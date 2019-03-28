@@ -1,0 +1,41 @@
+# Originally /opt/rocm/hip/samples/0_Intro/square/Makefile
+# Modified for testing in a PAPI environment.
+
+include ../../Makefile_comp_tests.target
+HIP_PATH?= $(wildcard /opt/rocm/hip)
+ifeq (,$(HIP_PATH))
+	HIP_PATH=../../..
+endif
+
+HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
+HIPCC=$(HIP_PATH)/bin/hipcc
+
+INCLUDE+=-I${HOME}/papi/src/
+
+ifeq (${HIP_PLATFORM}, nvcc)
+	SOURCES=square.cu
+else
+	SOURCES=square.cpp
+endif
+
+all: 
+
+# Step
+square.cpp: square.cu
+	$(HIP_PATH)/bin/hipify-perl square.cu > square.cpp
+
+square.out: square.cpp
+	$(HIPCC) $(CXXFLAGS) square.cpp -o $@
+
+rocm_all.out: rocm_all.cpp 
+	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+checkpath: 
+	echo HIP_PATH = $(HIP_PATH)
+	echo SOURCES = $(SOURCES)
+	echo HIP_PLATFORM = $(HIP_PLATFORM)
+	echo HIPCC = $(HIPCC)
+	echo INCLUDE = $(INCLUDE)
+
+clean:
+	rm -f *.o *.out

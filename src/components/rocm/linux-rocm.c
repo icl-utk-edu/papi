@@ -1,4 +1,4 @@
-/**
+/*/
  * @file    linux-rocm.c
  *
  * @ingroup rocm_components
@@ -41,7 +41,7 @@
     do {                                                                \
         int _cond = (checkcond);                                        \
         if (_cond) {                                                    \
-            fprintf(stderr, "error: condition %s failed: %s.\n", #checkcond, str); \
+            fprintf(stderr, "%s:%i error: condition %s failed: %s.\n", __FILE__, __LINE__, #checkcond, str); \
             evalthis;                                                   \
         }                                                               \
     } while (0)
@@ -49,19 +49,36 @@
 #define ROCM_CALL_CK(call, args, handleerror)                           \
     do {                                                                \
         hsa_status_t _status = (*call##Ptr)args;                        \
-        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {                                   \
-            fprintf(stderr, "error: function %s failed with error %d.\n", #call, _status); \
+        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {    \
+            fprintf(stderr, "%s:%i error: function %s failed with error %d.\n",     \
+            __FILE__, __LINE__, #call, _status);                                    \
+            handleerror;                                                \
+        }                                                               \
+    } while (0)
+
+// Roc Profiler call.
+#define ROCP_CALL_CK(call, args, handleerror)                           \
+    do {                                                                \
+        hsa_status_t _status = (*call##Ptr)args;                        \
+        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {     \
+            const char *profErr;                                                     \
+            profErr = (*rocprofiler_error_stringPtr)();                              \
+            fprintf(stderr, "%s:%i error: function %s failed with error %d [%s].\n", \
+            __FILE__, __LINE__, #call, _status, profErr);               \
             handleerror;                                                \
         }                                                               \
     } while (0)
 
 #define DLSYM_AND_CHECK(dllib, name)                                    \
     do {                                                                \
-        name##Ptr = dlsym(dllib, #name);                                            \
+        name##Ptr = dlsym(dllib, #name);                                \
         if (dlerror()!=NULL) {                                          \
-              strncpy(_rocm_vector.cmp_info.disabled_reason,            \
-                  "A ROCM required function was not found in dynamic libs", \
-                  PAPI_MAX_STR_LEN);                                        \
+            snprintf(_rocm_vector.cmp_info.disabled_reason,             \
+                PAPI_MAX_STR_LEN,                                                   \
+                "The ROCM required function '%s' was not found in dynamic libs",    \
+                #name);                                                             \
+            fprintf(stderr, "%s:%i ROCM component disabled: %s\n",                  \
+                __FILE__, __LINE__, _rocm_vector.cmp_info.disabled_reason);         \
           return ( PAPI_ENOSUPP );                                      \
         }                                                               \
     } while (0)
@@ -69,8 +86,8 @@
 typedef rocprofiler_t* Context;
 typedef rocprofiler_feature_t EventID;
 
-/* Contains device list, pointer to device desciption, and the list of available events */
-typedef struct papirocm_context {
+/* Contains device list, pointer to device description, and the list of available events */
+typedef struct _rocm_context {
     uint32_t availAgentSize;
     hsa_agent_t* availAgentArray;
     uint32_t availEventSize;
@@ -78,7 +95,7 @@ typedef struct papirocm_context {
     EventID *availEventIDArray;
     uint32_t *availEventIsBeingMeasuredInEventset;
     struct ev_name_desc *availEventDesc;
-} papirocm_context_t;
+} _rocm_context_t;
 
 /* Store the name and description for an event */
 typedef struct ev_name_desc {
@@ -87,27 +104,27 @@ typedef struct ev_name_desc {
 } ev_name_desc_t;
 
 /* Control structure tracks array of active contexts, records active events and their values */
-typedef struct papirocm_control {
+typedef struct _rocm_control {
     uint32_t countOfActiveContexts;
-    struct papirocm_active_context_s *arrayOfActiveContexts[PAPIROCM_MAX_COUNTERS];
+    struct _rocm_active_context_s *arrayOfActiveContexts[PAPIROCM_MAX_COUNTERS];
     uint32_t activeEventCount;
     int activeEventIndex[PAPIROCM_MAX_COUNTERS];
     long long activeEventValues[PAPIROCM_MAX_COUNTERS];
     uint64_t startTimestampNs;
     uint64_t readTimestampNs;
-} papirocm_control_t;
+} _rocm_control_t;
 
 /* For each active context, which ROCM events are being measured, context eventgroups containing events */
-typedef struct papirocm_active_context_s {
+typedef struct _rocm_active_context_s {
     Context ctx;
     int deviceNum;
     uint32_t conEventsCount;
     EventID conEvents[PAPIROCM_MAX_COUNTERS];
     int conEventIndex[PAPIROCM_MAX_COUNTERS];
-} papirocm_active_context_t;
+} _rocm_active_context_t;
 
 /* Function prototypes */
-static int papirocm_cleanup_eventset(hwd_control_state_t * ctrl);
+static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl);
 
 /* ******  CHANGE PROTOTYPES TO DECLARE ROCM LIBRARY SYMBOLS AS WEAK  **********
  *  This is done so that a version of PAPI built with the rocm component can   *
@@ -158,6 +175,10 @@ DECLAREROCMFUNC(rocprofiler_get_data, (rocprofiler_t*, uint32_t));
 DECLAREROCMFUNC(rocprofiler_get_metrics, (const rocprofiler_t*));
 DECLAREROCMFUNC(rocprofiler_reset, (rocprofiler_t*, uint32_t));
 
+// Unlike others, does not return an hsa_status_t.
+const char * __attribute__((weak)) rocprofiler_error_string2(void);
+const char *(*rocprofiler_error_stringPtr)(void);
+
 // file handles used to access rocm libraries with dlopen
 static void *dl1 = NULL;
 static void *dl2 = NULL;
@@ -166,10 +187,10 @@ static void *dl2 = NULL;
 papi_vector_t _rocm_vector;
 
 /* Global variable for hardware description, event and metric lists */
-static papirocm_context_t *global_papirocm_context = NULL;
+static _rocm_context_t *global__rocm_context = NULL;
 
 /* This global variable points to the head of the control state list */
-static papirocm_control_t *global_papirocm_control = NULL;
+static _rocm_control_t *global__rocm_control = NULL;
 
 
 /*****************************************************************************
@@ -182,7 +203,7 @@ static papirocm_control_t *global_papirocm_control = NULL;
  * with the ROCM component can be installed and used on systems which have the ROCM libraries installed
  * and on systems where these libraries are not installed.
  */
-static int papirocm_linkRocmLibraries()
+static int _rocm_linkRocmLibraries()
 {
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
@@ -191,13 +212,26 @@ static int papirocm_linkRocmLibraries()
     }
     /* Need to link in the ROCm libraries, if not found disable the component */
     dl1 = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_PRINT_EVAL(!dl1, "ROC runtime library libhsa-runtime64.so not found.", return (PAPI_ENOSUPP));
+    if (!dl1) {
+        char errstr[]="ROC runtime library 'libhsa-runtime64.so' was not found.";
+        fprintf(stderr, "%s\n", errstr); 
+        strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        return(PAPI_ENOSUPP);
+    }
+
     DLSYM_AND_CHECK(dl1, hsa_init);
     DLSYM_AND_CHECK(dl1, hsa_iterate_agents);
     DLSYM_AND_CHECK(dl1, hsa_system_get_info);
     DLSYM_AND_CHECK(dl1, hsa_agent_get_info);
+
     dl2 = dlopen("librocprofiler64.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
-    CHECK_PRINT_EVAL(!dl2, "ROCm profiling library librocprofiler64.so not found.", return (PAPI_ENOSUPP));
+    if (!dl2) {
+        char errstr[]="ROCM profiling library 'librocprofiler64.so' was not found.";
+        fprintf(stderr, "%s\n", errstr); 
+        strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        return(PAPI_ENOSUPP);
+    }
+
     DLSYM_AND_CHECK(dl2, rocprofiler_get_info);
     DLSYM_AND_CHECK(dl2, rocprofiler_iterate_info);
     DLSYM_AND_CHECK(dl2, rocprofiler_open);
@@ -209,13 +243,14 @@ static int papirocm_linkRocmLibraries()
     DLSYM_AND_CHECK(dl2, rocprofiler_get_data);
     DLSYM_AND_CHECK(dl2, rocprofiler_get_metrics);
     DLSYM_AND_CHECK(dl2, rocprofiler_reset);
+    DLSYM_AND_CHECK(dl2, rocprofiler_error_string);
 
     return (PAPI_OK);
 }
 
 // Callback function to get the number of agents
-static hsa_status_t papirocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
-  papirocm_context_t * gctxt = (papirocm_context_t*) arg;
+static hsa_status_t _rocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
+  _rocm_context_t * gctxt = (_rocm_context_t*) arg;
 
   hsa_device_type_t type;
   ROCM_CALL_CK(hsa_agent_get_info,(agent, HSA_AGENT_INFO_DEVICE, &type), return (PAPI_EMISC));
@@ -223,7 +258,7 @@ static hsa_status_t papirocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
   // Device is a GPU agent
   if (type == HSA_DEVICE_TYPE_GPU) {
     gctxt->availAgentSize += 1;
-    gctxt->availAgentArray = (hsa_agent_t*) papi_realloc(gctxt->availAgentArray, gctxt->availAgentSize);
+    gctxt->availAgentArray = (hsa_agent_t*) papi_realloc(gctxt->availAgentArray, (gctxt->availAgentSize*sizeof(hsa_agent_t)));
     gctxt->availAgentArray[gctxt->availAgentSize - 1] = agent;
   }
 
@@ -232,27 +267,30 @@ static hsa_status_t papirocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
 
 typedef struct {
     int device_num;
-    papirocm_context_t * ctx;
+    _rocm_context_t * ctx;
 } events_callback_arg_t;
 
 // Callback function to get the number of metrics
-static hsa_status_t papirocm_add_native_events_callback(const rocprofiler_info_data_t info, void * arg) {
+static hsa_status_t _rocm_add_native_events_callback(const rocprofiler_info_data_t info, void * arg) {
     events_callback_arg_t * callback_arg = (events_callback_arg_t*) arg;
-    papirocm_context_t * ctx = callback_arg->ctx;
+    _rocm_context_t * ctx = callback_arg->ctx;
     const int eventDeviceNum = callback_arg->device_num;
     const uint32_t index = ctx->availEventSize;
 
-    snprintf(ctx->availEventDesc[index].name, PAPI_MAX_STR_LEN, "device:%d:%s", eventDeviceNum, info.metric.name);
+//  information about AMD Event.
+//  fprintf(stderr, "%s:%i name=%s block_name=%s, instances=%i block_counters=%i.\n", 
+//      __FILE__, __LINE__, info.metric.name, info.metric.block_name, info.metric.instances, 
+//      info.metric.block_counters);
+    snprintf(ctx->availEventDesc[index].name, PAPI_MAX_STR_LEN, "device=%d:%s", eventDeviceNum, info.metric.name);
     ctx->availEventDesc[index].name[PAPI_MAX_STR_LEN - 1] = '\0';
     strncpy(ctx->availEventDesc[index].description, info.metric.description, PAPI_2MAX_STR_LEN);
     ctx->availEventDesc[index].description[PAPI_2MAX_STR_LEN - 1] = '\0';
 
-    EventID eventId;            // Removed ={} initialization.
-    eventId.parameters=NULL;    // Init.
-    eventId.parameter_count=0;
-	
+    EventID eventId;                                                    // Removed declaration init.
     eventId.kind = ROCPROFILER_FEATURE_KIND_METRIC;
     eventId.name = strdup(info.metric.name);
+    eventId.parameters = NULL;                                          // Not currently used, but init for safety.
+    eventId.parameter_count=0;                                          // Not currently used, but init for safety.
 
     ctx->availEventDeviceNum[index] = eventDeviceNum;
     ctx->availEventIDArray[index] = eventId;
@@ -261,13 +299,13 @@ static hsa_status_t papirocm_add_native_events_callback(const rocprofiler_info_d
     return HSA_STATUS_SUCCESS;
 }
 
-static int papirocm_add_native_events(papirocm_context_t * ctx)
+static int _rocm_add_native_events(_rocm_context_t * ctx)
 {
     uint32_t i, maxEventSize = 0;
 
     for (i = 0; i < ctx->availAgentSize; ++i) {
       uint32_t size = 0;
-      ROCM_CALL_CK(rocprofiler_get_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC_COUNT, &size), return (PAPI_EMISC));
+      ROCP_CALL_CK(rocprofiler_get_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC_COUNT, &size), return (PAPI_EMISC));
       maxEventSize += size;
     } 
   
@@ -285,7 +323,7 @@ static int papirocm_add_native_events(papirocm_context_t * ctx)
       events_callback_arg_t arg;
       arg.device_num = i;
       arg.ctx = ctx;
-      ROCM_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, papirocm_add_native_events_callback, (void*)(&arg)), return (PAPI_EMISC));
+      ROCP_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, _rocm_add_native_events_callback, (void*)(&arg)), return (PAPI_EMISC));
     }
 
     /* return 0 if everything went OK */
@@ -300,9 +338,9 @@ static int papirocm_add_native_events(papirocm_context_t * ctx)
 /* 
  * This is called whenever a thread is initialized.
  */
-static int papirocm_init_thread(hwd_context_t * ctx)
+static int _rocm_init_thread(hwd_context_t * ctx)
 {
-    ROCMDBG("Entering papirocm_init_thread\n");
+    ROCMDBG("Entering _rocm_init_thread\n");
 
     (void) ctx;
     return PAPI_OK;
@@ -313,12 +351,12 @@ static int papirocm_init_thread(hwd_context_t * ctx)
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-static int papirocm_init_component(int cidx)
+static int _rocm_init_component(int cidx)
 {
-    ROCMDBG("Entering papirocm_init_component\n");
+    ROCMDBG("Entering _rocm_init_component\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
-    if(papirocm_linkRocmLibraries() != PAPI_OK) {
+    if(_rocm_linkRocmLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of ROCM libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
         return (PAPI_ENOSUPP);
@@ -327,22 +365,22 @@ static int papirocm_init_component(int cidx)
     ROCM_CALL_CK(hsa_init, (), return (PAPI_EMISC));
 
     /* Create the structure */
-    if(!global_papirocm_context)
-        global_papirocm_context = (papirocm_context_t *) papi_calloc(1, sizeof(papirocm_context_t));
+    if(!global__rocm_context)
+        global__rocm_context = (_rocm_context_t *) papi_calloc(1, sizeof(_rocm_context_t));
 
     /* Get GPU agent */
-    ROCM_CALL_CK(hsa_iterate_agents, (papirocm_get_gpu_handle, global_papirocm_context), return (PAPI_EMISC));
+    ROCM_CALL_CK(hsa_iterate_agents, (_rocm_get_gpu_handle, global__rocm_context), return (PAPI_EMISC));
 
     int rv;
 
     /* Get list of all native ROCM events supported */
-    rv = papirocm_add_native_events(global_papirocm_context);
+    rv = _rocm_add_native_events(global__rocm_context);
     if(rv != 0)
         return (rv);
 
     /* Export some information */
     _rocm_vector.cmp_info.CmpIdx = cidx;
-    _rocm_vector.cmp_info.num_native_events = global_papirocm_context->availEventSize;
+    _rocm_vector.cmp_info.num_native_events = global__rocm_context->availEventSize;
     _rocm_vector.cmp_info.num_cntrs = _rocm_vector.cmp_info.num_native_events;
     _rocm_vector.cmp_info.num_mpx_cntrs = _rocm_vector.cmp_info.num_native_events;
 
@@ -354,24 +392,24 @@ static int papirocm_init_component(int cidx)
  *   In general a control state holds the hardware info for an
  *   EventSet.
  */
-static int papirocm_init_control_state(hwd_control_state_t * ctrl)
+static int _rocm_init_control_state(hwd_control_state_t * ctrl)
 {
-    ROCMDBG("Entering papirocm_init_control_state\n");
+    ROCMDBG("Entering _rocm_init_control_state\n");
 
     (void) ctrl;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_context_t *gctxt = global__rocm_context;
 
     CHECK_PRINT_EVAL(!gctxt, "Error: The PAPI ROCM component needs to be initialized first", return (PAPI_ENOINIT));
     /* If no events were found during the initial component initialization, return error */
-    if(global_papirocm_context->availEventSize <= 0) {
+    if(global__rocm_context->availEventSize <= 0) {
         strncpy(_rocm_vector.cmp_info.disabled_reason, "ERROR ROCM: No events exist", PAPI_MAX_STR_LEN);
         return (PAPI_EMISC);
     }
     /* If it does not exist, create the global structure to hold ROCM contexts and active events */
-    if(!global_papirocm_control) {
-        global_papirocm_control = (papirocm_control_t *) papi_calloc(1, sizeof(papirocm_control_t));
-        global_papirocm_control->countOfActiveContexts = 0;
-        global_papirocm_control->activeEventCount = 0;
+    if(!global__rocm_control) {
+        global__rocm_control = (_rocm_control_t *) papi_calloc(1, sizeof(_rocm_control_t));
+        global__rocm_control->countOfActiveContexts = 0;
+        global__rocm_control->activeEventCount = 0;
     }
     return PAPI_OK;
 }
@@ -383,13 +421,13 @@ static int papirocm_init_control_state(hwd_control_state_t * ctrl)
  * context, create eventgroups for the events.
  */
 /* Note: NativeInfo_t is defined in papi_internal.h */
-static int papirocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
+static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
 {
-    ROCMDBG("Entering papirocm_update_control_state with nativeCount %d\n", nativeCount);
+    ROCMDBG("Entering _rocm_update_control_state with nativeCount %d\n", nativeCount);
 
     (void) ctx;
-    papirocm_control_t *gctrl = global_papirocm_control;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_control_t *gctrl = global__rocm_control;
+    _rocm_context_t *gctxt = global__rocm_context;
     int eventContextIdx = 0;
     int index, ii;
     uint32_t cc;
@@ -425,7 +463,7 @@ static int papirocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         // Create context if it does not exit
         if(cc == gctrl->countOfActiveContexts) {
             ROCMDBG("Event %s device %d does not have a ctx registered yet...\n", eventName, eventDeviceNum);
-            gctrl->arrayOfActiveContexts[cc] = papi_calloc(1, sizeof(papirocm_active_context_t));
+            gctrl->arrayOfActiveContexts[cc] = papi_calloc(1, sizeof(_rocm_active_context_t));
             CHECK_PRINT_EVAL(gctrl->arrayOfActiveContexts[cc] == NULL, "Memory allocation for new active context failed", return (PAPI_ENOMEM));
             gctrl->arrayOfActiveContexts[cc]->deviceNum = eventDeviceNum;
             gctrl->arrayOfActiveContexts[cc]->ctx = NULL;
@@ -435,19 +473,20 @@ static int papirocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         }
         eventContextIdx = cc;
 
-        papirocm_active_context_t *eventctrl = gctrl->arrayOfActiveContexts[eventContextIdx];
+        _rocm_active_context_t *eventctrl = gctrl->arrayOfActiveContexts[eventContextIdx];
         ROCMDBG("Need to add event %d %s to the context\n", index, eventName);
+        // Now we have eventctrl, we can check on max event count.
+        if (eventctrl->conEventsCount >= PAPIROCM_MAX_COUNTERS) {
+            ROCMDBG("Num events exceeded PAPIROCM_MAX_COUNTERS\n");
+            return(PAPI_EINVAL);
+        }
+        
         /* lookup eventid for this event index */
         EventID eventId = gctxt->availEventIDArray[index];
         eventctrl->conEvents[eventctrl->conEventsCount] = eventId;
         eventctrl->conEventIndex[eventctrl->conEventsCount] = index;
         eventctrl->conEventsCount++;
 
-        if (eventctrl->conEventsCount >= PAPIROCM_MAX_COUNTERS) {
-            ROCMDBG("Num events exceeded PAPIROCM_MAX_COUNTERS\n");
-            return(PAPI_EINVAL);
-        }
-        
         /* Record index of this active event back into the nativeInfo structure */
         nativeInfo[ii].ni_position = gctrl->activeEventCount;
         /* record added event at the higher level */
@@ -460,18 +499,18 @@ static int papirocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
         ROCMDBG("Create eventGroupPasses for context (destroy pre-existing) (nativeCount %d, conEventsCount %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount);
         if(eventctrl->conEventsCount > 0) {
             if (eventctrl->ctx != NULL) {
-                ROCM_CALL_CK(rocprofiler_close, (eventctrl->ctx), return (PAPI_EMISC));
+                ROCP_CALL_CK(rocprofiler_close, (eventctrl->ctx), return (PAPI_EMISC));
             }
             rocprofiler_properties_t properties;
             memset(&properties, 0, sizeof(properties));
             properties.queue_depth = 128;
-            ROCM_CALL_CK(rocprofiler_open, (gctxt->availAgentArray[eventDeviceNum], eventctrl->conEvents, eventctrl->conEventsCount, &(eventctrl->ctx),
+            ROCP_CALL_CK(rocprofiler_open, (gctxt->availAgentArray[eventDeviceNum], eventctrl->conEvents, eventctrl->conEventsCount, &(eventctrl->ctx),
                                           ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE, &properties), return (PAPI_EBUG));
-            ROCM_CALL_CK(rocprofiler_group_count, (eventctrl->ctx, &numPasses), return (PAPI_EMISC));
+            ROCP_CALL_CK(rocprofiler_group_count, (eventctrl->ctx, &numPasses), return (PAPI_EMISC));
 
             if (numPasses > 1) {
                 ROCMDBG("Error occured: The combined ROCM events require more than 1 pass... try different events\n");
-                papirocm_cleanup_eventset(ctrl);
+                _rocm_cleanup_eventset(ctrl);
                 return(PAPI_ECOMBO);
             } else  {
                 ROCMDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, numPasses);
@@ -485,13 +524,13 @@ static int papirocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_
 /* Triggered by PAPI_start().
  * For ROCM component, switch to each context and start all eventgroups.
  */
-static int papirocm_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _rocm_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-    ROCMDBG("Entering papirocm_start\n");
+    ROCMDBG("Entering _rocm_start\n");
 
     (void) ctx;
     (void) ctrl;
-    papirocm_control_t *gctrl = global_papirocm_control;
+    _rocm_control_t *gctrl = global__rocm_control;
     uint32_t ii, cc;
 
     ROCMDBG("Reset all active event values\n");
@@ -501,10 +540,11 @@ static int papirocm_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     ROCM_CALL_CK(hsa_system_get_info, (HSA_SYSTEM_INFO_TIMESTAMP, &gctrl->startTimestampNs), return (PAPI_EMISC));
     for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
+        (void) eventDeviceNum;                                          // suppress "not used" error when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Start device %d ctx %p ts %lu\n", eventDeviceNum, eventCtx, gctrl->startTimestampNs);
         if (eventCtx == NULL) abort();
-        ROCM_CALL_CK(rocprofiler_start, (eventCtx, 0), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_start, (eventCtx, 0), return (PAPI_EMISC));
     }
 
     return (PAPI_OK);
@@ -514,20 +554,21 @@ static int papirocm_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 /* Triggered by PAPI_read().  For ROCM component, switch to each
  * context, read all the eventgroups, and put the values in the
  * correct places. */
-static int papirocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
+static int _rocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
 {
-    ROCMDBG("Entering papirocm_read\n");
+    ROCMDBG("Entering _rocm_read\n");
 
     (void) ctx;
     (void) ctrl;
     (void) flags;
-    papirocm_control_t *gctrl = global_papirocm_control;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_control_t *gctrl = global__rocm_control;
+    _rocm_context_t *gctxt = global__rocm_context;
     uint32_t cc, jj, ee;
 
     // Get read time stamp
     ROCM_CALL_CK(hsa_system_get_info, (HSA_SYSTEM_INFO_TIMESTAMP, &gctrl->readTimestampNs), return (PAPI_EMISC));
     uint64_t durationNs = gctrl->readTimestampNs - gctrl->startTimestampNs;
+    (void) durationNs;                                                  // Suppress 'not used' warning when not debug.
     gctrl->startTimestampNs = gctrl->readTimestampNs;
 
 
@@ -535,15 +576,16 @@ static int papirocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Read device %d ctx %p(%u) ts %lu\n", eventDeviceNum, eventCtx, cc, gctrl->readTimestampNs);
-        ROCM_CALL_CK(rocprofiler_read, (eventCtx, 0), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_read, (eventCtx, 0), return (PAPI_EMISC));
         ROCMDBG("waiting for data\n");
-        ROCM_CALL_CK(rocprofiler_get_data, (eventCtx, 0), return (PAPI_EMISC));
-        ROCM_CALL_CK(rocprofiler_get_metrics, (eventCtx), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_get_data, (eventCtx, 0), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_get_metrics, (eventCtx), return (PAPI_EMISC));
         ROCMDBG("done\n");
 
         for(jj = 0; jj < gctrl->activeEventCount; jj++) {
             int index = gctrl->activeEventIndex[jj];
             EventID eventId = gctxt->availEventIDArray[index];
+            (void) eventId;                                             // Suppress 'not used' warning when not debug.
 
             /* If the device/context does not match the current context, move to next */
             if(gctxt->availEventDeviceNum[index] != eventDeviceNum)
@@ -566,20 +608,21 @@ static int papirocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long l
 
 
 /* Triggered by PAPI_stop() */
-static int papirocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _rocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-    ROCMDBG("Entering papirocm_stop\n");
+    ROCMDBG("Entering _rocm_stop\n");
 
     (void) ctx;
     (void) ctrl;
-    papirocm_control_t *gctrl = global_papirocm_control;
+    _rocm_control_t *gctrl = global__rocm_control;
     uint32_t cc;
 
     for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
+        (void) eventDeviceNum;                                          // Suppress 'not used' warning when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Stop device %d ctx %p \n", eventDeviceNum, eventCtx);
-        ROCM_CALL_CK(rocprofiler_stop, (eventCtx, 0), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_stop, (eventCtx, 0), return (PAPI_EMISC));
     }
 
     return (PAPI_OK);
@@ -589,19 +632,20 @@ static int papirocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 /* 
  * Disable and destroy the ROCM eventGroup
  */
-static int papirocm_cleanup_eventset(hwd_control_state_t * ctrl)
+static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
 {
-    ROCMDBG("Entering papirocm_cleanup_eventset\n");
+    ROCMDBG("Entering _rocm_cleanup_eventset\n");
 
     (void) ctrl;
-    papirocm_control_t *gctrl = global_papirocm_control;
+    _rocm_control_t *gctrl = global__rocm_control;
     uint32_t cc;
 
     for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
+        (void) eventDeviceNum;                                          // Suppress 'not used' warning when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Destroy device %d ctx %p \n", eventDeviceNum, eventCtx);
-        ROCM_CALL_CK(rocprofiler_close, (eventCtx), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_close, (eventCtx), return (PAPI_EMISC));
         papi_free( gctrl->arrayOfActiveContexts[cc] );
     }
     /* Record that there are no active contexts or events */
@@ -612,23 +656,22 @@ static int papirocm_cleanup_eventset(hwd_control_state_t * ctrl)
 
 
 /* Called at thread shutdown. Does nothing in the ROCM component. */
-static int papirocm_shutdown_thread(hwd_context_t * ctx)
+static int _rocm_shutdown_thread(hwd_context_t * ctx)
 {
-    ROCMDBG("Entering papirocm_shutdown_thread\n");
-
+    ROCMDBG("Entering _rocm_shutdown_thread\n");
+    
     (void) ctx;
-
     return (PAPI_OK);
 }
 
 
 /* Triggered by PAPI_shutdown() and frees memory allocated in the ROCM component. */
-static int papirocm_shutdown_component(void)
+static int _rocm_shutdown_component(void)
 {
-    ROCMDBG("Entering papirocm_shutdown_component\n");
+    ROCMDBG("Entering _rocm_shutdown_component\n");
 
-    papirocm_control_t *gctrl = global_papirocm_control;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_control_t *gctrl = global__rocm_control;
+    _rocm_context_t *gctxt = global__rocm_context;
     uint32_t cc;
 
     /* Free context */
@@ -638,20 +681,23 @@ static int papirocm_shutdown_component(void)
         papi_free(gctxt->availEventIsBeingMeasuredInEventset);
         papi_free(gctxt->availEventDesc);
         papi_free(gctxt);
-        global_papirocm_context = gctxt = NULL;
+        global__rocm_context = gctxt = NULL;
     }
 
     /* Free control */
     if(gctrl) {
         for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
-            if(gctrl->arrayOfActiveContexts[cc] != NULL)
+            if(gctrl->arrayOfActiveContexts[cc] != NULL) {
                 papi_free(gctrl->arrayOfActiveContexts[cc]);
+            }
         }
+
         papi_free(gctrl);
-        global_papirocm_control = gctrl = NULL;
+        global__rocm_control = gctrl = NULL;
     }
 
     // Shutdown ROC runtime
+    // DEBUG: This causes a segfault.
     ROCM_CALL_CK(hsa_shut_down, (), return (PAPI_EMISC));
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
@@ -665,13 +711,13 @@ static int papirocm_shutdown_component(void)
  *  running. If the eventset is not currently running, then the saved
  *  value in the EventSet is set to zero without calling this
  *  routine.  */
-static int papirocm_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+static int _rocm_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
-    ROCMDBG("Entering papirocm_reset\n");
+    ROCMDBG("Entering _rocm_reset\n");
 
     (void) ctx;
     (void) ctrl;
-    papirocm_control_t *gctrl = global_papirocm_control;
+    _rocm_control_t *gctrl = global__rocm_control;
     uint32_t ii, cc;
 
     ROCMDBG("Reset all active event values\n");
@@ -680,9 +726,10 @@ static int papirocm_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
     for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
+        (void) eventDeviceNum;                                          // Suppress 'not used' error when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Reset device %d ctx %p \n", eventDeviceNum, eventCtx);
-        ROCM_CALL_CK(rocprofiler_reset, (eventCtx, 0), return (PAPI_EMISC));
+        ROCP_CALL_CK(rocprofiler_reset, (eventCtx, 0), return (PAPI_EMISC));
     }
 
     return (PAPI_OK);
@@ -694,9 +741,9 @@ static int papirocm_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
     @param[in] option -- options to be set
 */
-static int papirocm_ctrl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+static int _rocm_ctrl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
 {
-    ROCMDBG("Entering papirocm_ctrl\n");
+    ROCMDBG("Entering _rocm_ctrl\n");
 
     (void) ctx;
     (void) code;
@@ -715,9 +762,9 @@ static int papirocm_ctrl(hwd_context_t * ctx, int code, _papi_int_option_t * opt
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-static int papirocm_set_domain(hwd_control_state_t * ctrl, int domain)
+static int _rocm_set_domain(hwd_control_state_t * ctrl, int domain)
 {
-    ROCMDBG("Entering papirocm_set_domain\n");
+    ROCMDBG("Entering _rocm_set_domain\n");
 
     (void) ctrl;
     if((PAPI_DOM_USER & domain) || (PAPI_DOM_KERNEL & domain) || (PAPI_DOM_OTHER & domain) || (PAPI_DOM_ALL & domain))
@@ -732,7 +779,7 @@ static int papirocm_set_domain(hwd_control_state_t * ctrl, int domain)
  *   @param EventCode is the event of interest
  *   @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
  */
-static int papirocm_ntv_enum_events(unsigned int *EventCode, int modifier)
+static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     //ROCMDBG("Entering (get next event after %u)\n", *EventCode );
 
@@ -742,7 +789,7 @@ static int papirocm_ntv_enum_events(unsigned int *EventCode, int modifier)
         return (PAPI_OK);
         break;
     case PAPI_ENUM_EVENTS:
-        if(*EventCode < global_papirocm_context->availEventSize - 1) {
+        if(*EventCode < global__rocm_context->availEventSize - 1) {
             *EventCode = *EventCode + 1;
             return (PAPI_OK);
         } else
@@ -760,12 +807,12 @@ static int papirocm_ntv_enum_events(unsigned int *EventCode, int modifier)
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
  */
-static int papirocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
+static int _rocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     //ROCMDBG("Entering EventCode %d\n", EventCode );
 
     unsigned int index = EventCode;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_context_t *gctxt = global__rocm_context;
     if(index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].name, len);
     } else {
@@ -781,12 +828,12 @@ static int papirocm_ntv_code_to_name(unsigned int EventCode, char *name, int len
  * @param descr is a pointer for the description to be copied to
  * @param len is the size of the descr string
  */
-static int papirocm_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
+static int _rocm_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
 {
-    //ROCMDBG("Entering papirocm_ntv_code_to_descr\n");
+    //ROCMDBG("Entering _rocm_ntv_code_to_descr\n");
 
     unsigned int index = EventCode;
-    papirocm_context_t *gctxt = global_papirocm_context;
+    _rocm_context_t *gctxt = global__rocm_context;
     if(index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].description, len);
     } else {
@@ -820,29 +867,30 @@ papi_vector_t _rocm_vector = {
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {
-             .context = 1,      /* sizeof( papirocm_context_t ), */
-             .control_state = 1,        /* sizeof( papirocm_control_t ), */
-             .reg_value = 1,    /* sizeof( papirocm_register_t ), */
-             .reg_alloc = 1,    /* sizeof( papirocm_reg_alloc_t ), */
+             .context = 1,      /* sizeof( _rocm_context_t ), */
+             .control_state = 1,        /* sizeof( _rocm_control_t ), */
+             .reg_value = 1,    /* sizeof( _rocm_register_t ), */
+             .reg_alloc = 1,    /* sizeof( _rocm_reg_alloc_t ), */
              }
     ,
     /* function pointers in this component */
-    .start = papirocm_start,    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
-    .stop = papirocm_stop,      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
-    .read = papirocm_read,      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags ) */
-    .reset = papirocm_reset,    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
-    .cleanup_eventset = papirocm_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
+    .start = _rocm_start,    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .stop = _rocm_stop,      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .read = _rocm_read,      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags ) */
+    .reset = _rocm_reset,    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    .cleanup_eventset = _rocm_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
 
-    .init_component = papirocm_init_component,  /* ( int cidx ) */
-    .init_thread = papirocm_init_thread,        /* ( hwd_context_t * ctx ) */
-    .init_control_state = papirocm_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
-    .update_control_state = papirocm_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
+    .init_component = _rocm_init_component,  /* ( int cidx ) */
+    .init_thread = _rocm_init_thread,        /* ( hwd_context_t * ctx ) */
+    .init_control_state = _rocm_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
+    .update_control_state = _rocm_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
 
-    .ctl = papirocm_ctrl,       /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
-    .set_domain = papirocm_set_domain,  /* ( hwd_control_state_t * cntrl, int domain ) */
-    .ntv_enum_events = papirocm_ntv_enum_events,        /* ( unsigned int *EventCode, int modifier ) */
-    .ntv_code_to_name = papirocm_ntv_code_to_name,      /* ( unsigned int EventCode, char *name, int len ) */
-    .ntv_code_to_descr = papirocm_ntv_code_to_descr,    /* ( unsigned int EventCode, char *name, int len ) */
-    .shutdown_thread = papirocm_shutdown_thread,        /* ( hwd_context_t * ctx ) */
-    .shutdown_component = papirocm_shutdown_component,  /* ( void ) */
+    .ctl = _rocm_ctrl,       /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
+    .set_domain = _rocm_set_domain,  /* ( hwd_control_state_t * cntrl, int domain ) */
+    .ntv_enum_events = _rocm_ntv_enum_events,        /* ( unsigned int *EventCode, int modifier ) */
+    .ntv_code_to_name = _rocm_ntv_code_to_name,      /* ( unsigned int EventCode, char *name, int len ) */
+    .ntv_code_to_descr = _rocm_ntv_code_to_descr,    /* ( unsigned int EventCode, char *name, int len ) */
+    .shutdown_thread = _rocm_shutdown_thread,        /* ( hwd_context_t * ctx ) */
+    .shutdown_component = _rocm_shutdown_component,  /* ( void ) */
 };
+
