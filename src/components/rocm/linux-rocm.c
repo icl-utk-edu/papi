@@ -223,6 +223,7 @@ static int _rocm_linkRocmLibraries()
     DLSYM_AND_CHECK(dl1, hsa_iterate_agents);
     DLSYM_AND_CHECK(dl1, hsa_system_get_info);
     DLSYM_AND_CHECK(dl1, hsa_agent_get_info);
+    DLSYM_AND_CHECK(dl1, hsa_shut_down);
 
     dl2 = dlopen("librocprofiler64.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
     if (!dl2) {

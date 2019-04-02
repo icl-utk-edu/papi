@@ -67,7 +67,6 @@ typedef struct {
 } eventStore_t;
 
 std::string EXCLUDE[] = {           // List of events to specifically exclude, when rocprofiler_open is failing.
-   "",                              // End of Table. MOVE TO TOP to disable this list.
    "TA_TA_BUSY",
    "TA_FLAT_READ_WAVEFRONTS",
    "TA_FLAT_WRITE_WAVEFRONTS",
@@ -79,6 +78,7 @@ std::string EXCLUDE[] = {           // List of events to specifically exclude, w
    "TCC_EA_RDREQ",
    "TCC_EA_RDREQ_32B",
    "TCP_TA_DATA_STALL_CYCLES",
+   "",                              // End of Table. MOVE TO TOP to disable this list.
 };
 
 int eventsFoundCount = 0;               // occupants of the array.
