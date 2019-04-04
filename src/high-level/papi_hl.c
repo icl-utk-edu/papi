@@ -240,7 +240,9 @@ static void _internal_hl_onetime_library_init(void)
       /* we assume that PAPI_hl_init() is called from a parallel region */
       pthread_once(&library_is_initialized, _internal_hl_library_init);
       /* wait until first thread has finished */
-      while ( !hl_initiated )
+      int i = 0;
+      /* give it 5 seconds in case PAPI_thread_init crashes */
+      while ( !hl_initiated && (i++) < 500000 )
          usleep(10);
    } else {
       /* we assume that PAPI_hl_init() is called from a serial application
@@ -305,14 +307,14 @@ static char *_internal_hl_remove_spaces( char *str )
 static int _internal_hl_determine_default_events()
 {
    int i;
-   int num_of_defaults = 5;
-   char *default_events[num_of_defaults];
-
-   default_events[0] = "perf::TASK-CLOCK";
-   default_events[1] = "PAPI_TOT_INS";
-   default_events[2] = "PAPI_TOT_CYC";
-   default_events[3] = "PAPI_FP_INS";
-   default_events[4] = "PAPI_FP_OPS";
+   char *default_events[] = {
+      "perf::TASK-CLOCK",
+      "PAPI_TOT_INS",
+      "PAPI_TOT_CYC",
+      "PAPI_FP_INS",
+      "PAPI_FP_OPS"
+   };
+   int num_of_defaults = sizeof(default_events) / sizeof(char*);
 
    /* allocate memory for requested events */
    requested_event_names = (char**)malloc(num_of_defaults * sizeof(char*));
@@ -491,14 +493,15 @@ static int _internal_hl_create_components()
 
          /* get index of '=' in event name */
          index = (int)(ret - requested_event_names[i]);
-         /* remove event type from string */
-         requested_event_names[i][index] = '\0';
+         /* remove event type from string if '=instant' or '=delta' */
+         if ( (strcmp(ret, "=instant") == 0) || (strcmp(ret, "=delta") == 0) )
+            requested_event_names[i][index] = '\0';
       }
 
       /* determine event code and corresponding component id */
       retval = PAPI_event_name_to_code( requested_event_names[i], &event );
       if ( retval != PAPI_OK ) {
-         verbose_fprintf(stdout, "PAPI-HL Warning: \"%s\" does not exists or is not supported on this machine.\n", requested_event_names[i]);
+         verbose_fprintf(stdout, "PAPI-HL Warning: \"%s\" does not exist or is not supported on this machine.\n", requested_event_names[i]);
       } else {
          component_id = PAPI_COMPONENT_INDEX( event );
 
@@ -571,8 +574,10 @@ static int _internal_hl_read_events(const char* events)
       if ( user_events_from_env == NULL )
          return ( PAPI_ENOMEM );
       if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
-         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
+         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK ) {
+            free(user_events_from_env);
             return ( retval );
+         }
       free(user_events_from_env);
    } else {
       if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
@@ -1351,7 +1356,7 @@ static void _internal_hl_clean_up_all(bool deactivate)
    int i, num_of_threads;
 
    /* we assume that output has been already generated or
-    * cannot be generated due to prevoius errors */
+    * cannot be generated due to previous errors */
    output_generated = true;
 
    /* clean up thread local data */
@@ -1480,7 +1485,7 @@ PAPI_hl_init()
  *
  * @retval PAPI_OK
  * @retval PAPI_EMISC
- * -- Thread has been already cleaned up or PAPI is deactivated due to previous erros.
+ * -- Thread has been already cleaned up or PAPI is deactivated due to previous errors.
  * 
  * PAPI_hl_cleanup_thread shuts down thread-local event sets and cleans local
  * data structures. It is recommended to use this function in combination with
@@ -1544,7 +1549,7 @@ int PAPI_hl_cleanup_thread()
  *
  * @retval PAPI_OK
  * @retval PAPI_EMISC
- * -- PAPI has been already finalized or deactivated due to previous erros.
+ * -- PAPI has been already finalized or deactivated due to previous errors.
  *
  * PAPI_hl_finalize finalizes the high-level library by destroying all counting event sets
  * and internal data structures.
@@ -1589,7 +1594,7 @@ int PAPI_hl_finalize()
  *
  * @retval PAPI_OK
  * @retval PAPI_EMISC
- * -- PAPI has been deactivated due to previous erros.
+ * -- PAPI has been deactivated due to previous errors.
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
@@ -1623,6 +1628,10 @@ PAPI_hl_set_events(const char* events)
 {
    int retval;
    if ( state == PAPIHL_ACTIVE ) {
+
+      /* This may only be called once after the high-level API was successfully
+       * initiated. Any second call just returns PAPI_OK without doing an
+       * expensive lock. */
       if ( hl_initiated == true ) {
          if ( events_determined == false )
          {
@@ -1645,8 +1654,9 @@ PAPI_hl_set_events(const char* events)
             _papi_hwi_unlock( HIGHLEVEL_LOCK );
          }
       }
+      /* in case the first locked thread ran into problems */
       if ( state == PAPIHL_DEACTIVATED)
-         return ( PAPI_EINVAL );
+         return ( PAPI_EMISC );
       return ( PAPI_OK );
    }
    return ( PAPI_EMISC );
@@ -1711,7 +1721,7 @@ PAPI_hl_print_output()
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
  * @retval PAPI_EMISC
- * -- PAPI has been deactivated due to previous erros.
+ * -- PAPI has been deactivated due to previous errors.
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
@@ -1805,7 +1815,7 @@ PAPI_hl_region_begin( const char* region )
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
  * @retval PAPI_EMISC
- * -- PAPI has been deactivated due to previous erros.
+ * -- PAPI has been deactivated due to previous errors.
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
@@ -1883,7 +1893,7 @@ PAPI_hl_read(const char* region)
  * @retval PAPI_ESYS
  * -- A system or C library call failed inside PAPI, see the errno variable.
  * @retval PAPI_EMISC
- * -- PAPI has been deactivated due to previous erros.
+ * -- PAPI has been deactivated due to previous errors.
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
