@@ -72,11 +72,11 @@ typedef struct local_components
    long_long *values;
 } local_components_t;
 
-__thread local_components_t *_local_components = NULL;
-__thread long_long _local_cycles;
-__thread volatile bool _local_state = PAPIHL_ACTIVE;
-__thread int _local_region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
-__thread int _local_region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
+PAPI_TLS_KEYWORD local_components_t *_local_components = NULL;
+PAPI_TLS_KEYWORD long_long _local_cycles;
+PAPI_TLS_KEYWORD volatile bool _local_state = PAPIHL_ACTIVE;
+PAPI_TLS_KEYWORD int _local_region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
+PAPI_TLS_KEYWORD int _local_region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
 
 /* thread local components data end *************************************/
 
