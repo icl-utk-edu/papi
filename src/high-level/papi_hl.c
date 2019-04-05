@@ -1172,7 +1172,7 @@ static void _internal_hl_write_output()
          int cpu_freq;
 
          if ( region_begin_cnt == region_end_cnt ) {
-            verbose_fprintf(stdout, "PAPI-HL Info: Print results to stdout...\n");
+            verbose_fprintf(stdout, "PAPI-HL Info: Print results...\n");
          } else {
             verbose_fprintf(stdout, "PAPI-HL Warning: Cannot generate output due to not matching regions.\n");
             output_generated = true;
