@@ -36,4 +36,5 @@
          write (*,*) "PAPIf_hl_finalize failed!"
       end if
 
+      call ftests_pass(__FILE__)
       end program flops

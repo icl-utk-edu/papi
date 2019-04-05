@@ -17,5 +17,9 @@
          if ( retval .NE. PAPI_OK ) then
             write (*,*) "PAPIf_hl_region_end failed!"
          end if
-      end do 
+      end do
+
+      call PAPIf_hl_print_output()
+
+      call ftests_pass(__FILE__)
       end program flops
