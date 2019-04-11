@@ -978,7 +978,7 @@ static int _internal_hl_determine_output_path()
       time_t t = time(NULL);
       struct tm tm = *localtime(&t);
       char m_time[16];
-      sprintf(m_time, "%d%d%dT%d%d%d", tm.tm_year+1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+      sprintf(m_time, "%d%02d%02d-%02d%02d%02d", tm.tm_year+1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
       /* add timestamp to existing folder string */
       sprintf(new_absolute_output_file_path, "%s-%s", absolute_output_file_path, m_time);
 
@@ -1200,7 +1200,7 @@ static void _internal_hl_write_output()
          }
          else
          {
-            sprintf(absolute_output_file_path, "%s/rank_%d", absolute_output_file_path, rank);
+            sprintf(absolute_output_file_path, "%s/rank_%04d", absolute_output_file_path, rank);
          }
 
          /* determine current cpu frequency */
