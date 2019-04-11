@@ -907,7 +907,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 	char filename[BUFSIZ],type_string[BUFSIZ];
 	struct dirent *d;
 	int max_level=0;
-	int level_count=0,last_level=-1,level_index=0;
+	int level_count,level_index;
 
 	PAPI_mh_level_t *L = hw_info->mem_hierarchy.level;
 
@@ -918,6 +918,12 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 	dir=opendir("/sys/devices/system/cpu/cpu0/cache");
 	if (dir==NULL) {
 		goto unrecoverable_error;
+	}
+
+	for (level_index=0; level_index < PAPI_MAX_MEM_HIERARCHY_LEVELS; ++level_index) {
+		for (level_count = 0; level_count < PAPI_MH_MAX_LEVELS; ++level_count) {
+			L[level_index].cache[level_count].type = PAPI_MH_TYPE_EMPTY;
+		}
 	}
 
 	while(1) {
@@ -950,11 +956,12 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		/* Index arrays from 0 */
 		level_index=level-1;
 
-		if (level!=last_level) {
-			level_count=0;
-			last_level=level;
-		} else {
+		level_count = 0;
+		while (L[level_index].cache[level_count].type != PAPI_MH_TYPE_EMPTY) {
 			level_count++;
+			if (level_count>=PAPI_MH_MAX_LEVELS) {
+				break;
+			}
 		}
 
 		if (level_count>=PAPI_MH_MAX_LEVELS) {
