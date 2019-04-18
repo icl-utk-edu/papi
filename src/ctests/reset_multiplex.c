@@ -20,7 +20,7 @@ main( int argc, char **argv )
 	long long **values;
 	int EventSet = PAPI_NULL;
 	int PAPI_event, mask;
-	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_2MAX_STR_LEN];
 	int quiet;
 
 	/* Set TESTS_QUIET variable */
