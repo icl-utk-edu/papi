@@ -1,10 +1,17 @@
-ALL = strtest zero zeronamed first second tenth description fdmemtest accum highlevel cost \
-	  case1 case2 clockres eventname fmatrixlowpapi fmatrixpapi fmatrixpapi2 flops fmultiplex1 \
-      johnmay2 fmultiplex2 avail openmp
+ALL = strtest zero zeronamed first second tenth description fdmemtest accum cost \
+	case1 case2 clockres eventname fmatrixlowpapi fmultiplex1 \
+	johnmay2 fmultiplex2 avail openmp\
+	serial_hl serial_hl_advanced
 
 .PHONY : all default ftests ftest clean install
 
 all default ftests ftest: $(ALL)
+
+serial_hl: serial_hl.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl
+
+serial_hl_advanced: serial_hl_advanced.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
+	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) serial_hl_advanced.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced
 
 clockres: clockres.F $(TESTLIB) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) clockres.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o clockres
@@ -27,26 +34,14 @@ fdmemtest: fdmemtest.F $(TESTLIB)  $(PAPILIB)
 fmatrixlowpapi: fmatrixlowpapi.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmatrixlowpapi.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o fmatrixlowpapi
 
-fmatrixpapi: fmatrixpapi.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmatrixpapi.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o fmatrixpapi
-
-fmatrixpapi2: fmatrixpapi2.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) fmatrixpapi2.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o fmatrixpapi2
-
 strtest: strtest.F $(TESTLIB)  $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) strtest.F $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o strtest
-
-flops: flops.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) flops.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o flops
 
 description: description.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) description.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o description
 
 accum: accum.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) accum.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) -o accum $(LDFLAGS)
-
-highlevel: highlevel.F $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) highlevel.F $(TESTLIB) $(DOLOOPS) $(PAPILIB) -o highlevel $(LDFLAGS)
 
 openmp: openmp.F $(TESTLIB) $(PAPILIB)
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) openmp.F $(TESTLIB) $(PAPILIB) -o openmp $(LDFLAGS) $(OMPCFLGS)

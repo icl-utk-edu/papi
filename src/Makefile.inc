@@ -1,9 +1,13 @@
 PAPI_SRCDIR = $(PWD)
-SOURCES	  = $(MISCSRCS) papi.c papi_internal.c papi_hl.c extras.c sw_multiplex.c \
+SOURCES	  = $(MISCSRCS) papi.c papi_internal.c \
+    high-level/papi_hl.c \
+    extras.c sw_multiplex.c \
     papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
     papi_vector.c papi_memory.c $(COMPSRCS)
-OBJECTS = $(MISCOBJS) papi.o papi_internal.o papi_hl.o extras.o sw_multiplex.o \
+OBJECTS = $(MISCOBJS) papi.o papi_internal.o \
+    papi_hl.o \
+    extras.o sw_multiplex.o \
     papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
     papi_vector.o papi_memory.o $(COMPOBJS)
@@ -12,7 +16,7 @@ HEADERS  = $(MISCHDRS) $(OSFILESHDR) $(PAPI_EVENTS_TABLE) \
 	papi.h papi_internal.h papiStdEventDefs.h \
 	papi_preset.h threads.h cpus.h papi_vector.h \
 	papi_memory.h config.h \
-	extras.h sw_multiplex.h papi_hl.h \
+	extras.h sw_multiplex.h \
 	papi_common_strings.h components_config.h
 
 LIBCFLAGS += -I. $(CFLAGS) -DOSLOCK=\"$(OSLOCK)\" -DOSCONTEXT=\"$(OSCONTEXT)\"
@@ -99,8 +103,8 @@ threads.o: threads.c $(HEADERS)
 cpus.o: cpus.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c cpus.c -o cpus.o
 
-papi_hl.o: papi_hl.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_hl.c -o papi_hl.o
+papi_hl.o: high-level/papi_hl.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c high-level/papi_hl.c -o papi_hl.o
 
 aix-memory.o: aix-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c aix-memory.c -o aix-memory.o
@@ -291,7 +295,10 @@ dist:
 
 install-all: install install-tests
 
-install: install-lib install-man install-utils install-pkgconf
+install: install-lib install-man install-utils install-hl-scripts install-pkgconf
+
+install-hl-scripts:
+	cp high-level/scripts/papi_hl_output_writer.py $(DESTDIR)$(BINDIR)
 
 install-lib: native_install
 	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 

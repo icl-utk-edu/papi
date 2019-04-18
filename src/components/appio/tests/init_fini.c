@@ -5,7 +5,7 @@
 #include "papi.h"
 
 #define NUM_EVENTS 6
-static int Events[NUM_EVENTS];
+static int EventSet = PAPI_NULL;
 static const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES","READ_USEC","WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
 static long long values[NUM_EVENTS];
 
@@ -19,20 +19,33 @@ __attribute__ ((constructor)) void my_init(void) {
   else {
     fprintf(stderr, "appio: PAPI library initialized\n");
   }
+
+  /* Create the Event Set */
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error creating event set\n");
+    exit(2);
+  }
+
   int retval;
   int e;
+  int event_code;
   for (e=0; e<NUM_EVENTS; e++) {
-    retval = PAPI_event_name_to_code((char*)names[e], &Events[e]);
+    retval = PAPI_event_name_to_code((char*)names[e], &event_code);
     if (retval != PAPI_OK) {
       fprintf(stderr, "Error getting code for %s\n", names[e]);
+      exit(2);
+    }
+    retval = PAPI_add_event(EventSet, event_code);
+    if (retval != PAPI_OK) {
+      fprintf(stderr, "Error adding %s to event set\n", names[e]);
       exit(2);
     }
   }
 
   /* Start counting events */
   fprintf(stderr, "appio: starting PAPI counters; main program will follow\n");
-  if (PAPI_start_counters(Events, NUM_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "Error in PAPI_start_counters\n");
+  if (PAPI_start(EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error in PAPI_start\n");
     exit(1);
   }
   return;
@@ -41,7 +54,7 @@ __attribute__ ((constructor)) void my_init(void) {
 __attribute__ ((destructor)) void my_fini(void) {
   int e;
   //fprintf(stderr, "appio: destructor called\n");
-  if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
+  if (PAPI_stop(EventSet, values) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop_counters\n");
   }
   fprintf(stderr, "\nappio: PAPI counts (for pid=%6d)\n"

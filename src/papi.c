@@ -35,7 +35,6 @@
 #include "cpus.h"
 #include "extras.h"
 #include "sw_multiplex.h"
-#include "papi_hl.h"
 
 /*******************************/
 /* BEGIN EXTERNAL DECLARATIONS */
@@ -582,6 +581,8 @@ PAPI_library_init( int version )
 				_papi_hwi_debug |= DEBUG_MEMORY;
 			if ( strstr( var, "LEAK" ) )
 				_papi_hwi_debug |= DEBUG_LEAK;
+			if ( strstr( var, "HIGHLEVEL" ) )
+				_papi_hwi_debug |= DEBUG_HIGHLEVEL;
 			if ( strstr( var, "ALL" ) )
 				_papi_hwi_debug |= DEBUG_ALL;
 		}
@@ -4535,7 +4536,7 @@ again:
 	user_defined_events_count = 0;
 
 	/* Shutdown the entire component */
-	_papi_hwi_shutdown_highlevel(  );
+	//_papi_hwi_shutdown_highlevel(  );
 	_papi_hwi_shutdown_global_internal(  );
 	_papi_hwi_shutdown_global_threads(  );
 	for( i = 0; i < papi_num_components; i++ ) {

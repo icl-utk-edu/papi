@@ -29,6 +29,13 @@ else
   export TESTS_QUIET
 fi
 
+# Disable high-level output
+if [[ $TESTS_QUIET == "TESTS_QUIET" ]] ; then
+  export PAPI_NO_WARNING=1
+else
+  export PAPI_REPORT=1
+fi
+
 if [ "x$VALGRIND" != "x" ]; then
   VALGRIND="valgrind --leak-check=full";
 fi
@@ -40,6 +47,7 @@ FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
 COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" \)`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
+
 
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
 
@@ -122,9 +130,15 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	RAN="$i $RAN"
-    printf "Running %-50s " $i:
-    $VALGRIND ./$i $TESTS_QUIET
+      RAN="$i $RAN"
+      printf "Running %-50s %s" $i:
+      $VALGRIND ./$i $TESTS_QUIET
+      
+      #delete output folder for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0
@@ -145,9 +159,15 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	  RAN="$i $RAN"
-      printf "Running %-50s " $i:
+      RAN="$i $RAN"
+      printf "Running %-50s %s" $i:
       $VALGRIND ./$i $TESTS_QUIET
+
+      #delete output folder for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0
@@ -168,9 +188,15 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	RAN="$i $RAN"
-    printf "Running $i:\n"
-    $VALGRIND ./$i $TESTS_QUIET
+      RAN="$i $RAN"
+      printf "Running $i:\n"
+      $VALGRIND ./$i $TESTS_QUIET
+
+      #delete output folder for high-level tests
+      if [[ $i = *"_hl"* ]] ; then
+        rm -r papi
+      fi
+
     fi;
   fi;
   MATCH=0

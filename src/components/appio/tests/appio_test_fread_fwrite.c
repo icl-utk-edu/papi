@@ -24,7 +24,7 @@
 #define NUM_EVENTS 8
  
 int main(int argc, char** argv) {
-  int Events[NUM_EVENTS]; 
+  int EventSet = PAPI_NULL; 
   const char* names[NUM_EVENTS] = {"READ_CALLS", "READ_BYTES","READ_USEC","READ_ERR", "READ_EOF", "WRITE_CALLS","WRITE_BYTES","WRITE_USEC"};
   long long values[NUM_EVENTS];
 
@@ -38,6 +38,13 @@ int main(int argc, char** argv) {
     fprintf(stderr, "PAPI_library_init version mismatch\n");
     exit(1);
   }
+
+  /* Create the Event Set */
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error creating event set\n");
+      exit(2);
+  }
+
   if (!TESTS_QUIET) printf("This program will read %s and write it to /dev/null\n", infile);
   FILE* fdin=fopen(infile, "r");
   if (fdin  == NULL) perror("Could not open file for reading: \n");
@@ -48,21 +55,27 @@ int main(int argc, char** argv) {
 
   int retval;
   int e;
+  int event_code;
   for (e=0; e<NUM_EVENTS; e++) {
-    retval = PAPI_event_name_to_code((char*)names[e], &Events[e]);
+    retval = PAPI_event_name_to_code((char*)names[e], &event_code);
     if (retval != PAPI_OK) {
       fprintf(stderr, "Error getting code for %s\n", names[e]);
       exit(2);
-    } 
+    }
+    retval = PAPI_add_event(EventSet, event_code);
+    if (retval != PAPI_OK) {
+      fprintf(stderr, "Error adding %s to event set\n", names[e]);
+      exit(2);
+    }
   }
 
   /* Start counting events */
-  if (PAPI_start_counters(Events, NUM_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "Error in PAPI_start_counters\n");
+  if (PAPI_start(EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error in PAPI_start\n");
     exit(1);
   }
  
-//if (PAPI_read_counters(values, NUM_EVENTS) != PAPI_OK)
+//if (PAPI_read(EventSet, values) != PAPI_OK)
 //   handle_error(1);
 //printf("After reading the counters: %lld\n",values[0]);
 
@@ -74,8 +87,8 @@ int main(int argc, char** argv) {
   fclose(fout);
 
   /* Stop counting events */
-  if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "Error in PAPI_stop_counters\n");
+  if (PAPI_stop(EventSet, values) != PAPI_OK) {
+    fprintf(stderr, "Error in PAPI_stop\n");
   }
   
   if (!TESTS_QUIET) {

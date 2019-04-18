@@ -19,7 +19,7 @@
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT					= ../src/papi.h  ../src/papi.c ../src/papi_hl.c \
+INPUT					= ../src/papi.h  ../src/papi.c ../src/high-level/papi_hl.c \
 							../src/papi_fwrappers.c
 
 FILE_PATTERNS          = *.c *.h

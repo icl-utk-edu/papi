@@ -22,7 +22,7 @@
 #define NUM_EVENTS 1
  
 int main(int argc, char** argv) {
-  int Events[NUM_EVENTS]; 
+  int EventSet = PAPI_NULL;
   const char* names[NUM_EVENTS] = {"SELECT_USEC"};
   long long values[NUM_EVENTS];
 
@@ -35,20 +35,32 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
+  /* Create the Event Set */
+  if (PAPI_create_eventset(&EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error creating event set\n");
+    exit(2);
+  }
+
   if (!TESTS_QUIET) printf("This program will read from stdin and echo it to stdout\n");
   int retval;
   int e;
+  int event_code;
   for (e=0; e<NUM_EVENTS; e++) {
-    retval = PAPI_event_name_to_code((char*)names[e], &Events[e]);
+    retval = PAPI_event_name_to_code((char*)names[e], &event_code);
     if (retval != PAPI_OK) {
       fprintf(stderr, "Error getting code for %s\n", names[e]);
       exit(2);
-    } 
+    }
+    retval = PAPI_add_event(EventSet, event_code);
+    if (retval != PAPI_OK) {
+      fprintf(stderr, "Error adding %s to event set\n", names[e]);
+      exit(2);
+    }
   }
 
   /* Start counting events */
-  if (PAPI_start_counters(Events, NUM_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "Error in PAPI_start_counters\n");
+  if (PAPI_start(EventSet) != PAPI_OK) {
+    fprintf(stderr, "Error in PAPI_start\n");
     exit(1);
   }
 
@@ -56,7 +68,7 @@ int main(int argc, char** argv) {
   char buf[1024];
 
  
-//if (PAPI_read_counters(values, NUM_EVENTS) != PAPI_OK)
+//if (PAPI_read(EventSet, values) != PAPI_OK)
 //   handle_error(1);
 //printf("After reading the counters: %lld\n",values[0]);
 
@@ -72,8 +84,8 @@ int main(int argc, char** argv) {
 
 
   /* Stop counting events */
-  if (PAPI_stop_counters(values, NUM_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "Error in PAPI_stop_counters\n");
+  if (PAPI_stop(EventSet, values) != PAPI_OK) {
+    fprintf(stderr, "Error in PAPI_stop\n");
   }
  
   if (!TESTS_QUIET) { 

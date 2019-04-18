@@ -39,10 +39,12 @@
  *
  * @section papi_high_api High Level Functions
  * A simple interface for instrumenting end-user applications. 
- * Fully supported on both C and Fortran. 
+ * Fully supported on both C and Fortran.
  * See individual functions for details on usage.
  * 
  *	@ref high_api
+ *
+ * @ref high_api_advanced
  * 
  * Note that the high-level interface is self-initializing. 
  * You can mix high and low level calls, but you @b must call either 
@@ -60,6 +62,8 @@
  * See individual functions for details.
  * 
  * @ref PAPIF
+ *
+ * @ref PAPIF-HL
  *
  * @section Components 
  *
@@ -317,13 +321,24 @@ All of the functions in the PerfAPI should use the following set of constants.
  *	@{ */
 #define PAPI_USR1_TLS		0x0
 #define PAPI_USR2_TLS		0x1
-#define PAPI_HIGH_LEVEL_TLS     0x2
+//#define PAPI_HIGH_LEVEL_TLS     0x2
 #define PAPI_NUM_TLS		0x3
 #define PAPI_TLS_USR1		PAPI_USR1_TLS
 #define PAPI_TLS_USR2		PAPI_USR2_TLS
-#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
+//#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
+#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
+/** @} */
+
+/** @internal 
+ *	@defgroup tls_defns Thread Local Storage Keywords 
+ *	@{ */
+#if (__STDC_VERSION__ >= 201112L)
+   #define PAPI_TLS_KEYWORD _Thread_local
+#else
+   #define PAPI_TLS_KEYWORD __thread
+#endif
 /** @} */
 
 /** @internal 
@@ -1100,31 +1115,35 @@ enum {
    int   PAPI_get_component_index(const char *name); /**< Return component index for component with matching name */
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
-
-
+   int PAPI_num_components(void); /**< get the number of components available on the system */
    /** @} */
 
 /** \internal
   @defgroup high_api  The High Level API 
 
-   The simple interface implemented by the following eight routines
-   allows the user to access and count specific hardware events from
-   both C and Fortran. It should be noted that this API can be used in
-   conjunction with the low level API. 
-	@{ */
+   The simple interface implemented by the following routines allows the user to record hardware events inside instrumented regions from both C and Fortran.
+   @{ */
 
-   int PAPI_accum_counters(long long * values, int array_len); /**< add current counts to array and reset counters */
-   int PAPI_num_counters(void); /**< get the number of hardware counters available on the system */
-   int PAPI_num_components(void); /**< get the number of components available on the system */
-   int PAPI_read_counters(long long * values, int array_len); /**< copy current counts to array and reset counters */
-   int PAPI_start_counters(int *events, int array_len); /**< start counting hardware events */
-   int PAPI_stop_counters(long long * values, int array_len); /**< stop counters and return current counts */
-   int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
-   int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
-   int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
-   int PAPI_epc(int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc); /**< gets (named) events per cycle, real and processor time, reference and core cycles */
+   int PAPI_hl_region_begin(const char* region); /**< begin a new region for reading hardware events */
+   int PAPI_hl_read(const char* region); /**< read hardware events inside a region */
+   int PAPI_hl_region_end(const char* region); /**< end region and store the difference between the value of PAPI_hl_region_end and PAPI_hl_region_begin */
 /** @} */
 
+/** \internal
+  @defgroup high_api_advanced  The High Level API Advanced
+
+   The following four advanced routines of the high level API can be used in addition.
+   They allow the user to initialize and finalize the library, determine
+   hardware events and trigger output generation from both C and Fortran.
+   @{ */
+
+   int PAPI_hl_init(); /**< intialize high level library */
+   int PAPI_hl_cleanup_thread(); /**< clean local-thread event sets */
+   int PAPI_hl_finalize(); /**< shutdown event sets and clear up everything */
+   int PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
+   void PAPI_hl_print_output(); /**< generate output */
+
+/** @} */
 
 
 /* Backwards compatibility hacks.  Remove eventually? */
