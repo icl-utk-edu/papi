@@ -1254,7 +1254,7 @@ static void _internal_hl_write_output()
                /* print output to stdout */
                printf("\n\nPAPI-HL Output:\n");
                output_file = fopen(absolute_output_file_path, "r");
-               char c = fgetc(output_file); 
+               int c = fgetc(output_file); 
                while (c != EOF)
                {
                   printf("%c", c);
