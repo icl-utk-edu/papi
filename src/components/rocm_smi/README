@@ -1,0 +1,89 @@
+/** 
+* @file:   README
+* CVS:     $Id$
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: ROCM_SMI
+*/
+
+/** @page component_readme Component Readme 
+
+@section Component Specific Information
+
+rocm_smi/ 
+
+Support for ROCM_SMI (System Management Interface) library.
+
+General information
+-------------------
+
+The PAPI ROCM_SMI component allows the user to read things like the
+temperature, fan speed, and power consumption of an AMD GPU device.
+It can also be used to set limits on the power consumption or fan 
+speed, using a PAPI_write() interface.
+
+How to install PAPI with the ROCM component?
+-------------------------------------------- 
+
+This component uses the ROCM location from the environment (or looks
+for /opt/rocm by default). Please set ROCM_DIR and RPL_DIR during
+builds so that the component can find the required header files.
+
+Configure PAPI with ROCM enabled.  
+    % cd src
+    % ./configure --prefix=some_location --with-components="rocm_smi"
+
+Build with ROCM_DIR specified, and LD_LIBRARY_PATH must include the
+path to librocm_smi64.so.
+
+The compile must have as an -I directory the path to rocm_smi.h.
+  
+    % export ROCM_DIR=/opt/rocm
+    % make 
+
+To find a list of ROCM_SMI supported events.
+    % utils/papi_native_avail | grep rocm_smi
+
+TESTING, for ICL workers
+-------------------------------------------- 
+
+These instructions are specific to the ICL environment; but may be useful to
+users if translated to their own working or testing environments.
+
+ICL testing was done (April 2019) on the ICL system "caffeine"; which has AMD
+equipment installed, and the ROCM interface software installed at /opt/rocm.
+
+The software requires environment variables to be defined. 
+
+A shell script in papi/src/components/rocm/tests/run_papi.sh will export various
+environment variables, but (naturally) they go away when the shell exits. If you
+want to execute commands and programs from the command line instead, export the 
+same environment variables from the command line, but then don't use run_papi.sh.
+
+Note, these paths are specific to the ICL test system  'caffeine'. If you are not
+on that system, you will need to find the appropriate rocm directory paths for  
+LD_LIBRARY_PATH, and ROCP_METRICS. For example on another system, we have seen
+them installed at /opt/rocm/opencl/lib/x86_64 and /opt/rocm/hsa/lib.
+
+These exports assume you have papi installed in your $HOME directory.
+You will probably have to change the 2nd 'export LD_LIBRARY_PATH', 
+the current one requires rocm_smi_lib to be installed and built in 
+the user's directory. 
+
+ICLers copy-and-paste these to the command line:
+
+# These ONLY for Caffeine.
+export LD_LIBRARY_PATH=/opt/rocm_src/lib/hsa:/opt/rocm/lib/:$HOME/papi/src/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=~/rocm_smi_lib/build/lib:$LD_LIBRARY_PATH
+export ROCP_METRICS=/opt/rocm/lib/metrics.xml
+export ROCPROFILER_LOG=1
+export HSA_VEN_AMD_AQLPROFILE_LOG=1
+export AQLPROFILE_READ_API=1
+
+# THESE for Instinct:
+export LD_LIBRARY_PATH=$HOME/papi/src/:$LD_LIBRARY_PATH
+export ROCP_METRICS=/opt/rocm/rocprofiler/lib/metrics.xml 
+export ROCPROFILER_LOG=1
+export HSA_VEN_AMD_AQLPROFILE_LOG=1
+export AQLPROFILE_READ_API=1
+
+*/

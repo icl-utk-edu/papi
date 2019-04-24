@@ -627,8 +627,7 @@ static int _rocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     }
 
     return (PAPI_OK);
-}
-
+} // END ROUTINE.
 
 /* 
  * Disable and destroy the ROCM eventGroup

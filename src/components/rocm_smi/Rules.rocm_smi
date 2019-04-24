@@ -1,0 +1,12 @@
+# $Id$
+
+ROCM_SMI_DIR ?= /home/tonycastaldo/rocm_smi_lib
+HIPLIB = /opt/rocm/lib
+COMPSRCS += components/rocm_smi/linux-rocm-smi.c
+COMPOBJS += linux-rocm-smi.o
+CFLAGS += -I$(ROCM_SMI_DIR)/include/rocm_smi -L$(HIPLIB)
+# -I/opt/rocm/hip/include
+LDFLAGS += $(LDL) -g
+
+linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm_smi/linux-rocm-smi.c -o linux-rocm-smi.o 
