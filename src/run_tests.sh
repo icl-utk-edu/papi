@@ -30,7 +30,7 @@ else
 fi
 
 # Disable high-level output
-if [[ $TESTS_QUIET == "TESTS_QUIET" ]] ; then
+if [ "x$TESTS_QUIET" = "xTESTS_QUIET" ] ; then
   export PAPI_NO_WARNING=1
 else
   export PAPI_REPORT=1
@@ -135,9 +135,9 @@ do
       $VALGRIND ./$i $TESTS_QUIET
       
       #delete output folder for high-level tests
-      if [[ $i = *"_hl"* ]] ; then
-        rm -r papi
-      fi
+      case "$i" in
+        *"_hl"*) rm -r papi ;;
+      esac
 
     fi;
   fi;
@@ -164,9 +164,9 @@ do
       $VALGRIND ./$i $TESTS_QUIET
 
       #delete output folder for high-level tests
-      if [[ $i = *"_hl"* ]] ; then
-        rm -r papi
-      fi
+      case "$i" in
+        *"_hl"*) rm -r papi ;;
+      esac
 
     fi;
   fi;
@@ -193,9 +193,9 @@ do
       $VALGRIND ./$i $TESTS_QUIET
 
       #delete output folder for high-level tests
-      if [[ $i = *"_hl"* ]] ; then
-        rm -r papi
-      fi
+      case "$i" in
+        *"_hl"*) rm -r papi ;;
+      esac
 
     fi;
   fi;
