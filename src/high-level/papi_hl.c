@@ -953,7 +953,7 @@ static int _internal_hl_determine_output_path()
       if ( ( output_prefix = strdup( getenv("PAPI_OUTPUT_DIRECTORY") ) ) == NULL )
          return ( PAPI_ENOMEM );
    } else {
-      if ( ( output_prefix = strdup( get_current_dir_name() ) ) == NULL )
+      if ( ( output_prefix = strdup( getcwd(NULL,0) ) ) == NULL )
          return ( PAPI_ENOMEM );
    }
    
