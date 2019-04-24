@@ -1193,14 +1193,14 @@ static void _internal_hl_write_output()
          if ( rank < 0 )
          {
             /* generate unique rank number */
-            sprintf(absolute_output_file_path, "%s/rank_XXXXXX", absolute_output_file_path);
+            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_XXXXXX");
             int fd;
             fd = mkstemp(absolute_output_file_path);
             close(fd);
          }
          else
          {
-            sprintf(absolute_output_file_path, "%s/rank_%04d", absolute_output_file_path, rank);
+            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_%04d", rank);
          }
 
          /* determine current cpu frequency */
