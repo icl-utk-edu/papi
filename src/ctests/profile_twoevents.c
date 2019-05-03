@@ -21,7 +21,7 @@ main( int argc, char **argv )
 	int i, num_tests = 6;
 	unsigned long length, blength;
 	int num_buckets, mask;
-	char title[80];
+	char title[PAPI_2MAX_STR_LEN];
 	int retval;
 	const PAPI_exe_info_t *prginfo;
 	caddr_t start, end;
