@@ -31,7 +31,7 @@ main( int argc, char **argv )
 	int PAPI_event;
 	long long values1[2], values2[2];
 	long long elapsed_us, elapsed_cyc;
-	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_2MAX_STR_LEN];
 	int quiet;
 
 	/* Set TESTS_QUIET variable */

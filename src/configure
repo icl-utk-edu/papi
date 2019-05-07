@@ -664,6 +664,7 @@ CPUCOMPONENT_NAME
 OPTFLAGS
 PAPICFLAGS
 VLIB
+PAPISOVER
 SHLIB
 LIBRARY
 FILENAME
@@ -6190,7 +6191,8 @@ CTEST_TARGETS="all"
 FTEST_TARGETS="all"
 LIBRARY=libpapi.a
 SHLIB='libpapi.so.5.7.1.0'
-VLIB='libpapi.so.$(PAPIVER)'
+PAPISOVER='$(PAPIVER).$(PAPIREV)'
+VLIB='libpapi.so.$(PAPISOVER)'
 OMPCFLGS=-fopenmp
 CC_R='$(CC) -pthread'
 CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(VLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
@@ -6700,6 +6702,7 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
 
 
 
