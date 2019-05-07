@@ -1,3 +1,5 @@
+// NOTE: Different from distributed version; a problem compiling with the 
+// <stdinit.h> required me to comment it out. -Tony Castaldo
 /*
  * =============================================================================
  * The University of Illinois/NCSA

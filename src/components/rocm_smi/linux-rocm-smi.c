@@ -185,6 +185,7 @@ DECLARE_RSMI(rsmi_dev_perf_level_set, ( int32_t dv_ind, rsmi_dev_perf_level_t pe
 // RSMI_MEM_TYPE_VRAM; RSMI_MEM_TYPE_VIS_VRAM; RSMI_MEM_TYPE_GTT. (VIS=visible).
 DECLARE_RSMI(rsmi_dev_memory_total_get, (uint32_t dv_ind, rsmi_memory_type_t mem_type, uint64_t *total));
 DECLARE_RSMI(rsmi_dev_memory_usage_get, (uint32_t dv_ind, rsmi_memory_type_t mem_type, uint64_t *used));
+DECLARE_RSMI(rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
 
 // Need sensor-id (0...n) in name. All zero for starters.
 DECLARE_RSMI(rsmi_dev_fan_reset, (uint32_t dv_ind, uint32_t sensor_ind));
@@ -364,6 +365,7 @@ static int _rocm_smi_linkRocmLibraries()
 // RSMI_MEM_TYPE_VRAM; RSMI_MEM_TYPE_VIS_VRAM; RSMI_MEM_TYPE_GTT. (VIS=visible).
     DLSYM_SMI(rsmi_dev_memory_total_get);
     DLSYM_SMI(rsmi_dev_memory_usage_get);
+    DLSYM_SMI(rsmi_dev_busy_percent_get);
 
 // Need sensor-id (0...n) in name. All zero for starters.
     DLSYM_SMI(rsmi_dev_fan_reset);
@@ -593,6 +595,17 @@ int er_mem_usage_GTT(int myIdx) {
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
+
+// (rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
+int er_busy_percent(int myIdx) {
+    uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    RSMI(rsmi_dev_busy_percent_get,                         // Routine name.
+        (MyDevice, data),                                   // device, and pointer for storage of read.
+        return(PAPI_EMISC));                                // Error handler.
+    AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
 
 // (rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
 int er_pci_id(int myIdx) {
@@ -1125,6 +1138,19 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
+        //(rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *bdfid));
+        thisEvent = &AllEvents[TotalEvents];
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:busy_percent", device);
+        strcpy(thisEvent->desc, "Returns percentage of time the device was busying doing any processing.");
+        thisEvent->reader = &er_busy_percent;
+        thisEvent->writer = NULL;                           // Can't be written.
+        thisEvent->device=device;
+        thisEvent->sensor=-1;
+        thisEvent->baseIdx = TotalEvents;                   // Self.
+        thisEvent->vptrSize=sizeof(uint32_t);               // Memory for read.
+        thisEvent->vptr=calloc(1, thisEvent->vptrSize);
+        validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
+
         //(rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
         thisEvent = &AllEvents[TotalEvents];
         snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:pci_id", device);
@@ -1611,7 +1637,7 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
     (void) flags;
     int i, idx, bidx;
 
-    fprintf(stderr, "%s:%i ActiveEvents=%i.\n", __func__, __LINE__, ActiveEvents);
+//  fprintf(stderr, "%s:%i ActiveEvents=%i.\n", __func__, __LINE__, ActiveEvents);
     if (ActiveEvents == 0) {
         *values = NULL;
         return(PAPI_OK);
@@ -1648,13 +1674,13 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
     for (i=0; i<ActiveEvents; i++) {
         int idx = CurrentIdx[i];                            // get index of event.
         CurrentValue[i] = AllEvents[idx].value;             // Collect the value we read.
-        fprintf(stderr, "%s: Setting CurrentValue[%i]=%lli = %lu.\n", __func__, i, CurrentValue[i], AllEvents[idx].value);
+//      fprintf(stderr, "%s: Setting CurrentValue[%i]=%lli = %lu.\n", __func__, i, CurrentValue[i], AllEvents[idx].value);
     }
 
     *values = CurrentValue;                                 // Return address of list to caller.
-    for (i=0; i<ActiveEvents; i++) {
-        fprintf(stderr, "%s: (*values)[%i]=%lli.\n", __func__, i, (*values)[i]);
-    }
+//  for (i=0; i<ActiveEvents; i++) {
+//      fprintf(stderr, "%s: (*values)[%i]=%lli.\n", __func__, i, (*values)[i]);
+//  }
 
     return (PAPI_OK);
 } // END ROUTINE.

@@ -27,6 +27,9 @@ all:
 square.out: square.cpp
 	$(HIPCC) $(CXXFLAGS) square.cpp -o $@
 
+rocm_command_line.out: rocm_command_line.cpp 
+	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_command_line.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
 rocm_smi_all.out: rocm_smi_all.cpp 
 	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_smi_all.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
