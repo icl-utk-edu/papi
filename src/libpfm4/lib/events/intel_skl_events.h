@@ -309,6 +309,12 @@ static const intel_x86_umask_t skl_itlb_misses[]={
     .uequiv = "WALK_DURATION",
     .uflags = INTEL_X86_NCOMBO,
   },
+  { .uname = "WALK_ACTIVE",
+    .udesc  = "Cycles when at least one page walker is busy with a page walk request. EPT page walks are excluded",
+    .ucode  = 0x1000 | (1 << INTEL_X86_CMASK_BIT), /* cnt=1 */
+    .uequiv = "WALK_PENDING:c=1",
+    .uflags = INTEL_X86_NCOMBO,
+  },
   { .uname = "STLB_HIT",
     .udesc  = "Number of cache load STLB hits. No page walk",
     .ucode  = 0x2000,
@@ -886,6 +892,12 @@ static const intel_x86_umask_t skl_mem_load_l3_miss_retired[]={
     .umodel = PFM_PMU_INTEL_CLX,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
+  { .uname = "REMOTE_PMM",
+    .udesc  = "Retired load instructions with remote persistent memory as the data source which missed all caches",
+    .ucode  = 0x1000,
+    .umodel = PFM_PMU_INTEL_CLX,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+  },
 };
 
 static const intel_x86_umask_t skl_mem_load_retired[]={
@@ -928,6 +940,12 @@ static const intel_x86_umask_t skl_mem_load_retired[]={
     .udesc  = "Retired load uops which missed L1 but hit line fill buffer (LFB)",
     .ucode  = 0x4000,
     .uequiv = "HIT_LFB",
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+  },
+  { .uname = "LOCAL_PMM",
+    .udesc  = "Retired load instructions with local persistent memory as the data source where the request missed all the caches",
+    .umodel = PFM_PMU_INTEL_CLX,
+    .ucode  = 0x8000,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
 };
@@ -2245,12 +2263,12 @@ static const intel_x86_umask_t skl_sw_prefetch[]={
    },
    { .uname  = "T1_T2",
      .udesc  = "Number prefetch.t1 or prefetch.t2 instructions executed",
-     .ucode = 0x4000,
+     .ucode = 0x400,
      .uflags= INTEL_X86_NCOMBO,
    },
    { .uname  = "PREFETCHW",
      .udesc  = "Number prefetch.w instructions executed",
-     .ucode = 0x8000,
+     .ucode = 0x800,
      .uflags= INTEL_X86_NCOMBO,
    },
 };
