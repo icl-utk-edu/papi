@@ -197,6 +197,7 @@ DECLARECUFUNC(cuDeviceGet, (CUdevice *, int));
 DECLARECUFUNC(cuDeviceGetCount, (int *));
 DECLARECUFUNC(cuDeviceGetName, (char *, int, CUdevice));
 DECLARECUFUNC(cuInit, (unsigned int));
+DECLARECUFUNC(cuGetErrorString, (CUresult error, const char** pStr));
 DECLARECUFUNC(cuCtxPopCurrent, (CUcontext * pctx));
 DECLARECUFUNC(cuCtxPushCurrent, (CUcontext pctx));
 DECLARECUFUNC(cuCtxSynchronize, ());
@@ -275,6 +276,7 @@ static int papicuda_linkCudaLibraries()
     cuDeviceGetCountPtr = DLSYM_AND_CHECK(dl1, "cuDeviceGetCount");
     cuDeviceGetNamePtr = DLSYM_AND_CHECK(dl1, "cuDeviceGetName");
     cuInitPtr = DLSYM_AND_CHECK(dl1, "cuInit");
+    cuGetErrorStringPtr = DLSYM_AND_CHECK(dl1, "cuGetErrorString");
     cuCtxPopCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxPopCurrent");
     cuCtxPushCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxPushCurrent");
     cuCtxDestroyPtr = DLSYM_AND_CHECK(dl1, "cuCtxDestroy");
@@ -282,12 +284,14 @@ static int papicuda_linkCudaLibraries()
     cuCtxSynchronizePtr = DLSYM_AND_CHECK(dl1, "cuCtxSynchronize");
 
     dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
+    if (!dl2) strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so was not found.", PAPI_MAX_STR_LEN );
     CHECK_PRINT_EVAL(!dl2, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
     dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
+    if (!dl3) strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcupti.so was not found.", PAPI_MAX_STR_LEN );
     CHECK_PRINT_EVAL(!dl3, "CUDA Profiling Tools Interface (CUPTI) library libcupti.so not found.", return (PAPI_ENOSUPP));
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
     /* cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" ); */
@@ -348,13 +352,26 @@ static int papicuda_add_native_events(papicuda_context_t * gctxt)
     if(cuErr == CUDA_ERROR_NOT_INITIALIZED) {
         /* If CUDA not initialized, initialize CUDA and retry the device list */
         /* This is required for some of the PAPI tools, that do not call the init functions */
-        if(((*cuInitPtr) (0)) != CUDA_SUCCESS) {
-            strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA cannot be found and initialized (cuInit failed).", PAPI_MAX_STR_LEN);
+        cuErr = (cuInitPtr) (0); // Try the init.
+        if(cuErr != CUDA_SUCCESS) {     // If that failed, we are bailing.
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            if (errString != NULL) {
+                    snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, 
+                    "CUDA initialization (cuInit) failed: %s", errString);
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            } else {
+                    snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, 
+                    "CUDA initialization (cuInit) failed: Unrecognized Error Code=%d.", cuErr);
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            } // end dealing with error on cuInit(0).
             return PAPI_ENOSUPP;
-        }
-        CU_CALL((*cuDeviceGetCountPtr) (&gctxt->deviceCount), return (PAPI_EMISC));
-    }
+        } // end if cuInit(0) failed.
 
+        CU_CALL((*cuDeviceGetCountPtr) (&gctxt->deviceCount), return (PAPI_EMISC)); // repeat call for device count.
+    } // end if CUDA was not initialized; try to init.
+
+    // cuInit(0) was successful.
     if(gctxt->deviceCount == 0) {
         strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA initialized but no CUDA devices found.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
