@@ -1551,6 +1551,8 @@ static int _rocm_smi_init_component(int cidx)
         return (PAPI_ENOSUPP);
     }
 
+    RSMI(rsmi_init, (0),return(PAPI_ENOSUPP));
+ 
     /* Get list of all native ROCM events supported */
     int ret = _rocm_smi_add_native_events();
     if(ret != 0) return (ret);                // check for failure.
