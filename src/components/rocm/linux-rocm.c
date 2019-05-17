@@ -86,15 +86,19 @@
 typedef rocprofiler_t* Context;
 typedef rocprofiler_feature_t EventID;
 
-/* Contains device list, pointer to device description, and the list of available events */
+// Contains device list, pointer to device description, and the list of available events.
+// Note that "indexed variables" in ROCM are read with eventname[%d], where %d is 
+// 0 to #instances. This is what we store in the EventID.name element. But the PAPI name
+// doesn't use brackets; so in the ev_name_desc.name we store the user-visible name,
+// something like "device=%d:instance=%d:eventname". 
 typedef struct _rocm_context {
     uint32_t availAgentSize;
     hsa_agent_t* availAgentArray;
     uint32_t availEventSize;
     int *availEventDeviceNum;
-    EventID *availEventIDArray;
+    EventID *availEventIDArray;                         // Note: The EventID struct has its own .name element for ROCM internal operation.
     uint32_t *availEventIsBeingMeasuredInEventset;
-    struct ev_name_desc *availEventDesc;
+    struct ev_name_desc *availEventDesc;                // Note: This is where the PAPI name is stored; for user consumption.
 } _rocm_context_t;
 
 /* Store the name and description for an event */
@@ -176,7 +180,8 @@ DECLAREROCMFUNC(rocprofiler_get_metrics, (const rocprofiler_t*));
 DECLAREROCMFUNC(rocprofiler_reset, (rocprofiler_t*, uint32_t));
 
 // Unlike others, does not return an hsa_status_t.
-const char * __attribute__((weak)) rocprofiler_error_string2(void);
+// Have to deal with bad definition in rocprofiler.h. 
+// const char * __attribute__((weak)) rocprofiler_error_string(void);
 const char *(*rocprofiler_error_stringPtr)(void);
 
 // file handles used to access rocm libraries with dlopen
@@ -214,7 +219,6 @@ static int _rocm_linkRocmLibraries()
     dl1 = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);
     if (!dl1) {
         char errstr[]="ROC runtime library 'libhsa-runtime64.so' was not found.";
-        fprintf(stderr, "%s\n", errstr); 
         strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
         return(PAPI_ENOSUPP);
     }
@@ -228,7 +232,6 @@ static int _rocm_linkRocmLibraries()
     dl2 = dlopen("librocprofiler64.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
     if (!dl2) {
         char errstr[]="ROCM profiling library 'librocprofiler64.so' was not found.";
-        fprintf(stderr, "%s\n", errstr); 
         strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
         return(PAPI_ENOSUPP);
     }
@@ -249,6 +252,8 @@ static int _rocm_linkRocmLibraries()
     return (PAPI_OK);
 }
 
+
+// ----------------------------------------------------------------------------
 // Callback function to get the number of agents
 static hsa_status_t _rocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
   _rocm_context_t * gctxt = (_rocm_context_t*) arg;
@@ -268,49 +273,90 @@ static hsa_status_t _rocm_get_gpu_handle(hsa_agent_t agent, void* arg) {
 
 typedef struct {
     int device_num;
+    int count;
     _rocm_context_t * ctx;
 } events_callback_arg_t;
 
-// Callback function to get the number of metrics
+// ----------------------------------------------------------------------------
+// Callback function to get the number of events we will see;
+// Each element of instanced metrics must be created as a separate event
+static hsa_status_t _rocm_count_native_events_callback(const rocprofiler_info_data_t info, void * arg) {
+    const uint32_t instances = info.metric.instances;
+    uint32_t* count = (uint32_t*) arg;
+    (*count) += instances;
+    return HSA_STATUS_SUCCESS;
+} // END CALLBACK.
+
+
+// ----------------------------------------------------------------------------
+// Callback function that adds individual events. 
 static hsa_status_t _rocm_add_native_events_callback(const rocprofiler_info_data_t info, void * arg) {
+    uint32_t ui;
     events_callback_arg_t * callback_arg = (events_callback_arg_t*) arg;
     _rocm_context_t * ctx = callback_arg->ctx;
-    const int eventDeviceNum = callback_arg->device_num;
-    const uint32_t index = ctx->availEventSize;
+    const uint32_t eventDeviceNum = callback_arg->device_num;
+    const uint32_t count = callback_arg->count;
+          uint32_t index = ctx->availEventSize;
+    const uint32_t instances = info.metric.instances;   // short cut to instances.
 
+    
 //  information about AMD Event.
-//  fprintf(stderr, "%s:%i name=%s block_name=%s, instances=%i block_counters=%i.\n", 
+//   fprintf(stderr, "%s:%i name=%s block_name=%s, instances=%i block_counters=%i.\n", 
 //      __FILE__, __LINE__, info.metric.name, info.metric.block_name, info.metric.instances, 
 //      info.metric.block_counters);
-    snprintf(ctx->availEventDesc[index].name, PAPI_MAX_STR_LEN, "device=%d:%s", eventDeviceNum, info.metric.name);
-    ctx->availEventDesc[index].name[PAPI_MAX_STR_LEN - 1] = '\0';
-    strncpy(ctx->availEventDesc[index].description, info.metric.description, PAPI_2MAX_STR_LEN);
-    ctx->availEventDesc[index].description[PAPI_2MAX_STR_LEN - 1] = '\0';
+    if (index + instances > count) return HSA_STATUS_ERROR; // Should have enough space.
 
-    EventID eventId;                                                    // Removed declaration init.
-    eventId.kind = ROCPROFILER_FEATURE_KIND_METRIC;
-    eventId.name = strdup(info.metric.name);
-    eventId.parameters = NULL;                                          // Not currently used, but init for safety.
-    eventId.parameter_count=0;                                          // Not currently used, but init for safety.
+    for (ui=0; ui<instances; ui++) {
+      char ROCMname[PAPI_MAX_STR_LEN];
 
-    ctx->availEventDeviceNum[index] = eventDeviceNum;
-    ctx->availEventIDArray[index] = eventId;
-    ctx->availEventSize = index + 1;
+        if (instances > 1) {
+            snprintf(ctx->availEventDesc[index].name, 
+                PAPI_MAX_STR_LEN, "device=%d:instance=%d:%s",       // What PAPI user sees.
+                eventDeviceNum, ui, info.metric.name);                          
+            snprintf(ROCMname, PAPI_MAX_STR_LEN, "%s[%d]", 
+                info.metric.name, ui);                               // use indexed version.
+        } else {
+            snprintf(ctx->availEventDesc[index].name, 
+                PAPI_MAX_STR_LEN, "device=%d:%s",                   // What PAPI user sees.
+                eventDeviceNum, info.metric.name);                          
+            snprintf(ROCMname, PAPI_MAX_STR_LEN, "%s", 
+                info.metric.name);                                  // use non-indexed version.
+        }
+
+        ROCMname[PAPI_MAX_STR_LEN - 1] = '\0';                      // ensure z-terminated.
+        strncpy(ctx->availEventDesc[index].description, info.metric.description, PAPI_2MAX_STR_LEN);
+        ctx->availEventDesc[index].description[PAPI_2MAX_STR_LEN - 1] = '\0';   // ensure z-terminated.
+
+        EventID eventId;                                            // Removed declaration init.
+        eventId.kind = ROCPROFILER_FEATURE_KIND_METRIC;
+        eventId.name = strdup(ROCMname);                            // what ROCM needs to see.
+        eventId.parameters = NULL;                                  // Not currently used, but init for safety.
+        eventId.parameter_count=0;                                  // Not currently used, but init for safety.
+
+        ctx->availEventDeviceNum[index] = eventDeviceNum;
+        ctx->availEventIDArray[index] = eventId;
+        index++;                                                    // increment index.
+        ctx->availEventSize = index;                                // Always set availEventSize.
+    } // end for each instance.
 
     return HSA_STATUS_SUCCESS;
-}
+} // end CALLBACK, _rocm_add_native_events_callback
 
+// ----------------------------------------------------------------------------
+// function called during initialization.
 static int _rocm_add_native_events(_rocm_context_t * ctx)
 {
     uint32_t i, maxEventSize = 0;
 
-    for (i = 0; i < ctx->availAgentSize; ++i) {
-      uint32_t size = 0;
-      ROCP_CALL_CK(rocprofiler_get_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC_COUNT, &size), return (PAPI_EMISC));
-      maxEventSize += size;
-    } 
+    // Count all events in all agents; Each element of 'indexed' metrics is considered a separate event.
+    // NOTE: The environment variable ROCP_METRICS should point at a path and file like metrics.xml.
+    //       If that file doesn't exist, this iterate info fails with a general error (0x1000).
+    for (i = 0; i < ctx->availAgentSize; i++) {
+        ROCM_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, 
+            _rocm_count_native_events_callback, (void*)(&maxEventSize)), return (PAPI_EMISC));
+    }
   
-    /* Allocate space for all events and descriptors */
+    /* Allocate space for all events and descriptors, includes space for instances. */
     ctx->availEventDeviceNum = (int *) papi_calloc(maxEventSize, sizeof(int));
     CHECK_PRINT_EVAL(!ctx->availEventDeviceNum, "ERROR ROCM: Could not allocate memory", return (PAPI_ENOMEM));
     ctx->availEventIDArray = (EventID *) papi_calloc(maxEventSize, sizeof(EventID));
@@ -321,10 +367,12 @@ static int _rocm_add_native_events(_rocm_context_t * ctx)
     CHECK_PRINT_EVAL(!ctx->availEventDesc, "ERROR ROCM: Could not allocate memory", return (PAPI_ENOMEM));
 
     for (i = 0; i < ctx->availAgentSize; ++i) {
-      events_callback_arg_t arg;
-      arg.device_num = i;
-      arg.ctx = ctx;
-      ROCP_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, _rocm_add_native_events_callback, (void*)(&arg)), return (PAPI_EMISC));
+        events_callback_arg_t arg;
+        arg.device_num = i;
+        arg.count = maxEventSize;
+        arg.ctx = ctx;
+        ROCP_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, 
+            _rocm_add_native_events_callback, (void*)(&arg)), return (PAPI_EMISC));
     }
 
     /* return 0 if everything went OK */
@@ -487,6 +535,7 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
         eventctrl->conEvents[eventctrl->conEventsCount] = eventId;
         eventctrl->conEventIndex[eventctrl->conEventsCount] = index;
         eventctrl->conEventsCount++;
+//      fprintf(stderr, "%s:%d Added eventId.name='%s'.\n", __FILE__, __LINE__, eventId.name); // test indexed events.
 
         /* Record index of this active event back into the nativeInfo structure */
         nativeInfo[ii].ni_position = gctrl->activeEventCount;
@@ -802,11 +851,14 @@ static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 }
 
 
-/* Takes a native event code and passes back the name
- * @param EventCode is the native event code
- * @param name is a pointer for the name to be copied to
- * @param len is the size of the name string
- */
+//----------------------------------------------------------------------------
+// Takes a native event code and passes back the name, but the PAPI version
+// of the name in availEventDesc[], not the ROCM internal name (in 
+// availEventIDArray[].name).
+// @param EventCode is the native event code
+// @param name is a pointer for the name to be copied to
+// @param len is the size of the name string
+//----------------------------------------------------------------------------
 static int _rocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     //ROCMDBG("Entering EventCode %d\n", EventCode );

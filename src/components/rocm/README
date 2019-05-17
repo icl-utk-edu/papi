@@ -35,7 +35,7 @@ is included in standard ROCM release.
 How to install PAPI with the ROCM component?
 -------------------------------------------- 
 
-This PAPI ROCm componen has been developed and tested using ROCM
+This PAPI ROCm component has been developed and tested using ROCM
 release 1.8.
 
 This component uses the ROCM location from the environment (or looks
@@ -79,8 +79,10 @@ These exports assume you have papi installed in your $HOME directory.
 ICLers copy-and-paste these to the command line:
 
 # These ONLY for Caffeine. 
-export LD_LIBRARY_PATH=/opt/rocm_src/lib/hsa:/opt/rocm/lib/:$HOME/papi/src/:$LD_LIBRARY_PATH
-export ROCP_METRICS=/opt/rocm/lib/metrics.xml
+export ROCM_DIR=/opt/rocm
+export RPL_DIR=/home/adanalis/usr/rocprofiler
+export LD_LIBRARY_PATH=/opt/rocm_src/lib/hsa:/opt/rocm/lib/:$RPL_DIR/lib:$HOME/papi/src/:$LD_LIBRARY_PATH
+export ROCP_METRICS=$RPL/lib/metrics.xml
 export ROCPROFILER_LOG=1
 export HSA_VEN_AMD_AQLPROFILE_LOG=1
 export AQLPROFILE_READ_API=1
