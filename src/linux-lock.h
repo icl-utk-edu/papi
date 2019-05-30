@@ -201,8 +201,12 @@ static inline void __raw_spin_lock(volatile unsigned int *lock)
 		"       bnez    %1, 1b                                  \n"
 		"        li     %1,  1                                   \n"
 		"       sc      %1, %0                                  \n"
+#if __mips_isa_rev < 6
 		"       beqzl   %1, 1b                                  \n"
 		"        nop                                            \n"
+#else
+		"       beqzc    %1,1b                                  \n"
+#endif
 		"       sync                                            \n"
 		"       .set    reorder                                 \n"
 		: "=m" (*lock), "=&r" (tmp)
