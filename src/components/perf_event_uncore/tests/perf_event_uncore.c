@@ -19,7 +19,8 @@ int main( int argc, char **argv ) {
 	int retval,quiet;
 	int EventSet = PAPI_NULL;
 	long long values[1];
-	char *uncore_event=NULL;
+    char *uncore_event_tmp=NULL;
+	char uncore_event[BUFSIZ];
 	char event_name[BUFSIZ];
 	int uncore_cidx=-1;
 	const PAPI_component_info_t *info;
@@ -56,8 +57,8 @@ int main( int argc, char **argv ) {
 	}
 
 	/* Get a relevant event name */
-	uncore_event=get_uncore_event(event_name, BUFSIZ);
-	if (uncore_event==NULL) {
+	uncore_event_tmp=get_uncore_event(event_name, BUFSIZ);
+	if (uncore_event_tmp==NULL) {
 		if (!quiet) {
 			printf("uncore event name not available\n");
 		}
@@ -66,7 +67,7 @@ int main( int argc, char **argv ) {
 			PAPI_ENOSUPP );
 	}
 
-	sprintf(uncore_event,"%s:cpu=0",uncore_event);
+	sprintf(uncore_event,"%s:cpu=0",uncore_event_tmp);
 
 	/* Create an eventset */
 	retval = PAPI_create_eventset(&EventSet);
