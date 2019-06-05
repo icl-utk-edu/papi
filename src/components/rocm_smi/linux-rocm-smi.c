@@ -249,6 +249,7 @@ int      TotalEvents    = 0;            // Total Events we added.
 int      ActiveEvents   = 0;            // Active events (number added by update_control_state).
 int      SizeAllEvents  = 0;            // Size of the array.     
 uint32_t TotalDevices   = 0;            // Number of devices we found.
+uint32_t DeviceCards[64];               // The cards we found them on; up to 64 of them. Currently populated but unused.
 event_info_t *AllEvents = NULL;         // All events in the system.
 int      *CurrentIdx    = NULL;         // indices of events added by PAPI_add(), in order.
 long long *CurrentValue  = NULL;        // Value of events, in order, to return to user on PAPI_read().
@@ -433,6 +434,58 @@ static int _rocm_smi_linkRocmLibraries()
 
     return (PAPI_OK);
 }
+
+
+//-----------------------------------------------------------------------------
+// Find devices: We search the file system for 
+// /sys/class/drm/card?/device/vendor. The must be sequential; if they can 
+// be opened and return a line, it will be 0xhhhh as a hex vendor ID. 
+// 0x1002  is the vendor ID for AMD.
+// This constructs the global value TotalDevices, and fills in the DeviceCards
+// array with card-ids.
+//-----------------------------------------------------------------------------
+int _rocm_smi_find_devices(void) {
+char cardname[64]="/sys/class/drm/card?/device/vendor";     // card filename.
+uint32_t myVendor = 0x1002;                                 // The AMD GPU vendor ID.
+char line[7];
+size_t bytes;
+int card;
+long int devID;
+    
+    TotalDevices=0;                                                     // Reset, in case called more than once.
+    line[6]=0;                                                          // ensure null terminator.
+
+    for (card=0; card<64; card++) {
+        sprintf(cardname, "/sys/class/drm/card%i/device/vendor", card); // make a name for myself.
+        FILE *fcard = fopen(cardname, "r");                             // Open for reading.
+        if (fcard == NULL) {                                            // Failed to open,
+            break;
+        }
+
+        bytes=fread(line, 1, 6, fcard);                                 // read six bytes.
+        fclose(fcard);                                                  // Always close it (avoid mem leak).
+        if (bytes != 6) {                                               // If we did not read 6, 
+            break;                                                      // .. get out.
+        }
+
+        devID = strtol(line, NULL, 16);                                 // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
+        if (devID != myVendor) continue;                                // Not the droid I am looking for.
+        
+        // Found one.
+        DeviceCards[TotalDevices]=card;                                 // Remember this.
+//      fprintf(stderr, "%s Card %i is Device %i.\n", __func__, card, TotalDevices);
+        TotalDevices++;                                                 // count it.
+    } // end loop through possible cards.
+
+    if (TotalDevices == 0) {                                            // No AMD devices found.
+        char errstr[]="No AMD GPU devices found (vendor ID 0x1002).";
+        fprintf(stderr, "%s\n", errstr); 
+        strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        return(PAPI_ENOSUPP);
+    }
+
+    return(PAPI_OK);
+} // end _rocm_smi_find_devices
 
 
 //-----------------------------------------------------------------------------
@@ -947,7 +1000,10 @@ static int _rocm_smi_add_native_events(void)
     event_info_t* thisEvent=NULL;                       // an event pointer.
     TotalEvents = 0;
     int BaseEvent = 0;
-    RSMI(rsmi_num_monitor_devices, (&TotalDevices), return(PAPI_ENOSUPP));     // call for number of devices.
+
+//  This call is no longer used, we do our own search in _rocm_smi_find_devices to set TotalDevices.
+//  RSMI(rsmi_num_monitor_devices, (&TotalDevices), return(PAPI_ENOSUPP));     // call for number of devices.
+//  fprintf(stderr, "%s:%i TotalDevices=%i.\n", __FILE__, __LINE__, TotalDevices);
 
 //(rsmi_num_monitor_devices, (uint32_t *num_devices)); // ONLY ONE OF THESE.
     MakeRoomAllEvents();
@@ -1353,8 +1409,9 @@ static int _rocm_smi_add_native_events(void)
             thisEvent->vptrSize=sizeof(int64_t);                // Size of data to read.
             thisEvent->vptr=calloc(1, thisEvent->vptrSize);     // Space to read it.
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
+
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "vice=%i:sensor=%i:temp_max", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_max", device, sensor);
             strcpy(thisEvent->desc, "Temperature maximum value, millidegrees Celsius.");
             thisEvent->reader = &er_temp_max;                   // RSMI_TEMP_MAX
             thisEvent->writer = NULL;                           // can't be written.
@@ -1542,6 +1599,7 @@ static int _rocm_smi_init_thread(hwd_context_t * ctx)
 
 static int _rocm_smi_init_component(int cidx)
 {
+    int ret;
     SUBDBG("Entering _rocm_smi_init_component\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
@@ -1552,10 +1610,13 @@ static int _rocm_smi_init_component(int cidx)
     }
 
     RSMI(rsmi_init, (0),return(PAPI_ENOSUPP));
+
+    ret = _rocm_smi_find_devices();             // Find AMD devices. Must find at least 1.
+    if (ret != PAPI_OK) return(ret);            // check for failure. 
  
     /* Get list of all native ROCM events supported */
-    int ret = _rocm_smi_add_native_events();
-    if(ret != 0) return (ret);                // check for failure.
+    ret = _rocm_smi_add_native_events();
+    if (ret != 0) return (ret);                 // check for failure.
 
     // Export info to PAPI.
     _rocm_smi_vector.cmp_info.CmpIdx = cidx;
