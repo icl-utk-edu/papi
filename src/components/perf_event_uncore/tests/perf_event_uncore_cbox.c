@@ -126,7 +126,10 @@ int main( int argc, char **argv ) {
 			/* Default domain should work */
 
 			/* Add our uncore event */
-			sprintf(uncore_event,"%s%d::%s",uncore_base,j,event_name);
+			retval = snprintf(uncore_event, BUFSIZ, "%s%d::%s",uncore_base,j,event_name);
+            if( retval >= BUFSIZ ){
+                fprintf(stderr,"Event full name \"%s%d::%s\" has been truncated to \"%s\"\n",uncore_base,j,event_name, uncore_event);
+            }
 			retval = PAPI_add_named_event(EventSet[j][i], uncore_event);
 			if (retval != PAPI_OK) {
 				max_cbox=j;
