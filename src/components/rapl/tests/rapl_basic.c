@@ -183,7 +183,7 @@ int main (int argc, char **argv)
              "Error getting event info\n",retval);
 	}
 
-	strncpy(units[num_events],evinfo.units,sizeof(units[0])-1);
+	strncpy(units[num_events],evinfo.units,sizeof(units[0]));
 	// buffer must be null terminated to safely use strstr operation on it below
 	units[num_events][sizeof(units[0])-1] = '\0';
 
