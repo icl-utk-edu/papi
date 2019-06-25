@@ -124,6 +124,19 @@ nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitPtr)(nvmlDevice_t device, unsign
 nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int  limit);
 nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
+// The default library name can be changed for systems without a link to the current library.
+// Note that the ".../stubs/libnvidia-ml.so" is not functional; it is only there to prevent linking errors.
+// To define NVML_LIBNAME, change the Rules.nvml file and append (for example) 
+// -DNVML_LIBNAME="libnvidia-ml.so.1". This must be found in the standard paths (like /usr/lib64) or 
+// the path to the new library must be added to the environment variable LD_LIBRARY_PATH.
+#ifndef NVML_LIBNAME
+#define NVML_LIBNAME libnvidia-ml.so
+#endif
+
+// Stringifying macros.
+#define Mstr(x) MMstr(x)
+#define MMstr(x) #x
+
 // file handles used to access cuda libraries with dlopen
 static void* dl1 = NULL;
 static void* dl2 = NULL;
@@ -1189,9 +1202,9 @@ linkCudaLibraries()
         return (PAPI_ENOSUPP);
     }
 
-    dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+    dl3 = dlopen(Mstr(NVML_LIBNAME), RTLD_NOW | RTLD_GLOBAL);
     if (!dl3) {
-        strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML runtime library libnvidia-ml.so not found.", PAPI_MAX_STR_LEN);
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "NVML failed to find runtime library %s.", Mstr(NVML_LIBNAME));
         return (PAPI_ENOSUPP);
     }
     nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
