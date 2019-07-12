@@ -168,6 +168,8 @@ static int pfm_cpumcf_init(void *this)
 	/* counters based on second version number */
 	csvn_set = cpumcf_svn_generic_counters;
 	csvn_set_count = LIBPFM_ARRAY_SIZE(cpumcf_svn_generic_counters);
+	if (csvn < 6)	/* Crypto counter set enlarged for SVN == 6 */
+		csvn_set_count -= CPUMF_SVN6_ECC;
 
 	/* check and assign a machine-specific extended counter set */
 	switch (get_machine_type()) {
