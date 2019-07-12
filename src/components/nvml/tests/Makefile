@@ -11,12 +11,15 @@ PAPILIB := ../../../libpapi.a  -ldl
 %.o:%.cu
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = HelloWorld nvml_power_limiting_test
+TESTS = HelloWorld test_nvml nvml_power_limiting_test
 
 nvml_tests: $(TESTS) 
 
 HelloWorld: HelloWorld.o $(UTILOBJS) 
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
+
+test_nvml: test_nvml.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o test_nvml test_nvml.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
 nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS) 
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limiting_test nvml_power_limiting_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
