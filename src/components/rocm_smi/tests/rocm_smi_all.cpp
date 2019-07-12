@@ -65,6 +65,7 @@ typedef union
 typedef struct {
     char name[128];
     long long value;
+    int flagged;
 } eventStore_t;
 
 int eventsFoundCount = 0;               // occupants of the array.
@@ -72,6 +73,7 @@ int eventsFoundMax;                     // Size of the array.
 int eventsFoundAdd = 32;                // Blocksize for increasing the array.
 int deviceCount=0;                      // Total devices seen.
 int deviceEvents[32] = {0};             // Number of events for each device=??.
+int globalEvents = 0;                   // events without a "device=".
 eventStore_t *eventsFound = NULL;       // The array.
 
 //-----------------------------------------------------------------------------
@@ -129,6 +131,8 @@ void parseCommandLineArgs(int argc, char *argv[])
 void addEventsFound(char *eventName, long long value) {
     strncpy(eventsFound[eventsFoundCount].name, eventName, 127);    // Copy up to 127 chars.
     eventsFound[eventsFoundCount].value = value;                    // Copy the value.
+    eventsFound[eventsFoundCount].flagged = 0;                      // Not flagged yet.
+
 
     if (++eventsFoundCount >= eventsFoundMax) {                     // bump count, if too much, make room.
         eventsFoundMax += eventsFoundAdd;                           // Add.
@@ -284,7 +288,7 @@ int main(int argc, char *argv[])
           "be operational, or the exercises performed by this code do not affect \n"
           "them. We report all 'rocm' events presented by the rocm component.    \n"
           "\n"
-          "---------------------------Event Name---------------------------:---Value---\n");
+          "------------------------Event Name Found------------------------:---Value---\n");
 
     PAPI_event_info_t info;                                             // To get event enumeration info.
     m=PAPI_NATIVE_MASK;                                                 // Get the PAPI NATIVE mask.
@@ -302,10 +306,11 @@ int main(int argc, char *argv[])
             char *devstr = strstr(info.symbol, "device=");              // look for device enumerator.
             if (devstr != NULL) {                                       // If device specific,
                 device=atoi(devstr+7);                                      // Get the device id, for info.
-                fprintf(stderr, "Found rocm symbol '%s', device=%i.\n", info.symbol , device);
+//              fprintf(stderr, "Found rocm symbol '%s', device=%i.\n", info.symbol , device);
                 if (device < 0 || device >= 32) continue;                   // skip any not in range.
             } else {                                                    // A few are system wide.
-                fprintf(stderr, "Found rocm symbol '%s'.\n", info.symbol);
+//              fprintf(stderr, "Found rocm symbol '%s'.\n", info.symbol);
+                globalEvents++;                                         // Add to global events.
                 device=0;                                               // Any device will do.
             }
 
@@ -328,7 +333,7 @@ int main(int argc, char *argv[])
             
             // Prep stuff.
     
-            fprintf(stderr, "conductTest on single event: %s.\n", info.symbol);
+//          fprintf(stderr, "conductTest on single event: %s.\n", info.symbol);
             conductTest(EventSet, device, &value);                      // Conduct a test, on device given. 
             addEventsFound(info.symbol, value);                         // Add to events we were able to read.
             
@@ -345,7 +350,7 @@ int main(int argc, char *argv[])
         } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK); // Get next umask entry (bits different) (should return PAPI_NOEVNT).
     } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
 
-    fprintf(stderr, "%s:%i Finished Event Loops.\n", __FILE__, __LINE__);
+//  fprintf(stderr, "%s:%i Finished Event Loops.\n", __FILE__, __LINE__);
 
     if (eventCount < 1) {                                                   // If we failed on all of them,
         fprintf(stderr, "Unable to add any ROCM events; they are not present in the component.\n");
@@ -380,12 +385,16 @@ int main(int argc, char *argv[])
 
     for (i=0; i<32; i++) {
         if (deviceEvents[i] == 0) continue;                             // skip if none found.
-        printf("Device %i has %i events. %i potential pairings per device.\n", i, deviceEvents[i], deviceEvents[i]*(deviceEvents[i]-1)/2);
+        if (i==0 && globalEvents >0) {
+            printf("Device %i assigned %i events (%i of which are not device specific). %i potential pairings for this device.\n", i, deviceEvents[i], globalEvents, deviceEvents[i]*(deviceEvents[i]-1)/2);
+        } else {
+            printf("Device %i assigned %i events. %i potential pairings for this device.\n", i, deviceEvents[i], deviceEvents[i]*(deviceEvents[i]-1)/2);
+        }
     }
 
     // Begin pair testing. We consider every possible pairing of events
     // that, tested alone, returned a value greater than zero.
-    fprintf(stderr, "Begin Pair Testing.\n");
+//  fprintf(stderr, "Begin Pair Testing.\n");
 
     int mainEvent, pairEvent, mainDevice, pairDevice;
     long long readValues[2];
@@ -397,7 +406,7 @@ int main(int argc, char *argv[])
             printf("* means value changed by more than 10%% when paired (vs measured singly, above).\n");
             printf("^ means a pair was rejected as an invalid combo.\n");
         } else {
-            printf("List of Failed Pairings on DIFFERENT devices:\n");
+            printf("List of Pairings causing an error when on DIFFERENT devices:\n");
         }
 
         for (mainEvent = 0; mainEvent<eventsFoundCount-1; mainEvent++) {                // Through all but one events.
@@ -458,9 +467,9 @@ int main(int argc, char *argv[])
 
                 // We were able to add the pair, in type 0, get a measurement. 
                 readValues[0]= -1; readValues[1] = -1;
-                fprintf(stderr, "conductTest on paired events: '%s' v. '%s'.\n", eventsFound[mainEvent].name, eventsFound[pairEvent].name);
+//              fprintf(stderr, "conductTest on paired events: '%s' v. '%s'.\n", eventsFound[mainEvent].name, eventsFound[pairEvent].name);
                 conductTest(EventSet, device, readValues);                              // Conduct a test, on device given. 
-                fprintf(stderr, "readValues[0]=%lli readValues[1]=%lli.\n", readValues[0], readValues[1]);
+//              fprintf(stderr, "readValues[0]=%lli readValues[1]=%lli.\n", readValues[0], readValues[1]);
                 goodOnSame++;                                                           // Was accepted by cuda as a valid pairing.
 
                 // For the checks, we add 2 (so -1 becomes +1) to avoid any
@@ -472,8 +481,16 @@ int main(int argc, char *argv[])
                 double pairCheck  = pairSingle/(2.0 + readValues[1]);                   // ..
 
                 char flag=' ', flag1=' ', flag2=' ';                                    // Presume all okay.
-                if (mainCheck < 0.90 || mainCheck > 1.10) flag1='*';                    // Flag as significantly different for main.
-                if (pairCheck < 0.90 || pairCheck > 1.10) flag2='*';                    // Flag as significantly different for pair.
+                if (mainCheck < 0.90 || mainCheck > 1.10) {                             // Flag as significantly different for main.
+                    flag1='*';
+                    eventsFound[mainEvent].flagged = 1;                                 // .. remember this event is suspect.
+                }
+
+                if (pairCheck < 0.90 || pairCheck > 1.10) {                             // Flag as significantly different for pair.
+                    flag2='*';                    
+                    eventsFound[pairEvent].flagged = 1;                                 // .. remember this event is suspect.
+                }
+
                 if (flag1 == '*' || flag2 == '*') {
                     pairProblems++;                                                     // Remember number of problems.
                     flag = '*';                                                         // set global flag.
@@ -485,8 +502,8 @@ int main(int argc, char *argv[])
 
                 CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                          // Delete all events in set.
                 CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                         // destroy the event set.
-            }
-        } // end loop on all events.
+            } // end for each possible pairing event.
+        } // end loop for each possible primary event.
 
         if (type == 0) {                                                                // For good pairings on same devices,
             if (goodOnSame == 0) {
@@ -499,12 +516,18 @@ int main(int argc, char *argv[])
             
             if (pairProblems > 0) {
                 printf("%i pairings resulted in a change of one or both event values > 10%%.\n", pairProblems);
+                printf("The following events were changed by pairing:\n");
+                for (mainEvent = 0; mainEvent<eventsFoundCount; mainEvent++) {          // Through all events.
+                    if (eventsFound[mainEvent].flagged) {                               // ..If it was flagged,
+                        printf("%s\n", eventsFound[mainEvent].name);                    // .... report it.
+                    } 
+                } // end for each event.
             } else {
                 printf("No significant change in event values read for any pairings.\n");
             }
         } else {                                                                        // Must be reporting bad pairings across devies.
-            if (failOnDiff == 0) printf("NO failed pairings of above events if each on a DIFFERENT device.\n");
-            else printf("%i failed pairings of above events with each on a DIFFERENT device.\n", failOnDiff);
+            if (failOnDiff == 0) printf("NO pairings of above events caused an error if each were on DIFFERENT devices.\n");
+            else printf("%i pairings of above events caused an error with each on a DIFFERENT device.\n", failOnDiff);
         }
     } // end loop on type.
 

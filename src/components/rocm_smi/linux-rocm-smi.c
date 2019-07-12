@@ -23,7 +23,7 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 
-char *RSMI_ERROR_STRINGS[]={
+static char *RSMI_ERROR_STRINGS[]={
   "RSMI_STATUS_SUCCESS",
   "RSMI_STATUS_INVALID_ARGS",
   "RSMI_STATUS_NOT_SUPPORTED",
@@ -52,7 +52,7 @@ char *RSMI_ERROR_STRINGS[]={
 // This makes the function name weak, and declares a function pointer.
 #define DECLARE_RSMI(funcname, funcsig)                                 \
     rsmi_status_t __attribute__((weak)) funcname funcsig;               \
-    rsmi_status_t(*funcname##Ptr) funcsig;
+    static rsmi_status_t(*funcname##Ptr) funcsig;
 
 #define DLSYM_SMI(name)                                                 \
     do {                                                                \
@@ -245,23 +245,23 @@ DECLARE_RSMI(rsmi_status_string, (rsmi_status_t status, const char **status_stri
 
 // Globals.
 static void *dlSMI      = NULL;         // dynamic library handles.
-int      TotalEvents    = 0;            // Total Events we added.
-int      ActiveEvents   = 0;            // Active events (number added by update_control_state).
-int      SizeAllEvents  = 0;            // Size of the array.     
-uint32_t TotalDevices   = 0;            // Number of devices we found.
-uint32_t DeviceCards[64];               // The cards we found them on; up to 64 of them. Currently populated but unused.
-event_info_t *AllEvents = NULL;         // All events in the system.
-int      *CurrentIdx    = NULL;         // indices of events added by PAPI_add(), in order.
-long long *CurrentValue  = NULL;        // Value of events, in order, to return to user on PAPI_read().
-uint32_t MyDevice;                      // short cut to device, set by read/write.
-uint32_t MySensor;                      // short cut to sensor, set by read/write.
-int      printRSMIerr = 0;              // Suppresses RSMI errors during validation.
+static int      TotalEvents    = 0;     // Total Events we added.
+static int      ActiveEvents   = 0;     // Active events (number added by update_control_state).
+static int      SizeAllEvents  = 0;     // Size of the array.     
+static uint32_t TotalDevices   = 0;     // Number of devices we found.
+static uint32_t DeviceCards[64];        // The cards we found them on; up to 64 of them. Currently populated but unused.
+static event_info_t *AllEvents = NULL;  // All events in the system.
+static int      *CurrentIdx    = NULL;  // indices of events added by PAPI_add(), in order.
+static long long *CurrentValue  = NULL; // Value of events, in order, to return to user on PAPI_read().
+static uint32_t MyDevice;               // short cut to device, set by read/write.
+static uint32_t MySensor;               // short cut to sensor, set by read/write.
+static int      printRSMIerr = 0;       // Suppresses RSMI errors during validation.
 
 //****************************************************************************
 //*******  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
 //****************************************************************************
 
-char *RSMI_ERROR_STR(int err) {
+static char *RSMI_ERROR_STR(int err) {
     int modErr=err;
     if (modErr < 0 || modErr>11) modErr=12;
     return(RSMI_ERROR_STRINGS[modErr]);
@@ -270,7 +270,7 @@ char *RSMI_ERROR_STR(int err) {
 //----------------------------------------------------------------------------
 // Ensures there is room in all Events for one more entry. 
 //----------------------------------------------------------------------------
-void MakeRoomAllEvents(void) {
+static void MakeRoomAllEvents(void) {
     if (TotalEvents < SizeAllEvents) return;    // One more will fit.
     if (AllEvents == NULL) {         // Never alloced;
         SizeAllEvents = 16;          // Begin with 16 entries,
@@ -289,7 +289,7 @@ void MakeRoomAllEvents(void) {
 // Try to use the reader for a new event. We just filled in the AllEvent[] 
 // array entry. If the reader doesn't work, we must clean up the array entry.
 //----------------------------------------------------------------------------
-void validateNewEvent(void) {
+static void validateNewEvent(void) {
     int ret, bidx, idx=TotalEvents;
     if (AllEvents[idx].reader == NULL) {                // If we have no reader, it cannot fail.
         TotalEvents++;
@@ -444,13 +444,13 @@ static int _rocm_smi_linkRocmLibraries()
 // This constructs the global value TotalDevices, and fills in the DeviceCards
 // array with card-ids.
 //-----------------------------------------------------------------------------
-int _rocm_smi_find_devices(void) {
-char cardname[64]="/sys/class/drm/card?/device/vendor";     // card filename.
-uint32_t myVendor = 0x1002;                                 // The AMD GPU vendor ID.
-char line[7];
-size_t bytes;
-int card;
-long int devID;
+static int _rocm_smi_find_devices(void) {
+    char cardname[64]="/sys/class/drm/card?/device/vendor";     // card filename.
+    uint32_t myVendor = 0x1002;                                 // The AMD GPU vendor ID.
+    char line[7];
+    size_t bytes;
+    int card;
+    long int devID;
     
     TotalDevices=0;                                                     // Reset, in case called more than once.
     line[6]=0;                                                          // ensure null terminator.
@@ -496,7 +496,7 @@ long int devID;
 //-----------------------------------------------------------------------------
 
 // (rsmi_dev_id_get, (uint32_t dv_ind, uint16_t *id));
-int er_device_id(int myIdx) {
+static int er_device_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_id_get,                                   // Routine name.
@@ -507,7 +507,7 @@ int er_device_id(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_subsystem_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
-int er_subsystem_vendor_id(int myIdx) {
+static int er_subsystem_vendor_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_subsystem_vendor_id_get,                  // Routine name.
@@ -518,7 +518,7 @@ int er_subsystem_vendor_id(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
-int er_vendor_id(int myIdx) {
+static int er_vendor_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_vendor_id_get,                            // Routine name.
@@ -529,7 +529,7 @@ int er_vendor_id(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_subsystem_id_get, (uint32_t dv_ind, uint16_t *id));
-int er_subsystem_id(int myIdx) {
+static int er_subsystem_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_subsystem_id_get,                         // Routine name.
@@ -540,7 +540,7 @@ int er_subsystem_id(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_overdrive_level_get, (uint32_t dv_ind, uint32_t *od));
-int er_overdrive_level(int myIdx) {
+static int er_overdrive_level(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_overdrive_level_get,                      // Routine name.
@@ -552,7 +552,7 @@ int er_overdrive_level(int myIdx) {
 
 // (rsmi_dev_overdrive_level_set, (int32_t dv_ind, uint32_t od));
 // The data to write must be given in AllEvents[myIdx].value.
-int ew_overdrive_level(int myIdx) {
+static int ew_overdrive_level(int myIdx) {
     uint32_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_overdrive_level_set,                      // Routine name.
         (MyDevice, data),                                   // device, and pointer for storage of read.
@@ -561,7 +561,7 @@ int ew_overdrive_level(int myIdx) {
 } // end writer.
 
 // (rsmi_dev_perf_level_get, (uint32_t dv_ind, rsmi_dev_perf_level_t *perf));
-int er_perf_level(int myIdx) {
+static int er_perf_level(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_perf_level_get,                           // Routine name.
@@ -574,7 +574,7 @@ int er_perf_level(int myIdx) {
 // (rsmi_dev_perf_level_set, ( int32_t dv_ind, rsmi_dev_perf_level_t perf_lvl));
 // The data to write must be given in AllEvents[myIdx].value.
 // TONY: Should error-check value here, limited to enum values of rsmi_dev_perf_level_t. 
-int ew_perf_level(int myIdx) {
+static int ew_perf_level(int myIdx) {
     uint32_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_perf_level_set,                           // Routine name.
         (MyDevice, data),                                   // device, and pointer for storage of read.
@@ -583,7 +583,7 @@ int ew_perf_level(int myIdx) {
 } // end writer.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VRAM, uint64_t *total));
-int er_mem_total_VRAM(int myIdx) {
+static int er_mem_total_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -594,7 +594,7 @@ int er_mem_total_VRAM(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VIS_VRAM, uint64_t *total));
-int er_mem_total_VIS_VRAM(int myIdx) {
+static int er_mem_total_VIS_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -605,7 +605,7 @@ int er_mem_total_VIS_VRAM(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_GTT, uint64_t *total));
-int er_mem_total_GTT(int myIdx) {
+static int er_mem_total_GTT(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -616,7 +616,7 @@ int er_mem_total_GTT(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VRAM, uint64_t *usage));
-int er_mem_usage_VRAM(int myIdx) {
+static int er_mem_usage_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -627,7 +627,7 @@ int er_mem_usage_VRAM(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VIS_VRAM, uint64_t *usage));
-int er_mem_usage_VIS_VRAM(int myIdx) {
+static int er_mem_usage_VIS_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -638,7 +638,7 @@ int er_mem_usage_VIS_VRAM(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_GTT, uint64_t *usage));
-int er_mem_usage_GTT(int myIdx) {
+static int er_mem_usage_GTT(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -650,7 +650,7 @@ int er_mem_usage_GTT(int myIdx) {
 
 
 // (rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
-int er_busy_percent(int myIdx) {
+static int er_busy_percent(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_busy_percent_get,                         // Routine name.
@@ -661,7 +661,7 @@ int er_busy_percent(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
-int er_pci_id(int myIdx) {
+static int er_pci_id(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_pci_id_get,                               // Routine name.
@@ -673,7 +673,7 @@ int er_pci_id(int myIdx) {
 
 // (rsmi_version_get, (rsmi_version_t *version));
 // structure contains uint32_t for major, minor, patch (and pointer to 'build' string we don't use).
-int er_rsmi_version(int myIdx) {
+static int er_rsmi_version(int myIdx) {
     rsmi_version_t* data = (rsmi_version_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_version_get,                                  // Routine name.
@@ -688,7 +688,7 @@ int er_rsmi_version(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-int er_pci_throughput_sent(int myIdx) {                     // BASE EVENT. reads all three values.
+static int er_pci_throughput_sent(int myIdx) {                     // BASE EVENT. reads all three values.
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     if (AllEvents[myIdx].read == 0) {                       // If I haven't read yet,
@@ -703,7 +703,7 @@ int er_pci_throughput_sent(int myIdx) {                     // BASE EVENT. reads
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-int er_pci_throughput_received(int myIdx) {                 // NOT THE BASE EVENT; Base event already called.
+static int er_pci_throughput_received(int myIdx) {                 // NOT THE BASE EVENT; Base event already called.
     int idx = AllEvents[myIdx].baseIdx;                     // Get location of storage.
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value.
@@ -711,7 +711,7 @@ int er_pci_throughput_received(int myIdx) {                 // NOT THE BASE EVEN
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-int er_pci_throughput_max_packet(int myIdx) {               // NOT THE BASE EVENT; Base event already called.
+static int er_pci_throughput_max_packet(int myIdx) {               // NOT THE BASE EVENT; Base event already called.
     int idx = AllEvents[myIdx].baseIdx;                     // Get location of storage.
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = data[2];                       // Copy/convert the returned value.
@@ -728,7 +728,7 @@ int er_pci_throughput_max_packet(int myIdx) {               // NOT THE BASE EVEN
 // } // end writer.
 
 // (rsmi_dev_fan_reset, (uint32_t dv_ind, uint32_t sensor_ind));
-int ew_fan_reset(int myIdx) {
+static int ew_fan_reset(int myIdx) {
     (void) myIdx;                                           // Not needed. Only present for consistent function pointer.
     RSMI(rsmi_dev_fan_reset,                                // Routine name.
         (MyDevice, MySensor),                               // device, sensor. No data to write.
@@ -737,7 +737,7 @@ int ew_fan_reset(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_fan_rpms_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
-int er_fan_rpms(int myIdx) {
+static int er_fan_rpms(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_rpms_get,                             // Routine name.
@@ -748,7 +748,7 @@ int er_fan_rpms(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_fan_speed_max_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max_speed));
-int er_fan_speed_max(int myIdx) {
+static int er_fan_speed_max(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_speed_max_get,                        // Routine name.
@@ -759,7 +759,7 @@ int er_fan_speed_max(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_fan_speed_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
-int er_fan_speed(int myIdx) {
+static int er_fan_speed(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_speed_get,                            // Routine name.
@@ -770,7 +770,7 @@ int er_fan_speed(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_fan_speed_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t speed));
-int ew_fan_speed(int myIdx) {
+static int ew_fan_speed(int myIdx) {
     uint64_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     if (data > 255) return(PAPI_EINVAL);                    // Invalid value.
     RSMI(rsmi_dev_fan_speed_set,                            // Routine name.
@@ -780,7 +780,7 @@ int ew_fan_speed(int myIdx) {
 } // end writer.
 
 // (rsmi_dev_power_ave_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *power));
-int er_power_ave(int myIdx) {
+static int er_power_ave(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_power_ave_get,                            // Routine name.
@@ -791,7 +791,7 @@ int er_power_ave(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_power_cap_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *cap));
-int er_power_cap(int myIdx) {
+static int er_power_cap(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_power_cap_get,                            // Routine name.
@@ -802,7 +802,7 @@ int er_power_cap(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_power_cap_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t cap));
-int ew_power_cap(int myIdx) {
+static int ew_power_cap(int myIdx) {
     uint64_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_power_cap_set,                            // Routine name.
         (MyDevice, MySensor, data),                         // device, sensor. Data to write.
@@ -811,7 +811,7 @@ int ew_power_cap(int myIdx) {
 } // end writer.
 
 // (rsmi_dev_power_cap_range_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max, uint64_t *min));
-int er_power_cap_range_min(int myIdx) {                     // THIS IS THE BASE EVENT.
+static int er_power_cap_range_min(int myIdx) {                     // THIS IS THE BASE EVENT.
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     if (AllEvents[myIdx].read == 0) {                       // If I haven't read yet,
@@ -826,7 +826,7 @@ int er_power_cap_range_min(int myIdx) {                     // THIS IS THE BASE 
 } // end reader.
 
 // (rsmi_dev_power_cap_range_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max, uint64_t *min));
-int er_power_cap_range_max(int myIdx) {                     // NOT THE BASE EVENT; Base event already called.
+static int er_power_cap_range_max(int myIdx) {                     // NOT THE BASE EVENT; Base event already called.
     int idx = AllEvents[myIdx].baseIdx;                     
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut to min/max.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value for max.
@@ -835,7 +835,7 @@ int er_power_cap_range_max(int myIdx) {                     // NOT THE BASE EVEN
 
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_current(int myIdx) {
+static int er_temp_current(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -846,7 +846,7 @@ int er_temp_current(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_max(int myIdx) {
+static int er_temp_max(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -857,7 +857,7 @@ int er_temp_max(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_min(int myIdx) {
+static int er_temp_min(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -868,7 +868,7 @@ int er_temp_min(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_max_hyst(int myIdx) {
+static int er_temp_max_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -879,7 +879,7 @@ int er_temp_max_hyst(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_min_hyst(int myIdx) {
+static int er_temp_min_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -890,7 +890,7 @@ int er_temp_min_hyst(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_critical(int myIdx) {
+static int er_temp_critical(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -901,7 +901,7 @@ int er_temp_critical(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_critical_hyst(int myIdx) {
+static int er_temp_critical_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -912,7 +912,7 @@ int er_temp_critical_hyst(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_emergency(int myIdx) {
+static int er_temp_emergency(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -923,7 +923,7 @@ int er_temp_emergency(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_emergency_hyst(int myIdx) {
+static int er_temp_emergency_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -934,7 +934,7 @@ int er_temp_emergency_hyst(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_crit_min(int myIdx) {
+static int er_temp_crit_min(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -945,7 +945,7 @@ int er_temp_crit_min(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_crit_min_hyst(int myIdx) {
+static int er_temp_crit_min_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -956,7 +956,7 @@ int er_temp_crit_min_hyst(int myIdx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_offset(int myidx) {
+static int er_temp_offset(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.
@@ -967,7 +967,7 @@ int er_temp_offset(int myidx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_lowest(int myidx) {
+static int er_temp_lowest(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.
@@ -978,7 +978,7 @@ int er_temp_lowest(int myidx) {
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-int er_temp_highest(int myidx) {
+static int er_temp_highest(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.

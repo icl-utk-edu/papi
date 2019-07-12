@@ -79,6 +79,9 @@ export ROCPROFILER_LOG=1
 export HSA_VEN_AMD_AQLPROFILE_LOG=1
 export AQLPROFILE_READ_API=1
 
+# rocm_smi also requires a path to librocm_smi64.so This is a privately built one:
+export LD_LIBRARY_PATH=/home/tonycastaldo/rocm_smi_lib/build/lib:$LD_LIBRARY_PATH
+
 # THESE for Instinct:
 export LD_LIBRARY_PATH=$HOME/papi/src/:$LD_LIBRARY_PATH
 export ROCP_METRICS=/opt/rocm/rocprofiler/lib/metrics.xml 

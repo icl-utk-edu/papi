@@ -9,29 +9,29 @@
 */
 
 /**
-  *	@page papi_command_line
+  *    @page papi_command_line
   * @brief executes PAPI preset or native events from the command line.
   *
-  *	@section Synopsis
-  *		papi_command_line < event > < event > ...
+  *    @section Synopsis
+  *        papi_command_line < event > < event > ...
   *
-  *	@section Description
-  *		papi_command_line is a PAPI utility program that adds named events from the 
-  *		command line to a PAPI EventSet and does some work with that EventSet. 
-  *		This serves as a handy way to see if events can be counted together, 
-  *		and if they give reasonable results for known work.
+  *    @section Description
+  *        papi_command_line is a PAPI utility program that adds named events from the 
+  *        command line to a PAPI EventSet and does some work with that EventSet. 
+  *        This serves as a handy way to see if events can be counted together, 
+  *        and if they give reasonable results for known work.
   *
-  *	@section Options
+  *    @section Options
   * <ul>
-  *		<li>-u          Display output values as unsigned integers
-  *		<li>-x          Display output values as hexadecimal
-  *		<li>-h          Display help information about this utility.
-  *	</ul>
+  *        <li>-u          Display output values as unsigned integers
+  *        <li>-x          Display output values as hexadecimal
+  *        <li>-h          Display help information about this utility.
+  *    </ul>
   *
-  *	@section Bugs
-  *		There are no known bugs in this utility.
-  *		If you find a bug, it should be reported to the
-  *		PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
+  *    @section Bugs
+  *        There are no known bugs in this utility.
+  *        If you find a bug, it should be reported to the
+  *        PAPI Mailing List at <ptools-perfapi@icl.utk.edu>.
  */
 
 #include <stdio.h>
@@ -47,9 +47,10 @@
 {                                \
     hipError_t error  = cmd;     \
     if (error != hipSuccess) {   \
-        fprintf(stderr, "error: '%s'(%d) at %s:%d\n", hipGetErrorString(error), error,__FILE__, __LINE__); \
+        fprintf(stderr, "error: '%s'(%d) at %s:%d\n",               \
+            hipGetErrorString(error), error,__FILE__, __LINE__);    \
         exit(EXIT_FAILURE);      \
-	  }                           \
+    }                            \
 }
 
 //-----------------------------------------------------------------------------
@@ -130,104 +131,143 @@ void conductTest(int device) {
 static void
 print_help( char **argv )
 {
-	printf( "Usage: %s [options] [EVENTNAMEs]\n", argv[0] );
-	printf( "Options:\n\n" );
-	printf( "General command options:\n" );
-	printf( "\t-u          Display output values as unsigned integers\n" );
-	printf( "\t-x          Display output values as hexadecimal\n" );
-	printf( "\t-h          Print this help message\n" );
-	printf( "\tEVENTNAMEs  Specify one or more preset or native events\n" );
-	printf( "\n" );
-	printf( "This utility performs work while measuring the specified events.\n" );
-	printf( "It can be useful for sanity checks on given events and sets of events.\n" );
+    printf( "Usage: %s [options] [EVENTNAMEs]\n", argv[0] );
+    printf( "Options:\n\n" );
+    printf( "General command options:\n" );
+    printf( "\t-u          Display output values as unsigned integers\n" );
+    printf( "\t-x          Display output values as hexadecimal\n" );
+    printf( "\t-h          Print this help message\n" );
+    printf( "\tEVENTNAMEs  Specify one or more preset or native events\n" );
+    printf( "\n" );
+    printf( "This utility performs work while measuring the specified events.\n" );
+    printf( "All available AMD devices are given work.                       \n" );
+    printf( "It can be useful for sanity checks on given events and sets of events.\n" );
 }
 
 
 int
 main( int argc, char **argv )
 {
-	int retval;
-	int num_events;
-	long long *values;
-	char *success;
-	PAPI_event_info_t info;
-	int EventSet = PAPI_NULL;
-	int i, j, k, event, data_type = PAPI_DATATYPE_INT64;
-	int u_format = 0;
-	int hex_format = 0;
+    int retval;
+    int num_events;
+    long long *values;
+    char *success;
+    PAPI_event_info_t info;
+    int EventSet = PAPI_NULL;
+    int i, j, k, event, data_type = PAPI_DATATYPE_INT64;
+    int u_format = 0;
+    int hex_format = 0;
 
-	printf( "\nThis utility lets you add events from the command line "
-		"interface to see if they work.\n\n" );
+    printf( "\nThis utility lets you add events from the command line "
+        "interface to see if they work.\n\n" );
 
-	retval = PAPI_library_init( PAPI_VER_CURRENT );
-	if (retval != PAPI_VER_CURRENT ) {
-		fprintf(stderr,"Error! PAPI_library_init\n");
-		exit(retval );
-	}
+    retval = PAPI_library_init( PAPI_VER_CURRENT );
+    if (retval != PAPI_VER_CURRENT ) {
+        fprintf(stderr,"Error! PAPI_library_init\n");
+        exit(retval );
+    }
 
-	retval = PAPI_create_eventset( &EventSet );
-	if (retval != PAPI_OK ) {
-		fprintf(stderr,"Error! PAPI_create_eventset\n");
-		exit(retval );
-	}
+    retval = PAPI_create_eventset( &EventSet );
+    if (retval != PAPI_OK ) {
+        fprintf(stderr,"Error! PAPI_create_eventset\n");
+        exit(retval );
+    }
 
-	values =
-		( long long * ) malloc( sizeof ( long long ) * ( size_t ) argc );
-	success = ( char * ) malloc( ( size_t ) argc );
+    retval = PAPI_add_named_event(EventSet, "rocm_smi:::NUMDevices");   // Number of devices.
+ 
+    if ( retval != PAPI_OK ) {
+        printf("Failed adding rocm_smi:::NUMDevices, error='%s'.\n", PAPI_strerror(retval));
+        printf("Perhaps no rocm_smi component is available.\n"); 
+        printf("Use papi/src/utils/papi_component_avail to check.\n"); 
+        exit(-1);
+    }
 
-	if ( success == NULL || values == NULL ) {
-		fprintf(stderr,"Error allocating memory!\n");
-		exit(1);
-	}
+    retval = PAPI_add_named_event(EventSet, "rocm_smi:::rsmi_version");   // Version of Library.
+ 
+    if ( retval != PAPI_OK ) {
+        printf("Failed adding rocm_smi:::rsmi_version, error='%s'.\n", PAPI_strerror(retval));
+        printf("Perhaps no rocm_smi component is available.\n"); 
+        printf("Use papi/src/utils/papi_component_avail to check.\n"); 
+        exit(-1);
+    }
 
-	for ( num_events = 0, i = 1; i < argc; i++ ) {
-		if ( !strcmp( argv[i], "-h" ) ) {
-			print_help( argv );
-			exit( 1 );
-		} else if ( !strcmp( argv[i], "-u" ) ) {
-			u_format = 1;
-		} else if ( !strcmp( argv[i], "-x" ) ) {
-			hex_format = 1;
-		} else {
-			if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
-				printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
-					PAPI_strerror(retval));
-			} else {
-				success[num_events++] = i;
-				printf( "Successfully added: %s\n", argv[i] );
-			}
-		}
-	}
+    uint64_t startupValues[2] = {0,0};
+    retval = PAPI_start( EventSet );
+    if (retval != PAPI_OK ) {
+        fprintf(stderr,"Error! PAPI_start, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
+        exit( retval );
+    }
 
-	/* Automatically pass if no events, for run_tests.sh */
-	if ( num_events == 0 ) {
-		printf("No events specified!\n");
-		printf("Try running something like: %s rocm:::device:0:SQ_WAVES, rocm:::device:0:VALUUtilization\n",
-			argv[0]);
-		return 0;
-	}
+    retval = PAPI_read( EventSet, startupValues );
+    if (retval != PAPI_OK ) {
+        fprintf(stderr,"Error! PAPI_read, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
+        exit( retval );
+    }
+    
+    int NUMDevices, major, minor, patch;
+    NUMDevices = startupValues[0];
+    patch = startupValues[1] & 0x000000000000ffff;          // Extract patch from packed major:minor:patch.
+    minor = (startupValues[1]>>4) & 0x000000000000ffff;     // Extract minor.
+    major = (startupValues[1]>>8) & 0x000000000000ffff;     // Extract major.
+    printf("%i AMD rocm_smi capable devices found. Library version %i:%i:%i.\n", 
+        NUMDevices, major, minor, patch);
+    
+    values = ( long long * ) malloc( sizeof ( long long ) * ( size_t ) argc );  // create reading space.
+    success = ( char * ) malloc( ( size_t ) argc );
+
+    if ( success == NULL || values == NULL ) {
+        fprintf(stderr,"Error allocating memory!\n");
+        exit(1);
+    }
+
+    for ( num_events = 0, i = 1; i < argc; i++ ) {
+        if ( !strcmp( argv[i], "-h" ) ) {
+            print_help( argv );
+            exit( 1 );
+        } else if ( !strcmp( argv[i], "-u" ) ) {
+            u_format = 1;
+        } else if ( !strcmp( argv[i], "-x" ) ) {
+            hex_format = 1;
+        } else {
+            if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
+                printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
+                    PAPI_strerror(retval));
+            } else {
+                success[num_events++] = i;
+                printf( "Successfully added: %s\n", argv[i] );
+            }
+        }
+    }
+
+    /* Automatically pass if no events, for run_tests.sh */
+    if ( num_events == 0 ) {
+        printf("No events specified!\n");
+        printf("Specify events like rocm_smi:::device=0:mem_usage_VRAM rocm_smi:::device=0:pci_throughput_sent\n");
+        printf("Use papi/src/utils/papi_native_avail for a list of all events; search for 'rocm_smi:::'.\n");
+        return 0;
+    }
 
    // ROCM Activity.
-	printf( "\n" );
+    printf( "\n" );
 
-	retval = PAPI_start( EventSet );
-	if (retval != PAPI_OK ) {
-	    fprintf(stderr,"Error! PAPI_start, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
-	    exit( retval );
-	}
+    retval = PAPI_start( EventSet );
+    if (retval != PAPI_OK ) {
+        fprintf(stderr,"Error! PAPI_start, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
+        exit( retval );
+    }
 
         // ROCM skipped do_flops(), do_misses() in papi_command_line.c.
 
-        for (k = 0; k < 2; k++ ) {                    // ROCM loop through devices.
+        for (k = 0; k < NUMDevices; k++ ) {           // ROCM loop through devices.
             conductTest(k);                           // Do some GPU work on device 'k'.
             sleep(1);                                 // .. sleep between reads to build up events.
 
             retval = PAPI_read( EventSet, values );
             if (retval != PAPI_OK ) {
-	             fprintf(stderr,"Error! PAPI_read, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
+                 fprintf(stderr,"Error! PAPI_read, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
                 exit( retval );
             }
-	    printf( "\n----------------------------------\n" );
+        printf( "\n----------------------------------\n" );
         
             for ( j = 0; j < num_events; j++ ) {      // Back to original papi_command_line...
                 i = success[j];
@@ -263,9 +303,9 @@ main( int argc, char **argv )
 
         retval = PAPI_stop( EventSet, values );       // ROCM added stop and test.
         if (retval != PAPI_OK ) {
-	         fprintf(stderr,"Error! PAPI_stop, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
+             fprintf(stderr,"Error! PAPI_stop, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
             exit( retval );
         }
 
-	return 0;
+    return 0;
 } // end main.
