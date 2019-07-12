@@ -192,6 +192,7 @@ static int pfm_cpumcf_init(void *this)
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z13_counters);
 		break;
 	case 3906:  /* IBM z14  */
+	case 3907:  /* IBM z14 ZR1  */
 		ext_set = cpumcf_z14_counters;
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z14_counters);
 		break;
