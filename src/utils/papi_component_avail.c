@@ -138,24 +138,38 @@ main( int argc, char **argv )
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
 		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
-	  printf( "        %-23s PMUs supported: ", " ");
-	  int line_len = 49;
-	  for (i=0 ; i<PAPI_PMU_MAX ; i++) {
-		  if (cmpinfo->pmu_names[i] == NULL) continue;
 
-		  if (line_len + strlen(cmpinfo->pmu_names[i]) > 130) {
-			  printf("\n        %-23s                  ", " ");
-			  line_len = 49;
-		  } else {
-			  line_len += strlen(cmpinfo->pmu_names[i]);
-		  }
-		  // if it is not the first entry on a line, separate the names
-		  if ((i != 0) && (line_len > 50)) {
-			  printf(", ");
-		  }
-		  printf("%s", cmpinfo->pmu_names[i]);
-	  }
-	  printf("\n\n");
+     int pmus=0;
+     for (i=0; i<PAPI_PMU_MAX; i++) {                          // Count pmus to print.
+        if (cmpinfo->pmu_names[i] != NULL) pmus++;             // Non-Null get printed.
+     }
+
+     if (pmus) {                                               // If we have any, print.
+         printf( "        %-23s PMUs supported: ", " ");
+         int line_len = 48, name_len;
+         for (i=0 ; i<PAPI_PMU_MAX ; i++) {
+            if (cmpinfo->pmu_names[i] == NULL) continue;
+
+            name_len = strlen(cmpinfo->pmu_names[i]);
+
+            if ((line_len + 2 + name_len) > 130) {              // If it would be too long,
+               printf("\n        %-23s                 ", " "); // terminate line without printing current name,
+               line_len = 48;                                   // reset line length.
+            }
+
+            // if it is not the first entry on a line, separate the names
+            if (line_len > 48) {
+               printf(", ");
+               line_len += 2;                                   // account for the separator.
+            }
+            printf("%s", cmpinfo->pmu_names[i]);
+            line_len += name_len;                               // Add the new name to the length.
+         }
+
+         printf("\n");
+     } // end if we had PMUs to print.
+
+     printf("\n"); // extra line.
 
 	  if ( flags.details ) {
 		printf( "        %-23s Version:\t\t\t%s\n", " ", cmpinfo->version );
