@@ -1,30 +1,67 @@
 The PAPI NVML component provides an interface to the NVidia Management Library (nvml, libnvidia-ml).
 
-In versions 8 and later part of the CUDA Toolkit, The NVIDIA
-Management Library is no longer a separate download and is installed with
-CUDA. On Linux/x86 platforms, it is often found in
-/usr/lib64/nvidia/libnvidia-ml.so
+In versions 8 and later part of the CUDA Toolkit, The NVIDIA Management Library
+is no longer a separate download and is installed with CUDA. On Linux/x86
+platforms, it is often found in /usr/lib64/nvidia/libnvidia-ml.so or
+/usr/lib64/libnvidia-ml.so
 
-NOTE for ICL staff: On Summit, it is found in /usr/lib64/libnvidia-ml.so.1
-However, this is a problem, the name (with a version number on it) is not the
-default.  In order to open a lib of a different name, you must change the
-Rules.nvml file, and specify the exact name to use with the line: 
-LIBCFLAGS += -DNVML_LIBNAME="libnvidia-ml.so.1" 
-If that library is not on a standard path (/usr/lib64 is however), the path
-must be added to LD_LIBRARY_PATH.  After changing Rules.nvml, you must remake
-linux-nvml.c. If you have already built PAPI, in
-papi/src/components/nvml 'touch linux-nvml.c' so it will be recompiled, then in
-papi/src 'make' to rebuild PAPI with the new name.
+Systems with NVML often have multiple versions of libnvidia-ml.so in different
+directories.  NVIDIA provides a "/stubs/" version of the library which is not
+actually functional; it is to allow compiles on a system without any NVIDIA
+devices (the executables will be run on systems with devices).e.g.
+/sw/summit/cuda/10.1.168/lib64/stubs/libnvidia-ml.so. The "stubs" version of
+the library is filled with dummy routines. In recent versions (at least by
+libnvidia-ml.so.418.67) the nvmlInit() function in the stubs/ library will
+print a warning to stdout. 
+
+At runtime the application searching for the "libnvidia-ml.so" library must
+find the functional version of this library, usually in /usr/lib/ or
+/usr/lib64/ or /usr/lib64/nvidia. However, your system may differ. A linux
+command that may help locate it is 
+>whereis libnvidia-ml.so 
+
+Also, libnvidia-ml.so is often a file link to a versioned library, e.g. in
+Linux on our development system:
+
+>ls -lt /usr/lib64/libnvidia-ml.so
+returns "libnvidia-ml.so -> libnvidia-ml.so.418.67"
+
+On some systems, the link has not been formed, or it points at the stubs/
+version of the library.
+
+We provide a workaround for this; the environment variable PAPI_NVML_LIBNAME
+can be set to look for a different name; e.g. (your library name may vary)
+export PAPI_NVML_LIBNAME=libnvidia-ml.so.418.67
+
+Which will effectively bypass the link.
+
+This can be changed the same way, export again with a different name. It can be
+cleared (deleted from the environment variables) by 
+>unset PAPI_NVML_LIBNAME
+
+Which will cause the default to be used again.  However, it is preferable that
+your sysadmin create the proper link on the runtime system (and it is okay if
+the compile time system points at the same full library), just so users do not
+have to export PAPI_NVML_LIBNAME every time they start a new session.
+
+You may find that your system environment variable LD_LIBRARY_PATH is set to
+search a stubs/ library before /usr/lib64. In that case, you can force
+/usr/lib64 to be searched earlier by pre-pending it to the LD_LIBRARY_PATH:
+export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH
+
+This may be preferable to setting PAPI_NVML_LIBNAME. 
+
 
 Other download packages may be available at 
 https://developer.nvidia.com/gpu-deployment-kit
 
-Before running the NVML component, the configure script for the NVML component 
-must be executed in order to generate the Makefile which contains the 
+Before running the NVML component, the configure script for the NVML component
+must be executed in order to generate the Makefile which contains the
 configuration settings. This script needs to be executed only once.
 
-It will help to have the env variable CUDA_DIR defined; on Summit this is automatically
-defined by 'module load cuda'.  
+It makes the NVML configuration easier if the env variable CUDA_DIR defined.
+(For ICL personnel; on Summit this is automatically defined by 'module load
+cuda'.)  
 
     % cd < papi_dir >/src/components/nvml
     % ./configure --with-nvml-libdir=<NVMLDIR> --with-nvml-incdir=<NVMLDIR> --with-cuda-dir=<CUDADIR>
@@ -35,29 +72,26 @@ For example, one configuration may look like this
 A recent (02/01/2019) NVML configure on the ICL saturn system:
 ./configure --with-nvml-libdir=$CUDA_DIR/lib64/stubs --with-nvml-incdir=$CUDA_DIR/include --with-cuda-dir=$CUDA_DIR
 
-A recent (06/10/2019) NVML configure on the Summit system ( with $CUDA_DIR=/sw/summit/cuda/10.1.105 set by 'module load cuda' )
+A recent (07/17/2019) NVML configure on the Summit system ( with $CUDA_DIR=/sw/summit/cuda/10.1.168 set by 'module load cuda' )
 
 ./configure --with-nvml-libdir=$CUDA_DIR/lib64/stubs --with-nvml-incdir=$CUDA_DIR/include --with-cuda-dir=$CUDA_DIR
 
-Note the xxx/stubs/libnvidia-ml.so allows for linking PAPI, but only contains dummy routines;
-At runtime you need a path to libnvidia-ml.so with live routines in LD_LIBRARY_PATH. It is
-done this way so you can build PAPI (or any other NVML thing) without having the run-node's
-file system structure; you can compile and link on the head node. 
-
 The NVML component is added to PAPI during the configuration of PAPI
 by adding the '--with-components=nvml' command line option to
-configure.    
+configure, although usuall it is --with-components="cuda nvml"    
 
    % ./configure --with-components="nvml"
 
-At build-time the nVidia compiler, nvcc, needs to be in your path, as does the cuda run-time library (libcudart.so).
+At build-time the nVidia compiler, nvcc, needs to be in your path, as does the
+cuda run-time library (libcudart.so).
 
-Please refer to http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf 
-for details about NVML library.
+Please refer to
+http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf
+for details about the NVML library.
 
 
 
-Note: Power Limiting using NVML (aka power capping) requires root.
+Note: Power Limiting using NVML (aka power capping) requires root access.
 
 PAPI has added support for power limiting using NVML (on supported
 devices from the Kepler family or later).  The executable needs to
