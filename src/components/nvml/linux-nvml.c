@@ -124,19 +124,6 @@ nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitPtr)(nvmlDevice_t device, unsign
 nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int  limit);
 nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
-// The default library name can be changed for systems without a link to the current library.
-// Note that the ".../stubs/libnvidia-ml.so" is not functional; it is only there to prevent linking errors.
-// To define NVML_LIBNAME, change the Rules.nvml file and append (for example) 
-// -DNVML_LIBNAME="libnvidia-ml.so.1". This must be found in the standard paths (like /usr/lib64) or 
-// the path to the new library must be added to the environment variable LD_LIBRARY_PATH.
-#ifndef NVML_LIBNAME
-#define NVML_LIBNAME libnvidia-ml.so
-#endif
-
-// Stringifying macros.
-#define Mstr(x) MMstr(x)
-#define MMstr(x) #x
-
 // file handles used to access cuda libraries with dlopen
 static void* dl1 = NULL;
 static void* dl2 = NULL;
@@ -1080,7 +1067,7 @@ int _papi_nvml_init_component(int cidx)
 
     ret = (*nvmlInitPtr)();
     if (NVML_SUCCESS != ret) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA management library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1095,7 +1082,7 @@ int _papi_nvml_init_component(int cidx)
     /* Figure out the number of CUDA devices in the system */
     ret = (*nvmlDeviceGetCountPtr)(&nvml_count);
     if (NVML_SUCCESS != ret) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA managament library.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA management library.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1109,7 +1096,7 @@ int _papi_nvml_init_component(int cidx)
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA managament library have different device counts.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA management library have different device counts.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1202,11 +1189,24 @@ linkCudaLibraries()
         return (PAPI_ENOSUPP);
     }
 
-    dl3 = dlopen(Mstr(NVML_LIBNAME), RTLD_NOW | RTLD_GLOBAL);
-    if (!dl3) {
-        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "NVML failed to find runtime library %s.", Mstr(NVML_LIBNAME));
-        return (PAPI_ENOSUPP);
+    // We allow an export of PAPI_NVML_LIBNAME=string to override the default libname. 
+    char* nvml_libname = getenv("PAPI_NVML_LIBNAME");
+    if (nvml_libname != NULL) {
+        dl3 = dlopen(nvml_libname, RTLD_NOW | RTLD_GLOBAL);
+        if (!dl3) {
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "NVML failed to find runtime library name in env PAPI_NVML_LIBNAME=%s.", nvml_libname);
+            return (PAPI_ENOSUPP);
+        }
+//      fprintf(stderr, "Successfully opened nvml_libname='%s'\n", nvml_libname);
+    } else {
+        dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+        if (!dl3) {
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "NVML failed to find default runtime library name libnvidia-ml.so");
+            return (PAPI_ENOSUPP);
+        }
+//      fprintf(stderr, "Successfully opened default libname 'libnvidia-ml.so'\n");
     }
+
     nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetClockInfo not found.", PAPI_MAX_STR_LEN);

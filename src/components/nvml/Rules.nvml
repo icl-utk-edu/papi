@@ -3,8 +3,6 @@ include components/nvml/Makefile.nvml
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
 CFLAGS +=  -I$(NVML_INCDIR) -I$(CUDA_DIR)/include
-# Un-comment the following LIBCFLAGS line to specify a library name OTHER than 'libnvidia-ml.so'. see README.
-# LIBCFLAGS +=  -DNVML_LIBNAME="libnvidia-ml.so.1"
 LDFLAGS += $(LDL)
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)

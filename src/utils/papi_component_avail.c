@@ -103,7 +103,7 @@ main( int argc, char **argv )
 	retval = papi_print_header( "Available components and "
 					"hardware information.\n", &hwinfo );
 	if ( retval != PAPI_OK ) {
-		fprintf(stderr,"Error! PAPI_get_ahrdware_info\n");
+		fprintf(stderr,"Error! PAPI_get_hardware_info\n");
 		return 2;
 	}
 
