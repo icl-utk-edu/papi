@@ -19,7 +19,6 @@
 #include <search.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <error.h>
 #include <errno.h>
 #include <time.h>
 #include <stdint.h>
@@ -205,14 +204,14 @@ static void _internal_hl_library_init(void)
    }
 
    if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init");
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
    
    /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
    if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
 
       /* determine output directory and output file */
       if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
-         error_at_line(0, retval, __FILE__ ,__LINE__, "_internal_hl_determine_output_path");
+         verbose_fprintf(stdout, "PAPI-HL Error: _internal_hl_determine_output_path failed!\n");
          state = PAPIHL_DEACTIVATED;
          verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
       } else {
@@ -226,7 +225,7 @@ static void _internal_hl_library_init(void)
          HLDBG("master_thread_id=%lu\n", master_thread_id);
       }
    } else {
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_thread_init failed!\n");
       state = PAPIHL_DEACTIVATED;
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
    }
@@ -237,7 +236,7 @@ static void _internal_hl_library_init(void)
       if ( retval == PAPI_ENOSUPP) {
          verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
       } else if ( retval != PAPI_OK ) {
-         error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_multiplex_init");
+         verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
       } else if ( retval == PAPI_OK ) {
          verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
       }
