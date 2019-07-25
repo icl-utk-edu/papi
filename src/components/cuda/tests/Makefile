@@ -1,18 +1,18 @@
 NAME=cuda
 include ../../Makefile_comp_tests.target
 
-CUDA_DIR ?= /opt/cuda
-CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
-CUDRV_DIR ?= $(CUDA_DIR)
+PAPI_CUDA_ROOT ?= /opt/cuda
+PAPI_CUPTI_ROOT ?= $(PAPI_CUDA_ROOT)/extras/CUPTI
+CUDRV_DIR ?= $(PAPI_CUDA_ROOT)
 
 TESTS = HelloWorld simpleMultiGPU simpleMultiGPU_no_counters 
 cuda_tests: $(TESTS) 
 
-CUDA_DIR ?= $(CUDA_PATH)
-NVCC = $(CUDA_DIR)/bin/nvcc 
+PAPI_CUDA_ROOT ?= $(CUDA_PATH)
+NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc 
 NVCFLAGS = -g -ccbin='$(CC)'
-INCLUDE += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include 
-CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64/stubs -L$(CUPTI_DIR)/lib64 -lcudart -lcupti -lcuda 
+INCLUDE += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUPTI_ROOT)/include 
+CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(PAPI_CUDA_ROOT)/lib64 -L$(PAPI_CUDA_ROOT)/lib64/stubs -L$(PAPI_CUPTI_ROOT)/lib64 -lcudart -lcupti -lcuda 
 PAPILIB += -L../../../libpfm4/lib -lpfm
 default: $(TESTS)
 

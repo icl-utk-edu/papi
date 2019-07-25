@@ -1,10 +1,13 @@
-# include ../Makefile.cuda
-
-CUDA_DIR ?= /opt/cuda
-CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
-CFG = -I$(CUDA_DIR)/include  -I$(CUPTI_DIR)/include
-LDG = -L$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64/stubs  -L$(CUPTI_DIR)/lib64
-NVCC = $(CUDA_DIR)/bin/nvcc
+# Set defaults if these environment variables are not set yet.
+PAPI_CUDA_ROOT ?= /opt/cuda
+PAPI_CUDA_INC ?= $(PAPI_CUDA_ROOT)/include
+PAPI_CUPTI_INC ?= $(PAPI_CUDA_ROOT)/extras/CUPTI/include
+PAPI_CUDA_LIBS ?= $(PAPI_CUDA_ROOT)/lib64
+PAPI_CUDA_STUBS ?= $(PAPI_CUDA_ROOT)/lib64/stubs
+PAPI_CUPTI_LIBS ?= $(PAPI_CUDA_ROOT)/extras/CUPTI/lib64
+CFG = -I$(PAPI_CUDA_INC)  -I$(PAPI_CUPTI_INC)
+LDG = -L$(PAPI_CUDA_LIBS) -L$(PAPI_CUDA_STUBS)  -L$(PAPI_CUPTI_LIBS)
+NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
 
 all:
 	@make lib

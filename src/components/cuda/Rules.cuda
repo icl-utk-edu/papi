@@ -1,12 +1,14 @@
-# $Id$
-
-CUDA_DIR ?= /opt/cuda
-CUPTI_DIR ?= $(CUDA_DIR)/extras/CUPTI
+# Set defaults if these environment variables are not set yet.
+PAPI_CUDA_ROOT ?= /opt/cuda
+PAPI_CUDA_INC ?= $(PAPI_CUDA_ROOT)/include
+PAPI_CUPTI_INC ?= $(PAPI_CUDA_ROOT)/extras/CUPTI/include
+PAPI_CUDA_STUBS ?= $(PAPI_CUDA_ROOT)/lib64/stubs
+PAPI_CUPTI_LIBS ?= $(PAPI_CUDA_ROOT)/extras/CUPTI/lib64
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o
-CFLAGS += -I$(CUDA_DIR)/include -I$(CUPTI_DIR)/include -g 
-LDFLAGS += -L$(CUPTI_DIR)/lib64 -lcupti $(LDL) -Wl,-rpath=$(CUPTI_DIR)/lib64 -g
+CFLAGS += -I$(PAPI_CUDA_INC) -I$(PAPI_CUPTI_INC) -g 
+LDFLAGS += -L$(PAPI_CUPTI_LIBS) -L$(PAPI_CUDA_STUBS) -lcupti $(LDL) -Wl,-rpath=$(PAPI_CUPTI_LIBS) -g
 
 linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling
 	$(CC) -E $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.pre

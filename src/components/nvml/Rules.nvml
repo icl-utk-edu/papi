@@ -1,9 +1,13 @@
-include components/nvml/Makefile.nvml
+# Set defaults if these environment variables are not set yet.
+PAPI_CUDA_ROOT ?= /opt/cuda
+PAPI_CUDA_INC ?= $(PAPI_CUDA_ROOT)/include
+PAPI_NVML_INC ?= $(PAPI_CUDA_ROOT)/include
+PAPI_NVML_STUBS ?= $(PAPI_CUDA_ROOT)/lib64/stubs
 
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
-CFLAGS +=  -I$(NVML_INCDIR) -I$(CUDA_DIR)/include
-LDFLAGS += $(LDL)
+CFLAGS +=  -I$(PAPI_NVML_INC) -I$(PAPI_CUDA_INC)
+LDFLAGS += -L$(PAPI_NVML_STUBS) $(LDL)
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/nvml/linux-nvml.c -o linux-nvml.o
