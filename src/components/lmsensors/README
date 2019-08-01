@@ -14,21 +14,40 @@
 lmsensors/  
 The PAPI lmsensors component requires lmsensors version >= 3.0.0.
 
+
+How to install PAPI with the lmsensors component?
 --------------------------------------------------
-CONFIGURING THE PAPI LMSENSORS COMPONENT
 
-Set lmsensors header files by configuring within the component.
-    % cd <papi_dir>/src/components/lmsensors
-    % ./configure --with-sensors-incdir=<PATH>
-For example, one configuration may look like this
-   % ./configure --with-sensors-incdir=/usr/include/sensors
+PAPI provides the following environment variables to specify the include and library path:
 
-Then, at the higher src directory, configure with this component
-    % cd <papi_dir>/src
-    % ./configure --with-components="lmsensors"
-    or if you want to specify the compilers and enable debug.
-    % ./configure CC=gcc F77=gfortran --with-debug --with-components="lmsensors"
-Finally, follow the standard PAPI build (make) instructions
-    % make 
+PAPI_LMSENSORS_ROOT  default /usr
+PAPI_LMSENSORS_INC   default /usr/include/sensors
+PAPI_LMSENSORS_LIB   default /usr/lib64
 
-*/
+If you overwrite PAPI_LMSENSORS_ROOT, e.g.
+
+export PAPI_LMSENSORS_ROOT = /software/lmsensors
+
+PAPI will use the following configuration by default:
+PAPI_LMSENSORS_INC = $PAPI_LMSENSORS_ROOT/include
+PAPI_LMSENSORS_LIB = $PAPI_LMSENSORS_ROOT/lib64
+
+If the include and library path does not match the scheme above you have to set the correct path for
+PAPI_LMSENSORS_INC and PAPI_LMSENSORS_LIB.
+
+
+Configure PAPI with lmsensors enabled.  
+    % cd src
+    % ./configure --prefix=some_location --with-components="lmsensors"
+    % make
+
+
+Before working with the lmsensors component, verify it's active by running
+   % ./papi_component_avail"
+and check if it listed under the "Active Components" list.
+
+Note:
+If the library libsensors.so cannot be found, you can use the runtime environment
+variable PAPI_LMSENSORS_LIBNAME to set the correct path and library name, e.g.
+
+export PAPI_LMSENSORS_LIBNAME = /usr/lib64/libsensors.so

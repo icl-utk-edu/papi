@@ -1,8 +1,10 @@
 NAME=infiniband_umad
 include ../../Makefile_comp_tests.target
-include ../Makefile.infiniband_umad
 
-INFINIBANDLIBS = -L$(INFINIBAND_IBMAD_DIR)/lib64 -L$(INFINIBAND_IBUMAD_DIR)/lib64 -libumad -libmad
+PAPI_INFINIBAND_MAD_ROOT ?= /usr
+PAPI_INFINIBAND_UMAD_ROOT ?= /usr
+
+INFINIBANDLIBS = -L$(PAPI_INFINIBAND_MAD_ROOT)/lib64 -L$(PAPI_INFINIBAND_UMAD_ROOT)/lib64 -libumad -libmad
 
 TESTS = infiniband_umad_list_events infiniband_umad_values_by_code
 

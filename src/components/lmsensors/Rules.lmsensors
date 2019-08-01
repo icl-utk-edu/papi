@@ -1,11 +1,27 @@
 # $Id$
 
-include components/lmsensors/Makefile.lmsensors
+# Set defaults if these environment variables are not set yet.
+PAPI_LMSENSORS_ROOT ?= /usr
+
+ifeq ($(PAPI_LMSENSORS_ROOT),/usr)
+  PAPI_LMSENSORS_INC ?= $(PAPI_LMSENSORS_ROOT)/include/sensors
+else
+  PAPI_LMSENSORS_INC ?= $(PAPI_LMSENSORS_ROOT)/include
+endif
+
+PAPI_LMSENSORS_LIB ?= $(PAPI_LMSENSORS_ROOT)/lib64
+
+$(info    )
+$(info    Configuration for component lmsensors:)
+$(info    PAPI_LMSENSORS_ROOT=$(PAPI_LMSENSORS_ROOT))
+$(info    PAPI_LMSENSORS_INC=$(PAPI_LMSENSORS_INC))
+$(info    PAPI_LMSENSORS_LIB=$(PAPI_LMSENSORS_LIB))
+$(info    )
 
 COMPSRCS += components/lmsensors/linux-lmsensors.c 
 COMPOBJS += linux-lmsensors.o
-CFLAGS += -I$(SENSORS_INCDIR)
-LDFLAGS += -L$(SENSORS_LIBDIR) -lsensors
+CFLAGS += -I$(PAPI_LMSENSORS_INC)
+LDFLAGS += -L$(PAPI_LMSENSORS_LIB) -lsensors
 
 linux-lmsensors.o: components/lmsensors/linux-lmsensors.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/lmsensors/linux-lmsensors.c -o linux-lmsensors.o 

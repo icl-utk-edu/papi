@@ -627,13 +627,32 @@ linkInfinibandLibraries ()
 		return PAPI_ENOSUPP;
 	}
 
-	/* Need to link in the Infiniband libraries, if not found disable the component */
-	dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl1)
-	{
-		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+	// /* Need to link in the Infiniband libraries, if not found disable the component */
+	// dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
+	// if (!dl1)
+	// {
+	// 	strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
+	// 	return ( PAPI_ENOSUPP );
+	// }
+
+    /* We allow an export of PAPI_INFINIBAND_UMAD_LIBNAME=string to override the default libname. */
+    char* infiniband_umad_libname = getenv("PAPI_INFINIBAND_UMAD_LIBNAME");
+    if (infiniband_umad_libname != NULL) {
+        dl1 = dlopen(infiniband_umad_libname, RTLD_NOW | RTLD_GLOBAL);
+        if (!dl1) {
+            snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_INFINIBAND_UMAD_LIBNAME=%s not found; see README for environment variables.", infiniband_umad_libname);
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened infiniband_umad_libname='%s'\n", infiniband_umad_libname);
+    } else {
+        dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
+        if (!dl1) {
+            snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libibumad.so not found; see README for environment variables.");
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened default libname 'libibumad.so'\n");
+    }
+
 	umad_initPtr = dlsym(dl1, "umad_init");
 	if (dlerror() != NULL)
 	{
@@ -653,13 +672,32 @@ linkInfinibandLibraries ()
 		return ( PAPI_ENOSUPP );
 	}
 
-	/* Need to link in the Infiniband libraries, if not found disable the component */
-	dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl2)
-	{
-		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+	// /* Need to link in the Infiniband libraries, if not found disable the component */
+	// dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
+	// if (!dl2)
+	// {
+	// 	strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
+	// 	return ( PAPI_ENOSUPP );
+	// }
+
+    /* We allow an export of PAPI_INFINIBAND_MAD_LIBNAME=string to override the default libname. */
+    char* infiniband_mad_libname = getenv("PAPI_INFINIBAND_MAD_LIBNAME");
+    if (infiniband_mad_libname != NULL) {
+        dl2 = dlopen(infiniband_mad_libname, RTLD_NOW | RTLD_GLOBAL);
+        if (!dl2) {
+            snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_INFINIBAND_MAD_LIBNAME=%s not found; see README for environment variables.", infiniband_mad_libname);
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened infiniband_mad_libname='%s'\n", infiniband_mad_libname);
+    } else {
+        dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
+        if (!dl2) {
+            snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libibmad.so not found; see README for environment variables.");
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened default libname 'libibmad.so'\n");
+    }
+
 	mad_decode_fieldPtr = dlsym(dl2, "mad_decode_field");
 	if (dlerror() != NULL)
 	{

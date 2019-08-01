@@ -351,14 +351,24 @@ _lmsensors_init_component( int cidx )
 static int
 link_lmsensors_libraries ()
 {
-	/* Need to link in the lmsensors libraries, if not found disable the component */
-	dl1 = dlopen("libsensors.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl1)
-	{
-		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
-			"lmsensors library libsensors.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+    /* We allow an export of PAPI_LMSENSORS_LIBNAME=string to override the default libname. */
+    char* lmsensors_libname = getenv("PAPI_LMSENSORS_LIBNAME");
+    if (lmsensors_libname != NULL) {
+        dl1 = dlopen(lmsensors_libname, RTLD_NOW | RTLD_GLOBAL);
+        if (!dl1) {
+            snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LMSENSORS_LIBNAME=%s not found; see README for environment variables.", lmsensors_libname);
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened lmsensors_libname='%s'\n", lmsensors_libname);
+    } else {
+        dl1 = dlopen("libsensors.so", RTLD_NOW | RTLD_GLOBAL);
+        if (!dl1) {
+            snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found; see README for environment variables.");
+            return (PAPI_ENOSUPP);
+        }
+    // fprintf(stderr, "Successfully opened default libname 'libsensors.so'\n");
+    }
+
 	sensors_initPtr = dlsym(dl1, "sensors_init");
 	if (dlerror() != NULL)
 	{

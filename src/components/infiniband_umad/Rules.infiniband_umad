@@ -1,11 +1,39 @@
 # $Id$
 
-include components/infiniband_umad/Makefile.infiniband_umad
+# Set defaults if these environment variables are not set yet.
+PAPI_INFINIBAND_MAD_ROOT ?= /usr
+PAPI_INFINIBAND_UMAD_ROOT ?= /usr
+
+ifeq ($(PAPI_INFINIBAND_MAD_ROOT),/usr)
+  PAPI_INFINIBAND_MAD_INC ?= $(PAPI_INFINIBAND_MAD_ROOT)/include/infiniband
+else
+  PAPI_INFINIBAND_MAD_INC ?= $(PAPI_INFINIBAND_MAD_ROOT)/include
+endif
+
+ifeq ($(PAPI_INFINIBAND_UMAD_ROOT),/usr)
+  PAPI_INFINIBAND_UMAD_INC ?= $(PAPI_INFINIBAND_UMAD_ROOT)/include/infiniband
+else
+  PAPI_INFINIBAND_UMAD_INC ?= $(PAPI_INFINIBAND_UMAD_ROOT)/include
+endif
+
+PAPI_INFINIBAND_MAD_LIB ?= $(PAPI_INFINIBAND_MAD_ROOT)/lib64
+PAPI_INFINIBAND_UMAD_LIB ?= $(PAPI_INFINIBAND_UMADS_ROOT)/lib64
+
+$(info    )
+$(info    Configuration for component infiniband_umad:)
+$(info    PAPI_INFINIBAND_MAD_ROOT=$(PAPI_INFINIBAND_MAD_ROOT))
+$(info    PAPI_INFINIBAND_MAD_INC=$(PAPI_INFINIBAND_MAD_INC))
+$(info    PAPI_INFINIBAND_MAD_LIB=$(PAPI_INFINIBAND_MAD_LIB))
+$(info    PAPI_INFINIBAND_UMAD_ROOT=$(PAPI_INFINIBAND_UMAD_ROOT))
+$(info    PAPI_INFINIBAND_UMAD_INC=$(PAPI_INFINIBAND_UMAD_INC))
+$(info    PAPI_INFINIBAND_UMAD_LIB=$(PAPI_INFINIBAND_UMAD_LIB))
+$(info    )
+
 
 COMPSRCS += components/infiniband_umad/linux-infiniband_umad.c
 COMPOBJS += linux-infiniband_umad.o
-CFLAGS += -I$(INFINIBAND_IBMAD_DIR)/include -I$(INFINIBAND_IBUMAD_DIR)/include
-LDFLAGS += $(LDL)
+CFLAGS += -I$(PAPI_INFINIBAND_MAD_INC) -I$(PAPI_INFINIBAND_UMAD_INC)
+LDFLAGS += -L$(PAPI_INFINIBAND_MAD_LIB) -libmad -L$(PAPI_INFINIBAND_UMAD_LIB) -libumad
 
 linux-infiniband_umad.o: components/infiniband_umad/linux-infiniband_umad.c components/infiniband_umad/linux-infiniband_umad.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/infiniband_umad/linux-infiniband_umad.c -o linux-infiniband_umad.o
