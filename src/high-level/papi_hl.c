@@ -1221,6 +1221,11 @@ static void _internal_hl_write_output()
    {
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
+         /* check if events were recorded */
+         if ( binary_tree == NULL ) {
+            verbose_fprintf(stdout, "PAPI-HL Info: No events were recorded.\n");
+            return;
+         }
          unsigned long *tids = NULL;
          int number_of_threads;
          FILE *output_file;
