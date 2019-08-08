@@ -1,11 +1,16 @@
-# $Id$
+# Note: unlike -lname, we use -l:fullname to set complete name. 
+# -l: does not add 'lib' prefix or '.so' or '.a' suffix. This
+# lets us link with a versioned lib; see 'man ld' to verify.
+# e.g. -l:librocm_smi64.so.0.1.0
 
-ROCM_SMI_DIR ?= /home/tonycastaldo/rocm_smi_lib
-HIPLIB = /opt/rocm/lib
+PAPI_ROCMSMI_ROOT ?= /opt/rocm_smi_lib
+PAPI_ROCMSMI_LIBS ?= $(PAPI_ROCMSMI_ROOT)/build
+PAPI_ROCMSMI_INC ?= $(PAPI_ROCMSMI_ROOT)/include/rocm_smi
+PAPI_ROCMSMI_LIBNAME ?= librocm_smi64.so 
 COMPSRCS += components/rocm_smi/linux-rocm-smi.c
 COMPOBJS += linux-rocm-smi.o
-CFLAGS += -I$(ROCM_SMI_DIR)/include/rocm_smi -L$(HIPLIB)
-# -I/opt/rocm/hip/include
+CFLAGS += -I$(PAPI_ROCMSMI_INC) -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi 
+LDFLAGS += -L$(PAPI_ROCMSMI_LIBS) -l:$(PAPI_ROCMSMI_LIBNAME)
 LDFLAGS += $(LDL) -g
 
 linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)

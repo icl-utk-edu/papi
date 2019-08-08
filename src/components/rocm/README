@@ -25,11 +25,10 @@ Known problems and limitations in early release of metric support
 General information
 -------------------
 
-The PAPI ROCM component is a hardware performance counter
-measurement technology for the AMD ROCM platform which provides
-access to the hardware counters inside the GPU. The component is
-an adapter fo ROCm profiling library (RPL, 'ROC-profiler') which
-is included in standard ROCM release.
+The PAPI ROCM component is a hardware performance counter measurement
+technology for the AMD ROCM platform which provides access to the hardware
+counters inside the GPU. The component is an adapter to the ROCm profiling
+library (RPL, 'ROC-profiler') which is included in standard ROCM release.
 
 
 How to install PAPI with the ROCM component?
@@ -38,60 +37,122 @@ How to install PAPI with the ROCM component?
 This PAPI ROCm component has been developed and tested using ROCM
 release 1.8.
 
-This component uses the ROCM location from the environment (or looks
-for /opt/rocm by default). Please set ROCM_DIR and RPL_DIR during
-builds so that the component can find the required header files.
+These instructions are specific to the ICL environment; but may be useful to
+users if translated to their own working or testing environments.
 
+ICL testing was done (August 2019) on the ICL system "caffeine"; which has AMD
+equipment installed, and the ROCM interface software installed at /opt/rocm.
+
+Depending on your system, this software may require environment variables to be
+defined. 
+
+A shell script in papi/src/components/rocm/tests/run_papi.sh contains an
+example of how to work with just the LD_LIBRARY_PATH (other than the four
+exports are that are needed by the AMD RocProfiler). This script works on the
+ICL test system Caffeine, you will need to change directory entries to match
+your own system. In a shell script, those exports (setting environment
+variables) go away when the shell exits. If you want to execute commands and
+programs from the command line instead, export the same environment variables
+from the command line.
+
+Many users would rather not change LD_LIBRARY_PATH. We can operate instead
+with different environment variables; those are described next. Note that
+if these environment variables are never defined, our code will try the
+default locations indicated below.
+
+If your ROCM files are in these standard locations, you may not need to 
+export any variables at all. 
+
+
+Some environment variables are used at compile time, others at runtime, and 
+some at both times.
+
+-----COMPILE TIME-----
+The following variables are shown with their default values. If these defaults
+match your system, then you don't have to set them. Otherwise you can override
+the default by setting them, generally by 'export PAPI_ROCM_XXX=newvalue'
+
+PAPI_ROCM_ROOT      /opt/rocm
+PAPI_ROCM_HSAINC    $(PAPI_ROCM_ROOT)/include/hsa
+PAPI_ROCM_HSALIBS   $(PAPI_ROCM_ROOT)/lib
+PAPI_ROCM_LIBS      $(PAPI_ROCM_ROOT)/lib
+PAPI_ROCM_HSANAME   libhsa-runtime64.so 
+PAPI_ROCM_LIBNAME   librocprofiler64.so 
+PAPI_ROCM_RPROOT    $(PAPI_ROCM_ROOT)/rocprofiler
+PAPI_ROCM_RPLIBS    $(PAPI_ROCM_RPROOT)/lib
+PAPI_ROCM_RPINC     $(PAPI_ROCM_RPROOT)/include
+
+-----RUNTIME-----
+Two libraries are required for the PAPI ROCM component. We try to find them in
+this order, with the following default names.
+1) libhsa-runtime64.so (name can be overridden by export of PAPI_ROCM_HSANAME).
+2) librocprofiler64.so (name can be overridden by export of PAPI_ROCM_LIBNAME).
+
+We will look for PAPI_ROCM_HSANAME in the following directories, in this order,
+if the environment variable is defined (otherwise we don't try it).
+
+PAPI_ROCM_HSALIBS
+PAPI_ROCM_LIBS
+PAPI_ROCM_ROOT/lib  (default for PAPI_ROCM_ROOT is /opt/rocm).
+Any LD_LIBRARY_PATH
+Any default lib directory; e.g. /lib, /lib64, /usr/lib, /usr/lib64.
+
+We will look for PAPI_ROCM_LIBNAME in the following directories, in this order,
+if the environment variable is defined (otherwise we don't try it). We stop
+searching and use the first library found.
+
+PAPI_ROCM_RPLIBS
+PAPI_ROCM_RPROOT/lib
+PAPI_ROCM_ROOT/rocprofiler/lib
+Any LD_LIBRARY_PATH
+Any default lib directory; e.g. /lib, /lib64, /usr/lib, /usr/lib64
+
+These exports assume you have papi installed in your $HOME directory.
+
+ICL developers can copy-and-paste the following to the command line. The '#'
+lines are not actually necessary. Either PAPI_ROCM_ROOT or LD_LIBRARY_PATH is
+necessary. 
+
+----ICL only Settings-----
+# These ONLY for Caffeine (an ICL test machine). 
+export PAPI_ROCM_ROOT=/opt/rocm/
+export PAPI_ROCM_RPROOT=/home/adanalis/usr/rocprofiler
+export ROCP_METRICS=$PAPI_ROCM_RPROOT/lib/metrics.xml
+# export PAPI_ROCM_LIBS=/opt/rocm/lib
+# export PAPI_ROCM_HSALIBS=/opt/rocm/lib
+# export PAPI_ROCM_HSANAME=libhsa-runtime64.so
+# export PAPI_ROCM_LIBNAME=librocprofiler64.so
+# export LD_LIBRARY_PATH=$PAPI_ROCM_LIBS::$PAPI_ROCM_RPLIBS:$HOME/papi/src/:$LD_LIBRARY_PATH
+
+# THESE work for Instinct (another test machine)
+export PAPI_ROCM_ROOT=/opt/rocm/
+export ROCP_METRICS=/opt/rocm/rocprofiler/lib/metrics.xml 
+
+-----OTHER ENVIRONMENT VARIABLE REQUIREMENTS----
+# The following non-PAPI-standard names are used by the rocprofiler library, which PAPI uses.
+# (ROCP_METRICS is also used by rocprofiler; not by PAPI, but differs in the two examples above).
+export ROCPROFILER_LOG=1
+export HSA_VEN_AMD_AQLPROFILE_LOG=1
+export AQLPROFILE_READ_API=1
+
+-----EXAMPLE OF CONFIGURATION AND BUILD-----
 Configure PAPI with ROCM enabled.  
+    % # from papi install directory:
     % cd src
     % ./configure --prefix=some_location --with-components="rocm"
 
-Build with ROCM_DIR and RPL_DIR specified
-    % export ROCM_DIR=/opt/rocm
-    % export RPL_DIR=/opt/rocm/rocprofiler
+Build with PAPI_ROCM_ROOT and PAPI_ROCM_RPROOT specified
+    % export PAPI_ROCM_ROOT=/opt/rocm/
+    % export PAPI_ROCM_RPROOT=/home/adanalis/usr/rocprofiler
+    % export ROCP_METRICS=/opt/rocm/rocprofiler/lib/metrics.xml 
+    % export ROCPROFILER_LOG=1
+    % export HSA_VEN_AMD_AQLPROFILE_LOG=1
+    % export AQLPROFILE_READ_API=1
     % make 
+
+To see if the component is active (and if not, why not):
+    % utils/papi_component_avail
 
 To find a list of ROCM supported events.
     % utils/papi_native_avail | grep rocm
 
-TESTING, for ICL workers
--------------------------------------------- 
-
-These instructions are specific to the ICL environment; but may be useful to
-users if translated to their own working or testing environments.
-
-ICL testing was done (March 2019) on the ICL system "caffeine"; which has AMD
-equipment installed, and the ROCM interface software installed at /opt/rocm.
-
-The software requires environment variables to be defined. 
-
-A shell script in papi/src/components/rocm/tests/run_papi.sh will export various
-environment variables, but (naturally) they go away when the shell exits. If you
-want to execute commands and programs from the command line instead, export the 
-same environment variables from the command line, but then don't use run_papi.sh.
-
-Note, these paths are specific to the ICL test system  'caffeine'. If you are not
-on that system, you will need to find the appropriate rocm directory paths for  
-LD_LIBRARY_PATH, and ROCP_METRICS. For example on another system, we have seen
-them installed at /opt/rocm/opencl/lib/x86_64 and /opt/rocm/hsa/lib.
-
-These exports assume you have papi installed in your $HOME directory.
-ICLers copy-and-paste these to the command line:
-
-# These ONLY for Caffeine. 
-export ROCM_DIR=/opt/rocm
-export RPL_DIR=/home/adanalis/usr/rocprofiler
-export LD_LIBRARY_PATH=/opt/rocm_src/lib/hsa:/opt/rocm/lib/:$RPL_DIR/lib:$HOME/papi/src/:$LD_LIBRARY_PATH
-export ROCP_METRICS=$RPL/lib/metrics.xml
-export ROCPROFILER_LOG=1
-export HSA_VEN_AMD_AQLPROFILE_LOG=1
-export AQLPROFILE_READ_API=1
-
-# THESE for Instinct:
-export LD_LIBRARY_PATH=$HOME/papi/src/:$LD_LIBRARY_PATH
-export ROCP_METRICS=/opt/rocm/rocprofiler/lib/metrics.xml 
-export ROCPROFILER_LOG=1
-export HSA_VEN_AMD_AQLPROFILE_LOG=1
-export AQLPROFILE_READ_API=1
-
-*/

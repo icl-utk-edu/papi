@@ -332,17 +332,36 @@ static void validateNewEvent(void) {
 // installed and on systems where these libraries are not installed.
 static int _rocm_smi_linkRocmLibraries()
 {
+    char path_name[1024];
     // Attempt to guess if we were statically linked to libc, if so, get out.
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_rocm_smi_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
     }
 
-    dlSMI = dlopen("librocm_smi64.so", RTLD_NOW | RTLD_GLOBAL);
+    char *rocmsmi_root = getenv("PAPI_ROCMSMI_ROOT");
+    char *rocmsmi_libs = getenv("PAPI_ROCMSMI_LIBS");
+    char *rocmsmi_libname = getenv("PAPI_ROCMSMI_LIBNAME");
+    char rocmsmi_libname_default[]="librocm_smi64.so";
+    if (rocmsmi_libname == NULL) rocmsmi_libname = rocmsmi_libname_default; // use default if not set by user.
+
+    dlSMI = NULL;
+    if (rocmsmi_libs != NULL) {
+        snprintf(path_name, 1024, "%s/%s", rocmsmi_libs, rocmsmi_libname);
+        dlSMI = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dlSMI == NULL && rocmsmi_root != NULL) {
+        snprintf(path_name, 1024, "%s/build/%s", rocmsmi_root, rocmsmi_libname);
+        dlSMI = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dlSMI == NULL) {                // time to use LD_LIBRARY_PATH, default libs.
+        dlSMI = dlopen(rocmsmi_libname, RTLD_NOW | RTLD_GLOBAL);
+    }
+        
     if (dlSMI == NULL) {
-        char errstr[]="SMI library 'librocm_smi64.so' open failed. Check env LD_LIBRARY_PATH setting.";
-        fprintf(stderr, "%s\n", errstr); 
-        strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocmsmi_libname);
         return(PAPI_ENOSUPP);
     }
 

@@ -210,17 +210,56 @@ static _rocm_control_t *global__rocm_control = NULL;
  */
 static int _rocm_linkRocmLibraries()
 {
+    char path_lib[1024];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_rocm_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
     }
-    /* Need to link in the ROCm libraries, if not found disable the component */
-    dl1 = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);
+
+    // collect any defined environment variables, or "NULL" if not present.
+    char *rocm_root =       getenv("PAPI_ROCM_ROOT");
+    char *rocm_rproot =     getenv("PAPI_ROCM_RPROOT");
+    char *rocm_libs =       getenv("PAPI_ROCM_LIBS");
+    char *rocm_rplibs =     getenv("PAPI_ROCM_RPLIBS");
+    char *rocm_hsalibs =    getenv("PAPI_ROCM_HSALIBS");    
+    char *rocm_hsaname =    getenv("PAPI_ROCM_HSANAME");
+    char *rocm_libname =    getenv("PAPI_ROCM_LIBNAME");
+
+    // Allow override of libnames. Note if a libname is given by an environment
+    // variable, we will not check for the default name. If the name given is 
+    // not found, we fail.
+
+    char rocm_libname_default[] = "librocprofiler64.so";
+    if (rocm_libname == NULL) rocm_libname = rocm_libname_default;  // Set default if no env var.
+
+    char rocm_hsaname_default[] = "libhsa-runtime64.so";
+    if (rocm_hsaname == NULL) rocm_hsaname = rocm_hsaname_default;  // Set default if no env var.
+
+    // We have two ROCM libraries to find.
+    dl1 = NULL;
+    if (rocm_hsalibs != NULL) {
+        snprintf(path_lib, 1024, "%s/%s", rocm_hsalibs, rocm_hsaname);  // See if we have the lib there.
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl1 == NULL && rocm_libs != NULL) {
+        snprintf(path_lib, 1024, "%s/%s", rocm_libs, rocm_hsaname);
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl1 == NULL && rocm_root != NULL) {
+        snprintf(path_lib, 1024, "%s/lib/%s", rocm_root, rocm_hsaname);
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl1 == NULL) {
+        dl1 = dlopen(rocm_hsaname, RTLD_NOW | RTLD_GLOBAL);
+    }
+
     if (!dl1) {
-        char errstr[]="ROC runtime library 'libhsa-runtime64.so' was not found.";
-        strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
-        return(PAPI_ENOSUPP);
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocm_hsaname);
+        return(PAPI_ENOSUPP);                           // Failed to find libhsa-runtime64.so. 
     }
 
     DLSYM_AND_CHECK(dl1, hsa_init);
@@ -229,11 +268,31 @@ static int _rocm_linkRocmLibraries()
     DLSYM_AND_CHECK(dl1, hsa_agent_get_info);
     DLSYM_AND_CHECK(dl1, hsa_shut_down);
 
-    dl2 = dlopen("librocprofiler64.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
+    //-------------------------------------------------------------------------
+
+    dl2 = NULL;
+    if (rocm_rplibs != NULL) {
+        snprintf(path_lib, 1024, "%s/%s", rocm_rplibs, rocm_libname); // See if we have the lib there.
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl2 == NULL && rocm_rproot != NULL) {
+        snprintf(path_lib, 1024, "%s/lib/%s", rocm_rproot, rocm_libname);
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl2 == NULL && rocm_root != NULL) {
+        snprintf(path_lib, 1024, "%s/rocprofiler/lib/%s", rocm_root, rocm_libname);
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl2 == NULL) {
+        dl2 = dlopen(rocm_libname, RTLD_NOW | RTLD_GLOBAL);
+    }
+
     if (!dl2) {
-        char errstr[]="ROCM profiling library 'librocprofiler64.so' was not found.";
-        strncpy(_rocm_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
-        return(PAPI_ENOSUPP);
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocm_libname);
+        return(PAPI_ENOSUPP);                           // Failed to find libhsa-runtime64.so. 
     }
 
     DLSYM_AND_CHECK(dl2, rocprofiler_get_info);

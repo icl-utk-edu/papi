@@ -1,12 +1,22 @@
-# $Id$
-
-ROCM_DIR ?= /opt/rocm
-RPL_DIR ?= /opt/rocm/rocprofiler
+PAPI_ROCM_ROOT ?= /opt/rocm
+PAPI_ROCM_HSAINC ?= $(PAPI_ROCM_ROOT)/include/hsa
+PAPI_ROCM_HSALIBS ?= $(PAPI_ROCM_ROOT)/lib
+PAPI_ROCM_LIBS ?= $(PAPI_ROCM_ROOT)/lib
+PAPI_ROCM_HSANAME ?= libhsa-runtime64.so 
+PAPI_ROCM_LIBNAME ?= librocprofiler64.so
+PAPI_ROCM_RPROOT ?= $(PAPI_ROCM_ROOT)/rocprofiler
+PAPI_ROCM_RPINC ?= $(PAPI_ROCM_RPROOT)/include
+PAPI_ROCM_RPLIBS ?= $(PAPI_ROCM_RPROOT)/lib
 
 COMPSRCS += components/rocm/linux-rocm.c
 COMPOBJS += linux-rocm.o
-CFLAGS += -I$(ROCM_DIR)/include/hsa -I$(RPL_DIR)/include -I$(ROCM_DIR)/include -I$(RPL_DIR)/inc -g 
-LDFLAGS += -L$(ROCM_DIR)/lib -lhsa-runtime64 -L$(RPL_DIR)/lib -lrocprofiler64 $(LDL) -Wl,-rpath=$(ROCM_DIR)/lib -Wl,-rpath=$(RPL_DIR)/lib -g
+CFLAGS += -I$(PAPI_ROCM_HSAINC) -I$(PAPI_ROCM_RPINC) -I$(PAPI_ROCM_RPROOT)/include -g 
+# Note: unlike -lname, we use -l:fullname to set complete name. 
+# -l: does not add 'lib' prefix or '.so' or '.a' suffix. This
+# lets us link with a versioned lib; see 'man ld' to verify.
+# e.g. -l:libhsa-runtime64.so.1.0
+
+LDFLAGS += -L$(PAPI_ROCM_HSALIBS) -l:$(PAPI_ROCM_HSANAME) -L$(PAPI_ROCM_RPLIBS) -l:$(PAPI_ROCM_LIBNAME) $(LDL) -Wl,-rpath=$(PAPI_ROCM_HSALIBS) -Wl,-rpath=$(PAPI_ROCM_RPLIBS) -g
 
 linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm/linux-rocm.c -o linux-rocm.o
