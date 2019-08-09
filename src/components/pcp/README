@@ -27,9 +27,103 @@ General Information
 ...
 +++ Repository: bitbucket/icl/papi/src/components/pcp
 
+How to install PAPI with the PCP component?
+-------------------------------------------
+These instructions sometimes refer to the ICL development and
+testing environment; but may be useful to users if translated to
+their own working or testing environments.
 
-Code Specific Information
--------------------------
+This PAPI PCP component has been developed and tested using PCP
+version 3.12.2.
+
+Depending on your system, this software may require environment
+variables to be defined. 
+
+However, users should first try doing nothing. Although there are
+many options below, if PCP is installed in default directories,
+there may be no configuration required at all. Specifically, on
+Peak and Summit, we can find the PCP library named libpcp.so in
+/usr/lib64 (a directory searched by default) and we can find the
+necessary include files in /usr/include/pcp, which our software
+searches by default. Thus no changes are needed, including to
+LD_LIBRARY_PATH. 
+
+If libraries are not in the default directories, then using
+exports (to set environment variables) the user can force
+searching of a specific path, first, to find a library or
+include directory. Users can also override the name of the PCP
+library (for example, to use a different version of the library
+for testing or comparison).
+
+The following are the OPTIONAL environment variables:
+
+PAPI_PCP_LIBS       If present, the path location of
+                    PAPI_PCP_LIBNAME (normally libpcp.so).
+
+PAPI_PCP_ROOT       If present, we will look for PAPI_PCP_LIBNAME
+                    in PAPI_PCP_ROOT/lib64, but only if
+                    PAPI_PCP_LIBS was not defined, or no lib was
+                    found there.
+
+PAPI_PCP_INC        The full path to find pcp include files;
+                    specifically <pmapi.h> and <impl.h>. Example:
+                    export PAPI_PCP_INC=/usr/include/papi
+
+PAPI_PCP_LIBNAME    If present, this is the only library name we
+                    will accept.
+
+In the cases of PAPI_PCP_LIBS or PAPI_PCP_ROOT above, if they are
+not defined or we do not find the library there, then we will
+still search the LD_LIBRARY_PATH directories, and the default
+directories. These include /lib, /lib64, /usr/lib and /usr/lib64.
+For compile time include files, a default search target is
+/usr/include/pcp. 
+
+Some environment variables are used at compile time, others at
+runtime, and some at both times.
+
+-----COMPILE TIME-----
+PAPI_PCP_INC,   if the files <pmapi.h> and <impl.h> are not on a
+                default path, this needs to be set.
+
+-----RUNTIME-----
+One library is required for the PAPI ROCM component. The name is
+libpcp.so (name can be overridden by export of PAPI_PCP_LIBNAME).
+
+HOWEVER, note that PCP interfaces with a daemon (a background
+program running on the machines), and if you use a batch system
+(like SLURM) so that your programs run on a different machine
+(node) than your login node, then it is possible one has the
+daemon installed and the other does not. This is the case for ICL
+developers on the Peak and Summit machines; the login nodes are
+not executing the PCP daemon, and the work nodes are. Thus to test
+the PCP component, you must 'jsrun --np 1 someprogram'. 
+
+These exports assume you have papi installed in your $HOME
+directory.  ICL developers: At this writing, no exports are
+required to compile and use PCP on the machiens Peak or Summit.
+
+
+-----EXAMPLE OF CONFIGURATION AND BUILD-----
+Configure PAPI with PCP enabled.
+    % # from papi install directory:
+    % cd src
+    % ./configure --prefix=some_location --with-components="pcp"
+
+Build with PAPI_PCP_INC specified only:
+    % export PAPI_PCP_INC=/usr/include/pcp
+    % make 
+
+To see if the component is active (and if not, why not):
+(for batch users may need to be run with jsrun):
+    % utils/papi_component_avail
+
+To find a list of ROCM supported events.
+(for batch users may need to be run with jsrun):
+    % utils/papi_native_avail | grep pcp
+
+Code Specific Information for ICL developers
+--------------------------------------------
 
 This code was tested on both Saturn and ORNL peak (Power9; P9).
 ------------------------------------------------------------------
@@ -128,10 +222,6 @@ with this string. At this writing 'nest' events are always within
 'perfevents', but 'perfevents' is an umbrella that contains 
 other events that are not 'nest' events. 
 
-Near line 55: #define MYPCPLIB "libpcp.so" 
-The name of the pcp library to be used. Note that it MUST be a
-shared object library; a regular archive will not do.
-
 Near line 194: #define COUNT_ROUTINES 1
 Will enable a macro 'mRtnCnt' which will print on stderr the entry
 of each PAPI interfacing routine the first time it is executed;
@@ -166,40 +256,3 @@ detailing all the symbols, units, text description, time scope,
 type and a sample value for for each event. 
 ------------------------------------------------------------------
 
-
-How to install PAPI with the PCP component?
--------------------------------------------
-
-This PAPI PCP component has been developed and tested using PCP
-version 3.12.2.
-
-This component uses the PCP location from the environment (or looks
-for /usr by default).  Please set PCP_DIR during builds so that
-the component can find the required header files and library.
-
-Configure PAPI with PCP enabled.
-    % cd src
-    % ./configure --prefix=<prefix-location> --with-components="pcp"
-
-Build with PCP_DIR specified
-    % export PCP_DIR=/usr
-    % make && make install
-
-Testing the component requires that libraries for PAPI and PCP
-can be found or are statically linked in to the executable.  You may
-need to add the library directories as shown here.
-
-    % export LD_LIBRARY_PATH=${PCP_DIR}/lib64:${LD_LIBRARY_PATH}
-
-For general information on how to create and run components, the user
-is referred to the INSTALL.txt section "CREATING AND RUNNING
-COMPONENTS".
-
-
-To check if PCP was successfully installed with PAPI.
-    % <prefix-location>/bin/papi_component_avail
-
-To find a list of PCP supported events.
-    % <prefix-location>/bin/papi_native_avail | grep pcp
-
-*/
