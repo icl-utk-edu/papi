@@ -16,7 +16,7 @@ CFLAGS += -I$(PAPI_ROCM_HSAINC) -I$(PAPI_ROCM_RPINC) -I$(PAPI_ROCM_RPROOT)/inclu
 # lets us link with a versioned lib; see 'man ld' to verify.
 # e.g. -l:libhsa-runtime64.so.1.0
 
-LDFLAGS += -L$(PAPI_ROCM_HSALIBS) -l:$(PAPI_ROCM_HSANAME) -L$(PAPI_ROCM_RPLIBS) -l:$(PAPI_ROCM_LIBNAME) $(LDL) -Wl,-rpath=$(PAPI_ROCM_HSALIBS) -Wl,-rpath=$(PAPI_ROCM_RPLIBS) -g
+LDFLAGS += $(LDL) -L$(PAPI_ROCM_HSALIBS) -l:$(PAPI_ROCM_HSANAME) -L$(PAPI_ROCM_RPLIBS) -l:$(PAPI_ROCM_LIBNAME) $(LDL) -Wl,-rpath=$(PAPI_ROCM_HSALIBS) -Wl,-rpath=$(PAPI_ROCM_RPLIBS) -g
 
 linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm/linux-rocm.c -o linux-rocm.o

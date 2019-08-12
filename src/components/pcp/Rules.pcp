@@ -2,6 +2,7 @@ PAPI_PCP_INC ?= /usr/include/pcp
 COMPSRCS += components/pcp/linux-pcp.c
 COMPOBJS += linux-pcp.o
 CFLAGS += -I$(PAPI_PCP_INC)
+LDFLAGS += $(LDL)
 
 linux-pcp.o: components/pcp/linux-pcp.c 
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/pcp/linux-pcp.c -o linux-pcp.o 
