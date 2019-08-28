@@ -193,6 +193,7 @@ papi_vector_t _rocm_vector;
 
 /* Global variable for hardware description, event and metric lists */
 static _rocm_context_t *global__rocm_context = NULL;
+static uint32_t maxEventSize=0;                 // We accumulate all agent counts into this.
 
 /* This global variable points to the head of the control state list */
 static _rocm_control_t *global__rocm_control = NULL;
@@ -278,6 +279,11 @@ static int _rocm_linkRocmLibraries()
 
     if (dl2 == NULL && rocm_rproot != NULL) {
         snprintf(path_lib, 1024, "%s/lib/%s", rocm_rproot, rocm_libname);
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    if (dl2 == NULL && rocm_root != NULL) {
+        snprintf(path_lib, 1024, "%s/lib/%s", rocm_root, rocm_libname);
         dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
     }
 
@@ -405,11 +411,12 @@ static hsa_status_t _rocm_add_native_events_callback(const rocprofiler_info_data
 // function called during initialization.
 static int _rocm_add_native_events(_rocm_context_t * ctx)
 {
-    uint32_t i, maxEventSize = 0;
+    uint32_t i;
 
     // Count all events in all agents; Each element of 'indexed' metrics is considered a separate event.
     // NOTE: The environment variable ROCP_METRICS should point at a path and file like metrics.xml.
     //       If that file doesn't exist, this iterate info fails with a general error (0x1000).
+    // NOTE: We are *accumulating* into maxEventSize.
     for (i = 0; i < ctx->availAgentSize; i++) {
         ROCM_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, 
             _rocm_count_native_events_callback, (void*)(&maxEventSize)), return (PAPI_EMISC));
@@ -549,17 +556,17 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
     for(ii = 0; ii < nativeCount; ii++) {
         /* Get the PAPI event index from the user */
         index = nativeInfo[ii].ni_event;
-#ifdef DEBUG
         char *eventName = gctxt->availEventDesc[index].name;
-#endif
+        (void) eventName;
         int eventDeviceNum = gctxt->availEventDeviceNum[index];
 
         /* if this event is already added continue to next ii, if not, mark it as being added */
         if(gctxt->availEventIsBeingMeasuredInEventset[index] == 1) {
-            ROCMDBG("Skipping event %s which is already added\n", eventName);
+            ROCMDBG("Skipping event %s (%i of %i) which is already added\n", eventName, ii, nativeCount);
             continue;
-        } else
+        } else {
             gctxt->availEventIsBeingMeasuredInEventset[index] = 1;
+        }
 
         /* Find context/control in papirocm, creating it if does not exist */
         for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
@@ -568,7 +575,7 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
                 break;
             }
         }
-        // Create context if it does not exit
+        // Create context if it does not exist
         if(cc == gctrl->countOfActiveContexts) {
             ROCMDBG("Event %s device %d does not have a ctx registered yet...\n", eventName, eventDeviceNum);
             gctrl->arrayOfActiveContexts[cc] = papi_calloc(1, sizeof(_rocm_active_context_t));
@@ -594,7 +601,7 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
         eventctrl->conEvents[eventctrl->conEventsCount] = eventId;
         eventctrl->conEventIndex[eventctrl->conEventsCount] = index;
         eventctrl->conEventsCount++;
-//      fprintf(stderr, "%s:%d Added eventId.name='%s'.\n", __FILE__, __LINE__, eventId.name); // test indexed events.
+//      fprintf(stderr, "%s:%d Added eventId.name='%s' as conEventsCount=%i with index=%i.\n", __FILE__, __LINE__, eventId.name, eventctrl->conEventsCount-1, index); // test indexed events.
 
         /* Record index of this active event back into the nativeInfo structure */
         nativeInfo[ii].ni_position = gctrl->activeEventCount;
@@ -610,19 +617,29 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
             if (eventctrl->ctx != NULL) {
                 ROCP_CALL_CK(rocprofiler_close, (eventctrl->ctx), return (PAPI_EMISC));
             }
+            int openFailed=0;
             rocprofiler_properties_t properties;
             memset(&properties, 0, sizeof(properties));
             properties.queue_depth = 128;
+//          fprintf(stderr,"%s:%i calling rocprofiler_open, ii=%i device=%i numEvents=%i name='%s'.\n", __FILE__, __LINE__, ii, eventDeviceNum, eventctrl->conEventsCount, eventId.name);
             ROCP_CALL_CK(rocprofiler_open, (gctxt->availAgentArray[eventDeviceNum], eventctrl->conEvents, eventctrl->conEventsCount, &(eventctrl->ctx),
-                                          ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE, &properties), return (PAPI_EBUG));
+                                          ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE, &properties), openFailed=1);
+            if (openFailed) {                       // If the open failed, 
+                ROCMDBG("Error occurred: The ROCM event was not accepted by the ROCPROFILER.\n");
+//              fprintf(stderr, "Error occurred: The ROCM event '%s' was not accepted by the ROCPROFILER.\n", eventId.name);
+                _rocm_cleanup_eventset(ctrl);       // Try to cleanup,
+//              fprintf(stderr, "%s:%i Returning PAPI_ECOMBO.\n", __FILE__, __LINE__);
+                return(PAPI_ECOMBO);                // Say its a bad combo.
+            }
+
             ROCP_CALL_CK(rocprofiler_group_count, (eventctrl->ctx, &numPasses), return (PAPI_EMISC));
 
             if (numPasses > 1) {
-                ROCMDBG("Error occured: The combined ROCM events require more than 1 pass... try different events\n");
+                ROCMDBG("Error occurred: The combined ROCM events require more than 1 pass... try different events\n");
                 _rocm_cleanup_eventset(ctrl);
                 return(PAPI_ECOMBO);
             } else  {
-                ROCMDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-requied %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, numPasses);
+                ROCMDBG("Created eventGroupPasses for context total-events %d in-this-context %d passes-required %d) \n", gctrl->activeEventCount, eventctrl->conEventsCount, numPasses);
             }
         }
     }
@@ -694,6 +711,7 @@ static int _rocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
         for(jj = 0; jj < gctrl->activeEventCount; jj++) {
             int index = gctrl->activeEventIndex[jj];
             EventID eventId = gctxt->availEventIDArray[index];
+            ROCMDBG("jj=%i of %i, index=%i, device#=%i.\n", jj, gctrl->activeEventCount, index, gctxt->availEventDeviceNum[index]);
             (void) eventId;                                             // Suppress 'not used' warning when not debug.
 
             /* If the device/context does not match the current context, move to next */
@@ -701,10 +719,10 @@ static int _rocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
                 continue;
 
             for(ee = 0; ee < gctrl->arrayOfActiveContexts[cc]->conEventsCount; ee++) {
-                ROCMDBG("Reading for activeEvent %s(%u) eventId %d duration %lu\n", eventId.name, ee, index, durationNs);
+                ROCMDBG("Searching for activeEvent %s in Activecontext %u eventIndex %d duration %lu\n", eventId.name, ee, index, durationNs);
                 if (gctrl->arrayOfActiveContexts[cc]->conEventIndex[ee] == index) {
                   gctrl->activeEventValues[jj] = gctrl->arrayOfActiveContexts[cc]->conEvents[ee].data.result_int64;
-                  ROCMDBG("Matching event %d:%d eventName %s value %lld\n", jj, index, eventId.name, gctrl->activeEventValues[jj]);
+                  ROCMDBG("Matched event %d:%d eventName %s value %lld\n", jj, index, eventId.name, gctrl->activeEventValues[jj]);
                   break;
                 }
             }
@@ -743,22 +761,35 @@ static int _rocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
 {
     ROCMDBG("Entering _rocm_cleanup_eventset\n");
+//  fprintf(stderr, "%s:%i _rocm_cleanup_eventset called.\n", __FILE__, __LINE__);
 
     (void) ctrl;
     _rocm_control_t *gctrl = global__rocm_control;
-    uint32_t cc;
+    uint32_t i, cc;
 
     for(cc = 0; cc < gctrl->countOfActiveContexts; cc++) {
         int eventDeviceNum = gctrl->arrayOfActiveContexts[cc]->deviceNum;
         (void) eventDeviceNum;                                          // Suppress 'not used' warning when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Destroy device %d ctx %p \n", eventDeviceNum, eventCtx);
+//      fprintf(stderr, "%s:%i About to call rocprofiler_close.\n", __FILE__, __LINE__);
         ROCP_CALL_CK(rocprofiler_close, (eventCtx), return (PAPI_EMISC));
+//      fprintf(stderr, "%s:%i Returned from call to rocprofiler_close, papi_free ptr=%p.\n", __FILE__, __LINE__, gctrl->arrayOfActiveContexts[cc] );
         papi_free( gctrl->arrayOfActiveContexts[cc] );
+//      fprintf(stderr, "%s:%i Returned from call to papi_free.\n", __FILE__, __LINE__);
     }
     /* Record that there are no active contexts or events */
+//  fprintf(stderr, "%s:%i Checkpoint, maxEventSize=%i.\n", __FILE__, __LINE__, maxEventSize);
     gctrl->countOfActiveContexts = 0;
     gctrl->activeEventCount = 0;
+
+    /* Clear all indicators of event being measured. */
+    _rocm_context_t *gctxt = global__rocm_context;
+    for (i=0; i<maxEventSize; i++) {
+            gctxt->availEventIsBeingMeasuredInEventset[i] = 0;
+    }
+
+//  fprintf(stderr, "%s:%i Returning from _rocm_cleanup_eventset.\n", __FILE__, __LINE__);
     return (PAPI_OK);
 }
 
