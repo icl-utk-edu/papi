@@ -296,7 +296,7 @@ static int papicuda_linkCudaLibraries()
     }
 
     // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl1 == NULL) {                                          // No override, not at root,
+    if (dl1 == NULL) {                                          // No override,
         dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);     // Try system paths.
     }
 
@@ -340,7 +340,7 @@ static int papicuda_linkCudaLibraries()
     }
 
     // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl2 == NULL) {                                          // No override, not at root,
+    if (dl2 == NULL) {                                          // No override,
         dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
     }
 
@@ -374,7 +374,7 @@ static int papicuda_linkCudaLibraries()
     }
 
     // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl3 == NULL) {                                          // If no override, and root failed, 
+    if (dl3 == NULL) {                                          // If no override,
         dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
