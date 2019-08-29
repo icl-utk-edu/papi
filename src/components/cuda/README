@@ -29,12 +29,12 @@ Known problems and limitations in early release of metric support
 General information
 -------------------
 
-The PAPI CUDA component is a hardware performance counter
-measurement technology for the NVIDIA CUDA platform which provides
-access to the hardware counters inside the GPU. PAPI CUDA is based on
-CUPTI support in the NVIDIA driver library. In any environment where
-the CUPTI-enabled driver is installed, the PAPI CUDA component should
-be able to provide detailed performance counter information regarding
+The PAPI CUDA component is a hardware performance counter measurement
+technology for the NVIDIA CUDA platform which provides access to the
+hardware counters inside the GPU. PAPI CUDA is based on CUPTI support
+in the NVIDIA driver library. In any environment where the
+CUPTI-enabled driver is installed, the PAPI CUDA component should be
+able to provide detailed performance counter information regarding
 events on the GPU kernels.  
 
 NOTE: When adding CUDA related events or metrics to the CUDA
@@ -47,126 +47,60 @@ the user has to call PAPI_cleanup_eventset( EventSet ) before calling
 PAPI_shutdown() in the application. This is important since it also
 frees the performance monitoring hardware on the GPU.
 
+This PAPI CUDA component has been developed and tested using CUDA
+version 10.1 and the associated CUPTI library. CUPTI is released with
+the CUDA Tools SDK.
 
 How to install PAPI with the CUDA component?
 -------------------------------------------- 
 
-This PAPI CUDA component has been developed and tested using CUDA
-version 8.0 and the associated CUPTI library. CUPTI is released with
-the CUDA Tools SDK.
+There is ONE required environment variable: PAPI_CUDA_ROOT. This is
+required for both compiling, and at runtime. 
 
-BUILD TIME ENVIRONMENT VARIABLES REQUIRED: PAPI_CUDA_ROOT. This is the
-CUDA root directory. The default is /opt/cuda. It is seldom correct.
 An example that works on ICL's Saturn system (at this writing):
-
 export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
 
+Within PAPI_CUDA_ROOT, we expect the following standard directories:
+PAPI_CUDA_ROOT/include
+PAPI_CUDA_ROOT/lib64
+PAPI_CUDA_ROOT/extras/CUPTI/include
+PAPI_CUDA_ROOT/extras/CUPTI/lib64
+
 For a standard installed system, this is the only environment variable
-required for both compile and runtime. LD_LIBRARY_PATH does not have
-to be modified.
+required for both compile and runtime. 
 
-On some systems (particularly the ICL Saturn system), environment
-variables for CUDA will e preset, or a module load command (e.g.
-'module load cuda') will automatically set environment variables like
-CUDA_ROOT, CUDA_HOME, or CUDADIR, and modify LD_LIBRARY_PATH to match
-this. To avoid conflicts with existing settings, you may wish to (for
-example):
+System configurations can vary. Some systems use Spack, a package
+manager, to automatically keep paths straight. Others (like our own
+ICL Saturn System) require "module load" commands to provide some
+services, e.g. 'module load cuda-10.1', and these may also set
+environment variables and change the LD_LIBRARY_PATH search order.
 
-export PAPI_CUDA_ROOT=${CUDA_ROOT} 
+Users may require the help of sysadmin personnel to navigate these
+facilities and gain access to the correct libraries.
 
-Using whatever existing environment variable is correct. Typically you
-can find such variables by filtering the output of 'env', e.g.
-
-env | grep "cuda" 
-
-to show every environment variable containing 'cuda' in a setting.
-
-Although seldom necessary, it is possible to override other
-compile-time directories with environment variables, all starting
-with PAPI_.
-
-PAPI_CUDA_INC     default $PAPI_CUDA_ROOT/include
-PAPI_CUPTI_INC    default $PAPI_CUDA_ROOT/extras/CUPTI/include
-PAPI_CUDA_STUBS   default $PAPI_CUDA_ROOT/lib64/stubs
-PAPI_CUPTI_LIBS   default $PAPI_CUDA_ROOT/extras/CUPTI/lib64
-
-The "stubs" directory contains a dummy library that allows PAPI to be
-linked on network systems (like supercomputers) where the compile
-machine (or head node) may not have any GPUs installed; and thus no
-nvidia dynamic libs available, but the run-target will. (The component
-will fail if the first libcuda.so found on the run-target is the stubs
-directory.)
-
-RUNTIME LIBRARIES REQUIRED: libcupti.so, libcudart.so, libcuda.so
-
-RUNTIME ENVIRONMENT VARIABLES: The component allows the standard
-library search protocol to be overridden with environment variables.
-If it doesn't find the library that way, it will search the "standard
-paths"; meaning the directories given by the environment variable
-LD_LIBRARY_PATH, followed by the default Linux locations /usr/lib64
-and /lib64. The following variables are the optional overrides for
-this component, in priority order:
-
-PAPI_CUPTI_LIBS (was also needed at compile time)
-PAPI_CUDA_RTLIBS
-PAPI_CUDA_LIBS
-PAPI_CUDA_ROOT
-
-libcuda.so: We use the first found of 
-$(PAPI_CUDA_LIBS)/libcuda.so
-$(PAPI_CUDA_ROOT)/lib64/libcuda.so
-libcuda.so on the standard paths.
-
-libcudart.so: The RunTime library; we use the first found of
-$(PAPI_CUDA_RTLIBS)/libcudart.so
-PAPI_CUDA_ROOT/lib64/libcudart.so
-libcudart.so on the standard paths.
-
-libcupti.so: The cuda Performance Tools Interface library. We search
-$PAPI_CUPTI_LIBS/libcupti.so
-$PAPI_CUDA_ROOT/extras/CUPTI/lib64
-libcupti.so on the standard paths.
-
-LD_LIBRARY_PATH: Instead of specifying the above environment
-variables, it is possible to specify runtime library locations in the
-standard path. However, include the existing path as part of the new
-path, either in front or at the rear. An example: 
-
-export LD_LIBRARY_PATH=${PAPI_CUDA_ROOT}/lib64:${PAPI_CUDA_ROOT}/extras/CUPTI/lib64:${LD_LIBRARY_PATH}
-
-Configure PAPI with CUDA enabled.  
-    % cd src
-    % ./configure --prefix=some_location --with-components="cuda"
+Configure PAPI with CUDA enabled. We presume you have navigated to the
+directory papi/src. In that directory:
+    % ./configure --with-components="cuda"
 
 Build with PAPI_CUDA_ROOT specified (ICL's Saturn example again):
     % export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
     % make 
 
-Testing the component requires that libraries for PAPI, CUDA, CUPTI
-can be found or are statically linked in to the executable. The
-component libraries cannot be statically linked; only shared object
-(.so) libraries can be used.
+TESTING the component is installed: Still from papi/src:
+    % utils/papi_component_avail
 
-Note libraries may be found in different places on different systems;
-the point is that we need at minimum the environment variable
-$PAPI_CUDA_ROOT defined. The underscores and caps are required.
+For the CUDA component to be operational, it must find the dynamic
+libraries libcuda.so, libcudart.so, and libcupti.so.
 
-Before starting working with the cuda component, verify it's active by
-running:
-   % ./papi_component_avail"
-and check if it listed under the "Active Components" list.
+If any of these are not found (or are not functional) then the
+component will be listed as "disabled" with a reason explaining the
+problem. If libraries were not found, then they are not in the
+expected places. The component can be configured to look for each of
+these libraries in a specific place, and using an alternate name if
+desired. Detailed instructions are contained in the Rules.cuda file.
+They are technical, users may wish to enlist the help of a sysadmin.
 
-Test by running from the src directory
-   % ./components/cuda/tests/simpleMultiGPU
-
-(If you have a batch system like SLURM requiring commands like salloc
-and srun, you may need to do that to execute on a node that has GPUs).
-
-For general information on how to create and run components, the user
-is referred to the INSTALL.txt section "CREATING AND RUNNING
-COMPONENTS".
-
-To find a list of CUDA supported events.
+To find a list of CUDA supported events:
     % utils/papi_native_avail | grep -i CUDA
 
 */

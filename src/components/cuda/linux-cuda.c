@@ -25,6 +25,8 @@
 //-----------------------------------------------------------------------------
 
 #include <dlfcn.h>
+
+// NOTE: We can't use extended directories; these include files have includes.
 #include <cupti.h>
 #include <cuda_runtime_api.h>
 
@@ -110,6 +112,10 @@ typedef struct papicuda_control {
 static void *dl1 = NULL;
 static void *dl2 = NULL;
 static void *dl3 = NULL;
+
+static char cuda_main[]=PAPI_CUDA_MAIN;
+static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
+static char cuda_cupti[]=PAPI_CUDA_CUPTI;
 
 /* The PAPI side (external) variable as a global */
 papi_vector_t _cuda_vector;
@@ -261,7 +267,13 @@ DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
 static int papicuda_linkCudaLibraries()
 {
     char path_lib[1024];
-#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name ); if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); }
+#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );                \
+    if ( dlerror()!=NULL ) {                                                \
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,   \
+        "A CUDA required function '%s' was not found in lib '%s'.",         \
+        name, #dllib);                                                      \
+        return ( PAPI_ENOSUPP );                                            \
+    }
 
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
@@ -271,30 +283,35 @@ static int papicuda_linkCudaLibraries()
     // Need to link in the cuda libraries, if any not found disable the component
     // getenv returns NULL if environment variable is not found.
     char *cuda_root = getenv("PAPI_CUDA_ROOT");
-    char *cuda_libs = getenv("PAPI_CUDA_LIBS");
-    char *cuda_rtlibs = getenv("PAPI_CUDA_RTLIBS");
-    char *cupti_libs = getenv("PAPI_CUPTI_LIBS");
 
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
-    if (cuda_libs != NULL) {
-        snprintf(path_lib, 1024, "%s/libcuda.so", cuda_libs);   // Full specification takes priority.
-        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);         // Try to open that path.
+    // Step 1: Process override if given.   
+    if (strlen(cuda_main) > 0) {                                // If override given, it has to work.
+        dl1 = dlopen(cuda_main, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dl1 == NULL && cuda_root != NULL) {
-        snprintf(path_lib, 1024, "%s/lib64/libcuda.so", cuda_root);   // PAPI Root if full specification failed.
-        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);         // Try to open that path.
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                          // No override, not at root,
+        dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);     // Try system paths.
     }
 
-    if (dl1 == NULL) {                                          // If that failed, or no path specified,
-        dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);     // Try default path, searching LD_LIBRARY_PATH.
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && cuda_root != NULL) {                          // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcuda.so", cuda_root);  // PAPI Root check.
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);              // Try to open that path.
     }
 
-    if (dl1 == NULL) {                                          // If that failed too, disable component.
-        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcuda.so not found; see README for environment variables.");
-        return(PAPI_ENOSUPP);   // failed to find libcuda.so on either path.
+    // Check for failure.
+    if (dl1 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcuda.so not found.");
+        return(PAPI_ENOSUPP);
     }
+
     // We have a dl1. (libcuda.so).
 
     cuCtxGetCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxGetCurrent");
@@ -313,29 +330,32 @@ static int papicuda_linkCudaLibraries()
     /* Need to link in the cuda runtime library, if not found disable the component */
     dl2 = NULL;                                 // Ensure reset to NULL.
 
-    if (cuda_rtlibs != NULL) {
-        snprintf(path_lib, 1024, "%s/libcudart.so", cuda_rtlibs);   // Runtime specific path takes priority.
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    // Step 1: Process override if given.   
+    if (strlen(cuda_runtime) > 0) {                                // If override given, it has to work.
+        dl2 = dlopen(cuda_runtime, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl2 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dl2 == NULL && cuda_libs != NULL) {                         // If that failed,
-        snprintf(path_lib, 1024, "%s/libcudart.so", cuda_libs);     // Then cuda libs takes priority.
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl2 == NULL) {                                          // No override, not at root,
+        dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
     }
 
-    if (dl2 == NULL && cuda_root != NULL) {                             // If that failed,
-        snprintf(path_lib, 1024, "%s/lib64/libcudart.so", cuda_root);   // Then cuda root takes priority.
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    // Step 3: Try the explicit install default. 
+    if (dl2 == NULL && cuda_root != NULL) {                             // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcudart.so", cuda_root);   // PAPI Root check.
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                 // Try to open that path.
     }
 
-    if (dl2 == NULL) {                                          // If that failed, or no path specified,
-        dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);   // Try default path, searching LD_LIBRARY_PATH.
+    // Check for failure.
+    if (dl2 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcudart.so not found.");
+        return(PAPI_ENOSUPP);
     }
 
-    if (dl2 == NULL) {                                          // If that failed too, disable component.
-        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcudart.so not found; see README for environment variables. CUDA RunTime.");
-        return(PAPI_ENOSUPP);   // failed to find libcudart.so on either path.
-    }
     // We have a dl2. (libcudart.so).
 
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
@@ -344,24 +364,32 @@ static int papicuda_linkCudaLibraries()
 
     dl3 = NULL;                                                 // Ensure reset to NULL.
 
-    if (cupti_libs != NULL) {
-        snprintf(path_lib, 1024, "%s/libcupti.so", cupti_libs); // Runtime specific path takes priority.
-        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);         // Try to open that path.
+    // Step 1: Process override if given.   
+    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
+        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
+        if (dl3 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dl3 == NULL && cuda_root != NULL) {
-        snprintf(path_lib, 1024, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root); // PAPI Root if no full specification.
-        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);         // Try to open that path.
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                          // If no override, and root failed, 
+        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
-    if (dl3 == NULL) {                                          // If that failed, or no path specified,
-        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try default path, searching LD_LIBRARY_PATH.
+    // Step 3: Try the explicit install default. 
+    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        snprintf(path_lib, 1024, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
+        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
     }
 
-    if (dl3 == NULL) {                                          // If that failed too, disable component.
-        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found; see README for environment variables. CUDA Profiling Tools Interface.");
-        return(PAPI_ENOSUPP);   // failed to find libcupti.so on either path.
+    // Check for failure.
+    if (dl3 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
+        return(PAPI_ENOSUPP);   // Not found on default paths.
     }
+
     // We have a dl3. (libcupti.so)
 
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
