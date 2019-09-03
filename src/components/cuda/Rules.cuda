@@ -1,5 +1,5 @@
 # Set default if the root environment variable is not already set.
-# Note PAP_CUDA_ROOT is an environment variable that must be set.
+# Note PAPI_CUDA_ROOT is an environment variable that must be set.
 # It is the ONLY environment variable that must be set, all other
 # settings are optimal.
 PAPI_CUDA_ROOT ?= /opt/cuda
@@ -49,7 +49,7 @@ PAPI_CUDA_ROOT ?= /opt/cuda
 # There may be other package managers or utilities, for example on a system with
 # modules; the command 'module load cuda' may modify LD_LIBRARY_PATH.
 
-# Linux system will also search for libraries by default in the directories
+# A Linux system will also search for libraries by default in the directories
 # listed by /etc/ld.so.conf, and /usr/lib64, /lib64, /usr/lib, /lib. 
 
 # OVERRIDES: These are by default empty strings (""), if set they must work.
@@ -60,6 +60,14 @@ PAPI_CUDA_CUPTI = \"\"
 # An example of an override:
 # PAPI_CUDA_CUPTI = \"$(PAPI_CUDA_ROOT)/extras/CUPTI/lib64/libcupti.so\"
 
+# Note:  PAPI_CUDA_MAIN and PAPI_CUDA_RUNTIME, if set, also apply to the NVML
+#        component.
+
+# Note:  If you change these overrides, PAPI should be rebuilt from scratch.
+#        From papi/src/
+#        make clobber
+#        ./configure --with-components="nvml"
+#        make  
 
 # OPERATION, per library:
 # 1) If an override string is not empty, we will use it explicitly and fail if

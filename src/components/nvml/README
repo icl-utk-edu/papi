@@ -1,154 +1,66 @@
-The PAPI NVML component provides an interface to the NVidia Management
-Library (nvml, libnvidia-ml).
+General information
+-------------------
 
-In versions 8 and later part of the CUDA Toolkit, The NVIDIA
-Management Library is no longer a separate download and is installed
-with CUDA. For this reason, we use some of the same environment 
-variables as the cuda component. Those instructions are duplicated
-here.
+The PAPI NVML component provides an interface to the NVIDIA Management 
+LIBRARY (nvml). The default name of the library is libnvidia-ml.so.
+ 
+This PAPI CUDA component has been developed and tested using CUDA
+version 10.1 and the associated CUPTI library. CUPTI is released with
+the CUDA Tools SDK.
 
-BUILD TIME ENVIRONMENT VARIABLES REQUIRED: PAPI_CUDA_ROOT. This is the
-CUDA root directory. The default is /opt/cuda. It is seldom correct.
+How to install PAPI with the NVML component?
+-------------------------------------------- 
+
+The NVML component is provided by NVIDIA as a standard part of the
+CUDA Toolkit download. Two of the same libraries are required for the
+CUDA and NVML components. To avoid confusion or the use of multiple
+versions of the same library, the NVML component uses the same
+environment variable (PAPI_CUDA_ROOT) and overrides as CUDA. Those two
+libraries are libcuda.so, and libcudart.so.
+
+There is ONE required environment variable: PAPI_CUDA_ROOT. This is
+required for both compiling, and at runtime. 
+
 An example that works on ICL's Saturn system (at this writing):
-
 export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
 
+Within PAPI_CUDA_ROOT, we expect the following standard directories:
+PAPI_CUDA_ROOT/include
+PAPI_CUDA_ROOT/lib64
+
 For a standard installed system, this is the only environment variable
-required for both compile and runtime. LD_LIBRARY_PATH does not have
-to be modified.
+required for both compile and runtime. 
 
-On some systems (particularly the ICL Saturn system), environment
-variables for CUDA will e preset, or a module load command (e.g.
-'module load cuda') will automatically set environment variables like
-CUDA_ROOT, CUDA_HOME, or CUDADIR, and modify LD_LIBRARY_PATH to match
-this. To avoid conflicts with existing settings, you may wish to (for
-example):
+System configurations can vary. Some systems use Spack, a package
+manager, to automatically keep paths straight. Others (like our own
+ICL Saturn System) require "module load" commands to provide some
+services, e.g. 'module load cuda-10.1', and these may also set
+environment variables and change the LD_LIBRARY_PATH search order.
 
-export PAPI_CUDA_ROOT=${CUDA_ROOT} 
+Users may require the help of sysadmin personnel to navigate these
+facilities and gain access to the correct libraries.
 
-Using whatever existing environment variable is correct. Typically you
-can find such variables by filtering the output of 'env', e.g.
-
-env | grep "cuda" 
-
-to show every environment variable containing 'cuda' in a setting.
-
-Although seldom necessary, it is possible to override other
-compile-time directories with environment variables, all starting
-with PAPI_.
-
-PAPI_CUDA_INC     default $PAPI_CUDA_ROOT/include
-PAPI_NVML_INC     default $PAPI_CUDA_ROOT/include
-PAPI_NVML_STUBS   default $PAPI_CUDA_ROOT/lib64/stubs
-
-The "stubs" directory contains dummy libraries for libcuda.so and
-libnvidia-ml.so that allows PAPI to be linked on network systems (like
-supercomputers) where the compile machine (or head node) may not have
-any GPUs installed; and thus no nvidia dynamic libs available, but the
-run-target will.  (The component will fail if the first libcuda.so
-found on the run-target is the stubs directory.)
-
-RUNTIME LIBRARIES REQUIRED: libcuda.so, libcudart.so, libnvidia-ml.so
-
-RUNTIME ENVIRONMENT VARIABLES: The component allows the standard
-library search protocol to be overridden with environment variables.
-If it doesn't find the library that way, it will search the "standard
-paths"; meaning the directories given by the environment variable
-LD_LIBRARY_PATH, followed by the default Linux locations /usr/lib64
-and /lib64. The following variables are the optional overrides for
-this component, in priority order:
-
-PAPI_NVML_LIBNAME    default "libnvidia-ml.so"
-PAPI_NVML_LIBS       default $(PAPI_CUDA_LIBS)
-PAPI_CUDA_RTLIBS     default $(PAPI_CUDA_LIBS) 
-PAPI_CUDA_LIBS       default $(PAPI_CUDA_ROOT)/lib64
-PAPI_CUDA_ROOT       default /opt/cuda
-
-libcuda.so: We use the first found of: 
-$(PAPI_CUDA_LIBS)/libcuda.so
-$(PAPI_CUDA_ROOT)/lib64/libcuda.so
-libcuda.so on the standard paths.
-
-libcudart.so: The RunTime library; we use the first found of:
-$(PAPI_CUDA_RTLIBS)/libcudart.so
-PAPI_CUDA_ROOT/lib64/libcudart.so
-libcudart.so on the standard paths.
-
-libnvidia-ml.so: The nvidia Management Library.
-NOTE: libnvidia-ml.so is typically a link to a current version of it,
-such as libnvidia-ml.so.418.67. However, on many systems we have
-encountered, the link has not been made or points at the /stubs
-library, which is not functional. A workaround for that is setting
-PAPI_NVML_LIBNAME="libnvidia-ml.so.418.67" (or whatever the current
-library name happens to be on your system). The default is
-PAPI_NVML_LIBNAME="libnvidia-ml.so".
-
-You can also set PAPI_NVML_LIBS as the correct path to the library, or
-do both of these things (force the path, and force the name).
-
-We use the first found of the following:
-$(PAPI_NVML_LIBS)/$(PAPI_NVML_LIBNAME) 
-$(PAPI_NVML_ROOT)/lib64/$(PAPI_NVML_LIBNAME) 
-$(PAPI_CUDA_LIBS)/$(PAPI_NVML_LIBNAME) 
-$(PAPI_CUDA_ROOT)/lib64/$(PAPI_NVML_LIBNAME) 
-$(PAPI_NVML_LIBNAME) on the standard paths.
-
-LD_LIBRARY_PATH: Instead of specifying the above path environment
-variables, it is possible to specify runtime library locations in the
-standard path. However, include the existing path as part of the new
-path, either in front or at the rear. An example: 
-
-export LD_LIBRARY_PATH=${PAPI_CUDA_ROOT}/lib64:${LD_LIBRARY_PATH}
-
-Configure PAPI with NVML enabled.  
-    % cd src
-    % ./configure --prefix=some_location --with-components="nvml"
+Configure PAPI with NVML enabled. We presume you have navigated to the
+directory papi/src. In that directory:
+    % ./configure --with-components="nvml"
 
 Build with PAPI_CUDA_ROOT specified (ICL's Saturn example again):
     % export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
     % make 
 
-Testing the component requires that libraries for PAPI, CUDA, NVML
-can be found or are statically linked in to the executable. The
-component libraries cannot be statically linked; only shared object
-(.so) libraries can be used.
+TESTING the component is installed: Still from papi/src:
+    % utils/papi_component_avail
 
-Note libraries may be found in different places on different systems;
-the point is that we need at minimum the environment variable
-$PAPI_CUDA_ROOT defined. The underscores and caps are required.
+For the NVML component to be operational, it must find the dynamic
+libraries libcuda.so, libcudart.so, and libnvidia-ml.so.
 
-Before starting working with the nvml component, verify it's active by
-running:
-   % ./papi_component_avail"
-and check if it listed under the "Active Components" list.
+If any of these are not found (or are not functional) then the
+component will be listed as "disabled" with a reason explaining the
+problem. If libraries were not found, then they are not in the
+expected places. The component can be configured to look for each of
+these libraries in a specific place, and using an alternate name if
+desired. Detailed instructions are contained in the Rules.nvml file.
+They are technical, users may wish to enlist the help of a sysadmin.
 
-------------------------------- NOTES -------------------------------
-Other download packages may be available at 
-https://developer.nvidia.com/gpu-deployment-kit
-
-NVML used to have its own configure step. This is no longer necessary.
-
-At build-time the nVidia compiler, nvcc, needs to be in your path.
-
-Please refer to
-http://developer.download.nvidia.com/assets/cuda/files/CUDADownloads/NVML/nvml.pdf
-for details about the NVML library.
-
-Power Limiting using NVML (aka power capping) requires root access.
-
-PAPI has added support for power limiting using NVML (on supported
-devices from the Kepler family or later).  The executable needs to
-have root permissions to change the power limits on the device.
-
-The power_management_limit can be written to set a limit (in
-milliWatts) to the power consumption by DEVICE.  The value that can
-be written needs to be between the
-power_management_limit_constraint_min and
-power_management_limit_constraint_max.
-
-nvml:::DEVICE:power_management_limit
-nvml:::DEVICE:power_management_limit_constraint_min
-nvml:::DEVICE:power_management_limit_constraint_max
-
-A test for writing of the power_management_limit can be found in the
-nvml/tests/ directory.
+To find a list of NVML supported events:
+    % utils/papi_native_avail | grep -i NVML
