@@ -89,12 +89,12 @@ PAPI_CUDA_CUPTI = \"\"
 # static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
 # static char cuda_cupti[]=PAPI_CUDA_CUPTI;
 
-MACRODEF = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME) -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI)
+CUDA_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME) -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI)
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
-CFLAGS += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include -g $(MACRODEF)
+CFLAGS += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include -g $(CUDA_MACS)
 LDFLAGS += $(LDL) -g
 
 linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling

@@ -89,12 +89,12 @@ PAPI_NVML_MAIN = \"\"
 # static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
 # static char nvml_main[]=PAPI_NVML_MAIN;
 
-MACRODEF = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME) -DPAPI_NVML_MAIN=$(PAPI_NVML_MAIN)
+NVML_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME) -DPAPI_NVML_MAIN=$(PAPI_NVML_MAIN)
 
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
-CFLAGS += -I$(PAPI_CUDA_ROOT)/include -g $(MACRODEF)
+CFLAGS += -I$(PAPI_CUDA_ROOT)/include -g $(NVML_MACS)
 LDFLAGS += $(LDL) -g
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)
