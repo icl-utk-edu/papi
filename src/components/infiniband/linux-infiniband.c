@@ -126,6 +126,7 @@ make_ib_event_description(const char* input_str, int extended)
 {
    int i, len;
    char *desc = 0;
+   char *ext_str = 0; 
    if (! input_str)
       return (0);
    
@@ -135,7 +136,177 @@ make_ib_event_description(const char* input_str, int extended)
       return (0);
    }
    len = strlen(input_str);
-   
+
+   // append additional info to counter description
+   if (extended)
+       ext_str = "64-bit";
+   else 
+       ext_str = "32-bit";
+
+   // list of event descriptions
+   if (strstr(input_str, "rx_atomic_requests")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).", 
+                "Number of received ATOMIC requests for the associated Queue Pairs",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "out_of_buffer")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of drops which occurred due to lack of Work Queue Entry for the associated Queue Pairs",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "out_of_sequence")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of out of sequence packets received",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "lifespan")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Maximum sampling period of the counters in milliseconds",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "rx_read_requests")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of received READ requests for the associated Queue Pairs",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "rx_write_requests")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of received WRITE requests for the associated Queue Pairs",
+                ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_rcv_data")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).", 
+                "Total number of data octets, divided by 4 (lanes), received on all Virtual Lanes. "
+                "Multiply this by 4 to get bytes", 
+                 ext_str);
+       return (desc);
+   } 
+   if (strstr(input_str, "port_rcv_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets received on all Virtual Lanes from this port, including packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_multicast_rcv_packets") || strstr(input_str, "multicast_rcv_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of multicast packets, including multicast packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_unicast_rcv_packets") || strstr(input_str, "unicast_rcv_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of unicast packets, including unicast packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_xmit_data")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of data octets, divided by 4 (lanes), transmitted on all Virtual Lanes. " 
+                "Multiply this by 4 to get bytes",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_xmit_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets transmitted on all Virtual Lanes from this port, including packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_rcv_switch_relay_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets received on port that were discarded"
+                " because they could not be forwarded by switch relay",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_rcv_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets containing an error that were received on the port",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_rcv_constraint_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets received on the switch physical port that are discarded",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "local_link_integrity_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of times the count of local physical errors exceeded threshold",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_xmit_wait")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of ticks during which port had data to transmit but no data was sent during the entire tick",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_multicast_xmit_packets") || strstr(input_str, "multicast_xmit_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of multicast packets transmitted on all VLs from port,"
+                " including multicast packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_unicast_xmit_packets") || strstr(input_str, "unicast_xmit_packets")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of unicast packets transmitted on all VLs from port,"
+                " including unicast packets containing errors",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_xmit_discards")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of outbound packets discarded by the port because it is down or congested",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_xmit_constraint_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets not transmitted from the switch physical port",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "port_rcv_remote_physical_errors")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of packets marked with EBP (End of Bad Packet) delimiter received on the port",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "symbol_error")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of minor link errors detected on one or more physical lanes",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "VL15_dropped")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Number of incoming VL15 packets (can include management packets) dropped due to resource limitations of the port",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "link_error_recovery")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
+                "Total number of times the Port Training state machine has successfully completed the link error recovery process",
+                 ext_str);
+       return (desc);
+   }
+   if (strstr(input_str, "link_downed")) {
+       snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).", 
+                "Total number of times the Port Training state machine has failed link error recovery process and downed the link",
+                ext_str);
+       return (desc);
+   }
+ 
+   // default event description: re-format the filename
    snprintf(desc, PAPI_MAX_STR_LEN, "%s (%s).",
            input_str, (extended ? "free-running 64bit counter" :
             "overflowing, auto-resetting counter"));
