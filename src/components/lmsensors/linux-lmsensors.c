@@ -4,13 +4,15 @@
  * @author  Joachim Protze
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
+ * @mods    Rizwan Ashraf
+ *          rizwan@icl.utk.edu
  *
  * @ingroup papi_components
  *
  *
  * LM_SENSORS component 
  * 
- * Tested version of lm_sensors: 3.1.1
+ * Tested version of lm_sensors: 3.4.0
  *
  * @brief 
  *  This file has the source code for a component that enables PAPI-C to access
@@ -112,6 +114,7 @@ static const sensors_chip_name *(*sensors_get_detected_chipsPtr)(const sensors_c
 static const sensors_feature *(*sensors_get_featuresPtr)(const sensors_chip_name *name, int *nr);
 static const sensors_subfeature *(*sensors_get_all_subfeaturesPtr)(const sensors_chip_name *name,
 			    const sensors_feature *feature, int *nr);
+static const char *(*sensors_get_adapter_namePtr)(const sensors_bus_id *bus);  
 
 // file handles used to access lmsensors libraries with dlopen
 static void* dl1 = NULL;
@@ -163,6 +166,334 @@ detectSensors( void )
 	return id;
 }
 
+static char*
+makeEventDescription(const char* featureLabel, const sensors_feature* feature, const sensors_subfeature* subFeature, const sensors_bus_id* bus)
+{
+ 	char *desc = 0;
+	char *sensor = 0;
+	char *units = 0;
+
+	desc = (char*) papi_calloc (PAPI_MAX_STR_LEN, 1);
+	sensor = (char*) papi_calloc (PAPI_MAX_STR_LEN, 1);
+	units = (char*) papi_calloc (PAPI_MIN_STR_LEN, 1);
+	if (desc == 0 || sensor == 0 || units == 0) {
+		PAPIERROR("cannot allocate memory for event description");
+		return (0);
+	}
+
+	switch (feature->type) {
+		case SENSORS_FEATURE_IN:
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_IN_INPUT:
+					sensor = "Measured voltage";
+					break;
+				case SENSORS_SUBFEATURE_IN_MIN:
+					sensor = "Minimum voltage limit";
+					break;
+				case SENSORS_SUBFEATURE_IN_MAX:
+					sensor = "Maximum voltage limit";
+					break;	
+				case SENSORS_SUBFEATURE_IN_LCRIT:
+					sensor = "Low critical voltage";
+					break; 
+				case SENSORS_SUBFEATURE_IN_CRIT:
+					sensor = "High critical voltage";
+					break;
+				case SENSORS_SUBFEATURE_IN_AVERAGE:
+					sensor = "Average measured voltage";
+					break;
+				case SENSORS_SUBFEATURE_IN_LOWEST:
+					sensor = "Lowest measured voltage";
+					break;
+				case SENSORS_SUBFEATURE_IN_HIGHEST:
+                                        sensor = "Highest measured voltage";
+					break;
+				case SENSORS_SUBFEATURE_IN_ALARM:
+					sensor = "Voltage value which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_IN_MIN_ALARM:
+					sensor = "Minimum voltage value which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_IN_MAX_ALARM:
+					sensor = "Maximum voltage value which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_IN_BEEP:
+					sensor = "Voltage value which will result in beeping";
+					break;
+				case SENSORS_SUBFEATURE_IN_LCRIT_ALARM:
+					sensor = "Low critical voltage which will result in an alarm";
+					break; 
+				case SENSORS_SUBFEATURE_IN_CRIT_ALARM:
+					sensor = "High critical voltage which will result in an alarm";
+					break;
+				default:
+					sensor = "Voltage value with unknown attribute";
+			}
+			units = "Volts";
+			break;
+		case SENSORS_FEATURE_FAN:
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_FAN_INPUT:
+					sensor = "Measured fan speed";
+					break;
+				case SENSORS_SUBFEATURE_FAN_MIN:
+					sensor = "Minimum fan speed";
+					break;
+				case SENSORS_SUBFEATURE_FAN_MAX:
+					sensor = "Maximum fan speed";
+					break;
+				case SENSORS_SUBFEATURE_FAN_ALARM:
+					sensor = "Fan speed which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_FAN_FAULT:
+					sensor = "Fan speed which will result in a fault";
+					break;
+				case SENSORS_SUBFEATURE_FAN_DIV:
+					sensor = "Fan speed div";
+					break;
+				case SENSORS_SUBFEATURE_FAN_BEEP:
+					sensor = "Fan speed which will result in beeping";
+					break;
+				case SENSORS_SUBFEATURE_FAN_PULSES:
+					sensor = "Fan speed pulses";
+					break;
+				case SENSORS_SUBFEATURE_FAN_MIN_ALARM:
+					sensor = "Minimum fan speed which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_FAN_MAX_ALARM:
+					sensor = "Maximum fan speed which will result in an alarm";
+					break;
+				default:
+					sensor = "Fan speed with unknown attribute";
+			}
+			units = "RPM";
+			break;
+		case SENSORS_FEATURE_TEMP:
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_TEMP_INPUT:
+					sensor = "Measured temperature";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_MAX:
+					sensor = "Maximum temperature limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_MAX_HYST:
+					sensor = "Maximum temperature hysteresis limit. This is usually slightly lower than maximum limit and is used to safely clear maximum temperature condition";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_MIN:
+					sensor = "Minimum temperature limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_CRIT:
+					sensor = "Critical temperature limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_CRIT_HYST:
+					sensor = "Critical temperature hysteresis limit. This is usually slightly lower than critical limit and is used to safely clear critical temperature condition";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_LCRIT:
+					sensor = "Critical low temperature limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_EMERGENCY:
+					sensor = "Emergency temperature limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_EMERGENCY_HYST:
+					sensor = "Emergency temperature hysteresis limit. This is usually slightly lower than emergency limit and is used to safely clear emergency temperature condition";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_LOWEST:
+					sensor = "Lowest measured temperature";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_HIGHEST:
+					sensor = "Highest measured temperature";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_MIN_HYST:
+					sensor = "Minimum temperature hysteresis limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_LCRIT_HYST:
+					sensor = "Critical low temperature hysteresis limit";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_TYPE:
+					sensor = "Temperature sensor used for measurement. Possibilities: 1) PII/Celeron Diode, 2) 3904 transistor, 3) thermal diode, 4) thermistor, 5) AMD AMDSI, 6) Intel PECI"; 
+					break;
+				case SENSORS_SUBFEATURE_TEMP_OFFSET:
+					sensor = "Temperature offset";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_BEEP:
+					sensor = "Temperature which will result in beeping";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_EMERGENCY_ALARM:
+					sensor = "Emergency temperature limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_TEMP_LCRIT_ALARM:
+					sensor = "Critical low temperature limit which will result in an alarm";
+					break;
+				default:
+					sensor = "Temperature with unknonwn attribute";
+			}
+			units = "Celsius";
+			break;
+		case SENSORS_FEATURE_POWER:
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_POWER_AVERAGE:
+					sensor = "Average power over a time interval";
+					break;
+				case SENSORS_SUBFEATURE_POWER_AVERAGE_HIGHEST:
+					sensor = "Highest average power";
+					break;
+				case SENSORS_SUBFEATURE_POWER_AVERAGE_LOWEST:
+					sensor = "Lowest average power";
+					break;
+				case SENSORS_SUBFEATURE_POWER_INPUT:
+					sensor = "Measured absolute power";
+					break;
+				case SENSORS_SUBFEATURE_POWER_INPUT_HIGHEST:
+					sensor = "Highest measured power";
+					break;
+				case SENSORS_SUBFEATURE_POWER_INPUT_LOWEST:
+					sensor = "Lowest measured power";
+					break;
+				case SENSORS_SUBFEATURE_POWER_CAP:
+					sensor = "Power cap limit";
+					break;
+				case SENSORS_SUBFEATURE_POWER_CAP_HYST:
+					sensor = "Power cap hysteresis limit. This is usually slightly lower than the power cap limit and is used to safely clear the violation of power capping limit";
+					break;
+				case SENSORS_SUBFEATURE_POWER_MAX:
+					sensor = "Maximum power limit";
+					break;
+				case SENSORS_SUBFEATURE_POWER_CRIT:
+					sensor = "Critical power limit";
+					break;
+				case SENSORS_SUBFEATURE_POWER_AVERAGE_INTERVAL:
+					sensor = "Time interval over which average power is calculated/reported";
+					break;
+				case SENSORS_SUBFEATURE_POWER_ALARM:
+					sensor = "Power limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_POWER_CAP_ALARM:
+					sensor = "Power cap limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_POWER_MAX_ALARM:
+					sensor = "Maximum power limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_POWER_CRIT_ALARM:
+					sensor = "Critical power limit which will result in an alarm";
+					break;
+				default:
+					sensor = "Power with unknown attribute";
+			}
+			units = "Watts";
+			break;
+		case SENSORS_FEATURE_ENERGY:
+			sensor = "Energy consumed";
+			units = "Joules";
+			break;
+		case SENSORS_FEATURE_CURR:
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_CURR_INPUT:
+					sensor = "Measured current";
+					break;
+				case SENSORS_SUBFEATURE_CURR_MIN:
+					sensor = "Minimum current limit";
+					break;
+				case SENSORS_SUBFEATURE_CURR_MAX:
+					sensor = "Maximum current limit";
+					break;
+				case SENSORS_SUBFEATURE_CURR_LCRIT:
+					sensor = "Critical low current limit";
+					break;
+				case SENSORS_SUBFEATURE_CURR_CRIT:
+					sensor = "Critical current limit";
+					break;
+				case SENSORS_SUBFEATURE_CURR_AVERAGE:
+					sensor = "Average current";
+					break;
+				case SENSORS_SUBFEATURE_CURR_LOWEST:
+					sensor = "Lowest measured current";
+					break;
+				case SENSORS_SUBFEATURE_CURR_HIGHEST:
+					sensor = "Highest measured current";
+					break;
+				case SENSORS_SUBFEATURE_CURR_ALARM:
+					sensor = "Current reading which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_CURR_MIN_ALARM:
+					sensor = "Minimum current limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_CURR_MAX_ALARM:
+					sensor = "Maximum current limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_CURR_BEEP:
+					sensor = "Current reading which will result in beeping";
+					break;
+				case SENSORS_SUBFEATURE_CURR_LCRIT_ALARM:
+					sensor = "Critical low current limit which will result in an alarm";
+					break;
+				case SENSORS_SUBFEATURE_CURR_CRIT_ALARM:
+					sensor = "Critical current limit which will result in an alarm";
+					break;
+				default:
+					sensor = "Current with unknown attribute";
+			}
+			units = "Amperes";
+			break;
+		case SENSORS_FEATURE_HUMIDITY:
+			sensor = "Humidity reading";
+			units = "Percentage";
+			break;
+		case SENSORS_FEATURE_MAX_MAIN: // The description of this feature is unclear.
+			sensor = "Feature: MAX_MAIN";
+			units = "N/A";
+			break;
+		case SENSORS_FEATURE_VID: // voltage identification: value set in BIOS to set core voltage of processor
+			sensor = "Voltage identification";
+			units = "Volts";
+			break;
+		case SENSORS_FEATURE_INTRUSION: // chassis intrusion detection 
+			switch (subFeature->type) {
+				case SENSORS_SUBFEATURE_INTRUSION_ALARM:
+					sensor = "Chassis intrusion detection alarm. Flag which indicates whether an alarm will result in case of intrusion";
+					break;
+				case SENSORS_SUBFEATURE_INTRUSION_BEEP:
+					sensor = "Chassis intrusion detection beep. Flag which indicates whether beeping will occur in case of intrusion";
+					break;
+				default:
+					sensor = "Chassis intrusion flag";
+			} 
+			units = "N/A";
+			break;
+		case SENSORS_FEATURE_MAX_OTHER: // The description of this feature is unclear.
+			sensor = "Feature: MAX_OTHER";
+			units = "N/A";
+			break;
+		case SENSORS_FEATURE_BEEP_ENABLE: // 
+			sensor = "Flag which indicates whether beeping is enabled or not";
+			units = "N/A";
+			break;
+		case SENSORS_FEATURE_MAX: // The description of this feature is unclear.
+			sensor = "Feature: MAX";
+			units = "N/A";
+			break;
+		default:
+			sensor = "Feature: UNKNWON";
+			units = "N/A";
+	}
+
+	/* compose the description with all available info */	
+	if (subFeature->flags == SENSORS_MODE_R) { // readable sensor only
+		snprintf (desc, PAPI_MAX_STR_LEN, "%s (read-only) for %s. Units: %s. Adapter: %s.",
+		  	sensor, featureLabel, units, sensors_get_adapter_namePtr(bus));
+	} else if ((subFeature->flags == SENSORS_MODE_W) || 
+		   (subFeature->flags == (SENSORS_MODE_W + SENSORS_MODE_R))) { // writable value
+		snprintf (desc, PAPI_MAX_STR_LEN, "%s (writeable) for %s. Units: %s. Adapter: %s.",
+                        sensor, featureLabel, units, sensors_get_adapter_namePtr(bus));
+	} else if (subFeature->flags == (SENSORS_MODE_R + SENSORS_COMPUTE_MAPPING)) {  // affected by the computation rules of the main feature
+ 		snprintf (desc, PAPI_MAX_STR_LEN, "%s (affected by computation rules) for %s. Units: %s. Adapter: %s.",
+                        sensor, featureLabel, units, sensors_get_adapter_namePtr(bus));
+	} else {
+		snprintf (desc, PAPI_MAX_STR_LEN, "%s for %s. Units: %s. Adapter: %s.",
+                        sensor, featureLabel, units, sensors_get_adapter_namePtr(bus));
+	}
+
+	return (desc);
+}
 
 /*
  * Create the native events for particulare component (!= 0)
@@ -221,7 +552,8 @@ createNativeEvents( void )
 			  chipnamestring, featurelabel, sub->name );
 
 		 strncpy( lm_sensors_native_table[id].description,
-			  lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
+			  makeEventDescription(featurelabel, feature, sub, &chip_name->bus), 
+			  PAPI_MAX_STR_LEN );
                  lm_sensors_native_table[id].description[PAPI_MAX_STR_LEN-1] = '\0';
 
 		 /* The selector has to be !=0 . Starts with 1 */
@@ -270,7 +602,6 @@ getEventValue( unsigned event_id )
 
 	return ( ( long_long ) ( value * 1000 ) );
 }
-
 
 /*****************************************************************************
  *******************  BEGIN PAPI's COMPONENT REQUIRED FUNCTIONS  *************
@@ -458,6 +789,13 @@ link_lmsensors_libraries ()
 			"lmsensor function sensors_get_all_subfeatures.",PAPI_MAX_STR_LEN);
 		return ( PAPI_ENOSUPP );
 	}
+	sensors_get_adapter_namePtr = dlsym(dl1, "sensors_get_adapter_name"); 
+	if (dlerror() != NULL)  
+	{
+		strncpy(_lmsensors_vector.cmp_info.disabled_reason,
+			"lmsensor function sensors_get_adapter_name not found.", PAPI_MAX_STR_LEN);
+		return ( PAPI_ENOSUPP );
+	}
 
 	return ( PAPI_OK );
 }
@@ -531,7 +869,6 @@ _lmsensors_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     *events = cached_counts;
     return PAPI_OK;
 }
-
 
 static int
 _lmsensors_shutdown_component( void )
