@@ -56,12 +56,12 @@ static char *RSMI_ERROR_STRINGS[]={
 
 #define DLSYM_SMI(name)                                                 \
     do {                                                                \
-        name##Ptr = dlsym(dlSMI, #name);                                \
+        name##Ptr = dlsym(dl1, #name);                                  \
         if (dlerror()!=NULL) {                                          \
             snprintf(_rocm_smi_vector.cmp_info.disabled_reason,         \
                 PAPI_MAX_STR_LEN,                                       \
-                "The function '%s' was not found in dynamic library "   \
-                "librocm_smi64.so.", #name);                            \
+                "The function '%s' was not found in SMI library.",      \
+                #name);                                                 \
             fprintf(stderr, "%s\n",                                     \
                 _rocm_smi_vector.cmp_info.disabled_reason);             \
             name##Ptr = NULL;                                           \
@@ -244,7 +244,8 @@ DECLARE_RSMI(rsmi_shut_down, (void));
 DECLARE_RSMI(rsmi_status_string, (rsmi_status_t status, const char **status_string));
 
 // Globals.
-static void *dlSMI      = NULL;         // dynamic library handles.
+static void     *dl1 = NULL;
+static char     rocm_smi_main[]=PAPI_ROCM_SMI_MAIN;
 static int      TotalEvents    = 0;     // Total Events we added.
 static int      ActiveEvents   = 0;     // Active events (number added by update_control_state).
 static int      SizeAllEvents  = 0;     // Size of the array.     
@@ -339,31 +340,37 @@ static int _rocm_smi_linkRocmLibraries()
         return PAPI_ENOSUPP;
     }
 
-    char *rocmsmi_root = getenv("PAPI_ROCMSMI_ROOT");
-    char *rocmsmi_libs = getenv("PAPI_ROCMSMI_LIBS");
-    char *rocmsmi_libname = getenv("PAPI_ROCMSMI_LIBNAME");
-    char rocmsmi_libname_default[]="librocm_smi64.so";
-    if (rocmsmi_libname == NULL) rocmsmi_libname = rocmsmi_libname_default; // use default if not set by user.
+    // collect any defined environment variables, or "NULL" if not present.
+    char *rocm_root =       getenv("PAPI_ROCM_ROOT");
+    dl1 = NULL;                                                 // Ensure reset to NULL.
 
-    dlSMI = NULL;
-    if (rocmsmi_libs != NULL) {
-        snprintf(path_name, 1024, "%s/%s", rocmsmi_libs, rocmsmi_libname);
-        dlSMI = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);
+    // Step 1: Process override if given.   
+    if (strlen(rocm_smi_main) > 0) {                            // If override given, it has to work.
+        dl1 = dlopen(rocm_smi_main, RTLD_NOW | RTLD_GLOBAL);    // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_SMI_MAIN override '%s' given in Rules.rocm_smi not found.", rocm_smi_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dlSMI == NULL && rocmsmi_root != NULL) {
-        snprintf(path_name, 1024, "%s/build/%s", rocmsmi_root, rocmsmi_libname);
-        dlSMI = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                              // No override,
+        dl1 = dlopen("librocm_smi64.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
     }
 
-    if (dlSMI == NULL) {                // time to use LD_LIBRARY_PATH, default libs.
-        dlSMI = dlopen(rocmsmi_libname, RTLD_NOW | RTLD_GLOBAL);
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, 1024, "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);  // PAPI Root check.
+        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
-        
-    if (dlSMI == NULL) {
-        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocmsmi_libname);
+
+    // Check for failure.
+    if (dl1 == NULL) {
+        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocm_smi64.so not found.");
         return(PAPI_ENOSUPP);
     }
+
+    // We have a dl1. (librocm_smi64.so).
 
 // SMI Library routines.
     DLSYM_SMI(rsmi_num_monitor_devices);
@@ -1850,7 +1857,7 @@ static int _rocm_smi_shutdown_component(void)
     CurrentValue = NULL;
 
     // close the dynamic libraries needed by this component.
-    dlclose(dlSMI);
+    dlclose(dl1);
     return (PAPI_OK);
 } // END routine.
 

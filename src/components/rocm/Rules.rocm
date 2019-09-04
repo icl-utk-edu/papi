@@ -58,12 +58,13 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 PAPI_ROCM_HSA = \"\"
 PAPI_ROCM_PROF = \"\"
 
-# An example of an override:
-# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so.1\"
+# Examples of an override:
+# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/hsa/lib/libhsa-runtime64.so.1.1.9\"
+# PAPI_ROCM_PROF = \"$(PAPI_ROCM_ROOT)/rocprofiler/lib/librocprofiler64.so.1.0.0\"
 
-# Note:  PAPI_ROCM_ROOT also apply to the ROCM_SMI component, which is
-# by installed by AMD when ROCM is installed; however, it must be
-# included separately for PAPI. 
+# Note:  PAPI_ROCM_ROOT also applies to the ROCM_SMI component, which is by
+# default installed by AMD when ROCM is installed; however, it must be
+# specified at configure time as a separate component for PAPI. 
 
 # Note:  If you change these overrides, PAPI should be rebuilt from scratch.
 #        From papi/src/
@@ -93,7 +94,7 @@ PAPI_ROCM_PROF = \"\"
 # static char rocm_hsa[]=PAPI_ROCM_HSA;
 # static char rocm_prof[]=PAPI_ROCM_PROF;
 
-MACRODEF = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF) 
+ROCM_MACS = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF) 
 
 COMPSRCS += components/rocm/linux-rocm.c
 COMPOBJS += linux-rocm.o
@@ -101,7 +102,7 @@ COMPOBJS += linux-rocm.o
 # Order is important here; there are multiple DIFFERENT hsa.h files.
 CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
 CFLAGS += -I$(PAPI_ROCM_ROOT)/rocprofiler/include
-CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(MACRODEF) -g 
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(ROCM_MACS) -g 
 LDFLAGS += $(LDL) -g
 
 linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)

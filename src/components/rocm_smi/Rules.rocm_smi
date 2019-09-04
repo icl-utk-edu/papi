@@ -1,16 +1,101 @@
-# Note: unlike -lname, we use -l:fullname to set complete name. 
-# -l: does not add 'lib' prefix or '.so' or '.a' suffix. This
-# lets us link with a versioned lib; see 'man ld' to verify.
-# e.g. -l:librocm_smi64.so.0.1.0
+# Set default if the root environment variable is not already set.
+# Note PAPI_ROCM_ROOT is an environment variable that must be set.
+# There are four other environment variables that must be exported
+# for runtime operation; see the README file.
+PAPI_ROCM_ROOT ?= /opt/rocm
 
-PAPI_ROCMSMI_ROOT ?= /opt/rocm_smi_lib
-PAPI_ROCMSMI_LIBS ?= $(PAPI_ROCMSMI_ROOT)/build
-PAPI_ROCMSMI_INC ?= $(PAPI_ROCMSMI_ROOT)/include/rocm_smi
-PAPI_ROCMSMI_LIBNAME ?= librocm_smi64.so 
+# For non-typical system configurations, the following 'runtime overrides' can
+# be set, as just a library name, or a full path and name. There cannot be any
+# spaces between the double quotes (which must be escaped as \"). An example:
+
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
+
+# By default, all overrides are empty strings.
+
+# If an override is not an empty string, it must work, or the component will be
+# disabled. 
+
+# Both at compile time and run time, the software depends on PAPI_ROCM_ROOT.
+# There is one library used by the ROCM_SMI component:
+# librocm_smi64.so
+
+# The standard installed location for this library, with override:
+# $(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so #O.R. PAPI_ROCM_SMI_MAIN
+#
+# There are many ways to cause this path to be known.  Spack is a package
+# manager used on supercomputers, Linux and MacOS.  If Spack is aware of ROCM,
+# it encodes the paths to the necessary libraries.
+
+# The environment variable LD_LIBRARY_PATH encodes a list of paths to
+# search for libraries; separated by a colon (:). These paths could be
+# added to LD_LIBRARY_PATH. 
+#
+# Warning: LD_LIBRARY_PATH often contains a list of directories that
+# are searched for libraries, some of these may be needed by other
+# packages you are using. Always add to LD_LIBRARY_PATH recursively;
+# for example: 
+# >export LD_LIBRARY_PATH=someNewLibraryDirectory:$LD_LIBRARY_PATH
+# which would append the existing LD_LIBRARY_PATH to the new directory
+# you wish to add.  Alternatively, you can prepend it: 
+# >export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:someNewLibraryDirectory
+# Which will search the existing libraries first, then your new
+# directory.
+
+# You can check on the value of LD_LIBRARY_PATH with 
+# echo $LD_LIBRARY_PATH
+
+# There may be other package managers or utilities, for example on a
+# system with modules; the command 'module load rocm' may modify
+# LD_LIBRARY_PATH.
+
+# A Linux system will also search for libraries by default in the
+# directories listed by /etc/ld.so.conf, and /usr/lib64, /lib64,
+# /usr/lib, /lib. 
+
+# OVERRIDES: These are by default empty strings (""), if set they must work.
+PAPI_ROCM_SMI_MAIN = \"\"
+
+# An example of an override:
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
+
+# Note:  PAPI_ROCM_ROOT also applies to the ROCM component ROCM_SMI is provided
+# by default when ROCM is installed; however, ROCM must be specified at
+# configure time as a separate component for PAPI. 
+
+# Note:  If you change these overrides, PAPI should be rebuilt from scratch.
+#        From papi/src/
+#        make clobber
+#        ./configure --with-components="rocm_smi"
+#        make  
+
+# An alternative, for both rocm and rocm_smi components:
+#        ./configure --with-components="rocm rocm_smi"
+
+# OPERATION, per library:
+# 1) If an override string is not empty, we will use it explicitly and fail if
+# it does not work. This means disabling the component; a reason for disabling
+# is shown using the papi utility, papi/src/utils/papi_component_avail
+
+# 2) We will attempt to open the library using the normal system library search
+# paths; if Spack is present and configured correctly it should deliver the
+# proper library. A failure here will be silent; we will proceed to (3).
+
+# 3) If that fails, we will try to find the library in the standard installed
+# locations listed above. If this fails, we disable the component, the reason
+# for disabling is shown using the papi utility,
+# papi/src/utils/papi_component_avail. 
+
+# DEFFLAGS is the macro defines for the two overrides. In the code we convert
+# these to string variables with the following lines:
+# static char rocm_smi_main[]=PAPI_ROCM_HSA;
+
+ROCM_SMI_MACS = -DPAPI_ROCM_SMI_MAIN=$(PAPI_ROCM_SMI_MAIN)
+
 COMPSRCS += components/rocm_smi/linux-rocm-smi.c
 COMPOBJS += linux-rocm-smi.o
-CFLAGS += -I$(PAPI_ROCMSMI_INC) -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi 
-LDFLAGS += -L$(PAPI_ROCMSMI_LIBS) -l:$(PAPI_ROCMSMI_LIBNAME)
+# CFLAGS specifies compile flags; need include files here, and macro defines.
+# Order is important here; there are multiple DIFFERENT hsa.h files.
+CFLAGS += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi $(ROCM_SMI_MACS) -g 
 LDFLAGS += $(LDL) -g
 
 linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)

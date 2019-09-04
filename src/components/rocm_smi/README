@@ -22,81 +22,69 @@ It can also be used to set limits on the power consumption or fan
 speed, using a PAPI_write() interface.
 
 How to install PAPI with the ROCM_SMI component?
--------------------------------------------- 
+------------------------------------------------
 
-These instructions are specific to the ICL environment; but may be useful to
-users if translated to their own working or testing environments.
+ROCM_SMI is installed as part of the AMD ROCM install; so we require
+the same environment variable as the ROCM component: PAPI_ROCM_ROOT.
+An example is provided below, setting PAPI_ROCM_ROOT to its default
+value:
 
-ICL testing was done (August 2019) on the ICL system "caffeine"; which has AMD
-equipment installed, and the ROCM interface software installed at /opt/rocm.
+export PAPI_ROCM_ROOT=/opt/rocm
 
-Depending on your system, this software may require environment variables to be
-defined. 
+For a standard installed system, this is the only environment variable
+that needs to be set, for both compile and runtime.
 
-A shell script in papi/src/components/rocm/tests/run_papi.sh contains an
-example of how to work with just the LD_LIBRARY_PATH (other than the four
-exports are that are needed by the AMD RocProfiler). This script works on the
-ICL test system Caffeine, you will need to change directory entries to match
-your own system. In a shell script, those exports (setting environment
-variables) go away when the shell exits. If you want to execute commands and
-programs from the command line instead, export the same environment variables
-from the command line.
+The above example works on ICL's Caffeine system.
 
-Many users would rather not change LD_LIBRARY_PATH. We can operate instead
-with other environment variables; those are described next. Note that
-if these environment variables are never defined, our code will try the
-default locations indicated below.
+Within PAPI_ROCM_ROOT, we expect the following standard directories:
+PAPI_ROCM_ROOT/rocm_smi/lib
+PAPI_ROCM_ROOT/rocm_smi/include/rocm_smi
 
-If your ROCM_SMI files are in these standard locations, you may not need to 
-export any variables at all. 
-
-Some environment variables are used at compile time, others at runtime, and 
-some at both times.
-
------COMPILE TIME-----
-The following variables are shown with their default values. If these defaults
-match your system, then you don't have to set them. Otherwise you can override
-the default by setting them, generally by 'export PAPI_ROCM_XXX=newvalue'. If
-PAPI_ROCMSMI_ROOT is set, the _LIBS and _INC defaults will use it.
-
-PAPI_ROCMSMI_ROOT       /opt/rocm_smi
-PAPI_ROCMSMI_LIBS       $(PAPI_ROCM_ROOT)/build
-PAPI_ROCMSMI_INC        $(PAPI_ROCM_ROOT)/include/rocm_smi
-PAPI_ROCMSMI_LIBNAME    librocm_smi64.so 
-
------RUNTIME-----
 One library is required for the PAPI ROCM component. The name is
-librocm_smi64.so (name can be overridden by export of PAPI_ROCMSMI_LIBNAME).
+librocm_smi64.so.
 
-We will look for PAPI_ROCMSMI_LIBNAME in the following directories, in this order,
-if the environment variable is defined (otherwise we don't try it).
+After the exports shown above, PAPI must be configured and built.
+When papi is installed, there will be a papi/src directory. Navigate
+to that, and execute the following:
 
-PAPI_ROCMSMI_LIBS
-PAPI_ROCMSMI_ROOT/build  (default for PAPI_ROCM_ROOT is /opt/rocm_smi).
-Any LD_LIBRARY_PATH
-Any default lib directory; e.g. /lib, /lib64, /usr/lib, /usr/lib64.
+> ./configure --with-components="rocm_smi"
+> make 
 
-These exports assume you have papi installed in your $HOME directory.  ICL
-developers copy-and-paste the following to the command line. The '#' lines are
-not actually necessary. Either PAPI_ROCM_ROOT or LD_LIBRARY_PATH is necessary. 
+If you are rebuilding PAPI, then before the configure step, execute
+> make clobber
 
-----ICL only Settings-----
-# These ONLY for Caffeine (an ICL test machine). 
-export PAPI_ROCMSMI_ROOT=/home/tonycastaldo/rocm_smi_lib
+TESTING the component is installed: Still from papi/src:
+> utils/papi_component_avail
 
------EXAMPLE OF CONFIGURATION AND BUILD-----
-Configure PAPI with ROCM_SMI enabled.  
-    % # from papi install directory:
-    % cd src
-    % ./configure --prefix=some_location --with-components="rocm_smi"
+If the component is functional, it will show that. Otherwise it will
+report it is disabled, and provide a reason why.
 
-Build with PAPI_ROCMSMI_ROOT specified only:
-    % export PAPI_ROCMSMI_ROOT=/home/tonycastaldo/rocm_smi_lib
-    % make 
+You can see what events are provided by a working component as
+follows: 
+> utils/papi_native_avail | grep -i "rocm_smi:::"
 
-To see if the component is active (and if not, why not):
-    % utils/papi_component_avail
 
-To find a list of ROCM supported events.
-    % utils/papi_native_avail | grep rocm_smi
+
+------------------------UNUSUAL INSTALLATIONS------------------------
+
+System configurations can vary. Some systems use Spack, a package
+manager, to automatically keep paths straight. Others (like our own
+ICL Saturn System) require "module load" commands to provide some
+services, e.g. 'module load rocm', and these may also set environment
+variables and change the LD_LIBRARY_PATH search order.
+
+Users may require the help of sysadmin personnel to navigate these
+facilities and gain access to the correct libraries.
+
+For the ROCM_SMI component to be operational, it must find the dynamic
+library librocm_smi64.so.  
+
+If it is not found (or is not functional) then the component will be
+listed as "disabled" with a reason explaining the problem. If
+libraries were not found, then they are not in the expected places.
+
+The component can be configured to look for each of these libraries in
+a specific place, and using an alternate name if desired. Detailed
+instructions are contained in the Rules.rocm_smi file.  They are
+technical, users may wish to enlist the help of a sysadmin.
 

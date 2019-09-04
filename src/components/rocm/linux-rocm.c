@@ -130,6 +130,12 @@ typedef struct _rocm_active_context_s {
 /* Function prototypes */
 static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl);
 
+// GLOBALS
+static void     *dl1 = NULL;
+static void     *dl2 = NULL;
+static char     rocm_hsa[]=PAPI_ROCM_HSA;
+static char     rocm_prof[]=PAPI_ROCM_PROF;
+
 /* ******  CHANGE PROTOTYPES TO DECLARE ROCM LIBRARY SYMBOLS AS WEAK  **********
  *  This is done so that a version of PAPI built with the rocm component can   *
  *  be installed on a system which does not have the rocm libraries installed. *
@@ -184,10 +190,6 @@ DECLAREROCMFUNC(rocprofiler_reset, (rocprofiler_t*, uint32_t));
 // const char * __attribute__((weak)) rocprofiler_error_string(void);
 const char *(*rocprofiler_error_stringPtr)(void);
 
-// file handles used to access rocm libraries with dlopen
-static void *dl1 = NULL;
-static void *dl2 = NULL;
-
 /* The PAPI side (external) variable as a global */
 papi_vector_t _rocm_vector;
 
@@ -211,7 +213,7 @@ static _rocm_control_t *global__rocm_control = NULL;
  */
 static int _rocm_linkRocmLibraries()
 {
-    char path_lib[1024];
+    char path_name[1024];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_rocm_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
@@ -219,49 +221,36 @@ static int _rocm_linkRocmLibraries()
     }
 
     // collect any defined environment variables, or "NULL" if not present.
-    char *rocm_root =       getenv("PAPI_ROCM_ROOT");
-    char *rocm_rproot =     getenv("PAPI_ROCM_RPROOT");
-    char *rocm_libs =       getenv("PAPI_ROCM_LIBS");
-    char *rocm_rplibs =     getenv("PAPI_ROCM_RPLIBS");
-    char *rocm_hsalibs =    getenv("PAPI_ROCM_HSALIBS");    
-    char *rocm_hsaname =    getenv("PAPI_ROCM_HSANAME");
-    char *rocm_libname =    getenv("PAPI_ROCM_LIBNAME");
+    char *rocm_root = getenv("PAPI_ROCM_ROOT");
+    dl1 = NULL;                                                 // Ensure reset to NULL.
 
-    // Allow override of libnames. Note if a libname is given by an environment
-    // variable, we will not check for the default name. If the name given is 
-    // not found, we fail.
-
-    char rocm_libname_default[] = "librocprofiler64.so";
-    if (rocm_libname == NULL) rocm_libname = rocm_libname_default;  // Set default if no env var.
-
-    char rocm_hsaname_default[] = "libhsa-runtime64.so";
-    if (rocm_hsaname == NULL) rocm_hsaname = rocm_hsaname_default;  // Set default if no env var.
-
-    // We have two ROCM libraries to find.
-    dl1 = NULL;
-    if (rocm_hsalibs != NULL) {
-        snprintf(path_lib, 1024, "%s/%s", rocm_hsalibs, rocm_hsaname);  // See if we have the lib there.
-        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    // Step 1: Process override if given.   
+    if (strlen(rocm_hsa) > 0) {                             // If override given, it has to work.
+        dl1 = dlopen(rocm_hsa, RTLD_NOW | RTLD_GLOBAL);     // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_HSA override '%s' given in Rules.rocm not found.", rocm_hsa);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dl1 == NULL && rocm_libs != NULL) {
-        snprintf(path_lib, 1024, "%s/%s", rocm_libs, rocm_hsaname);
-        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                                  // No override,
+        dl1 = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
-    if (dl1 == NULL && rocm_root != NULL) {
-        snprintf(path_lib, 1024, "%s/lib/%s", rocm_root, rocm_hsaname);
-        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, 1024, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
+        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
+    // Check for failure.
     if (dl1 == NULL) {
-        dl1 = dlopen(rocm_hsaname, RTLD_NOW | RTLD_GLOBAL);
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libhsa-runtime64.so not found.");
+        return(PAPI_ENOSUPP);
     }
 
-    if (!dl1) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocm_hsaname);
-        return(PAPI_ENOSUPP);                           // Failed to find libhsa-runtime64.so. 
-    }
+    // We have a dl1. (libhsa-runtime64.so).
 
     DLSYM_AND_CHECK(dl1, hsa_init);
     DLSYM_AND_CHECK(dl1, hsa_iterate_agents);
@@ -271,35 +260,35 @@ static int _rocm_linkRocmLibraries()
 
     //-------------------------------------------------------------------------
 
-    dl2 = NULL;
-    if (rocm_rplibs != NULL) {
-        snprintf(path_lib, 1024, "%s/%s", rocm_rplibs, rocm_libname); // See if we have the lib there.
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    dl2 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(rocm_prof) > 0) {                             // If override given, it has to work.
+        dl2 = dlopen(rocm_prof, RTLD_NOW | RTLD_GLOBAL);     // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_PROF override '%s' given in Rules.rocm not found.", rocm_prof);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
 
-    if (dl2 == NULL && rocm_rproot != NULL) {
-        snprintf(path_lib, 1024, "%s/lib/%s", rocm_rproot, rocm_libname);
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl2 == NULL) {                                                  // No override,
+        dl2 = dlopen("librocprofiler64.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
-    if (dl2 == NULL && rocm_root != NULL) {
-        snprintf(path_lib, 1024, "%s/lib/%s", rocm_root, rocm_libname);
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
+    // Step 3: Try the explicit install default. 
+    if (dl2 == NULL && rocm_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
+        dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
-    if (dl2 == NULL && rocm_root != NULL) {
-        snprintf(path_lib, 1024, "%s/rocprofiler/lib/%s", rocm_root, rocm_libname);
-        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);
-    }
-
+    // Check for failure.
     if (dl2 == NULL) {
-        dl2 = dlopen(rocm_libname, RTLD_NOW | RTLD_GLOBAL);
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocprofiler64.so not found.");
+        return(PAPI_ENOSUPP);
     }
 
-    if (!dl2) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "ROC library %s not found; see README for environment variables.", rocm_libname);
-        return(PAPI_ENOSUPP);                           // Failed to find libhsa-runtime64.so. 
-    }
+    // We have a dl2. (librocprofiler64.so).
 
     DLSYM_AND_CHECK(dl2, rocprofiler_get_info);
     DLSYM_AND_CHECK(dl2, rocprofiler_iterate_info);
