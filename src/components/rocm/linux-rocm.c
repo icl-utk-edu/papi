@@ -418,7 +418,7 @@ static int _rocm_add_native_events(_rocm_context_t * ctx)
     //       If that file doesn't exist, this iterate info fails with a general error (0x1000).
     // NOTE: We are *accumulating* into maxEventSize.
     for (i = 0; i < ctx->availAgentSize; i++) {
-        ROCM_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, 
+        ROCP_CALL_CK(rocprofiler_iterate_info, (&(ctx->availAgentArray[i]), ROCPROFILER_INFO_KIND_METRIC, 
             _rocm_count_native_events_callback, (void*)(&maxEventSize)), return (PAPI_EMISC));
     }
   
@@ -498,6 +498,23 @@ static int _rocm_init_component(int cidx)
     _rocm_vector.cmp_info.num_native_events = global__rocm_context->availEventSize;
     _rocm_vector.cmp_info.num_cntrs = _rocm_vector.cmp_info.num_native_events;
     _rocm_vector.cmp_info.num_mpx_cntrs = _rocm_vector.cmp_info.num_native_events;
+
+    ROCMDBG("Exiting _rocm_init_component cidx %d num_native_events %d num_cntrs %d num_mpx_cntrs %d\n",
+        cidx,
+        _rocm_vector.cmp_info.num_native_events,
+        _rocm_vector.cmp_info.num_cntrs,
+        _rocm_vector.cmp_info.num_mpx_cntrs);
+
+    if (_rocm_vector.cmp_info.num_native_events == 0) {
+        char *metrics = getenv("ROCP_METRICS"); 
+        if (metrics == NULL) {
+            strncpy(_rocm_vector.cmp_info.disabled_reason, "Environment Variable ROCP_METRICS is not defined, should point to a valid metrics.xml.", PAPI_MAX_STR_LEN);
+            return (PAPI_EMISC);
+        }
+
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "No events.  Ensure ROCP_METRICS=%s is correct.", metrics);
+        return (PAPI_EMISC);
+    }
 
     return (PAPI_OK);
 }

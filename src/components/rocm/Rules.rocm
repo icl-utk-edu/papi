@@ -1,22 +1,109 @@
+# Set default if the root environment variable is not already set.
+# Note PAPI_ROCM_ROOT is an environment variable that must be set.
+# There are four other environment variables that must be exported
+# for runtime operation; see the README file.
 PAPI_ROCM_ROOT ?= /opt/rocm
-PAPI_ROCM_HSAINC ?= $(PAPI_ROCM_ROOT)/include/hsa
-PAPI_ROCM_HSALIBS ?= $(PAPI_ROCM_ROOT)/lib
-PAPI_ROCM_LIBS ?= $(PAPI_ROCM_ROOT)/lib
-PAPI_ROCM_HSANAME ?= libhsa-runtime64.so 
-PAPI_ROCM_LIBNAME ?= librocprofiler64.so
-PAPI_ROCM_RPROOT ?= $(PAPI_ROCM_ROOT)/rocprofiler
-PAPI_ROCM_RPINC ?= $(PAPI_ROCM_RPROOT)/include
-PAPI_ROCM_RPLIBS ?= $(PAPI_ROCM_RPROOT)/lib
+
+# For non-typical system configurations, the following 'runtime overrides' can
+# be set, as just a library name, or a full path and name. There cannot be any
+# spaces between the double quotes (which must be escaped as \"). An example:
+
+# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so.1\"
+
+# By default, all overrides are empty strings.
+
+# If an override is not an empty string, it must work, or the component will be
+# disabled. 
+
+# Both at compile time and run time, the software depends on PAPI_ROCM_ROOT.
+# There are two libraries used by the ROCM component, they are:
+# libhsa-runtime64.so
+# librocprofiler64.so 
+
+# The standard installed locations for these libraries, with overrides:
+# $(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so     #O.R. PAPI_ROCM_HSA
+# $(PAPI_CUDA_ROOT)/lib/librocprofiler64.so     #O.R. PAPI_ROCM_PROF
+#
+# There are many ways to cause these paths to be known.  Spack is a
+# package manager used on supercomputers, Linux and MacOS.  If Spack
+# is aware of ROCM, it encodes the paths to the necessary libraries.
+
+# The environment variable LD_LIBRARY_PATH encodes a list of paths to
+# search for libraries; separated by a colon (:). These paths could be
+# added to LD_LIBRARY_PATH. 
+#
+# Warning: LD_LIBRARY_PATH often contains a list of directories that
+# are searched for libraries, some of these may be needed by other
+# packages you are using. Always add to LD_LIBRARY_PATH recursively;
+# for example: 
+# >export LD_LIBRARY_PATH=someNewLibraryDirectory:$LD_LIBRARY_PATH
+# which would append the existing LD_LIBRARY_PATH to the new directory
+# you wish to add.  Alternatively, you can prepend it: 
+# >export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:someNewLibraryDirectory
+# Which will search the existing libraries first, then your new
+# directory.
+
+# You can check on the value of LD_LIBRARY_PATH with 
+# echo $LD_LIBRARY_PATH
+
+# There may be other package managers or utilities, for example on a
+# system with modules; the command 'module load rocm' may modify
+# LD_LIBRARY_PATH.
+
+# A Linux system will also search for libraries by default in the
+# directories listed by /etc/ld.so.conf, and /usr/lib64, /lib64,
+# /usr/lib, /lib. 
+
+# OVERRIDES: These are by default empty strings (""), if set they must work.
+PAPI_ROCM_HSA = \"\"
+PAPI_ROCM_PROF = \"\"
+
+# An example of an override:
+# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so.1\"
+
+# Note:  PAPI_ROCM_ROOT also apply to the ROCM_SMI component, which is
+# by installed by AMD when ROCM is installed; however, it must be
+# included separately for PAPI. 
+
+# Note:  If you change these overrides, PAPI should be rebuilt from scratch.
+#        From papi/src/
+#        make clobber
+#        ./configure --with-components="rocm"
+#        make  
+
+# An alternative, for both rocm and rocm_smi components:
+#        ./configure --with-components="rocm rocm_smi"
+
+# OPERATION, per library:
+# 1) If an override string is not empty, we will use it explicitly and fail if
+# it does not work. This means disabling the component; a reason for disabling
+# is shown using the papi utility, papi/src/utils/papi_component_avail
+
+# 2) We will attempt to open the library using the normal system library search
+# paths; if Spack is present and configured correctly it should deliver the
+# proper library. A failure here will be silent; we will proceed to (3).
+
+# 3) If that fails, we will try to find the library in the standard installed
+# locations listed above. If this fails, we disable the component, the reason
+# for disabling is shown using the papi utility,
+# papi/src/utils/papi_component_avail. 
+
+# DEFFLAGS is the macro defines for the two overrides. In the code we convert
+# these to string variables with the following lines:
+# static char rocm_hsa[]=PAPI_ROCM_HSA;
+# static char rocm_prof[]=PAPI_ROCM_PROF;
+
+MACRODEF = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF) 
 
 COMPSRCS += components/rocm/linux-rocm.c
 COMPOBJS += linux-rocm.o
-CFLAGS += -I$(PAPI_ROCM_HSAINC) -I$(PAPI_ROCM_RPINC) -I$(PAPI_ROCM_RPROOT)/include -g 
-# Note: unlike -lname, we use -l:fullname to set complete name. 
-# -l: does not add 'lib' prefix or '.so' or '.a' suffix. This
-# lets us link with a versioned lib; see 'man ld' to verify.
-# e.g. -l:libhsa-runtime64.so.1.0
-
-LDFLAGS += $(LDL) -L$(PAPI_ROCM_HSALIBS) -l:$(PAPI_ROCM_HSANAME) -L$(PAPI_ROCM_RPLIBS) -l:$(PAPI_ROCM_LIBNAME) $(LDL) -Wl,-rpath=$(PAPI_ROCM_HSALIBS) -Wl,-rpath=$(PAPI_ROCM_RPLIBS) -g
+# CFLAGS specifies compile flags; need include files here, and macro defines.
+# Order is important here; there are multiple DIFFERENT hsa.h files.
+CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
+CFLAGS += -I$(PAPI_ROCM_ROOT)/rocprofiler/include
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(MACRODEF) -g 
+LDFLAGS += $(LDL) -g
 
 linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm/linux-rocm.c -o linux-rocm.o
+
