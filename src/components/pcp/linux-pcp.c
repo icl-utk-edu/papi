@@ -239,8 +239,11 @@ static struct timeval t1, t2;                                           // used 
 #define _time_gettimeofday if (0) gettimeofday                          /* change to 1 to enable gettimeofday for performance timings.    */
 
 
-static void* dllib1 = NULL;                                             // Our dynamic library pointer. 
-static char *pcp_libname;                                               // Name of our library.
+// file handle used to access pcp library with dlopen
+static void *dl1 = NULL;
+
+// string macro defined within Rules.pcp
+static char pcp_main[]=PAPI_PCP_MAIN;
 
 //-----------------------------------------------------------------------------
 // Using weak symbols (global declared without a value, so it defers to any
@@ -399,11 +402,10 @@ static int findNameHash(char *key)
 #define STRINGIFY(x) #x 
 #define TOSTRING(x) STRINGIFY(x)
 #define mGet_DL_FPtr(Name)                                                 \
-   Name##_ptr = dlsym(dllib1, TOSTRING(Name));                             \
+   Name##_ptr = dlsym(dl1, TOSTRING(Name));                                \
    if (dlerror() != NULL) {  /* If we had an error, */                     \
       snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,     \
-         "PCP library function %s not found in %s.", TOSTRING(Name),       \
-         pcp_libname);                                                     \
+         "PCP library function %s not found in lib.", TOSTRING(Name));     \
       return(PAPI_ENOSUPP);                                                \
    } /* end of macro. */
 
@@ -415,35 +417,36 @@ static int _local_linkDynamicLibraries(void)
    }
 
    char path_name[1024];
-   char pcp_libname_default[]="libpcp.so";
-   pcp_libname = getenv("PAPI_PCP_LIBNAME");                      // get user override on libname.
-   if (pcp_libname == NULL) pcp_libname = pcp_libname_default;    // If not present, use default.
-
    char *pcp_root = getenv("PAPI_PCP_ROOT"); 
-   char *pcp_libs = getenv("PAPI_PCP_LIBS");
    
-   dllib1 = NULL;
-   if (pcp_libs != NULL) {
-      snprintf(path_name, 1024, "%s/%s", pcp_libs, pcp_libname);  // try the path. 
-      dllib1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);         // Open lib.
+   dl1 = NULL;
+   // Step 1: Process override if given.   
+   if (strlen(pcp_main) > 0) {                                  // If override given, it has to work.
+      dl1 = dlopen(pcp_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+      if (dl1 == NULL) {
+         snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_PCP_MAIN override '%s' given in Rules.pcp not found.", pcp_main);
+         return(PAPI_ENOSUPP);   // Override given but not found.
+      }
    }
 
-   if (dllib1 == NULL && pcp_root != NULL) {
-      snprintf(path_name, 1024, "%s/lib64/%s", pcp_root, pcp_libname);  // Try path from root.
-      dllib1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);         // Open lib.
+   // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+   if (dl1 == NULL) {                                           // No override,
+      dl1 = dlopen("libpcp.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
    }
 
-   if (dllib1 == NULL) {                                          // If neither worked,
-      dllib1 = dlopen(pcp_libname, RTLD_NOW | RTLD_GLOBAL);       // Try LD_LIBRARY_PATH and defaults.
+   // Step 3: Try the explicit install default. 
+   if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, 1024, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
+      dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
-   if (dllib1 == NULL) {                                          // If all failed,
-      snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
-         "PCP library %s not found", pcp_libname);
+   // Check for failure.
+   if (dl1 == NULL) {
+      snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libpcp.so not found.");
       return(PAPI_ENOSUPP);
    }
-      
-   // We have dllib1. 
+
+   // We have dl1. 
 
 //-----------------------------------------------------------------------------
 // Collect pointers for routines in shared library.  All below will abort this
@@ -849,8 +852,6 @@ static int _pcp_init_component(int cidx)
 
    ret = _local_linkDynamicLibraries();
    if ( ret != PAPI_OK ) {                                              // Failure to get lib.
-      snprintf(reason, rLen, "Failed attempt to link to PCP "
-              "library '%s'.\n", pcp_libname);
       return PAPI_ESYS;
    }
 

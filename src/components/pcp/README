@@ -27,103 +27,69 @@ General Information
 ...
 +++ Repository: bitbucket/icl/papi/src/components/pcp
 
-How to install PAPI with the PCP component?
--------------------------------------------
-These instructions sometimes refer to the ICL development and
-testing environment; but may be useful to users if translated to
-their own working or testing environments.
-
 This PAPI PCP component has been developed and tested using PCP
 version 3.12.2.
 
-Depending on your system, this software may require environment
-variables to be defined. 
+How to install PAPI with the PCP component?
+-------------------------------------------
+There is ONE required environment variable: PAPI_PCP_ROOT. This is
+required for both compiling, and at runtime. 
 
-However, users should first try doing nothing. Although there are
-many options below, if PCP is installed in default directories,
-there may be no configuration required at all. Specifically, on
-Peak and Summit, we can find the PCP library named libpcp.so in
-/usr/lib64 (a directory searched by default) and we can find the
-necessary include files in /usr/include/pcp, which our software
-searches by default. Thus no changes are needed, including to
-LD_LIBRARY_PATH. 
+An example that works on ICL's Caffeine system (at this writing):
+export PAPI_PCP_ROOT=/usr
 
-If libraries are not in the default directories, then using
-exports (to set environment variables) the user can force
-searching of a specific path, first, to find a library or
-include directory. Users can also override the name of the PCP
-library (for example, to use a different version of the library
-for testing or comparison).
+Within PAPI_PCP_ROOT, we expect the following standard directories:
+PAPI_PCP_ROOT/include #OR# PAPI_PCP_ROOT/include/pcp
+PAPI_PCP_ROOT/lib64
 
-The following are the OPTIONAL environment variables:
+For a standard installed system, this is the only environment variable
+required for both compile and runtime. 
 
-PAPI_PCP_LIBS       If present, the path location of
-                    PAPI_PCP_LIBNAME (normally libpcp.so).
+System configurations can vary. Some systems use Spack, a package
+manager, to automatically keep paths straight. Others (like our own
+ICL Saturn System) require "module load" commands to provide some
+services, e.g. 'module load pcp', and these may also set environment
+variables and change the LD_LIBRARY_PATH search order.
 
-PAPI_PCP_ROOT       If present, we will look for PAPI_PCP_LIBNAME
-                    in PAPI_PCP_ROOT/lib64, but only if
-                    PAPI_PCP_LIBS was not defined, or no lib was
-                    found there.
+Users may require the help of sysadmin personnel to navigate these
+facilities and gain access to the correct libraries.
 
-PAPI_PCP_INC        The full path to find pcp include files;
-                    specifically <pmapi.h> and <impl.h>. Example:
-                    export PAPI_PCP_INC=/usr/include/papi
-
-PAPI_PCP_LIBNAME    If present, this is the only library name we
-                    will accept.
-
-In the cases of PAPI_PCP_LIBS or PAPI_PCP_ROOT above, if they are
-not defined or we do not find the library there, then we will
-still search the LD_LIBRARY_PATH directories, and the default
-directories. These include /lib, /lib64, /usr/lib and /usr/lib64.
-For compile time include files, a default search target is
-/usr/include/pcp. 
-
-Some environment variables are used at compile time, others at
-runtime, and some at both times.
-
------COMPILE TIME-----
-PAPI_PCP_INC,   if the files <pmapi.h> and <impl.h> are not on a
-                default path, this needs to be set.
-
------RUNTIME-----
-One library is required for the PAPI ROCM component. The name is
-libpcp.so (name can be overridden by export of PAPI_PCP_LIBNAME).
-
-HOWEVER, note that PCP interfaces with a daemon (a background
-program running on the machines), and if you use a batch system
-(like SLURM) so that your programs run on a different machine
-(node) than your login node, then it is possible one has the
-daemon installed and the other does not. This is the case for ICL
-developers on the Peak and Summit machines; the login nodes are
-not executing the PCP daemon, and the work nodes are. Thus to test
-the PCP component, you must 'jsrun --np 1 someprogram'. 
-
-These exports assume you have papi installed in your $HOME
-directory.  ICL developers: At this writing, no exports are
-required to compile and use PCP on the machiens Peak or Summit.
-
-
------EXAMPLE OF CONFIGURATION AND BUILD-----
-Configure PAPI with PCP enabled.
-    % # from papi install directory:
-    % cd src
-    % ./configure --prefix=some_location --with-components="pcp"
-
-Build with PAPI_PCP_INC specified only:
-    % export PAPI_PCP_INC=/usr/include/pcp
+Configure PAPI with PCP enabled. We presume you have navigated to the
+directory papi/src, AND that you have exported PAPI_PCP_ROOT. 
+In the papi/src directory:
+    % ./configure --with-components="pcp"
     % make 
 
-To see if the component is active (and if not, why not):
-(for batch users may need to be run with jsrun):
-    % utils/papi_component_avail
+TESTING the component is installed: Still from papi/src:
+> utils/papi_component_avail
 
-To find a list of ROCM supported events.
-(for batch users may need to be run with jsrun):
-    % utils/papi_native_avail | grep pcp
+For the PCP component to be operational, it must find the dynamic
+library libpcp.so.
 
-Code Specific Information for ICL developers
---------------------------------------------
+If it is not found (or is not functional) then the component will be
+listed as "disabled" with a reason explaining the problem. If library
+was not found, then it is not in the expected place.  The component
+can be configured to look for the library in a specific place, and
+using an alternate name if desired. Detailed instructions are
+contained in the Rules.pcp file.  They are technical, users may wish
+to enlist the help of a sysadmin.
+
+To find a list of PCP supported events:
+    % utils/papi_native_avail | grep -i PCP
+
+Special Notes: PCP interfaces with a daemon (a background program
+running on the machines). If you use a batch system (like SLURM) so
+that your programs run on a different machine (node) than your login
+node, then it is possible one machine can have the daemon installed
+and the other machine does not. This is the case for ICL developers on
+the Peak and Summit machines; the login nodes are not executing the
+PCP daemon, and the work nodes are. 
+
+Thus to test the PCP component on Peak or Summit, you must
+>jsrun --np 1 someprogram 
+
+All below this line is code specific information for developers
+---------------------------------------------------------------
 
 This code was tested on both Saturn and ORNL peak (Power9; P9).
 ------------------------------------------------------------------
