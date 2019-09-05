@@ -173,12 +173,9 @@ makeEventDescription(const char* featureLabel, const sensors_feature* feature, c
 	char *sensor = 0;
 	char *units = 0;
 
-	desc = (char*) papi_calloc (PAPI_MAX_STR_LEN, 1);
-	sensor = (char*) papi_calloc (PAPI_MAX_STR_LEN, 1);
-	units = (char*) papi_calloc (PAPI_MIN_STR_LEN, 1);
-	if (desc == 0 || sensor == 0 || units == 0) {
-		PAPIERROR("cannot allocate memory for event description");
-		return (0);
+	if (!(desc = (char*) papi_calloc (PAPI_MAX_STR_LEN, 1))) {
+        PAPIERROR("cannot allocate memory for event description");
+		return NULL;
 	}
 
 	switch (feature->type) {
@@ -551,10 +548,10 @@ createNativeEvents( void )
 		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s",
 			  chipnamestring, featurelabel, sub->name );
 
-		 strncpy( lm_sensors_native_table[id].description,
-			  makeEventDescription(featurelabel, feature, sub, &chip_name->bus), 
-			  PAPI_MAX_STR_LEN );
-                 lm_sensors_native_table[id].description[PAPI_MAX_STR_LEN-1] = '\0';
+         char *event_desc = makeEventDescription(featurelabel, feature, sub, &chip_name->bus);
+		 strncpy( lm_sensors_native_table[id].description, event_desc, PAPI_MAX_STR_LEN );
+                free(event_desc);
+                lm_sensors_native_table[id].description[PAPI_MAX_STR_LEN-1] = '\0';
 
 		 /* The selector has to be !=0 . Starts with 1 */
 		 lm_sensors_native_table[id].resources.selector = id + 1;
