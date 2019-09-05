@@ -78,12 +78,12 @@ PAPI_PCP_MAIN = \"\"
 # these to string variables with the following lines:
 # static char pcp_main[]=PAPI_PCP_MAIN;
 
-MACRODEF = -DPAPI_PCP_MAIN=$(PAPI_PCP_MAIN) 
+PCP_MACS = -DPAPI_PCP_MAIN=$(PAPI_PCP_MAIN) 
 
 COMPSRCS += components/pcp/linux-pcp.c
 COMPOBJS += linux-pcp.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
-CFLAGS += -I$(PAPI_PCP_ROOT)/include -I$(PAPI_PCP_ROOT)/include/pcp -g $(MACRODEF)
+CFLAGS += -I$(PAPI_PCP_ROOT)/include -I$(PAPI_PCP_ROOT)/include/pcp -g $(PCP_MACS)
 LDFLAGS += $(LDL) -g
 
 linux-pcp.o: components/pcp/linux-pcp.c 
