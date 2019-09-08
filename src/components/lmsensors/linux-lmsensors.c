@@ -116,6 +116,18 @@ static const sensors_subfeature *(*sensors_get_all_subfeaturesPtr)(const sensors
 // file handles used to access lmsensors libraries with dlopen
 static void* dl1 = NULL;
 
+// string macro defined within Rules.lmsensors
+static char lmsensors_main[]=PAPI_LMSENSORS_MAIN;
+
+//-----------------------------------------------------------------------------
+// Using weak symbols (global declared without a value, so it defers to any
+// other global declared in another file WITH a value) allows PAPI to be built
+// with the component, but PAPI can still be installed in a system without the
+// required library.
+//-----------------------------------------------------------------------------
+
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));               // declare a weak dynamic-library init routine pointer.
+
 static int link_lmsensors_libraries ();
 
 papi_vector_t _lmsensors_vector;
@@ -351,23 +363,44 @@ _lmsensors_init_component( int cidx )
 static int
 link_lmsensors_libraries ()
 {
-    /* We allow an export of PAPI_LMSENSORS_LIBNAME=string to override the default libname. */
-    char* lmsensors_libname = getenv("PAPI_LMSENSORS_LIBNAME");
-    if (lmsensors_libname != NULL) {
-        dl1 = dlopen(lmsensors_libname, RTLD_NOW | RTLD_GLOBAL);
-        if (!dl1) {
-            snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LMSENSORS_LIBNAME=%s not found; see README for environment variables.", lmsensors_libname);
-            return (PAPI_ENOSUPP);
-        }
-    // fprintf(stderr, "Successfully opened lmsensors_libname='%s'\n", lmsensors_libname);
-    } else {
-        dl1 = dlopen("libsensors.so", RTLD_NOW | RTLD_GLOBAL);
-        if (!dl1) {
-            snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found; see README for environment variables.");
-            return (PAPI_ENOSUPP);
-        }
-    // fprintf(stderr, "Successfully opened default libname 'libsensors.so'\n");
-    }
+   if ( _dl_non_dynamic_init != NULL ) {
+      // If weak var present, statically linked insted of dynamic.
+      strncpy( _lmsensors_vector.cmp_info.disabled_reason, "The lmsensors component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN-1);
+      // EXIT not supported.
+      return PAPI_ENOSUPP;
+   }
+
+   char path_name[1024];
+   char *lmsensors_root = getenv("PAPI_LMSENSORS_ROOT"); 
+   
+   dl1 = NULL;
+   // Step 1: Process override if given.   
+   if (strlen(lmsensors_main) > 0) {                                  // If override given, it has to work.
+      dl1 = dlopen(lmsensors_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+      if (dl1 == NULL) {
+         snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LMSENSORS_MAIN override '%s' given in Rules.lmsensors not found.", lmsensors_main);
+         return(PAPI_ENOSUPP);   // Override given but not found.
+      }
+   }
+
+   // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+   if (dl1 == NULL) {                                           // No override,
+      dl1 = dlopen("libsensors.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
+   }
+
+   // Step 3: Try the explicit install default. 
+   if (dl1 == NULL && lmsensors_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, 1024, "%s/lib64/libsensors.so", lmsensors_root);   // PAPI Root check.
+      dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+   }
+
+   // Check for failure.
+   if (dl1 == NULL) {
+      snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found.");
+      return(PAPI_ENOSUPP);
+   }
+
+   // We have dl1. 
 
 	sensors_initPtr = dlsym(dl1, "sensors_init");
 	if (dlerror() != NULL)
