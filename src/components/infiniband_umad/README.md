@@ -8,10 +8,7 @@ required for both compiling, and at runtime.
 
 An example that works on ICL's Saturn system (at this writing):
 
-```console
-export PAPI_INFINIBAND_UMAD_ROOT=/usr
-```
-
+    export PAPI_INFINIBAND_UMAD_ROOT=/usr
 
 Within `PAPI_INFINIBAND_UMAD_ROOT`, we expect the following standard directories:
 
@@ -38,18 +35,14 @@ directory papi/src, AND that you have exported `PAPI_INFINIBAND_UMAD_ROOT`.
 
 In the papi/src directory:
 
-```console
-./configure --with-components="infiniband_umad"
-make
-```
+    ./configure --with-components="infiniband_umad"
+    make
 
 ### Testing PAPI with INFINIBAND_UMAD Enabled
 
 From papi/src:
 
-```console
-utils/papi_component_avail
-```
+    utils/papi_component_avail
 
 For the INFINIBAND_UMAD component to be operational, it must find the dynamic
 libraries `libibmad.so` and `libibumad.so`.
@@ -65,10 +58,8 @@ to enlist the help of a sysadmin.
 ### List INFINIBAND_UMAD Supported Events
 From papi/src:
 
-```console
-utils/papi_native_avail | grep -i infiniband
-```
-    
+    utils/papi_native_avail | grep -i infiniband
+
 ## Author
 * Frank Winkler (frank.winkler@icl.utk.edu)
 * Anthony Castaldo (tonycastaldo@icl.utk.edu)

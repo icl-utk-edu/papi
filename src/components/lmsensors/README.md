@@ -8,10 +8,7 @@ required for both compiling, and at runtime.
 
 An example that works on ICL's Saturn system (at this writing):
 
-```console
-export PAPI_LMSENSORS_ROOT=/usr
-```
-
+    export PAPI_LMSENSORS_ROOT=/usr
 
 Within `PAPI_LMSENSORS_ROOT`, we expect the following standard directories:
 
@@ -38,18 +35,16 @@ directory papi/src, AND that you have exported `PAPI_LMSENSORS_ROOT`.
 
 In the papi/src directory:
 
-```console
-./configure --with-components="lmsensors"
-make
-```
+    ./configure --with-components="lmsensors"
+    make
+
 
 ### Testing PAPI with LMSENSORS Enabled
 
 From papi/src:
 
-```console
-utils/papi_component_avail
-```
+    utils/papi_component_avail
+
 
 For the LMSENSORS component to be operational, it must find the dynamic
 library `libsensors.so`.
@@ -65,9 +60,7 @@ to enlist the help of a sysadmin.
 ### List LMSENSORS Supported Events
 From papi/src:
 
-```console
-utils/papi_native_avail | grep -i SENSORS
-```
+    utils/papi_native_avail | grep -i sensors
     
 ## Author
 * Frank Winkler (frank.winkler@icl.utk.edu)
