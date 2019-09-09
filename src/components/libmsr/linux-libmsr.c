@@ -38,9 +38,9 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-#include <msr/msr_core.h>
-#include <msr/msr_rapl.h>
-#include <msr/msr_counters.h>
+#include <msr_core.h>
+#include <msr_rapl.h>
+#include <msr_counters.h>
 
 typedef enum {
     PKG_ENERGY=0,
@@ -106,8 +106,19 @@ static int already_called_libmsr_rapl_initialized_global = 0;
 /* Using weak symbols allows PAPI to be built with the component, but
  * installed in a system without the required library */
 #include <dlfcn.h>
-static void* dllib1 = NULL;
-void (*_dl_non_dynamic_init)(void) __attribute__((weak));
+static void* dl1 = NULL;
+
+// string macro defined within Rules.libmsr
+static char libmsr_main[]=PAPI_LIBMSR_MAIN;
+
+//-----------------------------------------------------------------------------
+// Using weak symbols (global declared without a value, so it defers to any
+// other global declared in another file WITH a value) allows PAPI to be built
+// with the component, but PAPI can still be installed in a system without the
+// required library.
+//-----------------------------------------------------------------------------
+
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));               // declare a weak dynamic-library init routine pointer.
 
 /* Functions pointers */
 static int (*init_msr_ptr)();
@@ -136,28 +147,62 @@ static int libmsr_get_rapl_power_info( const unsigned socket, struct rapl_power_
 static int _local_linkDynamicLibraries()
 {
     if ( _dl_non_dynamic_init != NULL ) {
-        strncpy( _libmsr_vector.cmp_info.disabled_reason, "The libmsr component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN);
+        // If weak var present, statically linked insted of dynamic.
+        strncpy( _libmsr_vector.cmp_info.disabled_reason, "The libmsr component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN-1);
+        // EXIT not supported.
         return PAPI_ENOSUPP;
     }
-    dllib1 = dlopen("libmsr.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_DL_STATUS( !dllib1 , "Component library libmsr.so not found." );
-    init_msr_ptr = dlsym( dllib1, "init_msr" );
+
+    char path_name[1024];
+    char *libmsr_root = getenv("PAPI_LIBMSR_ROOT"); 
+
+    dl1 = NULL;
+    // Step 1: Process override if given.   
+    if (strlen(libmsr_main) > 0) {                                  // If override given, it has to work.
+        dl1 = dlopen(libmsr_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LIBMSR_MAIN override '%s' given in Rules.libmsr not found.", libmsr_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                           // No override,
+        dl1 = dlopen("libmsr.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && libmsr_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, 1024, "%s/lib/libmsr.so", libmsr_root);   // PAPI Root check.
+        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl1 == NULL) {
+        snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libmsr.so not found.");
+        return(PAPI_ENOSUPP);
+    }
+
+    // We have dl1.
+
+    CHECK_DL_STATUS( !dl1 , "Component library libmsr.so not found." );
+    init_msr_ptr = dlsym( dl1, "init_msr" );
     CHECK_DL_STATUS( dlerror()!=NULL , "libmsr function init_msr not found." );
-    finalize_msr_ptr = dlsym( dllib1, "finalize_msr" );
+    finalize_msr_ptr = dlsym( dl1, "finalize_msr" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function finalize_msr not found." );
-    rapl_init_ptr = dlsym( dllib1, "rapl_init" );
+    rapl_init_ptr = dlsym( dl1, "rapl_init" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function rapl_init not found." );
-    poll_rapl_data_ptr = dlsym( dllib1, "poll_rapl_data" );
+    poll_rapl_data_ptr = dlsym( dl1, "poll_rapl_data" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function poll_rapl_data not found." );
-    set_pkg_rapl_limit_ptr = dlsym( dllib1, "set_pkg_rapl_limit" );
+    set_pkg_rapl_limit_ptr = dlsym( dl1, "set_pkg_rapl_limit" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function set_pkg_rapl_limit not found." );
-    get_pkg_rapl_limit_ptr = dlsym( dllib1, "get_pkg_rapl_limit" );
+    get_pkg_rapl_limit_ptr = dlsym( dl1, "get_pkg_rapl_limit" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function get_pkg_rapl_limit not found." );
-    core_config_ptr = dlsym( dllib1, "core_config" );
+    core_config_ptr = dlsym( dl1, "core_config" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function core_config not found." );
-    rapl_storage_ptr = dlsym( dllib1, "rapl_storage" );
+    rapl_storage_ptr = dlsym( dl1, "rapl_storage" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function rapl_storage not found." );
-    get_rapl_power_info_ptr = dlsym( dllib1, "get_rapl_power_info" );
+    get_rapl_power_info_ptr = dlsym( dl1, "get_rapl_power_info" );
     CHECK_DL_STATUS( dlerror()!=NULL, "libmsr function get_rapl_power_info not found." );
     return( PAPI_OK);
 }
@@ -669,7 +714,7 @@ int _libmsr_shutdown_component( void )
         free( libmsr_native_events );
         libmsr_native_events = NULL;
     }
-    dlclose( dllib1 );
+    dlclose( dl1 );
     return PAPI_OK;
 }
 
