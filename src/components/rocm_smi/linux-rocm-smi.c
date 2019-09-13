@@ -69,7 +69,7 @@ static char *RSMI_ERROR_STRINGS[]={
         }                                                               \
     } while (0)
 
-// The following will call and check the return on an SMI function;
+// The following will call and check the return on an SMI function; 
 // note it appends 'Ptr' to the name for the caller.
 #define RSMI(name, args, handleerror)                                   \
     do {                                                                \
@@ -89,7 +89,7 @@ static char *RSMI_ERROR_STRINGS[]={
 // How it all works! The following structure is one element in AllEvents[].
 // As events are added, we search for matching entries in the array and mark
 // them as active, unread; and ensure vptr[] has room to receive values. Note
-// that all events in PAPI return a *single* value.
+// that all events in PAPI return a *single* value.  
 //
 // On PAPI_read(), we search the AllEvents[] array, and for any active entries
 // we call the reader routine. It can return one value or whole structures.
@@ -100,7 +100,7 @@ static char *RSMI_ERROR_STRINGS[]={
 // each event still gets its own reader (to handle indexing). Our protocol is
 // that if 'baseIdx != myIdx' the baseIdx reader is called; it will populate
 // its value and mark itself read. Then others can call their reader to
-// populate their value, from the array in the baseIdx.
+// populate their value, from the array in the baseIdx. 
 //
 // For efficiency, when we construct AllEvents[] we ensure all events with the
 // same device:sensor:baseIdx are contiguous.
@@ -108,7 +108,7 @@ static char *RSMI_ERROR_STRINGS[]={
 // Each reader populates the single 'value' it will return. At the end of a
 // PAPI_read(), we must return these values in the order they requested them;
 // but we have an array of AllEvents[] indices; so we just look them up and
-// copy this value.
+// copy this value. 
 //
 // Note 'device' and 'sensor' are signed; so we do not reset anything if they
 // are less than zero.
@@ -164,11 +164,11 @@ void (*_dl_non_dynamic_init) (void) __attribute__ ((weak));
 // for creating various event creation routines, depending on whether multiple
 // events must be created or special events must be created.  These are copied
 // in the same order to produce the corresponding function pointers and then
-// event names.
+// event names. 
 
 DECLARE_RSMI(rsmi_num_monitor_devices, (uint32_t *num_devices));
 
-// All by device id.
+// All by device id. 
 DECLARE_RSMI(rsmi_dev_id_get, (uint32_t dv_ind, uint16_t *id));
 DECLARE_RSMI(rsmi_dev_subsystem_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
 DECLARE_RSMI(rsmi_dev_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
@@ -201,7 +201,7 @@ DECLARE_RSMI(rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
 // rsmi_temperature_metric_t is an enum with 14 settings; each would need to be an event.
 DECLARE_RSMI(rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
 
-// rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t.
+// rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t. 
 DECLARE_RSMI(rsmi_version_get, (rsmi_version_t *version));
 
 // rsmi_range_t contains two uint64's; lower_bound; upper_bound.
@@ -229,7 +229,7 @@ DECLARE_RSMI(rsmi_dev_od_volt_info_get, (uint32_t dv_ind, rsmi_od_volt_freq_data
 DECLARE_RSMI(rsmi_dev_pci_bandwidth_get, (uint32_t dv_ind, rsmi_pcie_bandwidth_t *bandwidth));
 DECLARE_RSMI(rsmi_dev_pci_bandwidth_set, (uint32_t dv_ind, uint64_t bw_bitmask));
 
-// rsmi_power_profile_status_t is a structure with uint64 available_profiles; enum  current profile; uint32 num_profiles.
+// rsmi_power_profile_status_t is a structure with uint64 available_profiles; enum  current profile; uint32 num_profiles. 
 // DECLARE_RSMI(rsmi_dev_power_profile_presets_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_power_profile_status_t *status));
 
 // Cannot be implemented; returns a string.
@@ -248,7 +248,7 @@ static void     *dl1 = NULL;
 static char     rocm_smi_main[]=PAPI_ROCM_SMI_MAIN;
 static int      TotalEvents    = 0;     // Total Events we added.
 static int      ActiveEvents   = 0;     // Active events (number added by update_control_state).
-static int      SizeAllEvents  = 0;     // Size of the array.
+static int      SizeAllEvents  = 0;     // Size of the array.     
 static uint32_t TotalDevices   = 0;     // Number of devices we found.
 static uint32_t DeviceCards[64];        // The cards we found them on; up to 64 of them. Currently populated but unused.
 static event_info_t *AllEvents = NULL;  // All events in the system.
@@ -262,18 +262,16 @@ static int      printRSMIerr = 0;       // Suppresses RSMI errors during validat
 //*******  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
 //****************************************************************************
 
-static char *RSMI_ERROR_STR(int err)
-{
+static char *RSMI_ERROR_STR(int err) {
     int modErr=err;
     if (modErr < 0 || modErr>11) modErr=12;
     return(RSMI_ERROR_STRINGS[modErr]);
 } // END ROUTINE.
 
 //----------------------------------------------------------------------------
-// Ensures there is room in all Events for one more entry.
+// Ensures there is room in all Events for one more entry. 
 //----------------------------------------------------------------------------
-static void MakeRoomAllEvents(void)
-{
+static void MakeRoomAllEvents(void) {
     if (TotalEvents < SizeAllEvents) return;    // One more will fit.
     if (AllEvents == NULL) {         // Never alloced;
         SizeAllEvents = 16;          // Begin with 16 entries,
@@ -284,16 +282,15 @@ static void MakeRoomAllEvents(void)
     // Must add 16 table entries.
     SizeAllEvents += 16;            // Add 16 entries.
     AllEvents = realloc(AllEvents, SizeAllEvents*sizeof(event_info_t)); // make more room.
-    memset(&AllEvents[SizeAllEvents-16], 0, 16*sizeof(event_info_t));   // clear the added room.
+    memset(&AllEvents[SizeAllEvents-16], 0, 16*sizeof(event_info_t));   // clear the added room. 
 } // END ROUTINE.
 
 
 //----------------------------------------------------------------------------
-// Try to use the reader for a new event. We just filled in the AllEvent[]
+// Try to use the reader for a new event. We just filled in the AllEvent[] 
 // array entry. If the reader doesn't work, we must clean up the array entry.
 //----------------------------------------------------------------------------
-static void validateNewEvent(void)
-{
+static void validateNewEvent(void) {
     int ret, bidx, idx=TotalEvents;
     if (AllEvents[idx].reader == NULL) {                // If we have no reader, it cannot fail.
         TotalEvents++;
@@ -312,9 +309,9 @@ static void validateNewEvent(void)
             AllEvents[idx].vptr = NULL;
             printRSMIerr=1;                             // restore error printing.
             return;
-        }
+        }       
     }
-
+        
     ret = (AllEvents[idx].reader)(idx);                 // Always have to do this whether I had a base read or not.
     printRSMIerr=1;                                     // Restore error printing.
     if (ret != PAPI_OK) {                               // .. If it fails, don't use this event.
@@ -334,7 +331,7 @@ static void validateNewEvent(void)
 // is done at runtime so that a version of PAPI built with the ROCM component
 // can be installed and used on systems which have the ROCM libraries
 // installed and on systems where these libraries are not installed.
-static int _rocm_smi_linkRocmLibraries(void)
+static int _rocm_smi_linkRocmLibraries()
 {
     char path_name[1024];
     // Attempt to guess if we were statically linked to libc, if so, get out.
@@ -347,7 +344,7 @@ static int _rocm_smi_linkRocmLibraries(void)
     char *rocm_root =       getenv("PAPI_ROCM_ROOT");
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
-    // Step 1: Process override if given.
+    // Step 1: Process override if given.   
     if (strlen(rocm_smi_main) > 0) {                            // If override given, it has to work.
         dl1 = dlopen(rocm_smi_main, RTLD_NOW | RTLD_GLOBAL);    // Try to open that path.
         if (dl1 == NULL) {
@@ -361,7 +358,7 @@ static int _rocm_smi_linkRocmLibraries(void)
         dl1 = dlopen("librocm_smi64.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
     }
 
-    // Step 3: Try the explicit install default.
+    // Step 3: Try the explicit install default. 
     if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
         snprintf(path_name, 1024, "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);  // PAPI Root check.
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
@@ -378,7 +375,7 @@ static int _rocm_smi_linkRocmLibraries(void)
 // SMI Library routines.
     DLSYM_SMI(rsmi_num_monitor_devices);
 
-// All by device id.
+// All by device id. 
     DLSYM_SMI(rsmi_dev_id_get);
     DLSYM_SMI(rsmi_dev_subsystem_vendor_id_get);
     DLSYM_SMI(rsmi_dev_vendor_id_get);
@@ -411,7 +408,7 @@ static int _rocm_smi_linkRocmLibraries(void)
 // rsmi_temperature_metric_t is an enum with 14 settings; each would need to be an event.
     DLSYM_SMI(rsmi_dev_temp_metric_get);
 
-// rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t.
+// rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t. 
     DLSYM_SMI(rsmi_version_get);
 
 // rsmi_range_t contains two uint64's; lower_bound; upper_bound.
@@ -447,7 +444,7 @@ static int _rocm_smi_linkRocmLibraries(void)
 // rsmi_power_profile_preset_masks_t is an enum; it can be set as uint32.
 //  DLSYM_SMI(rsmi_dev_power_profile_set);
 
-// rsmi_power_profile_status_t is a structure with uint64 available_profiles; enum  current profile; uint32 num_profiles.
+// rsmi_power_profile_status_t is a structure with uint64 available_profiles; enum  current profile; uint32 num_profiles. 
 //  DLSYM_SMI(rsmi_dev_power_profile_presets_get);
 
 // Cannot be implemented; returns a string.
@@ -466,22 +463,21 @@ static int _rocm_smi_linkRocmLibraries(void)
 
 
 //-----------------------------------------------------------------------------
-// Find devices: We search the file system for
-// /sys/class/drm/card?/device/vendor. These must be sequential by card#; if 
-// they can be opened and return a line, it will be 0xhhhh as a hex vendor ID.
+// Find devices: We search the file system for 
+// /sys/class/drm/card?/device/vendor. The must be sequential; if they can 
+// be opened and return a line, it will be 0xhhhh as a hex vendor ID. 
 // 0x1002  is the vendor ID for AMD.
 // This constructs the global value TotalDevices, and fills in the DeviceCards
 // array with card-ids.
 //-----------------------------------------------------------------------------
-static int _rocm_smi_find_devices(void)
-{
+static int _rocm_smi_find_devices(void) {
     char cardname[64]="/sys/class/drm/card?/device/vendor";     // card filename.
     uint32_t myVendor = 0x1002;                                 // The AMD GPU vendor ID.
     char line[7];
     size_t bytes;
     int card;
     long int devID;
-
+    
     TotalDevices=0;                                                     // Reset, in case called more than once.
     line[6]=0;                                                          // ensure null terminator.
 
@@ -494,13 +490,13 @@ static int _rocm_smi_find_devices(void)
 
         bytes=fread(line, 1, 6, fcard);                                 // read six bytes.
         fclose(fcard);                                                  // Always close it (avoid mem leak).
-        if (bytes != 6) {                                               // If we did not read 6,
+        if (bytes != 6) {                                               // If we did not read 6, 
             break;                                                      // .. get out.
         }
 
         devID = strtol(line, NULL, 16);                                 // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
         if (devID != myVendor) continue;                                // Not the droid I am looking for.
-
+        
         // Found one.
         DeviceCards[TotalDevices]=card;                                 // Remember this.
 //      fprintf(stderr, "%s Card %i is Device %i.\n", __func__, card, TotalDevices);
@@ -509,7 +505,7 @@ static int _rocm_smi_find_devices(void)
 
     if (TotalDevices == 0) {                                            // No AMD devices found.
         char errstr[]="No AMD GPU devices found (vendor ID 0x1002).";
-        fprintf(stderr, "%s\n", errstr);
+        fprintf(stderr, "%s\n", errstr); 
         strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
         return(PAPI_ENOSUPP);
     }
@@ -526,8 +522,7 @@ static int _rocm_smi_find_devices(void)
 //-----------------------------------------------------------------------------
 
 // (rsmi_dev_id_get, (uint32_t dv_ind, uint16_t *id));
-static int er_device_id(int myIdx)
-{
+static int er_device_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_id_get,                                   // Routine name.
@@ -538,8 +533,7 @@ static int er_device_id(int myIdx)
 } // end reader.
 
 // (rsmi_dev_subsystem_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
-static int er_subsystem_vendor_id(int myIdx)
-{
+static int er_subsystem_vendor_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_subsystem_vendor_id_get,                  // Routine name.
@@ -550,8 +544,7 @@ static int er_subsystem_vendor_id(int myIdx)
 } // end reader.
 
 // (rsmi_dev_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
-static int er_vendor_id(int myIdx)
-{
+static int er_vendor_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_vendor_id_get,                            // Routine name.
@@ -562,8 +555,7 @@ static int er_vendor_id(int myIdx)
 } // end reader.
 
 // (rsmi_dev_subsystem_id_get, (uint32_t dv_ind, uint16_t *id));
-static int er_subsystem_id(int myIdx)
-{
+static int er_subsystem_id(int myIdx) {
     uint16_t* data = (uint16_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_subsystem_id_get,                         // Routine name.
@@ -574,8 +566,7 @@ static int er_subsystem_id(int myIdx)
 } // end reader.
 
 // (rsmi_dev_overdrive_level_get, (uint32_t dv_ind, uint32_t *od));
-static int er_overdrive_level(int myIdx)
-{
+static int er_overdrive_level(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_overdrive_level_get,                      // Routine name.
@@ -587,8 +578,7 @@ static int er_overdrive_level(int myIdx)
 
 // (rsmi_dev_overdrive_level_set, (int32_t dv_ind, uint32_t od));
 // The data to write must be given in AllEvents[myIdx].value.
-static int ew_overdrive_level(int myIdx)
-{
+static int ew_overdrive_level(int myIdx) {
     uint32_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_overdrive_level_set,                      // Routine name.
         (MyDevice, data),                                   // device, and pointer for storage of read.
@@ -597,8 +587,7 @@ static int ew_overdrive_level(int myIdx)
 } // end writer.
 
 // (rsmi_dev_perf_level_get, (uint32_t dv_ind, rsmi_dev_perf_level_t *perf));
-static int er_perf_level(int myIdx)
-{
+static int er_perf_level(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_perf_level_get,                           // Routine name.
@@ -610,9 +599,8 @@ static int er_perf_level(int myIdx)
 
 // (rsmi_dev_perf_level_set, ( int32_t dv_ind, rsmi_dev_perf_level_t perf_lvl));
 // The data to write must be given in AllEvents[myIdx].value.
-// TONY: Should error-check value here, limited to enum values of rsmi_dev_perf_level_t.
-static int ew_perf_level(int myIdx)
-{
+// TONY: Should error-check value here, limited to enum values of rsmi_dev_perf_level_t. 
+static int ew_perf_level(int myIdx) {
     uint32_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_perf_level_set,                           // Routine name.
         (MyDevice, data),                                   // device, and pointer for storage of read.
@@ -621,8 +609,7 @@ static int ew_perf_level(int myIdx)
 } // end writer.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VRAM, uint64_t *total));
-static int er_mem_total_VRAM(int myIdx)
-{
+static int er_mem_total_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -633,8 +620,7 @@ static int er_mem_total_VRAM(int myIdx)
 } // end reader.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VIS_VRAM, uint64_t *total));
-static int er_mem_total_VIS_VRAM(int myIdx)
-{
+static int er_mem_total_VIS_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -645,8 +631,7 @@ static int er_mem_total_VIS_VRAM(int myIdx)
 } // end reader.
 
 // (rsmi_dev_memory_total_get, (uint32_t dv_ind, RSMI_MEM_TYPE_GTT, uint64_t *total));
-static int er_mem_total_GTT(int myIdx)
-{
+static int er_mem_total_GTT(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_total_get,                         // Routine name.
@@ -657,8 +642,7 @@ static int er_mem_total_GTT(int myIdx)
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VRAM, uint64_t *usage));
-static int er_mem_usage_VRAM(int myIdx)
-{
+static int er_mem_usage_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -669,8 +653,7 @@ static int er_mem_usage_VRAM(int myIdx)
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_VIS_VRAM, uint64_t *usage));
-static int er_mem_usage_VIS_VRAM(int myIdx)
-{
+static int er_mem_usage_VIS_VRAM(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -681,8 +664,7 @@ static int er_mem_usage_VIS_VRAM(int myIdx)
 } // end reader.
 
 // (rsmi_dev_memory_usage_get, (uint32_t dv_ind, RSMI_MEM_TYPE_GTT, uint64_t *usage));
-static int er_mem_usage_GTT(int myIdx)
-{
+static int er_mem_usage_GTT(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_memory_usage_get,                         // Routine name.
@@ -694,8 +676,7 @@ static int er_mem_usage_GTT(int myIdx)
 
 
 // (rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
-static int er_busy_percent(int myIdx)
-{
+static int er_busy_percent(int myIdx) {
     uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_busy_percent_get,                         // Routine name.
@@ -706,8 +687,7 @@ static int er_busy_percent(int myIdx)
 } // end reader.
 
 // (rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
-static int er_pci_id(int myIdx)
-{
+static int er_pci_id(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_pci_id_get,                               // Routine name.
@@ -719,8 +699,7 @@ static int er_pci_id(int myIdx)
 
 // (rsmi_version_get, (rsmi_version_t *version));
 // structure contains uint32_t for major, minor, patch (and pointer to 'build' string we don't use).
-static int er_rsmi_version(int myIdx)
-{
+static int er_rsmi_version(int myIdx) {
     rsmi_version_t* data = (rsmi_version_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_version_get,                                  // Routine name.
@@ -735,8 +714,7 @@ static int er_rsmi_version(int myIdx)
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-static int er_pci_throughput_sent(int myIdx)                // BASE EVENT. reads all three values.
-{
+static int er_pci_throughput_sent(int myIdx) {                     // BASE EVENT. reads all three values.
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     if (AllEvents[myIdx].read == 0) {                       // If I haven't read yet,
@@ -751,8 +729,7 @@ static int er_pci_throughput_sent(int myIdx)                // BASE EVENT. reads
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-static int er_pci_throughput_received(int myIdx)            // NOT THE BASE EVENT; Base event already called.
-{
+static int er_pci_throughput_received(int myIdx) {                 // NOT THE BASE EVENT; Base event already called.
     int idx = AllEvents[myIdx].baseIdx;                     // Get location of storage.
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value.
@@ -760,8 +737,7 @@ static int er_pci_throughput_received(int myIdx)            // NOT THE BASE EVEN
 } // end reader.
 
 // (rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
-static int er_pci_throughput_max_packet(int myIdx)          // NOT THE BASE EVENT; Base event already called.
-{
+static int er_pci_throughput_max_packet(int myIdx) {               // NOT THE BASE EVENT; Base event already called.
     int idx = AllEvents[myIdx].baseIdx;                     // Get location of storage.
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = data[2];                       // Copy/convert the returned value.
@@ -778,8 +754,7 @@ static int er_pci_throughput_max_packet(int myIdx)          // NOT THE BASE EVEN
 // } // end writer.
 
 // (rsmi_dev_fan_reset, (uint32_t dv_ind, uint32_t sensor_ind));
-static int ew_fan_reset(int myIdx)
-{
+static int ew_fan_reset(int myIdx) {
     (void) myIdx;                                           // Not needed. Only present for consistent function pointer.
     RSMI(rsmi_dev_fan_reset,                                // Routine name.
         (MyDevice, MySensor),                               // device, sensor. No data to write.
@@ -788,8 +763,7 @@ static int ew_fan_reset(int myIdx)
 } // end reader.
 
 // (rsmi_dev_fan_rpms_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
-static int er_fan_rpms(int myIdx)
-{
+static int er_fan_rpms(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_rpms_get,                             // Routine name.
@@ -800,8 +774,7 @@ static int er_fan_rpms(int myIdx)
 } // end reader.
 
 // (rsmi_dev_fan_speed_max_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max_speed));
-static int er_fan_speed_max(int myIdx)
-{
+static int er_fan_speed_max(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_speed_max_get,                        // Routine name.
@@ -812,8 +785,7 @@ static int er_fan_speed_max(int myIdx)
 } // end reader.
 
 // (rsmi_dev_fan_speed_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
-static int er_fan_speed(int myIdx)
-{
+static int er_fan_speed(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_fan_speed_get,                            // Routine name.
@@ -824,8 +796,7 @@ static int er_fan_speed(int myIdx)
 } // end reader.
 
 // (rsmi_dev_fan_speed_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t speed));
-static int ew_fan_speed(int myIdx)
-{
+static int ew_fan_speed(int myIdx) {
     uint64_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     if (data > 255) return(PAPI_EINVAL);                    // Invalid value.
     RSMI(rsmi_dev_fan_speed_set,                            // Routine name.
@@ -835,8 +806,7 @@ static int ew_fan_speed(int myIdx)
 } // end writer.
 
 // (rsmi_dev_power_ave_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *power));
-static int er_power_ave(int myIdx)
-{
+static int er_power_ave(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_power_ave_get,                            // Routine name.
@@ -847,8 +817,7 @@ static int er_power_ave(int myIdx)
 } // end reader.
 
 // (rsmi_dev_power_cap_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *cap));
-static int er_power_cap(int myIdx)
-{
+static int er_power_cap(int myIdx) {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_power_cap_get,                            // Routine name.
@@ -859,8 +828,7 @@ static int er_power_cap(int myIdx)
 } // end reader.
 
 // (rsmi_dev_power_cap_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t cap));
-static int ew_power_cap(int myIdx)
-{
+static int ew_power_cap(int myIdx) {
     uint64_t data = AllEvents[myIdx].value;                 // get a short cut to data.
     RSMI(rsmi_dev_power_cap_set,                            // Routine name.
         (MyDevice, MySensor, data),                         // device, sensor. Data to write.
@@ -869,8 +837,7 @@ static int ew_power_cap(int myIdx)
 } // end writer.
 
 // (rsmi_dev_power_cap_range_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max, uint64_t *min));
-static int er_power_cap_range_min(int myIdx)                // THIS IS THE BASE EVENT.
-{
+static int er_power_cap_range_min(int myIdx) {                     // THIS IS THE BASE EVENT.
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     if (AllEvents[myIdx].read == 0) {                       // If I haven't read yet,
@@ -885,9 +852,8 @@ static int er_power_cap_range_min(int myIdx)                // THIS IS THE BASE 
 } // end reader.
 
 // (rsmi_dev_power_cap_range_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max, uint64_t *min));
-static int er_power_cap_range_max(int myIdx)                // NOT THE BASE EVENT; Base event already called.
-{
-    int idx = AllEvents[myIdx].baseIdx;
+static int er_power_cap_range_max(int myIdx) {                     // NOT THE BASE EVENT; Base event already called.
+    int idx = AllEvents[myIdx].baseIdx;                     
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut to min/max.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value for max.
     return(PAPI_OK);                                        // Done.
@@ -895,8 +861,7 @@ static int er_power_cap_range_max(int myIdx)                // NOT THE BASE EVEN
 
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_current(int myIdx)
-{
+static int er_temp_current(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -907,8 +872,7 @@ static int er_temp_current(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_max(int myIdx)
-{
+static int er_temp_max(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -919,8 +883,7 @@ static int er_temp_max(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_min(int myIdx)
-{
+static int er_temp_min(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -931,8 +894,7 @@ static int er_temp_min(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_max_hyst(int myIdx)
-{
+static int er_temp_max_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -943,8 +905,7 @@ static int er_temp_max_hyst(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_min_hyst(int myIdx)
-{
+static int er_temp_min_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -955,8 +916,7 @@ static int er_temp_min_hyst(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_critical(int myIdx)
-{
+static int er_temp_critical(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -967,8 +927,7 @@ static int er_temp_critical(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_critical_hyst(int myIdx)
-{
+static int er_temp_critical_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -979,8 +938,7 @@ static int er_temp_critical_hyst(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_emergency(int myIdx)
-{
+static int er_temp_emergency(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -991,8 +949,7 @@ static int er_temp_emergency(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_emergency_hyst(int myIdx)
-{
+static int er_temp_emergency_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -1003,8 +960,7 @@ static int er_temp_emergency_hyst(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_crit_min(int myIdx)
-{
+static int er_temp_crit_min(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -1015,8 +971,7 @@ static int er_temp_crit_min(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_crit_min_hyst(int myIdx)
-{
+static int er_temp_crit_min_hyst(int myIdx) {
     int64_t* data = (int64_t*) AllEvents[myIdx].vptr;       // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // Routine name.
@@ -1027,8 +982,7 @@ static int er_temp_crit_min_hyst(int myIdx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_offset(int myidx)
-{
+static int er_temp_offset(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.
@@ -1039,8 +993,7 @@ static int er_temp_offset(int myidx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_lowest(int myidx)
-{
+static int er_temp_lowest(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.
@@ -1051,8 +1004,7 @@ static int er_temp_lowest(int myidx)
 } // end reader.
 
 // (rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
-static int er_temp_highest(int myidx)
-{
+static int er_temp_highest(int myidx) {
     int64_t* data = (int64_t*) AllEvents[myidx].vptr;       // get a shortcut.
     AllEvents[myidx].value = 0;                             // default if error.
     RSMI(rsmi_dev_temp_metric_get,                          // routine name.
@@ -1063,7 +1015,7 @@ static int er_temp_highest(int myidx)
 } // end reader.
 
 //-----------------------------------------------------------------------------
-// All values get returned by calling routines that may vary in parameters.
+// All values get returned by calling routines that may vary in parameters. 
 // Since we have no automatic list of events (or descriptions) we add them by
 // hand; along with pointers to the routines that must be called.
 //-----------------------------------------------------------------------------
@@ -1094,7 +1046,7 @@ static int _rocm_smi_add_native_events(void)
     thisEvent->value=TotalDevices;                      // A static event; always returns this.
     validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
-    // rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t.
+    // rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed version as uint64_t. 
     //(rsmi_version_get, (rsmi_version_t *version));
     thisEvent = &AllEvents[TotalEvents];
     snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "rsmi_version");
@@ -1113,7 +1065,7 @@ static int _rocm_smi_add_native_events(void)
     for (device=0; device < TotalDevices; device++) {   // For every event requiring a device argument,
         //(rsmi_dev_id_get, (uint32_t dv_ind, uint16_t *id));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_id:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:device_id", device);
         strcpy(thisEvent->desc, "Vendor supplied device id number. May be shared by same model devices; see pci_id for a unique identifier.");
         thisEvent->reader = &er_device_id;
         thisEvent->writer = NULL;
@@ -1123,10 +1075,10 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint16_t);
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+        
         //(rsmi_dev_subsystem_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "subsystem_vendor_id:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:subsystem_vendor_id", device);
         strcpy(thisEvent->desc, "Subsystem vendor id number.");
         thisEvent->reader = &er_subsystem_vendor_id;
         thisEvent->writer = NULL;
@@ -1136,10 +1088,10 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint16_t);
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+        
         //(rsmi_dev_vendor_id_get, (uint32_t dv_ind, uint16_t *id));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "vendor_id:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:vendor_id", device);
         strcpy(thisEvent->desc, "Vendor id number.");
         thisEvent->reader = &er_vendor_id;
         thisEvent->writer = NULL;
@@ -1149,10 +1101,10 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint16_t);
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+        
         //(rsmi_dev_subsystem_id_get, (uint32_t dv_ind, uint16_t *id));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "subsystem_id:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:subsystem_id", device);
         strcpy(thisEvent->desc, "Subsystem id number.");
         thisEvent->reader = &er_subsystem_id;
         thisEvent->writer = NULL;
@@ -1162,11 +1114,11 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint16_t);
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+        
         //(rsmi_dev_overdrive_level_get, (uint32_t dv_ind, uint32_t *od));
         //(rsmi_dev_overdrive_level_set, (int32_t dv_ind, uint32_t od));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "overdrive_level:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:overdrive_level", device);
         strcpy(thisEvent->desc, "Overdrive Level %% for device, 0 to 20, max overclocking permitted. Read/Write. MAY CAUSE DAMAGE NOT COVERED BY ANY WARRANTY.");
         thisEvent->reader = &er_overdrive_level;
         thisEvent->writer = &ew_overdrive_level;            // Can be written.
@@ -1181,7 +1133,7 @@ static int _rocm_smi_add_native_events(void)
         //(rsmi_dev_perf_level_get, (uint32_t dv_ind, rsmi_dev_perf_level_t *perf));
         //(rsmi_dev_perf_level_set, ( int32_t dv_ind, rsmi_dev_perf_level_t perf_lvl));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "perf_level:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:perf_level", device);
         strcpy(thisEvent->desc, "PowerPlay Performance Level; Read/Write, enum 'rsmi_dev_perf_level_t' [0-7], see ROCm_SMI_Manual for details.");
         thisEvent->reader = &er_perf_level;
         thisEvent->writer = &ew_perf_level;                 // Can be written.
@@ -1191,12 +1143,12 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint32_t);
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         // Iterate by memory type; an enum:
         // RSMI_MEM_TYPE_VRAM; RSMI_MEM_TYPE_VIS_VRAM; RSMI_MEM_TYPE_GTT. (VIS=visible).
         //(rsmi_dev_memory_total_get, (uint32_t dv_ind, rsmi_memory_type_t mem_type, uint64_t *total));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_VRAM:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_total_VRAM", device);
         strcpy(thisEvent->desc, "Total VRAM memory.");
         thisEvent->reader = &er_mem_total_VRAM;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1206,9 +1158,9 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_VIS_VRAM:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_total_VIS_VRAM", device);
         strcpy(thisEvent->desc, "Total Visible VRAM memory.");
         thisEvent->reader = &er_mem_total_VIS_VRAM;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1218,9 +1170,9 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_GTT:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_total_GTT", device);
         strcpy(thisEvent->desc, "Total GTT (Graphics Translation Table) memory, aka GART memory.");
         thisEvent->reader = &er_mem_total_GTT;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1230,10 +1182,10 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         //(rsmi_dev_memory_usage_get, (uint32_t dv_ind, rsmi_memory_type_t mem_type, uint64_t *used));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_VRAM:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_usage_VRAM", device);
         strcpy(thisEvent->desc, "VRAM memory in use.");
         thisEvent->reader = &er_mem_usage_VRAM;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1243,9 +1195,9 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_VIS_VRAM:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_usage_VIS_VRAM", device);
         strcpy(thisEvent->desc, "Visible VRAM memory in use.");
         thisEvent->reader = &er_mem_usage_VIS_VRAM;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1255,9 +1207,9 @@ static int _rocm_smi_add_native_events(void)
         thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
         thisEvent->vptr=calloc(1, thisEvent->vptrSize);
         validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
-
+       
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_GTT:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:mem_usage_GTT", device);
         strcpy(thisEvent->desc, "(Graphics Translation Table) memory in use (aka GART memory).");
         thisEvent->reader = &er_mem_usage_GTT;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1270,7 +1222,7 @@ static int _rocm_smi_add_native_events(void)
 
         //(rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *bdfid));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "busy_percent:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:busy_percent", device);
         strcpy(thisEvent->desc, "Returns percentage of time the device was busying doing any processing.");
         thisEvent->reader = &er_busy_percent;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1283,7 +1235,7 @@ static int _rocm_smi_add_native_events(void)
 
         //(rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_id:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:pci_id", device);
         strcpy(thisEvent->desc, "Returns BDF (Bus/Device/Function) ID, unique per device.");
         thisEvent->reader = &er_pci_id;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1302,7 +1254,7 @@ static int _rocm_smi_add_native_events(void)
         // Needs to be three events; sent; received; max_pkt_size.
         //(rsmi_dev_pci_throughput_get, (uint32_t dv_ind, uint64_t *sent, uint64_t *received, uint64_t *max_pkt_sz));
         thisEvent = &AllEvents[TotalEvents];
-        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_throughput_sent:device=%i", device);
+        snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:pci_throughput_sent", device);
         strcpy(thisEvent->desc, "returns throughput on PCIe traffic, bytes/second sent.");
         thisEvent->reader = &er_pci_throughput_sent;
         thisEvent->writer = NULL;                           // Can't be written.
@@ -1316,7 +1268,7 @@ static int _rocm_smi_add_native_events(void)
 
         if (TotalEvents > BaseEvent) {                      // If the base did not succeed, do not add dependents.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_throughput_received:device=%i", device);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:pci_throughput_received", device);
             strcpy(thisEvent->desc, "returns throughput on PCIe traffic, bytes/second received.");
             thisEvent->reader = &er_pci_throughput_received;
             thisEvent->writer = NULL;                           // Can't be written.
@@ -1328,7 +1280,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_max_packet_size:device=%i", device);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:pci_max_packet_size", device);
             strcpy(thisEvent->desc, "Maximum PCIe packet size.");
             thisEvent->reader = &er_pci_throughput_max_packet;
             thisEvent->writer = NULL;                           // Can't be written.
@@ -1342,28 +1294,28 @@ static int _rocm_smi_add_native_events(void)
         }
 
         // Need sensor-id (0...n) in name.
-        for (sensor=0; sensor<Sensors; sensor++) {
-            // rsmi_power_profile_preset_masks_t is an enum; it can be set as uint32; however, the valid values are
+        for (sensor=0; sensor<Sensors; sensor++) { 
+            // rsmi_power_profile_preset_masks_t is an enum; it can be set as uint32; however, the valid values are 
             // limited by whatever rsmi_dev_power_profile_presets_get() returns, which is a structure.
             // So we don't add this event because the PAPI user can't get a structure yet.
             //(rsmi_dev_power_profile_set, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_power_profile_preset_masks_t profile));
 //          thisEvent = &AllEvents[TotalEvents];
-//          snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_profile_wo:device=%i:sensor=%i", device, sensor);
+//          snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:power_profile_wo", device, sensor);
 //          strcpy(thisEvent->desc, "Power profile. Write Only. enum values.");
-//          thisEvent->reader = NULL;                           // can't be read!
+//          thisEvent->reader = NULL;                           // can't be read! 
 //          thisEvent->writer = &ew_power_profile;              // Can be written.
 //          thisEvent->device=device;
 //          thisEvent->sensor=sensor;
 //          thisEvent->baseIdx = TotalEvents;                   // Self.
 //          thisEvent->vptrSize=0;                              // Cannot be read.
-//          thisEvent->vptr=NULL;                               // ...
+//          thisEvent->vptr=NULL;                               // ... 
 //          validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             //(rsmi_dev_fan_reset, (uint32_t dv_ind, uint32_t sensor_ind));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_reset:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:fan_reset", device, sensor);
             strcpy(thisEvent->desc, "Fan Reset. Write Only, data value is ignored.");
-            thisEvent->reader = NULL;                           // can't be read!
+            thisEvent->reader = NULL;                           // can't be read! 
             thisEvent->writer = &ew_fan_reset;                  // Can be written.
             thisEvent->device=device;
             thisEvent->sensor=sensor;
@@ -1374,7 +1326,7 @@ static int _rocm_smi_add_native_events(void)
 
             //(rsmi_dev_fan_rpms_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_rpms:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:fan_rpms", device, sensor);
             strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute).");
             thisEvent->reader = &er_fan_rpms;
             thisEvent->writer = NULL;                           // can't be written.
@@ -1387,7 +1339,7 @@ static int _rocm_smi_add_native_events(void)
 
             //(rsmi_dev_fan_speed_max_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max_speed));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_speed_max:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:fan_speed_max", device, sensor);
             strcpy(thisEvent->desc, "Maximum possible fan speed in RPM (Rotations Per Minute).");
             thisEvent->reader = &er_fan_speed_max;
             thisEvent->writer = NULL;                           // can't be written.
@@ -1401,7 +1353,7 @@ static int _rocm_smi_add_native_events(void)
             //(rsmi_dev_fan_speed_get, (uint32_t dv_ind, uint32_t sensor_ind, int64_t *speed));
             //(rsmi_dev_fan_speed_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t speed));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_speed:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:fan_speed", device, sensor);
             strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute), Read/Write, Write must be <=MAX (see fan_speed_max event), arg int [0-255].");
             thisEvent->reader = &er_fan_speed;
             thisEvent->writer = &ew_fan_speed;                  // can be written.
@@ -1414,7 +1366,7 @@ static int _rocm_smi_add_native_events(void)
 
             //(rsmi_dev_power_ave_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *power));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_average:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:power_average", device, sensor);
             strcpy(thisEvent->desc, "Current Average Power consumption in microwatts. Requires root privilege.");
             thisEvent->reader = &er_power_ave;
             thisEvent->writer = NULL;                           // can't be written.
@@ -1428,7 +1380,7 @@ static int _rocm_smi_add_native_events(void)
             //(rsmi_dev_power_cap_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *cap));
             //(rsmi_dev_power_cap_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t cap));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:power_cap", device, sensor);
             strcpy(thisEvent->desc, "Power cap in microwatts. Read/Write. Between min/max (see power_cap_range_min/max). May require root privilege.");
             thisEvent->reader = &er_power_cap;
             thisEvent->writer = &ew_power_cap;                  // Can be written.
@@ -1443,7 +1395,7 @@ static int _rocm_smi_add_native_events(void)
             // Needs to be two events; max and min.
             //(rsmi_dev_power_cap_range_get, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t *max, uint64_t *min));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap_range_min:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:power_cap_range_min", device, sensor);
             strcpy(thisEvent->desc, "Power cap Minimum settable value, in microwatts.");
             thisEvent->reader = &er_power_cap_range_min;
             thisEvent->writer = NULL;                           // Can't be written.
@@ -1457,7 +1409,7 @@ static int _rocm_smi_add_native_events(void)
 
             if (TotalEvents > BaseEvent) {                      // If the base did not succeed, do not add the dependent.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap_range_max:device=%i:sensor=%i", device, sensor);
+                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:power_cap_range_max", device, sensor);
                 strcpy(thisEvent->desc, "Power cap Maximum settable value, in microwatts.");
                 thisEvent->reader = &er_power_cap_range_max;        // Will call previous, this routine just copies it.
                 thisEvent->writer = NULL;                           // Can't be written.
@@ -1473,7 +1425,7 @@ static int _rocm_smi_add_native_events(void)
             // rsmi_temperature_metric_t is an enum with 14 settings; each will be a separate event.
             //(rsmi_dev_temp_metric_get, (uint32_t dv_ind, uint32_t sensor_ind, rsmi_temperature_metric_t metric, int64_t *temperature));
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_current:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_current", device, sensor);
             strcpy(thisEvent->desc, "Temperature current value, millidegrees Celsius.");
             thisEvent->reader = &er_temp_current;               // RSMI_TEMP_CURRENT
             thisEvent->writer = NULL;                           // can't be written.
@@ -1485,7 +1437,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_max:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_max", device, sensor);
             strcpy(thisEvent->desc, "Temperature maximum value, millidegrees Celsius.");
             thisEvent->reader = &er_temp_max;                   // RSMI_TEMP_MAX
             thisEvent->writer = NULL;                           // can't be written.
@@ -1497,8 +1449,8 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_min:device=%i:sensor=%i", device, sensor);
-            strcpy(thisEvent->desc, "Temperature minimum value, millidegrees Celsius.");
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_min", device, sensor);
+            strcpy(thisEvent->desc, "Temperature mimimum value, millidegrees Celsius.");
             thisEvent->reader = &er_temp_min;                   // RSMI_TEMP_MIN
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
@@ -1509,7 +1461,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_max_hyst:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_max_hyst", device, sensor);
             strcpy(thisEvent->desc, "Temperature hysteresis value for max limit, millidegrees Celsius.");
             thisEvent->reader = &er_temp_max_hyst;              // RSMI_TEMP_MAX_HYST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1521,7 +1473,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_min_hyst:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_min_hyst", device, sensor);
             strcpy(thisEvent->desc, "Temperature hysteresis value for min limit, millidegrees Celsius.");
             thisEvent->reader = &er_temp_min_hyst;              // RSMI_TEMP_MIN_HYST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1533,7 +1485,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_critical:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_critical", device, sensor);
             strcpy(thisEvent->desc, "Temperature critical max value, typically > temp_max, millidegrees Celsius.");
             thisEvent->reader = &er_temp_critical;              // RSMI_TEMP_CRITICAL
             thisEvent->writer = NULL;                           // can't be written.
@@ -1545,7 +1497,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_critical_hyst:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_critical_hyst", device, sensor);
             strcpy(thisEvent->desc, "Temperature hysteresis value for critical limit, millidegrees Celsius.");
             thisEvent->reader = &er_temp_critical_hyst;         // RSMI_TEMP_CRITICAL_HYST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1557,9 +1509,9 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_emergency:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_emergency", device, sensor);
             strcpy(thisEvent->desc, "Temperature emergency max for chips supporting more than two upper temp limits, millidegrees Celsius.");
-            thisEvent->reader = &er_temp_emergency;             // RSMI_TEMP_EMERGENCY
+            thisEvent->reader = &er_temp_emergency;             // RSMI_TEMP_EMERGENCY    
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
             thisEvent->sensor=sensor;
@@ -1569,7 +1521,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_emergency_hyst:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_emergency_hyst", device, sensor);
             strcpy(thisEvent->desc, "Temperature hysteresis value for emergency limit, millidegrees Celsius.");
             thisEvent->reader = &er_temp_emergency_hyst;        // RSMI_TEMP_EMERGENCY_HYST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1581,9 +1533,9 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_crit_min:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_crit_min", device, sensor);
             strcpy(thisEvent->desc, "Temperature critical min value; typical < temp_min, millidegrees Celsius.");
-            thisEvent->reader = &er_temp_crit_min;              // RSMI_TEMP_CRIT_MIN
+            thisEvent->reader = &er_temp_crit_min;              // RSMI_TEMP_CRIT_MIN        
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
             thisEvent->sensor=sensor;
@@ -1593,7 +1545,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_crit_min_hyst:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_crit_min_hyst", device, sensor);
             strcpy(thisEvent->desc, "Temperature hysteresis value for critical min limit, millidegrees Celsius.");
             thisEvent->reader = &er_temp_crit_min_hyst;         // RSMI_TEMP_CRIT_MIN_HYST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1605,7 +1557,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_offset:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_offset", device, sensor);
             strcpy(thisEvent->desc, "Temperature offset added to temp reading by the chip, millidegrees Celsius.");
             thisEvent->reader = &er_temp_offset;                // RSMI_TEMP_OFFSET
             thisEvent->writer = NULL;                           // can't be written.
@@ -1617,7 +1569,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_lowest:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_lowest", device, sensor);
             strcpy(thisEvent->desc, "Temperature historical minimum, millidegrees Celsius.");
             thisEvent->reader = &er_temp_lowest;                // RSMI_TEMP_LOWEST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1629,7 +1581,7 @@ static int _rocm_smi_add_native_events(void)
             validateNewEvent();                                 // If can be read, inc TotalEvents, MakeRoomAllEvents().
 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_highest:device=%i:sensor=%i", device, sensor);
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device=%i:sensor=%i:temp_highest", device, sensor);
             strcpy(thisEvent->desc, "Temperature historical maximum, millidegrees Celsius.");
             thisEvent->reader = &er_temp_highest;               // RSMI_TEMP_HIGHEST
             thisEvent->writer = NULL;                           // can't be written.
@@ -1656,7 +1608,7 @@ static int _rocm_smi_add_native_events(void)
  *******************  BEGIN PAPI's COMPONENT REQUIRED FUNCTIONS  *************
  *****************************************************************************/
 
-/*
+/* 
  * This is called whenever a thread is initialized.
  */
 static int _rocm_smi_init_thread(hwd_context_t * ctx)
@@ -1686,8 +1638,8 @@ static int _rocm_smi_init_component(int cidx)
     RSMI(rsmi_init, (0),return(PAPI_ENOSUPP));
 
     ret = _rocm_smi_find_devices();             // Find AMD devices. Must find at least 1.
-    if (ret != PAPI_OK) return(ret);            // check for failure.
-
+    if (ret != PAPI_OK) return(ret);            // check for failure. 
+ 
     /* Get list of all native ROCM events supported */
     ret = _rocm_smi_add_native_events();
     if (ret != 0) return (ret);                 // check for failure.
@@ -1753,7 +1705,7 @@ static int _rocm_smi_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
     SUBDBG("Reset all active event values\n");
     // We don't have any cumulative events; if we did we should read zero values
-    // for them now.
+    // for them now. 
 
     for (i=0; i<TotalEvents; i++) {
         CurrentValue[i]=0;
@@ -1764,7 +1716,7 @@ static int _rocm_smi_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
 
 // Triggered by PAPI_read(). Call the read routine for each
-// event requested; and compose the response vector.
+// event requested; and compose the response vector. 
 static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
 {
     SUBDBG("Entering _rocm_smi_read\n");
@@ -1824,7 +1776,7 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
 
 
 // Triggered by PAPI_write(). Call the write routine for each
-// event specified, with the value given. .
+// event specified, with the value given. . 
 static int _rocm_smi_write(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long *values)
 {
     SUBDBG("Entering _rocm_smi_write\n");
@@ -1838,15 +1790,15 @@ static int _rocm_smi_write(hwd_context_t * ctx, hwd_control_state_t * ctrl, long
         int idx = CurrentIdx[i];                                // Get idx into AllEvents[].
         if (AllEvents[idx].writer == NULL) continue;            // Skip if no write routine.
         AllEvents[idx].value = (uint64_t) values[i];            // copy the value to write out.
-        ret = (AllEvents[idx].writer)(idx);                     // write the value.
-        if (ret != PAPI_OK) return(ret);                        // Exit early, had a write failure.
+        ret = (AllEvents[idx].writer)(idx);                     // write the value. 
+        if (ret != PAPI_OK) return(ret);                        // Exit early, had a write failure. 
     }
 
     return(PAPI_OK);
 } // END ROUTINE.
 
 
-// Triggered by PAPI_stop().
+// Triggered by PAPI_stop(). 
 static int _rocm_smi_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering _rocm_smi_stop\n");
@@ -1880,7 +1832,7 @@ static int _rocm_smi_cleanup_eventset(hwd_control_state_t * ctrl)
 static int _rocm_smi_shutdown_thread(hwd_context_t * ctx)
 {
     SUBDBG("Entering _rocm_smi_shutdown_thread\n");
-
+    
     (void) ctx;
     return (PAPI_OK);
 } // END routine.
@@ -1895,13 +1847,13 @@ static int _rocm_smi_shutdown_component(void)
     // Free memories.
     for (i=0; i<TotalEvents; i++) {
         if (AllEvents[i].vptr != NULL) free(AllEvents[i].vptr); // Free event memory.
-    }
-
+    }        
+    
     free(AllEvents);                                // Done.
     free(CurrentIdx);
     free(CurrentValue);
     AllEvents = NULL;
-    CurrentIdx = NULL;
+    CurrentIdx = NULL;   
     CurrentValue = NULL;
 
     // close the dynamic libraries needed by this component.
@@ -1919,14 +1871,14 @@ static int _rocm_smi_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
     (void) ctx;
     (void) ctrl;
-
+     
     return (PAPI_OK);
 } // END routine.
 
 
 //  This function sets various options in the component.
 //  @param[in] ctx -- hardware context
-//  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN,
+//  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
 //  PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
 //  @param[in] option -- options to be set
 static int _rocm_smi_ctrl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
@@ -1952,7 +1904,7 @@ static int _rocm_smi_set_domain(hwd_control_state_t * ctrl, int domain)
     SUBDBG("Entering _rocm_smi_set_domain\n");
 
     (void) ctrl;
-    if((PAPI_DOM_USER & domain) || (PAPI_DOM_KERNEL & domain) ||
+    if((PAPI_DOM_USER & domain) || (PAPI_DOM_KERNEL & domain) || 
        (PAPI_DOM_OTHER & domain) || (PAPI_DOM_ALL & domain)) {
         return (PAPI_OK);
     } else {
@@ -2030,7 +1982,7 @@ papi_vector_t _rocm_smi_vector = {
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
                  }
     ,
-    // sizes of framework-opaque component-private structures...
+    // sizes of framework-opaque component-private structures... 
     // these are all unused in this component.
     .size = {
              .context = 1,              // sizeof( _rocm_smi_context_t )
