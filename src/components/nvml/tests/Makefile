@@ -1,11 +1,14 @@
 NAME=nvml
 include ../../Makefile_comp_tests
-include ../Makefile.nvml
 # -fverbose-asm -Wa,-adhln=benchSANVML.s
 
-NVCC = $(CUDA_DIR)/bin/nvcc
-NVCFLAGS = -L$(NVML_INCDIR) -ccbin=$(CC)
-CUDALIBS = -L$(NVML_LIBDIR) -L$(CUDA_DIR)/lib64 -lcuda -lcudart -lnvidia-ml -lstdc++
+PAPI_NVML_ROOT ?= $(PAPI_CUDA_ROOT)
+PAPI_NVML_INC ?= $(PAPI_CUDA_ROOT)/include
+PAPI_NVML_LIB ?= $(PAPI_CUDA_ROOT)/lib64/stubs
+
+NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
+NVCFLAGS = -L$(PAPI_NVML_INC) -ccbin=$(CC)
+CUDALIBS = -L$(PAPI_NVML_LIB) -L$(PAPI_CUDA_ROOT)/lib64 -lcuda -lcudart -lnvidia-ml -lstdc++
 PAPILIB := ../../../libpapi.a  -ldl
 
 %.o:%.cu

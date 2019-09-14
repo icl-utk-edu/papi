@@ -129,6 +129,10 @@ static void* dl1 = NULL;
 static void* dl2 = NULL;
 static void* dl3 = NULL;
 
+static char cuda_main[]=PAPI_CUDA_MAIN;
+static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
+static char nvml_main[]=PAPI_NVML_MAIN;
+
 static int linkCudaLibraries();
 
 /* Declare our vector in advance */
@@ -1067,7 +1071,7 @@ int _papi_nvml_init_component(int cidx)
 
     ret = (*nvmlInitPtr)();
     if (NVML_SUCCESS != ret) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA managament library failed to initialize.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA management library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1082,7 +1086,7 @@ int _papi_nvml_init_component(int cidx)
     /* Figure out the number of CUDA devices in the system */
     ret = (*nvmlDeviceGetCountPtr)(&nvml_count);
     if (NVML_SUCCESS != ret) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA managament library.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA management library.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1096,7 +1100,7 @@ int _papi_nvml_init_component(int cidx)
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
-        strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA managament library have different device counts.");
+        strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA management library have different device counts.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;
     }
@@ -1150,30 +1154,84 @@ int _papi_nvml_init_component(int cidx)
 static int
 linkCudaLibraries()
 {
+    char path_lib[1024];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if (_dl_non_dynamic_init != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
     }
 
-    /* Need to link in the cuda libraries, if not found disable the component */
-    dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
-    if (!dl1) {
-        strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA library libcuda.so not found.", PAPI_MAX_STR_LEN);
-        return (PAPI_ENOSUPP);
+    // Need to link in the cuda libraries, if any not found disable the component.
+    // getenv returns NULL if environment variable is not found.
+    char *cuda_root = getenv("PAPI_CUDA_ROOT");
+    dl1 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(cuda_main) > 0) {                                // If override given, it has to work.
+        dl1 = dlopen(cuda_main, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                          // No override,
+        dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);     // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && cuda_root != NULL) {                          // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcuda.so", cuda_root);  // PAPI Root check.
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);              // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl1 == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcuda.so not found.");
+        return(PAPI_ENOSUPP);
+    }
+
+    // We have a dl1. (libcuda.so).
+
     cuInitPtr = dlsym(dl1, "cuInit");
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA function cuInit not found.", PAPI_MAX_STR_LEN);
         return (PAPI_ENOSUPP);
     }
 
-    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
-    if (!dl2) {
-        strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so not found.", PAPI_MAX_STR_LEN);
-        return (PAPI_ENOSUPP);
+    /* Need to link in the cuda runtime library, if not found disable the component */
+    dl2 = NULL;                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(cuda_runtime) > 0) {                                // If override given, it has to work.
+        dl2 = dlopen(cuda_runtime, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl2 == NULL) {
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
-    cudaGetDevicePtr = dlsym(dl2, "cudaGetDevice");
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl2 == NULL) {                                          // No override,
+        dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl2 == NULL && cuda_root != NULL) {                             // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcudart.so", cuda_root);   // PAPI Root check.
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                 // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl2 == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcudart.so not found.");
+        return(PAPI_ENOSUPP);
+    }
+
+    // We have a dl2. (libcudart.so).
+    
+   cudaGetDevicePtr = dlsym(dl2, "cudaGetDevice");
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "CUDART function cudaGetDevice not found.", PAPI_MAX_STR_LEN);
         return (PAPI_ENOSUPP);
@@ -1189,11 +1247,37 @@ linkCudaLibraries()
         return (PAPI_ENOSUPP);
     }
 
-    dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
-    if (!dl3) {
-        strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML runtime library libnvidia-ml.so not found.", PAPI_MAX_STR_LEN);
-        return (PAPI_ENOSUPP);
+    // We need the NVML main library, normally libnvidia-ml.so. 
+    dl3 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(nvml_main) > 0) {                                        // If override given, it MUST work.
+        dl3 = dlopen(nvml_main, RTLD_NOW | RTLD_GLOBAL);                // Try to open that path.
+        if (dl3 == NULL) {
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_NVML_MAIN override '%s' given in Rules.cuda not found.", nvml_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
     }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                              // If no override,
+        dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        snprintf(path_lib, 1024, "%s/lib64/libnvidia-ml.so", cuda_root);            // PAPI Root check.
+        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl3 == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libnvidia-ml.so not found.");
+        return(PAPI_ENOSUPP);   // Not found on default paths.
+    }
+
+    // We have a dl3. (libnvidia-ml.so).
+
     nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetClockInfo not found.", PAPI_MAX_STR_LEN);

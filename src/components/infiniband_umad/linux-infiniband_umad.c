@@ -72,6 +72,19 @@ uint8_t *            (*pma_query_viaPtr)         (void *, ib_portid_t *, int, un
 static void* dl1 = NULL;
 static void* dl2 = NULL;
 
+// string macro defined within Rules.infiniband_umad
+static char infiniband_mad_main[]=PAPI_INFINIBAND_MAD_MAIN;
+static char infiniband_umad_main[]=PAPI_INFINIBAND_UMAD_MAIN;
+
+//-----------------------------------------------------------------------------
+// Using weak symbols (global declared without a value, so it defers to any
+// other global declared in another file WITH a value) allows PAPI to be built
+// with the component, but PAPI can still be installed in a system without the
+// required library.
+//-----------------------------------------------------------------------------
+
+void (*_dl_non_dynamic_init)(void) __attribute__((weak));               // declare a weak dynamic-library init routine pointer.
+
 static int linkInfinibandLibraries ();
 
 papi_vector_t _infiniband_umad_vector;
@@ -621,19 +634,74 @@ INFINIBAND_init_component( int cidx )
 static int
 linkInfinibandLibraries ()
 {
-	/* Attempt to guess if we were statically linked to libc, if so bail */
-	if ( _dl_non_dynamic_init != NULL ) {
-		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "The Infiniband component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
-		return PAPI_ENOSUPP;
-	}
+   if ( _dl_non_dynamic_init != NULL ) {
+      // If weak var present, statically linked insted of dynamic.
+      strncpy( _infiniband_umad_vector.cmp_info.disabled_reason, "The infiniband_umad component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN-1);
+      // EXIT not supported.
+      return PAPI_ENOSUPP;
+   }
 
-	/* Need to link in the Infiniband libraries, if not found disable the component */
-	dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl1)
-	{
-		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibumad.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
+   char path_name[1024];
+   char *infiniband_umad_root = getenv("PAPI_INFINIBAND_UMAD_ROOT"); 
+   
+   dl1 = NULL;
+   // Step 1: Process override if given.   
+   if (strlen(infiniband_umad_main) > 0) {                                  // If override given, it has to work.
+      dl1 = dlopen(infiniband_umad_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+      if (dl1 == NULL) {
+         snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_INFINIBAND_UMAD_MAIN override '%s' given in Rules.infiniband_umad not found.", infiniband_umad_main);
+         return(PAPI_ENOSUPP);   // Override given but not found.
+      }
+   }
+
+   // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+   if (dl1 == NULL) {                                           // No override,
+      dl1 = dlopen("libibumad.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
+   }
+
+   // Step 3: Try the explicit install default. 
+   if (dl1 == NULL && infiniband_umad_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, 1024, "%s/lib64/libibumad.so", infiniband_umad_root);   // PAPI Root check.
+      dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+   }
+
+   // Check for failure.
+   if (dl1 == NULL) {
+      snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libibumad.so not found.");
+      return(PAPI_ENOSUPP);
+   }
+
+   // We have dl1.
+
+   dl2 = NULL;
+   // Step 1: Process override if given.   
+   if (strlen(infiniband_mad_main) > 0) {                                  // If override given, it has to work.
+      dl2 = dlopen(infiniband_mad_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+      if (dl2 == NULL) {
+         snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_INFINIBAND_MAD_MAIN override '%s' given in Rules.infiniband_umad not found.", infiniband_mad_main);
+         return(PAPI_ENOSUPP);   // Override given but not found.
+      }
+   }
+
+   // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+   if (dl2 == NULL) {                                           // No override,
+      dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
+   }
+
+   // Step 3: Try the explicit install default. 
+   if (dl2 == NULL && infiniband_umad_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, 1024, "%s/lib64/libibmad.so", infiniband_umad_root);   // PAPI Root check.
+      dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+   }
+
+   // Check for failure.
+   if (dl2 == NULL) {
+      snprintf(_infiniband_umad_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libibmad.so not found.");
+      return(PAPI_ENOSUPP);
+   }
+
+   // We have dl2.
+
 	umad_initPtr = dlsym(dl1, "umad_init");
 	if (dlerror() != NULL)
 	{
@@ -653,13 +721,6 @@ linkInfinibandLibraries ()
 		return ( PAPI_ENOSUPP );
 	}
 
-	/* Need to link in the Infiniband libraries, if not found disable the component */
-	dl2 = dlopen("libibmad.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!dl2)
-	{
-		strncpy(_infiniband_umad_vector.cmp_info.disabled_reason, "Infiniband library libibmad.so not found.",PAPI_MAX_STR_LEN);
-		return ( PAPI_ENOSUPP );
-	}
 	mad_decode_fieldPtr = dlsym(dl2, "mad_decode_field");
 	if (dlerror() != NULL)
 	{

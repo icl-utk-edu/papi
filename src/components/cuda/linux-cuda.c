@@ -25,6 +25,8 @@
 //-----------------------------------------------------------------------------
 
 #include <dlfcn.h>
+
+// NOTE: We can't use extended directories; these include files have includes.
 #include <cupti.h>
 #include <cuda_runtime_api.h>
 
@@ -110,6 +112,10 @@ typedef struct papicuda_control {
 static void *dl1 = NULL;
 static void *dl2 = NULL;
 static void *dl3 = NULL;
+
+static char cuda_main[]=PAPI_CUDA_MAIN;
+static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
+static char cuda_cupti[]=PAPI_CUDA_CUPTI;
 
 /* The PAPI side (external) variable as a global */
 papi_vector_t _cuda_vector;
@@ -260,16 +266,54 @@ DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
  */
 static int papicuda_linkCudaLibraries()
 {
-#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name ); if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); }
+    char path_lib[1024];
+#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );                \
+    if ( dlerror()!=NULL ) {                                                \
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,   \
+        "A CUDA required function '%s' was not found in lib '%s'.",         \
+        name, #dllib);                                                      \
+        return ( PAPI_ENOSUPP );                                            \
+    }
 
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_cuda_vector.cmp_info.disabled_reason, "The CUDA component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
     }
-    /* Need to link in the cuda libraries, if not found disable the component */
-    dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
-    CHECK_PRINT_EVAL(!dl1, "CUDA library libcuda.so not found.", return (PAPI_ENOSUPP));
+    // Need to link in the cuda libraries, if any not found disable the component
+    // getenv returns NULL if environment variable is not found.
+    char *cuda_root = getenv("PAPI_CUDA_ROOT");
+
+    dl1 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(cuda_main) > 0) {                                // If override given, it has to work.
+        dl1 = dlopen(cuda_main, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl1 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl1 == NULL) {                                          // No override,
+        dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);     // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl1 == NULL && cuda_root != NULL) {                          // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcuda.so", cuda_root);  // PAPI Root check.
+        dl1 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);              // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl1 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcuda.so not found.");
+        return(PAPI_ENOSUPP);
+    }
+
+    // We have a dl1. (libcuda.so).
+
     cuCtxGetCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxGetCurrent");
     cuCtxSetCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxSetCurrent");
     cuDeviceGetPtr = DLSYM_AND_CHECK(dl1, "cuDeviceGet");
@@ -283,16 +327,71 @@ static int papicuda_linkCudaLibraries()
     cuCtxCreatePtr  = DLSYM_AND_CHECK(dl1, "cuCtxCreate");
     cuCtxSynchronizePtr = DLSYM_AND_CHECK(dl1, "cuCtxSynchronize");
 
-    dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
-    if (!dl2) strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcudart.so was not found.", PAPI_MAX_STR_LEN );
-    CHECK_PRINT_EVAL(!dl2, "CUDA runtime library libcudart.so not found.", return (PAPI_ENOSUPP));
+    /* Need to link in the cuda runtime library, if not found disable the component */
+    dl2 = NULL;                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(cuda_runtime) > 0) {                                // If override given, it has to work.
+        dl2 = dlopen(cuda_runtime, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
+        if (dl2 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl2 == NULL) {                                          // No override,
+        dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL);   // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl2 == NULL && cuda_root != NULL) {                             // if root given, try it.
+        snprintf(path_lib, 1024, "%s/lib64/libcudart.so", cuda_root);   // PAPI Root check.
+        dl2 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                 // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl2 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcudart.so not found.");
+        return(PAPI_ENOSUPP);
+    }
+
+    // We have a dl2. (libcudart.so).
+
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
-    dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);
-    if (!dl3) strncpy( _cuda_vector.cmp_info.disabled_reason, "CUDA runtime library libcupti.so was not found.", PAPI_MAX_STR_LEN );
-    CHECK_PRINT_EVAL(!dl3, "CUDA Profiling Tools Interface (CUPTI) library libcupti.so not found.", return (PAPI_ENOSUPP));
+    dl3 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.   
+    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
+        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
+        if (dl3 == NULL) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                          // If no override,
+        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default. 
+    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        snprintf(path_lib, 1024, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
+        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl3 == NULL) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
+        return(PAPI_ENOSUPP);   // Not found on default paths.
+    }
+
+    // We have a dl3. (libcupti.so)
+
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
     /* cuptiDeviceEnumEventDomainsPtr = dlsym( dl3, "cuptiDeviceEnumEventDomains" ); */
     /* if ( dlerror()!=NULL ) { strncpy( _cuda_vector.cmp_info.disabled_reason, "A CUDA required function was not found in dynamic libs", PAPI_MAX_STR_LEN ); return ( PAPI_ENOSUPP ); } */

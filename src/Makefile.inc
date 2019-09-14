@@ -58,13 +58,13 @@ $(LIBRARY): $(OBJECTS)
 	rm -f $(LIBRARY)
 	$(AR) $(ARG64) rv $(LIBRARY) $(OBJECTS)
 
-shared: libpapi.so libpapi.so.$(PAPIVER)
+shared: libpapi.so libpapi.so.$(PAPISOVER)
 
-libpapi.so libpapi.so.$(PAPIVER): $(SHLIB)
+libpapi.so libpapi.so.$(PAPISOVER): $(SHLIB)
 	ln -sf $(SHLIB) $@
 
 $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
-	rm -f $(SHLIB) libpapi.so libpapi.so.$(PAPIVER); 
+	rm -f $(SHLIB) libpapi.so libpapi.so.$(PAPISOVER)
 	$(CC_SHR) $(LIBCFLAGS) $(OPTFLAGS) $(SOURCES) $(SHLIBOBJS) -o $@ $(SHLIBDEPS) $(LDFLAGS)
 	@set -ex; if test "$(POST_BUILD)" != "" ; then \
 		-$(POST_BUILD) ; \
@@ -258,7 +258,7 @@ ifneq (${COMPONENTS},)
 endif
 
 clean: comp_tests_clean native_clean
-	rm -rf $(LIBRARY) $(SHLIB) libpapi.so libpapi.so.$(PAPIVER) $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c
+	rm -rf $(LIBRARY) $(SHLIB) libpapi.so libpapi.so.$(PAPISOVER) $(OBJECTS) core rii_files genpapifdef *~ so_locations papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c
 	$(MAKE) -C ../doc clean
 	$(MAKE) -C ctests clean
 	$(MAKE) -C ftests clean
@@ -317,8 +317,7 @@ install-lib: native_install
 		cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC); \
 		chmod go+r $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) ; \
 		cd $(DESTDIR)$(LIBDIR); \
-		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE); \
-		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER); \
+		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPISOVER); \
 		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so; \
 	fi
 
@@ -352,9 +351,8 @@ install-pkgconf:
 	-mkdir -p $(DESTDIR)$(LIBPC)
 	-chmod go+rx $(DESTDIR)$(LIBPC)
 	cp papi.pc $(DESTDIR)$(LIBPC)/papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc
-	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).pc;
-	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi-$(PAPIVER).pc;
-	cd $(DESTDIR)$(LIBPC); ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc papi.pc;
+	ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc $(DESTDIR)$(LIBPC)/papi-$(PAPISOVER).pc
+	ln -sf papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC).pc $(DESTDIR)$(LIBPC)/papi.pc
 
 #
 # Dummy targets for configurations that do not also include a Rules file with targets

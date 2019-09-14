@@ -125,6 +125,10 @@ Thread( int n )
 	}
 }
 
+unsigned long omp_get_thread_num_wrapper(void){
+    return (unsigned long)omp_get_thread_num();
+}
+
 int
 main( int argc, char **argv )
 {
@@ -160,8 +164,7 @@ main( int argc, char **argv )
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
 
-	retval = PAPI_thread_init( ( unsigned long ( * )( void ) )
-						( omp_get_thread_num ) );
+	retval = PAPI_thread_init( omp_get_thread_num_wrapper );
 	if ( retval != PAPI_OK ) {
 		if ( retval == PAPI_ECMP ) {
 			if (!quiet) printf("Trouble init threads\n");

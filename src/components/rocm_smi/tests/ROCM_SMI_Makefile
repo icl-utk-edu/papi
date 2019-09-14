@@ -1,0 +1,47 @@
+# Originally /opt/rocm/hip/samples/0_Intro/square/Makefile
+# Modified for testing in a PAPI environment.
+
+include ../../Makefile_comp_tests.target
+HIP_PATH?= $(wildcard /opt/rocm/hip)
+ifeq (,$(HIP_PATH))
+	HIP_PATH=../../..
+endif
+
+HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
+HIPCC=$(HIP_PATH)/bin/hipcc
+
+INCLUDE+=-I${HOME}/papi/src/ -I${HOME}/rocm_smi_lib/include/rocm_smi/
+
+ifeq (${HIP_PLATFORM}, nvcc)
+	SOURCES=square.cu
+else
+	SOURCES=square.cpp
+endif
+
+all: 
+
+# Step
+#square.cpp: square.cu
+#	$(HIP_PATH)/bin/hipify-perl square.cu > square.cpp
+
+square.out: square.cpp
+	$(HIPCC) $(CXXFLAGS) square.cpp -o $@
+
+rocm_command_line.out: rocm_command_line.cpp 
+	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_command_line.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+rocm_smi_all.out: rocm_smi_all.cpp 
+	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_smi_all.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+rocm_smi_writeTests.out: rocm_smi_writeTests.cpp 
+	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_smi_writeTests.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+checkpath: 
+	echo HIP_PATH = $(HIP_PATH)
+	echo SOURCES = $(SOURCES)
+	echo HIP_PLATFORM = $(HIP_PLATFORM)
+	echo HIPCC = $(HIPCC)
+	echo INCLUDE = $(INCLUDE)
+
+clean:
+	rm -f *.o *.out

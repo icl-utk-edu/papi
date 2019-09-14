@@ -21,7 +21,7 @@ main( int argc, char **argv )
 	int i;
 	PAPI_event_info_t info;
 	long long values;
-	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_2MAX_STR_LEN];
 	int quiet=0;
 
 	/* Set TESTS_QUIET variable */

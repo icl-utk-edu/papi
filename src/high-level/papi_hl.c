@@ -19,7 +19,6 @@
 #include <search.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <error.h>
 #include <errno.h>
 #include <time.h>
 #include <stdint.h>
@@ -205,14 +204,14 @@ static void _internal_hl_library_init(void)
    }
 
    if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_library_init");
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
    
    /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
    if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
 
       /* determine output directory and output file */
       if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
-         error_at_line(0, retval, __FILE__ ,__LINE__, "_internal_hl_determine_output_path");
+         verbose_fprintf(stdout, "PAPI-HL Error: _internal_hl_determine_output_path failed!\n");
          state = PAPIHL_DEACTIVATED;
          verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
       } else {
@@ -226,10 +225,23 @@ static void _internal_hl_library_init(void)
          HLDBG("master_thread_id=%lu\n", master_thread_id);
       }
    } else {
-      error_at_line(0, retval, __FILE__ ,__LINE__, "PAPI_thread_init");
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_thread_init failed!\n");
       state = PAPIHL_DEACTIVATED;
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
    }
+
+   /* Support multiplexing if user wants to */
+   if ( getenv("PAPI_MULTIPLEX") != NULL ) {
+      retval = PAPI_multiplex_init();
+      if ( retval == PAPI_ENOSUPP) {
+         verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
+      } else if ( retval != PAPI_OK ) {
+         verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
+      } else if ( retval == PAPI_OK ) {
+         verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
+      }
+   }
+
    hl_initiated = true;
 }
 
@@ -398,6 +410,25 @@ static int _internal_hl_new_component(int component_id, components_t *component)
       return ( retval );
    }
 
+   /* Support multiplexing if user wants to */
+   if ( getenv("PAPI_MULTIPLEX") != NULL ) {
+
+      /* multiplex only for cpu core events */
+      if ( component_id == 0 ) {
+         retval = PAPI_assign_eventset_component(component->EventSet, component_id);
+         if ( retval != PAPI_OK ) {
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_assign_eventset_component failed.\n");
+         } else {
+            if ( PAPI_get_multiplex(component->EventSet) == false ) {
+               retval = PAPI_set_multiplex(component->EventSet);
+               if ( retval != PAPI_OK ) {
+                  verbose_fprintf(stdout, "PAPI-HL Error: PAPI_set_multiplex failed.\n");
+               }
+            }
+         }
+      }
+   }
+
    component->component_id = component_id;
    component->num_of_events = 0;
    component->max_num_of_events = PAPIHL_NUM_OF_EVENTS_PER_COMPONENT;
@@ -452,7 +483,8 @@ static int _internal_hl_add_event_to_component(char *event_name, int event,
       for ( i = 0; i < component->num_of_events; i++ )
          verbose_fprintf(stdout, "  %s\n", component->event_names[i]);
       verbose_fprintf(stdout, "  %s\n", event_name);
-      verbose_fprintf(stdout, "Advice: Use papi_event_chooser to obtain an appropriate event set for this component.\n");
+      verbose_fprintf(stdout, "Advice: Use papi_event_chooser to obtain an appropriate event set for this component or set PAPI_MULTIPLEX=1.\n");
+
       return PAPI_EINVAL;
    }
 
@@ -539,6 +571,8 @@ static int _internal_hl_create_components()
       }
    }
 
+   verbose_fprintf(stdout, "PAPI-HL Info: Using the following events:\n");
+
    /* destroy all EventSets from global data */
    for ( i = 0; i < num_of_components; i++ ) {
       if ( ( retval = PAPI_cleanup_eventset (components[i].EventSet) ) != PAPI_OK )
@@ -551,6 +585,7 @@ static int _internal_hl_create_components()
       HLDBG("num_of_events = %d\n", components[i].num_of_events);
       for ( j = 0; j < components[i].num_of_events; j++ ) {
          HLDBG(" %s type=%d\n", components[i].event_names[j], components[i].event_types[j]);
+         verbose_fprintf(stdout, "  %s\n", components[i].event_names[j]);
       }
    }
 
@@ -621,6 +656,26 @@ static int _internal_hl_create_event_sets()
          if ( ( retval = PAPI_create_eventset( &_local_components[i].EventSet ) ) != PAPI_OK ) {
             return (retval );
          }
+
+         /* Support multiplexing if user wants to */
+         if ( getenv("PAPI_MULTIPLEX") != NULL ) {
+
+            /* multiplex only for cpu core events */
+            if ( components[i].component_id == 0 ) {
+               retval = PAPI_assign_eventset_component(_local_components[i].EventSet, components[i].component_id );
+	            if ( retval != PAPI_OK ) {
+		            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_assign_eventset_component failed.\n");
+               } else {
+                  if ( PAPI_get_multiplex(_local_components[i].EventSet) == false ) {
+                     retval = PAPI_set_multiplex(_local_components[i].EventSet);
+                     if ( retval != PAPI_OK ) {
+		                  verbose_fprintf(stdout, "PAPI-HL Error: PAPI_set_multiplex failed.\n");
+                     }
+                  }
+               }
+            }
+         }
+
          /* add event to current EventSet */
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             retval = PAPI_add_event( _local_components[i].EventSet, components[i].event_codes[j] );
@@ -632,6 +687,10 @@ static int _internal_hl_create_event_sets()
          _local_components[i].values = (long_long*)malloc(components[i].num_of_events * sizeof(long_long));
          if ( _local_components[i].values == NULL )
             return ( PAPI_ENOMEM );
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
       }
 
       for ( i = 0; i < num_of_components; i++ ) {
@@ -953,7 +1012,7 @@ static int _internal_hl_determine_output_path()
       if ( ( output_prefix = strdup( getenv("PAPI_OUTPUT_DIRECTORY") ) ) == NULL )
          return ( PAPI_ENOMEM );
    } else {
-      if ( ( output_prefix = strdup( get_current_dir_name() ) ) == NULL )
+      if ( ( output_prefix = strdup( getcwd(NULL,0) ) ) == NULL )
          return ( PAPI_ENOMEM );
    }
    
@@ -977,7 +1036,7 @@ static int _internal_hl_determine_output_path()
       /* create timestamp */
       time_t t = time(NULL);
       struct tm tm = *localtime(&t);
-      char m_time[16];
+      char m_time[32];
       sprintf(m_time, "%d%02d%02d-%02d%02d%02d", tm.tm_year+1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
       /* add timestamp to existing folder string */
       sprintf(new_absolute_output_file_path, "%s-%s", absolute_output_file_path, m_time);
@@ -1165,6 +1224,11 @@ static void _internal_hl_write_output()
    {
       _papi_hwi_lock( HIGHLEVEL_LOCK );
       if ( output_generated == false ) {
+         /* check if events were recorded */
+         if ( binary_tree == NULL ) {
+            verbose_fprintf(stdout, "PAPI-HL Info: No events were recorded.\n");
+            return;
+         }
          unsigned long *tids = NULL;
          int number_of_threads;
          FILE *output_file;
@@ -1193,14 +1257,14 @@ static void _internal_hl_write_output()
          if ( rank < 0 )
          {
             /* generate unique rank number */
-            sprintf(absolute_output_file_path, "%s/rank_XXXXXX", absolute_output_file_path);
+            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_XXXXXX");
             int fd;
             fd = mkstemp(absolute_output_file_path);
             close(fd);
          }
          else
          {
-            sprintf(absolute_output_file_path, "%s/rank_%04d", absolute_output_file_path, rank);
+            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_%04d", rank);
          }
 
          /* determine current cpu frequency */
@@ -1254,7 +1318,7 @@ static void _internal_hl_write_output()
                /* print output to stdout */
                printf("\n\nPAPI-HL Output:\n");
                output_file = fopen(absolute_output_file_path, "r");
-               char c = fgetc(output_file); 
+               int c = fgetc(output_file); 
                while (c != EOF)
                {
                   printf("%c", c);

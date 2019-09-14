@@ -168,6 +168,8 @@ static int pfm_cpumcf_init(void *this)
 	/* counters based on second version number */
 	csvn_set = cpumcf_svn_generic_counters;
 	csvn_set_count = LIBPFM_ARRAY_SIZE(cpumcf_svn_generic_counters);
+	if (csvn < 6)	/* Crypto counter set enlarged for SVN == 6 */
+		csvn_set_count -= CPUMF_SVN6_ECC;
 
 	/* check and assign a machine-specific extended counter set */
 	switch (get_machine_type()) {
@@ -192,6 +194,9 @@ static int pfm_cpumcf_init(void *this)
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z13_counters);
 		break;
 	case 3906:  /* IBM z14  */
+	case 3907:  /* IBM z14 ZR1  */
+	case 8561:  /* IBM Machine types 8561 and 8562 */
+	case 8562:
 		ext_set = cpumcf_z14_counters;
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z14_counters);
 		break;

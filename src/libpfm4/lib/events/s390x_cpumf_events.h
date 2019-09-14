@@ -13,6 +13,8 @@
 #define CPUMF_CTRSET_EXTENDED           1
 #define CPUMF_CTRSET_MT_DIAG            32
 
+#define CPUMF_SVN6_ECC			4
+
 
 static const pme_cpumf_ctr_t cpumcf_fvn1_counters[] = {
 	{
@@ -269,6 +271,43 @@ static const pme_cpumf_ctr_t cpumcf_svn_generic_counters[] = {
 			" functions issued by the CPU because the DEA/AES"
 			" coprocessor is busy performing a function issued by"
 			" another CPU",
+	},
+	{
+		.ctrnum = 80,
+		.ctrset = CPUMF_CTRSET_CRYPTO,
+		.name = "ECC_FUNCTION_COUNT",
+		.desc = "This counter counts the"
+			" total number of the elliptic-curve cryptography (ECC)"
+			" functions issued by the CPU.",
+	},
+	{
+		.ctrnum = 81,
+		.ctrset = CPUMF_CTRSET_CRYPTO,
+		.name = "ECC_CYCLES_COUNT",
+		.desc = "This counter counts the total"
+			" number of CPU cycles when the ECC coprocessor is"
+			" busy performing the elliptic-curve cryptography"
+			" (ECC) functions issued by the CPU.",
+	},
+	{
+		.ctrnum = 82,
+		.ctrset = CPUMF_CTRSET_CRYPTO,
+		.name = "ECC_BLOCKED_FUNCTION_COUNT",
+		.desc = "This counter counts the total number of the"
+			" elliptic-curve cryptography (ECC) functions that are"
+			" issued by the CPU and are blocked because the ECC"
+			" coprocessor is busy performing a function issued by"
+			" another CPU.",
+	},
+	{
+		.ctrnum = 83,
+		.ctrset = CPUMF_CTRSET_CRYPTO,
+		.name = "ECC_BLOCKED_CYCLES_COUNT",
+		.desc = "This counter counts the total number of CPU cycles "
+			" blocked for the elliptic-curve cryptography (ECC) "
+			" functions issued by the CPU because the ECC"
+			" coprocessor is busy perform ing a function issued"
+			" by another CPU.",
 	},
 };
 

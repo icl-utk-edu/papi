@@ -60,8 +60,8 @@ endif
 	-install -d $(DESTDIR)$(LIBDIR)
 ifneq (,$(findstring shared,$(LIBS)))
 	cp -p $(SHLIB) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPIVER)
-	cd $(DESTDIR)$(LIBDIR); ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so
+	ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) $(DESTDIR)$(LIBDIR)/libpapi.so.$(PAPISOVER)
+	ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) $(DESTDIR)$(LIBDIR)/libpapi.so
 endif
 	-install -d $(DESTDIR)$(DATADIR)
 	cp -f ./papi_events.csv $(DESTDIR)$(DATADIR)

@@ -2312,7 +2312,7 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 	   info->count = _papi_hwi_presets[i].count;
 
 	   _papi_hwi_derived_string( _papi_hwi_presets[i].derived_int,
-				     info->derived,  sizeof ( info->derived ) );
+				     info->derived,  sizeof ( info->derived )-1 );
 
 	   if ( _papi_hwi_presets[i].postfix != NULL )
 	      strncpy( info->postfix, _papi_hwi_presets[i].postfix,

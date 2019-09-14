@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "papi.h"
-#include "msr/msr_core.h"
-#include "msr/msr_rapl.h"
+#include "msr_core.h"
+#include "msr_rapl.h"
 
 #define MAX_EVENTS 128
 

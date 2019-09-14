@@ -29,12 +29,12 @@ Known problems and limitations in early release of metric support
 General information
 -------------------
 
-The PAPI CUDA component is a hardware performance counter
-measurement technology for the NVIDIA CUDA platform which provides
-access to the hardware counters inside the GPU. PAPI CUDA is based on
-CUPTI support in the NVIDIA driver library. In any environment where
-the CUPTI-enabled driver is installed, the PAPI CUDA component should
-be able to provide detailed performance counter information regarding
+The PAPI CUDA component is a hardware performance counter measurement
+technology for the NVIDIA CUDA platform which provides access to the
+hardware counters inside the GPU. PAPI CUDA is based on CUPTI support
+in the NVIDIA driver library. In any environment where the
+CUPTI-enabled driver is installed, the PAPI CUDA component should be
+able to provide detailed performance counter information regarding
 events on the GPU kernels.  
 
 NOTE: When adding CUDA related events or metrics to the CUDA
@@ -47,50 +47,60 @@ the user has to call PAPI_cleanup_eventset( EventSet ) before calling
 PAPI_shutdown() in the application. This is important since it also
 frees the performance monitoring hardware on the GPU.
 
+This PAPI CUDA component has been developed and tested using CUDA
+version 10.1 and the associated CUPTI library. CUPTI is released with
+the CUDA Tools SDK.
 
 How to install PAPI with the CUDA component?
 -------------------------------------------- 
 
-This PAPI CUDA component has been developed and tested using CUDA
-version 8.0 and the associated CUPTI library. CUPTI is released with
-the CUDA Tools SDK.
+There is ONE required environment variable: PAPI_CUDA_ROOT. This is
+required for both compiling, and at runtime. 
 
-This component uses the CUDA location from the environment (or looks
-for /opt/cuda by default).  Please set CUDA_DIR and CUPTI_DIR during
-builds so that the component can find the required header files.
+An example that works on ICL's Saturn system (at this writing):
+export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
 
-Configure PAPI with CUDA enabled.  
-    % cd src
-    % ./configure --prefix=some_location --with-components="cuda"
+Within PAPI_CUDA_ROOT, we expect the following standard directories:
+PAPI_CUDA_ROOT/include
+PAPI_CUDA_ROOT/lib64
+PAPI_CUDA_ROOT/extras/CUPTI/include
+PAPI_CUDA_ROOT/extras/CUPTI/lib64
 
-Build with CUDA_DIR and CUPTI_DIR specified
-    % export CUDA_DIR=/opt/cuda
-    % export CUPTI_DIR=/opt/cuda/extras/CUPTI
+For a standard installed system, this is the only environment variable
+required for both compile and runtime. 
+
+System configurations can vary. Some systems use Spack, a package
+manager, to automatically keep paths straight. Others (like our own
+ICL Saturn System) require "module load" commands to provide some
+services, e.g. 'module load cuda-10.1', and these may also set
+environment variables and change the LD_LIBRARY_PATH search order.
+
+Users may require the help of sysadmin personnel to navigate these
+facilities and gain access to the correct libraries.
+
+Configure PAPI with CUDA enabled. We presume you have navigated to the
+directory papi/src. In that directory:
+    % ./configure --with-components="cuda"
+
+Build with PAPI_CUDA_ROOT specified (ICL's Saturn example again):
+    % export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
     % make 
 
-Testing the component requires that libraries for PAPI, CUDA, CUPTI
-can be found or are statically linked in to the executable.  You may
-need to add the library directories; examples are shown here.  
+TESTING the component is installed: Still from papi/src:
+    % utils/papi_component_avail
 
- % export LD_LIBRARY_PATH=${CUDA_DIR}/lib64:${CUPTI_DIR}/lib64:${LD_LIBRARY_PATH}
+For the CUDA component to be operational, it must find the dynamic
+libraries libcuda.so, libcudart.so, and libcupti.so.
 
-Note libraries may be found in different places on different systems; the point
-is that we need an environment variable $CUDA_DIR (with the underscore), and 
-the CUPTI directory in the $LD_LIBRARY_PATH. 
+If any of these are not found (or are not functional) then the
+component will be listed as "disabled" with a reason explaining the
+problem. If libraries were not found, then they are not in the
+expected places. The component can be configured to look for each of
+these libraries in a specific place, and using an alternate name if
+desired. Detailed instructions are contained in the Rules.cuda file.
+They are technical, users may wish to enlist the help of a sysadmin.
 
-Before starting working with the cuda component, verify it's active by
-running:
-   % ./papi_component_avail"
-and check if it listed under the "Active Components" list.
-
-Test by running from the src directory
-   % ./components/cuda/tests/simpleMultiGPU
-
-For general information on how to create and run components, the user
-is referred to the INSTALL.txt section "CREATING AND RUNNING
-COMPONENTS".
-
-To find a list of CUDA supported events.
+To find a list of CUDA supported events:
     % utils/papi_native_avail | grep -i CUDA
 
 */

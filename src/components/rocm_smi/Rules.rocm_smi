@@ -8,7 +8,7 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 # be set, as just a library name, or a full path and name. There cannot be any
 # spaces between the double quotes (which must be escaped as \"). An example:
 
-# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so.1\"
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
 
 # By default, all overrides are empty strings.
 
@@ -16,17 +16,15 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 # disabled. 
 
 # Both at compile time and run time, the software depends on PAPI_ROCM_ROOT.
-# There are two libraries used by the ROCM component, they are:
-# libhsa-runtime64.so
-# librocprofiler64.so 
+# There is one library used by the ROCM_SMI component:
+# librocm_smi64.so
 
-# The standard installed locations for these libraries, with overrides:
-# $(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so     #O.R. PAPI_ROCM_HSA
-# $(PAPI_CUDA_ROOT)/lib/librocprofiler64.so     #O.R. PAPI_ROCM_PROF
+# The standard installed location for this library, with override:
+# $(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so #O.R. PAPI_ROCM_SMI_MAIN
 #
-# There are many ways to cause these paths to be known.  Spack is a
-# package manager used on supercomputers, Linux and MacOS.  If Spack
-# is aware of ROCM, it encodes the paths to the necessary libraries.
+# There are many ways to cause this path to be known.  Spack is a package
+# manager used on supercomputers, Linux and MacOS.  If Spack is aware of ROCM,
+# it encodes the paths to the necessary libraries.
 
 # The environment variable LD_LIBRARY_PATH encodes a list of paths to
 # search for libraries; separated by a colon (:). These paths could be
@@ -55,21 +53,19 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 # /usr/lib, /lib. 
 
 # OVERRIDES: These are by default empty strings (""), if set they must work.
-PAPI_ROCM_HSA = \"\"
-PAPI_ROCM_PROF = \"\"
+PAPI_ROCM_SMI_MAIN = \"\"
 
-# Examples of an override:
-# PAPI_ROCM_HSA = \"$(PAPI_ROCM_ROOT)/hsa/lib/libhsa-runtime64.so.1.1.9\"
-# PAPI_ROCM_PROF = \"$(PAPI_ROCM_ROOT)/rocprofiler/lib/librocprofiler64.so.1.0.0\"
+# An example of an override:
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
 
-# Note:  PAPI_ROCM_ROOT also applies to the ROCM_SMI component, which is by
-# default installed by AMD when ROCM is installed; however, it must be
-# specified at configure time as a separate component for PAPI. 
+# Note:  PAPI_ROCM_ROOT also applies to the ROCM component ROCM_SMI is provided
+# by default when ROCM is installed; however, ROCM must be specified at
+# configure time as a separate component for PAPI. 
 
 # Note:  If you change these overrides, PAPI should be rebuilt from scratch.
 #        From papi/src/
 #        make clobber
-#        ./configure --with-components="rocm"
+#        ./configure --with-components="rocm_smi"
 #        make  
 
 # An alternative, for both rocm and rocm_smi components:
@@ -91,20 +87,16 @@ PAPI_ROCM_PROF = \"\"
 
 # DEFFLAGS is the macro defines for the two overrides. In the code we convert
 # these to string variables with the following lines:
-# static char rocm_hsa[]=PAPI_ROCM_HSA;
-# static char rocm_prof[]=PAPI_ROCM_PROF;
+# static char rocm_smi_main[]=PAPI_ROCM_HSA;
 
-ROCM_MACS = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF) 
+ROCM_SMI_MACS = -DPAPI_ROCM_SMI_MAIN=$(PAPI_ROCM_SMI_MAIN)
 
-COMPSRCS += components/rocm/linux-rocm.c
-COMPOBJS += linux-rocm.o
+COMPSRCS += components/rocm_smi/linux-rocm-smi.c
+COMPOBJS += linux-rocm-smi.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
 # Order is important here; there are multiple DIFFERENT hsa.h files.
-CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
-CFLAGS += -I$(PAPI_ROCM_ROOT)/rocprofiler/include
-CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(ROCM_MACS) -g 
+CFLAGS += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi $(ROCM_SMI_MACS) -g 
 LDFLAGS += $(LDL) -g
 
-linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm/linux-rocm.c -o linux-rocm.o
-
+linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm_smi/linux-rocm-smi.c -o linux-rocm-smi.o 

@@ -52,7 +52,7 @@ main( int argc, char **argv )
 	int num_events1;
 	long long **values;
 	long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
-	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_MAX_STR_LEN];
+	char event_name[PAPI_MAX_STR_LEN], add_event_str[PAPI_2MAX_STR_LEN];
 	const PAPI_component_info_t *cmpinfo;
 	pid_t pid;
 

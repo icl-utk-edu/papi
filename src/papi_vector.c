@@ -146,7 +146,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->init_thread = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
 	if ( !v->init_control_state )
 		v->init_control_state =
-			( int ( * )( hwd_control_state_t * ptr ) ) vec_void_dummy;
+			( int ( * )( hwd_control_state_t * ptr ) ) vec_int_dummy;
 	if ( !v->update_control_state )
 		v->update_control_state = ( int ( * )
 									( hwd_control_state_t *, NativeInfo_t *,

@@ -49,10 +49,9 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_VERSION
 
-#include <pcp/pmapi.h> // See https://pcp.io/man/man3/pmapi.3.html for routines.
-#include <pcp/impl.h>  // also a PCP file.  
-
-#define MYPCPLIB "libpcp.so"  // Name of my PCP library. 
+// PCP include directory (defaults to /usr/include/pcp; see README for PAPI_PCP_INC.)
+#include <pmapi.h> // See https://pcp.io/man/man3/pmapi.3.html for routines.
+#include <impl.h>  // also a PCP file.  
 
 #define   PM_OPTFLAG_EXIT     (1<<5)
 #define   PM_CONTEXT_UNDEF    -1
@@ -180,13 +179,12 @@ papi_vector_t _pcp_vector;                         // What we expose to PAPI, ro
 
 // -------------------------- GLOBAL SECTION ---------------------------------
 
-int         _papi_hwi_debug = DEBUG_SUBSTRATE;                          // Bit flags to enable xxxDBG; SUBDBG for Substrate. Overrides weak global in papi.c.
+       int  _papi_hwi_debug = DEBUG_SUBSTRATE;                          // Bit flags to enable xxxDBG; SUBDBG for Substrate. Overrides weak global in papi.c.
 static int  sEventInfoSize=0;                                           // total size of pcp_event_info.
 static int  sEventInfoBlock = ((8*1024) / sizeof(_pcp_event_info_t));   // add about 8K at a time.
 static      _pcp_event_info_t * pcp_event_info = NULL;                  // our array of created pcp events.
 static int  sEventCount = 0;                                            // count of events seen by pmTraversePMNS().
-int         ctxHandle = -1;                                             // context handle. (-1 is invalid).
-char        *pmProgname = "pcp";
+static int  ctxHandle = -1;                                             // context handle. (-1 is invalid).
 static char *cachedGetInDom(pmInDom indom, int inst);                   // cache all reads of pcp_pmGetInDom, to save time.
 #define     HASH_SIZE 512                                               /* very roughly in the range of total events. full Saturn test, had ~ 11,000 events.*/
 static      _pcp_hash_t sNameHash[HASH_SIZE];                           // hash table into pcp_event_info by event name.
@@ -212,7 +210,7 @@ ctr_pcp_ntv_code_to_name,                          // counter 14
 ctr_pcp_ntv_code_to_descr,                         // counter 15
 ctr_pcp_ntv_code_to_info};                         // counter 16
 
-int cnt[ctr_pcp_ntv_code_to_info+1] = {0};         // counters for the following macro.
+static int cnt[ctr_pcp_ntv_code_to_info+1] = {0};  // counters for the following macro.
 
 #define mRtnCnt(funcname) \
    if (COUNT_ROUTINES) {            /* Note if (0) optimized out completely even if -O0. */  \
@@ -241,7 +239,11 @@ static struct timeval t1, t2;                                           // used 
 #define _time_gettimeofday if (0) gettimeofday                          /* change to 1 to enable gettimeofday for performance timings.    */
 
 
-static void* dllib1 = NULL;                                             // Our dynamic library. 
+// file handle used to access pcp library with dlopen
+static void *dl1 = NULL;
+
+// string macro defined within Rules.pcp
+static char pcp_main[]=PAPI_PCP_MAIN;
 
 //-----------------------------------------------------------------------------
 // Using weak symbols (global declared without a value, so it defers to any
@@ -258,7 +260,7 @@ void (*_dl_non_dynamic_init)(void) __attribute__((weak));               // decla
 static int     (*pmLookupName_ptr)     (int numpid, char **namelist,pmID *pmidlist);
 static char*   (*pmErrStr_ptr)         (int code);
 static int     (*pmTraversePMNS_ptr)   (const char *name, void(*func)(const char *));
-void           (*pmFreeResult_ptr)     (pmResult *result);
+static void    (*pmFreeResult_ptr)     (pmResult *result);
 static int     (*pmNewContext_ptr)     (int type, const char *name);
 static int     (*pmDestroyContext_ptr) (int handle);
 static int     (*pmFetch_ptr)          (int numpid, pmID *pmidlist, pmResult **result);
@@ -277,7 +279,7 @@ static char*   pcp_pmErrStr (int code)
 static int     pcp_pmTraversePMNS (const char *name, void(*func)(const char *)) 
                   { return ((*pmTraversePMNS_ptr) (name, func)); }
 
-void           pcp_pmFreeResult (pmResult *result) 
+static void    pcp_pmFreeResult (pmResult *result) 
                   { return ((*pmFreeResult_ptr) (result)); }
 
 static int     pcp_pmNewContext (int type, const char *name) 
@@ -310,7 +312,7 @@ static char*   pcp_pmUnitsStr_r (const pmUnits *pu, char *buf, int buflen)
 // have dups; max dups was 4.
 //-----------------------------------------------------------------------------
 
-unsigned int stringHash(char *str, unsigned int tableSize) 
+static unsigned int stringHash(char *str, unsigned int tableSize) 
 {
   unsigned long hash = 5381;                             // seed value.
   int c;
@@ -326,7 +328,7 @@ unsigned int stringHash(char *str, unsigned int tableSize)
 // addNameHash: Given a string, hash it, and add to sNameHash[]. 
 //-----------------------------------------------------------------------------
 
-unsigned int addNameHash(char *key, int idx) 
+static unsigned int addNameHash(char *key, int idx) 
 {
    unsigned int slot = stringHash(key, HASH_SIZE);       // compute hash code.
    if (sNameHash[slot].idx < 0) {                        // If not occupied,
@@ -348,7 +350,7 @@ unsigned int addNameHash(char *key, int idx)
 // freeNameHash: delete any allocated for collisions.
 //-----------------------------------------------------------------------------
 
-void freeNameHash(void) 
+static void freeNameHash(void) 
 {
    int i;
    for (i=0; i<HASH_SIZE; i++) {                                         // loop through table.
@@ -367,7 +369,7 @@ void freeNameHash(void)
 // avg over 1857 lookups, Saturn [Intel XEON 2.0GHz) was 120ns per lookup.
 //-----------------------------------------------------------------------------
 
-int findNameHash(char *key) 
+static int findNameHash(char *key) 
 {
    int idx;
    unsigned int slot = stringHash(key, HASH_SIZE);                      // compute hash code.
@@ -396,35 +398,55 @@ int findNameHash(char *key)
 // Get all needed function pointers from the Dynamic Link Library. 
 //-----------------------------------------------------------------------------
 
-// MACRO checks for Dynamic Lib failure, reports, returns Not Supported.
-#define mCheck_DL_Status( err, str )                                          \
-   if( err )                                                                  \
-   {                                                                          \
-   strncpy(_pcp_vector.cmp_info.disabled_reason, str, PAPI_MAX_STR_LEN-1);    \
-   return (PAPI_ENOSUPP );                                                    \
-   }
-
-// keys for above: Init, InitThrd, InitCtlSt, Stop, ShutdownThrd, ShutdownCmp, Start,
-// UpdateCtl, Read, Ctl, SetDom, Reset, Enum, EnumFirst, EnumNext, EnumUmasks, 
-// NameToCode, CodeToName, CodeToDesc, CodeToInfo.
-
 // Simplify routine below; relies on ptr names being same as func tags.
 #define STRINGIFY(x) #x 
 #define TOSTRING(x) STRINGIFY(x)
-#define mGet_DL_FPtr(Name)                                                \
-   Name##_ptr = dlsym(dllib1, TOSTRING(Name));                            \
-   mCheck_DL_Status(dlerror()!=NULL, "PCP library function "              \
-                  TOSTRING(Name) " not found in " MYPCPLIB ".");
+#define mGet_DL_FPtr(Name)                                                 \
+   Name##_ptr = dlsym(dl1, TOSTRING(Name));                                \
+   if (dlerror() != NULL) {  /* If we had an error, */                     \
+      snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,     \
+         "PCP library function %s not found in lib.", TOSTRING(Name));     \
+      return(PAPI_ENOSUPP);                                                \
+   } /* end of macro. */
 
-int _local_linkDynamicLibraries(void) 
+static int _local_linkDynamicLibraries(void) 
 {
    if ( _dl_non_dynamic_init != NULL ) {  // If weak var present, statically linked insted of dynamic.
        strncpy( _pcp_vector.cmp_info.disabled_reason, "The pcp component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN-1);
        return PAPI_ENOSUPP;               // EXIT not supported.
    }
 
-   dllib1 = dlopen(MYPCPLIB, RTLD_NOW | RTLD_GLOBAL);    // Open lib. MYPCPLIB is defined macro above.
-   mCheck_DL_Status( !dllib1 , "Component library '" MYPCPLIB "' not found." );
+   char path_name[1024];
+   char *pcp_root = getenv("PAPI_PCP_ROOT"); 
+   
+   dl1 = NULL;
+   // Step 1: Process override if given.   
+   if (strlen(pcp_main) > 0) {                                  // If override given, it has to work.
+      dl1 = dlopen(pcp_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
+      if (dl1 == NULL) {
+         snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_PCP_MAIN override '%s' given in Rules.pcp not found.", pcp_main);
+         return(PAPI_ENOSUPP);   // Override given but not found.
+      }
+   }
+
+   // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+   if (dl1 == NULL) {                                           // No override,
+      dl1 = dlopen("libpcp.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
+   }
+
+   // Step 3: Try the explicit install default. 
+   if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, 1024, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
+      dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+   }
+
+   // Check for failure.
+   if (dl1 == NULL) {
+      snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libpcp.so not found.");
+      return(PAPI_ENOSUPP);
+   }
+
+   // We have dl1. 
 
 //-----------------------------------------------------------------------------
 // Collect pointers for routines in shared library.  All below will abort this
@@ -450,7 +472,7 @@ int _local_linkDynamicLibraries(void)
 //-----------------------------------------------------------------------------
 // qsort comparison routine, for pcp_event_info.
 //-----------------------------------------------------------------------------
-int qsPMID(const void *arg1, const void* arg2) 
+static int qsPMID(const void *arg1, const void* arg2) 
 {
    _pcp_event_info_t *p1 = (_pcp_event_info_t*) arg1;
    _pcp_event_info_t *p2 = (_pcp_event_info_t*) arg2;
@@ -471,7 +493,7 @@ int qsPMID(const void *arg1, const void* arg2)
 // WARNING: May realloc() pcp_event_info[], invalidating pointers into it.
 //-----------------------------------------------------------------------------
 
-void cbPopulateNameOnly(const char *name) 
+static void cbPopulateNameOnly(const char *name) 
 {
    if (sEventCount >= sEventInfoSize) {                                 // If we must realloc, 
       sEventInfoSize += sEventInfoBlock;                                // .. Add another page.
@@ -492,7 +514,7 @@ void cbPopulateNameOnly(const char *name)
 // (which CAN invalidate any pointers into it).
 //-----------------------------------------------------------------------------
 
-void makeQualifiedEvent(int baseEvent, int idx, char *qualifier) 
+static void makeQualifiedEvent(int baseEvent, int idx, char *qualifier) 
 {
    int prevSize;
    if (sEventCount >= sEventInfoSize) {                                 // If we must realloc, 
@@ -536,7 +558,7 @@ void makeQualifiedEvent(int baseEvent, int idx, char *qualifier)
 // index. Presumes pmid is already present.
 //-----------------------------------------------------------------------------
 
-void getPMDesc(int pcpIdx) {                                            // Reads the variable descriptor.
+static void getPMDesc(int pcpIdx) {                                     // Reads the variable descriptor.
    int ret;
    if (pcp_event_info[pcpIdx].pmid == PM_ID_NULL) return;               // Already have it.
    ret = pcp_pmLookupDesc(pcp_event_info[pcpIdx].pmid,                  // Get the event descriptor.
@@ -649,7 +671,7 @@ static char *cachedGetInDom(pmInDom indom, int inst)
 // Helper routine, returns a ull value from a value set pointer. Automatically
 // does conversions from 32 bit to 64 bit (int32, uint32, fp32).  
 //-----------------------------------------------------------------------------
-unsigned long long getULLValue(pmValueSet *vset, int value_index) 
+static unsigned long long getULLValue(pmValueSet *vset, int value_index) 
 {
    unsigned long long value;                                         // our return value.
    convert_64_t convert;                                             // union for conversion.
@@ -723,7 +745,7 @@ unsigned long long getULLValue(pmValueSet *vset, int value_index)
 // PM_SEM_DISCRETE   // instantaneous value, discrete domain
 //----------------------------------------------------------------------------
 
-void subZero(_pcp_control_state_t *myCtl, int event)
+static void subZero(_pcp_control_state_t *myCtl, int event)
 {
    int k = myCtl->pcpIndex[event];                                      // get pcp_event_info[] index.
    if (pcp_event_info[k].desc.sem != PM_SEM_COUNTER) return;            // Don't subtract from instantaneous values.
@@ -775,7 +797,7 @@ void subZero(_pcp_control_state_t *myCtl, int event)
 // NOTE: There is also a pmLookupInDomText() that returns a description of a
 // domain; if you want that, you need a pmInDom and a very similar routine. 
 //-----------------------------------------------------------------------------
-int getHelpText(unsigned int pcpIdx, char **helpText) 
+static int getHelpText(unsigned int pcpIdx, char **helpText) 
 {
    char    *p;
    int     ret;
@@ -830,8 +852,6 @@ static int _pcp_init_component(int cidx)
 
    ret = _local_linkDynamicLibraries();
    if ( ret != PAPI_OK ) {                                              // Failure to get lib.
-      snprintf(reason, rLen, "Failed attempt to link to PCP "
-              "library '%s'.\n", MYPCPLIB);
       return PAPI_ESYS;
    }
 
@@ -1305,7 +1325,7 @@ static int _pcp_update_control_state(
 // RETURNS PAPI error code, or PAPI_OK.
 //---------------------------------------------------------------------
 
-int PCP_ReadList(hwd_control_state_t *ctl,                              // the event set.
+static int PCP_ReadList(hwd_control_state_t *ctl,                       // the event set.
     pmResult **results)                                                 // results from pmFetch, caller must pmFreeResult(results).
 {
    int i, j, ret;
