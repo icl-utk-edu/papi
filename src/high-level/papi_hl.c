@@ -687,10 +687,6 @@ static int _internal_hl_create_event_sets()
          _local_components[i].values = (long_long*)malloc(components[i].num_of_events * sizeof(long_long));
          if ( _local_components[i].values == NULL )
             return ( PAPI_ENOMEM );
-<<<<<<< HEAD
-=======
-
->>>>>>> master
       }
 
       for ( i = 0; i < num_of_components; i++ ) {
