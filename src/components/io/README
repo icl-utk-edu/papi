@@ -1,0 +1,45 @@
+
+COMPONENT
+
+    net
+
+SUMMARY
+
+    Linux I/O component
+
+DESCRIPTION
+
+    This network component enables PAPI-C to access the io
+    statistics exported by the Linux kernel through the /proc
+    pseudo-file system (file /proc/self/io).
+
+    This component will dynamically create a native events table.
+
+    Event names
+    -------------------------
+      "<ifname>.rchar",
+      "<ifname>.wchar",
+      "<ifname>.syscr",
+      "<ifname>.syscw",
+      "<ifname>.read_bytes",
+      "<ifname>.write_bytes",
+      "<ifname>.cancelled_write_bytes"
+
+    By default the Linux kernel only updates the io statistics
+    once every second (see the references listed in the "SEE ALSO"
+    section for some problems you may come across and for how to
+    change the default polling period).
+
+    Note: The Linux network statistics are updated by code that
+    resides in the file ?
+
+AUTHOR
+
+  Initial written by Kevin A. Huck <khuck@uoregon.edu>
+
+SEE ALSO
+
+ * man proc
+
+# 2019-09-16 khuck
+# vim:set ai ts=4 sw=4 sts=4 et:
