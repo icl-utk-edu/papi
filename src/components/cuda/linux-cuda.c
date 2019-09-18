@@ -1071,9 +1071,11 @@ static int papicuda_update_control_state(hwd_control_state_t * ctrl,
                 return (PAPI_ECMP));
 
 #else // Normal operation.
+            // Note: We no longer fail if this collection mode does not work. It will only work
+            // on TESLA devices, and is desirable there (not restricted to the kernel). But it
+            // is not available on other models (including GTX) and we shouldn't fail without it.
             CUPTI_CALL((*cuptiSetEventCollectionModePtr)
-                (eventCuCtx,CUPTI_EVENT_COLLECTION_MODE_CONTINUOUS),
-                return(PAPI_ECMP));
+                (eventCuCtx,CUPTI_EVENT_COLLECTION_MODE_CONTINUOUS), );
 
 // CUPTI provides two routines to create EventGroupSets, one is used
 // here cuptiEventGroupSetsCreate(), the other is for metrics, it will
