@@ -1,7 +1,7 @@
 # Set default if the root environment variable is not already set.
 # Note PAPI_PCP_ROOT is an environment variable that must be set.
 # It is the ONLY environment variable that must be set, all other
-# settings are optimal.
+# settings are optional.
 PAPI_PCP_ROOT ?= /usr
 
 # For non-typical system configurations, the following 'runtime overrides' can
