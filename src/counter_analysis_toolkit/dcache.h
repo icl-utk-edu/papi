@@ -1,9 +1,7 @@
 #ifndef _DATA_CACHE_
 #define _DATA_CACHE_
 
-#include "caches.h"
-#include "prepareArray.h"
-#include "timing_kernels.h"
+#include <stdio.h>
 
 int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int detect_size, int readwrite);
 void *thread_main(void *arg);

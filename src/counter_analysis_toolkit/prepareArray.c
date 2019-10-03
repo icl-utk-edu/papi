@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <assert.h>
+
 #include "prepareArray.h"
 
 volatile uintptr_t opt_killer_zero;

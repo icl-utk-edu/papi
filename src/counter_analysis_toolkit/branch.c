@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "papi.h"
 #include "branch.h"
 
 volatile int iter_count, global_var1, global_var2;
@@ -11,9 +19,17 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
     double avg, round;
     FILE* ofp_papi;
     const char *sufx = ".branch";
-    char *papiFileName = (char *)calloc( 1+strlen(outdir)+strlen(papi_event_name)+strlen(sufx), sizeof(char) );
-    sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx);
-    ofp_papi = fopen(papiFileName,"w");
+    int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
+
+    char *papiFileName = (char *)calloc( 1+l, sizeof(char) );
+    if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {
+        fprintf(stderr, "sprintf failed to copy into papiFileName.\n");
+        goto error0;
+    }
+    if (NULL == (ofp_papi = fopen(papiFileName,"w"))) {
+        fprintf(stderr, "Unable to open file %s.\n", papiFileName);
+        goto error0;
+    }
 
     // Initialize undecidible values for the BRNG macro.
     z1 = init*7;
@@ -22,15 +38,15 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
     z4 = (z3+z2)/z1;
 
     ret_val = PAPI_create_eventset( &papi_eventset );
-    if (ret_val != PAPI_OK ){
+    if (ret_val != PAPI_OK){
         fprintf(stderr, "PAPI_create_eventset() returned %d\n",ret_val);
-        return;
+        goto error1;
     }
 
     ret_val = PAPI_add_named_event( papi_eventset, papi_event_name );
-    if (ret_val != PAPI_OK ){
+    if (ret_val != PAPI_OK){
         fprintf(stderr, "PAPI_add_named_event() returned %d for %s\n",ret_val, papi_event_name);
-        return;
+        goto error1;
     }
 
     BRANCH_BENCH(1);
@@ -45,13 +61,14 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
     BRANCH_BENCH(6);
     BRANCH_BENCH(7);
 
-    free(papiFileName);
-    fclose(ofp_papi);
-
     if( result == 143526 ){
         printf("random side effect\n");
     }
 
+error1:
+    fclose(ofp_papi);
+error0:
+    free(papiFileName);
     return;
 }
 
