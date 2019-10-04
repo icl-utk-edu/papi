@@ -1,3 +1,11 @@
+#include <inttypes.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <assert.h>
+#include <math.h>
+#include <papi.h>
+#include "prepareArray.h"
+
 #include "timing_kernels.h"
 
 // For do_work macro in the header file

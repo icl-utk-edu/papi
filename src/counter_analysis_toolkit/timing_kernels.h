@@ -2,14 +2,8 @@
 #define _TIMING_KERNELS_
 
 #include <stdint.h>
-#include <inttypes.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <assert.h>
-#include <math.h>
-#include <papi.h>
+
 #include "caches.h"
-#include "prepareArray.h"
 
 #define N_1   p = (uintptr_t *)*p;
 #define N_2   N_1 N_1

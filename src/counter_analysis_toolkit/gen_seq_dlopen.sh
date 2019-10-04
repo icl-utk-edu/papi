@@ -11,6 +11,13 @@ FALSE_IF=0
 ################################################################################
 create_common_prefix(){
   cat <<EOF
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <math.h>
+
+#include "papi.h"
 #include "icache_seq.h"
 
 EOF
@@ -50,11 +57,11 @@ create_kernel(){
 
 
     if (( $block_type == $TRUE_IF )); then
-        echo "long long seq_kernel_TRUE_IF_${basic_block_copies}(int epilogue){" 
+        echo "long long seq_kernel_TRUE_IF_${basic_block_copies}(int epilogue){"
     else
-        echo "long long seq_kernel_FALSE_IF_${basic_block_copies}(int epilogue){" 
+        echo "long long seq_kernel_FALSE_IF_${basic_block_copies}(int epilogue){"
     fi
-    cat <<EOF 
+    cat <<EOF
     int jj, is_zero;
     unsigned int z1 = 12345, z2 = 12345, z3 = 22745, z4 = 82395;
     unsigned result = 0;
@@ -66,22 +73,22 @@ create_kernel(){
 EOF
 
     for((i=0; i<${basic_block_copies}; i++)); do
-        echo "" 
+        echo ""
         if (( $block_type == $TRUE_IF )); then
             echo "    if( is_zero < 3 ){"
-            echo "        RNG();" 
+            echo "        RNG();"
             echo "    }"
             echo "    is_zero *= result;"
         else
             echo "    if( is_zero > 3 ){"
-            echo "        RNG();" 
+            echo "        RNG();"
             echo "    }"
             echo "    result = z1 ^ z2 ^ z3 ^ z4;"
             echo "    is_zero *= result;"
         fi
     done
 
-    cat <<EOF 
+    cat <<EOF
 
     if( DO_COPY == epilogue ){
         // Access enough elements to flush the shared caches.
@@ -107,7 +114,7 @@ create_caller(){
     dl_reps=$2;
 
 
-    cat <<EOF 
+    cat <<EOF
 int seq_jumps_${basic_block_copies}x${dl_reps}(int iter_count, int eventset, int epilogue, int branch_type, int run_type, FILE* ofp_papi){
     long long int cntr_value = 0;
     int i, j, is_zero = 13;
@@ -145,21 +152,21 @@ EOF
     echo ""
     echo "    if( TRUE_IF == branch_type ){"
     echo "        for(i=0; i<iter_count; i++){"
-    echo "            // cntr_value += seq_kernel_TRUE_IF_${basic_block_copies}(eventset, epilogue);" 
+    echo "            // cntr_value += seq_kernel_TRUE_IF_${basic_block_copies}(eventset, epilogue);"
     echo "            for(j=0; j<${dl_reps}; j++){"
-    echo "                cntr_value += ((long long (*)(int))sym_true_if[j])(epilogue);" 
+    echo "                cntr_value += ((long long (*)(int))sym_true_if[j])(epilogue);"
     echo "            }"
     echo "        }"
     echo "    }else{"
     echo "        for(i=0; i<iter_count; i++){"
-    echo "            // cntr_value += seq_kernel_FALSE_IF_${basic_block_copies}(eventset, epilogue);" 
+    echo "            // cntr_value += seq_kernel_FALSE_IF_${basic_block_copies}(eventset, epilogue);"
     echo "            for(j=0; j<${dl_reps}; j++){"
-    echo "                cntr_value += ((long long (*)(int))sym_false_if[j])(epilogue);" 
+    echo "                cntr_value += ((long long (*)(int))sym_false_if[j])(epilogue);"
     echo "            }"
     echo "        }"
     echo "    }"
 
-    cat <<EOF 
+    cat <<EOF
 
     if((ret=PAPI_stop(eventset, &cntr_value)) != PAPI_OK){
         fprintf(stderr,"PAPI error:%s \n",PAPI_strerror(ret));
@@ -177,10 +184,10 @@ EOF
     echo "    }"
 
     echo "    if( COLD_RUN != run_type ){"
-    echo "        fprintf(ofp_papi, \"%lf\\n\", ((double)cntr_value)/(${basic_block_copies}*${dl_reps}*(double)iter_count) );" 
+    echo "        fprintf(ofp_papi, \"%lf\\n\", ((double)cntr_value)/(${basic_block_copies}*${dl_reps}*(double)iter_count) );"
     echo "    }"
 
-    cat <<EOF 
+    cat <<EOF
 
     is_zero = global_zero * (int)cntr_value;
 
@@ -266,7 +273,7 @@ EOF
             echo ""
         done
     done
-    
+
     for copy_type in "NO_COPY" "DO_COPY"; do
         for ((prm=1; prm<=$#; prm++)); do
             basic_block_copies=${!prm}

@@ -1,3 +1,7 @@
+#include "papi.h"
+#include "caches.h"
+#include "prepareArray.h"
+#include "timing_kernels.h"
 #include "dcache.h"
 
 typedef struct {
@@ -24,7 +28,7 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int detec
     int ls = 64;
     float ppb = 16;
     FILE *ofp_papi, *ofp;
-    char *sufx;
+    char *sufx, *papiFileName, *timeFileName;
 
     // Open file (pass handle to d_cache_test()).
     if(readwrite == 1){
@@ -32,14 +36,35 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int detec
     }else{
         sufx = strdup(".data.reads");
     }
-    char *papiFileName = (char *)calloc( 1+strlen(outdir)+strlen(papi_event_name)+strlen(sufx), sizeof(char) );
-    char *timeFileName = (char *)calloc( 1+strlen(outdir)+strlen(papi_event_name), sizeof(char) );
-    sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx);
-    sprintf(timeFileName, "%s%s", outdir, papi_event_name);
-    ofp_papi = fopen(papiFileName,"w");
-    ofp      = fopen(timeFileName,"w");
+    int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
+    papiFileName = (char *)calloc( 1+l, sizeof(char) );
+    if (!papiFileName) {
+        fprintf(stderr, "Unable to calloc papiFileName.\n");
+        goto error0;
+    }
+    if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {
+        fprintf(stderr, "sprintf failed to copy into papiFileName.\n");
+        goto error1;
+    }
+    if (NULL == (ofp_papi = fopen(papiFileName,"w"))) {
+        fprintf(stderr, "Unable to open file %s.\n", papiFileName);
+        goto error1;
+    }
 
-    free(sufx);
+    l = strlen(outdir)+strlen(papi_event_name);
+    timeFileName = (char *)calloc( 1+l, sizeof(char) );
+    if (!timeFileName) {
+        fprintf(stderr, "Unable to calloc timeFileName.\n");
+        goto error2;
+    }
+    if (l != (sprintf(timeFileName, "%s%s", outdir, papi_event_name))) {
+        fprintf(stderr, "sprintf failed to copy into timeFileName.\n");
+        goto error3;
+    }
+    if (NULL == (ofp = fopen(timeFileName,"w"))) {
+        fprintf(stderr, "Unable to open file %s.\n", papiFileName);
+        goto error3;
+    }
 
     // Go through each parameter variant.
     for(pattern = 3; pattern <= 4; ++pattern)
@@ -63,10 +88,15 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int detec
     }
 
     // Close files and free memory.
-    fclose(ofp_papi);
     fclose(ofp);
-    free(papiFileName);
+error3:
     free(timeFileName);
+error2:
+    fclose(ofp_papi);
+error1:
+    free(papiFileName);
+error0:
+    free(sufx);
 
     return;
 }

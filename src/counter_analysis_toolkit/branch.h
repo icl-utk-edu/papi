@@ -1,14 +1,6 @@
 #ifndef _BRANCH_
 #define _BRANCH_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <papi.h>
-
 #define BRANCH_BENCH(_I_) {\
     iter = 0;\
     avg = 0.0;\
@@ -28,7 +20,6 @@
         avg += (double)cnt/(double)sz;\
     }\
     if(avg < 0.0){\
-        free(papiFileName);\
         fclose(ofp_papi);\
         return;\
     }\

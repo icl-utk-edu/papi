@@ -1,15 +1,7 @@
 #ifndef _INSTR_CACHE_
 #define _INSTR_CACHE_
 
-#include <math.h>
-#include <sys/types.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <papi.h>
 
 #define NO_COPY 0
 #define DO_COPY 1

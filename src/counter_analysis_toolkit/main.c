@@ -1,3 +1,11 @@
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "papi.h"
 #include "driver.h"
 
 int main(int argc, char*argv[])
@@ -45,7 +53,8 @@ int main(int argc, char*argv[])
         if(ct == -1)
         {
             free(outdir);
-            remove_stock(data);
+            //remove_stock(data); // that was segfaulting, data is full of NULL pointers, and free was called on all of them
+            free(data); // at this points, it's an empty shell, free it
             PAPI_shutdown();
             return 0;
         }
@@ -94,7 +103,11 @@ int main(int argc, char*argv[])
     }
 
     // Allocate enough space for all of the event+qualifier combinations.
-    allevts = (char**)malloc(cmbtotal*sizeof(char*));
+    if (NULL == (allevts = (char**)malloc(cmbtotal*sizeof(char*)))) {
+        fprintf(stderr, "Failed allocation of allevts.\n");
+        PAPI_shutdown();
+        return 0;
+    }
 
     // Create the qualifier combinations for each event.
     trav_evts(data, pk, cards, nevts, ct, mode, allevts, &track, indexmemo, basenames);

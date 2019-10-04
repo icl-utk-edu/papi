@@ -1,7 +1,16 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+
+#include "papi.h"
 #include "eventstock.h"
+
 
 int build_stock(evstock* stock, int cap)
 {
+    if (!stock) return 1;
+
     int i,k;
     int ret;
     PAPI_event_info_t info;
@@ -43,9 +52,18 @@ int build_stock(evstock* stock, int cap)
     }
 
     // Set the data stock's sizes all to zero.
-    stock->evtsizes = (int*)calloc((stock->size),sizeof(int));
-    stock->maxqualsize = (unsigned int*)calloc((stock->size),sizeof(unsigned int));
-    stock->base_evts = (char**)malloc((stock->size)*sizeof(char*));
+    if (NULL == (stock->evtsizes = (int*)calloc((stock->size),sizeof(int)))) {
+        fprintf(stderr, "Failed allocation of stock->evtsizes.\n");
+        goto gracious_error;
+    }
+    if (NULL == (stock->maxqualsize = (unsigned int*)calloc((stock->size),sizeof(unsigned int)))) {
+        fprintf(stderr, "Failed allocation of stock->maxqualsize.\n");
+        goto gracious_error;
+    }
+    if (NULL == (stock->base_evts = (char**)malloc((stock->size)*sizeof(char*)))) {
+        fprintf(stderr, "Failed allocation of stock->base_evts.\n");
+        goto gracious_error;
+    }
 
     // Stock names of the base events.
     i=0 | PAPI_NATIVE_MASK;
@@ -83,7 +101,6 @@ int build_stock(evstock* stock, int cap)
                     {
                         continue;
                     }
-
                     if(strcmp(info.symbol, stock->base_evts[counter]) != 0 && strstr(info.symbol, "=") == NULL)
                     {    
                         stock->evtsizes[counter]++;
@@ -96,10 +113,16 @@ int build_stock(evstock* stock, int cap)
     }
 
     // Adjust the stock accordingly.
-    stock->evts = (char***)malloc((stock->size)*sizeof(char**));
+    if (NULL == (stock->evts = (char***)malloc((stock->size)*sizeof(char**)))) {
+        fprintf(stderr, "Failed allocation of stock->evts.\n");
+        goto gracious_error;
+    }
     for(i = 0; i < stock->size; ++i)
     {
-        stock->evts[i] = (char**)malloc((stock->evtsizes[i])*sizeof(char*));
+        if (NULL == (stock->evts[i] = (char**)malloc((stock->evtsizes[i])*sizeof(char*)))) {
+            fprintf(stderr, "Failed allocation of stock->evts[i].\n");
+            goto gracious_error;
+        }
     }
 
     // Add the names to the stock.
@@ -149,6 +172,11 @@ int build_stock(evstock* stock, int cap)
     }
 
     return 0;
+
+gracious_error:
+    // Frees only the successfully allocated arrays
+    remove_stock(stock);
+    return 1;
 }
 
 void print_stock(evstock* stock)
@@ -193,22 +221,30 @@ char* evt_name(evstock* stock, int index)
 
 void remove_stock(evstock* stock)
 {
+    if (!stock) return;
+
     int i, j;
     for(i = 0; i < stock->size; ++i)
     {
+        if (!stock->evtsizes)
         for(j = 0; j < stock->evtsizes[i]; ++j)
         {
-            free(stock->evts[i][j]);
+            if (stock->evts[i][j])
+                free(stock->evts[i][j]);
         }
-
-        free(stock->evts[i]);
-        free(stock->base_evts[i]);
+        if (stock->evts[i])
+            free(stock->evts[i]);
+        if (stock->base_evts[i])
+            free(stock->base_evts[i]);
     }
-
-    free(stock->evts);
-    free(stock->base_evts);
-    free(stock->evtsizes);
-    free(stock->maxqualsize);
+    if (stock->evts)
+        free(stock->evts);
+    if (stock->base_evts)
+        free(stock->base_evts);
+    if (stock->evtsizes)
+        free(stock->evtsizes);
+    if (stock->maxqualsize)
+        free(stock->maxqualsize);
     free(stock);
 
     return;
