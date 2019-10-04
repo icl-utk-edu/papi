@@ -178,7 +178,7 @@ createNativeEvents( void )
 	const sensors_chip_name *chip_name;
 
 	/* component name and description */
-	strcpy( _lmsensors_vector.cmp_info.short_name, "lm_sensors" );
+	strcpy( _lmsensors_vector.cmp_info.short_name, "lmsensors" );
 	strcpy( _lmsensors_vector.cmp_info.description,
 			"lm-sensors provides tools for monitoring the hardware health" );
 
