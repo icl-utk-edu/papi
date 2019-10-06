@@ -1,7 +1,7 @@
 # Set default if the root environment variable is not already set.
 # Note PAPI_CUDA_ROOT is an environment variable that must be set.
 # It is the ONLY environment variable that must be set, all other
-# settings are optimal.
+# settings are optional.
 PAPI_CUDA_ROOT ?= /opt/cuda
 
 # For non-typical system configurations, the following 'runtime overrides' can
@@ -60,8 +60,8 @@ PAPI_NVML_MAIN = \"\"
 # An example of an override:
 # PAPI_NVML_MAIN = \"$(PAPI_CUDA_ROOT)/lib64/libnvidia-ml.so\"
 
-# Note:  PAPI_CUDA_MAIN and PAPI_CUDA_RUNTIME, if set, also apply to the CUDA
-#        component.
+# Note:  PAPI_CUDA_MAIN and PAPI_CUDA_RUNTIME, if set, will also apply to the
+#        CUDA component, which uses the same libraries.
 
 # Note:  If you change these overrides, PAPI should be rebuilt from scratch.
 #        From papi/src/
