@@ -12,7 +12,7 @@ MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpi_hl mpi_omp_hl \
 	mpifirst
 SHARED  = shlib
-SERIAL  = serial_hl serial_hl_advanced serial_hl_ll_comb serial_hl_ll_comb2\
+SERIAL  = serial_hl serial_hl_ll_comb\
 	all_events all_native_events branches calibrate case1 case2 \
 	cmpinfo code2name derived describe destroy disable_component \
 	dmem_info eventname exeinfo failed_events first \
@@ -302,14 +302,8 @@ dmem_info: dmem_info.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 serial_hl: serial_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl
 
-serial_hl_advanced: serial_hl_advanced.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_advanced.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_advanced
-
 serial_hl_ll_comb: serial_hl_ll_comb.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb
-
-serial_hl_ll_comb2: serial_hl_ll_comb2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) serial_hl_ll_comb2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o serial_hl_ll_comb2
 
 all_events: all_events.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) all_events.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o all_events

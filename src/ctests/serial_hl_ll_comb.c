@@ -35,14 +35,6 @@ int main( int argc, char **argv )
          test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
       }
    }
-   PAPI_hl_print_output();
-   PAPI_hl_finalize();
-
-   /* one iteration with low-level API */
-   retval = PAPI_library_init( PAPI_VER_CURRENT );
-   if ( retval != PAPI_VER_CURRENT ) {
-      test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
-   }
 
    if ( !quiet ) {
       printf("\nTesting low-level API: do_flops\n");
@@ -50,8 +42,8 @@ int main( int argc, char **argv )
 
    long long values[2];
    int EventSet = PAPI_NULL;
-   char event_name1[]="PAPI_TOT_CYC";
-   char event_name2[]="PAPI_TOT_INS";
+   char event_name1[]="appio:::READ_BYTES";
+   char event_name2[]="appio:::WRITE_BYTES";
 
    /* create the eventset */
    retval = PAPI_create_eventset( &EventSet );
@@ -62,13 +54,13 @@ int main( int argc, char **argv )
    retval = PAPI_add_named_event( EventSet, event_name1);
    if ( retval != PAPI_OK ) {
       if (!quiet) printf("Couldn't add %s\n",event_name1);
-      test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_CYC",0);
+      test_skip(__FILE__,__LINE__,"Couldn't add appio:::READ_BYTES",0);
    }
 
    retval = PAPI_add_named_event( EventSet, event_name2);
    if ( retval != PAPI_OK ) {
       if (!quiet) printf("Couldn't add %s\n",event_name2);
-      test_skip(__FILE__,__LINE__,"Couldn't add PAPI_TOT_INS",0);
+      test_skip(__FILE__,__LINE__,"Couldn't add appio:::WRITE_BYTES",0);
    }
 
    /* Start PAPI */
@@ -94,7 +86,7 @@ int main( int argc, char **argv )
    PAPI_remove_named_event(EventSet,event_name1);
    PAPI_remove_named_event(EventSet,event_name2);
 
-   test_pass( __FILE__ );
+   test_hl_pass( __FILE__ );
 
    return 0;
 }

@@ -17,11 +17,6 @@ int main( int argc, char **argv )
 
    region_name = "do_flops";
 
-   retval = PAPI_hl_init();
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_hl_init", retval );
-   }
-
    #pragma omp parallel
    #pragma omp for
    for ( i = 1; i <= 4; ++i ) {
@@ -68,16 +63,9 @@ int main( int argc, char **argv )
       if ( retval != PAPI_OK ) {
          test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
       }
-
-      retval = PAPI_hl_cleanup_thread();
-      if ( retval != PAPI_OK ) {
-         test_fail( __FILE__, __LINE__, "PAPI_hl_cleanup_thread", retval );
-      }
    }
 
-
-   PAPI_hl_print_output();
-   test_pass( __FILE__ );
+   test_hl_pass( __FILE__ );
 
    return 0;
 }
