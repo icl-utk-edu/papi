@@ -192,13 +192,6 @@ static void _internal_hl_clean_up_global_data();
 static void _internal_hl_clean_up_all(bool deactivate);
 static int _internal_hl_check_for_clean_thread_states();
 
-/* internal advanced functions */
-int _internal_PAPI_hl_init(); /**< intialize high level library */
-int _internal_PAPI_hl_cleanup_thread(); /**< clean local-thread event sets */
-int _internal_PAPI_hl_finalize(); /**< shutdown event sets and clear up everything */
-int _internal_PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
-void _internal_PAPI_hl_print_output(); /**< generate output */
-
 
 static void _internal_hl_library_init(void)
 {
@@ -224,7 +217,7 @@ static void _internal_hl_library_init(void)
       } else {
 
          /* register the termination function for output */
-         atexit(_internal_PAPI_hl_print_output);
+         atexit(PAPI_hl_print_output);
          verbose_fprintf(stdout, "PAPI-HL Info: PAPI has been initiated!\n");
 
          /* remember thread id */
@@ -1544,7 +1537,7 @@ static int _internal_hl_check_for_clean_thread_states()
  * @see PAPI_hl_print_output
  */
 int
-_internal_PAPI_hl_init()
+PAPI_hl_init()
 {
    if ( state == PAPIHL_ACTIVE ) {
       if ( hl_initiated == false && hl_finalized == false ) {
@@ -1610,7 +1603,7 @@ _internal_PAPI_hl_init()
  * @see PAPI_hl_region_end
  * @see PAPI_hl_print_output
  */
-int _internal_PAPI_hl_cleanup_thread()
+int PAPI_hl_cleanup_thread()
 {
    if ( state == PAPIHL_ACTIVE && 
         hl_initiated == true && 
@@ -1656,7 +1649,7 @@ int _internal_PAPI_hl_cleanup_thread()
  * @see PAPI_hl_region_end
  * @see PAPI_hl_print_output
  */
-int _internal_PAPI_hl_finalize()
+int PAPI_hl_finalize()
 {
    if ( state == PAPIHL_ACTIVE && hl_initiated == true ) {
       _internal_hl_clean_up_all(true);
@@ -1707,7 +1700,7 @@ int _internal_PAPI_hl_finalize()
  * @see PAPI_hl_print_output
  */
 int
-_internal_PAPI_hl_set_events(const char* events)
+PAPI_hl_set_events(const char* events)
 {
    int retval;
    if ( state == PAPIHL_ACTIVE ) {
@@ -1780,7 +1773,7 @@ _internal_PAPI_hl_set_events(const char* events)
  * @see PAPI_hl_region_end 
  */
 void
-_internal_PAPI_hl_print_output()
+PAPI_hl_print_output()
 {
    if ( state == PAPIHL_ACTIVE && 
         hl_initiated == true && 
@@ -1857,12 +1850,12 @@ PAPI_hl_region_begin( const char* region )
       return ( PAPI_ENOTRUN );
 
    if ( hl_initiated == false ) {
-      if ( ( retval = _internal_PAPI_hl_init() ) != PAPI_OK )
+      if ( ( retval = PAPI_hl_init() ) != PAPI_OK )
          return ( retval );
    }
 
    if ( events_determined == false ) {
-      if ( ( retval = _internal_PAPI_hl_set_events(NULL) ) != PAPI_OK )
+      if ( ( retval = PAPI_hl_set_events(NULL) ) != PAPI_OK )
          return ( retval );
    }
 
@@ -1985,6 +1978,7 @@ PAPI_hl_read(const char* region)
  * PAPI_hl_region_begin at the end of an instrumented code region.
  * Assumes that PAPI_hl_region_begin was called before.
  * Note that an output is automatically generated when your application terminates.
+ * If the automatic output does not work for any reason, PAPI_hl_print_output must be called.
  * 
  *
  * @par Example:

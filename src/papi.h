@@ -43,6 +43,8 @@
  * See individual functions for details on usage.
  * 
  *	@ref high_api
+ *
+ * @ref high_api_advanced
  * 
  * Note that the high-level interface is self-initializing. 
  * You can mix high and low level calls, but you @b must call either 
@@ -1127,6 +1129,21 @@ enum {
    int PAPI_hl_region_end(const char* region); /**< end region and store the difference between the value of PAPI_hl_region_end and PAPI_hl_region_begin */
 /** @} */
 
+/** \internal
+  @defgroup high_api_advanced  The High Level API Advanced
+
+   The following four advanced routines of the high level API can be used in addition.
+   They allow the user to initialize and finalize the library, determine
+   hardware events and trigger output generation from both C and Fortran.
+   @{ */
+
+   int PAPI_hl_init(); /**< intialize high level library */
+   int PAPI_hl_cleanup_thread(); /**< clean local-thread event sets */
+   int PAPI_hl_finalize(); /**< shutdown event sets and clear up everything */
+   int PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
+   void PAPI_hl_print_output(); /**< generate output */
+
+/** @} */
 
 /* Backwards compatibility hacks.  Remove eventually? */
 int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu. for backward compatibility. Don't use! */
