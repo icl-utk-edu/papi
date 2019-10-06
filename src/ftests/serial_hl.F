@@ -19,7 +19,5 @@
          end if
       end do
 
-      call PAPIf_hl_print_output()
-
-      call ftests_pass(__FILE__)
+      call ftests_hl_pass(__FILE__)
       end program flops

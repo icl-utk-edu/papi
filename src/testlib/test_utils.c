@@ -463,6 +463,29 @@ test_pass( const char *filename )
 
 }
 
+void
+test_hl_pass( const char *filename )
+{
+	(void)filename;
+
+	if ( TEST_WARN ) {
+		print_spaces(59);
+		if (TESTS_COLOR) fprintf( stdout, "%s", YELLOW);
+		fprintf( stdout, "PASSED with WARNING");
+		if (TESTS_COLOR) fprintf( stdout, "%s", NORMAL);
+		fprintf( stdout, "\n");
+	}
+	else {
+		if (TESTS_COLOR) fprintf( stdout, "%s",GREEN);
+		fprintf( stdout, "PASSED");
+		if (TESTS_COLOR) fprintf( stdout, "%s",NORMAL);
+		fprintf( stdout, "\n");
+	}
+
+	exit( 0 );
+
+}
+
 /* Use a positive value of retval to simply print an error message */
 void
 test_fail( const char *file, int line, const char *call, int retval )

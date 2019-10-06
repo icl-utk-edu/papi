@@ -48,8 +48,7 @@ int main( int argc, char **argv )
       test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
    }
 
-   PAPI_hl_print_output();
-   test_pass( __FILE__ );
+   test_hl_pass( __FILE__ );
 
    return 0;
 }

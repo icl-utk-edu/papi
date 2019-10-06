@@ -79,6 +79,14 @@ C     And also to make the test code read cleaner
  100  format(a,t41,a)
       end
 
+      subroutine ftests_hl_pass(test_str)
+      implicit integer (p)
+      character*(*) test_str
+
+      write(*,100) test_str,' PASSED'
+ 100  format(a,t41,a)
+      end
+
       subroutine ftest_fail(file, line, callstr, retval)
       implicit integer (p)
       character*(*) file

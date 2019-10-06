@@ -192,6 +192,13 @@ static void _internal_hl_clean_up_global_data();
 static void _internal_hl_clean_up_all(bool deactivate);
 static int _internal_hl_check_for_clean_thread_states();
 
+/* internal advanced functions */
+int _internal_PAPI_hl_init(); /**< intialize high level library */
+int _internal_PAPI_hl_cleanup_thread(); /**< clean local-thread event sets */
+int _internal_PAPI_hl_finalize(); /**< shutdown event sets and clear up everything */
+int _internal_PAPI_hl_set_events(const char* events); /**< set specfic events to be recorded */
+void _internal_PAPI_hl_print_output(); /**< generate output */
+
 
 static void _internal_hl_library_init(void)
 {
@@ -217,7 +224,7 @@ static void _internal_hl_library_init(void)
       } else {
 
          /* register the termination function for output */
-         atexit(PAPI_hl_print_output);
+         atexit(_internal_PAPI_hl_print_output);
          verbose_fprintf(stdout, "PAPI-HL Info: PAPI has been initiated!\n");
 
          /* remember thread id */
@@ -270,14 +277,19 @@ _internal_hl_checkCounter ( char* counter )
    int eventcode;
    int retval;
 
+   HLDBG("Counter: %s\n", counter);
    if ( ( retval = PAPI_create_eventset( &EventSet ) ) != PAPI_OK )
       return ( retval );
 
-   if ( ( retval = PAPI_event_name_to_code( counter, &eventcode ) ) != PAPI_OK )
+   if ( ( retval = PAPI_event_name_to_code( counter, &eventcode ) ) != PAPI_OK ) {
+      HLDBG("Counter %s does not exist\n", counter);
       return ( retval );
+   }
 
-   if ( ( retval = PAPI_add_event (EventSet, eventcode) ) != PAPI_OK )
+   if ( ( retval = PAPI_add_event (EventSet, eventcode) ) != PAPI_OK ) {
+      HLDBG("Cannot add counter %s\n", counter);
       return ( retval );
+   }
 
    if ( ( retval = PAPI_cleanup_eventset (EventSet) ) != PAPI_OK )
       return ( retval );
@@ -319,6 +331,7 @@ static char *_internal_hl_remove_spaces( char *str )
 static int _internal_hl_determine_default_events()
 {
    int i;
+   HLDBG("Default events\n");
    char *default_events[] = {
       "perf::TASK-CLOCK",
       "PAPI_TOT_INS",
@@ -354,6 +367,7 @@ static int _internal_hl_read_user_events(const char *user_events)
    const char *position = NULL; //current position in processed string
    char *token;
    
+   HLDBG("User events: %s\n", user_events);
    user_events_copy = strdup(user_events);
    if ( user_events_copy == NULL )
       return ( PAPI_ENOMEM );
@@ -396,6 +410,7 @@ static int _internal_hl_read_user_events(const char *user_events)
    if ( num_of_requested_events == 0 )
       return PAPI_EINVAL;
 
+   HLDBG("Number of requested events: %d\n", num_of_requested_events);
    return ( PAPI_OK );
 }
 
@@ -506,6 +521,7 @@ static int _internal_hl_create_components()
    bool component_exists = false;
    short event_type = 0;
 
+   HLDBG("Create components\n");
    components = (components_t*)malloc(max_num_of_components * sizeof(components_t));
    if ( components == NULL )
       return ( PAPI_ENOMEM );
@@ -530,11 +546,15 @@ static int _internal_hl_create_components()
             requested_event_names[i][index] = '\0';
       }
 
-      /* determine event code and corresponding component id */
-      retval = PAPI_event_name_to_code( requested_event_names[i], &event );
+      /* check if event is supported on current machine */
+      retval = _internal_hl_checkCounter(requested_event_names[i]);
       if ( retval != PAPI_OK ) {
          verbose_fprintf(stdout, "PAPI-HL Warning: \"%s\" does not exist or is not supported on this machine.\n", requested_event_names[i]);
       } else {
+         /* determine event code and corresponding component id */
+         retval = PAPI_event_name_to_code( requested_event_names[i], &event );
+         if ( retval != PAPI_OK )
+            return ( retval );
          component_id = PAPI_COMPONENT_INDEX( event );
 
          /* check if component_id already exists in global components structure */
@@ -571,7 +591,9 @@ static int _internal_hl_create_components()
       }
    }
 
-   verbose_fprintf(stdout, "PAPI-HL Info: Using the following events:\n");
+   HLDBG("Number of components %d\n", num_of_components);
+   if ( num_of_components > 0 )
+      verbose_fprintf(stdout, "PAPI-HL Info: Using the following events:\n");
 
    /* destroy all EventSets from global data */
    for ( i = 0; i < num_of_components; i++ ) {
@@ -598,6 +620,7 @@ static int _internal_hl_create_components()
 static int _internal_hl_read_events(const char* events)
 {
    int i, retval;
+   HLDBG("Read events: %s\n", events);
    if ( events != NULL ) {
       if ( _internal_hl_read_user_events(events) != PAPI_OK )
          if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK )
@@ -1521,7 +1544,7 @@ static int _internal_hl_check_for_clean_thread_states()
  * @see PAPI_hl_print_output
  */
 int
-PAPI_hl_init()
+_internal_PAPI_hl_init()
 {
    if ( state == PAPIHL_ACTIVE ) {
       if ( hl_initiated == false && hl_finalized == false ) {
@@ -1587,7 +1610,7 @@ PAPI_hl_init()
  * @see PAPI_hl_region_end
  * @see PAPI_hl_print_output
  */
-int PAPI_hl_cleanup_thread()
+int _internal_PAPI_hl_cleanup_thread()
 {
    if ( state == PAPIHL_ACTIVE && 
         hl_initiated == true && 
@@ -1633,7 +1656,7 @@ int PAPI_hl_cleanup_thread()
  * @see PAPI_hl_region_end
  * @see PAPI_hl_print_output
  */
-int PAPI_hl_finalize()
+int _internal_PAPI_hl_finalize()
 {
    if ( state == PAPIHL_ACTIVE && hl_initiated == true ) {
       _internal_hl_clean_up_all(true);
@@ -1684,7 +1707,7 @@ int PAPI_hl_finalize()
  * @see PAPI_hl_print_output
  */
 int
-PAPI_hl_set_events(const char* events)
+_internal_PAPI_hl_set_events(const char* events)
 {
    int retval;
    if ( state == PAPIHL_ACTIVE ) {
@@ -1698,6 +1721,7 @@ PAPI_hl_set_events(const char* events)
             _papi_hwi_lock( HIGHLEVEL_LOCK );
             if ( events_determined == false && state == PAPIHL_ACTIVE )
             {
+               HLDBG("Set events: %s\n", events);
                if ( ( retval = _internal_hl_read_events(events) ) != PAPI_OK ) {
                   state = PAPIHL_DEACTIVATED;
                   _internal_hl_clean_up_global_data();
@@ -1756,7 +1780,7 @@ PAPI_hl_set_events(const char* events)
  * @see PAPI_hl_region_end 
  */
 void
-PAPI_hl_print_output()
+_internal_PAPI_hl_print_output()
 {
    if ( state == PAPIHL_ACTIVE && 
         hl_initiated == true && 
@@ -1833,12 +1857,12 @@ PAPI_hl_region_begin( const char* region )
       return ( PAPI_ENOTRUN );
 
    if ( hl_initiated == false ) {
-      if ( ( retval = PAPI_hl_init() ) != PAPI_OK )
+      if ( ( retval = _internal_PAPI_hl_init() ) != PAPI_OK )
          return ( retval );
    }
 
    if ( events_determined == false ) {
-      if ( ( retval = PAPI_hl_set_events(NULL) ) != PAPI_OK )
+      if ( ( retval = _internal_PAPI_hl_set_events(NULL) ) != PAPI_OK )
          return ( retval );
    }
 
@@ -1961,7 +1985,6 @@ PAPI_hl_read(const char* region)
  * PAPI_hl_region_begin at the end of an instrumented code region.
  * Assumes that PAPI_hl_region_begin was called before.
  * Note that an output is automatically generated when your application terminates.
- * If the automatic output does not work for any reason, PAPI_hl_print_output must be called.
  * 
  *
  * @par Example:

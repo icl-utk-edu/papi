@@ -41,11 +41,6 @@ void *CallMatMul(void *args)
       test_fail( __FILE__, __LINE__, "PAPI_hl_region_end", retval );
    }
 
-   retval = PAPI_hl_cleanup_thread();
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_hl_cleanup_thread", retval );
-   }
-
    pthread_exit(NULL);
 }
 
@@ -56,16 +51,10 @@ int main( int argc, char **argv )
    int rc;
    long t;
    int quiet = 0;
-   int retval;
 
    /* Set TESTS_QUIET variable */
    quiet = tests_quiet( argc, argv );
 
-   retval = PAPI_hl_init();
-   if ( retval != PAPI_OK ) {
-      test_fail( __FILE__, __LINE__, "PAPI_hl_init", retval );
-   }
-
    for( t = 0; t < NUM_THREADS; t++) {
       args[t].tid = t;
       args[t].quiet = quiet;
@@ -95,8 +84,7 @@ int main( int argc, char **argv )
       pthread_join(threads[t], NULL);
    }
 
-   PAPI_hl_print_output();
-   test_pass( __FILE__ );
+   test_hl_pass( __FILE__ );
 
    return 0;
 }
