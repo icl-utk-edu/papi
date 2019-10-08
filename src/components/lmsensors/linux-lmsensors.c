@@ -224,7 +224,6 @@ createNativeEvents( void )
 		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s",
 			  chipnamestring, featurelabel, sub->name );
 
-
 		 strncpy( lm_sensors_native_table[id].description,
 			  lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
                  lm_sensors_native_table[id].description[PAPI_MAX_STR_LEN-1] = '\0';
