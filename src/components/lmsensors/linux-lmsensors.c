@@ -216,9 +216,14 @@ createNativeEvents( void )
 
 	         count = 0;
 
+		 /* replace spaces with underscores */
+		 char *ptr;
+		 while( (ptr = strchr(featurelabel, ' ')) != NULL ){ *ptr = '_'; }
+
 		 /* Save native event data */
 		 sprintf( lm_sensors_native_table[id].name, "%s.%s.%s",
 			  chipnamestring, featurelabel, sub->name );
+
 
 		 strncpy( lm_sensors_native_table[id].description,
 			  lm_sensors_native_table[id].name, PAPI_MAX_STR_LEN );
