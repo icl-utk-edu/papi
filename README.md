@@ -32,7 +32,7 @@ PAPI project and extends it with:
   libraries, task-based runtime systems, etc.)
 
 The objective is to enable monitoring of both types of performance
-eventsâ€”hardware- and software-related eventsâ€”in a uniform way, through one
+events—hardware- and software-related events—in a uniform way, through one
 consistent PAPI interface. Third-party tools and application developers will
 have to handle only a single hook to PAPI in order to access all hardware
 performance counters in a system, including the new software-defined events.
@@ -42,8 +42,9 @@ performance counters in a system, including the new software-defined events.
 
 # Documentation
 
-* [PAPI Wiki](https://bitbucket.org/icl/papi/wiki/) lists HOWTOs and Supported Architectures
+* [PAPI Wiki](https://bitbucket.org/icl/papi/wiki/) is the main documentation for HOWTOs, Supported Architectures, PAPI Releases.
 * [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All)
+
 
 ***
 
