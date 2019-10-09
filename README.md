@@ -32,7 +32,7 @@ PAPI project and extends it with:
   libraries, task-based runtime systems, etc.)
 
 The objective is to enable monitoring of both types of performance
-events—hardware- and software-related events—in a uniform way, through one
+events---hardware- and software-related events---in a uniform way, through one
 consistent PAPI interface. Third-party tools and application developers will
 have to handle only a single hook to PAPI in order to access all hardware
 performance counters in a system, including the new software-defined events.
