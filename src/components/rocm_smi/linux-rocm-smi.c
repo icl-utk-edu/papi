@@ -82,6 +82,10 @@ static char *RSMI_ERROR_STRINGS[]={
 // note it appends 'Ptr' to the name for the caller.
 #define RSMI(name, args, handleerror)                                   \
     do {                                                                \
+        if (name##Ptr == NULL) {                                        \
+            fprintf(stderr, "%s function pointer is NULL.\n", #name);   \
+            return(-1);                                                 \
+        }                                                               \
         rsmi_status_t _status = (*name##Ptr)args;                       \
         if (_status != RSMI_STATUS_SUCCESS) {                           \
             if (printRSMIerr) {                                         \
@@ -228,6 +232,8 @@ DECLARE_RSMI(rsmi_dev_subsystem_id_get, (uint32_t dv_ind, uint16_t *id));
 DECLARE_RSMI(rsmi_dev_drm_render_minor_get, (uint32_t dv_ind, uint32_t *minor));
 DECLARE_RSMI(rsmi_dev_overdrive_level_get, (uint32_t dv_ind, uint32_t *od));
 DECLARE_RSMI(rsmi_dev_overdrive_level_set, (int32_t dv_ind, uint32_t od));
+DECLARE_RSMI(rsmi_dev_memory_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
+DECLARE_RSMI(rsmi_dev_memory_reserved_pages_get, (uint32_t dv_ind, uint32_t *num_pages, rsmi_retired_page_record_t *records));
 
 // rsmi_dev_perf_level_t is just an enum; this can be returned as uint32.
 DECLARE_RSMI(rsmi_dev_perf_level_get, (uint32_t dv_ind, rsmi_dev_perf_level_t *perf));
@@ -240,6 +246,9 @@ DECLARE_RSMI(rsmi_dev_memory_usage_get, (uint32_t dv_ind, rsmi_memory_type_t mem
 
 DECLARE_RSMI(rsmi_dev_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
 DECLARE_RSMI(rsmi_dev_firmware_version_get, (uint32_t dv_ind, rsmi_fw_block_t block, uint64_t *fw_version));
+DECLARE_RSMI(rsmi_dev_ecc_count_get, (uint32_t dv_ind, rsmi_gpu_block_t block, rsmi_error_count_t *ec));
+DECLARE_RSMI(rsmi_dev_ecc_enabled_get, (uint32_t dv_ind, uint64_t *enabled_blocks));
+DECLARE_RSMI(rsmi_dev_ecc_status_get, (uint32_t dv_ind, rsmi_gpu_block_t block, rsmi_ras_err_state_t *state));
 
 // clock frequency tables.
 DECLARE_RSMI(rsmi_dev_gpu_clk_freq_get, (uint32_t dv_ind, rsmi_clk_type_t type, rsmi_frequencies_t *frequencies));
@@ -280,9 +289,11 @@ DECLARE_RSMI(rsmi_dev_gpu_clk_freq_get, (uint32_t dv_ind, rsmi_clk_type_t clk_ty
 DECLARE_RSMI(rsmi_dev_gpu_clk_freq_set, (uint32_t dv_ind, rsmi_clk_type_t clk_type, uint64_t freq_bitmask));
 
 // rsmi_freq_volt_region_t contains two rsmi_range_t; each has two uint64's lower_bound; upper_bound.
+// Not implemented; data does not seem like useful performance data for PAPI users.
 DECLARE_RSMI(rsmi_dev_od_volt_curve_regions_get, (uint32_t dv_ind, uint32_t *num_regions, rsmi_freq_volt_region_t *buffer));
 
 // rsmi_od_volt_freq_data_t Complex structure with 4 rsmi_range_t and a 2D array of voltage curve points.
+// Not implemented; data does not seem like useful performance data for PAPI users.
 DECLARE_RSMI(rsmi_dev_od_volt_info_get, (uint32_t dv_ind, rsmi_od_volt_freq_data_t *odv));
 
 // rsmi_pcie_bandwidth_t is a structure containing two arrays; for transfer_rates and lanes.
@@ -297,6 +308,7 @@ DECLARE_RSMI(rsmi_dev_serial_number_get, (uint32_t dv_ind, char *serial_number, 
 DECLARE_RSMI(rsmi_dev_subsystem_name_get, (uint32_t dv_ind, char *name, size_t len));
 DECLARE_RSMI(rsmi_dev_vbios_version_get, (uint32_t dv_ind, char *vbios, uint32_t len));
 DECLARE_RSMI(rsmi_dev_vendor_name_get, (uint32_t id, char *name, size_t len));
+DECLARE_RSMI(rsmi_version_str_get, (rsmi_sw_component_t id, char *name, size_t len));
 
 // Non-Events.
 DECLARE_RSMI(rsmi_init, (uint64_t init_flags));
@@ -577,6 +589,12 @@ static int _rocm_smi_linkRocmLibraries(void)
     DLSYM_SMI(rsmi_dev_overdrive_level_get);
     DLSYM_SMI(rsmi_dev_overdrive_level_set);
     DLSYM_SMI(rsmi_dev_pci_id_get);
+    DLSYM_SMI(rsmi_dev_memory_busy_percent_get);
+
+    // Not implemented; data does not seem like useful performance data for PAPI users.
+    DLSYM_SMI(rsmi_dev_memory_reserved_pages_get);  // retrieves an array. 
+
+
 
 // rsmi_dev_perf_level_t is just an enum; this can be returned as uint32.
     DLSYM_SMI(rsmi_dev_perf_level_get);
@@ -588,7 +606,13 @@ static int _rocm_smi_linkRocmLibraries(void)
     DLSYM_SMI(rsmi_dev_memory_total_get);
     DLSYM_SMI(rsmi_dev_memory_usage_get);
     DLSYM_SMI(rsmi_dev_busy_percent_get);
+    DLSYM_SMI(rsmi_dev_firmware_version_get);
 
+// Iterate by GPU_BLOCK enum.
+    DLSYM_SMI(rsmi_dev_ecc_count_get);
+    DLSYM_SMI(rsmi_dev_ecc_enabled_get);
+    DLSYM_SMI(rsmi_dev_ecc_status_get);
+    
 // Need sensor-id (0...n) in name. All zero for starters.
     DLSYM_SMI(rsmi_dev_fan_reset);
     DLSYM_SMI(rsmi_dev_fan_rpms_get);
@@ -640,6 +664,7 @@ static int _rocm_smi_linkRocmLibraries(void)
     DLSYM_SMI(rsmi_dev_subsystem_name_get);
     DLSYM_SMI(rsmi_dev_vbios_version_get);
     DLSYM_SMI(rsmi_dev_vendor_name_get);
+    DLSYM_SMI(rsmi_version_str_get);
 
 // Non-Events.
     DLSYM_SMI(rsmi_init);
@@ -871,6 +896,19 @@ static int er_busy_percent(int myIdx)
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
+// (rsmi_dev_memory_busy_percent_get, (uint32_t dv_ind, uint32_t *busy_percent));
+// NOTE UNTESTED EVENT: This is given in the manual, but our test driver/equipment did not support it.
+static int er_memory_busy_percent(int myIdx)
+{
+    uint32_t* data = (uint32_t*) AllEvents[myIdx].vptr;     // get a shortcut.
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    RSMI(rsmi_dev_memory_busy_percent_get,                  // Routine name.
+        (AllEvents[myIdx].device, data),                    // device, and pointer for storage of read.
+        return(PAPI_EMISC));                                // Error handler.
+    AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
 // (rsmi_dev_pci_id_get, (uint32_t dv_ind, uint64_t *bdfid));
 static int er_pci_id(int myIdx)
 {
@@ -1089,6 +1127,61 @@ static int er_firmware_version(int myIdx)
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
+// rsmi_dev_ecc_count_get is an enum with 14 settings; each will be a separate event.
+// NOTE UNTESTED EVENT: This is given in the manual, but our test driver/equipment did not support it.
+static int er_ecc_count_correctable(int myIdx)              // THIS IS A BASE EVENT.
+{
+    rsmi_error_count_t* data = (rsmi_error_count_t*) AllEvents[myIdx].vptr; // get a shortcut. 
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    if (AllEvents[myIdx].read == 0) {
+        RSMI(rsmi_dev_ecc_count_get,                        // ..Routine name.
+            (AllEvents[myIdx].device,                       // ..Device,
+             AllEvents[myIdx].variant, data),               // ..gpu block ID, and pointer for storage of read.
+            return(PAPI_EMISC));                            // ..Error handler.
+        AllEvents[myIdx].read = 1;                          // ..mark as read.
+    }
+
+    AllEvents[myIdx].value = data->correctable_err;         // Copy/convert the returned value.
+
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
+// rsmi_dev_ecc_count_get is an enum with 14 settings; each will be a separate event.
+static int er_ecc_count_uncorrectable(int myIdx)            // NOT THE BASE EVENT; Base event already called.
+{
+    int idx = AllEvents[myIdx].baseIdx;
+    rsmi_error_count_t* data = (rsmi_error_count_t*) AllEvents[idx].vptr; // get a shortcut. 
+    AllEvents[myIdx].value = data->uncorrectable_err;       // Copy/convert the returned value for uncorrectable.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
+// (rsmi_dev_ecc_enabled_get, (uint32_t dv_ind, uint64_t *mask));
+// NOTE UNTESTED EVENT: This is given in the manual, but our test driver/equipment did not support it.
+static int er_ecc_enabled(int myIdx)
+{
+    uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    RSMI(rsmi_dev_ecc_enabled_get,                          // Routine name.
+        (AllEvents[myIdx].device, data),                    // device, data pointer.
+        return(PAPI_EMISC));                                // Error handler.
+    AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
+// (rsmi_dev_ecc_status_get(uint32_t dv_ind, rsmi_gpu_block_t block, rsmi_ras_err_state_t ∗ state)
+// NOTE UNTESTED EVENT: This is given in the manual, but our test driver/equipment did not support it.
+static int er_ecc_status(int myIdx)
+{
+    rsmi_ras_err_state_t* data = (rsmi_ras_err_state_t*) AllEvents[myIdx].vptr;  // get a shortcut.
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    RSMI(rsmi_dev_ecc_status_get,                           // Routine name.
+        (AllEvents[myIdx].device,                           // Device,
+         AllEvents[myIdx].variant, data),                   // gpu block ID, and pointer for storage of read.
+        return(PAPI_EMISC));                                // Error handler.
+    AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
 // rsmi_dev_gpu_clk_freq_get(device, clock_type, *rsmi_frequencies_t frequencies):
 static int er_gpu_clk_freq_current(int myIdx)
 {
@@ -1297,6 +1390,7 @@ static int er_name(int myIdx)
 } // end reader.
 
 // (rsmi_dev_serial_number_get(uint32_t dv_ind, char *serial_number, uint32_t len);
+// NOTE UNTESTED EVENT: This is given in the manual, but our test driver/equipment did not support it.
 static int er_serial_number(int myIdx)
 {
     char *data = (char*) AllEvents[myIdx].vptr;             // get a shortcut.
@@ -1356,6 +1450,22 @@ static int er_vendor_name(int myIdx)
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
+// (rsmi_version_str_get(rsmi_sw_component_t id, char *name, size_t len);
+static int er_driver_version(int myIdx)
+{
+    char *data = (char*) AllEvents[myIdx].vptr;             // get a shortcut.
+    AllEvents[myIdx].value = 0;                             // Default if error.
+    RSMI(rsmi_version_str_get,                              // Routine name.
+        (RSMI_SW_COMP_DRIVER,                               // Only enumerated element. 
+         data,                                              // string location,
+         PAPI_MAX_STR_LEN-1),                               // max length of string.
+        return(PAPI_EMISC));                                // Error handler.
+    data[PAPI_MAX_STR_LEN-1] = 0;                           // Guarantee a zero terminator.
+    AllEvents[myIdx].value = (uint64_t) data;               // Copy/convert the returned value.
+    return(PAPI_OK);                                        // Done.
+} // end reader.
+
+
 //=============================================================================
 // END OF RW ROUTINES.
 //=============================================================================
@@ -1402,7 +1512,6 @@ static int _rocm_smi_add_native_events(void)
 
     // rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed versions as uint64_t.
     //(rsmi_version_get, (rsmi_version_t *version));
-    
     thisEvent = &AllEvents[TotalEvents];
     snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "rsmi_version");
     strcpy(thisEvent->desc, "Version of RSMI lib; 0x0000MMMMmmmmpppp Major, Minor, Patch.");
@@ -1412,6 +1521,20 @@ static int _rocm_smi_add_native_events(void)
     thisEvent->baseIdx = TotalEvents;                   // Self.
     thisEvent->vptrSize=sizeof(rsmi_version_t);         // Memory for read.
     thisEvent->vptr=calloc(1, thisEvent->vptrSize);
+    thisEvent->variant=-1;                              // Not applicable.
+    thisEvent->subvariant=-1;                           // Not applicable.
+    TotalEvents++;                                      // Count it.
+    MakeRoomAllEvents();                                // Make room for another.
+
+    thisEvent = &AllEvents[TotalEvents];
+    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "driver_version_str");
+    strcpy(thisEvent->desc, "Returns char* to  z-terminated driver version string; do not free().");
+    thisEvent->reader = &er_driver_version;
+    thisEvent->writer = NULL;                           // Can't be written.
+    thisEvent->device=-1;            
+    thisEvent->baseIdx = TotalEvents;                   // Self.
+    thisEvent->vptrSize=(PAPI_MAX_STR_LEN);             // Memory for read.
+    thisEvent->vptr=calloc(thisEvent->vptrSize, sizeof(char));  
     thisEvent->variant=-1;                              // Not applicable.
     thisEvent->subvariant=-1;                           // Not applicable.
     TotalEvents++;                                      // Count it.
@@ -1715,6 +1838,25 @@ static int _rocm_smi_add_native_events(void)
             snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "busy_percent:device=%i", device);
             strcpy(thisEvent->desc, "Percentage of time the device was busy doing any processing.");
             thisEvent->reader = &er_busy_percent;
+            thisEvent->writer = NULL;                           // Can't be written.
+            thisEvent->device=device;
+            thisEvent->baseIdx = TotalEvents;                   // Self.
+            thisEvent->vptrSize=sizeof(uint32_t);               // Memory for read.
+            thisEvent->vptr=calloc(1, thisEvent->vptrSize);
+            thisEvent->variant=-1;                              // Not applicable.
+            thisEvent->subvariant=-1;                           // Not applicable.
+            TotalEvents++;                                      // Count it.
+            MakeRoomAllEvents();                                // Make room for another.
+        }
+
+        //(rsmi_dev_memory_busy_percent_get, (uint32_t dv_ind, uint32_t *bdfid));
+        scan = NULL;
+        scan = nextEvent(scan, device, "rsmi_dev_memory_busy_percent_get");
+        if (scan != NULL) {
+            thisEvent = &AllEvents[TotalEvents];
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "memory_busy_percent:device=%i", device);
+            strcpy(thisEvent->desc, "Percentage of time any device memory is being used.");
+            thisEvent->reader = &er_memory_busy_percent;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
             thisEvent->baseIdx = TotalEvents;                   // Self.
@@ -2049,7 +2191,7 @@ static int _rocm_smi_add_native_events(void)
         }
 
         // This must immediately follow rsmi_dev_power_cap_get.        
-        // Deal with (rsmi_dev_fan_speed_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t speed));
+        // Deal with (rsmi_dev_power_cap_set, (uint32_t dv_ind, uint32_t sensor_ind, uint64_t cap));
         scan = NULL;
         while (1) {                                                 // No variants, just subvariants.
             scan = nextEvent(scan, device, "rsmi_dev_power_cap_set");   // Get the next, if any.
@@ -2343,6 +2485,263 @@ static int _rocm_smi_add_native_events(void)
                     snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=VCN", device);
                     strcpy(thisEvent->desc, "Firmware Version Block VCN.");
                     break;                                              // END CASE.
+
+                default:                                   // If we did not recognize it, kill stuff.
+                    thisEvent->device= 0;       
+                    thisEvent->reader = NULL;
+                    thisEvent->baseIdx = 0;
+                    thisEvent->vptrSize = 0;
+                    free(thisEvent->vptr);
+                    thisEvent->vptr = NULL;
+                    thisEvent->variant = 0;
+                    thisEvent->subvariant = 0;
+                    found = 0;                                  // indicate not found.
+                    break;
+            } // end switch
+
+            if (found) {
+                TotalEvents++;                                      // Count it.
+                MakeRoomAllEvents();                                // Make room for another.
+            }
+        } // end while.
+
+        // rsmi_dev_ecc_count_get uses an enum with 14 settings; then each is a base event for
+        // correctable and uncorrectable errors.
+        // We will have a single loop with a switch to pick the variants.
+        // We sorted the list, it should be in order by variant.
+        scan = NULL;
+        while (1) {                                                 // No variants, just subvariants.
+            scan = nextEvent(scan, device, "rsmi_dev_ecc_count_get");   // Get the next, if any.
+            if (scan == NULL) break;                                // Exit if done.
+
+            // Common elements.
+            int found=1;                                        // Presume variant will be found.
+            thisEvent = &AllEvents[TotalEvents];
+            thisEvent->writer = NULL;                           // can't be written.
+            thisEvent->reader = &er_ecc_count_correctable;      // read routine.     
+            thisEvent->device=device;
+            thisEvent->baseIdx = TotalEvents;                   // Self.
+            thisEvent->vptrSize=sizeof(rsmi_error_count_t);     // Size of data to read.
+            thisEvent->vptr=calloc(1, thisEvent->vptrSize);     // Space to read it.
+            thisEvent->variant=scan->variant;                   // Same as case we are in.
+            thisEvent->subvariant=scan->subvariant;             // subvariant is gpu block type (bit mask).
+            BaseEvent = TotalEvents;                            // Make the first a base event.
+
+            switch(scan->variant) {         
+                case RSMI_GPU_BLOCK_UMC:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=UMC", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block UMC.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SDMA:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SDMA", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SDMA.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_GFX:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=GFX", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block GFX.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MMHUB:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MMHUB", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MMHUB.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_ATHUB:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=ATHUB", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block ATHUB.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_PCIE_BIF:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=PCIE_BIF", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block PCIE_BIF.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_HDP:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=HDP", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block HDP.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_XGMI_WAFL:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=XGMI_WAFL", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block XGMI_WAFL.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_DF:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=DF", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block DF.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SMN:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SMN", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SMN.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SEM:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SEM", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SEM.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MP0:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MP0", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MP0.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MP1:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MP1", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MP1.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_FUSE:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=FUSE", device);
+                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block FUSE.");
+                    break;                                              // END CASE.
+
+
+                default:                                   // If we did not recognize it, kill stuff.
+                    thisEvent->device= 0;       
+                    thisEvent->reader = NULL;
+                    thisEvent->baseIdx = 0;
+                    thisEvent->vptrSize = 0;
+                    free(thisEvent->vptr);
+                    thisEvent->vptr = NULL;
+                    thisEvent->variant = 0;
+                    thisEvent->subvariant = 0;
+                    found = 0;                                  // indicate not found.
+                    break;
+            } // end switch
+
+            if (found) {
+                TotalEvents++;                                      // Count it.
+                MakeRoomAllEvents();                                // Make room for another.
+                thisEvent = &AllEvents[TotalEvents];
+                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_un%s", &AllEvents[BaseEvent].name[10]); // Base must start with "ecc_count_correctable:"
+                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Unc%s", &AllEvents[BaseEvent].name[1]);    // Base description must begin with "Correctable".
+                thisEvent->reader = &er_ecc_count_uncorrectable;    // Will call previous, this routine just copies it.
+                thisEvent->writer = NULL;                           // Can't be written.
+                thisEvent->device=device;
+                thisEvent->baseIdx = BaseEvent;                     // NOT SELF, combined read with previous event(s).
+                thisEvent->vptrSize=0;                              // Shares data with base event.
+                thisEvent->vptr=NULL;                               // No space here.
+                thisEvent->variant=-1;                              // Not applicable (DUMMY)
+                thisEvent->subvariant=scan->subvariant;             // subvariant is sensor.
+                TotalEvents++;                                      // Count it.
+                MakeRoomAllEvents();                                // Make room for another.
+            }
+        } // end while.
+
+        //(rsmi_dev_ecc_enabled_get, (uint32_t dv_ind, uint64_t *enabled_blocks));
+        scan = NULL;
+        scan = nextEvent(scan, device, "rsmi_dev_ecc_enabled_get");
+        if (scan != NULL) {
+            thisEvent = &AllEvents[TotalEvents];
+            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_enabled_get:device=%i", device);
+            strcpy(thisEvent->desc, "Bit mask of gpu blocks with ecc error counting enabled.");
+            thisEvent->reader = &er_ecc_enabled;
+            thisEvent->writer = NULL;                           // Can't be written.
+            thisEvent->device=device;
+            thisEvent->baseIdx = TotalEvents;                   // Self.
+            thisEvent->vptrSize=sizeof(uint64_t);               // Memory for read.
+            thisEvent->vptr=calloc(1, thisEvent->vptrSize);
+            thisEvent->variant=-1;                              // Not applicable.
+            thisEvent->subvariant=-1;                           // Not applicable.
+            TotalEvents++;                                      // Count it.
+            MakeRoomAllEvents();                                // Make room for another.
+        }
+
+        // rsmi_dev_ecc_status_get uses an enum with 14 settings; each will be a separate event.
+        // (rsmi_dev_ecc_status_get(uint32_t dv_ind, rsmi_gpu_block_t block, rsmi_ras_err_state_t ∗ state)
+        // We will have a single loop with a switch to pick the variants.
+        // We sorted the list, it should be in order by variant.
+        scan = NULL;
+        while (1) {                                                 // No variants, just subvariants.
+            scan = nextEvent(scan, device, "rsmi_dev_ecc_status_get");   // Get the next, if any.
+            if (scan == NULL) break;                                // Exit if done.
+
+            // Common elements.
+            int found=1;                                        // Presume variant will be found.
+            thisEvent = &AllEvents[TotalEvents];
+            thisEvent->writer = NULL;                           // can't be written.
+            thisEvent->reader = &er_ecc_status;                 // read routine.     
+            thisEvent->device=device;
+            thisEvent->baseIdx = TotalEvents;                   // Self.
+            thisEvent->vptrSize=sizeof(rsmi_ras_err_state_t);   // Size of data to read.
+            thisEvent->vptr=calloc(1, thisEvent->vptrSize);     // Space to read it.
+            thisEvent->variant=scan->variant;                   // Same as case we are in.
+            thisEvent->subvariant=scan->subvariant;             // subvariant is gpu block type (bit mask).
+
+            switch(scan->variant) {         
+                case RSMI_GPU_BLOCK_UMC:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=UMC", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block UMC.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SDMA:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SDMA", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SDMA.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_GFX:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=GFX", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block GFX.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MMHUB:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MMHUB", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MMHUB.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_ATHUB:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=ATHUB", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block ATHUB.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_PCIE_BIF:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=PCIE_BIF", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block PCIE_BIF.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_HDP:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=HDP", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block HDP.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_XGMI_WAFL:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=XGMI_WAFL", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block XGMI_WAFL.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_DF:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=DF", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block DF.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SMN:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SMN", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SMN.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_SEM:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SEM", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SEM.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MP0:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MP0", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP0.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_MP1:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MP1", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP1.");
+                    break;                                              // END CASE.
+
+                case RSMI_GPU_BLOCK_FUSE:
+                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=FUSE", device);
+                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block FUSE.");
+                    break;                                              // END CASE.
+
 
                 default:                                   // If we did not recognize it, kill stuff.
                     thisEvent->device= 0;       

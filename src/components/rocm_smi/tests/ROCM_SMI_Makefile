@@ -10,7 +10,7 @@ endif
 HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
 HIPCC=$(HIP_PATH)/bin/hipcc
 
-INCLUDE+=-I${HOME}/papi/src/ -I${HOME}/rocm_smi_lib/include/rocm_smi/
+INCLUDE+=-I${HOME}/papi/src/ -I${PAPI_ROCM_ROOT}/include/rocm_smi/
 
 ifeq (${HIP_PLATFORM}, nvcc)
 	SOURCES=square.cu
