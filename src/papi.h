@@ -330,16 +330,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 /** @} */
 
 /** @internal 
- *	@defgroup tls_defns Thread Local Storage Keywords 
- *	@{ */
-#if (__STDC_VERSION__ >= 201112L)
-   #define PAPI_TLS_KEYWORD _Thread_local
-#else
-   #define PAPI_TLS_KEYWORD __thread
-#endif
-/** @} */
-
-/** @internal 
  *	@defgroup locking_defns Locking Mechanisms defines 
  *	@{ */
 #define PAPI_USR1_LOCK          	0x0    /**< User controlled locks */
