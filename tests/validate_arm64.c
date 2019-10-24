@@ -177,6 +177,12 @@ static const test_event_t arm64_test_events[]={
 	  .codes[0] = 0x8000008,
 	  .fstr = "arm_thunderx2::INST_RETIRED:k=1:u=1:hv=0",
 	},
+	{ SRC_LINE,
+	  .name = "tx2_dmc1::UNC_DMC_READS",
+	  .ret  = PFM_SUCCESS,
+	  .count = 1,
+	  .codes[0] = 0xf,
+	},
 };
 #define NUM_TEST_EVENTS (int)(sizeof(arm64_test_events)/sizeof(test_event_t))
 

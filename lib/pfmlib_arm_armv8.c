@@ -203,3 +203,58 @@ pfmlib_pmu_t arm_thunderx2_support={
 	.get_event_nattrs	= pfm_arm_get_event_nattrs,
 };
 
+// For uncore, each socket has a separate perf name, otherwise they are the same, use macro
+
+#define DEFINE_TX2_DMC(n) \
+pfmlib_pmu_t arm_thunderx2_dmc##n##_support={ \
+	.desc			= "Cavium ThunderX2 Node"#n" DMC", \
+	.name			= "tx2_dmc"#n, \
+	.perf_name		= "uncore_dmc_"#n, \
+	.pmu			= PFM_PMU_ARM_THUNDERX2_DMC##n, \
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_thunderx2_unc_dmc_pe), \
+	.type			= PFM_PMU_TYPE_UNCORE, \
+	.pe			= arm_thunderx2_unc_dmc_pe, \
+	.pmu_detect		= pfm_arm_detect_thunderx2, \
+	.max_encoding		= 1, \
+	.num_cntrs		= 4, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_tx2_unc_get_event_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_tx2_unc_get_perf_encoding),		\
+	.get_event_first	= pfm_arm_get_event_first, \
+	.get_event_next		= pfm_arm_get_event_next,  \
+	.event_is_valid		= pfm_arm_event_is_valid,  \
+	.validate_table		= pfm_arm_validate_table,  \
+	.get_event_info		= pfm_arm_get_event_info,  \
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,	\
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),\
+	.get_event_nattrs	= pfm_arm_get_event_nattrs, \
+};
+
+DEFINE_TX2_DMC(0);
+DEFINE_TX2_DMC(1);
+
+#define DEFINE_TX2_LLC(n) \
+pfmlib_pmu_t arm_thunderx2_llc##n##_support={ \
+	.desc			= "Cavium ThunderX2 node "#n" LLC", \
+	.name			= "tx2_llc"#n, \
+	.perf_name		= "uncore_l3c_"#n, \
+	.pmu			= PFM_PMU_ARM_THUNDERX2_LLC##n, \
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_thunderx2_unc_llc_pe), \
+	.type			= PFM_PMU_TYPE_UNCORE, \
+	.pe			= arm_thunderx2_unc_llc_pe, \
+	.pmu_detect		= pfm_arm_detect_thunderx2, \
+	.max_encoding		= 1, \
+	.num_cntrs		= 4, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_tx2_unc_get_event_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_tx2_unc_get_perf_encoding),		\
+	.get_event_first	= pfm_arm_get_event_first, \
+	.get_event_next		= pfm_arm_get_event_next,  \
+	.event_is_valid		= pfm_arm_event_is_valid,  \
+	.validate_table		= pfm_arm_validate_table,  \
+	.get_event_info		= pfm_arm_get_event_info,  \
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,	\
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),\
+	.get_event_nattrs	= pfm_arm_get_event_nattrs, \
+};
+
+DEFINE_TX2_LLC(0);
+DEFINE_TX2_LLC(1);

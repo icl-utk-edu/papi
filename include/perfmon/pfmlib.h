@@ -546,6 +546,11 @@ typedef enum {
 	PFM_PMU_ARM_THUNDERX2,		/* Cavium ThunderX2 */
 
 	PFM_PMU_INTEL_CLX,		/* Intel CascadeLake X */
+
+	PFM_PMU_ARM_THUNDERX2_DMC0,	/* Cavium ThunderX2 DMC unit 0 uncore */
+	PFM_PMU_ARM_THUNDERX2_DMC1,	/* Cavium ThunderX2 DMC unit 1 uncore */
+	PFM_PMU_ARM_THUNDERX2_LLC0,	/* Cavium ThunderX2 LLC unit 0 uncore */
+	PFM_PMU_ARM_THUNDERX2_LLC1,	/* Cavium ThunderX2 LLC unit 1 uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

@@ -188,7 +188,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM64)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM64
 endif
 
