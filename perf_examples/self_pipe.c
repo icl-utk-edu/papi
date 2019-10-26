@@ -255,7 +255,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (!options.events)
-		options.events = "cycles,instructions";
+		options.events = "cycles:u,instructions:u";
 
 	if (options.delay == -1)
 		options.delay = 10;
