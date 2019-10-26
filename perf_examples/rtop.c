@@ -65,8 +65,8 @@ typedef struct {
 		int	opt_delay_set;
 	} program_opt_flags;
 	rtop_cpumask_t	cpu_mask;	  /* which CPUs to use in system wide mode */
-	long		online_cpus;
-	long		selected_cpus;
+	int		online_cpus;
+	int		selected_cpus;
 	unsigned long	cpu_mhz;
 } program_options_t;
 
@@ -99,7 +99,7 @@ get_term_size(void)
         }
 
 	if (term_rows < options.selected_cpus)
-		errx(1, "you need at least %ld rows on your terminal to display all CPUs", options.selected_cpus);
+		errx(1, "you need at least %d rows on your terminal to display all CPUs", options.selected_cpus);
 }
 
 static void
@@ -342,9 +342,11 @@ mainloop(void)
 			if (ret != sizeof(raw_values))
 				fatal_errorw("cannot read count for event %d on CPU%d\n", j, cpus[i].cpu);
 
-			printw("nr=%"PRIu64"\n", raw_values[0]);
-			printw("ena=%"PRIu64"\n", raw_values[1]);
-			printw("run=%"PRIu64"\n", raw_values[2]);
+			if (options.opt_verbose) {
+				printw("nr=%"PRIu64"\n", raw_values[0]);
+				printw("ena=%"PRIu64"\n", raw_values[1]);
+				printw("run=%"PRIu64"\n", raw_values[2]);
+			}
 
 			raw_values[0] = raw_values[3];
 			values[0] = perf_scale(raw_values);
@@ -389,10 +391,10 @@ void
 populate_cpumask(char *cpu_list)
 {
 	char *p;
-	unsigned long start_cpu, end_cpu = 0;
-	unsigned long i, count = 0;
+	int start_cpu, end_cpu = 0;
+	int i, count = 0;
 
-	options.online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+	options.online_cpus = (int)sysconf(_SC_NPROCESSORS_ONLN);
 	if (options.online_cpus == -1) 
 		errx(1, "cannot figure out the number of online processors");
 
@@ -412,7 +414,7 @@ populate_cpumask(char *cpu_list)
 		p = NULL;
 		start_cpu = strtoul(cpu_list, &p, 0); /* auto-detect base */
 
-		if (start_cpu == ULONG_MAX || (*p != '\0' && *p != ',' && *p != '-'))
+		if (start_cpu == INT_MAX || (*p != '\0' && *p != ',' && *p != '-'))
 			goto invalid;
 
 		if (p && *p == '-') {
@@ -421,7 +423,7 @@ populate_cpumask(char *cpu_list)
 
 			end_cpu = strtoul(cpu_list, &p, 0); /* auto-detect base */
 			
-			if (end_cpu == ULONG_MAX || (*p != '\0' && *p != ','))
+			if (end_cpu == INT_MAX || (*p != '\0' && *p != ','))
 				goto invalid;
 			if (end_cpu < start_cpu)
 				goto invalid_range; 
@@ -457,13 +459,13 @@ invalid:
 	errx(1, "invalid cpu list argument: %s", cpu_list);
 	/* no return */
 not_online:
-	errx(1, "cpu %lu is not online", start_cpu);
+	errx(1, "cpu %d is not online", start_cpu);
 	/* no return */
 invalid_range:
-	errx(1, "cpu range %lu - %lu is invalid", start_cpu, end_cpu);
+	errx(1, "cpu range %d - %d is invalid", start_cpu, end_cpu);
 	/* no return */
 too_big:
-	errx(1, "rtop is limited to %u CPUs", RTOP_MAX_CPUS);
+	errx(1, "rtop is limited to %d CPUs", RTOP_MAX_CPUS);
 	/* no return */
 }
 
@@ -492,7 +494,7 @@ main(int argc, char **argv)
 	while ((c=getopt_long(argc, argv,"+vhVd:", rtop_cmd_options, 0)) != -1) {
 		switch(c) {
 			case   0: continue; /* fast path for options */
-			case 'v': options.opt_verbose = 1;
+			case 'v': options.opt_verbose++;
 				  break;
 			case 1:
 			case 'h':
