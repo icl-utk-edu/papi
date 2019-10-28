@@ -381,7 +381,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (options.num_groups == 0) {
-		options.events[0] = "cycles,instructions";
+		options.events[0] = "cycles:u,instructions:u";
 		options.num_groups = 1;
 	}
 	if (!argv[optind] && !options.pid)

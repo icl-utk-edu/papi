@@ -70,7 +70,7 @@ static struct option the_options[]={
 	{ 0, 0, 0, 0}
 };
 
-static char *gen_events = "cycles,instructions";
+static char *gen_events = "cycles:u:freq=100,instructions:u:freq=100";
 
 static void
 cld_handler(int n)

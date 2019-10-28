@@ -53,16 +53,16 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 
 EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/perf_examples
 
-all: $(TARGETS)
+all: $(TARGETS) rtop
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # Many systems don't have ncurses-devel installed
 #
-rtop: rtop.o $(PFMLIB)
-	-$(CC) $(CFLAGS) $(LDFLAGS) -D_GNU_SOURCE -o $@ $^ $(LIBS)  -lpthread -lncurses -lm
+rtop: rtop.o $(PFMLIB) $(PERF_EVENT_HDR)
+	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -lm
 
-$(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 
+$(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB)
+	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 
 
 $(LPC_UTILS): $(LPC_UTILS_HDR)
 
