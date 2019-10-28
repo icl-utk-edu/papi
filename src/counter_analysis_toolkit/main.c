@@ -151,6 +151,13 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
         // Find the index in the main stock whose evt corresponds to that in the file provided.
         for(i = 0; i < ct; ++i)
         {
+            if(NULL == basenames[i])
+            {
+                (*indexmemo)[i] = -1;
+                cmbtotal -= 1;
+                continue;
+            }
+
             for(j = 0; j < nevts; ++j)
             {
                 name = evt_name(data, j);
@@ -159,11 +166,12 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                     break;
                 }
             }
+
             if(cards[i] != 0 && j == nevts)
             {
-                fprintf(stderr, "Event %s not found in architecture. Exiting...\n", basenames[i]);
-                free(*indexmemo);
-                return -1;
+                fprintf(stderr, "The provided event '%s' is either not in the architecture or contains qualifiers.\n" \
+                        "If the latter, use '0' in place of the provided '%d'.\n", basenames[i], cards[i]);
+                cards[i] = 0;
             }
             (*indexmemo)[i] = j;
         }
@@ -176,7 +184,15 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                 continue;
             }
 
-            n = num_quals(data, (*indexmemo)[i]);
+            if((*indexmemo)[i] != -1)
+            {
+                n = num_quals(data, (*indexmemo)[i]);
+            }
+            else
+            {
+                n = 0;
+            }
+
             minim = cards[i];
             if(cards[i] > n)
             {
@@ -209,7 +225,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
     int cnt = 0, status = 0;
     char *line, *place;
     FILE *input;
-    int evnt_count = 256;   
+    int evnt_count = 256;
   
     char **names = (char **)calloc(evnt_count, sizeof(char *));
     int *cards = (int *)calloc(evnt_count, sizeof(int));
@@ -230,6 +246,11 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         place = strstr(line, " ");
         if( NULL == place )
         {
+            fprintf(stderr,"problem with line: '%s'\n",line);
+            names[cnt] = NULL;
+            cards[cnt] = -1;
+            cnt--;
+
             free(line);
             line = NULL;
             linelen = 0;
@@ -244,14 +265,15 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         if(2 != status)
         {
             fprintf(stderr,"problem with line: '%s'\n",line);
+            names[cnt] = NULL;
             free(names[cnt]);
             cards[cnt] = -1;
+            cnt--;
         }
 
         free(line);
         line = NULL;
         linelen = 0;
-
     }
     free(line);
     fclose(input);
@@ -340,8 +362,15 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
     {
         for(i = 0; i < selexnsize; ++i)
         {
-            // Iterate through whole stock. If there's a match, proceed normally, using the special pk.
+            // Iterate through whole stock. If there are matches, proceed normally using the given cardinalities.
             j = indexmemo[i];
+            if( -1 == j )
+            {
+                allevts[i] = NULL;
+                continue;
+            }
+
+            // User a provided specific qualifier combination.
             if(j == nevts)
             {
                 name = basenames[i];
@@ -349,10 +378,8 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             else
             {
                 name = evt_name(stock, j);
+                n = num_quals(stock, j);
             }
-
-            // Declare variables.
-            n = num_quals(stock, j);
 
             // Show progress to the user.
             //fprintf(stderr, "CURRENT EVENT: %s (%d/%d)\n", name, (i+1), selexnsize);
@@ -363,7 +390,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
                 chosen = (char**)malloc(n*sizeof(char*));
                 bitmap = (int*)calloc(n, sizeof(int));    
 
-                // Store the tags for the current event.
+                // Store the qualifiers for the current event.
                 for(k = 0; k < n; ++k)
                 {
                     chosen[k] = strdup(stock->evts[j][k]);
@@ -409,11 +436,10 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             chosen = (char**)malloc(n*sizeof(char*));
             bitmap = (int*)calloc(n, sizeof(int));    
 
-            // Store the tags for the current event.
+            // Store the qualifiers for the current event.
             for(j = 0; j < n; ++j)
             {
-                chosen[j] = (char*)malloc((strlen(stock->evts[i][j])+1)*sizeof(char));
-                strcpy(chosen[j], stock->evts[i][j]);
+                chosen[j] = strdup(stock->evts[i][j]);
             }
 
             // Get combinations of all subsets of current event's qualifiers.
@@ -424,8 +450,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             }
             else
             {
-                allevts[*track] = (char*)malloc((strlen(name)+1)*sizeof(char));
-                strcpy(allevts[*track], name);
+                allevts[*track] = strdup(name);
                 *track += 1;
             }
 
@@ -465,11 +490,19 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
 {
     int i;
 
+    // Make sure the user provided events.
+    if( 0 == cmbtotal )
+    {
+        fprintf(stderr, "No events to measure.\n");
+        return;
+    }
+
     // Iterate through all events for the worker.
     // Approximate the cache sizes first.
     if( (bench_type & BENCH_DCACHE_READ) || (bench_type & BENCH_DCACHE_WRITE) )
     {
-        d_cache_test(3, max_iter, 256, 64, allevts[0], NULL, 1, 0, NULL, NULL);
+        if( allevts[0] != NULL )
+            d_cache_test(3, max_iter, 256, 64, allevts[0], NULL, 1, 0, NULL, NULL);
     }
 
     /* Benchmark I - Branch*/
@@ -477,7 +510,8 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         for(i = 0; i < cmbtotal; ++i)
         {
-            branch_driver(allevts[i], init, outputdir);
+            if( allevts[i] != NULL )
+                branch_driver(allevts[i], init, outputdir);
         }
     }
 
@@ -486,7 +520,8 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         for(i = 0; i < cmbtotal; ++i)
         {
-            d_cache_driver(allevts[i], max_iter, outputdir, 0, 0);
+            if( allevts[i] != NULL )
+                d_cache_driver(allevts[i], max_iter, outputdir, 0, 0);
         }
     }
 
@@ -495,7 +530,8 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         for(i = 0; i < cmbtotal; ++i)
         {
-            d_cache_driver(allevts[i], max_iter, outputdir, 0, 1);
+            if( allevts[i] != NULL )
+                d_cache_driver(allevts[i], max_iter, outputdir, 0, 1);
         }
     }
 
@@ -504,7 +540,8 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         for(i = 0; i < cmbtotal; ++i)
         {
-            flops_driver(allevts[i], outputdir);
+            if( allevts[i] != NULL )
+                flops_driver(allevts[i], outputdir);
         }
     }
 
@@ -513,7 +550,8 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         for(i = 0; i < cmbtotal; ++i)
         {
-            i_cache_driver(allevts[i], init, outputdir);
+            if( allevts[i] != NULL )
+                i_cache_driver(allevts[i], init, outputdir);
         }
     }
 
