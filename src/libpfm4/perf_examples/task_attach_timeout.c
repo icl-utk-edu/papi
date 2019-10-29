@@ -184,7 +184,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (!options.events)
-		options.events = strdup("cycles,instructions");
+		options.events = strdup("cycles:u,instructions:u");
 
 	if (options.delay < 1)
 		options.delay = 10;
