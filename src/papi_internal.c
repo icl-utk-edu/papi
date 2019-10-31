@@ -111,31 +111,28 @@ _papi_hwi_free_papi_event_string() {
 	}
 	return;
 }
-// A place to keep the current papi event code so some component functions can fetch its value
-// The current event code can be stored here prior to component calls and cleared after the component returns
-static unsigned int papi_event_code = -1;
-static int papi_event_code_changed = -1;
+
 void
 _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag) {
 	INTDBG("new event_code: %#x, update_flag: %d, previous event_code: %#x\n", event_code, update_flag, papi_event_code);
 
 	// if call is just to reset and start over, set both flags to show nothing saved yet
 	if (update_flag < 0) {
-		papi_event_code_changed = -1;
-		papi_event_code = -1;
+		_papi_hwi_my_thread->tls_papi_event_code_changed = -1;
+		_papi_hwi_my_thread->tls_papi_event_code = -1;
 		return;
 	}
 
 	// if 0, it is being set prior to calling a component, if >0 it is being changed by the component
-	papi_event_code_changed = update_flag;
+	_papi_hwi_my_thread->tls_papi_event_code_changed = update_flag;
 	// save the event code passed in
-	papi_event_code = event_code;
+	_papi_hwi_my_thread->tls_papi_event_code = event_code;
 	return;
 }
 unsigned int
 _papi_hwi_get_papi_event_code () {
 	INTDBG("papi_event_code: %#x\n", papi_event_code);
-	return papi_event_code;
+	return _papi_hwi_my_thread->tls_papi_event_code;
 }
 /* Get the index into the ESI->NativeInfoArray for the current PAPI event code */
 int
@@ -560,7 +557,7 @@ _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char 
 
   int result;
 
-  if (papi_event_code_changed > 0) {
+  if (_papi_hwi_my_thread->tls_papi_event_code_changed > 0) {
 	  result = _papi_hwi_get_papi_event_code();
 	  INTDBG("EXIT: papi_event_code: %#x set by the component\n", result);
 	  return result;

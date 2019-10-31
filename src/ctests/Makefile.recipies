@@ -161,6 +161,12 @@ locks_pthreads: locks_pthreads.c $(TESTLIB) $(PAPILIB)
 krentel_pthreads: krentel_pthreads.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) krentel_pthreads.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o krentel_pthreads -lpthread
 
+# krentel_pthreads_race is not included with the standard tests;
+# it is a modification of krentel_pthreads intended to be run with 
+# "valgrind --tool=helgrind" to test for race conditions.
+krentel_pthreads_race: krentel_pthreads_race.c $(TESTLIB) $(PAPILIB)
+	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) krentel_pthreads_race.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o krentel_pthreads_race -lpthread
+
 overflow_pthreads: overflow_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) overflow_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o overflow_pthreads -lpthread
 
@@ -433,6 +439,9 @@ forkexec4: forkexec4.c $(TESTLIB) $(PAPILIB)
 
 prof_utils.o: prof_utils.c $(testlibdir)/papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c
+
+filter_helgrind: filter_helgrind.c $(TESTLIB) $(PAPILIB)
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) filter_helgrind.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o filter_helgrind 
 
 .PHONY : all default ctests ctest clean
 

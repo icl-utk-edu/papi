@@ -608,6 +608,16 @@ PAPI_library_init( int version )
 	   papi_return( init_retval );
 	}
 
+	/* Initialize thread globals, including the main threads  */
+
+	tmp = _papi_hwi_init_global_threads(  );
+	if ( tmp ) {
+		init_retval = tmp;
+		_papi_hwi_shutdown_global_internal(  );
+   	_in_papi_library_init_cnt--;
+		papi_return( init_retval );
+	}
+
 	/* Initialize component globals */
 
 	tmp = _papi_hwi_init_global(  );
@@ -618,22 +628,6 @@ PAPI_library_init( int version )
 		papi_return( init_retval );
 	}
 	
-	/* Initialize thread globals, including the main threads  */
-
-	tmp = _papi_hwi_init_global_threads(  );
-	if ( tmp ) {
-		int i;
-		init_retval = tmp;
-		_papi_hwi_shutdown_global_internal(  );
-		for ( i = 0; i < papi_num_components; i++ ) {
-		    if (!_papi_hwd[i]->cmp_info.disabled) {
-                       _papi_hwd[i]->shutdown_component(  );
-		    }
-		}
-		_in_papi_library_init_cnt--;
-		papi_return( init_retval );
-	}
-
 	init_level = PAPI_LOW_LEVEL_INITED;
 	_in_papi_library_init_cnt--;
 
