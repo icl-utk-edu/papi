@@ -41,7 +41,7 @@
 #include "perf_util.h"
 
 static const char *gen_events[]={
-	"cycles",
+	"cycles:u",
 	NULL
 };
 

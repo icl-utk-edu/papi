@@ -74,7 +74,7 @@ main(int argc, char **argv)
  	 * 2nd argument: default privilege level (used if not specified in the event string)
  	 * 3rd argument: the perf_event_attr to initialize
  	 */
-	ret = pfm_get_perf_event_encoding("cycles", PFM_PLM0|PFM_PLM3, &attr, NULL, NULL);
+	ret = pfm_get_perf_event_encoding("cycles:u", PFM_PLM0|PFM_PLM3, &attr, NULL, NULL);
 	if (ret != PFM_SUCCESS)
 		errx(1, "cannot find encoding: %s", pfm_strerror(ret));
 

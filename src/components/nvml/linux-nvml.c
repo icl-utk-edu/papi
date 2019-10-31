@@ -1170,7 +1170,7 @@ linkCudaLibraries()
     if (strlen(cuda_main) > 0) {                                // If override given, it has to work.
         dl1 = dlopen(cuda_main, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
         if (dl1 == NULL) {
-            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.nvml not found.", cuda_main);
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -1207,7 +1207,7 @@ linkCudaLibraries()
     if (strlen(cuda_runtime) > 0) {                                // If override given, it has to work.
         dl2 = dlopen(cuda_runtime, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
         if (dl2 == NULL) {
-            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.nvml not found.", cuda_runtime);
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -1254,7 +1254,7 @@ linkCudaLibraries()
     if (strlen(nvml_main) > 0) {                                        // If override given, it MUST work.
         dl3 = dlopen(nvml_main, RTLD_NOW | RTLD_GLOBAL);                // Try to open that path.
         if (dl3 == NULL) {
-            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_NVML_MAIN override '%s' given in Rules.cuda not found.", nvml_main);
+            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_NVML_MAIN override '%s' given in Rules.nvml not found.", nvml_main);
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }

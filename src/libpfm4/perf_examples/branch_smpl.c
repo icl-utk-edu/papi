@@ -40,7 +40,7 @@
 
 #include "perf_util.h"
 
-#define DFL_BR_EVENT "branches:freq=100"
+#define DFL_BR_EVENT "branches:freq=100:u"
 
 typedef struct {
 	int opt_no_show;
@@ -451,7 +451,7 @@ main(int argc, char **argv)
 		errx(1, "you must specify a command to execute\n");
 
 	if (!options.branch_filt)
-		options.branch_filt = PERF_SAMPLE_BRANCH_ANY;
+		options.branch_filt = PERF_SAMPLE_BRANCH_ANY | PERF_SAMPLE_BRANCH_USER;
 
 	/*
 	 * use low frequency rate to avoid flooding output

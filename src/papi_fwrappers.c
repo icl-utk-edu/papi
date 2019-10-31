@@ -1490,7 +1490,6 @@ PAPI_FCALL( papif_hl_read, PAPIF_HL_READ,
  * PAPIf_hl_region_begin at the end of an instrumented code region.
  * Assumes that PAPIf_hl_region_begin was called before.
  * Note that an output is automatically generated when your application terminates.
- * If the automatic output does not work for any reason, PAPIf_hl_print_output must be called.
  *
  * @par Example:
  *

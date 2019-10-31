@@ -174,7 +174,7 @@ pfm_intel_rapl_get_encoding(void *this, pfmlib_event_desc_t *e)
  * using this function to avoid duplicating code.
  */
 static const pfmlib_attr_desc_t rapl_mods[]=
-{};
+{ { 0, } };
 
 pfmlib_pmu_t intel_rapl_support={
 	.desc			= "Intel RAPL",
