@@ -353,11 +353,10 @@ static struct native_event_t *allocate_native_event(
 				ret = pfm_get_event_attr_info(libpfm4_index,
 					i, PFM_OS_PERF_EVENT_EXT, &ainfo);
 				if (ret != PFM_SUCCESS) {
-					SUBDBG("EXIT: Attribute info not found, libpfm4_index: %#x, ret: %d\n", libpfm4_index, _papi_libpfm4_error(ret));
                free (msk_ptr);
                free(pmu_name);
+					SUBDBG("EXIT: error libpfm4 find event: Attribute info not found, libpfm4_index: %#x, ret: %d\n", libpfm4_index, _papi_libpfm4_error(ret));
                _papi_hwi_unlock( NAMELIB_LOCK );
-               SUBDBG("EXIT: error from libpfm4 find event\n");
 					return NULL;
 				}
 
@@ -393,11 +392,10 @@ static struct native_event_t *allocate_native_event(
 
 			/* See if we had a mask that wasn't found */
 			if (!mask_found) {
-				SUBDBG("Mask not found! %s\n",ptr);
             free(msk_ptr);
             free(pmu_name);
+            SUBDBG("EXIT: error from libpfm4 find event, Mask not found: %s.\n", ptr);
             _papi_hwi_unlock( NAMELIB_LOCK );
-            SUBDBG("EXIT: error from libpfm4 find event\n");
 				return NULL;
 			}
 
