@@ -224,22 +224,23 @@ static void _internal_hl_library_init(void)
          master_thread_id = PAPI_thread_id();
          HLDBG("master_thread_id=%lu\n", master_thread_id);
       }
+
+      /* Support multiplexing if user wants to */
+      if ( getenv("PAPI_MULTIPLEX") != NULL ) {
+         retval = PAPI_multiplex_init();
+         if ( retval == PAPI_ENOSUPP) {
+            verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
+         } else if ( retval != PAPI_OK ) {
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
+         } else if ( retval == PAPI_OK ) {
+            verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
+         }
+      }
+
    } else {
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI_thread_init failed!\n");
       state = PAPIHL_DEACTIVATED;
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
-   }
-
-   /* Support multiplexing if user wants to */
-   if ( getenv("PAPI_MULTIPLEX") != NULL ) {
-      retval = PAPI_multiplex_init();
-      if ( retval == PAPI_ENOSUPP) {
-         verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
-      } else if ( retval != PAPI_OK ) {
-         verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
-      } else if ( retval == PAPI_OK ) {
-         verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
-      }
    }
 
    hl_initiated = true;
@@ -1496,46 +1497,6 @@ static int _internal_hl_check_for_clean_thread_states()
    return ( PAPI_OK );
 }
 
-/** @class PAPI_hl_init
- * @brief Initializes the high-level PAPI library.
- *
- * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_hl_init();
- *
- * @retval PAPI_OK 
- * @retval PAPI_HIGH_LEVEL_INITED 
- * -- Initialization was already called.
- * @retval PAPI_EMISC
- * -- Initialization failed.
- * @retval PAPI_ENOMEM
- * -- Insufficient memory.
- *
- * PAPI_hl_init initializes the PAPI library and some high-level specific features.
- * If your application is making use of threads you do not need to call any other low level
- * initialization functions as PAPI_hl_init includes thread support.
- * Note that the first call of PAPI_hl_region_begin will automatically call PAPI_hl_init
- * if not already called.
- *
- * @par Example:
- *
- * @code
- * int retval;
- *
- * retval = PAPI_hl_init();
- * if ( retval != PAPI_OK )
- *     handle_error(1);
- *
- * @endcode
- *
- * @see PAPI_hl_cleanup_thread
- * @see PAPI_hl_finalize
- * @see PAPI_hl_set_events
- * @see PAPI_hl_region_begin
- * @see PAPI_hl_read
- * @see PAPI_hl_region_end
- * @see PAPI_hl_print_output
- */
 int
 PAPI_hl_init()
 {
@@ -1552,57 +1513,6 @@ PAPI_hl_init()
    return ( PAPI_EMISC );
 }
 
-/** @class PAPI_hl_cleanup_thread
- * @brief Cleans up all thread-local data.
- * 
- * @par C Interface:
- * \#include <papi.h> @n
- * void PAPI_hl_cleanup_thread( );
- *
- * @retval PAPI_OK
- * @retval PAPI_EMISC
- * -- Thread has been already cleaned up or PAPI is deactivated due to previous errors.
- * 
- * PAPI_hl_cleanup_thread shuts down thread-local event sets and cleans local
- * data structures. It is recommended to use this function in combination with
- * PAPI_hl_finalize if your application is making use of threads.
- *
- * @par Example:
- *
- * @code
- * int retval;
- *
- * #pragma omp parallel
- * {
- *   retval = PAPI_hl_region_begin("computation");
- *   if ( retval != PAPI_OK )
- *       handle_error(1);
- *
- *    //Do some computation here
- *
- *   retval = PAPI_hl_region_end("computation");
- *   if ( retval != PAPI_OK )
- *       handle_error(1);
- * 
- *   retval = PAPI_hl_cleanup_thread();
- *   if ( retval != PAPI_OK )
- *       handle_error(1);
- * }
- *
- * retval = PAPI_hl_finalize();
- * if ( retval != PAPI_OK )
- *     handle_error(1);
- *
- * @endcode
- *
- * @see PAPI_hl_init
- * @see PAPI_hl_finalize
- * @see PAPI_hl_set_events
- * @see PAPI_hl_region_begin
- * @see PAPI_hl_read
- * @see PAPI_hl_region_end
- * @see PAPI_hl_print_output
- */
 int PAPI_hl_cleanup_thread()
 {
    if ( state == PAPIHL_ACTIVE && 
@@ -1616,39 +1526,6 @@ int PAPI_hl_cleanup_thread()
    return ( PAPI_EMISC );
 }
 
-/** @class PAPI_hl_finalize
- * @brief Finalizes the high-level PAPI library.
- *
- * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_hl_finalize( );
- *
- * @retval PAPI_OK
- * @retval PAPI_EMISC
- * -- PAPI has been already finalized or deactivated due to previous errors.
- *
- * PAPI_hl_finalize finalizes the high-level library by destroying all counting event sets
- * and internal data structures.
- *
- * @par Example:
- *
- * @code
- * int retval;
- *
- * retval = PAPI_hl_finalize();
- * if ( retval != PAPI_OK )
- *     handle_error(1);
- *
- * @endcode
- *
- * @see PAPI_hl_init
- * @see PAPI_hl_cleanup_thread
- * @see PAPI_hl_set_events
- * @see PAPI_hl_region_begin
- * @see PAPI_hl_read
- * @see PAPI_hl_region_end
- * @see PAPI_hl_print_output
- */
 int PAPI_hl_finalize()
 {
    if ( state == PAPIHL_ACTIVE && hl_initiated == true ) {
@@ -1658,47 +1535,6 @@ int PAPI_hl_finalize()
    return ( PAPI_EMISC );
 }
 
-/** @class PAPI_hl_set_events
- * @brief Generates event sets based on a list of hardware events.
- *
- * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_hl_set_events( const char* events );
- *
- * @param events
- * -- list of hardware events separated by commas
- *
- * @retval PAPI_OK
- * @retval PAPI_EMISC
- * -- PAPI has been deactivated due to previous errors.
- * @retval PAPI_ENOMEM
- * -- Insufficient memory.
- *
- * PAPI_hl_set_events offers the user the possibility to determine hardware events in
- * the source code as an alternative to the environment variable PAPI_EVENTS.
- * Note that the content of PAPI_EVENTS is ignored if PAPI_hl_set_events was successfully executed.
- * If the events argument cannot be interpreted, default hardware events are
- * taken for the measurement.
- *
- * @par Example:
- *
- * @code
- * int retval;
- *
- * retval = PAPI_hl_set_events("PAPI_TOT_INS,PAPI_TOT_CYC");
- * if ( retval != PAPI_OK )
- *     handle_error(1);
- *
- * @endcode
- *
- * @see PAPI_hl_init
- * @see PAPI_hl_cleanup_thread
- * @see PAPI_hl_finalize
- * @see PAPI_hl_region_begin
- * @see PAPI_hl_read
- * @see PAPI_hl_region_end
- * @see PAPI_hl_print_output
- */
 int
 PAPI_hl_set_events(const char* events)
 {
@@ -1739,39 +1575,6 @@ PAPI_hl_set_events(const char* events)
    return ( PAPI_EMISC );
 }
 
-/** @class PAPI_hl_print_output
- * @brief Prints values of hardware events.
- *
- * @par C Interface:
- * \#include <papi.h> @n
- * void PAPI_hl_print_output( );
- *
- * PAPI_hl_print_output prints the measured values of hardware events in one file for serial
- * or thread parallel applications.
- * Multi-processing applications, such as MPI, will have one output file per process.
- * Each output file contains measured values of all threads.
- * The entire measurement can be converted in a better readable output via python.
- * For more information, see <a href="https://bitbucket.org/icl/papi/wiki/papi-hl.md">High Level API</a>.
- * Note that if PAPI_hl_print_output is not called explicitly PAPI will try to generate output
- * at the end of the application. However, for some reason, this feature sometimes does not  work.
- * It is therefore recommended to call PAPI_hl_print_output for larger applications.
- *
- * @par Example:
- *
- * @code
- *
- * PAPI_hl_print_output();
- *
- * @endcode
- *
- * @see PAPI_hl_init
- * @see PAPI_hl_cleanup_thread
- * @see PAPI_hl_finalize
- * @see PAPI_hl_set_events
- * @see PAPI_hl_region_begin
- * @see PAPI_hl_read
- * @see PAPI_hl_region_end 
- */
 void
 PAPI_hl_print_output()
 {
