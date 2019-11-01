@@ -142,6 +142,7 @@ static char *absolute_output_file_path = NULL;
 static int output_counter = 0;   /**< Count each output generation. Not used yet */
 short verbosity = 1;             /**< Verbose output is always generated */
 bool state = PAPIHL_ACTIVE;      /**< PAPIHL is active until first error or finalization */
+bool hl_disabled_by_user = false; /**< PAPIHL disabled by the user */
 static int region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
 static int region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
 unsigned long master_thread_id = -1; /**< Remember id of master thread */
@@ -198,52 +199,64 @@ static void _internal_hl_library_init(void)
    /* This function is only called by one thread! */
    int retval;
 
-   /* check VERBOSE level */
-   if ( getenv("PAPI_NO_WARNING") != NULL ) {
-      verbosity = 0;
+   /* check if user wants to disable PAPI via the environment variable */
+   if ( getenv("PAPI_EVENTS") != NULL ) {
+      if ( strcmp(getenv("PAPI_EVENTS"), "NONE") == 0 ) {
+         verbose_fprintf(stdout, "PAPI-HL Info: All measurements are disabled!\n");
+         state = PAPIHL_DEACTIVATED;
+         hl_initiated = true;
+         hl_disabled_by_user = true;
+      }
    }
 
-   if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
-      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
-   
-   /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
-   if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
+   if ( state != PAPIHL_DEACTIVATED ) {
+      /* check VERBOSE level */
+      if ( getenv("PAPI_NO_WARNING") != NULL ) {
+         verbosity = 0;
+      }
 
-      /* determine output directory and output file */
-      if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
-         verbose_fprintf(stdout, "PAPI-HL Error: _internal_hl_determine_output_path failed!\n");
+      if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
+         verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
+      
+      /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
+      if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
+
+         /* determine output directory and output file */
+         if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
+            verbose_fprintf(stdout, "PAPI-HL Error: _internal_hl_determine_output_path failed!\n");
+            state = PAPIHL_DEACTIVATED;
+            verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
+         } else {
+
+            /* register the termination function for output */
+            atexit(PAPI_hl_print_output);
+            verbose_fprintf(stdout, "PAPI-HL Info: PAPI has been initiated!\n");
+
+            /* remember thread id */
+            master_thread_id = PAPI_thread_id();
+            HLDBG("master_thread_id=%lu\n", master_thread_id);
+         }
+
+         /* Support multiplexing if user wants to */
+         if ( getenv("PAPI_MULTIPLEX") != NULL ) {
+            retval = PAPI_multiplex_init();
+            if ( retval == PAPI_ENOSUPP) {
+               verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
+            } else if ( retval != PAPI_OK ) {
+               verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
+            } else if ( retval == PAPI_OK ) {
+               verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
+            }
+         }
+
+      } else {
+         verbose_fprintf(stdout, "PAPI-HL Error: PAPI_thread_init failed!\n");
          state = PAPIHL_DEACTIVATED;
          verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
-      } else {
-
-         /* register the termination function for output */
-         atexit(PAPI_hl_print_output);
-         verbose_fprintf(stdout, "PAPI-HL Info: PAPI has been initiated!\n");
-
-         /* remember thread id */
-         master_thread_id = PAPI_thread_id();
-         HLDBG("master_thread_id=%lu\n", master_thread_id);
       }
 
-      /* Support multiplexing if user wants to */
-      if ( getenv("PAPI_MULTIPLEX") != NULL ) {
-         retval = PAPI_multiplex_init();
-         if ( retval == PAPI_ENOSUPP) {
-            verbose_fprintf(stdout, "PAPI-HL Info: Multiplex is not supported!\n");
-         } else if ( retval != PAPI_OK ) {
-            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_multiplex_init failed!\n");
-         } else if ( retval == PAPI_OK ) {
-            verbose_fprintf(stdout, "PAPI-HL Info: Multiplex has been initiated!\n");
-         }
-      }
-
-   } else {
-      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_thread_init failed!\n");
-      state = PAPIHL_DEACTIVATED;
-      verbose_fprintf(stdout, "PAPI-HL Error: PAPI could not be initiated!\n");
+      hl_initiated = true;
    }
-
-   hl_initiated = true;
 }
 
 static void _internal_hl_onetime_library_init(void)
@@ -1544,8 +1557,12 @@ PAPI_hl_init()
       if ( hl_initiated == false && hl_finalized == false ) {
          _internal_hl_onetime_library_init();
          /* check if the library has been initialized successfully */
-         if ( state == PAPIHL_DEACTIVATED )
-            return ( PAPI_EMISC );
+         if ( state == PAPIHL_DEACTIVATED ) {
+            if ( hl_disabled_by_user == true )
+               return ( PAPI_OK );
+            else
+               return ( PAPI_EMISC );
+         }
          return ( PAPI_OK );
       }
       return ( PAPI_ENOINIT );
@@ -1607,14 +1624,17 @@ PAPI_hl_init()
 int PAPI_hl_cleanup_thread()
 {
    if ( state == PAPIHL_ACTIVE && 
-        hl_initiated == true && 
-        _local_state == PAPIHL_ACTIVE ) {
-         /* do not clean local data from master thread */
-         if ( master_thread_id != PAPI_thread_id() )
-           _internal_hl_clean_up_local_data();
+      hl_initiated == true && 
+      _local_state == PAPIHL_ACTIVE ) {
+      /* do not clean local data from master thread */
+      if ( master_thread_id != PAPI_thread_id() )
+         _internal_hl_clean_up_local_data();
+      return ( PAPI_OK );
+   }
+   if ( hl_disabled_by_user == true )
          return ( PAPI_OK );
-      }
-   return ( PAPI_EMISC );
+      else
+         return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_finalize
@@ -1656,7 +1676,10 @@ int PAPI_hl_finalize()
       _internal_hl_clean_up_all(true);
       return ( PAPI_OK );
    }
-   return ( PAPI_EMISC );
+   if ( hl_disabled_by_user == true )
+      return ( PAPI_OK );
+   else
+      return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_set_events
@@ -1680,6 +1703,7 @@ int PAPI_hl_finalize()
  * Note that the content of PAPI_EVENTS is ignored if PAPI_hl_set_events was successfully executed.
  * If the events argument cannot be interpreted, default hardware events are
  * taken for the measurement.
+ * This function has to be called after PAPI_hl_init.
  *
  * @par Example:
  *
@@ -1737,7 +1761,10 @@ PAPI_hl_set_events(const char* events)
          return ( PAPI_EMISC );
       return ( PAPI_OK );
    }
-   return ( PAPI_EMISC );
+   if ( hl_disabled_by_user == true )
+      return ( PAPI_OK );
+   else
+      return ( PAPI_EMISC );
 }
 
 /** @class PAPI_hl_print_output
@@ -1844,7 +1871,10 @@ PAPI_hl_region_begin( const char* region )
       /* check if we have to clean up local stuff */
       if ( _local_state == PAPIHL_ACTIVE )
          _internal_hl_clean_up_local_data();
-      return ( PAPI_EMISC );
+      if ( hl_disabled_by_user == true )
+         return ( PAPI_OK );
+      else
+         return ( PAPI_EMISC );
    }
 
    if ( hl_finalized == true )
@@ -1854,6 +1884,10 @@ PAPI_hl_region_begin( const char* region )
       if ( ( retval = PAPI_hl_init() ) != PAPI_OK )
          return ( retval );
    }
+
+   /* this is neccessary for the first call of PAPI_hl_region_begin */
+   if ( hl_disabled_by_user == true )
+      return ( PAPI_OK );
 
    if ( events_determined == false ) {
       if ( ( retval = PAPI_hl_set_events(NULL) ) != PAPI_OK )
@@ -1936,7 +1970,10 @@ PAPI_hl_read(const char* region)
       /* check if we have to clean up local stuff */
       if ( _local_state == PAPIHL_ACTIVE )
          _internal_hl_clean_up_local_data();
-      return ( PAPI_EMISC );
+      if ( hl_disabled_by_user == true )
+         return ( PAPI_OK );
+      else
+         return ( PAPI_EMISC );
    }
 
    if ( _local_region_begin_cnt == 0 ) {
@@ -2011,7 +2048,10 @@ PAPI_hl_region_end( const char* region )
       /* check if we have to clean up local stuff */
       if ( _local_state == PAPIHL_ACTIVE )
          _internal_hl_clean_up_local_data();
-      return ( PAPI_EMISC );
+      if ( hl_disabled_by_user == true )
+         return ( PAPI_OK );
+      else
+         return ( PAPI_EMISC );
    }
 
    if ( _local_region_begin_cnt == 0 ) {
