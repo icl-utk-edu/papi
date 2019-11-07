@@ -1951,7 +1951,8 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	info.dtype = PFM_DTYPE_UINT64;
 
 	/* reset flags */
-	info.is_precise = 0;
+	info.is_precise  = 0;
+	info.is_speculative = PFM_EVENT_INFO_SPEC_NA;
 
 	ret = pmu->get_event_info(pmu, pidx, &info);
 	if (ret != PFM_SUCCESS)
