@@ -54,13 +54,13 @@
 
 /* Package */
 #define MSR_PKG_RAPL_POWER_LIMIT        0x610
-#define MSR_INTEL_PKG_ENERGY_STATUS	0x611
+#define MSR_INTEL_PKG_ENERGY_STATUS     0x611
 #define MSR_PKG_PERF_STATUS             0x613
 #define MSR_PKG_POWER_INFO              0x614
 
 /* PP0 */
 #define MSR_PP0_POWER_LIMIT             0x638
-#define MSR_INTEL_PP0_ENERGY_STATUS	0x639
+#define MSR_INTEL_PP0_ENERGY_STATUS     0x639
 #define MSR_PP0_POLICY                  0x63A
 #define MSR_PP0_PERF_STATUS             0x63B
 
@@ -76,7 +76,7 @@
 #define MSR_DRAM_POWER_INFO             0x61C
 
 /* PSYS RAPL Domain */
-#define MSR_PLATFORM_ENERGY_STATUS	0x64d
+#define MSR_PLATFORM_ENERGY_STATUS      0x64d
 
 /* RAPL bitsmasks */
 #define POWER_UNIT_OFFSET          0
@@ -129,10 +129,15 @@ typedef struct _rapl_control_state
   long long lastupdate;
 } _rapl_control_state_t;
 
-
+// The _ENERGY_ counters should return a monotonically increasing
+// value from the _start point, but the hardware only returns a
+// uint32_t that wraps fairly quickly. We keep a start_value which
+// is reset at _start and every read, handle overflows of the 
+// uint32_t, and accumulate a uint64_t which we return.
 typedef struct _rapl_context
 {
   long long start_value[RAPL_MAX_COUNTERS];
+  long long accumulated_value[RAPL_MAX_COUNTERS];
   _rapl_control_state_t state;
 } _rapl_context_t;
 
@@ -898,9 +903,11 @@ _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
   long long now = PAPI_get_real_usec();
   int i;
 
+  
   for( i = 0; i < RAPL_MAX_COUNTERS; i++ ) {
      if ((control->being_measured[i]) && (control->need_difference[i])) {
-        context->start_value[i]=read_rapl_value(i);
+        context->start_value[i]=(read_rapl_value(i) & 0xFFFFFFFF);
+        context->accumulated_value[i]=0;
      }
   }
 
@@ -912,31 +919,35 @@ _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 static int
 _rapl_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
+   /* read values */
+   _rapl_context_t* context = (_rapl_context_t*) ctx;
+   _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
+   long long now = PAPI_get_real_usec();
+   int i;
+   long long temp, newstart;
 
-    /* read values */
-    _rapl_context_t* context = (_rapl_context_t*) ctx;
-    _rapl_control_state_t* control = (_rapl_control_state_t*) ctl;
-    long long now = PAPI_get_real_usec();
-    int i;
-    long long temp;
-
-    for ( i = 0; i < RAPL_MAX_COUNTERS; i++ ) {
-		if (control->being_measured[i]) {
-			temp = read_rapl_value(i);
-			if (context->start_value[i])
-			if (control->need_difference[i]) {
-				/* test for wrap around */
-				if (temp < context->start_value[i] ) {
-	        		SUBDBG("Wraparound!\nstart:\t%#016x\ttemp:\t%#016x",
-	        			(unsigned)context->start_value[i], (unsigned)temp);
-	           		temp += (0x100000000 - context->start_value[i]);
-	           		SUBDBG("\tresult:\t%#016x\n", (unsigned)temp);
-		  		} else {
-					temp -= context->start_value[i];
-		  		}
-			}
-			control->count[i] = convert_rapl_energy( i, temp );
-		}
+   for ( i = 0; i < RAPL_MAX_COUNTERS; i++ ) {
+      if (control->being_measured[i]) {
+         temp = read_rapl_value(i);
+         if (control->need_difference[i]) {
+            temp &= 0xFFFFFFFF;
+            newstart = temp;
+            /* test for wrap around */
+            if (temp < context->start_value[i] ) {
+               SUBDBG("Wraparound!\nstart:\t%#016x\ttemp:\t%#016x",
+                  (unsigned)context->start_value[i], (unsigned)temp);
+               temp += (0x100000000 - context->start_value[i]);
+               SUBDBG("\tresult:\t%#016x\n", (unsigned)temp);
+            } else {
+               temp -= context->start_value[i];
+            }
+            // reset the start value, add to accum, set temp for convert call.
+            context->start_value[i]=newstart;
+            context->accumulated_value[i] += temp;
+            temp = context->accumulated_value[i];
+         }
+         control->count[i] = convert_rapl_energy( i, temp );
+      }
     }
     control->lastupdate = now;
     return PAPI_OK;
