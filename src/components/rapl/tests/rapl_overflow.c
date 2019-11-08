@@ -12,6 +12,7 @@ static long long values[2];
 static long long rapl_values[2];
 static long long old_rapl_values[2] = {0,0};
 static int rapl_backward=0;
+static long long before_time, after_time;
 
 int EventSet2=PAPI_NULL;
 
@@ -28,11 +29,15 @@ void handler( int EventSet, void *address,
 	fprintf( stderr, "handler(%d ) Overflow at %p! bit=%#llx \n",
                          EventSet, address, overflow_vector );
 #endif
-	
+
 	PAPI_read(EventSet,values);
-	if (!quiet) printf("%lld %lld\t",values[0],values[1]);
 	PAPI_read(EventSet2,rapl_values);
-	if (!quiet) printf("RAPL: %lld %lld\n",rapl_values[0],rapl_values[1]);
+   after_time = PAPI_get_real_nsec();
+   double elapsed_time=((double)(after_time-before_time))/1.0e9;	
+
+	if (!quiet) printf("%15lld %15lld %18lld %15lld %.3fms\n",
+      values[0],values[1], 
+      rapl_values[0], rapl_values[1], elapsed_time*1000.);
 
 	if ((rapl_values[0]<old_rapl_values[0]) ||
 	    (rapl_values[1]<old_rapl_values[1])) {
@@ -41,7 +46,6 @@ void handler( int EventSet, void *address,
 	}
 	old_rapl_values[0]=rapl_values[0];
 	old_rapl_values[1]=rapl_values[1];
-
 
 	total++;
 }
@@ -54,7 +58,7 @@ void do_ints(int n,int quiet)
   for(i=0;i<n;i++) {
      c+=c*i*n;
   }
-  if (!quiet) printf("%d\n",c);
+  if (!quiet) printf("do_ints result: %d\n",c);
 }
 
 
@@ -64,8 +68,8 @@ main( int argc, char **argv )
 {
 	int EventSet = PAPI_NULL;
 	long long values0[2],values1[2],values2[2];
-	int num_flops = 3000000, retval;
-	int mythreshold = 1000000;
+	int num_flops = 30000000, retval;
+	int mythreshold;
 	char event_name1[PAPI_MAX_STR_LEN];
         int PAPI_event;
 	int cid,numcmp,rapl_cid;
@@ -106,7 +110,7 @@ main( int argc, char **argv )
 	}
 
 
-	/* add PAPI_TOT_CYC and PAPI_TOT_INS */
+	/* add PAPI_TOT_CYC and PAPI_TOT_INS to EventSet */
 	retval=PAPI_create_eventset(&EventSet);
 	if ( retval != PAPI_OK ) {
 	   test_fail(__FILE__, __LINE__,"PAPI_create_eventset",retval);
@@ -128,11 +132,13 @@ main( int argc, char **argv )
 	   test_fail(__FILE__, __LINE__,"PAPI_create_eventset",retval);
 	}
 
-	/* Add an event for each packages 0-n  */
+	/* Add to eventSet2 for each package 0-n  */
+   /* We use PACKAGE_ENERGY_CNT because it is an integer counter. */
+   char raplEventBase[]="rapl:::PACKAGE_ENERGY_CNT:PACKAGE";
 	i = 0;
 	do {
 		char buffer[80];
-		sprintf(&(buffer[0]), "rapl:::PACKAGE_ENERGY:PACKAGE%d", i);
+		sprintf(&(buffer[0]), "%s%d", raplEventBase, i);
 		retval=PAPI_add_named_event(EventSet2,buffer);
 		++i;
 	/* protect against insane PAPI library, the value 64 is the same value as 
@@ -141,10 +147,11 @@ main( int argc, char **argv )
 
 	PAPI_event=PAPI_TOT_CYC;
 
-	/* arbitrary */
-	mythreshold = 2000000;
+	/* arbitrary, period of reporting, in total cycles. */
+   /* our test routine is ~16 cycles per flop, get ~50 reports. */
+	mythreshold = (num_flops/50)<<4;
 	if (!TESTS_QUIET) {
-	   printf("Using %#x for the overflow event, threshold %d\n",
+	   printf("Using %#x for the overflow event on PAPI_TOT_CYC, threshold %d\n",
 		  PAPI_event,mythreshold);
 	}
 
@@ -163,6 +170,11 @@ main( int argc, char **argv )
 	   test_fail(__FILE__, __LINE__,"PAPI_stop",retval);
 	}
 
+   /* report header */
+   if (!TESTS_QUIET) {
+      printf("%15s %15s %18s %15s Elapsed\n", "PAPI_TOT_CYC", "PAPI_TOT_INS", 
+         "PACKAGE_ENERGY_CNT", "--UNUSED--");
+   }
 
 	/* set up overflow handler */
 	retval = PAPI_overflow( EventSet,PAPI_event,mythreshold, 0, handler );
@@ -171,6 +183,7 @@ main( int argc, char **argv )
 	}
 
 	/* Start overflow run */
+   before_time = PAPI_get_real_nsec();
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
 	   test_fail(__FILE__, __LINE__,"PAPI_start",retval);
@@ -205,7 +218,7 @@ main( int argc, char **argv )
 	}
 
 	if (!TESTS_QUIET) {
-	   printf("%s: %lld %lld\n",event_name1,values0[0],values1[0]);
+	   printf("%s: %lld(Calibration) %lld(OverflowRun)\n",event_name1,values0[0],values1[0]);
 	}
 
 	retval = PAPI_event_code_to_name( PAPI_TOT_INS, event_name1 );
@@ -214,7 +227,7 @@ main( int argc, char **argv )
 	}
 
 	if (!TESTS_QUIET) {
-	   printf("%s: %lld %lld\n",event_name1,values0[1],values1[1]);
+	   printf("%s: %lld(Calibration) %lld(OverflowRun)\n",event_name1,values0[1],values1[1]);
 	}
 
 	retval = PAPI_cleanup_eventset( EventSet );
