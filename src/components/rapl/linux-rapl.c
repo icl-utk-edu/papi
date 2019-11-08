@@ -131,9 +131,10 @@ typedef struct _rapl_control_state
 
 // The _ENERGY_ counters should return a monotonically increasing
 // value from the _start point, but the hardware only returns a
-// uint32_t that wraps fairly quickly. We keep a start_value which
-// is reset at _start and every read, handle overflows of the 
-// uint32_t, and accumulate a uint64_t which we return.
+// uint32_t that may wrap. We keep a start_value which is reset at
+// _start and every read, handle overflows of the uint32_t, and
+// accumulate a uint64_t which we return.
+
 typedef struct _rapl_context
 {
   long long start_value[RAPL_MAX_COUNTERS];
