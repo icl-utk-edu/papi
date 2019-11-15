@@ -645,6 +645,12 @@ typedef struct {
 	} SWIG_NAME(flags);
 } pfm_pmu_info_t;
 
+typedef enum {
+	PFM_EVENT_INFO_SPEC_NA    = 0,
+	PFM_EVENT_INFO_SPEC_TRUE  = 1,
+	PFM_EVENT_INFO_SPEC_FALSE = 2,
+} pfm_event_info_spec_t;
+
 typedef struct {
 	const char		*name;	/* event name */
 	const char		*desc;	/* event description */
@@ -657,8 +663,9 @@ typedef struct {
 	int			nattrs;	/* number of attributes */
 	int			reserved; /* for future use */
 	struct {
-		unsigned int	is_precise:1;	/* precise sampling (Intel X86=PEBS) */
-		unsigned int	reserved_bits:31;
+		unsigned int	is_precise:1;	 /* precise sampling (Intel X86=PEBS) */
+		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
+		unsigned int	reserved_bits:29;
 	} SWIG_NAME(flags);
 } pfm_event_info_t;
 
