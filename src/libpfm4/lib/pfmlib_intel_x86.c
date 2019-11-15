@@ -1099,6 +1099,14 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	 */
 	info->is_precise = intel_x86_eflag(this, idx, INTEL_X86_PEBS);
 
+	if (pmu->flags & PFMLIB_PMU_FL_SPEC) {
+		int ret = intel_x86_eflag(this, idx, INTEL_X86_SPEC);
+		if (ret)
+			info->is_speculative = PFM_EVENT_INFO_SPEC_TRUE;
+		else
+			info->is_speculative = PFM_EVENT_INFO_SPEC_FALSE;
+	}
+
 	info->nattrs  = intel_x86_num_umasks(this, idx);
 	info->nattrs += intel_x86_num_mods(this, idx);
 
