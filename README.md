@@ -68,6 +68,17 @@ be offered through the standard Bitbucket pull request model. We strongly
 encourage you to coordinate large contributions with the PAPI development team
 early in the process.
 
+In order to create a pull request on a public read-only repo, 
+you will need to do the following:
+
+1. Fork the PAPI repo (click "+" on the left and "Fork this repository").
+
+2. Clone it.
+
+3. Make your changes and push them.
+
+4. Click "create pull request" from your repo (not the PAPI repo).
+
 ***
 
 
