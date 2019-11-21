@@ -33,7 +33,8 @@
 #include "events/arm_cortex_a57_events.h"    /* A57 event tables */
 #include "events/arm_cortex_a53_events.h"    /* A53 event tables */
 #include "events/arm_xgene_events.h"         /* Applied Micro X-Gene tables */
-#include "events/arm_cavium_tx2_events.h"    /* Cavium ThunderX2 tables */
+#include "events/arm_cavium_tx2_events.h"    	/* Marvell ThunderX2 tables */
+#include "events/arm_marvell_tx2_unc_events.h" 	/* Marvell ThunderX2 PMU tables */
 
 static int
 pfm_arm_detect_cortex_a57(void *this)
