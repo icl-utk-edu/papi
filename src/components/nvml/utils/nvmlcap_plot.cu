@@ -38,7 +38,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
-#define dprintf if (1) printf /* debug printf; change to (1) to enable. */
+#define dprintf if (0) printf /* debug printf; change to (1) to enable. */
 
 int CTL_Z = 0;                         // No SIGTSTP signalled yet.
 void cbSignal_SIGTSTP(int signalNumber) {
