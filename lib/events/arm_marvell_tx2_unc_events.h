@@ -44,6 +44,13 @@
 #define DMC_EVENT_READ_TXNS             0xF
 #define DMC_EVENT_MAX                   0x10
 
+/* CCPI event IDs */
+#define CCPI2_EVENT_REQ_PKT_SENT	0x3D
+#define CCPI2_EVENT_SNOOP_PKT_SENT	0x65
+#define CCPI2_EVENT_DATA_PKT_SENT	0x105
+#define CCPI2_EVENT_GIC_PKT_SENT	0x12D
+
+
 static const arm_entry_t arm_thunderx2_unc_dmc_pe[]={
 	{.name = "UNC_DMC_READS",
 	 .modmsk = ARMV8_ATTRS,
@@ -55,9 +62,44 @@ static const arm_entry_t arm_thunderx2_unc_dmc_pe[]={
 	 .code = DMC_EVENT_WRITE_TXNS,
 	 .desc = "Memory write transactions"
 	},
+	{.name = "UNC_DMC_DATA_TRANSFERS",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = DMC_EVENT_DATA_TRANSFERS,
+	 .desc = "Memory data transfers"
+	},
+	{.name = "UNC_DMC_CYCLES",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = DMC_EVENT_COUNT_CYCLES,
+	 .desc = "Clocks at the DMC clock rate"
+	}
 };
 
 #define ARM_TX2_CORE_DMC_COUNT	(sizeof(arm_thunderx2_unc_dmc_pe)/sizeof(arm_entry_t))
+
+static const arm_entry_t arm_thunderx2_unc_ccpi_pe[]={
+	{.name = "UNC_CCPI_REQ",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = CCPI2_EVENT_REQ_PKT_SENT,
+	 .desc = "Request packets sent from this node"
+	},
+	{.name = "UNC_CCPI_SNOOP",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = CCPI2_EVENT_SNOOP_PKT_SENT,
+	 .desc = "Snoop packets sent from this node"
+	},
+	{.name = "UNC_CCPI_DATA",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = CCPI2_EVENT_DATA_PKT_SENT ,
+	 .desc = "Data packets sent from this node"
+	},
+	{.name = "UNC_CCPI_GIC",
+	 .modmsk = ARMV8_ATTRS,
+	 .code = CCPI2_EVENT_GIC_PKT_SENT,
+	 .desc = "Interrupt related packets sent from this node"
+	}
+};
+
+#define ARM_TX2_CORE_CCPI_COUNT	(sizeof(arm_thunderx2_unc_ccpi_pe)/sizeof(arm_entry_t))
 
 static const arm_entry_t arm_thunderx2_unc_llc_pe[]={
 	{.name = "UNC_LLC_READ",

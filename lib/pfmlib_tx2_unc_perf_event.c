@@ -27,11 +27,51 @@ typedef union {
 } tx2_unc_data_t;
 
 static void
-display_reg(void *this, pfmlib_event_desc_t *e, tx2_unc_data_t reg);
+display_com(void *this, pfmlib_event_desc_t *e, void *val)
+{
+	const arm_entry_t *pe = this_pe(this);
+	tx2_unc_data_t *reg = val;
+
+	__pfm_vbprintf("[UNC=0x%"PRIx64"] %s\n",
+			reg->val,
+			pe[e->event].name);
+}
+
 static void
-display_com(void *this, pfmlib_event_desc_t *e, void *val);
+display_reg(void *this, pfmlib_event_desc_t *e, tx2_unc_data_t reg)
+{
+	pfmlib_pmu_t *pmu = this;
+	if (pmu->display_reg)
+		pmu->display_reg(this, e, &reg);
+	else
+		display_com(this, e, &reg);
+}
+
+
 static int
-find_pmu_type_by_name(const char *name);
+find_pmu_type_by_name(const char *name)
+{
+	char filename[PATH_MAX];
+	FILE *fp;
+	int ret, type;
+
+	if (!name)
+		return PFM_ERR_NOTSUPP;
+
+	sprintf(filename, "/sys/bus/event_source/devices/%s/type", name);
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return PFM_ERR_NOTSUPP;
+
+	ret = fscanf(fp, "%d", &type);
+	if (ret != 1)
+		type = PFM_ERR_NOTSUPP;
+
+	fclose(fp);
+
+	return type;
+}
 
 int
 pfm_tx2_unc_get_event_encoding(void *this, pfmlib_event_desc_t *e)
@@ -82,58 +122,3 @@ pfm_tx2_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	return PFM_SUCCESS;
 }
-
-
-static void
-display_reg(void *this, pfmlib_event_desc_t *e, tx2_unc_data_t reg)
-{
-	pfmlib_pmu_t *pmu = this;
-	if (pmu->display_reg)
-		pmu->display_reg(this, e, &reg);
-	else
-		display_com(this, e, &reg);
-}
-
-static void
-display_com(void *this, pfmlib_event_desc_t *e, void *val)
-{
-	const arm_entry_t *pe = this_pe(this);
-	tx2_unc_data_t *reg = val;
-
-	__pfm_vbprintf("[UNC=0x%"PRIx64" event=0x%x umask=0x%x en=%d "
-		       "inv=%d edge=%d thres=%d] %s\n",
-			reg->val,
-			reg->com.unc_event,
-			reg->com.unc_umask,
-			reg->com.unc_en,
-			reg->com.unc_inv,
-			reg->com.unc_edge,
-			reg->com.unc_thres,
-			pe[e->event].name);
-}
-
-static int
-find_pmu_type_by_name(const char *name)
-{
-	char filename[PATH_MAX];
-	FILE *fp;
-	int ret, type;
-
-	if (!name)
-		return PFM_ERR_NOTSUPP;
-
-	sprintf(filename, "/sys/bus/event_source/devices/%s/type", name);
-
-	fp = fopen(filename, "r");
-	if (!fp)
-		return PFM_ERR_NOTSUPP;
-
-	ret = fscanf(fp, "%d", &type);
-	if (ret != 1)
-		type = PFM_ERR_NOTSUPP;
-
-	fclose(fp);
-
-	return type;
-}
-

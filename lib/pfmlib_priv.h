@@ -650,6 +650,8 @@ extern pfmlib_pmu_t arm_thunderx2_dmc0_support;
 extern pfmlib_pmu_t arm_thunderx2_dmc1_support;
 extern pfmlib_pmu_t arm_thunderx2_llc0_support;
 extern pfmlib_pmu_t arm_thunderx2_llc1_support;
+extern pfmlib_pmu_t arm_thunderx2_ccpi0_support;
+extern pfmlib_pmu_t arm_thunderx2_ccpi1_support;
 
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
