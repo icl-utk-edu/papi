@@ -319,12 +319,12 @@ All of the functions in the PerfAPI should use the following set of constants.
  *	@{ */
 #define PAPI_USR1_TLS		0x0
 #define PAPI_USR2_TLS		0x1
-//#define PAPI_HIGH_LEVEL_TLS     0x2
+#define PAPI_HIGH_LEVEL_TLS     0x2
 #define PAPI_NUM_TLS		0x3
 #define PAPI_TLS_USR1		PAPI_USR1_TLS
 #define PAPI_TLS_USR2		PAPI_USR2_TLS
-//#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
-#define PAPI_TLS_HIGH_LEVEL    0x2
+#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
+//#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
 /** @} */
@@ -1104,6 +1104,13 @@ enum {
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
    int PAPI_num_components(void); /**< get the number of components available on the system */
+
+   int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
+   int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
+   int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
+   int PAPI_epc(int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc); /**< gets (named) events per cycle, real and processor time, reference and core cycles */
+   int PAPI_stop_rates(); /**< stop rates for PAPI_[flips|flops|ipc|epc] */
+
    /** @} */
 
 /** \internal
