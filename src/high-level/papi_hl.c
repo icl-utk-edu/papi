@@ -388,19 +388,24 @@ static int _internal_hl_read_user_events(const char *user_events)
 
       /* allocate memory for requested events */
       requested_event_names = (char**)malloc(num_of_req_events * sizeof(char*));
-      if ( requested_event_names == NULL )
+      if ( requested_event_names == NULL ) {
+         free(user_events_copy);
          return ( PAPI_ENOMEM );
+      }
 
       /* parse list of event names */
       token = strtok( user_events_copy, separator );
       while ( token ) {
          if ( req_event_index >= num_of_req_events ){
             /* more entries as in the first run */
+            free(user_events_copy);
             return PAPI_EINVAL;
          }
          requested_event_names[req_event_index] = strdup(_internal_hl_remove_spaces(token));
-         if ( requested_event_names[req_event_index] == NULL )
+         if ( requested_event_names[req_event_index] == NULL ) {
+            free(user_events_copy);
             return ( PAPI_ENOMEM );
+         }
          token = strtok( NULL, separator );
          req_event_index++;
       }
@@ -816,8 +821,11 @@ static inline regions_t* _internal_hl_insert_region_node(regions_t** head_node, 
    if ( new_node == NULL )
       return ( NULL );
    new_node->region = (char *)malloc((strlen(region) + 1) * sizeof(char));
-   if ( new_node->region == NULL )
+   if ( new_node->region == NULL ) {
+      free(new_node);
       return ( NULL );
+   }
+
    new_node->next = NULL;
    new_node->prev = NULL;
    strcpy(new_node->region, region);
@@ -1012,15 +1020,17 @@ static int _internal_hl_mkdir(const char *dir)
          *p = 0;
          errno = 0;
          retval = mkdir(tmp, S_IRWXU);
-         if ( retval != 0 && errno != EEXIST )
-            return ( PAPI_ESYS );
          *p = '/';
+         if ( retval != 0 && errno != EEXIST ) {
+            free(tmp);
+            return ( PAPI_ESYS );
+         }
       }
    }
    retval = mkdir(tmp, S_IRWXU);
+   free(tmp);
    if ( retval != 0 && errno != EEXIST )
       return ( PAPI_ESYS );
-   free(tmp);
 
    return ( PAPI_OK );
 }
@@ -1038,8 +1048,10 @@ static int _internal_hl_determine_output_path()
    }
    
    /* generate absolute path for measurement directory */
-   if ( ( absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char)) ) == NULL )
+   if ( ( absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char)) ) == NULL ) {
+      free(output_prefix);
       return ( PAPI_ENOMEM );
+   }
    if ( output_counter > 0 )
       sprintf(absolute_output_file_path, "%s/papi_%d", output_prefix, output_counter);
    else
@@ -1051,8 +1063,11 @@ static int _internal_hl_determine_output_path()
 
       /* rename old directory by adding a timestamp */
       char *new_absolute_output_file_path = NULL;
-      if ( ( new_absolute_output_file_path = (char *)malloc((strlen(absolute_output_file_path) + 64) * sizeof(char)) ) == NULL )
+      if ( ( new_absolute_output_file_path = (char *)malloc((strlen(absolute_output_file_path) + 64) * sizeof(char)) ) == NULL ) {
+         free(output_prefix);
+         free(absolute_output_file_path);
          return ( PAPI_ENOMEM );
+      }
 
       /* create timestamp */
       time_t t = time(NULL);
@@ -1079,6 +1094,7 @@ static int _internal_hl_determine_output_path()
       free(new_absolute_output_file_path);
    }
    free(output_prefix);
+   free(absolute_output_file_path);
    output_counter++;
 
    return ( PAPI_OK );
@@ -1303,14 +1319,17 @@ static void _internal_hl_write_output()
             /* list all threads */
             if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
                verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+               fclose(output_file);
                return;
             }
             if ( ( tids = malloc( number_of_threads * sizeof(unsigned long) ) ) == NULL ) {
                verbose_fprintf(stdout, "PAPI-HL Error: OOM!\n");
+               fclose(output_file);
                return;
             }
             if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
                verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+               fclose(output_file);
                return;
             }
 

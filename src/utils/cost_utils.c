@@ -117,8 +117,8 @@ int do_percentile(long long *a,
 	i_50=(int)num_iters/2;
 	// index for  75%, not quite accurate because it doesn't
 	// take even or odd into consideration
-	i_75=(int)num_iters/4*3;
-	i_99=(int)num_iters/10*9.9;
+	i_75=((int)num_iters*3)/4;
+	i_99=((int)num_iters*99)/100;
 
 	qsort(a_sort,num_iters-1,sizeof(long long),cmpfunc);
 

@@ -57,24 +57,29 @@ thread( void *arg )
 	   0 is always the cpu component */
 	ret = PAPI_assign_eventset_component( eventset, 0 );
 	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_assign_eventset_component", ret );
 	}
 
 	ret = PAPI_set_multiplex( eventset );
-        if ( ret == PAPI_ENOSUPP) {
-	   test_skip( __FILE__, __LINE__, "Multiplexing not supported", 1 );
+      if ( ret == PAPI_ENOSUPP) {
+         free(values);       
+	      test_skip( __FILE__, __LINE__, "Multiplexing not supported", 1 );
 	}
 	else if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_set_multiplex", ret );
 	}
 
 	ret = PAPI_add_events( eventset, events, numevents );
 	if ( ret < PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_add_events", ret );
 	}
 
 	ret = PAPI_start( eventset );
 	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_start", ret );
 	}
 
@@ -82,22 +87,29 @@ thread( void *arg )
 
 	ret = PAPI_stop( eventset, values );
 	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_stop", ret );
 	}
 
 	ret = PAPI_cleanup_eventset( eventset );
 	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset", ret );
 	}
 
 	ret = PAPI_destroy_eventset( &eventset );
 	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", ret );
 	}
 
 	ret = PAPI_unregister_thread(  );
-	if ( ret != PAPI_OK )
+	if ( ret != PAPI_OK ) {
+      free(values);
 		test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", ret );
+   }
+
+   free(values);
 	return ( NULL );
 }
 
@@ -171,6 +183,7 @@ main( int argc, char **argv )
 	threads =
 		( pthread_t * ) malloc( ( size_t ) nthreads * sizeof ( pthread_t ) );
 	if ( threads == NULL ) {
+      free(events);
 		test_fail( __FILE__, __LINE__, "malloc", PAPI_ENOMEM );
 	}
 
@@ -178,6 +191,8 @@ main( int argc, char **argv )
 	for ( i = 0; i < nthreads; i++ ) {
 		retval = pthread_create( &threads[i], NULL, thread, NULL );
 		if ( retval != 0 ) {
+         free(events);
+         free(threads); 
 			test_fail( __FILE__, __LINE__, "pthread_create", PAPI_ESYS );
 		}
 	}
@@ -186,12 +201,16 @@ main( int argc, char **argv )
 	for ( i = 0; i < nthreads; i++ ) {
 		retval = pthread_join( threads[i], NULL );
 		if ( retval != 0 ) {
+         free(events);
+         free(threads); 
 			test_fail( __FILE__, __LINE__, "pthread_join", PAPI_ESYS );
 		}
 	}
 
 	if (!quiet) printf( "Done." );
 
+   free(events);
+   free(threads); 
 	test_pass( __FILE__ );
 
 	pthread_exit( NULL );

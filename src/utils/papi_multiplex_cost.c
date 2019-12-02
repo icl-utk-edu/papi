@@ -675,6 +675,10 @@ main( int argc, char **argv )
 	PAPI_cleanup_eventset( KernelMPX );
 	finalize_test();
 
+	if ( values != NULL ) free(values);
+	if ( array != NULL ) free(array);
+	if ( Events != NULL ) free(Events);
+
 	return 0;
 
 cleanup:

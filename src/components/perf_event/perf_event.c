@@ -1165,7 +1165,7 @@ _pe_read_multiplexed( pe_control_t *pe_ctl )
 				papi_pe_buffer,
 				sizeof ( papi_pe_buffer ) );
 		if ( ret == -1 ) {
-			PAPIERROR("read returned an error: ",
+			PAPIERROR("read returned an error: %s",
 					strerror( errno ));
 			return PAPI_ESYS;
 		}
@@ -1233,7 +1233,7 @@ _pe_read_nogroup( pe_control_t *pe_ctl ) {
 				papi_pe_buffer,
 				sizeof ( papi_pe_buffer ) );
 		if ( ret == -1 ) {
-			PAPIERROR("read returned an error: ",
+			PAPIERROR("read returned an error: %s",
 				strerror( errno ));
 			return PAPI_ESYS;
 		}
@@ -1310,7 +1310,7 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 			sizeof ( papi_pe_buffer ) );
 
 		if ( ret == -1 ) {
-			PAPIERROR("read returned an error: ",
+			PAPIERROR("read returned an error: %s",
 				strerror( errno ));
 			return PAPI_ESYS;
 		}
@@ -2069,7 +2069,7 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 
 	/* Restart the counters */
 	if (ioctl( fd, PERF_EVENT_IOC_REFRESH, PAPI_REFRESH_VALUE ) == -1) {
-		PAPIERROR( "overflow refresh failed", 0 );
+		PAPIERROR("overflow refresh failed");
 	}
 }
 

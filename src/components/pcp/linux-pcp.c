@@ -915,6 +915,7 @@ static int _pcp_init_component(int cidx)
    if (allPMID == NULL) {                                               // If we failed,
       snprintf(reason, rLen, "memory alloc denied for allPMID; "
             "size=%i.\n", sEventCount);
+      free(allNames);
       return(PAPI_ENOMEM);                                              // memory failure.
    } // end if calloc failed.
 
@@ -1003,7 +1004,7 @@ static int _pcp_init_component(int cidx)
          pmValue *pmval = &vset->vlist[0];                              // .. Get the first value.
          pmValueBlock *pB = pmval->value.pval;                          // .. get it.
          if (pcp_event_info[i].valType != pB->vtype) {
-            snprintf(reason, rLen, "Disagreement between var descriptor and fetch on event %s. %i vs %i. Possible version incompatibiity.\n", 
+            snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
             return PAPI_ENOSUPP;                                          // .. in
          }
@@ -1273,7 +1274,7 @@ static int _pcp_update_control_state(
          MyCtl->pcpIndex = realloc(MyCtl->pcpIndex,                     // .. .. reallocate to make more room.
                                    newalloc*sizeof(int));               // .. .. ..
          MyCtl->pcpValue = realloc(MyCtl->pcpValue,                     // .. .. reallocate to make more room.
-                                   newalloc*sizeof(long long));         // .. .. ..
+                                   newalloc*sizeof(unsigned long long));// .. .. ..
          MyCtl->maxAllocated = newalloc;                                // .. .. remember what we've got.
       }
    } else {                                                             // If NULL then I have no previous set,
@@ -1281,7 +1282,7 @@ static int _pcp_update_control_state(
       MyCtl->pcpIndex =                                                 // .. make room for 'count' indices,
          calloc(MyCtl->maxAllocated, sizeof(int));                      // .. 
       MyCtl->pcpValue =                                                 // .. make room for 'count' values.
-         calloc(MyCtl->maxAllocated, sizeof(long long));                // .. 
+         calloc(MyCtl->maxAllocated, sizeof(unsigned long long));       // .. 
    }
 
    if (MyCtl->pcpIndex == NULL) {                                       // If malloc failed,

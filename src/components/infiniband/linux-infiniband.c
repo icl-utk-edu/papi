@@ -209,214 +209,214 @@ find_ib_device_events(ib_device_t *dev, int extended)
 
    if ( extended ) {
       /* mofed driver version <4.0 */
-      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s", 
-             ib_dir_path, dev->dev_name, dev->dev_port, (extended?"_ext":""));
-   
-      cnt_dir = opendir(counters_path);
-      if (cnt_dir == NULL) {
-         /* directory counters_ext in sysfs fs has changed to hw_counters */
-         /* in 4.0 version of mofed driver */
-         SUBDBG("cannot open counters directory `%s'\n", counters_path);
-
-         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters", 
-                ib_dir_path, dev->dev_name, dev->dev_port, "hw_");
-   
-         cnt_dir = opendir(counters_path);
-      }
-   }
-   else {
-      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters", 
+      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters_ext", 
              ib_dir_path, dev->dev_name, dev->dev_port);
-      cnt_dir = opendir(counters_path);
-   }
-   
-   if (cnt_dir == NULL) {
-      SUBDBG("cannot open counters directory `%s'\n", counters_path);
-      goto out;
-   }
-   
-   struct dirent *ev_ent;
-   /* iterate over all the events */
-   while ((ev_ent = readdir(cnt_dir)) != NULL) {
-      char *ev_name = ev_ent->d_name;
-      long long value = -1;
-      char event_path[160];
-      char counter_name[80];
-
-      if (ev_name[0] == '.')
-         continue;
-
-      /* Check that we can read an integer from the counter file */
-      snprintf(event_path, sizeof(event_path), "%s/%s", counters_path, ev_name);
-      if (pscanf(event_path, "%lld", &value) != 1) {
-        SUBDBG("cannot read value for event '%s'\n", ev_name);
-        continue;
-      }
-
-      /* Create new counter */
-      snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
-            dev->dev_name, dev->dev_port, (extended?"_ext":""), ev_name);
-      if (add_ib_counter(counter_name, ev_name, extended, dev))
-      {
-         SUBDBG("Added new counter `%s'\n", counter_name);
-         nevents += 1;
-      }
-   }
-
- out:
-  if (cnt_dir != NULL)
-    closedir(cnt_dir);
-
-  return (nevents);
-}
-
-static int 
-find_ib_devices() 
-{
-  DIR *ib_dir = NULL;
-  int result = PAPI_OK;
-  num_events = 0;
-
-  ib_dir = opendir(ib_dir_path);
-  if (ib_dir == NULL) {
-     SUBDBG("cannot open `%s'\n", ib_dir_path);
-     strncpy(_infiniband_vector.cmp_info.disabled_reason,
-                 "Infiniband sysfs interface not found", PAPI_MAX_STR_LEN);
-     result = PAPI_ENOSUPP;
-     goto out;
-  }
-
-  struct dirent *hca_ent;
-  while ((hca_ent = readdir(ib_dir)) != NULL) {
-     char *hca = hca_ent->d_name;
-     char ports_path[80];
-     DIR *ports_dir = NULL;
-
-     if (hca[0] == '.')
-        goto next_hca;
-
-     snprintf(ports_path, sizeof(ports_path), "%s/%s/ports", ib_dir_path, hca);
-     ports_dir = opendir(ports_path);
-     if (ports_dir == NULL) {
-        SUBDBG("cannot open `%s'\n", ports_path);
-        goto next_hca;
-     }
-
-     struct dirent *port_ent;
-     while ((port_ent = readdir(ports_dir)) != NULL) {
-        int port = atoi(port_ent->d_name);
-        if (port <= 0)
-           continue;
-
-        /* Check that port is active. .../HCA/ports/PORT/state should read "4: ACTIVE." */
-        int state = -1;
-        char state_path[80];
-        snprintf(state_path, sizeof(state_path), "%s/%s/ports/%d/state", ib_dir_path, hca, port);
-        if (pscanf(state_path, "%d", &state) != 1) {
-           SUBDBG("cannot read state of IB HCA `%s' port %d\n", hca, port);
-           continue;
-        }
-
-        if (state != 4) {
-           SUBDBG("skipping inactive IB HCA `%s', port %d, state %d\n", hca, port, state);
-           continue;
-        }
-
-        /* Create dev name (HCA/PORT) and get stats for dev. */
-        SUBDBG("Found IB device `%s', port %d\n", hca, port);
-        ib_device_t *dev = add_ib_device(hca, port);
-        if (!dev)
-           continue;
-        // do we want to check for short counters only if no extended counters found?
-        num_events += find_ib_device_events(dev, 1);  // check if we have extended (64bit) counters
-        num_events += find_ib_device_events(dev, 0);  // check also for short counters
-     }
-
-   next_hca:
-      if (ports_dir != NULL)
-         closedir(ports_dir);
-   }
-
-   if (root_device == 0)  // no active devices found
-   {
-     strncpy(_infiniband_vector.cmp_info.disabled_reason,
-                 "No active Infiniband ports found", PAPI_MAX_STR_LEN);
-     result = PAPI_ENOIMPL;
-   } else if (num_events == 0)
-   {
-     strncpy(_infiniband_vector.cmp_info.disabled_reason,
-                 "No supported Infiniband events found", PAPI_MAX_STR_LEN);
-     result = PAPI_ENOIMPL;
-   } else
-   {
-      // Events are stored in a linked list, in reverse order than how I found them
-      // Revert them again, so that they are in finding order, not that it matters.
-      int i = num_events - 1;
-      // now allocate memory to store the counters into the native table
-      infiniband_native_events = (infiniband_native_event_entry_t*)
-           papi_calloc(num_events, sizeof(infiniband_native_event_entry_t));
-      ib_counter_t *iter = root_counter;
-      while (iter != 0)
-      {
-         infiniband_native_events[i].name = iter->ev_name;
-         infiniband_native_events[i].file_name = iter->ev_file_name;
-         infiniband_native_events[i].device = iter->ev_device;
-         infiniband_native_events[i].extended = iter->extended;
-         infiniband_native_events[i].resources.selector = i + 1;
-         infiniband_native_events[i].description = 
-                  make_ib_event_description(iter->ev_file_name, iter->extended);
-         
-         ib_counter_t *tmp = iter;
-         iter = iter->next;
-         papi_free(tmp);
-         -- i;
-      }
-      root_counter = 0;
-   }
-   
-   out:
-      if (ib_dir != NULL)
-         closedir(ib_dir);
-    
-   return (result);
-}
-
-static long long
-read_ib_counter_value(int index)
-{
-   char ev_file[128];
-   char counters_path[128];
-   DIR *cnt_dir = NULL;
-   long long value = 0ll;
-   infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
-   
-   if ( iter->extended ) {
-      /* mofed driver version <4.0 */
-      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
-             ib_dir_path, iter->device->dev_name, iter->device->dev_port, "_ext");
-   
-      cnt_dir = opendir(counters_path);
-      if (cnt_dir == NULL) {
-         /* directory counters_ext in sysfs fs has changed to hw_counters */
-         /* in 4.0 version of mofed driver */
-         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
-                ib_dir_path, iter->device->dev_name, iter->device->dev_port, "hw_");
    
          cnt_dir = opendir(counters_path);
+         if (cnt_dir == NULL) {
+            /* directory counters_ext in sysfs fs has changed to hw_counters */
+            /* in 4.0 version of mofed driver */
+            SUBDBG("cannot open counters directory `%s'\n", counters_path);
+
+            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters", 
+                   ib_dir_path, dev->dev_name, dev->dev_port, "hw_");
+      
+            cnt_dir = opendir(counters_path);
+         }
       }
+      else {
+         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters", 
+                ib_dir_path, dev->dev_name, dev->dev_port);
+         cnt_dir = opendir(counters_path);
+      }
+      
+      if (cnt_dir == NULL) {
+         SUBDBG("cannot open counters directory `%s'\n", counters_path);
+         goto out;
+      }
+      
+      struct dirent *ev_ent;
+      /* iterate over all the events */
+      while ((ev_ent = readdir(cnt_dir)) != NULL) {
+         char *ev_name = ev_ent->d_name;
+         long long value = -1;
+         char event_path[FILENAME_MAX];
+         char counter_name[512];
+
+         if (ev_name[0] == '.')
+            continue;
+
+         /* Check that we can read an integer from the counter file */
+         snprintf(event_path, sizeof(event_path), "%s/%s", counters_path, ev_name);
+         if (pscanf(event_path, "%lld", &value) != 1) {
+           SUBDBG("cannot read value for event '%s'\n", ev_name);
+           continue;
+         }
+
+         /* Create new counter */
+         snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
+               dev->dev_name, dev->dev_port, (extended?"_ext":""), ev_name);
+         if (add_ib_counter(counter_name, ev_name, extended, dev))
+         {
+            SUBDBG("Added new counter `%s'\n", counter_name);
+            nevents += 1;
+         }
+      }
+
+    out:
+     if (cnt_dir != NULL)
+       closedir(cnt_dir);
+
+     return (nevents);
    }
-   else {
-      snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
-             ib_dir_path, iter->device->dev_name, iter->device->dev_port );
-      cnt_dir = opendir(counters_path);
+
+   static int 
+   find_ib_devices() 
+   {
+     DIR *ib_dir = NULL;
+     int result = PAPI_OK;
+     num_events = 0;
+
+     ib_dir = opendir(ib_dir_path);
+     if (ib_dir == NULL) {
+        SUBDBG("cannot open `%s'\n", ib_dir_path);
+        strncpy(_infiniband_vector.cmp_info.disabled_reason,
+                    "Infiniband sysfs interface not found", PAPI_MAX_STR_LEN);
+        result = PAPI_ENOSUPP;
+        goto out;
+     }
+
+     struct dirent *hca_ent;
+     while ((hca_ent = readdir(ib_dir)) != NULL) {
+        char *hca = hca_ent->d_name;
+        char ports_path[FILENAME_MAX];
+        DIR *ports_dir = NULL;
+
+        if (hca[0] == '.')
+           goto next_hca;
+
+        snprintf(ports_path, sizeof(ports_path), "%s/%s/ports", ib_dir_path, hca);
+        ports_dir = opendir(ports_path);
+        if (ports_dir == NULL) {
+           SUBDBG("cannot open `%s'\n", ports_path);
+           goto next_hca;
+        }
+
+        struct dirent *port_ent;
+        while ((port_ent = readdir(ports_dir)) != NULL) {
+           int port = atoi(port_ent->d_name);
+           if (port <= 0)
+              continue;
+
+           /* Check that port is active. .../HCA/ports/PORT/state should read "4: ACTIVE." */
+           int state = -1;
+           char state_path[FILENAME_MAX];
+           snprintf(state_path, sizeof(state_path), "%s/%s/ports/%d/state", ib_dir_path, hca, port);
+           if (pscanf(state_path, "%d", &state) != 1) {
+              SUBDBG("cannot read state of IB HCA `%s' port %d\n", hca, port);
+              continue;
+           }
+
+           if (state != 4) {
+              SUBDBG("skipping inactive IB HCA `%s', port %d, state %d\n", hca, port, state);
+              continue;
+           }
+
+           /* Create dev name (HCA/PORT) and get stats for dev. */
+           SUBDBG("Found IB device `%s', port %d\n", hca, port);
+           ib_device_t *dev = add_ib_device(hca, port);
+           if (!dev)
+              continue;
+           // do we want to check for short counters only if no extended counters found?
+           num_events += find_ib_device_events(dev, 1);  // check if we have extended (64bit) counters
+           num_events += find_ib_device_events(dev, 0);  // check also for short counters
+        }
+
+      next_hca:
+         if (ports_dir != NULL)
+            closedir(ports_dir);
+      }
+
+      if (root_device == 0)  // no active devices found
+      {
+        strncpy(_infiniband_vector.cmp_info.disabled_reason,
+                    "No active Infiniband ports found", PAPI_MAX_STR_LEN);
+        result = PAPI_ENOIMPL;
+      } else if (num_events == 0)
+      {
+        strncpy(_infiniband_vector.cmp_info.disabled_reason,
+                    "No supported Infiniband events found", PAPI_MAX_STR_LEN);
+        result = PAPI_ENOIMPL;
+      } else
+      {
+         // Events are stored in a linked list, in reverse order than how I found them
+         // Revert them again, so that they are in finding order, not that it matters.
+         int i = num_events - 1;
+         // now allocate memory to store the counters into the native table
+         infiniband_native_events = (infiniband_native_event_entry_t*)
+              papi_calloc(num_events, sizeof(infiniband_native_event_entry_t));
+         ib_counter_t *iter = root_counter;
+         while (iter != 0)
+         {
+            infiniband_native_events[i].name = iter->ev_name;
+            infiniband_native_events[i].file_name = iter->ev_file_name;
+            infiniband_native_events[i].device = iter->ev_device;
+            infiniband_native_events[i].extended = iter->extended;
+            infiniband_native_events[i].resources.selector = i + 1;
+            infiniband_native_events[i].description = 
+                     make_ib_event_description(iter->ev_file_name, iter->extended);
+            
+            ib_counter_t *tmp = iter;
+            iter = iter->next;
+            papi_free(tmp);
+            -- i;
+         }
+         root_counter = 0;
+      }
+      
+      out:
+         if (ib_dir != NULL)
+            closedir(ib_dir);
+       
+      return (result);
    }
 
+   static long long
+   read_ib_counter_value(int index)
+   {
+      char ev_file[FILENAME_MAX];
+      char counters_path[FILENAME_MAX];
+      DIR *cnt_dir = NULL;
+      long long value = 0ll;
+      infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
+      
+      if ( iter->extended ) {
+         /* mofed driver version <4.0 */
+         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
+                ib_dir_path, iter->device->dev_name, iter->device->dev_port, "_ext");
+      
+         cnt_dir = opendir(counters_path);
+         if (cnt_dir == NULL) {
+            /* directory counters_ext in sysfs fs has changed to hw_counters */
+            /* in 4.0 version of mofed driver */
+            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
+                   ib_dir_path, iter->device->dev_name, iter->device->dev_port, "hw_");
+      
+            cnt_dir = opendir(counters_path);
+         }
+      }
+      else {
+         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
+                ib_dir_path, iter->device->dev_name, iter->device->dev_port );
+         cnt_dir = opendir(counters_path);
+      }
 
-   if (cnt_dir != NULL)
-      closedir(cnt_dir);
 
- 
-   snprintf(ev_file, sizeof(ev_file), "%s/%s",
+      if (cnt_dir != NULL)
+         closedir(cnt_dir);
+
+    
+      snprintf(ev_file, sizeof(ev_file), "%s/%s",
            counters_path, iter->file_name);
 
    if (pscanf(ev_file, "%lld", &value) != 1) {

@@ -912,7 +912,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
          ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer,
 		    sizeof ( papi_pe_buffer ) );
          if ( ret == -1 ) {
-	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    PAPIERROR("read returned an error: %s", strerror( errno ));
        SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
@@ -970,7 +970,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
          ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
 		    sizeof ( papi_pe_buffer ) );
          if ( ret == -1 ) {
-	    PAPIERROR("read returned an error: ", strerror( errno ));
+	    PAPIERROR("read returned an error: %s", strerror( errno ));
        SUBDBG("EXIT: PAPI_ESYS\n");
 	    return PAPI_ESYS;
 	 }
@@ -1007,7 +1007,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		  sizeof ( papi_pe_buffer ) );
 
       if ( ret == -1 ) {
-	 PAPIERROR("read returned an error: ", strerror( errno ));
+	 PAPIERROR("read returned an error: %s", strerror( errno ));
        SUBDBG("EXIT: PAPI_ESYS\n");
 	 return PAPI_ESYS;
       }

@@ -300,8 +300,6 @@ init_lustre_counters( void  )
 
 	  /* Lustre paths are of type server-UUID */
 
-	  idx = 0;
-
 	  ptr = strstr(path,"llite/") + 6;
 	 if (ptr == NULL) {
 	  SUBDBG("Path: %s, missing llite directory, performance event not created.\n", path);

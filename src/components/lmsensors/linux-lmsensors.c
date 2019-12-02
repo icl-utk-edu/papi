@@ -171,9 +171,6 @@ static unsigned
 createNativeEvents( void )
 {
 	unsigned id = 0;
-	unsigned int count;
-	(void) count; // Ignore not used warnings.
-
 	int chip_nr = 0;
 	const sensors_chip_name *chip_name;
 
@@ -214,8 +211,6 @@ createNativeEvents( void )
 	      /* Loop through all the subfeatures found */
 	      while ((sub=sensors_get_all_subfeaturesPtr(chip_name,feature,&b))) {
 
-	         count = 0;
-
 		 /* replace spaces with underscores */
 		 char *ptr;
 		 while( (ptr = strchr(featurelabel, ' ')) != NULL ){ *ptr = '_'; }
@@ -234,8 +229,6 @@ createNativeEvents( void )
 		 /* Save the actual references to this event */
 		 lm_sensors_native_table[id].resources.name = chip_name;
 		 lm_sensors_native_table[id].resources.subfeat_nr = sub->number;
-
-		 count = sub->number;
 
 		 /* increment the table index counter */
 		 id++;		 
