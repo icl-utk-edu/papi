@@ -65,10 +65,12 @@ char *stringify_all_domains(int domains);
 char *stringify_granularity(int granularity);
 char *stringify_all_granularities(int granularities);
 int tests_quiet(int argc, char **argv);
-void test_pass(const char *filename);
-void test_hl_pass(const char *filename);
-void test_fail(const char *file, int line, const char *call, int retval);
-void test_skip(const char *file, int line, const char *call, int retval);
+void __attribute__ ((__noreturn__)) test_pass(const char *filename);
+void __attribute__ ((__noreturn__)) test_hl_pass(const char *filename);
+void __attribute__ ((__noreturn__)) test_fail(const char *file, int line,
+					      const char *call, int retval);
+void __attribute__ ((__noreturn__)) test_skip(const char *file, int line,
+					      const char *call, int retval);
 void test_warn(const char *file, int line, const char *call, int retval);
 void test_print_event_header(const char *call, int evset);
 int approx_equals(double a, double b);
