@@ -252,7 +252,7 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
 
 		if ( ESI->master != thread ) {
 			PAPIERROR
-				( "eventset->thread %#p vs. current thread %#p mismatch",
+				( "eventset->thread %p vs. current thread %p mismatch",
 				  ESI->master, thread );
 			return ( PAPI_EBUG );
 		}
