@@ -13,17 +13,8 @@
 typedef union {
 	uint64_t val;
 	struct {
-		unsigned long unc_event:8;	/* event code */
-		unsigned long unc_umask:8;	/* unit mask */
-		unsigned long unc_res1:1;	/* reserved */
-		unsigned long unc_rst:1;	/* reset */
-		unsigned long unc_edge:1;	/* edge detect */
-		unsigned long unc_res2:3;	/* reserved */
-		unsigned long unc_en:1;		/* enable */
-		unsigned long unc_inv:1;	/* invert counter mask */
-		unsigned long unc_thres:8;	/* counter mask */
-		unsigned long unc_res3:32;	/* reserved */
-	} com; /* covers common fields for DMC/L3C */
+		unsigned long unc_res1:32;	/* reserved */
+	} com; /* reserved space for future extensions */
 } tx2_unc_data_t;
 
 static void
