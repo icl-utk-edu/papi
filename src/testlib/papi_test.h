@@ -48,6 +48,13 @@ struct test_events_t {
 
 extern struct test_events_t test_events[];
 
+/* Mark non-returning functions if the compiler support GNU C extensions. */
+#if defined(__GNUC__)
+#define PAPI_NORETURN __attribute__ ((__noreturn__))
+#else
+#define PAPI_NORETURN
+#endif
+
 void validate_string(const char *name, char *s);
 void *get_overflow_address(void *context);
 void free_test_space(long long ** values, int num_tests);
@@ -65,12 +72,12 @@ char *stringify_all_domains(int domains);
 char *stringify_granularity(int granularity);
 char *stringify_all_granularities(int granularities);
 int tests_quiet(int argc, char **argv);
-void __attribute__ ((__noreturn__)) test_pass(const char *filename);
-void __attribute__ ((__noreturn__)) test_hl_pass(const char *filename);
-void __attribute__ ((__noreturn__)) test_fail(const char *file, int line,
-					      const char *call, int retval);
-void __attribute__ ((__noreturn__)) test_skip(const char *file, int line,
-					      const char *call, int retval);
+void PAPI_NORETURN test_pass(const char *filename);
+void PAPI_NORETURN test_hl_pass(const char *filename);
+void PAPI_NORETURN test_fail(const char *file, int line,
+			     const char *call, int retval);
+void PAPI_NORETURN test_skip(const char *file, int line,
+			     const char *call, int retval);
 void test_warn(const char *file, int line, const char *call, int retval);
 void test_print_event_header(const char *call, int evset);
 int approx_equals(double a, double b);
