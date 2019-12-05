@@ -48,7 +48,7 @@
 /** \internal 
  * This is stored per thread
  */
-typedef struct _HighLevelInfo
+typedef struct _RateInfo
 {
 	int EventSet;                 /**< EventSet of the thread */
 	short int num_evts;           /**< number of events in the eventset */
@@ -58,25 +58,25 @@ typedef struct _HighLevelInfo
 	long long last_real_time;     /**< Previous value of real time */
 	long long last_proc_time;     /**< Previous value of processor time */
 	long long total_ins;          /**< Total instructions */
-} HighLevelInfo;
+} RateInfo;
 
 int _hl_rate_calls( float *real_time, float *proc_time, int *events, 
                     long long *values, long long *ins, float *rate, int mode );
-void _internal_cleanup_hl_info( HighLevelInfo * state );
-int _internal_check_state( HighLevelInfo ** state );
-int _internal_start_hl_counters( HighLevelInfo * state );
+void _internal_cleanup_hl_info( RateInfo * state );
+int _internal_check_state( RateInfo ** state );
+int _internal_start_hl_counters( RateInfo * state );
 int _internal_hl_read_cnts( long long *values, int array_len, int flag );
 
 /** @internal 
  * This function is called to determine the state of the system.
- * We may as well set the HighLevelInfo so you don't have to look it
+ * We may as well set the RateInfo so you don't have to look it
  * up again.
  */
 int
-_internal_check_state( HighLevelInfo ** outgoing )
+_internal_check_state( RateInfo ** outgoing )
 {
 	int retval;
-	HighLevelInfo *state = NULL;
+	RateInfo *state = NULL;
 
 	/* Only allow one thread at a time in here */
 	if ( init_level == PAPI_NOT_INITED ) {
@@ -96,11 +96,11 @@ _internal_check_state( HighLevelInfo ** outgoing )
 	if ( ( retval =
 		   PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void ** ) &state ) )
 		 != PAPI_OK || state == NULL ) {
-		state = ( HighLevelInfo * ) papi_malloc( sizeof ( HighLevelInfo ) );
+		state = ( RateInfo * ) papi_malloc( sizeof ( RateInfo ) );
 		if ( state == NULL )
 			return ( PAPI_ENOMEM );
 
-		memset( state, 0, sizeof ( HighLevelInfo ) );
+		memset( state, 0, sizeof ( RateInfo ) );
 		state->EventSet = -1;
 
 		if ( ( retval = PAPI_create_eventset( &state->EventSet ) ) != PAPI_OK )
@@ -119,13 +119,13 @@ _internal_check_state( HighLevelInfo ** outgoing )
  * Make sure to allocate space for values 
  */
 int
-_internal_start_hl_counters( HighLevelInfo * state )
+_internal_start_hl_counters( RateInfo * state )
 {
 	return ( PAPI_start( state->EventSet ) );
 }
 
 void
-_internal_cleanup_hl_info( HighLevelInfo * state )
+_internal_cleanup_hl_info( RateInfo * state )
 {
 	state->num_evts = 0;
 	state->running = HL_STOP;
@@ -388,7 +388,7 @@ _hl_rate_calls( float *real_time, float *proc_time, int *events,
 	long long rt, pt; // current elapsed real and process times in usec
 	int num_events = 2;
 	int retval = 0;
-	HighLevelInfo *state = NULL;
+	RateInfo *state = NULL;
 
 	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) {
 		return ( retval );
@@ -509,7 +509,7 @@ int
 PAPI_stop_rates()
 {
 	int retval;
-	HighLevelInfo *state = NULL;
+	RateInfo *state = NULL;
 
 	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK )
 		return ( retval );
@@ -832,7 +832,7 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
  *	@par Example:
  *	@code
  int ret;
- HighLevelInfo *state = NULL;
+ RateInfo *state = NULL;
  ret = PAPI_thread_init(pthread_self);
  if (ret != PAPI_OK) handle_error(ret);
  
@@ -840,9 +840,9 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
 
 ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
 if (ret != PAPI_OK || state == NULL) {
-	state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+	state = (RateInfo *) malloc(sizeof(RateInfo));
 	if (state == NULL) return (PAPI_ESYS);
-	memset(state, 0, sizeof(HighLevelInfo));
+	memset(state, 0, sizeof(RateInfo));
 	state->EventSet = PAPI_NULL;
 	ret = PAPI_create_eventset(&state->EventSet);
 	if (ret != PAPI_OK) return (PAPI_ESYS);
@@ -908,7 +908,7 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *	@par Example:
  *	@code
 int ret;
-HighLevelInfo *state = NULL;
+RateInfo *state = NULL;
 ret = PAPI_thread_init(pthread_self);
 if (ret != PAPI_OK) handle_error(ret);
  
@@ -916,9 +916,9 @@ if (ret != PAPI_OK) handle_error(ret);
 
 ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
 if (ret != PAPI_OK || state == NULL) {
-	state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+	state = (RateInfo *) malloc(sizeof(RateInfo));
 	if (state == NULL) return (PAPI_ESYS);
-	memset(state, 0, sizeof(HighLevelInfo));
+	memset(state, 0, sizeof(RateInfo));
 	state->EventSet = PAPI_NULL;
 	ret = PAPI_create_eventset(&state->EventSet);
 	if (ret != PAPI_OK) return (PAPI_ESYS);
