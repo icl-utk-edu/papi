@@ -68,6 +68,9 @@ be offered through the standard Bitbucket pull request model. We strongly
 encourage you to coordinate large contributions with the PAPI development team
 early in the process.
 
+**For timely pull request reviews and feedback, it is important to submit 
+one (1) pull request per feature / bug fix.**
+
 In order to create a pull request on a public read-only repo, 
 you will need to do the following:
 
