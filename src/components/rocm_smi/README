@@ -41,7 +41,9 @@ PAPI_ROCM_ROOT/rocm_smi/lib
 PAPI_ROCM_ROOT/rocm_smi/include/rocm_smi
 
 One library is required for the PAPI ROCM component. The name is
-librocm_smi64.so.
+librocm_smi64.so. 
+
+(At this writing, testing was done with librocm_smi64.so.2.1.)
 
 After the exports shown above, PAPI must be configured and built.
 When papi is installed, there will be a papi/src directory. Navigate

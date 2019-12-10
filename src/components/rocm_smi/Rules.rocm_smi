@@ -53,14 +53,19 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 # /usr/lib, /lib. 
 
 # OVERRIDES: These are by default empty strings (""), if set they must work.
-PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/build/librocm_smi64.so\"
+PAPI_ROCM_SMI_MAIN = \"\"
+
+# This is used for development and a locally built library.
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/build/librocm_smi64.so\"
 
 # An example of an override:
 # PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
 
-# Note:  PAPI_ROCM_ROOT also applies to the ROCM component ROCM_SMI is provided
-# by default when ROCM is installed; however, ROCM must be specified at
-# configure time as a separate component for PAPI. 
+# Note:  PAPI_ROCM_ROOT also applies to the ROCM component. The ROCM_SMI
+# library is provided by default when ROCM is installed, in
+# $(PAPI_ROCM_ROOT)/rocm_smi/lib/; however, the two components, rocm and
+# rocm_smi, must be specified separately on the configure line. See below for
+# examples.
 
 # Note:  If you change these overrides, PAPI should be rebuilt from scratch.
 #        From papi/src/
@@ -96,7 +101,7 @@ COMPOBJS += linux-rocm-smi.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
 # Order is important here; there are multiple DIFFERENT hsa.h files.
 # CFLAGS += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi $(ROCM_SMI_MACS) -g 
-CFLAGS += -I/home/tonycastaldo/rocm_smi_lib/include/rocm_smi $(ROCM_SMI_MACS) -g 
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include/rocm_smi $(ROCM_SMI_MACS) -g 
 LDFLAGS += $(LDL) -g
 
 linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)
