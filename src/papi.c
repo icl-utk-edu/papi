@@ -15,6 +15,8 @@
 *	   london@cs.utk.edu
 * @author  Per Ekman
 *          pek@pdc.kth.se
+* @author  Frank Winkler
+*          frank.winkler@icl.utk.edu
 * Mods:    Gary Mohr
 *          gary.mohr@bull.com
 *
@@ -24,7 +26,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h> 
+#include <unistd.h>
+#include <stdbool.h>
+#include <pthread.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -37,13 +41,18 @@
 #include "sw_multiplex.h"
 
 
-/* advanced papi functions for rates */
+/* simplified papi functions for event rates */
 
-#define HL_STOP      0
-#define HL_FLIP      1
-#define HL_FLOP      2
-#define HL_IPC       3
-#define HL_EPC       4
+/* For dynamic linking to libpapi */
+/* Weak symbol for pthread_once to avoid additional linking
+ * against libpthread when not used. */
+#pragma weak pthread_once
+
+#define STOP      0
+#define FLIP      1
+#define FLOP      2
+#define IPC       3
+#define EPC       4
 
 /** \internal 
  * This is stored per thread
@@ -60,79 +69,88 @@ typedef struct _RateInfo
 	long long total_ins;          /**< Total instructions */
 } RateInfo;
 
-int _hl_rate_calls( float *real_time, float *proc_time, int *events, 
-                    long long *values, long long *ins, float *rate, int mode );
-void _internal_cleanup_hl_info( RateInfo * state );
-int _internal_check_state( RateInfo ** state );
-int _internal_start_hl_counters( RateInfo * state );
-int _internal_hl_read_cnts( long long *values, int array_len, int flag );
+THREAD_LOCAL_STORAGE_KEYWORD RateInfo *_state = NULL;
+bool papi_initiated = false;
 
-/** @internal 
- * This function is called to determine the state of the system.
- * We may as well set the RateInfo so you don't have to look it
- * up again.
- */
-int
-_internal_check_state( RateInfo ** outgoing )
+static void _internal_papi_init(void);
+static void _internal_onetime_papi_init(void);
+int _rate_calls( float *real_time, float *proc_time, int *events, 
+                 long long *values, long long *ins, float *rate, int mode );
+void _internal_cleanup_info();
+int _internal_check_state();
+
+
+static void _internal_papi_init(void)
 {
-	int retval;
-	RateInfo *state = NULL;
+   /* This function is only called by one thread! */
+   int retval;
 
-	/* Only allow one thread at a time in here */
-	if ( init_level == PAPI_NOT_INITED ) {
-		retval = PAPI_library_init( PAPI_VER_CURRENT );
-		if ( retval != PAPI_VER_CURRENT ) {
-			return ( retval );
-		} else {
-			_papi_hwi_lock( HIGHLEVEL_LOCK );
-			init_level = PAPI_HIGH_LEVEL_INITED;
-			_papi_hwi_unlock( HIGHLEVEL_LOCK );
-		}
-	}
+   if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
+      printf("PAPI Error: PAPI_library_init failed!\n");
+   
+   /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
+   if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK) {
+      printf("PAPI Error: PAPI_thread_init failed!\n");
+      printf("PAPI Error: PAPI could not be initiated!\n");
+   } else {
+      papi_initiated = true;
+   }
 
-	/*
-	 * Do we have the thread specific data setup yet?
-	 */
-	if ( ( retval =
-		   PAPI_get_thr_specific( PAPI_HIGH_LEVEL_TLS, ( void ** ) &state ) )
-		 != PAPI_OK || state == NULL ) {
-		state = ( RateInfo * ) papi_malloc( sizeof ( RateInfo ) );
-		if ( state == NULL )
-			return ( PAPI_ENOMEM );
-
-		memset( state, 0, sizeof ( RateInfo ) );
-		state->EventSet = -1;
-
-		if ( ( retval = PAPI_create_eventset( &state->EventSet ) ) != PAPI_OK )
-			return ( retval );
-
-		if ( ( retval =
-			   PAPI_set_thr_specific( PAPI_HIGH_LEVEL_TLS,
-									  state ) ) != PAPI_OK )
-			return ( retval );
-	}
-	*outgoing = state;
-	return ( PAPI_OK );
 }
 
-/** @internal 
- * Make sure to allocate space for values 
- */
-int
-_internal_start_hl_counters( RateInfo * state )
+static void _internal_onetime_papi_init(void)
 {
-	return ( PAPI_start( state->EventSet ) );
+   static pthread_once_t library_is_initialized = PTHREAD_ONCE_INIT;
+   if ( pthread_once ) {
+      /* we assume that this function was called from a parallel region */
+      pthread_once(&library_is_initialized, _internal_papi_init);
+      /* wait until first thread has finished */
+      int i = 0;
+      /* give it 5 seconds in case PAPI_thread_init crashes */
+      while ( !papi_initiated && (i++) < 500000 )
+         usleep(10);
+   } else {
+      /* we assume that this function was called from a serial application
+       * that was not linked against libpthread */
+      _internal_papi_init();
+   }
+}
+
+int
+_internal_check_state()
+{
+   int retval;
+   if ( papi_initiated == false ) {
+      _internal_onetime_papi_init();
+
+      if ( papi_initiated == false ) {
+         return ( PAPI_EINVAL ); 
+      } else {
+         _state = ( RateInfo* ) papi_malloc( sizeof ( RateInfo ) );
+         if ( _state == NULL )
+            return ( PAPI_ENOMEM );
+         
+         memset( _state, 0, sizeof ( RateInfo ) );
+         _state->EventSet = -1;
+         if ( ( retval = PAPI_create_eventset( &_state->EventSet ) ) != PAPI_OK )
+            return ( retval );
+      }
+
+      return ( PAPI_OK );
+   } else {
+      return ( PAPI_OK );
+   }
 }
 
 void
-_internal_cleanup_hl_info( RateInfo * state )
+_internal_cleanup_info()
 {
-	state->num_evts = 0;
-	state->running = HL_STOP;
-	state->initial_real_time = -1;
-   	state->initial_proc_time = -1;
-	state->total_ins = 0;
-	return;
+   _state->num_evts = 0;
+   _state->running = STOP;
+   _state->initial_real_time = -1;
+   _state->initial_proc_time = -1;
+   _state->total_ins = 0;
+   return;
 }
 
 /** @class PAPI_flips
@@ -188,8 +206,8 @@ PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips )
 		return PAPI_EINVAL;
 	}
 
-	retval = _hl_rate_calls( rtime, ptime, events,
-			&values, flpins, mflips, HL_FLIP );
+	retval = _rate_calls( rtime, ptime, events,
+			&values, flpins, mflips, FLIP );
 
 	return ( retval );
 }
@@ -245,7 +263,7 @@ PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops )
 	if ( rtime == NULL || ptime == NULL || flpops == NULL || mflops == NULL )
 		return PAPI_EINVAL;
 
-   retval = _hl_rate_calls( rtime, ptime, events, &values, flpops, mflops, HL_FLOP );
+   retval = _rate_calls( rtime, ptime, events, &values, flpops, mflops, FLOP );
 	return ( retval );
 }
 
@@ -302,7 +320,7 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
 	if ( rtime == NULL || ptime == NULL || ins == NULL || ipc == NULL )
 		return PAPI_EINVAL;
 
-	retval = _hl_rate_calls( rtime, ptime, events, values, ins, ipc, HL_IPC );
+	retval = _rate_calls( rtime, ptime, events, values, ins, ipc, IPC );
 	return ( retval );
 }
 
@@ -375,108 +393,107 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
 	if ( PAPI_query_event( ( int ) PAPI_REF_CYC ) != PAPI_OK )
 		events[2] = 0;
 
-	retval = _hl_rate_calls( rtime, ptime, events, values, evt, epc, HL_EPC );
+	retval = _rate_calls( rtime, ptime, events, values, evt, epc, EPC );
 	*core = values[1];
 	*ref = values[2];
 	return ( retval );
 }
 
 int
-_hl_rate_calls( float *real_time, float *proc_time, int *events,
+_rate_calls( float *real_time, float *proc_time, int *events,
 		long long *values, long long *ins, float *rate, int mode )
 {
-	long long rt, pt; // current elapsed real and process times in usec
-	int num_events = 2;
-	int retval = 0;
-	RateInfo *state = NULL;
+   long long rt, pt; // current elapsed real and process times in usec
+   int num_events = 2;
+   int retval = 0;
 
-	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK ) {
-		return ( retval );
-	}
+   if ( ( retval = _internal_check_state() ) != PAPI_OK ) {
+      return ( retval );
+   }
 
-	if ( state->running != HL_STOP && state->running != mode ) {
-		return PAPI_EINVAL;
-	}
+   if ( _state->running != STOP && _state->running != mode ) {
+      return PAPI_EINVAL;
+   }
 
-	if ( state->running == HL_STOP ) {
+   if ( _state->running == STOP ) {
 
-		switch (mode) {
-			case HL_FLOP:
-			case HL_FLIP:
-				num_events = 1;
-				break;
-			case HL_IPC:
-				break;
-			case HL_EPC:
-				if ( events[2] != 0 ) num_events = 3;
-				break;
-			default:
-				return PAPI_EINVAL;
-		}
-		if (( retval = PAPI_add_events( state->EventSet, events, num_events )) != PAPI_OK ) {
-			_internal_cleanup_hl_info( state );
-			PAPI_cleanup_eventset( state->EventSet );
-			return retval;
-		}
+      switch (mode) {
+         case FLOP:
+         case FLIP:
+            num_events = 1;
+            break;
+         case IPC:
+            break;
+         case EPC:
+            if ( events[2] != 0 ) num_events = 3;
+            break;
+         default:
+            return PAPI_EINVAL;
+      }
+      if (( retval = PAPI_add_events( _state->EventSet, events, num_events )) != PAPI_OK ) {
+         _internal_cleanup_info();
+         PAPI_cleanup_eventset( _state->EventSet );
+         return retval;
+      }
 
-		state->total_ins = 0;
-		state->initial_real_time = state->last_real_time = PAPI_get_real_usec( );
-		state->initial_proc_time = state->last_proc_time = PAPI_get_virt_usec( );
+      _state->total_ins = 0;
+      _state->initial_real_time = _state->last_real_time = PAPI_get_real_usec( );
+      _state->initial_proc_time = _state->last_proc_time = PAPI_get_virt_usec( );
 
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-			return retval;
-		}
+      if ( ( retval = PAPI_start( _state->EventSet ) ) != PAPI_OK ) {
+         return retval;
+      }
 
-		/* Initialize the interface */
-		state->running = mode;
-		*real_time 	= 0.0;
-		*proc_time 	= 0.0;
-		*rate 		= 0.0;
+      /* Initialize the interface */
+      _state->running = mode;
+      *real_time 	= 0.0;
+      *proc_time 	= 0.0;
+      *rate 		= 0.0;
 
-	} else {
-		if ( ( retval = PAPI_stop( state->EventSet, values ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
+   } else {
+      if ( ( retval = PAPI_stop( _state->EventSet, values ) ) != PAPI_OK ) {
+         _state->running = STOP;
+         return retval;
+      }
 
-		/* Read elapsed real and process times  */
-		rt = PAPI_get_real_usec();
-		pt = PAPI_get_virt_usec();
+      /* Read elapsed real and process times  */
+      rt = PAPI_get_real_usec();
+      pt = PAPI_get_virt_usec();
 
-		/* Convert to seconds with multiplication because it is much faster */
-		*real_time = ((float)( rt - state->initial_real_time )) * .000001;
-		*proc_time = ((float)( pt - state->initial_proc_time )) * .000001;
+      /* Convert to seconds with multiplication because it is much faster */
+      *real_time = ((float)( rt - _state->initial_real_time )) * .000001;
+      *proc_time = ((float)( pt - _state->initial_proc_time )) * .000001;
 
-		state->total_ins += values[0];
+      _state->total_ins += values[0];
 
-		switch (mode) {
-			case HL_FLOP:
-			case HL_FLIP:
-				/* Calculate MFLOP and MFLIP rates */
-				if ( pt > 0 ) {
-					 *rate = (float)values[0] / (pt - state->last_proc_time);
-				} else *rate = 0;
-				break;
-			case HL_IPC:
-			case HL_EPC:
-				/* Calculate IPC */
-				if (values[1]!=0) {
-					*rate = (float) ((float)values[0] / (float) ( values[1]));
-				}
-				break;
-			default:
-				return PAPI_EINVAL;
-		}
-		state->last_real_time = rt;
-		state->last_proc_time = pt;
+      switch (mode) {
+         case FLOP:
+         case FLIP:
+            /* Calculate MFLOP and MFLIP rates */
+            if ( pt > 0 ) {
+                  *rate = (float)values[0] / (pt - _state->last_proc_time);
+            } else *rate = 0;
+            break;
+         case IPC:
+         case EPC:
+            /* Calculate IPC */
+            if (values[1]!=0) {
+               *rate = (float) ((float)values[0] / (float) ( values[1]));
+            }
+            break;
+         default:
+            return PAPI_EINVAL;
+      }
+      _state->last_real_time = rt;
+      _state->last_proc_time = pt;
 
-		if ( ( retval = PAPI_start( state->EventSet ) ) != PAPI_OK ) {
-			state->running = HL_STOP;
-			return retval;
-		}
-	}
-	*ins = state->total_ins;
-	return PAPI_OK;
+      if ( ( retval = PAPI_start( _state->EventSet ) ) != PAPI_OK ) {
+         _state->running = STOP;
+         return retval;
+      }
+   }
+   *ins = _state->total_ins;
+   return PAPI_OK;
 }
 
 /** @class PAPI_stop_rates
@@ -509,23 +526,22 @@ int
 PAPI_stop_rates()
 {
 	int retval;
-	RateInfo *state = NULL;
 
-	if ( ( retval = _internal_check_state( &state ) ) != PAPI_OK )
+	if ( ( retval = _internal_check_state() ) != PAPI_OK )
 		return ( retval );
 
-	if ( state->running == 0 )
+	if ( _state->running == 0 )
 		return ( PAPI_ENOTRUN );
 
 
-	if ( state->running > HL_STOP ) {
+	if ( _state->running > STOP ) {
 		long long tmp_values[3];
-		retval = PAPI_stop( state->EventSet, tmp_values );
+		retval = PAPI_stop( _state->EventSet, tmp_values );
 	}
 	
 	if ( retval == PAPI_OK ) {
-		_internal_cleanup_hl_info( state );
-		PAPI_cleanup_eventset( state->EventSet );
+		_internal_cleanup_info();
+		PAPI_cleanup_eventset( _state->EventSet );
 	}
 	APIDBG( "PAPI_stop_rates returns %d\n", retval );
 	return retval;
