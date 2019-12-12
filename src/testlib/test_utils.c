@@ -428,7 +428,7 @@ static void print_spaces(int count) {
 /* TESTS_QUIET #define printf hack		*/
 /* FIXME! Revert to printf once we are done converting */
 
-void
+void PAPI_NORETURN
 test_pass( const char *filename )
 {
 	(void)filename;
@@ -463,7 +463,7 @@ test_pass( const char *filename )
 
 }
 
-void
+void PAPI_NORETURN
 test_hl_pass( const char *filename )
 {
 	(void)filename;
@@ -487,7 +487,7 @@ test_hl_pass( const char *filename )
 }
 
 /* Use a positive value of retval to simply print an error message */
-void
+void PAPI_NORETURN
 test_fail( const char *file, int line, const char *call, int retval )
 {
 //	int line_pad;
@@ -580,7 +580,7 @@ test_warn( const char *file, int line, const char *call, int retval )
 	TEST_WARN++;
 }
 
-void
+void PAPI_NORETURN
 test_skip( const char *file, int line, const char *call, int retval )
 {
 //	int line_pad;
