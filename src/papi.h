@@ -1105,11 +1105,10 @@ enum {
    int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
    int PAPI_num_components(void); /**< get the number of components available on the system */
 
-   int PAPI_flips(float *rtime, float *ptime, long long * flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
-   int PAPI_flops(float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
+   int PAPI_flips_rate(int event, float *rtime, float *ptime, long long *flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
+   int PAPI_flops_rate(int event, float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
    int PAPI_epc(int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc); /**< gets (named) events per cycle, real and processor time, reference and core cycles */
-   int PAPI_stop_rates(); /**< stop rates for PAPI_[flips|flops|ipc|epc] */
 
    /** @} */
 

@@ -16,8 +16,9 @@
 #include <stdlib.h>
 #include "papi.h"
 
+int your_slow_code();
 
-main()
+int main()
 { 
   float real_time, proc_time,ipc;
   long long ins;

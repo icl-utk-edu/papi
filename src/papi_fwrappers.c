@@ -1360,54 +1360,38 @@ PAPI_FCALL( papif_epc, PAPIF_EPC,
 	*check = PAPI_epc( event, rtime, ptime, ref, core, evt, epc );
 }
 
-/** @class PAPIF_flips
+/** @class PAPIF_flips_rate
  *	@ingroup PAPIF
  *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *	PAPIF_flips( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
+ *	PAPIF_flips_rate ( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
  *
- * @see PAPI_flips
+ * @see PAPI_flips_rate
  */
-PAPI_FCALL( papif_flips, PAPIF_FLIPS,
-			( float *real_time, float *proc_time, long long *flpins,
+PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
+			( int event, float *real_time, float *proc_time, long long *flpins,
 			  float *mflips, int *check ) )
 {
-	*check = PAPI_flips( real_time, proc_time, flpins, mflips );
+	*check = PAPI_flips_rate( event, real_time, proc_time, flpins, mflips );
 }
 
-/** @class PAPIF_flops
+/** @class PAPIF_flops_rate
  *	@ingroup PAPIF
  *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *  PAPIF_flops( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+ *  PAPIF_flops( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
  *
- * @see PAPI_flops
+ * @see PAPI_flops_rate
  */
-PAPI_FCALL( papif_flops, PAPIF_FLOPS,
-			( float *real_time, float *proc_time, long long *flpops,
+PAPI_FCALL( papif_flops_rate, PAPIF_FLOPS_RATE,
+			( int event, float *real_time, float *proc_time, long long *flpops,
 			  float *mflops, int *check ) )
 {
-	*check = PAPI_flops( real_time, proc_time, flpops, mflops );
-}
-
-/** @class PAPIF_stop_rates
- *	@ingroup PAPIF
- *	@brief Stop counting hardware events and reset values to zero.
- *
- *	@par Fortran Interface:
- *	\#include "fpapi.h" @n
- *	PAPIF_stop_rates( C_INT check )
- *
- * @see PAPI_stop_rates
- */
-PAPI_FCALL( papif_stop_rates, PAPIF_STOP_RATES,
-			( int *check ) )
-{
-	*check = PAPI_stop_rates( );
+	*check = PAPI_flops_rate( event, real_time, proc_time, flpops, mflops );
 }
 
 
