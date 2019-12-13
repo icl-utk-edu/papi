@@ -1041,9 +1041,9 @@ static int _internal_hl_determine_output_path()
    if ( ( absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char)) ) == NULL )
       return ( PAPI_ENOMEM );
    if ( output_counter > 0 )
-      sprintf(absolute_output_file_path, "%s/papi_%d", output_prefix, output_counter);
+      sprintf(absolute_output_file_path, "%s/papi_hl_output_%d", output_prefix, output_counter);
    else
-      sprintf(absolute_output_file_path, "%s/papi", output_prefix);
+      sprintf(absolute_output_file_path, "%s/papi_hl_output", output_prefix);
 
    /* check if directory already exists */
    struct stat buf;
@@ -1067,7 +1067,8 @@ static int _internal_hl_determine_output_path()
 
       /* This is a workaround for MPI applications!!!
        * Only rename existing measurement directory when it is older than
-       * current timestamp. If it's not, we assume that another MPI process already created a new measurement directory. */
+       * current timestamp. If it's not, we assume that another MPI process already created a 
+       * new measurement directory. */
       if ( unix_time_from_old_directory < current_unix_time ) {
 
          if ( rename(absolute_output_file_path, new_absolute_output_file_path) != 0 ) {
