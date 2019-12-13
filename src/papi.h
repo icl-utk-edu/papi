@@ -1112,9 +1112,9 @@ enum {
    The simple interface implemented by the following routines allows the user to record hardware events inside instrumented regions from both C and Fortran.
    @{ */
 
-   int PAPI_hl_region_begin(const char* region); /**< begin a new region for reading hardware events */
-   int PAPI_hl_read(const char* region); /**< read hardware events inside a region */
-   int PAPI_hl_region_end(const char* region); /**< end region and store the difference between the value of PAPI_hl_region_end and PAPI_hl_region_begin */
+   int PAPI_hl_region_begin(const char* region); /**< read performance events at the beginning of a region */
+   int PAPI_hl_read(const char* region); /**< read performance events inside of a region and store the difference to the corresponding beginning of the region */
+   int PAPI_hl_region_end(const char* region); /**< read performance events at the end of a region and store the difference to the corresponding beginning of the region */
 /** @} */
 
 

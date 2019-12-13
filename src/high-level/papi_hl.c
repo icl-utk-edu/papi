@@ -1595,7 +1595,7 @@ _internal_PAPI_hl_print_output()
 }
 
 /** @class PAPI_hl_region_begin
- * @brief Reads and stores hardware events at the beginning of an instrumented code region.
+ * @brief Read performance events at the beginning of a region.
  *
  * @par C Interface:
  * \#include <papi.h> @n
@@ -1614,17 +1614,18 @@ _internal_PAPI_hl_print_output()
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
- * PAPI_hl_region_begin reads hardware events and stores them internally at the beginning
+ * PAPI_hl_region_begin reads performance events and stores them internally at the beginning
  * of an instrumented code region.
- * If not specified via environment variable PAPI_EVENTS, default events are used.
+ * If not specified via the environment variable PAPI_EVENTS, default events are used.
  * The first call sets all counters implicitly to zero and starts counting.
- * Note that if PAPI_EVENTS is not set or cannot be interpreted, default hardware events are
+ * Note that if PAPI_EVENTS is not set or cannot be interpreted, default performance events are
  * recorded.
  *
  * @par Example:
  *
  * @code
  * export PAPI_EVENTS="PAPI_TOT_INS,PAPI_TOT_CYC"
+ *
  * @endcode
  *
  *
@@ -1689,7 +1690,8 @@ PAPI_hl_region_begin( const char* region )
 }
 
 /** @class PAPI_hl_read
- * @brief Reads and stores hardware events inside of an instrumented code region.
+ * @brief Read performance events inside of a region and store the difference to the corresponding
+ * beginning of the region.
  *
  * @par C Interface:
  * \#include <papi.h> @n
@@ -1708,8 +1710,9 @@ PAPI_hl_region_begin( const char* region )
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
- * PAPI_hl_read reads hardware events and stores them internally inside
- * of an instrumented code region.
+ * PAPI_hl_read reads performance events inside of a region and stores the difference to the 
+ * corresponding beginning of the region.
+ *
  * Assumes that PAPI_hl_region_begin was called before.
  *
  * @par Example:
@@ -1767,7 +1770,8 @@ PAPI_hl_read(const char* region)
 }
 
 /** @class PAPI_hl_region_end
- * @brief Reads and stores hardware events at the end of an instrumented code region.
+ * @brief Read performance events at the end of a region and store the difference to the
+ * corresponding beginning of the region.
  *
  * @par C Interface:
  * \#include <papi.h> @n
@@ -1786,12 +1790,33 @@ PAPI_hl_read(const char* region)
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
- * PAPI_hl_region_end reads hardware events and stores the difference to the values from
- * PAPI_hl_region_begin at the end of an instrumented code region.
- * Assumes that PAPI_hl_region_begin was called before.
- * Note that an output is automatically generated when your application terminates.
+ * PAPI_hl_region_end reads performance events at the end of a region and stores the
+ * difference to the corresponding beginning of the region.
  * 
+ * Assumes that PAPI_hl_region_begin was called before.
+ * 
+ * Note that PAPI_hl_region_end does not stop counting the performance events. Counting
+ * continues until the application terminates. Therefore, the programmer can also create
+ * nested regions if required.
+ * 
+ * An output of the measured events is created automatically after the application exits.
+ * In the case of a serial, or a thread-parallel application there is only one output file.
+ * MPI applications would be saved in multiple files, one per MPI rank.
+ * The output is generated in the current directory by default. However, it is recommended to
+ * specify an output directory for larger measurements, especially for MPI applications via
+ * the environment variable PAPI_OUTPUT_DIRECTORY. In the case where measurements are performed,
+ * while there are old measurements in the same directory, PAPI will not overwrite or delete the
+ * old measurement directories. Instead, timestamps are added to the old directories.
+ * 
+ * For more convenience, the output can also be printed to stdout by setting PAPI_REPORT=1. This
+ * is not recommended for MPI applications as each MPI rank tries to print the output concurrently.
  *
+ * The generated measurement output can also be converted in a better readable output. The python
+ * script papi_hl_output_writer.py enhances the output by creating some derived metrics, like IPC,
+ * MFlops/s, and MFlips/s as well as real and processor time in case the corresponding PAPI events
+ * have been recorded. The python script can also summarize performance events over all threads and
+ * MPI ranks when using the option "accumulate" as seen below.
+ * 
  * @par Example:
  *
  * @code
@@ -1809,6 +1834,25 @@ PAPI_hl_read(const char* region)
  *
  * @endcode
  *
+ * @code
+ * python papi_hl_output_writer.py --type=accumulate
+ *
+ * {
+ *    "computation": {
+ *       "Region count": 1,
+ *       "Real time in s": 0.97 ,
+ *       "CPU time in s": 0.98 ,
+ *       "IPC": 1.41 ,
+ *       "MFLIPS /s": 386.28 ,
+ *       "MFLOPS /s": 386.28 ,
+ *       "Number of ranks ": 1,
+ *       "Number of threads ": 1,
+ *       "Number of processes ": 1
+ *    }
+ * }
+ *
+ * @endcode
+ * 
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_read
  */
