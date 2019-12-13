@@ -141,46 +141,44 @@ _internal_check_state()
    return ( PAPI_OK );
 }
 
-/** @class PAPI_flips
+/** @class PAPI_flips_rate
   *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
   *
   *	@par C Interface: 
   *	\#include <papi.h> @n
-  *	int PAPI_flips( float *rtime, float *ptime, long long *flpins, float *mflips );
+  *	int PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips );
   *
-  * @param *rtime
-  *		total realtime since the first call
+  *   @param event
+  *      one of the three presets PAPI_FP_INS, PAPI_VEC_SP or PAPI_VEC_DP 
+  *   @param *rtime
+  *		total realtime since the last call
   *	@param *ptime
-  *		total process time since the first call
+  *		total process time since the last call
   *	@param *flpins
-  *		total floating point instructions since the first call
+  *		total floating point instructions since the last call
   *	@param *mflips
   *		incremental (Mega) floating point instructions per seconds since the last call
   *  
   *	@retval PAPI_EINVAL 
-  *		The counters were already started by something other than PAPI_flips().
+  *		The counters were already started by something other than PAPI_flips_rate().
   *	@retval PAPI_ENOEVNT 
   *		The floating point instructions event does not exist.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
-  * The first call to PAPI_flips() will initialize the PAPI interface, 
-  * set up the counters to monitor the PAPI_FP_INS event and start the counters.
+  * The first call to PAPI_flips_rate() will initialize the PAPI interface, 
+  * set up the counters to monitor the floating point instructions event and start the counters.
   *
-  * Subsequent calls will read the counters and return total real time, 
-  * total process time, total floating point instructions since the start of the 
-  * measurement and the Mflip/s rate since latest call to PAPI_flips(). 
-  * A call to PAPI_stop_rates() will stop the counters from running and then 
-  * other rate calls can safely be used. 
+  * Subsequent calls will read the counters and return total real time, total process time,
+  * total floating point instructions and the Mflip/s rate since the latest call to PAPI_flips_rate(). 
   *
-  * PAPI_flips returns information related to floating point instructions using 
-  * the PAPI_FP_INS event. This is intended to measure instruction rate through the 
+  * PAPI_flips_rate returns information related to floating point instructions using 
+  * the floating point instructions event. This is intended to measure instruction rate through the 
   * floating point pipe with no massaging.
   *
-  * @see PAPI_flops()
+  * @see PAPI_flops_rate()
   * @see PAPI_ipc()
   * @see PAPI_epc()
-  * @see PAPI_stop_rates()
  */
 int
 PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips )
@@ -203,50 +201,47 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
 
       return ( retval );
    }
-   // fprintf( stderr, "Cannot execute PAPI_flips_rate. Please use one of the following presets:\nPAPI_FP_INS,\nPAPI_VEC_DP,\nPAPI_VEC_SP\n");
-   return ( PAPI_EINVAL );
+   return ( PAPI_ENOEVNT );
 }
 
-/** @class PAPI_flops
+/** @class PAPI_flops_rate
   *	@brief Simplified call to get Mflops/s (floating point operation rate), real and processor time. 
   *
   *	@par C Interface: 
   *	\#include <papi.h> @n
-  *	int PAPI_flops( float *rtime, float *ptime, long long *flpops, float *mflops );
+  *	int PAPI_flops_rate ( int event, float *rtime, float *ptime, long long *flpops, float *mflops );
   *
-  * @param *rtime
-  *		total realtime since the first call
+  *   @param event
+  *      one of the three presets PAPI_FP_OPS, PAPI_SP_OPS or PAPI_DP_OPS
+  *   @param *rtime
+  *		total realtime since the last call
   *	@param *ptime
-  *		total process time since the first call
+  *		total process time since the last call
   *	@param *flpops
-  *		total floating point operations since the first call
+  *		total floating point operations since the last call
   *	@param *mflops
   *		incremental (Mega) floating point operations per seconds since the last call
   * 
   *	@retval PAPI_EINVAL 
-  *		The counters were already started by something other than PAPI_flops().
+  *		The counters were already started by something other than PAPI_flops_rate().
   *	@retval PAPI_ENOEVNT 
   *		The floating point operations event does not exist.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
-  * The first call to PAPI_flops() will initialize the PAPI interface, 
-  * set up the counters to monitor the PAPI_FP_OPS event and start the counters. 
+  * The first call to PAPI_flops_rate() will initialize the PAPI interface, 
+  * set up the counters to monitor the floating point operations event and start the counters. 
   *
-  * Subsequent calls will read the counters and return total real time, 
-  * total process time, total floating point operations since the start of the 
-  * measurement and the Mflop/s rate since latest call to PAPI_flops(). 
-  * A call to PAPI_stop_rates() will stop the counters from running and then 
-  * other rate calls can safely be used. 
+  * Subsequent calls will read the counters and return total real time, total process time,
+  * total floating point operations and the Mflop/s rate since the latest call to PAPI_flops_rate(). 
   *
   * PAPI_flops returns information related to theoretical floating point operations
-  * rather than simple instructions. It uses the PAPI_FP_OPS event which attempts to 
+  * rather than simple instructions. It uses the floating point operations event which attempts to 
   * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
   *
-  * @see PAPI_flips()
+  * @see PAPI_flips_rate()
   * @see PAPI_ipc()
   * @see PAPI_epc()
-  * @see PAPI_stop_rates()
  */
 int
 PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float *mflops )
@@ -269,8 +264,7 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
 
       return ( retval );
    }
-   // fprintf( stderr, "Cannot execute PAPI_flips_rate. Please use one of the following presets:\nPAPI_FP_INS,\nPAPI_VEC_DP,\nPAPI_VEC_SP\n");
-   return ( PAPI_EINVAL );
+   return ( PAPI_ENOEVNT );
 }
 
 /** @class PAPI_ipc
@@ -281,18 +275,18 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
   *
   * @param *rtime
-  *		total realtime since the first call
+  *		total realtime since the last call
   *	@param *ptime
-  *		total process time since the first call
+  *		total process time since the last call
   *	@param *ins
-  *		total instructions since the first call
+  *		total instructions since the last call
   *	@param *ipc
   *		incremental instructions per cycle since the last call
   * 
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_ipc().
   *	@retval PAPI_ENOEVNT 
-  *		The floating point operations event does not exist.
+  *		One of both events PAPI_TOT_INS or PAPI_TOT_CYC is not supported.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
@@ -301,20 +295,15 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * and start the counters. 
   *
   * Subsequent calls will read the counters and return total real time, 
-  * total process time, total instructions since the start of the 
-  * measurement and the IPC rate since the latest call to PAPI_ipc().
-  *
-  * A call to PAPI_stop_rates() will stop the counters from running and then 
-  * other rate calls can safely be used. 
+  * total process time, total instructions and the IPC rate since the latest call to PAPI_ipc().
   *
   * PAPI_ipc should return a ratio greater than 1.0, indicating instruction level
   * parallelism within the chip. The larger this ratio the more effeciently the program
   * is running.
   *
-  * @see PAPI_flips()
-  * @see PAPI_flops()
+  * @see PAPI_flips_rate()
+  * @see PAPI_flops_rate()
   * @see PAPI_epc()
-  * @see PAPI_stop_rates()
  */
 int
 PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
@@ -340,15 +329,15 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * @param event
   *		event code to be measured (0 defaults to PAPI_TOT_INS)
   * @param *rtime
-  *		total realtime since the first call
+  *		total realtime since the last call
   *	@param *ptime
-  *		total process time since the first call
+  *		total process time since the last call
   *	@param *ref
   *		incremental reference clock cycles since the last call
   *	@param *core
   *		incremental core clock cycles since the last call
   *	@param *evt
-  *		total events since the first call
+  *		total events since the last call
   *	@param *epc
   *		incremental events per cycle since the last call
   * 
@@ -364,12 +353,8 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * and PAPI_REF_CYC (if it exists) and start the counters. 
   *
   * Subsequent calls will read the counters and return total real time, 
-  * total process time, total event counts since the start of the 
-  * measurement and the core and reference cycle count and EPC rate since the 
-  * latest call to PAPI_epc(). 
-  
-  * A call to PAPI_stop_rates() will stop the counters from running and then 
-  * other rate calls can safely be used. 
+  * total process time, total event counts, the core and reference cycle count and EPC rate
+  * since the latest call to PAPI_epc(). 
   *
   * PAPI_epc can provide a more detailed look at algorithm efficiency in light of clock
   * variability in modern cpus. MFLOPS is no longer an adequate description of peak
@@ -378,10 +363,9 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * PAPI_epc provides the information to compute an accurate effective clock rate, and
   * an accurate measure of computational throughput.
   *
-  * @see PAPI_flips()
-  * @see PAPI_flops()
+  * @see PAPI_flips_rate()
+  * @see PAPI_flops_rate()
   * @see PAPI_ipc()
-  * @see PAPI_stop_rates()
  */
 int
 PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )

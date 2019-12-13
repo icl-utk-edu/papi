@@ -1,6 +1,6 @@
 /*****************************************************************************
- * This example demonstrates the usage of the high level function PAPI_ipc   *
- * which measures the number of instructions executed per cpu cycle          *
+ * This example demonstrates the usage of the function PAPI_ipc which        *
+ * measures the number of instructions executed per cpu cycle                *
  *****************************************************************************/
 
 /*****************************************************************************

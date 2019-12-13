@@ -1,17 +1,17 @@
 /*****************************************************************************
- * This example demonstrates the usage of the high level function PAPI_flops *
+ * This example demonstrates the usage of the function PAPI_flops_rate       *
  * which measures the number of floating point operations executed and the   *
  * MegaFlop rate(defined as the number of floating point operations per      *
- * microsecond). To use PAPI_flops you need to have floating point operations*
- * event supported by the platform.                                          * 
+ * microsecond). To use PAPI_flops_rate you need to have floating point      *
+ * operations event supported by the platform.                               *
  *****************************************************************************/
 
 /*****************************************************************************
- * The first call to PAPI_flops initializes the PAPI library, set up the     *
- * counters to monitor PAPI_FP_OPS and PAPI_TOT_CYC events, and start the    *
- * counters. Subsequent calls will read the counters and return total real   *
- * time, total process time, total floating point operations, and the        *
- * Mflops/s rate since the last call to PAPI_flops.                          *
+ * The first call to PAPI_flops_rate initializes the PAPI library, set up    *
+ * the counters to monitor the floating point operations event, and start    *
+ * the counters. Subsequent calls will read the counters and return total    *
+ * real time, total process time, total floating point operations, and the   *
+ * Mflops/s rate since the last call to PAPI_flops_rate.                     *
  *****************************************************************************/
 
  
@@ -30,12 +30,13 @@ int main()
   int retval;
 
   /***********************************************************************
-   * if PAPI_FP_OPS is a derived event in your platform, then your       * 
-   * platform must have at least three counters to support PAPI_flops,   *
-   * because PAPI needs one counter to cycles. So in UltraSparcIII, even *
-   * the platform supports PAPI_FP_OPS, but UltraSparcIII only has  two  *
-   * available hardware counters and PAPI_FP_OPS is a derived event in   *
-   * this platform, so PAPI_flops returns an error.                      *
+   * If PAPI_FP_OPS is a derived event in your platform, then your       * 
+   * platform must have at least three counters to support               *
+   * PAPI_flops_rate, because PAPI needs one counter to cycles. So in    *
+   * UltraSparcIII, even the platform supports PAPI_FP_OPS, but          *
+   * UltraSparcIII only has two available hardware counters and          *
+   * PAPI_FP_OPS is a derived event in this platform, so                 *
+   * PAPI_flops_rate returns an error.                                   *
    ***********************************************************************/
   if((retval=PAPI_flops_rate(PAPI_FP_OPS,&ireal_time,&iproc_time,&iflpops,&imflops)) < PAPI_OK)
   { 

@@ -1,18 +1,19 @@
 /*****************************************************************************
- * This example demonstrates the usage of the high level function PAPI_flips *
- * which measures the number of floating point instructions executed and the *
- * MegaFlop rate(defined as the number of floating point instructions per    *
- * microsecond). To use PAPI_flips you need to have floating point           *
- * instructions event supported by the platform.                             * 
+ * This example demonstrates the usage of the function PAPI_flips_rate which *
+ * measures the number of floating point instructions executed and the       *
+ * MegaFlip rate(defined as the number of floating point instructions per    *
+ * microsecond). To use PAPI_flips_rate you need to have floating point      *
+ * instructions event supported by the platform.                             *
  *****************************************************************************/
 
 /*****************************************************************************
- * The first call to PAPI_flips initializes the PAPI library, set up the     *
- * counters to monitor PAPI_FP_INS and PAPI_TOT_CYC events, and start the    *
- * counters. Subsequent calls will read the counters and return total real   *
- * time, total process time, total floating point instructions, and the      *
- * Mflins/s rate since the last call to PAPI_flips.                          *
+ * The first call to PAPI_flips_rate initializes the PAPI library, set up    *
+ * the counters to monitor the floating point instructions event, and start  *
+ * the counters. Subsequent calls will read the counters and return total    *
+ * real time, total process time, total floating point instructions, and the *
+ * Mflips/s rate since the last call to PAPI_flips_rate.                     *
  *****************************************************************************/
+
 
  
 #include <stdio.h>
