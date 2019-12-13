@@ -172,9 +172,10 @@ _internal_check_state()
   * Subsequent calls will read the counters and return total real time, total process time,
   * total floating point instructions and the Mflip/s rate since the latest call to PAPI_flips_rate(). 
   *
-  * PAPI_flips_rate returns information related to floating point instructions using 
+  * PAPI_flips_rate() returns information related to floating point instructions using 
   * the floating point instructions event. This is intended to measure instruction rate through the 
-  * floating point pipe with no massaging.
+  * floating point pipe with no massaging. Note that PAPI_flips_rate() is thread-safe and can
+  * therefore be called by multiple threads.
   *
   * @see PAPI_flops_rate()
   * @see PAPI_ipc()
@@ -235,9 +236,10 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   * Subsequent calls will read the counters and return total real time, total process time,
   * total floating point operations and the Mflop/s rate since the latest call to PAPI_flops_rate(). 
   *
-  * PAPI_flops returns information related to theoretical floating point operations
+  * PAPI_flops_rate() returns information related to theoretical floating point operations
   * rather than simple instructions. It uses the floating point operations event which attempts to 
-  * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts, etc.
+  * 'correctly' account for, e.g., FMA undercounts and FP Store overcounts. Note that
+  * PAPI_flops_rate() is thread-safe and can therefore be called by multiple threads.
   *
   * @see PAPI_flips_rate()
   * @see PAPI_ipc()
@@ -297,9 +299,9 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * Subsequent calls will read the counters and return total real time, 
   * total process time, total instructions and the IPC rate since the latest call to PAPI_ipc().
   *
-  * PAPI_ipc should return a ratio greater than 1.0, indicating instruction level
+  * PAPI_ipc() should return a ratio greater than 1.0, indicating instruction level
   * parallelism within the chip. The larger this ratio the more effeciently the program
-  * is running.
+  * is running. Note that PAPI_ipc() is thread-safe and can therefore be called by multiple threads.
   *
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
@@ -356,12 +358,13 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * total process time, total event counts, the core and reference cycle count and EPC rate
   * since the latest call to PAPI_epc(). 
   *
-  * PAPI_epc can provide a more detailed look at algorithm efficiency in light of clock
+  * PAPI_epc() can provide a more detailed look at algorithm efficiency in light of clock
   * variability in modern cpus. MFLOPS is no longer an adequate description of peak
   * performance if clock rates can arbitrarily speed up or slow down. By allowing a
   * user specified event and reporting reference cycles, core cycles and real time,
   * PAPI_epc provides the information to compute an accurate effective clock rate, and
-  * an accurate measure of computational throughput.
+  * an accurate measure of computational throughput. Note that PAPI_epc() is thread-safe and can
+  * therefore be called by multiple threads.
   *
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
