@@ -3,7 +3,7 @@
  * which measures the number of floating point operations executed and the   *
  * MegaFlop rate(defined as the number of floating point operations per      *
  * microsecond). To use PAPI_flops_rate you need to have floating point      *
- * operations event supported by the platform.                               *
+ * operations events supported by the platform.                               *
  *****************************************************************************/
 
 /*****************************************************************************

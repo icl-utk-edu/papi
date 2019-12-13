@@ -3,7 +3,7 @@
  * measures the number of floating point instructions executed and the       *
  * MegaFlip rate(defined as the number of floating point instructions per    *
  * microsecond). To use PAPI_flips_rate you need to have floating point      *
- * instructions event supported by the platform.                             *
+ * instructions events supported by the platform.                             *
  *****************************************************************************/
 
 /*****************************************************************************

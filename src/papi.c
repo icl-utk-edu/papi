@@ -288,7 +288,7 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_ipc().
   *	@retval PAPI_ENOEVNT 
-  *		One of both events PAPI_TOT_INS or PAPI_TOT_CYC is not supported.
+  *		The events PAPI_TOT_INS and PAPI_TOT_CYC are not supported.
   *	@retval PAPI_ENOMEM 
   *		Insufficient memory to complete the operation. 
   *
