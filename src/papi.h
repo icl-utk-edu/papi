@@ -319,12 +319,10 @@ All of the functions in the PerfAPI should use the following set of constants.
  *	@{ */
 #define PAPI_USR1_TLS		0x0
 #define PAPI_USR2_TLS		0x1
-#define PAPI_HIGH_LEVEL_TLS     0x2
+#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_NUM_TLS		0x3
 #define PAPI_TLS_USR1		PAPI_USR1_TLS
 #define PAPI_TLS_USR2		PAPI_USR2_TLS
-#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
-//#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
 /** @} */
