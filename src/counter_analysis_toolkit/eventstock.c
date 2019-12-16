@@ -111,9 +111,9 @@ int build_stock(evstock* stock)
                 continue;
             }
 
-            // TODO: For the CPU component, all the qualifiers that contain the
-            // string "=" are not worth testing. This assumption should be
-            // removed when working with more components.
+            // TODO: For the CPU component, we skip qualifiers that
+            // contain the string "=". This assumption should be
+            // removed when working with other components.
             if( NULL != strstr(info.symbol, "=") )
                 continue;
 
