@@ -6,10 +6,10 @@
  * @ingroup papi_components
  *
  * @brief io component
- *  This file contains the source code for a component that enables
- *  PAPI-C to access I/O statistics through the /proc file system.
- *  This component will dynamically create a native events table for
- *  all the 7 counters in /proc/self/io.
+ *  This component provides access to the I/O statistics in the
+ *  system file /proc/self/io. It typically contains 7 counters,
+ *  but for robusness we read the file and create whatever events
+ *  it contains.
  */
 
 #include <stdio.h>
@@ -23,298 +23,316 @@
 #include "papi_vector.h"
 #include "papi_memory.h"    /* defines papi_malloc(), etc. */
 
-/** This driver supports three counters counting at once      */
-/*  This is artificially low to allow testing of multiplexing */
-#define EXAMPLE_MAX_SIMULTANEOUS_COUNTERS 3
-#define EXAMPLE_MAX_MULTIPLEX_COUNTERS 4
-
 /* Declare our vector in advance */
 /* This allows us to modify the component info */
 papi_vector_t _io_vector;
 
-/* Define our structures */
-#include "linux-io.h"
+/* Maximum expected characters per line in /proc/self/io. */
+#define FILE_LINE_SIZE 256
+
+/** This structure is used to build the table of events */
+typedef struct IO_native_event_entry
+{
+    char name[PAPI_MAX_STR_LEN];	      // Name of the counter.
+    char desc[PAPI_MAX_STR_LEN];       // Description of the counter.
+	int fileIdx;                        // Line in file.
+} IO_native_event_entry_t;
 
 /** This table contains the native events */
 static IO_native_event_entry_t *io_native_table;
 
 /** number of events in the table*/
-static int num_events = 0;
+static int EventCount;
+static int EventSetCount;
+static int *EventSetIdx;
+static long long *EventSetVal;
+static long long *EventSetReport;
 
-/*************************************************************************/
-/* Below is the actual "hardware implementation" of our example counters */
-/*************************************************************************/
-
-/** Code that resets the hardware.  */
-    static void
-io_hardware_reset( IO_control_state_t *ctl )
-{
-    /* reset counter values */
-    memset(ctl->counter, 0LL, sizeof(long long));
-
-}
-
-/** Code that reads event values.                         */
-/*   You might replace this with code that accesses       */
-/*   hardware or reads values from the operating system. */
-    void
-io_hardware_read( IO_control_state_t* ctl )
+// Code to read values; returns PAPI_OK or an error.
+// We presume the number of counters and order of them
+// will not change from our initialization read.
+static int 
+io_hardware_read(void)
 {
     /*  Reading proc/stat as a file  */
     FILE * pFile;
-    char line[256] = {0};
+    char line[FILE_LINE_SIZE] = {0};
     pFile = fopen ("/proc/self/io","r");
-    if (pFile == NULL) {
-        perror ("Error opening file");
-        return;
-    }
+    if (pFile == NULL) return(PAPI_ENOCNTR); /* No counters */
+
     /* Read each line */
-    int counter_index = 0;
-    while (fgets(line, 4096, pFile)) {
-        char dummy[32] = {0};
-        long long tmplong = 0LL;
-        int nf = sscanf( line, "%s %lld\n", dummy, &tmplong);
-        if (nf == EOF) {
-            perror ("Error reading from file");
-            return;
+    int idx;
+    for (idx=0; idx<EventCount; idx++) {
+        if (fgets(line, FILE_LINE_SIZE-1, pFile)) {
+            char dummy[FILE_LINE_SIZE] = {0};
+            long long tmplong = 0LL;
+            int nf = sscanf( line, "%s %lld\n", dummy, &tmplong);
+            if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
+                fclose(pFile);
+                return PAPI_ENOCNTR;
+            }
+
+            EventSetVal[idx] = tmplong;
+//          printf ("%s = %lld\n", dummy, tmplong);
+        } else {                            /* Did not read ALL counters. */
+            fclose(pFile);
+            return(PAPI_EMISC);
         }
-        ctl->counter[counter_index++] = tmplong;
-        printf ("%s = %ld\n", dummy, tmplong);
     }
+
     fclose(pFile);
-
-    return;
-}
-
-/** Code that writes event values.                        */
-    static int
-io_hardware_write( IO_control_state_t *ctl )
-{
-    (void) ctl; // unused
-    /* counters are not writable, do nothing */
-    return PAPI_OK;
-}
-
-static int
-detect_io(void) {
-
-    return PAPI_OK;
-}
+    return(PAPI_OK);
+} // END FUNCTION.
 
 /********************************************************************/
 /* Below are the functions required by the PAPI component interface */
 /********************************************************************/
 
-
 /** Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-    static int
+static int
 _io_init_component( int cidx )
 {
-
+    int fileIdx;
     SUBDBG( "_io_init_component..." );
 
-
-    /* First, detect that our hardware is available */
-    if (detect_io()!=PAPI_OK) {
-        return PAPI_ECMP;
+    // Open the file.
+    FILE * pFile;
+    char line[FILE_LINE_SIZE] = {0};
+    pFile = fopen ("/proc/self/io","r");
+    if (pFile == NULL) {
+        strncpy(_io_vector.cmp_info.disabled_reason, 
+        "Required File /proc/self/io is not present.", PAPI_MAX_STR_LEN-1);
+       return PAPI_ENOSUPP;               // EXIT not supported.
     }
 
-    /* we know in advance how many events we want                       */
-    /* for actual hardware this might have to be determined dynamically */
-    num_events = IO_MAX_COUNTERS;
+    // Just count the lines, basic vetting.
+    EventCount = 0;
+    while (1) {
+        char *res;
+        // fgets guarantees z-terminator, reads at most FILE_LINE_SIZE-1 bytes.
+        res = fgets(line, FILE_LINE_SIZE, pFile);
+        if (res  == NULL) break;
+        // If the read filled the whole buffer, line is too long.
+        if (strlen(line) == (FILE_LINE_SIZE-1)) {
+            strncpy(_io_vector.cmp_info.disabled_reason,
+            "/proc/self/io line too long for current buffer size.", PAPI_MAX_STR_LEN-1);
+            fclose(pFile);
+            return PAPI_ENOSUPP;
+        }
 
-    /* Allocate memory for the our native event table */
-    io_native_table =
-        ( IO_native_event_entry_t * )
-        papi_calloc( num_events, sizeof(IO_native_event_entry_t) );
-    if ( io_native_table == NULL ) {
-        PAPIERROR( "malloc():Could not get memory for events table" );
+        char dummy[FILE_LINE_SIZE] = {0};
+        long long tmplong = 0LL;
+        int nf = sscanf( line, "%s %lld\n", dummy, &tmplong);
+        if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
+            strncpy(_io_vector.cmp_info.disabled_reason,
+            "/proc/self/io unexpected format, expect 'name: count'.", PAPI_MAX_STR_LEN-1);
+            fclose(pFile);
+            return PAPI_ENOSUPP;
+        }
+
+        EventCount++; 
+    } // END READING.
+
+    EventSetCount=0;
+    EventSetIdx = papi_calloc(EventCount, sizeof(int));
+    if (EventSetIdx == NULL) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Insufficient memory to allocate %i ints.", EventCount);
+        fclose(pFile);
+        return PAPI_ENOMEM;
+    }
+        
+    EventSetVal = papi_calloc(EventCount, sizeof(long long));
+    if (EventSetVal == NULL) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Insufficient memory to allocate %i long longs.", EventCount);
+        fclose(pFile);
         return PAPI_ENOMEM;
     }
 
-    /* fill in the event table parameters */
-    /* for complicated components this will be done dynamically */
-    /* or by using an external library                          */
+    EventSetReport = papi_calloc(EventCount, sizeof(long long));
+    if (EventSetReport == NULL) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Insufficient memory to allocate %i long longs.", EventCount);
+        fclose(pFile);
+        return PAPI_ENOMEM;
+    }
 
-    strcpy( io_native_table[0].name, "rchar" );
-    strcpy( io_native_table[0].description, "Characters read" );
-    io_native_table[0].writable = 0;
+   rewind(pFile);
 
-    strcpy( io_native_table[1].name, "wchar" );
-    strcpy( io_native_table[1].description, "Characters written" );
-    io_native_table[1].writable = 0;
+    /* Allocate memory for the native event table */
+    io_native_table =
+        ( IO_native_event_entry_t * )
+        papi_calloc(EventCount, sizeof(IO_native_event_entry_t) );
+    if ( io_native_table == NULL ) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Insufficient memory to allocate %i Events.", EventCount);
+        fclose(pFile);
+        return PAPI_ENOMEM;
+    }
 
-    strcpy( io_native_table[2].name, "syscr" );
-    strcpy( io_native_table[2].description, "Characters read by system calls" );
-    io_native_table[2].writable = 0;
+    for (fileIdx = 0; fileIdx < EventCount; fileIdx++) {
+        (void) fgets(line, FILE_LINE_SIZE, pFile);
+        char name[FILE_LINE_SIZE] = {0};
+        long long tmplong = 0LL;
+        // No check for error here, we would have caught it above.
+        (void) sscanf( line, "%s %lld\n", name, &tmplong);
+        name[strlen(name)-1]=0;     // null terminate over ':' we found.
+        strncpy(io_native_table[fileIdx].name, name, PAPI_MAX_STR_LEN-1);
+        io_native_table[fileIdx].fileIdx=fileIdx;
+        io_native_table[fileIdx].desc[0]=0;         // flag for successful copy.
+        if (strcmp("rchar", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Characters read.");
+        }
+        if (strcmp("wchar", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Characters written."); 
+        }
+        if (strcmp("syscr", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Characters read by system calls."); 
+        }
+        if (strcmp("syscw", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Characters written by system calls."); 
+        }
+        if (strcmp("read_bytes", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Binary bytes read."); 
+        }
+        if (strcmp("write_bytes", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Binary bytes written."); 
+        }
+        if (strcmp("cancelled_write_bytes", name) == 0) {
+            strcpy(io_native_table[fileIdx].desc, "Binary write bytes cancelled."); 
+        }
+                     
+        // If none of the above found, generic description.
+        if (io_native_table[fileIdx].desc[0] == 0) {    
+            strcpy(io_native_table[fileIdx].desc, "No description available."); 
+        }
+    } // END READING.
 
-    strcpy( io_native_table[3].name, "syscw" );
-    strcpy( io_native_table[3].description, "Characters written by system calls" );
-    io_native_table[3].writable = 0;
-
-    strcpy( io_native_table[4].name, "read_bytes" );
-    strcpy( io_native_table[4].description, "Binary bytes read" );
-    io_native_table[4].writable = 0;
-
-    strcpy( io_native_table[5].name, "write_bytes" );
-    strcpy( io_native_table[5].description, "Binary bytes written" );
-    io_native_table[5].writable = 0;
-
-    strcpy( io_native_table[6].name, "cancelled_write_bytes" );
-    strcpy( io_native_table[6].description, "Binary write bytes cancelled" );
-    io_native_table[6].writable = 0;
-
-    /* Export the total number of events available */
-    _io_vector.cmp_info.num_native_events = num_events;
+    // Export the total number of events available.
+    _io_vector.cmp_info.num_native_events = EventCount;
+   
+    _io_vector.cmp_info.num_cntrs = EventCount;
+    _io_vector.cmp_info.num_mpx_cntrs = EventCount;
 
     /* Export the component id */
     _io_vector.cmp_info.CmpIdx = cidx;
 
     return PAPI_OK;
-}
+} // END ROUTINE.
 
 /** This is called whenever a thread is initialized */
-    static int
+static int
 _io_init_thread( hwd_context_t *ctx )
 {
     (void) ctx; // unused
-
     SUBDBG( "_io_init_thread %p...", ctx );
-
     return PAPI_OK;
 }
 
-
-
-/** Setup a counter control state.
- *   In general a control state holds the hardware info for an
- *   EventSet.
- */
-
-    static int
+// In general a control state holds the hardware info for an EventSet.
+// We don't use one; we use a global state.
+static int
 _io_init_control_state( hwd_control_state_t * ctl )
 {
-    SUBDBG( "io_init_control_state... %p\n", ctl );
-
-    IO_control_state_t *io_ctl = ( IO_control_state_t * ) ctl;
-    memset( io_ctl, 0, sizeof ( IO_control_state_t ) );
-
+    (void) ctl;
     return PAPI_OK;
 }
 
 
-/** Triggered by eventset operations like add or remove */
-    static int
+// Triggered by eventset operations like add or remove.
+// We store the order of the events, and the number.
+static int
 _io_update_control_state( hwd_control_state_t *ctl, 
         NativeInfo_t *native,
         int count, 
         hwd_context_t *ctx )
 {
-
     (void) ctx;
+    (void) ctl;
+    
     int i, index;
 
-    IO_control_state_t *io_ctl = ( IO_control_state_t * ) ctl;   
-
-    SUBDBG( "_io_update_control_state %p %p...", ctl, ctx );
-
+    EventSetCount = count;
+    
     /* if no events, return */
     if (count==0) return PAPI_OK;
 
     for( i = 0; i < count; i++ ) {
         index = native[i].ni_event;
-
-        /* Map counter #i to Measure Event "index" */
-        io_ctl->which_counter[i]=index;
+        EventSetIdx[i] = index;    
 
         /* We have no constraints on event position, so any event */
         /* can be in any slot.                                    */
         native[i].ni_position = i;
     }
 
-    io_ctl->num_events=count;
-
     return PAPI_OK;
-}
+} // END ROUTINE.
 
 /** Triggered by PAPI_start() */
-    static int
+static int
 _io_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-
-    IO_control_state_t *io_ctl = ( IO_control_state_t *) ctl;
+    (void) ctl;
     (void) ctx;
-
     SUBDBG( "io_start %p %p...", ctx, ctl );
-
-    /* anything that would need to be set at counter start time */
-
-    /* reset counters? */
-    /* For hardware that cannot reset counters, store initial        */
-    /*     counter state to the ctl and subtract it off at read time */
-    io_hardware_reset( io_ctl );
-
-    /* start the counting ?*/
-
     return PAPI_OK;
 }
 
 
 /** Triggered by PAPI_stop() */
-    static int
+static int
 _io_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-
     (void) ctx;
     (void) ctl;
-
     SUBDBG( "io_stop %p %p...", ctx, ctl );
-
-    /* anything that would need to be done at counter stop time */
-
-
+    // Don't do anything, can't stop the counters.
 
     return PAPI_OK;
 }
 
 
-/** Triggered by PAPI_read()     */
-/*     flags field is never set? */
-    static int
+// Triggered by PAPI_read(). We read all the events, then 
+// pick out the ones the user actually requested, in their
+// given order.
+static int
 _io_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
         long long **events, int flags )
 {
-    (void) ctx; // unused
+    // Prevent 'unused' warnings from compiler.
+    (void) ctx;
+    (void) ctl; 
     (void) flags;
-
-    IO_control_state_t *io_ctl = ( IO_control_state_t *) ctl;   
-
+    int i;
     SUBDBG( "io_read... %p %d", ctx, flags );
 
-    /* Read counters into expected slot */
-    io_hardware_read( io_ctl );
+    /* Read all counters into EventSetVal */
+    io_hardware_read();
+    for (i=0; i<EventSetCount; i++) {
+        EventSetReport[i]=EventSetVal[EventSetIdx[i]];
+    }
 
     /* return pointer to the values we read */
-    *events = io_ctl->counter;
+    *events = EventSetReport; 
 
     return PAPI_OK;
 }
 
-/** Triggered by PAPI_wrte(), but only if the counters are running */
+/** Triggered by PAPI_write(), but only if the counters are running */
 /*    otherwise, the updated state is written to ESI->hw_start      */
-    static int
+static int
 _io_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
         long long *events )
 {
-    IO_control_state_t *io_ctl = ( IO_control_state_t *) ctl;   
-    (void) ctx; // unused
+    (void) ctx;    // unused
+    (void) ctl;    // unused
     (void) events; // unused
 
-    /* Counters are not writable, do nothing */
-    io_hardware_write( io_ctl );
     return PAPI_OK;
 }
 
@@ -322,49 +340,36 @@ _io_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 /** Triggered by PAPI_reset() but only if the EventSet is currently running */
 /*  If the eventset is not currently running, then the saved value in the   */
 /*  EventSet is set to zero without calling this routine.                   */
-    static int
+/*  We don't do anything for an io reset.                                   */
+static int
 _io_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-    IO_control_state_t *io_ctl = ( IO_control_state_t *) ctl;   
     (void) ctx; // unused
-
-    SUBDBG( "io_reset ctx=%p ctrl=%p...", ctx, ctl );
-
-    /* Reset the hardware */
-    io_hardware_reset( io_ctl );
-
+    (void) ctl;
+    SUBDBG( "io_reset...");
     return PAPI_OK;
 }
 
 /** Triggered by PAPI_shutdown() */
-    static int
+static int
 _io_shutdown_component(void)
 {
-
     SUBDBG( "io_shutdown_component..." );
-
-    /* Free anything we allocated */
-
     papi_free(io_native_table);
-
+    papi_free(EventSetIdx);
+    papi_free(EventSetVal);
+    papi_free(EventSetReport);
     return PAPI_OK;
 }
 
 /** Called at thread shutdown */
-    static int
+static int
 _io_shutdown_thread( hwd_context_t *ctx )
 {
-
     (void) ctx;
-
     SUBDBG( "io_shutdown_thread... %p", ctx );
-
-    /* Last chance to clean up thread */
-
     return PAPI_OK;
 }
-
-
 
 /** This function sets various options in the component
   @param[in] ctx -- hardware context
@@ -372,16 +377,13 @@ _io_shutdown_thread( hwd_context_t *ctx )
   PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param[in] option -- options to be set
  */
-    static int
+static int
 _io_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
-
     (void) ctx;
     (void) code;
     (void) option;
-
     SUBDBG( "io_ctl..." );
-
     return PAPI_OK;
 }
 
@@ -394,7 +396,7 @@ _io_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
   PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
   PAPI_DOM_ALL   is all of the domains
  */
-    static int
+static int
 _io_set_domain( hwd_control_state_t * cntrl, int domain )
 {
     (void) cntrl;
@@ -436,29 +438,24 @@ _io_set_domain( hwd_control_state_t * cntrl, int domain )
  *  If your component has attribute masks then these need to
  *   be handled here as well.
  */
-    static int
+static int
 _io_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
     int index;
-
 
     switch ( modifier ) {
 
         /* return EventCode of first event */
         case PAPI_ENUM_FIRST:
-            /* return the first event that we support */
-
             *EventCode = 0;
             return PAPI_OK;
 
-            /* return EventCode of next available event */
+        /* return EventCode of next available event */
         case PAPI_ENUM_EVENTS:
             index = *EventCode;
 
             /* Make sure we have at least 1 more event after us */
-            if ( index < num_events - 1 ) {
-
-                /* This assumes a non-sparse mapping of the events */
+            if ( index < (EventCount-1) ) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
             } else {
@@ -471,43 +468,42 @@ _io_ntv_enum_events( unsigned int *EventCode, int modifier )
     }
 
     return PAPI_EINVAL;
-}
+} // END ROUTINE
 
 /** Takes a native event code and passes back the name 
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
  */
-    static int
+static int
 _io_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
     int index;
-
     index = EventCode;
 
     /* Make sure we are in range */
-    if (index >= 0 && index < num_events) {
-        strncpy( name, io_native_table[index].name, len );  
+    if (index >= 0 && index < EventCount) {
+        strncpy(name, io_native_table[index].name, len );  
         return PAPI_OK;
     }
 
     return PAPI_ENOEVNT;
-}
+} // END ROUTINE.
 
 /** Takes a native event code and passes back the event description
  * @param EventCode is the native event code
  * @param descr is a pointer for the description to be copied to
  * @param len is the size of the descr string
  */
-    static int
+static int
 _io_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 {
     int index;
     index = EventCode;
 
     /* make sure event is in range */
-    if (index >= 0 && index < num_events) {
-        strncpy( descr, io_native_table[index].description, len );
+    if (index >= 0 && index < EventCount) {
+        strncpy( descr, io_native_table[index].desc, len );
         return PAPI_OK;
     }
 
@@ -528,8 +524,8 @@ papi_vector_t _io_vector = {
         .version = "1.0",
         .support_version = "n/a",
         .kernel_version = "n/a",
-        .num_cntrs =               IO_MAX_COUNTERS, 
-        .num_mpx_cntrs =           IO_MAX_COUNTERS,
+        .num_cntrs =               512,
+        .num_mpx_cntrs =           512,
         .default_domain =          PAPI_DOM_USER,
         .available_domains =       PAPI_DOM_USER,
         .default_granularity =     PAPI_GRN_THR,
@@ -542,13 +538,11 @@ papi_vector_t _io_vector = {
     /* sizes of framework-opaque component-private structures */
     .size = {
         /* once per thread */
-        .context = sizeof ( IO_context_t ),
+        .context = 1, /* unused */
         /* once per eventset */
-        .control_state = sizeof ( IO_control_state_t ),
-        /* ?? */
-        .reg_value = sizeof ( IO_register_t ),
-        /* ?? */
-        .reg_alloc = sizeof ( IO_reg_alloc_t ),
+        .control_state = 1, /* unused */
+        .reg_value = 1, /* unused */
+        .reg_alloc = 1, /* unused */
     },
 
     /* function pointers */
