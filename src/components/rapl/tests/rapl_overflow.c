@@ -138,7 +138,7 @@ main( int argc, char **argv )
 	i = 0;
 	do {
 		char buffer[80];
-		sprintf(&(buffer[0]), "%s%d", raplEventBase, i);
+		sprintf(buffer, "%s%d", raplEventBase, i);
 		retval=PAPI_add_named_event(EventSet2,buffer);
 		++i;
 	/* protect against insane PAPI library, the value 64 is the same value as 
