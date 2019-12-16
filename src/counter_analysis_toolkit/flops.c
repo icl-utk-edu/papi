@@ -32,10 +32,10 @@ static void resultline( int i, int j, int EventSet, FILE *fp)
         return;
     }
 
-    i++;                     /* convert to 1s base  */
+    i++;
     theory = 2;
     while ( j-- )
-        theory *= i;         /* theoretical ops   */
+        theory *= i;
     papi = flpins << FMA;
 
     fprintf(fp, "%lld\n", papi);
@@ -316,7 +316,6 @@ void flops_driver(char* papi_event_name, char* outdir)
         goto error0;
     }
   
-    // Set up PAPI event set.
     retval = PAPI_create_eventset( &EventSet );
     if (retval != PAPI_OK ){
         fprintf(stderr, "PAPI_create_eventset() returned %d\n",retval);
