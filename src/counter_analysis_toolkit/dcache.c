@@ -155,7 +155,7 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     data.counter  = counter;
     data.event_name = papi_event_name;
     data.detect_size = detect_size;
-	data.readwrite = readwrite;
+    data.readwrite = readwrite;
 
     // A new thread will run the actual experiment.
     pthread_create(&tid, NULL, thread_main, &data);
@@ -273,7 +273,17 @@ void *thread_main(void *arg){
     }
 
     if( use_papi ){
-        PAPI_destroy_eventset(&_papi_eventset);
+        ret_val = PAPI_cleanup_eventset(_papi_eventset);
+        if (ret_val != PAPI_OK ){
+            fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
+            pthread_exit((void *)error_flag);
+        }
+        ret_val = PAPI_destroy_eventset(&_papi_eventset);
+        if (ret_val != PAPI_OK ){
+            fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
+            pthread_exit((void *)error_flag);
+        }
+
     }
 
     return error_flag;

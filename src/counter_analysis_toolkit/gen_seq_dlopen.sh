@@ -300,6 +300,18 @@ EOF
         printf("Random side-effect\n");
     }
 
+    ret = PAPI_cleanup_eventset( eventset );
+    if (ret != PAPI_OK ){
+        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret);
+        return;
+    }
+    ret = PAPI_destroy_eventset( &eventset );
+    if (ret != PAPI_OK ){
+        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret);
+        return;
+    }
+
+
     return;
 }
 EOF
