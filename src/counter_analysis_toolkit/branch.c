@@ -62,6 +62,17 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
         printf("Random side effect\n");
     }
 
+    ret_val = PAPI_cleanup_eventset( papi_eventset );
+    if (ret_val != PAPI_OK ){
+        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
+        goto error1;
+    }
+    ret_val = PAPI_destroy_eventset( &papi_eventset );
+    if (ret_val != PAPI_OK ){
+        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
+        goto error1;
+    }
+
 error1:
     fclose(ofp_papi);
 error0:
