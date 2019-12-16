@@ -12,7 +12,7 @@ int main(int argc, char*argv[])
 {
     int cmbtotal = 0, ct = 0, track = 0, ret = 0;
     int bench_type = 0;
-    int mode = 0, pk = 0, max_iter = 1, i = 0, total = 0, nevts = 0, status;
+    int mode = 0, pk = 0, max_iter = 1, i = 0, nevts = 0, status;
     int *cards = NULL, *indexmemo = NULL;
     char *infile = NULL, *outdir = NULL;
     char **allevts = NULL, **basenames = NULL;
@@ -27,7 +27,7 @@ int main(int argc, char*argv[])
     }
 
     // Parse the command-line arguments.
-    status = parseArgs(argc, argv, &total, &pk, &mode, &max_iter, &infile, &outdir, &bench_type );
+    status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type );
     if(0 != status)
     {
         free(outdir);
@@ -61,7 +61,7 @@ int main(int argc, char*argv[])
     }
 
     // Populate the event stock.
-    status = build_stock(data, total);
+    status = build_stock(data);
     if(status)
     {
         free(outdir);
@@ -558,7 +558,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     return;
 }
 
-int parseArgs(int argc, char **argv, int *totevts, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type){
+int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type){
 
     char *name = argv[0];
     char *tmp = NULL;
@@ -576,12 +576,6 @@ int parseArgs(int argc, char **argv, int *totevts, int *subsetsize, int *mode, i
         if( !strcmp(argv[0],"-h") ){
             print_usage(name);
             return -1;
-        }
-        if( argc > 1 && !strcmp(argv[0],"-N") ){
-            *totevts = atoi(argv[1]);
-            --argc;
-            ++argv;
-            continue;
         }
         if( argc > 1 && !strcmp(argv[0],"-k") ){
             *subsetsize = atoi(argv[1]);
@@ -640,12 +634,6 @@ int parseArgs(int argc, char **argv, int *totevts, int *subsetsize, int *mode, i
     // MODE INFO: mode 1 uses file; mode 2 uses all native events.
     if(*mode == 1)
     {
-        if(*totevts != 0)
-        {
-            fprintf(stderr, "Cannot use -N flag with mode %d. Exiting...\n", *mode);
-            return -1;
-        }
-
         test = fopen(*inputfile, "r");
         if(test == NULL)
         {
@@ -708,7 +696,6 @@ void print_usage(char* name)
     fprintf(stdout, "  Parameters \"-k\" and \"-in\" are mutually exclusive.\n");
     
     fprintf(stdout, "\nOptional:\n");
-    fprintf(stdout, "  -N       <value>  Maximum number of events to test.\n");
     fprintf(stdout, "  -n       <value>  Number of iterations for data cache kernels.\n");
     fprintf(stdout, "  -branch           Branch kernels.\n");
     fprintf(stdout, "  -dcr              Data cache reading kernels.\n");

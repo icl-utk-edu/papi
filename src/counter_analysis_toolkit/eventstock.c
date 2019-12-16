@@ -6,171 +6,142 @@
 #include "papi.h"
 #include "eventstock.h"
 
+#if !defined(_PAPI_CPU_COMPONENT_NAME)
+#define _PAPI_CPU_COMPONENT_NAME "perf_event"
+#endif
 
-int build_stock(evstock* stock, int cap)
+int build_stock(evstock* stock)
 {
-    if (!stock) return 1;
-
-    int i,k;
     int ret;
     PAPI_event_info_t info;
     int cid;
     int ncomps = PAPI_num_components();
-    int counter = 0;
+    int event_counter = 0;
     int subctr = 0;
+    int tmp_event_count;
+    int event_qual_i, event_i;
 
-    // Set the data stock's sizes all to zero.
-    stock->size = 0;
+    if (!stock) return 1;
 
-    // If the cap is zero, then the user did not specify the number of events.
-    // If CIT is using an input file, then to ensure each event in the file is
-    // found, then the stock must contain all available events. If CIT is not
-    // using an input file and the user did not specify the maximum number of
-    // events to use, then a good default option is to let the stock contain
-    // all available events.
-    if(cap == 0)
+    event_i = 0 | PAPI_NATIVE_MASK;
+
+    // Add the names to the stock.
+    event_counter = 0;
+    for(cid = 0; cid < ncomps; ++cid)
     {
-        cap = INT_MAX;
-    }
+        const PAPI_component_info_t *cmp_info = PAPI_get_component_info(cid);
+        if( strcmp(cmp_info->name, _PAPI_CPU_COMPONENT_NAME) )
+            continue;
 
-    // Find the number of events.
-    i=0 | PAPI_NATIVE_MASK;
-    for(cid = 0; cid < ncomps && stock->size < cap; ++cid) // only use cap if cap > 0?
-    {
-        ret=PAPI_enum_cmp_event(&i,PAPI_ENUM_FIRST,cid);
-        if(ret==PAPI_OK){
-            do{
-                memset(&info,0,sizeof(info));
-                ret=PAPI_get_event_info(i,&info);
-                if(ret != PAPI_OK)
-                {
-                    continue;
-                }
-                stock->size++;
-            } while(PAPI_enum_cmp_event(&i,PAPI_ENUM_EVENTS,cid)==PAPI_OK && stock->size < cap);
+        tmp_event_count = cmp_info->num_native_events;
+
+        // Set the data stock's sizes all to zero.
+        if (NULL == (stock->evtsizes = (int*)calloc( (tmp_event_count),sizeof(int) ))) {
+            fprintf(stderr, "Failed allocation of stock->evtsizes.\n");
+            goto gracious_error;
         }
-    }
 
-    // Set the data stock's sizes all to zero.
-    if (NULL == (stock->evtsizes = (int*)calloc((stock->size),sizeof(int)))) {
-        fprintf(stderr, "Failed allocation of stock->evtsizes.\n");
-        goto gracious_error;
-    }
-    if (NULL == (stock->maxqualsize = (unsigned int*)calloc((stock->size),sizeof(unsigned int)))) {
-        fprintf(stderr, "Failed allocation of stock->maxqualsize.\n");
-        goto gracious_error;
-    }
-    if (NULL == (stock->base_evts = (char**)malloc((stock->size)*sizeof(char*)))) {
-        fprintf(stderr, "Failed allocation of stock->base_evts.\n");
-        goto gracious_error;
-    }
-
-    // Stock names of the base events.
-    i=0 | PAPI_NATIVE_MASK;
-    for(cid = 0; cid < ncomps && counter < cap; ++cid)
-    {
-        ret=PAPI_enum_cmp_event(&i,PAPI_ENUM_FIRST,cid);
-        if(ret==PAPI_OK){
-            do{
-                memset(&info,0,sizeof(info));
-                ret=PAPI_get_event_info(i,&info);
-                if(ret != PAPI_OK)
-                {
-                    continue;
-                }
-                stock->base_evts[counter] = strdup(info.symbol);
-                counter++;
-            } while(PAPI_enum_cmp_event(&i,PAPI_ENUM_EVENTS,cid)==PAPI_OK && counter < cap);
+        if (NULL == (stock->base_evts = (char**)malloc( (tmp_event_count)*sizeof(char*) ))) {
+            fprintf(stderr, "Failed allocation of stock->base_evts.\n");
+            goto gracious_error;
         }
-    }
 
-    // Find the number of qualifiers.
-    i=0 | PAPI_NATIVE_MASK;
-    counter = 0;
-    for(cid = 0; cid < ncomps && counter < cap; ++cid)
-    {
-        // moving counter here fixes the issue but causes another.
-        ret=PAPI_enum_cmp_event(&i,PAPI_ENUM_FIRST,cid);
-        if(ret==PAPI_OK){
-            do{
-                memset(&info,0,sizeof(info));
-                k=i;
-                do{
-                    ret=PAPI_get_event_info(k,&info);
-                    if(ret != PAPI_OK)
-                    {
-                        continue;
-                    }
-                    if(strcmp(info.symbol, stock->base_evts[counter]) != 0 && strstr(info.symbol, "=") == NULL)
-                    {    
-                        stock->evtsizes[counter]++;
-                    }
-
-                }while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK);
-                counter++;
-            } while(PAPI_enum_cmp_event(&i,PAPI_ENUM_EVENTS,cid)==PAPI_OK && counter < cap);
+        if (NULL == (stock->evts = (char***)malloc((tmp_event_count)*sizeof(char**)))) {
+            fprintf(stderr, "Failed allocation of stock->evts.\n");
+            goto gracious_error;
         }
+
+        if (NULL == (stock->maxqualsize = (size_t *)calloc( tmp_event_count, sizeof(size_t) ))) {
+            fprintf(stderr, "Failed allocation of stock->maxqualsize.\n");
+            goto gracious_error;
+        }
+
+        break;
     }
 
-    // Adjust the stock accordingly.
-    if (NULL == (stock->evts = (char***)malloc((stock->size)*sizeof(char**)))) {
-        fprintf(stderr, "Failed allocation of stock->evts.\n");
+    if( 0 == tmp_event_count ){
+        fprintf(stderr,"ERROR: CPU component (%s) not found. Exiting.",_PAPI_CPU_COMPONENT_NAME);
         goto gracious_error;
     }
-    for(i = 0; i < stock->size; ++i)
-    {
-        if (NULL == (stock->evts[i] = (char**)malloc((stock->evtsizes[i])*sizeof(char*)))) {
+
+    // At this point "cid" contains the id of the perf_event (CPU) component.
+
+    ret=PAPI_enum_cmp_event(&event_i,PAPI_ENUM_FIRST,cid);
+    if(ret!=PAPI_OK){
+        fprintf(stderr,"ERROR: CPU component does not contain any events. Exiting");
+        goto gracious_error;
+    }
+
+    do{
+        int i, max_qual_count = 32;
+        size_t max_qual_len, tmp_qual_len;
+        memset(&info,0,sizeof(info));
+        event_qual_i = event_i;
+
+        // Resize the arrays if needed.
+        if( event_counter >= tmp_event_count ){
+            tmp_event_count *= 2;
+            stock->evts = (char ***)realloc( stock->evts, tmp_event_count*sizeof(char **) );
+            stock->evtsizes = (int *)realloc( stock->evtsizes, tmp_event_count*sizeof(int) );
+            stock->base_evts = (char **)realloc( stock->base_evts, tmp_event_count*sizeof(char *) );
+            stock->maxqualsize = (size_t *)realloc( stock->maxqualsize, tmp_event_count*sizeof(size_t) );
+        }
+
+        if (NULL == (stock->evts[event_counter] = (char**)malloc( max_qual_count*sizeof(char*) )) ) {
             fprintf(stderr, "Failed allocation of stock->evts[i].\n");
             goto gracious_error;
         }
-    }
 
-    // Add the names to the stock.
-    i=0 | PAPI_NATIVE_MASK;
-    counter = 0;
-    for(cid = 0; cid < ncomps && counter < cap; ++cid)
-    {
-        ret=PAPI_enum_cmp_event(&i,PAPI_ENUM_FIRST,cid);
-        if(ret==PAPI_OK){
-            do{
-                memset(&info,0,sizeof(info));
-                k=i;
-                do
-                {
-                    ret=PAPI_get_event_info(k,&info);
-                    if(ret != PAPI_OK)
-                    {
-                        continue;
-                    }
+        max_qual_len = 0;
+        subctr = 0;
+        i = 0;
 
-                    if(strcmp(info.symbol, stock->base_evts[counter]) != 0 && strstr(info.symbol, "=") == NULL)
-                    {    
-                        char *col_pos = rindex(info.symbol, ':');
-                        col_pos++;
-                        stock->evts[counter][subctr] = strdup(col_pos);
-                        subctr++;
-                    }
-                } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK);
-                subctr = 0;
-                counter++;
-            } while(PAPI_enum_cmp_event(&i,PAPI_ENUM_EVENTS,cid)==PAPI_OK && counter < cap);
-        }
-    }
-
-    // Set max qualifier sizes.
-    for(i = 0; i < stock->size; ++i)
-    {
-        for(k = 0; k < stock->evtsizes[i]; ++k)
+        do
         {
-            if(strlen(stock->evts[i][k]) > stock->maxqualsize[i])
-            {
-                stock->maxqualsize[i] = strlen(stock->evts[i][k]);
+            char *col_pos;
+            ret=PAPI_get_event_info(event_qual_i,&info);
+            if(ret != PAPI_OK)
+                continue;
+
+            if( 0 == i ){
+                // The first iteration of the inner do loop will give us
+                // the base event, without qualifiers.
+                stock->base_evts[event_counter] = strdup(info.symbol);
+                i++;
+                continue;
             }
-        }
 
-        stock->maxqualsize[i]++;    // to capture null character termination
-    }
+            // TODO: For the CPU component, all the qualifiers that contain the
+            // string "=" are not worth testing. This assumption should be
+            // removed when working with more components.
+            if( NULL != strstr(info.symbol, "=") )
+                continue;
 
+            col_pos = rindex(info.symbol, ':');
+            if ( NULL == col_pos ){
+                continue;
+            }
+
+            // Resize the array of qualifiers as needed.
+            if( subctr >= max_qual_count ){
+                max_qual_count *= 2;
+                stock->evts[event_counter] = (char **)realloc( stock->evts[event_counter], max_qual_count*sizeof(char *) );
+            }
+
+            // Copy the qualifier name into the array.
+            stock->evts[event_counter][subctr] = strdup(col_pos+1);
+            tmp_qual_len = strlen( stock->evts[event_counter][subctr] ) + 1;
+            if( tmp_qual_len > max_qual_len )
+                max_qual_len = tmp_qual_len;
+            subctr++;
+
+        } while(PAPI_enum_cmp_event(&event_qual_i,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK);
+        stock->evtsizes[event_counter] = subctr;
+        stock->maxqualsize[event_counter] = max_qual_len;
+        event_counter++;
+    } while( PAPI_enum_cmp_event(&event_i,PAPI_ENUM_EVENTS,cid)==PAPI_OK );
+
+    stock->size = event_counter;
     return 0;
 
 gracious_error:
@@ -204,7 +175,7 @@ int num_quals(evstock* stock, int base_evt)
     return stock->evtsizes[base_evt];
 }
 
-unsigned int max_qual_size(evstock* stock, int base_evt)
+size_t max_qual_size(evstock* stock, int base_evt)
 {
     return stock->maxqualsize[base_evt];
 }
