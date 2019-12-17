@@ -73,7 +73,6 @@ io_hardware_read(void)
             }
 
             EventSetVal[idx] = tmplong;
-//          printf ("%s = %lld\n", dummy, tmplong);
         } else {                            /* Did not read ALL counters. */
             fclose(pFile);
             return(PAPI_EMISC);
