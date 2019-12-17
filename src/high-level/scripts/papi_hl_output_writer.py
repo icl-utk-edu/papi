@@ -303,7 +303,7 @@ def main(source, format, type):
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source', type=str, required=False, default="papi",
+  parser.add_argument('--source', type=str, required=False, default="papi_hl_output",
                       help='Measurement directory of raw data.')
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
