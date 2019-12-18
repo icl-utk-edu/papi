@@ -419,7 +419,7 @@ typedef enum {
 	PFM_PMU_INTEL_BDX_UNC_SB2,	/* Intel Broadwell-X S-Box 2 uncore */
 	PFM_PMU_INTEL_BDX_UNC_SB3,	/* Intel Broadwell-X S-Box 3 uncore */
 
-	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen */
+	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen1 (deprecated) */
 	PFM_PMU_AMD64_FAM16H,		/* AMD AMD64 Fam16h Jaguar */
 
 	PFM_PMU_INTEL_SKX,		/* Intel Skylake-X */
@@ -553,6 +553,8 @@ typedef enum {
 	PFM_PMU_ARM_THUNDERX2_LLC1,	/* Marvell ThunderX2 LLC unit 1 uncore */
 	PFM_PMU_ARM_THUNDERX2_CCPI0,	/* Marvell ThunderX2 Cross-Socket Interconnect unit 0 uncore */
 	PFM_PMU_ARM_THUNDERX2_CCPI1,	/* Marvell ThunderX2 Cross-Socket Interconnect unit 1 uncore */
+
+	PFM_PMU_AMD64_FAM17H_ZEN1,	/* AMD AMD64 Fam17h Zen1 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
