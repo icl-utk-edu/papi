@@ -555,6 +555,7 @@ typedef enum {
 	PFM_PMU_ARM_THUNDERX2_CCPI1,	/* Marvell ThunderX2 Cross-Socket Interconnect unit 1 uncore */
 
 	PFM_PMU_AMD64_FAM17H_ZEN1,	/* AMD AMD64 Fam17h Zen1 */
+	PFM_PMU_AMD64_FAM17H_ZEN2,	/* AMD AMD64 Fam17h Zen2 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

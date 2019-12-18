@@ -250,6 +250,7 @@ extern pfmlib_pmu_t amd64_fam15h_nb_support;
 extern pfmlib_pmu_t amd64_fam16h_support;
 extern pfmlib_pmu_t amd64_fam17h_deprecated_support;
 extern pfmlib_pmu_t amd64_fam17h_zen1_support;
+extern pfmlib_pmu_t amd64_fam17h_zen2_support;
 extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
 extern pfmlib_pmu_t intel_pii_support;

@@ -80,6 +80,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam16h_support,
 	&amd64_fam17h_deprecated_support,
 	&amd64_fam17h_zen1_support,
+	&amd64_fam17h_zen2_support,
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
