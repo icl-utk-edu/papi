@@ -55,6 +55,6 @@ PAPI_flips_rate
 PAPI_flops_rate
 PAPI_ipc
 PAPI_epc
-PAPI_h_region_begin
+PAPI_hl_region_begin
 PAPI_hl_read
 PAPI_hl_region_end
