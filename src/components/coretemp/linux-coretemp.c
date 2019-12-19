@@ -184,6 +184,7 @@ generateEventList(char *base_dir)
 	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:in%i_input", hwmonx->d_name, i);
 	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
 	         SUBDBG("Unable to generate name %s:in%i_input\n", hwmonx->d_name, i);
+            closedir(d);
 	         return ( PAPI_EINVAL );
 	     }
 
@@ -230,6 +231,8 @@ generateEventList(char *base_dir)
 	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:temp%i_input", hwmonx->d_name, i);
 	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
 	         SUBDBG("Unable to generate name %s:temp%i_input\n", hwmonx->d_name, i);
+            closedir(d);
+            closedir(dir);
 	         return ( PAPI_EINVAL );
 	     }
 
@@ -269,6 +272,8 @@ generateEventList(char *base_dir)
 	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_input", path,i);
 	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
 	         SUBDBG("Unable to generate filename %s/fan%d_input\n", path,i);
+            closedir(d);
+            closedir(dir);
 	         return ( PAPI_EINVAL );
 	     }
 
@@ -279,6 +284,8 @@ generateEventList(char *base_dir)
 	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:fan%i_input", hwmonx->d_name, i);
 	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
 	         SUBDBG("Unable to generate name %s:fan%i_input\n", hwmonx->d_name, i);
+            closedir(d);
+            closedir(dir);
 	         return ( PAPI_EINVAL );
 	     }
 
