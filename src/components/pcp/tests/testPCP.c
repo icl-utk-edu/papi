@@ -218,10 +218,15 @@ int main(int argc, char **argv) {                                       // args 
          long long *values = NULL;                                   // pointer for us to malloc next.
 
          eventSetCount = PAPI_num_events(EventSet);                  // get the number of events in set.
+         if (eventSetCount < 1) {
+            test_fail( __FILE__, __LINE__, "PAPI_num_events(EventSet) failed.\n", ret);
+         }
+
          values = calloc(eventSetCount, sizeof(long long));          // make zeroed space for it. 
          
          ret = PAPI_read(EventSet, values);                          // read without a stop.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
+            free(values);
             test_fail( __FILE__, __LINE__, "PAPI_read(EventSet) failed.\n", ret);
          }
 
@@ -263,11 +268,13 @@ int main(int argc, char **argv) {                                       // args 
 
          ret = PAPI_reset(EventSet);                                 // Reset the event.
          if (ret != PAPI_OK) {                                       // If that failed, report and exit.
+            free(values);
             test_fail( __FILE__, __LINE__, "PAPI_reset_event() failed\n", ret);
          }
 
          ret = PAPI_stop(EventSet, values);                          // stop counting, get final values.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
+            free(values);
             test_fail( __FILE__, __LINE__, "PAPI_stop_event(EventSet, values) failed.\n", ret);
          }
 

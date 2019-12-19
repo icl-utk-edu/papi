@@ -81,8 +81,10 @@ main( int argc, char *argv[] )
 		ret = pthread_create( &th[j], &attr, &Thread, NULL );
 		if ( ret ) {
 			printf( "Failed to create thread: %d\n", j );
-			if ( j < 10 )
+			if ( j < 10 ) {
+            free(th);
 				test_fail( __FILE__, __LINE__, "pthread_create", PAPI_ESYS );
+         }
 			printf( "Continuing test with %d threads.\n", j - 1 );
 			nthr = j - 1;
 			th = ( pthread_t * ) realloc( th,
@@ -96,6 +98,7 @@ main( int argc, char *argv[] )
 		pthread_join( th[j], NULL );
 	}
 
+   free(th);
 	test_pass( __FILE__ );
 
 	return 0;
