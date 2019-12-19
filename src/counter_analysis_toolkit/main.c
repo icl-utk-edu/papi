@@ -26,7 +26,7 @@ int main(int argc, char*argv[])
         return 0;
     }
 
-    // Parse the command-line arguments .
+    // Parse the command-line arguments.
     status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type );
     if(0 != status)
     {
