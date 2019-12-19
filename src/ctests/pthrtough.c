@@ -85,14 +85,17 @@ main( int argc, char *argv[] )
 
 	for ( j = 0; j < nthr; j++ ) {
 		ret = pthread_create( &th[j], &attr, &Thread, NULL );
-		if ( ret )
+		if ( ret ) {
+         free(th);
 			test_fail( __FILE__, __LINE__, "pthread_create", PAPI_ESYS );
+      }
 	}
 
 	for ( j = 0; j < nthr; j++ ) {
 		pthread_join( th[j], NULL );
 	}
 
+   free(th);
 	test_pass( __FILE__ );
 
 	return 0;

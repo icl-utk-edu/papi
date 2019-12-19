@@ -3,6 +3,7 @@ LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
 INCFLAGS=-I$(PAPIDIR)/include
 CFLAGS+=-g -Wall -Wextra
 OPT0=-O0
+OPT1=-O1
 OPT2=-O2
 CC=gcc
 
@@ -31,8 +32,8 @@ eventstock.o: eventstock.c eventstock.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c eventstock.c -o eventstock.o
 
 flops: flops_aux.c flops_aux.h flops.c flops.h
-	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops.c -o flops.o
-	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops_aux.c -o flops_aux.o
+	$(CC) $(CFLAGS) $(OPT1) $(INCFLAGS) -c flops.c -o flops.o
+	$(CC) $(CFLAGS) $(OPT1) $(INCFLAGS) -c flops_aux.c -o flops_aux.o
 
 icache.o: icache.c icache.h
 	bash gen_seq_dlopen.sh

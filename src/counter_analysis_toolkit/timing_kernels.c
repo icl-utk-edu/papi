@@ -12,13 +12,12 @@
 volatile double x,y;
 
 int _papi_eventset = PAPI_NULL;
-extern int use_papi;
 extern int max_size;
 
-run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock, uintptr_t *v, uintptr_t *rslt, int detect_size, int readwrite){
+run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, uintptr_t *v, uintptr_t *rslt, int latency_only, int mode){
     int count, status;
     register uintptr_t *p = NULL;
-    ticks time1, time2;
+    double time1=0.0, time2=1.0;
     double dt, factor;
     long pageSize, blockSize;
     long long int counter = 0;
@@ -32,13 +31,11 @@ run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock
     if( x > 0 || y > 0 )
         printf("WARNING: x=%lf y=%lf\n",x,y);
 
-    // Max counter value.
-    //    int countMax = 2*32*1024*1024/(line_size*sizeof(uintptr_t));
-    //    int countMax = 4*(1024*1024*1024/(line_size*sizeof(uintptr_t)));
-    int countMax = 4*(64*1024*1024/(line_size*sizeof(uintptr_t)));
+    // Max counter value to access 1GB worth of buffer.
+    int countMax = 1024*1024*1024/(line_size*sizeof(uintptr_t));
 
-    // clean up the memory
-    memset(v,0,l1_size*sizeof(uintptr_t));
+    // Clean up the memory.
+    memset(v,0,active_buf_len*sizeof(uintptr_t));
 
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);
     if( pageSize <= 0 ){
@@ -47,68 +44,58 @@ run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock
         return out;
     }
     blockSize = (long)(pageCountPerBlock*(float)pageSize);
-    status = prepareArray(v, l1_size, line_size, blockSize);
+    status = prepareArray(v, active_buf_len, line_size, blockSize);
     out.status = status;
     if(status != 0)
     {
         return out;
     }
 
-    // PAPI
-    if(detect_size == 1 || readwrite == 0)
+    // Start the counters.
+    if (!latency_only)
     {
-        /* Start the counters. */
-        if (use_papi && (PAPI_start(_papi_eventset) != PAPI_OK)) {
+        if ( PAPI_start(_papi_eventset) != PAPI_OK )
+        {
             error_handler(1, __LINE__);
         }
-        /* Done with starting counters. */
+        
+    }
 
-        // start the actual test
-        count = countMax;
-        p = &v[0];
+    // Start the actual test.
+    count = countMax;
+    p = &v[0];
+    if(latency_only || (CACHE_READ_ONLY == mode))
+    {
         time1 = getticks();
         while(count > 0){
             N_128;
             count -= 128;
         }
         time2 = getticks();
-
-        /* Stop the counters. */
-        if (use_papi && (PAPI_stop(_papi_eventset, &counter) != PAPI_OK)) {
-            error_handler(1, __LINE__);
-        }
-        /* Done with stopping counters. */
     }
     else
     {
-        /* Start the counters. */
-        if (use_papi && (PAPI_start(_papi_eventset) != PAPI_OK)) {
-            error_handler(1, __LINE__);
-        }
-        /* Done with starting counters. */
-
-        // start the actual test
-        count = countMax;
-        p = &v[0];
-        time1 = getticks();
         while(count > 0){
             NW_128;
             count -= 128;
         }
-        time2 = getticks();
+    }
 
-        /* Stop the counters. */
-        if (use_papi && (PAPI_stop(_papi_eventset, &counter) != PAPI_OK)) {
+    // Stop the counters.
+    if (!latency_only)
+    {
+        if ( PAPI_stop(_papi_eventset, &counter) != PAPI_OK ) 
+        {
             error_handler(1, __LINE__);
         }
-        /* Done with stopping counters. */
     }
-    // PAPI
 
     dt = elapsed(time2, time1);
 
+    // Turn the time into nanoseconds.
     factor = 1000.0;
-    factor /= (1.0*countMax); // number of loads per run of findCacheSize()
+    // Number of loads per run of this function.
+    factor /= (1.0*countMax);
 
     *rslt = (uintptr_t)p+(uintptr_t)(x+y);
 

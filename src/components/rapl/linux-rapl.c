@@ -495,6 +495,12 @@ _rapl_init_component( int cidx )
 
 
      /* Detect how many packages */
+     // Some code below may be flagged by Coverity due to uninitialized array
+     // entries of cpu_to_use[]. This is not a bug; the 'filename' listed below
+     // will have 'cpu0', 'cpu1', sequentially on up to the maximum.  Coverity
+     // cannot know that, so its code analysis allows the possibility that the
+     // cpu_to_use[] array is only partially filled in. [Tony C. 11-27-19].
+
      j=0;
      while(1) {
        int num_read;
