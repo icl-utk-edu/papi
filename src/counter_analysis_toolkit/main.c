@@ -26,7 +26,7 @@ int main(int argc, char*argv[])
         return 0;
     }
 
-    // Parse the command-line arguments.
+    // Parse the command-line arguments .
     status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type );
     if(0 != status)
     {
@@ -37,7 +37,6 @@ int main(int argc, char*argv[])
 
     // Allocate space for the native events and qualifiers.
     data = (evstock*)calloc(1,sizeof(evstock));
-
     if(NULL == data)
     {
         free(outdir);
@@ -53,8 +52,7 @@ int main(int argc, char*argv[])
         if(ct == -1)
         {
             free(outdir);
-            //remove_stock(data); // that was segfaulting, data is full of NULL pointers, and free was called on all of them
-            free(data); // at this points, it's an empty shell, free it
+            remove_stock(data);
             PAPI_shutdown();
             return 0;
         }
@@ -104,7 +102,7 @@ int main(int argc, char*argv[])
 
     // Allocate enough space for all of the event+qualifier combinations.
     if (NULL == (allevts = (char**)malloc(cmbtotal*sizeof(char*)))) {
-        fprintf(stderr, "Failed allocation of allevts.\n");
+        fprintf(stderr, "Failed to allocate memory.\n");
         PAPI_shutdown();
         return 0;
     }
@@ -112,7 +110,7 @@ int main(int argc, char*argv[])
     // Create the qualifier combinations for each event.
     trav_evts(data, pk, cards, nevts, ct, mode, allevts, &track, indexmemo, basenames);
 
-    // Run the benchmark for each evt+qual combos.
+    // Run the benchmark for each qualifier combination.
     testbench(allevts, cmbtotal, max_iter, argc, outdir, bench_type);
 
     // Free dynamically allocated memory.
@@ -138,17 +136,20 @@ int main(int argc, char*argv[])
     return 0;
 }
 
+// Verify that valid qualifier counts are provided and count their combinations.
 int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct, int nevts, int pk, evstock* data)
 {
     int i, j, minim, n, cmbtotal = 0;
     char *name;
 
+    // User provided a file of events.
     if(READ_FROM_FILE == mode)
     {
-        // Compute the total number of evt+qual combos and allocate memory to store them.
+        // Compute the total number of qualifier combinations and allocate memory to store them.
         (*indexmemo) = (int*)malloc(ct*sizeof(int));
 
-        // Find the index in the main stock whose evt corresponds to that in the file provided.
+        // Find the index in the main stock whose event corresponds to that in the file provided.
+        // This simplifies looking up event qualifiers later.
         for(i = 0; i < ct; ++i)
         {
             if(NULL == basenames[i])
@@ -158,6 +159,7 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                 continue;
             }
 
+            // j is the index of the event name provided by the user.
             for(j = 0; j < nevts; ++j)
             {
                 name = evt_name(data, j);
@@ -167,6 +169,9 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                 }
             }
 
+            // If the event name provided by the user does not match any of the main event
+            // names in the architecture, then it either contains qualifiers or it does not
+            // exist.
             if(cards[i] != 0 && j == nevts)
             {
                 fprintf(stderr, "The provided event '%s' is either not in the architecture or contains qualifiers.\n" \
@@ -176,14 +181,17 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
             (*indexmemo)[i] = j;
         }
 
+        // Count the total number of events to test.
         for(i = 0; i < ct; ++i)
         {
+            // If not qualifiers are used, then just count the event itself.
             if(cards[i] == 0)
             {
                 cmbtotal += 1;
                 continue;
             }
 
+            // Get the number of qualifiers which belong to the main event.
             if((*indexmemo)[i] != -1)
             {
                 n = num_quals(data, (*indexmemo)[i]);
@@ -193,6 +201,9 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                 n = 0;
             }
 
+            // If the user specifies to use more qualifiers than are available
+            // for the main event, do not use any qualifiers. Otherwise, count
+            // the number of combinations of qualifiers for the main event.
             minim = cards[i];
             if(cards[i] > n)
             {
@@ -201,11 +212,17 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
             cmbtotal += comb(n, minim);
         }
     }
+    // User wants to inspect all events in the architecture.
     else
     {
         for(i = 0; i < nevts; ++i)
         {
+            // Get the number of qualifiers which belong to the main event.
             n = num_quals(data, i);
+
+            // If the user specifies to use more qualifiers than are available
+            // for the main event, do not use any qualifiers. Otherwise, count
+            // the number of combinations of qualifiers for the main event.
             minim = pk;
             if(pk > n)
             {
@@ -284,7 +301,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
     return cnt;
 }
 
-// The purpose of this function is to recursively traverse the combinations of the index matrix.
+// Recursively builds the list of all combinations of an event's qualifiers.
 void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* track, int flag, int* bitmap)
 {
     int original;
@@ -295,7 +312,7 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
     original = bitmap[ct];
     bitmap[ct] = flag;
 
-    // only make recursive calls if there are more items 
+    // Only make recursive calls if there are more items.
     // Ensure proper cardinality.
     counter = 0;
     for(i = 0; i < n; ++i)
@@ -303,27 +320,32 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
         counter += bitmap[i];
     }    
 
+    // Cannot use more qualifiers than are available.
     if(ct+1 < n)
     {
-        // Call rec() with both flags.
+        // Make recursive calls both with and without a given qualifier.
+        // Recursion cannot exceed the number of qualifiers specified by
+        // the user.
         if(counter < pk)
         {
             rec(n, pk, ct+1, list, name, allevts, track, 1, bitmap); 
         }
         rec(n, pk, ct+1, list, name, allevts, track, 0, bitmap);
     }
+    // Qualifier count matches that specified by the user.
     else
     {
         if(counter == pk)
         {
-            // Construct the string and add it to the list.
+            // Construct the qualifier combination string.
             char* chunk;
-            size_t evtsize = strlen(name)+1; // account for null terminator
+            size_t evtsize = strlen(name)+1;
             for(i = 0; i < n; ++i)
             {
                 if(bitmap[i] == 1)
                 {
-                    evtsize += strlen(list[i])+1; // account for colon in front of qualifier
+                    // Add one to account for the colon in front of the qualifier.
+                    evtsize += strlen(list[i])+1;
                 }
             }
 
@@ -338,6 +360,7 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
                 }
             }
 
+            // Add qualifier combination string to the list.
             allevts[*track] = strdup(chunk);
             *track += 1;
 
@@ -345,12 +368,13 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
         }
     }
 
-    // Undo - flip bit back.
+    // Undo effect of recursive call to combine other qualifiers.
     bitmap[ct] = original;
 
     return;
 }
 
+// Create the combinations of qualifiers for the events.
 void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, int mode, char** allevts, int* track, int* indexmemo, char** basenames)
 {
     int i, j, k, n = 0;
@@ -358,6 +382,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
     char* name = NULL;
     int* bitmap = NULL;
 
+    // User provided a file of events.
     if(READ_FROM_FILE == mode)
     {
         for(i = 0; i < selexnsize; ++i)
@@ -370,9 +395,10 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
                 continue;
             }
 
-            // User a provided specific qualifier combination.
+            // Get event's name and qualifier count.
             if(j == nevts)
             {
+                // User a provided specific qualifier combination.
                 name = basenames[i];
             }
             else
@@ -397,8 +423,8 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
                 }
             }
 
-            // Get combinations of all subsets of current event's qualifiers.
-            if (n!=0)
+            // Get combinations of all current event's qualifiers.
+            if (n!=0 && cards[i]!=0)
             {
                 rec(n, cards[i], 0, chosen, name, allevts, track, 0, bitmap);
                 rec(n, cards[i], 0, chosen, name, allevts, track, 1, bitmap);
@@ -421,11 +447,12 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             }
         }
     }
+    // User wants to inspect all events in the architecture.
     else
     {
         for(i = 0; i < nevts; ++i)
         {
-            // Declare variables.
+            // Get event's name and qualifier count.
             n = num_quals(stock, i);
             name = evt_name(stock, i);
 
@@ -442,7 +469,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
                 chosen[j] = strdup(stock->evts[i][j]);
             }
 
-            // Get combinations of all subsets of current event's qualifiers.
+            // Get combinations of all current event's qualifiers.
             if (n!=0)
             {
                 rec(n, pk, 0, chosen, name, allevts, track, 0, bitmap);
@@ -467,6 +494,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
     return;
 }
 
+// Compute the permutations of k objects from a set of n objects.
 int perm(int n, int k)
 {
     int i;
@@ -481,28 +509,49 @@ int perm(int n, int k)
     return prod;
 }
 
+// Compute the combinations of k objects from a set of n objects.
 int comb(int n, int k)
 {
     return perm(n, k)/perm(k, k);
+}
+
+// Measures the read latencies of the data cache. This information is
+// useful for analyzing data cache-related event signatures.
+void get_dcache_latencies(int max_iter, char *outputdir){
+    FILE *ofp;
+
+    // Make sure the output files could be opened.
+    int l = strlen(outputdir)+strlen("latencies.txt");
+    char *latencyFileName = (char *)calloc( 1+l, sizeof(char) );
+    if (!latencyFileName) {
+        fprintf(stderr, "Unable to allocate memory. Skipping latency test.\n");
+        return;
+    }
+    if (l != (sprintf(latencyFileName, "%slatencies.txt", outputdir))) {
+        fprintf(stderr, "sprintf error.\n");
+        return;
+    }
+    if (NULL == (ofp = fopen(latencyFileName,"w"))) {
+        fprintf(stderr, "Unable to open file %s. Skipping latency test.\n", latencyFileName);
+        return;
+    }
+
+    d_cache_test(3, max_iter, 256, 128, NULL, 1, 0, ofp);
+
+    fclose(ofp);
+
+    return;
 }
 
 void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outputdir, int bench_type )
 {
     int i;
 
-    // Make sure the user provided events.
+    // Make sure the user provided events and iterate through all events.
     if( 0 == cmbtotal )
     {
         fprintf(stderr, "No events to measure.\n");
         return;
-    }
-
-    // Iterate through all events for the worker.
-    // Approximate the cache sizes first.
-    if( (bench_type & BENCH_DCACHE_READ) || (bench_type & BENCH_DCACHE_WRITE) )
-    {
-        if( allevts[0] != NULL )
-            d_cache_test(3, max_iter, 256, 64, allevts[0], NULL, 1, 0, NULL, NULL);
     }
 
     /* Benchmark I - Branch*/
@@ -518,20 +567,26 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     /* Benchmark II - Data Cache Reads*/
     if( bench_type & BENCH_DCACHE_READ )
     {
+        get_dcache_latencies(max_iter, outputdir);
+
         for(i = 0; i < cmbtotal; ++i)
         {
-            if( allevts[i] != NULL )
+            if( allevts[i] != NULL ) {
                 d_cache_driver(allevts[i], max_iter, outputdir, 0, 0);
+            }
         }
     }
 
     /* Benchmark III - Data Cache Writes*/
     if( bench_type & BENCH_DCACHE_WRITE )
     {
+        get_dcache_latencies(max_iter, outputdir);
+
         for(i = 0; i < cmbtotal; ++i)
         {
-            if( allevts[i] != NULL )
+            if( allevts[i] != NULL ) {
                 d_cache_driver(allevts[i], max_iter, outputdir, 0, 1);
+            }
         }
     }
 
@@ -685,6 +740,7 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     return 0;
 }
 
+// Show the user how to properly use the program.
 void print_usage(char* name)
 {
     fprintf(stdout, "\nUsage: %s [OPTIONS...]\n", name);
@@ -692,7 +748,7 @@ void print_usage(char* name)
     fprintf(stdout, "\nRequired:\n");
     fprintf(stdout, "  -out <path>   Output files location.\n");
     fprintf(stdout, "  -in  <file>   Events and cardinalities file.\n");
-    fprintf(stdout, "  -k   <value>  Maximum cardinality of subsets.\n");
+    fprintf(stdout, "  -k   <value>  Cardinality of subsets.\n");
     fprintf(stdout, "  Parameters \"-k\" and \"-in\" are mutually exclusive.\n");
     
     fprintf(stdout, "\nOptional:\n");
