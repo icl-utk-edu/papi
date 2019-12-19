@@ -51,11 +51,7 @@ PAPI_thread_id
 PAPI_thread_init
 PAPI_unlock
 PAPI_write
-PAPI_accum_counters
-PAPI_num_counters
-PAPI_read_counters
-PAPI_start_counters
-PAPI_stop_counters
-PAPI_flips
-PAPI_flops
+PAPI_flips_rate
+PAPI_flops_rate
 PAPI_ipc
+PAPI_epc
