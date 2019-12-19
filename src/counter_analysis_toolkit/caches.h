@@ -42,17 +42,16 @@ typedef struct run_output_s{
     int status;
 }run_output_t;
 
-typedef double ticks;
-static inline ticks getticks(void){
-     ticks ret;
+static inline double getticks(void){
+     double ret;
      struct timeval tv;
 
      gettimeofday(&tv, NULL);
-     ret = 1000*1000*(ticks)tv.tv_sec + (ticks)tv.tv_usec;
+     ret = 1000*1000*(double)tv.tv_sec + (double)tv.tv_usec;
      return ret;
 }
 
-static inline double elapsed(ticks t1, ticks t0){ 
+static inline double elapsed(double t1, double t0){ 
      return (double)t1 - (double)t0;
 } 
 

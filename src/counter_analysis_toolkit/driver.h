@@ -20,6 +20,7 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
 void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, int mode, char** allevts, int* track, int* indexmemo, char** basenames);
 int perm(int n, int k);
 int comb(int n, int k);
+void get_dcache_latencies(int max_iter, char *outputdir);
 void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outputdir, int bench_type);
 void print_usage();
 

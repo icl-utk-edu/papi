@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int detect_size, int readwrite);
+int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode);
 void *thread_main(void *arg);
-void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int detect_size, int readwrite);
-void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages_per_block, char* papi_event_name, char* papiFileName, int detect_size, int readwrite, FILE* ofp_papi, FILE* ofp);
+void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int latency_only, int mode);
+void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp);
 
 #endif
