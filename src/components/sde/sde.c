@@ -152,11 +152,11 @@ static inline void free_counter(sde_counter_t *counter)
 {
     int i;
 
-    free(counter->name);
-    free(counter->description);
-
     if( NULL == counter )
         return;
+
+    free(counter->name);
+    free(counter->description);
 
     // If we are dealing with a recorder we need to free all the data associated with it.
     if( NULL != counter->recorder_data ){
@@ -189,7 +189,7 @@ static void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buff
     used_entries = recorder->recorder_data->used_entries;
 
     for(i=0; i<EXP_CONTAINER_ENTRIES; i++){
-       current_size = (1<<i) * EXP_CONTAINER_MIN_SIZE;
+       current_size = ((long long)1<<i) * EXP_CONTAINER_MIN_SIZE;
        src = recorder->recorder_data->exp_container[i];
        dst = cont_buffer + tmp_size*typesize;
        if ( (tmp_size+current_size) <= used_entries){
@@ -415,7 +415,7 @@ static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt )
     }
 
     do{
-        long long int tmp_value;
+        long long int tmp_value = 0;
         int ret_val;
 
         sde_counter_t *tmp_cntr = curr->item;
@@ -701,8 +701,10 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
         tmp_group = (sde_counter_t *)calloc(1, sizeof(sde_counter_t));
         tmp_group->glb_uniq_id = cntr_group_uniq_id;
-        tmp_group->name = full_group_name; // we do not need to strdup() this, it was malloc()-ed just above.
-        tmp_group->description = strdup( full_group_name ); // make a copy here, because we will free() the 'name' and the 'description' separately.
+        // copy the name because we will free the malloced space further down in this function.
+        tmp_group->name = strdup(full_group_name);
+        // make a copy here, because we will free() the 'name' and the 'description' separately.
+        tmp_group->description = strdup( full_group_name );
         tmp_group->which_lib = lib_handle;
         tmp_group->counter_group_flags = group_flags;
         // Be explicit so that people reading the code can spot the initialization easier.
@@ -724,6 +726,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
         if( tmp_group->counter_group_flags != group_flags ){
             papi_sde_unlock();
             PAPIERROR("papi_sde_add_counter_to_group(): Attempting to add counter '%s' to counter group '%s' with incompatible group flags.\n", event_name, group_name);
+            free(full_group_name);
             return PAPI_EINVAL;
         }
     }
@@ -735,6 +738,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     tmp_group->counter_group_head = new_head;
 
     papi_sde_unlock();
+    free(full_group_name);
     return PAPI_OK;
 }
 
@@ -783,6 +787,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     cntr = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
     if(NULL == cntr) {
         SUBDBG("Logging counter '%s' not properly inserted in SDE library '%s'\n", full_event_name, lib_handle->libraryName);
+        free(full_event_name);
         return PAPI_ECMP;
     }
 
@@ -959,7 +964,7 @@ papi_sde_compare_float(const void *p1, const void *p2){
 // data element that corresponds to the edge (min/max), so that it works
 // for all types of data, not only integers.
 static inline long long _sde_compute_edge(void *param, int which_edge){
-    void *edge, *edge_copy;
+	void *edge = NULL, *edge_copy;
     long long elem_cnt;
     long long current_size, cumul_size = 0;
     void *src;
@@ -1007,7 +1012,7 @@ static inline long long _sde_compute_edge(void *param, int which_edge){
 
         cumul_size = 0;
         for(chunk=0; chunk<EXP_CONTAINER_ENTRIES; chunk++){
-           current_size = (1<<chunk) * EXP_CONTAINER_MIN_SIZE;
+           current_size = ((long long)1<<chunk) * EXP_CONTAINER_MIN_SIZE;
            src = rcrd->recorder_data->exp_container[chunk];
 
            for(i=0; (i < (elem_cnt-cumul_size)) && (i < current_size); i++){
@@ -1035,7 +1040,7 @@ static inline long long _sde_compute_edge(void *param, int which_edge){
     // to free it, so it is the responibility of the user (who calls PAPI_read()) to
     // free this memory.
     edge_copy = malloc( 1 * typesize);
-    memcpy(edge_copy, edge, typesize);
+    memcpy(edge_copy, edge, 1 * typesize);
 
     // A pointer is guaranteed to fit inside a long long, so cast it and return a long long.
     return (long long)edge_copy;
@@ -1200,6 +1205,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     if( PAPI_OK != ret_val ){
         SUBDBG("papi_sde_create_recorder(): Registration of aux counter: '%s' in SDE library: %s FAILED.\n", aux_event_name, lib_handle->libraryName);
         papi_sde_unlock();
+        free(aux_event_name);
         return ret_val;
     }
 
@@ -1219,13 +1225,14 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
             if( PAPI_OK != ret_val ){
                 SUBDBG("papi_sde_create_recorder(): Registration of aux counter: '%s' in SDE library: %s FAILED.\n", aux_event_name, lib_handle->libraryName);
                 papi_sde_unlock();
+                free(aux_event_name);
                 return ret_val;
             }
         }
     }
 
     papi_sde_unlock();
-    
+    free(aux_event_name);
     return PAPI_OK;
 }
 
@@ -1265,7 +1272,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
     // Find how many chunks we have already allocated
     tmp_size = 0;
     for(i=0; i<EXP_CONTAINER_ENTRIES; i++){
-       long long factor = 1<<i; // 2^i;
+       long long factor = (long long)1<<i; // 2^i;
        prev_entries = tmp_size;
        tmp_size += factor * EXP_CONTAINER_MIN_SIZE;
        // At least the first chunk "tmp_item->recorder_data->exp_container[0]"
@@ -1286,7 +1293,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
         offset = 0;
 
         chunk += 1; // we need to allocate the next chunk from the last one we found.
-        new_segment_size = (1<<chunk) * EXP_CONTAINER_MIN_SIZE;
+        new_segment_size = ((long long)1<<chunk) * EXP_CONTAINER_MIN_SIZE;
         tmp_item->recorder_data->exp_container[chunk] = malloc(new_segment_size*typesize);
         tmp_item->recorder_data->total_entries += new_segment_size;
     }
@@ -1805,7 +1812,7 @@ _sde_init_component( int cidx )
             continue;
         }
 
-        insert_library_handle(tmp_lib, gctl);
+        insert_library_handle(lib_handle, gctl);
 
         papi_sde_unlock();
 
@@ -1813,6 +1820,10 @@ _sde_init_component( int cidx )
 
         dlclose(dl_handle);
     }
+    for(i=0; i<sde_num_libs; i++) {
+        free(sde_library_path[i]);
+    }
+    free(sde_library_path);
 
     return PAPI_OK;
 }
@@ -2903,7 +2914,6 @@ set_timer_for_overflow( sde_control_state_t *sde_ctl ){
 }
 
 #endif // defined(SDE_HAVE_OVERFLOW)
-
 
 
 /** Vector that points to entry points for our component */
