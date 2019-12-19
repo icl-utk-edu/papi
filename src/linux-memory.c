@@ -1100,6 +1100,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		}
 	}
 
+   closedir(dir);
 	hw_info->mem_hierarchy.levels = max_level;
 
 	return 0;
@@ -1109,6 +1110,7 @@ unrecoverable_error:
 	/* Just say we have no cache */
 	hw_info->mem_hierarchy.levels = 0;
 
+   closedir(dir);
 	return 0;
 }
 
@@ -1225,6 +1227,7 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 					tmp[t_index - 1].text_start = ( caddr_t ) begin;
 					tmp[t_index - 1].text_end = ( caddr_t ) ( begin + size );
 					strncpy( tmp[t_index - 1].name, mapname, PAPI_HUGE_STR_LEN );
+               tmp[t_index - 1].name[PAPI_HUGE_STR_LEN-1]=0;
 				}
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
 						( inode != 0 ) ) {

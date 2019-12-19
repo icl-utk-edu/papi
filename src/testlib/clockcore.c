@@ -48,6 +48,7 @@ clock_res_check( int flag, int quiet )
 			elapsed_cyc[i] = ( long long ) PAPI_get_virt_usec(  );
 		break;
 	default:
+      free(elapsed_cyc);
 		return -1;
 
 	}
