@@ -7,9 +7,9 @@
  * The first call to PAPI_epc() will initialize the PAPI interface,          *
  * set up the counters to monitor the user specified event, PAPI_TOT_CYC,    *
  * and PAPI_REF_CYC (if it exists) and start the counters. Subsequent calls  *
- * will read the counters and return total real time, total process time,    *
- * total event counts, the core and reference cycle count and EPC rate since *
- * the latest call to PAPI_epc().                                            *
+ * will read the counters and return real time, process time, event counts,  *
+ * the core and reference cycle count and EPC rate since the latest call to  *
+ * PAPI_epc().                                                               *
  *****************************************************************************/
 
 
@@ -45,7 +45,7 @@ int main()
   }
 
 
-  printf("Real_time: %f Proc_time: %f Ref_clock: %lld Core_clock: %lld Total events: %lld EPC: %f\n",
+  printf("Real_time: %f Proc_time: %f Ref_clock: %lld Core_clock: %lld Events: %lld EPC: %f\n",
          real_time, proc_time, ref, core, evt, epc);
 
   /* clean up */
