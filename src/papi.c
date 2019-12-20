@@ -149,15 +149,15 @@ _internal_check_state()
   *	int PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips );
   *
   *   @param event
-  *      one of the three presets PAPI_FP_INS, PAPI_VEC_SP or PAPI_VEC_DP 
+  *     one of the three presets PAPI_FP_INS, PAPI_VEC_SP or PAPI_VEC_DP 
   *   @param *rtime
-  *		total realtime since the last call
+  *		realtime since the latest call
   *	@param *ptime
-  *		total process time since the last call
+  *		process time since the latest call
   *	@param *flpins
-  *		total floating point instructions since the last call
+  *		floating point instructions since the latest call
   *	@param *mflips
-  *		incremental (Mega) floating point instructions per seconds since the last call
+  *		incremental (Mega) floating point instructions per seconds since the latest call
   *  
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_flips_rate().
@@ -169,8 +169,8 @@ _internal_check_state()
   * The first call to PAPI_flips_rate() will initialize the PAPI interface, 
   * set up the counters to monitor the floating point instructions event and start the counters.
   *
-  * Subsequent calls will read the counters and return total real time, total process time,
-  * total floating point instructions and the Mflip/s rate since the latest call to PAPI_flips_rate(). 
+  * Subsequent calls will read the counters and return real time, process time,
+  * floating point instructions and the Mflip/s rate since the latest call to PAPI_flips_rate(). 
   *
   * PAPI_flips_rate() returns information related to floating point instructions using 
   * the floating point instructions event. This is intended to measure instruction rate through the 
@@ -213,15 +213,15 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   *	int PAPI_flops_rate ( int event, float *rtime, float *ptime, long long *flpops, float *mflops );
   *
   *   @param event
-  *      one of the three presets PAPI_FP_OPS, PAPI_SP_OPS or PAPI_DP_OPS
+  *     one of the three presets PAPI_FP_OPS, PAPI_SP_OPS or PAPI_DP_OPS
   *   @param *rtime
-  *		total realtime since the last call
+  *		realtime since the latest call
   *	@param *ptime
-  *		total process time since the last call
+  *		process time since the latest call
   *	@param *flpops
-  *		total floating point operations since the last call
+  *		floating point operations since the latest call
   *	@param *mflops
-  *		incremental (Mega) floating point operations per seconds since the last call
+  *		incremental (Mega) floating point operations per seconds since the latest call
   * 
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_flops_rate().
@@ -233,8 +233,8 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   * The first call to PAPI_flops_rate() will initialize the PAPI interface, 
   * set up the counters to monitor the floating point operations event and start the counters. 
   *
-  * Subsequent calls will read the counters and return total real time, total process time,
-  * total floating point operations and the Mflop/s rate since the latest call to PAPI_flops_rate(). 
+  * Subsequent calls will read the counters and return real time, process time,
+  * floating point operations and the Mflop/s rate since the latest call to PAPI_flops_rate(). 
   *
   * PAPI_flops_rate() returns information related to theoretical floating point operations
   * rather than simple instructions. It uses the floating point operations event which attempts to 
@@ -277,13 +277,13 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
   *
   * @param *rtime
-  *		total realtime since the last call
+  *		realtime since the latest call
   *	@param *ptime
-  *		total process time since the last call
+  *		process time since the latest call
   *	@param *ins
-  *		total instructions since the last call
+  *		instructions since the latest call
   *	@param *ipc
-  *		incremental instructions per cycle since the last call
+  *		incremental instructions per cycle since the latest call
   * 
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_ipc().
@@ -296,8 +296,8 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events 
   * and start the counters. 
   *
-  * Subsequent calls will read the counters and return total real time, 
-  * total process time, total instructions and the IPC rate since the latest call to PAPI_ipc().
+  * Subsequent calls will read the counters and return real time, 
+  * process time, instructions and the IPC rate since the latest call to PAPI_ipc().
   *
   * PAPI_ipc() should return a ratio greater than 1.0, indicating instruction level
   * parallelism within the chip. The larger this ratio the more effeciently the program
@@ -331,17 +331,17 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * @param event
   *		event code to be measured (0 defaults to PAPI_TOT_INS)
   * @param *rtime
-  *		total realtime since the last call
+  *		realtime since the latest call
   *	@param *ptime
-  *		total process time since the last call
+  *		process time since the latest call
   *	@param *ref
-  *		incremental reference clock cycles since the last call
+  *		incremental reference clock cycles since the latest call
   *	@param *core
-  *		incremental core clock cycles since the last call
+  *		incremental core clock cycles since the latest call
   *	@param *evt
-  *		total events since the last call
+  *		events since the latest call
   *	@param *epc
-  *		incremental events per cycle since the last call
+  *		incremental events per cycle since the latest call
   * 
   *	@retval PAPI_EINVAL 
   *		The counters were already started by something other than PAPI_epc().
@@ -354,8 +354,8 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * set up the counters to monitor the user specified event, PAPI_TOT_CYC, 
   * and PAPI_REF_CYC (if it exists) and start the counters. 
   *
-  * Subsequent calls will read the counters and return total real time, 
-  * total process time, total event counts, the core and reference cycle count and EPC rate
+  * Subsequent calls will read the counters and return real time, 
+  * process time, event counts, the core and reference cycle count and EPC rate
   * since the latest call to PAPI_epc(). 
   *
   * PAPI_epc() can provide a more detailed look at algorithm efficiency in light of clock
