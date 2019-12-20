@@ -9,7 +9,7 @@
 *      PAPI_TOT_INS                                                          *
 *      PAPI_TOT_CYC                                                          *
 *      PAPI_FP_INS                                                           *
-*      PAPI_FP_OPS                                                           *
+*      PAPI_FP_OPS or PAPI_DP_OPS or PAPI_SP_OPS                             *
 ******************************************************************************/ 
 
 #include <stdio.h>
