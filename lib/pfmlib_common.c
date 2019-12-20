@@ -713,6 +713,12 @@ pfmlib_pmu_active(pfmlib_pmu_t *pmu)
 }
 
 static inline int
+pfmlib_pmu_deprecated(pfmlib_pmu_t *pmu)
+{
+        return !!(pmu->flags & PFMLIB_PMU_FL_DEPR);
+}
+
+static inline int
 pfmlib_pmu_initialized(pfmlib_pmu_t *pmu)
 {
         return !!(pmu->flags & PFMLIB_PMU_FL_INIT);
@@ -1494,6 +1500,14 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 * only look for active PMU models
 		 */
 		if (!pname && !pfmlib_pmu_active(pmu))
+			continue;
+
+		/*
+		 * if the PMU name is not passed, then if
+		 * the pmu is deprecated, then skip it. It means
+		 * there is a better candidate in the active list
+		 */
+		if (!pname && pfmlib_pmu_deprecated(pmu))
 			continue;
 		/*
 		 * check for requested PMU name,

@@ -187,6 +187,7 @@ typedef struct {
 #define PFMLIB_PMU_FL_ARCH_DFL	0x8	/* PMU is arch default */
 #define PFMLIB_PMU_FL_NO_SMPL	0x10	/* PMU does not support sampling */
 #define PFMLIB_PMU_FL_SPEC	0x20	/* PMU provides event speculation info */
+#define PFMLIB_PMU_FL_DEPR	0x40	/* PMU model is deprecated */
 
 typedef struct {
 	int	initdone;
