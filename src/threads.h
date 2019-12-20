@@ -30,6 +30,11 @@ typedef struct _ThreadInfo
 	EventSetInfo_t **running_eventset;
 	EventSetInfo_t *from_esi;          /* ESI used for last update this control state */
 	int wants_signal;
+
+   // The current event code can be stored here prior to 
+   // component calls and cleared after the component returns.
+   unsigned int tls_papi_event_code;
+   int tls_papi_event_code_changed;
 } ThreadInfo_t;
 
 /** The list of threads, gets initialized to master process with TID of getpid() 
