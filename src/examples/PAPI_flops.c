@@ -9,9 +9,9 @@
 /*****************************************************************************
  * The first call to PAPI_flops_rate initializes the PAPI library, set up    *
  * the counters to monitor the floating point operations event, and start    *
- * the counters. Subsequent calls will read the counters and return total    *
- * real time, total process time, total floating point operations, and the   *
- * Mflops/s rate since the last call to PAPI_flops_rate.                     *
+ * the counters. Subsequent calls will read the counters and return          *
+ * real time, process time, floating point operations, and the Mflops/s rate *
+ * since the latest call to PAPI_flops_rate.                                 *
  *****************************************************************************/
 
  
@@ -56,7 +56,7 @@ int main()
   }
 
 
-  printf("Real_time: %f Proc_time: %f Total flpops: %lld MFLOPS: %f\n", 
+  printf("Real_time: %f Proc_time: %f flpops: %lld MFLOPS: %f\n", 
          real_time, proc_time,flpops,mflops);
 
   exit(0);
