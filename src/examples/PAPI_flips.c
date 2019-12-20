@@ -9,9 +9,9 @@
 /*****************************************************************************
  * The first call to PAPI_flips_rate initializes the PAPI library, set up    *
  * the counters to monitor the floating point instructions event, and start  *
- * the counters. Subsequent calls will read the counters and return total    *
- * real time, total process time, total floating point instructions, and the *
- * Mflips/s rate since the last call to PAPI_flips_rate.                     *
+ * the counters. Subsequent calls will read the counters and return          *
+ * real time, process time, floating point instructions, and the Mflips/s    *
+ * rate since the latest call to PAPI_flips_rate.                              *
  *****************************************************************************/
 
 
@@ -56,7 +56,7 @@ int main()
   }
 
 
-  printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLIPS: %f\n", 
+  printf("Real_time: %f Proc_time: %f flpins: %lld MFLIPS: %f\n", 
          real_time, proc_time,flpins,mflips);
 
   exit(0);
