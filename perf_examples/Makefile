@@ -59,7 +59,7 @@ all: $(TARGETS) rtop
 # Many systems don't have ncurses-devel installed
 #
 rtop: rtop.o $(PFMLIB) $(PERF_EVENT_HDR)
-	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -lm
+	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -ltinfo -lm
 
 $(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB)
 	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 
