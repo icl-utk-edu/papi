@@ -655,10 +655,13 @@ typedef struct {
 	} SWIG_NAME(flags);
 } pfm_pmu_info_t;
 
+/*
+ * possible values for pfm_event_info_t.is_speculative
+ */
 typedef enum {
-	PFM_EVENT_INFO_SPEC_NA    = 0,
-	PFM_EVENT_INFO_SPEC_TRUE  = 1,
-	PFM_EVENT_INFO_SPEC_FALSE = 2,
+	PFM_EVENT_INFO_SPEC_NA    = 0, /* speculation info not available */
+	PFM_EVENT_INFO_SPEC_TRUE  = 1, /* counts speculative exec events */
+	PFM_EVENT_INFO_SPEC_FALSE = 2, /* counts non-speculative exec events */
 } pfm_event_info_spec_t;
 
 typedef struct {
