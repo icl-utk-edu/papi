@@ -286,6 +286,10 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 		return PAPI_ENOMEM;
 	}
 
+   /* init event memory variables, used by papi_internal.c  */
+   thread->tls_papi_event_code = -1;
+   thread->tls_papi_event_code_changed = -1;
+
 	/* Call the component to fill in anything special. */
 
 	for ( i = 0; i < papi_num_components; i++ ) {
@@ -421,6 +425,11 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread, int force_shutdown )
 	unsigned long tid;
 	int i, failure = 0;
 
+   /* Clear event memory variables */
+   thread->tls_papi_event_code = -1;
+   thread->tls_papi_event_code_changed = -1;
+
+   /* Get thread id */
 	if ( _papi_hwi_thread_id_fn )
 		tid = ( *_papi_hwi_thread_id_fn ) (  );
 	else

@@ -1095,7 +1095,6 @@ static int _internal_hl_determine_output_path()
       free(new_absolute_output_file_path);
    }
    free(output_prefix);
-   free(absolute_output_file_path);
    output_counter++;
 
    return ( PAPI_OK );
