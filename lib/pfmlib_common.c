@@ -2006,10 +2006,10 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 int
 pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_t *uinfo)
 {
-	pfmlib_event_attr_info_t info;
+	pfmlib_event_attr_info_t *info;
 	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
-	size_t sz = sizeof(info);
+	size_t sz = sizeof(*info);
 	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
@@ -2046,10 +2046,7 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	if (attr_idx >= e.npattrs)
 		goto error;
 
-	/*
-	 * copy event_attr_info
-	 */
-	info = e.pattrs[attr_idx];
+	info = &e.pattrs[attr_idx];
 
 	/*
 	 * info.idx = private, namespace specific index,
@@ -2059,19 +2056,19 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	 * cannot memcpy() info into uinfo as they do not
 	 * have the same size, cf. idx field (uint64 vs, uint32)
 	 */
-	uinfo->name  = info.name;
-	uinfo->desc  = info.desc;
-	uinfo->equiv = info.equiv;
+	uinfo->name  = info->name;
+	uinfo->desc  = info->desc;
+	uinfo->equiv = info->equiv;
 	uinfo->size  = sz;
-	uinfo->code  = info.code;
-	uinfo->type  = info.type;
+	uinfo->code  = info->code;
+	uinfo->type  = info->type;
 	uinfo->idx   = attr_idx;
-	uinfo->ctrl  = info.ctrl;
-	uinfo->is_dfl= info.is_dfl;
-	uinfo->is_precise = info.is_precise;
-	uinfo->is_speculative = info.is_speculative;
+	uinfo->ctrl  = info->ctrl;
+	uinfo->is_dfl= info->is_dfl;
+	uinfo->is_precise = info->is_precise;
+	uinfo->is_speculative = info->is_speculative;
 	uinfo->reserved_bits = 0;
-	uinfo->dfl_val64 = info.dfl_val64;
+	uinfo->dfl_val64 = info->dfl_val64;
 
 	ret = PFM_SUCCESS;
 error:
