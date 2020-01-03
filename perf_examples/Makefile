@@ -49,16 +49,16 @@ LPC_UTILS_HDR=perf_util.h
 TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	notify_self notify_group task_smpl self_smpl_multi \
 	self_pipe syst_count task_cpu syst_smpl evt2raw \
-	branch_smpl rtop
+	branch_smpl
 
 EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/perf_examples
 
-all: $(TARGETS)
+all: $(TARGETS) rtop
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
 #
 # Many systems don't have ncurses-devel installed
 #
-rtop: rtop.o $(PFMLIB) $(PERF_EVENT_HDR)
+rtop: rtop.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
 	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -ltinfo -lm
 
 $(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB)
