@@ -66,9 +66,10 @@ typedef struct {
 	pfm_attr_ctrl_t		ctrl;	/* what is providing attr */
 	uint64_t		idx;	/* attribute opaque index */
 	struct {
-		unsigned int    is_dfl:1;	/* is default umask */
-		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
-		unsigned int	reserved_bits:30;
+		unsigned int    is_dfl:1;	 /* is default umask */
+		unsigned int    is_precise:1;	 /* Intel X86: supports PEBS */
+		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
+		unsigned int	reserved_bits:28;
 	};
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */

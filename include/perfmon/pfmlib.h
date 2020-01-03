@@ -657,6 +657,7 @@ typedef struct {
 
 /*
  * possible values for pfm_event_info_t.is_speculative
+ * possible values for pfm_event_attr_info_t.is_speculative
  */
 typedef enum {
 	PFM_EVENT_INFO_SPEC_NA    = 0, /* speculation info not available */
@@ -694,7 +695,8 @@ typedef struct {
 	struct {
 		unsigned int    is_dfl:1;	/* is default umask */
 		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
-		unsigned int	reserved_bits:30;
+		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
+		unsigned int	reserved_bits:28;
 	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */

@@ -2069,6 +2069,7 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	uinfo->ctrl  = info.ctrl;
 	uinfo->is_dfl= info.is_dfl;
 	uinfo->is_precise = info.is_precise;
+	uinfo->is_speculative = info.is_speculative;
 	uinfo->reserved_bits = 0;
 	uinfo->dfl_val64 = info.dfl_val64;
 
