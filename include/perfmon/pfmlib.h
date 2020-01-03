@@ -679,9 +679,10 @@ typedef struct {
 	int			nattrs;	/* number of attributes */
 	int			reserved; /* for future use */
 	struct {
-		unsigned int	is_precise:1;	 /* precise sampling (Intel X86=PEBS) */
-		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
-		unsigned int	reserved_bits:29;
+		unsigned int	is_precise:1;	  /* precise sampling (Intel X86=PEBS) */
+		unsigned int	is_speculative:2; /* count correct and wrong path occurrences */
+		unsigned int	support_hw_smpl:1;/* can be recorded by hw buffer (Intel X86=EXTPEBS) */
+		unsigned int	reserved_bits:28;
 	} SWIG_NAME(flags);
 } pfm_event_info_t;
 
@@ -693,12 +694,13 @@ typedef struct {
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
 	int			idx;	/* attribute opaque index */
-	pfm_attr_ctrl_t		ctrl;		/* what is providing attr */
+	pfm_attr_ctrl_t		ctrl;	/* what is providing attr */
 	struct {
-		unsigned int    is_dfl:1;	/* is default umask */
-		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
-		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
-		unsigned int	reserved_bits:28;
+		unsigned int    is_dfl:1;	  /* is default umask */
+		unsigned int    is_precise:1;	  /* Intel X86: supports PEBS */
+		unsigned int	is_speculative:2; /* count correct and wrong path occurrences */
+		unsigned int	support_hw_smpl:1;/* can be recorded by hw buffer (Intel X86=EXTPEBS) */
+		unsigned int	reserved_bits:27;
 	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */
