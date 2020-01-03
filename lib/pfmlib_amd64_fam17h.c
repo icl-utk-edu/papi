@@ -51,7 +51,7 @@ pfm_amd64_family_detect_zen1(void *this)
  * Should use amd_fam17h_zen1 instead.
  */
 pfmlib_pmu_t amd64_fam17h_deprecated_support={
-	.desc			= "AMD64 Fam17h Zen1 (deprecated - use amd_fam17_zen1 instead)",
+	.desc			= "AMD64 Fam17h Zen1 (deprecated - use amd_fam17h_zen1 instead)",
 	.name			= "amd64_fam17h",
 	.pmu			= PFM_PMU_AMD64_FAM17H,
 	.pmu_rev		= 0,

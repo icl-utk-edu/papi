@@ -84,157 +84,6 @@ static const amd64_umask_t amd64_fam17h_zen2_tagged_ibs_ops[]={
   },
 };
 
-static const amd64_umask_t amd64_fam17h_zen2_number_of_move_elimination_and_scalar_op_optimization[]={
-  { .uname  = "OPTIMIZED",
-    .udesc  = "Number of scalar ops optimized.",
-    .ucode  = 0x8,
-  },
-  { .uname  = "OPT_POTENTIAL",
-    .udesc  = "Number of ops that are candidates for optimization (have z-bit either set or pass.",
-    .ucode  = 0x4,
-  },
-  { .uname  = "SSE_MOV_OPS_ELIM",
-    .udesc  = "Number of SSE move ops eliminated.",
-    .ucode  = 0x2,
-  },
-  { .uname  = "SSE_MOV_OPS",
-    .udesc  = "Number of SSE move ops.",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_retired_sse_avx_operations[]={
-  { .uname  = "MAC_FLOPS",
-    .udesc  = "Mac flops. MAC FLOPS count as 2 FLOPS.",
-    .ucode  = 0x8,
-  },
-  { .uname  = "DIV_FLOPS",
-    .udesc  = "Divide/square root flops.",
-    .ucode  = 0x4,
-  },
-  { .uname  = "MULT_FLOPS",
-    .udesc  = "Multiply flops.",
-    .ucode  = 0x2,
-  },
-  { .uname  = "ADD_SUB_FLOPS",
-    .udesc  = "Add/subtract flops.",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_retired_serializing_ops[]={
-  { .uname  = "X87_CTRL_RET",
-    .udesc  = "X87 control word mispredict traps due to mispredction in RC or PC, or changes in mask bits.",
-    .ucode  = 0x1,
-  },
-  { .uname  = "X87_BOT_RET",
-    .udesc  = "X87 bottom-executing uops retired.",
-    .ucode  = 0x2,
-  },
-  { .uname  = "SSE_CTRL_RET",
-    .udesc  = "SSE control word mispreduct traps due to mispredctions in RC, FTZ or DAZ or changes in mask bits.",
-    .ucode  = 0x4,
-  },
-  { .uname  = "SSE_BOT_RET",
-    .udesc  = "SSE bottom-executing uops retired.",
-    .ucode  = 0x8,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_fp_dispatch_faults[]={
-  { .uname  = "X87_FULL_FAULT",
-    .udesc  = "X87 fill faults",
-    .ucode  = 0x1,
-  },
-  { .uname  = "XMM_FILL_FAULT",
-    .udesc  = "XMM fill faults",
-    .ucode  = 0x2,
-  },
-  { .uname  = "YMM_FILL_FAULT",
-    .udesc  = "YMM fill faults",
-    .ucode  = 0x4,
-  },
-  { .uname  = "YMM_SPILL_FAULT",
-    .udesc  = "YMM spill faults",
-    .ucode  = 0x8,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_retired_x87_floating_point_operations[]={
-  { .uname  = "DIV_SQR_R_OPS",
-    .udesc  = "Divide and square root ops",
-    .ucode  = 0x4,
-  },
-  { .uname  = "MUL_OPS",
-    .udesc  = "Multiple ops",
-    .ucode  = 0x2,
-  },
-  { .uname  = "ADD_SUB_OPS",
-    .udesc  = "Add/subtract ops",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_fpu_pipe_assignment[]={
-  { .uname  = "DUAL3",
-    .udesc  = "Total number of multi-pipe uops assigned to pipe3",
-    .ucode  = 0x80,
-  },
-  { .uname  = "DUAL2",
-    .udesc  = "Total number of multi-pipe uops assigned to pipe2",
-    .ucode  = 0x40,
-  },
-  { .uname  = "DUAL1",
-    .udesc  = "Total number of multi-pipe uops assigned to pipe1",
-    .ucode  = 0x20,
-  },
-  { .uname  = "DUAL0",
-    .udesc  = "Total number of multi-pipe uops assigned to pipe0",
-    .ucode  = 0x10,
-  },
-  { .uname  = "TOTAL3",
-    .udesc  = "Total number of uops assigned to pipe3",
-    .ucode  = 0x8,
-  },
-  { .uname  = "TOTAL2",
-    .udesc  = "Total number of uops assigned to pipe2",
-    .ucode  = 0x4,
-  },
-  { .uname  = "TOTAL1",
-    .udesc  = "Total number of uops assigned to pipe1",
-    .ucode  = 0x2,
-  },
-  { .uname  = "TOTAL0",
-    .udesc  = "Total number of uops assigned to pipe0",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_instruction_cache_lines_invalidated[]={
-  { .uname  = "L2_INVALIDATING_PROBE",
-    .udesc  = "IC line invalidated due to L2 invalidating probe (external or LS).",
-    .ucode  = 0x2,
-  },
-  { .uname  = "FILL_INVALIDATED",
-    .udesc  = "IC line invalidated due to overwriting fill response.",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_instruction_pipe_stall[]={
-  { .uname  = "IC_STALL_ANY",
-    .udesc  = "IC pipe was stalled during this clock cycle for any reason (nothing valud in pipe ICM1).",
-    .ucode  = 0x4,
-  },
-  { .uname  = "IC_STALL_DQ_EMPTY",
-    .udesc  = "IC pipe was stalled during this clock cycle (including IC to OC fetches) due to DQ empty.",
-    .ucode  = 0x2,
-  },
-  { .uname  = "IC_STALL_BACK_PRESSURE",
-    .udesc  = "IC pipe was stalled during this clock cycle (ncluding IC to OC fetches) due to back pressure.",
-    .ucode  = 0x1,
-  },
-};
 
 static const amd64_umask_t amd64_fam17h_zen2_core_to_l2_cacheable_request_access_status[]={
   { .uname  = "LS_RD_BLK_C_S",
@@ -279,21 +128,6 @@ static const amd64_umask_t amd64_fam17h_zen2_l2_prefetch_hit_l2[]={
   },
 };
 
-static const amd64_umask_t amd64_fam17h_zen2_cycles_with_fill_pending_from_l2[]={
-  { .uname  = "L2_FILL_BUSY",
-   .udesc  = "TBD",
-    .ucode  = 0x1,
-    .uflags = AMD64_FL_DFL,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_l2_latency[]={
-  { .uname  = "L2_CYCLES_WAITING_ON_FILLS",
-    .udesc  = "TBD",
-    .ucode  = 0x1,
-    .uflags = AMD64_FL_DFL,
-  },
-};
 
 static const amd64_umask_t amd64_fam17h_zen2_requests_to_l2_group1[]={
   { .uname  = "RD_BLK_L",
@@ -361,37 +195,6 @@ static const amd64_umask_t amd64_fam17h_zen2_requests_to_l2_group2[]={
   },
   { .uname  = "BUS_LOCKS_RESPONSES",
     .udesc  = "Number of bus lock responses.",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_ls_to_l2_wbc_requests[]={
-  { .uname  = "WCB_WRITE",
-    .udesc  = "TBD",
-    .ucode  = 0x40,
-  },
-  { .uname  = "WCB_CLOSE",
-    .udesc  = "TBD",
-    .ucode  = 0x20,
-  },
-  { .uname  = "CACHE_LINE_FLUSH",
-    .udesc  = "TBD",
-    .ucode  = 0x10,
-  },
-  { .uname  = "I_LINE_FLUSH",
-    .udesc  = "TBD",
-    .ucode  = 0x8,
-  },
-  { .uname  = "ZERO_BYTE_STORE",
-    .udesc  = "TBD",
-    .ucode  = 0x4,
-  },
-  { .uname  = "LOCAL_IC_CLR",
-    .udesc  = "TBD",
-    .ucode  = 0x2,
-  },
-  { .uname  = "C_L_ZERO",
-    .udesc  = "TBD",
     .ucode  = 0x1,
   },
 };
@@ -512,25 +315,6 @@ static const amd64_umask_t amd64_fam17h_zen2_l1_dtlb_miss[]={
   },
 };
 
-static const amd64_umask_t amd64_fam17h_zen2_locks[]={
-  { .uname  = "SPEC_LOCK_MAP_COMMIT",
-    .udesc  = "TBD",
-    .ucode  = 0x8,
-  },
-  { .uname  = "SPEC_LOCK",
-    .udesc  = "TBD",
-    .ucode  = 0x4,
-  },
-  { .uname  = "NON_SPEC_LOCK",
-    .udesc  = "TBD",
-    .ucode  = 0x2,
-  },
-  { .uname  = "BUS_LOCK",
-    .udesc  = "TBD",
-    .ucode  = 0x1,
-  },
-};
-
 static const amd64_umask_t amd64_fam17h_zen2_mab_allocation_by_pipe[]={
   { .uname  = "TLB_PIPE_EARLY",
     .udesc  = "TBD",
@@ -559,36 +343,6 @@ static const amd64_umask_t amd64_fam17h_zen2_prefetch_instructions_dispatched[]=
     .udesc  = "Any prefetch",
     .ucode  = 0xff,
     .uflags = AMD64_FL_DFL,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_tablewalker_allocation[]={
-  { .uname  = "ALLOC_ISIDE1",
-    .udesc  = "TBD",
-    .ucode  = 0x8,
-  },
-  { .uname  = "ALLOC_ISIDE0",
-    .udesc  = "TBD",
-    .ucode  = 0x4,
-  },
-  { .uname  = "ALLOC_DSIDE1",
-    .udesc  = "TBD",
-    .ucode  = 0x2,
-  },
-  { .uname  = "ALLOC_DSIDE0",
-    .udesc  = "TBD",
-    .ucode  = 0x1,
-  },
-};
-
-static const amd64_umask_t amd64_fam17h_zen2_oc_mode_switch[]={
-  { .uname  = "OC_IC_MODE_SWITCH",
-    .udesc  = "TBD",
-    .ucode  = 0x2,
-  },
-  { .uname  = "IC_OC_MODE_SWITCH",
-    .udesc  = "TBD",
-    .ucode  = 0x1,
   },
 };
 
