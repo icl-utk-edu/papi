@@ -1352,7 +1352,7 @@ pfmlib_build_event_pattrs(pfmlib_event_desc_t  *e)
 		npattrs++;
 
 	if (npattrs) {
-		e->pattrs = malloc(npattrs * sizeof(*e->pattrs));
+		e->pattrs = calloc(npattrs, sizeof(*e->pattrs));
 		if (!e->pattrs)
 			return PFM_ERR_NOMEM;
 	}
