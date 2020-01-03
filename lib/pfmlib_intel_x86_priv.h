@@ -227,7 +227,8 @@ typedef union pfm_intel_x86_reg {
 /*
  * Intel x86 specific pmu flags (pmu->flags 16 MSB)
  */
-#define INTEL_X86_PMU_FL_ECMASK 0x10000	/* edge requires cmask >=1 */
+#define INTEL_X86_PMU_FL_ECMASK  0x10000 /* edge requires cmask >=1 */
+#define INTEL_X86_PMU_FL_EXTPEBS 0x20000 /* PMU supports ExtendedPEBS */
 
 /*
  * default ldlat value for PEBS-LL events. Used when ldlat= is missing
