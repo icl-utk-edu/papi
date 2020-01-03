@@ -1978,8 +1978,7 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	/* default data type is uint64 */
 	info.dtype = PFM_DTYPE_UINT64;
 
-	/* reset flags */
-	info.is_precise  = 0;
+	/* initialize flags */
 	info.is_speculative = PFM_EVENT_INFO_SPEC_NA;
 
 	ret = pmu->get_event_info(pmu, pidx, &info);
