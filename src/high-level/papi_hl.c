@@ -355,20 +355,20 @@ static int _internal_hl_determine_default_events()
             return ( PAPI_ENOMEM );
       } 
       else {
-         /* if PAPI_FP_OPS is not available try PAPI_DP_OPS or PAPI_SP_OPS */
+         /* if PAPI_FP_OPS is not available try PAPI_SP_OPS or PAPI_DP_OPS */
          if ( strcmp(default_events[i], "PAPI_FP_OPS") == 0 ) {
-            if ( _internal_hl_checkCounter( "PAPI_DP_OPS" ) == PAPI_OK )
-               requested_event_names[num_of_requested_events++] = strdup("PAPI_DP_OPS");
-            else if ( _internal_hl_checkCounter( "PAPI_SP_OPS" ) == PAPI_OK )
+            if ( _internal_hl_checkCounter( "PAPI_SP_OPS" ) == PAPI_OK )
                requested_event_names[num_of_requested_events++] = strdup("PAPI_SP_OPS");
+            else if ( _internal_hl_checkCounter( "PAPI_DP_OPS" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_DP_OPS");
          }
 
-         /* if PAPI_FP_INS is not available try PAPI_VEC_DP or PAPI_VEC_SP */
+         /* if PAPI_FP_INS is not available try PAPI_VEC_SP or PAPI_VEC_DP */
          if ( strcmp(default_events[i], "PAPI_FP_INS") == 0 ) {
-            if ( _internal_hl_checkCounter( "PAPI_VEC_DP" ) == PAPI_OK )
-               requested_event_names[num_of_requested_events++] = strdup("PAPI_VEC_DP");
-            else if ( _internal_hl_checkCounter( "PAPI_VEC_SP" ) == PAPI_OK )
+            if ( _internal_hl_checkCounter( "PAPI_VEC_SP" ) == PAPI_OK )
                requested_event_names[num_of_requested_events++] = strdup("PAPI_VEC_SP");
+            else if ( _internal_hl_checkCounter( "PAPI_VEC_DP" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_VEC_DP");
          }
       }
    }
