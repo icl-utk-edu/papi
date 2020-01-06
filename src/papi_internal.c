@@ -114,7 +114,7 @@ _papi_hwi_free_papi_event_string() {
 
 void
 _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag) {
-	INTDBG("new event_code: %#x, update_flag: %d, previous event_code: %#x\n", event_code, update_flag, papi_event_code);
+	INTDBG("new event_code: %#x, update_flag: %d, previous event_code: %#x\n", event_code, update_flag, _papi_hwi_my_thread->tls_papi_event_code);
 
 	// if call is just to reset and start over, set both flags to show nothing saved yet
 	if (update_flag < 0) {
@@ -131,7 +131,7 @@ _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag) {
 }
 unsigned int
 _papi_hwi_get_papi_event_code () {
-	INTDBG("papi_event_code: %#x\n", papi_event_code);
+	INTDBG("papi_event_code: %#x\n", _papi_hwi_my_thread->tls_papi_event_code);
 	return _papi_hwi_my_thread->tls_papi_event_code;
 }
 /* Get the index into the ESI->NativeInfoArray for the current PAPI event code */
