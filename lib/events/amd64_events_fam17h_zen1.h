@@ -21,7 +21,7 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  *
- * PMU: amd64_fam17h (AMD64 Fam17h))
+ * PMU: amd64_fam17h_zen1 (AMD64 Fam17h Zen1))
  */
 
 static const amd64_umask_t amd64_fam17h_zen1_l1_itlb_miss_l2_itlb_miss[]={
