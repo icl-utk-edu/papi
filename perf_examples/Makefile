@@ -68,7 +68,7 @@ $(LPC_UTILS): $(LPC_UTILS_HDR)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) *~
+	$(RM) -f *.o $(TARGETS) rtop *~
 
 distclean: clean
 
