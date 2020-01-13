@@ -133,32 +133,36 @@ parse_args( int argc, char **argv, command_flags_t * f )
 		else if ( !strcmp( argv[i], "-e" ) ) {
 			f->named = 1;
 			i++;
-			f->name = argv[i];
-			if ( i >= argc || no_str_arg( f->name ) ) {
+			if ( i < argc )
+			    f->name = argv[i];
+			if ( no_str_arg( f->name ) ) {
 				printf( "Invalid argument for -e\n");
 				exit(1);
 			}
 		} else if ( !strcmp( argv[i], "-sde" ) ) {
 			f->list_sdes = 1;
 			i++;
-			f->path = argv[i];
-			if ( i >= argc || no_str_arg( f->path ) ) {
+			if ( i < argc )
+			    f->path = argv[i];
+			if ( no_str_arg( f->path ) ) {
 				printf( "Invalid argument for -sde\n");
 				exit(1);
 			}
 		} else if ( !strcmp( argv[i], "-i" ) ) {
 			f->include = 1;
 			i++;
-			f->istr = argv[i];
-			if ( i >= argc || no_str_arg( f->istr ) ) {
+			if ( i < argc )
+			    f->istr = argv[i];
+			if ( no_str_arg( f->istr ) ) {
 				printf( "Invalid argument for -i\n");
 				exit(1);
 			}
 		} else if ( !strcmp( argv[i], "-x" ) ) {
 			f->xclude = 1;
 			i++;
-			f->xstr = argv[i];
-			if ( i >= argc || no_str_arg( f->xstr ) ) {
+			if ( i < argc )
+			    f->xstr = argv[i];
+			if ( no_str_arg( f->xstr ) ) {
 				printf( "Invalid argument for -x\n");
 				exit(1);
 			}
