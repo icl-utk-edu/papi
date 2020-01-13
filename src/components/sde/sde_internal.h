@@ -183,7 +183,6 @@ static int sde_hardware_read_and_store( sde_counter_t *counter, long long int pr
 static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
 static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder );
 int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
-static int get_sde_env(int* sde_num_libs, char ***sde_library_path);
 static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param );
 
 static sde_counter_t *allocate_and_insert(papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, void *param);
