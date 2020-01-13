@@ -45,7 +45,8 @@ typedef struct {
         struct {
                 int             is_dfl:1;
                 int             is_precise:1;
-                int             reserved:30;
+                int             is_speculative:2;
+                int             reserved:28;
         };
         union {
                 uint64_t        dfl_val64;
@@ -125,6 +126,15 @@ This field indicates whether or not this umask supports precise sampling.
 Precise sampling is a hardware mechanism that avoids instruction address
 skid when using interrupt-based sampling. On Intel X86 processors, this
 field indicates that the umask supports Precise Event-Based Sampling (PEBS).
+.TP
+.B is_speculative
+This bitfield indicates whether or not the attribute includes occurrences happening
+during speculative execution for both wrong and correct paths. Given that this
+kind of event information is not always available from vendors, this field uses
+multiple bits. A value of \fBPFM_EVENT_INFO_SPEC_NA\fR indicates that speculation
+information is not available. A value of \fBPFM_EVENT_INFO_SPEC_TRUE\fR indicates
+that the attribute counts during speculative execution. A value of \fBPFM_EVENT_INFO_SPEC_FALSE\fR
+indicates that the attribute does not count during speculative execution.
 .TP
 .B dfl_val64, dfl_str, dfl_bool, dfl_int
 This union contains the value of an attribute. For PFM_ATTR_UMASK, the is
