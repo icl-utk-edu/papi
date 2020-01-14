@@ -667,7 +667,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
     }else{
         // should the following branch ever be true? Why do we already have a group registered if it's empty?
-        if( NULL != tmp_group->counter_group_head ){
+        if( NULL == tmp_group->counter_group_head ){
             PAPIERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.\n", group_name);
         }
 
@@ -1195,6 +1195,8 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
     long long used_entries, total_entries, prev_entries, offset;
     int i, chunk;
     long long tmp_size;
+
+    SUBDBG("Preparing to record value of size %lu at address: %p\n",typesize, value);
 
     papi_sde_lock();
 
@@ -1919,7 +1921,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
         // Our convention is that read attempts on a placeholder will set the counter to "-1" to
         // signify semantically that there was an error, but the function will not return an error
         // to avoid breaking existing programs that do something funny when an error is returned.
-        if( (NULL == counter->data) && (NULL == counter->func_ptr) ){
+        if( (NULL == counter->data) && (NULL == counter->func_ptr) && (NULL == counter->recorder_data) ){
             PAPIERROR("_sde_read(): Attempted read on a placeholder: '%s'.\n",counter->name);
             sde_ctl->counter[i] = -1;
             continue;
@@ -1935,6 +1937,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
 
             // At least the first chunk should have been allocated at creation.
             if( NULL == counter->recorder_data->exp_container[0] ){
+                SUBDBG( "No space has been allocated for recorder %s\n",counter->name);
                 sde_ctl->counter[i] = (long long)-1;
                 continue;
             }
@@ -2003,16 +2006,15 @@ _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *values )
 
         if( NULL == counter->data ){
             if( NULL == counter->func_ptr ){
-                PAPIERROR("_sde_write(): Attempted write on a placeholder: '%s'.\n",counter->name);
+                // If we are not dealing with a simple counter but with a "recorder", which cannot be written, we have to error.
+                if( NULL != counter->recorder_data ){
+                    PAPIERROR("_sde_write(): Attempted write on a recorder: '%s'.\n",counter->name);
+                }else{
+                    PAPIERROR("_sde_write(): Attempted write on a placeholder: '%s'.\n",counter->name);
+                }
             }else{
                 PAPIERROR("_sde_write(): Attempted write on an event based on a callback function instead of a counter: '%s'.\n",counter->name);
             }
-            continue;
-        }
-
-        // If we are not dealing with a simple counter but with a "recorder", which cannot be written, we have to error.
-        if( NULL != counter->recorder_data ){
-            PAPIERROR("_sde_write(): Attempted write on a recorder: '%s'.\n",counter->name);
             continue;
         }
 
