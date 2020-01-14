@@ -48,8 +48,8 @@ papi_mem_info: papi_mem_info.o $(PAPILIB)
 papi_multiplex_cost: papi_multiplex_cost.o $(PAPILIB) cost_utils.o
 	$(CC) -o papi_multiplex_cost papi_multiplex_cost.o cost_utils.o $(PAPILIB) -lm $(LDFLAGS)
 
-papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o
-	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o $(LDFLAGS)
+papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o papi_sde_interface.o
+	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o $(LDFLAGS) papi_sde_interface.o
 
 papi_version: papi_version.o $(PAPILIB)
 	$(CC) -o papi_version papi_version.o $(PAPILIB) $(LDFLAGS)
@@ -64,6 +64,9 @@ cost_utils.o: ../testlib/papi_test.h cost_utils.c
 
 print_header.o: print_header.h print_header.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c print_header.c
+
+papi_sde_interface.o: papi_sde_interface.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c papi_sde_interface.c
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)
