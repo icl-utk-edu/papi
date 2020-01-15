@@ -58,8 +58,8 @@ all: $(TARGETS) rtop
 #
 # Many systems don't have ncurses-devel installed
 #
-rtop: rtop.o $(PFMLIB) $(PERF_EVENT_HDR)
-	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -lm
+rtop: rtop.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
+	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -ltinfo -lm
 
 $(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB)
 	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 
@@ -68,7 +68,7 @@ $(LPC_UTILS): $(LPC_UTILS_HDR)
 
 clean:
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-	$(RM) -f *.o $(TARGETS) *~
+	$(RM) -f *.o $(TARGETS) rtop *~
 
 distclean: clean
 
