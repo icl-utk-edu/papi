@@ -353,6 +353,23 @@ static int _internal_hl_determine_default_events()
          requested_event_names[num_of_requested_events++] = strdup(default_events[i]);
          if ( requested_event_names[num_of_requested_events -1] == NULL )
             return ( PAPI_ENOMEM );
+      } 
+      else {
+         /* if PAPI_FP_OPS is not available try PAPI_SP_OPS or PAPI_DP_OPS */
+         if ( strcmp(default_events[i], "PAPI_FP_OPS") == 0 ) {
+            if ( _internal_hl_checkCounter( "PAPI_SP_OPS" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_SP_OPS");
+            else if ( _internal_hl_checkCounter( "PAPI_DP_OPS" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_DP_OPS");
+         }
+
+         /* if PAPI_FP_INS is not available try PAPI_VEC_SP or PAPI_VEC_DP */
+         if ( strcmp(default_events[i], "PAPI_FP_INS") == 0 ) {
+            if ( _internal_hl_checkCounter( "PAPI_VEC_SP" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_VEC_SP");
+            else if ( _internal_hl_checkCounter( "PAPI_VEC_DP" ) == PAPI_OK )
+               requested_event_names[num_of_requested_events++] = strdup("PAPI_VEC_DP");
+         }
       }
    }
 
@@ -1010,6 +1027,13 @@ static int _internal_hl_mkdir(const char *dir)
    if ( ( tmp = strdup(dir) ) == NULL )
       return ( PAPI_ENOMEM );
    len = strlen(tmp);
+
+   /* check if there is a file with the same name as the ouptut directory */
+   struct stat buf;
+   if ( stat(dir, &buf) == 0 && S_ISREG(buf.st_mode) ) {
+      verbose_fprintf(stdout, "PAPI-HL Error: Name conflict with measurement directory and existing file.\n");
+      return ( PAPI_ESYS );
+   }
 
    if(tmp[len - 1] == '/')
       tmp[len - 1] = 0;
