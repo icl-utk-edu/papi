@@ -1288,6 +1288,7 @@ static void _internal_hl_write_output()
          /* check if events were recorded */
          if ( binary_tree == NULL ) {
             verbose_fprintf(stdout, "PAPI-HL Info: No events were recorded.\n");
+            free(absolute_output_file_path);
             return;
          }
          unsigned long *tids = NULL;
@@ -1303,12 +1304,14 @@ static void _internal_hl_write_output()
             output_generated = true;
             HLDBG("region_begin_cnt=%d, region_end_cnt=%d\n", region_begin_cnt, region_end_cnt);
             _papi_hwi_unlock( HIGHLEVEL_LOCK );
+            free(absolute_output_file_path);
             return;
          }
 
          /* create new measurement directory */
          if ( ( _internal_hl_mkdir(absolute_output_file_path) ) != PAPI_OK ) {
             verbose_fprintf(stdout, "PAPI-HL Error: Cannot create measurement directory %s.\n", absolute_output_file_path);
+            free(absolute_output_file_path);
             return;
          }
 
@@ -1336,6 +1339,7 @@ static void _internal_hl_write_output()
          if ( output_file == NULL )
          {
             verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file %s!\n", absolute_output_file_path);
+            free(absolute_output_file_path);
             return;
          }
          else
@@ -1344,16 +1348,19 @@ static void _internal_hl_write_output()
             if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
                verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
                fclose(output_file);
+               free(absolute_output_file_path);
                return;
             }
             if ( ( tids = malloc( number_of_threads * sizeof(unsigned long) ) ) == NULL ) {
                verbose_fprintf(stdout, "PAPI-HL Error: OOM!\n");
                fclose(output_file);
+               free(absolute_output_file_path);
                return;
             }
             if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
                verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
                fclose(output_file);
+               free(absolute_output_file_path);
                return;
             }
 
@@ -1395,6 +1402,7 @@ static void _internal_hl_write_output()
          }
 
          output_generated = true;
+         free(absolute_output_file_path);
       }
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
