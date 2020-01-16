@@ -394,6 +394,7 @@ static void
 print_attr_flags(pfm_event_attr_info_t *info)
 {
 	int n = 0;
+	int spec = info->is_speculative;
 
 	if (info->is_dfl) {
 		printf("[default] ");
@@ -402,6 +403,11 @@ print_attr_flags(pfm_event_attr_info_t *info)
 
 	if (info->is_precise) {
 		printf("[precise] ");
+		n++;
+	}
+
+	if (spec > PFM_EVENT_INFO_SPEC_NA) {
+		printf("[%s] ", spec == PFM_EVENT_INFO_SPEC_TRUE ? "speculative" : "non-speculative");
 		n++;
 	}
 

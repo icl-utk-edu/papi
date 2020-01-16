@@ -305,6 +305,27 @@ static int _rocm_linkRocmLibraries(void)
     DLSYM_AND_CHECK(dl2, rocprofiler_reset);
     DLSYM_AND_CHECK(dl2, rocprofiler_error_string);
 
+    // Disable if ROCPROFILER env vars not present.
+    if (getenv("ROCP_METRICS") == NULL) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCP_METRICS not set; rocprofiler is not configured.");
+        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    }
+
+    if (getenv("ROCPROFILER_LOG") == NULL) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCPROFILER_LOG not set; rocprofiler is not configured.");
+        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    }
+
+    if (getenv("HSA_VEN_AMD_AQLPROFILE_LOG") == NULL) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG not set; rocprofiler is not configured.");
+        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    }
+
+    if (getenv("AQLPROFILE_READ_API") == NULL) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var.AQLPROFILE_READ_API not set; rocprofiler is not configured.");
+        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    }
+
     return (PAPI_OK);
 }
 
@@ -941,7 +962,9 @@ static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
         return (PAPI_OK);
         break;
     case PAPI_ENUM_EVENTS:
-        if(*EventCode < global__rocm_context->availEventSize - 1) {
+        if(global__rocm_context == NULL) {
+            return (PAPI_ENOEVNT);
+        } else if(*EventCode < global__rocm_context->availEventSize - 1) {
             *EventCode = *EventCode + 1;
             return (PAPI_OK);
         } else
@@ -968,7 +991,7 @@ static int _rocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 
     unsigned int index = EventCode;
     _rocm_context_t *gctxt = global__rocm_context;
-    if(index < gctxt->availEventSize) {
+    if(gctxt != NULL && index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].name, len);
     } else {
         return (PAPI_EINVAL);
@@ -989,7 +1012,7 @@ static int _rocm_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
 
     unsigned int index = EventCode;
     _rocm_context_t *gctxt = global__rocm_context;
-    if(index < gctxt->availEventSize) {
+    if(gctxt != NULL && index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].description, len);
     } else {
         return (PAPI_EINVAL);

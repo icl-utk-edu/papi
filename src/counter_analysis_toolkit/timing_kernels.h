@@ -15,7 +15,10 @@
 #define NW_16  NW_2 NW_2 NW_2 NW_2 NW_2 NW_2 NW_2 NW_2
 #define NW_128 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16
 
-run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock, uintptr_t *v, uintptr_t *rslt, int detect_size, int readwrite);
+#define CACHE_READ_ONLY  0x0
+#define CACHE_READ_WRITE 0x1
+
+run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock, uintptr_t *v, uintptr_t *rslt, int detect_size, int mode);
 void error_handler(int e, int line);
 
 #endif

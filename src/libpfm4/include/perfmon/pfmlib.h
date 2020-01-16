@@ -419,7 +419,7 @@ typedef enum {
 	PFM_PMU_INTEL_BDX_UNC_SB2,	/* Intel Broadwell-X S-Box 2 uncore */
 	PFM_PMU_INTEL_BDX_UNC_SB3,	/* Intel Broadwell-X S-Box 3 uncore */
 
-	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen */
+	PFM_PMU_AMD64_FAM17H,		/* AMD AMD64 Fam17h Zen1 (deprecated) */
 	PFM_PMU_AMD64_FAM16H,		/* AMD AMD64 Fam16h Jaguar */
 
 	PFM_PMU_INTEL_SKX,		/* Intel Skylake-X */
@@ -543,9 +543,19 @@ typedef enum {
 
 	PFM_PMU_INTEL_KNM_UNC_UBOX,	/* Intel Knights Mill Ubox uncore */
 	PFM_PMU_INTEL_KNM_UNC_M2PCIE,	/* Intel Knights Mill M2PCIe uncore */
-	PFM_PMU_ARM_THUNDERX2,		/* Cavium ThunderX2 */
+	PFM_PMU_ARM_THUNDERX2,		/* Marvell ThunderX2 */
 
 	PFM_PMU_INTEL_CLX,		/* Intel CascadeLake X */
+
+	PFM_PMU_ARM_THUNDERX2_DMC0,	/* Marvell ThunderX2 DMC unit 0 uncore */
+	PFM_PMU_ARM_THUNDERX2_DMC1,	/* Marvell ThunderX2 DMC unit 1 uncore */
+	PFM_PMU_ARM_THUNDERX2_LLC0,	/* Marvell ThunderX2 LLC unit 0 uncore */
+	PFM_PMU_ARM_THUNDERX2_LLC1,	/* Marvell ThunderX2 LLC unit 1 uncore */
+	PFM_PMU_ARM_THUNDERX2_CCPI0,	/* Marvell ThunderX2 Cross-Socket Interconnect unit 0 uncore */
+	PFM_PMU_ARM_THUNDERX2_CCPI1,	/* Marvell ThunderX2 Cross-Socket Interconnect unit 1 uncore */
+
+	PFM_PMU_AMD64_FAM17H_ZEN1,	/* AMD AMD64 Fam17h Zen1 */
+	PFM_PMU_AMD64_FAM17H_ZEN2,	/* AMD AMD64 Fam17h Zen2 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
@@ -645,10 +655,14 @@ typedef struct {
 	} SWIG_NAME(flags);
 } pfm_pmu_info_t;
 
+/*
+ * possible values for pfm_event_info_t.is_speculative
+ * possible values for pfm_event_attr_info_t.is_speculative
+ */
 typedef enum {
-	PFM_EVENT_INFO_SPEC_NA    = 0,
-	PFM_EVENT_INFO_SPEC_TRUE  = 1,
-	PFM_EVENT_INFO_SPEC_FALSE = 2,
+	PFM_EVENT_INFO_SPEC_NA    = 0, /* speculation info not available */
+	PFM_EVENT_INFO_SPEC_TRUE  = 1, /* counts speculative exec events */
+	PFM_EVENT_INFO_SPEC_FALSE = 2, /* counts non-speculative exec events */
 } pfm_event_info_spec_t;
 
 typedef struct {
@@ -681,7 +695,8 @@ typedef struct {
 	struct {
 		unsigned int    is_dfl:1;	/* is default umask */
 		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
-		unsigned int	reserved_bits:30;
+		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
+		unsigned int	reserved_bits:28;
 	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */

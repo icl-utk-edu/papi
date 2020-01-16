@@ -110,6 +110,8 @@ main( int argc, char **argv )
 
 	/* Automatically pass if no events, for run_tests.sh */
 	if ( num_events == 0 ) {
+      free(values);
+      free(success);
 		printf("No events specified!\n");
 		printf("Try running something like: %s PAPI_TOT_CYC\n\n",
 			argv[0]);
@@ -124,6 +126,8 @@ main( int argc, char **argv )
 
 	retval = PAPI_start( EventSet );
 	if (retval != PAPI_OK ) {
+      free(values);
+      free(success);
 		fprintf(stderr,"Error! PAPI_start\n");
 		exit( retval );
 	}
@@ -133,6 +137,8 @@ main( int argc, char **argv )
 
 	retval = PAPI_stop( EventSet, values );
 	if (retval != PAPI_OK ) {
+      free(values);
+      free(success);
 		fprintf(stderr,"Error! PAPI_stop\n");
 		exit( retval );
 	}
@@ -170,6 +176,8 @@ main( int argc, char **argv )
 
 	printf( "\n----------------------------------\n" );
 
+   free(values);
+   free(success);
 	return 0;
 
 }

@@ -184,15 +184,17 @@ main( int argc, char **argv )
 	  } else {
 	    /* Event didn't have any umasks */
 
-//		printf("%s\n",info1.symbol);
-		if (strlen(info1.symbol)>5) {
-			info1.symbol[strlen(info1.symbol)-4]^=0xa5;
+      // PROBLEM: info1 is NOT initialized by anyone!
+      // Original code referenced info1, changed to info. [Tony C. 11-27-19] 
+//		printf("%s\n",info.symbol);
+		if (strlen(info.symbol)>5) {
+			info.symbol[strlen(info.symbol)-4]^=0xa5;
 
-			retval=PAPI_add_named_event(EventSet,info1.symbol);
+			retval=PAPI_add_named_event(EventSet,info.symbol);
 			if (retval==PAPI_OK) {
 				if (!quiet) {
 					printf("Unexpectedly opened %s!\n",
-						info1.symbol);
+						info.symbol);
 					err_count++;
 				}
 			}

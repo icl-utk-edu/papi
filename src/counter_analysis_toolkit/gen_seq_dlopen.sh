@@ -234,7 +234,7 @@ void seq_driver(FILE* ofp_papi, char* papi_event_name, int init){
     for(i=0; i<BUF_ELEM_CNT; i++){
         buff[i] = floor( ((float)i+0.71)/((float)i+8.0*(float)init) );
         if( (int)buff[i] != 0 )
-            fprintf(stderr,"buff[%d] = %f (%d)\n",i, buff[i], (int)buff[i]);
+            fprintf(stderr,"WARNING: this element should have been zero: buff[%d] = %d (%f). The branch benchmarks might not work properly.\n",i, (int)buff[i], buff[i]);
     }
 
     // Set the variable to zero in a way that the compiler cannot figure it out.
@@ -242,11 +242,9 @@ void seq_driver(FILE* ofp_papi, char* papi_event_name, int init){
 
 	//set up PAPI
 	if((ret=PAPI_create_eventset(&eventset)) != PAPI_OK){
-		fprintf(stderr,"PAPI create eventset error:%s \n",PAPI_strerror(ret));
 		return;
 	}
 	if((ret=PAPI_add_named_event(eventset, papi_event_name)) != PAPI_OK){
-		fprintf(stderr,"PAPI add event error:%s \n",PAPI_strerror(ret));
 		return;
 	}
 
@@ -299,6 +297,18 @@ EOF
     if( 174562 == side_effect ){
         printf("Random side-effect\n");
     }
+
+    ret = PAPI_cleanup_eventset( eventset );
+    if (ret != PAPI_OK ){
+        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret);
+        return;
+    }
+    ret = PAPI_destroy_eventset( &eventset );
+    if (ret != PAPI_OK ){
+        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret);
+        return;
+    }
+
 
     return;
 }
