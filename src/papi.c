@@ -244,6 +244,7 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   * @see PAPI_flips_rate()
   * @see PAPI_ipc()
   * @see PAPI_epc()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float *mflops )
@@ -306,6 +307,7 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_epc()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
@@ -369,6 +371,7 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_ipc()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
@@ -388,6 +391,44 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
    *core = values[1];
    return ( retval );
    }
+
+/** @class PAPI_rate_stop
+  * @brief Stop counting hardware events of rate functions.
+  *
+  * @par C Interface: 
+  * \#include <papi.h> @n
+  * int PAPI_rate_stop();
+  * 
+  * @retval PAPI_ENOEVNT 
+  * -- The EventSet is not started yet.
+  * @retval PAPI_ENOMEM 
+  * -- Insufficient memory to complete the operation. 
+  *
+  * PAPI_rate_stop stops the counters of a rate function and destroys the event set.
+  *
+  * @see PAPI_flips_rate()
+  * @see PAPI_flops_rate()
+  * @see PAPI_ipc()
+  * @see PAPI_epc()
+ */
+int
+PAPI_rate_stop()
+{
+   int retval;
+   long long tmp_values[3];
+
+   if ( _state != NULL ) {
+      if ( _state->running > STOP ) {
+         retval = PAPI_stop( _state->EventSet, tmp_values );
+         if ( retval == PAPI_OK ) {
+            PAPI_cleanup_eventset( _state->EventSet );
+            _state->running = STOP;
+         }
+         return retval;
+      }
+   }
+   return ( PAPI_ENOEVNT );
+}
 
 static int
 _start_new_rate_call(float *real_time, float *proc_time, int *events,
