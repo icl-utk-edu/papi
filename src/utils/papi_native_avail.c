@@ -46,9 +46,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <dlfcn.h>
 
 #include "papi.h"
 #include "print_header.h"
+#include "components/sde/interface/papi_sde_interface.h"
 
 #define EVT_LINE 80
 #define EVT_LINE_BUF_SIZE 4096
@@ -60,7 +63,8 @@ typedef struct command_flags
 	int include;
 	int xclude;
 	int check;
-	char *name, *istr, *xstr;
+	int list_sdes;
+	char *path, *name, *istr, *xstr;
 	int darr;
 	int dear;
 	int iarr;
@@ -80,6 +84,7 @@ print_help( char **argv )
 	printf( "\nGeneral command options:\n" );
 	printf( "\t-h, --help       print this help message\n" );
 	printf( "\t-c, --check      attempts to add each event\n");
+	printf( "\t-sde FILE        lists SDEs that are registered by the library or executable in FILE\n" );
 	printf( "\t-e EVENTNAME     display detailed information about named native event\n" );
 	printf( "\t-i EVENTSTR      include only event names that contain EVENTSTR\n" );
 	printf( "\t-x EVENTSTR      exclude any event names that contain EVENTSTR\n" );
@@ -128,24 +133,36 @@ parse_args( int argc, char **argv, command_flags_t * f )
 		else if ( !strcmp( argv[i], "-e" ) ) {
 			f->named = 1;
 			i++;
-			f->name = argv[i];
-			if ( i >= argc || no_str_arg( f->name ) ) {
+			if ( i < argc )
+			    f->name = argv[i];
+			if ( no_str_arg( f->name ) ) {
 				printf( "Invalid argument for -e\n");
+				exit(1);
+			}
+		} else if ( !strcmp( argv[i], "-sde" ) ) {
+			f->list_sdes = 1;
+			i++;
+			if ( i < argc )
+			    f->path = argv[i];
+			if ( no_str_arg( f->path ) ) {
+				printf( "Invalid argument for -sde\n");
 				exit(1);
 			}
 		} else if ( !strcmp( argv[i], "-i" ) ) {
 			f->include = 1;
 			i++;
-			f->istr = argv[i];
-			if ( i >= argc || no_str_arg( f->istr ) ) {
+			if ( i < argc )
+			    f->istr = argv[i];
+			if ( no_str_arg( f->istr ) ) {
 				printf( "Invalid argument for -i\n");
 				exit(1);
 			}
 		} else if ( !strcmp( argv[i], "-x" ) ) {
 			f->xclude = 1;
 			i++;
-			f->xstr = argv[i];
-			if ( i >= argc || no_str_arg( f->xstr ) ) {
+			if ( i < argc )
+			    f->xstr = argv[i];
+			if ( no_str_arg( f->xstr ) ) {
 				printf( "Invalid argument for -x\n");
 				exit(1);
 			}
@@ -351,6 +368,33 @@ parse_event_qualifiers( PAPI_event_info_t * info )
 	return ( 1 );
 }
 
+void
+invoke_hook_fptr( char *lib_path )
+{
+    void *dl_handle;
+    typedef void *(* hook_fptr_t)(papi_sde_fptr_struct_t *);
+    hook_fptr_t hook_func_ptr;
+
+    /* Clear any old error conditions */
+    (void)dlerror();
+
+    dl_handle = dlopen(lib_path, RTLD_LOCAL | RTLD_LAZY);
+    if ( NULL == dl_handle ) {
+        return;
+    }
+
+    hook_func_ptr = (hook_fptr_t)dlsym(dl_handle, "papi_sde_hook_list_events");
+    if ( (NULL != hook_func_ptr) && ( NULL == dlerror()) ) {
+        papi_sde_fptr_struct_t fptr_struct;
+
+        POPULATE_SDE_FPTR_STRUCT( fptr_struct );
+        (void)hook_func_ptr( &fptr_struct );
+    }
+
+    dlclose(dl_handle);
+    return;
+}
+
 int
 main( int argc, char **argv )
 {
@@ -399,6 +443,77 @@ main( int argc, char **argv )
 		fprintf(stderr,"Error!  PAPI_get_hardware_info\n");
 		return 2;
 	}
+
+    /*
+       The following code will execute if the user wants to list the SDEs in the
+       library (or executable) stored in flags.path. This code will not list the
+       SDEs per se, it will only give an opportunity to the library to register
+       their SDEs, so they can be listed further down.
+    */
+    if ( flags.list_sdes ){
+        char *cmd;
+        FILE *pipe;
+
+        if ( access(flags.path, R_OK) == -1 ){
+            fprintf(stderr,"Error!  Unable to read file '%s'.\n",flags.path);
+            goto no_sdes;
+        }
+
+        int len = 5+strlen(flags.path);
+        cmd = (char *)calloc(len, sizeof(char));
+        if( NULL == cmd ) goto no_sdes;
+
+        int l = snprintf(cmd, len, "ldd %s",flags.path);
+        if(l<len-1){
+            free(cmd);
+            goto no_sdes;
+        }
+
+        /* First open all the dependencies of the file we were given */
+        pipe = popen(cmd, "r");
+        if( NULL != pipe ){
+            while( !feof(pipe) ){
+                char *lineptr, *lib_name, *lib_path;
+                size_t n=0;
+                lineptr = lib_name = lib_path = NULL;
+
+                if( getline(&lineptr, &n, pipe) == -1 ){
+                    if(lineptr) free(lineptr);
+                    break;
+                }
+
+                /* If this line does not give us a path to a library, ignore it. */
+                if( (NULL != strstr(lineptr,"not found")) || (NULL == strstr(lineptr," => ")) ) {
+                    goto skip_lib;
+                }
+
+                int status = sscanf(lineptr, "%ms => %ms (%*x)", &lib_name, &lib_path);
+                /* If this line is malformed, ignore it. */
+                if(2 != status){
+                    /* According to the man page: "it is necessary to call free()
+                       only if the scanf() call successfully read a string." */
+                    goto skip_lib;
+                }
+
+                /* Invoke the hook for the dependency we just discovered */
+                invoke_hook_fptr(lib_path);
+
+                if( lib_name ) free(lib_name);
+                if( lib_path ) free(lib_path);
+skip_lib:
+                if(lineptr) free(lineptr);
+                lineptr = NULL;
+                n=0;
+            }
+            pclose(pipe);
+        }
+
+        /* Finally, invoke the hook for the file the user gave us */
+        invoke_hook_fptr(flags.path);
+
+        if( NULL != cmd ) free(cmd);
+    }
+no_sdes:
 
 	/* Do this code if the event name option was specified on the commandline */
 	if ( flags.named ) {

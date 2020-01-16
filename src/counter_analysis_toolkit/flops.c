@@ -12,7 +12,6 @@
 #define MAX_ERROR 80
 #define MAX_DIFF  14
 
-// FMA is supported on POWER9!!!
 #if defined(mips)
 #define FMA 1
 #elif (defined(sparc) && defined(sun))
@@ -28,18 +27,16 @@ static void resultline( int i, int j, int EventSet, FILE *fp)
     int retval;
 
     if ( (retval=PAPI_stop(EventSet, &flpins)) != PAPI_OK){
-        fprintf(stderr, "Not able to stop counter\n");
-        fprintf(stderr, "PAPI stop event funciton call return value is:%d\n", retval);
+        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return;
     }
 
-    i++;					 /* convert to 1s base  */
+    i++;
     theory = 2;
     while ( j-- )
-        theory *= i;		 /* theoretical ops   */
+        theory *= i;
     papi = flpins << FMA;
 
-    //fprintf( "%8d %12lld %12lld %8d %10.4f\n", i, papi, theory);
     fprintf(fp, "%lld\n", papi);
 }
 
@@ -106,8 +103,7 @@ static void reset_flops( int EventSet )
     int retval;
 
     if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
-        fprintf(stderr, "Not able to start event\n");
-        fprintf(stderr, "PAPI start event funciton call return value is:%d\n", retval);
+        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
     }
 
     return;
@@ -306,29 +302,23 @@ void flops_driver(char* papi_event_name, char* outdir)
 
     int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
     if (NULL == (papiFileName = (char *)calloc( 1+l, sizeof(char)))) {
-        fprintf(stderr, "Failed to allocate papiFileName.\n");
         return;
     }
     if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {
-        fprintf(stderr, "sprintf failed to copy into papiFileName.\n");
         goto error0;
     }
     if (NULL == (ofp_papi = fopen(papiFileName,"w"))) {
         fprintf(stderr, "Failed to open file %s.\n", papiFileName);
         goto error0;
     }
-
   
-    // Set up PAPI event set.
     retval = PAPI_create_eventset( &EventSet );
     if (retval != PAPI_OK ){
-        fprintf(stderr, "PAPI_create_eventset() returned %d\n",retval);
         goto error1;
     }
 
     retval = PAPI_add_named_event( EventSet, papi_event_name );
     if (retval != PAPI_OK ){
-        fprintf(stderr, "PAPI_add_named_event() returned %d\n",retval);
         goto error1;
     }
 
@@ -336,6 +326,17 @@ void flops_driver(char* papi_event_name, char* outdir)
 
     exec_flops(0, EventSet, retval, ofp_papi);
     exec_flops(1, EventSet, retval, ofp_papi);
+
+    retval = PAPI_cleanup_eventset( EventSet );
+    if (retval != PAPI_OK ){
+        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",retval);
+        goto error1;
+    }
+    retval = PAPI_destroy_eventset( &EventSet );
+    if (retval != PAPI_OK ){
+        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",retval);
+        goto error1;
+    }
 
 error1:
     fclose(ofp_papi);

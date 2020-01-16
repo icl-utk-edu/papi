@@ -225,6 +225,28 @@ def format_events(events):
       mflips = float(format(mflips, '.2f'))
       format_events['MFLIPS/s'] = mflips
     del events['PAPI_FP_INS']
+
+  #SP vector instructions per second
+  if 'PAPI_VEC_SP' in events:
+    if isinstance(events['PAPI_VEC_SP'],dict):
+      mvecins_dict = get_ops_dict(events['PAPI_VEC_SP'], rt_dict)
+      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+    else:
+      mvecins = float(events['PAPI_VEC_SP']) / 1000000 / rt
+      mvecins = float(format(mvecins, '.2f'))
+      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins
+    del events['PAPI_VEC_SP']
+
+  #DP vector instructions per second
+  if 'PAPI_VEC_DP' in events:
+    if isinstance(events['PAPI_VEC_DP'],dict):
+      mvecins_dict = get_ops_dict(events['PAPI_VEC_DP'], rt_dict)
+      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+    else:
+      mvecins = float(events['PAPI_VEC_DP']) / 1000000 / rt
+      mvecins = float(format(mvecins, '.2f'))
+      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins
+    del events['PAPI_VEC_DP']
   
   #FLOPS
   if 'PAPI_FP_OPS' in events:
@@ -237,6 +259,28 @@ def format_events(events):
       format_events['MFLOPS/s'] = mflops
     del events['PAPI_FP_OPS']
   
+  #SP FLOPS
+  if 'PAPI_SP_OPS' in events:
+    if isinstance(events['PAPI_SP_OPS'],dict):
+      mflops_dict = get_ops_dict(events['PAPI_SP_OPS'], rt_dict)
+      format_events['Single precision MFLOPS/s'] = mflops_dict
+    else:
+      mflops = float(events['PAPI_SP_OPS']) / 1000000 / rt
+      mflops = float(format(mflops, '.2f'))
+      format_events['Single precision MFLOPS/s'] = mflops
+    del events['PAPI_SP_OPS']
+
+  #DP FLOPS
+  if 'PAPI_DP_OPS' in events:
+    if isinstance(events['PAPI_DP_OPS'],dict):
+      mflops_dict = get_ops_dict(events['PAPI_DP_OPS'], rt_dict)
+      format_events['Double precision MFLOPS/s'] = mflops_dict
+    else:
+      mflops = float(events['PAPI_DP_OPS']) / 1000000 / rt
+      mflops = float(format(mflops, '.2f'))
+      format_events['Double precision MFLOPS/s'] = mflops
+    del events['PAPI_DP_OPS']
+
   #read the rest
   for event_key,event_value in events.iteritems():
     if isinstance(event_value,dict):
