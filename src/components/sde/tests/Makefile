@@ -63,7 +63,7 @@ Recorder_Test: $(prfx)/Recorder_Driver.c $(prfx)/libRecorder.so
 prfx=Advanced_C+FORTRAN
 rcrd_prfx=Recorder
 
-sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) $(prfx)/libXandria.so $(prfx)/libGamum.so $(prfx)/libRecorder.so
+sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) $(prfx)/libXandria.so $(prfx)/libGamum.so $(rcrd_prfx)/libRecorder.so
 	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(prfx)/libXandria.so $(prfx)/libGamum.so $(rcrd_prfx)/libRecorder.so $(PAPILIB) $(LDFLAGS)
 
 $(prfx)/libXandria.so: $(prfx)/Xandria.F90 weak_symbols.o
