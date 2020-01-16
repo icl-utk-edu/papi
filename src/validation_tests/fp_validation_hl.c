@@ -1,6 +1,4 @@
-/* flops.c, based on the hl_rates.c ctest
- *
- * This test runs a "classic" matrix multiply
+/* This test runs a "classic" matrix multiply
  * and then runs it again with the inner loop swapped.
  * the swapped version should have better MFLIPS/MFLOPS/IPC and we test that.
  */

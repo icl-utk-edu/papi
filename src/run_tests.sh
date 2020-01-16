@@ -136,7 +136,7 @@ do
       
       #delete output folder for high-level tests
       case "$i" in
-        *"_hl"*) rm -r papi ;;
+        *"_hl"*) rm -r papi_hl_output ;;
       esac
 
     fi;
@@ -165,7 +165,7 @@ do
 
       #delete output folder for high-level tests
       case "$i" in
-        *"_hl"*) rm -r papi ;;
+        *"_hl"*) rm -r papi_hl_output ;;
       esac
 
     fi;
@@ -194,7 +194,7 @@ do
 
       #delete output folder for high-level tests
       case "$i" in
-        *"_hl"*) rm -r papi ;;
+        *"_hl"*) rm -r papi_hl_output ;;
       esac
 
     fi;
