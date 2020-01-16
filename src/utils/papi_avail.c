@@ -320,11 +320,11 @@ main( int argc, char **argv )
    for( args = 1; args < argc; args++ ) {
       if ( strstr( argv[args], "-e" ) ) {
 	 print_event_info = 1;
-	 name = argv[args + 1];
-	 if ( ( name == NULL ) || ( strlen( name ) == 0 ) ) {
+         if( (args+1 >= argc) || ( argv[args+1] == NULL ) || ( strlen( argv[args+1] ) == 0 ) ) {
 	    print_help( argv );
 	    exit( 1 );
 	 }
+	 name = argv[args + 1];
       }
       else if ( strstr( argv[args], "-c" ) || strstr (argv[args], "--check") )
       {

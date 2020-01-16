@@ -962,18 +962,18 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		if (npebs && !intel_x86_eflag(this, i, INTEL_X86_PEBS)) {
-			fprintf(fp, "pmu: %s event%d: %s, pebs umasks but event pebs flag not set\n", pmu->name, i, pe[i].name);
+			fprintf(fp, "pmu: %s event%d: %s, pebs umasks but event pebs flag is not set\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
 		if (intel_x86_eflag(this, i, INTEL_X86_PEBS) && pe[i].numasks && npebs == 0) {
-			fprintf(fp, "pmu: %s event%d: %s, pebs event flag but not umask has pebs flag\n", pmu->name, i, pe[i].name);
+			fprintf(fp, "pmu: %s event%d: %s, pebs event flag but no umask has the pebs flag\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
 		/* if only one umask, then ought to be default */
 		if (pe[i].numasks == 1 && !(pe[i].umasks[0].uflags & INTEL_X86_DFL)) {
-			fprintf(fp, "pmu: %s event%d: %s, only one umask but no default\n", pmu->name, i, pe[i].name);
+			fprintf(fp, "pmu: %s event%d: %s, only one umask but no default set\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 
@@ -1003,7 +1003,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 skip_dfl:
 
 		if (pe[i].flags & INTEL_X86_NCOMBO) {
-			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is unit mask only flag\n", pmu->name, i, pe[i].name);
+			fprintf(fp, "pmu: %s event%d: %s :: NCOMBO is a umask only flag\n", pmu->name, i, pe[i].name);
 			error++;
 		}
 

@@ -78,7 +78,9 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam15h_interlagos_support,
 	&amd64_fam15h_nb_support,
 	&amd64_fam16h_support,
-	&amd64_fam17h_support,
+	&amd64_fam17h_deprecated_support,
+	&amd64_fam17h_zen1_support,
+	&amd64_fam17h_zen2_support,
 	&intel_core_support,
 	&intel_atom_support,
 	&intel_nhm_support,
@@ -713,6 +715,12 @@ pfmlib_pmu_active(pfmlib_pmu_t *pmu)
 }
 
 static inline int
+pfmlib_pmu_deprecated(pfmlib_pmu_t *pmu)
+{
+        return !!(pmu->flags & PFMLIB_PMU_FL_DEPR);
+}
+
+static inline int
 pfmlib_pmu_initialized(pfmlib_pmu_t *pmu)
 {
         return !!(pmu->flags & PFMLIB_PMU_FL_INIT);
@@ -1344,7 +1352,7 @@ pfmlib_build_event_pattrs(pfmlib_event_desc_t  *e)
 		npattrs++;
 
 	if (npattrs) {
-		e->pattrs = malloc(npattrs * sizeof(*e->pattrs));
+		e->pattrs = calloc(npattrs, sizeof(*e->pattrs));
 		if (!e->pattrs)
 			return PFM_ERR_NOMEM;
 	}
@@ -1494,6 +1502,14 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		 * only look for active PMU models
 		 */
 		if (!pname && !pfmlib_pmu_active(pmu))
+			continue;
+
+		/*
+		 * if the PMU name is not passed, then if
+		 * the pmu is deprecated, then skip it. It means
+		 * there is a better candidate in the active list
+		 */
+		if (!pname && pfmlib_pmu_deprecated(pmu))
 			continue;
 		/*
 		 * check for requested PMU name,
@@ -1962,8 +1978,7 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 	/* default data type is uint64 */
 	info.dtype = PFM_DTYPE_UINT64;
 
-	/* reset flags */
-	info.is_precise  = 0;
+	/* initialize flags */
 	info.is_speculative = PFM_EVENT_INFO_SPEC_NA;
 
 	ret = pmu->get_event_info(pmu, pidx, &info);
@@ -1991,10 +2006,10 @@ pfm_get_event_info(int idx, pfm_os_t os, pfm_event_info_t *uinfo)
 int
 pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_t *uinfo)
 {
-	pfmlib_event_attr_info_t info;
+	pfmlib_event_attr_info_t *info;
 	pfmlib_event_desc_t e;
 	pfmlib_pmu_t *pmu;
-	size_t sz = sizeof(info);
+	size_t sz = sizeof(*info);
 	int pidx, ret;
 
 	if (!PFMLIB_INITIALIZED())
@@ -2031,10 +2046,7 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	if (attr_idx >= e.npattrs)
 		goto error;
 
-	/*
-	 * copy event_attr_info
-	 */
-	info = e.pattrs[attr_idx];
+	info = &e.pattrs[attr_idx];
 
 	/*
 	 * info.idx = private, namespace specific index,
@@ -2044,18 +2056,19 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	 * cannot memcpy() info into uinfo as they do not
 	 * have the same size, cf. idx field (uint64 vs, uint32)
 	 */
-	uinfo->name  = info.name;
-	uinfo->desc  = info.desc;
-	uinfo->equiv = info.equiv;
+	uinfo->name  = info->name;
+	uinfo->desc  = info->desc;
+	uinfo->equiv = info->equiv;
 	uinfo->size  = sz;
-	uinfo->code  = info.code;
-	uinfo->type  = info.type;
+	uinfo->code  = info->code;
+	uinfo->type  = info->type;
 	uinfo->idx   = attr_idx;
-	uinfo->ctrl  = info.ctrl;
-	uinfo->is_dfl= info.is_dfl;
-	uinfo->is_precise = info.is_precise;
+	uinfo->ctrl  = info->ctrl;
+	uinfo->is_dfl= info->is_dfl;
+	uinfo->is_precise = info->is_precise;
+	uinfo->is_speculative = info->is_speculative;
 	uinfo->reserved_bits = 0;
-	uinfo->dfl_val64 = info.dfl_val64;
+	uinfo->dfl_val64 = info->dfl_val64;
 
 	ret = PFM_SUCCESS;
 error:

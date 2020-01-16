@@ -856,42 +856,42 @@
           print *,''
 
 ! 16
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:CNT', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:CNT', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
           endif
 
 ! 17
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:MIN', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MIN', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
           endif
 
 ! 18
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:Q1', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:Q1', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
           endif
 
 ! 19
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:MED', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MED', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
           endif
 
 ! 20
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:Q3', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:Q3', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
           endif
 
 ! 21
-          call papif_add_named_event(eventset, 'sde:::Recorder::simple_recording:MAX', ret_val )
+          call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MAX', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
               stop
@@ -909,26 +909,26 @@
               stop
           endif
 
-          print '(A42,I4)',     '  Recorder::simple_recording:CNT (1036) = ', values(16)
+          print '(A51,I4)',     '  Lib_With_Recorder::simple_recording:CNT (1036) = ', values(16)
           if( abs(values(16) - 1036) .gt. 0 ) then
               print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
           
           call c_f_pointer(transfer(values(17), quantile), quantile_f)
-          print '(A45,I6)',     '  Recorder::simple_recording:MIN (     >0) = ', quantile_f
+          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MIN (     >0) = ', quantile_f
 
           call c_f_pointer(transfer(values(18), quantile), quantile_f)
-          print '(A45,I6)',     '  Recorder::simple_recording:Q1  ( ~30864) = ', quantile_f
+          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q1  ( ~30864) = ', quantile_f
 
           call c_f_pointer(transfer(values(19), quantile), quantile_f)
-          print '(A45,I6)',     '  Recorder::simple_recording:MED ( ~61728) = ', quantile_f
+          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MED ( ~61728) = ', quantile_f
 
           call c_f_pointer(transfer(values(20), quantile), quantile_f)
-          print '(A45,I6)',     '  Recorder::simple_recording:Q3  ( ~92592) = ', quantile_f
+          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q3  ( ~92592) = ', quantile_f
 
           call c_f_pointer(transfer(values(21), quantile), quantile_f)
-          print '(A45,I6)',     '  Recorder::simple_recording:MAX (<123456) = ', quantile_f
+          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MAX (<123456) = ', quantile_f
 
 !-------------------------------------------------------------------------------
           print *,''

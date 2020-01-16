@@ -264,57 +264,6 @@ int delete_counter(papisde_library_desc_t* lib_handle, const char* name)
     return 0;
 }
 
-/******************************************************/
-/* Helper function for reading environment variables  */
-/******************************************************/
-
-/**
-  This function assumes that the evironment variable 'PAPI_SDE_LIB_PATHS'
-  contain paths to SDE enbaled libraries. Paths to different libraries
-  are separated with a colon (':').
-
-  @param[out] sde_num_libs is a pointer to an integer which this function will set to the number of libraries found in PAPI_SDE_LIB_PATHS.
-  @param[out] sde_library_path is an array of strings each containing the path to a single library. Space is allocated by this function.
-  @return PAPI_OK on success, or -1 if no paths to libraries are found.
- */
-static int get_sde_env(int *sde_num_libs, char ***sde_library_path) 
-{
-    int i, lib_count;
-    char *tkn;
-
-    // count ':' characters in PAPI_SDE_LIB_PATHS to set sde_num_libs
-    char *sde_library_path_env = getenv( "PAPI_SDE_LIB_PATHS" );
-    if (NULL != sde_library_path_env) {
-        char* tmp_ptr = sde_library_path_env;
-        lib_count=1;
-        while( NULL != (tmp_ptr = strchr(tmp_ptr, ':'))) {                                                                                                                       
-            lib_count++;                                                                                                             
-            tmp_ptr++;
-        }
-        SUBDBG("Number of libraries found in PAPI_SDE_LIB_PATHS: %d\n", lib_count);
-    }
-    else {
-        SUBDBG("For list of SDEs user must set envirnment variable 'PAPI_SDE_LIB_PATHS' with ':' separating paths to SDE enabled libraries.\n");
-        return -1; 
-    }
-
-    (*sde_library_path) = (char **)calloc(lib_count, sizeof(char *));
-
-    /* if we are here it means that (sde_library_path_env != NULL) */
-    tkn = strtok(sde_library_path_env, ":");
-    (*sde_library_path)[0] = strdup(tkn);
-    for (i=1; i<lib_count; i++ ) {
-        tkn = strtok(NULL, ":");
-        (*sde_library_path)[i] = strdup(tkn);
-    }
-    *sde_num_libs = lib_count;
-
-    return PAPI_OK; 
-}
-
-
-
-
 /*************************************************************************/
 /* Below is the actual "hardware implementation" of the sde counters     */
 /*************************************************************************/
@@ -718,7 +667,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
     }else{
         // should the following branch ever be true? Why do we already have a group registered if it's empty?
-        if( NULL != tmp_group->counter_group_head ){
+        if( NULL == tmp_group->counter_group_head ){
             PAPIERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.\n", group_name);
         }
 
@@ -1247,6 +1196,8 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
     int i, chunk;
     long long tmp_size;
 
+    SUBDBG("Preparing to record value of size %lu at address: %p\n",typesize, value);
+
     papi_sde_lock();
 
     tmp_item = (sde_counter_t *)record_handle;
@@ -1732,98 +1683,10 @@ __attribute__((visibility("default")))
 static int
 _sde_init_component( int cidx )
 {
-    void   *dl_handle;
-    typedef void *(* hook_fptr_t)(papi_sde_fptr_struct_t *);
-    hook_fptr_t fptr;
-    char *error;
-    int i, sde_num_libs, info = 0;
-    char **sde_library_path;    
-    papi_sde_fptr_struct_t fptr_struct;
-
     SUBDBG("_sde_init_component...\n");
 
     _sde_vector.cmp_info.num_native_events = 0;
     _sde_vector.cmp_info.CmpIdx = cidx;
-
-    /*
-     If the component is initialized because of the utility 'papi_native_avail' then the user must have
-     some environment variables set to let this code find the relevant libraries and query their SDEs.
-     If these environment variables are not set we will assume that this is a component initialization
-     which happens in a library, or application code and not in papi_native_avail.
-    */
-    info = get_sde_env(&sde_num_libs, &sde_library_path);
-    if ( info != 0 ) {
-        SUBDBG("No env info on SDE libraries\n");
-        /* If the user does not give us a list of SDE libraries, we don't have to do anything. */
-        return PAPI_OK;
-    }
-    SUBDBG("Found env info on SDE libraries\n");
-
-    POPULATE_SDE_FPTR_STRUCT( fptr_struct );
-
-    for(i=0; i<sde_num_libs; i++) {
-        papisde_library_desc_t *tmp_lib;
-
-        SUBDBG("_sde_init_component(): dlopen [%d-th library] : %s --- %s %d\n", i, sde_library_path[i], __FILE__, __LINE__);
-
-        /* Open one of the dynamic libraries specified in the environment variable PAPI_SDE_LIB_PATHS */
-        dl_handle = dlopen(sde_library_path[i], RTLD_LOCAL | RTLD_LAZY);
-        if ( NULL == dl_handle ) {
-            PAPIERROR("Unable to dlopen library '%s'.\n",sde_library_path[i]);
-            fprintf(stderr,"%s\n",dlerror());
-            continue;
-        }
-
-        /* Look for the hook function in the dynamic library we just opened */
-        fptr = (hook_fptr_t)dlsym(dl_handle, "papi_sde_hook_list_events");
-        if ( NULL == fptr ) {
-            PAPIERROR("Unable to find function 'papi_sde_hook_list_events()' in library '%s'.\n",sde_library_path[i]);
-            SUBDBG("Unable to find function 'papi_sde_hook_list_events()' in library '%s'.\n",sde_library_path[i]);
-            dlclose(dl_handle);
-            continue;
-        }
-
-        if ( NULL != (error = dlerror()) )  {
-            PAPIERROR("Problem with library %s: %s",sde_library_path[i], error);
-            SUBDBG("Problem with library %s: %s",sde_library_path[i], error);
-            dlclose(dl_handle);
-            continue;
-        }
-
-        /* Call the hook function */
-        papisde_library_desc_t *lib_handle = ( papisde_library_desc_t * ) fptr( &fptr_struct );
-
-        if ( (NULL == lib_handle) || (NULL == lib_handle->libraryName) ) {
-            PAPIERROR("Problem with papi_sde_hook_list_events() in library %s.\n",sde_library_path[i]);
-            SUBDBG("Problem with papi_sde_hook_list_events() in library %s.\n",sde_library_path[i]);
-            dlclose(dl_handle);
-            continue;
-        }
-        
-        // Lock before we read and/or modify the global structures. 
-        papi_sde_lock();
-
-        papisde_control_t *gctl = get_global_struct();
-
-        // If the library is already there, we silently ignore it.
-        tmp_lib = find_library_by_name(lib_handle->libraryName, gctl);
-        if( NULL != tmp_lib ){
-            SUBDBG("_sde_init_component(): Library '%s' is already registered.\n",tmp_lib->libraryName);
-            continue;
-        }
-
-        insert_library_handle(lib_handle, gctl);
-
-        papi_sde_unlock();
-
-        SUBDBG("_sde_init_component(): papi_sde_hook_list_events() from library %s was successfully called.\n", sde_library_path[i]);
-
-        dlclose(dl_handle);
-    }
-    for(i=0; i<sde_num_libs; i++) {
-        free(sde_library_path[i]);
-    }
-    free(sde_library_path);
 
     return PAPI_OK;
 }
@@ -2058,7 +1921,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
         // Our convention is that read attempts on a placeholder will set the counter to "-1" to
         // signify semantically that there was an error, but the function will not return an error
         // to avoid breaking existing programs that do something funny when an error is returned.
-        if( (NULL == counter->data) && (NULL == counter->func_ptr) ){
+        if( (NULL == counter->data) && (NULL == counter->func_ptr) && (NULL == counter->recorder_data) ){
             PAPIERROR("_sde_read(): Attempted read on a placeholder: '%s'.\n",counter->name);
             sde_ctl->counter[i] = -1;
             continue;
@@ -2074,6 +1937,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
 
             // At least the first chunk should have been allocated at creation.
             if( NULL == counter->recorder_data->exp_container[0] ){
+                SUBDBG( "No space has been allocated for recorder %s\n",counter->name);
                 sde_ctl->counter[i] = (long long)-1;
                 continue;
             }
@@ -2142,16 +2006,15 @@ _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *values )
 
         if( NULL == counter->data ){
             if( NULL == counter->func_ptr ){
-                PAPIERROR("_sde_write(): Attempted write on a placeholder: '%s'.\n",counter->name);
+                // If we are not dealing with a simple counter but with a "recorder", which cannot be written, we have to error.
+                if( NULL != counter->recorder_data ){
+                    PAPIERROR("_sde_write(): Attempted write on a recorder: '%s'.\n",counter->name);
+                }else{
+                    PAPIERROR("_sde_write(): Attempted write on a placeholder: '%s'.\n",counter->name);
+                }
             }else{
                 PAPIERROR("_sde_write(): Attempted write on an event based on a callback function instead of a counter: '%s'.\n",counter->name);
             }
-            continue;
-        }
-
-        // If we are not dealing with a simple counter but with a "recorder", which cannot be written, we have to error.
-        if( NULL != counter->recorder_data ){
-            PAPIERROR("_sde_write(): Attempted write on a recorder: '%s'.\n",counter->name);
             continue;
         }
 
