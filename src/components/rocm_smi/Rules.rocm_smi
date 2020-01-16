@@ -8,7 +8,7 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 # be set, as just a library name, or a full path and name. There cannot be any
 # spaces between the double quotes (which must be escaped as \"). An example:
 
-# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.1.0.0\"
+# PAPI_ROCM_SMI_MAIN = \"$(PAPI_ROCM_ROOT)/rocm_smi/lib/librocm_smi64.so.2.2\"
 
 # By default, all overrides are empty strings.
 
@@ -100,8 +100,10 @@ COMPSRCS += components/rocm_smi/linux-rocm-smi.c
 COMPOBJS += linux-rocm-smi.o
 # CFLAGS specifies compile flags; need include files here, and macro defines.
 # Order is important here; there are multiple DIFFERENT hsa.h files.
-# CFLAGS += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi $(ROCM_SMI_MACS) -g 
-CFLAGS += -I$(PAPI_ROCM_ROOT)/include/rocm_smi $(ROCM_SMI_MACS) -g 
+# Where to find rocm_smi.h varies by ROCM release; we cover two possible paths.
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include/rocm_smi 
+CFLAGS += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi 
+CFLAGS += $(ROCM_SMI_MACS) -g
 LDFLAGS += $(LDL) -g
 
 linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)
