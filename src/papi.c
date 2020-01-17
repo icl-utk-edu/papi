@@ -66,7 +66,7 @@ typedef struct _RateInfo
    long long last_proc_time;     /**< Previous value of processor time */
 } RateInfo;
 
-THREAD_LOCAL_STORAGE_KEYWORD RateInfo *_state = NULL;
+THREAD_LOCAL_STORAGE_KEYWORD RateInfo *_rate_state = NULL;
 bool _papi_rate_initiated = false;
 
 static void _internal_papi_init(void);
@@ -75,7 +75,7 @@ static int _start_new_rate_call(float *real_time, float *proc_time, int *events,
                          int num_events, long long *ins, float *rate);
 static int _rate_calls( float *real_time, float *proc_time, int *events, 
                  long long *values, long long *ins, float *rate, int mode );
-static int _internal_check_state();
+static int _internal_check_rate_state();
 
 
 static void _internal_papi_init(void)
@@ -120,7 +120,7 @@ static void _internal_onetime_papi_init(void)
 }
 
 static int
-_internal_check_state()
+_internal_check_rate_state()
 {
    /* check if PAPI is initialized for rate functions */
    if ( _papi_rate_initiated == false ) {
@@ -130,13 +130,13 @@ _internal_check_state()
          return ( PAPI_EINVAL );
    }
 
-   if ( _state == NULL ) {
-      _state = ( RateInfo* ) papi_malloc( sizeof ( RateInfo ) );
-      if ( _state == NULL )
+   if ( _rate_state== NULL ) {
+      _rate_state= ( RateInfo* ) papi_malloc( sizeof ( RateInfo ) );
+      if ( _rate_state== NULL )
          return ( PAPI_ENOMEM );
       
-      memset( _state, 0, sizeof ( RateInfo ) );
-      _state->running = STOP;
+      memset( _rate_state, 0, sizeof ( RateInfo ) );
+      _rate_state->running = STOP;
    }
    return ( PAPI_OK );
 }
@@ -390,7 +390,7 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
    *ref = values[2];
    *core = values[1];
    return ( retval );
-   }
+}
 
 /** @class PAPI_rate_stop
   * @brief Stop counting hardware events of rate functions.
@@ -417,12 +417,12 @@ PAPI_rate_stop()
    int retval;
    long long tmp_values[3];
 
-   if ( _state != NULL ) {
-      if ( _state->running > STOP ) {
-         retval = PAPI_stop( _state->EventSet, tmp_values );
+   if ( _rate_state!= NULL ) {
+      if ( _rate_state->running > STOP ) {
+         retval = PAPI_stop( _rate_state->EventSet, tmp_values );
          if ( retval == PAPI_OK ) {
-            PAPI_cleanup_eventset( _state->EventSet );
-            _state->running = STOP;
+            PAPI_cleanup_eventset( _rate_state->EventSet );
+            _rate_state->running = STOP;
          }
          return retval;
       }
@@ -430,30 +430,41 @@ PAPI_rate_stop()
    return ( PAPI_ENOEVNT );
 }
 
+/* this internal function is called by PAPI_hl_region_begin */
+int
+_papi_rate_stop()
+{
+   int retval;
+   retval = PAPI_rate_stop();
+   if ( retval == PAPI_OK )
+      _papi_rate_events_running = 0;
+   return retval;
+}
+
 static int
 _start_new_rate_call(float *real_time, float *proc_time, int *events,
                      int num_events, long long *ins, float *rate)
 {
    int retval;
-   _state->EventSet = -1;
+   _rate_state->EventSet = -1;
 
-   if ( ( retval = PAPI_create_eventset( &_state->EventSet ) ) != PAPI_OK )
+   if ( ( retval = PAPI_create_eventset( &_rate_state->EventSet ) ) != PAPI_OK )
       return ( retval );
    
-   if (( retval = PAPI_add_events( _state->EventSet, events, num_events )) != PAPI_OK )
+   if (( retval = PAPI_add_events( _rate_state->EventSet, events, num_events )) != PAPI_OK )
       return retval;
 
    /* remember the event for subsequent calls of PAPI_flips_rate and PAPI_flops_rate */
-   _state->event_0 = events[0];
+   _rate_state->event_0 = events[0];
    *real_time  = 0.0;
    *proc_time  = 0.0;
    *rate       = 0.0;
    *ins        = 0;
 
-   _state->last_real_time = PAPI_get_real_usec( );
-   _state->last_proc_time = PAPI_get_virt_usec( );
+   _rate_state->last_real_time = PAPI_get_real_usec( );
+   _rate_state->last_proc_time = PAPI_get_virt_usec( );
 
-   if ( ( retval = PAPI_start( _state->EventSet ) ) != PAPI_OK ) {
+   if ( ( retval = PAPI_start( _rate_state->EventSet ) ) != PAPI_OK ) {
       return retval;
    }
 
@@ -471,7 +482,13 @@ _rate_calls( float *real_time, float *proc_time, int *events,
    int num_events = 2;
    int retval = 0;
 
-   if ( ( retval = _internal_check_state() ) != PAPI_OK ) {
+   /* if a high-level event set is running stop it */
+   if ( _papi_hl_events_runnning == 1 ) {
+      if ( ( retval = _papi_hl_stop() ) != PAPI_OK )
+         return ( retval );
+   }
+
+   if ( ( retval = _internal_check_rate_state() ) != PAPI_OK ) {
       return ( retval );
    }
 
@@ -496,36 +513,36 @@ _rate_calls( float *real_time, float *proc_time, int *events,
    }
 
    /* STOP means the first call of a rate function */
-   if ( _state->running == STOP ) {
+   if ( _rate_state->running == STOP ) {
 
       if ( ( retval = _start_new_rate_call(real_time, proc_time, events, num_events, ins, rate)) != PAPI_OK )
          return retval;
-      _state->running = mode;
+      _rate_state->running = mode;
 
    } else {
       // check last mode
-      // printf("current mode: %d, last mode: %d\n", mode, _state->running);
-      // printf("current event: %d, last event: %d\n", events[0], _state->event_0);
+      // printf("current mode: %d, last mode: %d\n", mode, _rate_state->running);
+      // printf("current event: %d, last event: %d\n", events[0], _rate_state->event_0);
 
-      if ( mode != _state->running || events[0] != _state->event_0 ) {
+      if ( mode != _rate_state->running || events[0] != _rate_state->event_0 ) {
               
          long long tmp_values[3];
-         retval = PAPI_stop( _state->EventSet, tmp_values );
+         retval = PAPI_stop( _rate_state->EventSet, tmp_values );
          if ( retval == PAPI_OK ) {
-            PAPI_cleanup_eventset( _state->EventSet );
+            PAPI_cleanup_eventset( _rate_state->EventSet );
          } else {
             return retval;
          }
 
          if ( ( retval = _start_new_rate_call(real_time, proc_time, events, num_events, ins, rate)) != PAPI_OK )
             return retval;
-         _state->running = mode;
-
+         _rate_state->running = mode;
+         _papi_rate_events_running = 1;
          return ( PAPI_OK );
       }
 
-      if ( ( retval = PAPI_stop( _state->EventSet, values ) ) != PAPI_OK ) {
-         _state->running = STOP;
+      if ( ( retval = PAPI_stop( _rate_state->EventSet, values ) ) != PAPI_OK ) {
+         _rate_state->running = STOP;
          return retval;
       }
 
@@ -534,8 +551,8 @@ _rate_calls( float *real_time, float *proc_time, int *events,
       pt = PAPI_get_virt_usec();
 
       /* Convert to seconds with multiplication because it is much faster */
-      *real_time = ((float)( rt - _state->last_real_time )) * .000001;
-      *proc_time = ((float)( pt - _state->last_proc_time )) * .000001;
+      *real_time = ((float)( rt - _rate_state->last_real_time )) * .000001;
+      *proc_time = ((float)( pt - _rate_state->last_proc_time )) * .000001;
 
       *ins = values[0];
 
@@ -544,7 +561,7 @@ _rate_calls( float *real_time, float *proc_time, int *events,
          case FLIP:
             /* Calculate MFLOP and MFLIP rates */
             if ( pt > 0 ) {
-                  *rate = (float)values[0] / (pt - _state->last_proc_time);
+                  *rate = (float)values[0] / (pt - _rate_state->last_proc_time);
             } else *rate = 0;
             break;
          case IPC:
@@ -557,14 +574,15 @@ _rate_calls( float *real_time, float *proc_time, int *events,
          default:
             return PAPI_EINVAL;
       }
-      _state->last_real_time = rt;
-      _state->last_proc_time = pt;
+      _rate_state->last_real_time = rt;
+      _rate_state->last_proc_time = pt;
 
-      if ( ( retval = PAPI_start( _state->EventSet ) ) != PAPI_OK ) {
-         _state->running = STOP;
+      if ( ( retval = PAPI_start( _rate_state->EventSet ) ) != PAPI_OK ) {
+         _rate_state->running = STOP;
          return retval;
       }
    }
+   _papi_rate_events_running = 1;
    return PAPI_OK;
 }
 

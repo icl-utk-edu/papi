@@ -31,7 +31,6 @@ extern int _papi_hwi_errno;
 extern int _papi_hwi_num_errors;
 extern char **_papi_errlist;
 
-
 /********************************************************/
 /* This block provides general strings used in PAPI     */
 /* If a new string is needed for PAPI prompts           */
@@ -438,6 +437,9 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 #include "papi_lock.h"
 #include "threads.h"
 
+extern THREAD_LOCAL_STORAGE_KEYWORD int _papi_rate_events_running;
+extern THREAD_LOCAL_STORAGE_KEYWORD int _papi_hl_events_runnning;
+
 EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
 void _papi_hwi_set_papi_event_string (const char *event_string);
 char *_papi_hwi_get_papi_event_string (void);
@@ -489,5 +491,8 @@ int _papi_hwi_invalid_cmp( int cidx );
 int _papi_hwi_component_index( int event_code );
 int _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char *event_name);
 int _papi_hwi_eventcode_to_native(int event_code);
+
+int _papi_rate_stop();
+int _papi_hl_stop();
 
 #endif /* PAPI_INTERNAL_H */
