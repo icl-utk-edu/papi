@@ -417,15 +417,24 @@ PAPI_rate_stop()
    int retval;
    long long tmp_values[3];
 
-   if ( _rate_state!= NULL ) {
-      if ( _rate_state->running > STOP ) {
-         retval = PAPI_stop( _rate_state->EventSet, tmp_values );
-         if ( retval == PAPI_OK ) {
-            PAPI_cleanup_eventset( _rate_state->EventSet );
-            _rate_state->running = STOP;
+   if ( _papi_rate_events_running == 1 ) {
+      if ( _rate_state!= NULL ) {
+         if ( _rate_state->running > STOP ) {
+            retval = PAPI_stop( _rate_state->EventSet, tmp_values );
+            if ( retval == PAPI_OK ) {
+               PAPI_cleanup_eventset( _rate_state->EventSet );
+               _rate_state->running = STOP;
+            }
+            _papi_rate_events_running = 0;
+            return retval;
          }
-         return retval;
       }
+   }
+
+   /* if a high-level event set is running stop it */
+   if ( _papi_hl_events_runnning == 1 ) {
+      retval = _papi_hl_stop();
+      return ( retval );
    }
    return ( PAPI_ENOEVNT );
 }
@@ -436,8 +445,6 @@ _papi_rate_stop()
 {
    int retval;
    retval = PAPI_rate_stop();
-   if ( retval == PAPI_OK )
-      _papi_rate_events_running = 0;
    return retval;
 }
 
