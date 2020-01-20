@@ -432,7 +432,7 @@ PAPI_rate_stop()
    }
 
    /* if a high-level event set is running stop it */
-   if ( _papi_hl_events_runnning == 1 ) {
+   if ( _papi_hl_events_running == 1 ) {
       retval = _papi_hl_stop();
       return ( retval );
    }
@@ -490,7 +490,7 @@ _rate_calls( float *real_time, float *proc_time, int *events,
    int retval = 0;
 
    /* if a high-level event set is running stop it */
-   if ( _papi_hl_events_runnning == 1 ) {
+   if ( _papi_hl_events_running == 1 ) {
       if ( ( retval = _papi_hl_stop() ) != PAPI_OK )
          return ( retval );
    }

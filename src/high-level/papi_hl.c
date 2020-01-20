@@ -755,7 +755,7 @@ static int _internal_hl_start_counters()
             return (retval );
          }
       }
-      _papi_hl_events_runnning = 1;
+      _papi_hl_events_running = 1;
       return PAPI_OK;
    }
    return ( PAPI_EMISC );
@@ -1444,7 +1444,7 @@ static void _internal_hl_clean_up_local_data()
       num_of_cleaned_threads++;
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
-   _papi_hl_events_runnning = 0;
+   _papi_hl_events_running = 0;
    _local_state = PAPIHL_DEACTIVATED;
 }
 
@@ -1747,7 +1747,7 @@ PAPI_hl_region_begin( const char* region )
       }
    }
 
-   if ( _papi_hl_events_runnning == 0 ) {
+   if ( _papi_hl_events_running == 0 ) {
       if ( ( retval = _internal_hl_start_counters() ) != PAPI_OK ) {
          HLDBG("Could not start counters for thread %lu.\n", PAPI_thread_id());
          _internal_hl_clean_up_all(true);
@@ -1972,7 +1972,7 @@ _papi_hl_stop()
             return ( retval );
       }
    }
-   _papi_hl_events_runnning = 0;
+   _papi_hl_events_running = 0;
    return ( PAPI_OK );
 }
 

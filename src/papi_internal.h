@@ -438,7 +438,7 @@ extern PAPI_os_info_t _papi_os_info; /* For internal PAPI use only */
 #include "threads.h"
 
 extern THREAD_LOCAL_STORAGE_KEYWORD int _papi_rate_events_running;
-extern THREAD_LOCAL_STORAGE_KEYWORD int _papi_hl_events_runnning;
+extern THREAD_LOCAL_STORAGE_KEYWORD int _papi_hl_events_running;
 
 EventSetInfo_t *_papi_hwi_lookup_EventSet( int eventset );
 void _papi_hwi_set_papi_event_string (const char *event_string);

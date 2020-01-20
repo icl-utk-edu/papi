@@ -60,7 +60,7 @@ hwi_presets_t user_defined_events[PAPI_MAX_USER_EVENTS];
 int user_defined_events_count = 0;
 
 THREAD_LOCAL_STORAGE_KEYWORD int _papi_rate_events_running = 0;
-THREAD_LOCAL_STORAGE_KEYWORD int _papi_hl_events_runnning = 0;
+THREAD_LOCAL_STORAGE_KEYWORD int _papi_hl_events_running = 0;
 
 /*****************************/
 /* Native Event Mapping Code */
