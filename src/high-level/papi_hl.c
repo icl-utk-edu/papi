@@ -655,7 +655,14 @@ static int _internal_hl_read_events(const char* events)
       char *user_events_from_env = strdup( getenv("PAPI_EVENTS") );
       if ( user_events_from_env == NULL )
          return ( PAPI_ENOMEM );
-      if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
+      /* if string is emtpy use default events */
+      if ( strlen( user_events_from_env ) == 0 ) {
+         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK ) {
+            free(user_events_from_env);
+            return ( retval );
+         }
+      }
+      else if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
          if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK ) {
             free(user_events_from_env);
             return ( retval );
