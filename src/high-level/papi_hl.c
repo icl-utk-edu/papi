@@ -1444,6 +1444,7 @@ static void _internal_hl_clean_up_local_data()
       num_of_cleaned_threads++;
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
+   _papi_hl_events_runnning = 0;
    _local_state = PAPIHL_DEACTIVATED;
 }
 
@@ -1540,7 +1541,7 @@ static void _internal_hl_clean_up_all(bool deactivate)
             free(components);
             HLDBG("PAPI-HL shutdown!\n");
          } else {
-            verbose_fprintf(stdout, "PAPI-HL Warning: Could not call PAPI_shutdown() since some threads still have running event sets. Make sure to call PAPI_hl_cleanup_thread() at the end of all parallel regions and PAPI_hl_finalize() in the master thread!\n");
+            verbose_fprintf(stdout, "PAPI-HL Warning: Could not call PAPI_shutdown() since some threads still have running event sets.\n");
          }
 
          /* deactivate PAPI-HL */
