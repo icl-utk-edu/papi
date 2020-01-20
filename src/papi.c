@@ -244,7 +244,7 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   * @see PAPI_flips_rate()
   * @see PAPI_ipc()
   * @see PAPI_epc()
-  * @see PAPI_rate_stop()
+  * @see PAPI_stop_events()
  */
 int
 PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float *mflops )
@@ -307,7 +307,7 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_epc()
-  * @see PAPI_rate_stop()
+  * @see PAPI_stop_events()
  */
 int
 PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
@@ -371,7 +371,7 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_ipc()
-  * @see PAPI_rate_stop()
+  * @see PAPI_stop_events()
  */
 int
 PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
@@ -392,19 +392,19 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
    return ( retval );
 }
 
-/** @class PAPI_rate_stop
-  * @brief Stop counting hardware events of rate functions.
+/** @class PAPI_stop_events
+  * @brief Stop counting hardware events of rate or high-level functions.
   *
   * @par C Interface: 
   * \#include <papi.h> @n
-  * int PAPI_rate_stop();
+  * int PAPI_stop_events();
   * 
   * @retval PAPI_ENOEVNT 
   * -- The EventSet is not started yet.
   * @retval PAPI_ENOMEM 
   * -- Insufficient memory to complete the operation. 
   *
-  * PAPI_rate_stop stops the counters of a rate function and destroys the event set.
+  * PAPI_stop_events stops the counters of a rate or high-level function.
   *
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
@@ -412,7 +412,7 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
   * @see PAPI_epc()
  */
 int
-PAPI_rate_stop()
+PAPI_stop_events()
 {
    int retval;
    long long tmp_values[3];
@@ -441,10 +441,10 @@ PAPI_rate_stop()
 
 /* this internal function is called by PAPI_hl_region_begin */
 int
-_papi_rate_stop()
+_PAPI_stop_events()
 {
    int retval;
-   retval = PAPI_rate_stop();
+   retval = PAPI_stop_events();
    return retval;
 }
 
