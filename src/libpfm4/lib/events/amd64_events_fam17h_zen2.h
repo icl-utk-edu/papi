@@ -400,6 +400,25 @@ static const amd64_umask_t amd64_fam17h_zen2_dispatch_resource_stall_cycles_0[]=
   },
 };
 
+static const amd64_umask_t amd64_fam17h_zen2_retired_serializing_ops[]={
+  { .uname  = "X87_CTRL_RET",
+    .udesc  = "X87 control word mispredict traps due to mispredction in RC or PC, or changes in mask bits.",
+    .ucode  = 0x1,
+  },
+  { .uname  = "X87_BOT_RET",
+    .udesc  = "X87 bottom-executing uops retired.",
+    .ucode  = 0x2,
+  },
+  { .uname  = "SSE_CTRL_RET",
+    .udesc  = "SSE control word mispreduct traps due to mispredctions in RC, FTZ or DAZ or changes in mask bits.",
+    .ucode  = 0x4,
+  },
+  { .uname  = "SSE_BOT_RET",
+    .udesc  = "SSE bottom-executing uops retired.",
+    .ucode  = 0x8,
+  },
+};
+
 static const amd64_entry_t amd64_fam17h_zen2_pe[]={
   { .name   = "L1_ITLB_MISS_L2_ITLB_HIT",
     .desc   = "Number of instruction fetches that miss in the L1 ITLB but hit in the L2 ITLB.",
@@ -806,5 +825,14 @@ static const amd64_entry_t amd64_fam17h_zen2_pe[]={
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_dispatch_resource_stall_cycles_0),
     .umasks = amd64_fam17h_zen2_dispatch_resource_stall_cycles_0,
+  },
+  { .name   = "RETIRED_SERIALIZING_OPS",
+    .desc   = "The number of serializing Ops retired.",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x5,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_retired_serializing_ops),
+    .umasks = amd64_fam17h_zen2_retired_serializing_ops,
   },
 };

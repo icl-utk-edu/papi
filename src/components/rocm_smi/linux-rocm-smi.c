@@ -23,6 +23,11 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 
+// The following macros, if defined, will help with diagnosing problems with new devices.
+// output will be to stderr during any PAPI_INIT, e.g. execute utils/papi_component_avail.
+// #define  REPORT_KNOWN_EVENTS_NOT_SUPPORTED_BY_DEVICE
+// #define  REPORT_DEVICE_FUNCTION_NOT_SUPPORTED_BY_THIS_SOFTWARE
+
 static char *RSMI_ERROR_STRINGS[]={
   "RSMI_STATUS_SUCCESS",
   "RSMI_STATUS_INVALID_ARGS",
@@ -509,7 +514,10 @@ scanEvent_info_t* nextEvent(scanEvent_info_t* currentEvent, int device, char* fu
                 return(&ScanEvents[i]);                             // Exit with pointer to first found.
             }
         } // end loop through events.
-        fprintf(stderr, "nextEvent() Failed to find funcname '%s'.\n", funcname);
+
+#ifdef REPORT_KNOWN_EVENTS_NOT_SUPPORTED_BY_DEVICE
+        fprintf(stderr, "Known Event not supported by hardware: '%s'\n", funcname);
+#endif 
         return(NULL);                                           // Never found.
     }
 
@@ -2516,6 +2524,7 @@ static int _rocm_smi_add_native_events(void)
 
             // Common elements.
             int found=1;                                        // Presume variant will be found.
+            char blockName[16] = "";                            // Block name found.
             thisEvent = &AllEvents[TotalEvents];
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->reader = &er_ecc_count_correctable;      // read routine.     
@@ -2529,74 +2538,60 @@ static int _rocm_smi_add_native_events(void)
 
             switch(scan->variant) {         
                 case RSMI_GPU_BLOCK_UMC:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=UMC", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block UMC.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "UMC", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_SDMA:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SDMA", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SDMA.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "SDMA", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_GFX:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=GFX", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block GFX.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "GFX", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_MMHUB:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MMHUB", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MMHUB.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "MMUB", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_ATHUB:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=ATHUB", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block ATHUB.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "ATHUB", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_PCIE_BIF:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=PCIE_BIF", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block PCIE_BIF.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "PCIE_BIF", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_HDP:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=HDP", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block HDP.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "HDP", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_XGMI_WAFL:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=XGMI_WAFL", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block XGMI_WAFL.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "XGMI_WAFL", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_DF:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=DF", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block DF.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "DF", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_SMN:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SMN", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SMN.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "SMN", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_SEM:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=SEM", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block SEM.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "SEM", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_MP0:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MP0", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MP0.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "MP0", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_MP1:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=MP1", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block MP1.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "MP1", 15);
+                    break;
 
                 case RSMI_GPU_BLOCK_FUSE:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=FUSE", device);
-                    strcpy(thisEvent->desc, "Correctable error count for the GPU Block FUSE.");
-                    break;                                              // END CASE.
+                    strncpy(blockName, "FUSE", 15);
+                    break;
 
 
                 default:                                   // If we did not recognize it, kill stuff.
@@ -2613,11 +2608,13 @@ static int _rocm_smi_add_native_events(void)
             } // end switch
 
             if (found) {
+                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=%s", device, blockName);
+                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Correctable error count for the GPU Block %s.", blockName);
                 TotalEvents++;                                      // Count it.
                 MakeRoomAllEvents();                                // Make room for another.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_un%s", &AllEvents[BaseEvent].name[10]); // Base must start with "ecc_count_correctable:"
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Unc%s", &AllEvents[BaseEvent].name[1]);    // Base description must begin with "Correctable".
+                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_uncorrectable:device=%i:block=%s", device, blockName);
+                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Uncorrectable error count for the GPU Block %s.", blockName);
                 thisEvent->reader = &er_ecc_count_uncorrectable;    // Will call previous, this routine just copies it.
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -3104,6 +3101,7 @@ static int _rocm_smi_init_thread(hwd_context_t * ctx)
 static int _rocm_smi_init_component(int cidx)
 {
     int i, ret;
+    (void) i;
     uint32_t dev;
     scanEvent_info_t* scan=NULL;                        // a scan event pointer.
     SUBDBG("Entering _rocm_smi_init_component\n");
@@ -3185,13 +3183,13 @@ static int _rocm_smi_init_component(int cidx)
     // corresponding diagnostic in nextEvent() to show what
     // we tried to incorporate but did not find.
 
-    if (1) {
-        for (i=0; i<TotalScanEvents; i++) {
-            if (ScanEvents[i].used == 0) 
-                fprintf(stderr, "Available '%s:dev=%i:var=%i:sv=%i had no interface routine.\n", 
-                    ScanEvents[i].funcname, ScanEvents[i].device, ScanEvents[i].variant, ScanEvents[i].subvariant);
-        }
+#ifdef  REPORT_DEVICE_FUNCTION_NOT_SUPPORTED_BY_THIS_SOFTWARE
+    for (i=0; i<TotalScanEvents; i++) {
+        if (ScanEvents[i].used == 0) 
+            fprintf(stderr, "Device function not supported by this software: '%s:dev=%i:var=%i:sv=%i'\n", 
+                ScanEvents[i].funcname, ScanEvents[i].device, ScanEvents[i].variant, ScanEvents[i].subvariant);
     }
+#endif
  
     // Export info to PAPI.
     _rocm_smi_vector.cmp_info.CmpIdx = cidx;
