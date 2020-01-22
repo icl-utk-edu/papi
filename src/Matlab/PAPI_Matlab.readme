@@ -1,13 +1,8 @@
-Running PAPI's High Level API in the MATLAB Environment
+Running PAPI in the MATLAB Environment
 
 If you have the desire to do this, you most likely already
 know why you want to make calls to PAPI inside of a 
 MATLAB environment.
-
-If you don't know much about what composes PAPI's high 
-level API, you should probably take a look at this:
-
-http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_USER_GUIDE_23.htm#WHAT_IS_HIGH_LEVEL_API
 
 This section of the PAPI user guide covers C and FORTRAN
 calls, but at the moment, you can only make C calls
@@ -17,23 +12,23 @@ There is one overall function to call from Matlab; from there,
 you specify which of the 6 specific functions you want to call, 
 and then the arguments to each.  Here are some examples:
 
-PAPI_num_counters - Returns the number of available
+PAPI_num_cmp_hwctrs(0) - Returns the number of available preset
   hardware counters on the system.
 
 Ex:  num_counters = PAPI('num')
 
 
-PAPI_flips - Has 3 possibilities:
+PAPI_flips_rate - Has 3 possibilities:
   Initialize FLIP counting with:
     PAPI('flips')
   Record the number of floating point instructions since
-  initialization:
+  latest call:
     ops = PAPI('flips')
   Record the number of floating point instructions and
   the incremental rate of floating point execution
-  since initialization:
+  since latest call:
     [ops, mflips] = PAPI('flips')
-  Use PAPI_stop_counters to stop counting flips and reset the counters.
+  Use PAPI('stop') to stop counting flips and reset the counters.
 
 PAPI_flops - Identical to PAPI_flips,
   but counts floating point *operations* rather than instructions.
@@ -52,7 +47,7 @@ PAPI_ipc - Has 3 possibilities:
     [ins, ipc] = PAPI('ipc')
   
 
-PAPI_start_counters - Specify the events to count
+PAPI_start - Specify the events to count
   (in text form or the actual numeric code; NOTE: make sure
   to not confuse normal decimal and hexadecimal.) You cannot
   specify more events than there are hardware counters.
@@ -61,16 +56,15 @@ PAPI_start_counters - Specify the events to count
     PAPI('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS');
 
 
-PAPI_read_counters - Simply specify the variables to read
+PAPI_read - Simply specify the variables to read
   the values into.  You cannot specify more variables
-  than there are hardware counters.  This will reset the
-  counters.
+  than there are hardware counters.
 
   To read the above events you just started:
     [cycles, instructions] = PAPI('read');
 
 
-PAPI_accum_counters - This function adds the value you
+PAPI_accum - This function adds the value you
   pass to the readings in the hardware counter.  You
   cannot specify more variables than there are hardware
   counters.  This function will reset the counters.
@@ -80,7 +74,7 @@ PAPI_accum_counters - This function adds the value you
     [cycles, instructions] = PAPI('accum', cycles, instructions);
 
 
-PAPI_stop_counters - This function reads the value of
+PAPI_stop - This function reads the value of
   the running hardware counters into the variables
   you specify.  You cannot specify more variables than
   there are hardware counters.
@@ -164,7 +158,7 @@ PAPIMatrixMatrix.m
 e.  Start counting:
 PAPI('start', 'PAPI_TOT_CYC', 'PAPI_TOT_INS')
 
-f.  Read the counters and reset:
+f.  Read the counters:
 [cycles, instr] = PAPI('read')
 
 g.  Add the current value of the counters to a previous read
