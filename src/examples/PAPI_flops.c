@@ -32,10 +32,10 @@ int main()
   /***********************************************************************
    * If PAPI_FP_OPS is a derived event in your platform, then your       * 
    * platform must have at least three counters to support               *
-   * PAPI_flops_rate, because PAPI needs one counter to cycles. So in    *
-   * UltraSparcIII, even the platform supports PAPI_FP_OPS, but          *
-   * UltraSparcIII only has two available hardware counters and          *
-   * PAPI_FP_OPS is a derived event in this platform, so                 *
+   * PAPI_flops_rate, because PAPI needs one counter for cycles. So in   *
+   * UltraSparcIII, even though the platform supports PAPI_FP_OPS,       *
+   * UltraSparcIII only has two available hardware counters, and         *
+   * PAPI_FP_OPS is a derived event that requires both of them, so       *
    * PAPI_flops_rate returns an error.                                   *
    ***********************************************************************/
   if((retval=PAPI_flops_rate(PAPI_FP_OPS,&ireal_time,&iproc_time,&iflpops,&imflops)) < PAPI_OK)
