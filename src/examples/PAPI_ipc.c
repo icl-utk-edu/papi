@@ -1,14 +1,14 @@
 /*****************************************************************************
- * This example demonstrates the usage of the high level function PAPI_ipc   *
- * which measures the number of instructions executed per cpu cycle          *
+ * This example demonstrates the usage of the function PAPI_ipc which        *
+ * measures the number of instructions executed per cpu cycle                *
  *****************************************************************************/
 
 /*****************************************************************************
  * The first call to PAPI_ipc initializes the PAPI library, set up the       *
  * counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events, and start the   *
- * counters. Subsequent calls will read the counters and return total real   *
- * time, total process time, total instructions, and the instructions per    *
- * cycle rate since the last call to PAPI_ipc.                               *
+ * counters. Subsequent calls will read the counters and return real time,   *
+ * process time, instructions, and the instructions per cycle rate since the *
+ * latest call to PAPI_ipc.                                                  *
  *****************************************************************************/
 
  
@@ -16,8 +16,9 @@
 #include <stdlib.h>
 #include "papi.h"
 
+int your_slow_code();
 
-main()
+int main()
 { 
   float real_time, proc_time,ipc;
   long long ins;
@@ -42,7 +43,7 @@ main()
   }
 
 
-  printf("Real_time: %f Proc_time: %f Total instructions: %lld IPC: %f\n", 
+  printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n", 
          real_time, proc_time,ins,ipc);
 
   /* clean up */

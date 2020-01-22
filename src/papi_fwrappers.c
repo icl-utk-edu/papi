@@ -1325,6 +1325,75 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 	*check = PAPI_set_opt( PAPI_INHERIT, &i );
 }
 
+/** @class PAPIF_ipc
+ *	@ingroup PAPIF
+ *	@brief Get instructions per cycle, real and processor time.
+ *	
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *	PAPIF_ipc( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ins, C_FLOAT ipc, C_INT check )
+ *
+ * @see PAPI_ipc
+ */
+PAPI_FCALL( papif_ipc, PAPIF_IPC,
+			( float *rtime, float *ptime, long long *ins, float *ipc,
+			  int *check ) )
+{
+	*check = PAPI_ipc( rtime, ptime, ins, ipc );
+}
+
+/** @class PAPIF_epc
+ *	@ingroup PAPIF
+ *	@brief Get named events per cycle, real and processor time, reference and core cycles.
+ *	
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *	PAPIF_epc( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )
+ *
+ * @see PAPI_epc
+ */
+PAPI_FCALL( papif_epc, PAPIF_EPC,
+			( int event, float *rtime, float *ptime, 
+			  long long *ref, long long *core, long long *evt, float *epc,
+			  int *check) )
+{
+	*check = PAPI_epc( event, rtime, ptime, ref, core, evt, epc );
+}
+
+/** @class PAPIF_flips_rate
+ *	@ingroup PAPIF
+ *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
+ *
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *	PAPIF_flips_rate ( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
+ *
+ * @see PAPI_flips_rate
+ */
+PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
+			( int event, float *real_time, float *proc_time, long long *flpins,
+			  float *mflips, int *check ) )
+{
+	*check = PAPI_flips_rate( event, real_time, proc_time, flpins, mflips );
+}
+
+/** @class PAPIF_flops_rate
+ *	@ingroup PAPIF
+ *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
+ *
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *  PAPIF_flops( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+ *
+ * @see PAPI_flops_rate
+ */
+PAPI_FCALL( papif_flops_rate, PAPIF_FLOPS_RATE,
+			( int event, float *real_time, float *proc_time, long long *flpops,
+			  float *mflops, int *check ) )
+{
+	*check = PAPI_flops_rate( event, real_time, proc_time, flpops, mflops );
+}
+
 
 /* The High Level API Wrappers */
 /** \internal @defgroup PAPIF-HL PAPI Fortran High Level API */
