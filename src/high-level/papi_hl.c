@@ -163,6 +163,7 @@ static int _internal_hl_add_event_to_component(char *event_name, int event,
 static int _internal_hl_create_components();
 static int _internal_hl_read_events(const char* events);
 static int _internal_hl_create_event_sets();
+static int _internal_hl_start_counters();
 
 /* functions for storing events */
 static inline reads_t* _internal_hl_insert_read_node( reads_t** head_node );
@@ -654,7 +655,14 @@ static int _internal_hl_read_events(const char* events)
       char *user_events_from_env = strdup( getenv("PAPI_EVENTS") );
       if ( user_events_from_env == NULL )
          return ( PAPI_ENOMEM );
-      if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
+      /* if string is emtpy use default events */
+      if ( strlen( user_events_from_env ) == 0 ) {
+         if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK ) {
+            free(user_events_from_env);
+            return ( retval );
+         }
+      }
+      else if ( _internal_hl_read_user_events(user_events_from_env) != PAPI_OK )
          if ( ( retval = _internal_hl_determine_default_events() ) != PAPI_OK ) {
             free(user_events_from_env);
             return ( retval );
@@ -688,7 +696,6 @@ static int _internal_hl_read_events(const char* events)
 static int _internal_hl_create_event_sets()
 {
    int i, j, retval;
-   long_long cycles;
 
    if ( state == PAPIHL_ACTIVE ) {
       /* allocate memory for local components */
@@ -735,7 +742,17 @@ static int _internal_hl_create_event_sets()
             return ( PAPI_ENOMEM );
 
       }
+      return PAPI_OK;
+   }
+   return ( PAPI_EMISC );
+}
 
+static int _internal_hl_start_counters()
+{
+   int i, retval;
+   long_long cycles;
+
+   if ( state == PAPIHL_ACTIVE ) {
       for ( i = 0; i < num_of_components; i++ ) {
          if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
             return (retval );
@@ -745,6 +762,7 @@ static int _internal_hl_create_event_sets()
             return (retval );
          }
       }
+      _papi_hl_events_running = 1;
       return PAPI_OK;
    }
    return ( PAPI_EMISC );
@@ -1433,6 +1451,7 @@ static void _internal_hl_clean_up_local_data()
       num_of_cleaned_threads++;
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
+   _papi_hl_events_running = 0;
    _local_state = PAPIHL_DEACTIVATED;
 }
 
@@ -1529,7 +1548,7 @@ static void _internal_hl_clean_up_all(bool deactivate)
             free(components);
             HLDBG("PAPI-HL shutdown!\n");
          } else {
-            verbose_fprintf(stdout, "PAPI-HL Warning: Could not call PAPI_shutdown() since some threads still have running event sets. Make sure to call PAPI_hl_cleanup_thread() at the end of all parallel regions and PAPI_hl_finalize() in the master thread!\n");
+            verbose_fprintf(stdout, "PAPI-HL Warning: Could not call PAPI_shutdown() since some threads still have running event sets.\n");
          }
 
          /* deactivate PAPI-HL */
@@ -1701,6 +1720,11 @@ int
 PAPI_hl_region_begin( const char* region )
 {
    int retval;
+   /* if a rate event set is running stop it */
+   if ( _papi_rate_events_running == 1 ) {
+      if ( ( retval = _papi_rate_stop() ) != PAPI_OK )
+         return ( retval );
+   }
 
    if ( state == PAPIHL_DEACTIVATED ) {
       /* check if we have to clean up local stuff */
@@ -1725,6 +1749,14 @@ PAPI_hl_region_begin( const char* region )
    if ( _local_components == NULL ) {
       if ( ( retval = _internal_hl_create_event_sets() ) != PAPI_OK ) {
          HLDBG("Could not create local events sets for thread %lu.\n", PAPI_thread_id());
+         _internal_hl_clean_up_all(true);
+         return ( retval );
+      }
+   }
+
+   if ( _papi_hl_events_running == 0 ) {
+      if ( ( retval = _internal_hl_start_counters() ) != PAPI_OK ) {
+         HLDBG("Could not start counters for thread %lu.\n", PAPI_thread_id());
          _internal_hl_clean_up_all(true);
          return ( retval );
       }
@@ -1932,6 +1964,22 @@ PAPI_hl_region_end( const char* region )
       return ( retval );
 
    _local_region_end_cnt++;
+   return ( PAPI_OK );
+}
+
+/* this internal function is called by a rate function */
+int
+_papi_hl_stop()
+{
+   int retval, i;
+
+   if ( _local_components != NULL ) {
+      for ( i = 0; i < num_of_components; i++ ) {
+         if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
+            return ( retval );
+      }
+   }
+   _papi_hl_events_running = 0;
    return ( PAPI_OK );
 }
 
