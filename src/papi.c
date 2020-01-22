@@ -441,11 +441,25 @@ PAPI_stop_events()
 
 /* this internal function is called by PAPI_hl_region_begin */
 int
-_PAPI_stop_events()
+_papi_rate_stop()
 {
    int retval;
-   retval = PAPI_stop_events();
-   return retval;
+   long long tmp_values[3];
+
+   if ( _papi_rate_events_running == 1 ) {
+      if ( _rate_state!= NULL ) {
+         if ( _rate_state->running > STOP ) {
+            retval = PAPI_stop( _rate_state->EventSet, tmp_values );
+            if ( retval == PAPI_OK ) {
+               PAPI_cleanup_eventset( _rate_state->EventSet );
+               _rate_state->running = STOP;
+            }
+            _papi_rate_events_running = 0;
+            return retval;
+         }
+      }
+   }
+   return ( PAPI_ENOEVNT );
 }
 
 static int
