@@ -69,10 +69,8 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int laten
         }
     }
 
-    if(!ofp_papi)
-        fclose(ofp_papi);
-
     // Close files and free memory.
+    fclose(ofp_papi);
 error1:
     free(papiFileName);
 error0:
