@@ -117,6 +117,20 @@ machine assuming PAPI_Matlab.c is in your current working
 directory (you'll have a different compile string on a 
 different architecture):
 
+0. Define the events for flops and flips in PAPI_Matlab.c:
+ONE of the three presets for flips:
+- PAPI_FP_INS
+- PAPI_VEC_SP
+- PAPI_VEC_DP
+ONE of the three presets for flops:
+- PAPI_FP_OPS
+- PAPI_SP_OPS
+- PAPI_DP_OPS
+
+Example:
+#define FLIPS_EVENT PAPI_FP_INS
+#define FLOPS_EVENT PAPI_FP_OPS
+
 1. Compile the wrapper:
 mex -I/usr/local/include PAPI_Matlab.c /usr/local/lib/libpapi.so -output PAPI
 

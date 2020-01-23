@@ -4,13 +4,16 @@
 /****************************/                                                                                                     
                                                                                                                                    
 /**                                                                                                                                
-  * @file:    PAPI_Matlab.c
-  * CVS:     $Id$    
-  * @author Joseph Thomas <jthomas@cs.utk.edu>
+  * @file:    PAPI_Matlab.c   
+  * @author   Frank Winkler <frank.winkler@icl.utk.edu>
   *
   *	@brief PAPI Matlab integration.
   *	See PAPI_Matlab.readme for more information.
   */
+
+#define FLIPS_EVENT PAPI_FP_INS
+#define FLOPS_EVENT PAPI_FP_OPS
+
 #include "mex.h"
 #include "matrix.h"
 #include "papi.h"
@@ -93,13 +96,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
         mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflops].");
     }
     if (input[2] == 'i') {
-      if(result = PAPI_flips_rate( PAPI_FP_INS, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+      if(result = PAPI_flips_rate( FLIPS_EVENT, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
         mexPrintf("Error code: %d\n", result);
         mexErrMsgTxt("Error getting flips.");
       }
     } else {
        if(result = PAPI_event_name_to_code("EMON_SSE_SSE2_COMP_INST_RETIRED_PACKED_DOUBLE", &(flop_events[0])) < PAPI_OK) {
-          if(result = PAPI_flops_rate( PAPI_FP_OPS, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+          if(result = PAPI_flops_rate( FLOPS_EVENT, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
             mexPrintf("Error code: %d\n", result);
             mexErrMsgTxt("Error getting flops.");
           }
