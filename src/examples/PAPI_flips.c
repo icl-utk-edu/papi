@@ -1,26 +1,28 @@
 /*****************************************************************************
- * This example demonstrates the usage of the high level function PAPI_flips *
- * which measures the number of floating point instructions executed and the *
- * MegaFlop rate(defined as the number of floating point instructions per    *
- * microsecond). To use PAPI_flips you need to have floating point           *
- * instructions event supported by the platform.                             * 
+ * This example demonstrates the usage of the function PAPI_flips_rate which *
+ * measures the number of floating point instructions executed and the       *
+ * MegaFlip rate(defined as the number of floating point instructions per    *
+ * microsecond). To use PAPI_flips_rate you need to have floating point      *
+ * instructions events supported by the platform.                             *
  *****************************************************************************/
 
 /*****************************************************************************
- * The first call to PAPI_flips initializes the PAPI library, set up the     *
- * counters to monitor PAPI_FP_INS and PAPI_TOT_CYC events, and start the    *
- * counters. Subsequent calls will read the counters and return total real   *
- * time, total process time, total floating point instructions, and the      *
- * Mflins/s rate since the last call to PAPI_flips.                          *
+ * The first call to PAPI_flips_rate initializes the PAPI library, set up    *
+ * the counters to monitor the floating point instructions event, and start  *
+ * the counters. Subsequent calls will read the counters and return          *
+ * real time, process time, floating point instructions, and the Mflips/s    *
+ * rate since the latest call to PAPI_flips_rate.                              *
  *****************************************************************************/
+
 
  
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h"
 
+int your_slow_code();
 
-main()
+int main()
 { 
   float real_time, proc_time,mflips;
   long long flpins;
@@ -37,7 +39,7 @@ main()
    * this platform, so PAPI_flops returns an error.                      *
    ***********************************************************************/
 
-  if((retval=PAPI_flips(&ireal_time,&iproc_time,&iflpins,&imflips)) < PAPI_OK)
+  if((retval=PAPI_flips_rate(PAPI_FP_INS,&ireal_time,&iproc_time,&iflpins,&imflips)) < PAPI_OK)
   { 
     printf("Could not initialise PAPI_flips \n");
     printf("Your platform may not support floating point instruction event.\n");    printf("retval: %d\n", retval);
@@ -47,14 +49,14 @@ main()
   your_slow_code();
 
   
-  if((retval=PAPI_flips( &real_time, &proc_time, &flpins, &mflips))<PAPI_OK)
+  if((retval=PAPI_flips_rate(PAPI_FP_INS,&real_time, &proc_time, &flpins, &mflips))<PAPI_OK)
   {    
     printf("retval: %d\n", retval);
     exit(1);
   }
 
 
-  printf("Real_time: %f Proc_time: %f Total flpins: %lld MFLIPS: %f\n", 
+  printf("Real_time: %f Proc_time: %f flpins: %lld MFLIPS: %f\n", 
          real_time, proc_time,flpins,mflips);
 
   exit(0);

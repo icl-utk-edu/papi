@@ -251,11 +251,15 @@ _sensors_ppc_init_component( int cidx )
         return PAPI_ENOSUPP;
     }
 
-    snprintf(events_dir, sizeof(events_dir), "/sys/firmware/opal/exports/");
+    int ret = snprintf(events_dir, sizeof(events_dir), "/sys/firmware/opal/exports/");
+    if (ret <= 0 || (int)(sizeof(events_dir)) <= ret)
+        return PAPI_ENOSUPP;
     if (NULL == (events = opendir(events_dir)))
         return PAPI_ENOSUPP;
 
-    snprintf(event_path, sizeof(event_path), "%s%s", events_dir, pkg_sys_name);
+    ret = snprintf(event_path, sizeof(event_path), "%s%s", events_dir, pkg_sys_name);
+    if (ret <= 0 || (int)(sizeof(event_path)) <= ret)
+        return PAPI_ENOSUPP;
     if (-1 == access(event_path, F_OK))
         return PAPI_ENOSUPP;
 
@@ -556,8 +560,10 @@ _sensors_ppc_ntv_code_to_name( unsigned int EventCode, char *name, int len )
         return PAPI_ENOEVNT;
 
     char buf[512];
-    snprintf(buf, 512, "%s:occ=%d%s", occ_names[s][gidx].name, s, sensors_ppc_fake_qualifiers[midx]);
-    _local_strlcpy( name, buf, len );
+    int ret = snprintf(buf, 512, "%s:occ=%d%s", occ_names[s][gidx].name, s, sensors_ppc_fake_qualifiers[midx]);
+    if (ret <= 0 || 512 <= ret)
+        return PAPI_ENOSUPP;
+    _local_strlcpy( name, buf, len);
 
     return PAPI_OK;
 }
@@ -588,7 +594,9 @@ _sensors_ppc_ntv_code_to_info( unsigned int EventCode, PAPI_event_info_t *info )
         return PAPI_ENOEVNT;
 
     char buf[512];
-    snprintf(buf, 512, "%s:occ=%d%s", occ_names[s][gidx].name, s, sensors_ppc_fake_qualifiers[midx]);
+    int ret = snprintf(buf, 512, "%s:occ=%d%s", occ_names[s][gidx].name, s, sensors_ppc_fake_qualifiers[midx]);
+    if (ret <= 0 || 512 <= ret)
+        return PAPI_ENOSUPP;
     _local_strlcpy( info->symbol, buf, sizeof( info->symbol ));
     _local_strlcpy( info->units, occ_names[s][gidx].units, sizeof( info->units ) );
     /* If it ends with:
@@ -614,182 +622,189 @@ _sensors_ppc_ntv_code_to_info( unsigned int EventCode, PAPI_event_info_t *info )
                 tgt = atoi(z);
                 name[3] = 'z';
                 if (!strncmp(name, "GPUzHWTHROT", 11))
-                    snprintf(buf, 512, "Total time GPU %d has been throttled by hardware (thermal or power brake)", tgt);
+                    ret = snprintf(buf, 512, "Total time GPU %d has been throttled by hardware (thermal or power brake)", tgt);
                 else if (!strncmp(name, "GPUzSWTHROT", 11))
-                    snprintf(buf, 512, "Total time GPU %d has been throttled by software for any reason", tgt);
+                    ret = snprintf(buf, 512, "Total time GPU %d has been throttled by software for any reason", tgt);
                 else if (!strncmp(name, "GPUzSWOTTHROT", 13))
-                    snprintf(buf, 512, "Total time GPU %d has been throttled by software due to thermal", tgt);
+                    ret = snprintf(buf, 512, "Total time GPU %d has been throttled by software due to thermal", tgt);
                 else if (!strncmp(name, "GPUzSWPWRTHROT", 14))
-                    snprintf(buf, 512, "Total time GPU %d has been throttled by software due to power", tgt);
+                    ret = snprintf(buf, 512, "Total time GPU %d has been throttled by software due to power", tgt);
                 else
-                    snprintf(buf, 512, "[PERFORMANCE] Unexpected: GPU-%d %s", tgt, name);
+                    ret = snprintf(buf, 512, "[PERFORMANCE] Unexpected: GPU-%d %s", tgt, name);
             }
             else if (!strncmp(name, "IPSCxx", 4)) {
                 tgt = atoi(name+4);
-                snprintf(buf, 512, "Instructions per second for core %d on this Processor", tgt);
+                ret = snprintf(buf, 512, "Instructions per second for core %d on this Processor", tgt);
             }
             else if (!strncmp(name, "IPS", 3))
-                snprintf(buf, 512, "Vector sensor that takes the average of all the cores this Processor");
+                ret = snprintf(buf, 512, "Vector sensor that takes the average of all the cores this Processor");
             else if (!strncmp(name, "STOPDEEPACTCxx", 12)) {
                 tgt = atoi(name+12);
-                snprintf(buf, 512, "Deepest actual stop state that was fully entered during sample time for core %d", tgt);
+                ret = snprintf(buf, 512, "Deepest actual stop state that was fully entered during sample time for core %d", tgt);
             }
             else if (!strncmp(name, "STOPDEEPREQCxx", 12)) {
                 tgt = atoi(name+12);
-                snprintf(buf, 512, "Deepest stop state that has been requested during sample time for core %d", tgt);
+                ret = snprintf(buf, 512, "Deepest stop state that has been requested during sample time for core %d", tgt);
             }
             else if (!strncmp(name, "MEMPWRTHROT", 11))
-                snprintf(buf, 512, "Count of memory throttled due to power");
+                ret = snprintf(buf, 512, "Count of memory throttled due to power");
             else if (!strncmp(name, "MEMOTTHROT", 10))
-                snprintf(buf, 512, "Count of memory throttled due to memory Over temperature");
+                ret = snprintf(buf, 512, "Count of memory throttled due to memory Over temperature");
             else if (!strncmp(name, "PROCOTTHROT", 11))
-                snprintf(buf, 512, "Count of processor throttled for temperature");
+                ret = snprintf(buf, 512, "Count of processor throttled for temperature");
             else if (!strncmp(name, "PROCPWRTHROT", 12))
-                snprintf(buf, 512, "Count of processor throttled due to power");
+                ret = snprintf(buf, 512, "Count of processor throttled due to power");
             else if (!strncmp(name, "MWRM", 4)) {
                 tgt = atoi(name+4);
-                snprintf(buf, 512, "Memory write requests per sec for MC %d", tgt);
+                ret = snprintf(buf, 512, "Memory write requests per sec for MC %d", tgt);
             }
             else if (!strncmp(name, "MRDM", 4)) {
                 tgt = atoi(name+4);
-                snprintf(buf, 512, "Memory read requests per sec for MC %d", tgt);
+                ret = snprintf(buf, 512, "Memory read requests per sec for MC %d", tgt);
             }
             else
-                snprintf(buf, 512, "[PERFORMANCE] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[PERFORMANCE] Unexpected: %s", name);
             break;
 
         /* PWRSYS, PWRGPU, PWRAPSSCHvv, PWRPROC, PWRVDD, PWRVDN, PWRMEM */
         case OCC_SENSOR_TYPE_POWER:
             if (!strncmp(name, "PWRSYS", 6))
-                snprintf(buf, 512, "Bulk power of the system/node");
+                ret = snprintf(buf, 512, "Bulk power of the system/node");
             else if (!strncmp(name, "PWRGPU", 6))
-                snprintf(buf, 512, "Power consumption for GPUs per socket (OCC) read from APSS");
+                ret = snprintf(buf, 512, "Power consumption for GPUs per socket (OCC) read from APSS");
             else if (!strncmp(name, "PWRPROC", 7))
-                snprintf(buf, 512, "Power consumption for this Processor");
+                ret = snprintf(buf, 512, "Power consumption for this Processor");
             else if (!strncmp(name, "PWRVDD", 6))
-                snprintf(buf, 512, "Power consumption for this Processor's Vdd (calculated from AVSBus readings)");
+                ret = snprintf(buf, 512, "Power consumption for this Processor's Vdd (calculated from AVSBus readings)");
             else if (!strncmp(name, "PWRVDN", 6))
-                snprintf(buf, 512, "Power consumption for this Processor's Vdn (nest) (calculated from AVSBus readings)");
+                ret = snprintf(buf, 512, "Power consumption for this Processor's Vdn (nest) (calculated from AVSBus readings)");
             else if (!strncmp(name, "PWRMEM", 6))
-                snprintf(buf, 512, "Power consumption for Memory for this Processor read from APSS");
+                ret = snprintf(buf, 512, "Power consumption for Memory for this Processor read from APSS");
             else if (!strncmp(name, "PWRAPSSCH", 9)) {
                 tgt = atoi(name+9);
-                snprintf(buf, 512, "Power Provided by APSS channel %d", tgt);
+                ret = snprintf(buf, 512, "Power Provided by APSS channel %d", tgt);
             }
             else
-                snprintf(buf, 512, "[POWER] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[POWER] Unexpected: %s", name);
             break;
 
         /* FREQA, FREQACxx */
         case OCC_SENSOR_TYPE_FREQUENCY:
             if (!strncmp(name, "FREQACxx", 6)) {
                 tgt = atoi(name+6);
-                snprintf(buf, 512, "Average/actual frequency for this processor, Core %d based on OCA data", tgt);
+                ret = snprintf(buf, 512, "Average/actual frequency for this processor, Core %d based on OCA data", tgt);
             }
             else if (!strncmp(name, "FREQA", 5))
-                snprintf(buf, 512, "Average of all core frequencies for Processor");
+                ret = snprintf(buf, 512, "Average of all core frequencies for Processor");
             else
-                snprintf(buf, 512, "[FREQUENCY] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[FREQUENCY] Unexpected: %s", name);
             break;
 
         case OCC_SENSOR_TYPE_TIME:
-            snprintf(buf, 512, "[TIME] Unexpected: %s", name);
+            ret = snprintf(buf, 512, "[TIME] Unexpected: %s", name);
             break;
 
         /* UTILCxx, UTIL, NUTILCxx, MEMSPSTATMy, MEMSPMy */
         case OCC_SENSOR_TYPE_UTILIZATION:
             if (!strncmp(name, "MEMSPSTATM", 10)) {
                 tgt = atoi(name+10);
-                snprintf(buf, 512, "Static Memory throttle level setting for MCA %d when not in a memory throttle condition", tgt);
+                ret = snprintf(buf, 512, "Static Memory throttle level setting for MCA %d when not in a memory throttle condition", tgt);
             }
             else if (!strncmp(name, "MEMSPM", 6)) {
                 tgt = atoi(name+6);
-                snprintf(buf, 512, "Current Memory throttle level setting for MCA %d", tgt);
+                ret = snprintf(buf, 512, "Current Memory throttle level setting for MCA %d", tgt);
             }
             else if (!strncmp(name, "NUTILC", 6)) {
                 tgt = atoi(name+6);
-                snprintf(buf, 512, "Normalized average utilization, rolling average of this Processor's Core %d", tgt);
+                ret = snprintf(buf, 512, "Normalized average utilization, rolling average of this Processor's Core %d", tgt);
             }
             else if (!strncmp(name, "UTILC", 5)) {
                 tgt = atoi(name+5);
-                snprintf(buf, 512, "Utilization of this Processor's Core %d (where 100%% means fully utilized): NOTE: per thread HW counters are combined as appropriate to give this core level utilization sensor", tgt);
+                ret = snprintf(buf, 512, "Utilization of this Processor's Core %d (where 100%% means fully utilized): NOTE: per thread HW counters are combined as appropriate to give this core level utilization sensor", tgt);
             }
             else if (!strncmp(name, "UTIL", 4))
-                snprintf(buf, 512, "Average of all Cores UTILC[yy] sensor");
+                ret = snprintf(buf, 512, "Average of all Cores UTILC[yy] sensor");
             else
-                snprintf(buf, 512, "[UTILIZATION] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[UTILIZATION] Unexpected: %s", name);
             break;
 
         /* TEMPNEST, TEMPPROCTHRMCxx, TEMPVDD, TEMPDIMMvv, TEMPGPUz, TEMPGPUzMEM*/
         case OCC_SENSOR_TYPE_TEMPERATURE:
             if (!strncmp(name, "TEMPNEST", 8))
-                snprintf(buf, 512, "Average temperature of nest DTS sensors");
+                ret = snprintf(buf, 512, "Average temperature of nest DTS sensors");
             else if (!strncmp(name, "TEMPVDD", 7))
-                snprintf(buf, 512, "VRM Vdd temperature");
+                ret = snprintf(buf, 512, "VRM Vdd temperature");
             else if (!strncmp(name, "TEMPPROCTHRMCxx", 13)) {
                 tgt = atoi(name+13);
-                snprintf(buf, 512, "The combined weighted core/quad temperature for processor core %d", tgt);
+                ret = snprintf(buf, 512, "The combined weighted core/quad temperature for processor core %d", tgt);
             }
             else if (!strncmp(name, "TEMPDIMMvv", 8)) {
                 tgt = atoi(name+8);
-                snprintf(buf, 512, "DIMM temperature for DIMM %d", tgt);
+                ret = snprintf(buf, 512, "DIMM temperature for DIMM %d", tgt);
             }
             else if (!strncmp(name, "TEMPGPUz", 7)) {
                 char z[] = {name[7], '\0'};
                 tgt = atoi(z);
                 name[7] = 'z';
                 if (!strncmp(name, "TEMPGPUzMEM", 11))
-                    snprintf(buf, 512, "GPU %d hottest HBM temperature (individual memory temperatures are not available)", tgt);
+                    ret = snprintf(buf, 512, "GPU %d hottest HBM temperature (individual memory temperatures are not available)", tgt);
                 else if (!strncmp(name, "TEMPGPUz", 8))
-                    snprintf(buf, 512, "GPU %d board temperature", tgt);
+                    ret = snprintf(buf, 512, "GPU %d board temperature", tgt);
                 else
-                    snprintf(buf, 512, "[TEMPERATURE] Unexpected: GPU-%d %s", tgt, name);
+                    ret = snprintf(buf, 512, "[TEMPERATURE] Unexpected: GPU-%d %s", tgt, name);
             }
             else
-                snprintf(buf, 512, "[TEMPERATURE] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[TEMPERATURE] Unexpected: %s", name);
             break;
 
         /* VOLTVDD, VOLTVDDSENSE, VOLTVDN, VOLTVDNSENSE, VOLTDROOPCNTCx, VOLTDROOPCNTQw */
         case OCC_SENSOR_TYPE_VOLTAGE:
             if (!strncmp(name, "VOLTVDDS", 8))
-                snprintf(buf, 512, "Vdn Voltage at the remote sense. (AVS reading adjusted for loadline)");
+                ret = snprintf(buf, 512, "Vdn Voltage at the remote sense. (AVS reading adjusted for loadline)");
             else if (!strncmp(name, "VOLTVDNS", 8))
-                snprintf(buf, 512, "Vdd Voltage at the remote sense. (AVS reading adjusted for loadline)");
+                ret = snprintf(buf, 512, "Vdd Voltage at the remote sense. (AVS reading adjusted for loadline)");
             else if (!strncmp(name, "VOLTVDD", 7))
-                snprintf(buf, 512, "Processor Vdd Voltage (read from AVSBus)");
+                ret = snprintf(buf, 512, "Processor Vdd Voltage (read from AVSBus)");
             else if (!strncmp(name, "VOLTVDN", 7))
-                snprintf(buf, 512, "Processor Vdn Voltage (read from AVSBus)");
+                ret = snprintf(buf, 512, "Processor Vdn Voltage (read from AVSBus)");
             else if (!strncmp(name, "VOLTDROOPCNTC", 13)) {
                 tgt = atoi(name+13);
-                snprintf(buf, 512, "Small voltage droop count for core %d", tgt);
+                ret = snprintf(buf, 512, "Small voltage droop count for core %d", tgt);
             }
             else if (!strncmp(name, "VOLTDROOPCNTQ", 13)) {
                 tgt = atoi(name+13);
-                snprintf(buf, 512, "Small voltage droop count for core %d", tgt);
+                ret = snprintf(buf, 512, "Small voltage droop count for core %d", tgt);
             }
             else
-                snprintf(buf, 512, "[VOLTAGE] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[VOLTAGE] Unexpected: %s", name);
             break;
 
     /* CURVDD, CURVDN */
         case OCC_SENSOR_TYPE_CURRENT:
             if (!strncmp(name, "CURVDN", 6))
-                snprintf(buf, 512, "Processor Vdn Current (read from AVSBus)");
+                ret = snprintf(buf, 512, "Processor Vdn Current (read from AVSBus)");
             else if (!strncmp(name, "CURVDD", 6))
-                snprintf(buf, 512, "Processor Vdd Current (read from AVSBus)");
+                ret = snprintf(buf, 512, "Processor Vdd Current (read from AVSBus)");
             else
-                snprintf(buf, 512, "[CURRENT] Unexpected: %s", name);
+                ret = snprintf(buf, 512, "[CURRENT] Unexpected: %s", name);
             break;
 
         case OCC_SENSOR_TYPE_GENERIC:
-            snprintf(buf, 512, "[GENERIC] Unexpected: %s", name);
+        default:
+            ret = snprintf(buf, 512, "[GENERIC] Unexpected: %s", name);
             break;
     }
 
+    if (ret <= 0 || 512 <= ret)
+        return PAPI_ENOSUPP;
     _space_padding(buf, sizeof(buf));
-    snprintf(buf+strlen(buf), 512, "%s", sensors_ppc_fake_qualif_desc[midx]);
+    ret = snprintf(buf+strlen(buf), 512, "%s", sensors_ppc_fake_qualif_desc[midx]);
+    if (ret <= 0 || 512 <= ret)
+        return PAPI_ENOSUPP;
     _space_padding(buf, sizeof(buf));
-    snprintf(buf+strlen(buf), 512, "Sampling period: %lfs", 1./freq);
+    ret = snprintf(buf+strlen(buf), 512, "Sampling period: %lfs", 1./freq);
+    if (ret <= 0 || 512 <= ret)
+        return PAPI_ENOSUPP;
 
     _local_strlcpy( info->long_descr, buf, sizeof(info->long_descr));
     info->data_type = PAPI_DATATYPE_INT64;
