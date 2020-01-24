@@ -244,7 +244,7 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   * @see PAPI_flips_rate()
   * @see PAPI_ipc()
   * @see PAPI_epc()
-  * @see PAPI_stop_events()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float *mflops )
@@ -307,7 +307,7 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_epc()
-  * @see PAPI_stop_events()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
@@ -371,7 +371,7 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
   * @see PAPI_ipc()
-  * @see PAPI_stop_events()
+  * @see PAPI_rate_stop()
  */
 int
 PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )
@@ -392,19 +392,19 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
    return ( retval );
 }
 
-/** @class PAPI_stop_events
-  * @brief Stop counting hardware events of rate or high-level functions.
+/** @class PAPI_rate_stop
+  * @brief Stop a running event set of a rate function.
   *
   * @par C Interface: 
   * \#include <papi.h> @n
-  * int PAPI_stop_events();
+  * int PAPI_rate_stop();
   * 
   * @retval PAPI_ENOEVNT 
   * -- The EventSet is not started yet.
   * @retval PAPI_ENOMEM 
   * -- Insufficient memory to complete the operation. 
   *
-  * PAPI_stop_events stops the counters of a rate or high-level function.
+  * PAPI_rate_stop stops a running event set of a rate function.
   *
   * @see PAPI_flips_rate()
   * @see PAPI_flops_rate()
@@ -412,36 +412,7 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
   * @see PAPI_epc()
  */
 int
-PAPI_stop_events()
-{
-   int retval;
-   long long tmp_values[3];
-
-   if ( _papi_rate_events_running == 1 ) {
-      if ( _rate_state!= NULL ) {
-         if ( _rate_state->running > STOP ) {
-            retval = PAPI_stop( _rate_state->EventSet, tmp_values );
-            if ( retval == PAPI_OK ) {
-               PAPI_cleanup_eventset( _rate_state->EventSet );
-               _rate_state->running = STOP;
-            }
-            _papi_rate_events_running = 0;
-            return retval;
-         }
-      }
-   }
-
-   /* if a high-level event set is running stop it */
-   if ( _papi_hl_events_running == 1 ) {
-      retval = _papi_hl_stop();
-      return ( retval );
-   }
-   return ( PAPI_ENOEVNT );
-}
-
-/* this internal function is called by PAPI_hl_region_begin */
-int
-_papi_rate_stop()
+PAPI_rate_stop()
 {
    int retval;
    long long tmp_values[3];
@@ -505,7 +476,7 @@ _rate_calls( float *real_time, float *proc_time, int *events,
 
    /* if a high-level event set is running stop it */
    if ( _papi_hl_events_running == 1 ) {
-      if ( ( retval = _papi_hl_stop() ) != PAPI_OK )
+      if ( ( retval = PAPI_hl_stop() ) != PAPI_OK )
          return ( retval );
    }
 

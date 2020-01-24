@@ -1108,7 +1108,7 @@ enum {
    int PAPI_flops_rate(int event, float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
    int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
    int PAPI_epc(int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc); /**< gets (named) events per cycle, real and processor time, reference and core cycles */
-   int PAPI_stop_events(); /**< stops an internal running event set from a rate or high-level function */
+   int PAPI_rate_stop(); /**< stops a running event set of a rate function */
 
    /** @} */
 
@@ -1121,6 +1121,7 @@ enum {
    int PAPI_hl_region_begin(const char* region); /**< read performance events at the beginning of a region */
    int PAPI_hl_read(const char* region); /**< read performance events inside of a region and store the difference to the corresponding beginning of the region */
    int PAPI_hl_region_end(const char* region); /**< read performance events at the end of a region and store the difference to the corresponding beginning of the region */
+   int PAPI_hl_stop(); /**< stops a running high-level event set */
 /** @} */
 
 

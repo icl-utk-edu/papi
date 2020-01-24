@@ -56,7 +56,7 @@ int main()
   printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n", 
          real_time, proc_time,ins,ipc);
 
-  if ( (retval = PAPI_stop_events()) < PAPI_OK )
+  if ( (retval = PAPI_rate_stop()) < PAPI_OK )
     ERROR_RETURN(retval);
 
   exit(0);
