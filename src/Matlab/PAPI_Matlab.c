@@ -223,7 +223,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if ( papi_start == 1 )
       result = PAPI_stop(EventSet, flop_values);
   }
-  PAPI_stop_events();
+  PAPI_rate_stop();
   papi_start = 0;
 
   if(result < PAPI_OK) {
