@@ -5,6 +5,9 @@ TESTS = infiniband_list_events infiniband_values_by_code MPI_test_infiniband_eve
 
 infiniband_tests: $(TESTS)
 
+MPI_test_infiniband_events.o:MPI_test_infiniband_events.c
+	$(MPICC) $(INCLUDE) -c -o $@ $<
+
 %.o:%.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
