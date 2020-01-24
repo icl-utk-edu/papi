@@ -10,9 +10,9 @@
 %                                 to the input values.
 %                 PAPI('ipc')   - Begin counting instructions.
 %           ins = PAPI('ipc')   - Return the number of instructions executed
-%                                 since the first call.
+%                                 since the last call.
 %    [ins, ipc] = PAPI('ipc')   - Return both the total number of instructions 
-%                                 executed since the first call, and the 
+%                                 executed since the last call, and the 
 %                                 incremental rate of instruction execution
 %                                 since the last call.
 %                 PAPI('flips')
@@ -20,11 +20,11 @@
 %                                 instructions or operations.
 %           ins = PAPI('flips')
 %           ops = PAPI('flops') - Return the number of floating point instruc-
-%                                 tions or operations since the first call.
+%                                 tions or operations since the last call.
 %      [ins, mflips] = PAPI('flips')
 %      [ops, mflops] = PAPI('flops') - 
 %                                 Return both the number of floating point 
-%                                 instructions or operations since the first  
+%                                 instructions or operations since the last  
 %                                 call, and the incremental rate of floating  
 %                                 point execution since since the last call.
 %
@@ -55,7 +55,7 @@
 %                to this subfunction, and the rate of execution of instructions  
 %                (as instructions per cycle) since the last call.
 %      'flips' - returns the total floating point instructions executed since 
-%                the first call to this subfunction, and the rate of execution 
+%                the last call to this subfunction, and the rate of execution 
 %                of floating point instructions (as mega-floating point
 %                instructions per second, or mflips) since the last call.
 %                A floating point instruction is defined as whatever this cpu

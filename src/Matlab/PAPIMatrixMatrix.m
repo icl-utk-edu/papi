@@ -5,8 +5,8 @@ function PAPIMatrixMatrix
 % in steps of 50. 
 %
 % Use the PAPI mex function with two different methods:
-% - The PAPI High Level flops call
-% - PAPI High Level start/stop calls
+% - The PAPI flops call
+% - PAPI start/stop calls
 %
 % For each size, display:
 % - number of floating point operations
@@ -16,7 +16,7 @@ function PAPIMatrixMatrix
 % - mflops/s
 
 fprintf(1,'\nPAPI Matrix Matrix Multiply Test');
-fprintf(1,'\nUsing the High Level PAPI("flops") call');
+fprintf(1,'\nUsing the PAPI("flops") call');
 fprintf(1,'\n%12s %12s %12s %12s %12s %12s\n', 'n', 'ops', '2n^3', 'difference', '% error', 'mflops')
 for n=50:50:500,
     a=rand(n);b=rand(n);c=rand(n);
