@@ -36,7 +36,7 @@ int main()
   if ( (retval = PAPI_hl_region_end("slow_code")) < PAPI_OK )
     ERROR_RETURN(retval);
 
-  if ( (retval = PAPI_stop_events()) < PAPI_OK )
+  if ( (retval = PAPI_hl_stop()) < PAPI_OK )
     ERROR_RETURN(retval);
 
   /* get IPC using low-level API */
