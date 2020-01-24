@@ -13,6 +13,7 @@ PAPILIB = $(datadir)/@LINKLIB@
 TESTLIB = $(testlibdir)/libtestlib.a
 LDFLAGS = @LDFLAGS@ @LDL@
 CC	= @CC@
+MPICC	= @MPICC@
 F77	= @F77@
 CC_R	= @CC_R@
 CFLAGS	= @CFLAGS@
