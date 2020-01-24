@@ -4,19 +4,43 @@
 /****************************/                                                                                                     
                                                                                                                                    
 /**                                                                                                                                
-  * @file:    PAPI_Matlab.c
-  * CVS:     $Id$    
-  * @author Joseph Thomas <jthomas@cs.utk.edu>
+  * @file:    PAPI_Matlab.c   
+  * @author   Frank Winkler <frank.winkler@icl.utk.edu>
   *
   *	@brief PAPI Matlab integration.
   *	See PAPI_Matlab.readme for more information.
   */
+
+#define FLIPS_EVENT PAPI_FP_INS
+#define FLOPS_EVENT PAPI_FP_OPS
+
 #include "mex.h"
 #include "matrix.h"
 #include "papi.h"
 
 static long long accum_error = 0;
 static long long start_time = 0;
+int EventSet = PAPI_NULL;
+int papi_init = 0;
+int papi_start = 0;
+
+void initialize_papi() {
+  int result;
+
+  /* initialize PAPI */
+  result = PAPI_library_init(PAPI_VER_CURRENT);
+  if(result < PAPI_OK) {
+    mexPrintf("Error code: %d\n", result);
+    mexErrMsgTxt("Error PAPI_create_eventset.");
+  }
+
+  /* create EventSet */
+  result = PAPI_create_eventset(&EventSet);
+  if(result < PAPI_OK) {
+    mexPrintf("Error code: %d\n", result);
+    mexErrMsgTxt("Error PAPI_library_init.");
+  }
+}
 
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]) {
@@ -34,6 +58,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
   char no_input[]	= "This function expects no input.";
   char error_reading[]	= "Error reading the running counters.";
 
+  if ( papi_init == 0 ) {
+    initialize_papi();
+    papi_init = 1;
+  }
+
   /* Check for proper number of arguments. */
   if(nrhs < 1) {
     mexErrMsgTxt("This function expects input.");
@@ -49,7 +78,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     else if(nlhs != 1) {
       mexErrMsgTxt("This function produces one and only one output: counters.");
     }
-    result = PAPI_num_counters();
+    result = PAPI_num_cmp_hwctrs(0);
     if(result < PAPI_OK) {
       mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt("Error reading counters.");
@@ -62,34 +91,44 @@ void mexFunction(int nlhs, mxArray *plhs[],
       mexErrMsgTxt(no_input);
     } else if(nlhs > 2) {
       if (input[2] == 'i')
-	mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflips].");
+        mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflips].");
       else
-	mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflops].");
+        mexErrMsgTxt("This function produces 1 or 2 outputs: [ops, mflops].");
     }
     if (input[2] == 'i') {
-      if(result = PAPI_flips( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+      if(result = PAPI_flips_rate( FLIPS_EVENT, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
         mexPrintf("Error code: %d\n", result);
-	     mexErrMsgTxt("Error getting flips.");
+        mexErrMsgTxt("Error getting flips.");
       }
     } else {
        if(result = PAPI_event_name_to_code("EMON_SSE_SSE2_COMP_INST_RETIRED_PACKED_DOUBLE", &(flop_events[0])) < PAPI_OK) {
-          if(result = PAPI_flops( &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
-             mexPrintf("Error code: %d\n", result);
-	          mexErrMsgTxt("Error getting flops.");
+          if(result = PAPI_flops_rate( FLOPS_EVENT, &real_time, &proc_time, &ins, &rate)<PAPI_OK) {
+            mexPrintf("Error code: %d\n", result);
+            mexErrMsgTxt("Error getting flops.");
           }
        } else {
          if(start_time == 0) {
             flop_events[1] = PAPI_FP_OPS;
             start_time = PAPI_get_real_usec();
-            if((result = PAPI_start_counters(flop_events, 2)) < PAPI_OK) {
+
+            for (i = 0; i < 2; i++) {
+              result = PAPI_add_event(EventSet, flop_events[i]);
+              if(result < PAPI_OK) {
+                mexPrintf("Error code: %d\n", result);
+                mexErrMsgTxt("Error PAPI_create_eventset.");
+              }
+            }
+
+            if((result = PAPI_start(EventSet)) < PAPI_OK) {
                mexPrintf("Error code: %d\n", result);
                mexErrMsgTxt("Error getting flops.");
             } else {
+               papi_start = 1;
                ins = 0;
                rate = 0;
             }
          } else {
-            if((result = PAPI_read_counters(flop_values, 2)) < PAPI_OK) {
+            if((result = PAPI_read(EventSet, values)) < PAPI_OK) {
                mexPrintf("%d\n", result);
                mexErrMsgTxt(error_reading);
             } else {
@@ -118,7 +157,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nlhs != 0) {
       mexErrMsgTxt("This function produces no output.");
     }
-    if(nrhs > (PAPI_num_counters() + 1)) {
+    if(nrhs > (PAPI_num_cmp_hwctrs(0) + 1)) {
       mexErrMsgTxt(one_output);
     }
     mrows = mxGetM(prhs[1]);
@@ -133,7 +172,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
         temp = mxArrayToString(prhs[i]);
         if(result = PAPI_event_name_to_code(temp, &(events[i - 1])) < PAPI_OK) {
           mxFree(temp);
-	  mexPrintf("Error code: %d\n", result);
+          mexPrintf("Error code: %d\n", result);
           mexErrMsgTxt("Incorrect PAPI code given.");
        }
         mxFree(temp);
@@ -142,11 +181,23 @@ void mexFunction(int nlhs, mxArray *plhs[],
         events[i - 1] = (unsigned int)mxGetScalar(prhs[i]);
       }
     }
-    if((result = PAPI_start_counters(events, nrhs - 1)) < PAPI_OK) {
+
+    if((result = PAPI_cleanup_eventset(EventSet)) < PAPI_OK)
+      mexErrMsgTxt("Error PAPI_cleanup_eventset");
+
+    for (i = 0; i < nrhs - 1; i++) {
+      result = PAPI_add_event(EventSet, events[i]);
+      if(result < PAPI_OK) {
+        mexPrintf("Error code: %d\n", result);
+        mexErrMsgTxt("Error PAPI_add_event.");
+      }
+    }
+    if((result = PAPI_start(EventSet)) < PAPI_OK) {
       mxFree(events);
       mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt("Error initializing counters.");
     }
+    papi_start = 1;
     mxFree(events);
   }
 
@@ -154,47 +205,49 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nrhs != 1) {
       mexErrMsgTxt(no_input);
     }
-	number_of_counters = PAPI_num_counters();
+    number_of_counters = PAPI_num_cmp_hwctrs(0);
     if(nlhs > number_of_counters ) {
       mexErrMsgTxt(one_output);
     }
-	if (nlhs == 0) 
-	  values = (long long*)mxCalloc(number_of_counters, sizeof(long long));
-	else 
-	  values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
+  if (nlhs == 0) 
+    values = (long long*)mxCalloc(number_of_counters, sizeof(long long));
+  else 
+    values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
 
-	if (start_time == 0) {
-	  if (nlhs == 0)
-		result = PAPI_stop_counters(values, number_of_counters);
-	  else
-		result = PAPI_stop_counters(values, nlhs);
-	} else {
-	  start_time = 0;
-	  result = PAPI_stop_counters(flop_values, 2);
-	}
+  result = PAPI_OK;
+  if (start_time == 0) {
+    if ( papi_start == 1 )
+      result = PAPI_stop(EventSet, values);
+  } else {
+    start_time = 0;
+    if ( papi_start == 1 )
+      result = PAPI_stop(EventSet, flop_values);
+  }
+  PAPI_rate_stop();
+  papi_start = 0;
 
-	if(result < PAPI_OK) {
-	  if(result != PAPI_ENOTRUN) {
-		mexPrintf("Error code: %d\n", result);
-		mexErrMsgTxt("Error stopping the running counters.");
-	  }
-	}
-	accum_error = 0;
-	for(i = 0; i < nlhs; i++) {
-	  plhs[i] = mxCreateDoubleScalar((double)values[i]);
-	}
-	mxFree(values);
+  if(result < PAPI_OK) {
+    if(result != PAPI_ENOTRUN) {
+      mexPrintf("Error code: %d\n", result);
+      mexErrMsgTxt("Error stopping the running counters.");
+    }
+  }
+  accum_error = 0;
+  for(i = 0; i < nlhs; i++) {
+    plhs[i] = mxCreateDoubleScalar((double)values[i]);
+  }
+  mxFree(values);
   }
 
   else if(!strncmp(input, "read", 4)) {
     if(nrhs != 1) {
       mexErrMsgTxt(no_input);
     }
-    if(nlhs > PAPI_num_counters()) {
+    if(nlhs > PAPI_num_cmp_hwctrs(0)) {
       mexErrMsgTxt(one_output);
     }
     values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
-    if((result = PAPI_read_counters(values, nlhs)) < PAPI_OK) {
+    if((result = PAPI_read(EventSet, values)) < PAPI_OK) {
       mexPrintf("%d\n", result);
       mexErrMsgTxt(error_reading);
     }
@@ -205,17 +258,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
   }
 
   else if(!strncmp(input, "accum", 5)) {
-    if(nrhs > PAPI_num_counters() + 1) {
+    if(nrhs > PAPI_num_cmp_hwctrs(0) + 1) {
       mexErrMsgTxt(no_input);
     }
-    if(nlhs > PAPI_num_counters()) {
+    if(nlhs > PAPI_num_cmp_hwctrs(0)) {
       mexErrMsgTxt(one_output);
     }
     values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
     for(i = 0; i < nrhs - 1; i++) {
       values[i] = (long long)(*(mxGetPr(prhs[i + 1])));
     }
-    if(result = PAPI_accum_counters(values, nlhs) < PAPI_OK) {
+    if(result = PAPI_accum(EventSet, values) < PAPI_OK) {
       mexPrintf("Error code: %d\n", result);
       mexErrMsgTxt(error_reading);
     }

@@ -85,6 +85,16 @@ field means that at least one umask supports precise sampling. On Intel X86
 processors, this indicates whether the event supports Precise Event-Based
 Sampling (PEBS).
 .PP
+.TP
+.B is_speculative
+This bitfield indicates whether or not the event includes occurrences happening
+during speculative execution for both wrong and correct path. Given that this
+kind of event information is not always available from vendors, this field uses
+multiple bits. A value of \fBPFM_EVENT_INFO_SPEC_NA\fR indicates that speculation
+information is not available. A value of \fBPFM_EVENT_INFO_SPEC_TRUE\fR indicates
+that the event count during speculative execution. A value of \fBPFM_EVENT_INFO_SPEC_FALS\fR
+indicates that the event does not count during speculative execution.
+.PP
 
 The \fBpfm_os_t\fR enumeration provides the following choices:
 .TP

@@ -66,9 +66,10 @@ typedef struct {
 	pfm_attr_ctrl_t		ctrl;	/* what is providing attr */
 	uint64_t		idx;	/* attribute opaque index */
 	struct {
-		unsigned int    is_dfl:1;	/* is default umask */
-		unsigned int    is_precise:1;	/* Intel X86: supports PEBS */
-		unsigned int	reserved_bits:30;
+		unsigned int    is_dfl:1;	 /* is default umask */
+		unsigned int    is_precise:1;	 /* Intel X86: supports PEBS */
+		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
+		unsigned int	reserved_bits:28;
 	};
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */
@@ -186,6 +187,8 @@ typedef struct {
 #define PFMLIB_PMU_FL_RAW_UMASK	0x4	/* PMU supports PFM_ATTR_RAW_UMASKS */
 #define PFMLIB_PMU_FL_ARCH_DFL	0x8	/* PMU is arch default */
 #define PFMLIB_PMU_FL_NO_SMPL	0x10	/* PMU does not support sampling */
+#define PFMLIB_PMU_FL_SPEC	0x20	/* PMU provides event speculation info */
+#define PFMLIB_PMU_FL_DEPR	0x40	/* PMU model is deprecated */
 
 typedef struct {
 	int	initdone;
@@ -246,7 +249,9 @@ extern pfmlib_pmu_t amd64_fam14h_bobcat_support;
 extern pfmlib_pmu_t amd64_fam15h_interlagos_support;
 extern pfmlib_pmu_t amd64_fam15h_nb_support;
 extern pfmlib_pmu_t amd64_fam16h_support;
-extern pfmlib_pmu_t amd64_fam17h_support;
+extern pfmlib_pmu_t amd64_fam17h_deprecated_support;
+extern pfmlib_pmu_t amd64_fam17h_zen1_support;
+extern pfmlib_pmu_t amd64_fam17h_zen2_support;
 extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
 extern pfmlib_pmu_t intel_pii_support;
@@ -643,7 +648,15 @@ extern pfmlib_pmu_t arm_qcom_krait_support;
 extern pfmlib_pmu_t arm_cortex_a57_support;
 extern pfmlib_pmu_t arm_cortex_a53_support;
 extern pfmlib_pmu_t arm_xgene_support;
+
 extern pfmlib_pmu_t arm_thunderx2_support;
+extern pfmlib_pmu_t arm_thunderx2_dmc0_support;
+extern pfmlib_pmu_t arm_thunderx2_dmc1_support;
+extern pfmlib_pmu_t arm_thunderx2_llc0_support;
+extern pfmlib_pmu_t arm_thunderx2_llc1_support;
+extern pfmlib_pmu_t arm_thunderx2_ccpi0_support;
+extern pfmlib_pmu_t arm_thunderx2_ccpi1_support;
+
 extern pfmlib_pmu_t mips_74k_support;
 extern pfmlib_pmu_t s390x_cpum_cf_support;
 extern pfmlib_pmu_t s390x_cpum_sf_support;

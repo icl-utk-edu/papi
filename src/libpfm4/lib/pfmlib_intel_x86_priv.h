@@ -99,6 +99,7 @@ typedef struct {
 #define INTEL_X86_GRP_REQ		0x08000	/* grpid field split as (grpid & 0xff) | (required_grpid & 0xff) << 8 */
 #define INTEL_X86_FILT_UMASK		0x10000	/* Event use filter which may be encoded in umask */
 #define INTEL_X86_FORCE_FILT0		0x20000	/* Event must set filter0 even if zero value */
+#define INTEL_X86_SPEC			0x40000 /* Event includes speculative execution */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */

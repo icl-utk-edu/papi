@@ -94,7 +94,7 @@ class Sum_Counters(object):
       new_events['Number of processes'] = 1
 
       #add values
-      for event_key,event_value in known_events.iteritems():
+      for event_key,event_value in known_events.items():
         if 'Number of' in event_key or 'count' in event_key:
           known_events[event_key] = event_value + new_events[event_key]
         else:
@@ -114,7 +114,7 @@ def sum_json_object(json):
   for ranks in json['ranks']:
     for threads in ranks['threads']:
       for regions in threads['regions']:
-        for region_key,region_value in regions.iteritems():
+        for region_key,region_value in regions.items():
           name = region_key
           events = region_value
           sum_cnt.add_region(ranks['id'], name, events)
@@ -225,6 +225,28 @@ def format_events(events):
       mflips = float(format(mflips, '.2f'))
       format_events['MFLIPS/s'] = mflips
     del events['PAPI_FP_INS']
+
+  #SP vector instructions per second
+  if 'PAPI_VEC_SP' in events:
+    if isinstance(events['PAPI_VEC_SP'],dict):
+      mvecins_dict = get_ops_dict(events['PAPI_VEC_SP'], rt_dict)
+      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+    else:
+      mvecins = float(events['PAPI_VEC_SP']) / 1000000 / rt
+      mvecins = float(format(mvecins, '.2f'))
+      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins
+    del events['PAPI_VEC_SP']
+
+  #DP vector instructions per second
+  if 'PAPI_VEC_DP' in events:
+    if isinstance(events['PAPI_VEC_DP'],dict):
+      mvecins_dict = get_ops_dict(events['PAPI_VEC_DP'], rt_dict)
+      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+    else:
+      mvecins = float(events['PAPI_VEC_DP']) / 1000000 / rt
+      mvecins = float(format(mvecins, '.2f'))
+      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins
+    del events['PAPI_VEC_DP']
   
   #FLOPS
   if 'PAPI_FP_OPS' in events:
@@ -237,8 +259,30 @@ def format_events(events):
       format_events['MFLOPS/s'] = mflops
     del events['PAPI_FP_OPS']
   
+  #SP FLOPS
+  if 'PAPI_SP_OPS' in events:
+    if isinstance(events['PAPI_SP_OPS'],dict):
+      mflops_dict = get_ops_dict(events['PAPI_SP_OPS'], rt_dict)
+      format_events['Single precision MFLOPS/s'] = mflops_dict
+    else:
+      mflops = float(events['PAPI_SP_OPS']) / 1000000 / rt
+      mflops = float(format(mflops, '.2f'))
+      format_events['Single precision MFLOPS/s'] = mflops
+    del events['PAPI_SP_OPS']
+
+  #DP FLOPS
+  if 'PAPI_DP_OPS' in events:
+    if isinstance(events['PAPI_DP_OPS'],dict):
+      mflops_dict = get_ops_dict(events['PAPI_DP_OPS'], rt_dict)
+      format_events['Double precision MFLOPS/s'] = mflops_dict
+    else:
+      mflops = float(events['PAPI_DP_OPS']) / 1000000 / rt
+      mflops = float(format(mflops, '.2f'))
+      format_events['Double precision MFLOPS/s'] = mflops
+    del events['PAPI_DP_OPS']
+
   #read the rest
-  for event_key,event_value in events.iteritems():
+  for event_key,event_value in events.items():
     if isinstance(event_value,dict):
       format_events[event_key] = format_read_events(event_value)
     else:
@@ -265,7 +309,7 @@ def format_json_object(json):
       json_thread['regions'] = []
       for region in thread['regions']:
         json_region = {}
-        for region_key,region_value in region.iteritems():
+        for region_key,region_value in region.items():
           # print region_key
           # print region_value
           json_region[region_key] = format_events(region_value)
@@ -282,7 +326,7 @@ def write_json_file(data, file_name):
                       indent=4, sort_keys=False,
                       separators=(',', ': '), ensure_ascii=False)
     outfile.write(to_unicode(str_))
-    print str_
+    print (str_)
 
 
 def main(source, format, type):
@@ -303,7 +347,7 @@ def main(source, format, type):
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source', type=str, required=False, default="papi",
+  parser.add_argument('--source', type=str, required=False, default="papi_hl_output",
                       help='Measurement directory of raw data.')
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')

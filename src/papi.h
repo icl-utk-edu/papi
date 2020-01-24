@@ -286,6 +286,7 @@ failure.
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
 #define PAPI_HIGH_LEVEL_INITED 	2       /* High level has called library init */
 #define PAPI_THREAD_LEVEL_INITED 4      /* Threads have been inited */
+
 /** @} */
 
 /** @internal 
@@ -321,12 +322,10 @@ All of the functions in the PerfAPI should use the following set of constants.
  *	@{ */
 #define PAPI_USR1_TLS		0x0
 #define PAPI_USR2_TLS		0x1
-//#define PAPI_HIGH_LEVEL_TLS     0x2
+#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_NUM_TLS		0x3
 #define PAPI_TLS_USR1		PAPI_USR1_TLS
 #define PAPI_TLS_USR2		PAPI_USR2_TLS
-//#define PAPI_TLS_HIGH_LEVEL     PAPI_HIGH_LEVEL_TLS
-#define PAPI_TLS_HIGH_LEVEL    0x2
 #define PAPI_TLS_NUM		PAPI_NUM_TLS
 #define PAPI_TLS_ALL_THREADS	0x10
 /** @} */
@@ -1106,6 +1105,13 @@ enum {
    int   PAPI_disable_component(int cidx); /**< Disables a component before init */
    int	 PAPI_disable_component_by_name(const char *name ); /**< Disable, before library init, a component by name. */
    int PAPI_num_components(void); /**< get the number of components available on the system */
+
+   int PAPI_flips_rate(int event, float *rtime, float *ptime, long long *flpins, float *mflips); /**< simplified call to get Mflips/s (floating point instruction rate), real and processor time */
+   int PAPI_flops_rate(int event, float *rtime, float *ptime, long long * flpops, float *mflops); /**< simplified call to get Mflops/s (floating point operation rate), real and processor time */
+   int PAPI_ipc(float *rtime, float *ptime, long long * ins, float *ipc); /**< gets instructions per cycle, real and processor time */
+   int PAPI_epc(int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc); /**< gets (named) events per cycle, real and processor time, reference and core cycles */
+   int PAPI_rate_stop(); /**< stops a running event set of a rate function */
+
    /** @} */
 
 /** \internal
@@ -1114,9 +1120,10 @@ enum {
    The simple interface implemented by the following routines allows the user to record hardware events inside instrumented regions from both C and Fortran.
    @{ */
 
-   int PAPI_hl_region_begin(const char* region); /**< begin a new region for reading hardware events */
-   int PAPI_hl_read(const char* region); /**< read hardware events inside a region */
-   int PAPI_hl_region_end(const char* region); /**< end region and store the difference between the value of PAPI_hl_region_end and PAPI_hl_region_begin */
+   int PAPI_hl_region_begin(const char* region); /**< read performance events at the beginning of a region */
+   int PAPI_hl_read(const char* region); /**< read performance events inside of a region and store the difference to the corresponding beginning of the region */
+   int PAPI_hl_region_end(const char* region); /**< read performance events at the end of a region and store the difference to the corresponding beginning of the region */
+   int PAPI_hl_stop(); /**< stops a running high-level event set */
 /** @} */
 
 /** \internal

@@ -177,7 +177,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
 endif
 
@@ -188,7 +188,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM64)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM64
 endif
 
@@ -248,7 +248,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam12h.h	\
 	events/amd64_events_fam14h.h	\
 	events/amd64_events_fam15h.h	\
-	events/amd64_events_fam17h.h	\
+	events/amd64_events_fam17h_zen1.h \
+	events/amd64_events_fam17h_zen2.h \
 	events/amd64_events_fam16h.h	\
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
@@ -360,11 +361,13 @@ INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_cortex_a15_events.h		\
 	events/arm_cortex_a57_events.h		\
 	events/arm_cortex_a53_events.h		\
-	events/arm_cavium_tx2_events.h
+	events/arm_cavium_tx2_events.h		\
+	events/arm_marvell_tx2_unc_events.h
 
 INC_ARM64=events/arm_cortex_a57_events.h	\
-	  events/arm_cortex_a53_events.h	\
-	  events/arm_cavium_tx2_events.h
+	events/arm_cortex_a53_events.h	\
+	events/arm_cavium_tx2_events.h	\
+	events/arm_marvell_tx2_unc_events.h
 
 INCDEP=$(INC_COMMON) $(INCARCH)
 

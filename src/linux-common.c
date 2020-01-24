@@ -368,6 +368,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		*cpuinfo_mhz = mhz;
 	}
 	else {
+      *cpuinfo_mhz = -1;   // Could not find it.
 	//	PAPIWARN("Failed to find a clock speed in /proc/cpuinfo");
 	}
 
@@ -379,19 +380,22 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 	/* Which is the most common field      */
 	s = search_cpu_info( f, "vendor_id");
 	if ( s ) {
-		strcpy( hwinfo->vendor_string, s );
+		strncpy( hwinfo->vendor_string, s, PAPI_MAX_STR_LEN );
+      hwinfo->vendor_string[PAPI_MAX_STR_LEN-1]=0;
 	}
 	else {
 		/* If not found, try "vendor" which seems to be Itanium specific */
 		s = search_cpu_info( f, "vendor" );
 		if ( s ) {
-			strcpy( hwinfo->vendor_string, s );
+		   strncpy( hwinfo->vendor_string, s, PAPI_MAX_STR_LEN );
+         hwinfo->vendor_string[PAPI_MAX_STR_LEN-1]=0;
 		}
 		else {
 			/* "system type" seems to be MIPS and Alpha */
 			s = search_cpu_info( f, "system type");
 			if ( s ) {
-				strcpy( hwinfo->vendor_string, s );
+		      strncpy( hwinfo->vendor_string, s, PAPI_MAX_STR_LEN );
+            hwinfo->vendor_string[PAPI_MAX_STR_LEN-1]=0;
 			}
 			else {
 				/* "platform" indicates Power */

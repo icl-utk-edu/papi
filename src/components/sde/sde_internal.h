@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
-// #define _POSIX_C_SOURCE 199309L // According to the man page we need this for nanosleep(), timer_create(), etc
 #include <signal.h>
 #include <time.h>
 #if defined(SDE_HAVE_OVERFLOW)
@@ -25,21 +24,22 @@
 #define is_delta(_X_)     (PAPI_SDE_DELTA   == ((_X_)&0xF0))
 #define is_instant(_X_)   (PAPI_SDE_INSTANT == ((_X_)&0xF0))
 
-#define EXP_CONTAINER_ENTRIES 64
+#define EXP_CONTAINER_ENTRIES 52
 #define EXP_CONTAINER_MIN_SIZE 2048
 
 #ifndef SDE_MAX_SIMULTANEOUS_COUNTERS
 #define SDE_MAX_SIMULTANEOUS_COUNTERS 40
 #endif
 
+#define PAPISDE_HT_SIZE 512
 #define REGISTERED_EVENT_MASK 0x2;
 
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
-#include "papi_memory.h"    /* defines papi_malloc(), etc. */
-#include "extras.h" /* for _papi_hwi_dispatch_overflow_signal() */
+#include "papi_memory.h"
+#include "extras.h"
 
 #include "interface/papi_sde_interface.h"
 
@@ -51,7 +51,6 @@
   #define papi_sde_lock()
   #define papi_sde_unlock()
 #endif
-
 
 papi_vector_t _sde_vector;
 
@@ -75,22 +74,17 @@ typedef struct sde_control_state
 {
   int num_events;
   unsigned int which_counter[SDE_MAX_SIMULTANEOUS_COUNTERS]; 
-  long long counter[SDE_MAX_SIMULTANEOUS_COUNTERS];   /**< Copy of counts, holds results when stopped */
-  long long previous_value[SDE_MAX_SIMULTANEOUS_COUNTERS];   /**< Copy of counts, only used for overflow support */
+  long long counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
+  long long previous_value[SDE_MAX_SIMULTANEOUS_COUNTERS];
 #if defined(SDE_HAVE_OVERFLOW)
   timer_t timerid;
   int has_timer;
 #endif //defined(SDE_HAVE_OVERFLOW)
 } sde_control_state_t;
 
-/* Holds per-thread information. Currently not used by SDE. */
 typedef struct sde_context {
    long long junk;
 } sde_context_t;
-
-
-/* Size of the hash tables which hold the counters */
-#define PAPISDE_HT_SIZE 512
 
 typedef struct sde_counter_s sde_counter_t;
 typedef struct sde_sorting_params_s sde_sorting_params_t;
@@ -119,26 +113,19 @@ struct sde_counter_s {
    unsigned int glb_uniq_id;
    char *name;
    char *description;
-
    void *data; 
    long long int previous_data;
    recorder_data_t *recorder_data;
-
    int is_created;
    int overflow;
-
    papi_sde_fptr_t func_ptr;   
    void *param;   
-
    int cntr_type;
    int cntr_mode;
-
    papisde_library_desc_t *which_lib;
-
    papisde_list_entry_t *counter_group_head;
    uint32_t counter_group_flags;
 };
-
 
 struct sde_sorting_params_s{
    sde_counter_t *recording;
@@ -196,13 +183,10 @@ static int sde_hardware_read_and_store( sde_counter_t *counter, long long int pr
 static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
 static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder );
 int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
-static int get_sde_env(int* sde_num_libs, char ***sde_library_path);
 static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param );
 
 static sde_counter_t *allocate_and_insert(papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, void *param);
 static int delete_counter(papisde_library_desc_t* lib_handle, const char *name);
-
-//static void *overflow_thread_main(void *arg);
 
 static inline void free_counter(sde_counter_t *counter);
 static unsigned int ht_hash_id(unsigned int uniq_id);
@@ -211,5 +195,4 @@ static void ht_insert(papisde_list_entry_t *hash_table, int key, sde_counter_t *
 static sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int key, unsigned int uniq_id);
 static sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *name);
 static sde_counter_t *ht_lookup_by_id(papisde_list_entry_t *hash_table, unsigned int uniq_id);
-
 #endif

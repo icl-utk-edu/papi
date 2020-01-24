@@ -192,17 +192,17 @@ void conductTest(int EventSet, int device, long long *values) {
     const unsigned threadsPerBlock = 256;
 
     if (verbose) fprintf (stderr, "info: launch 'vector_square' kernel\n");
-//  hipLaunchKernelGGL((vector_square), dim3(blocks), dim3(threadsPerBlock), 0, 0, C_d, A_d, N);
+    hipLaunchKernelGGL((vector_square), dim3(blocks), dim3(threadsPerBlock), 0, 0, C_d, A_d, N);
 
     if (verbose) fprintf (stderr, "info: copy Device2Host\n");
     CHECK ( hipMemcpy(C_h, C_d, Nbytes, hipMemcpyDeviceToHost));  // copy (*dest, *source, Type).
 
-//  if (verbose) fprintf (stderr, "info: check result\n");
-//  for (size_t i=0; i<N; i++)  {
-//      if (C_h[i] != A_h[i] * A_h[i]) {              // If value received is not square of value sent,
-//          CHECK(hipErrorUnknown);                   // ... We have a problem!
-//      }
-//  }
+    if (verbose) fprintf (stderr, "info: check result\n");
+    for (size_t i=0; i<N; i++)  {
+        if (C_h[i] != A_h[i] * A_h[i]) {              // If value received is not square of value sent,
+            CHECK(hipErrorUnknown);                   // ... We have a problem!
+        }
+    }
 
     // We passed. Now we need to read the event.
     if (verbose) fprintf(stderr, "Passed. info: About to read event with PAPI_stop.\n");
@@ -215,6 +215,11 @@ void conductTest(int EventSet, int device, long long *values) {
     
     if (verbose) fprintf (stderr, "PAPI_stop succeeded.\n");
 
+    // Memory cleanup, on device and host.
+    CHECK(hipFree(A_d));                   // HIP free for device.
+    CHECK(hipFree(C_d));                   // ...
+    free(A_h);
+    free(C_h);
 } // end conductTest.
 
 //-----------------------------------------------------------------------------
@@ -314,13 +319,37 @@ int main(int argc, char *argv[])
                 device=0;                                               // Any device will do.
             }
 
+            // Filter for strings being returned.
+            int isString = 0;
+
+            if (strstr(info.symbol, "device_brand:")            != NULL) isString=1;
+            if (strstr(info.symbol, "device_name:")             != NULL) isString=1;
+            if (strstr(info.symbol, "device_serial_number:")    != NULL) isString=1;
+            if (strstr(info.symbol, "device_subsystem_name:")   != NULL) isString=1;
+            if (strstr(info.symbol, "vbios_version:")           != NULL) isString=1;
+            if (strstr(info.symbol, "vendor_name:")             != NULL) isString=1;
+            if (strstr(info.symbol, "driver_version_str:")      != NULL) isString=1;
+
+            // Filter out crashers.
+            if (strstr(info.symbol, "temp_current:device=0:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_critical:device=0:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_critical_hyst:device=0:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_emergency:device=0:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_emergency:device=0:sensor=3") != NULL) continue;  
+
+            if (strstr(info.symbol, "temp_current:device=1:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_critical:device=1:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_critical_hyst:device=1:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_emergency:device=1:sensor=3") != NULL) continue;  
+            if (strstr(info.symbol, "temp_emergency:device=1:sensor=3") != NULL) continue;  
+
             CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
             CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
 
             ret = PAPI_add_named_event(EventSet, info.symbol);          // Don't want to fail program if name not found...
             if(ret == PAPI_OK) {
                 eventCount++;                                           // Bump number of events we could test.
-                if (deviceEvents[device] == 0) deviceCount++;           // Increase count if first for this device.
+                if (deviceEvents[device] == 0) deviceCount++;           // Increase count of devices if first for this device.
                 deviceEvents[device]++;                                 // Add to count of events on this device.
             } else {
                 fprintf(stderr, "FAILED to add event '%s', ret=%i='%s'.\n", info.symbol, ret, PAPI_strerror(ret));
@@ -333,7 +362,7 @@ int main(int argc, char *argv[])
             
             // Prep stuff.
     
-//          fprintf(stderr, "conductTest on single event: %s.\n", info.symbol);
+            fprintf(stderr, "conductTest on single event: %s.\n", info.symbol);
             conductTest(EventSet, device, &value);                      // Conduct a test, on device given. 
             addEventsFound(info.symbol, value);                         // Add to events we were able to read.
             
@@ -345,7 +374,8 @@ int main(int argc, char *argv[])
             if (value == 0) {
                 printf("%-64s: %lli (perhaps not exercised by current test code.)\n", info.symbol, value);
             } else {
-                printf("%-64s: %lli\n", info.symbol, value);
+                if (isString) printf("%-64s: %-64s\n", info.symbol, ((char*) value));
+                else         printf("%-64s: %lli\n", info.symbol, value);
             }
         } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK); // Get next umask entry (bits different) (should return PAPI_NOEVNT).
     } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
@@ -497,8 +527,11 @@ int main(int argc, char *argv[])
                 }
 
                 printf("%c %64s + %-64s [", flag, eventsFound[mainEvent].name, eventsFound[pairEvent].name);
-                printf("%c%lli,", flag1, readValues[0]);
-                printf("%c%lli]\n", flag2, readValues[1]);
+                if (flag1 == '*') printf("%c%lli (vs %lli),", flag1, readValues[0], eventsFound[mainEvent].value);
+                else              printf("%c%lli,", flag1, readValues[0]);
+
+                if (flag2 == '*') printf("%c%lli (vs %lli)]\n", flag2, readValues[1], eventsFound[pairEvent].value);
+                else              printf("%c%lli]\n", flag2, readValues[1]);
 
                 CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                          // Delete all events in set.
                 CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                         // destroy the event set.

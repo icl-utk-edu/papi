@@ -1,0 +1,61 @@
+/**
+* @file:   README
+* CVS:     $Id$
+* @author: Damien Genet (ICL/UTK)
+* @defgroup papi_components Components
+* @brief Component Specific Readme file: powercap_ppc
+*/
+
+/** @page component_readme Component Readme
+
+@section Component Specific Information
+
+powercap_ppc/
+
+The PAPI powercap component supports measuring and capping power usage
+on recent IBM PowerPC architectures (Power9 and later) using the powercap
+interface exposed through the Linux kernel.
+
+--------------------------------------------------
+MEASURING AND CAPPING POWER
+
+The powercap sysfs interface exposes power measurments as R/W regsiter-like
+power settings. The counters and R/W settings apply to the Power9.
+
+These counters and settings are exposed though this PAPI component and can be
+accessed just like any normal PAPI counter. Running the "powercap_basic" test
+in the test directory will list all the events on a system. There is also a
+"powercap_limit" test in the test directory that shows how a power limit is
+applied.
+
+Note: Power Limiting using powercap_ppc _does_ _not_ require root privileges.
+Write permission to the file /sys/firmware/opal/powercap/powercap-current is
+"enough".
+
+--------------------------------------------------
+CONFIGURING THE PAPI POWERCAP COMPONENT
+
+At the higher src dirctory, configure with this component
+    % cd <papi_dir>/src
+    % ./configure --with-components="powercap_ppc"
+Follow the standard PAPI build (make) instructions
+    % make
+To use the module, make sure that the libraries are accessible.
+    % export LD_LIBRARY_PATH=${PAPIDIR}/src:${PAPIDIR}/src/libpfm4/lib:${LD_LIBRARY_PATH}
+To check the installation, the following should show some available counters
+    % ./utils/papi_native_avail | grep powercap_ppc
+
+--------------------------------------------------
+SYSTEM SETUP
+
+The actions described below will generally require superuser ability.
+Note, these actions may have security and performance consequences, so
+please make sure you know what you are doing.
+
+    Use chmod to set site-appropriate access permissions (e.g. 444)
+    for /sys/firmware/opal/powercap/powercap-(min|max)
+
+    Use chmod to set site-appropriate access permissions (e.g. 664)
+    for /sys/firmware/opal/powercap/powercap-current
+
+--------------------------------------------------
