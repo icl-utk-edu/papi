@@ -94,7 +94,7 @@ class Sum_Counters(object):
       new_events['Number of processes'] = 1
 
       #add values
-      for event_key,event_value in known_events.iteritems():
+      for event_key,event_value in known_events.items():
         if 'Number of' in event_key or 'count' in event_key:
           known_events[event_key] = event_value + new_events[event_key]
         else:
@@ -114,7 +114,7 @@ def sum_json_object(json):
   for ranks in json['ranks']:
     for threads in ranks['threads']:
       for regions in threads['regions']:
-        for region_key,region_value in regions.iteritems():
+        for region_key,region_value in regions.items():
           name = region_key
           events = region_value
           sum_cnt.add_region(ranks['id'], name, events)
@@ -282,7 +282,7 @@ def format_events(events):
     del events['PAPI_DP_OPS']
 
   #read the rest
-  for event_key,event_value in events.iteritems():
+  for event_key,event_value in events.items():
     if isinstance(event_value,dict):
       format_events[event_key] = format_read_events(event_value)
     else:
@@ -309,7 +309,7 @@ def format_json_object(json):
       json_thread['regions'] = []
       for region in thread['regions']:
         json_region = {}
-        for region_key,region_value in region.iteritems():
+        for region_key,region_value in region.items():
           # print region_key
           # print region_value
           json_region[region_key] = format_events(region_value)
@@ -326,7 +326,7 @@ def write_json_file(data, file_name):
                       indent=4, sort_keys=False,
                       separators=(',', ': '), ensure_ascii=False)
     outfile.write(to_unicode(str_))
-    print str_
+    print (str_)
 
 
 def main(source, format, type):
