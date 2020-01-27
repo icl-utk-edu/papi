@@ -1174,7 +1174,7 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 	event_table->default_pmu.size = sizeof(pfm_pmu_info_t);
 	retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
 
-    SUBDBG("Prescan for aliases.")
+    SUBDBG("Prescan for aliases.\n");
     /* We have to see if we have aliases in there as separate PMUs, */
     /* we don't want both PMUs with all the events duplicated.      */
     /* For aliases, either is valid alone, but if both are present  */
