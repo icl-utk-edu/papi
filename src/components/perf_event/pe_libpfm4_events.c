@@ -31,6 +31,9 @@
 // used to step through the attributes when enumerating events
 static int attr_idx;
 
+/* alias flags to handle amd_fam17h, amd_fam17h_zen1 both present PMUs*/
+static int amd64_fam17h_zen1_present = 0;
+
 /** @class  find_existing_event
  *  @brief  looks up an event, returns it if it exists
  *
@@ -482,7 +485,13 @@ static struct native_event_t *allocate_native_event(
  *
  *  @returns returns a libpfm event number
  *  @retval PAPI_ENOEVENT  Could not find an event
- *
+ *  Operational note: _pe_libpfm4_init() must be called first to set
+ *                    flags for synonymous PMUs. At this writing only 
+ *                    amd64_fam17h_zen1_present is defined.
+ *  Operational note: We indirectly return the pmu_idx within the
+ *                    event data; the calling code uses that to set
+ *                    pmu_idx for subsequent calls. All we do is find
+ *                    the next valid pmu, if any.
  */
 
 static int
@@ -511,6 +520,12 @@ get_first_event_next_pmu(int pmu_idx, int pmu_type)
 		break;
 	}
 
+    if ((ret==PFM_SUCCESS) && amd64_fam17h_zen1_present && strcmp(pinfo.name, "amd64_fam17h") == 0) {
+        /* Skip as if invalid; we want the PMU amd64_fam17h_zen1 instead. */
+        pmu_idx++;
+        continue;
+    }
+        
     if ((ret==PFM_SUCCESS) && pmu_is_present_and_right_type(&pinfo,pmu_type)) {
 
       pidx=pinfo.first_event;
@@ -1159,6 +1174,35 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 	event_table->default_pmu.size = sizeof(pfm_pmu_info_t);
 	retval=pfm_get_pmu_info(0, &(event_table->default_pmu));
 
+    SUBDBG("Prescan for aliases.")
+    /* We have to see if we have aliases in there as separate PMUs, */
+    /* we don't want both PMUs with all the events duplicated.      */
+    /* For aliases, either is valid alone, but if both are present  */
+    /* specify a preference in the code.                            */
+    /* Alias: amd64_fam17h_zen1 over amd64_fam17h.                  */
+    /* Alias flags are static ints global to this file.             */
+    i=0;
+	while(1) {
+		memset(&pinfo,0,sizeof(pfm_pmu_info_t));
+		pinfo.size = sizeof(pfm_pmu_info_t);
+		retval=pfm_get_pmu_info(i, &pinfo);
+
+		/* We're done if we hit an invalid PMU entry		    */
+		/* We can't check against PFM_PMU_MAX as that might not	*/
+		/* match if libpfm4 is dynamically linked		        */
+
+		if (retval==PFM_ERR_INVAL) {
+			break;
+		}
+
+		if ( (retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
+			(pmu_is_present_and_right_type(&pinfo,pmu_type)) &&
+            (strcmp(pinfo.name,"amd64_fam17h_zen1") == 0) ) {
+            amd64_fam17h_zen1_present = 1;
+        }
+        i++;
+    } 
+
 	SUBDBG("Detected pmus:\n");
 	i=0;
 	while(1) {
@@ -1177,6 +1221,12 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 		if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
 			(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
 
+            /* skip if it is amd64_fam17h and zen1 is also present. */
+            if (strcmp(pinfo.name,"amd64_fam17h") == 0 && amd64_fam17h_zen1_present) {
+                i++;
+                continue;
+            }
+
 			SUBDBG("\t%d %s %s %d\n",i,
 				pinfo.name,pinfo.desc,pinfo.type);
 
@@ -1193,11 +1243,9 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 				/* Hack to have "default core" PMU */
 				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
 					strcmp(pinfo.name,"ix86arch")) {
-
-					SUBDBG("\t  %s is default\n",pinfo.name);
-					memcpy(&(event_table->default_pmu),
-						&pinfo,sizeof(pfm_pmu_info_t));
-					found_default++;
+					    memcpy(&(event_table->default_pmu),
+						    &pinfo,sizeof(pfm_pmu_info_t));
+                        found_default++;
 				}
 			}
 

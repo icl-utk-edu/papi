@@ -1715,6 +1715,7 @@ _internal_PAPI_hl_print_output()
  *
  * @see PAPI_hl_read
  * @see PAPI_hl_region_end
+ * @see PAPI_hl_stop
  */
 int
 PAPI_hl_region_begin( const char* region )
@@ -1722,7 +1723,7 @@ PAPI_hl_region_begin( const char* region )
    int retval;
    /* if a rate event set is running stop it */
    if ( _papi_rate_events_running == 1 ) {
-      if ( ( retval = _papi_rate_stop() ) != PAPI_OK )
+      if ( ( retval = PAPI_rate_stop() ) != PAPI_OK )
          return ( retval );
    }
 
@@ -1822,6 +1823,7 @@ PAPI_hl_region_begin( const char* region )
  *
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_region_end
+ * @see PAPI_hl_stop
  */
 int
 PAPI_hl_read(const char* region)
@@ -1879,7 +1881,9 @@ PAPI_hl_read(const char* region)
  * 
  * Note that PAPI_hl_region_end does not stop counting the performance events. Counting
  * continues until the application terminates. Therefore, the programmer can also create
- * nested regions if required.
+ * nested regions if required. To stop a running high-level event set, the programmer must call
+ * PAPI_hl_stop(). It should also be noted, that a marked region is thread-local and therefore
+ * has to be in the same thread.
  * 
  * An output of the measured events is created automatically after the application exits.
  * In the case of a serial, or a thread-parallel application there is only one output file.
@@ -1937,6 +1941,7 @@ PAPI_hl_read(const char* region)
  * 
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_read
+ * @see PAPI_hl_stop
  */
 int
 PAPI_hl_region_end( const char* region )
@@ -1967,19 +1972,44 @@ PAPI_hl_region_end( const char* region )
    return ( PAPI_OK );
 }
 
-/* this internal function is called by a rate function */
+/** @class PAPI_hl_stop
+  * @brief Stop a running high-level event set.
+  *
+  * @par C Interface: 
+  * \#include <papi.h> @n
+  * int PAPI_hl_stop();
+  * 
+  * @retval PAPI_ENOEVNT 
+  * -- The EventSet is not started yet.
+  * @retval PAPI_ENOMEM 
+  * -- Insufficient memory to complete the operation. 
+  *
+  * PAPI_hl_stop stops a running high-level event set.
+  * 
+  * This call is optional and only necessary if the programmer wants to use the low-level API in addition
+  * to the high-level API. It should be noted that PAPI_hl_stop and low-level calls are not
+  * allowed inside of a marked region. Furthermore, PAPI_hl_stop is thread-local and therefore
+  * has to be called in the same thread as the corresponding marked region.
+  *
+ * @see PAPI_hl_region_begin
+ * @see PAPI_hl_read
+ * @see PAPI_hl_region_end
+ */
 int
-_papi_hl_stop()
+PAPI_hl_stop()
 {
    int retval, i;
 
-   if ( _local_components != NULL ) {
-      for ( i = 0; i < num_of_components; i++ ) {
-         if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
-            return ( retval );
+   if ( _papi_hl_events_running == 1 ) {
+      if ( _local_components != NULL ) {
+         for ( i = 0; i < num_of_components; i++ ) {
+            if ( ( retval = PAPI_stop( _local_components[i].EventSet, _local_components[i].values ) ) != PAPI_OK )
+               return ( retval );
+         }
       }
+      _papi_hl_events_running = 0;
+      return ( PAPI_OK );
    }
-   _papi_hl_events_running = 0;
-   return ( PAPI_OK );
+   return ( PAPI_ENOEVNT );
 }
 
