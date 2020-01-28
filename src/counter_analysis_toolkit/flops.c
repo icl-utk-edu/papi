@@ -271,7 +271,7 @@ void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
                 /* compute the resultant matrix */
                 if ( double_precision ) {
                     matrix_double( n, cd, ad, bd );
-                    dummy( ( void * ) c );
+                    dummy( ( void * ) cd );
                 } else {
                     matrix_single( n, c, a, b );
                     dummy( ( void * ) c );
