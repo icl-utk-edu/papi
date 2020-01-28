@@ -10,7 +10,7 @@
 #include "papi.h"
 #include "icache.h"
 
-void i_cache_driver(char* papi_event_name, int init, char* outdir)
+void i_cache_driver(char* papi_event_name, int init, char* outdir, int show_progress)
 {
     // Open output file.
     const char *sufx = ".instr";
@@ -33,7 +33,7 @@ void i_cache_driver(char* papi_event_name, int init, char* outdir)
         return;
     }
 
-    seq_driver(ofp_papi, papi_event_name, init);
+    seq_driver(ofp_papi, papi_event_name, init, show_progress);
 
     // Close output file.
     fclose(ofp_papi);

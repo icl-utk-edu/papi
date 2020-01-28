@@ -13,6 +13,7 @@ create_common_prefix(){
   cat <<EOF
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
@@ -226,27 +227,32 @@ create_functions(){
 create_main(){
 
     cat <<EOF
-void seq_driver(FILE* ofp_papi, char* papi_event_name, int init){
-    int i, ret, side_effect=0;
-	int eventset = PAPI_NULL;
+void seq_driver(FILE* ofp_papi, char* papi_event_name, int init, int show_progress){
+    int ret, exp_cnt=0, side_effect=0;
+    size_t i;
+    int eventset = PAPI_NULL;
 
     // Fill up the buffer with some nonsense numbers that will round to zero.
     for(i=0; i<BUF_ELEM_CNT; i++){
         buff[i] = floor( ((float)i+0.71)/((float)i+8.0*(float)init) );
         if( (int)buff[i] != 0 )
-            fprintf(stderr,"WARNING: this element should have been zero: buff[%d] = %d (%f). The branch benchmarks might not work properly.\n",i, (int)buff[i], buff[i]);
+            fprintf(stderr,"WARNING: this element should have been zero: buff[%lu] = %d (%f). The branch benchmarks might not work properly.\n",i, (int)buff[i], buff[i]);
     }
 
     // Set the variable to zero in a way that the compiler cannot figure it out.
     global_zero = (int)floor( (buff[3]+1) / (buff[9]+getpid()) );
 
-	//set up PAPI
-	if((ret=PAPI_create_eventset(&eventset)) != PAPI_OK){
-		return;
-	}
-	if((ret=PAPI_add_named_event(eventset, papi_event_name)) != PAPI_OK){
-		return;
-	}
+    //set up PAPI
+    if((ret=PAPI_create_eventset(&eventset)) != PAPI_OK){
+        for(i=0; i<strlen("Total:100%  Current test:"); i++) putchar('\b');
+        fflush(stdout);
+        return;
+    }
+    if((ret=PAPI_add_named_event(eventset, papi_event_name)) != PAPI_OK){
+        for(i=0; i<strlen("Total:100%  Current test:"); i++) putchar('\b');
+        fflush(stdout);
+        return;
+    }
 
     side_effect = init;
 EOF
@@ -260,6 +266,11 @@ EOF
                 tmp=$(( ${basic_block_copies}/${dl_reps} ))
                 basic_block_copies=$tmp
             fi
+            echo "    if( show_progress ){"
+            echo "        printf(\"%3d%%\b\b\b\b\",(100*exp_cnt)/(4*$#));"
+            echo "        exp_cnt++;"
+            echo "        fflush(stdout);"
+            echo "    }"
             echo "    side_effect += seq_jumps_${basic_block_copies}x${dl_reps}(1, eventset, NO_COPY, TRUE_IF, COLD_RUN, NULL);"
             echo "    if(side_effect < init){"
             echo "        return;"
@@ -281,6 +292,11 @@ EOF
                 tmp=$(( ${basic_block_copies}/${dl_reps} ))
                 basic_block_copies=$tmp
             fi
+            echo "    if( show_progress ){"
+            echo "        printf(\"%3d%%\b\b\b\b\",(100*exp_cnt)/(4*$#));"
+            echo "        exp_cnt++;"
+            echo "        fflush(stdout);"
+            echo "    }"
             echo "    side_effect += seq_jumps_${basic_block_copies}x${dl_reps}(1, eventset, NO_COPY, FALSE_IF, COLD_RUN, NULL);"
             echo "    if(side_effect < init){"
             echo "        return;"
@@ -293,6 +309,13 @@ EOF
         done
     done
     cat <<EOF
+
+    if( show_progress ){
+        size_t i;
+        printf("100%%");
+        for(i=0; i<strlen("Total:100%  Current test:100%"); i++) putchar('\b');
+        fflush(stdout);
+    }
 
     if( 174562 == side_effect ){
         printf("Random side-effect\n");

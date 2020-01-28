@@ -12,7 +12,7 @@ int main(int argc, char*argv[])
 {
     int cmbtotal = 0, ct = 0, track = 0, ret = 0;
     int bench_type = 0;
-    int mode = 0, pk = 0, max_iter = 1, i = 0, nevts = 0, status;
+    int mode = 0, pk = 0, max_iter = 1, i = 0, nevts = 0, show_progress = 0, status;
     int *cards = NULL, *indexmemo = NULL;
     char *infile = NULL, *outdir = NULL;
     char **allevts = NULL, **basenames = NULL;
@@ -27,7 +27,7 @@ int main(int argc, char*argv[])
     }
 
     // Parse the command-line arguments.
-    status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type );
+    status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type, &show_progress );
     if(0 != status)
     {
         free(outdir);
@@ -111,7 +111,7 @@ int main(int argc, char*argv[])
     trav_evts(data, pk, cards, nevts, ct, mode, allevts, &track, indexmemo, basenames);
 
     // Run the benchmark for each qualifier combination.
-    testbench(allevts, cmbtotal, max_iter, argc, outdir, bench_type);
+    testbench(allevts, cmbtotal, max_iter, argc, outdir, bench_type, show_progress);
 
     // Free dynamically allocated memory.
     free(outdir);
@@ -546,7 +546,27 @@ void get_dcache_latencies(int max_iter, char *outputdir){
     return;
 }
 
-void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outputdir, int bench_type )
+static void print_progress(int prg)
+{
+    if(prg < 100)
+        printf("%3d%%\b\b\b\b",prg);
+    else
+        printf("%3d%%\n",prg);
+
+    fflush(stdout);
+}
+
+static void print_progress2(int prg)
+{
+    if(prg < 100)
+        printf("Total:%3d%%  Current test:  0%%\b\b\b\b",prg);
+    else
+        printf("Total:%3d%%\n",prg);
+
+    fflush(stdout);
+}
+
+void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outputdir, int bench_type, int show_progress )
 {
     int i;
 
@@ -560,63 +580,92 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     /* Benchmark I - Branch*/
     if(bench_type & BENCH_BRANCH)
     {
+        if(show_progress) printf("Branch Benchmarks: ");
+
         for(i = 0; i < cmbtotal; ++i)
         {
+            if(show_progress) print_progress((100*i)/cmbtotal);
+
             if( allevts[i] != NULL )
                 branch_driver(allevts[i], init, outputdir);
         }
+        if(show_progress) print_progress(100);
     }
 
     /* Benchmark II - Data Cache Reads*/
     if( bench_type & BENCH_DCACHE_READ )
     {
+        if(show_progress)
+        {
+            printf("D-Cache Latencies: ");
+            fflush(stdout);
+        }
         get_dcache_latencies(max_iter, outputdir);
+        if(show_progress) printf("100%%\n");
 
+        if(show_progress) printf("D-Cache Read Benchmarks: ");
         for(i = 0; i < cmbtotal; ++i)
         {
+            if(show_progress) print_progress2((100*i)/cmbtotal);
+
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, outputdir, 0, 0);
+                d_cache_driver(allevts[i], max_iter, outputdir, 0, 0, show_progress);
             }
         }
+        if(show_progress) print_progress2(100);
     }
 
     /* Benchmark III - Data Cache Writes*/
     if( bench_type & BENCH_DCACHE_WRITE )
     {
+        if(show_progress) printf("D-Cache Write Benchmarks: ");
         get_dcache_latencies(max_iter, outputdir);
 
         for(i = 0; i < cmbtotal; ++i)
         {
+            if(show_progress) print_progress2((100*i)/cmbtotal);
+
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, outputdir, 0, 1);
+                d_cache_driver(allevts[i], max_iter, outputdir, 0, 1, show_progress);
             }
         }
+        if(show_progress) print_progress2(100);
     }
 
     /* Benchmark IV - FLOPS*/
     if( bench_type & BENCH_FLOPS )
     {
+        if(show_progress) printf("FLOP Benchmarks: ");
+
         for(i = 0; i < cmbtotal; ++i)
         {
+            if(show_progress) print_progress((100*i)/cmbtotal);
+
             if( allevts[i] != NULL )
                 flops_driver(allevts[i], outputdir);
         }
+        if(show_progress) print_progress(100);
     }
 
     /* Benchmark V - Instruction Cache*/
     if( bench_type & BENCH_ICACHE_READ )
     {
+        if(show_progress) printf("I-Cache Benchmarks: ");
+
         for(i = 0; i < cmbtotal; ++i)
         {
+            if(show_progress) print_progress2((100*i)/cmbtotal);
+
             if( allevts[i] != NULL )
-                i_cache_driver(allevts[i], init, outputdir);
+                i_cache_driver(allevts[i], init, outputdir, show_progress);
         }
+        if(show_progress) print_progress2(100);
     }
 
     return;
 }
 
-int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type){
+int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type, int *show_progress){
 
     char *name = argv[0];
     char *tmp = NULL;
@@ -627,6 +676,7 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     int len, status = 0;
 
     *subsetsize = -1;
+    *show_progress=0;
 
     // Parse the command line arguments
     while(--argc){
@@ -668,7 +718,10 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
             ++argv;
             continue;
         }
-
+        if( !strcmp(argv[0],"-verbose") ){
+            *show_progress=1;
+            continue;
+        }
         if( !strcmp(argv[0],"-branch") ){
             *bench_type |= BENCH_BRANCH;
             continue;
@@ -760,6 +813,7 @@ void print_usage(char* name)
     fprintf(stdout, "  Parameters \"-k\" and \"-in\" are mutually exclusive.\n");
     
     fprintf(stdout, "\nOptional:\n");
+    fprintf(stdout, "  -verbose          Show benchmark progress in the standard output.\n");
     fprintf(stdout, "  -n       <value>  Number of iterations for data cache kernels.\n");
     fprintf(stdout, "  -branch           Branch kernels.\n");
     fprintf(stdout, "  -dcr              Data cache reading kernels.\n");
