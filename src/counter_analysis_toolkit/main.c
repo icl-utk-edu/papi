@@ -178,14 +178,22 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
                         "If the latter, use '0' in place of the provided '%d'.\n", basenames[i], cards[i]);
                 cards[i] = 0;
             }
+
+            // If an invalid (negative) qualifier count was given, use zero qualifiers.
+            if(cards[i] < 0)
+            {
+                fprintf(stderr, "The qualifier count (provided for event '%s') cannot be negative.\n", basenames[i]);
+                cards[i] = 0;
+            }
+
             (*indexmemo)[i] = j;
         }
 
         // Count the total number of events to test.
         for(i = 0; i < ct; ++i)
         {
-            // If not qualifiers are used, then just count the event itself.
-            if(cards[i] == 0)
+            // If no qualifiers are used, then just count the event itself.
+            if(cards[i] <= 0)
             {
                 cmbtotal += 1;
                 continue;
@@ -205,7 +213,7 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
             // for the main event, do not use any qualifiers. Otherwise, count
             // the number of combinations of qualifiers for the main event.
             minim = cards[i];
-            if(cards[i] > n)
+            if(cards[i] > n || cards[i] < 0)
             {
                 minim = 0;
             }
@@ -224,7 +232,7 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
             // for the main event, do not use any qualifiers. Otherwise, count
             // the number of combinations of qualifiers for the main event.
             minim = pk;
-            if(pk > n)
+            if(pk > n || pk < 0)
             {
                 minim = 0;
             }
@@ -274,15 +282,13 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
             continue;
         }
 
-        size_t len = 1 + (uintptr_t)place-(uintptr_t)line;
-        names[cnt] = (char *)calloc(len, sizeof(char));
+        names[cnt] = NULL;
+        status = sscanf(line, "%ms %d", &(names[cnt]), &(cards[cnt]) );
 
-        status = sscanf(line, "%s %d", names[cnt], &(cards[cnt]) );
         // If this line was malformed, silently ignore it.
         if(2 != status)
         {
             fprintf(stderr,"problem with line: '%s'\n",line);
-            free(names[cnt]);
             names[cnt] = NULL;
             cards[cnt] = -1;
             cnt--;
@@ -302,7 +308,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
 }
 
 // Recursively builds the list of all combinations of an event's qualifiers.
-void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* track, int flag, int* bitmap)
+void combine_qualifiers(int n, int pk, int ct, char** list, char* name, char** allevts, int* track, int flag, int* bitmap)
 {
     int original;
     int counter;
@@ -328,9 +334,9 @@ void rec(int n, int pk, int ct, char** list, char* name, char** allevts, int* tr
         // the user.
         if(counter < pk)
         {
-            rec(n, pk, ct+1, list, name, allevts, track, 1, bitmap); 
+            combine_qualifiers(n, pk, ct+1, list, name, allevts, track, 1, bitmap); 
         }
-        rec(n, pk, ct+1, list, name, allevts, track, 0, bitmap);
+        combine_qualifiers(n, pk, ct+1, list, name, allevts, track, 0, bitmap);
     }
     // Qualifier count matches that specified by the user.
     else
@@ -407,11 +413,8 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
                 n = num_quals(stock, j);
             }
 
-            // Show progress to the user.
-            //fprintf(stderr, "CURRENT EVENT: %s (%d/%d)\n", name, (i+1), selexnsize);
-
             // Create a list to contain the qualifiers.
-            if(cards[i] != 0)
+            if(cards[i] > 0)
             {
                 chosen = (char**)malloc(n*sizeof(char*));
                 bitmap = (int*)calloc(n, sizeof(int));    
@@ -424,10 +427,10 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             }
 
             // Get combinations of all current event's qualifiers.
-            if (n!=0 && cards[i]!=0)
+            if (n!=0 && cards[i]>0)
             {
-                rec(n, cards[i], 0, chosen, name, allevts, track, 0, bitmap);
-                rec(n, cards[i], 0, chosen, name, allevts, track, 1, bitmap);
+                combine_qualifiers(n, cards[i], 0, chosen, name, allevts, track, 0, bitmap);
+                combine_qualifiers(n, cards[i], 0, chosen, name, allevts, track, 1, bitmap);
             }
             else
             {
@@ -436,7 +439,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             }
 
             // Free the space back up.
-            if(cards[i] != 0)
+            if(cards[i] > 0)
             {
                 for(k = 0; k < n; ++k)
                 {
@@ -472,8 +475,8 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             // Get combinations of all current event's qualifiers.
             if (n!=0)
             {
-                rec(n, pk, 0, chosen, name, allevts, track, 0, bitmap);
-                rec(n, pk, 0, chosen, name, allevts, track, 1, bitmap);
+                combine_qualifiers(n, pk, 0, chosen, name, allevts, track, 0, bitmap);
+                combine_qualifiers(n, pk, 0, chosen, name, allevts, track, 1, bitmap);
             }
             else
             {
@@ -684,6 +687,11 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
         }
         if( argc > 1 && !strcmp(argv[0],"-k") ){
             *subsetsize = atoi(argv[1]);
+            if( *subsetsize < 0 )
+            {
+                *subsetsize = 0;
+                fprintf(stderr, "Warning: Cannot pass a negative value to -k.\n");
+            }
             *mode = USE_ALL_EVENTS;
             kflag = 1;
             --argc;
