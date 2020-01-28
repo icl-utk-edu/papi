@@ -618,9 +618,19 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     /* Benchmark III - Data Cache Writes*/
     if( bench_type & BENCH_DCACHE_WRITE )
     {
-        if(show_progress) printf("D-Cache Write Benchmarks: ");
-        get_dcache_latencies(max_iter, outputdir);
+        // If the READ benchmark was run, do not recompute the latencies.
+        if ( !(bench_type & BENCH_DCACHE_READ) )
+        {
+            if(show_progress)
+            {
+                printf("D-Cache Latencies: ");
+                fflush(stdout);
+            }
+            get_dcache_latencies(max_iter, outputdir);
+            if(show_progress) printf("100%%\n");
+        }
 
+        if(show_progress) printf("D-Cache Write Benchmarks: ");
         for(i = 0; i < cmbtotal; ++i)
         {
             if(show_progress) print_progress2((100*i)/cmbtotal);
