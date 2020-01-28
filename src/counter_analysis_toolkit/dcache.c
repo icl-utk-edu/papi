@@ -21,10 +21,11 @@ int show_progress = 0;
 int line_size;
 int guessCount, min_size, max_size;
 
-void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int latency_only, int mode)
+void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int latency_only, int mode, int show_progress)
 {
     int pattern = 3;
     int ls = 64;
+    int test_cnt = 0;
     float ppb = 16;
     FILE *ofp_papi;
     char *sufx, *papiFileName;
@@ -60,15 +61,34 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int laten
             if(pattern != 4) 
             {
                 for(ppb = 64; ppb >= 16; ppb -= 48)
+                {
+                    if( show_progress )
+                    {
+                        printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
+                        fflush(stdout);
+                    }
                     d_cache_test(pattern, max_iter, ls, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                }
             }
             else
             {
+                if( show_progress )
+                {
+                    printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
+                    fflush(stdout);
+                }
                 d_cache_test(pattern, max_iter, ls, ppb, papi_event_name, latency_only, mode, ofp_papi);
             }
         }
     }
-
+    if( show_progress )
+    {
+        size_t i;
+        printf("100%%");
+        for(i=0; i<strlen("Total:100%  Current test:100%"); i++) putchar('\b');
+        fflush(stdout);
+    }
+ 
     // Close files and free memory.
     fclose(ofp_papi);
 error1:
@@ -96,7 +116,6 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     line_size = line_size_in_bytes/sizeof(uintptr_t);
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
-
 
     // The number of different sizes we will guess, trying to find the right size.
     guessCount = 0;
@@ -132,7 +151,6 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     pthread_create(&tid, NULL, thread_main, &data);
     pthread_join(tid, (void **)&thread_msg);
     if( -7 == *thread_msg ){
-        fprintf(stderr,"Benchmark thread encountered an error with %s.\n", papi_event_name);
         return;
     }
 
@@ -188,40 +206,26 @@ void *thread_main(void *arg){
     latency_only = data->latency_only;
     mode = data->mode;
 
-#if defined(SET_AFFIN)
-    cpu_set_t cpu_set;
-    CPU_ZERO( &cpu_set );
-    CPU_SET( 1, &cpu_set );
-
-    if ( sched_setaffinity( 0, sizeof(cpu_set), &cpu_set ) ){
-        fprintf(stderr,"Can't pin thread to CPU\n");
-        exit(-1);
-    }
-#endif //SET_AFFIN
-
     if( !latency_only){
         _papi_eventset = PAPI_NULL;
         if( PAPI_thread_init(pthread_self) != PAPI_OK ){
-            printf("PAPI was NOT initialized correctly.\n");
+            fprintf(stderr,"PAPI was NOT initialized correctly.\n");
             pthread_exit((void *)error_flag); 
         }        
 
         /* Set the event */
         ret_val = PAPI_create_eventset( &_papi_eventset );
         if (ret_val != PAPI_OK ){
-            fprintf(stderr, "PAPI_create_eventset() returned %d\n",ret_val);
             pthread_exit((void *)error_flag); 
         }
 
         ret_val = PAPI_event_name_to_code( data->event_name, &native );
         if (ret_val != PAPI_OK ){
-            fprintf(stderr, "PAPI_event_name_to_code() returned %d\n",ret_val);
             pthread_exit((void *)error_flag);
         }
 
         ret_val = PAPI_add_event( _papi_eventset, native );
         if (ret_val != PAPI_OK ){
-            fprintf(stderr, "PAPI_add_event() returned %d\n",ret_val);
             pthread_exit((void *)error_flag);
         }
         /* Done setting the event. */
@@ -232,7 +236,6 @@ void *thread_main(void *arg){
             printf("%3d%%\b\b\b\b",(100*i)/global_max_iter);
             fflush(stdout);
         }
-        fflush(stdout);
 
         *error_flag = varyBufferSizes(values, rslts[i], counter[i], global_line_size_in_bytes, global_pages_per_block, latency_only, mode);
     }

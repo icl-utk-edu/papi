@@ -31,7 +31,7 @@
     result = z1 ^ z2 ^ z3 ^ z4;\
 }
 
-void i_cache_driver(char* papi_event_name, int init, char* outdir);
-void seq_driver(FILE* ofp_papi, char* papi_event_name, int init);
+void i_cache_driver(char* papi_event_name, int init, char* outdir, int show_progress);
+void seq_driver(FILE* ofp_papi, char* papi_event_name, int init, int show_progress);
 
 #endif
