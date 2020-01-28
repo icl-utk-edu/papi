@@ -289,7 +289,6 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         if(2 != status)
         {
             fprintf(stderr,"problem with line: '%s'\n",line);
-            free(names[cnt]);
             names[cnt] = NULL;
             cards[cnt] = -1;
             cnt--;
