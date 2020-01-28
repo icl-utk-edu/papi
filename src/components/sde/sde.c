@@ -2789,7 +2789,7 @@ papi_vector_t _sde_vector = {
 
         .name = "sde",
         .short_name = "sde",
-        .description = "A simple sde component",
+        .description = "Software Defined Events (SDE) component",
         .version = "1.15",
         .support_version = "n/a",
         .kernel_version = "n/a",
