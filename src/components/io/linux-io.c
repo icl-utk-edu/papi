@@ -41,8 +41,8 @@ typedef struct IO_native_event_entry
 /** This table contains the native events */
 static IO_native_event_entry_t *io_native_table;
 
-/** number of events in the table*/
-static int EventCount;
+/** _io_init_component() only fills these once, if EventCount==0. */
+static int EventCount = 0; 
 static int EventSetCount;
 static int *EventSetIdx;
 static long long *EventSetVal;
@@ -97,6 +97,13 @@ _io_init_component( int cidx )
     int fileIdx;
     SUBDBG( "_io_init_component..." );
 
+    // ensure this is done just once.
+    _papi_hwi_lock(COMPONENT_LOCK);
+    if (EventCount != 0) {
+        _papi_hwi_unlock(COMPONENT_LOCK);
+        return(PAPI_OK);
+    }
+
     // Open the file.
     FILE * pFile;
     char line[FILE_LINE_SIZE] = {0};
@@ -104,11 +111,11 @@ _io_init_component( int cidx )
     if (pFile == NULL) {
         strncpy(_io_vector.cmp_info.disabled_reason, 
         "Required File /proc/self/io is not present.", PAPI_MAX_STR_LEN-1);
+        _papi_hwi_unlock(COMPONENT_LOCK);
        return PAPI_ENOSUPP;               // EXIT not supported.
     }
 
-    // Just count the lines, basic vetting.
-    EventCount = 0;
+    // Just count the lines, basic vetting. EventCount == 0 already.
     while (1) {
         char *res;
         // fgets guarantees z-terminator, reads at most FILE_LINE_SIZE-1 bytes.
@@ -119,6 +126,7 @@ _io_init_component( int cidx )
             strncpy(_io_vector.cmp_info.disabled_reason,
             "/proc/self/io line too long for current buffer size.", PAPI_MAX_STR_LEN-1);
             fclose(pFile);
+            _papi_hwi_unlock(COMPONENT_LOCK);
             return PAPI_ENOSUPP;
         }
 
@@ -129,6 +137,7 @@ _io_init_component( int cidx )
             strncpy(_io_vector.cmp_info.disabled_reason,
             "/proc/self/io unexpected format, expect 'name: count'.", PAPI_MAX_STR_LEN-1);
             fclose(pFile);
+            _papi_hwi_unlock(COMPONENT_LOCK);
             return PAPI_ENOSUPP;
         }
 
@@ -141,6 +150,7 @@ _io_init_component( int cidx )
         snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
         "Insufficient memory to allocate %i ints.", EventCount);
         fclose(pFile);
+        _papi_hwi_unlock(COMPONENT_LOCK);
         return PAPI_ENOMEM;
     }
         
@@ -149,6 +159,7 @@ _io_init_component( int cidx )
         snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
         "Insufficient memory to allocate %i long longs.", EventCount);
         fclose(pFile);
+        _papi_hwi_unlock(COMPONENT_LOCK);
         return PAPI_ENOMEM;
     }
 
@@ -157,6 +168,7 @@ _io_init_component( int cidx )
         snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
         "Insufficient memory to allocate %i long longs.", EventCount);
         fclose(pFile);
+        _papi_hwi_unlock(COMPONENT_LOCK);
         return PAPI_ENOMEM;
     }
 
@@ -170,6 +182,7 @@ _io_init_component( int cidx )
         snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
         "Insufficient memory to allocate %i Events.", EventCount);
         fclose(pFile);
+        _papi_hwi_unlock(COMPONENT_LOCK);
         return PAPI_ENOMEM;
     }
 
@@ -211,6 +224,8 @@ _io_init_component( int cidx )
         }
     } // END READING.
 
+    fclose(pFile);
+
     // Export the total number of events available.
     _io_vector.cmp_info.num_native_events = EventCount;
    
@@ -219,7 +234,7 @@ _io_init_component( int cidx )
 
     /* Export the component id */
     _io_vector.cmp_info.CmpIdx = cidx;
-
+    _papi_hwi_unlock(COMPONENT_LOCK);
     return PAPI_OK;
 } // END ROUTINE.
 
