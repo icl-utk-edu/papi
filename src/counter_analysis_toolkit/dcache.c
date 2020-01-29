@@ -17,7 +17,6 @@ extern int _papi_eventset;
 
 int global_max_iter, global_line_size_in_bytes, global_pattern;
 float global_pages_per_block;
-int show_progress = 0;
 int line_size;
 int guessCount, min_size, max_size;
 
@@ -232,16 +231,7 @@ void *thread_main(void *arg){
     }
 
     for(i=0; i<global_max_iter; ++i){
-        if( show_progress ){
-            printf("%3d%%\b\b\b\b",(100*i)/global_max_iter);
-            fflush(stdout);
-        }
-
         *error_flag = varyBufferSizes(values, rslts[i], counter[i], global_line_size_in_bytes, global_pages_per_block, latency_only, mode);
-    }
-    if( show_progress ){
-        printf("100%%\n");
-        fflush(stdout);
     }
 
     if( !latency_only ){
