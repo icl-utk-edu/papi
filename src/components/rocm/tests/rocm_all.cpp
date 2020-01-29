@@ -10,6 +10,14 @@
 #include "papi.h"
 #include <hip/hip_runtime.h>
 
+// Pair testing can trigger a bug in the AMD library, a segfault once too
+// many pairs have been tested. The order of testing doesn't matter, I 
+// have randomized them and it still occurs. I suspect a memory leak.
+// However, it is unusual to test and destroy thousands of event sets,
+// so we can skip that in our test until the AMD library is repaired.
+// Tony Castaldo
+#define SKIP_PAIR_TESTING
+
 #define CHECK(cmd) \
 {\
     hipError_t error  = cmd;\
@@ -67,17 +75,6 @@ typedef struct {
 } eventStore_t;
 
 std::string EXCLUDE[] = {           // List of events to specifically exclude, when rocprofiler_open is failing.
-   "TA_TA_BUSY",
-   "TA_FLAT_READ_WAVEFRONTS",
-   "TA_FLAT_WRITE_WAVEFRONTS",
-   "TCC_HIT",
-   "TCC_MISS",
-   "TCC_EA_WRREQ",
-   "TCC_EA_WRREQ_64B",
-   "TCC_EA_WRREQ_STALL",
-   "TCC_EA_RDREQ",
-   "TCC_EA_RDREQ_32B",
-   "TCP_TA_DATA_STALL_CYCLES",
    "",                              // End of Table. MOVE TO TOP to disable this list.
 };
 
@@ -242,7 +239,7 @@ int main(int argc, char *argv[])
 
     // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
-    int eventCount;
+    int eventCount, thisEvent=0;
     int ret;
     int k, m, cid=-1;
 
@@ -326,6 +323,7 @@ int main(int argc, char *argv[])
 
             if (EXCLUDE[i].size() != 0) continue;                       // Matched an exclusion, skip it.
 
+//          fprintf(stderr, "Received event '%i. %s'.\n", thisEvent++, info.symbol);
             CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
             CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
 
@@ -346,6 +344,7 @@ int main(int argc, char *argv[])
             // Prep stuff.
            
             conductTest(EventSet, device, &value);                      // Conduct a test, on device given. 
+//          fprintf(stderr, "Tested Event '%s'.\n", info.symbol);
             addEventsFound(info.symbol, value);                         // Add to events we were able to read.
             
             CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));              // Delete all events in set.
@@ -382,6 +381,7 @@ int main(int argc, char *argv[])
     }
 
     printf("\nTotal ROCM events identified: %i.\n\n", eventsFoundCount);
+#ifndef SKIP_PAIR_TESTING
     if (eventsFoundCount < 2) {                                             // If failed to get counts on any,
         printf("Insufficient events are exercised by the current test code to perform pair testing.\n"); // report a failure.
         FreeGlobals();
@@ -517,8 +517,10 @@ int main(int argc, char *argv[])
         }
     } // end loop on type.
 
-    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
+#endif // SKIP_PAIR_TESTING
+
+//  fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     PAPI_shutdown();                                                                    // Returns no value.
-    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
+//  fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     return(0);                                                                          // exit OK.
 } // end MAIN.
