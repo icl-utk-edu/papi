@@ -64,12 +64,10 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
 
     ret_val = PAPI_cleanup_eventset( papi_eventset );
     if (ret_val != PAPI_OK ){
-        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
         goto error1;
     }
     ret_val = PAPI_destroy_eventset( &papi_eventset );
     if (ret_val != PAPI_OK ){
-        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
         goto error1;
     }
 
@@ -85,7 +83,6 @@ long long int branch_char_b1(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -109,7 +106,6 @@ long long int branch_char_b1(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -122,7 +118,6 @@ long long int branch_char_b2(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -147,7 +142,6 @@ long long int branch_char_b2(int size, int event_set){
 
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
     return value;
@@ -159,7 +153,6 @@ long long int branch_char_b3(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -184,7 +177,6 @@ long long int branch_char_b3(int size, int event_set){
 
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
     return value;
@@ -196,7 +188,6 @@ long long int branch_char_b4(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -221,7 +212,6 @@ long long int branch_char_b4(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -234,7 +224,6 @@ long long int branch_char_b4a(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -254,7 +243,6 @@ long long int branch_char_b4a(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -267,7 +255,6 @@ long long int branch_char_b4b(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -287,7 +274,6 @@ long long int branch_char_b4b(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -300,7 +286,6 @@ long long int branch_char_b5(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -325,7 +310,6 @@ long long int branch_char_b5(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -338,7 +322,6 @@ long long int branch_char_b5a(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -359,7 +342,6 @@ long long int branch_char_b5a(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -372,7 +354,6 @@ long long int branch_char_b5b(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -393,7 +374,6 @@ long long int branch_char_b5b(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
 
@@ -406,7 +386,6 @@ long long int branch_char_b6(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -434,7 +413,6 @@ long long int branch_char_b6(int size, int event_set){
 
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
     return value;
@@ -446,7 +424,6 @@ long long int branch_char_b7(int size, int event_set){
     long long int value;
 
     if ( (retval=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
         return -1;
     }
 
@@ -466,7 +443,6 @@ long long int branch_char_b7(int size, int event_set){
     }while(iter_count<size);
 
     if ( (retval=PAPI_stop(event_set, &value)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return -1;
     }
     return value;

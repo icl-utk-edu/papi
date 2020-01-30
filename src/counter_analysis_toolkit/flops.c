@@ -27,7 +27,6 @@ static void resultline( int i, int j, int EventSet, FILE *fp)
     int retval;
 
     if ( (retval=PAPI_stop(EventSet, &flpins)) != PAPI_OK){
-        fprintf(stderr, "PAPI_stop() returned: %d\n", retval);
         return;
     }
 
@@ -98,17 +97,6 @@ static void matrix_double( int n, double *c, double *a, double *b )
                 c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
 }
 
-static void reset_flops( int EventSet )
-{
-    int retval;
-
-    if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
-        fprintf(stderr, "PAPI_start() returned: %d\n", retval);
-    }
-
-    return;
-}
-
 void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
 {
     extern void dummy( void * );
@@ -148,7 +136,9 @@ void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
                 }
 
                 /* reset PAPI flops count */
-                reset_flops( EventSet );
+                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+                    return;
+                }
 
                 /* do the multiplication */
                 if ( double_precision ) {
@@ -208,7 +198,9 @@ void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
                 }
 
                 /* reset PAPI flops count */
-                reset_flops( EventSet );
+                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+                    return;
+                }
 
                 /* compute the resultant vector */
                 if ( double_precision ) {
@@ -266,7 +258,9 @@ void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
                 }
 
                 /* reset PAPI flops count */
-                reset_flops( EventSet );
+                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+                    return;
+                }
 
                 /* compute the resultant matrix */
                 if ( double_precision ) {
@@ -329,12 +323,10 @@ void flops_driver(char* papi_event_name, char* outdir)
 
     retval = PAPI_cleanup_eventset( EventSet );
     if (retval != PAPI_OK ){
-        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",retval);
         goto error1;
     }
     retval = PAPI_destroy_eventset( &EventSet );
     if (retval != PAPI_OK ){
-        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",retval);
         goto error1;
     }
 

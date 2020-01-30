@@ -147,7 +147,6 @@ EOF
     echo "    }"
     echo ""
     echo "    if((ret=PAPI_start(eventset)) != PAPI_OK){"
-    echo "        fprintf(stderr,\"PAPI error:%s \n\",PAPI_strerror(ret));"
     echo "        return -1;"
     echo "    }"
     echo ""
@@ -170,7 +169,6 @@ EOF
     cat <<EOF
 
     if((ret=PAPI_stop(eventset, &cntr_value)) != PAPI_OK){
-        fprintf(stderr,"PAPI error:%s \n",PAPI_strerror(ret));
         return -1;
     }
 
@@ -323,12 +321,10 @@ EOF
 
     ret = PAPI_cleanup_eventset( eventset );
     if (ret != PAPI_OK ){
-        fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret);
         return;
     }
     ret = PAPI_destroy_eventset( &eventset );
     if (ret != PAPI_OK ){
-        fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret);
         return;
     }
 
