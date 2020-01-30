@@ -140,7 +140,7 @@ bool events_determined = false;  /**< Check if events are determined */
 bool output_generated = false;   /**< Check if output has been already generated */
 static char *absolute_output_file_path = NULL;
 static int output_counter = 0;   /**< Count each output generation. Not used yet */
-short verbosity = 1;             /**< Verbose output is always generated */
+short verbosity = 0;             /**< Verbose output is off by default */
 bool state = PAPIHL_ACTIVE;      /**< PAPIHL is active until first error or finalization */
 static int region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
 static int region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
@@ -207,8 +207,8 @@ static void _internal_hl_library_init(void)
    int retval;
 
    /* check VERBOSE level */
-   if ( getenv("PAPI_NO_WARNING") != NULL ) {
-      verbosity = 0;
+   if ( getenv("PAPI_HL_VERBOSE") != NULL ) {
+      verbosity = 1;
    }
 
    if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
