@@ -10,7 +10,7 @@ endif
 HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
 HIPCC=$(HIP_PATH)/bin/hipcc
 
-INCLUDE+=-I${HOME}/papi/src/ -I${PAPI_ROCM_ROOT}/include/rocm_smi/
+INCLUDE+=-I../../../ -I${PAPI_ROCM_ROOT}/include/rocm_smi/
 
 ifeq (${HIP_PLATFORM}, nvcc)
 	SOURCES=square.cu
@@ -35,6 +35,9 @@ rocm_smi_all.out: rocm_smi_all.cpp
 
 rocm_smi_writeTests.out: rocm_smi_writeTests.cpp 
 	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocm_smi_writeTests.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+
+rocmcap_plot.out: rocmcap_plot.cpp 
+	$(HIPCC) $(CXXFLAGS) -g $(INCLUDE) rocmcap_plot.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 checkpath: 
 	echo HIP_PATH = $(HIP_PATH)

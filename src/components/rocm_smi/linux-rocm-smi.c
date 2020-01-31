@@ -1054,10 +1054,12 @@ static int er_power_ave(int myIdx)
 {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
+//  fprintf(stderr, "%s:%i:%s Checkpoint.\n", __FILE__, __LINE__, __func__);
     RSMI(rsmi_dev_power_ave_get,                            // Routine name.
         (AllEvents[myIdx].device, AllEvents[myIdx].subvariant, data), // device, sensor, and pointer for storage of read.
         return(PAPI_EMISC));                                // Error handler.
     AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
+//  fprintf(stderr, "er_power_ave read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -1096,6 +1098,7 @@ static int er_power_cap_range_min(int myIdx)                // THIS IS THE BASE 
     }
 
     AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value for min.
+//  fprintf(stderr, "er_power_min read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -1105,6 +1108,7 @@ static int er_power_cap_range_max(int myIdx)                // NOT THE BASE EVEN
     int idx = AllEvents[myIdx].baseIdx;
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut to min/max.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value for max.
+//  fprintf(stderr, "er_power_max read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -3298,9 +3302,11 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
         if (AllEvents[idx].reader == NULL) continue;            // No reader provided, may be static value or write-only value.
         bidx=AllEvents[idx].baseIdx;                            // ... for base event.
         if (bidx != idx && AllEvents[bidx].read == 0) {         // If baseIdx is for some other event and it hasn't been read,
+//          fprintf(stderr, "%s:%i calling reader '%s'.\n", __FILE__, __LINE__, AllEvents[bidx].name);
             (AllEvents[bidx].reader)(bidx);                     // .. call the base reader to populate the whole array.
         }
 
+//      fprintf(stderr, "%s:%i calling reader '%s'.\n", __FILE__, __LINE__, AllEvents[idx].name);
         (AllEvents[idx].reader)(idx);                           // Always have to do this whether I had a base read or not.
     }
 
