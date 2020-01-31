@@ -43,12 +43,6 @@ typedef struct IO_native_event_entry
 	int fileIdx;                        // Line in file.
 } IO_native_event_entry_t;
 
-// We have to have a global table of events, to support event enumeration.
-// We can have different file pointers for each thread, but all files must
-// match the file found during _init_component().
-static int gEventCount;
-static IO_native_event_entry_t *io_native_table;
-
 //-----------------------------------------------------------------------------
 // Holds control flags. There's one of these per event-set. Use this to hold
 // data specific to the EventSet.
@@ -70,6 +64,13 @@ typedef struct _io_context
    FILE *pFile;
    char line[FILE_LINE_SIZE]; 
 } _io_context_t;
+
+// ----------------------- GLOBALS ----------------------------
+// We have to have a global table of events, to support event enumeration.
+// We can have different file pointers for each thread, but all files must
+// match the file found during _init_component().
+static int gEventCount;
+static IO_native_event_entry_t *io_native_table;
 
 // Code to just count events in file, fills in a context.
 // This may be a dummy from init_component.
@@ -122,9 +123,8 @@ static int io_count_events(_io_context_t *myCtx)
 static int 
 io_hardware_read(_io_context_t *ctx, _io_control_state_t *ctl)
 {
+    ctx->pFile = fopen(IO_FILENAME, "r");
     if (ctx->pFile == NULL) return(PAPI_ENOCNTR); /* No counters */
-    /*  Reading proc/stat as a file  */
-    rewind(ctx->pFile);
 
     /* Read each line */
     int idx;
@@ -143,6 +143,7 @@ io_hardware_read(_io_context_t *ctx, _io_control_state_t *ctl)
         }
     }
 
+    fclose(ctx->pFile);
     return(PAPI_OK);
 } // END FUNCTION.
 
@@ -235,7 +236,7 @@ _io_init_component( int cidx )
 // This is called whenever a thread is initialized.
 // WARNING: This can be called BEFORE init_component.
 // When it is, shutdown_thread is never called, but 
-// this is the default context used in calls.
+// this is the default context used in calls. 
 static int
 _io_init_thread( hwd_context_t *ctx )
 {
@@ -247,11 +248,12 @@ _io_init_thread( hwd_context_t *ctx )
     // File mismatch on event count kills it.
     if (gEventCount > 0 && myCtx->EventCount != gEventCount) {
         fclose(myCtx->pFile);
+        myCtx->pFile = NULL;
         return PAPI_ENOSUPP;
     }
 
-    // We have a valid file.
-   return PAPI_OK;
+    fclose(myCtx->pFile);
+    return PAPI_OK;
 } // END of init thread.
 
 // Our control state holds arrays for reading/arranging Event values.
@@ -372,7 +374,7 @@ _io_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
     return PAPI_OK;
 }
 
-/** Triggered by PAPI_shutdown() */
+// Triggered by PAPI_shutdown().
 static int
 _io_shutdown_component(void)
 {
@@ -384,9 +386,8 @@ _io_shutdown_component(void)
 static int
 _io_shutdown_thread( hwd_context_t *ctx )
 {
-    _io_context_t *myCtx = (_io_context_t*) ctx;
+    (void) ctx;
     SUBDBG( "io_shutdown_thread... %p", ctx );
-    fclose(myCtx->pFile);
     return PAPI_OK;
 }
 
