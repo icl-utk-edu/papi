@@ -2146,7 +2146,7 @@ static int _rocm_smi_add_native_events(void)
                 if (AllEvents[TotalEvents-1-i].subvariant == 
                     scan->subvariant) {                                 // If we found the matching read,
                     AllEvents[TotalEvents-1-i].writer = &ew_fan_speed;  // Allow writing.
-                    strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute), Read/Write, Write must be <=MAX (see fan_speed_max event), arg int [0-255].");
+                    strcpy(AllEvents[TotalEvents-1-i].desc, "Current Fan Speed in RPM (Rotations Per Minute), Read/Write, Write must be <=MAX (see fan_speed_max event), arg int [0-255].");
                 }
             }
         }
@@ -2208,7 +2208,7 @@ static int _rocm_smi_add_native_events(void)
                 if (AllEvents[TotalEvents-1-i].subvariant == 
                     scan->subvariant) {                                 // If we found the matching read,
                     AllEvents[TotalEvents-1-i].writer = &ew_power_cap;  // Allow writing.
-                    strcpy(thisEvent->desc, "Power cap in microwatts. Read/Write. Between min/max (see power_cap_range_min/max). May require root privilege.");
+                    strcpy(AllEvents[TotalEvents-1-i].desc, "Power cap in microwatts. Read/Write. Between min/max (see power_cap_range_min/max). May require root privilege.");
                 }
             }
         }
