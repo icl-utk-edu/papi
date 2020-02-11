@@ -726,7 +726,6 @@ static int _rocm_smi_find_devices(void)
 
     if (TotalDevices == 0) {                                            // No AMD devices found.
         char errstr[]="No AMD GPU devices found (vendor ID 0x1002).";
-        fprintf(stderr, "%s\n", errstr);
         strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
         return(PAPI_ENOSUPP);
     }
