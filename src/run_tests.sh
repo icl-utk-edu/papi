@@ -30,9 +30,7 @@ else
 fi
 
 # Disable high-level output
-if [ "x$TESTS_QUIET" = "xTESTS_QUIET" ] ; then
-  export PAPI_NO_WARNING=1
-else
+if [ "x$TESTS_QUIET" != "xTESTS_QUIET" ] ; then
   export PAPI_REPORT=1
 fi
 
