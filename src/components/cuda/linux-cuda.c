@@ -1607,11 +1607,14 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
         return (PAPI_OK);
         break;
     case PAPI_ENUM_EVENTS:
-        if(*EventCode < global_cuda_context->availEventSize - 1) {
+        if (global_cuda_context == NULL) {
+            return (PAPI_ENOEVNT);
+        } else if (*EventCode < global_cuda_context->availEventSize - 1) {
             *EventCode = *EventCode + 1;
             return (PAPI_OK);
-        } else
+        } else {
             return (PAPI_ENOEVNT);
+        }
         break;
     default:
         return (PAPI_EINVAL);
@@ -1630,7 +1633,7 @@ static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
     // SUBDBG( "Entering EventCode %d\n", EventCode );
     unsigned int index = EventCode;
     cuda_context_t *gctxt = global_cuda_context;
-    if(index < gctxt->availEventSize) {
+    if(gctxt != NULL && index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].name, len);
     } else {
         return (PAPI_EINVAL);
@@ -1650,7 +1653,7 @@ static int _cuda_ntv_code_to_descr(unsigned int EventCode, char *name, int len)
     // SUBDBG( "Entering\n" );
     unsigned int index = EventCode;
     cuda_context_t *gctxt = global_cuda_context;
-    if(index < gctxt->availEventSize) {
+    if(gctxt != NULL && index < gctxt->availEventSize) {
         strncpy(name, gctxt->availEventDesc[index].description, len);
     } else {
         return (PAPI_EINVAL);
