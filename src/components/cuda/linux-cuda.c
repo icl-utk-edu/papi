@@ -1424,25 +1424,28 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl)
     uint32_t cc;
     int saveDeviceNum;
     unsigned int ui;
+    CUcontext saveCtx;  
 
-    SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
+    SUBDBG("Save current device/context, then switch to each active device/context and enable eventgroups\n");
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
+    CU_CALL((*cuCtxGetCurrentPtr) (&saveCtx), return (PAPI_EMISC));
+
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
-        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
+        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
+        CUDA_CALL((*cudaSetDevicePtr) (currDeviceNum), return(PAPI_EMISC));
+        CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
         CUpti_EventGroupSets *currEventGroupSets = gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets;
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        else
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+
         //CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
         (*cuptiEventGroupSetsDestroyPtr) (currEventGroupSets);
         gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets = NULL;
         papi_free( gctrl->arrayOfActiveCUContexts[cc] );
-        /* Pop the pushed context */
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     }
+    /* Restore saved context, device pointer */
+    CU_CALL((*cuCtxSetCurrentPtr) (saveCtx), return (PAPI_EMISC));
+    CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum), return(PAPI_EMISC));
+
     /* Record that there are no active contexts or events */
     for (ui=0; ui<gctrl->activeEventCount; ui++) {              // For each active event,
         int idx = gctrl->activeEventIndex[ui];                  // .. Get its index...
