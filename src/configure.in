@@ -141,6 +141,38 @@ AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h sched.h])
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time sched_getcpu])
 
 #
+# Check if the system provides time_* symbols without -lrt, and if not,
+# check for -lrt existance.
+#
+
+AC_MSG_CHECKING([for timer_create and timer_*ettime symbols in base system])
+AC_TRY_LINK([#include <signal.h>
+             #include <time.h>],
+    [timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);],
+	[rtsymbols_in_base="yes"], [rtsymbols_in_base="no"])
+if test "${rtsymbols_in_base}" = "yes"; then
+	AC_MSG_RESULT([found])
+	LRT=""
+else
+	AC_MSG_RESULT([not found])
+	AC_MSG_CHECKING([for timer_create and timer_*ettime symbols in -lrt])
+	SAVED_LIBS=${LIBS}
+	LIBS="${LIBS} -lrt"
+	AC_TRY_LINK([#include <signal.h>
+                 #include <time.h>],
+        [timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);],
+		[has_lrt="yes"], [has_lrt="no"])
+	LIBS=${SAVED_LIBS}
+	if test "${has_lrt}" = "yes" ; then
+		AC_MSG_RESULT([found])
+	LRT="-lrt"
+	else
+		AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt])
+	fi
+fi
+AC_SUBST(LRT)
+
+#
 # Check if the system provides dl* symbols without -ldl, and if not,
 # check for -ldl existance.
 #
@@ -1717,6 +1749,13 @@ for comp in $components; do
   fi
 done
 tests="$tests comp_tests"
+
+# check for SDE component to determine if we need -lrt in LDFLAGS
+for comp in $components; do
+  if test "x$comp" = "xsde" ; then
+    LDFLAGS="$LDFLAGS $LRT"
+  fi
+done
 
 AC_MSG_RESULT($components)
 
