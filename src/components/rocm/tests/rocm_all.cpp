@@ -10,14 +10,6 @@
 #include "papi.h"
 #include <hip/hip_runtime.h>
 
-// Pair testing can trigger a bug in the AMD library, a segfault once too
-// many pairs have been tested. The order of testing doesn't matter, I 
-// have randomized them and it still occurs. I suspect a memory leak.
-// However, it is unusual to test and destroy thousands of event sets,
-// so we can skip that in our test until the AMD library is repaired.
-// Tony Castaldo
-#define SKIP_PAIR_TESTING
-
 #define CHECK(cmd) \
 {\
     hipError_t error  = cmd;\
@@ -75,6 +67,17 @@ typedef struct {
 } eventStore_t;
 
 std::string EXCLUDE[] = {           // List of events to specifically exclude, when rocprofiler_open is failing.
+   "TA_TA_BUSY",
+   "TA_FLAT_READ_WAVEFRONTS",
+   "TA_FLAT_WRITE_WAVEFRONTS",
+   "TCC_HIT",
+   "TCC_MISS",
+   "TCC_EA_WRREQ",
+   "TCC_EA_WRREQ_64B",
+   "TCC_EA_WRREQ_STALL",
+   "TCC_EA_RDREQ",
+   "TCC_EA_RDREQ_32B",
+   "TCP_TA_DATA_STALL_CYCLES",
    "",                              // End of Table. MOVE TO TOP to disable this list.
 };
 
@@ -154,12 +157,13 @@ void addEventsFound(char *eventName, long long value) {
 // Note values must point at an array large enough to store the events in
 // Eventset.
 //-----------------------------------------------------------------------------
-void conductTest(int EventSet, int device, long long *values) {
+void conductTest(int EventSet, int device, long long *values, int numValues) {
     float *A_d, *C_d;
     float *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(float);
-    int ret, thisDev, verbose=0;
+    int i, ret, thisDev, verbose=0;
+    long long *ptrToPapiValues;
 
 	ret = PAPI_start( EventSet );
 	if (ret != PAPI_OK ) {
@@ -211,13 +215,24 @@ void conductTest(int EventSet, int device, long long *values) {
 
     // We passed. Now we need to read the event.
     if (verbose) printf("info: About to read event with PAPI_stop.\n");
-    ret = PAPI_stop( EventSet, values );
+    fprintf(stderr, "About to stop: &ptrToPapiValues=%p.\n", &ptrToPapiValues);
+    ret = PAPI_stop( EventSet, ptrToPapiValues );
+    fprintf(stderr, "Returned from PAPI_stop: ptrToPapiValues=%p.\n", ptrToPapiValues);
     if (ret != PAPI_OK ) {
         fprintf(stderr,"Error! PAPI_stop failed.\n");
         if (verbose) printf("PAPI_stop failed.\n");
         exit(ret);
     }
 
+    for (i=0; i<numValues; i++) {
+        fprintf(stderr, "idx=%i. ", i);
+        fprintf(stderr, "values=%p, values[%i]=%lli. ", values, i, values[i]);
+        fprintf(stderr, "ptrToPapiValues[%i]=%lli.\n", i, ptrToPapiValues[i]);
+        values[i]=ptrToPapiValues[i];
+        fprintf(stderr, "stored values[%i]=%lli.\n", i, values[0]);
+    }
+
+        fprintf(stderr, "Exiting conductTest.\n");
     if (verbose) printf ("PASSED!\n");
 
 } // end conductTest.
@@ -239,7 +254,7 @@ int main(int argc, char *argv[])
 
     // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
-    int eventCount, thisEvent=0;
+    int eventCount;
     int ret;
     int k, m, cid=-1;
 
@@ -281,6 +296,13 @@ int main(int argc, char *argv[])
     }
 
     printf("Found ROCM Component at id %d\n", cid);
+    printf("This test and the vendor library are still under development. \n"
+           "It is disabled until issues with the vendor libraries and with\n"
+           "this code can be resolved. Testing of specific events can be  \n"
+           "accomplished with rocm_command_line, but library issues may   \n"
+           "still prevent correct operation.                              \n"
+          );
+    exit(0);
 
     // Add events at a GPU specific level ... eg rocm:::device=0:Whatever
     eventCount = 0;
@@ -323,7 +345,6 @@ int main(int argc, char *argv[])
 
             if (EXCLUDE[i].size() != 0) continue;                       // Matched an exclusion, skip it.
 
-//          fprintf(stderr, "Received event '%i. %s'.\n", thisEvent++, info.symbol);
             CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
             CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
 
@@ -339,30 +360,37 @@ int main(int argc, char *argv[])
                 continue; 
             }
 
-            long long value=-1;                                         // The only value we read.
+            long long value[1]={-1};                                    // The only value we read.
             
             // Prep stuff.
            
-            conductTest(EventSet, device, &value);                      // Conduct a test, on device given. 
-//          fprintf(stderr, "Tested Event '%s'.\n", info.symbol);
-            addEventsFound(info.symbol, value);                         // Add to events we were able to read.
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
+            conductTest(EventSet, device, value, 1);                   // Conduct a test, on device given. 
+            fprintf(stderr, "after conductTest, value[0]=%lli.\n", value[0]);
+            addEventsFound(info.symbol, value[0]);                     // Add to events we were able to read.
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
             
             CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));              // Delete all events in set.
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
             CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));             // destroy the event set.
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
 
             // report each event counted.
-            if (value >= 0) {                                           // If not still -1,
+            if (value[0] >= 0) {                                        // If not still -1,
                 eventsRead++;                                           // .. count and report.
-                if (value == 0) {
-                    printf("%-64s: %lli (not exercised by current test code.)\n", info.symbol, value);
+                if (value[0] == 0) {
+                    printf("%-64s: %lli (not exercised by current test code.)\n", info.symbol, value[0]);
                 } else {
-                    printf("%-64s: %lli\n", info.symbol, value);
+                    printf("%-64s: %lli\n", info.symbol, value[0]);
                 }
             } else {
                 printf("%-64s: Failed to read.\n", info.symbol);
             }
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
         } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK); // Get next umask entry (bits different) (should return PAPI_NOEVNT).
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
     } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
+            fprintf(stderr, "%s:%i checkpoint.\n", __FILE__, __LINE__);
 
     if (eventCount < 1) {                                                   // If we failed on all of them,
         fprintf(stderr, "Unable to add any ROCM events; they are not present in the component.\n");
@@ -381,7 +409,6 @@ int main(int argc, char *argv[])
     }
 
     printf("\nTotal ROCM events identified: %i.\n\n", eventsFoundCount);
-#ifndef SKIP_PAIR_TESTING
     if (eventsFoundCount < 2) {                                             // If failed to get counts on any,
         printf("Insufficient events are exercised by the current test code to perform pair testing.\n"); // report a failure.
         FreeGlobals();
@@ -468,9 +495,9 @@ int main(int argc, char *argv[])
 
                 // We were able to add the pair, in type 0, get a measurement. 
                 readValues[0]= -1; readValues[1] = -1;
-                conductTest(EventSet, device, readValues);                              // Conduct a test, on device given. 
+                conductTest(EventSet, device, readValues, 2);                           // Conduct a test, on device given. 
 
-                goodOnSame++;                                                           // Was accepted by cuda as a valid pairing.
+                goodOnSame++;                                                           // Was accepted by rocm as a valid pairing.
 
                 // For the checks, we add 2 (so -1 becomes +1) to avoid any
                 // divide by zeros. It won't make a significant difference 
@@ -517,10 +544,8 @@ int main(int argc, char *argv[])
         }
     } // end loop on type.
 
-#endif // SKIP_PAIR_TESTING
-
-//  fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     PAPI_shutdown();                                                                    // Returns no value.
-//  fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     return(0);                                                                          // exit OK.
 } // end MAIN.
