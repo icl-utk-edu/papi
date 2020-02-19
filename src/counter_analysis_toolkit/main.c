@@ -577,8 +577,15 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
         return;
     }
 
+    // Run the branch benchmark by default if none are specified.
+    if( 0 == bench_type )
+    {
+        bench_type |= BENCH_BRANCH;
+        fprintf(stderr, "Warning: No benchmark specified. Running 'branch' by default.\n");
+    }
+
     /* Benchmark I - Branch*/
-    if(bench_type & BENCH_BRANCH)
+    if( bench_type & BENCH_BRANCH )
     {
         if(show_progress) printf("Branch Benchmarks: ");
 

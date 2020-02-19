@@ -27,8 +27,13 @@
 /* This allows us to modify the component info */
 papi_vector_t _io_vector;
 
-/* Maximum expected characters per line in /proc/self/io. */
+// Maximum expected characters per line in file.
 #define FILE_LINE_SIZE 256
+// Maximum expected events in file. ARBITRARY VALUE, 
+// set as needed, just avoiding malloc() and free().
+#define IO_COUNTERS 64
+// File name to access.
+#define IO_FILENAME "/proc/self/io"
 
 /** This structure is used to build the table of events */
 typedef struct IO_native_event_entry
@@ -38,48 +43,107 @@ typedef struct IO_native_event_entry
 	int fileIdx;                        // Line in file.
 } IO_native_event_entry_t;
 
-/** This table contains the native events */
+//-----------------------------------------------------------------------------
+// Holds control flags. There's one of these per event-set. Use this to hold
+// data specific to the EventSet.
+//-----------------------------------------------------------------------------
+typedef struct _io_control_state  
+{
+   int EventSetCount;
+   long long EventSetVal[IO_COUNTERS];
+   long long EventSetReport[IO_COUNTERS];
+   int EventSetIdx[IO_COUNTERS];
+} _io_control_state_t;
+
+//-----------------------------------------------------------------------------
+// Holds per-thread information.
+//-----------------------------------------------------------------------------
+typedef struct _io_context  
+{
+   int  EventCount;
+   FILE *pFile;
+   char line[FILE_LINE_SIZE]; 
+} _io_context_t;
+
+// ----------------------- GLOBALS ----------------------------
+// We have to have a global table of events, to support event enumeration.
+// We can have different file pointers for each thread, but all files must
+// match the file found during _init_component().
+static int gEventCount;
 static IO_native_event_entry_t *io_native_table;
 
-/** _io_init_component() only fills these once, if EventCount==0. */
-static int EventCount = 0; 
-static int EventSetCount;
-static int *EventSetIdx;
-static long long *EventSetVal;
-static long long *EventSetReport;
+// Code to just count events in file, fills in a context.
+// This may be a dummy from init_component.
+static int io_count_events(_io_context_t *myCtx)
+{
+    myCtx->EventCount = 0;
+    myCtx->pFile = fopen (IO_FILENAME,"r");
+    if (myCtx->pFile == NULL) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Failed to open target file '%s'.", IO_FILENAME);
+        return PAPI_ENOSUPP;
+    }
+
+    // Just count the lines, basic vetting for ability to parse.
+    while (1) {
+        char *res;
+        // fgets guarantees z-terminator, reads at most FILE_LINE_SIZE-1 bytes.
+        res = fgets(myCtx->line, FILE_LINE_SIZE, myCtx->pFile);
+        if (res  == NULL) break;
+        // If the read filled the whole buffer, line is too long.
+        if (strlen(myCtx->line) == (FILE_LINE_SIZE-1)) {
+            fclose(myCtx->pFile);
+            snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+            "File '%s' line %i too long.", IO_FILENAME, myCtx->EventCount+1);
+            return PAPI_ENOSUPP;
+        }
+
+        char dummy[FILE_LINE_SIZE] = {0};
+        long long tmplong = 0LL;
+        int nf = sscanf( myCtx->line, "%s %lld\n", dummy, &tmplong);
+        if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
+            fclose(myCtx->pFile);
+            snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+            "File '%s' line %i bad format.", IO_FILENAME, myCtx->EventCount+1);
+            return PAPI_ENOSUPP;
+        }
+
+        myCtx->EventCount++; 
+    } // END READING.
+
+    // NOTE: We intentionally leave file open; up to caller to close
+    // or rewind and continue.
+    return PAPI_OK;
+} // END ROUTINE.
+
 
 // Code to read values; returns PAPI_OK or an error.
 // We presume the number of counters and order of them
 // will not change from our initialization read.
 static int 
-io_hardware_read(void)
+io_hardware_read(_io_context_t *ctx, _io_control_state_t *ctl)
 {
-    /*  Reading proc/stat as a file  */
-    FILE * pFile;
-    char line[FILE_LINE_SIZE] = {0};
-    pFile = fopen ("/proc/self/io","r");
-    if (pFile == NULL) return(PAPI_ENOCNTR); /* No counters */
+    ctx->pFile = fopen(IO_FILENAME, "r");
+    if (ctx->pFile == NULL) return(PAPI_ENOCNTR); /* No counters */
 
     /* Read each line */
     int idx;
-    for (idx=0; idx<EventCount; idx++) {
-        if (fgets(line, FILE_LINE_SIZE-1, pFile)) {
+    for (idx=0; idx<gEventCount; idx++) {
+        if (fgets(ctx->line, FILE_LINE_SIZE-1, ctx->pFile)) {
             char dummy[FILE_LINE_SIZE] = {0};
             long long tmplong = 0LL;
-            int nf = sscanf( line, "%s %lld\n", dummy, &tmplong);
+            int nf = sscanf(ctx->line, "%s %lld\n", dummy, &tmplong);
             if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
-                fclose(pFile);
                 return PAPI_ENOCNTR;
             }
 
-            EventSetVal[idx] = tmplong;
+            ctl->EventSetVal[idx] = tmplong;
         } else {                            /* Did not read ALL counters. */
-            fclose(pFile);
             return(PAPI_EMISC);
         }
     }
 
-    fclose(pFile);
+    fclose(ctx->pFile);
     return(PAPI_OK);
 } // END FUNCTION.
 
@@ -94,104 +158,38 @@ io_hardware_read(void)
 static int
 _io_init_component( int cidx )
 {
-    int fileIdx;
+    _io_context_t myCtx;
+    int ret, fileIdx;
     SUBDBG( "_io_init_component..." );
+   
+    ret = io_count_events(&myCtx);
+    if (ret != PAPI_OK) return(ret);
+    rewind(myCtx.pFile);
 
-    // ensure this is done just once.
-    _papi_hwi_lock(COMPONENT_LOCK);
-    if (EventCount != 0) {
-        _papi_hwi_unlock(COMPONENT_LOCK);
-        return(PAPI_OK);
-    }
-
-    // Open the file.
-    FILE * pFile;
-    char line[FILE_LINE_SIZE] = {0};
-    pFile = fopen ("/proc/self/io","r");
-    if (pFile == NULL) {
-        strncpy(_io_vector.cmp_info.disabled_reason, 
-        "Required File /proc/self/io is not present.", PAPI_MAX_STR_LEN-1);
-        _papi_hwi_unlock(COMPONENT_LOCK);
-       return PAPI_ENOSUPP;               // EXIT not supported.
-    }
-
-    // Just count the lines, basic vetting. EventCount == 0 already.
-    while (1) {
-        char *res;
-        // fgets guarantees z-terminator, reads at most FILE_LINE_SIZE-1 bytes.
-        res = fgets(line, FILE_LINE_SIZE, pFile);
-        if (res  == NULL) break;
-        // If the read filled the whole buffer, line is too long.
-        if (strlen(line) == (FILE_LINE_SIZE-1)) {
-            strncpy(_io_vector.cmp_info.disabled_reason,
-            "/proc/self/io line too long for current buffer size.", PAPI_MAX_STR_LEN-1);
-            fclose(pFile);
-            _papi_hwi_unlock(COMPONENT_LOCK);
-            return PAPI_ENOSUPP;
-        }
-
-        char dummy[FILE_LINE_SIZE] = {0};
-        long long tmplong = 0LL;
-        int nf = sscanf( line, "%s %lld\n", dummy, &tmplong);
-        if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
-            strncpy(_io_vector.cmp_info.disabled_reason,
-            "/proc/self/io unexpected format, expect 'name: count'.", PAPI_MAX_STR_LEN-1);
-            fclose(pFile);
-            _papi_hwi_unlock(COMPONENT_LOCK);
-            return PAPI_ENOSUPP;
-        }
-
-        EventCount++; 
-    } // END READING.
-
-    EventSetCount=0;
-    EventSetIdx = papi_calloc(EventCount, sizeof(int));
-    if (EventSetIdx == NULL) {
+    if (myCtx.EventCount > IO_COUNTERS) {
         snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
-        "Insufficient memory to allocate %i ints.", EventCount);
-        fclose(pFile);
-        _papi_hwi_unlock(COMPONENT_LOCK);
-        return PAPI_ENOMEM;
-    }
-        
-    EventSetVal = papi_calloc(EventCount, sizeof(long long));
-    if (EventSetVal == NULL) {
-        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
-        "Insufficient memory to allocate %i long longs.", EventCount);
-        fclose(pFile);
-        _papi_hwi_unlock(COMPONENT_LOCK);
-        return PAPI_ENOMEM;
+        "File '%s' has %i events, exceeds counter limit of %i.", IO_FILENAME, myCtx.EventCount, IO_COUNTERS);
+        fclose(myCtx.pFile);
+        return PAPI_ENOSUPP;
     }
 
-    EventSetReport = papi_calloc(EventCount, sizeof(long long));
-    if (EventSetReport == NULL) {
-        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
-        "Insufficient memory to allocate %i long longs.", EventCount);
-        fclose(pFile);
-        _papi_hwi_unlock(COMPONENT_LOCK);
-        return PAPI_ENOMEM;
-    }
-
-   rewind(pFile);
-
+    // Must be same for all threads, now.
+    gEventCount = myCtx.EventCount;
     /* Allocate memory for the native event table */
     io_native_table =
         ( IO_native_event_entry_t * )
-        papi_calloc(EventCount, sizeof(IO_native_event_entry_t) );
+        papi_calloc(gEventCount, sizeof(IO_native_event_entry_t) );
     if ( io_native_table == NULL ) {
-        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
-        "Insufficient memory to allocate %i Events.", EventCount);
-        fclose(pFile);
-        _papi_hwi_unlock(COMPONENT_LOCK);
+        fclose(myCtx.pFile);
         return PAPI_ENOMEM;
     }
 
-    for (fileIdx = 0; fileIdx < EventCount; fileIdx++) {
-        (void) fgets(line, FILE_LINE_SIZE, pFile);
+    for (fileIdx = 0; fileIdx < gEventCount; fileIdx++) {
+        (void) fgets(myCtx.line, FILE_LINE_SIZE, myCtx.pFile);
         char name[FILE_LINE_SIZE] = {0};
         long long tmplong = 0LL;
-        // No check for error here, we would have caught it above.
-        (void) sscanf( line, "%s %lld\n", name, &tmplong);
+        // No check for error here, we would have caught it in io_count_events().
+        (void) sscanf(myCtx.line, "%s %lld\n", name, &tmplong);
         name[strlen(name)-1]=0;     // null terminate over ':' we found.
         strncpy(io_native_table[fileIdx].name, name, PAPI_MAX_STR_LEN-1);
         io_native_table[fileIdx].fileIdx=fileIdx;
@@ -224,37 +222,49 @@ _io_init_component( int cidx )
         }
     } // END READING.
 
-    fclose(pFile);
-
-    // Export the total number of events available.
-    _io_vector.cmp_info.num_native_events = EventCount;
-   
-    _io_vector.cmp_info.num_cntrs = EventCount;
-    _io_vector.cmp_info.num_mpx_cntrs = EventCount;
+    fclose(myCtx.pFile);
+    // Export the total number of events available, at least on the init thread.
+    _io_vector.cmp_info.num_native_events = gEventCount;
+    _io_vector.cmp_info.num_cntrs = IO_COUNTERS;
+    _io_vector.cmp_info.num_mpx_cntrs = IO_COUNTERS;
 
     /* Export the component id */
     _io_vector.cmp_info.CmpIdx = cidx;
-    _papi_hwi_unlock(COMPONENT_LOCK);
     return PAPI_OK;
 } // END ROUTINE.
 
-/** This is called whenever a thread is initialized */
+// This is called whenever a thread is initialized.
+// WARNING: This can be called BEFORE init_component.
+// When it is, shutdown_thread is never called, but 
+// this is the default context used in calls. 
 static int
 _io_init_thread( hwd_context_t *ctx )
 {
-    (void) ctx; // unused
-    SUBDBG( "_io_init_thread %p...", ctx );
-    return PAPI_OK;
-}
+    _io_context_t* myCtx = (_io_context_t*) ctx;
+    int ret;
+    ret = io_count_events(myCtx);
+    if (ret != PAPI_OK) return(ret);
 
-// In general a control state holds the hardware info for an EventSet.
-// We don't use one; we use a global state.
+    // File mismatch on event count kills it.
+    if (gEventCount > 0 && myCtx->EventCount != gEventCount) {
+        fclose(myCtx->pFile);
+        myCtx->pFile = NULL;
+        return PAPI_ENOSUPP;
+    }
+
+    fclose(myCtx->pFile);
+    return PAPI_OK;
+} // END of init thread.
+
+// Our control state holds arrays for reading/arranging Event values.
+// We just ensure it is all zeros.
 static int
 _io_init_control_state( hwd_control_state_t * ctl )
 {
-    (void) ctl;
+    _io_control_state_t* control = ( _io_control_state_t* ) ctl;
+    memset(control, 0, sizeof(_io_control_state_t));
     return PAPI_OK;
-}
+} // END.
 
 
 // Triggered by eventset operations like add or remove.
@@ -266,18 +276,18 @@ _io_update_control_state( hwd_control_state_t *ctl,
         hwd_context_t *ctx )
 {
     (void) ctx;
-    (void) ctl;
+    _io_control_state_t *myCtl = (_io_control_state_t*) ctl;
     
     int i, index;
 
-    EventSetCount = count;
+    myCtl->EventSetCount = count;
     
     /* if no events, return */
     if (count==0) return PAPI_OK;
 
     for( i = 0; i < count; i++ ) {
         index = native[i].ni_event;
-        EventSetIdx[i] = index;    
+        myCtl->EventSetIdx[i] = index;    
 
         /* We have no constraints on event position, so any event */
         /* can be in any slot.                                    */
@@ -319,20 +329,20 @@ _io_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
         long long **events, int flags )
 {
     // Prevent 'unused' warnings from compiler.
-    (void) ctx;
-    (void) ctl; 
     (void) flags;
+    _io_context_t *myCtx = (_io_context_t*) ctx;
+    _io_control_state_t *myCtl = (_io_control_state_t*) ctl;
     int i;
     SUBDBG( "io_read... %p %d", ctx, flags );
 
     /* Read all counters into EventSetVal */
-    io_hardware_read();
-    for (i=0; i<EventSetCount; i++) {
-        EventSetReport[i]=EventSetVal[EventSetIdx[i]];
+    io_hardware_read(myCtx, myCtl);
+    for (i=0; i<myCtl->EventSetCount; i++) {
+        myCtl->EventSetReport[i]=myCtl->EventSetVal[myCtl->EventSetIdx[i]];
     }
 
     /* return pointer to the values we read */
-    *events = EventSetReport; 
+    *events = myCtl->EventSetReport; 
 
     return PAPI_OK;
 }
@@ -364,19 +374,15 @@ _io_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
     return PAPI_OK;
 }
 
-/** Triggered by PAPI_shutdown() */
+// Triggered by PAPI_shutdown().
 static int
 _io_shutdown_component(void)
 {
     SUBDBG( "io_shutdown_component..." );
-    papi_free(io_native_table);
-    papi_free(EventSetIdx);
-    papi_free(EventSetVal);
-    papi_free(EventSetReport);
     return PAPI_OK;
 }
 
-/** Called at thread shutdown */
+// Shutdown thread; close files. 
 static int
 _io_shutdown_thread( hwd_context_t *ctx )
 {
@@ -469,7 +475,7 @@ _io_ntv_enum_events( unsigned int *EventCode, int modifier )
             index = *EventCode;
 
             /* Make sure we have at least 1 more event after us */
-            if ( index < (EventCount-1) ) {
+            if ( index < (gEventCount-1) ) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
             } else {
@@ -496,7 +502,7 @@ _io_ntv_code_to_name( unsigned int EventCode, char *name, int len )
     index = EventCode;
 
     /* Make sure we are in range */
-    if (index >= 0 && index < EventCount) {
+    if (index >= 0 && index < gEventCount) {
         strncpy(name, io_native_table[index].name, len );  
         return PAPI_OK;
     }
@@ -516,7 +522,7 @@ _io_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
     index = EventCode;
 
     /* make sure event is in range */
-    if (index >= 0 && index < EventCount) {
+    if (index >= 0 && index < gEventCount) {
         strncpy( descr, io_native_table[index].desc, len );
         return PAPI_OK;
     }
@@ -552,9 +558,9 @@ papi_vector_t _io_vector = {
     /* sizes of framework-opaque component-private structures */
     .size = {
         /* once per thread */
-        .context = 1, /* unused */
+        .context = sizeof(_io_context_t),
         /* once per eventset */
-        .control_state = 1, /* unused */
+        .control_state = sizeof(_io_control_state_t),
         .reg_value = 1, /* unused */
         .reg_alloc = 1, /* unused */
     },
