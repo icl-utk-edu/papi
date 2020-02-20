@@ -2,7 +2,7 @@
 #define SDE_H
 
 // Enable the following line if you want to use PAPI_overflow()
-// #define SDE_HAVE_OVERFLOW
+#define SDE_HAVE_OVERFLOW
 
 #define PAPI_SDE_THREAD_SAFE
 
