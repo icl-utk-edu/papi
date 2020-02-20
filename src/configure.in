@@ -1754,6 +1754,7 @@ tests="$tests comp_tests"
 for comp in $components; do
   if test "x$comp" = "xsde" ; then
     LDFLAGS="$LDFLAGS $LRT"
+    LIBS="$LIBS $LRT"
   fi
 done
 

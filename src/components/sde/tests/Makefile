@@ -9,7 +9,7 @@ endif
 FFLAGS +=-g
 #CFLAGS +=-g
 
-LDFLAGS +=-L.. -lrt
+LDFLAGS +=-L..
 SDE_F08_API=$(datadir)/sde_F.o
 
 EXTRA_SRC=../interface/papi_sde_interface.c
