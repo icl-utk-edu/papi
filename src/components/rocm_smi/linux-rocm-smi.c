@@ -720,7 +720,6 @@ static int _rocm_smi_find_devices(void)
 
         // Found one.
         DeviceCards[TotalDevices]=card;                                 // Remember this.
-//      fprintf(stderr, "%s Card %i is Device %i.\n", __func__, card, TotalDevices);
         TotalDevices++;                                                 // count it.
     } // end loop through possible cards.
 
@@ -1054,12 +1053,10 @@ static int er_power_ave(int myIdx)
 {
     uint64_t* data = (uint64_t*) AllEvents[myIdx].vptr;     // get a shortcut.
     AllEvents[myIdx].value = 0;                             // Default if error.
-//  fprintf(stderr, "%s:%i:%s Checkpoint.\n", __FILE__, __LINE__, __func__);
     RSMI(rsmi_dev_power_ave_get,                            // Routine name.
         (AllEvents[myIdx].device, AllEvents[myIdx].subvariant, data), // device, sensor, and pointer for storage of read.
         return(PAPI_EMISC));                                // Error handler.
     AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value.
-//  fprintf(stderr, "er_power_ave read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -1098,7 +1095,6 @@ static int er_power_cap_range_min(int myIdx)                // THIS IS THE BASE 
     }
 
     AllEvents[myIdx].value = data[0];                       // Copy/convert the returned value for min.
-//  fprintf(stderr, "er_power_min read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -1108,7 +1104,6 @@ static int er_power_cap_range_max(int myIdx)                // NOT THE BASE EVEN
     int idx = AllEvents[myIdx].baseIdx;
     uint64_t* data = (uint64_t*) AllEvents[idx].vptr;       // get a shortcut to min/max.
     AllEvents[myIdx].value = data[1];                       // Copy/convert the returned value for max.
-//  fprintf(stderr, "er_power_max read %lu.\n", AllEvents[myIdx].value);
     return(PAPI_OK);                                        // Done.
 } // end reader.
 
@@ -1503,7 +1498,6 @@ static int _rocm_smi_add_native_events(void)
 
 //  This call is no longer used, we do our own search in _rocm_smi_find_devices to set TotalDevices.
 //  RSMI(rsmi_num_monitor_devices, (&TotalDevices), return(PAPI_ENOSUPP));     // call for number of devices.
-//  fprintf(stderr, "%s:%i TotalDevices=%i.\n", __FILE__, __LINE__, TotalDevices);
 
 //(rsmi_num_monitor_devices, (uint32_t *num_devices)); // ONLY ONE OF THESE.
     MakeRoomAllEvents();
@@ -3160,7 +3154,6 @@ static int _rocm_smi_init_component(int cidx)
                 continue;                                               // Y. Skip if variant unrecognized.
             int idx = dev*freqTablePerDevice+scan->variant;             // idx into FreqTable.
             RSMI(rsmi_dev_gpu_clk_freq_get, (dev, scan->variant, &FreqTable[idx]),); 
-//          fprintf(stderr, "clk_freq, dev=%i, variant=%i, num_supported=%i.\n", dev, scan->variant, FreqTable[idx].num_supported);
         } 
     }
 
@@ -3277,7 +3270,6 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
     (void) flags;
     int i, idx, bidx;
 
-//  fprintf(stderr, "%s:%i ActiveEvents=%i.\n", __func__, __LINE__, ActiveEvents);
     if (ActiveEvents == 0) {
         *values = NULL;
         return(PAPI_OK);
@@ -3302,11 +3294,9 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
         if (AllEvents[idx].reader == NULL) continue;            // No reader provided, may be static value or write-only value.
         bidx=AllEvents[idx].baseIdx;                            // ... for base event.
         if (bidx != idx && AllEvents[bidx].read == 0) {         // If baseIdx is for some other event and it hasn't been read,
-//          fprintf(stderr, "%s:%i calling reader '%s'.\n", __FILE__, __LINE__, AllEvents[bidx].name);
             (AllEvents[bidx].reader)(bidx);                     // .. call the base reader to populate the whole array.
         }
 
-//      fprintf(stderr, "%s:%i calling reader '%s'.\n", __FILE__, __LINE__, AllEvents[idx].name);
         (AllEvents[idx].reader)(idx);                           // Always have to do this whether I had a base read or not.
     }
 
@@ -3314,13 +3304,9 @@ static int _rocm_smi_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long 
     for (i=0; i<ActiveEvents; i++) {
         int idx = CurrentIdx[i];                            // get index of event.
         CurrentValue[i] = AllEvents[idx].value;             // Collect the value we read.
-//      fprintf(stderr, "%s: Setting CurrentValue[%i]=%lli = %lu.\n", __func__, i, CurrentValue[i], AllEvents[idx].value);
     }
 
     *values = CurrentValue;                                 // Return address of list to caller.
-//  for (i=0; i<ActiveEvents; i++) {
-//      fprintf(stderr, "%s: (*values)[%i]=%lli.\n", __func__, i, (*values)[i]);
-//  }
 
     return (PAPI_OK);
 } // END ROUTINE.
@@ -3459,7 +3445,6 @@ static int _rocm_smi_set_domain(hwd_control_state_t * ctrl, int domain)
        (PAPI_DOM_OTHER & domain) || (PAPI_DOM_ALL & domain)) {
         return (PAPI_OK);
     } else {
-//      fprintf(stderr, "%s:%i:%s domain 0X%16X unknown.\n", __FILE__, __LINE__, __func__, domain);
         return (PAPI_EINVAL);
     }
 
