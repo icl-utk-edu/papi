@@ -22,7 +22,7 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 
 # The standard installed locations for these libraries, with overrides:
 # $(PAPI_ROCM_ROOT)/lib/libhsa-runtime64.so     #O.R. PAPI_ROCM_HSA
-# $(PAPI_CUDA_ROOT)/lib/librocprofiler64.so     #O.R. PAPI_ROCM_PROF
+# $(PAPI_ROCM_ROOT)/lib/librocprofiler64.so     #O.R. PAPI_ROCM_PROF
 #
 # There are many ways to cause these paths to be known.  Spack is a
 # package manager used on supercomputers, Linux and MacOS.  If Spack
