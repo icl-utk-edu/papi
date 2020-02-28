@@ -1,8 +1,8 @@
-.TH "PAPIF_flops" 3 "Fri Feb 22 2019" "Version 5.7.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_flops_rate" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPIF_flops \- 
+PAPIF_flops_rate \- 
 .PP
 Simplified call to get Mflops/s (floating point instruction rate), real and processor time\&.  
 
@@ -17,12 +17,12 @@ Simplified call to get Mflops/s (floating point instruction rate), real and proc
 .RS 4
 #include 'fpapi\&.h' 
 .br
- \fBPAPIF_flops( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )\fP
+ \fBPAPIF_flops_rate( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )\fP
 .RE
 .PP
 \fBSee Also:\fP
 .RS 4
-\fBPAPI_flops\fP 
+\fBPAPI_flops_rate\fP 
 .RE
 .PP
 

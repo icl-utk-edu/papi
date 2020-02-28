@@ -24,6 +24,15 @@ __ 0a. Notify developers that a release is imminent and the repository should be
    ./validation_tests/memleak_check.c using valgrind. You may need to load a
    module to use valgrind.
 
+   BEFORE YOU BEGIN: Step 2d will require access to the papi website directory,
+   it is easiest to do all this on a machine that has it. Most recently we
+   updated using harry.icl.utk.edu, where /nfs/www/icl/projectsdev/papi/docs
+   was accessible. The sysadmin must give you write permission.
+   This directory should be available on all machines but Saturn; but it can
+   be 'automount'. That means you can't see it with 'ls', you need to
+   'cd /nfs/www/icl/projectsdev/papi/docs' to get it mounted, and THEN you can
+   see it with 'ls'. 
+
 __ 0b. Update your local copy from git to make sure you have all changes.
 	git pull
 
@@ -31,18 +40,23 @@ __ 1. Update any documentation that may have changed. Pay particular attention
 	to INSTALL.txt.
 
 __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.in, src/Makefile.in,
-	doc/Doxyfile-common (as PROJECT_NUMBER) ; and commit to the repo.
+	doc/Doxyfile-common (as PROJECT_NUMBER) ; and commit to the repo, along with any other changed files.
 	Do not "git push" until autoconf is run (Step 3). You will have to run it, you just changed
 	configure.in, which is the reason to run autoconf.
         The number may already have been updated after the last release, if so, skip this step.
 
--- 2a. 	You must find a machine to rebuild the doxygen pages. For the release 5.7.0, we used
-	harry.icl.utk.edu. On that machine, doxygen was already in the $PATH (/usr/bin); you 
-	can check using >doxygen -V to get the version. If not, Find the doxygen directories
-	and add it to $PATH. e.g. >find /usr -name "doxygen" 2>/dev/null 
-	export PATH=/usr/bin/doxygen-1.8.5/bin:$PATH
-	-- or --
-	setenv PATH /mnt/scratch/sw/doxygen-1.8.5/bin:$PATH
+-- 2a. 	You must find a machine to rebuild the doxygen pages.  We have been using
+         doxygen 1.8.5. This is available on Saturn, and harry.icl.utk.edu. Note on
+         Saturn there is also a module doxygen, with version 1.8.15. Don't use the older
+         version without a reason; do a 'module list', and if doxygen is loaded, 
+         'module unload doxygen'; then 'doxygen -v' to double check.
+
+   For release 5.7.0, we used harry.icl.utk.edu, doxygen 1.8.5 was in /usr/bin.
+
+   you can check using 'doxygen -v' to get the version. 
+   If it isn't found, find the doxygen directories and add it to $PATH. 
+   e.g. 'find /usr -name "doxygen" 2>/dev/null' then 'export PATH=/usr/bin/doxygen-1.8.5/bin:$PATH'
+   (substituting whatever path was actually found).
 
 -- 2b. Rebuild the doxygen manpages
         ( cd doc && make && make install )
@@ -51,13 +65,18 @@ __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.i
 	doxygen may generate some extraneous files in man1 and man3; eg 
 	man/man1/_home_youruserid_*.* 
 	man/man3/_home_youruserid_*.* 
-	remove these. 
+
+	Remove these. Be careful of the directory! These exist in doc/man/man1 and doc/man/man3.
+   Those are not the ones to remove, and not the ones to ADD in the next step.
+
 	Then you can go to each directory and add all files:
         >cd papi/man/man1
 	>git add *
         >cd papi/man/man3 
 	>git add *
 
+   Note: Step 2d will require access to the webdir. Since these files are not 
+         saved as part of the repository, 
 -- 2c. Rebuild the website docs.
 	We use Doxyfile-html for this, that is a configuration file in papi/doc
 	that will be used by Makefile.

@@ -1,4 +1,4 @@
-.TH "PAPI_set_thr_specific" 3 "Fri Feb 22 2019" "Version 5.7.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_thr_specific" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -44,7 +44,7 @@ There is no Fortran equivalent function.
 .PP
 .nf
 int ret;
-HighLevelInfo *state = NULL;
+RateInfo *state = NULL;
 ret = PAPI_thread_init(pthread_self);
 if (ret != PAPI_OK) handle_error(ret);
  
@@ -52,9 +52,9 @@ if (ret != PAPI_OK) handle_error(ret);
 
 ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
 if (ret != PAPI_OK || state == NULL) {
-    state = (HighLevelInfo *) malloc(sizeof(HighLevelInfo));
+    state = (RateInfo *) malloc(sizeof(RateInfo));
     if (state == NULL) return (PAPI_ESYS);
-    memset(state, 0, sizeof(HighLevelInfo));
+    memset(state, 0, sizeof(RateInfo));
     state->EventSet = PAPI_NULL;
     ret = PAPI_create_eventset(&state->EventSet);
     if (ret != PAPI_OK) return (PAPI_ESYS);
