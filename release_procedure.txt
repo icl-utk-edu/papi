@@ -96,8 +96,42 @@ __ 2. Check/Change the version number in: papi.spec, src/papi.h, src/configure.i
 	( cp -R doc/html/* /webdir/papi/docs )
 	( chmod -R 775 /webdir/papi/docs )
 
-__ 3. If configure.in is changed, run autoconf (2.69) and commit the resulting
-	configure file.
+__ 3. If configure.in is changed, we must generate a new 'configure' file.
+    First, make a copy of the existing file in papi/src; eg 'cp configure old_configure'.
+    Then run autoconf (2.69), it reads configure.in and creates a new configure.
+    
+    We have an issue with autoconf; on different machines the same version (2.69)
+    can produce different files; some include 'runstatedir' lines, others do not.
+    We want those in there. If they are missing from the new configure, we need
+    to add them in. We do that by building a patch we can apply.
+
+    # Produce a diff file, newly-generated configure, to previous configure,
+    # that had the runstatedir stuff in it.
+    >  diff configure ~/papi/src/old_configure  >configure.diff
+
+    # Edit the diff file. Delete changes that would mess with the version.
+    # Keep only the change that are about adding in runstatedir. Examples
+    # of what to keep in the diff file; a change, and an add.
+    # 1234c1245
+    # < libdir localedir mandir
+    # ---
+    # > libdir localedir mandir runstatedir
+    # 1386a1398
+    # > --runstatedir=DIR modifiable per-process data [LOCALSTATEDIR/run]
+    > vim configure.diff
+
+    # Backup the newly created configure, in case you mess this up.
+    > cp configure save_configure
+
+    # Patch the newly created configure, to add in runstatedir stuff.
+    > patch configure configure.diff
+    
+    # Double check. search for runstatedir.
+    > vim configure
+
+    # Clean up.
+    > rm configure.diff  old_configure  save_configure
+
 	NOTE: Using an autoconf version >2.69 will work, but will produce an
 	inordinate number of extraneous differences between versions.
         You can check the version # with >autoconf -V
@@ -174,7 +208,7 @@ __ 20. Post the announcement on the PAPI User Forum.
 
 __ 21. Bump the version number in the repository AFTER the release (look at step 2)
        papi.spec, src/papi.h, src/configure.in, src/Makefile.in, doc/Doxyfile-common (PROJECT_NUMBER) 
-       Regenerate the configure using autoconf 2.69 (e.g. on saturn). Then commit.
+       Regenerate the configure using autoconf 2.69. Then commit.
        ( git commit -m "Updated version to X.Y.Z after the release"  doc/Doxyfile-common papi.spec \
           release_procedure.txt src/Makefile.in src/configure src/configure.in  src/papi.h )
        This is to ensure more development commits (that may not be fully tested)
