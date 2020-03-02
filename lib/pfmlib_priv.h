@@ -384,6 +384,7 @@ extern pfmlib_pmu_t intel_hswep_unc_r3qpi2_support;
 extern pfmlib_pmu_t intel_hswep_unc_irp_support;
 extern pfmlib_pmu_t intel_knc_support;
 extern pfmlib_pmu_t intel_slm_support;
+extern pfmlib_pmu_t intel_tmt_support;
 extern pfmlib_pmu_t intel_knl_support;
 extern pfmlib_pmu_t intel_knl_unc_imc0_support;
 extern pfmlib_pmu_t intel_knl_unc_imc1_support;

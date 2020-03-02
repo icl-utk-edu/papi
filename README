@@ -57,6 +57,7 @@ The library supports many PMUs. The current version can handle:
 		Intel Silvermont
 		Intel Airmont
 		Intel Goldmont
+		Intel Tremont
 		Intel RAPL (energy consumption)
 		Intel Knights Corner
 		Intel Knights Landing (core, uncore)
