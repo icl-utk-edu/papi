@@ -252,7 +252,11 @@ __ 19a. Check that the proper link where folks can download the tarball
     ---- The following steps are typically done by the person responsible 
     ---- for the website, NOT the programmer completing the release. But 
     ---- final steps are done by the programmer, after these are completed.
+
 __ 20. Create a link with supporting text on the PAPI software web page.
+       Creeate an entry on the PAPI wiki:
+       https://bitbucket.org/icl/papi/wiki/PAPI-Releases.md 
+       announcing the new release with details about the changes.
 
 __ 21. Create a News item on the PAPI Web page.
 
@@ -261,17 +265,15 @@ __ 21. Create a News item on the PAPI Web page.
 
 __ 22. Email the papi developer and discussion lists with an announcement.
 
-__ 23. Post the announcement on the PAPI User Forum.
-
     ---- FINAL STEPS: To be done by the Programmer making the release.
     ---- Bump version number, update release procedures (after you know they
     ---- worked!) This is to ensure more development commits (that may not 
     ---- be fully tested) will not be in the release version of the repository.
 
-__ 24. Using steps 0b,0c,0d, make ANOTHER fork of the repository, clone it,
+__ 23. Using steps 0b,0c,0d, make ANOTHER fork of the repository, clone it,
        and change to that directory. Example, papi-6-0-1.
 
-__ 25. Repeate Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in 
+__ 24. Repeate Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in 
        the repository AFTER the release changing Z to Z+1. Example:
        papi-6-0-0 to papi-6-0-1. The following files must be edited:
        papi.spec,
@@ -280,17 +282,17 @@ __ 25. Repeate Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in
        src/Makefile.in, 
        doc/Doxyfile-common (PROJECT_NUMBER)
  
-__ 26. Repeat Step 3, to create a new configure, preserving runstatedir lines.
+__ 25. Repeat Step 3, to create a new configure, preserving runstatedir lines.
 
-__ 26a. If these 'release_procedure.txt' instructions need to be updated, fix them now.
+__ 25a. If these 'release_procedure.txt' instructions need to be updated, fix them now.
 
-__ 27. Add changed files, Commit and Push.
+__ 26. Add changed files, Commit and Push.
        (use 'git status -uno' to see files that need to be added with 'git add filepath').
 
        'git commit -m "Updated version to 6.0.1 after the release' 
        'git push'.
 
-__ 28. Repeat step 9, to create a pull request for review.
+__ 27. Repeat step 9, to create a pull request for review.
 
 
 ================================================================================
