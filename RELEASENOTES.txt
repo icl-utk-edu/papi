@@ -17,10 +17,6 @@ statistics exported by the Linux kernel). Furthermore, PAPI 6.0 ships CAT, a
 new Counter Analysis Toolkit that assists with native performance counter
 disambiguation through micro-benchmarks.
 
-PAPI 6.0 is now available. This release includes several new components;
-including ROCM and ROCM_SMI (for AMD GPUs), SDE (Software Defined Events),
-and the IO component (exposes I/O statistics exported by the Linux kernel).
-
 For specific and detailed information on changes made for this release, see
 ChangeLogP600.txt for filenames or keywords of interest and change summaries,
 or go directly to the PAPI git repository.
