@@ -119,6 +119,9 @@ pfm_rapl_detect(void *this)
 		case  61: /* Broadwell */
 		case  71: /* Broadwell GT3E */
 		case  92: /* Goldmont */
+		case  95: /* Denverton */
+		case 102: /* Cannonlake */
+		case 122: /* Goldmont Plus */
 			 /* already setup by default */
 			  break;
 		case  45: /* Sandy Bridg-EP  */
@@ -130,6 +133,10 @@ pfm_rapl_detect(void *this)
 		case  94: /* Skylake H/S */
 		case 142: /* Kabylake */
 		case 158: /* Kabylake */
+		case 165: /* CometLake mobile */
+		case 166: /* CometLake */
+		case 126: /* Icelake mobile */
+		case 157: /* Icelake */
 			intel_rapl_support.pe 	     = intel_rapl_skl_cln_pe;
 			intel_rapl_support.pme_count = LIBPFM_ARRAY_SIZE(intel_rapl_skl_cln_pe);
 			break;
