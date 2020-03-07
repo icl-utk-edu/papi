@@ -31,6 +31,8 @@ static const int skl_models[] = {
 	94, /* Skylake desktop */
 	142,/* KabyLake mobile */
 	158,/* KabyLake desktop */
+	165,/* CometLake mobile */
+	166,/* CometLake */
 	0
 };
 
