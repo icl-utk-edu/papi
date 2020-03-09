@@ -7008,7 +7008,7 @@ static const test_event_t x86_test_events[]={
 	  .name = "tmt::offcore_response_1:demand_data_rd_l3_miss",
 	  .ret  = PFM_SUCCESS,
 	  .count = 2,
-	  .codes[0] = 0x5301bb,
+	  .codes[0] = 0x5302b7,
 	  .codes[1] = 0x3f04000001ull,
 	  .fstr = "tmt::OFFCORE_RESPONSE_1:DEMAND_DATA_RD_L3_MISS:k=1:u=1:e=0:i=0:c=0",
 	},

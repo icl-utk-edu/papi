@@ -281,7 +281,7 @@ static const intel_x86_entry_t intel_tmt_pe[]={
   },
   { .name   = "OFFCORE_RESPONSE_1",
     .desc   = "Counts demand data reads that have any response type.",
-    .code   = 0x01bb,
+    .code   = 0x02b7,
     .modmsk = INTEL_V2_ATTRS,
     .cntmsk = 0xfull,
     .ngrp   = 1,
