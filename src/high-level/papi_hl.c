@@ -215,7 +215,7 @@ static void _internal_hl_library_init(void)
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
    
    /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
-   if ((retval = PAPI_thread_init(&pthread_self)) == PAPI_OK) {
+   if ((retval = PAPI_thread_init(_papi_gettid)) == PAPI_OK) {
 
       /* determine output directory and output file */
       if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
