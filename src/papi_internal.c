@@ -34,9 +34,6 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include <sys/types.h>
-#include <unistd.h>
-
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -2731,10 +2728,4 @@ _papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty )
 
 	}
 	return( ctx );
-}
-
-unsigned long
-_papi_gettid(void)
-{
-  return (unsigned long)(getpid());
 }

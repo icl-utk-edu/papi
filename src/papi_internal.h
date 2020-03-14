@@ -492,6 +492,4 @@ int _papi_hwi_component_index( int event_code );
 int _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char *event_name);
 int _papi_hwi_eventcode_to_native(int event_code);
 
-unsigned long _papi_gettid(void);
-
 #endif /* PAPI_INTERNAL_H */
