@@ -381,8 +381,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
 	unsigned short req_grpid;
-	int ldlat = 0, ldlat_um = 0;
-	int fe_thr= 0, fe_thr_um = 0;
+	unsigned int ldlat = 0, ldlat_um = 0;
+	unsigned int fe_thr= 0, fe_thr_um = 0;
 	int excl_grp_but_0 = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int req_grps[INTEL_X86_NUM_GRP];
@@ -472,6 +472,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_FETHR))
 				fe_thr_um = 1;
+
 			/*
 			 * if more than one umask in this group but one is marked
 			 * with ncombo, then fail. It is okay to combine umask within
@@ -566,6 +567,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					if (ival < 1 || ival > 4095)
 						return PFM_ERR_ATTR_VAL;
 					fe_thr = ival;
+					umodmsk |= _INTEL_X86_ATTR_FETHR;
 					break;
 			}
 		}
@@ -681,20 +683,26 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 
-	if (fe_thr_um && !fe_thr) {
-		/* try extracting te latency threshold from the event umask first */
-		fe_thr = (umask2 >> 8) & 0x7;
-		/* if not in the umask ,then use default */
-		if (!fe_thr) {
-			DPRINT("missing fe_thres= for umask, forcing to default %d cycles\n", INTEL_X86_FETHR_DEFAULT);
-			fe_thr = INTEL_X86_FETHR_DEFAULT;
+	if (intel_x86_eflag(this, e->event, INTEL_X86_FRONTEND)) {
+		uint64_t um_thr = (umask2 >> 8) & 0xfff; /* threshold from umask */
+
+		DPRINT("um_thr=0x%"PRIx64 " fe_thr=%u thr_um=%u modhw=0x%x umodhw=0x%x\n", um_thr, fe_thr, fe_thr_um, modhw, umodmsk);
+		/* umask expects a fe_thres modifier */
+		if (fe_thr_um) {
+			/* hardware has non zero fe_thres (hardcoded) */
+			if (um_thr) {
+				/* user passed fe_thres, then must match hardcoded */
+				if (mdhw(modhw, umodmsk, ATTR_FETHR)) {
+					if (fe_thr != um_thr)
+						return PFM_ERR_ATTR_SET;
+				} else
+					fe_thr = um_thr;
+			} else if (fe_thr == 0) {
+				fe_thr = INTEL_X86_FETHR_DEFAULT;
+			}
+			umask2 &= ~((0xfffULL) << 8);
+			umask2 |= fe_thr << 8;
 		}
-	}
-	/*
-	 * encode threshold in final position in extra register
-	 */
-	if (fe_thr && fe_thr_um) {
-		umask2 |= fe_thr << 8;
 	}
 
 	/*
