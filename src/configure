@@ -5901,21 +5901,7 @@ fi
 $as_echo "$ac_cv_file__proc_sys_kernel_perf_event_paranoid" >&6; }
 if test "x$ac_cv_file__proc_sys_kernel_perf_event_paranoid" = xyes; then :
 
-    paranoid_level=`cat /proc/sys/kernel/perf_event_paranoid`
-    if test $paranoid_level -gt 1; then
-      warning_text=`echo -e "\n
-**************************************************************************
-* Insufficient permissions for accessing any hardware counters.          *
-* Your current paranoid level is $paranoid_level.                                      *
-* Set /proc/sys/kernel/perf_event_paranoid to at least 2 or run as root. *
-*                                                                        *
-* Example:                                                               *
-* sudo sh -c \"echo 2 > /proc/sys/kernel/perf_event_paranoid\"             *
-**************************************************************************
-"\ `
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $warning_text" >&5
-$as_echo "$as_me: WARNING: $warning_text" >&2;}
-    fi
+    have_paranoid=yes
 	  as_ac_File=`$as_echo "ac_cv_file_$pe_incdir/perf_event.h" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $pe_incdir/perf_event.h" >&5
 $as_echo_n "checking for $pe_incdir/perf_event.h... " >&6; }
@@ -8187,5 +8173,24 @@ fi
 if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+fi
+
+
+if test "$have_paranoid" = "yes"; then
+  paranoid_level=`cat /proc/sys/kernel/perf_event_paranoid`
+  if test $paranoid_level -gt 2; then
+    warning_text=`echo -e "\n
+***************************************************************************
+* Insufficient permissions for accessing any hardware counters.           *
+* Your current paranoid level is $paranoid_level.                                       *
+* Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root. *
+*                                                                         *
+* Example:                                                                *
+* sudo sh -c \"echo 2 > /proc/sys/kernel/perf_event_paranoid\"              *
+***************************************************************************
+"\ `
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $warning_text" >&5
+$as_echo "$as_me: WARNING: $warning_text" >&2;}
+  fi
 fi
 
