@@ -89,7 +89,7 @@ static void _internal_papi_init(void)
          fprintf( stderr, "PAPI Error: PAPI_library_init failed with return value %d.\n", retval);
       } else {
       
-         if ((retval = PAPI_thread_init(&pthread_self)) != PAPI_OK) {
+         if ((retval = PAPI_thread_init(_papi_gettid)) != PAPI_OK) {
             fprintf( stderr, "PAPI Error: PAPI_thread_init failed with return value %d.\n", retval);
             fprintf( stderr, "PAPI Error: PAPI could not be initiated!\n");
          } else {
