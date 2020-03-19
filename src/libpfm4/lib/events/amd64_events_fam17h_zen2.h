@@ -419,6 +419,31 @@ static const amd64_umask_t amd64_fam17h_zen2_retired_serializing_ops[]={
   },
 };
 
+static const amd64_umask_t amd64_fam17h_zen2_retired_sse_avx_flops[]={
+  { .uname  = "ADD_SUB_FLOPS",
+    .udesc  = "Addition/subtraction FLOPS",
+    .ucode  = 0x1,
+  },
+  { .uname  = "MULT_FLOPS",
+    .udesc  = "Multiplication FLOPS",
+    .ucode  = 0x2,
+  },
+  { .uname  = "DIV_FLOPS",
+    .udesc  = "Division FLOPS.",
+    .ucode  = 0x4,
+  },
+  { .uname  = "MAC_FLOPS",
+    .udesc  = "Double precision add/subtract flops.",
+    .ucode  = 0x8,
+  },
+  { .uname  = "ANY",
+    .udesc  = "Double precision add/subtract flops.",
+    .ucode  = 0xf,
+    .uflags = AMD64_FL_DFL | AMD64_FL_NCOMBO,
+  },
+};
+
+
 static const amd64_entry_t amd64_fam17h_zen2_pe[]={
   { .name   = "L1_ITLB_MISS_L2_ITLB_HIT",
     .desc   = "Number of instruction fetches that miss in the L1 ITLB but hit in the L2 ITLB.",
@@ -435,6 +460,15 @@ static const amd64_entry_t amd64_fam17h_zen2_pe[]={
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_l1_itlb_miss_l2_itlb_miss),
     .umasks = amd64_fam17h_zen2_l1_itlb_miss_l2_itlb_miss,
+  },
+  { .name   = "RETIRED_SSE_AVX_FLOPS",
+    .desc   = "This is a retire-based event. The number of retired SSE/AVX FLOPS. The number of events logged per cycle can vary from 0 to 64. This event can count above 15 and therefore requires the MergeEvent. On Linux, the kernel handles this case without the need to pass the merge event.",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x3,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_retired_sse_avx_flops),
+    .umasks = amd64_fam17h_zen2_retired_sse_avx_flops,
   },
   { .name   = "DIV_CYCLES_BUSY_COUNT",
     .desc   = "Number of cycles when the divider is busy.",

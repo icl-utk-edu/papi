@@ -62,11 +62,19 @@ The associated event is the only event measured on the PMU. This applies only to
 events. This attribute requires admin privileges. Default is off.
 .TP
 .B precise
-Enables precise sampling mode. This option is only valid on sampling events. This is an
-integer value. It can have the following values: 1 enable precise sampling, 2 enable precise
-sampling and eliminate skid. Not all events necessarily support precise mode, this is dependent
-on the underlying PMU. Eliminating skid is a best effort feature. It may not work for all
-samples.
+Enables precise sampling mode. This option is only valid when sampling on events. The options takes
+an integer argument. It can have the following values: 1=enable precise sampling, 2=enable precise
+sampling and eliminate skid, 3=enable precise sampling, eliminate skid and bias. Not all events
+necessarily support precise mode at all levels, this is dependent on the underlying PMU. Eliminating
+skid is a best effort feature. It may not work for all samples. This option is mutually exclusive
+with \fBhw_smpl\fR. This options implies using the hardware assist sampling mechanism.
+.TP
+.B hw_smpl
+Enables hardware assist sampling. This is a boolean option. It is false by default. On some processors,
+it is possible to have the hardware record samples in a buffer and then notify the kernel when it is full.
+Such feature may not be available for all events. Using a hardware buffer does not necessarily eliminate
+skid and bias, it usually lowers the overhead of interrupt-based sampling by amortizing the interrupt over
+multiple samples. This option is usually implicit with precise sampling events.
 .TP
 .B cpu
 This integer option is used with system-wide events, i.e., events attached to a CPU instead of

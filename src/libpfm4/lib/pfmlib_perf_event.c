@@ -59,17 +59,19 @@ static const pfmlib_attr_desc_t perf_event_mods[]={
  * and pure software attributes such as sampling periods
  */
 static const pfmlib_attr_desc_t perf_event_ext_mods[]={
-	PFM_ATTR_B("u", "monitor at user level"),	/* monitor user level */
-	PFM_ATTR_B("k", "monitor at kernel level"),	/* monitor kernel level */
-	PFM_ATTR_B("h", "monitor at hypervisor level"),	/* monitor hypervisor level */
-	PFM_ATTR_I("period", "sampling period"),     	/* sampling period */
-	PFM_ATTR_I("freq", "sampling frequency (Hz)"),	/* sampling frequency */
-	PFM_ATTR_I("precise", "precise ip"),     	/* anti-skid mechanism */
-	PFM_ATTR_B("excl", "exclusive access"),    	/* exclusive PMU access */
-	PFM_ATTR_B("mg", "monitor guest execution"),	/* monitor guest level */
-	PFM_ATTR_B("mh", "monitor host execution"),	/* monitor host level */
-	PFM_ATTR_I("cpu", "CPU to program"),		/* CPU to program */
-	PFM_ATTR_B("pinned", "pin event to counters"),	/* pin event  to PMU */
+	PFM_ATTR_B("u", "monitor at user level"),	  /* monitor user level */
+	PFM_ATTR_B("k", "monitor at kernel level"),	  /* monitor kernel level */
+	PFM_ATTR_B("h", "monitor at hypervisor level"),	  /* monitor hypervisor level */
+	PFM_ATTR_I("period", "sampling period"),     	  /* sampling period */
+	PFM_ATTR_I("freq", "sampling frequency (Hz)"),	  /* sampling frequency */
+	PFM_ATTR_I("precise", "precise event sampling"),  /* anti-skid mechanism */
+	PFM_ATTR_B("excl", "exclusive access"),    	  /* exclusive PMU access */
+	PFM_ATTR_B("mg", "monitor guest execution"),	  /* monitor guest level */
+	PFM_ATTR_B("mh", "monitor host execution"),	  /* monitor host level */
+	PFM_ATTR_I("cpu", "CPU to program"),		  /* CPU to program */
+	PFM_ATTR_B("pinned", "pin event to counters"),	  /* pin event  to PMU */
+	PFM_ATTR_B("hw_smpl", "enable hardware sampling"),/* enable hw_smpl, not precise IP */
+
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
@@ -223,6 +225,9 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 		case PERF_ATTR_PIN:
 			pinned = (int)!!ival;
 			break;
+		case PERF_ATTR_HWS:
+			attr->precise_ip = (int)!!ival;
+			break;
 		}
 	}
 	/*
@@ -309,6 +314,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			evt_strcat(e.fstr, ":%s=%lu", perf_event_ext_mods[idx].name, !!(plm & PFM_PLMH));
 			break;
 		case PERF_ATTR_PR:
+		case PERF_ATTR_HWS:
 			evt_strcat(e.fstr, ":%s=%d", perf_event_ext_mods[idx].name, attr->precise_ip);
 			break;
 		case PERF_ATTR_PE:

@@ -54,7 +54,9 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_bdw.3	\
 	 libpfm_intel_rapl.3	\
 	 libpfm_intel_slm.3	\
+	 libpfm_intel_tmt.3	\
 	 libpfm_intel_skl.3	\
+	 libpfm_intel_icl.3	\
 	 libpfm_intel_glm.3	\
 	 libpfm_intel_knl.3	\
 	 libpfm_intel_knm.3	\

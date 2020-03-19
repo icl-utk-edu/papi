@@ -108,6 +108,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_skl_support,
 	&intel_skx_support,
 	&intel_clx_support,
+	&intel_icl_support,
 	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
@@ -132,6 +133,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_knc_support,
 	&intel_slm_support,
 	&intel_glm_support,
+	&intel_tmt_support,
 	&intel_ivbep_unc_cb0_support,
 	&intel_ivbep_unc_cb1_support,
 	&intel_ivbep_unc_cb2_support,
@@ -2067,6 +2069,7 @@ pfm_get_event_attr_info(int idx, int attr_idx, pfm_os_t os, pfm_event_attr_info_
 	uinfo->is_dfl= info->is_dfl;
 	uinfo->is_precise = info->is_precise;
 	uinfo->is_speculative = info->is_speculative;
+	uinfo->support_hw_smpl = info->support_hw_smpl;
 	uinfo->reserved_bits = 0;
 	uinfo->dfl_val64 = info->dfl_val64;
 
