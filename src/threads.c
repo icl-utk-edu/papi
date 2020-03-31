@@ -596,3 +596,33 @@ _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where )
 	return ( PAPI_OK );
 
 }
+
+#if defined(__NR_gettid) && !defined(HAVE_GETTID)
+  #include <syscall.h>
+  #include <unistd.h>
+  unsigned long _papi_gettid(void)
+  {
+    return (unsigned long)(syscall(__NR_gettid));
+  } 
+#elif defined(HAVE_GETTID)
+  #include <sys/types.h>
+  unsigned long _papi_gettid(void)
+  {
+    return (unsigned long)(gettid());
+  }
+#elif defined(HAVE_SYSCALL_GETTID)
+  #include <syscall.h>
+  #include <sys/types.h>
+  unsigned long _papi_gettid(void)
+  {
+    return (unsigned long)(syscall(SYS_gettid));
+  }
+#else
+  #include <sys/types.h>
+  #include <unistd.h>
+  /* Fall-back on getpid for tid if not available. */
+  unsigned long _papi_gettid(void)
+  {
+    return (unsigned long)(getpid());
+  }
+#endif

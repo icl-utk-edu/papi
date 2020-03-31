@@ -1,0 +1,33 @@
+.TH "value_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+value_t \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "long_long \fBoffset\fP"
+.br
+.ti -1c
+.RI "long_long \fBtotal\fP"
+.br
+.ti -1c
+.RI "\fBreads_t\fP * \fBread_values\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "long_long value_t::offset"
+Event value for region_begin 
+.SS "\fBreads_t\fP* value_t::read_values"
+List of read event values inside a region 
+.SS "long_long value_t::total"
+Event value for region_end - region_begin + previous value 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code\&.

@@ -1,0 +1,47 @@
+.TH "PAPI_rate_stop" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+PAPI_rate_stop \- 
+.PP
+Stop a running event set of a rate function\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBC Interface: \fP
+.RS 4
+#include <\fBpapi\&.h\fP> 
+.br
+int \fBPAPI_rate_stop()\fP;
+.RE
+.PP
+\fBReturn values:\fP
+.RS 4
+\fIPAPI_ENOEVNT\fP -- The EventSet is not started yet\&. 
+.br
+\fIPAPI_ENOMEM\fP -- Insufficient memory to complete the operation\&.
+.RE
+.PP
+\fBPAPI_rate_stop\fP stops a running event set of a rate function\&.
+.PP
+\fBSee Also:\fP
+.RS 4
+\fBPAPI_flips_rate()\fP 
+.PP
+\fBPAPI_flops_rate()\fP 
+.PP
+\fBPAPI_ipc()\fP 
+.PP
+\fBPAPI_epc()\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code\&.

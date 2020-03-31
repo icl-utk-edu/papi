@@ -1383,7 +1383,7 @@ PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *  PAPIF_flops( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+ *  PAPIF_flops_rate( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
  *
  * @see PAPI_flops_rate
  */
@@ -1394,6 +1394,21 @@ PAPI_FCALL( papif_flops_rate, PAPIF_FLOPS_RATE,
 	*check = PAPI_flops_rate( event, real_time, proc_time, flpops, mflops );
 }
 
+/** @class PAPIF_rate_stop
+ *	@ingroup PAPIF
+ *	@brief Stop a running event set of a rate function.
+ *
+ *	@par Fortran Interface:
+ *	\#include "fpapi.h" @n
+ *  PAPIF_rate_stop( C_INT check )
+ *
+ * @see PAPI_rate_stop
+ */
+PAPI_FCALL( papif_rate_stop, PAPIF_RATE_STOP,
+			( int *check ) )
+{
+	*check = PAPI_rate_stop( );
+}
 
 /* The High Level API Wrappers */
 /** \internal @defgroup PAPIF-HL PAPI Fortran High Level API */
@@ -1596,5 +1611,57 @@ PAPI_FCALL( papif_hl_region_end, PAPIF_HL_REGION_END,
 	*check = PAPI_hl_region_end( name );
 }
 #endif
+
+/** @class PAPIf_hl_stop
+ * @ingroup PAPIF-HL
+ * @brief Stop a running high-level event set.
+ *
+ * @par Fortran Prototype:
+ * \#include "fpapi.h" @n
+ * PAPIf_hl_stop( C_INT check )
+ *
+ * @retval PAPI_ENOEVNT
+ * -- The EventSet is not started yet.
+ * @retval PAPI_ENOMEM
+ * -- Insufficient memory to complete the operation.
+ *
+ * PAPIf_hl_stop stops a running high-level event set.
+ *
+ * This call is optional and only necessary if the programmer wants to use the low-level API in addition
+ * to the high-level API. It should be noted that PAPIf_hl_stop and low-level calls are not
+ * allowed inside of a marked region. Furthermore, PAPIf_hl_stop is thread-local and therefore
+ * has to be called in the same thread as the corresponding marked region.
+ *
+ * @par Example:
+ *
+ * @code
+ * integer retval
+ *
+ * call PAPIf_hl_region_begin("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_begin failed!"
+ * end if
+ *
+ * !do some computation here
+ *
+ * call PAPIf_hl_region_end("computation", retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_region_end failed!"
+ * end if
+ *
+ * call PAPIf_hl_stop(retval)
+ * if ( retval .NE. PAPI_OK ) then
+ *     write (*,*) "PAPIf_hl_stop failed!"
+ * end if
+ *
+ * @endcode
+ *
+ * @see PAPI_hl_stop
+ */
+PAPI_FCALL( papif_hl_stop, PAPIF_HL_STOP,
+			( int *check ) )
+{
+	*check = PAPI_hl_stop( );
+}
 
 #pragma GCC visibility pop

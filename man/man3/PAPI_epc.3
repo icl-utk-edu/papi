@@ -1,4 +1,4 @@
-.TH "PAPI_epc" 3 "Fri Feb 22 2019" "Version 5.7.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_epc" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,17 +24,17 @@ int \fBPAPI_epc( int event, float *rtime, float *ptime, long long *ref, long lon
 .RS 4
 \fIevent\fP event code to be measured (0 defaults to PAPI_TOT_INS) 
 .br
-\fI*rtime\fP total realtime since the first call 
+\fI*rtime\fP realtime since the latest call 
 .br
-\fI*ptime\fP total process time since the first call 
+\fI*ptime\fP process time since the latest call 
 .br
-\fI*ref\fP incremental reference clock cycles since the last call 
+\fI*ref\fP incremental reference clock cycles since the latest call 
 .br
-\fI*core\fP incremental core clock cycles since the last call 
+\fI*core\fP incremental core clock cycles since the latest call 
 .br
-\fI*evt\fP total events since the first call 
+\fI*evt\fP events since the latest call 
 .br
-\fI*epc\fP incremental events per cycle since the last call
+\fI*epc\fP incremental events per cycle since the latest call
 .RE
 .PP
 \fBReturn values:\fP
@@ -46,23 +46,21 @@ int \fBPAPI_epc( int event, float *rtime, float *ptime, long long *ref, long lon
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation\&.
 .RE
 .PP
-The first call to \fBPAPI_epc()\fP will initialize the PAPI High Level interface, set up the counters to monitor the user specified event, PAPI_TOT_CYC, and PAPI_REF_CYC (if it exists) and start the counters\&.
+The first call to \fBPAPI_epc()\fP will initialize the PAPI interface, set up the counters to monitor the user specified event, PAPI_TOT_CYC, and PAPI_REF_CYC (if it exists) and start the counters\&.
 .PP
-Subsequent calls will read the counters and return total real time, total process time, total event counts since the start of the measurement and the core and reference cycle count and EPC rate since the latest call to \fBPAPI_epc()\fP\&.
+Subsequent calls will read the counters and return real time, process time, event counts, the core and reference cycle count and EPC rate since the latest call to \fBPAPI_epc()\fP\&.
 .PP
-A call to \fBPAPI_stop_counters()\fP will stop the counters from running and then calls such as \fBPAPI_start_counters()\fP or other rate calls can safely be used\&.
-.PP
-\fBPAPI_epc\fP can provide a more detailed look at algorithm efficiency in light of clock variability in modern cpus\&. MFLOPS is no longer an adequate description of peak performance if clock rates can arbitrarily speed up or slow down\&. By allowing a user specified event and reporting reference cycles, core cycles and real time, \fBPAPI_epc\fP provides the information to compute an accurate effective clock rate, and an accurate measure of computational throughput\&.
+\fBPAPI_epc()\fP can provide a more detailed look at algorithm efficiency in light of clock variability in modern cpus\&. MFLOPS is no longer an adequate description of peak performance if clock rates can arbitrarily speed up or slow down\&. By allowing a user specified event and reporting reference cycles, core cycles and real time, \fBPAPI_epc\fP provides the information to compute an accurate effective clock rate, and an accurate measure of computational throughput\&. Note that \fBPAPI_epc()\fP is thread-safe and can therefore be called by multiple threads\&.
 .PP
 \fBSee Also:\fP
 .RS 4
-\fBPAPI_flips()\fP 
+\fBPAPI_flips_rate()\fP 
 .PP
-\fBPAPI_flops()\fP 
+\fBPAPI_flops_rate()\fP 
 .PP
 \fBPAPI_ipc()\fP 
 .PP
-\fBPAPI_stop_counters()\fP 
+\fBPAPI_rate_stop()\fP 
 .RE
 .PP
 

@@ -6,7 +6,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 5.7.1.0, ptools-perfapi@icl.utk.edu)
+AC_INIT(PAPI, 6.0.0.1, ptools-perfapi@icl.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -1082,7 +1082,9 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
   fi
   if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
-	AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")])
+	  have_paranoid=yes
+	  AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")
+    ])
   fi
   if test "$perf_events" = "yes"; then
       PECFLAGS="$PECFLAGS -DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
@@ -1873,3 +1875,20 @@ AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
 AC_CONFIG_FILES([Makefile papi.pc])
 AC_CONFIG_FILES([components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target validation_tests/Makefile.target])
 AC_OUTPUT
+
+if test "$have_paranoid" = "yes"; then
+  paranoid_level=`cat /proc/sys/kernel/perf_event_paranoid`
+  if test $paranoid_level -gt 2; then
+    warning_text=`echo -e "\n
+***************************************************************************
+* Insufficient permissions for accessing any hardware counters.           *
+* Your current paranoid level is $paranoid_level.                                       *
+* Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root. *
+*                                                                         *
+* Example:                                                                *
+* sudo sh -c \"echo 2 > /proc/sys/kernel/perf_event_paranoid\"              *
+***************************************************************************
+"\ `
+    AC_MSG_WARN($warning_text)
+  fi
+fi
