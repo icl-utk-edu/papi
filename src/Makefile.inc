@@ -298,6 +298,8 @@ install-all: install install-tests
 install: install-lib install-man install-utils install-hl-scripts install-pkgconf
 
 install-hl-scripts:
+	@echo "Copy papi_hl_output_writer.py to: \"$(DESTDIR)$(BINDIR)\"";
+	-mkdir -p $(DESTDIR)$(BINDIR)
 	cp high-level/scripts/papi_hl_output_writer.py $(DESTDIR)$(BINDIR)
 
 install-lib: native_install
