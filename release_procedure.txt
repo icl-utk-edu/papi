@@ -330,3 +330,64 @@ __ 7. Create a News item on the PAPI Web page.
 __ 8. Email the papi discussion list with an announcement.
 
 __ 9. Post the announcement on the PAPI User Forum.
+
+
+================================================================================
+
+Bug Fix Release Procedure for PAPI
+
+Below is a step-wise procedure for creating a bug fix release tarball.
+
+One way to use this procedure is to print a copy and check off
+the lines as they are completed to avoid confusion.
+================================================================================
+__ 0. Clone the PAPI repo and checkout the release branch.
+      > git clone https://<your_login>@bitbucket.org/icl/papi.git
+      For the first bug fix release do:
+      > git checkout stable-6.0
+      For further bug fix releases create a branch from the last bug fix release:
+      > git checkout tags/papi-6-0-0-1-t -b papi-6-0-0-2
+
+__ 1. Make sure you're on the branch you want to apply bug fixes
+      > git branch
+      * stable-6.0
+
+__ 2. Apply bug fixes. If those fixes are already applied in the master branch,
+      you can do 'git cherry-pick <commit#>'. If the commit was a merge use "-m 1",
+      e.g.:
+      > git cherry-pick -m 1 95c2b15
+      > git cherry-pick -m 1 7acc7a5
+
+__ 3. Build and test your changes on different platforms.
+
+__ 4. Create the tag papi-X-Y-Z-N-t (N is an incremental bug fix identifier)
+      Example:
+      > git tag -a papi-6-0-0-1-t
+      
+__ 5. Push your changes:
+      > git push --tags
+
+__ 6. Create a fresh clone of the papi repository, under a directory name including 
+      the release number. Do not use your login this time!
+      > git clone https://bitbucket.org/icl/papi.git papi-6.0.0.1
+
+__ 7. tar and zip the directory; example:
+      > tar -czf papi-6.0.0.1.tar.gz papi-6.0.0.1
+
+
+__ 8. Copy the tarball to the webserver.
+      > scp papi-6.0.0.1.tar.gz methane:/nfs/www/icl/projects/papi/downloads
+
+__ 9. ssh to methane and adjust permissions on the tarball. 664 is good. (-rw-rw-r--).
+      > ssh methane
+      > cd /nfs/www/icl/projects/papi/downloads
+      > chmod g+w papi-6.0.0.1.tar.gz
+
+__ 10. Check that the proper link where folks can download the tarball
+       is functional. Example:
+       > wget http://icl.utk.edu/projects/papi/downloads/papi-6.0.0.1.tar.gz
+
+__ 11. Create a link with supporting text on the PAPI software web page.
+       Create an entry on the PAPI wiki:
+       https://bitbucket.org/icl/papi/wiki/PAPI-Releases.md 
+       announcing the new release with details about the changes.
