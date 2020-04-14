@@ -160,7 +160,6 @@ void parseArgs(int argc, char **argv) {
     for (i=0; i<NUM_EVENTS; i++) UserLimitGiven[i]=-1; 
     if (argc < 1) exit(-1);
     for (i=1; i<argc; i++) {
-//      fprintf(stderr, "arg %i='%s'\n", i, argv[i]);
         if (strncmp("--interval=", argv[i], 11) == 0) {
             n = atoi(argv[i]+11);
             if (n < 10) {
@@ -169,7 +168,6 @@ void parseArgs(int argc, char **argv) {
             }
             
             Interval = n;
-//          fprintf(stderr, "Found --interval=%i\n", n);
             continue;
         }
 
@@ -180,7 +178,6 @@ void parseArgs(int argc, char **argv) {
                 exit(-1);
             }
        
-//          fprintf(stderr, "Found --duration=%i\n", n);
             Duration=n;
             continue;
         }
@@ -194,7 +191,6 @@ void parseArgs(int argc, char **argv) {
             dUserLimitGiven[0]=dn;
             UserLimitGiven[0]=(long long) round(dn*ValueScale);
             PowerCapped = 1;
-//          fprintf(stderr, "Found --globalcap=%3.6f=%lli\n", dn, UserLimitGiven[0]);
 
             for (j=1; j<NUM_EVENTS; j++) {
                 dUserLimitGiven[j]=dn;
@@ -213,7 +209,6 @@ void parseArgs(int argc, char **argv) {
             dUserLimitGiven[0]=dn;
             UserLimitGiven[0]=(long long) round(dn*ValueScale);
             PowerCapped = 1;
-//          fprintf(stderr, "Found --perGPUcap[0]=%3.6f=%lli\n", dn, UserLimitGiven[0]);
 
             j = 1;
             while (1) {
@@ -237,7 +232,6 @@ void parseArgs(int argc, char **argv) {
 
                 dUserLimitGiven[j]=dn;
                 UserLimitGiven[j]=(long long) round(dn*ValueScale);
-//              fprintf(stderr, "Found --perGPUcap[%i]=%3.6f=%lli\n", j, dn, UserLimitGiven[j]);
                 j++;
             }
 
@@ -246,19 +240,16 @@ void parseArgs(int argc, char **argv) {
                 exit(-1);
             }
                 
-//          fprintf(stderr, "--perGPUcap items found=%i.\n", j);
             continue;
         }
 
        if (strncmp("--output=", argv[i], 9) == 0) {
             OutputName = argv[i]+9;
-//          fprintf(stderr, "Found --output='%s'\n", OutputName);
             continue;
         }
 
        if (strncmp("--script=", argv[i], 9) == 0) {
             ScriptName = argv[i]+9;
-//          fprintf(stderr, "Found --script='%s'\n", ScriptName);
             continue;
         }
 
@@ -271,7 +262,6 @@ void parseArgs(int argc, char **argv) {
                 exit(-1);
             }
 
-//          fprintf(stderr, "Found --restore='%c'\n", Restore);
             continue;
         }
 
@@ -333,21 +323,20 @@ int main( int argc, char** argv )
    int cid = 0;
     for (cid=0; cid<numcmp; cid++) {
         cmpinfo = PAPI_get_component_info(cid);
-        if (cmpinfo == NULL) {                                  // NULL?
+        if (cmpinfo == NULL) {
             fprintf(stderr, "PAPI error: PAPI reports %d components, but PAPI_get_component_info(%d) returns NULL pointer.\n", numcmp, cid); 
             test_fail( __FILE__, __LINE__,"PAPI_get_component_info failed\n",-1 );
         } else {
-            if ( strstr( cmpinfo->name, "rocm_smi" ) ) break;       // If we found it, 
+            if ( strstr( cmpinfo->name, "rocm_smi" ) ) break;
         }
     }
 
-    if ( cid==numcmp ) {                                        // If true we looped through all without finding rocm_smi.
+    if ( cid==numcmp ) {
         fprintf(stderr, "ROCM_SMI PAPI Component was not found.\n");       
         exit(-1);
     }
 
-//  printf( "ROCM_SMI found as Component %d of %d: %s: %d events\n", (1+cmpinfo->CmpIdx), numcmp, cmpinfo->name, cmpinfo->num_native_events );
-    if (cmpinfo->disabled) {                                    // If disabled,
+    if (cmpinfo->disabled) {
         fprintf(stderr, "ROCM_SMI PAPI Component is disabled.\n");
         exit(-1);
     }
@@ -369,8 +358,8 @@ int main( int argc, char** argv )
 
     parseArgs(argc, argv);
 
-    FILE *myOut = fopen(OutputName, "w");                       // Open the file.
-    if (myOut == NULL) {                                        // If that failed,
+    FILE *myOut = fopen(OutputName, "w");
+    if (myOut == NULL) {
         fprintf(stderr, "Failed to open output '%s'. Error: %d (%s)\n", OutputName, errno, strerror(errno));
         if (errno == 13) fprintf(stderr,"In sudo mode, you may be restricted to output only to /tmp/ directory.\n");
         exit(-1);
@@ -401,16 +390,11 @@ int main( int argc, char** argv )
         int did = atoi(ss+7);                                           // convert it.
         if (did >= DeviceCount) continue;                               // Invalid device count.
 
-            // rocm_smi:::power_average:device=0:sensor=1
-            // rocm_smi:::power_cap:device=0:sensor=1
-            // rocm_smi:::power_cap_range_min:device=0:sensor=1
-            // rocm_smi:::power_cap_range_max:device=0:sensor=1
         // Have an event name to examine.
         ss = strstr(event_name, "power_average:");
         if (ss != NULL) {
             strncpy(PowerEventName[did], event_name, PAPI_MAX_STR_LEN);
             PowerEventName[did][PAPI_MAX_STR_LEN-1]=0;
-//          dprintf("Found powerEvent '%s' for device %i.\n", event_name, did);
             PowerEventCount++;
             continue;
         }
@@ -419,7 +403,6 @@ int main( int argc, char** argv )
         if (ss != NULL) {
             strncpy(LimitEventName[did], event_name, PAPI_MAX_STR_LEN);
             LimitEventName[did][PAPI_MAX_STR_LEN-1]=0;
-//          dprintf("Found limitEvent '%s' for device %i.\n", event_name, did);
             LimitEventCount++;
             continue;
         }
@@ -428,7 +411,6 @@ int main( int argc, char** argv )
         if (ss != NULL) {
             strncpy(minEventName[did], event_name, PAPI_MAX_STR_LEN);
             minEventName[did][PAPI_MAX_STR_LEN-1]=0;
-//          dprintf("Found minEvent '%s' for device %i.\n", event_name, did);
             minEventCount++;
             continue;
         }
@@ -437,7 +419,6 @@ int main( int argc, char** argv )
         if (ss != NULL) {
             strncpy(maxEventName[did], event_name, PAPI_MAX_STR_LEN);
             maxEventName[did][PAPI_MAX_STR_LEN-1]=0;
-//          dprintf("Found maxEvent '%s' for device %i.\n", event_name, did);
             maxEventCount++;
             continue;
         }
@@ -447,7 +428,7 @@ int main( int argc, char** argv )
     if (PowerEventCount != DeviceCount || 
         LimitEventCount != DeviceCount ||
           minEventCount != DeviceCount ||
-          maxEventCount != DeviceCount) {                              // If we did not get all the events,
+          maxEventCount != DeviceCount) {
         fprintf(stderr, "Too few ROCM_SMI events found; %d devices, %i PowerEvents, %i LimitEvents, %i maxEvents, %i minEvents. Aborting\n",
                 DeviceCount, PowerEventCount, LimitEventCount, minEventCount, maxEventCount);
         helpText();
@@ -485,14 +466,6 @@ int main( int argc, char** argv )
         }
     }
 
-
-//  for (i=0; i<DeviceCount; i++) {
-//      printf("PAPI Event ID: 0x%08x Power Event: %s\n", powerEvents[i], PowerEventName[i]);
-//      printf("PAPI Event ID: 0x%08x Limit Event: %s\n", limitEvents[i], LimitEventName[i]);
-//      printf("PAPI Event ID: 0x%08x   min Event: %s\n", minEvents[i]  , minEventName[i]  );
-//      printf("PAPI Event ID: 0x%08x   max Event: %s\n", maxEvents[i]  , maxEventName[i]  );
-//  }
-
     retval = PAPI_create_eventset( &EventSet );
     if( retval != PAPI_OK ) {
         fprintf(stderr, "PAPI_create_eventset failure returned %i [%s].\n", retval, PAPI_strerror(retval));
@@ -501,13 +474,13 @@ int main( int argc, char** argv )
 
 
     // Get the minimum values we can set each device to.
-    retval = PAPI_add_events(EventSet, minEvents, DeviceCount);  // Add the events in.
+    retval = PAPI_add_events(EventSet, minEvents, DeviceCount);
     if( retval != PAPI_OK ) {
         fprintf(stderr, "PAPI_add_events (minEvents) failure returned %i [%s].\n", retval, PAPI_strerror(retval));
         exit(-1); 
     }
 
-    retval = PAPI_start(EventSet);                          // Start the event set.
+    retval = PAPI_start(EventSet);
     if( retval != PAPI_OK ) {
         fprintf(stderr, "PAPI_start failure returned %i [%s].\n", retval, PAPI_strerror(retval));
         exit(-1); 
@@ -520,22 +493,23 @@ int main( int argc, char** argv )
         exit(-1); 
     }
 
-    PAPI_cleanup_eventset(EventSet);                        // get rid of those events.
+    // get rid of those events.
+    PAPI_cleanup_eventset(EventSet);
     
     // Get the maximum values we can set each device to.
-    retval = PAPI_add_events(EventSet, maxEvents, DeviceCount);  // Add the events in.
+    retval = PAPI_add_events(EventSet, maxEvents, DeviceCount);
     if( retval != PAPI_OK ) {
         fprintf(stderr, "PAPI_add_events (maxEvents) failure returned %i [%s].\n", retval, PAPI_strerror(retval));
         exit(-1); 
     }
 
-    retval = PAPI_start(EventSet);                          // Start the event set.
+    retval = PAPI_start(EventSet);
     if( retval != PAPI_OK ) {
         fprintf(stderr, "PAPI_start failure returned %i [%s].\n", retval, PAPI_strerror(retval));
         exit(-1); 
     }
 
-    retval = PAPI_stop(EventSet, maxSetting);                // Read it, and get values.
+    retval = PAPI_stop(EventSet, maxSetting);
     if( retval != PAPI_OK ) {
         fprintf(stderr, "%i: PAPI_stop failed, returned %i [%s].\n", __LINE__, retval, PAPI_strerror(retval));
         exit(-1); 
@@ -559,7 +533,8 @@ int main( int argc, char** argv )
         }
     }
 
-    if (retval > 0) {                                       // Any out of range, we get out.
+    // exit if any violations.
+    if (retval > 0) {
         exit(-1); 
     }
 
@@ -649,7 +624,7 @@ int main( int argc, char** argv )
     double elapsedSec;
 
     t1 = PAPI_get_real_nsec();                                  // Get the start time.
-    while (CTL_Z == 0) {                                        // While I havent recieved a CTL-Z;
+    while (CTL_Z == 0) {                                        // While I havent received a CTL-Z;
         usleep(Interval*1000);                                  // .. Wait (Interval given in mS, function arg is uS).
         if (CTL_Z) break;                                       // .. CTL-Z may have interrupted usleep.
         t2 = PAPI_get_real_nsec();                              // .. Find end time.
