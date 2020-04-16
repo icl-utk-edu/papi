@@ -311,7 +311,7 @@ main(int argc, char **argv)
 	int ret, c, errors = 0;
 
 
-	while ((c=getopt(argc, argv,"hcaA")) != -1) {
+	while ((c=getopt(argc, argv,"hpcaA")) != -1) {
 		switch(c) {
 			case 'c':
 				options.valid_mode |= VALID_INTERN;
