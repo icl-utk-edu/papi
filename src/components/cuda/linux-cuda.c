@@ -504,9 +504,11 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
         // From https://developer.nvidia.com/cuda-gpus#compute):
         // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
-        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                          // get number of domains,
+
+        cuptiError = CUPTI_SUCCESS;                                     // Note: cuptiError is NOT SET except on failure.
+        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                  // get number of domains,
             (mydevice->cuDev, &mydevice->maxDomains),
-            cuptiError=_status);                                               // .. on failure, just record error.
+            cuptiError=_status);                                        // .. on failure, just record error.
 
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
@@ -516,7 +518,11 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-            strncpy(_cuda_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+            if (strcmp(errstr, "<unknown>") == 0) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "cuptDeviceGetNumEventDomains() returned unknown error code 0x%08X.", cuptiError);
+            } else {
+                strncpy(_cuda_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+            }
             return PAPI_ENOSUPP;
         }
             
