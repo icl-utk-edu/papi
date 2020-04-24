@@ -123,12 +123,17 @@ __ 2. Check/Change the version number in:
 	( chmod -R 775 /webdir/papi/docs )
 
 __ 3. If 'configure.in' is changed, we must generate a new 'configure' file.
-    Run autoconf (2.69), it reads configure.in and creates a new configure.
+      Run autoconf (2.69), it reads configure.in and creates a new configure.
 
-	NOTE: Using an autoconf version >2.69 will work, but will produce an
-	inordinate number of extraneous differences between versions.
-    You can check the version # with 'autoconf -V'
-	Release 6.0.0.1 was done on saturn.icl.utk.edu with autoconf 2.69.
+      We have an issue with autoconf; on different machines the same version (2.69)
+      can produce different files; some include 'runstatedir' lines, others do not.
+      We want those removed. All new changes must now be done on
+      saturn.icl.utk.edu with autoconf 2.69.
+
+      NOTE: Using an autoconf version >2.69 will work, but will produce an
+      inordinate number of extraneous differences between versions.
+        You can check the version # with 'autoconf -V'
+      Release 6.0.0.1 was done on saturn.icl.utk.edu with autoconf 2.69.
 
 __ 4. Create a ChangeLog for the current release.
 	We use a python script gitlog2changelog.py to generate is for us.
