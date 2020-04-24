@@ -200,9 +200,13 @@ else
 		AC_MSG_ERROR([cannot find dlopen and dlerror symbols neither in the base system libraries nor in -ldl])
 	fi
 fi
+
+# Disable LDL for static builds
+# if test "x${STATIC}" = "x"; then
+#   LDL=""
+# fi
 AC_SUBST(LDL)
-        
-    
+
 if test "$OS" = "CLE"; then
   virtualtimer=times
   tls=__thread
@@ -827,10 +831,6 @@ AC_ARG_WITH(static_tools,
 	    AC_MSG_RESULT(yes)],
 	    [AC_MSG_RESULT(no)])
 
-if test "$static_lib" = "no"; then
-   AC_MSG_ERROR(Building tests and utilities static but no static papi library to be built)
-fi
-
 AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
 AC_ARG_WITH(shlib_tools,
 	        [  --with-shlib-tools		Specify linking with papi library of tests and utilities],
@@ -838,6 +838,14 @@ AC_ARG_WITH(shlib_tools,
 		AC_MSG_RESULT(yes)],
 		[shlib_tools=no
 		AC_MSG_RESULT(no)])
+
+if test "$static_lib" = "no"; then
+   shlib_tools=yes
+fi
+
+if test "$static_lib" = "no" -a "$shlib_tools" = "no"; then
+   AC_MSG_ERROR(Building tests and utilities static but no static papi library to be built)
+fi
 
 if test "$shlib_tools" = "yes"; then
    if test "$shared_lib" != "yes"; then	
@@ -847,6 +855,8 @@ if test "$shlib_tools" = "yes"; then
       AC_MSG_ERROR([Building shared but specified static linking])
    fi
    LINKLIB='$(SHLIB)'
+   #WORKAROUND: if libpfm cannot be found at link time
+   LDFLAGS="$LDFLAGS -Wl,-rpath-link,$PWD/libpfm4/lib"
 elif test "$shlib_tools" = "no"; then
    if test "$static_lib" != "yes"; then
       AC_MSG_ERROR([Building shared but specified static linking for tests and utilities])
