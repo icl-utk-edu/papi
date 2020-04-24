@@ -201,10 +201,6 @@ else
 	fi
 fi
 
-# Disable LDL for static builds
-# if test "x${STATIC}" = "x"; then
-#   LDL=""
-# fi
 AC_SUBST(LDL)
 
 if test "$OS" = "CLE"; then
@@ -830,6 +826,11 @@ AC_ARG_WITH(static_tools,
             [STATIC="-static"
 	    AC_MSG_RESULT(yes)],
 	    [AC_MSG_RESULT(no)])
+
+# Disable LDL for static builds
+# if test "$STATIC" = "-static"; then
+#   LDL=""
+# fi
 
 AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
 AC_ARG_WITH(shlib_tools,
