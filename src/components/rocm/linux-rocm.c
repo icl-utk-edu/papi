@@ -62,7 +62,7 @@
         hsa_status_t _status = (*call##Ptr)args;                        \
         if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {     \
             const char *profErr;                                                     \
-            profErr = (*rocprofiler_error_stringPtr)();                              \
+            (*rocprofiler_error_stringPtr)(&profErr);                              \
             fprintf(stderr, "%s:%i error: function %s failed with error %d [%s].\n", \
             __FILE__, __LINE__, #call, _status, profErr);               \
             handleerror;                                                \
@@ -164,6 +164,7 @@ DECLAREROCMFUNC(hsa_iterate_agents, (hsa_status_t (*)(hsa_agent_t, void*),
                                      void*));
 DECLAREROCMFUNC(hsa_system_get_info, (hsa_system_info_t, void*));
 DECLAREROCMFUNC(hsa_agent_get_info, (hsa_agent_t agent, hsa_agent_info_t attribute, void* value));
+DECLAREROCMFUNC(hsa_queue_destroy, (hsa_queue_t* queue));
 
 // ROC-profiler API declaration
 DECLAREROCMFUNC(rocprofiler_get_info, (const hsa_agent_t*, rocprofiler_info_kind_t, void *));
@@ -184,11 +185,7 @@ DECLAREROCMFUNC(rocprofiler_stop, (rocprofiler_t*, uint32_t));
 DECLAREROCMFUNC(rocprofiler_get_data, (rocprofiler_t*, uint32_t));
 DECLAREROCMFUNC(rocprofiler_get_metrics, (const rocprofiler_t*));
 DECLAREROCMFUNC(rocprofiler_reset, (rocprofiler_t*, uint32_t));
-
-// Unlike others, does not return an hsa_status_t.
-// Have to deal with bad definition in rocprofiler.h.
-// const char * __attribute__((weak)) rocprofiler_error_string(void);
-const char *(*rocprofiler_error_stringPtr)(void);
+DECLAREROCMFUNC(rocprofiler_error_string, (const char**));
 
 /* The PAPI side (external) variable as a global */
 papi_vector_t _rocm_vector;
@@ -196,6 +193,12 @@ papi_vector_t _rocm_vector;
 /* Global variable for hardware description, event and metric lists */
 static _rocm_context_t *global__rocm_context = NULL;
 static uint32_t maxEventSize=0;                 // We accumulate all agent counts into this.
+static rocprofiler_properties_t global__ctx_properties = {
+  NULL, // queue
+  128, // queue depth
+  NULL, // handler on completion
+  NULL // handler_arg
+};
 
 /* This global variable points to the head of the control state list */
 static _rocm_control_t *global__rocm_control = NULL;
@@ -259,6 +262,7 @@ static int _rocm_linkRocmLibraries(void)
     DLSYM_AND_CHECK(dl1, hsa_system_get_info);
     DLSYM_AND_CHECK(dl1, hsa_agent_get_info);
     DLSYM_AND_CHECK(dl1, hsa_shut_down);
+    DLSYM_AND_CHECK(dl1, hsa_queue_destroy);
 
     //-------------------------------------------------------------------------
 
@@ -652,12 +656,10 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
                 ROCP_CALL_CK(rocprofiler_close, (eventctrl->ctx), return (PAPI_EMISC));
             }
             int openFailed=0;
-            rocprofiler_properties_t properties;
-            memset(&properties, 0, sizeof(properties));
-            properties.queue_depth = 128;
 //          fprintf(stderr,"%s:%i calling rocprofiler_open, ii=%i device=%i numEvents=%i name='%s'.\n", __FILE__, __LINE__, ii, eventDeviceNum, eventctrl->conEventsCount, eventId.name);
+            const uint32_t mode = (global__ctx_properties.queue != NULL) ? ROCPROFILER_MODE_STANDALONE : ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE;
             ROCP_CALL_CK(rocprofiler_open, (gctxt->availAgentArray[eventDeviceNum], eventctrl->conEvents, eventctrl->conEventsCount, &(eventctrl->ctx),
-                                          ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE, &properties), openFailed=1);
+                         mode, &global__ctx_properties), openFailed=1);
             if (openFailed) {                       // If the open failed,
                 ROCMDBG("Error occurred: The ROCM event was not accepted by the ROCPROFILER.\n");
 //              fprintf(stderr, "Error occurred: The ROCM event '%s' was not accepted by the ROCPROFILER.\n", eventId.name);
@@ -811,6 +813,10 @@ static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
 //      fprintf(stderr, "%s:%i Returned from call to rocprofiler_close, papi_free ptr=%p.\n", __FILE__, __LINE__, gctrl->arrayOfActiveContexts[cc] );
         papi_free( gctrl->arrayOfActiveContexts[cc] );
 //      fprintf(stderr, "%s:%i Returned from call to papi_free.\n", __FILE__, __LINE__);
+    }
+    if (global__ctx_properties.queue != NULL) {
+      ROCM_CALL_CK(hsa_queue_destroy, (global__ctx_properties.queue), return (PAPI_EMISC));
+      global__ctx_properties.queue = NULL;
     }
     /* Record that there are no active contexts or events */
 //  fprintf(stderr, "%s:%i Checkpoint, maxEventSize=%i.\n", __FILE__, __LINE__, maxEventSize);

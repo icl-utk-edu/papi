@@ -37,6 +37,7 @@
 #define PERF_ATTR_MH	8	/* monitor host execution */
 #define PERF_ATTR_CPU	9	/* CPU to program */
 #define PERF_ATTR_PIN  10	/* pin event to CPU */
+#define PERF_ATTR_HWS  11	/* hardware sampling */
 
 #define _PERF_ATTR_U  (1 << PERF_ATTR_U)
 #define _PERF_ATTR_K  (1 << PERF_ATTR_K)
@@ -49,6 +50,7 @@
 #define _PERF_ATTR_MH (1 << PERF_ATTR_MH)
 #define _PERF_ATTR_CPU (1 << PERF_ATTR_CPU)
 #define _PERF_ATTR_PIN (1 << PERF_ATTR_PIN)
+#define _PERF_ATTR_HWS (1 << PERF_ATTR_HWS)
 
 #define PERF_PLM_ALL (PFM_PLM0|PFM_PLM3|PFM_PLMH)
 

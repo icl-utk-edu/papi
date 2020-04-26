@@ -6,7 +6,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 5.7.1.0, ptools-perfapi@icl.utk.edu)
+AC_INIT(PAPI, 6.0.0.1, ptools-perfapi@icl.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -139,6 +139,38 @@ AC_C_INLINE
 AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h sched.h])
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time sched_getcpu])
+
+#
+# Check if the system provides time_* symbols without -lrt, and if not,
+# check for -lrt existance.
+#
+
+AC_MSG_CHECKING([for timer_create and timer_*ettime symbols in base system])
+AC_TRY_LINK([#include <signal.h>
+             #include <time.h>],
+    [timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);],
+	[rtsymbols_in_base="yes"], [rtsymbols_in_base="no"])
+if test "${rtsymbols_in_base}" = "yes"; then
+	AC_MSG_RESULT([found])
+	LRT=""
+else
+	AC_MSG_RESULT([not found])
+	AC_MSG_CHECKING([for timer_create and timer_*ettime symbols in -lrt])
+	SAVED_LIBS=${LIBS}
+	LIBS="${LIBS} -lrt"
+	AC_TRY_LINK([#include <signal.h>
+                 #include <time.h>],
+        [timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);],
+		[has_lrt="yes"], [has_lrt="no"])
+	LIBS=${SAVED_LIBS}
+	if test "${has_lrt}" = "yes" ; then
+		AC_MSG_RESULT([found])
+	LRT="-lrt"
+	else
+		AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt])
+	fi
+fi
+AC_SUBST(LRT)
 
 #
 # Check if the system provides dl* symbols without -ldl, and if not,
@@ -1050,7 +1082,9 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
   fi
   if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
-	AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")])
+	  have_paranoid=yes
+	  AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")
+    ])
   fi
   if test "$perf_events" = "yes"; then
       PECFLAGS="$PECFLAGS -DPEINCLUDE=\\\"$pe_incdir/perf_event.h\\\""
@@ -1718,6 +1752,14 @@ for comp in $components; do
 done
 tests="$tests comp_tests"
 
+# check for SDE component to determine if we need -lrt in LDFLAGS
+for comp in $components; do
+  if test "x$comp" = "xsde" ; then
+    LDFLAGS="$LDFLAGS $LRT"
+    LIBS="$LIBS $LRT"
+  fi
+done
+
 AC_MSG_RESULT($components)
 
 AC_MSG_CHECKING(for PAPI event CSV filename to use)
@@ -1833,3 +1875,20 @@ AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
 AC_CONFIG_FILES([Makefile papi.pc])
 AC_CONFIG_FILES([components/Makefile_comp_tests.target testlib/Makefile.target utils/Makefile.target ctests/Makefile.target ftests/Makefile.target validation_tests/Makefile.target])
 AC_OUTPUT
+
+if test "$have_paranoid" = "yes"; then
+  paranoid_level=`cat /proc/sys/kernel/perf_event_paranoid`
+  if test $paranoid_level -gt 2; then
+    warning_text=`echo -e "\n
+***************************************************************************
+* Insufficient permissions for accessing any hardware counters.           *
+* Your current paranoid level is $paranoid_level.                                       *
+* Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root. *
+*                                                                         *
+* Example:                                                                *
+* sudo sh -c \"echo 2 > /proc/sys/kernel/perf_event_paranoid\"              *
+***************************************************************************
+"\ `
+    AC_MSG_WARN($warning_text)
+  fi
+fi

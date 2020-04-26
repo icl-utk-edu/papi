@@ -262,6 +262,13 @@ intel_x86_event_has_pebs(void *this, pfmlib_event_desc_t *e)
 	return 0;
 }
 
+static int
+intel_x86_event_has_hws(void *this, pfmlib_event_desc_t *e)
+{
+	pfmlib_pmu_t *pmu = this;
+	return !!(pmu->flags & INTEL_X86_PMU_FL_EXTPEBS);
+}
+
 /*
  * remove attrs which are in conflicts (or duplicated) with os layer
  */
@@ -270,6 +277,7 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
 	int i, compact;
+	int has_hws = intel_x86_event_has_hws(this, e);
 	int has_pebs = intel_x86_event_has_pebs(this, e);
 	int no_smpl = pmu->flags & PFMLIB_PMU_FL_NO_SMPL;
 
@@ -292,6 +300,10 @@ pfm_intel_x86_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 
 			/* Precise mode, subject to PEBS */
 			if (e->pattrs[i].idx == PERF_ATTR_PR && !has_pebs)
+				compact = 1;
+
+			/* hardware sampling mode, subject to HWS or PEBS */
+			if (e->pattrs[i].idx == PERF_ATTR_HWS && (!has_hws || has_pebs))
 				compact = 1;
 
 			/*

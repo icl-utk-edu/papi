@@ -64,12 +64,15 @@ typedef struct {
 	uint64_t		code;	/* attribute code */
 	pfm_attr_t		type;	/* attribute type */
 	pfm_attr_ctrl_t		ctrl;	/* what is providing attr */
+
 	uint64_t		idx;	/* attribute opaque index */
+
 	struct {
 		unsigned int    is_dfl:1;	 /* is default umask */
 		unsigned int    is_precise:1;	 /* Intel X86: supports PEBS */
 		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
-		unsigned int	reserved_bits:28;
+		unsigned int	support_hw_smpl:1;/* can be recorded by hw buffer (Intel X86=EXTPEBS) */
+		unsigned int	reserved_bits:27;
 	};
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */
@@ -285,6 +288,7 @@ extern pfmlib_pmu_t intel_bdw_ep_support;
 extern pfmlib_pmu_t intel_skl_support;
 extern pfmlib_pmu_t intel_skx_support;
 extern pfmlib_pmu_t intel_clx_support;
+extern pfmlib_pmu_t intel_icl_support;
 extern pfmlib_pmu_t intel_rapl_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb0_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb1_support;
@@ -384,6 +388,7 @@ extern pfmlib_pmu_t intel_hswep_unc_r3qpi2_support;
 extern pfmlib_pmu_t intel_hswep_unc_irp_support;
 extern pfmlib_pmu_t intel_knc_support;
 extern pfmlib_pmu_t intel_slm_support;
+extern pfmlib_pmu_t intel_tmt_support;
 extern pfmlib_pmu_t intel_knl_support;
 extern pfmlib_pmu_t intel_knl_unc_imc0_support;
 extern pfmlib_pmu_t intel_knl_unc_imc1_support;

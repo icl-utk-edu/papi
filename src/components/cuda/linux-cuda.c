@@ -445,6 +445,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     tmpStr[PAPI_MIN_STR_LEN - 1] = '\0';
     size_t tmpSizeBytes;
     int ii;
+    CUptiResult cuptiError;
     uint32_t maxEventSize;
 
     /* How many CUDA devices do we have? */
@@ -496,10 +497,35 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                          // get number of domains,
-            (mydevice->cuDev, &mydevice->maxDomains),
-            return (PAPI_EMISC));                                               // .. on failure.
+        // First CUPTI Call: This will fail if CUPTI is not supported,
+        // which happens on compute capability >=7.5. 
+        // #0x00000026='CUPTI_ERROR_LEGACY_PROFILER_NOT_SUPPORTED'. (error 38 decimal).
+        // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
+        // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
+        // From https://developer.nvidia.com/cuda-gpus#compute):
+        // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
 
+        cuptiError = CUPTI_SUCCESS;                                     // Note: cuptiError is NOT SET except on failure.
+        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                  // get number of domains,
+            (mydevice->cuDev, &mydevice->maxDomains),
+            cuptiError=_status);                                        // .. on failure, just record error.
+
+        if (cuptiError != CUPTI_SUCCESS) {
+            const char *errstr;
+            if (cuptiError == 38) { 
+                strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
+                return PAPI_ENOSUPP;
+            }
+
+            (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+            if (strcmp(errstr, "<unknown>") == 0) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "cuptDeviceGetNumEventDomains() returned unknown error code 0x%08X.", cuptiError);
+            } else {
+                strncpy(_cuda_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+            }
+            return PAPI_ENOSUPP;
+        }
+            
         /* Allocate space to hold domain IDs */
         mydevice->domainIDArray = (CUpti_EventDomainID *) papi_calloc(
             mydevice->maxDomains, sizeof(CUpti_EventDomainID));
@@ -1424,25 +1450,28 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl)
     uint32_t cc;
     int saveDeviceNum;
     unsigned int ui;
+    CUcontext saveCtx;  
 
-    SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
+    SUBDBG("Save current device/context, then switch to each active device/context and enable eventgroups\n");
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
+    CU_CALL((*cuCtxGetCurrentPtr) (&saveCtx), return (PAPI_EMISC));
+
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
-        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
+        CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
+        CUDA_CALL((*cudaSetDevicePtr) (currDeviceNum), return(PAPI_EMISC));
+        CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
         CUpti_EventGroupSets *currEventGroupSets = gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets;
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        else
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+
         //CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
         (*cuptiEventGroupSetsDestroyPtr) (currEventGroupSets);
         gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets = NULL;
         papi_free( gctrl->arrayOfActiveCUContexts[cc] );
-        /* Pop the pushed context */
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     }
+    /* Restore saved context, device pointer */
+    CU_CALL((*cuCtxSetCurrentPtr) (saveCtx), return (PAPI_EMISC));
+    CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum), return(PAPI_EMISC));
+
     /* Record that there are no active contexts or events */
     for (ui=0; ui<gctrl->activeEventCount; ui++) {              // For each active event,
         int idx = gctrl->activeEventIndex[ui];                  // .. Get its index...

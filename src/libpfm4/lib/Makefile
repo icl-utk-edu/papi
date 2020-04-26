@@ -62,6 +62,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_hsw.c \
 	  pfmlib_intel_bdw.c \
 	  pfmlib_intel_skl.c \
+	  pfmlib_intel_icl.c \
 	  pfmlib_intel_rapl.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
@@ -112,6 +113,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_skx_unc_upi.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
+	  pfmlib_intel_tmt.c \
 	  pfmlib_intel_knl.c \
 	  pfmlib_intel_knl_unc_imc.c \
 	  pfmlib_intel_knl_unc_edc.c \
@@ -268,6 +270,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_bdw_events.h	\
 	events/intel_skl_events.h	\
 	events/intel_glm_events.h	\
+	events/intel_icl_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
 	events/intel_snbep_unc_cbo_events.h \
 	events/intel_snbep_unc_ha_events.h \
@@ -277,6 +280,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_snbep_unc_ubo_events.h \
 	events/intel_snbep_unc_r2pcie_events.h \
 	events/intel_snbep_unc_r3qpi_events.h \
+	events/intel_tmt_events.h \
 	events/intel_knc_events.h \
 	events/intel_knl_events.h \
 	events/intel_ivbep_unc_cbo_events.h \

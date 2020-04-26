@@ -1,0 +1,34 @@
+.TH "regions_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+regions_t \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "char * \fBregion\fP"
+.br
+.ti -1c
+.RI "struct regions * \fBnext\fP"
+.br
+.ti -1c
+.RI "struct regions * \fBprev\fP"
+.br
+.ti -1c
+.RI "\fBvalue_t\fP \fBvalues\fP []"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "char* regions_t::region"
+Region name 
+.SS "\fBvalue_t\fP regions_t::values[]"
+Array of event values based on current eventset 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code\&.

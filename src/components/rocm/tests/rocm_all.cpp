@@ -157,12 +157,12 @@ void addEventsFound(char *eventName, long long value) {
 // Note values must point at an array large enough to store the events in
 // Eventset.
 //-----------------------------------------------------------------------------
-void conductTest(int EventSet, int device, long long *values) {
+void conductTest(int EventSet, int device, long long *values, int numValues) {
     float *A_d, *C_d;
     float *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(float);
-    int ret, thisDev, verbose=0;
+    int i, ret, thisDev, verbose=0;
 
 	ret = PAPI_start( EventSet );
 	if (ret != PAPI_OK ) {
@@ -221,8 +221,9 @@ void conductTest(int EventSet, int device, long long *values) {
         exit(ret);
     }
 
+    CHECK(hipFree(A_d));                   // HIP free for device.
+    CHECK(hipFree(C_d));                   // ...
     if (verbose) printf ("PASSED!\n");
-
 } // end conductTest.
 
 //-----------------------------------------------------------------------------
@@ -240,7 +241,6 @@ int main(int argc, char *argv[])
     // Parse command line arguments
     parseCommandLineArgs(argc, argv);
 
-    // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
     int eventCount;
     int ret;
@@ -285,7 +285,6 @@ int main(int argc, char *argv[])
 
     printf("Found ROCM Component at id %d\n", cid);
 
-    // Add events at a GPU specific level ... eg rocm:::device=0:Whatever
     eventCount = 0;
     int eventsRead=0;
 
@@ -313,7 +312,6 @@ int main(int argc, char *argv[])
             char *devstr = strstr(info.symbol, "device=");              // look for device enumerator.
             if (devstr == NULL) continue;                               // Skip if no device present. 
             device=atoi(devstr+7);                                      // Get the device id, for info.
-//          fprintf(stderr, "Found rocm symbol '%s', device=%i.\n", info.symbol , device);
             if (device < 0 || device >= 32) continue;                   // skip any not in range.
 
             // Check if this symbol is in the exclusion table.
@@ -341,23 +339,23 @@ int main(int argc, char *argv[])
                 continue; 
             }
 
-            long long value=-1;                                         // The only value we read.
+            long long value[1]={-1};                                    // The only value we read.
             
             // Prep stuff.
            
-            conductTest(EventSet, device, &value);                      // Conduct a test, on device given. 
-            addEventsFound(info.symbol, value);                         // Add to events we were able to read.
+            conductTest(EventSet, device, value, 1);                   // Conduct a test, on device given. 
+            addEventsFound(info.symbol, value[0]);                     // Add to events we were able to read.
             
             CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));              // Delete all events in set.
             CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));             // destroy the event set.
 
             // report each event counted.
-            if (value >= 0) {                                           // If not still -1,
+            if (value[0] >= 0) {                                        // If not still -1,
                 eventsRead++;                                           // .. count and report.
-                if (value == 0) {
-                    printf("%-64s: %lli (not exercised by current test code.)\n", info.symbol, value);
+                if (value[0] == 0) {
+                    printf("%-64s: %lli (not exercised by current test code.)\n", info.symbol, value[0]);
                 } else {
-                    printf("%-64s: %lli\n", info.symbol, value);
+                    printf("%-64s: %lli\n", info.symbol, value[0]);
                 }
             } else {
                 printf("%-64s: Failed to read.\n", info.symbol);
@@ -399,7 +397,6 @@ int main(int argc, char *argv[])
     // that, tested alone, returned a value greater than zero.
 
     int mainEvent, pairEvent, mainDevice, pairDevice;
-    long long saveValues[2];
     long long readValues[2];
     int  goodOnSame=0, failOnDiff=0, badSameCombo=0, pairProblems=0;        // Some counters.
     int type;                                                               // 0 succeed on same device, 1 = fail across devices.
@@ -468,17 +465,17 @@ int main(int argc, char *argv[])
 
                 // We were able to add the pair, in type 0, get a measurement. 
                 readValues[0]= -1; readValues[1] = -1;
-                conductTest(EventSet, device, readValues);                              // Conduct a test, on device given. 
+                conductTest(EventSet, device, readValues, 2);                           // Conduct a test, on device given. 
 
-                goodOnSame++;                                                           // Was accepted by cuda as a valid pairing.
+                goodOnSame++;                                                           // Was accepted by rocm as a valid pairing.
 
                 // For the checks, we add 2 (so -1 becomes +1) to avoid any
                 // divide by zeros. It won't make a significant difference 
                 // in the ratios. (none if readings are the same). 
                 double mainSingle = (2.0 + eventsFound[mainEvent].value);               // Get value when read alone.
                 double pairSingle = (2.0 + eventsFound[pairEvent].value);               // ..
-                double mainCheck  = mainSingle/(2.0 + saveValues[0]);                   // Get ratio when paired.
-                double pairCheck  = pairSingle/(2.0 + saveValues[1]);                   // ..
+                double mainCheck  = mainSingle/(2.0 + readValues[0]);                   // Get ratio when paired.
+                double pairCheck  = pairSingle/(2.0 + readValues[1]);                   // ..
 
                 char flag=' ', flag1=' ', flag2=' ';                                    // Presume all okay.
                 if (mainCheck < 0.90 || mainCheck > 1.10) flag1='*';                    // Flag as significantly different for main.
@@ -489,8 +486,8 @@ int main(int argc, char *argv[])
                 }
 
                 printf("%c %64s + %-64s [", flag, eventsFound[mainEvent].name, eventsFound[pairEvent].name);
-                printf("%c%lli,", flag1, saveValues[0]);
-                printf("%c%lli]\n", flag2, saveValues[1]);
+                printf("%c%lli,", flag1, readValues[0]);
+                printf("%c%lli]\n", flag2, readValues[1]);
 
                 CALL_PAPI_OK(PAPI_cleanup_eventset(EventSet));                          // Delete all events in set.
                 CALL_PAPI_OK(PAPI_destroy_eventset(&EventSet));                         // destroy the event set.
@@ -517,8 +514,6 @@ int main(int argc, char *argv[])
         }
     } // end loop on type.
 
-    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     PAPI_shutdown();                                                                    // Returns no value.
-    fprintf(stderr, "%s:%i.\n", __FILE__, __LINE__);
     return(0);                                                                          // exit OK.
 } // end MAIN.

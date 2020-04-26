@@ -381,8 +381,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
 	unsigned short last_grpid =  INTEL_X86_MAX_GRPID;
 	unsigned short req_grpid;
-	int ldlat = 0, ldlat_um = 0;
-	int fe_thr= 0, fe_thr_um = 0;
+	unsigned int ldlat = 0, ldlat_um = 0;
+	unsigned int fe_thr= 0, fe_thr_um = 0;
 	int excl_grp_but_0 = -1;
 	int grpcounts[INTEL_X86_NUM_GRP];
 	int req_grps[INTEL_X86_NUM_GRP];
@@ -472,6 +472,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_FETHR))
 				fe_thr_um = 1;
+
 			/*
 			 * if more than one umask in this group but one is marked
 			 * with ncombo, then fail. It is okay to combine umask within
@@ -566,6 +567,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					if (ival < 1 || ival > 4095)
 						return PFM_ERR_ATTR_VAL;
 					fe_thr = ival;
+					umodmsk |= _INTEL_X86_ATTR_FETHR;
 					break;
 			}
 		}
@@ -681,20 +683,26 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 			evt_strcat(e->fstr, ":0x%x", a->idx);
 	}
 
-	if (fe_thr_um && !fe_thr) {
-		/* try extracting te latency threshold from the event umask first */
-		fe_thr = (umask2 >> 8) & 0x7;
-		/* if not in the umask ,then use default */
-		if (!fe_thr) {
-			DPRINT("missing fe_thres= for umask, forcing to default %d cycles\n", INTEL_X86_FETHR_DEFAULT);
-			fe_thr = INTEL_X86_FETHR_DEFAULT;
+	if (intel_x86_eflag(this, e->event, INTEL_X86_FRONTEND)) {
+		uint64_t um_thr = (umask2 >> 8) & 0xfff; /* threshold from umask */
+
+		DPRINT("um_thr=0x%"PRIx64 " fe_thr=%u thr_um=%u modhw=0x%x umodhw=0x%x\n", um_thr, fe_thr, fe_thr_um, modhw, umodmsk);
+		/* umask expects a fe_thres modifier */
+		if (fe_thr_um) {
+			/* hardware has non zero fe_thres (hardcoded) */
+			if (um_thr) {
+				/* user passed fe_thres, then must match hardcoded */
+				if (mdhw(modhw, umodmsk, ATTR_FETHR)) {
+					if (fe_thr != um_thr)
+						return PFM_ERR_ATTR_SET;
+				} else
+					fe_thr = um_thr;
+			} else if (fe_thr == 0) {
+				fe_thr = INTEL_X86_FETHR_DEFAULT;
+			}
+			umask2 &= ~((0xfffULL) << 8);
+			umask2 |= fe_thr << 8;
 		}
-	}
-	/*
-	 * encode threshold in final position in extra register
-	 */
-	if (fe_thr && fe_thr_um) {
-		umask2 |= fe_thr << 8;
 	}
 
 	/*
@@ -1037,6 +1045,7 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	const pfmlib_attr_desc_t *atdesc = this_atdesc(this);
+	pfmlib_pmu_t *pmu = this;
 	int numasks, idx;
 
 	if (!is_model_event(this, pidx)) {
@@ -1046,6 +1055,8 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 
 	numasks = intel_x86_num_umasks(this, pidx);
 	if (attr_idx < numasks) {
+		int has_extpebs = pmu->flags & INTEL_X86_PMU_FL_EXTPEBS;
+
 		idx = intel_x86_attr2umask(this, pidx, attr_idx);
 		info->name = pe[pidx].umasks[idx].uname;
 		info->desc = pe[pidx].umasks[idx].udesc;
@@ -1058,6 +1069,24 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 		info->type = PFM_ATTR_UMASK;
 		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
 		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
+		/*
+		 * if PEBS is supported, then hw buffer sampling is also supported
+		 * because PEBS is a hw buffer
+		 */
+		info->support_hw_smpl = (info->is_precise || has_extpebs);
+		/*
+		 * On Intel X86, either all or none of the umasks are speculative
+		 * for a speculative event, so propagate speculation info to all
+		 * umasks
+		 */
+		if (pmu->flags & PFMLIB_PMU_FL_SPEC) {
+			int ret = intel_x86_eflag(this, pidx, INTEL_X86_SPEC);
+			if (ret)
+				info->is_speculative = PFM_EVENT_INFO_SPEC_TRUE;
+			else
+				info->is_speculative = PFM_EVENT_INFO_SPEC_FALSE;
+		} else
+			info->is_speculative = PFM_EVENT_INFO_SPEC_NA;
 	} else {
 		idx = intel_x86_attr2mod(this, pidx, attr_idx);
 		info->name = atdesc[idx].name;
@@ -1067,6 +1096,8 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 		info->code = idx;
 		info->is_dfl = 0;
 		info->is_precise = 0;
+		info->is_speculative = PFM_EVENT_INFO_SPEC_NA;
+		info->support_hw_smpl = 0;
 	}
 
 	info->ctrl = PFM_ATTR_CTRL_PMU;
@@ -1081,6 +1112,7 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
 	pfmlib_pmu_t *pmu = this;
+	int has_extpebs = pmu->flags & INTEL_X86_PMU_FL_EXTPEBS;
 
 	if (!is_model_event(this, idx)) {
 		DPRINT("invalid event index %d\n", idx);
@@ -1098,6 +1130,17 @@ pfm_intel_x86_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	 * with umasks: at least one umask supports PEBS
 	 */
 	info->is_precise = intel_x86_eflag(this, idx, INTEL_X86_PEBS);
+	/*
+	 * if PEBS is supported, then hw buffer sampling is also supported
+	 * because PEBS is a hw buffer
+	 *
+	 * if the PMU supports ExtendedPEBS, then all events can be
+	 * recorded using the PEBS buffer. They will all benefit from
+	 * the sampling buffer feature. They will not all become precise.
+	 * Only the precise at-retirement events will be skidless. Though
+	 * by construction PEBS also limits the skid for all events.
+	 */
+	info->support_hw_smpl = (info->is_precise || has_extpebs);
 
 	if (pmu->flags & PFMLIB_PMU_FL_SPEC) {
 		int ret = intel_x86_eflag(this, idx, INTEL_X86_SPEC);

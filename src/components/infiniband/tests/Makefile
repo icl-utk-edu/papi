@@ -1,7 +1,11 @@
 NAME=infiniband
 include ../../Makefile_comp_tests.target
 
-TESTS = infiniband_list_events infiniband_values_by_code MPI_test_infiniband_events
+TESTS = infiniband_list_events infiniband_values_by_code
+
+ifneq ($(MPICC),)
+TESTS += MPI_test_infiniband_events
+endif
 
 infiniband_tests: $(TESTS)
 

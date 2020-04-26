@@ -9,12 +9,12 @@ endif
 FFLAGS +=-g
 #CFLAGS +=-g
 
-LDFLAGS +=-L.. -lrt
+LDFLAGS +=-L..
 SDE_F08_API=$(datadir)/sde_F.o
 
 EXTRA_SRC=../interface/papi_sde_interface.c
 
-TESTS = Minimal_Test Simple_Test Simple2_Test Recorder_Test sde_test_f08
+TESTS = Minimal_Test Simple_Test Simple2_Test Recorder_Test Created_Counter_Test Overflow_Test sde_test_f08
 
 sde_tests: $(TESTS)
 
@@ -58,6 +58,20 @@ $(prfx)/libRecorder.so: $(prfx)/Lib_With_Recorder.c weak_symbols.o
 Recorder_Test: $(prfx)/Recorder_Driver.c $(prfx)/libRecorder.so
 	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
 
+
+################################################################################
+## Created Counter test
+prfx=Created_Counter
+
+$(prfx)/libCreated_Counter.so: $(prfx)/Lib_With_Created_Counter.c weak_symbols.o
+	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
+
+Created_Counter_Test: $(prfx)/Created_Counter_Driver.c $(prfx)/libCreated_Counter.so
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+
+Overflow_Test: $(prfx)/Overflow_Driver.c $(prfx)/libCreated_Counter.so
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+
 ################################################################################
 ## Advanced test
 prfx=Advanced_C+FORTRAN
@@ -73,7 +87,7 @@ $(prfx)/libGamum.so: $(prfx)/Gamum.c weak_symbols.o
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 
-LIBS=Advanced_C+FORTRAN/libXandria.so Advanced_C+FORTRAN/libGamum.so Recorder/libRecorder.so Simple/libSimple.so Simple2/libSimple2.so
+LIBS=Advanced_C+FORTRAN/libXandria.so Advanced_C+FORTRAN/libGamum.so Recorder/libRecorder.so Created_Counter/libCreated_Counter.so Simple/libSimple.so Simple2/libSimple2.so
 
 clean:
 	rm -f *.o *.mod $(LIBS)

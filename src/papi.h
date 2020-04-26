@@ -67,9 +67,9 @@
  *
  *	Components provide access to hardware information on specific subsystems.
  *
- *	Components can be found under the conponents directory or @ref papi_components "here". 
- *	and included in a build as an argument to configure, 
- *	'--with-components=< comma_seperated_list_of_components_to_build >'
+ *	Components can be found under the components directory or @ref papi_components "here"
+ *	and included in a build as an argument to configure,\n
+ *	'--with-components=< comma_seperated_list_of_components_to_build >'.
  * 
  * @section papi_util PAPI Utility Commands
  * <ul> 
@@ -223,7 +223,7 @@
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION  			PAPI_VERSION_NUMBER(5,7,1,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(6,0,0,1)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
   /* Tests for checking event code type */
