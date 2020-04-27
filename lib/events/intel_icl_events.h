@@ -1865,14 +1865,26 @@ static const intel_x86_umask_t intel_icl_inst_retired[]={
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "PREC_DIST",
-    .udesc   = "Precise instruction retired event with a reduced effect of PEBS shadow in IP distribution",
+    .udesc   = "Precise instruction retired event with a reduced effect of PEBS shadow in IP distribution (Fixed counter 1 only. c, e, i, intx, intxcp modifiers not available)",
     .ucode   = 0x0100ull,
-    .uflags  = INTEL_X86_NCOMBO,
+    .ucntmsk = 0x100000000ull,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_CODE_OVERRIDE | INTEL_X86_FIXED | INTEL_X86_PEBS,
+    /*
+     * because this encoding is for a fixed counter, not all modifiers are available. Given that we do not have per umask modmsk, we use
+     * the hardcoded modifiers field instead. We mark all unavailable modifiers as set (to 0) so the user cannot modify them
+     */
+    .modhw   = _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP | _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_I,
   },
   { .uname   = "ANY",
-    .udesc   = "Number of instructions retired. Fixed Counter - architectural event",
+    .udesc   = "Number of instructions retired. Fixed Counter - architectural event (c, e, i, intx, intxcp modifiers not available)",
     .ucode   = 0x0100ull,
-    .uflags  = INTEL_X86_NCOMBO,
+    .ucntmsk = 0x100000000ull,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_CODE_OVERRIDE | INTEL_X86_FIXED,
+    /*
+     * because this encoding is for a fixed counter, not all modifiers are available. Given that we do not have per umask modmsk, we use
+     * the hardcoded modifiers field instead. We mark all unavailable modifiers as set (to 0) so the user cannot modify them
+     */
+    .modhw   = _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP | _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_I | _INTEL_X86_ATTR_E,
   },
 };
 
@@ -1893,14 +1905,14 @@ static const intel_x86_entry_t intel_icl_pe[]={
   { .name   = "INSTRUCTION_RETIRED",
     .desc   = "Number of instructions at retirement",
     .modmsk = INTEL_V2_ATTRS,
-    .cntmsk = 0x10000000full,
+    .cntmsk = 0x1000000ffull,
     .code = 0xc0,
   },
   { .name   = "INSTRUCTIONS_RETIRED",
     .desc   = "Number of instructions at retirement",
     .modmsk = INTEL_V2_ATTRS,
     .equiv = "INSTRUCTION_RETIRED",
-    .cntmsk = 0x10000000full,
+    .cntmsk = 0x1000000ffull,
     .code = 0xc0,
   },
   { .name   = "SQ_MISC",
@@ -2489,12 +2501,12 @@ static const intel_x86_entry_t intel_icl_pe[]={
     .umasks = intel_icl_cpu_clk_unhalted,
   },
   { .name   = "INST_RETIRED",
-    .desc   = "Number of instructions retired.",
-    .code   = 0x0000,
+    .desc   = "Number of instructions retired",
+    .code   = 0xc0,
     .modmsk = INTEL_V5_ATTRS,
-    .cntmsk = 0x100000000ull,
+    .cntmsk = 0xffull,
     .ngrp   = 1,
-    .flags  = 0,
+    .flags  = INTEL_X86_PEBS,
     .numasks= LIBPFM_ARRAY_SIZE(intel_icl_inst_retired),
     .umasks = intel_icl_inst_retired,
   },
