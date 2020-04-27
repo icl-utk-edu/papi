@@ -195,10 +195,13 @@ static int pfm_cpumcf_init(void *this)
 		break;
 	case 3906:  /* IBM z14  */
 	case 3907:  /* IBM z14 ZR1  */
-	case 8561:  /* IBM Machine types 8561 and 8562 */
-	case 8562:
 		ext_set = cpumcf_z14_counters;
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z14_counters);
+		break;
+	case 8561:  /* IBM Machine types 8561 and 8562 */
+	case 8562:
+		ext_set = cpumcf_z15_counters;
+		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z15_counters);
 		break;
 	default:
 		/* No extended counter set for this machine type or there
