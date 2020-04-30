@@ -827,10 +827,11 @@ AC_ARG_WITH(static_tools,
 	    AC_MSG_RESULT(yes)],
 	    [AC_MSG_RESULT(no)])
 
-# Disable LDL for static builds
-# if test "$STATIC" = "-static"; then
-#   LDL=""
-# fi
+# Disable LDL AND SDE for static builds
+if test "$STATIC" = "-static"; then
+  LDL=""
+  SDE_ENABLED=
+fi
 
 AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
 AC_ARG_WITH(shlib_tools,
@@ -1768,6 +1769,7 @@ for comp in $components; do
   if test "x$comp" = "xsde" ; then
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
+    SDE_ENABLED=1
   fi
 done
 
@@ -1862,6 +1864,7 @@ AC_SUBST(BGP_SYSDIR)
 AC_SUBST(BITFLAGS)
 AC_SUBST(COMPONENT_RULES)
 AC_SUBST(COMPONENTS)
+AC_SUBST(SDE_ENABLED)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(BGPM_INSTALL_DIR)

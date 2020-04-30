@@ -10,6 +10,7 @@ INCLUDE = -I. -I@includedir@ -I$(testlibdir) -I$(validationlibdir)
 LIBDIR  = @libdir@
 LIBRARY = @LIBRARY@
 SHLIB   = @SHLIB@
+STATIC  = @STATIC@
 PAPILIB = ../@LINKLIB@
 TESTLIB = $(testlibdir)/libtestlib.a
 LDFLAGS = @LDFLAGS@ @LDL@ @STATIC@

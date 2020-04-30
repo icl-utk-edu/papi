@@ -11,7 +11,11 @@ MPX	= max_multiplex multiplex1 multiplex2 mendes-alt sdsc-mpx sdsc2-mpx \
 MPXPTHR	= multiplex1_pthreads multiplex3_pthreads kufrin
 MPI	= mpi_hl mpi_omp_hl \
 	mpifirst
+
+ifeq ($(STATIC),)
 SHARED  = shlib
+endif
+
 SERIAL  = serial_hl serial_hl_ll_comb\
 	all_events all_native_events branches calibrate case1 case2 \
 	cmpinfo code2name derived describe destroy disable_component \
@@ -344,8 +348,10 @@ case2: case2.c $(TESTLIB) $(PAPILIB)
 low-level: low-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) low-level.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o low-level
 
+ifeq ($(STATIC),)
 shlib: shlib.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) shlib.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o shlib $(LDL)
+endif
 
 exeinfo: exeinfo.c $(TESTLIB) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exeinfo 
