@@ -51,9 +51,10 @@
 
 #include "papi.h"
 #include "print_header.h"
-#ifdef SDE_ENABLED
+#if SDE
 #include "components/sde/interface/papi_sde_interface.h"
 #endif
+
 #define EVT_LINE 80
 #define EVT_LINE_BUF_SIZE 4096
 
@@ -85,7 +86,7 @@ print_help( char **argv )
 	printf( "\nGeneral command options:\n" );
 	printf( "\t-h, --help       print this help message\n" );
 	printf( "\t-c, --check      attempts to add each event\n");
-#ifdef SDE_ENABLED
+#if SDE
 	printf( "\t-sde FILE        lists SDEs that are registered by the library or executable in FILE\n" );
 #endif
 	printf( "\t-e EVENTNAME     display detailed information about named native event\n" );
@@ -371,7 +372,7 @@ parse_event_qualifiers( PAPI_event_info_t * info )
 	return ( 1 );
 }
 
-#ifdef SDE_ENABLED
+#if SDE
 void
 invoke_hook_fptr( char *lib_path )
 {
@@ -449,7 +450,7 @@ main( int argc, char **argv )
 		return 2;
 	}
 
-#ifdef SDE_ENABLED
+#if SDE
     /*
        The following code will execute if the user wants to list the SDEs in the
        library (or executable) stored in flags.path. This code will not list the
@@ -520,7 +521,7 @@ skip_lib:
         if( NULL != cmd ) free(cmd);
     }
 no_sdes:
-#endif //SDE_ENABLED
+#endif //SDE
 
 	/* Do this code if the event name option was specified on the commandline */
 	if ( flags.named ) {

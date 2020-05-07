@@ -1767,6 +1767,7 @@ tests="$tests comp_tests"
 # check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
   if test "x$comp" = "xsde" ; then
+    CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
     SDE_ENABLED=1
