@@ -445,6 +445,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     tmpStr[PAPI_MIN_STR_LEN - 1] = '\0';
     size_t tmpSizeBytes;
     int ii;
+    CUptiResult cuptiError;
     uint32_t maxEventSize;
 
     /* How many CUDA devices do we have? */
@@ -496,10 +497,35 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                          // get number of domains,
-            (mydevice->cuDev, &mydevice->maxDomains),
-            return (PAPI_EMISC));                                               // .. on failure.
+        // First CUPTI Call: This will fail if CUPTI is not supported,
+        // which happens on compute capability >=7.5. 
+        // #0x00000026='CUPTI_ERROR_LEGACY_PROFILER_NOT_SUPPORTED'. (error 38 decimal).
+        // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
+        // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
+        // From https://developer.nvidia.com/cuda-gpus#compute):
+        // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
 
+        cuptiError = CUPTI_SUCCESS;                                     // Note: cuptiError is NOT SET except on failure.
+        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                  // get number of domains,
+            (mydevice->cuDev, &mydevice->maxDomains),
+            cuptiError=_status);                                        // .. on failure, just record error.
+
+        if (cuptiError != CUPTI_SUCCESS) {
+            const char *errstr;
+            if (cuptiError == 38) { 
+                strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
+                return PAPI_ENOSUPP;
+            }
+
+            (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+            if (strcmp(errstr, "<unknown>") == 0) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "cuptDeviceGetNumEventDomains() returned unknown error code 0x%08X.", cuptiError);
+            } else {
+                strncpy(_cuda_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+            }
+            return PAPI_ENOSUPP;
+        }
+            
         /* Allocate space to hold domain IDs */
         mydevice->domainIDArray = (CUpti_EventDomainID *) papi_calloc(
             mydevice->maxDomains, sizeof(CUpti_EventDomainID));
