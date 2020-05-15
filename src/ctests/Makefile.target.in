@@ -16,6 +16,7 @@ TESTLIB = $(testlibdir)/libtestlib.a
 LDFLAGS = @LDFLAGS@ @LDL@ @STATIC@
 CC	= @CC@
 MPICC	= @MPICC@
+NO_MPI_TESTS	= @NO_MPI_TESTS@
 F77	= @F77@
 CC_R	= @CC_R@
 CFLAGS	= @CFLAGS@ @TOPTFLAGS@

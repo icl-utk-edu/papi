@@ -2529,9 +2529,8 @@ _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
             // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
             // does not have derived events (the groups are first class citizens, they don't have multiple pos[] entries).
             int pos = ESI->EventInfoArray[papi_index].pos[0];
-            double rel_dist = 100.0*(double)(latest-deadline)/(double)threshold;
             SUBDBG ( "Event at index %d (and pos %d) has value %lld which exceeds deadline %lld (threshold %lld, accuracy %.2lf)\n",
-                     papi_index, pos, latest, deadline, threshold, rel_dist);
+                     papi_index, pos, latest, deadline, threshold, 100.0*(double)(latest-deadline)/(double)threshold);
 
             overflow_vector ^= ( long long ) 1 << pos;
             // We adjust the deadline in a way that it remains a multiple of threshold so we don't create an additive error.
