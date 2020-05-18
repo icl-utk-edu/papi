@@ -559,6 +559,8 @@ typedef enum {
 
 	PFM_PMU_INTEL_TMT,		/* Intel Tremont */
 	PFM_PMU_INTEL_ICL,		/* Intel IceLake */
+
+	PFM_PMU_ARM_A64FX,		/* Fujitsu A64FX processor */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
