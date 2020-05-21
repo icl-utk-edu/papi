@@ -322,7 +322,6 @@ DECLARE_RSMI(rsmi_status_string, (rsmi_status_t status, const char **status_stri
 
 // Globals.
 static void     *dl1 = NULL;
-static char     rocm_smi_main[]=PAPI_ROCM_SMI_MAIN;
 static int      TotalScanEvents = 0;    // From the iterator scan, number we have.
 static int      SizeScanEvents  = 0;    // Size of dynamically growing array.
 static int      TotalEvents    = 0;     // Total Events we added.
@@ -337,7 +336,7 @@ static long long *CurrentValue  = NULL; // Value of events, in order, to return 
 static int      printRSMIerr = 0;       // Suppresses RSMI errors during validation.
 
 static rsmi_frequencies_t *FreqTable = NULL;            // For rsmi_dev_gpu_clk_freq_get (per device).
-#define freqTablePerDevice (RSMI_CLK_TYPE_MEM+1)        /* The only ones we know about */
+#define freqTablePerDevice (RSMI_CLK_TYPE_LAST+1)       /* The only ones we know about */
 
 static rsmi_pcie_bandwidth_t *PCITable = NULL;          // For rsmi_dev_pci_bandwidth_get (no variants, just one per device).
 
@@ -402,8 +401,7 @@ void addScanEvent(const char* routine, int32_t device, uint64_t variant, uint64_
     }
 
     MakeRoomScanEvents();                                                           // Make room if needed.
-    strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen-1); // Copy name.
-    ScanEvents[TotalScanEvents].funcname[scanEventFuncNameLen-1]=0;                 // ensure z-terminated.
+    strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen);   // Copy name.
     ScanEvents[TotalScanEvents].device=device;                                      // Device ID.
     ScanEvents[TotalScanEvents].variant=variant;                                    // variant is typically enum, may be a type.
     ScanEvents[TotalScanEvents].subvariant=subvariant;                              // subvariant is typically a sensor-ID.
@@ -552,14 +550,16 @@ static int _rocm_smi_linkRocmLibraries(void)
     }
 
     // collect any defined environment variables, or "NULL" if not present.
-    char *rocm_root =       getenv("PAPI_ROCM_ROOT");
+    char *rocmsmi_root =       getenv("PAPI_ROCMSMI_ROOT");
+    char *rocmsmi_lib  =       getenv("PAPI_ROCMSMI_LIB");
+
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
     // Step 1: Process override if given.
-    if (strlen(rocm_smi_main) > 0) {                            // If override given, it has to work.
-        dl1 = dlopen(rocm_smi_main, RTLD_NOW | RTLD_GLOBAL);    // Try to open that path.
+    if (rocmsmi_lib != NULL) {                              // If override given, it has to work.
+        dl1 = dlopen(rocmsmi_lib, RTLD_NOW | RTLD_GLOBAL);  // Try to open that path.
         if (dl1 == NULL) {
-            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_SMI_MAIN override '%s' given in Rules.rocm_smi not found.", rocm_smi_main);
+            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to open PAPI_ROCMSMI_LIB='%s'.", rocmsmi_lib);
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -570,8 +570,8 @@ static int _rocm_smi_linkRocmLibraries(void)
     }
 
     // Step 3: Try the explicit install default.
-    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
-        snprintf(path_name, 1024, "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);  // PAPI Root check.
+    if (dl1 == NULL && rocmsmi_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, 1024, "%s/lib/librocm_smi64.so", rocmsmi_root);  // PAPI Root check.
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
@@ -612,7 +612,6 @@ static int _rocm_smi_linkRocmLibraries(void)
 // rsmi_dev_perf_level_t is just an enum; this can be returned as uint32.
     DLSYM_SMI(rsmi_dev_perf_level_get);
     DLSYM_SMI(rsmi_dev_perf_level_set);
-    DLSYM_SMI(rsmi_dev_gpu_clk_freq_get);
 
 // Iterate by memory type; an enum:
 // RSMI_MEM_TYPE_VRAM; RSMI_MEM_TYPE_VIS_VRAM; RSMI_MEM_TYPE_GTT. (VIS=visible).
