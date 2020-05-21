@@ -628,6 +628,7 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
+SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
 BITFLAGS
@@ -685,6 +686,7 @@ perfctr_incdir
 perfctr_prefix
 perfctr_root
 altix
+NO_MPI_TESTS
 STATIC
 papiLIBS
 AR
@@ -701,6 +703,7 @@ SET_MAKE
 LN_S
 CPP
 AWK
+MPIICC
 MPICC
 ac_ct_F77
 FFLAGS
@@ -732,7 +735,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -761,6 +763,7 @@ with_OS
 with_OSVER
 with_assumed_kernel
 with_mic
+enable_mpi_tests
 with_bgpm_installdir
 with_nativecc
 with_tests
@@ -843,7 +846,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1096,15 +1098,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1242,7 +1235,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1395,7 +1388,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1425,6 +1417,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-mpi-tests    Disable MPI tests
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
@@ -3365,13 +3358,90 @@ fi
 # Lets figure out what CC actually is...
 # Used in later checks to set compiler specific options
 if `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
-	CC_COMMON_NAME="icc"
-elif `$CC -v 2>&1 | grep 'gcc version' >/dev/null 2>&1` ; then
-	CC_COMMON_NAME="gcc"
-elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
-	CC_COMMON_NAME="xlc"
+  CC_COMMON_NAME="icc"
+  if test "$MPICC" = "mpicc"; then
+    # Check if mpiicc is available
+    # Extract the first word of "mpiicc", so it can be a program name with args.
+set dummy mpiicc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPIICC+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-	CC_COMMON_NAME="unknown"
+  if test -n "$MPIICC"; then
+  ac_cv_prog_MPIICC="$MPIICC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPIICC="mpiicc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPIICC=$ac_cv_prog_MPIICC
+if test -n "$MPIICC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPIICC" >&5
+$as_echo "$MPIICC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    if test "x$MPIICC" = "xmpiicc"; then
+      MPICC=mpiicc
+    fi
+    MPI_COMPILER_CHECK=`$MPICC -V 2>&1 | grep '^Intel(R) C'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+elif `$CC -v 2>&1 | grep 'gcc version' >/dev/null 2>&1` ; then
+  CC_COMMON_NAME="gcc"
+  if test "$MPICC" = "mpicc"; then
+    MPI_COMPILER_CHECK=`$MPICC -v 2>&1 | grep 'gcc version'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
+  CC_COMMON_NAME="xlc"
+  if test "$MPICC" = "mpicc"; then
+    MPI_COMPILER_CHECK=`$MPICC -qversion 2>&1 | grep 'IBM XL C'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+else
+  CC_COMMON_NAME="unknown"
+fi
+
+# Check whether --enable-mpi_tests was given.
+if test "${enable_mpi_tests+set}" = set; then :
+  enableval=$enable_mpi_tests;  enable_mpi_tests=no
+fi
+
+
+if test "x$enable_mpi_tests" != "x"; then :
+
+  NO_MPI_TESTS=yes
+
 fi
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
@@ -5431,6 +5501,10 @@ if test "$static_lib" = "yes"; then
   papiLIBS="$papiLIBS static"
 fi
 
+if test "$shared_lib" = "no" -a "$static_lib" = "yes"; then
+  NO_MPI_TESTS="yes"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for static compile of tests and utilities" >&5
 $as_echo_n "checking for static compile of tests and utilities... " >&6; }
 
@@ -5445,8 +5519,10 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "$static_lib" = "no"; then
-   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+# Disable LDL AND SDE for static builds
+if test "$STATIC" = "-static"; then
+  LDL=""
+  SDE_ENABLED=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linking with papi shared library of tests and utilities" >&5
@@ -5464,6 +5540,14 @@ $as_echo "no" >&6; }
 fi
 
 
+if test "$static_lib" = "no"; then
+   shlib_tools=yes
+fi
+
+if test "$static_lib" = "no" -a "$shlib_tools" = "no"; then
+   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+fi
+
 if test "$shlib_tools" = "yes"; then
    if test "$shared_lib" != "yes"; then
       as_fn_error $? "Building static but specified shared linking for tests and utilities" "$LINENO" 5
@@ -5472,6 +5556,8 @@ if test "$shlib_tools" = "yes"; then
       as_fn_error $? "Building shared but specified static linking" "$LINENO" 5
    fi
    LINKLIB='$(SHLIB)'
+   #WORKAROUND: if libpfm cannot be found at link time
+   LDFLAGS="$LDFLAGS -Wl,-rpath-link,$PWD/libpfm4/lib"
 elif test "$shlib_tools" = "no"; then
    if test "$static_lib" != "yes"; then
       as_fn_error $? "Building shared but specified static linking for tests and utilities" "$LINENO" 5
@@ -6777,8 +6863,10 @@ tests="$tests comp_tests"
 # check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
   if test "x$comp" = "xsde" ; then
+    CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
+    SDE_ENABLED=1
   fi
 done
 
@@ -6792,6 +6880,8 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
+
 
 
 
