@@ -397,8 +397,13 @@ static void MakeRoomScanEvents(void)
 //----------------------------------------------------------------------------
 void addScanEvent(const char* routine, int32_t device, uint64_t variant, uint64_t subvariant)
 {
+    if (subvariant != ((uint64_t) -1)) {
+        subvariant--;
+    }
+
     MakeRoomScanEvents();                                                           // Make room if needed.
-    strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen);   // Copy name.
+    strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen-1); // Copy name.
+    ScanEvents[TotalScanEvents].funcname[scanEventFuncNameLen-1]=0;                 // ensure z-terminated.
     ScanEvents[TotalScanEvents].device=device;                                      // Device ID.
     ScanEvents[TotalScanEvents].variant=variant;                                    // variant is typically enum, may be a type.
     ScanEvents[TotalScanEvents].subvariant=subvariant;                              // subvariant is typically a sensor-ID.
