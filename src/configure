@@ -628,6 +628,7 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
+SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
 BITFLAGS
@@ -5518,8 +5519,10 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "$static_lib" = "no"; then
-   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+# Disable LDL AND SDE for static builds
+if test "$STATIC" = "-static"; then
+  LDL=""
+  SDE_ENABLED=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linking with papi shared library of tests and utilities" >&5
@@ -5537,6 +5540,14 @@ $as_echo "no" >&6; }
 fi
 
 
+if test "$static_lib" = "no"; then
+   shlib_tools=yes
+fi
+
+if test "$static_lib" = "no" -a "$shlib_tools" = "no"; then
+   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+fi
+
 if test "$shlib_tools" = "yes"; then
    if test "$shared_lib" != "yes"; then
       as_fn_error $? "Building static but specified shared linking for tests and utilities" "$LINENO" 5
@@ -5545,6 +5556,8 @@ if test "$shlib_tools" = "yes"; then
       as_fn_error $? "Building shared but specified static linking" "$LINENO" 5
    fi
    LINKLIB='$(SHLIB)'
+   #WORKAROUND: if libpfm cannot be found at link time
+   LDFLAGS="$LDFLAGS -Wl,-rpath-link,$PWD/libpfm4/lib"
 elif test "$shlib_tools" = "no"; then
    if test "$static_lib" != "yes"; then
       as_fn_error $? "Building shared but specified static linking for tests and utilities" "$LINENO" 5
@@ -6850,8 +6863,10 @@ tests="$tests comp_tests"
 # check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
   if test "x$comp" = "xsde" ; then
+    CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
+    SDE_ENABLED=1
   fi
 done
 
@@ -6865,6 +6880,7 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
 
 
 
