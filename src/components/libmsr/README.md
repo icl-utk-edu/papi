@@ -1,4 +1,44 @@
 # LIBMSR Component
+
+The LIBMSR component supports measuring and capping power usage on recent Intel architectures using the RAPL interface exposed through MSRs (model-specific registers).
+
+* [Enabling the LIBMSR Component](#markdown-header-enabling-the-libmsr-component)
+* [Environment Variables](#markdown-header-environment-variables)
+* [FAQ](#markdown-header-faq)
+
+***
+## Enabling the LIBMSR Component
+
+To enable reading LIBMSR events the user needs to link against a PAPI library that was configured with the LIBMSR component enabled. As an example the following command: `./configure --with-components="libmsr"` is sufficient to enable the component.
+
+Typically, the utility `papi_components_avail` (available in `papi/src/utils/papi_components_avail`) will display the components available to the user, and whether they are disabled, and when they are disabled why.
+
+## Environment Variables
+
+For LIBMSR, PAPI requires one environment variable: **PAPI\_LIBMSR\_ROOT**.
+
+This is required for both compiling, and at runtime. 
+
+Example:
+
+    export PAPI_LIBMSR_ROOT=/sw/libmsr/0.1.17
+
+Within PAPI\_LIBMSR\_ROOT, we expect the following standard directories:
+
+    PAPI_LIBMSR_ROOT/include or PAPI_LIBMSR_ROOT/include/msr
+    PAPI_LIBMSR_ROOT/lib
+
+***
+## FAQ
+
+1. [Background](#markdown-header-background)
+2. [Enable Access to the MSRs](#markdown-header-enable-access-to-the-msrs)
+3. [Compile the LIBMSR Library to Access the MSRs](#markdown-header-compile-the-libmsr-library-to-access-the-msrs)
+4. [Testing PAPI with LIBMSR Enabled](#markdown-header-testing-papi-with-libmsr-enabled)
+5. [List LIBMSR Supported Events](#markdown-header-list-libmsr-supported-events)
+6. [Use the PAPI LIBMSR Component](#markdown-header-use-the-papi-libmsr-component)
+
+## Background
 This libmsr component is an initial version, and has been tested
 with libmsr (v0.1.17 11/2015) and the msr_safe kernel module (19/2015
 version).
@@ -6,10 +46,6 @@ version).
 * https://github.com/scalability-llnl/libmsr
 * https://github.com/scalability-llnl/msr-safe
 
-
-The PAPI libmsr component supports measuring and capping power usage
-on recent Intel architectures using the RAPL interface exposed through
-MSRs (model-specific registers).  
 
 Lawrence Livermore National Laboratory has released a library (libmsr)
 designed to provide a simple, safe, consistent interface to several of
@@ -89,45 +125,7 @@ Get the library and follow the instructions to build using CMake.
 This library contains a subdirectory, test, which will exercise the
 functionality.
 
-
-## Installing PAPI with LIBMSR Component
-
-There is ONE required environment variable: `PAPI_LIBMSR_ROOT`. This is
-required for both compiling, and at runtime. 
-
-An example that works on ICL's Saturn system (at this writing):
-
-    export PAPI_LIBMSR_ROOT=/sw/libmsr/0.1.17
-
-Within `PAPI_LIBMSR_ROOT`, we expect the following standard directories:
-
-* `PAPI_LIBMSR_ROOT/include` or `PAPI_LIBMSR_ROOT/include/msr`
-* `PAPI_LIBMSR_ROOT/lib`
-
-
-For a standard installed system, this is the only environment variable
-required for both compile and runtime. 
-
-System configurations can vary. Some systems use Spack, a package
-manager, to automatically keep paths straight. Others require
-"module load" commands to provide some services, e.g.
-"module load libmsr", and these may also set environment
-variables and change the `LD_LIBRARY_PATH` search order.
-
-Users may require the help of sysadmin personnel to navigate these
-facilities and gain access to the correct libraries.
-
-### Configure PAPI with LIBMSR Enabled
-
-We presume you have navigated to the
-directory papi/src, AND that you have exported `PAPI_LIBMSR_ROOT`. 
-
-In the papi/src directory:
-
-    ./configure --with-components="libmsr"
-    make
-
-### Testing PAPI with LIBMSR Enabled
+## Testing PAPI with LIBMSR Enabled
 
 From papi/src:
 
@@ -144,7 +142,7 @@ using an alternate name if desired. Detailed instructions are
 contained in the `Rules.libmsr` file.  They are technical, users may wish
 to enlist the help of a sysadmin.
 
-### List LIBMSR Supported Events
+## List LIBMSR Supported Events
 From papi/src:
 
     utils/papi_native_avail | grep -i libmsr
@@ -155,12 +153,6 @@ See the components/libmsr/utils/README file for instructions.  This
 test demonstrates how to write power constraints, and gives an
 estimate of the overheads for reading and writing information to the
 RAPL MSRs.
-
-   
-## Author
-* Frank Winkler (frank.winkler@icl.utk.edu)
-* Anthony Castaldo (tonycastaldo@icl.utk.edu)
-* Asim YarKhan (yarkhan@icl.utk.edu)
 
 
 [1] http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=c903f0456bc69176912dee6dd25c6a66ee1aed00

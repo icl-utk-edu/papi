@@ -10,7 +10,7 @@
 *          jagode@eecs.utk.edu
 * @author  Vince Weaver
 *          vweaver1@eecs.utk.edu
-* @brief A component for the luster filesystem.
+* @brief A component for the lustre filesystem.
 */
 
 #include <string.h>
