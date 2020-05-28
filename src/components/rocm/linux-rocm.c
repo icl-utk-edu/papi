@@ -498,21 +498,35 @@ static int _rocm_init_component(int cidx)
         return (PAPI_ENOSUPP);
     }
 
-    ROCM_CALL_CK(hsa_init, (), return (PAPI_EMISC));
-
+    hsa_status_t status;
+    status = (*hsa_initPtr)();
+    if (status != HSA_STATUS_SUCCESS && status != HSA_STATUS_INFO_BREAK) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "ROCM hsa_init() failed with error %d.", status);
+        return(PAPI_EMISC);
+    }
+        
     /* Create the structure */
     if(global__rocm_context == NULL)
         global__rocm_context = (_rocm_context_t *) papi_calloc(1, sizeof(_rocm_context_t));
 
     /* Get GPU agent */
-    ROCM_CALL_CK(hsa_iterate_agents, (_rocm_get_gpu_handle, global__rocm_context), return (PAPI_EMISC));
+    status = (*hsa_iterate_agentsPtr)(_rocm_get_gpu_handle, global__rocm_context);
+    if (status != HSA_STATUS_SUCCESS && status != HSA_STATUS_INFO_BREAK) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "ROCM hsa_iterate_agents() failed with error %d.", status);
+        return(PAPI_EMISC);
+    }
 
     int rv;
 
     /* Get list of all native ROCM events supported */
     rv = _rocm_add_native_events(global__rocm_context);
-    if(rv != 0)
+    if(rv != 0) {
+        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "ROCM component routine _rocm_add_native_events() failed.");
         return (rv);
+    }
 
     /* Export some information */
     _rocm_vector.cmp_info.CmpIdx = cidx;
