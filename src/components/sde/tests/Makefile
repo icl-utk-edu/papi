@@ -11,13 +11,13 @@ endif
 FFLAGS +=-g
 #CFLAGS +=-g
 
-SDELIB =-L.. -lsde
+SDELIB =-L$(datadir) -lsde
 LDFLAGS += -L$(datadir) -lpapi
 SDE_F08_API=$(datadir)/sde_F.o
 
 EXTRA_SRC=../interface/papi_sde_interface.c
 
-TESTS = Minimal_Test Simple_Test Simple2_Test Recorder_Test Created_Counter_Test Overflow_Test sde_test_f08
+TESTS = Minimal_Test Simple_Test Simple2_Test Simple2_NoPAPI_Test Recorder_Test Created_Counter_Test Overflow_Test sde_test_f08
 
 sde_tests: $(TESTS)
 
@@ -47,6 +47,9 @@ $(prfx)/libSimple2.so: $(prfx)/Simple2_Lib.c
 
 Simple2_Test: $(prfx)/Simple2_Driver.c $(prfx)/libSimple2.so
 	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
+
+Simple2_NoPAPI_Test: $(prfx)/Simple2_NoPAPI_Driver.c $(prfx)/libSimple2.so
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) -lm
 
 ################################################################################
 ## Recorder test
