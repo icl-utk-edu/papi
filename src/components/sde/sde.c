@@ -62,8 +62,10 @@ static int aggregate_value_in_group(long long int *data, long long int *rslt, in
 static void invoke_user_handler(sde_counter_t *cntr_handle);
 
 #if defined(SDE_HAVE_OVERFLOW)
-static int set_timer_for_overflow( sde_control_state_t *sde_ctl );
+int __attribute__((visibility("default"))) papi_sde_set_timer_for_overflow(void);
+static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl );
 static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
+static inline int _sde_arm_timer(sde_control_state_t *sde_ctl);
 #endif // defined(SDE_HAVE_OVERFLOW)
 
 
@@ -429,7 +431,7 @@ _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
                 // If the counter that we are checking was set to overflow and it is registered (not created), create the timer.
                 if( !(counter->is_created) && counter->overflow ){
                     // Registered counters went through r4
-                    int ret = set_timer_for_overflow(sde_ctl);
+                    int ret = do_set_timer_for_overflow(sde_ctl);
                     if( PAPI_OK != ret ){
                         papi_sde_unlock();
                     }
@@ -1104,7 +1106,6 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
     }
 
     // If we still don't know what type the counter is, then we are _not_ in r[1-3] so we can't create a timer here.
-//AD: what if we start a timer for [rc][4-5] as well, and kill it at create_counter() for c[4-5]?
     if( (NULL == counter->data) && (NULL == counter->func_ptr) && (threshold > 0) ){
         SUBDBG("Event is a placeholder (it has not been registered by a library yet), so we cannot start overflow, but we can remember it.\n");
         counter->overflow = 1;
@@ -1120,7 +1121,7 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
         sde_ctl->has_timer = 0;
     }else{
         // If we are here we are in r[1-3] so we can create the timer
-        return set_timer_for_overflow(sde_ctl);
+        return do_set_timer_for_overflow(sde_ctl);
     }
 
     return PAPI_OK;
@@ -1132,7 +1133,7 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
  *  This code assumes that it is called _ONLY_ for registered counters,
  *  and that is why it sets has_timer to REGISTERED_EVENT_MASK
  */
-int set_timer_for_overflow( sde_control_state_t *sde_ctl ){
+static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl ){
     int signo, sig_offset;
     struct sigevent sigev;
     struct sigaction sa;
@@ -1168,6 +1169,31 @@ int set_timer_for_overflow( sde_control_state_t *sde_ctl ){
     return PAPI_OK;
 }
 #endif // defined(SDE_HAVE_OVERFLOW)
+
+#if defined(SDE_HAVE_OVERFLOW)
+static inline int _sde_arm_timer(sde_control_state_t *sde_ctl){
+    struct itimerspec its;
+
+    // We will start the timer at 100us because we adjust its period in _sde_dispatch_timer()
+    // if the counter is not growing fast enough, or growing too slowly.
+    its.it_value.tv_sec = 0;
+    its.it_value.tv_nsec = 100*1000; // 100us
+    its.it_interval.tv_sec = its.it_value.tv_sec;
+    its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+    SDEDBG( "starting SDE internal timer for emulating HARDWARE overflowing\n");
+    if (timer_settime(sde_ctl->timerid, 0, &its, NULL) == -1){
+        SDE_ERROR("timer_settime");
+        timer_delete(sde_ctl->timerid);
+        sde_ctl->has_timer = 0;
+
+        // If the timer is broken, let the caller know that something internal went wrong.
+        return PAPI_ECMP;
+    }
+
+    return PAPI_OK;
+}
+#endif //defined(SDE_HAVE_OVERFLOW)
 
 #if defined(SDE_HAVE_OVERFLOW)
 void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
@@ -1450,6 +1476,43 @@ papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest)
     }
 
     return;
+}
+#endif // defined(SDE_HAVE_OVERFLOW)
+
+#if defined(SDE_HAVE_OVERFLOW)
+// The following function should only be called from within
+// sde_do_register() in libsde.so, which guarantees we are in cases r[4-6].
+int
+__attribute__((visibility("default")))
+papi_sde_set_timer_for_overflow(void){
+    ThreadInfo_t *thread;
+    EventSetInfo_t *ESI;
+    sde_control_state_t *sde_ctl;
+
+    thread = _papi_hwi_lookup_thread( 0 );
+    if( NULL == thread )
+        return PAPI_OK;
+
+    // Get the current running eventset and check if it has some events set to overflow.
+    int cidx = _sde_vector.cmp_info.CmpIdx;
+    ESI = thread->running_eventset[cidx];
+    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) 
+        return PAPI_OK;
+
+    sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
+
+    // Below this point we know we have a running eventset, so we are in case r5.
+    // Since the event is set to overfow, if there is no timer in the eventset, create one and arm it.
+    if( !(sde_ctl->has_timer) ){
+        int ret = do_set_timer_for_overflow(sde_ctl);
+        if( PAPI_OK != ret ){
+            return ret;
+        }
+        ret = _sde_arm_timer(sde_ctl);
+        return ret;
+    }
+
+    return PAPI_OK;
 }
 #endif // defined(SDE_HAVE_OVERFLOW)
 

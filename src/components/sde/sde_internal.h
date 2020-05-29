@@ -32,13 +32,6 @@
 #define PAPISDE_HT_SIZE 512
 #define REGISTERED_EVENT_MASK 0x2;
 
-/* Headers required by PAPI */
-#include "papi.h"
-//#include "papi_internal.h"
-//#include "papi_vector.h"
-//#include "papi_memory.h"
-//#include "extras.h"
-
 #include "interface/papi_sde_interface.h"
 
 /* We do not use this structure, but the framework needs its size */
