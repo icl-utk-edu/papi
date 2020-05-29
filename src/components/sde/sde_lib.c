@@ -15,8 +15,6 @@
 #endif
 #include <dlfcn.h>
 #include <assert.h>
-#include <string.h>
-#include "sde_internal.h"
 #include "sde_common.h"
 
 // The following values have been defined such that they match the
@@ -39,7 +37,6 @@ static long long _sde_compute_min(void *param);
 static long long _sde_compute_max(void *param);
 static inline long long _sde_compute_quantile(void *param, int percent);
 static inline long long _sde_compute_edge(void *param, int which_edge);
-// static int _sde_arm_timer(sde_control_state_t *sde_ctl);
 
 int papi_sde_compare_long_long(const void *p1, const void *p2);
 int papi_sde_compare_int(const void *p1, const void *p2);
@@ -163,6 +160,7 @@ __attribute__((visibility("default")))
 papi_sde_init(const char *name_of_library)
 {
     char *err;
+    int dlsym_err = 0;
     papisde_library_desc_t *tmp_lib;
 
     // We have to emulate PAPI's SUBDBG to get the same behavior
@@ -178,6 +176,7 @@ papi_sde_init(const char *name_of_library)
     void *handle = dlopen(NULL, RTLD_NOW|RTLD_GLOBAL);
     if( NULL != (err = dlerror()) ){
         SDEDBG("papi_sde_init(): %s\n",err);
+        dlsym_err = 1;
         return NULL;
     }
 
@@ -186,6 +185,7 @@ papi_sde_init(const char *name_of_library)
     get_struct_sym = dlsym(handle, "papisde_get_global_struct");
     if( (NULL != (err = dlerror())) || (NULL == get_struct_sym) ){
         SDEDBG("papi_sde_init(): Unable to find symbols from libpapi.so. SDEs will not be accessible by external software. %s\n",err);
+        dlsym_err = 1;
         return NULL;
     }
 
@@ -194,6 +194,7 @@ papi_sde_init(const char *name_of_library)
     papi_sde_lock_sym = dlsym(handle, "PAPI_lock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_lock_sym) ){
         SDEDBG("papi_sde_init(): Unable to find libpapi.so function needed for thread safety. %s\n",err);
+        dlsym_err = 1;
     }
 
     // We need this function to guarantee thread safety between the threads
@@ -201,18 +202,26 @@ papi_sde_init(const char *name_of_library)
     papi_sde_unlock_sym = dlsym(handle, "PAPI_unlock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_unlock_sym) ){
         SDEDBG("papi_sde_init(): Unable to find libpapi.so function needed for thread safety. %s\n",err);
+        dlsym_err = 1;
     }
 
     // We need this function to inform the SDE component about the value of created counters.
 #if defined(SDE_HAVE_OVERFLOW)
     papi_sde_check_overflow_status_sym = dlsym(handle, "papi_sde_check_overflow_status");
-    if( (NULL != (err = dlerror())) || (NULL == papi_sde_check_overflow_status_sym) )
+    if( (NULL != (err = dlerror())) || (NULL == papi_sde_check_overflow_status_sym) ){
         SDEDBG("papi_sde_init(): Unable to find libpapi.so function needed to support overflowing of SDEs. %s\n",err);
+        dlsym_err = 1;
+    }
 
     papi_sde_set_timer_for_overflow_sym = dlsym(handle, "papi_sde_set_timer_for_overflow");
-    if( (NULL != (err = dlerror())) || (NULL == papi_sde_set_timer_for_overflow_sym) )
+    if( (NULL != (err = dlerror())) || (NULL == papi_sde_set_timer_for_overflow_sym) ){
         SDEDBG("papi_sde_init(): Unable to find libpapi.so function needed to support overflowing of SDEs. %s\n",err);
+        dlsym_err = 1;
+    }
 #endif // SDE_HAVE_OVERFLOW
+    if( !dlsym_err ){
+        SDEDBG("papi_sde_init(): All symbols from libpapi.so have been successfully acquired.\n");
+    }
 
     papisde_control_t *gctl = (*get_struct_sym)();
 
@@ -564,7 +573,7 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
         return SDE_EINVAL;
     }
 
-//    SDEDBG("Preparing to increment counter: '%s::%s' by %lld.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name, increment);
+    SDEDBG("Preparing to increment counter: '%s::%s' by %lld.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name, increment);
 
     ptr = (long long int *)(tmp_cntr->data);
 

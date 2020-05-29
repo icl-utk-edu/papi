@@ -11,63 +11,12 @@
  *  layers to export events to other software layers through PAPI.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <dlfcn.h>
-#include <assert.h>
-#include "papi.h"
-#include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
-#include "extras.h"
 #include "sde_internal.h"
-#include "sde_common.h"
-
-#define papi_sde_lock() _papi_hwi_lock(COMPONENT_LOCK);
-#define papi_sde_unlock() _papi_hwi_unlock(COMPONENT_LOCK);
 
 papi_vector_t _sde_vector;
 
 /** This global variable points to the head of the control state list **/
-papisde_control_t 
-*_papisde_global_control = NULL;
-
-
-/* All of the following functions are for internal use only. */
-static int _sde_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *events );
-static int _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int flags );
-static int _sde_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native, int count, hwd_context_t *ctx );
-static int _sde_init_control_state( hwd_control_state_t * ctl );
-static int _sde_init_thread( hwd_context_t *ctx );
-static int _sde_init_component( int cidx );
-static int _sde_shutdown_component(void);
-static int _sde_shutdown_thread( hwd_context_t *ctx );
-static int _sde_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
-static int _sde_set_domain( hwd_control_state_t * cntrl, int domain );
-static int _sde_ntv_enum_events( unsigned int *EventCode, int modifier );
-static int _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len );
-static int _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len );
-static int _sde_ntv_name_to_code(const char *name, unsigned int *event_code );
-
-static int sde_cast_and_store(void *data, long long int previous_value, void *rslt, int type);
-static int sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt );
-static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
-static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
-
-static void invoke_user_handler(sde_counter_t *cntr_handle);
-
-#if defined(SDE_HAVE_OVERFLOW)
-int __attribute__((visibility("default"))) papi_sde_set_timer_for_overflow(void);
-static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl );
-static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
-static inline int _sde_arm_timer(sde_control_state_t *sde_ctl);
-#endif // defined(SDE_HAVE_OVERFLOW)
-
+papisde_control_t *_papisde_global_control = NULL;
 
 
 /** This helper function checks if the global structure has been allocated

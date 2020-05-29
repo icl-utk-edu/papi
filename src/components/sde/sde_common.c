@@ -11,7 +11,6 @@
  */
 
 #include <stdarg.h>
-#include "sde_internal.h"
 #include "sde_common.h"
 
 int _sde_be_verbose = 0;
