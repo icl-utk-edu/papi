@@ -16,7 +16,7 @@ to the user, and whether they are disabled, and when they are disabled why.
 
 ## FAQ
 
-1. [Measuring and Uncore Events](#markdown-header-measuring-uncore-events)
+1. [Measuring Uncore Events](#markdown-header-measuring-uncore-events)
 
 ## Measuring Uncore Events
 
