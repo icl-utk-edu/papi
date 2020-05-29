@@ -11,7 +11,8 @@ endif
 FFLAGS +=-g
 #CFLAGS +=-g
 
-LDFLAGS +=-L..
+SDELIB =-L.. -lsde
+LDFLAGS += -L$(datadir) -lpapi
 SDE_F08_API=$(datadir)/sde_F.o
 
 EXTRA_SRC=../interface/papi_sde_interface.c
@@ -20,59 +21,55 @@ TESTS = Minimal_Test Simple_Test Simple2_Test Recorder_Test Created_Counter_Test
 
 sde_tests: $(TESTS)
 
-weak_symbols.o: $(EXTRA_SRC)
-	$(CC) -Wall -c $< -o $@
-
 ################################################################################
 ## Minimal test
 prfx=Minimal
 
 Minimal_Test: $(prfx)/Minimal_Test.c
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS)
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS)
 
 ################################################################################
 ## Simple test
 prfx=Simple
 
-$(prfx)/libSimple.so: $(prfx)/Simple_Lib.c weak_symbols.o
+$(prfx)/libSimple.so: $(prfx)/Simple_Lib.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 Simple_Test: $(prfx)/Simple_Driver.c $(prfx)/libSimple.so
-	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
 
 ################################################################################
 ## Simple2 test
 prfx=Simple2
 
-$(prfx)/libSimple2.so: $(prfx)/Simple2_Lib.c weak_symbols.o
+$(prfx)/libSimple2.so: $(prfx)/Simple2_Lib.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 Simple2_Test: $(prfx)/Simple2_Driver.c $(prfx)/libSimple2.so
-	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
 
 ################################################################################
 ## Recorder test
 prfx=Recorder
 
-$(prfx)/libRecorder.so: $(prfx)/Lib_With_Recorder.c weak_symbols.o
+$(prfx)/libRecorder.so: $(prfx)/Lib_With_Recorder.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 Recorder_Test: $(prfx)/Recorder_Driver.c $(prfx)/libRecorder.so
-	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
 
 
 ################################################################################
 ## Created Counter test
 prfx=Created_Counter
 
-$(prfx)/libCreated_Counter.so: $(prfx)/Lib_With_Created_Counter.c weak_symbols.o
+$(prfx)/libCreated_Counter.so: $(prfx)/Lib_With_Created_Counter.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 Created_Counter_Test: $(prfx)/Created_Counter_Driver.c $(prfx)/libCreated_Counter.so
-	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
-
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
 Overflow_Test: $(prfx)/Overflow_Driver.c $(prfx)/libCreated_Counter.so
-	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(PAPILIB) $(LDFLAGS) -lm
+	$(CC) $^ -o $@ $(INCLUDE) $(CFLAGS) $(SDELIB) $(LDFLAGS) -lm
 
 ################################################################################
 ## Advanced test
@@ -80,12 +77,12 @@ prfx=Advanced_C+FORTRAN
 rcrd_prfx=Recorder
 
 sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) $(prfx)/libXandria.so $(prfx)/libGamum.so $(rcrd_prfx)/libRecorder.so
-	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(prfx)/libXandria.so $(prfx)/libGamum.so $(rcrd_prfx)/libRecorder.so $(PAPILIB) $(LDFLAGS)
+	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(prfx)/libXandria.so $(prfx)/libGamum.so $(rcrd_prfx)/libRecorder.so $(SDELIB) $(LDFLAGS)
 
-$(prfx)/libXandria.so: $(prfx)/Xandria.F90 weak_symbols.o
+$(prfx)/libXandria.so: $(prfx)/Xandria.F90
 	$(F77) -shared -Wall -fPIC $(FFLAGS) $(INCLUDE) -o $@ $^ $(SDE_F08_API)
 
-$(prfx)/libGamum.so: $(prfx)/Gamum.c weak_symbols.o
+$(prfx)/libGamum.so: $(prfx)/Gamum.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 

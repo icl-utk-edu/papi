@@ -39,7 +39,7 @@ int main(int argc, char **argv){
         }
     
         // PAPI has packed the bits of the double inside the long long.
-        dbl_ptr = (double *)&counter_values[3];
+        dbl_ptr = (double *)&counter_values[4];
         printf("Low Watermark=%lld, High Watermark=%lld, Any Watermark=%lld, Total Iterations=%lld, Comp. Value=%lf\n",
                counter_values[0], counter_values[1], counter_values[2], counter_values[3], *dbl_ptr);
     }

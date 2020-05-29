@@ -2,9 +2,10 @@
 #define SDE_H
 
 // Enable the following line if you want to use PAPI_overflow()
-#define SDE_HAVE_OVERFLOW
+//#define SDE_HAVE_OVERFLOW
 
-#define PAPI_SDE_THREAD_SAFE
+//FIXME: we need a locking mechanism that can coordinate with libpapi and all other libraries.
+//#define PAPI_SDE_THREAD_SAFE
 
 #include <stdio.h>
 #include <string.h>
@@ -36,13 +37,14 @@
 
 /* Headers required by PAPI */
 #include "papi.h"
-#include "papi_internal.h"
-#include "papi_vector.h"
-#include "papi_memory.h"
-#include "extras.h"
+//#include "papi_internal.h"
+//#include "papi_vector.h"
+//#include "papi_memory.h"
+//#include "extras.h"
 
 #include "interface/papi_sde_interface.h"
 
+#if 0
 #if defined(PAPI_SDE_THREAD_SAFE)
   #define papi_sde_lock() _papi_hwi_lock(COMPONENT_LOCK);
   #define papi_sde_unlock() _papi_hwi_unlock(COMPONENT_LOCK);
@@ -51,8 +53,8 @@
   #define papi_sde_lock()
   #define papi_sde_unlock()
 #endif
+#endif //0
 
-papi_vector_t _sde_vector;
 
 /* We do not use this structure, but the framework needs its size */
 typedef struct sde_register
@@ -148,51 +150,5 @@ struct papisde_control_s {
     papisde_list_entry_t all_reg_counters[PAPISDE_HT_SIZE];
 };
 
-/** This global variable points to the head of the control state list **/
-static papisde_control_t *_papisde_global_control = NULL;
 
-/* All of the following functions are for internal use only. */
-static int _sde_reset( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *events );
-static int _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int flags );
-static int _sde_stop( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl );
-static int _sde_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native, int count, hwd_context_t *ctx );
-static int _sde_init_control_state( hwd_control_state_t * ctl );
-static int _sde_init_thread( hwd_context_t *ctx );
-static int _sde_init_component( int cidx );
-static int _sde_shutdown_component(void);
-static int _sde_shutdown_thread( hwd_context_t *ctx );
-static int _sde_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option );
-static int _sde_set_domain( hwd_control_state_t * cntrl, int domain );
-static int _sde_ntv_enum_events( unsigned int *EventCode, int modifier );
-static int _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len );
-static int _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len );
-static int _sde_ntv_name_to_code(const char *name, unsigned int *event_code );
-
-#if defined(SDE_HAVE_OVERFLOW)
-static int _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold );
-static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
-static void invoke_user_handler(sde_counter_t *cntr_handle);
-static int set_timer_for_overflow( sde_control_state_t *sde_ctl );
-#endif // defined(SDE_HAVE_OVERFLOW)
-
-static papi_handle_t do_sde_init(const char *name_of_library);
-static int sde_cast_and_store(void *data, long long int previous_value, void *rslt, int type);
-static int sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt );
-static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
-static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder );
-int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
-static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param );
-
-static sde_counter_t *allocate_and_insert(papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, void *param);
-static int delete_counter(papisde_library_desc_t* lib_handle, const char *name);
-
-static inline void free_counter(sde_counter_t *counter);
-static unsigned int ht_hash_id(unsigned int uniq_id);
-static unsigned long ht_hash_name(const char *str);
-static void ht_insert(papisde_list_entry_t *hash_table, int key, sde_counter_t *sde_counter);
-static sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int key, unsigned int uniq_id);
-static sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *name);
-static sde_counter_t *ht_lookup_by_id(papisde_list_entry_t *hash_table, unsigned int uniq_id);
 #endif
