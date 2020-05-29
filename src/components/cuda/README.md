@@ -10,7 +10,7 @@ The CUDA component exposes counters and controls for NVIDIA GPUs.
 ## Enabling the CUDA Component
 
 To enable reading or writing of CUDA counters the user needs to link against a
-PAPI library that was configured with the CUDA component enabled.  As an
+PAPI library that was configured with the CUDA component enabled. As an
 example the following command: `./configure --with-components="cuda"` is
 sufficient to enable the component.
 
