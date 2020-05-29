@@ -2,10 +2,7 @@
 #define SDE_H
 
 // Enable the following line if you want to use PAPI_overflow()
-//#define SDE_HAVE_OVERFLOW
-
-//FIXME: we need a locking mechanism that can coordinate with libpapi and all other libraries.
-//#define PAPI_SDE_THREAD_SAFE
+#define SDE_HAVE_OVERFLOW
 
 #include <stdio.h>
 #include <string.h>
@@ -43,18 +40,6 @@
 //#include "extras.h"
 
 #include "interface/papi_sde_interface.h"
-
-#if 0
-#if defined(PAPI_SDE_THREAD_SAFE)
-  #define papi_sde_lock() _papi_hwi_lock(COMPONENT_LOCK);
-  #define papi_sde_unlock() _papi_hwi_unlock(COMPONENT_LOCK);
-#else
-  #warning "Thread safe locking is _NOT_ activated"
-  #define papi_sde_lock()
-  #define papi_sde_unlock()
-#endif
-#endif //0
-
 
 /* We do not use this structure, but the framework needs its size */
 typedef struct sde_register

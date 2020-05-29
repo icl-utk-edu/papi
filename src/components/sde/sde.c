@@ -32,7 +32,6 @@ papi_vector_t _sde_vector;
 
 /** This global variable points to the head of the control state list **/
 papisde_control_t 
-__attribute__((visibility("default")))
 *_papisde_global_control = NULL;
 
 
@@ -59,6 +58,13 @@ static int sde_cast_and_store(void *data, long long int previous_value, void *rs
 static int sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt );
 static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
 static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
+
+static void invoke_user_handler(sde_counter_t *cntr_handle);
+
+#if defined(SDE_HAVE_OVERFLOW)
+static int set_timer_for_overflow( sde_control_state_t *sde_ctl );
+static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
+#endif // defined(SDE_HAVE_OVERFLOW)
 
 
 
@@ -1329,6 +1335,121 @@ no_change_in_period:
     _papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context, address, &isHardware, overflow_vector, genOverflowBit, &thread, cidx );
 
    return;
+}
+#endif // defined(SDE_HAVE_OVERFLOW)
+
+#if defined(SDE_HAVE_OVERFLOW)
+static void invoke_user_handler(sde_counter_t *cntr_handle){
+    EventSetInfo_t *ESI;
+    int i, cidx;
+    ThreadInfo_t *thread;
+    sde_control_state_t *sde_ctl;
+    _papi_hwi_context_t hw_context;
+    ucontext_t uc;
+    caddr_t address;
+    long long overflow_vector;
+
+    if( NULL == cntr_handle )
+        return;
+
+    thread = _papi_hwi_lookup_thread( 0 );
+    cidx = _sde_vector.cmp_info.CmpIdx;
+    ESI = thread->running_eventset[cidx];
+
+    // checking again, just to be sure.
+    if( !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) {
+        return;
+    }
+
+    sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
+
+    papisde_control_t *gctl = _papisde_global_control; 
+
+    if( NULL == gctl ){
+        return;
+    }
+
+    // This path comes from papi_sde_inc_counter() which increment _ONLY_ one counter, so we don't
+    // need to check if any others have overflown.
+    overflow_vector = 0;
+    for( i = 0; i < sde_ctl->num_events; i++ ) {
+        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
+
+        if( counter_uniq_id == cntr_handle->glb_uniq_id ){
+            // pos[0] holds the first among the native events that compose the given event. If it is a derived event,
+            // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
+            // does not have derived events (the groups are first class citizens, they don't have multiple pos[] entries).
+            int pos = ESI->EventInfoArray[i].pos[0];
+            if( pos == -1 ){
+               SDE_ERROR( "The PAPI framework considers this event removed from the eventset, but the component does not\n");
+               return;
+            }
+            overflow_vector = ( long long ) 1 << pos;
+        }
+    }
+
+    getcontext( &uc );
+    hw_context.ucontext = &uc;
+    hw_context.si = NULL;
+    address = GET_OVERFLOW_ADDRESS( hw_context );
+
+    ESI->overflow.handler( ESI->EventSetIndex, ( void * ) address, overflow_vector, hw_context.ucontext );
+    return;
+}
+#endif // SDE_HAVE_OVERFLOW
+
+#if defined(SDE_HAVE_OVERFLOW)
+void
+__attribute__((visibility("default")))
+papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest){
+    EventSetInfo_t *ESI;
+    int cidx, i, index_in_ESI;
+    ThreadInfo_t *thread;
+    sde_control_state_t *sde_ctl;
+
+    cidx = _sde_vector.cmp_info.CmpIdx;
+    thread = _papi_hwi_lookup_thread( 0 );
+    if( NULL == thread )
+        return;
+
+    ESI = thread->running_eventset[cidx];
+    // Check if there is a running event set and it has some events set to overflow
+    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) 
+        return;
+
+    sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
+    int event_counter = ESI->overflow.event_counter;
+
+    // Check all the events that are set to overflow
+    index_in_ESI = -1;
+    for (i = 0; i < event_counter; i++ ) {
+        int papi_index = ESI->overflow.EventIndex[i];
+        unsigned int counter_uniq_id = sde_ctl->which_counter[papi_index];
+        // If the created counter that we are incrementing corresponds to
+        // an event that was set to overflow, read the deadline and threshold.
+        if( counter_uniq_id == cntr_handle->glb_uniq_id ){
+            index_in_ESI = i;
+            break;
+        }
+    }
+
+    if( index_in_ESI >= 0 ){
+        long long deadline, threshold;
+        deadline = ESI->overflow.deadline[index_in_ESI];
+        threshold = ESI->overflow.threshold[index_in_ESI];
+
+        // If the current value has exceeded the deadline then
+        // invoke the user handler and update the deadline.
+        SDEDBG("counter: '%s::%s' has value: %lld and the overflow deadline is at: %lld.\n", cntr_handle->which_lib->libraryName, cntr_handle->name, latest, deadline);
+        if( latest > deadline ){
+            // We adjust the deadline in a way that it remains a multiple of threshold
+            // so we don't create an additive error.
+            ESI->overflow.deadline[index_in_ESI] = threshold*(latest/threshold) + threshold;
+            invoke_user_handler(cntr_handle);
+        }
+    }
+
+    return;
 }
 #endif // defined(SDE_HAVE_OVERFLOW)
 

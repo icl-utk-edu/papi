@@ -11,12 +11,6 @@ extern papi_handle_t do_sde_init(const char *name_of_library, papisde_control_t 
 extern sde_counter_t *allocate_and_insert(papisde_control_t *gctl, papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, void *param);
 extern void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer);
 extern void SDE_ERROR( char *format, ... );
-
-#if defined(SDE_HAVE_OVERFLOW)
-extern int set_timer_for_overflow( sde_control_state_t *sde_ctl );
-extern void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
-#endif // defined(SDE_HAVE_OVERFLOW)
-
 extern int _sde_be_verbose;
 extern int _sde_debug;
 #define SDEDBG(format, args...) { if(_sde_debug){fprintf(stderr,format, ## args);} }

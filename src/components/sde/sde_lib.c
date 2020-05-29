@@ -21,7 +21,6 @@
 
 papisde_control_t *(*get_struct_sym)(void);
 
-//static void invoke_user_handler(sde_counter_t *cntr_handle);
 static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder );
 static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param );
 static int delete_counter(papisde_library_desc_t* lib_handle, const char *name);
@@ -58,6 +57,10 @@ void papi_sde_unlock(void){
     if( papi_sde_unlock_sym )
         (*papi_sde_unlock_sym )(COMPONENT_LOCK);
 }
+
+#if defined(SDE_HAVE_OVERFLOW)
+void (*papi_sde_check_overflow_status_sym)(sde_counter_t *hndl, long long int value);
+#endif // SDE_HAVE_OVERFLOW
 
 /*************************************************************************/
 /* Functions related to handling memory related to SDE structures.       */
@@ -171,28 +174,38 @@ papi_sde_init(const char *name_of_library)
         return NULL;
     }
 
-    // This function will give me the global structure that libpapi and libsde
-    // will use to exchange information.
+    // This function will give us the global structure that libpapi and libsde
+    // will use to store and exchange information about SDEs.
     get_struct_sym = dlsym(handle, "papisde_get_global_struct");
     if( (NULL != (err = dlerror())) || (NULL == get_struct_sym) ){
         SDEDBG("papi_sde_init(): %s\n",err);
         return NULL;
     }
 
+    // We need this function to guarantee thread safety between the threads
+    // that change the value of SDEs and the threads calling PAPI to read them.
     papi_sde_lock_sym = dlsym(handle, "_papi_hwi_lock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_lock_sym) ){
         SDEDBG("papi_sde_init(): %s\n",err);
     }
 
+    // We need this function to guarantee thread safety between the threads
+    // that change the value of SDEs and the threads calling PAPI to read them.
     papi_sde_unlock_sym = dlsym(handle, "_papi_hwi_unlock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_unlock_sym) ){
         SDEDBG("papi_sde_init(): %s\n",err);
     }
 
+    // We need this function to inform the SDE component about the value of created counters.
+#if defined(SDE_HAVE_OVERFLOW)
+    papi_sde_check_overflow_status_sym = dlsym(handle, "papi_sde_check_overflow_status");
+    if( (NULL != (err = dlerror())) || (NULL == papi_sde_check_overflow_status_sym) )
+        SDEDBG("papi_sde_init(): %s\n",err);
+#endif // SDE_HAVE_OVERFLOW
+
     papisde_control_t *gctl = (*get_struct_sym)();
 
     // Lock before we read and/or modify the global structures.
-//AD: we need a separate locking mechanism, or even better, we need PAPI's symbols.
     papi_sde_lock();
 
     // Put the actual work in a different function so we call it from other
@@ -530,12 +543,6 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 {
     long long int *ptr;
     sde_counter_t *tmp_cntr;
-#if defined(SDE_HAVE_OVERFLOW)
-    EventSetInfo_t *ESI;
-    int cidx, i, index_in_ESI = -1;
-    ThreadInfo_t *thread;
-    sde_control_state_t *sde_ctl;
-#endif //defined(SDE_HAVE_OVERFLOW)
 
     papi_sde_lock();
 
@@ -571,117 +578,14 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
     *ptr += increment;
 
 #if defined(SDE_HAVE_OVERFLOW)
-    cidx = _sde_vector.cmp_info.CmpIdx;
-    thread = _papi_hwi_lookup_thread( 0 );
-    if( NULL == thread )
-        goto counter_did_not_overflow;
-
-    ESI = thread->running_eventset[cidx];
-    // Check if there is a running event set and it has some events set to overflow
-    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) 
-        goto counter_did_not_overflow;
-
-    sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
-    int event_counter = ESI->overflow.event_counter;
-
-    // Check all the events that are set to overflow
-    index_in_ESI = -1;
-    for (i = 0; i < event_counter; i++ ) {
-        int papi_index = ESI->overflow.EventIndex[i];
-        unsigned int counter_uniq_id = sde_ctl->which_counter[papi_index];
-        // If the created counter that we are incrementing corresponds to
-        // an event that was set to overflow, read the deadline and threshold.
-        if( counter_uniq_id == tmp_cntr->glb_uniq_id ){
-            index_in_ESI = i;
-            break;
-        }
-    }
-
-    if( index_in_ESI >= 0 ){
-        long long deadline, threshold, latest;
-        deadline = ESI->overflow.deadline[index_in_ESI];
-        threshold = ESI->overflow.threshold[index_in_ESI];
-
-        // If the current value has exceeded the deadline then
-        // invoke the user handler and update the deadline.
-        latest = *ptr;
-        SDEDBG("counter: '%s::%s' has value: %lld and the overflow deadline is at: %lld.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name, latest, deadline);
-        if( latest > deadline ){
-            // We adjust the deadline in a way that it remains a multiple of threshold
-            // so we don't create an additive error. However, this code path should
-            // result in a precise overflow trigger, so this might not be necessary.
-            ESI->overflow.deadline[index_in_ESI] = threshold*(latest/threshold) + threshold;
-            invoke_user_handler(cntr_handle);
-        }
-    }
-
-counter_did_not_overflow:
-#endif // defined(SDE_HAVE_OVERFLOW)
+    if( NULL != papi_sde_check_overflow_status_sym )
+        (*papi_sde_check_overflow_status_sym)(tmp_cntr, *ptr);
+#endif // SDE_HAVE_OVERFLOW
 
     papi_sde_unlock();
 
     return PAPI_OK;
 }
-
-#if defined(SDE_HAVE_OVERFLOW)
-static void invoke_user_handler(sde_counter_t *cntr_handle){
-    EventSetInfo_t *ESI;
-    int i, cidx;
-    ThreadInfo_t *thread;
-    sde_control_state_t *sde_ctl;
-    _papi_hwi_context_t hw_context;
-    ucontext_t uc;
-    caddr_t address;
-    long long overflow_vector;
-
-    if( NULL == cntr_handle )
-        return;
-
-    thread = _papi_hwi_lookup_thread( 0 );
-    cidx = _sde_vector.cmp_info.CmpIdx;
-    ESI = thread->running_eventset[cidx];
-
-    // checking again, just to be sure.
-    if( !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) {
-        return;
-    }
-
-    sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
-
-    papisde_control_t *gctl = _papisde_global_control; 
-
-    if( NULL == gctl ){
-        return;
-    }
-
-    // This path comes from papi_sde_inc_counter() which increment _ONLY_ one counter, so we don't
-    // need to check if any others have overflown.
-    overflow_vector = 0;
-    for( i = 0; i < sde_ctl->num_events; i++ ) {
-        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
-
-        if( counter_uniq_id == cntr_handle->glb_uniq_id ){
-            // pos[0] holds the first among the native events that compose the given event. If it is a derived event,
-            // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
-            // does not have derived events (the groups are first class citizens, they don't have multiple pos[] entries).
-            int pos = ESI->EventInfoArray[i].pos[0];
-            if( pos == -1 ){
-               SDE_ERROR( "The PAPI framework considers this event removed from the eventset, but the component does not\n");
-               return;
-            }
-            overflow_vector = ( long long ) 1 << pos;
-        }
-    }
-
-    getcontext( &uc );
-    hw_context.ucontext = &uc;
-    hw_context.si = NULL;
-    address = GET_OVERFLOW_ADDRESS( hw_context );
-
-    ESI->overflow.handler( ESI->EventSetIndex, ( void * ) address, overflow_vector, hw_context.ucontext );
-    return;
-}
-#endif // SDE_HAVE_OVERFLOW
 
 
 int 
@@ -941,8 +845,7 @@ papi_sde_reset_counter( void *cntr_handle )
 /* Utility Functions.                                                    */
 /*************************************************************************/
 
-static inline int
-sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param )
+static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param )
 {   
     sde_counter_t *placeholder;
 
@@ -1219,7 +1122,7 @@ static long long _sde_compute_max(void *param){
 
 #if 0
 #if defined(SDE_HAVE_OVERFLOW)
-static int
+int
 _sde_arm_timer(sde_control_state_t *sde_ctl){
     struct itimerspec its;
 
@@ -1362,7 +1265,6 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
     // number of registered events as the index of the new one, and increment it.
     counter_uniq_id = gctl->num_reg_events++;
     gctl->num_live_events++;
-//    _sde_vector.cmp_info.num_native_events = gctl->num_live_events;
 
     SDEDBG("%s: Counter %s has unique ID = %d\n", __FILE__, full_event_name, counter_uniq_id);
 
@@ -1379,5 +1281,4 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     return PAPI_OK;
 }
-
 
