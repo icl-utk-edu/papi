@@ -3,7 +3,7 @@
 The PCP component interfaces PAPI and the Performance Co-Pilot, for the
 Performance Metrics Domain Agent (PMDA) perfevent. This allows monitoring
 of IBM Power 9 'nest' events via PCP without elevated privileges. This 
-component was developed and t ested using PCP version 3.12.2. 
+component was developed and tested using PCP version 3.12.2. 
 
 * [Enabling the PCP Component](#markdown-header-enabling-the-pcp-component)
 * [Environment Variables](#markdown-header-environment-variables)
