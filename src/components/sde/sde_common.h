@@ -103,6 +103,10 @@ extern void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buff
 extern void SDE_ERROR( char *format, ... );
 extern int _sde_be_verbose;
 extern int _sde_debug;
+#if defined(DEBUG)
 #define SDEDBG(format, args...) { if(_sde_debug){fprintf(stderr,format, ## args);} }
+#else // DEBUG
+#define SDEDBG(format, args...) { ; }
+#endif
 
 #endif // _PAPI_SDE_COMMON_H

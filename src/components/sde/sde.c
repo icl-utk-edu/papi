@@ -258,7 +258,9 @@ _sde_init_component( int cidx )
     _sde_vector.cmp_info.num_native_events = 0;
     _sde_vector.cmp_info.CmpIdx = cidx;
 
+#if defined(DEBUG)
     _sde_debug = _papi_hwi_debug&DEBUG_SUBSTRATE;
+#endif
 
     return PAPI_OK;
 }
