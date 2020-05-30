@@ -347,7 +347,7 @@ static rsmi_pcie_bandwidth_t *PCITable = NULL;          // For rsmi_dev_pci_band
 static char *RSMI_ERROR_STR(int err)
 {
     int modErr=err;
-    if (modErr < 0 || modErr>11) modErr=12;
+    if (modErr < 0 || modErr>15) modErr=15;
     return(RSMI_ERROR_STRINGS[modErr]);
 } // END ROUTINE.
 
@@ -3114,8 +3114,20 @@ static int _rocm_smi_init_component(int cidx)
         return (PAPI_ENOSUPP);
     }
 
-    RSMI(rsmi_init, (0),return(PAPI_ENOSUPP));
+    rsmi_status_t status;
+    if (rsmi_initPtr == NULL) {
+        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+            "rsmi_init() function not found.");
+        return(PAPI_ENOSUPP);
+    }
 
+    status = (*rsmi_initPtr)(0);
+    if (status != RSMI_STATUS_SUCCESS) {
+        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+            "rsmi_init() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+        return(PAPI_ENOSUPP);
+    }
+     
     ret = _rocm_smi_find_devices();             // Find AMD devices. Must find at least 1.
     if (ret != PAPI_OK) return(ret);            // check for failure.
 
@@ -3156,7 +3168,18 @@ static int _rocm_smi_init_component(int cidx)
             if (scan->variant<0 || scan->variant>=freqTablePerDevice)   // Out of range?
                 continue;                                               // Y. Skip if variant unrecognized.
             int idx = dev*freqTablePerDevice+scan->variant;             // idx into FreqTable.
-            RSMI(rsmi_dev_gpu_clk_freq_get, (dev, scan->variant, &FreqTable[idx]),); 
+            if (rsmi_dev_gpu_clk_freq_getPtr == NULL) {
+                snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                    "rsmi_dev_gpu_clk_freq_get() function not found.");
+                return(PAPI_ENOSUPP);
+            }
+
+            status = (*rsmi_dev_gpu_clk_freq_getPtr)(dev, scan->variant, &FreqTable[idx]);
+            if (status != RSMI_STATUS_SUCCESS) {
+                snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                    "rsmi_dev_gpu_clk_freq_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+                return(PAPI_ENOSUPP);
+            }
         } 
     }
 
@@ -3166,7 +3189,18 @@ static int _rocm_smi_init_component(int cidx)
         scan = NULL;
         scan = nextEvent(scan, dev, "rsmi_dev_pci_bandwidth_get");
         if (scan == NULL) continue;                                     // Skip if not avail on this device.
-        RSMI(rsmi_dev_pci_bandwidth_get, (dev, &PCITable[dev]),);
+        if (rsmi_dev_pci_bandwidth_getPtr == NULL) {
+            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                "rsmi_dev_pci_bandwidth_get() function not found.");
+            return(PAPI_ENOSUPP);
+        }
+
+        status = (*rsmi_dev_pci_bandwidth_getPtr)(dev, &PCITable[dev]);
+        if (status != RSMI_STATUS_SUCCESS) {
+            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                "rsmi_dev_pci_bandwidth_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+            return(PAPI_ENOSUPP);
+        }
     }
 
     // Build the list of all possible native ROCM events.
