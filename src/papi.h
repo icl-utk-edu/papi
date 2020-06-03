@@ -467,7 +467,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_2MAX_STR_LEN      256      /* For somewhat longer run-of-the-mill strings */
 #define PAPI_HUGE_STR_LEN     1024      /* This should be defined in terms of a system parameter */
 
-#define PAPI_PMU_MAX           40      /* maximum number of pmu's supported by one component */
+#define PAPI_PMU_MAX           80      /* maximum number of pmu's supported by one component */
 #define PAPI_DERIVED           0x1      /* Flag to indicate that the event is derived */
 /** @} */
 
