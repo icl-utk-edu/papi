@@ -26,7 +26,7 @@ For example, to read counters from the native uncore event `hswep_unc_ha0::UNC_H
 
 	papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=0
 	
-*Hint**: Use `lscpu` on the respective compute node to get the socket information per CPU.
+**Hint**: Use `lscpu` on the respective compute node to get the socket information per CPU.
 
 Example for a dual-socket Intel Haswell node with 24 physical cores:
 
