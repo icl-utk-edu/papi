@@ -25,4 +25,23 @@ The read counters of uncore events requires to specify the CPU/socket identifier
 For example, to read counters from the native uncore event `hswep_unc_ha0::UNC_H_RING_AD_USED:CW` on Haswell:
 
 	papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=0
+	
+**Hint**: Use `lscpu` on the respective compute node to get the socket information per CPU.
+
+Example for a dual-socket Intel Haswell node with 24 physical cores:
+
+	lscpu
+	Architecture:          x86_64
+	CPU op-mode(s):        32-bit, 64-bit
+	Byte Order:            Little Endian
+	CPU(s):                24
+	On-line CPU(s) list:   0-23
+	Thread(s) per core:    1
+	Core(s) per socket:    12
+	...
+
+You can determine the socket identifiers based on the number of physical cores and cores per socket.
+Thus,`:cpu=0` and `:cpu=12` are the socket identifiers on Haswell nodes.
+
+
 
