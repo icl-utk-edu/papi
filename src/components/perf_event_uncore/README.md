@@ -40,7 +40,7 @@ Example for a dual-socket Intel Haswell node with 24 physical cores:
 	Core(s) per socket:    12
 	...
 
-You can determine the socket identifiers based on the number of cores per socket.
+You can determine the socket identifiers based on the number of physical cores and cores per socket.
 Thus,`:cpu=0` and `:cpu=12` are the socket identifiers on Haswell nodes.
 
 
