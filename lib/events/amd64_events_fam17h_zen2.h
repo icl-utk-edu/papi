@@ -128,7 +128,6 @@ static const amd64_umask_t amd64_fam17h_zen2_l2_prefetch_hit_l2[]={
   },
 };
 
-
 static const amd64_umask_t amd64_fam17h_zen2_requests_to_l2_group1[]={
   { .uname  = "RD_BLK_L",
     .udesc  = "Number of data cache reads (including software and hardware prefetches).",
@@ -622,6 +621,15 @@ static const amd64_entry_t amd64_fam17h_zen2_pe[]={
     .desc   = "Number of L2 prefetcher hits in the L3",
     .modmsk  = AMD64_FAM17H_ATTRS,
     .code    = 0x71,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_l2_prefetch_hit_l2),
+    .umasks = amd64_fam17h_zen2_l2_prefetch_hit_l2, /* shared */
+  },
+  { .name   = "L2_PREFETCH_MISS_L3",
+    .desc   = "Number of L2 prefetcher misses in the L3",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x72,
     .flags   = 0,
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_l2_prefetch_hit_l2),
