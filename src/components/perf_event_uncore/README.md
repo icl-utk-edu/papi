@@ -20,13 +20,13 @@ to the user, and whether they are disabled, and when they are disabled why.
 
 ## Measuring Uncore Events
 
-The read counters of uncore events requires to specify the CPU/socket identifier such as **`:cpu=0`**.
+The read counters of uncore events requires to specify the CPU identifier such as **`:cpu=0`**.
 
 For example, to read counters from the native uncore event `hswep_unc_ha0::UNC_H_RING_AD_USED:CW` on Haswell:
 
 	papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=0
 	
-**Hint**: Use `lscpu` on the respective compute node to get the socket information per CPU.
+**Hint**: Use `lscpu` on the respective node to get the distribution of CPU identifiers across the sockets.
 
 Example for a dual-socket Intel Haswell node with 24 physical cores:
 
@@ -35,13 +35,12 @@ Example for a dual-socket Intel Haswell node with 24 physical cores:
 	CPU op-mode(s):        32-bit, 64-bit
 	Byte Order:            Little Endian
 	CPU(s):                24
-	On-line CPU(s) list:   0-23
-	Thread(s) per core:    1
-	Core(s) per socket:    12
 	...
+	NUMA node0 CPU(s):     0-11
+    NUMA node1 CPU(s):     12-23
 
-You can determine the socket identifiers based on the number of physical cores and cores per socket.
-Thus,`:cpu=0` and `:cpu=12` are the socket identifiers on Haswell nodes.
+The last two lines show you the distribution of CPU identifiers for socket1 (NUMA node0) and socket2 (NUMA node0).
+If you weant to measure uncore events from socket1, you can use the CPU identifiers from 0-11.
 
 
 
