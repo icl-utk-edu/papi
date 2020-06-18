@@ -40,7 +40,7 @@ Example for a dual-socket Intel Haswell node with 24 physical cores:
     NUMA node1 CPU(s):     12-23
 
 The last two lines show you the distribution of CPU identifiers for socket1 (NUMA node0) and socket2 (NUMA node0).
-If you weant to measure uncore events from socket1, you can use the CPU identifiers from 0-11.
+If you want to measure uncore events from socket1, you can use the CPU identifiers from 0-11.
 
 
 
