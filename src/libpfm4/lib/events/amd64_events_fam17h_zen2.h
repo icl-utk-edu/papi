@@ -128,7 +128,6 @@ static const amd64_umask_t amd64_fam17h_zen2_l2_prefetch_hit_l2[]={
   },
 };
 
-
 static const amd64_umask_t amd64_fam17h_zen2_requests_to_l2_group1[]={
   { .uname  = "RD_BLK_L",
     .udesc  = "Number of data cache reads (including software and hardware prefetches).",
@@ -262,11 +261,11 @@ static const amd64_umask_t amd64_fam17h_zen2_software_prefetch_data_cache_fills[
     .udesc  = "Fill from DRAM (home node local).",
     .ucode  = 0x8,
   },
-  { .uname  = "LS_MABRESP_LCL_RMT_CACHE",
+  { .uname  = "LS_MABRESP_RMT_CACHE",
     .udesc  = "Fill from another cache (home node remote).",
     .ucode  = 0x10,
   },
-  { .uname  = "LS_MABRESP_LCL_RMT_DRAM",
+  { .uname  = "LS_MABRESP_RMT_DRAM",
     .udesc  = "Fill from DRAM (home node remote).",
     .ucode  = 0x40,
   },
@@ -443,6 +442,29 @@ static const amd64_umask_t amd64_fam17h_zen2_retired_sse_avx_flops[]={
   },
 };
 
+static const amd64_umask_t amd64_fam17h_zen2_fp_dispatch_faults[]={
+  { .uname  = "X87_FILL_FAULT",
+    .udesc  = "x87 fill faults",
+    .ucode  = 0x1,
+  },
+  { .uname  = "XMM_FILL_FAULT",
+    .udesc  = "XMM fill faults",
+    .ucode  = 0x2,
+  },
+  { .uname  = "YMM_FILL_FAULT",
+    .udesc  = "YMM fill faults",
+    .ucode  = 0x4,
+  },
+  { .uname  = "YMM_SPILL_FAULT",
+    .udesc  = "YMM spill faults",
+    .ucode  = 0x8,
+  },
+  { .uname  = "ANY",
+    .udesc  = "Any FP dispatch faults",
+    .ucode  = 0xf,
+    .uflags = AMD64_FL_DFL | AMD64_FL_NCOMBO,
+  },
+};
 
 static const amd64_entry_t amd64_fam17h_zen2_pe[]={
   { .name   = "L1_ITLB_MISS_L2_ITLB_HIT",
@@ -622,6 +644,15 @@ static const amd64_entry_t amd64_fam17h_zen2_pe[]={
     .desc   = "Number of L2 prefetcher hits in the L3",
     .modmsk  = AMD64_FAM17H_ATTRS,
     .code    = 0x71,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_l2_prefetch_hit_l2),
+    .umasks = amd64_fam17h_zen2_l2_prefetch_hit_l2, /* shared */
+  },
+  { .name   = "L2_PREFETCH_MISS_L3",
+    .desc   = "Number of L2 prefetcher misses in the L3",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x72,
     .flags   = 0,
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_l2_prefetch_hit_l2),
@@ -868,5 +899,23 @@ static const amd64_entry_t amd64_fam17h_zen2_pe[]={
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_retired_serializing_ops),
     .umasks = amd64_fam17h_zen2_retired_serializing_ops,
+  },
+  { .name   = "FP_DISPATCH_FAULTS",
+    .desc   = "Floating-point dispatch faults",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0xe,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_fp_dispatch_faults),
+    .umasks = amd64_fam17h_zen2_fp_dispatch_faults,
+  },
+  { .name   = "DATA_CACHE_REFILLS_FROM_SYSTEM",
+    .desc   = "Demand Data Cache fills by data source",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x43,
+    .flags   = 0,
+    .ngrp    = 1,
+    .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen2_software_prefetch_data_cache_fills),
+    .umasks = amd64_fam17h_zen2_software_prefetch_data_cache_fills, /* shared */
   },
 };
