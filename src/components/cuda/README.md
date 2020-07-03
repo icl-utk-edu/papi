@@ -37,6 +37,16 @@ Within PAPI_CUDA_ROOT, we expect the following standard directories:
     PAPI_CUDA_ROOT/extras/CUPTI/include
     PAPI_CUDA_ROOT/extras/CUPTI/lib64
 
+For the CUDA component to be operational at runtime, it must find the following dynamic libraries:
+
+    libcuda.so
+    libcudart.so
+    libcupti.so
+
+If those libraries cannot be found or some of those are stub libraries in the standard `PAPI_CUDA_ROOT` subdirectories, you have to add the correct paths, e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`. This can be set using export; e.g. 
+
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
+
 ## Known Limitations
 
 * NVIDIA made a significant change in their performance reporting software 
