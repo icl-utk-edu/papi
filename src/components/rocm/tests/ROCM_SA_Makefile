@@ -1,0 +1,39 @@
+# Designed to eliminate PAPI.
+# Requires PAPI_ROCM_ROOT be defined.
+# At runtime, LD_LIBRARY_PATH needs to be set to get two libraries:
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PAPI_ROCM_ROOT/hsa/lib/:$PAPI_ROCM_ROOT/rocprofiler/lib/ 
+LDFLAGS =  -ldl -lhsa-runtime64 -lrocprofiler64 
+CFLAGS	=  -g -Wextra  -Wall -O2 
+HIP_PATH = $(PAPI_ROCM_ROOT)/hip
+
+HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
+HIPCC=$(HIP_PATH)/bin/hipcc
+
+# CFLAGS specifies compile flags; need include files here, any macro defines.
+# Order is important here; there are multiple DIFFERENT hsa.h files.
+CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
+CFLAGS += -I$(PAPI_ROCM_ROOT)/rocprofiler/include
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include 
+
+# Step
+rocm_standalone.pre: rocm_standalone.cpp 
+	$(HIPCC) $(CFLAGS) -E rocm_standalone.cpp -o $@ $(LDFLAGS)
+
+rocm_standalone: rocm_standalone.cpp 
+	$(HIPCC) $(CFLAGS) rocm_standalone.cpp -o $@ $(LDFLAGS)
+
+rocm_failure_demo.pre: rocm_failure_demo.cpp 
+	$(HIPCC) $(CFLAGS) -E rocm_failure_demo.cpp -o $@ $(LDFLAGS)
+
+rocm_failure_demo: rocm_failure_demo.cpp 
+	$(HIPCC) $(CFLAGS) rocm_failure_demo.cpp -o $@ $(LDFLAGS)
+
+checkpath: 
+	echo HIP_PATH = $(HIP_PATH)
+	echo SOURCES = $(SOURCES)
+	echo HIP_PLATFORM = $(HIP_PLATFORM)
+	echo HIPCC = $(HIPCC)
+	echo INCLUDE = $(INCLUDE)
+
+clean:
+	rm -f *.o *.out
