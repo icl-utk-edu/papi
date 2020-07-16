@@ -32,4 +32,4 @@ Set the variable SDE\_LIB\_PATHS to contain the paths to all the libraries in yo
 
 ## FAQ
 
-* [Software Defined Events](Software_Defined_Events.md)
+* [Software Defined Events](https://bitbucket.org/icl/papi/wiki/Software_Defined_Events.md)

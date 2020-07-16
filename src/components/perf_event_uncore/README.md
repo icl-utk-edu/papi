@@ -20,28 +20,39 @@ to the user, and whether they are disabled, and when they are disabled why.
 
 ## Measuring Uncore Events
 
-The read counters of uncore events requires to specify the CPU/socket identifier such as **`:cpu=0`**.
+Uncore events (like e.g. `hswep_unc_ha0`) are per-package (not per-process like core events). 
+Therefore, you need to make sure you are specifying the CPU package you want to monitor. 
+You can make this specification with the **`:cpu=`** qualifier.
 
-For example, to read counters from the native uncore event `hswep_unc_ha0::UNC_H_RING_AD_USED:CW` on Haswell:
+If you have more than one package in your machine, then you can measure with multiple events.
 
-	papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=0
+For example on Haswell, the following measures the uncore event `hswep_unc_ha0::UNC_H_RING_AD_USED:CW`
+on one socket:   
+     
+        papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=0   
 	
-**Hint**: Use `lscpu` on the respective compute node to get the socket information per CPU.
+**Hint**: 
 
-Example for a dual-socket Intel Haswell node with 24 physical cores:
-
-	lscpu
-	Architecture:          x86_64
-	CPU op-mode(s):        32-bit, 64-bit
-	Byte Order:            Little Endian
-	CPU(s):                24
-	On-line CPU(s) list:   0-23
-	Thread(s) per core:    1
-	Core(s) per socket:    12
-	...
-
-You can determine the socket identifiers based on the number of physical cores and cores per socket.
-Thus,`:cpu=0` and `:cpu=12` are the socket identifiers on Haswell nodes.
+* You can use `lscpu` on the respective node to see the distribution of 
+  CPU-core identifiers across the sockets. 
+* It shows you which of the logical cores belong to the same package.
+* Based on that output, you can pick the appropriate **`:cpu=`** to get 
+  the uncore event count for the second (third, etc) socket. 
 
 
+**Example for a dual-socket Intel Haswell node with 24 physical cores**:   
+   
+        lscpu
+	    Architecture:          x86_64
+	    CPU op-mode(s):        32-bit, 64-bit
+	    Byte Order:            Little Endian
+	    CPU(s):                24
+	    ...
+	    NUMA node0 CPU(s):     0-11
+        NUMA node1 CPU(s):     12-23
+
+
+The following measures the same uncore event as above for the second socket (NUMA node1):   
+   
+        papi_command_line hswep_unc_ha0::UNC_H_RING_AD_USED:CW:cpu=12
 
