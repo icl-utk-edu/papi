@@ -10,7 +10,7 @@ The CUDA component exposes counters and controls for NVIDIA GPUs.
 ## Enabling the CUDA Component
 
 To enable reading or writing of CUDA counters the user needs to link against a
-PAPI library that was configured with the CUDA component enabled.  As an
+PAPI library that was configured with the CUDA component enabled. As an
 example the following command: `./configure --with-components="cuda"` is
 sufficient to enable the component.
 
@@ -36,6 +36,16 @@ Within PAPI_CUDA_ROOT, we expect the following standard directories:
     PAPI_CUDA_ROOT/lib64
     PAPI_CUDA_ROOT/extras/CUPTI/include
     PAPI_CUDA_ROOT/extras/CUPTI/lib64
+
+For the CUDA component to be operational at runtime, it must find the following dynamic libraries:
+
+    libcuda.so
+    libcudart.so
+    libcupti.so
+
+If those libraries cannot be found or some of those are stub libraries in the standard `PAPI_CUDA_ROOT` subdirectories, you have to add the correct paths, e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`. This can be set using export; e.g. 
+
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
 
 ## Known Limitations
 

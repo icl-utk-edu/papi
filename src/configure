@@ -5556,8 +5556,8 @@ if test "$shlib_tools" = "yes"; then
       as_fn_error $? "Building shared but specified static linking" "$LINENO" 5
    fi
    LINKLIB='$(SHLIB)'
-   #WORKAROUND: if libpfm cannot be found at link time
-   LDFLAGS="$LDFLAGS -Wl,-rpath-link,$PWD/libpfm4/lib"
+   # Set rpath and runpath to find libpfm.so and libpapi.so if not specified via LD_LIBRARY_PATH. The search path at runtime can be overriden by LD_LIBRARY_PATH.
+   LDFLAGS="$LDFLAGS -Wl,-rpath=$PWD/libpfm4/lib:$PWD,--enable-new-dtags"
 elif test "$shlib_tools" = "no"; then
    if test "$static_lib" != "yes"; then
       as_fn_error $? "Building shared but specified static linking for tests and utilities" "$LINENO" 5
