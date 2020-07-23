@@ -570,12 +570,11 @@ static int _internal_hl_create_components()
             requested_event_names[i][index] = '\0';
       }
 
-      /* change event type to instantaneous for specific events if not set by the user */
-      if( (strstr(requested_event_names[i], "nvml") != NULL) ||
-          (strstr(requested_event_names[i], "power") != NULL) ||
-          (strstr(requested_event_names[i], "temperature") != NULL) ) {
+      /* change event type to instantaneous for specific events */
+      /* we consider all nvml events as instantaneous values */
+      if( (strstr(requested_event_names[i], "nvml:::") != NULL) ) {
          event_type = 1;
-         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" is stored as instantaneous value.\n", requested_event_names[i]);
+         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as instantaneous value.\n", requested_event_names[i]);
       }
 
       /* check if event is supported on current machine */
