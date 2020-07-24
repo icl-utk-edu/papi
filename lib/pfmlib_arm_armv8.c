@@ -145,6 +145,7 @@ pfmlib_pmu_t arm_cortex_a57_support={
 	.pmu			= PFM_PMU_ARM_CORTEX_A57,
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_cortex_a57_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
 	.pe			= arm_cortex_a57_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a57,
@@ -170,6 +171,7 @@ pfmlib_pmu_t arm_cortex_a53_support={
 	.pmu			= PFM_PMU_ARM_CORTEX_A53,
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_cortex_a53_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
 	.pe			= arm_cortex_a53_pe,
 
 	.pmu_detect		= pfm_arm_detect_cortex_a53,
@@ -195,6 +197,7 @@ pfmlib_pmu_t arm_xgene_support={
 	.pmu			= PFM_PMU_ARM_XGENE,
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_xgene_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
 	.pe			= arm_xgene_pe,
 
 	.pmu_detect		= pfm_arm_detect_xgene,
@@ -220,6 +223,7 @@ pfmlib_pmu_t arm_thunderx2_support={
 	.pmu			= PFM_PMU_ARM_THUNDERX2,
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_thunderx2_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
 	.pe			= arm_thunderx2_pe,
 
 	.pmu_detect		= pfm_arm_detect_thunderx2,
@@ -245,6 +249,7 @@ pfmlib_pmu_t arm_fujitsu_a64fx_support={
 	.pmu			= PFM_PMU_ARM_A64FX,
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_a64fx_pe),
 	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
 	.pe			= arm_a64fx_pe,
 
 	.pmu_detect		= pfm_arm_detect_a64fx,
