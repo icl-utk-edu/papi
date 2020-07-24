@@ -36,6 +36,23 @@
 #include "events/arm_cavium_tx2_events.h"    	/* Marvell ThunderX2 tables */
 #include "events/arm_marvell_tx2_unc_events.h" 	/* Marvell ThunderX2 PMU tables */
 #include "events/arm_fujitsu_a64fx_events.h"	/* Fujitsu A64FX PMU tables */
+#include "events/arm_neoverse_n1_events.h"	/* ARM Neoverse N1 table */
+
+static int
+pfm_arm_detect_n1(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
+		(pfm_arm_cfg.part == 0xd0c)) { /* Neoverse N1 */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
 
 static int
 pfm_arm_detect_cortex_a57(void *this)
@@ -328,3 +345,28 @@ pfmlib_pmu_t arm_thunderx2_ccpi##n##_support={ \
 
 DEFINE_TX2_CCPI(0);
 DEFINE_TX2_CCPI(1);
+
+pfmlib_pmu_t arm_n1_support={
+	.desc			= "ARM Neoverse N1",
+	.name			= "arm_n1",
+	.pmu			= PFM_PMU_ARM_N1,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_n1_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
+	.pe			= arm_n1_pe,
+
+	.pmu_detect		= pfm_arm_detect_n1,
+	.max_encoding		= 1,
+	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
