@@ -657,7 +657,6 @@ static const amd64_umask_t amd64_fam17h_zen1_l2_prefetch_hit_l2[]={
   },
 };
 
-
 static const amd64_entry_t amd64_fam17h_zen1_pe[]={
   { .name   = "L1_ITLB_MISS_L2_ITLB_HIT",
     .desc   = "The number of instruction fetches that miss in the L1 ITLB but hit in the L2 ITLB.",
@@ -1165,5 +1164,17 @@ static const amd64_entry_t amd64_fam17h_zen1_pe[]={
     .ngrp    = 1,
     .numasks = LIBPFM_ARRAY_SIZE(amd64_fam17h_zen1_l2_prefetch_hit_l2),
     .umasks = amd64_fam17h_zen1_l2_prefetch_hit_l2, /* shared */
+  },
+  { .name   = "DYNAMIC_INDIRECT_PREDICTIONS",
+    .desc   = "Indirect Branch Prediction for potential multi-target branch (speculative)",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x8e,
+    .flags   = 0,
+  },
+  { .name   = "DECODER_OVERRIDES_PREDICTION",
+    .desc   = "Decoder Overrides Existing Branch Prediction (speculative)",
+    .modmsk  = AMD64_FAM17H_ATTRS,
+    .code    = 0x91,
+    .flags   = 0,
   },
 };
