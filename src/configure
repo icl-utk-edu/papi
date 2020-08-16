@@ -628,6 +628,7 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
+SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
 BITFLAGS
@@ -685,6 +686,7 @@ perfctr_incdir
 perfctr_prefix
 perfctr_root
 altix
+NO_MPI_TESTS
 STATIC
 papiLIBS
 AR
@@ -701,6 +703,7 @@ SET_MAKE
 LN_S
 CPP
 AWK
+MPIICC
 MPICC
 ac_ct_F77
 FFLAGS
@@ -732,7 +735,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -843,7 +845,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1096,15 +1097,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1242,7 +1234,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1395,7 +1387,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1428,47 +1419,80 @@ Optional Features:
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
-  --disable-perf-event-uncore		Disable perf_event uncore component
+  --disable-perf-event-uncore
+                          Disable perf_event uncore component
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-arch=<arch>		Specify architecture (uname -m)
-  --with-bitmode=<32,64>		Specify bit mode of library
-  --with-OS=<os>       		Specify operating system
-  --with-OSVER=<ver>		Specify operating system version
-  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
- --with-mic To compile for Intel MIC
-  --with-bgpm_installdir=<path> Specify the installation path of BGPM
-  --with-nativecc=<path>		Specify native C compiler for header generation
-  --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
-  --with-debug=<yes,memory,no>		Build a debug version, debug version plus memory tracker or none
-  --with-CPU=<cpu>		Specify CPU type
-  --with-pthread-mutexes		Specify use of pthread mutexes rather than custom PAPI locks
-  --with-ffsll		Specify use of the ffsll() function
-  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer
-  --with-tls=<keyword>		This platform supports thread local storage with a keyword
-  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer
-  --with-pmapi=<path>		Specify path of pmapi on aix system
- --with-static-user-events             Build with a static user events file.
- --with-static-papi-events             Build with a static papi events file.
-  --with-static-lib=<yes,no>		Build a static library
-  --with-shared-lib=<yes,no>		Build a shared library
-  --with-static-tools		Specify static compile of tests and utilities
-  --with-shlib-tools		Specify linking with papi library of tests and utilities
-  --with-perfctr		Specify perfctr as the performance interface
-  --with-perfctr-root=<path>		Specify path to source tree (for use by developers only)
-  --with-perfctr-prefix=<path>		Specify prefix to installed perfctr distribution
-  --with-perfctr-incdir=<path>		Specify directory of perfctr header files in non-standard location
-  --with-perfctr-libdir=<path>		Specify directory of perfctr library in non-standard location
-  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version
-  --with-pfm-root=<path>		Specify path to source tree (for use by developers only)
-  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
-  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
-  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
-  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
-  --with-pe-incdir=<path>		Specify path to the correct perf header file
-  --with-components=<"component1 component2">		Specify which components to build
+  --with-arch=<arch>      Specify architecture (uname -m)
+  --with-bitmode=<32,64>  Specify bit mode of library
+  --with-OS=<os>          Specify operating system
+  --with-OSVER=<ver>      Specify operating system version
+  --with-assumed-kernel=<ver>
+                          Assume kernel version is <ver> for purposes of
+                          workarounds
+  --with-mic              To compile for Intel MIC
+  --with-bgpm_installdir=<path>
+                          Specify the installation path of BGPM
+  --with-nativecc=<path>  Specify native C compiler for header generation
+  --with-tests=<"ctests ftests mpitests", no>
+                          Specify which tests to run on install, or "no" tests
+                          (default: all available tests)
+  --with-debug=<yes,memory,no>
+                          Build a debug version, debug version plus memory
+                          tracker or none
+  --with-CPU=<cpu>        Specify CPU type
+  --with-pthread-mutexes  Specify use of pthread mutexes rather than custom
+                          PAPI locks
+  --with-ffsll            Specify use of the ffsll() function
+  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>
+                          Specify realtime timer
+  --with-tls=<keyword>    This platform supports thread local storage with a
+                          keyword
+  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>
+                          Specify per-thread virtual timer
+  --with-pmapi=<path>     Specify path of pmapi on aix system
+  --with-static-user-events
+                          Build with a static user events file.
+  --with-static-papi-events
+                          Build with a static papi events file.
+  --with-static-lib=<yes,no>
+                          Build a static library
+  --with-shared-lib=<yes,no>
+                          Build a shared library
+  --with-static-tools     Specify static compile of tests and utilities
+  --with-shlib-tools      Specify linking with papi library of tests and
+                          utilities
+  --with-perfctr          Specify perfctr as the performance interface
+  --with-perfctr-root=<path>
+                          Specify path to source tree (for use by developers
+                          only)
+  --with-perfctr-prefix=<path>
+                          Specify prefix to installed perfctr distribution
+  --with-perfctr-incdir=<path>
+                          Specify directory of perfctr header files in
+                          non-standard location
+  --with-perfctr-libdir=<path>
+                          Specify directory of perfctr library in non-standard
+                          location
+  --with-perfmon=<x.y>    Specify perfmon as the performance interface and
+                          specify version
+  --with-pfm-root=<path>  Specify path to source tree (for use by developers
+                          only)
+  --with-pfm-prefix=<path>
+                          Specify prefix to installed pfm distribution
+  --with-pfm-incdir=<path>
+                          Specify directory of pfm header files in
+                          non-standard location
+  --with-pfm-libdir=<path>
+                          Specify directory of pfm library in non-standard
+                          location
+  --with-perf-events      Specify use of Linux Performance Event (requires
+                          kernel 2.6.32 or greater)
+  --with-pe-incdir=<path> Specify path to the correct perf header file
+  --with-components=<"component1 component2">
+                          Specify which components to build
 
 Some influential environment variables:
   CC          C compiler command
@@ -3365,13 +3389,78 @@ fi
 # Lets figure out what CC actually is...
 # Used in later checks to set compiler specific options
 if `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
-	CC_COMMON_NAME="icc"
-elif `$CC -v 2>&1 | grep 'gcc version' >/dev/null 2>&1` ; then
-	CC_COMMON_NAME="gcc"
-elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
-	CC_COMMON_NAME="xlc"
+  CC_COMMON_NAME="icc"
+  if test "$MPICC" = "mpicc"; then
+    # Check if mpiicc is available
+    # Extract the first word of "mpiicc", so it can be a program name with args.
+set dummy mpiicc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPIICC+:} false; then :
+  $as_echo_n "(cached) " >&6
 else
-	CC_COMMON_NAME="unknown"
+  if test -n "$MPIICC"; then
+  ac_cv_prog_MPIICC="$MPIICC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPIICC="mpiicc"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPIICC=$ac_cv_prog_MPIICC
+if test -n "$MPIICC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPIICC" >&5
+$as_echo "$MPIICC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    if test "x$MPIICC" = "xmpiicc"; then
+      MPICC=mpiicc
+    fi
+    MPI_COMPILER_CHECK=`$MPICC -V 2>&1 | grep '^Intel(R) C'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+elif `$CC -v 2>&1 | grep 'gcc version' >/dev/null 2>&1` ; then
+  CC_COMMON_NAME="gcc"
+  if test "$MPICC" = "mpicc"; then
+    MPI_COMPILER_CHECK=`$MPICC -v 2>&1 | grep 'gcc version'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
+  CC_COMMON_NAME="xlc"
+  if test "$MPICC" = "mpicc"; then
+    MPI_COMPILER_CHECK=`$MPICC -qversion 2>&1 | grep 'IBM XL C'`
+    if test "x$MPI_COMPILER_CHECK" = "x"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&5
+$as_echo "$as_me: WARNING: $MPICC is using a different compiler than $CC. MPI tests disabled." >&2;}
+      NO_MPI_TESTS=yes
+    fi
+  fi
+else
+  CC_COMMON_NAME="unknown"
 fi
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
@@ -4472,12 +4561,70 @@ fi
 $as_echo "$nativecc" >&6; }
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tests" >&5
+$as_echo_n "checking for tests... " >&6; }
 
 # Check whether --with-tests was given.
 if test "${with_tests+set}" = set; then :
   withval=$with_tests; tests=$withval
 else
-  tests="ctests ftests"
+  tests="ctests ftests mpitests"
+fi
+
+
+if test "$tests" = "no"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tests" >&5
+$as_echo "$tests" >&6; }
+  tests=
+  NO_MPI_TESTS=yes
+else
+  # mpitests is not a target
+  tmp_tests=
+  mpi_tests=no
+  case "$tests" in
+      *ctests*)
+          tmp_tests+="ctests "
+          ;;
+  esac
+  case "$tests" in
+      *ftests*)
+          tmp_tests+="ftests "
+          ;;
+  esac
+  case "$tests" in
+      *mpitests*)
+          # we already checked if mpicc is working
+          if test "x$MPICC" != "x"; then
+            if test "x$NO_MPI_TESTS" = "x"; then
+              mpi_tests=yes
+              # mpitests only works together with ctests
+              if test "x$tmp_tests" = "x"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+              else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tmp_tests mpitests" >&5
+$as_echo "$tmp_tests mpitests" >&6; }
+              fi
+            fi
+          else
+            NO_MPI_TESTS=yes
+            if test "x$tmp_tests" = "x"; then
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            else
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tmp_tests" >&5
+$as_echo "$tmp_tests" >&6; }
+            fi
+          fi
+          ;;
+  esac
+  # do not list mpi_tests for makefile target
+  tests=$tmp_tests
+
+  # mpi_tests is not listed by the user
+  if test "$mpi_tests" = "no"; then
+    NO_MPI_TESTS=yes
+  fi
 fi
 
 
@@ -5431,6 +5578,10 @@ if test "$static_lib" = "yes"; then
   papiLIBS="$papiLIBS static"
 fi
 
+if test "$shared_lib" = "no" -a "$static_lib" = "yes"; then
+  NO_MPI_TESTS="yes"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for static compile of tests and utilities" >&5
 $as_echo_n "checking for static compile of tests and utilities... " >&6; }
 
@@ -5445,8 +5596,10 @@ $as_echo "no" >&6; }
 fi
 
 
-if test "$static_lib" = "no"; then
-   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+# Disable LDL AND SDE for static builds
+if test "$STATIC" = "-static"; then
+  LDL=""
+  SDE_ENABLED=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linking with papi shared library of tests and utilities" >&5
@@ -5464,6 +5617,14 @@ $as_echo "no" >&6; }
 fi
 
 
+if test "$static_lib" = "no"; then
+   shlib_tools=yes
+fi
+
+if test "$static_lib" = "no" -a "$shlib_tools" = "no"; then
+   as_fn_error $? "Building tests and utilities static but no static papi library to be built" "$LINENO" 5
+fi
+
 if test "$shlib_tools" = "yes"; then
    if test "$shared_lib" != "yes"; then
       as_fn_error $? "Building static but specified shared linking for tests and utilities" "$LINENO" 5
@@ -5472,6 +5633,8 @@ if test "$shlib_tools" = "yes"; then
       as_fn_error $? "Building shared but specified static linking" "$LINENO" 5
    fi
    LINKLIB='$(SHLIB)'
+   # Set rpath and runpath to find libpfm.so and libpapi.so if not specified via LD_LIBRARY_PATH. The search path at runtime can be overriden by LD_LIBRARY_PATH.
+   LDFLAGS="$LDFLAGS -Wl,-rpath=$PWD/libpfm4/lib:$PWD,--enable-new-dtags"
 elif test "$shlib_tools" = "no"; then
    if test "$static_lib" != "yes"; then
       as_fn_error $? "Building shared but specified static linking for tests and utilities" "$LINENO" 5
@@ -5872,8 +6035,8 @@ fi
 # Check whether --with-pe_incdir was given.
 if test "${with_pe_incdir+set}" = set; then :
   withval=$with_pe_incdir; pe_incdir=$withval
-               force_perf_events=yes
-	       user_specified_interface=pe
+              force_perf_events=yes
+              user_specified_interface=pe
 else
   pe_incdir=$pfm_incdir/perfmon
 fi
@@ -6777,8 +6940,10 @@ tests="$tests comp_tests"
 # check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
   if test "x$comp" = "xsde" ; then
+    CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
+    SDE_ENABLED=1
   fi
 done
 
@@ -6792,6 +6957,8 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
+
 
 
 

@@ -9,6 +9,7 @@ INCLUDE = -I. -I@includedir@ -I$(testlibdir)
 LIBDIR  = @libdir@
 LIBRARY = @LIBRARY@
 SHLIB   = @SHLIB@
+SDE_ENABLED  = @SDE_ENABLED@
 PAPILIB = ../@LINKLIB@
 TESTLIB = $(testlibdir)/libtestlib.a
 LDFLAGS = @LDFLAGS@ @LDL@ @STATIC@

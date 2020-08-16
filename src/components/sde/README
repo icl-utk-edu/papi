@@ -1,7 +1,0 @@
-// In order to configure PAPI with Software Defined Event support use the following option in configure.
-./configure --with-components="sde"
-
-// papi_native_avail needs to know where to look for libraries with sde. 
-// To do this set the variable SDE_LIB_PATHS to contain the paths to all the libraries in your system with SDE support.
-
-export SDE_LIB_PATHS=${SDE_TEST_PATH}/tests/libGamum.so

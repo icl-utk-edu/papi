@@ -72,6 +72,8 @@ The library supports many PMUs. The current version can handle:
 		ARMV8 Cortex A57, A53
 		Applied Micro X-Gene
 		Qualcomm Krait
+		Fujitsu A64FX
+		ARM Neoverse N1
 
 	- For SPARC
 		Ultra I, II

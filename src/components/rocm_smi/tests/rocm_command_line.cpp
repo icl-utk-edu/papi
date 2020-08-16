@@ -191,19 +191,21 @@ main( int argc, char **argv )
         exit(-1);
     }
 
-    uint64_t startupValues[2] = {0,0};
+    long long startupValues[2] = {0,0};
     retval = PAPI_start( EventSet );
     if (retval != PAPI_OK ) {
         fprintf(stderr,"Error! PAPI_start, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
         exit( retval );
     }
 
-    retval = PAPI_read( EventSet, startupValues );
+    retval = PAPI_stop( EventSet, startupValues );
     if (retval != PAPI_OK ) {
         fprintf(stderr,"Error! PAPI_read, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
         exit( retval );
     }
     
+    PAPI_cleanup_eventset(EventSet);                        // get rid of this set.
+
     int NUMDevices, major, minor, patch;
     NUMDevices = startupValues[0];
     patch = startupValues[1] & 0x000000000000ffff;          // Extract patch from packed major:minor:patch.
