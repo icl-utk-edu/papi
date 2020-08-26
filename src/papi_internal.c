@@ -1928,11 +1928,13 @@ int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
  * Routine that initializes all available components.
  * A component is available if a pointer to its info vector
  * appears in the NULL terminated_papi_hwd table.
+ * Modified to accept an arg: 0=do not init perf_event or 
+ * perf_event_uncore. 1=init ONLY perf_event or perf_event_uncore.
  */
 int
-_papi_hwi_init_global( void )
+_papi_hwi_init_global( int PE_OR_PEU )
 {
-        int retval, i = 0;
+        int retval, is_pe_peu, i = 0;
 
 	retval = _papi_hwi_innoculate_os_vector( &_papi_os_vector );
 	if ( retval != PAPI_OK ) {
@@ -1940,14 +1942,16 @@ _papi_hwi_init_global( void )
 	}
 
 	while ( _papi_hwd[i] ) {
-
+      is_pe_peu = 0;
+      if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event") == 0) is_pe_peu=1;
+      if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event_uncore") == 0) is_pe_peu=1;
 	   retval = _papi_hwi_innoculate_vector( _papi_hwd[i] );
 	   if ( retval != PAPI_OK ) {
 	      return retval;
 	   }
 
 	   /* We can be disabled by user before init */
-	   if (!_papi_hwd[i]->cmp_info.disabled) {
+	   if (!_papi_hwd[i]->cmp_info.disabled && (PE_OR_PEU == is_pe_peu)) {
 	      retval = _papi_hwd[i]->init_component( i );
 	      _papi_hwd[i]->cmp_info.disabled=retval;
 
