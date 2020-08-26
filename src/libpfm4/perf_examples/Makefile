@@ -51,15 +51,18 @@ TARGETS+=self self_basic self_count task task_attach_timeout syst \
 	self_pipe syst_count task_cpu syst_smpl evt2raw \
 	branch_smpl
 
+# Make rtop conditional on ncurses development package installed
+ifeq ($(shell /bin/echo -e '\#include <ncurses.h>\nint main(void) { return 0;}' | $(CC) -o /dev/null -xc - 2>/dev/null && echo -n yes), yes)
+RTOP=rtop
+endif
+
 EXAMPLESDIR=$(DESTDIR)$(DOCDIR)/perf_examples
 
-all: $(TARGETS) rtop
+all: $(TARGETS) $(RTOP)
 	@set -e ; for d in $(DIRS) ; do $(MAKE) -C $$d $@ ; done
-#
-# Many systems don't have ncurses-devel installed
-#
+
 rtop: rtop.o $(LPC_UTILS) $(PFMLIB) $(PERF_EVENT_HDR)
-	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -ltinfo -lm
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) -lpthread -lncurses -ltinfo -lm
 
 $(TARGETS): %:%.o $(LPC_UTILS) $(PFMLIB)
 	-$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $(LPC_UTILS) $(PFMLIB) $(LIBS) 

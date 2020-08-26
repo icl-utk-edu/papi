@@ -2244,7 +2244,7 @@ static const pme_cpumf_ctr_t cpumcf_z15_counters[] = {
 	{
 		.ctrnum = 265,
 		.ctrset = CPUMF_CTRSET_EXTENDED,
-		.name = "DFLT_CCERROR",
+		.name = "DFLT_CCFINISH",
 		.desc = "Increments by one for every DEFLATE CONVERSION CALL"
 			" instruction executed that ended in Condition Codes"
 			" 0, 1 or 2",

@@ -545,6 +545,30 @@ static pfmlib_os_t *pfmlib_oses[]={
  */
 static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
 
+/*
+ * A drop-in replacement for strsep(). strsep() is not part of the POSIX
+ * standard, and it is not available on all platforms - in particular it is not
+ * provided by Microsoft's C runtime or by MinGW.
+ */
+static char* pfmlib_strsep(char **stringp, const char *delim)
+{
+	char* token = *stringp;
+	char* end = *stringp;
+
+	if (!end)
+		return NULL;
+
+	while (*end && !strchr(delim, *end))
+		end++;
+
+	if (*end) {
+		*end = '\0';
+		*stringp = end + 1;
+	} else {
+		*stringp = NULL;
+	}
+	return token;
+}
 
 #define pfmlib_for_each_pmu_event(p, e) \
 	for(e=(p)->get_event_first((p)); e != -1; e = (p)->get_event_next((p), e))
@@ -1174,7 +1198,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 
 	while(s) {
 	        p = s;
-	        strsep(&p, PFMLIB_ATTR_DELIM);
+	        pfmlib_strsep(&p, PFMLIB_ATTR_DELIM);
 		/* if (p)
 		 *p++ = '\0'; */
 
@@ -1422,7 +1446,7 @@ pfmlib_parse_equiv_event(const char *event, pfmlib_event_desc_t *d)
 		return PFM_ERR_NOMEM;
 
 	p = s;
-	strsep(&p, PFMLIB_ATTR_DELIM);
+	pfmlib_strsep(&p, PFMLIB_ATTR_DELIM);
 	/* if (p)
 	 *p++ = '\0'; */
 
@@ -1494,7 +1518,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 		s = p + strlen(PFMLIB_PMU_DELIM);
 	}
 	p = s;
-	strsep(&p, PFMLIB_ATTR_DELIM);
+	pfmlib_strsep(&p, PFMLIB_ATTR_DELIM);
 	/* if (p)
 	 *p++ = '\0'; */
 
