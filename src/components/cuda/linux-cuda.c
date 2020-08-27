@@ -59,19 +59,17 @@
 
 // #define PAPICUDA_KERNEL_REPLAY_MODE
 
-// Contains device list, pointer to device description, and the list of all available events.
-typedef struct cuda_context {
-    int         deviceCount;
-    struct cuda_device_desc *deviceArray;
-    uint32_t    availEventSize;
-    CUpti_ActivityKind *availEventKind;
-    int         *availEventDeviceNum;
-    uint32_t    *availEventIDArray;
-    uint32_t    *availEventIsBeingMeasuredInEventset;
-    struct cuda_name_desc *availEventDesc;
-    uint32_t    numAllEvents;
-    struct cuda_all_events *allEvents;
-} cuda_context_t;
+// CUDA metrics can require events that do not appear in the 
+// enumerated event lists. A table of these tracks these for
+// cumulative valuing (necessary because a read of any counter
+// zeros it).
+typedef struct cuda_all_events {
+   CUpti_EventID  eventId;
+   int            deviceNum;
+   int            idx;              // -1 if unenumerated, otherwise idx into enumerated events.
+   int            nonCumulative;    // 1=do not accumulate. Spot value, or constant.
+   long unsigned int cumulativeValue;
+} cuda_all_events_t;
 
 /* Store the name and description for an event */
 typedef struct cuda_name_desc {
@@ -91,6 +89,20 @@ typedef struct cuda_device_desc {
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 } cuda_device_desc_t;
+
+// Contains device list, pointer to device description, and the list of all available events.
+typedef struct cuda_context {
+    int         deviceCount;
+    cuda_device_desc_t *deviceArray;
+    uint32_t    availEventSize;
+    CUpti_ActivityKind *availEventKind;
+    int         *availEventDeviceNum;
+    uint32_t    *availEventIDArray;
+    uint32_t    *availEventIsBeingMeasuredInEventset;
+    cuda_name_desc_t *availEventDesc;
+    uint32_t    numAllEvents;
+    cuda_all_events_t *allEvents;
+} cuda_context_t;
 
 // For each active cuda context (one measuring something) we also track the
 // cuda device number it is on. We track in separate arrays for each reading
@@ -127,18 +139,6 @@ typedef struct cuda_control {
     uint64_t    cuptiStartTimestampNs;                                  // needed to compute duration for some metrics.
     uint64_t    cuptiReadTimestampNs;                                   // ..
 } cuda_control_t;
-
-// CUDA metrics can require events that do not appear in the 
-// enumerated event lists. A table of these tracks these for
-// cumulative valuing (necessary because a read of any counter
-// zeros it).
-typedef struct cuda_all_events {
-   CUpti_EventID  eventId;
-   int            deviceNum;
-   int            idx;              // -1 if unenumerated, otherwise idx into enumerated events.
-   int            nonCumulative;    // 1=do not accumulate. Spot value, or constant.
-   long unsigned int cumulativeValue;
-} cuda_all_events_t;
 
 // file handles used to access cuda libraries with dlopen
 static void *dl1 = NULL;
@@ -966,31 +966,6 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     gctxt->numAllEvents = j;
     gctxt->allEvents = localAllEvents;
 
-#if 0 /* Set to '1' for binary search testing. */
-    // Test binary search for all events.
-    i=0;
-    for (k=0; k<(signed) j; k++) {
-        int p=_search_all_events(gctxt, gctxt->allEvents[k].eventId, gctxt->allEvents[k].deviceNum);
-        if (p != k) {
-            fprintf(stderr, "Failed to look up event %d, eventId=%d, device=%d.\n", 
-                k, gctxt->allEvents[k].eventId, gctxt->allEvents[k].deviceNum); 
-            i++;
-        }
-    }
-
-    fprintf(stderr, "Binary Search of all valid values failed %d times.\n", i);
-    k = _search_all_events(gctxt, gctxt->allEvents[0].eventId-1, gctxt->allEvents[k].deviceNum);
-    fprintf(stderr, "Lookup of pre-first event returned %d.\n", k);
-    k = _search_all_events(gctxt, gctxt->allEvents[j].eventId+1, gctxt->allEvents[k].deviceNum);
-    fprintf(stderr, "Lookup of post-last event returned %d.\n", k);
-    for (k=1; k<(signed) j; k++) 
-        if (gctxt->allEvents[k-1].eventId+1 != gctxt->allEvents[k].eventId) {
-        int p=_search_all_events(gctxt, gctxt->allEvents[k-1].eventId+1, gctxt->allEvents[k-1].deviceNum);
-        fprintf(stderr, "Lookup of non-existent event returned %d.\n", p);
-        break;
-        }
-#endif /* Testing binary search routine */ 
-    
     #ifdef Produce_Event_Report
     fprintf(stderr, "\nFull Event Report:\n"); 
     for (k=0; k<(signed) j; k++) {
