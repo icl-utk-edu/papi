@@ -47,7 +47,7 @@
 // full event report, showing the composition of metrics, etc. This is a 
 // diagnostic aid, it is possible these unenumerated events will vary by 
 // GPU version or model, should some metric seem to be misbehaving.
-// #define Produce_Event_Report
+// #define PRODUCE_EVENT_REPORT
 
 // For the same unenumerated events, for experimentation and diagnostics, this
 // #define will add all the unumerated events as PAPI events that can be
@@ -55,7 +55,7 @@
 // "cuda:::unenum_event:0x16000001:device=0", with a description "Unenumerated
 // Event used in a metric". But this allows you to add it to a PAPI_EventSet
 // and see how it behaves under different test kernels. 
-// #define Expose_Unenumerated_Events 
+// #define EXPOSE_UNENUMERATED_EVENTS 
 
 // #define PAPICUDA_KERNEL_REPLAY_MODE
 
@@ -900,7 +900,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     idxAllEvents = firstMetricIdx;
     for (i = firstMetricIdx; i<idxEventArray; i++) {
         uint32_t numSubs=gctxt->availEventDesc[i].numMetricEvents;
-        #ifdef Produce_Event_Report
+        #ifdef PRODUCE_EVENT_REPORT
         fprintf(stderr, "%s %d SubEvents:\n", gctxt->availEventDesc[i].name, numSubs);
         #endif 
         // Look for any subEvents that are NOT in the array of raw events
@@ -908,7 +908,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // i=current metric idx, j is subEvent entry within it,
         // k index is search item within known events.
         for (j=0; j<numSubs; j++) {
-            #ifdef Produce_Event_Report
+            #ifdef PRODUCE_EVENT_REPORT
             fprintf(stderr, "    0x%08X = ",gctxt->availEventDesc[i].metricEvents[j]); 
             #endif 
             // search for this subEventId in our list.
@@ -923,7 +923,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
              // we do not need to add this to the list as a newly
              // discovered event.
             if (k < firstMetricIdx) {
-                #ifdef Produce_Event_Report
+                #ifdef PRODUCE_EVENT_REPORT
                 fprintf(stderr, "%s\n", gctxt->availEventDesc[k].name);
                 #endif 
                 continue;
@@ -931,7 +931,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
             // Here, we did not find it in the list of normal events, so
             // we have to add it in.
-            #ifdef Produce_Event_Report
+            #ifdef PRODUCE_EVENT_REPORT
             fprintf(stderr, "?\n");      
             #endif 
             localAllEvents[idxAllEvents].eventId = 
@@ -966,7 +966,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     gctxt->numAllEvents = j;
     gctxt->allEvents = localAllEvents;
 
-    #ifdef Produce_Event_Report
+    #ifdef PRODUCE_EVENT_REPORT
     fprintf(stderr, "\nFull Event Report:\n"); 
     for (k=0; k<(signed) j; k++) {
         fprintf(stderr, "Event=0x%08x  Device=%d Name=", 
@@ -982,7 +982,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     fprintf(stderr, "UnEnumerated Events Total Usage: %d Unique: %d.\n", idxAllEvents-firstMetricIdx, j-firstMetricIdx);
     #endif 
 
-#ifdef Expose_Unenumerated_Events /* To help with Unenum event exploration: */
+#ifdef EXPOSE_UNENUMERATED_EVENTS /* To help with Unenum event exploration: */
     /* Reallocate space for all events and descriptors to make room. */
     maxEventSize += (j-firstMetricIdx); 
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_realloc(gctxt->availEventKind, maxEventSize * sizeof(CUpti_ActivityKind));
