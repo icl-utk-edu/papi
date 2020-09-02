@@ -1,3 +1,20 @@
+libpfm4 (11.0) unstable; urgency=low
+  * Cavium TX2 core updates
+  * Cavium TX2 uncore core
+  * Intel CascadeLakeX core PMU support
+  * AMD Zen1 updates
+  * AMD Zen2 core pmu support
+  * S390 updates
+  * Update Skylake event table
+  * speculative event info infrastructure
+  * RAPL updates
+  * Intel Icelake core PMU support
+  * add hw_smpl attribute to the interface
+  * enable priv level filtering on ARMv8
+  * add ARM Neoverse N1 core PMU support
+
+ -- Stephane Eranian <eranian@gmail.com>  Wed, 2 Sep  2020 12:00:01 +0200
+
 libpfm4 (10.1) unstable; urgency=low
   * fix Cavium Thunder X2 build issues
   * Update Skylake event table
