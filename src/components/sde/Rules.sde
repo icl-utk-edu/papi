@@ -1,20 +1,16 @@
-COMPSRCS += components/sde/sde.c components/sde/sde_common.c
+COMPSRCS += components/sde/sde.c components/sde/sde_lib/sde_common.c
 COMPOBJS += sde.o sde_F.o sde_common.o
 LDFLAGS += -ldl -pthread
-CC_SHR += -Icomponents/sde -g
-SDE_INC = -Icomponents/sde -g
+CC_SHR += -Icomponents/sde -Icomponents/sde/sde_lib
+SDE_INC = -Icomponents/sde -Icomponents/sde/sde_lib -g
 SDE_LD = -ldl -pthread
 
 F90FLAGS += -ffree-form -ffree-line-length-none -fPIC
 
-.PHONY: libsde
-libsde: components/sde/sde_lib.c components/sde/sde_common.c
-		$(CC) -Bdynamic -fPIC -shared -Wl,-soname -Wl,libsde.so -D_GNU_SOURCE -fvisibility=hidden -Wextra -Wall -g -O2 -I. $^ -lrt -ldl -pthread -o libsde.so
-
-sde_common.o: components/sde/sde_common.c components/sde/sde_internal.h $(HEADERS)
+sde_common.o: components/sde/sde_lib/sde_common.c components/sde/sde_lib/sde_common.h components/sde/sde_internal.h $(HEADERS)
 		$(CC) $(LIBCFLAGS) $(OPTFLAGS) $(LDFLAGS) $(SDE_INC) $(SDE_LD) -c $< -o $@
 
-sde.o: components/sde/sde.c components/sde/sde_internal.h $(HEADERS)
+sde.o: components/sde/sde.c components/sde/sde_lib/sde_common.h components/sde/sde_internal.h $(HEADERS)
 		$(CC) $(LIBCFLAGS) $(OPTFLAGS) $(LDFLAGS) $(SDE_INC) $(SDE_LD) -c $< -o $@
 
 sde_F.o: components/sde/sde_F.F90 $(HEADERS)

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "papi.h"
+#include "papi_test.h"
 #include "papi_sde_interface.h"
 
 long long local_var;
@@ -27,23 +28,23 @@ int main(int argc, char **argv){
 
     // --- Setup PAPI
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
-        fprintf(stderr,"PAPI_library_init() error:%s \n",PAPI_strerror(ret));
+        test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
         exit(-1);
     }
     
     if((ret=PAPI_create_eventset(&Eventset)) != PAPI_OK){
-        fprintf(stderr,"PAPI_create_eventset() error:%s \n",PAPI_strerror(ret));
+        test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
         exit(-1);
     }
 
     if((ret=PAPI_add_named_event(Eventset, "sde:::Min Example Code::Example Event")) != PAPI_OK){
-        fprintf(stderr,"PAPI_add_named_event() error:%s \n",PAPI_strerror(ret));
+        test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
         exit(-1);
     }
 
     // --- Start PAPI
     if((ret=PAPI_start(Eventset)) != PAPI_OK){
-        fprintf(stderr,"PAPI_start error:%s \n",PAPI_strerror(ret));
+        test_fail( __FILE__, __LINE__, "PAPI_start", ret );
         exit(-1);
     }
 
@@ -51,14 +52,15 @@ int main(int argc, char **argv){
 
     // --- Stop PAPI
     if((ret=PAPI_stop(Eventset, counter_values)) != PAPI_OK){
-        fprintf(stderr,"PAPI_stop error:%s \n",PAPI_strerror(ret));
+        test_fail( __FILE__, __LINE__, "PAPI_stop", ret );
         exit(-1);
     }
 
-    if( counter_values[0] == 7 )
-        printf("Success: counter value is %lld, as expected.\n",counter_values[0]);
-    else
-        printf("Error: counter value is %lld, when it should be 7.\n",counter_values[0]);
+    if( counter_values[0] == 7 ){
+        test_pass(__FILE__);
+    }else{
+        test_fail( __FILE__, __LINE__, "SDE counter values are wrong!", ret );
+    }
 
     return 0;
 }

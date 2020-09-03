@@ -15,7 +15,7 @@
 #if defined(SDE_HAVE_OVERFLOW)
 #include <ucontext.h>
 #endif //defined(SDE_HAVE_OVERFLOW)
-#include "interface/papi_sde_interface.h"
+#include "papi_sde_interface.h"
 
 #define EXP_CONTAINER_ENTRIES 52
 #define EXP_CONTAINER_MIN_SIZE 2048

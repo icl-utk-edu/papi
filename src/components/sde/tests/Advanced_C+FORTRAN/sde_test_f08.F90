@@ -22,6 +22,10 @@
           integer :: internal_variable_int
           integer :: all_tests_passed
 
+          character(:), allocatable :: arg
+          integer :: arglen, stat
+          integer :: be_verbose
+
           interface
             function callback_t(param) result(ret_val)
               use, intrinsic :: ISO_C_BINDING, only: C_LONG_LONG
@@ -44,6 +48,20 @@
           ev_cnt3_int = 5
           ev_cnt4_float = 5.431
           values_to_write(1) = 9
+
+
+          be_verbose = 0
+          if(command_argument_count() .eq. 1) then
+              call get_command_argument(number=1, length=arglen, status=stat)
+              if( stat .eq. 0 ) then
+                  allocate (character(arglen) :: arg)
+                  call get_command_argument(number=1, value=arg, status=stat)
+                  if( arg == '-verbose' ) then
+                      be_verbose = 1
+                  endif
+              endif
+          endif
+
 
           call papif_sde_init('TESTLIB', handle, error)
           if(error .ne. PAPI_OK ) print *,'Error in sde_init'
@@ -145,9 +163,9 @@
     
           call recorder_do_work()
 
-          print '(A29,I4)',   '  TESTLIB::TESTEVENT (100) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A29,I4)',   '  TESTLIB::TESTEVENT (100) = ', values(1)
           if( values(1) .ne. 100 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -168,7 +186,7 @@
           internal_variable_int = 12
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -186,15 +204,15 @@
               stop
           endif
 
-          print '(A27,I2)',   '  TESTLIB::TESTEVENT (9) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (9) = ', values(1)
           if( values(1) .ne. 9 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
+          if( be_verbose .eq. 1 ) print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
           if( values(2) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -263,7 +281,7 @@
           endif
 
 !--------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_read(eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -275,34 +293,34 @@
               call recorder_do_work()
           end do
 
-          print '(A27,I2)',   '  TESTLIB::TESTEVENT (2) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (2) = ', values(1)
           if( values(1) .ne. 2 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A26,I2)',   '  TESTLIB::FP_EVENT (8) = ', values(2)
+          if( be_verbose .eq. 1 ) print '(A26,I2)',   '  TESTLIB::FP_EVENT (8) = ', values(2)
           if( values(2) .ne. 8 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(3), 1.0D0)
-          print '(A31,F4.2)', '  TESTLIB::FLOATEVENT (3.98) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A31,F4.2)', '  TESTLIB::FLOATEVENT (3.98) = ', value_d
           if( abs(value_d - 3.98) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A23,I1)',   '  Xandria::EV_I1 (1) = ', values(4)
+          if( be_verbose .eq. 1 ) print '(A23,I1)',   '  Xandria::EV_I1 (1) = ', values(4)
           if( values(4) .ne. 1 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::RW_I1 (14) = ', values(5)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::RW_I1 (14) = ', values(5)
           if( values(5) .ne. 14 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -311,7 +329,7 @@
           call xandria_do_work()
 
 !--------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -319,9 +337,9 @@
               stop
           endif
 
-          print '(A24,I2)',   '  Xandria::RW_I1 (35) = ', values(5)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::RW_I1 (35) = ', values(5)
           if( values(5) .ne. 35 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -345,9 +363,9 @@
               stop
           endif
 
-          print '(A23,I1)',   '  Xandria::RW_I1 (9) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A23,I1)',   '  Xandria::RW_I1 (9) = ', values(1)
           if( values(1) .ne. 9 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -379,34 +397,34 @@
               stop
           endif
 
-          print '(A27,I1)',  '  TESTLIB::TESTEVENT (5) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A27,I1)',  '  TESTLIB::TESTEVENT (5) = ', values(1)
           if( values(1) .ne. 5 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A27,I2)',  '  TESTLIB::FP_EVENT (30) = ', values(2)
+          if( be_verbose .eq. 1 ) print '(A27,I2)',  '  TESTLIB::FP_EVENT (30) = ', values(2)
           if( values(2) .ne. 30 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(3), 1.0D0)
-          print '(A31,F4.1)','  TESTLIB::FLOATEVENT (18.8) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A31,F4.1)','  TESTLIB::FLOATEVENT (18.8) = ', value_d
           if( abs(value_d - 18.8) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A23,I2)',  '  Xandria::EV_I1 (3) = ', values(4)
+          if( be_verbose .eq. 1 ) print '(A23,I2)',  '  Xandria::EV_I1 (3) = ', values(4)
           if( values(4) .ne. 3 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
 
 !--------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_reset(eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -421,28 +439,28 @@
           endif
 
 
-          print '(A27,I2)',   '  TESTLIB::TESTEVENT (0) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (0) = ', values(1)
           if( values(1) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
+          if( be_verbose .eq. 1 ) print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
           if( values(2) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(3), 1.0D0)
-          print '(A31,F4.1)', '  TESTLIB::FLOATEVENT, (0.0) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A31,F4.1)', '  TESTLIB::FLOATEVENT, (0.0) = ', value_d
           if( abs(value_d - 0.0) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A23,I2)',   '  Xandria::EV_I1 (0) = ', values(4)
+          if( be_verbose .eq. 1 ) print '(A23,I2)',   '  Xandria::EV_I1 (0) = ', values(4)
           if( values(4) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -479,7 +497,7 @@
           end do
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -497,46 +515,46 @@
               stop
           endif
 
-          print '(A27,I2)',   '  TESTLIB::TESTEVENT (0) = ', values(1)
+          if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (0) = ', values(1)
           if( values(1) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
+          if( be_verbose .eq. 1 ) print '(A26,I2)',   '  TESTLIB::FP_EVENT (0) = ', values(2)
           if( values(2) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(3), 1.0D0)
-          print '(A30,F3.1)' ,'  TESTLIB::FLOATEVENT (0.0) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A30,F3.1)' ,'  TESTLIB::FLOATEVENT (0.0) = ', value_d
           if( abs(value_d - 0.0) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A23,I2)',   '  Xandria::EV_I1 (3) = ', values(4)
+          if( be_verbose .eq. 1 ) print '(A23,I2)',   '  Xandria::EV_I1 (3) = ', values(4)
           if( values(4) .ne. 3 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::EV_R1 (30) = ', values(6)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::EV_R1 (30) = ', values(6)
           if( values(6) .ne. 30 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::EV_R2 (60) = ', values(7)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::EV_R2 (60) = ', values(7)
           if( values(7) .ne. 60 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::EV_R3 (90) = ', values(8)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::EV_R3 (90) = ', values(8)
           if( values(8) .ne. 90 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -575,7 +593,7 @@
           endif
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -600,28 +618,28 @@
 
 
           value_d = transfer(values(9), 1.0D0)
-          print '(A21,F4.1)','  Gamum::ev1 (0.4) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F4.1)','  Gamum::ev1 (0.4) = ', value_d
           if( abs(value_d - 0.4) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(10), 1.0D0)
-          print '(A21,F4.1)','  Gamum::ev3 (0.8) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F4.1)','  Gamum::ev3 (0.8) = ', value_d
           if( abs(value_d - 0.8) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(11), 1.0D0)
-          print '(A23,F5.3)','  Gamum::ev4 (1.888) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A23,F5.3)','  Gamum::ev4 (1.888) = ', value_d
           if( abs(value_d - 1.888) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
 ! 12
           call papif_event_name_to_code('sde:::Xandria::LATE' , eventcode, ret_val )
@@ -654,29 +672,29 @@
           endif
 
           value_d = transfer(values(9), 1.0D0)
-          print '(A21,F4.1)',     '  Gamum::ev1 (0.0) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F4.1)',     '  Gamum::ev1 (0.0) = ', value_d
           if( abs(value_d - 0.0) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(10), 1.0D0)
-          print '(A21,F4.1)','  Gamum::ev3 (0.0) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F4.1)','  Gamum::ev3 (0.0) = ', value_d
           if( abs(value_d - 0.0) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(11), 1.0D0)
-          print '(A23,F5.3)',     '  Gamum::ev4 (1.888) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A23,F5.3)',     '  Gamum::ev4 (1.888) = ', value_d
           if( abs(value_d - 1.888) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A22,I2)',   '  Xandria::LATE (7) = ', values(12)
+          if( be_verbose .eq. 1 ) print '(A22,I2)',   '  Xandria::LATE (7) = ', values(12)
           if( values(12) .ne. 7 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -686,7 +704,7 @@
           end do
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
 ! 13
           call papif_event_name_to_code('sde:::Xandria::WRONG' , eventcode, ret_val )
@@ -717,20 +735,20 @@
               stop
           endif
 
-          print '(A23,I2)',   '  Xandria::LATE (21) = ', values(12)
+          if( be_verbose .eq. 1 ) print '(A23,I2)',   '  Xandria::LATE (21) = ', values(12)
           if( values(12) .ne. 21 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::WRONG (-1) = ', values(13)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::WRONG (-1) = ', values(13)
           if( values(13) .ne. -1 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 ! 14
           call papif_event_name_to_code('sde:::Gamum::group0' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
@@ -772,42 +790,42 @@
               stop
           endif
 
-          print '(A22,I2)',   '  Xandria::LATE (0) = ', values(12)
+          if( be_verbose .eq. 1 ) print '(A22,I2)',   '  Xandria::LATE (0) = ', values(12)
           if( values(12) .ne. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A24,I2)',   '  Xandria::WRONG (-1) = ', values(13)
+          if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::WRONG (-1) = ', values(13)
           if( values(13) .ne. -1 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(9), 1.0D0)
-          print '(A21,F4.1)',     '  Gamum::ev1 (0.2) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F4.1)',     '  Gamum::ev1 (0.2) = ', value_d
           if( abs(value_d - 0.2) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(11), 1.0D0)
-          print '(A23,F5.3)',     '  Gamum::ev4 (2.332) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A23,F5.3)',     '  Gamum::ev4 (2.332) = ', value_d
           if( abs(value_d - 2.332) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(14), 1.0D0)
-          print '(A36,F5.3)',     '  Gamum::group0 [ev1+ev4] (2.532) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A36,F5.3)',     '  Gamum::group0 [ev1+ev4] (2.532) = ', value_d
           if( abs(value_d - 2.532) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A29,I3)',     '  Gamum::papi_counter (36) = ', values(15)
+          if( be_verbose .eq. 1 ) print '(A29,I3)',     '  Gamum::papi_counter (36) = ', values(15)
           if( abs(values(15) - 36) .gt. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
@@ -826,34 +844,34 @@
           endif
 
           value_d = transfer(values(9), 1.0D0)
-          print '(A21,F3.1)',     '  Gamum::ev1 (0.7) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A21,F3.1)',     '  Gamum::ev1 (0.7) = ', value_d
           if( abs(value_d - 0.7) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(11), 1.0D0)
-          print '(A23,F5.3)',     '  Gamum::ev4 (3.442) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A23,F5.3)',     '  Gamum::ev4 (3.442) = ', value_d
           if( abs(value_d - 3.442) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
           value_d = transfer(values(14), 1.0D0)
-          print '(A36,F5.3)',     '  Gamum::group0 [ev1+ev4] (4.142) = ', value_d
+          if( be_verbose .eq. 1 ) print '(A36,F5.3)',     '  Gamum::group0 [ev1+ev4] (4.142) = ', value_d
           if( abs(value_d - 4.142) .gt. rounding_error(value_d) ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
-          print '(A29,I3)',     '  Gamum::papi_counter (66) = ', values(15)
+          if( be_verbose .eq. 1 ) print '(A29,I3)',     '  Gamum::papi_counter (66) = ', values(15)
           if( abs(values(15) - 66) .gt. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
 ! 16
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:CNT', ret_val )
@@ -909,29 +927,29 @@
               stop
           endif
 
-          print '(A51,I4)',     '  Lib_With_Recorder::simple_recording:CNT (1036) = ', values(16)
+          if( be_verbose .eq. 1 ) print '(A51,I4)',     '  Lib_With_Recorder::simple_recording:CNT (1036) = ', values(16)
           if( abs(values(16) - 1036) .gt. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
           
           call c_f_pointer(transfer(values(17), quantile), quantile_f)
-          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MIN (     >0) = ', quantile_f
+          if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MIN (     >0) = ', quantile_f
 
           call c_f_pointer(transfer(values(18), quantile), quantile_f)
-          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q1  ( ~30864) = ', quantile_f
+          if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q1  ( ~30864) = ', quantile_f
 
           call c_f_pointer(transfer(values(19), quantile), quantile_f)
-          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MED ( ~61728) = ', quantile_f
+          if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MED ( ~61728) = ', quantile_f
 
           call c_f_pointer(transfer(values(20), quantile), quantile_f)
-          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q3  ( ~92592) = ', quantile_f
+          if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:Q3  ( ~92592) = ', quantile_f
 
           call c_f_pointer(transfer(values(21), quantile), quantile_f)
-          print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MAX (<123456) = ', quantile_f
+          if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MAX (<123456) = ', quantile_f
 
 !-------------------------------------------------------------------------------
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
 
 ! 22
           call papif_event_name_to_code('sde:::Xandria::XND_CREATED' , eventcode, ret_val )
@@ -962,9 +980,9 @@
               stop
           endif
 
-          print '(A30,I2)',   '  Xandria::XND_CREATED (27) = ', values(22)
+          if( be_verbose .eq. 1 ) print '(A30,I2)',   '  Xandria::XND_CREATED (27) = ', values(22)
           if( abs(values(22) - 27) .gt. 0 ) then
-              print *,'^^^^^^^^^^^^^^^^^^^'
+              if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
           
@@ -974,12 +992,14 @@
 
           call papif_shutdown( )
 
-          print *,''
+          if( be_verbose .eq. 1 ) print *,''
           if( all_tests_passed .eq. 1 ) then
-              print *,'====> TEST PASSED'
+              call ftests_pass('')
           else
-              print *,'====> TEST FAILED'
+              call ftest_fail(__FILE__, __LINE__, 'SDE counters do not much expected values!', 1)
           endif
+
+
 
         end program
 

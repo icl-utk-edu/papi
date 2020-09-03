@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stddef.h>
-#include "components/sde/interface/papi_sde_interface.h"
-
+#include "papi_sde_interface.h"
 
 #pragma weak papi_sde_init
 #pragma weak papi_sde_register_counter
@@ -134,8 +133,8 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     (void) handle;
     (void) event_name;
     (void) typesize;
-    (void) record_handle;
     (void) cmpr_fptr;
+    (void) record_handle;
 
     /* do nothing */
 

@@ -14,10 +14,7 @@
 #include "papi_memory.h"
 #include "extras.h"
 #include "sde_common.h"
-#include "interface/papi_sde_interface.h"
-
-#define papi_sde_lock() _papi_hwi_lock(COMPONENT_LOCK);
-#define papi_sde_unlock() _papi_hwi_unlock(COMPONENT_LOCK);
+#include "sde_lib/papi_sde_interface.h"
 
 #define REGISTERED_EVENT_MASK 0x2;
 
@@ -78,6 +75,9 @@ static int sde_cast_and_store(void *data, long long int previous_value, void *rs
 static int sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt );
 static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
 static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
+
+int papi_sde_lock(void);
+int papi_sde_unlock(void);
 
 static void invoke_user_handler(sde_counter_t *cntr_handle);
 

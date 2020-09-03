@@ -21,7 +21,7 @@ static const char *ev_names[4] = {
     "HIGH_WATERMARK_REACHED"
 };
 
-long long int compute_sde( void *param );
+long long int counter_accessor_function( void *param );
 
 void simple_init(void){
 
@@ -33,7 +33,7 @@ void simple_init(void){
 
     // Initialize PAPI SDEs
     handle = papi_sde_init("Simple");
-    papi_sde_register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, compute_sde, &comp_value);
+    papi_sde_register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, counter_accessor_function, &comp_value);
     papi_sde_register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
     papi_sde_register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
     papi_sde_register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
@@ -48,7 +48,7 @@ void simple_init(void){
 // discover the SDEs that are exported by this library.
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
     handle = fptr_struct->init("Simple");
-    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, compute_sde, &comp_value);
+    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, counter_accessor_function, &comp_value);
     fptr_struct->register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
     fptr_struct->register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
     fptr_struct->register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
@@ -65,7 +65,7 @@ papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
 }
 
 // This function allows the library to perform operations in order to compute the value of an SDE at run-time
-long long compute_sde( void *param ){
+long long counter_accessor_function( void *param ){
     long long *ll_ptr;
     double *dbl_ptr = (double *)param;
 

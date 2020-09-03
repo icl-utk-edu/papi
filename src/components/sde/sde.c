@@ -36,6 +36,22 @@ __attribute__((visibility("default")))
 }
 
 /*************************************************************************/
+/* We need externaly visible symbols for synchronizing between the SDE   */
+/* component in libpapi and the code in libsde.                          */
+/*************************************************************************/
+int
+__attribute__((visibility("default")))
+papi_sde_lock(void){
+    return _papi_hwi_lock(COMPONENT_LOCK);
+}
+
+int
+__attribute__((visibility("default")))
+papi_sde_unlock(void){
+    return _papi_hwi_unlock(COMPONENT_LOCK);
+}
+
+/*************************************************************************/
 /* Below is the actual "hardware implementation" of the sde counters     */
 /*************************************************************************/
 
