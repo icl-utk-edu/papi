@@ -763,7 +763,6 @@ with_OS
 with_OSVER
 with_assumed_kernel
 with_mic
-enable_mpi_tests
 with_bgpm_installdir
 with_nativecc
 with_tests
@@ -1417,51 +1416,83 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-mpi-tests    Disable MPI tests
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
-  --disable-perf-event-uncore		Disable perf_event uncore component
+  --disable-perf-event-uncore
+                          Disable perf_event uncore component
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-arch=<arch>		Specify architecture (uname -m)
-  --with-bitmode=<32,64>		Specify bit mode of library
-  --with-OS=<os>       		Specify operating system
-  --with-OSVER=<ver>		Specify operating system version
-  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds
- --with-mic To compile for Intel MIC
-  --with-bgpm_installdir=<path> Specify the installation path of BGPM
-  --with-nativecc=<path>		Specify native C compiler for header generation
-  --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install
-  --with-debug=<yes,memory,no>		Build a debug version, debug version plus memory tracker or none
-  --with-CPU=<cpu>		Specify CPU type
-  --with-pthread-mutexes		Specify use of pthread mutexes rather than custom PAPI locks
-  --with-ffsll		Specify use of the ffsll() function
-  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer
-  --with-tls=<keyword>		This platform supports thread local storage with a keyword
-  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer
-  --with-pmapi=<path>		Specify path of pmapi on aix system
- --with-static-user-events             Build with a static user events file.
- --with-static-papi-events             Build with a static papi events file.
-  --with-static-lib=<yes,no>		Build a static library
-  --with-shared-lib=<yes,no>		Build a shared library
-  --with-static-tools		Specify static compile of tests and utilities
-  --with-shlib-tools		Specify linking with papi library of tests and utilities
-  --with-perfctr		Specify perfctr as the performance interface
-  --with-perfctr-root=<path>		Specify path to source tree (for use by developers only)
-  --with-perfctr-prefix=<path>		Specify prefix to installed perfctr distribution
-  --with-perfctr-incdir=<path>		Specify directory of perfctr header files in non-standard location
-  --with-perfctr-libdir=<path>		Specify directory of perfctr library in non-standard location
-  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version
-  --with-pfm-root=<path>		Specify path to source tree (for use by developers only)
-  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution
-  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location
-  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location
-  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)
-  --with-pe-incdir=<path>		Specify path to the correct perf header file
-  --with-components=<"component1 component2">		Specify which components to build
+  --with-arch=<arch>      Specify architecture (uname -m)
+  --with-bitmode=<32,64>  Specify bit mode of library
+  --with-OS=<os>          Specify operating system
+  --with-OSVER=<ver>      Specify operating system version
+  --with-assumed-kernel=<ver>
+                          Assume kernel version is <ver> for purposes of
+                          workarounds
+  --with-mic              To compile for Intel MIC
+  --with-bgpm_installdir=<path>
+                          Specify the installation path of BGPM
+  --with-nativecc=<path>  Specify native C compiler for header generation
+  --with-tests=<"ctests ftests mpitests", no>
+                          Specify which tests to run on install, or "no" tests
+                          (default: all available tests)
+  --with-debug=<yes,memory,no>
+                          Build a debug version, debug version plus memory
+                          tracker or none
+  --with-CPU=<cpu>        Specify CPU type
+  --with-pthread-mutexes  Specify use of pthread mutexes rather than custom
+                          PAPI locks
+  --with-ffsll            Specify use of the ffsll() function
+  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>
+                          Specify realtime timer
+  --with-tls=<keyword>    This platform supports thread local storage with a
+                          keyword
+  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>
+                          Specify per-thread virtual timer
+  --with-pmapi=<path>     Specify path of pmapi on aix system
+  --with-static-user-events
+                          Build with a static user events file.
+  --with-static-papi-events
+                          Build with a static papi events file.
+  --with-static-lib=<yes,no>
+                          Build a static library
+  --with-shared-lib=<yes,no>
+                          Build a shared library
+  --with-static-tools     Specify static compile of tests and utilities
+  --with-shlib-tools      Specify linking with papi library of tests and
+                          utilities
+  --with-perfctr          Specify perfctr as the performance interface
+  --with-perfctr-root=<path>
+                          Specify path to source tree (for use by developers
+                          only)
+  --with-perfctr-prefix=<path>
+                          Specify prefix to installed perfctr distribution
+  --with-perfctr-incdir=<path>
+                          Specify directory of perfctr header files in
+                          non-standard location
+  --with-perfctr-libdir=<path>
+                          Specify directory of perfctr library in non-standard
+                          location
+  --with-perfmon=<x.y>    Specify perfmon as the performance interface and
+                          specify version
+  --with-pfm-root=<path>  Specify path to source tree (for use by developers
+                          only)
+  --with-pfm-prefix=<path>
+                          Specify prefix to installed pfm distribution
+  --with-pfm-incdir=<path>
+                          Specify directory of pfm header files in
+                          non-standard location
+  --with-pfm-libdir=<path>
+                          Specify directory of pfm library in non-standard
+                          location
+  --with-perf-events      Specify use of Linux Performance Event (requires
+                          kernel 2.6.32 or greater)
+  --with-pe-incdir=<path> Specify path to the correct perf header file
+  --with-components=<"component1 component2">
+                          Specify which components to build
 
 Some influential environment variables:
   CC          C compiler command
@@ -3432,18 +3463,6 @@ else
   CC_COMMON_NAME="unknown"
 fi
 
-# Check whether --enable-mpi_tests was given.
-if test "${enable_mpi_tests+set}" = set; then :
-  enableval=$enable_mpi_tests;  enable_mpi_tests=no
-fi
-
-
-if test "x$enable_mpi_tests" != "x"; then :
-
-  NO_MPI_TESTS=yes
-
-fi
-
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 # remark #869: parameter was never referenced
 # remark #271: trailing comma is nonstandard
@@ -4542,12 +4561,70 @@ fi
 $as_echo "$nativecc" >&6; }
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tests" >&5
+$as_echo_n "checking for tests... " >&6; }
 
 # Check whether --with-tests was given.
 if test "${with_tests+set}" = set; then :
   withval=$with_tests; tests=$withval
 else
-  tests="ctests ftests"
+  tests="ctests ftests mpitests"
+fi
+
+
+if test "$tests" = "no"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tests" >&5
+$as_echo "$tests" >&6; }
+  tests=
+  NO_MPI_TESTS=yes
+else
+  # mpitests is not a target
+  tmp_tests=
+  mpi_tests=no
+  case "$tests" in
+      *ctests*)
+          tmp_tests+="ctests "
+          ;;
+  esac
+  case "$tests" in
+      *ftests*)
+          tmp_tests+="ftests "
+          ;;
+  esac
+  case "$tests" in
+      *mpitests*)
+          # we already checked if mpicc is working
+          if test "x$MPICC" != "x"; then
+            if test "x$NO_MPI_TESTS" = "x"; then
+              mpi_tests=yes
+              # mpitests only works together with ctests
+              if test "x$tmp_tests" = "x"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+              else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tmp_tests mpitests" >&5
+$as_echo "$tmp_tests mpitests" >&6; }
+              fi
+            fi
+          else
+            NO_MPI_TESTS=yes
+            if test "x$tmp_tests" = "x"; then
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            else
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: $tmp_tests" >&5
+$as_echo "$tmp_tests" >&6; }
+            fi
+          fi
+          ;;
+  esac
+  # do not list mpi_tests for makefile target
+  tests=$tmp_tests
+
+  # mpi_tests is not listed by the user
+  if test "$mpi_tests" = "no"; then
+    NO_MPI_TESTS=yes
+  fi
 fi
 
 
@@ -5958,8 +6035,8 @@ fi
 # Check whether --with-pe_incdir was given.
 if test "${with_pe_incdir+set}" = set; then :
   withval=$with_pe_incdir; pe_incdir=$withval
-               force_perf_events=yes
-	       user_specified_interface=pe
+              force_perf_events=yes
+              user_specified_interface=pe
 else
   pe_incdir=$pfm_incdir/perfmon
 fi

@@ -36,19 +36,22 @@ AC_DEFUN([AS_AC_EXPAND],
           exec_prefix=$exec_prefix_save ])
 
 AC_MSG_CHECKING(for architecture)
-AC_ARG_WITH(arch,
-	       [  --with-arch=<arch>		Specify architecture (uname -m)],
-	       [arch=$withval],
-	       [arch=`uname -m`])
+AC_ARG_WITH([arch],
+            [AS_HELP_STRING([--with-arch=<arch>],
+            [Specify architecture (uname -m)])],
+            [arch=$withval],
+            [arch=`uname -m`])
 AC_MSG_RESULT($arch)
 
-AC_ARG_WITH(bitmode,
-            [  --with-bitmode=<32,64>		Specify bit mode of library],
+AC_ARG_WITH([bitmode],
+            [AS_HELP_STRING([--with-bitmode=<32,64>],
+            [Specify bit mode of library])],
             [bitmode=$withval])
 
 AC_MSG_CHECKING(for OS)
 AC_ARG_WITH(OS,
-           [  --with-OS=<os>       		Specify operating system],
+           [AS_HELP_STRING([--with-OS=<os>],
+           [Specify operating system])],
            [OS=$withval],
 	       [OS="`uname | tr '[A-Z]' '[a-z]'`"
             if (test "$OS" = "SunOS" || test "$OS" = "sunos"); then
@@ -58,7 +61,8 @@ AC_MSG_RESULT($OS)
 
 AC_MSG_CHECKING(for OS version)
 AC_ARG_WITH(OSVER,
-           [  --with-OSVER=<ver>		Specify operating system version],
+           [AS_HELP_STRING([--with-OSVER=<ver>],
+           [Specify operating system version])],
            [OSVER=$withval],
 	       [if test "$OS" != "bgp" -o "$OS" != "bgq"; then
               OSVER="`uname -r`"
@@ -67,7 +71,8 @@ AC_MSG_RESULT($OSVER)
 
 AC_MSG_CHECKING(for perf_event workaround level)
 AC_ARG_WITH(assumed_kernel,
-		[  --with-assumed-kernel=<ver>	Assume kernel version is <ver> for purposes of workarounds],
+            [AS_HELP_STRING([--with-assumed-kernel=<ver>],
+            [Assume kernel version is <ver> for purposes of workarounds])],
 		[assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
                 [assumed_kernel="autodetect"]
 		)		
@@ -75,7 +80,8 @@ AC_MSG_RESULT($assumed_kernel)
 
 AC_MSG_CHECKING([for if MIC should be used])
 		AC_ARG_WITH(mic,
-						[ --with-mic To compile for Intel MIC ],
+						[AS_HELP_STRING([--with-mic],
+            [To compile for Intel MIC])],
 						[MIC=yes
 						tls=__thread
 						virtualtimer=cputime_id
@@ -139,14 +145,6 @@ elif `$CC -qversion 2>&1 | grep 'IBM XL C' >/dev/null 2>&1`; then
 else
   CC_COMMON_NAME="unknown"
 fi
-
-AC_ARG_ENABLE(mpi_tests,
-    [  --disable-mpi-tests    Disable MPI tests],
-    [ enable_mpi_tests=no])
-
-AS_IF([test "x$enable_mpi_tests" != "x"],[
-  NO_MPI_TESTS=yes
-])
 
 #prevent icc warnings about overriding optimization settings set by AC_PROG_CC
 # remark #869: parameter was never referenced 
@@ -263,7 +261,8 @@ elif test "$OS" = "bgp"; then
   cross_compiling=yes
 elif test "$OS" = "bgq"; then
   AC_ARG_WITH(bgpm_installdir,
-              [  --with-bgpm_installdir=<path> Specify the installation path of BGPM],
+              [AS_HELP_STRING([--with-bgpm_installdir=<path>],
+              [Specify the installation path of BGPM])],
               [BGPM_INSTALL_DIR=$withval
               CFLAGS="$CFLAGS -I$withval"],
               [AC_MSG_ERROR([BGQ CPU component requires installation path of BGPM (see --with-bgpm_installdir)])])
@@ -294,20 +293,75 @@ fi
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_CHECKING(for native compiler for header generation)
   AC_ARG_WITH(nativecc,
-	         [  --with-nativecc=<path>		Specify native C compiler for header generation ],
+	         [AS_HELP_STRING([--with-nativecc=<path>],
+           [Specify native C compiler for header generation])],
 	         [nativecc=$withval],
 	         [nativecc=gcc])
   AC_MSG_RESULT($nativecc)
 fi
 
+AC_MSG_CHECKING(for tests)
 AC_ARG_WITH(tests,
-        	[  --with-tests=<ctests,ftests,"ctests ftests">		Specify which tests to run on install ],
-        	[tests=$withval],
-        	[tests="ctests ftests"]) 
+           [AS_HELP_STRING([--with-tests=<"ctests ftests mpitests", no>],
+           [Specify which tests to run on install, or "no" tests (default: all available tests)])],
+    [tests=$withval],
+    [tests="ctests ftests mpitests"])
+
+if test "$tests" = "no"; then
+  AC_MSG_RESULT($tests)
+  tests=
+  NO_MPI_TESTS=yes
+else
+  # mpitests is not a target
+  tmp_tests=
+  mpi_tests=no
+  case "$tests" in
+      *ctests*)
+          tmp_tests+="ctests "
+          ;;
+  esac
+  case "$tests" in
+      *ftests*)
+          tmp_tests+="ftests "
+          ;;
+  esac
+  case "$tests" in
+      *mpitests*)
+          # we already checked if mpicc is working
+          if test "x$MPICC" != "x"; then
+            if test "x$NO_MPI_TESTS" = "x"; then
+              mpi_tests=yes
+              # mpitests only works together with ctests
+              if test "x$tmp_tests" = "x"; then
+                AC_MSG_RESULT(no)
+              else
+                AC_MSG_RESULT($tmp_tests mpitests)
+              fi
+            fi
+          else
+            NO_MPI_TESTS=yes
+            if test "x$tmp_tests" = "x"; then
+              AC_MSG_RESULT(no)
+            else
+              AC_MSG_RESULT($tmp_tests)
+            fi
+          fi
+          ;;
+  esac
+  # do not list mpi_tests for makefile target
+  tests=$tmp_tests
+  
+  # mpi_tests is not listed by the user
+  if test "$mpi_tests" = "no"; then
+    NO_MPI_TESTS=yes
+  fi
+fi
+
 
 AC_MSG_CHECKING(for debug build)
 AC_ARG_WITH(debug,
-            [  --with-debug=<yes,memory,no>		Build a debug version, debug version plus memory tracker or none ],
+            [AS_HELP_STRING([--with-debug=<yes,memory,no>],
+            [Build a debug version, debug version plus memory tracker or none])],
             [debug=$withval])
 if test "$debug" = "yes"; then
   if test "$CC_COMMON_NAME" = "gcc"; then
@@ -352,7 +406,8 @@ AC_MSG_RESULT($HAVE_NO_OVERRIDE_INIT)
 fi
 AC_MSG_CHECKING(for CPU type)
 AC_ARG_WITH(CPU,
-            [  --with-CPU=<cpu>		Specify CPU type],
+            [AS_HELP_STRING([--with-CPU=<cpu>],
+            [Specify CPU type])],
             [CPU=$withval
              case "$CPU" in
                core|core2|i7|atom|p4|p3|opteron|athlon)
@@ -453,13 +508,15 @@ esac
 
 
 AC_ARG_WITH(pthread-mutexes,
-              [  --with-pthread-mutexes		Specify use of pthread mutexes rather than custom PAPI locks],
+            [AS_HELP_STRING([--with-pthread-mutexes],
+            [Specify use of pthread mutexes rather than custom PAPI locks])],
               [pthread_mutexes=yes
 	      CFLAGS="$CFLAGS -DUSE_PTHREAD_MUTEXES"
 	      ])
 
   AC_ARG_WITH(ffsll,
-	          [  --with-ffsll		Specify use of the ffsll() function ],
+	            [AS_HELP_STRING([--with-ffsll],
+              [Specify use of the ffsll() function])],
 	          [ffsll=$withval],
 	          [if test "$cross_compiling" = "yes" ; then
                  AC_MSG_ERROR([ffsll must be specified for cross compile])
@@ -492,7 +549,8 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
                                [AC_MSG_RESULT(no)]) ])
 
 AC_ARG_WITH(walltimer,
-            [  --with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>		Specify realtime timer ],
+            [AS_HELP_STRING([--with-walltimer=<gettimeofday,mmtimer,clock_realtime_hr,clock_realtime,cycle>],
+            [Specify realtime timer])],
             [walltimer=$withval],
             [if test "$cross_compiling" = "yes" ; then
                AC_MSG_ERROR([walltimer must be specified for cross compile])
@@ -590,7 +648,8 @@ LDFLAGS=""
 CFLAGS="-pthread"
 
 AC_ARG_WITH(tls,
-              [  --with-tls=<keyword>		This platform supports thread local storage with a keyword ],
+            [AS_HELP_STRING([--with-tls=<keyword>],
+            [This platform supports thread local storage with a keyword])],
               [tls=$withval],
               [if test "$cross_compiling" = "yes" ; then
                  AC_MSG_ERROR([tls must be specified for cross compile])
@@ -650,7 +709,8 @@ fi
 AC_MSG_RESULT($tls)
 
 AC_ARG_WITH(virtualtimer,
-              [  --with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>		Specify per-thread virtual timer ],
+              [AS_HELP_STRING([--with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>],
+              [Specify per-thread virtual timer])],
               [virtualtimer=$withval],
               [if test "$cross_compiling" = "yes" ; then
                  AC_MSG_ERROR([virtualtimer must be specified for cross compile])
@@ -797,7 +857,8 @@ AC_MSG_RESULT($virtualtimer)
 
 if test "$OS" = "aix"; then
   AC_ARG_WITH(pmapi,
-              [  --with-pmapi=<path>		Specify path of pmapi on aix system ],
+              [AS_HELP_STRING([--with-pmapi=<path>],
+              [Specify path of pmapi on aix system])],
               [PMAPI=$withval],
               [PMAPI="/usr/pmapi"])
   LIBS="-L$PMAPI/lib -lpmapi"
@@ -811,7 +872,8 @@ fi
 
 AC_MSG_CHECKING(for static user preset events)
 AC_ARG_WITH(static_user_events,
-		  [ --with-static-user-events             Build with a static user events file.],
+		        [AS_HELP_STRING([--with-static-user-events],
+            [Build with a static user events file.])],
 		  [STATIC_USER_EVENTS=$withval],
 		  [STATIC_USER_EVENTS=no])
 if test "$STATIC_USER_EVENTS" = "yes"; then
@@ -821,7 +883,8 @@ AC_MSG_RESULT($STATIC_USER_EVENTS)
 
 AC_MSG_CHECKING(for static PAPI preset events)
 AC_ARG_WITH(static_papi_events,
-		  [ --with-static-papi-events             Build with a static papi events file.],
+		        [AS_HELP_STRING([--with-static-papi-events],
+            [Build with a static papi events file.])],
 		  [STATIC_PAPI_EVENTS=$withval],
 		  [STATIC_PAPI_EVENTS=yes])
 if test "$STATIC_PAPI_EVENTS" = "yes"; then
@@ -831,14 +894,16 @@ AC_MSG_RESULT($STATIC_PAPI_EVENTS)
 
 AC_MSG_CHECKING(for whether to build static library)
 AC_ARG_WITH(static_lib,
-            [  --with-static-lib=<yes,no>		Build a static library],
+            [AS_HELP_STRING([--with-static-lib=<yes,no>],
+            [Build a static library])],
             [static_lib=$withval],
             [static_lib=yes])
 AC_MSG_RESULT($static_lib)
 
 AC_MSG_CHECKING(for whether to build shared library)
 AC_ARG_WITH(shared_lib,
-            [  --with-shared-lib=<yes,no>		Build a shared library],
+            [AS_HELP_STRING([--with-shared-lib=<yes,no>],
+            [Build a shared library])],
             [shared_lib=$withval],
             [shared_lib=yes])
 AC_MSG_RESULT($shared_lib)
@@ -860,7 +925,8 @@ fi
 
 AC_MSG_CHECKING(for static compile of tests and utilities)
 AC_ARG_WITH(static_tools,
-            [  --with-static-tools		Specify static compile of tests and utilities],
+            [AS_HELP_STRING([--with-static-tools],
+            [Specify static compile of tests and utilities])],
             [STATIC="-static"
 	    AC_MSG_RESULT(yes)],
 	    [AC_MSG_RESULT(no)])
@@ -873,7 +939,8 @@ fi
 
 AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
 AC_ARG_WITH(shlib_tools,
-	        [  --with-shlib-tools		Specify linking with papi library of tests and utilities],
+	          [AS_HELP_STRING([--with-shlib-tools],
+            [Specify linking with papi library of tests and utilities])],
  	        [shlib_tools=yes
 		AC_MSG_RESULT(yes)],
 		[shlib_tools=no
@@ -911,7 +978,8 @@ perfctr=0
 force_perfctr=no
 
 AC_ARG_WITH(perfctr,
-            [  --with-perfctr		Specify perfctr as the performance interface ],
+            [AS_HELP_STRING([--with-perfctr],
+            [Specify perfctr as the performance interface])],
 	    force_perfctr=yes
             [user_specified_interface=perfctr
 	     if test "$arch" != "ppc64"; then
@@ -935,19 +1003,23 @@ if test "$perfctr" != 0; then
 fi
 
 AC_ARG_WITH(perfctr_root,
-            [  --with-perfctr-root=<path>		Specify path to source tree (for use by developers only) ],
+            [AS_HELP_STRING([--with-perfctr-root=<path>],
+            [Specify path to source tree (for use by developers only)])],
             [perfctr_root=$withval
              user_specified_interface=perfctr])
 AC_ARG_WITH(perfctr_prefix,
-            [  --with-perfctr-prefix=<path>		Specify prefix to installed perfctr distribution ],
+            [AS_HELP_STRING([--with-perfctr-prefix=<path>],
+            [Specify prefix to installed perfctr distribution])],
             [perfctr_prefix=$withval
              user_specified_interface=perfctr])
 AC_ARG_WITH(perfctr_incdir,
-           [  --with-perfctr-incdir=<path>		Specify directory of perfctr header files in non-standard location ],
+            [AS_HELP_STRING([--with-perfctr-incdir=<path>],
+            [Specify directory of perfctr header files in non-standard location])],
            [perfctr_incdir=$withval
             user_specified_interface=perfctr])
 AC_ARG_WITH(perfctr_libdir,
-           [  --with-perfctr-libdir=<path>		Specify directory of perfctr library in non-standard location ],
+            [AS_HELP_STRING([--with-perfctr-libdir=<path>],
+            [Specify directory of perfctr library in non-standard location])],
            [perfctr_libdir=$withval
             user_specified_interface=perfctr])
 
@@ -1007,7 +1079,8 @@ perfmon2=no
 force_perfmon2=no
 
 AC_ARG_WITH(perfmon,
-            [  --with-perfmon=<x.y>		Specify perfmon as the performance interface and specify version],
+            [AS_HELP_STRING([--with-perfmon=<x.y>],
+            [Specify perfmon as the performance interface and specify version])],
             [perfmon=$withval 
              user_specified_interface=perfmon
 	     force_perfmon2=yes
@@ -1053,20 +1126,24 @@ force_pfm_incdir=no
 # default
 
 AC_ARG_WITH(pfm_root,
-           [  --with-pfm-root=<path>		Specify path to source tree (for use by developers only) ],
+            [AS_HELP_STRING([--with-pfm-root=<path>],
+            [Specify path to source tree (for use by developers only)])],
            [pfm_root=$withval
 	    pfm_incdir=$withval/include
 	    pfm_libdir=$withval/lib])
 AC_ARG_WITH(pfm_prefix,
-           [  --with-pfm-prefix=<path>		Specify prefix to installed pfm distribution ],
+            [AS_HELP_STRING([--with-pfm-prefix=<path>],
+            [Specify prefix to installed pfm distribution])],
            [pfm_prefix=$withval
 	    pfm_incdir=$pfm_prefix/include
 	    pfm_libdir=$pfm_prefix/lib])
 AC_ARG_WITH(pfm_incdir,
-           [  --with-pfm-incdir=<path>		Specify directory of pfm header files in non-standard location ],
+            [AS_HELP_STRING([--with-pfm-incdir=<path>],
+            [Specify directory of pfm header files in non-standard location])],
            [pfm_incdir=$withval])
 AC_ARG_WITH(pfm_libdir,
-           [  --with-pfm-libdir=<path>		Specify directory of pfm library in non-standard location ],
+            [AS_HELP_STRING([--with-pfm-libdir=<path>],
+            [Specify directory of pfm library in non-standard location])],
            [pfm_libdir=$withval])
 
 # if these are both empty, it means we haven't set either pfm_prefix or pfm_root
@@ -1091,15 +1168,16 @@ force_perf_events=no
 disable_uncore=yes
 
 AC_ARG_WITH(perf_events,
-              [  --with-perf-events		Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)],
+            [AS_HELP_STRING([--with-perf-events],
+            [Specify use of Linux Performance Event (requires kernel 2.6.32 or greater)])],
               [force_perf_events=yes
 	       user_specified_interface=pe])
 
 # RDPMC support
 
 AC_ARG_ENABLE(perfevent_rdpmc,
-AS_HELP_STRING([--enable-perfevent-rdpmc],
-		[Enable userspace rdpmc instruction on perf_event, default: yes]),
+              [AS_HELP_STRING([--enable-perfevent-rdpmc],
+              [Enable userspace rdpmc instruction on perf_event, default: yes])],
 [case "${enableval}" in
              yes) enable_perfevent_rdpmc=true ;;
              no)  enable_perfevent_rpdmc=false ;;
@@ -1113,14 +1191,16 @@ fi
 
 # Uncore support
 AC_ARG_WITH(pe_incdir,
-	      [  --with-pe-incdir=<path>		Specify path to the correct perf header file],
-              [pe_incdir=$withval 
-               force_perf_events=yes
-	       user_specified_interface=pe],
-	      [pe_incdir=$pfm_incdir/perfmon])
+            [AS_HELP_STRING([--with-pe-incdir=<path>],
+            [Specify path to the correct perf header file])],
+            [pe_incdir=$withval 
+              force_perf_events=yes
+              user_specified_interface=pe],
+            [pe_incdir=$pfm_incdir/perfmon])
 
 AC_ARG_ENABLE(perf_event_uncore,
-		[  --disable-perf-event-uncore		Disable perf_event uncore component])
+              [AS_HELP_STRING([--disable-perf-event-uncore],
+              [Disable perf_event uncore component])])
 
 AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
 	disable_uncore=no
@@ -1705,7 +1785,8 @@ echo "#define COMPONENTS_CONFIG_H" >> components_config.h
 echo "" >> components_config.h
 
 AC_ARG_WITH(components,
-        	[  --with-components=<"component1 component2">		Specify which components to build ],
+        	  [AS_HELP_STRING([--with-components=<"component1 component2">],
+            [Specify which components to build])],
         	[components="$components $withval"]) 
 
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
