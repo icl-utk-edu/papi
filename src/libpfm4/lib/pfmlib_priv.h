@@ -653,6 +653,7 @@ extern pfmlib_pmu_t arm_qcom_krait_support;
 extern pfmlib_pmu_t arm_cortex_a57_support;
 extern pfmlib_pmu_t arm_cortex_a53_support;
 extern pfmlib_pmu_t arm_xgene_support;
+extern pfmlib_pmu_t arm_n1_support;
 
 extern pfmlib_pmu_t arm_thunderx2_support;
 extern pfmlib_pmu_t arm_thunderx2_dmc0_support;

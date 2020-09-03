@@ -31,6 +31,43 @@
 #include "pfmlib_perf_event_priv.h"
 
 
+/*
+ * The s390 Performance Measurement counter facility does not have a fixed
+ * type number anymore. This was caused by linux kernel commits
+ * 66d258c5b0488 perf/core: Optimize perf_init_event()
+ * and its necessary follow on commit
+ * 6a82e23f45fe0 s390/cpumf: Adjust registration of s390 PMU device drivers
+ *
+ * Now read out the current type number from a sysfs file named
+ * /sys/devices/cpum_cf/type. If it does not exist there is no CPU-MF counter
+ * facility installed or activated.
+ *
+ * As the CPU Measurement counter facility does not change on a running
+ * system, read out the type value on first read and cache it.
+ */
+#define CPUM_CF_DEVICE_TYPE  "/sys/bus/event_source/devices/cpum_cf/type"
+static int cpum_cf_type;
+static int pfm_s390_get_perf_attr_type(void)
+{
+	size_t buflen;
+	char *buffer;
+	FILE *fp;
+
+	if (cpum_cf_type)
+		return cpum_cf_type;
+
+	fp = fopen(CPUM_CF_DEVICE_TYPE, "r");
+	if (fp == NULL)
+		return cpum_cf_type;
+	buffer = NULL;
+	if (pfmlib_getl(&buffer, &buflen, fp) != -1 &&
+	    sscanf(buffer, "%u", &cpum_cf_type) == -1)
+		cpum_cf_type = PERF_TYPE_RAW;
+	fclose(fp);
+	free(buffer);
+	return cpum_cf_type;
+}
+
 int pfm_s390x_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
@@ -44,7 +81,7 @@ int pfm_s390x_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	rc = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (rc == PFM_SUCCESS) {
 		/* currently use raw events only */
-		attr->type = PERF_TYPE_RAW;
+		attr->type = pfm_s390_get_perf_attr_type();
 		attr->config = e->codes[0];
 	}
 
