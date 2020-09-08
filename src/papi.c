@@ -1151,7 +1151,23 @@ PAPI_library_init( int version )
 	   papi_return( init_retval );
 	}
 
-	/* Initialize thread globals, including the main threads  */
+	/* Initialize component globals EXCEPT for perf_event, perf_event_uncore.
+    * To avoid race conditions, these components use the thread local storage
+    * construct initialized by _papi_hwi_init_global_threads(), from within 
+    * their init_component(). So these must have init_component() run AFTER
+    * _papi_hwi_init_global_threads. Other components demand that init threads
+    * run AFTER init_component(), which sets up globals they need.
+    */
+
+	tmp = _papi_hwi_init_global( 0 ); /* Selector 0 to skip perf_event, perf_event_uncore */
+	if ( tmp ) {
+		init_retval = tmp;
+		_papi_hwi_shutdown_global_internal(  );
+		_in_papi_library_init_cnt--;
+		papi_return( init_retval );
+	}
+	
+   /* Initialize thread globals, including the main threads  */
 
 	tmp = _papi_hwi_init_global_threads(  );
 	if ( tmp ) {
@@ -1161,9 +1177,9 @@ PAPI_library_init( int version )
 		papi_return( init_retval );
 	}
 
-	/* Initialize component globals */
+	/* Initialize perf_event, perf_event_uncore components */
 
-	tmp = _papi_hwi_init_global(  );
+	tmp = _papi_hwi_init_global( 1 ); /* Selector 1 for only perf_event, perf_event_uncore */
 	if ( tmp ) {
 		init_retval = tmp;
 		_papi_hwi_shutdown_global_internal(  );
