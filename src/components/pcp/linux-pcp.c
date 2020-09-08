@@ -867,8 +867,11 @@ static int _pcp_init_component(int cidx)
 
    ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, hostname);             // Set the new context to hostname retrieved.
    if (ctxHandle < 0) {
-      snprintf(reason, rLen, "Cannot connect to PM Daemon on host \"%s\".\n "
+      int retval = snprintf(reason, rLen, "Cannot connect to PM Daemon on host \"%s\".\n "
          "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);
+      if( retval >= rLen ) {
+          fprintf(stderr, "Error message has been truncated.\n");
+      }
       return(ctxHandle);                                                // contains PAPI error code, not handle.
    }
 
@@ -1004,8 +1007,11 @@ static int _pcp_init_component(int cidx)
          pmValue *pmval = &vset->vlist[0];                              // .. Get the first value.
          pmValueBlock *pB = pmval->value.pval;                          // .. get it.
          if (pcp_event_info[i].valType != pB->vtype) {
-            snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
+            int retval = snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
+            if( retval >= rLen ) {
+                fprintf(stderr, "Error message has been truncated.\n");
+            }
             return PAPI_ENOSUPP;                                          // .. in
          }
 
