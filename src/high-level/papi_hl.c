@@ -570,6 +570,13 @@ static int _internal_hl_create_components()
             requested_event_names[i][index] = '\0';
       }
 
+      /* change event type to instantaneous for specific events */
+      /* we consider all nvml events as instantaneous values */
+      if( (strstr(requested_event_names[i], "nvml:::") != NULL) ) {
+         event_type = 1;
+         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as instantaneous value.\n", requested_event_names[i]);
+      }
+
       /* check if event is supported on current machine */
       retval = _internal_hl_checkCounter(requested_event_names[i]);
       if ( retval != PAPI_OK ) {
@@ -830,7 +837,7 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ ) {
-            /* if event type is istant only save last value */
+            /* if event type is instantaneous only save last value */
             if ( components[i].event_types[j] == 1 )
                node->values[cmp_iter].total += _local_components[i].values[j];
             else

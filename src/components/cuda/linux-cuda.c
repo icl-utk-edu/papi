@@ -1,5 +1,6 @@
 /**
  * @file    linux-cuda.c
+ * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 08/2019, to make counters accumulate.)
  * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 2018, to use batch reads and support nvlink metrics.
  * @author  Asim YarKhan yarkhan@icl.utk.edu (updated in 2017 to support CUDA metrics)
  * @author  Asim YarKhan yarkhan@icl.utk.edu (updated in 2015 for multiple CUDA contexts/devices)
@@ -39,20 +40,36 @@
 // We use a define so we can use it as a static array dimension. Increase as needed.
 #define PAPICUDA_MAX_COUNTERS 512
 
-// #define PAPICUDA_KERNEL_REPLAY_MODE
-// w to punctuate an embedded quoted question within a declarative sentence? [duplicate]
+// CUDA metrics use events that are not "exposed" by the normal enumeration of
+// performance events; they are only identified by an event number (no name, 
+// no description). But we have to track them for accumulating purposes, they
+// get zeroed after a read too. This #define will add code that produces a
+// full event report, showing the composition of metrics, etc. This is a 
+// diagnostic aid, it is possible these unenumerated events will vary by 
+// GPU version or model, should some metric seem to be misbehaving.
+// #define PRODUCE_EVENT_REPORT
 
-// Contains device list, pointer to device description, and the list of all available events.
-typedef struct cuda_context {
-    int         deviceCount;
-    struct cuda_device_desc *deviceArray;
-    uint32_t    availEventSize;
-    CUpti_ActivityKind *availEventKind;
-    int         *availEventDeviceNum;
-    uint32_t    *availEventIDArray;
-    uint32_t    *availEventIsBeingMeasuredInEventset;
-    struct cuda_name_desc *availEventDesc;
-} cuda_context_t;
+// For the same unenumerated events, for experimentation and diagnostics, this
+// #define will add all the unumerated events as PAPI events that can be
+// queried individually.  The "event" will show up as something like
+// "cuda:::unenum_event:0x16000001:device=0", with a description "Unenumerated
+// Event used in a metric". But this allows you to add it to a PAPI_EventSet
+// and see how it behaves under different test kernels. 
+// #define EXPOSE_UNENUMERATED_EVENTS 
+
+// #define PAPICUDA_KERNEL_REPLAY_MODE
+
+// CUDA metrics can require events that do not appear in the 
+// enumerated event lists. A table of these tracks these for
+// cumulative valuing (necessary because a read of any counter
+// zeros it).
+typedef struct cuda_all_events {
+   CUpti_EventID  eventId;
+   int            deviceNum;
+   int            idx;              // -1 if unenumerated, otherwise idx into enumerated events.
+   int            nonCumulative;    // 1=do not accumulate. Spot value, or constant.
+   long unsigned int cumulativeValue;
+} cuda_all_events_t;
 
 /* Store the name and description for an event */
 typedef struct cuda_name_desc {
@@ -73,13 +90,27 @@ typedef struct cuda_device_desc {
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 } cuda_device_desc_t;
 
+// Contains device list, pointer to device description, and the list of all available events.
+typedef struct cuda_context {
+    int         deviceCount;
+    cuda_device_desc_t *deviceArray;
+    uint32_t    availEventSize;
+    CUpti_ActivityKind *availEventKind;
+    int         *availEventDeviceNum;
+    uint32_t    *availEventIDArray;
+    uint32_t    *availEventIsBeingMeasuredInEventset;
+    cuda_name_desc_t *availEventDesc;
+    uint32_t    numAllEvents;
+    cuda_all_events_t *allEvents;
+} cuda_context_t;
+
 // For each active cuda context (one measuring something) we also track the
 // cuda device number it is on. We track in separate arrays for each reading
 // method.  cuda metrics and nvlink metrics require multiple events to be read,
 // these are then arithmetically combined to produce the metric value. The
-// allEvents array stores all the actual events; i.e. metrics are deconstructed
-// to their individual events and stored there, as well as regular events, so
-// we can perform an analysis of how to read with cuptiEventGroupSetsCreate().
+// allEvents array stores all the actual events; i.e. metrics are decomposed 
+// to their individual events and both enumerated and metric events are stored,
+// so we can perform an analysis of how to read with cuptiEventGroupSetsCreate().
 
 typedef struct cuda_active_cucontext_s {
     CUcontext cuCtx;
@@ -90,7 +121,7 @@ typedef struct cuda_active_cucontext_s {
 
     uint32_t      allEventsCount;                               // entries in allEvents array.
     CUpti_EventID allEvents          [PAPICUDA_MAX_COUNTERS];   // allEvents, including sub-events of metrics. (no metric Ids in here).
-    uint64_t      allEventValues     [PAPICUDA_MAX_COUNTERS];   // aggregated event values.
+    long unsigned int allEventValues     [PAPICUDA_MAX_COUNTERS];   // aggregated event values.
 
     CUpti_EventGroupSets *eventGroupSets;                       // Built during add, to save time not doing it at read.
 } cuda_active_cucontext_t;
@@ -142,6 +173,9 @@ static cuda_control_t *global_cuda_control = NULL;
         cudaError_t _status = (call);                                               \
         if (_status != cudaSuccess) {                                               \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
+            fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
+            printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
+            fflush(stdout);  \
             handleerror;                                                            \
         }                                                                           \
     } while (0)
@@ -151,7 +185,9 @@ static cuda_control_t *global_cuda_control = NULL;
         CUresult _status = (call);                                                  \
         if (_status != CUDA_SUCCESS) {                                              \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
-            /* fprintf(stderr,"Line %i CU_CALL error function %s failed with error %08X.\n", __LINE__, #call, _status); */ \
+            fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
+            printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
+            fflush(stdout);  \
             handleerror;                                                            \
         }                                                                           \
     } while (0)
@@ -164,7 +200,9 @@ static cuda_control_t *global_cuda_control = NULL;
             const char *errstr;                                                                             \
             (*cuptiGetResultStringPtr)(_status, &errstr);                                                   \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                            \
-            /* fprintf(stderr, "Line %i CUPTI_CALL macro '%s' failed with error #%08X='%s'.\n", __LINE__, #call, _status, errstr); */  \
+            fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n", __FILE__, __func__, __LINE__, #call, _status, errstr);   \
+            printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n", __FILE__, __func__, __LINE__, #call, _status, errstr);   \
+            fflush(stdout);  \
             handleerror;                                                                                    \
         }                                                                                                   \
     } while (0)
@@ -175,6 +213,18 @@ static cuda_control_t *global_cuda_control = NULL;
   (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
 /* Function prototypes */
+
+// Sort into ascending order, by eventID and device.
+static int ascAllEvents(const void *A, const void *B) { 
+    cuda_all_events_t *a = (cuda_all_events_t*) A;
+    cuda_all_events_t *b = (cuda_all_events_t*) B;
+    if (a->eventId < b->eventId) return(-1);
+    if (a->eventId > b->eventId) return( 1);
+    if (a->deviceNum < b->deviceNum) return(-1);
+    if (a->deviceNum > b->deviceNum) return( 1);
+    return(0);
+}
+
 static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl);
 
 /* ******  CHANGE PROTOTYPES TO DECLARE CUDA LIBRARY SYMBOLS AS WEAK  **********
@@ -258,6 +308,38 @@ DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
 /*****************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
+
+
+//-----------------------------------------------------------------------------
+// Binary Search of gctxt->allEvents[gctxt->numAllEvents]. Returns idx, or -1.
+//-----------------------------------------------------------------------------
+static int _search_all_events(cuda_context_t * gctxt, CUpti_EventID id, int device) {
+    cuda_all_events_t *list =gctxt->allEvents; 
+    int lower=0, upper=gctxt->numAllEvents-1, middle=(lower+upper)/2;
+
+    while (lower <= upper) {
+        if (list[middle].eventId < id || 
+            (list[middle].eventId == id && list[middle].deviceNum < device)) {
+            lower = middle+1;
+        } else {
+            if (list[middle].eventId > id || 
+                (list[middle].eventId == id && list[middle].deviceNum > device)) {
+                upper = middle -1;
+            } else {
+                if (list[middle].eventId == id && list[middle].deviceNum == device) {
+                    return(middle);
+                }
+            }
+        }
+
+        // We have a new lower or new upper.
+        if (lower > upper) break;
+        middle = (lower+upper)/2;
+    }
+
+    return(-1);
+} // end search_all_events.
+
 
 /*
  * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
@@ -637,6 +719,11 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     // Now we retrieve and store all METRIC info for each device; this includes
     // both cuda metrics and nvlink metrics.
+    int firstMetricIdx = idxEventArray;
+    int maxUnenumEvents = 0;
+    int idxAllEvents = 0;
+    cuda_all_events_t *localAllEvents = NULL; 
+
     SUBDBG("Checking for metrics\n");
     for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         uint32_t maxMetrics = 0, i, j;
@@ -659,7 +746,23 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         // Elimination loop for metrics we cannot support.
         int saveDeviceNum = 0;
-        CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));       // save caller's device num.
+        cudaError_t _cudaErr;
+        CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), _cudaErr=_status);          // save caller's device num.
+        if (_cudaErr != cudaSuccess) {
+            if (_cudaErr ==  cudaErrorInvalidValue       ) {
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN);
+            }
+            if (_cudaErr ==  cudaErrorInitializationError) { 
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN);
+            }
+            if (_cudaErr ==  cudaErrorInsufficientDriver ) {
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN);
+            }
+            if (_cudaErr ==  cudaErrorNoDevice           ) { 
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN);
+            }
+            return(PAPI_EMISC);
+        }
 
         for (i=0, j=0; i<maxMetrics; i++) {                                         // process each metric Id.
             size = PAPI_MIN_STR_LEN-1;                                              // Most bytes allowed to be written.
@@ -749,10 +852,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
             CUPTI_CALL((*cuptiMetricEnumEventsPtr)                                  // .. Enumrate events in the metric.
                 (itemId, &sizeBytes, subEventIds),                                  // .. store in array.
-                return (PAPI_EINVAL));                                              // .. If cupti call fails.
+                cuptiRet = _status);                                                // .. If cupti call fails.
+
+            if (cuptiRet != CUPTI_SUCCESS) {
+               const char *errstr;
+               (*cuptiGetResultStringPtr)(cuptiRet, &errstr);
+               snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                  "Metric Enumeration Failed error '%s'.", errstr);
+               free(subEventIds);
+               return(PAPI_EINVAL);
+            }
 
             gctxt->availEventDesc[idxEventArray].metricEvents = subEventIds;        // .. Copy the array pointer for IDs.
             gctxt->availEventDesc[idxEventArray].numMetricEvents = numSubs;         // .. Copy number of elements in it.
+            maxUnenumEvents += numSubs;                                             // .. a rough size for unenum event array.
 
             idxEventArray++;                                                        // count another collectable found.
         } // end maxMetrics loop.
@@ -761,11 +874,153 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // Part of problem above, cannot create tempContext for unknown reason.
         // CU_CALL((*cuCtxDestroyPtr) (tempContext),     return (PAPI_EMISC));         // destroy the temporary context.
         CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum),  return (PAPI_EMISC));       // set the device pointer back to caller.
-    } // end 'for each device'.
+    } // end of device loop, for metrics.
+
+    //-------------------------------------------------------------------------
+    // The NVIDIA code, by design, zeros counters once events are read. PAPI
+    // promises monotonically increasing performance counters. So we have to
+    // accumulate the counters in-between reads. We make a new list here, 
+    // which includes unenumerated events, so we can do that.
+    //-------------------------------------------------------------------------
+    // Build an all Events array. Over-specify the number of entries.
+    localAllEvents = calloc(maxUnenumEvents+firstMetricIdx, sizeof(cuda_all_events_t));
+    CHECK_PRINT_EVAL(localAllEvents == NULL, "Malloc failed", return (PAPI_ENOMEM));
+
+    unsigned int i,j;
+    int k;
+   
+    // Begin by populating with all fixed events. 
+    for (k=0; k<firstMetricIdx; k++) {
+        localAllEvents[k].eventId = gctxt->availEventIDArray[k];         // CUpti EventID.
+        localAllEvents[k].deviceNum = gctxt->availEventDeviceNum[k];     // Device.
+        localAllEvents[k].idx = k;                                       // Index into table.
+        localAllEvents[k].nonCumulative = 0;                             // flag if spot or constant event.
+    }        
+      
+    idxAllEvents = firstMetricIdx;
+    for (i = firstMetricIdx; i<idxEventArray; i++) {
+        uint32_t numSubs=gctxt->availEventDesc[i].numMetricEvents;
+        #ifdef PRODUCE_EVENT_REPORT
+        fprintf(stderr, "%s %d SubEvents:\n", gctxt->availEventDesc[i].name, numSubs);
+        #endif 
+        // Look for any subEvents that are NOT in the array of raw events
+        // we have already composed, and add to array. 
+        // i=current metric idx, j is subEvent entry within it,
+        // k index is search item within known events.
+        for (j=0; j<numSubs; j++) {
+            #ifdef PRODUCE_EVENT_REPORT
+            fprintf(stderr, "    0x%08X = ",gctxt->availEventDesc[i].metricEvents[j]); 
+            #endif 
+            // search for this subEventId in our list.
+            for (k=0; k<firstMetricIdx; k++) {
+                if (gctxt->availEventIDArray[k] ==                  // existing event id
+                    gctxt->availEventDesc[i].metricEvents[j] &&     // metric event and subEvent id,
+                    gctxt->availEventDeviceNum[k] ==                // existing event device, 
+                    gctxt->availEventDeviceNum[i]) break;           // subEvent device.
+                }
+
+             // If we found it, report but move on to next subEvent,
+             // we do not need to add this to the list as a newly
+             // discovered event.
+            if (k < firstMetricIdx) {
+                #ifdef PRODUCE_EVENT_REPORT
+                fprintf(stderr, "%s\n", gctxt->availEventDesc[k].name);
+                #endif 
+                continue;
+            }
+
+            // Here, we did not find it in the list of normal events, so
+            // we have to add it in.
+            #ifdef PRODUCE_EVENT_REPORT
+            fprintf(stderr, "?\n");      
+            #endif 
+            localAllEvents[idxAllEvents].eventId = 
+                gctxt->availEventDesc[i].metricEvents[j];
+            localAllEvents[idxAllEvents].deviceNum = 
+                gctxt->availEventDeviceNum[i];
+            localAllEvents[idxAllEvents].idx = -1;
+            localAllEvents[idxAllEvents].nonCumulative = 0;
+            idxAllEvents++;
+        }
+    } // end 'for each metric' search for unique subevents. 
 
     gctxt->availEventSize = idxEventArray;
 
-    /* return 0 if everything went OK */
+    // We should have an array of all possible events, with duplicates.
+    // Sort into ascending order by event #, device #.
+    qsort(localAllEvents, idxAllEvents, sizeof(cuda_all_events_t), ascAllEvents);
+
+    // condense to remove duplicates. i scans list,
+    // j holds count (and index) of next unique eventId.
+    j=1;
+    for (k=1; k<idxAllEvents; k++) {
+        if (localAllEvents[k].eventId == localAllEvents[k-1].eventId &&
+            localAllEvents[k].deviceNum == localAllEvents[k-1].deviceNum) continue;
+        // found a new EventId.
+        localAllEvents[j].eventId   = localAllEvents[k].eventId;
+        localAllEvents[j].deviceNum = localAllEvents[k].deviceNum;
+        localAllEvents[j].idx       = localAllEvents[k].idx;
+        j++;
+    }
+
+    gctxt->numAllEvents = j;
+    gctxt->allEvents = localAllEvents;
+
+    #ifdef PRODUCE_EVENT_REPORT
+    fprintf(stderr, "\nFull Event Report:\n"); 
+    for (k=0; k<(signed) j; k++) {
+        fprintf(stderr, "Event=0x%08x  Device=%d Name=", 
+        gctxt->allEvents[k].eventId, gctxt->allEvents[k].deviceNum);
+        int idx=gctxt->allEvents[k].idx;
+        if (idx >= 0) {                                             // If a known event,
+            fprintf(stderr, "%s\n", gctxt->availEventDesc[idx].name);
+        } else {
+            fprintf(stderr, "?\n");
+        }
+    }
+
+    fprintf(stderr, "UnEnumerated Events Total Usage: %d Unique: %d.\n", idxAllEvents-firstMetricIdx, j-firstMetricIdx);
+    #endif 
+
+#ifdef EXPOSE_UNENUMERATED_EVENTS /* To help with Unenum event exploration: */
+    /* Reallocate space for all events and descriptors to make room. */
+    maxEventSize += (j-firstMetricIdx); 
+    gctxt->availEventKind = (CUpti_ActivityKind *) papi_realloc(gctxt->availEventKind, maxEventSize * sizeof(CUpti_ActivityKind));
+    CHECK_PRINT_EVAL(!gctxt->availEventKind, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+    gctxt->availEventDeviceNum = (int *) papi_realloc(gctxt->availEventDeviceNum,maxEventSize * sizeof(int));
+    CHECK_PRINT_EVAL(!gctxt->availEventDeviceNum, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+    gctxt->availEventIDArray = (CUpti_EventID *) papi_realloc(gctxt->availEventIDArray,maxEventSize * sizeof(CUpti_EventID));
+    CHECK_PRINT_EVAL(!gctxt->availEventIDArray, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+    gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_realloc(gctxt->availEventIsBeingMeasuredInEventset,maxEventSize * sizeof(uint32_t));
+    CHECK_PRINT_EVAL(!gctxt->availEventIsBeingMeasuredInEventset, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+    gctxt->availEventDesc = (cuda_name_desc_t *) papi_realloc(gctxt->availEventDesc,maxEventSize * sizeof(cuda_name_desc_t));
+    CHECK_PRINT_EVAL(!gctxt->availEventDesc, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+
+    for (k=0; k<(signed) j; k++) {
+        int idx=gctxt->allEvents[k].idx;
+        if (idx < 0) {
+            gctxt->availEventKind[idxEventArray] = CUPTI_ACTIVITY_KIND_EVENT;           // .. record the kind,
+            gctxt->availEventIDArray[idxEventArray] = gctxt->allEvents[k].eventId;      // .. record the id,
+            gctxt->availEventDeviceNum[idxEventArray] = gctxt->allEvents[k].deviceNum;  // .. record the device number,
+            // We have tried to get the names of these events using
+            // cuptiEventGetAttribute() with CUPTI_EVENT_ATTR_NAME,
+            // it just returns "event_name" for all them.
+            snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MAX_STR_LEN,       // record expanded name for papi user.
+                "unenum_event:0x%08X:device=%d", 
+                gctxt->allEvents[k].eventId, 
+                gctxt->allEvents[k].deviceNum);
+            gctxt->availEventDesc[idxEventArray].name[PAPI_MAX_STR_LEN - 1] = '\0'; // ensure null termination.
+            snprintf(gctxt->availEventDesc[idxEventArray].description, PAPI_2MAX_STR_LEN - 1,
+            "Unenumerated Event used in a metric.");
+            gctxt->availEventDesc[idxEventArray].numMetricEvents = 0;                       // Not a metric.
+            gctxt->availEventDesc[idxEventArray].metricEvents = NULL;                       // No space allocated.
+            idxEventArray++;                                                        // Bump total number of events.
+        }
+    } 
+
+    gctxt->availEventSize = idxEventArray;
+#endif /* END IF we should expose Unenumerated Events */
+
     return 0;
 } // end _cuda_add_native_events
 
@@ -873,9 +1128,9 @@ static int _cuda_init_component(int cidx)
 
     /* Get list of all native CUDA events supported */
     rv = _cuda_add_native_events(global_cuda_context);
-    if(rv != 0)
+    if(rv != 0) {
         return (rv);
-
+    }
     /* Export some information */
     _cuda_vector.cmp_info.CmpIdx = cidx;
     _cuda_vector.cmp_info.num_native_events = global_cuda_context->availEventSize;
@@ -936,11 +1191,14 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     if(nativeCount == 0)
         return (PAPI_OK);
 
-    /* Get deviceNum, initialize context if needed via free, get context */
+    // Get deviceNum.
     CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d \n", currDeviceNum);
 
-    CUDA_CALL((*cudaFreePtr) (NULL), return (PAPI_EMISC));
+    // cudaFree(NULL) does nothing real, but initializes a new cuda context
+    // if one does not exist. This prevents cuCtxGetCurrent() from failing.
+    // If it returns an error, we ignore it.
+    CUDA_CALL((*cudaFreePtr) (NULL), );
     CU_CALL((*cuCtxGetCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d cuCtx %p \n", currDeviceNum, currCuCtx);
 
@@ -1135,22 +1393,28 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 } // end PAPI_update_control_state.
 
 
-/* Triggered by PAPI_start().
- * For CUDA component, switch to each context and start all eventgroups.
-*/
+// Triggered by PAPI_start().
+// For CUDA component, switch to each context and start all eventgroups.
 static int _cuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering\n");
     (void) ctx;
     (void) ctrl;
     cuda_control_t *gctrl = global_cuda_control;
-    // cuda_context_t *gctxt = global_cuda_context;
+    cuda_context_t *gctxt = global_cuda_context;
     uint32_t ii, gg, cc;
     int saveDeviceNum = -1;
 
     SUBDBG("Reset all active event values\n");
-    for(ii = 0; ii < gctrl->activeEventCount; ii++)                             // These are the values we will return.
+    // Zeroing values for the local read.
+    for(ii = 0; ii < gctrl->activeEventCount; ii++) {
         gctrl->activeEventValues[ii] = 0;
+    }
+
+    // Zeroing cumulative values at start.
+    for(ii = 0; ii < gctxt->numAllEvents; ii++) {
+        gctxt->allEvents[ii].cumulativeValue = 0;
+    }
 
     SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
@@ -1195,6 +1459,9 @@ static int _cuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 // variables to keep track of the one and only eventset.  Note that **values is
 // where we have to give PAPI the address of an array of the values we read (or
 // composed).
+// ALSO note, cuda resets all event counters to zero after a read, while PAPI
+// promises monotonically increasing counters (from PAPI_start()). So we have
+// to synthesize that.
 
 static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
 {
@@ -1346,11 +1613,30 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
         } // end of an event group.
 
         // We have finished all event groups within this context; allEvents[]
-        // and allEventValues[] are populated. Now we compute metrics and move
-        // event values. We do that by looping through the events assigned to
-        // this context, and we must back track to the activeEventIdx[] and
-        // activeEventValues[] array in gctrl. We have kept our indexes into
-        // that array, in ctxActive[].
+        // and allEventValues[] are populated. Now we must update the
+        // cumulative totals.
+        for (i=0; i<(unsigned) AEIdx; i++) {
+            CUpti_EventID myId = activeCuCtxt->allEvents[i]; 
+            int myIdx = _search_all_events(gctxt, myId, currDeviceNum);
+            if (myIdx < 0) {
+                fprintf(stderr, "Failed to find event 0x%08X device=%d.\n", myId, currDeviceNum);
+                continue;
+            }
+
+            if (gctxt->allEvents[myIdx].nonCumulative == 0) {
+                long unsigned int temp = gctxt->allEvents[myIdx].cumulativeValue;
+                gctxt->allEvents[myIdx].cumulativeValue += activeCuCtxt->allEventValues[i];
+                if (gctxt->allEvents[myIdx].cumulativeValue < temp) {
+                    fprintf(stderr, "%s:%s:%i temp=%ld, value=%ld, result=%ld.\n", __FILE__, __func__, __LINE__, 
+                    temp, gctxt->allEvents[myIdx].cumulativeValue, activeCuCtxt->allEventValues[i]);
+                }
+                activeCuCtxt->allEventValues[i] = gctxt->allEvents[myIdx].cumulativeValue;
+            }
+        }
+        // Now we compute metrics and move event values. We do that by looping
+        // through the events assigned to this context, and we must back track
+        // to the activeEventIdx[] and activeEventValues[] array in gctrl. We
+        // have kept our indexes into that array, in ctxActive[].
 
         uint32_t ctxActiveCount =  activeCuCtxt->ctxActiveCount;                // Number of (papi user) events in this context.
         uint32_t *ctxActive =  activeCuCtxt->ctxActiveEvents;                   // index of each event in gctrl->activeEventXXXX.
@@ -1385,7 +1671,7 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
                     durationNs, &myValue),                                      // duration (for rates), and where to return the value.
                     return(PAPI_EMISC));                                        // In case of error.
 
-                _cuda_convert_metric_value_to_long_long(                     // convert the value computed to long long and store it.
+                _cuda_convert_metric_value_to_long_long(                        // convert the value computed to long long and store it.
                     myValue, myDesc->MV_Kind,
                     &gctrl->activeEventValues[activeIdx]);
             }
