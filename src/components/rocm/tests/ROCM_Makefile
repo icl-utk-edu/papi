@@ -2,7 +2,7 @@
 # Modified for testing in a PAPI environment.
 
 include ../../Makefile_comp_tests.target
-HIP_PATH?= $(wildcard /opt/rocm/hip)
+HIP_PATH= ${PAPI_ROCM_ROOT}/hip
 ifeq (,$(HIP_PATH))
 	HIP_PATH=../../..
 endif

@@ -139,10 +139,10 @@ typedef struct _rocm_active_context_s {
 static int _rocm_cleanup_eventset(void);
 
 // GLOBALS
-#define         EventTableSize 64
+#define         EVENT_TABLE_SIZE 64
 static int      global_num_native_events = 0;
 static int      Number_Events_Requested=0;
-static char     *MyEventTable[EventTableSize];
+static char     *MyEventTable[EVENT_TABLE_SIZE];
 static int      RunKernel=1;     
 static int      Verbose   = 0; 
 
@@ -432,7 +432,7 @@ void helpText(void) {
     fprintf(stderr, "leading 'rocm:::'. Thus, not 'rocm:::SQ_INSTS_LDS:device=0', just         \n");
     fprintf(stderr, "'SQ_INSTS_LDS:device=0'. These names can be seen in the output of the     \n");
     fprintf(stderr, "utility papi/src/utils/papi_native_avail. Each event to be read should be \n");
-    fprintf(stderr, "a command line argument. At least 1 must be specified, the maximum is %d. \n", EventTableSize);
+    fprintf(stderr, "a command line argument. At least 1 must be specified, the maximum is %d. \n", EVENT_TABLE_SIZE);
     fprintf(stderr, "                                                                          \n");
     fprintf(stderr, "In addition, any argument beginning with -- will not be used as an event, \n");
     fprintf(stderr, "but interpreted as a control, below the controls are detailed. An argument\n");
@@ -506,9 +506,9 @@ void parseArgs(int argc, char **argv) {
         }
 
         // if it wasn't above, it must be an event to request.
-        if (Number_Events_Requested >= EventTableSize) {
+        if (Number_Events_Requested >= EVENT_TABLE_SIZE) {
             fprintf(stderr, "ERROR: Maximum number of events is %d, Event '%s' exceeds that.\n",
-                EventTableSize, argv[i]);
+                EVENT_TABLE_SIZE, argv[i]);
             exit(-1);
         }
 
