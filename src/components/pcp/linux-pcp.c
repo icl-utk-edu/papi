@@ -870,7 +870,7 @@ static int _pcp_init_component(int cidx)
       int retval = snprintf(reason, rLen, "Cannot connect to PM Daemon on host \"%s\".\n "
          "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);
       if( retval >= rLen ) {
-          fprintf(stderr, "Error message has been truncated.\n");
+          fprintf(stderr, "%s:%i Error message has been truncated.\n",__FILE__,__LINE__);
       }
       return(ctxHandle);                                                // contains PAPI error code, not handle.
    }
@@ -1010,7 +1010,7 @@ static int _pcp_init_component(int cidx)
             int retval = snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
             if( retval >= rLen ) {
-                fprintf(stderr, "Error message has been truncated.\n");
+                fprintf(stderr, "%s:%i Error message has been truncated.\n",__FILE__,__LINE__);
             }
             return PAPI_ENOSUPP;                                          // .. in
          }
