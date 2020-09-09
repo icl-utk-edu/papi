@@ -746,7 +746,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         // Elimination loop for metrics we cannot support.
         int saveDeviceNum = 0;
-        cudaError_t _cudaErr;
+        cudaError_t _cudaErr = cudaSuccess;
         CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), _cudaErr=_status);          // save caller's device num.
         if (_cudaErr != cudaSuccess) {
             if (_cudaErr ==  cudaErrorInvalidValue       ) {
@@ -850,6 +850,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             CHECK_PRINT_EVAL(subEventIds == NULL, "Malloc failed",                  // .. If malloc fails,
                 return (PAPI_ENOMEM));
 
+            cuptiRet = CUPTI_SUCCESS;
             CUPTI_CALL((*cuptiMetricEnumEventsPtr)                                  // .. Enumrate events in the metric.
                 (itemId, &sizeBytes, subEventIds),                                  // .. store in array.
                 cuptiRet = _status);                                                // .. If cupti call fails.
