@@ -467,7 +467,7 @@ int _papi_hwi_read( hwd_context_t * context, EventSetInfo_t * ESI,
 		    long long *values );
 int _papi_hwi_cleanup_eventset( EventSetInfo_t * ESI );
 int _papi_hwi_convert_eventset_to_multiplex( _papi_int_multiplex_t * mpx );
-int _papi_hwi_init_global( void );
+int _papi_hwi_init_global( int PE_OR_PEU );
 int _papi_hwi_init_global_internal( void );
 int _papi_hwi_init_os(void);
 void _papi_hwi_init_errors(void);
