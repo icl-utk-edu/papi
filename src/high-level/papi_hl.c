@@ -1165,34 +1165,24 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
    int num_events, i, j;
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
-   fprintf(f, "\"definitions\":{");
-   _internal_hl_json_line_break_and_indent(f, beautifier, 2);
-
-   fprintf(f, "\"event_types\":{");
-   _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-   fprintf(f, "\"delta\":\"0\",");
-   _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-   fprintf(f, "\"instantaneous\":\"1\"");
-   _internal_hl_json_line_break_and_indent(f, beautifier, 2);
-   fprintf(f, "},");
-
-   _internal_hl_json_line_break_and_indent(f, beautifier, 2);
-   fprintf(f, "\"events\":{");
+   fprintf(f, "\"event_definitions\":{");
 
    /* get all events + types */
    num_events = 1;
    for ( i = 0; i < num_of_components; i++ ) {
       for ( j = 0; j < components[i].num_of_events; j++ ) {
-         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "\"%s\":\"%d\"", components[i].event_names[j], components[i].event_types[j]);
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+
+         if ( components[i].event_types[j] == 0 )
+            fprintf(f, "\"%s\":\"%s\"", components[i].event_names[j], "delta");
+         else
+            fprintf(f, "\"%s\":\"%s\"", components[i].event_names[j], "instant");
+
          if ( num_events < total_num_events )
             fprintf(f, ",");
          num_events++;
       }
    }
-
-   _internal_hl_json_line_break_and_indent(f, beautifier, 2);
-   fprintf(f, "}");
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
    fprintf(f, "},");
