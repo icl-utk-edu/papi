@@ -1174,9 +1174,9 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
 
          if ( components[i].event_types[j] == 0 )
-            fprintf(f, "\"%s\":\"%s\"", components[i].event_names[j], "delta");
+            fprintf(f, "\"%s\":\"delta\"", components[i].event_names[j]);
          else
-            fprintf(f, "\"%s\":\"%s\"", components[i].event_names[j], "instant");
+            fprintf(f, "\"%s\":\"instant\"", components[i].event_names[j]);
 
          if ( num_events < total_num_events )
             fprintf(f, ",");
