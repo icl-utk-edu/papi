@@ -430,7 +430,7 @@ static int _internal_hl_read_user_events(const char *user_events)
       }
    }
 
-   num_of_requested_events = num_of_req_events;
+   num_of_requested_events = req_event_index;
    free(user_events_copy);
    if ( num_of_requested_events == 0 )
       return PAPI_EINVAL;
