@@ -454,8 +454,19 @@ PRESET,PAPI_L2_DCM,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:LS_RD_
 PRESET,PAPI_L2_DCR,NOT_DERIVED,REQUESTS_TO_L2_GROUP1:RD_BLK_L
 PRESET,PAPI_L2_DCH,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:LS_RD_BLK_L_HIT_X
 
-#
-#
+# New FLOP event on zen2
+# PPR (under section 2.1.15.3. --
+# https://www.amd.com/system/files/TechDocs/54945_3.03_ppr_ZP_B2_pub.zip)
+# explains that FLOP events require MergeEvent support, which was included 
+# in the 5.6 kernel. 
+# Hence, a kernel version 5.6 or greater is required.
+# NOTE: without the MergeEvent support in the kernel, there is no guarantee
+# that this SSE/AVX FLOP event produces any useful data whatsoever.  
+PRESET,PAPI_FP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+PRESET,PAPI_DP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+PRESET,PAPI_SP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+
+
 CPU,Intel architectural PMU
 CPU,ix86arch
 #
