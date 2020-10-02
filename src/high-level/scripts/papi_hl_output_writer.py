@@ -55,58 +55,115 @@ def merge_json_files(source):
   #                  separators=(',', ': '), ensure_ascii=False)
   return json_object
 
+class Sum_Counter(object):
+  def __init__(self):
+    self.min = None
+    self.all_values = []
+    self.max = 0.0
+
+  def add_event(self, value):
+    if isinstance(value, dict):
+      if self.min > value['min'] or self.min is None:
+        self.min = value['min']
+      self.all_values.append(value['avg'])
+      if self.max < value['max']:
+        self.max = value['max']
+    else:
+      if self.min > value or self.min is None:
+        self.min = value
+      self.all_values.append(value)
+      if self.max < value:
+        self.max = value
+
+  def get_min(self):
+    return self.min
+
+  def get_median(self):
+    return self.all_values
+
+  def get_sum(self):
+    sum = 0.0
+    for value in self.all_values:
+      sum += float(value)
+    return sum
+
+  def get_max(self):
+    return self.max
+
+
 class Sum_Counters(object):
-  regions = OrderedDict()
-  regions_last_rank_id = {}
+
+  def __init__(self):
+    self.regions = OrderedDict()
+    self.regions_last_rank_id = {}
+    self.regions_rank_num = {}
+    self.regions_thread_num = {}
+
+    self.clean_regions = OrderedDict()
+    self.sum_counters = OrderedDict()
 
   def add_region(self, rank_id, region, events=OrderedDict()):
 
-    #clean events from read values caused by PAPI_hl_read
+    #remove all read values caused by PAPI_hl_read
     cleaned_events = OrderedDict()
     for key,value in events.items():
       metric_value = value
       if isinstance(value, dict):
-        metric_value = float(value['total'])
+        if "total" in value:
+          metric_value = float(value['total'])
+        elif "min" in value and "avg" in value and "max" in value:
+          metric_value = {"min":value['min'], "avg":value['avg'], "max":value['max']}
+        else:
+          metric_value = value
       cleaned_events[key] = metric_value
+      #print("add_region ", rank_id, region, key, metric_value)
 
+    #create new Sum_Counter object for each new region
     if region not in self.regions:
-      #new region
-      new_region_events = cleaned_events.copy()
-      new_region_events['Number of ranks'] = 1
-      new_region_events['Number of threads'] = 1
-      new_region_events['Number of processes'] = 1
-      self.regions[region] = new_region_events.copy()
+      self.regions[region] = {}
       self.regions_last_rank_id[region] = rank_id
+      self.regions_rank_num[region] = 1
+      self.regions_thread_num[region] = 1
+      self.sum_counters[region] = OrderedDict()
+      for key,value in cleaned_events.items():
+        self.sum_counters[region][key] = Sum_Counter()
+        self.sum_counters[region][key].add_event(value)
     else:
-      #add counter values to existing region
-      known_events = self.regions[region].copy()
-      new_events = cleaned_events.copy()
-
       #increase number of ranks when rank_id has changed
-      if self.regions_last_rank_id[region] == rank_id:
-        new_events['Number of ranks'] = 0
-      else:
+      if self.regions_last_rank_id[region] != rank_id:
         self.regions_last_rank_id[region] = rank_id
-        new_events['Number of ranks'] = 1
+        self.regions_rank_num[region] += 1
 
       #always increase number of threads
-      new_events['Number of threads'] = 1
-      new_events['Number of processes'] = 1
+      self.regions_thread_num[region] += 1
 
-      #add values
-      for event_key,event_value in known_events.items():
-        if 'Number of' in event_key or 'count' in event_key:
-          known_events[event_key] = event_value + new_events[event_key]
-        else:
-          known_events[event_key] = float(format(event_value + new_events[event_key], '.2f'))
-      self.regions[region] = known_events.copy()
+      for key,value in cleaned_events.items():
+        self.sum_counters[region][key].add_event(value)
+
+    self.regions[region]['rank_num'] = self.regions_rank_num[region]
+    self.regions[region]['thread_num'] = self.regions_thread_num[region]
+
 
   def get_json(self):
-    #calculate correct thread number (number of processes / number of ranks)
+    sum_json = OrderedDict()
     for name in self.regions:
-      events = self.regions[name]
-      events['Number of threads'] = int(events['Number of processes'] / events['Number of ranks'])
-    return self.regions
+      events = OrderedDict()
+      for key,value in self.sum_counters.items():
+        if key == name:
+          for event_key,event_value in value.items():
+            if event_key == 'region_count':
+              events[event_key] = int(event_value.get_sum())
+            else:
+              events[event_key] = OrderedDict()
+              events[event_key]['min'] = event_value.get_min()
+              events[event_key]['median'] = event_value.get_median()
+              events[event_key]['max'] = event_value.get_max()
+        break
+      events['Number of ranks'] = self.regions[name]['rank_num']
+      events['Number of threads per rank'] = int(self.regions[name]['thread_num'] / self.regions[name]['rank_num'])
+      
+      sum_json[name] = events
+    return sum_json
 
 
 def sum_json_object(json):
@@ -162,23 +219,23 @@ def convert_value(value, event_type = 'Other'):
   return result
 
 
-def format_read_events(events, event_type = 'Other'):
+def derive_read_events(events, event_type = 'Other'):
   format_read_dict = OrderedDict()
   for read_key,read_value in events.items():
     format_read_dict[read_key] = convert_value(read_value, event_type)
   return format_read_dict
 
 
-def format_events(events):
+def derive_events(events):
   #keep order as declared
-  format_events = OrderedDict()
+  derive_events = OrderedDict()
   #remember runtime for other metrics like MFLOPS
   rt = 1.0
   rt_dict = OrderedDict()
 
   #Region Count
   if 'region_count' in events:
-    format_events['Region count'] = int(events['region_count'])
+    derive_events['Region count'] = int(events['region_count'])
     del events['region_count']
 
   #Real Time
@@ -186,31 +243,31 @@ def format_events(events):
     if isinstance(events['cycles'],dict):
       for read_key,read_value in events['cycles'].items():
         rt_dict[read_key] = float(read_value) / int(cpu_freq)
-      format_events['Real time in s'] = format_read_events(events['cycles'],'Runtime')
+      derive_events['Real time in s'] = derive_read_events(events['cycles'],'Runtime')
     else:
       rt = float(events['cycles']) / int(cpu_freq)
-      format_events['Real time in s'] = convert_value(events['cycles'], 'Runtime')
+      derive_events['Real time in s'] = convert_value(events['cycles'], 'Runtime')
     del events['cycles']
 
   #CPU Time
   if 'perf::TASK-CLOCK' in events:
     if isinstance(events['perf::TASK-CLOCK'],dict):
-      format_events['CPU time in s'] = format_read_events(events['perf::TASK-CLOCK'],'CPUtime')
+      derive_events['CPU time in s'] = derive_read_events(events['perf::TASK-CLOCK'],'CPUtime')
     else:
-      format_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK'], 'CPUtime')
+      derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK'], 'CPUtime')
     del events['perf::TASK-CLOCK']
 
   #PAPI_TOT_INS and PAPI_TOT_CYC to calculate IPC
   if 'PAPI_TOT_INS' and 'PAPI_TOT_CYC' in events:
     if isinstance(events['PAPI_TOT_INS'],dict) and isinstance(events['PAPI_TOT_CYC'],dict):
       ipc_dict = get_ipc_dict(events['PAPI_TOT_INS'], events['PAPI_TOT_CYC'])
-      format_events['IPC'] = ipc_dict
+      derive_events['IPC'] = ipc_dict
     else:
       try:
         ipc = float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC']))
       except:
         ipc = 0
-      format_events['IPC'] = float(format(ipc, '.2f'))
+      derive_events['IPC'] = float(format(ipc, '.2f'))
 
     del events['PAPI_TOT_INS']
     del events['PAPI_TOT_CYC']
@@ -219,79 +276,79 @@ def format_events(events):
   if 'PAPI_FP_INS' in events:
     if isinstance(events['PAPI_FP_INS'],dict):
       mflips_dict = get_ops_dict(events['PAPI_FP_INS'], rt_dict)
-      format_events['MFLIPS/s'] = mflips_dict
+      derive_events['MFLIPS/s'] = mflips_dict
     else:
       mflips = float(events['PAPI_FP_INS']) / 1000000 / rt
       mflips = float(format(mflips, '.2f'))
-      format_events['MFLIPS/s'] = mflips
+      derive_events['MFLIPS/s'] = mflips
     del events['PAPI_FP_INS']
 
   #SP vector instructions per second
   if 'PAPI_VEC_SP' in events:
     if isinstance(events['PAPI_VEC_SP'],dict):
       mvecins_dict = get_ops_dict(events['PAPI_VEC_SP'], rt_dict)
-      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+      derive_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins_dict
     else:
       mvecins = float(events['PAPI_VEC_SP']) / 1000000 / rt
       mvecins = float(format(mvecins, '.2f'))
-      format_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins
+      derive_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins
     del events['PAPI_VEC_SP']
 
   #DP vector instructions per second
   if 'PAPI_VEC_DP' in events:
     if isinstance(events['PAPI_VEC_DP'],dict):
       mvecins_dict = get_ops_dict(events['PAPI_VEC_DP'], rt_dict)
-      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins_dict
+      derive_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins_dict
     else:
       mvecins = float(events['PAPI_VEC_DP']) / 1000000 / rt
       mvecins = float(format(mvecins, '.2f'))
-      format_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins
+      derive_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins
     del events['PAPI_VEC_DP']
   
   #FLOPS
   if 'PAPI_FP_OPS' in events:
     if isinstance(events['PAPI_FP_OPS'],dict):
       mflops_dict = get_ops_dict(events['PAPI_FP_OPS'], rt_dict)
-      format_events['MFLOPS/s'] = mflops_dict
+      derive_events['MFLOPS/s'] = mflops_dict
     else:
       mflops = float(events['PAPI_FP_OPS']) / 1000000 / rt
       mflops = float(format(mflops, '.2f'))
-      format_events['MFLOPS/s'] = mflops
+      derive_events['MFLOPS/s'] = mflops
     del events['PAPI_FP_OPS']
   
   #SP FLOPS
   if 'PAPI_SP_OPS' in events:
     if isinstance(events['PAPI_SP_OPS'],dict):
       mflops_dict = get_ops_dict(events['PAPI_SP_OPS'], rt_dict)
-      format_events['Single precision MFLOPS/s'] = mflops_dict
+      derive_events['Single precision MFLOPS/s'] = mflops_dict
     else:
       mflops = float(events['PAPI_SP_OPS']) / 1000000 / rt
       mflops = float(format(mflops, '.2f'))
-      format_events['Single precision MFLOPS/s'] = mflops
+      derive_events['Single precision MFLOPS/s'] = mflops
     del events['PAPI_SP_OPS']
 
   #DP FLOPS
   if 'PAPI_DP_OPS' in events:
     if isinstance(events['PAPI_DP_OPS'],dict):
       mflops_dict = get_ops_dict(events['PAPI_DP_OPS'], rt_dict)
-      format_events['Double precision MFLOPS/s'] = mflops_dict
+      derive_events['Double precision MFLOPS/s'] = mflops_dict
     else:
       mflops = float(events['PAPI_DP_OPS']) / 1000000 / rt
       mflops = float(format(mflops, '.2f'))
-      format_events['Double precision MFLOPS/s'] = mflops
+      derive_events['Double precision MFLOPS/s'] = mflops
     del events['PAPI_DP_OPS']
 
   #read the rest
   for event_key,event_value in events.items():
     if isinstance(event_value,dict):
-      format_events[event_key] = format_read_events(event_value)
+      derive_events[event_key] = derive_read_events(event_value)
     else:
-      format_events[event_key] = convert_value(event_value)
+      derive_events[event_key] = convert_value(event_value)
 
-  return format_events
+  return derive_events
 
 
-def format_json_object(json):
+def derive_json_object(json):
   json_object = {}
   json_object['ranks'] = []
 
@@ -312,7 +369,7 @@ def format_json_object(json):
         for region_key,region_value in region.items():
           # print region_key
           # print region_value
-          json_region[region_key] = format_events(region_value)
+          json_region[region_key] = derive_events(region_value)
 
         json_thread['regions'].append(json_region)
       json_rank['threads'].append(json_thread)
@@ -329,17 +386,20 @@ def write_json_file(data, file_name):
     print (str_)
 
 
-def main(source, format, type):
+def main(source, format, type, notation):
   if (format == "json"):
     json = merge_json_files(source)
-    formated_json = format_json_object(json)
 
     if type == 'detail':
-      write_json_file(formated_json, 'papi.json')
+      if notation == 'derived':
+        write_json_file(derive_json_object(json), 'papi.json')
+      else:
+        write_json_file(json, 'papi.json')
 
     #summarize data over threads and ranks
-    if type == 'accumulate':
-      sum_json = sum_json_object(formated_json)
+    if type == 'summary':
+      sum_json = sum_json_object(json)
+      # write_json_file(derive_json_object(sum_json), 'papi_sum.json')
       write_json_file(sum_json, 'papi_sum.json')
   else:
     print("Format not supported!")
@@ -352,7 +412,9 @@ def parse_args():
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
   parser.add_argument('--type', type=str, required=False, default='detail', 
-                      help='Output type: detail or accumulate.')
+                      help='Output type: detail or summary.')
+  parser.add_argument('--notation', type=str, required=False, default='derived', 
+                      help='Output notation: raw or derived.')
 
   # check if papi directory exists
   source = str(parser.parse_args().source)
@@ -370,7 +432,7 @@ def parse_args():
 
   # check type
   output_type = str(parser.parse_args().type)
-  if output_type != "detail" and output_type != "accumulate":
+  if output_type != "detail" and output_type != "summary":
     print("Output type '{}' is not supported!\n".format(output_type))
     parser.print_help()
     parser.exit()
@@ -383,4 +445,5 @@ if __name__ == '__main__':
   args = parse_args()
   main(format=args.format,
        source=args.source,
-       type=args.type)
+       type=args.type,
+       notation=args.notation)
