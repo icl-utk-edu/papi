@@ -59,32 +59,35 @@ class Sum_Counter(object):
   def __init__(self):
     self.min = None
     self.all_values = []
-    self.max = 0.0
+    self.max = 0
 
   def add_event(self, value):
     if isinstance(value, dict):
-      if self.min > value['min'] or self.min is None:
-        self.min = value['min']
-      self.all_values.append(value['avg'])
-      if self.max < value['max']:
-        self.max = value['max']
+      if self.min > long(value['min']) or self.min is None:
+        self.min = long(value['min'])
+      self.all_values.append(long(value['avg']))
+      if self.max < long(value['max']):
+        self.max = long(value['max'])
     else:
-      if self.min > value or self.min is None:
-        self.min = value
-      self.all_values.append(value)
-      if self.max < value:
-        self.max = value
+      val = long(value)
+      if self.min > val or self.min is None:
+        self.min = val
+      self.all_values.append(val)
+      if self.max < val:
+        self.max = val
 
   def get_min(self):
     return self.min
 
   def get_median(self):
-    return self.all_values
+    n = len(self.all_values)
+    s = sorted(self.all_values)
+    return (sum(s[n//2-1:n//2+1])/2.0, s[n//2])[n % 2] if n else None
 
   def get_sum(self):
-    sum = 0.0
+    sum = 0
     for value in self.all_values:
-      sum += float(value)
+      sum += value
     return sum
 
   def get_max(self):
