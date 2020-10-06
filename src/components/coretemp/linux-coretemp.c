@@ -369,7 +369,7 @@ _coretemp_init_component( int cidx )
      struct temp_event *t,*last;
 
      if ( is_initialized )
-	return (PAPI_OK );
+        return (PAPI_OK );
 
      is_initialized = 1;
 
@@ -380,20 +380,24 @@ _coretemp_init_component( int cidx )
 
      if ( num_events < 0 ) {
         strncpy(_coretemp_vector.cmp_info.disabled_reason,
-		"Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
-	return PAPI_ENOCMP;
+        "Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
+        return PAPI_ENOCMP;
      }
 
      if ( num_events == 0 ) {
         strncpy(_coretemp_vector.cmp_info.disabled_reason,
-		"No coretemp events found",PAPI_MAX_STR_LEN);
-	return PAPI_ENOCMP;
+        "No coretemp events found",PAPI_MAX_STR_LEN);
+        return PAPI_ENOCMP;
      }
 
      t = root;
   
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
           papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
+     if (_coretemp_native_events == NULL) {
+          snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() failed in %s for %lu bytes.", __func__, num_events*sizeof(CORETEMP_native_event_entry_t));
+          return(PAPI_ENOMEM);
+     }
 
      do {
 	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);

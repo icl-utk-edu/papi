@@ -528,6 +528,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     size_t tmpSizeBytes;
     int ii;
     CUptiResult cuptiError;
+    cudaError_t cudaErr;
     uint32_t maxEventSize;
 
     /* How many CUDA devices do we have? */
@@ -551,7 +552,16 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             return PAPI_ENOSUPP;
         } // end if cuInit(0) failed.
 
-        CU_CALL((*cuDeviceGetCountPtr) (&gctxt->deviceCount), return (PAPI_EMISC)); // repeat call for device count.
+        
+        cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
+        if(cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Function cuDeviceGetCount() failed; error code=%d [%s].", cuErr, errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
+        } 
     } // end if CUDA was not initialized; try to init.
 
     // cuInit(0) was successful.
@@ -563,19 +573,38 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     /* allocate memory for device information */
     gctxt->deviceArray = (cuda_device_desc_t *) papi_calloc(gctxt->deviceCount, sizeof(cuda_device_desc_t));
-    CHECK_PRINT_EVAL(!gctxt->deviceArray, "ERROR CUDA: Could not allocate memory for CUDA device structure", return (PAPI_ENOMEM));
+    if (!gctxt->deviceArray) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for CUDA device structure.", gctxt->deviceCount*sizeof(cuda_device_desc_t));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
 
     /* For each device, get domains and domain-events counts */
     maxEventSize = 0;
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         mydevice = &gctxt->deviceArray[deviceNum];
         /* Get device id, name, numeventdomains for each device */
-        CU_CALL((*cuDeviceGetPtr) (&mydevice->cuDev, deviceNum),                // get CUdevice.
-            return (PAPI_EMISC));                                               // .. on failure.
+        cuErr = (*cuDeviceGetPtr) (&mydevice->cuDev, deviceNum);
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Function cuDeviceGet() failed; error code=%d [%s].", cuErr, errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
+        } 
 
-        CU_CALL((*cuDeviceGetNamePtr) (mydevice->deviceName,                    // get device name,
-            PAPI_MIN_STR_LEN - 1, mydevice->cuDev),                             // .. max length,
-            return (PAPI_EMISC));                                               // .. on failure.
+
+        cuErr = (*cuDeviceGetNamePtr) ((char*) &mydevice->deviceName, PAPI_MIN_STR_LEN - 1, mydevice->cuDev);
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Function cuDeviceGetName() failed; error code=%d [%s].", cuErr, errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
+        } 
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
@@ -587,11 +616,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // From https://developer.nvidia.com/cuda-gpus#compute):
         // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
 
-        cuptiError = CUPTI_SUCCESS;                                     // Note: cuptiError is NOT SET except on failure.
-        CUPTI_CALL((*cuptiDeviceGetNumEventDomainsPtr)                  // get number of domains,
-            (mydevice->cuDev, &mydevice->maxDomains),
-            cuptiError=_status);                                        // .. on failure, just record error.
-
+        cuptiError=(*cuptiDeviceGetNumEventDomainsPtr) (mydevice->cuDev, &mydevice->maxDomains);
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
             if (cuptiError == 38) { 
@@ -600,37 +625,58 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-            if (strcmp(errstr, "<unknown>") == 0) {
-                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "cuptDeviceGetNumEventDomains() returned unknown error code 0x%08X.", cuptiError);
-            } else {
-                strncpy(_cuda_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
-            }
-            return PAPI_ENOSUPP;
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Function cuptiDeviceGetNumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
         }
             
         /* Allocate space to hold domain IDs */
         mydevice->domainIDArray = (CUpti_EventDomainID *) papi_calloc(
             mydevice->maxDomains, sizeof(CUpti_EventDomainID));
 
-        CHECK_PRINT_EVAL(!mydevice->domainIDArray, "ERROR CUDA: Could not allocate memory for CUDA device domains", return (PAPI_ENOMEM));
+        if (!mydevice->domainIDArray) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Could not allocate %lu bytes of memory for device domain ID array", mydevice->maxDomains*sizeof(CUpti_EventDomainID));
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return (PAPI_ENOMEM);
+        }
 
         /* Put domain ids into allocated space */
         size_t domainarraysize = mydevice->maxDomains * sizeof(CUpti_EventDomainID);
-        CUPTI_CALL((*cuptiDeviceEnumEventDomainsPtr)                            // enumerate domain ids into space.
-            (mydevice->cuDev, &domainarraysize, mydevice->domainIDArray),
-            return (PAPI_EMISC));                                               // .. on failure.
+        // enumerate domain ids into space.
+        cuptiError=(*cuptiDeviceEnumEventDomainsPtr)(mydevice->cuDev, &domainarraysize, mydevice->domainIDArray);
+        if (cuptiError != CUPTI_SUCCESS) {
+            const char *errstr;
+           (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Function cuptiDeviceEnumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
+        }
 
         /* Allocate space to hold domain event counts */
         mydevice->domainIDNumEvents = (uint32_t *) papi_calloc(mydevice->maxDomains, sizeof(uint32_t));
-        CHECK_PRINT_EVAL(!mydevice->domainIDNumEvents, "ERROR CUDA: Could not allocate memory for domain event counts", return (PAPI_ENOMEM));
+        if (!mydevice->domainIDArray) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Could not allocate %lu bytes of memory for device domain ID array", mydevice->maxDomains*sizeof(CUpti_EventDomainID));
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return (PAPI_ENOMEM);
+        }
 
         /* For each domain, get event counts in domainNumEvents[] */
         for(domainNum = 0; domainNum < mydevice->maxDomains; domainNum++) {     // For each domain,
             CUpti_EventDomainID domainID = mydevice->domainIDArray[domainNum];  // .. make a copy of the domain ID.
             /* Get num events in domain */
-            CUPTI_CALL((*cuptiEventDomainGetNumEventsPtr)                       // Get number of events in this domain,
-                (domainID, &mydevice->domainIDNumEvents[domainNum]),            // .. store in array.
-                return (PAPI_EMISC));                                           // .. on failure.
+            cuptiError=(*cuptiEventDomainGetNumEventsPtr) (domainID, &mydevice->domainIDNumEvents[domainNum]);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+               (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiEventDomaintGetNumEvents() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EMISC);    
+            }
 
             maxEventSize += mydevice->domainIDNumEvents[domainNum];             // keep track of overall number of events.
         } // end for each domain.
@@ -648,15 +694,40 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     /* Allocate space for all events and descriptors */
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_calloc(maxEventSize, sizeof(CUpti_ActivityKind));
-    CHECK_PRINT_EVAL(!gctxt->availEventKind, "ERROR CUDA: Could not allocate memory", return (PAPI_ENOMEM));
+    if (!gctxt->availEventKind) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for availEventKind.", maxEventSize*sizeof(CUpti_ActivityKind));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
     gctxt->availEventDeviceNum = (int *) papi_calloc(maxEventSize, sizeof(int));
-    CHECK_PRINT_EVAL(!gctxt->availEventDeviceNum, "ERROR CUDA: Could not allocate memory", return (PAPI_ENOMEM));
+    if (!gctxt->availEventDeviceNum) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for availEventDeviceNum.", maxEventSize*sizeof(int));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
     gctxt->availEventIDArray = (CUpti_EventID *) papi_calloc(maxEventSize, sizeof(CUpti_EventID));
-    CHECK_PRINT_EVAL(!gctxt->availEventIDArray, "ERROR CUDA: Could not allocate memory", return (PAPI_ENOMEM));
+    if (!gctxt->availEventIDArray) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for availEventIDArray.", maxEventSize*sizeof(CUpti_EventID));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_calloc(maxEventSize, sizeof(uint32_t));
-    CHECK_PRINT_EVAL(!gctxt->availEventIsBeingMeasuredInEventset, "ERROR CUDA: Could not allocate memory", return (PAPI_ENOMEM));
+    if (!gctxt->availEventIsBeingMeasuredInEventset) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for availEventIsBeingMeasured.", maxEventSize*sizeof(uint32_t));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_calloc(maxEventSize, sizeof(cuda_name_desc_t));
-    CHECK_PRINT_EVAL(!gctxt->availEventDesc, "ERROR CUDA: Could not allocate memory", return (PAPI_ENOMEM));
+    if (!gctxt->availEventDesc) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for availEventDesc.", maxEventSize*sizeof(cuda_name_desc_t));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
 
     // Record all events on each device, and their descriptions.
     uint32_t idxEventArray = 0;
@@ -674,12 +745,24 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
             CUpti_EventID *domainEventIDArray =                                         // Make space for the events in this domain.
                 (CUpti_EventID *) papi_calloc(domainNumEvents, sizeof(CUpti_EventID));  // ..
-            CHECK_PRINT_EVAL(!domainEventIDArray, "ERROR CUDA: Could not allocate memory for events", return (PAPI_ENOMEM));
+            if (!domainEventIDArray) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for domainEventIDArray.", domainNumEvents*sizeof(CUpti_EventID));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
 
             size_t domainEventArraySize = domainNumEvents * sizeof(CUpti_EventID);      // compute size of array we allocated.
-            CUPTI_CALL((*cuptiEventDomainEnumEventsPtr)                                 // Enumerate the events in the domain,
-                (domainID, &domainEventArraySize, domainEventIDArray),                  // ..
-                return (PAPI_EMISC));                                                   // .. on failure, exit.
+            // Enumerate the events in the domain,
+            cuptiError=(*cuptiEventDomainEnumEventsPtr)(domainID, &domainEventArraySize, domainEventIDArray);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiEventDomainEnumEvents() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                 return(PAPI_EMISC);    
+            }
 
             for(eventNum = 0; eventNum < domainNumEvents; eventNum++) {                 // Loop through the events in this domain.
                 CUpti_EventID myeventCuptiEventId = domainEventIDArray[eventNum];       // .. get this event,
@@ -688,9 +771,15 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 gctxt->availEventDeviceNum[idxEventArray] = deviceNum;                  // .. record the device number,
 
                 tmpSizeBytes = PAPI_MAX_STR_LEN - 1 * sizeof(char);                     // .. compute size of name,
-                CUPTI_CALL((*cuptiEventGetAttributePtr) (myeventCuptiEventId,           // .. Get the event name seen by cupti,
-                    CUPTI_EVENT_ATTR_NAME, &tmpSizeBytes, tmpStr),                      // .. into tmpStr.
-                    return (PAPI_EMISC));                                               // .. on failure, exit routine.
+                cuptiError=(*cuptiEventGetAttributePtr)(myeventCuptiEventId,CUPTI_EVENT_ATTR_NAME, &tmpSizeBytes, tmpStr);                      // .. into tmpStr.
+                if (cuptiError != CUPTI_SUCCESS) {
+                    const char *errstr;
+                    (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                    snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                        "Function cuptiEventGetAttribute(EVENT_NAME) failed; error code=%d [%s].", cuptiError, errstr);
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                     return(PAPI_EMISC);    
+                }
 
                 snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MAX_STR_LEN,   // record expanded name for papi user.
                     "event:%s:device=%d", tmpStr, deviceNum);
@@ -702,10 +791,17 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
                 /* Save description in the native event array */
                 tmpSizeBytes = PAPI_2MAX_STR_LEN - 1 * sizeof(char);                    // Most space to use for description.
-                CUPTI_CALL((*cuptiEventGetAttributePtr) (myeventCuptiEventId,           // Get it,
-                    CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &tmpSizeBytes,                  // .. Set limit (and receive bytes written),
-                    gctxt->availEventDesc[idxEventArray].description),                  // .. in the description.
-                    return (PAPI_EMISC));                                               // .. on failure.
+                cuptiError=(*cuptiEventGetAttributePtr)(myeventCuptiEventId,
+                    CUPTI_EVENT_ATTR_SHORT_DESCRIPTION, &tmpSizeBytes,
+                    gctxt->availEventDesc[idxEventArray].description);
+                if (cuptiError != CUPTI_SUCCESS) {
+                    const char *errstr;
+                    (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                    snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                        "Function cuptiEventGetAttribute(EVENT_NAME) failed; error code=%d [%s].", cuptiError, errstr);
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                    return(PAPI_EMISC);    
+                }
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0'; // Ensure null terminator.
                 gctxt->availEventDesc[idxEventArray].numMetricEvents = 0;                       // Not a metric.
                 gctxt->availEventDesc[idxEventArray].metricEvents = NULL;                       // No space allocated.
@@ -738,27 +834,37 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // Make a temporary list of the metric Ids to add to the available named collectables.
         size_t size = maxMetrics * sizeof(CUpti_EventID);
         metricIdList = (CUpti_MetricID *) papi_calloc(maxMetrics, sizeof(CUpti_EventID));
-        CHECK_PRINT_EVAL(metricIdList == NULL, "Out of memory", return (PAPI_ENOMEM));
+        if (!metricIdList) {
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Could not allocate %lu bytes of memory for metricIdList.", maxMetrics*sizeof(CUpti_EventID));
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return (PAPI_ENOMEM);
+        }
 
-        CUPTI_CALL((*cuptiDeviceEnumMetricsPtr)                                     // Enumerate the metric Ids for this device,
-            (mydevice->cuDev, &size, metricIdList),                                 // .. into metricIdList.
-            return (PAPI_EMISC));                                                   // .. On failure, but should work, we have metrics!
+        cuptiError=(*cuptiDeviceEnumMetricsPtr)(mydevice->cuDev, &size, metricIdList);  // Enumerate into metricIDList.
+        if (cuptiError != CUPTI_SUCCESS) {
+            const char *errstr;
+            (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+            snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "Function cuptiDeviceEnumMetrics failed; error code=%d [%s].", cuptiError, errstr);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            return(PAPI_EMISC);    
+        }
 
         // Elimination loop for metrics we cannot support.
         int saveDeviceNum = 0;
-        cudaError_t _cudaErr = cudaSuccess;
-        CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), _cudaErr=_status);          // save caller's device num.
-        if (_cudaErr != cudaSuccess) {
-            if (_cudaErr ==  cudaErrorInvalidValue       ) {
+        cudaErr = (*cudaGetDevicePtr)(&saveDeviceNum);
+        if (cudaErr != cudaSuccess) {
+            if (cudaErr ==  cudaErrorInvalidValue       ) {
                strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN);
             }
-            if (_cudaErr ==  cudaErrorInitializationError) { 
+            if (cudaErr ==  cudaErrorInitializationError) { 
                strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN);
             }
-            if (_cudaErr ==  cudaErrorInsufficientDriver ) {
+            if (cudaErr ==  cudaErrorInsufficientDriver ) {
                strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN);
             }
-            if (_cudaErr ==  cudaErrorNoDevice           ) { 
+            if (cudaErr ==  cudaErrorNoDevice           ) { 
                strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN);
             }
             return(PAPI_EMISC);
@@ -766,9 +872,15 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         for (i=0, j=0; i<maxMetrics; i++) {                                         // process each metric Id.
             size = PAPI_MIN_STR_LEN-1;                                              // Most bytes allowed to be written.
-            CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i],              // Get the name.
-                CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr),
-                return (PAPI_EMISC));
+            cuptiError=(*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EMISC);    
+            }
 
             // Note that 'size' also returned total bytes written.
             tmpStr[size] = '\0';
@@ -813,28 +925,46 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             gctxt->availEventKind[idxEventArray] = CUPTI_ACTIVITY_KIND_METRIC;      // Indicate it is a metric.
             gctxt->availEventDeviceNum[idxEventArray] = deviceNum;                  // remember the device number.
             size = PAPI_MAX_STR_LEN;
-            CUPTI_CALL((*cuptiMetricGetAttributePtr) (metricIdList[i],              // Get the name, fail if we cannot.
-                CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr),
-                return (PAPI_EMISC));
+            cuptiError=(*cuptiMetricGetAttributePtr) (metricIdList[i], CUPTI_METRIC_ATTR_NAME, &size, (uint8_t *) tmpStr);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EMISC);    
+            }
 
             if (size >= PAPI_MAX_STR_LEN) {                                         // Truncate if we don't have room for the name.
                 gctxt->availEventDesc[idxEventArray].name[PAPI_MAX_STR_LEN - 1] = '\0';
             }
 
             size_t MV_KindSize = sizeof(CUpti_MetricValueKind);
-            CUPTI_CALL((*cuptiMetricGetAttributePtr)                                // Collect the metric kind.
-                (metricIdList[i], CUPTI_METRIC_ATTR_VALUE_KIND, &MV_KindSize,       // .. for this metric,
-                &gctxt->availEventDesc[idxEventArray].MV_Kind),                     // .. store in the event description,
-                return (PAPI_EMISC));                                               // .. on failure, but should always work.
+            cuptiError=(*cuptiMetricGetAttributePtr)(metricIdList[i], CUPTI_METRIC_ATTR_VALUE_KIND, 
+                &MV_KindSize, &gctxt->availEventDesc[idxEventArray].MV_Kind);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricGetAttribute(METRIC_KIND)) failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EMISC);    
+            }
 
             snprintf(gctxt->availEventDesc[idxEventArray].name, PAPI_MAX_STR_LEN,   // .. develop name for papi user in tmpStr.
                 "metric:%s:device=%d", tmpStr, deviceNum);
 
             size = PAPI_2MAX_STR_LEN-1;                                             // Most bytes to return.
-            CUPTI_CALL((*cuptiMetricGetAttributePtr)                                // Collect the long description.
-                (metricIdList[i], CUPTI_METRIC_ATTR_LONG_DESCRIPTION, &size,        // .. for this metric, no more than size.
-                (uint8_t *) gctxt->availEventDesc[idxEventArray].description),      // .. and store in event description.
-                return (PAPI_EMISC));                                               // .. on failure, but should always work.
+            cuptiError=(*cuptiMetricGetAttributePtr)(metricIdList[i], CUPTI_METRIC_ATTR_LONG_DESCRIPTION, 
+                &size, (uint8_t *) gctxt->availEventDesc[idxEventArray].description);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricGetAttribute(METRIC_LONG_DESC)) failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EMISC);    
+            }
 
             // Note that 'size' also returned total bytes written.
             gctxt->availEventDesc[idxEventArray].description[size] = '\0';          // Always z-terminate.
@@ -842,26 +972,33 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             // Now we get all the sub-events of this metric.
             uint32_t numSubs;
             CUpti_MetricID itemId = metricIdList[i];                                //.. shortcut to metric id.
-            CUPTI_CALL((*cuptiMetricGetNumEventsPtr) (itemId, &numSubs),            // .. Get number of sub-events in metric.
-                return (PAPI_EINVAL));                                              // .. on failure of call.
+            cuptiError=(*cuptiMetricGetNumEventsPtr) (itemId, &numSubs);            // .. Get number of sub-events in metric.
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricGetNumEvents() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EINVAL);    
+            }
 
             size_t sizeBytes = numSubs * sizeof(CUpti_EventID);                     // .. compute size of array we need.
             CUpti_EventID *subEventIds = papi_malloc(sizeBytes);                    // .. Make the space.
-            CHECK_PRINT_EVAL(subEventIds == NULL, "Malloc failed",                  // .. If malloc fails,
-                return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for subEventIds.", sizeBytes);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
 
-            cuptiRet = CUPTI_SUCCESS;
-            CUPTI_CALL((*cuptiMetricEnumEventsPtr)                                  // .. Enumrate events in the metric.
-                (itemId, &sizeBytes, subEventIds),                                  // .. store in array.
-                cuptiRet = _status);                                                // .. If cupti call fails.
-
-            if (cuptiRet != CUPTI_SUCCESS) {
-               const char *errstr;
-               (*cuptiGetResultStringPtr)(cuptiRet, &errstr);
-               snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-                  "Metric Enumeration Failed error '%s'.", errstr);
-               free(subEventIds);
-               return(PAPI_EINVAL);
+            cuptiError=(*cuptiMetricEnumEventsPtr)(itemId, &sizeBytes, subEventIds);
+            if (cuptiError != CUPTI_SUCCESS) {
+                const char *errstr;
+                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Function cuptiMetricEnumEvents() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return(PAPI_EINVAL);    
             }
 
             gctxt->availEventDesc[idxEventArray].metricEvents = subEventIds;        // .. Copy the array pointer for IDs.
@@ -874,7 +1011,22 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         papi_free(metricIdList);                                                    // Done with this enumeration of metrics.
         // Part of problem above, cannot create tempContext for unknown reason.
         // CU_CALL((*cuCtxDestroyPtr) (tempContext),     return (PAPI_EMISC));         // destroy the temporary context.
-        CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum),  return (PAPI_EMISC));       // set the device pointer back to caller.
+        cudaErr = (*cudaSetDevicePtr)(saveDeviceNum);
+        if (cudaErr != cudaSuccess) {
+            if (cudaErr ==  cudaErrorInvalidValue       ) {
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN);
+            }
+            if (cudaErr ==  cudaErrorInitializationError) { 
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN);
+            }
+            if (cudaErr ==  cudaErrorInsufficientDriver ) {
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN);
+            }
+            if (cudaErr ==  cudaErrorNoDevice           ) { 
+               strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN);
+            }
+            return(PAPI_EMISC);
+        }
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
@@ -886,6 +1038,12 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     // Build an all Events array. Over-specify the number of entries.
     localAllEvents = calloc(maxUnenumEvents+firstMetricIdx, sizeof(cuda_all_events_t));
     CHECK_PRINT_EVAL(localAllEvents == NULL, "Malloc failed", return (PAPI_ENOMEM));
+    if (!localAllEvents) {
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for localAllEvents.", (maxUnenumEvents+firstMetricIdx)*sizeof(cuda_all_events_t));
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return (PAPI_ENOMEM);
+    }
 
     unsigned int i,j;
     int k;
@@ -987,15 +1145,44 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     /* Reallocate space for all events and descriptors to make room. */
     maxEventSize += (j-firstMetricIdx); 
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_realloc(gctxt->availEventKind, maxEventSize * sizeof(CUpti_ActivityKind));
-    CHECK_PRINT_EVAL(!gctxt->availEventKind, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for availEventKind.", maxEventSize * sizeof(CUpti_ActivityKind));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
+
     gctxt->availEventDeviceNum = (int *) papi_realloc(gctxt->availEventDeviceNum,maxEventSize * sizeof(int));
-    CHECK_PRINT_EVAL(!gctxt->availEventDeviceNum, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for availEventDeviceNum.", maxEventSize * sizeof(int));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
+
     gctxt->availEventIDArray = (CUpti_EventID *) papi_realloc(gctxt->availEventIDArray,maxEventSize * sizeof(CUpti_EventID));
-    CHECK_PRINT_EVAL(!gctxt->availEventIDArray, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for availEventIDArray.", maxEventSize * sizeof(CUpti_EventID));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
+
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_realloc(gctxt->availEventIsBeingMeasuredInEventset,maxEventSize * sizeof(uint32_t));
-    CHECK_PRINT_EVAL(!gctxt->availEventIsBeingMeasuredInEventset, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for availEventIsBeingMeasured.", maxEventSize * sizeof(uint32_t));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
+
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_realloc(gctxt->availEventDesc,maxEventSize * sizeof(cuda_name_desc_t));
-    CHECK_PRINT_EVAL(!gctxt->availEventDesc, "ERROR CUDA: Could not reallocate memory", return (PAPI_ENOMEM));
+            if (!subEventIds) {
+                snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "Could not allocate %lu bytes of memory for availEventDesc.", maxEventSize * sizeof(cuda_name_desc_t));
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                return (PAPI_ENOMEM);
+            }
 
     for (k=0; k<(signed) j; k++) {
         int idx=gctxt->allEvents[k].idx;

@@ -188,12 +188,14 @@ _example_init_component( int cidx )
 {
 
 	SUBDBG( "_example_init_component..." );
-
    
-        /* First, detect that our hardware is available */
-        if (detect_example()!=PAPI_OK) {
-	   return PAPI_ECMP;
-	}
+   /* First, detect that our hardware is available */
+   if (detect_example()!=PAPI_OK) {
+      snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+         "Example Hardware not present.");
+      _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+      return PAPI_ENOSUPP;
+   }
    
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
@@ -204,7 +206,9 @@ _example_init_component( int cidx )
 		( example_native_event_entry_t * )
 		papi_calloc( num_events, sizeof(example_native_event_entry_t) );
 	if ( example_native_table == NULL ) {
-		PAPIERROR( "malloc():Could not get memory for events table" );
+      snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+      "Could not allocate %lu bytes of memory for EXAMPLE device structure.", num_events*sizeof(example_native_event_entry_t));
+      _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
 		return PAPI_ENOMEM;
 	}
 
@@ -237,8 +241,6 @@ _example_init_component( int cidx )
 
 	/* Export the component id */
 	_example_vector.cmp_info.CmpIdx = cidx;
-
-	
 
 	return PAPI_OK;
 }

@@ -355,8 +355,14 @@ int _libmsr_init_component( int cidx )
 
     int max_num_events = ( NUM_OF_EVENTTYPES * num_packages );
     /* Allocate space for events */
-    libmsr_native_events = ( _libmsr_native_event_entry_t * ) calloc( sizeof( _libmsr_native_event_entry_t ), max_num_events );
-    if ( !libmsr_native_events ) SUBDBG("Could not allocate memory\n" );
+    libmsr_native_events = ( _libmsr_native_event_entry_t * ) calloc(max_num_events, sizeof(_libmsr_native_event_entry_t));
+    if ( !libmsr_native_events ) {
+        snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Could not allocate %lu bytes of memory for libmsr native event array.", max_num_events*sizeof(_libmsr_native_event_entry_t));
+        _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        SUBDBG("Could not allocate memory\n" );
+        return(PAPI_ENOMEM);
+   }
 
     /* Create events for package power info */
     num_events_global = 0;

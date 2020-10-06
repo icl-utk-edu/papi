@@ -163,7 +163,13 @@ _io_init_component( int cidx )
     SUBDBG( "_io_init_component..." );
    
     ret = io_count_events(&myCtx);
-    if (ret != PAPI_OK) return(ret);
+    if (ret != PAPI_OK) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        "Failed counting events.");
+        _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        return(ret);
+    }
+ 
     rewind(myCtx.pFile);
 
     if (myCtx.EventCount > IO_COUNTERS) {
@@ -180,6 +186,8 @@ _io_init_component( int cidx )
         ( IO_native_event_entry_t * )
         papi_calloc(gEventCount, sizeof(IO_native_event_entry_t) );
     if ( io_native_table == NULL ) {
+        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        "Failed to allocate %lu bytes for _io_native_table.", gEventCount*sizeof(IO_native_event_entry_t));
         fclose(myCtx.pFile);
         return PAPI_ENOMEM;
     }
