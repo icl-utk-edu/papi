@@ -400,10 +400,20 @@ find_ib_device_events(ib_device_t *dev, int extended)
             continue;
         }
 
+        /* Adding 3 exceptions to the counter size
+         * https://community.mellanox.com/s/article/understanding-mlx5-linux-counters-and-status-parameters
+         * port_rcv_data, port_rcv_packets, and port_xmit_data are listed as 64 bits counters,
+         * located in the 32 bits directory */
+        int fixed_extended = extended;
+        if (   !strcmp("port_rcv_data", ev_name)
+            || !strcmp("port_rcv_packets", ev_name)
+            || !strcmp("port_xmit_data", ev_name))
+            fixed_extended = 1-extended;
+
         /* Create new counter */
         snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
-                dev->dev_name, dev->dev_port, (extended?"_ext":""), ev_name);
-        if (add_ib_counter(counter_name, ev_name, extended, dev))
+                dev->dev_name, dev->dev_port, (fixed_extended?"_ext":""), ev_name);
+        if (add_ib_counter(counter_name, ev_name, fixed_extended, dev))
         {
             SUBDBG("Added new counter `%s'\n", counter_name);
             nevents += 1;
