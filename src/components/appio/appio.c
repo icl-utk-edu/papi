@@ -430,15 +430,15 @@ _appio_init_thread( hwd_context_t *ctx )
 static int
 _appio_init_component( int cidx  )
 {
-    int snpErr;
+    int strErr;
     SUBDBG("_appio_component %d\n", cidx);
     _appio_native_events = (APPIO_native_event_entry_t *) papi_calloc(APPIO_MAX_COUNTERS, sizeof(APPIO_native_event_entry_t));
 
     if (_appio_native_events == NULL ) {
       PAPIERROR( "malloc():Could not get memory for events table" );
-      snpErr=snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
+      strErr=snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
       _appio_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-      if (snpErr>PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+      if (strErr>PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
       return PAPI_ENOMEM;
     }
     int i;

@@ -383,17 +383,19 @@ _coretemp_init_component( int cidx )
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
-        char* cpyPtr;
-        cpyPtr = strncpy(_coretemp_vector.cmp_info.disabled_reason,
+        char* strCpy;
+        strCpy=strncpy(_coretemp_vector.cmp_info.disabled_reason,
         "Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
         _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        (void) cpyPtr;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOCMP;
      }
 
      if ( num_events == 0 ) {
-        strncpy(_coretemp_vector.cmp_info.disabled_reason,
+        char* strCpy=strncpy(_coretemp_vector.cmp_info.disabled_reason,
         "No coretemp events found",PAPI_MAX_STR_LEN);
+        _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOCMP;
      }
 
@@ -402,25 +404,36 @@ _coretemp_init_component( int cidx )
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
           papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
      if (_coretemp_native_events == NULL) {
-          snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() failed in %s for %lu bytes.", __func__, num_events*sizeof(CORETEMP_native_event_entry_t));
+          int strErr=snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "malloc() of _coretemp_native_events failed for %lu bytes.", num_events*sizeof(CORETEMP_native_event_entry_t));
+          _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+          if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
           return(PAPI_ENOMEM);
      }
 
      do {
-	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
+        char *strCpy;
+        strCpy=strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN-2);
         _coretemp_native_events[i].name[PAPI_MAX_STR_LEN-1] = '\0';
-	strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
         _coretemp_native_events[i].path[PATH_MAX-1] = '\0';
-	strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN);
-	_coretemp_native_events[i].units[PAPI_MIN_STR_LEN-1] = '\0';
-	strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN);
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN-2);
+	    _coretemp_native_events[i].units[PAPI_MIN_STR_LEN-1] = '\0';
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN-2);
         _coretemp_native_events[i].description[PAPI_MAX_STR_LEN-1] = '\0';
-	_coretemp_native_events[i].stone = 0;
-	_coretemp_native_events[i].resources.selector = i + 1;
-	last	= t;
-	t		= t->next;
-	papi_free(last);
-	i++;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+	    _coretemp_native_events[i].stone = 0;
+	    _coretemp_native_events[i].resources.selector = i + 1;
+	    last	= t;
+	    t		= t->next;
+	    papi_free(last);
+	    i++;
      } while (t != NULL);
      root = NULL;
 
