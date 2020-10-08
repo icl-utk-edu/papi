@@ -463,13 +463,20 @@ PRESET,PAPI_L2_DCH,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:LS_RD_
 # NOTE: without the MergeEvent support in the kernel, there is no guarantee
 # that this SSE/AVX FLOP event produces any useful data whatsoever.  
 PRESET,PAPI_FP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
-PRESET,PAPI_DP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
-PRESET,PAPI_SP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+# Since FP_OPS counts both single- and double-prec operations
+# correctly, we don't need to confuse the user with additional
+# DP_OPS and SP_OPS events. So, I'm taking them out.  
+#PRESET,PAPI_DP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+#PRESET,PAPI_SP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+#
 # Floating-point instructions (including non-numeric floating-point instructions,
 # e.g. Move or Merge Scalar Double-Precision Floating-Point values)
 PRESET,PAPI_FP_INS,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
-PRESET,PAPI_VEC_DP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
-PRESET,PAPI_VEC_SP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
+# Since FP_INS counts both single- and double-prec instuctions
+# correctly, we don't need to confuse the user with additional
+# VEC_DP and VEC_SP events. So, I'm taking them out.  
+#PRESET,PAPI_VEC_DP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
+#PRESET,PAPI_VEC_SP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
 
 
 CPU,Intel architectural PMU
