@@ -13,10 +13,12 @@ except NameError:
   to_unicode = str
 
 cpu_freq = 0
+event_definitions = {}
 
 def merge_json_files(source):
   json_object = {}
   json_object["ranks"] = []
+  events_stored = False
 
   #get measurement files
   file_list = os.listdir(source)
@@ -41,9 +43,14 @@ def merge_json_files(source):
       print("Cannot open file {} ({})".format(file_name, repr(ioe)))
       return
 
-    #determine cpu frequency
-    global cpu_freq
-    cpu_freq = int(data['cpu in mhz']) * 1000000
+    #store global data
+    if events_stored == False:
+      #determine cpu frequency
+      global cpu_freq
+      cpu_freq = int(data['cpu in mhz']) * 1000000
+      global event_definitions
+      event_definitions = data['event_definitions']
+      events_stored = True
 
     #get all threads
     json_rank["threads"] = data["threads"]
@@ -158,6 +165,12 @@ class Sum_Counters(object):
               events[event_key] = int(event_value.get_sum())
             else:
               events[event_key] = OrderedDict()
+              global event_definitions
+              if event_key == 'cycles':
+                events[event_key]['total'] = event_value.get_sum()
+              else:
+                if event_definitions[event_key] == 'delta':
+                  events[event_key]['total'] = event_value.get_sum()
               events[event_key]['min'] = event_value.get_min()
               events[event_key]['median'] = event_value.get_median()
               events[event_key]['max'] = event_value.get_max()
@@ -168,8 +181,81 @@ class Sum_Counters(object):
       sum_json[name] = events
     return sum_json
 
+def derive_sum_json_object(json):
+  json_object = OrderedDict()
 
-def sum_json_object(json):
+  for region_key,region_value in json.items():
+    #print("region: ", region_key)
+    derive_events = OrderedDict()
+    events = region_value.copy()
+
+    #remember runtime for other metrics like MFLOPS
+    rt = {}
+
+    #Region Count
+    if 'region_count' in events:
+      derive_events['Region count'] = int(events['region_count'])
+      del events['region_count']
+
+    #Real Time
+    if 'cycles' in events:
+      for metric in ['total', 'min', 'median', 'max']:
+        rt[metric] = convert_value(events['cycles'][metric], 'Runtime')
+      derive_events['Real time in s'] = rt['max']
+      del events['cycles']
+
+    #CPU Time
+    if 'perf::TASK-CLOCK' in events:
+      derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK']['total'], 'CPUtime')
+      del events['perf::TASK-CLOCK']
+
+    #PAPI_TOT_INS and PAPI_TOT_CYC to calculate IPC
+    if 'PAPI_TOT_INS' and 'PAPI_TOT_CYC' in events:
+      event_name = 'IPC'
+      derive_events[event_name] = OrderedDict()
+      for metric in ['total', 'min', 'median', 'max']:
+        try:
+          ipc = float(format(float(int(events['PAPI_TOT_INS'][metric]) / int(events['PAPI_TOT_CYC'][metric])), '.2f'))
+        except:
+          ipc = 'n/a'
+        derive_events[event_name][metric] = ipc
+
+      del events['PAPI_TOT_INS']
+      del events['PAPI_TOT_CYC']
+    
+    #Rates
+    event_rate_names = OrderedDict([
+      ('PAPI_FP_INS','MFLIPS/s'),
+      ('PAPI_VEC_SP','Single precision vector/SIMD instructions rate in M/s'),
+      ('PAPI_VEC_DP','Double precision vector/SIMD instructions rate in M/s'),
+      ('PAPI_FP_OPS','MFLOPS/s'),
+      ('PAPI_SP_OPS','Single precision MFLOPS/s'),
+      ('PAPI_DP_OPS','Double precision MFLOPS/s')
+    ])
+    for rate_event in event_rate_names:
+      if rate_event in events:
+        event_name = event_rate_names[rate_event]
+        derive_events[event_name] = OrderedDict()
+        for metric in ['total', 'min', 'median', 'max']:
+          try:
+            rate = float(format(float(events[rate_event][metric]) / 1000000 / rt[metric], '.2f'))
+          except:
+            rate = 'n/a'
+          derive_events[event_name][metric] = rate
+
+        del events[rate_event]
+
+
+    #read the rest
+    for event_key,event_value in events.items():
+      derive_events[event_key] = OrderedDict()
+      derive_events[event_key] = event_value
+
+    json_object[region_key] = derive_events.copy()
+
+  return json_object
+
+def sum_json_object(json, derived = False):
   sum_cnt = Sum_Counters()
   for ranks in json['ranks']:
     for threads in ranks['threads']:
@@ -179,7 +265,10 @@ def sum_json_object(json):
           events = region_value
           sum_cnt.add_region(ranks['id'], name, events)
 
-  return sum_cnt.get_json()
+  if derived == True:
+    return derive_sum_json_object(sum_cnt.get_json())
+  else:
+    return sum_cnt.get_json()
 
 
 def get_ipc_dict(inst, cyc):
@@ -206,6 +295,7 @@ def get_ops_dict(ops, rt):
 
 
 def convert_value(value, event_type = 'Other'):
+  global cpu_freq
   if event_type == 'Other':
     result = float(value)
     result = float(format(result, '.2f'))
@@ -230,6 +320,7 @@ def derive_read_events(events, event_type = 'Other'):
 
 
 def derive_events(events):
+  global cpu_freq
   #keep order as declared
   derive_events = OrderedDict()
   #remember runtime for other metrics like MFLOPS
@@ -401,9 +492,11 @@ def main(source, format, type, notation):
 
     #summarize data over threads and ranks
     if type == 'summary':
-      sum_json = sum_json_object(json)
-      # write_json_file(derive_json_object(sum_json), 'papi_sum.json')
-      write_json_file(sum_json, 'papi_sum.json')
+      if notation == 'derived':
+        write_json_file(sum_json_object(json, True), 'papi_sum.json')
+      else:
+        write_json_file(sum_json_object(json), 'papi_sum.json')
+
   else:
     print("Format not supported!")
 
