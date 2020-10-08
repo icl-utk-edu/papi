@@ -182,6 +182,7 @@ static int _internal_hl_create_global_binary_tree();
 static int _internal_hl_mkdir(const char *dir);
 static int _internal_hl_determine_output_path();
 static void _internal_hl_json_line_break_and_indent(FILE* f, bool b, int width);
+static void _internal_hl_json_definitions(FILE* f, bool beautifier);
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions);
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
 static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
@@ -429,7 +430,7 @@ static int _internal_hl_read_user_events(const char *user_events)
       }
    }
 
-   num_of_requested_events = num_of_req_events;
+   num_of_requested_events = req_event_index;
    free(user_events_copy);
    if ( num_of_requested_events == 0 )
       return PAPI_EINVAL;
@@ -1159,6 +1160,35 @@ static void _internal_hl_json_line_break_and_indent( FILE* f, bool b, int width 
    }
 }
 
+static void _internal_hl_json_definitions(FILE* f, bool beautifier)
+{
+   int num_events, i, j;
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "\"event_definitions\":{");
+
+   /* get all events + types */
+   num_events = 1;
+   for ( i = 0; i < num_of_components; i++ ) {
+      for ( j = 0; j < components[i].num_of_events; j++ ) {
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+
+         if ( components[i].event_types[j] == 0 )
+            fprintf(f, "\"%s\":\"delta\"", components[i].event_names[j]);
+         else
+            fprintf(f, "\"%s\":\"instant\"", components[i].event_names[j]);
+
+         if ( num_events < total_num_events )
+            fprintf(f, ",");
+         num_events++;
+      }
+   }
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "},");
+}
+
+
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions)
 {
    char **all_event_names = NULL;
@@ -1398,6 +1428,9 @@ static void _internal_hl_write_output()
             fprintf(output_file, "{");
             _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
             fprintf(output_file, "\"cpu in mhz\":\"%d\",", cpu_freq);
+
+            /* write definitions */
+            _internal_hl_json_definitions(output_file, beautifier);
 
             /* write all regions with events per thread */
             _internal_hl_json_threads(output_file, beautifier, tids, number_of_threads);
