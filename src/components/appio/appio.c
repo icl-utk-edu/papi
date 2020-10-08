@@ -166,6 +166,10 @@ static const struct appio_counters {
     { "SEEK_USEC",       "Real microseconds spent in seek calls"}
 };
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
 /*********************************************************************
  ***  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ****
@@ -422,16 +426,19 @@ _appio_init_thread( hwd_context_t *ctx )
  * and get hardware information, this routine is called when the 
  * PAPI process is initialized (IE PAPI_library_init)
  */
+
 static int
 _appio_init_component( int cidx  )
 {
-
+    int snpErr;
     SUBDBG("_appio_component %d\n", cidx);
     _appio_native_events = (APPIO_native_event_entry_t *) papi_calloc(APPIO_MAX_COUNTERS, sizeof(APPIO_native_event_entry_t));
 
     if (_appio_native_events == NULL ) {
       PAPIERROR( "malloc():Could not get memory for events table" );
-      snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
+      snpErr=snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
+      _appio_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+      if (snpErr>PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
       return PAPI_ENOMEM;
     }
     int i;

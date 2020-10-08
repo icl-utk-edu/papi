@@ -28,6 +28,11 @@
 #define EXAMPLE_MAX_SIMULTANEOUS_COUNTERS 3
 #define EXAMPLE_MAX_MULTIPLEX_COUNTERS 4
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 /* Declare our vector in advance */
 /* This allows us to modify the component info */
 papi_vector_t _example_vector;
@@ -191,9 +196,10 @@ _example_init_component( int cidx )
    
    /* First, detect that our hardware is available */
    if (detect_example()!=PAPI_OK) {
-      snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
          "Example Hardware not present.");
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+      if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
       return PAPI_ENOSUPP;
    }
    
@@ -206,9 +212,10 @@ _example_init_component( int cidx )
 		( example_native_event_entry_t * )
 		papi_calloc( num_events, sizeof(example_native_event_entry_t) );
 	if ( example_native_table == NULL ) {
-      snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
       "Could not allocate %lu bytes of memory for EXAMPLE device structure.", num_events*sizeof(example_native_event_entry_t));
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+      if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
 		return PAPI_ENOMEM;
 	}
 

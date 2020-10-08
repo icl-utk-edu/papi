@@ -28,6 +28,10 @@ struct temp_event {
   struct temp_event *next;
 };
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
 static CORETEMP_native_event_entry_t * _coretemp_native_events;
 static int num_events		= 0;
@@ -379,8 +383,11 @@ _coretemp_init_component( int cidx )
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
-        strncpy(_coretemp_vector.cmp_info.disabled_reason,
+        char* cpyPtr;
+        cpyPtr = strncpy(_coretemp_vector.cmp_info.disabled_reason,
         "Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
+        _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        (void) cpyPtr;
         return PAPI_ENOCMP;
      }
 
