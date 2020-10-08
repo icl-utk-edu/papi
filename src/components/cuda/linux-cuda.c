@@ -359,11 +359,11 @@ static int _cuda_linkCudaLibraries(void)
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );                \
     if ( dlerror()!=NULL ) {                                                \
         int strErr;                                                         \
-        strErr = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,   \
+        strErr = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,   \
         "A CUDA required function '%s' was not found in lib '%s'.",         \
         name, #dllib);                                                      \
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;        \
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;               \
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;                 \
         return ( PAPI_ENOSUPP );                                            \
     }
 
@@ -386,9 +386,9 @@ static int _cuda_linkCudaLibraries(void)
         int strErr;
         dl1 = dlopen(cuda_main, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
         if (dl1 == NULL) {
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_MAIN override '%s' given in Rules.cuda not found.", cuda_main);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -408,9 +408,9 @@ static int _cuda_linkCudaLibraries(void)
 
     // Check for failure.
     if (dl1 == NULL) {
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "libcuda.so not found.");
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcuda.so not found.");
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -436,9 +436,9 @@ static int _cuda_linkCudaLibraries(void)
     if (strlen(cuda_runtime) > 0) {                                // If override given, it has to work.
         dl2 = dlopen(cuda_runtime, RTLD_NOW | RTLD_GLOBAL);        // Try to open that path.
         if (dl2 == NULL) {
-            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_RUNTIME override '%s' given in Rules.cuda not found.", cuda_runtime);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -458,9 +458,9 @@ static int _cuda_linkCudaLibraries(void)
 
     // Check for failure.
     if (dl2 == NULL) {
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "libcudart.so not found.");
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcudart.so not found.");
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -476,9 +476,9 @@ static int _cuda_linkCudaLibraries(void)
     if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
         dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
         if (dl3 == NULL) {
-            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -498,9 +498,9 @@ static int _cuda_linkCudaLibraries(void)
 
     // Check for failure.
     if (dl3 == NULL) {
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "libcupti.so not found.");
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);   // Not found on default paths.
     }
 
@@ -573,15 +573,15 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             const char *errString=NULL;
             (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
             if (errString != NULL) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "CUDA initialization (cuInit) failed: %s", errString);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             } else {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "CUDA initialization (cuInit) failed: Unrecognized Error Code=%d.", cuErr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             } // end dealing with error on cuInit(0).
             return PAPI_ENOSUPP;
         } // end if cuInit(0) failed.
@@ -591,17 +591,17 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if(cuErr != CUDA_SUCCESS) {
             const char *errString=NULL;
             (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuDeviceGetCount() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         } 
     } // end if CUDA was not initialized; try to init.
 
     // cuInit(0) was successful.
     if(gctxt->deviceCount == 0) {
-        char* strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA initialized but no CUDA devices found.", PAPI_MAX_STR_LEN-2);
+        char* strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA initialized but no CUDA devices found.", PAPI_MAX_STR_LEN);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
@@ -611,10 +611,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     /* allocate memory for device information */
     gctxt->deviceArray = (cuda_device_desc_t *) papi_calloc(gctxt->deviceCount, sizeof(cuda_device_desc_t));
     if (!gctxt->deviceArray) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "Could not allocate %lu bytes of memory for CUDA device structure.", gctxt->deviceCount*sizeof(cuda_device_desc_t));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
 
@@ -627,10 +627,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cuErr != CUDA_SUCCESS) {
             const char *errString=NULL;
             (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuDeviceGet() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         } 
 
@@ -639,10 +639,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cuErr != CUDA_SUCCESS) {
             const char *errString=NULL;
             (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuDeviceGetName() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         } 
 
@@ -660,17 +660,17 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
             if (cuptiError == 38) { 
-                char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN-2);
+                char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
                 if (strCpy == NULL) HANDLE_STRING_ERROR;
                 return PAPI_ENOSUPP;
             }
 
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuptiDeviceGetNumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         }
             
@@ -679,10 +679,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             mydevice->maxDomains, sizeof(CUpti_EventDomainID));
 
         if (!mydevice->domainIDArray) {
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for device domain ID array", mydevice->maxDomains*sizeof(CUpti_EventDomainID));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return (PAPI_ENOMEM);
         }
 
@@ -693,20 +693,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
            (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Function cuptiDeviceEnumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         }
 
         /* Allocate space to hold domain event counts */
         mydevice->domainIDNumEvents = (uint32_t *) papi_calloc(mydevice->maxDomains, sizeof(uint32_t));
         if (!mydevice->domainIDArray) {
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Could not allocate %lu bytes of memory for device domain ID array", mydevice->maxDomains*sizeof(CUpti_EventDomainID));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return (PAPI_ENOMEM);
         }
 
@@ -718,10 +718,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiEventDomaintGetNumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -742,42 +742,42 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     /* Allocate space for all events and descriptors */
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_calloc(maxEventSize, sizeof(CUpti_ActivityKind));
     if (!gctxt->availEventKind) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for availEventKind.", maxEventSize*sizeof(CUpti_ActivityKind));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
     gctxt->availEventDeviceNum = (int *) papi_calloc(maxEventSize, sizeof(int));
     if (!gctxt->availEventDeviceNum) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for availEventDeviceNum.", maxEventSize*sizeof(int));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
     gctxt->availEventIDArray = (CUpti_EventID *) papi_calloc(maxEventSize, sizeof(CUpti_EventID));
     if (!gctxt->availEventIDArray) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for availEventIDArray.", maxEventSize*sizeof(CUpti_EventID));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_calloc(maxEventSize, sizeof(uint32_t));
     if (!gctxt->availEventIsBeingMeasuredInEventset) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for availEventIsBeingMeasured.", maxEventSize*sizeof(uint32_t));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_calloc(maxEventSize, sizeof(cuda_name_desc_t));
     if (!gctxt->availEventDesc) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for availEventDesc.", maxEventSize*sizeof(cuda_name_desc_t));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
 
@@ -798,10 +798,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             CUpti_EventID *domainEventIDArray =                                         // Make space for the events in this domain.
                 (CUpti_EventID *) papi_calloc(domainNumEvents, sizeof(CUpti_EventID));  // ..
             if (!domainEventIDArray) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for domainEventIDArray.", domainNumEvents*sizeof(CUpti_EventID));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
@@ -811,10 +811,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiEventDomainEnumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -829,10 +829,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (cuptiError != CUPTI_SUCCESS) {
                     const char *errstr;
                     (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                    strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                         "Function cuptiEventGetAttribute(EVENT_NAME) failed; error code=%d [%s].", cuptiError, errstr);
                     _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                    if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                     return(PAPI_EMISC);    
                 }
 
@@ -852,10 +852,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (cuptiError != CUPTI_SUCCESS) {
                     const char *errstr;
                     (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                    strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                         "Function cuptiEventGetAttribute(EVENT_NAME) failed; error code=%d [%s].", cuptiError, errstr);
                     _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                    if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                     return(PAPI_EMISC);    
                 }
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0'; // Ensure null terminator.
@@ -891,10 +891,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         size_t size = maxMetrics * sizeof(CUpti_EventID);
         metricIdList = (CUpti_MetricID *) papi_calloc(maxMetrics, sizeof(CUpti_EventID));
         if (!metricIdList) {
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Could not allocate %lu bytes of memory for metricIdList.", maxMetrics*sizeof(CUpti_EventID));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return (PAPI_ENOMEM);
         }
 
@@ -902,10 +902,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Function cuptiDeviceEnumMetrics failed; error code=%d [%s].", cuptiError, errstr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         }
 
@@ -913,18 +913,18 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         int saveDeviceNum = 0;
         cudaErr = (*cudaGetDevicePtr)(&saveDeviceNum);
         if (cudaErr != cudaSuccess) {
-            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "cudaGetDevicePtr failed, invalid return code.", PAPI_MAX_STR_LEN-2);
+            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "cudaGetDevicePtr failed, invalid return code.", PAPI_MAX_STR_LEN);
             if (cudaErr ==  cudaErrorInvalidValue       ) {
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorInitializationError) { 
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorInsufficientDriver ) {
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorNoDevice           ) { 
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN);
             }
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
@@ -937,10 +937,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -991,10 +991,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -1008,10 +1008,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricGetAttribute(METRIC_KIND)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -1024,10 +1024,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricGetAttribute(METRIC_LONG_DESC)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EMISC);    
             }
 
@@ -1041,20 +1041,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricGetNumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EINVAL);    
             }
 
             size_t sizeBytes = numSubs * sizeof(CUpti_EventID);                     // .. compute size of array we need.
             CUpti_EventID *subEventIds = papi_malloc(sizeBytes);                    // .. Make the space.
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for subEventIds.", sizeBytes);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
@@ -1062,10 +1062,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                 const char *errstr;
                 (*cuptiGetResultStringPtr)(cuptiError, &errstr);
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Function cuptiMetricEnumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return(PAPI_EINVAL);    
             }
 
@@ -1081,18 +1081,18 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // CU_CALL((*cuCtxDestroyPtr) (tempContext),     return (PAPI_EMISC));         // destroy the temporary context.
         cudaErr = (*cudaSetDevicePtr)(saveDeviceNum);
         if (cudaErr != cudaSuccess) {
-            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "cudaSetDevicePtr failed, invalid return code.", PAPI_MAX_STR_LEN-2);
+            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "cudaSetDevicePtr failed, invalid return code.", PAPI_MAX_STR_LEN);
             if (cudaErr ==  cudaErrorInvalidValue       ) {
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Invalid argument provided for cudaGetDevice() function.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorInitializationError) { 
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver and Runtime could not be Initialized.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorInsufficientDriver ) {
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda Driver version too old for Cuda Library.", PAPI_MAX_STR_LEN);
             }
             if (cudaErr ==  cudaErrorNoDevice           ) { 
-               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN-2);
+               strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Cuda device could not be found.", PAPI_MAX_STR_LEN);
             }
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
@@ -1110,10 +1110,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     localAllEvents = calloc(maxUnenumEvents+firstMetricIdx, sizeof(cuda_all_events_t));
     CHECK_PRINT_EVAL(localAllEvents == NULL, "Malloc failed", return (PAPI_ENOMEM));
     if (!localAllEvents) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for localAllEvents.", (maxUnenumEvents+firstMetricIdx)*sizeof(cuda_all_events_t));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
 
@@ -1218,46 +1218,46 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     maxEventSize += (j-firstMetricIdx); 
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_realloc(gctxt->availEventKind, maxEventSize * sizeof(CUpti_ActivityKind));
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventKind.", maxEventSize * sizeof(CUpti_ActivityKind));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
     gctxt->availEventDeviceNum = (int *) papi_realloc(gctxt->availEventDeviceNum,maxEventSize * sizeof(int));
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventDeviceNum.", maxEventSize * sizeof(int));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
     gctxt->availEventIDArray = (CUpti_EventID *) papi_realloc(gctxt->availEventIDArray,maxEventSize * sizeof(CUpti_EventID));
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventIDArray.", maxEventSize * sizeof(CUpti_EventID));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_realloc(gctxt->availEventIsBeingMeasuredInEventset,maxEventSize * sizeof(uint32_t));
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventIsBeingMeasured.", maxEventSize * sizeof(uint32_t));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_realloc(gctxt->availEventDesc,maxEventSize * sizeof(cuda_name_desc_t));
             if (!subEventIds) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventDesc.", maxEventSize * sizeof(cuda_name_desc_t));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 return (PAPI_ENOMEM);
             }
 
@@ -1391,10 +1391,10 @@ static int _cuda_init_component(int cidx)
     if(!global_cuda_context) {
         global_cuda_context = (cuda_context_t *) papi_calloc(1, sizeof(cuda_context_t));
         if (global_cuda_context == NULL) {
-            int strErr=strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            int strErr=strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Could not allocate %lu bytes of memory for global_cuda_context.", sizeof(cuda_context_t));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;    
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_ENOMEM);
         }
     }

@@ -404,9 +404,9 @@ _coretemp_init_component( int cidx )
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
           papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
      if (_coretemp_native_events == NULL) {
-          int strErr=snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "malloc() of _coretemp_native_events failed for %lu bytes.", num_events*sizeof(CORETEMP_native_event_entry_t));
+          int strErr=snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() of _coretemp_native_events failed for %lu bytes.", num_events*sizeof(CORETEMP_native_event_entry_t));
           _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-          if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+          if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
           return(PAPI_ENOMEM);
      }
 

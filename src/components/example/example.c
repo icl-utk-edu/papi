@@ -196,10 +196,10 @@ _example_init_component( int cidx )
    
    /* First, detect that our hardware is available */
    if (detect_example()!=PAPI_OK) {
-      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
          "Example Hardware not present.");
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-      if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
       return PAPI_ENOSUPP;
    }
    
@@ -212,10 +212,10 @@ _example_init_component( int cidx )
 		( example_native_event_entry_t * )
 		papi_calloc( num_events, sizeof(example_native_event_entry_t) );
 	if ( example_native_table == NULL ) {
-      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
       "Could not allocate %lu bytes of memory for EXAMPLE device structure.", num_events*sizeof(example_native_event_entry_t));
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-      if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		return PAPI_ENOMEM;
 	}
 

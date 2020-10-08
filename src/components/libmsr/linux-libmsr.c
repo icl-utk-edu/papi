@@ -149,7 +149,7 @@ static int libmsr_get_rapl_power_info( const unsigned socket, struct rapl_power_
 
 
 #define CHECK_DL_STATUS( err, str ) if( err ) {                                            \
-   char* strCpy=strncpy(_libmsr_vector.cmp_info.disabled_reason, str, PAPI_MAX_STR_LEN-2); \
+   char* strCpy=strncpy(_libmsr_vector.cmp_info.disabled_reason, str, PAPI_MAX_STR_LEN);   \
    _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;                          \
    if (strCpy == NULL) HANDLE_STRING_ERROR;                                                \
    return ( PAPI_ENOSUPP ); }
@@ -158,7 +158,7 @@ static int _local_linkDynamicLibraries()
 {
     if ( _dl_non_dynamic_init != NULL ) {
         // If weak var present, statically linked insted of dynamic.
-        char *strCpy = strncpy( _libmsr_vector.cmp_info.disabled_reason, "The libmsr component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN-2);
+        char *strCpy = strncpy( _libmsr_vector.cmp_info.disabled_reason, "The libmsr component REQUIRES dynamic linking capabilities.", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
         // EXIT not supported.
@@ -173,9 +173,9 @@ static int _local_linkDynamicLibraries()
     if (strlen(libmsr_main) > 0) {                                  // If override given, it has to work.
         dl1 = dlopen(libmsr_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
         if (dl1 == NULL) {
-            int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "PAPI_LIBMSR_MAIN override '%s' given in Rules.libmsr not found.", libmsr_main);
+            int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LIBMSR_MAIN override '%s' given in Rules.libmsr not found.", libmsr_main);
             _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -195,9 +195,9 @@ static int _local_linkDynamicLibraries()
 
     // Check for failure.
     if (dl1 == NULL) {
-        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2, "libmsr.so not found.");
+        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libmsr.so not found.");
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -295,7 +295,7 @@ int _libmsr_init_component( int cidx )
     hw_info = &( _papi_hwi_system_info.hw_info );
     /* Can't use PAPI_get_hardware_info() if PAPI library not done initializing yet */
     if( hw_info->vendor != PAPI_VENDOR_INTEL ) {
-        char *strCpy = strncpy( _libmsr_vector.cmp_info.disabled_reason, "Not an Intel processor", PAPI_MAX_STR_LEN-2);
+        char *strCpy = strncpy( _libmsr_vector.cmp_info.disabled_reason, "Not an Intel processor", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
@@ -311,8 +311,8 @@ int _libmsr_init_component( int cidx )
 
     /* initialize libmsr */
     if ( libmsr_init_msr() != 0 ) {
-        SUBDBG( "init_msr (libmsr) returned error.  Possible problems accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr"); 
-        char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize (libmsr/init_msr failed)", PAPI_MAX_STR_LEN-2);
+        SUBDBG( "init_msr (libmsr) returned error. Possible permission problem accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr"); 
+        char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr init failed; possible permission issue accessing /dev/cpu/<n>/msr)", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP; 
@@ -322,7 +322,7 @@ int _libmsr_init_component( int cidx )
     if ( already_called_libmsr_rapl_initialized_global==0 ) {
         if ( libmsr_rapl_init( &libmsr_rapl_data, &libmsr_rapl_flags ) < 0 ) {
             SUBDBG( "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)"); 
-            char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)", PAPI_MAX_STR_LEN-2);
+            char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)", PAPI_MAX_STR_LEN);
             _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
             return PAPI_ENOSUPP;
@@ -381,10 +381,10 @@ int _libmsr_init_component( int cidx )
     /* Allocate space for events */
     libmsr_native_events = ( _libmsr_native_event_entry_t * ) calloc(max_num_events, sizeof(_libmsr_native_event_entry_t));
     if ( !libmsr_native_events ) {
-        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for libmsr native event array.", max_num_events*sizeof(_libmsr_native_event_entry_t));
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN-2) HANDLE_STRING_ERROR;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         SUBDBG("Could not allocate memory\n" );
         return(PAPI_ENOMEM);
    }
