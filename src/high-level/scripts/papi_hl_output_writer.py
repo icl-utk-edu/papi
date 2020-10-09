@@ -250,7 +250,7 @@ def derive_sum_json_object(json):
       del events['perf::TASK-CLOCK']
 
     #PAPI_TOT_INS and PAPI_TOT_CYC to calculate IPC
-    if 'PAPI_TOT_INS' and 'PAPI_TOT_CYC' in events:
+    if 'PAPI_TOT_INS' in events and 'PAPI_TOT_CYC' in events:
       event_name = 'IPC'
       metric = 'total'
       try:
@@ -389,7 +389,7 @@ def derive_events(events):
     del events['perf::TASK-CLOCK']
 
   #PAPI_TOT_INS and PAPI_TOT_CYC to calculate IPC
-  if 'PAPI_TOT_INS' and 'PAPI_TOT_CYC' in events:
+  if 'PAPI_TOT_INS' in events and 'PAPI_TOT_CYC' in events:
     if isinstance(events['PAPI_TOT_INS'],dict) and isinstance(events['PAPI_TOT_CYC'],dict):
       ipc_dict = get_ipc_dict(events['PAPI_TOT_INS'], events['PAPI_TOT_CYC'])
       derive_events['IPC'] = ipc_dict
