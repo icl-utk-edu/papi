@@ -39,6 +39,7 @@ Besides the PAPI\_ROCM\_ROOT environment variable, four more environment variabl
     export ROCPROFILER_LOG=1
     export HSA_VEN_AMD_AQLPROFILE_LOG=1
     export AQLPROFILE_READ_API=1
+    export HSA_TOOLS_LIB=librocprofiler64.60
 
 The first of these, ROCP\_METRICS, must point at a file containing the descriptions of metrics. The standard location is shown above, the final three exports are fixed settings.
     
