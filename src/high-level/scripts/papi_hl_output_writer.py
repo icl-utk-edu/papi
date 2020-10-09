@@ -14,6 +14,16 @@ except NameError:
 
 cpu_freq = 0
 event_definitions = {}
+process_num = 1
+
+event_rate_names = OrderedDict([
+      ('PAPI_FP_INS','MFLIPS/s'),
+      ('PAPI_VEC_SP','Single precision vector/SIMD instructions rate in M/s'),
+      ('PAPI_VEC_DP','Double precision vector/SIMD instructions rate in M/s'),
+      ('PAPI_FP_OPS','MFLOPS/s'),
+      ('PAPI_SP_OPS','Single precision MFLOPS/s'),
+      ('PAPI_DP_OPS','Double precision MFLOPS/s')
+    ])
 
 def merge_json_files(source):
   json_object = {}
@@ -32,7 +42,7 @@ def merge_json_files(source):
 
     json_rank["id"] = rank
 
-    #open meaurement file
+    #open measurement file
     file_name = str(source) + "/rank_" + str(rank) 
 
     try:
@@ -160,25 +170,45 @@ class Sum_Counters(object):
       events = OrderedDict()
       for key,value in self.sum_counters.items():
         if key == name:
+          region_count = 1
           for event_key,event_value in value.items():
             if event_key == 'region_count':
               events[event_key] = int(event_value.get_sum())
+              region_count = events[event_key]
             else:
-              events[event_key] = OrderedDict()
               global event_definitions
-              if event_key == 'cycles':
-                events[event_key]['total'] = event_value.get_sum()
-              else:
-                if event_definitions[event_key] == 'delta':
+              if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
+                events[event_key] = OrderedDict()
+                if event_key == 'cycles':
                   events[event_key]['total'] = event_value.get_sum()
-              events[event_key]['min'] = event_value.get_min()
-              events[event_key]['median'] = event_value.get_median()
-              events[event_key]['max'] = event_value.get_max()
+                else:
+                  if event_definitions[event_key] == 'delta':
+                    events[event_key]['total'] = event_value.get_sum()
+                events[event_key]['min'] = event_value.get_min()
+                events[event_key]['median'] = event_value.get_median()
+                events[event_key]['max'] = event_value.get_max()
+              else:
+                #sequential code
+                if event_key == 'cycles':
+                  events[event_key] = event_value.get_min()
+                else:
+                  if event_definitions[event_key] == 'instant' and region_count > 1:
+                    events[event_key] = OrderedDict()
+                    events[event_key]['min'] = event_value.get_min()
+                    events[event_key]['median'] = event_value.get_median()
+                    events[event_key]['max'] = event_value.get_max()
+                  else:
+                    events[event_key] = event_value.get_min()
         break
-      events['Number of ranks'] = self.regions[name]['rank_num']
-      events['Number of threads per rank'] = int(self.regions[name]['thread_num'] / self.regions[name]['rank_num'])
-      
+
+      #add number of ranks and threads in case of a parallel code
+      if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
+        events['Number of ranks'] = self.regions[name]['rank_num']
+        events['Number of threads per rank'] = int(self.regions[name]['thread_num'] / self.regions[name]['rank_num'])
       sum_json[name] = events
+
+      global process_num
+      process_num = self.regions[name]['rank_num'] * self.regions[name]['thread_num']
     return sum_json
 
 def derive_sum_json_object(json):
@@ -188,6 +218,7 @@ def derive_sum_json_object(json):
     #print("region: ", region_key)
     derive_events = OrderedDict()
     events = region_value.copy()
+    global process_num
 
     #remember runtime for other metrics like MFLOPS
     rt = {}
@@ -199,49 +230,55 @@ def derive_sum_json_object(json):
 
     #Real Time
     if 'cycles' in events:
-      for metric in ['total', 'min', 'median', 'max']:
-        rt[metric] = convert_value(events['cycles'][metric], 'Runtime')
-      derive_events['Real time in s'] = rt['max']
+      event_name = 'Real time in s'
+      if process_num > 1:
+        for metric in ['total', 'min', 'median', 'max']:
+          rt[metric] = convert_value(events['cycles'][metric], 'Runtime')
+        derive_events[event_name] = rt['max']
+      else:
+        rt['total'] = convert_value(events['cycles'], 'Runtime')
+        derive_events[event_name] = rt['total']
       del events['cycles']
 
     #CPU Time
     if 'perf::TASK-CLOCK' in events:
-      derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK']['total'], 'CPUtime')
+      event_name = 'CPU time in s'
+      if process_num > 1:
+        derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK']['total'], 'CPUtime')
+      else:
+        derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK'], 'CPUtime')
       del events['perf::TASK-CLOCK']
 
     #PAPI_TOT_INS and PAPI_TOT_CYC to calculate IPC
     if 'PAPI_TOT_INS' and 'PAPI_TOT_CYC' in events:
       event_name = 'IPC'
-      derive_events[event_name] = OrderedDict()
-      for metric in ['total', 'min', 'median', 'max']:
-        try:
+      metric = 'total'
+      try:
+        if process_num > 1: 
           ipc = float(format(float(int(events['PAPI_TOT_INS'][metric]) / int(events['PAPI_TOT_CYC'][metric])), '.2f'))
-        except:
-          ipc = 'n/a'
-        derive_events[event_name][metric] = ipc
+        else:
+          ipc = float(format(float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC'])), '.2f'))
+      except:
+        ipc = 'n/a'
+      derive_events[event_name] = ipc
 
       del events['PAPI_TOT_INS']
       del events['PAPI_TOT_CYC']
     
     #Rates
-    event_rate_names = OrderedDict([
-      ('PAPI_FP_INS','MFLIPS/s'),
-      ('PAPI_VEC_SP','Single precision vector/SIMD instructions rate in M/s'),
-      ('PAPI_VEC_DP','Double precision vector/SIMD instructions rate in M/s'),
-      ('PAPI_FP_OPS','MFLOPS/s'),
-      ('PAPI_SP_OPS','Single precision MFLOPS/s'),
-      ('PAPI_DP_OPS','Double precision MFLOPS/s')
-    ])
+    global event_rate_names
     for rate_event in event_rate_names:
       if rate_event in events:
         event_name = event_rate_names[rate_event]
-        derive_events[event_name] = OrderedDict()
-        for metric in ['total', 'min', 'median', 'max']:
-          try:
+        metric = 'total'
+        try:
+          if process_num > 1:
             rate = float(format(float(events[rate_event][metric]) / 1000000 / rt[metric], '.2f'))
-          except:
-            rate = 'n/a'
-          derive_events[event_name][metric] = rate
+          else:
+            rate = float(format(float(events[rate_event]) / 1000000 / rt[metric], '.2f'))
+        except:
+          rate = 'n/a'
+        derive_events[event_name] = rate
 
         del events[rate_event]
 
@@ -366,71 +403,18 @@ def derive_events(events):
     del events['PAPI_TOT_INS']
     del events['PAPI_TOT_CYC']
   
-  #FLIPS
-  if 'PAPI_FP_INS' in events:
-    if isinstance(events['PAPI_FP_INS'],dict):
-      mflips_dict = get_ops_dict(events['PAPI_FP_INS'], rt_dict)
-      derive_events['MFLIPS/s'] = mflips_dict
-    else:
-      mflips = float(events['PAPI_FP_INS']) / 1000000 / rt
-      mflips = float(format(mflips, '.2f'))
-      derive_events['MFLIPS/s'] = mflips
-    del events['PAPI_FP_INS']
-
-  #SP vector instructions per second
-  if 'PAPI_VEC_SP' in events:
-    if isinstance(events['PAPI_VEC_SP'],dict):
-      mvecins_dict = get_ops_dict(events['PAPI_VEC_SP'], rt_dict)
-      derive_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins_dict
-    else:
-      mvecins = float(events['PAPI_VEC_SP']) / 1000000 / rt
-      mvecins = float(format(mvecins, '.2f'))
-      derive_events['Single precision vector/SIMD instructions rate in M/s'] = mvecins
-    del events['PAPI_VEC_SP']
-
-  #DP vector instructions per second
-  if 'PAPI_VEC_DP' in events:
-    if isinstance(events['PAPI_VEC_DP'],dict):
-      mvecins_dict = get_ops_dict(events['PAPI_VEC_DP'], rt_dict)
-      derive_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins_dict
-    else:
-      mvecins = float(events['PAPI_VEC_DP']) / 1000000 / rt
-      mvecins = float(format(mvecins, '.2f'))
-      derive_events['Double precision vector/SIMD instructions rate in M/s'] = mvecins
-    del events['PAPI_VEC_DP']
-  
-  #FLOPS
-  if 'PAPI_FP_OPS' in events:
-    if isinstance(events['PAPI_FP_OPS'],dict):
-      mflops_dict = get_ops_dict(events['PAPI_FP_OPS'], rt_dict)
-      derive_events['MFLOPS/s'] = mflops_dict
-    else:
-      mflops = float(events['PAPI_FP_OPS']) / 1000000 / rt
-      mflops = float(format(mflops, '.2f'))
-      derive_events['MFLOPS/s'] = mflops
-    del events['PAPI_FP_OPS']
-  
-  #SP FLOPS
-  if 'PAPI_SP_OPS' in events:
-    if isinstance(events['PAPI_SP_OPS'],dict):
-      mflops_dict = get_ops_dict(events['PAPI_SP_OPS'], rt_dict)
-      derive_events['Single precision MFLOPS/s'] = mflops_dict
-    else:
-      mflops = float(events['PAPI_SP_OPS']) / 1000000 / rt
-      mflops = float(format(mflops, '.2f'))
-      derive_events['Single precision MFLOPS/s'] = mflops
-    del events['PAPI_SP_OPS']
-
-  #DP FLOPS
-  if 'PAPI_DP_OPS' in events:
-    if isinstance(events['PAPI_DP_OPS'],dict):
-      mflops_dict = get_ops_dict(events['PAPI_DP_OPS'], rt_dict)
-      derive_events['Double precision MFLOPS/s'] = mflops_dict
-    else:
-      mflops = float(events['PAPI_DP_OPS']) / 1000000 / rt
-      mflops = float(format(mflops, '.2f'))
-      derive_events['Double precision MFLOPS/s'] = mflops
-    del events['PAPI_DP_OPS']
+  #Rates
+  global event_rate_names
+  for rate_event in event_rate_names:
+    if rate_event in events:
+      event_name = event_rate_names[rate_event]
+      if isinstance(events[rate_event],dict):
+        rate_dict = get_ops_dict(events[rate_event], rt_dict)
+        derive_events[event_name] = rate_dict
+      else:
+        rate = float(format(float(events[rate_event]) / 1000000 / rt, '.2f'))
+        derive_events[event_name] = rate
+      del events[rate_event]
 
   #read the rest
   for event_key,event_value in events.items():
@@ -507,7 +491,7 @@ def parse_args():
                       help='Measurement directory of raw data.')
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
-  parser.add_argument('--type', type=str, required=False, default='detail', 
+  parser.add_argument('--type', type=str, required=False, default='summary', 
                       help='Output type: detail or summary.')
   parser.add_argument('--notation', type=str, required=False, default='derived', 
                       help='Output notation: raw or derived.')
@@ -530,6 +514,13 @@ def parse_args():
   output_type = str(parser.parse_args().type)
   if output_type != "detail" and output_type != "summary":
     print("Output type '{}' is not supported!\n".format(output_type))
+    parser.print_help()
+    parser.exit()
+
+  # check notation
+  output_notation = str(parser.parse_args().notation)
+  if output_notation != "raw" and output_notation != "derived":
+    print("Output notation '{}' is not supported!\n".format(output_notation))
     parser.print_help()
     parser.exit()
   
