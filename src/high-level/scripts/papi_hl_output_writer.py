@@ -199,7 +199,7 @@ class Sum_Counters(object):
                     events[event_key]['max'] = event_value.get_max()
                   else:
                     events[event_key] = event_value.get_min()
-        break
+          break
 
       #add number of ranks and threads in case of a parallel code
       if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
