@@ -14,7 +14,7 @@ except NameError:
 
 cpu_freq = 0
 event_definitions = {}
-process_num = 1
+process_num = {}
 
 event_rate_names = OrderedDict([
       ('PAPI_FP_INS','MFLIPS/s'),
@@ -208,7 +208,7 @@ class Sum_Counters(object):
       sum_json[name] = events
 
       global process_num
-      process_num = self.regions[name]['rank_num'] * self.regions[name]['thread_num']
+      process_num[name] = self.regions[name]['rank_num'] * self.regions[name]['thread_num']
     return sum_json
 
 def derive_sum_json_object(json):
@@ -219,6 +219,7 @@ def derive_sum_json_object(json):
     derive_events = OrderedDict()
     events = region_value.copy()
     global process_num
+    proc_num = process_num[region_key]
 
     #remember runtime for other metrics like MFLOPS
     rt = {}
@@ -231,7 +232,7 @@ def derive_sum_json_object(json):
     #Real Time
     if 'cycles' in events:
       event_name = 'Real time in s'
-      if process_num > 1:
+      if proc_num > 1:
         for metric in ['total', 'min', 'median', 'max']:
           rt[metric] = convert_value(events['cycles'][metric], 'Runtime')
         derive_events[event_name] = rt['max']
@@ -243,7 +244,7 @@ def derive_sum_json_object(json):
     #CPU Time
     if 'perf::TASK-CLOCK' in events:
       event_name = 'CPU time in s'
-      if process_num > 1:
+      if proc_num > 1:
         derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK']['total'], 'CPUtime')
       else:
         derive_events['CPU time in s'] = convert_value(events['perf::TASK-CLOCK'], 'CPUtime')
@@ -254,7 +255,7 @@ def derive_sum_json_object(json):
       event_name = 'IPC'
       metric = 'total'
       try:
-        if process_num > 1: 
+        if proc_num > 1: 
           ipc = float(format(float(int(events['PAPI_TOT_INS'][metric]) / int(events['PAPI_TOT_CYC'][metric])), '.2f'))
         else:
           ipc = float(format(float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC'])), '.2f'))
@@ -272,7 +273,7 @@ def derive_sum_json_object(json):
         event_name = event_rate_names[rate_event]
         metric = 'total'
         try:
-          if process_num > 1:
+          if proc_num > 1:
             rate = float(format(float(events[rate_event][metric]) / 1000000 / rt[metric], '.2f'))
           else:
             rate = float(format(float(events[rate_event]) / 1000000 / rt[metric], '.2f'))
