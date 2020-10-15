@@ -598,8 +598,8 @@ static const pme_power_entry_t power7_pe[] = {
 	[ POWER7_PME_PM_VSU0_16FLOP ] = {
 		.pme_name = "PM_VSU0_16FLOP",
 		.pme_code = 0xa0a4,
-		.pme_short_desc = "Sixteen flops operation (SP vector versions of fdiv,fsqrt)  ",
-		.pme_long_desc = "Sixteen flops operation (SP vector versions of fdiv,fsqrt)  ",
+		.pme_short_desc = "Sixteen flops operation (SP vector versions of fdiv,fsqrt)",
+		.pme_long_desc = "Sixteen flops operation (SP vector versions of fdiv,fsqrt)",
 	},
 	[ POWER7_PME_PM_MRK_LSU_DERAT_MISS ] = {
 		.pme_name = "PM_MRK_LSU_DERAT_MISS",
@@ -1792,8 +1792,8 @@ static const pme_power_entry_t power7_pe[] = {
 	[ POWER7_PME_PM_IC_BANK_CONFLICT ] = {
 		.pme_name = "PM_IC_BANK_CONFLICT",
 		.pme_code = 0x4082,
-		.pme_short_desc = "Read blocked due to interleave conflict.  ",
-		.pme_long_desc = "Read blocked due to interleave conflict.  ",
+		.pme_short_desc = "Read blocked due to interleave conflict.",
+		.pme_long_desc = "Read blocked due to interleave conflict.",
 	},
 	[ POWER7_PME_PM_BR_MPRED_CR_TA ] = {
 		.pme_name = "PM_BR_MPRED_CR_TA",
@@ -1984,8 +1984,8 @@ static const pme_power_entry_t power7_pe[] = {
 	[ POWER7_PME_PM_VSU1_2FLOP_DOUBLE ] = {
 		.pme_name = "PM_VSU1_2FLOP_DOUBLE",
 		.pme_code = 0xa08e,
-		.pme_short_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)  ",
-		.pme_long_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)  ",
+		.pme_short_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)",
+		.pme_long_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)",
 	},
 	[ POWER7_PME_PM_THRD_PRIO_6_7_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_6_7_CYC",
@@ -3143,7 +3143,7 @@ static const pme_power_entry_t power7_pe[] = {
 		.pme_name = "PM_IC_PREF_WRITE",
 		.pme_code = 0x408e,
 		.pme_short_desc = "Instruction prefetch written into IL1",
-		.pme_long_desc = "Number of Instruction Cache entries written because of prefetch. Prefetch entries are marked least recently used and are candidates for eviction if they are not needed to satify a demand fetch.",
+		.pme_long_desc = "Number of Instruction Cache entries written because of prefetch. Prefetch entries are marked least recently used and are candidates for eviction if they are not needed to satisfy a demand fetch.",
 	},
 	[ POWER7_PME_PM_BR_PRED ] = {
 		.pme_name = "PM_BR_PRED",
@@ -3670,8 +3670,8 @@ static const pme_power_entry_t power7_pe[] = {
 	[ POWER7_PME_PM_VSU0_2FLOP_DOUBLE ] = {
 		.pme_name = "PM_VSU0_2FLOP_DOUBLE",
 		.pme_code = 0xa08c,
-		.pme_short_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)  ",
-		.pme_long_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)  ",
+		.pme_short_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)",
+		.pme_long_desc = "two flop DP vector operation (xvadddp, xvmuldp, xvsubdp, xvcmpdp, xvseldp, xvabsdp, xvnabsdp, xvredp ,xvsqrtedp, vxnegdp)",
 	},
 	[ POWER7_PME_PM_LSU_DC_PREF_STRIDED_STREAM_CONFIRM ] = {
 		.pme_name = "PM_LSU_DC_PREF_STRIDED_STREAM_CONFIRM",

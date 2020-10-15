@@ -396,14 +396,14 @@ static const pme_cpumf_ctr_t cpumcf_z10_counters[] = {
 		.name = "L1I_CACHELINE_INVALIDATES",
 		.desc = "A cache line in the Level-1 I-Cache has been"
 			" invalidated by a store on the same CPU as the Level-"
-			" 1 I-Cache",
+			"1 I-Cache",
 	},
 	{
 		.ctrnum = 138,
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "ITLB1_WRITES",
 		.desc = "A translation entry has been written into the Level-"
-			" 1 Instruction Translation Lookaside Buffer",
+			"1 Instruction Translation Lookaside Buffer",
 	},
 	{
 		.ctrnum = 139,
@@ -552,7 +552,7 @@ static const pme_cpumf_ctr_t cpumcf_z196_counters[] = {
 		.name = "DTLB1_HPAGE_WRITES",
 		.desc = "A translation entry has been written to the Level-1"
 			" Data Translation Lookaside Buffer for a one-"
-			" megabyte page",
+			"megabyte page",
 	},
 	{
 		.ctrnum = 141,
@@ -730,7 +730,7 @@ static const pme_cpumf_ctr_t cpumcf_zec12_counters[] = {
 		.name = "DTLB1_HPAGE_WRITES",
 		.desc = "A translation entry has been written to the Level-1"
 			" Data Translation Lookaside Buffer for a one-"
-			" megabyte page",
+			"megabyte page",
 	},
 	{
 		.ctrnum = 140,
@@ -963,7 +963,7 @@ static const pme_cpumf_ctr_t cpumcf_z13_counters[] = {
 		.name = "DTLB1_HPAGE_WRITES",
 		.desc = "A translation entry has been written to the Level-1"
 			" Data Translation Lookaside Buffer for a one-"
-			" megabyte page",
+			"megabyte page",
 	},
 	{
 		.ctrnum = 132,
@@ -971,7 +971,7 @@ static const pme_cpumf_ctr_t cpumcf_z13_counters[] = {
 		.name = "DTLB1_GPAGE_WRITES",
 		.desc = "A translation entry has been written to the Level-1"
 			" Data Translation Lookaside Buffer for a two-"
-			" gigabyte page.",
+			"gigabyte page.",
 	},
 	{
 		.ctrnum = 133,
@@ -1038,7 +1038,7 @@ static const pme_cpumf_ctr_t cpumcf_z13_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TEND",
 		.desc = "A TEND instruction has completed in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 143,
@@ -1350,7 +1350,7 @@ static const pme_cpumf_ctr_t cpumcf_z13_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TABORT",
 		.desc = "A transaction abort has occurred in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 219,
@@ -1493,7 +1493,7 @@ static const pme_cpumf_ctr_t cpumcf_z14_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TEND",
 		.desc = "A TEND instruction has completed in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 143,
@@ -1777,7 +1777,7 @@ static const pme_cpumf_ctr_t cpumcf_z14_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TABORT",
 		.desc = "A transaction abort has occurred in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 244,
@@ -1919,7 +1919,7 @@ static const pme_cpumf_ctr_t cpumcf_z15_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TEND",
 		.desc = "A TEND instruction has completed in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 143,
@@ -2203,7 +2203,7 @@ static const pme_cpumf_ctr_t cpumcf_z15_counters[] = {
 		.ctrset = CPUMF_CTRSET_EXTENDED,
 		.name = "TX_NC_TABORT",
 		.desc = "A transaction abort has occurred in a non-"
-			" constrained transactional-execution mode",
+			"constrained transactional-execution mode",
 	},
 	{
 		.ctrnum = 244,

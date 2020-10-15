@@ -144,7 +144,7 @@ pfm_mips_detect(void *this)
 	if (strstr(buffer,"MIPS") == NULL)
 	  return PFM_ERR_NOTSUPP;
 
-	strncpy(pfm_mips_cfg.model,buffer,strlen(buffer));
+	strcpy(pfm_mips_cfg.model, buffer);
 
 /*	ret = pfmlib_getcpuinfo_attr("CPU implementer", buffer, sizeof(buffer));
 	if (ret == -1)

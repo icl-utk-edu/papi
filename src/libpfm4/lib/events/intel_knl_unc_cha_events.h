@@ -1154,7 +1154,7 @@ static const intel_x86_entry_t intel_knl_unc_cha_pe[]={
     .code    = 0xa4,
   },
   { .name    = "UNC_H_FAST_ASSERTED",
-    .desc    = "Counts cycles source throttling is adderted",
+    .desc    = "Counts cycles source throttling is asserted",
     .cntmsk  = 0xf,
     .code    = 0xa5,
     .ngrp    = 1,

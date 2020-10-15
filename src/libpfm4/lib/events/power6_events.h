@@ -800,8 +800,8 @@ static const pme_power_entry_t power6_pe[] = {
 	[ POWER6_PME_PM_LSU_FLUSH_ALIGN ] = {
 		.pme_name = "PM_LSU_FLUSH_ALIGN",
 		.pme_code = 0x220cc,
-		.pme_short_desc = "Flush caused by alignement exception",
-		.pme_long_desc = "Flush caused by alignement exception",
+		.pme_short_desc = "Flush caused by alignment exception",
+		.pme_long_desc = "Flush caused by alignment exception",
 	},
 	[ POWER6_PME_PM_DPU_HELD_FPU_CR ] = {
 		.pme_name = "PM_DPU_HELD_FPU_CR",
@@ -3494,8 +3494,8 @@ static const pme_power_entry_t power6_pe[] = {
 	[ POWER6_PME_PM_FAB_ADDR_COLLISION ] = {
 		.pme_name = "PM_FAB_ADDR_COLLISION",
 		.pme_code = 0x5018e,
-		.pme_short_desc = "local node launch collision with off-node address   ",
-		.pme_long_desc = "local node launch collision with off-node address   ",
+		.pme_short_desc = "local node launch collision with off-node address",
+		.pme_long_desc = "local node launch collision with off-node address",
 	},
 	[ POWER6_PME_PM_MRK_FXU_FIN ] = {
 		.pme_name = "PM_MRK_FXU_FIN",

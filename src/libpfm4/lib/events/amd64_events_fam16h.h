@@ -675,7 +675,7 @@ static const amd64_umask_t amd64_fam16h_cache_cross_invalidates[]={
      .ucode = 0x4,
    },
    { .uname  = "IC_INVALIDATES_DC_DIRTY",
-     .udesc  = "Exection of modified instruction or data too close to code",
+     .udesc  = "Execution of modified instruction or data too close to code",
      .ucode = 0x8,
    },
    { .uname  = "IC_HITS_DC_CLEAN_LINE",
