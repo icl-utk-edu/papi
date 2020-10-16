@@ -170,7 +170,7 @@ static intel_x86_entry_t intel_skx_unc_p_pe[]={
   },
   { .name   = "UNC_P_PROCHOT_INTERNAL_CYCLES",
     .code   = 0x9,
-    .desc   = "Counts the number of cycles that we are in Interal PROCHOT mode.  This mode is triggered when a sensor on the die determines that we are too hot and must throttle to avoid damaging the chip.",
+    .desc   = "Counts the number of cycles that we are in internal PROCHOT mode.  This mode is triggered when a sensor on the die determines that we are too hot and must throttle to avoid damaging the chip.",
     .modmsk = SKX_UNC_PCU_ATTRS,
     .cntmsk = 0xf,
   },

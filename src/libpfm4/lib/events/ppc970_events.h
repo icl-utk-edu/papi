@@ -385,7 +385,7 @@ static const pme_power_entry_t ppc970_pe[] = {
 		.pme_name = "PM_GRP_DISP_SUCCESS",
 		.pme_code = 0x5001,
 		.pme_short_desc = "Group dispatch success",
-		.pme_long_desc = "Number of groups sucessfully dispatched (not rejected)",
+		.pme_long_desc = "Number of groups successfully dispatched (not rejected)",
 	},
 	[ PPC970_PME_PM_LSU1_LDF ] = {
 		.pme_name = "PM_LSU1_LDF",
@@ -1375,7 +1375,7 @@ static const pme_power_entry_t ppc970_pe[] = {
 		.pme_name = "PM_LARX_LSU0",
 		.pme_code = 0x727,
 		.pme_short_desc = "Larx executed on LSU0",
-		.pme_long_desc = "A larx (lwarx or ldarx) was executed on side 0 (there is no coresponding unit 1 event since larx instructions can only execute on unit 0)",
+		.pme_long_desc = "A larx (lwarx or ldarx) was executed on side 0 (there is no corresponding unit 1 event since larx instructions can only execute on unit 0)",
 	},
 	[ PPC970_PME_PM_GCT_EMPTY_CYC ] = {
 		.pme_name = "PM_GCT_EMPTY_CYC",

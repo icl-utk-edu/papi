@@ -489,7 +489,7 @@ static const mips_entry_t mips_74k_pe []={
   {
     .name = "NO_INSTRUCTIONS_FROM_REPLAY_CYCLES",
     .code = 0xb8,
-    .desc = "Number of cycles no instructions graduated from the time the pipe was flushed because of a replay until the first new instruction graduates. This is an indicator of the graduation bandwidth loss due to replay. Often times this replay is a result of event 25 and therefor an indicator of bandwidth lost due to cache misses",
+    .desc = "Number of cycles no instructions graduated from the time the pipe was flushed because of a replay until the first new instruction graduates. This is an indicator of the graduation bandwidth loss due to replay. Often times this replay is a result of event 25 and therefore an indicator of bandwidth lost due to cache misses",
   },
   {
     .name = "MISPREDICTION_BRANCH_NODELAY_CYCLES",

@@ -983,7 +983,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_FPU_FEST",
 		.pme_code = 0x1010a8,
 		.pme_short_desc = "FPU executed FEST instruction",
-		.pme_long_desc = "The floating point unit has executed an estimate instructions. This could be fres* or frsqrte* where XYZ* means XYZ or  XYZ.   Combined Unit 0 + Unit 1.",
+		.pme_long_desc = "The floating point unit has executed an estimate instructions.  This could be fres* or frsqrte* where XYZ* means XYZ or XYZ.  Combined Unit 0 + Unit 1.",
 	},
 	[ POWER5p_PME_PM_FAB_M1toP1_SIDECAR_EMPTY ] = {
 		.pme_name = "PM_FAB_M1toP1_SIDECAR_EMPTY",
@@ -1457,7 +1457,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_FAB_HOLDtoNN_EMPTY",
 		.pme_code = 0x722e7,
 		.pme_short_desc = "Hold buffer to NN empty",
-		.pme_long_desc = "Fabric cyles when the Next Node out hold-buffers are emtpy.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
+		.pme_long_desc = "Fabric cyles when the Next Node out hold-buffers are empty.  The signal is delivered at FBC speed and the count must be scaled accordingly.",
 	},
 	[ POWER5p_PME_PM_DATA_FROM_LMEM ] = {
 		.pme_name = "PM_DATA_FROM_LMEM",
@@ -2135,7 +2135,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_GRP_DISP_SUCCESS",
 		.pme_code = 0x300002,
 		.pme_short_desc = "Group dispatch success",
-		.pme_long_desc = "Number of groups sucessfully dispatched (not rejected)",
+		.pme_long_desc = "Number of groups successfully dispatched (not rejected)",
 	},
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_1or2_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_1or2_CYC",
@@ -2189,7 +2189,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_FAB_HOLDtoVN_EMPTY",
 		.pme_code = 0x721e7,
 		.pme_short_desc = "Hold buffer to VN empty",
-		.pme_long_desc = "Fabric cycles when the Vertical Node out hold-buffers are emtpy. The signal is delivered at FBC speed and the count must be scaled accordingly.",
+		.pme_long_desc = "Fabric cycles when the Vertical Node out hold-buffers are empty. The signal is delivered at FBC speed and the count must be scaled accordingly.",
 	},
 	[ POWER5p_PME_PM_FPU1_FEST ] = {
 		.pme_name = "PM_FPU1_FEST",
@@ -2357,7 +2357,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_MEM_PW_CMPL",
 		.pme_code = 0x724e6,
 		.pme_short_desc = "Memory partial-write completed",
-		.pme_long_desc = "Number of Partial Writes completed.   This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
+		.pme_long_desc = "Number of Partial Writes completed.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 	},
 	[ POWER5p_PME_PM_THRD_PRIO_DIFF_minus5or6_CYC ] = {
 		.pme_name = "PM_THRD_PRIO_DIFF_minus5or6_CYC",
@@ -2807,7 +2807,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_MEM_NONSPEC_RD_CANCEL",
 		.pme_code = 0x711c6,
 		.pme_short_desc = "Non speculative memory read cancelled",
-		.pme_long_desc = "A non-speculative read was cancelled because the combined response indicated it was sourced from aother L2 or L3.   This event is sent from the Memory Controller clock domain and must be scaled accordingly",
+		.pme_long_desc = "A non-speculative read was cancelled because the combined response indicated it was sourced from aother L2 or L3.  This event is sent from the Memory Controller clock domain and must be scaled accordingly.",
 	},
 	[ POWER5p_PME_PM_BR_PRED_CR_TA ] = {
 		.pme_name = "PM_BR_PRED_CR_TA",
@@ -2849,7 +2849,7 @@ static const pme_power_entry_t power5p_pe[] = {
 		.pme_name = "PM_LSU0_DERAT_MISS",
 		.pme_code = 0x800c2,
 		.pme_short_desc = "LSU0 DERAT misses",
-		.pme_long_desc = "Total D-ERAT Misses by LSU0.   Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.",
+		.pme_long_desc = "Total D-ERAT Misses by LSU0.  Requests that miss the Derat are rejected and retried until the request hits in the Erat. This may result in multiple erat misses for the same instruction.",
 	},
 	[ POWER5p_PME_PM_FPU_STALL3 ] = {
 		.pme_name = "PM_FPU_STALL3",
