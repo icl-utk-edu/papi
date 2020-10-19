@@ -47,6 +47,11 @@ static char *RSMI_ERROR_STRINGS[]={
   "RSMI_STATUS_UNKNOWN_ERROR"};
 
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 // Macros for error checking... each arg is only referenced/evaluated once
 #define CHECK_PRINT_EVAL(checkcond, str, evalthis)                      \
     do {                                                                \
@@ -68,19 +73,19 @@ static char *RSMI_ERROR_STRINGS[]={
 
 // This macro gets the function pointer from the dynamic
 // library, and sets the function pointer declared above.
-#define DLSYM_SMI(name)                                                 \
-    do {                                                                \
-        name##Ptr = dlsym(dl1, #name);                                  \
-        if (dlerror()!=NULL) {                                          \
-            snprintf(_rocm_smi_vector.cmp_info.disabled_reason,         \
-                PAPI_MAX_STR_LEN,                                       \
-                "The function '%s' was not found in SMI library.",      \
-                #name);                                                 \
-            fprintf(stderr, "%s\n",                                     \
-                _rocm_smi_vector.cmp_info.disabled_reason);             \
-            name##Ptr = NULL;                                           \
-            return(PAPI_ENOSUPP);                                       \
-        }                                                               \
+#define DLSYM_SMI(name)                                                       \
+    do {                                                                      \
+        name##Ptr = dlsym(dl1, #name);                                        \
+        if (dlerror()!=NULL) {                                                \
+            int strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason,    \
+                PAPI_MAX_STR_LEN,                                             \
+                "The function '%s' was not found in SMI library.",            \
+                #name);                                                       \
+            _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;  \
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;               \
+            name##Ptr = NULL;                                                 \
+            return(PAPI_ENOSUPP);                                             \
+        }                                                                     \
     } while (0)
 
 // The following will call and check the return on an SMI function;
@@ -381,12 +386,20 @@ static void MakeRoomScanEvents(void)
     if (ScanEvents == NULL) {                           // Never alloced;
         SizeScanEvents = 16;                            // Begin with 16 entries,
         ScanEvents = calloc(SizeScanEvents, sizeof(scanEvent_info_t));
+        if (ScanEvents == NULL) {
+            fprintf(stderr, "%s:%i Failed to allocate %lu bytes for ScanEvents.\n", __FILE__, __LINE__, SizeScanEvents*sizeof(scanEvent_info_t));
+            exit(-1);
+        }
         return;
     }
 
     // Must add 16 table entries.
     SizeScanEvents += 16;                                                       // Add 16 entries.
     ScanEvents = realloc(ScanEvents, SizeScanEvents*sizeof(scanEvent_info_t));  // make more room.
+    if (ScanEvents == NULL) {
+        fprintf(stderr, "%s:%i Failed to re-allocate %lu bytes for ScanEvents.\n", __FILE__, __LINE__, SizeScanEvents*sizeof(scanEvent_info_t));
+        exit(-1);
+    }
     memset(&ScanEvents[SizeScanEvents-16], 0, 16*sizeof(scanEvent_info_t));     // clear the added room.
 } // END ROUTINE.
 
@@ -729,7 +742,8 @@ static int _rocm_smi_find_devices(void)
 
     if (TotalDevices == 0) {                                            // No AMD devices found.
         char errstr[]="No AMD GPU devices found (vendor ID 0x1002).";
-        strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        char *strCpy=strncpy(_rocm_smi_vector.cmp_info.disabled_reason, errstr, PAPI_MAX_STR_LEN);
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -1493,8 +1507,9 @@ static int _rocm_smi_add_native_events(void)
     TotalEvents = 0;
     int BaseEvent = 0;
     int subvariants;
-    int i;
+    int i, strErr;
     uint32_t ui;
+    char *strCpy;
     char *gpuClkVariantName[] = {"System", "DataFabric", "DisplayEngine", "SOC", "Memory"};
     int enumList[64];                                   // List of enums found for variants.
     #define enumSize (sizeof(enumList)/sizeof(enumList[0]))
@@ -1505,8 +1520,11 @@ static int _rocm_smi_add_native_events(void)
 //(rsmi_num_monitor_devices, (uint32_t *num_devices)); // ONLY ONE OF THESE.
     MakeRoomAllEvents();
     thisEvent = &AllEvents[TotalEvents];
-    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "NUMDevices");
-    strcpy(thisEvent->desc, "Number of Devices which have monitors, accessible by rocm_smi.");
+    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "NUMDevices");
+    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+    strCpy=strcpy(thisEvent->desc, "Number of Devices which have monitors, accessible by rocm_smi.");
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
     thisEvent->reader = NULL;                           // No need to read anything, we have TotalDevices.
     thisEvent->writer = NULL;                           // Not possible to change by writing.
     thisEvent->device=-1;                               // There is no device to set in order to read.
@@ -1522,8 +1540,11 @@ static int _rocm_smi_add_native_events(void)
     // rsmi_version_t contains uint32 for major; minor; patch. but could return 16-bit packed versions as uint64_t.
     //(rsmi_version_get, (rsmi_version_t *version));
     thisEvent = &AllEvents[TotalEvents];
-    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "rsmi_version");
-    strcpy(thisEvent->desc, "Version of RSMI lib; 0x0000MMMMmmmmpppp Major, Minor, Patch.");
+    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "rsmi_version");
+    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+    strCpy=strcpy(thisEvent->desc, "Version of RSMI lib; 0x0000MMMMmmmmpppp Major, Minor, Patch.");
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
     thisEvent->reader = &er_rsmi_version;
     thisEvent->writer = NULL;                           // Can't be written.
     thisEvent->device=-1;
@@ -1536,8 +1557,11 @@ static int _rocm_smi_add_native_events(void)
     MakeRoomAllEvents();                                // Make room for another.
 
     thisEvent = &AllEvents[TotalEvents];
-    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "driver_version_str");
-    strcpy(thisEvent->desc, "Returns char* to  z-terminated driver version string; do not free().");
+    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "driver_version_str");
+    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+    strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated driver version string; do not free().");
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
     thisEvent->reader = &er_driver_version;
     thisEvent->writer = NULL;                           // Can't be written.
     thisEvent->device=-1;            
@@ -1557,8 +1581,11 @@ static int _rocm_smi_add_native_events(void)
         scan = NULL;
         scan = nextEvent(scan, device, "rsmi_dev_id_get");
         if (scan != NULL) {                             // If we found it,
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_id:device=%i", device);
-            strcpy(thisEvent->desc, "Vendor supplied device id number. May be shared by same model devices; see pci_id for a unique identifier.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "device_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Vendor supplied device id number. May be shared by same model devices; see pci_id for a unique identifier.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_device_id;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1576,8 +1603,11 @@ static int _rocm_smi_add_native_events(void)
         scan = NULL;
         scan = nextEvent(scan, device, "rsmi_dev_subsystem_vendor_id_get");
         if (scan != NULL) {
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "subsystem_vendor_id:device=%i", device);
-            strcpy(thisEvent->desc, "Subsystem vendor id number.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "subsystem_vendor_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Subsystem vendor id number.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_subsystem_vendor_id;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1595,8 +1625,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_vendor_id_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "vendor_id:device=%i", device);
-            strcpy(thisEvent->desc, "Vendor id number.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "vendor_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Vendor id number.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_vendor_id;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1614,8 +1647,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_unique_id_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "unique_id:device=%i", device);
-            strcpy(thisEvent->desc, "unique Id for device.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "unique_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "unique Id for device.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_unique_id;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1633,8 +1669,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_subsystem_id_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "subsystem_id:device=%i", device);
-            strcpy(thisEvent->desc, "Subsystem id number.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "subsystem_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Subsystem id number.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_subsystem_id;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1652,8 +1691,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_drm_render_minor_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "drm_render_minor:device=%i", device);
-            strcpy(thisEvent->desc, "DRM Minor Number associated with this device.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "drm_render_minor:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "DRM Minor Number associated with this device.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_render_minor;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1672,8 +1714,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_overdrive_level_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "overdrive_level:device=%i", device);
-            strcpy(thisEvent->desc, "Overdrive Level % for device, 0 to 20, max overclocking permitted. Read Only.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "overdrive_level:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Overdrive Level % for device, 0 to 20, max overclocking permitted. Read Only.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_overdrive_level;
             thisEvent->writer = NULL;
             thisEvent->device=device;
@@ -1686,7 +1731,8 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_overdrive_level_set");
             if (scan != NULL) {
                 thisEvent->writer = &ew_overdrive_level;            // Can be written.
-                strcpy(thisEvent->desc, "Overdrive Level % for device, 0 to 20, max overclocking permitted. Read/Write. WRITE MAY CAUSE DAMAGE NOT COVERED BY ANY WARRANTY.");
+                strCpy=strcpy(thisEvent->desc, "Overdrive Level % for device, 0 to 20, max overclocking permitted. Read/Write. WRITE MAY CAUSE DAMAGE NOT COVERED BY ANY WARRANTY.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
             }
 
             TotalEvents++;                                      // Count it.
@@ -1700,8 +1746,12 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_perf_level_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "perf_level:device=%i", device);
-            snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "PowerPlay Performance Level; Read Only, enum 'rsmi_dev_perf_level_t' [0-%i], see ROCm_SMI_Manual for details.", RSMI_DEV_PERF_LEVEL_LAST);
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "perf_level:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "PowerPlay Performance Level; Read Only, enum 'rsmi_dev_perf_level_t' [0-%i], see ROCm_SMI_Manual for details.", RSMI_DEV_PERF_LEVEL_LAST);
+            thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_perf_level;
             thisEvent->writer = &ew_perf_level;                 // Can be written.
             thisEvent->device=device;
@@ -1714,7 +1764,9 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_perf_level_set");
             if (scan != NULL) {
                 thisEvent->writer = &ew_perf_level;                 // Can be written.
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "PowerPlay Performance Level; Read/Write, enum 'rsmi_dev_perf_level_t' [0-%i], see ROCm_SMI_Manual for details.", RSMI_DEV_PERF_LEVEL_LAST);
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "PowerPlay Performance Level; Read/Write, enum 'rsmi_dev_perf_level_t' [0-%i], see ROCm_SMI_Manual for details.", RSMI_DEV_PERF_LEVEL_LAST);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             }
 
             TotalEvents++;                                      // Count it.
@@ -1736,8 +1788,11 @@ static int _rocm_smi_add_native_events(void)
             
         if (enumList[0]) {                                      // If we found TOTAL VRAM,
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_VRAM:device=%i", device);
-            strcpy(thisEvent->desc, "Total VRAM memory.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_total_VRAM:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Total VRAM memory.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_total;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1752,8 +1807,11 @@ static int _rocm_smi_add_native_events(void)
 
         if (enumList[1]) {                                      // If we found VISIBLE VRAM,
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_VIS_VRAM:device=%i", device);
-            strcpy(thisEvent->desc, "Total Visible VRAM memory.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_total_VIS_VRAM:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Total Visible VRAM memory.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_total;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1768,8 +1826,11 @@ static int _rocm_smi_add_native_events(void)
 
         if (enumList[2]) {                                      // If we found TOTAL GTT, 
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_total_GTT:device=%i", device);
-            strcpy(thisEvent->desc, "Total GTT (Graphics Translation Table) memory, aka GART memory.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_total_GTT:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Total GTT (Graphics Translation Table) memory, aka GART memory.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_total;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1793,8 +1854,11 @@ static int _rocm_smi_add_native_events(void)
         //(rsmi_dev_memory_usage_get, (uint32_t dv_ind, rsmi_memory_type_t mem_type, uint64_t *used));
         if (enumList[0]) {                                      // If we found USAGE VRAM,
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_VRAM:device=%i", device);
-            strcpy(thisEvent->desc, "VRAM memory in use.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_usage_VRAM:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "VRAM memory in use.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_usage;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1809,8 +1873,11 @@ static int _rocm_smi_add_native_events(void)
 
         if (enumList[1]) {                                      // If we found USAGE VIS VRAM,
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_VIS_VRAM:device=%i", device);
-            strcpy(thisEvent->desc, "Visible VRAM memory in use.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_usage_VIS_VRAM:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Visible VRAM memory in use.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_usage;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1825,8 +1892,11 @@ static int _rocm_smi_add_native_events(void)
 
         if (enumList[2]) {                                      // If we found USAGE GTT,
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "mem_usage_GTT:device=%i", device);
-            strcpy(thisEvent->desc, "(Graphics Translation Table) memory in use (aka GART memory).");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "mem_usage_GTT:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "(Graphics Translation Table) memory in use (aka GART memory).");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_mem_usage;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1844,8 +1914,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_busy_percent_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "busy_percent:device=%i", device);
-            strcpy(thisEvent->desc, "Percentage of time the device was busy doing any processing.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "busy_percent:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Percentage of time the device was busy doing any processing.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_busy_percent;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1863,8 +1936,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_memory_busy_percent_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "memory_busy_percent:device=%i", device);
-            strcpy(thisEvent->desc, "Percentage of time any device memory is being used.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "memory_busy_percent:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Percentage of time any device memory is being used.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_memory_busy_percent;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1882,8 +1958,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_pci_id_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_id:device=%i", device);
-            strcpy(thisEvent->desc, "BDF (Bus/Device/Function) ID, unique per device.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_id:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "BDF (Bus/Device/Function) ID, unique per device.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_pci_id;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1901,8 +1980,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_pci_replay_counter_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_replay_counter:device=%i", device);
-            strcpy(thisEvent->desc, "Sum of the number of NAK's received by the GPU and the NAK's generated by the GPU.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_replay_counter:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Sum of the number of NAK's received by the GPU and the NAK's generated by the GPU.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_pci_replay_counter;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1926,8 +2008,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_pci_throughput_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_throughput_sent:device=%i", device);
-            strcpy(thisEvent->desc, "Throughput on PCIe traffic, bytes/second sent.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_throughput_sent:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Throughput on PCIe traffic, bytes/second sent.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_pci_throughput_sent;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1942,8 +2027,11 @@ static int _rocm_smi_add_native_events(void)
 
             if (TotalEvents > BaseEvent) {                      // If the base did not succeed, do not add dependents.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_throughput_received:device=%i", device);
-                strcpy(thisEvent->desc, "Throughput on PCIe traffic, bytes/second received.");
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_throughput_received:device=%i", device);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strCpy=strcpy(thisEvent->desc, "Throughput on PCIe traffic, bytes/second received.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_pci_throughput_received;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -1956,8 +2044,11 @@ static int _rocm_smi_add_native_events(void)
                 MakeRoomAllEvents();                                // Make room for another.
 
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_max_packet_size:device=%i", device);
-                strcpy(thisEvent->desc, "Maximum PCIe packet size.");
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_max_packet_size:device=%i", device);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strCpy=strcpy(thisEvent->desc, "Maximum PCIe packet size.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_pci_throughput_max_packet;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -1979,8 +2070,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_power_profile_presets_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_profile_presets:device=%i:count", device);
-            strcpy(thisEvent->desc, "Number of power profile presets available. See ROCM_SMI manual for details.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_profile_presets:device=%i:count", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Number of power profile presets available. See ROCM_SMI manual for details.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_power_profile_presets_count;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -1995,8 +2089,11 @@ static int _rocm_smi_add_native_events(void)
 
             if (TotalEvents > BaseEvent) {                      // If the base did not succeed, do not add dependents.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_profile_presets:device=%i:avail_profiles", device);
-                strcpy(thisEvent->desc, "Bit mask for allowable power profile presets. See ROCM_SMI manual for details.");
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_profile_presets:device=%i:avail_profiles", device);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strCpy=strcpy(thisEvent->desc, "Bit mask for allowable power profile presets. See ROCM_SMI manual for details.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_power_profile_presets_avail_profiles;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2009,8 +2106,11 @@ static int _rocm_smi_add_native_events(void)
                 MakeRoomAllEvents();                                // Make room for another.
 
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_profile_presets:device=%i:current", device);
-                strcpy(thisEvent->desc, "Bit mask for current power profile preset. Read/Write. See ROCM_SMI manual for details.");
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_profile_presets:device=%i:current", device);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strCpy=strcpy(thisEvent->desc, "Bit mask for current power profile preset. Read/Write. See ROCM_SMI manual for details.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_power_profile_presets_current;
                 thisEvent->writer = NULL;  
                 thisEvent->device=device;
@@ -2031,8 +2131,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_power_profile_set");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_profile_set:device=%i", device);
-            strcpy(thisEvent->desc, "Write Only, sets the power profile to one of the available masks. See ROCM_SMI manual for details.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_profile_set:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Write Only, sets the power profile to one of the available masks. See ROCM_SMI manual for details.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;
             thisEvent->writer = &ew_power_profile_mask;         // Write only.
             thisEvent->device=device;
@@ -2056,8 +2159,11 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_fan_reset");   // Get the next, if any.
             if (scan == NULL) break;                                // Exit if done.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_reset:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Fan Reset. Write Only, data value is ignored.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "fan_reset:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Fan Reset. Write Only, data value is ignored.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;                           // can't be read!
             thisEvent->writer = &ew_fan_reset;                  // Can be written.
             thisEvent->device=device;
@@ -2076,8 +2182,11 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_fan_rpms_get");   // Get the next, if any.
             if (scan == NULL) break;                                // Exit if done.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_rpms:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute).");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "fan_rpms:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute).");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_fan_rpms;
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
@@ -2096,8 +2205,11 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_fan_speed_max_get");   // Get the next, if any.
             if (scan == NULL) break;                                // Exit if done.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_speed_max:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Maximum possible fan speed in RPM (Rotations Per Minute).");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "fan_speed_max:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Maximum possible fan speed in RPM (Rotations Per Minute).");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_fan_speed_max;
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
@@ -2123,8 +2235,11 @@ static int _rocm_smi_add_native_events(void)
             if (scan == NULL) break;                                // Exit if done.
             subvariants++;                                          // count the number found.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "fan_speed:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute), Read Only, result [0-255].");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "fan_speed:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Current Fan Speed in RPM (Rotations Per Minute), Read Only, result [0-255].");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_fan_speed;
             thisEvent->writer = NULL;                           // Presume not written.
             thisEvent->device=device;
@@ -2158,8 +2273,11 @@ static int _rocm_smi_add_native_events(void)
             scan = nextEvent(scan, device, "rsmi_dev_power_ave_get");   // Get the next, if any.
             if (scan == NULL) break;                                // Exit if done.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_average:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Current Average Power consumption in microwatts. Requires root privilege.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_average:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Current Average Power consumption in microwatts. Requires root privilege.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_power_ave;
             thisEvent->writer = NULL;                           // can't be written.
             thisEvent->device=device;
@@ -2185,8 +2303,11 @@ static int _rocm_smi_add_native_events(void)
             if (scan == NULL) break;                                // Exit if done.
             subvariants++;                                          // count the number found.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Power cap in microwatts. Read Only. Between min/max (see power_cap_range_min/max). May require root privilege.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_cap:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Power cap in microwatts. Read Only. Between min/max (see power_cap_range_min/max). May require root privilege.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_power_cap;
             thisEvent->writer = NULL;                           // Presume read only.
             thisEvent->device=device;
@@ -2222,8 +2343,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_power_cap_range_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap_range_min:device=%i:sensor=%i", device, scan->subvariant);
-            strcpy(thisEvent->desc, "Power cap Minimum settable value, in microwatts.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_cap_range_min:device=%i:sensor=%i", device, scan->subvariant);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Power cap Minimum settable value, in microwatts.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_power_cap_range_min;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2238,8 +2362,11 @@ static int _rocm_smi_add_native_events(void)
 
             if (TotalEvents > BaseEvent) {                      // If the base did not succeed, do not add the dependent.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "power_cap_range_max:device=%i:sensor=%i", device, scan->subvariant);
-                strcpy(thisEvent->desc, "Power cap Maximum settable value, in microwatts.");
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "power_cap_range_max:device=%i:sensor=%i", device, scan->subvariant);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strCpy=strcpy(thisEvent->desc, "Power cap Maximum settable value, in microwatts.");
+                if (strCpy == NULL) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_power_cap_range_max;        // Will call previous, this routine just copies it.
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2279,73 +2406,115 @@ static int _rocm_smi_add_native_events(void)
 
             switch(scan->variant) {         
                 case RSMI_TEMP_CURRENT:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_current:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature current value, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_current:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature current value, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_MAX:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_max:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature maximum value, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_max:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature maximum value, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_MIN:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_min:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature minimum value, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_min:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature minimum value, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_MAX_HYST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_max_hyst:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature hysteresis value for max limit, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_max_hyst:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature hysteresis value for max limit, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_MIN_HYST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_min_hyst:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature hysteresis value for min limit, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_min_hyst:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature hysteresis value for min limit, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_CRITICAL:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_critical:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature critical max value, typically > temp_max, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_critical:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature critical max value, typically > temp_max, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_CRITICAL_HYST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_critical_hyst:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature hysteresis value for critical limit, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_critical_hyst:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature hysteresis value for critical limit, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_EMERGENCY:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_emergency:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature emergency max for chips supporting more than two upper temp limits, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_emergency:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature emergency max for chips supporting more than two upper temp limits, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_EMERGENCY_HYST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_emergency_hyst:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature hysteresis value for emergency limit, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_emergency_hyst:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature hysteresis value for emergency limit, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_CRIT_MIN:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_crit_min:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature critical min value; typical < temp_min, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_crit_min:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature critical min value; typical < temp_min, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_CRIT_MIN_HYST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_crit_min_hyst:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature hysteresis value for critical min limit, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_crit_min_hyst:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature hysteresis value for critical min limit, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_OFFSET:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_offset:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature offset added to temp reading by the chip, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_offset:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature offset added to temp reading by the chip, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_LOWEST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_lowest:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature historical minimum, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_lowest:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature historical minimum, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_TEMP_HIGHEST:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "temp_highest:device=%i:sensor=%i", device, scan->subvariant);
-                    strcpy(thisEvent->desc, "Temperature historical maximum, millidegrees Celsius.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "temp_highest:device=%i:sensor=%i", device, scan->subvariant);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Temperature historical maximum, millidegrees Celsius.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 default:                                   // If we did not recognize it, kill stuff.
@@ -2391,108 +2560,171 @@ static int _rocm_smi_add_native_events(void)
 
             switch(scan->variant) {         
                 case RSMI_FW_BLOCK_ASD: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=ASD", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block ASD.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=ASD", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block ASD.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_CE: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=CE", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block CE.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=CE", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block CE.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_DMCU:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=DMCU", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block DMCU.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=DMCU", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block DMCU.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_MC: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=MC", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block MC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=MC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block MC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_ME: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=ME", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block ME.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=ME", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block ME.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_MEC: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=MEC", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block MEC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=MEC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block MEC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_MEC2:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=MEC2", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block MEC2.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=MEC2", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block MEC2.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_PFP: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=PFP", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block PFP.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=PFP", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block PFP.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_RLC: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=RLC", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block RLC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=RLC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block RLC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_RLC_SRLC: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SRLC", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SRLC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SRLC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SRLC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_RLC_SRLG:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SRLG", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SRLG.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SRLG", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SRLG.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_RLC_SRLS: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SRLS", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SRLS.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SRLS", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SRLS.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_SDMA: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SDMA", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SDMA.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SDMA", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SDMA.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_SDMA2: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SDMA2", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SDMA2.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SDMA2", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SDMA2.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_SMC:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SMC", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SMC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SMC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SMC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_SOS: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=SOS", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block SOS.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=SOS", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block SOS.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_TA_RAS: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=RAS", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block RAS.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=RAS", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block RAS.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_TA_XGMI: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=XGMI", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block XGMI.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=XGMI", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block XGMI.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_UVD:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=UVD", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block UVD.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=UVD", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block UVD.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_VCE: 
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=VCE", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block VCE.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=VCE", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block VCE.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_FW_BLOCK_VCN:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "firmware_version:device=%i:block=VCN", device);
-                    strcpy(thisEvent->desc, "Firmware Version Block VCN.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "firmware_version:device=%i:block=VCN", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "Firmware Version Block VCN.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 default:                                   // If we did not recognize it, kill stuff.
@@ -2609,13 +2841,21 @@ static int _rocm_smi_add_native_events(void)
             } // end switch
 
             if (found) {
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_correctable:device=%i:block=%s", device, blockName);
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Correctable error count for the GPU Block %s.", blockName);
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_count_correctable:device=%i:block=%s", device, blockName);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Correctable error count for the GPU Block %s.", blockName);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 TotalEvents++;                                      // Count it.
                 MakeRoomAllEvents();                                // Make room for another.
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_count_uncorrectable:device=%i:block=%s", device, blockName);
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Uncorrectable error count for the GPU Block %s.", blockName);
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_count_uncorrectable:device=%i:block=%s", device, blockName);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Uncorrectable error count for the GPU Block %s.", blockName);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_ecc_count_uncorrectable;    // Will call previous, this routine just copies it.
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2634,8 +2874,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_ecc_enabled_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_enabled_get:device=%i", device);
-            strcpy(thisEvent->desc, "Bit mask of gpu blocks with ecc error counting enabled.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_enabled_get:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Bit mask of gpu blocks with ecc error counting enabled.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_ecc_enabled;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2671,73 +2914,115 @@ static int _rocm_smi_add_native_events(void)
 
             switch(scan->variant) {         
                 case RSMI_GPU_BLOCK_UMC:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=UMC", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block UMC.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=UMC", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block UMC.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_SDMA:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SDMA", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SDMA.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=SDMA", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SDMA.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_GFX:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=GFX", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block GFX.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=GFX", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block GFX.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_MMHUB:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MMHUB", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MMHUB.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=MMHUB", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MMHUB.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_ATHUB:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=ATHUB", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block ATHUB.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=ATHUB", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block ATHUB.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_PCIE_BIF:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=PCIE_BIF", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block PCIE_BIF.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=PCIE_BIF", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block PCIE_BIF.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_HDP:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=HDP", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block HDP.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=HDP", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block HDP.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_XGMI_WAFL:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=XGMI_WAFL", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block XGMI_WAFL.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=XGMI_WAFL", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block XGMI_WAFL.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_DF:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=DF", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block DF.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=DF", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block DF.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_SMN:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SMN", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SMN.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=SMN", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SMN.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_SEM:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=SEM", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SEM.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=SEM", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block SEM.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_MP0:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MP0", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP0.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=MP0", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP0.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_MP1:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=MP1", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP1.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=MP1", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block MP1.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
                 case RSMI_GPU_BLOCK_FUSE:
-                    snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "ecc_status:device=%i:block=FUSE", device);
-                    strcpy(thisEvent->desc, "ECC Error Status for the GPU Block FUSE.");
+                    strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "ecc_status:device=%i:block=FUSE", device);
+                    thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                    strCpy=strcpy(thisEvent->desc, "ECC Error Status for the GPU Block FUSE.");
+                    if (strCpy == NULL) HANDLE_STRING_ERROR;
                     break;                                              // END CASE.
 
 
@@ -2773,8 +3058,11 @@ static int _rocm_smi_add_native_events(void)
             
             // The Count of frequencies for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "gpu_clk_freq_%s:device=%i:count", gpuClkVariantName[scan->variant], device);
-            strcpy(thisEvent->desc, "Number of frequencies available.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "gpu_clk_freq_%s:device=%i:count", gpuClkVariantName[scan->variant], device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Number of frequencies available.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;                           // No reader is needed. 
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2790,8 +3078,11 @@ static int _rocm_smi_add_native_events(void)
 
             // The Current frequency for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "gpu_clk_freq_%s:device=%i:current", gpuClkVariantName[scan->variant], device);
-            strcpy(thisEvent->desc, "Current operating frequency.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "gpu_clk_freq_%s:device=%i:current", gpuClkVariantName[scan->variant], device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Current operating frequency.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_gpu_clk_freq_current;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2808,8 +3099,12 @@ static int _rocm_smi_add_native_events(void)
             // An event per frequency.
             for (ui=0; ui<FreqTable[idx].num_supported; ui++) { // For each frequency supported,
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "gpu_clk_freq_%s:device=%i:idx=%u", gpuClkVariantName[scan->variant], device, ui);
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Returns %s frequency value from supported_table[%u].", gpuClkVariantName[scan->variant], ui);
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "gpu_clk_freq_%s:device=%i:idx=%u", gpuClkVariantName[scan->variant], device, ui);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Returns %s frequency value from supported_table[%u].", gpuClkVariantName[scan->variant], ui);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_gpu_clk_freq_table;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2838,8 +3133,12 @@ static int _rocm_smi_add_native_events(void)
             
             // The Count of frequencies for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "gpu_clk_freq_%s:device=%i:mask", gpuClkVariantName[scan->variant], device);
-            snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Write Only. Sets bitmask, 1's for %s frequency values in support table permitted. All 0 mask prohibited.", gpuClkVariantName[scan->variant]);
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "gpu_clk_freq_%s:device=%i:mask", gpuClkVariantName[scan->variant], device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Write Only. Sets bitmask, 1's for %s frequency values in support table permitted. All 0 mask prohibited.", gpuClkVariantName[scan->variant]);
+            thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;                           // No reader is needed. 
             thisEvent->writer = &ew_gpu_clk_freq_mask;          // Write the mask.
             thisEvent->device=device;
@@ -2865,8 +3164,11 @@ static int _rocm_smi_add_native_events(void)
             
             // The Count of frequencies for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:count", device);
-            strcpy(thisEvent->desc, "Number of PCI transfer rates available.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:count", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Number of PCI transfer rates available.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;                           // No reader is needed. 
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2882,8 +3184,11 @@ static int _rocm_smi_add_native_events(void)
 
             // The Current frequency for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:current", device);
-            strcpy(thisEvent->desc, "Current PCI transfer rate.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:current", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Current PCI transfer rate.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_pci_bandwidth_rate_current;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2900,8 +3205,12 @@ static int _rocm_smi_add_native_events(void)
             // Two events per rate, the rate, and the lanes.
             for (ui=0; ui<FreqTable[device].num_supported; ui++) { // For each frequency supported on this device,
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:rate_idx=%u", device, ui);
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Returns PCI bandwidth rate value from supported_table[%u].", ui);
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:rate_idx=%u", device, ui);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Returns PCI bandwidth rate value from supported_table[%u].", ui);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_pci_bandwidth_rate_table;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2916,8 +3225,12 @@ static int _rocm_smi_add_native_events(void)
                 MakeRoomAllEvents();                                // Make room for another.
 
                 thisEvent = &AllEvents[TotalEvents];
-                snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:lane_idx=%u", device, ui);
-                snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Returns PCI bandwidth rate corresponding lane count from supported_table[%u].", ui);
+                strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:lane_idx=%u", device, ui);
+                thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Returns PCI bandwidth rate corresponding lane count from supported_table[%u].", ui);
+                thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 thisEvent->reader = &er_pci_bandwidth_lane_table;
                 thisEvent->writer = NULL;                           // Can't be written.
                 thisEvent->device=device;
@@ -2941,10 +3254,17 @@ static int _rocm_smi_add_native_events(void)
             
             // The Count of frequencies for this variant.
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:count", device);
-            strcpy(thisEvent->desc, "Number of PCI transfer rates available.");
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "pci_bandwidth_rate:device=%i:mask", device);
-            snprintf(thisEvent->desc, PAPI_MAX_STR_LEN-1, "Write Only. Sets bitmask, 1's for pci transfer rates in support table permitted. All 0 mask prohibited.");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:count", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Number of PCI transfer rates available.");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "pci_bandwidth_rate:device=%i:mask", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(thisEvent->desc, PAPI_MAX_STR_LEN, "Write Only. Sets bitmask, 1's for pci transfer rates in support table permitted. All 0 mask prohibited.");
+            thisEvent->desc[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             thisEvent->reader = NULL;                           // No reader is needed. 
             thisEvent->writer = &ew_pci_bandwidth_mask;         // Write Only.
             thisEvent->device=device;
@@ -2966,8 +3286,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_brand_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_brand:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated brand string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "device_brand:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated brand string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_brand;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -2984,8 +3307,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_name_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_name:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated name string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "device_name:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated name string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_name;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -3002,8 +3328,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_serial_number_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_serial_number:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated serial number string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "device_serial_number:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated serial number string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_serial_number;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -3020,8 +3349,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_subsystem_name_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "device_subsystem_name:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated subsystem name string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "device_subsystem_name:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated subsystem name string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_subsystem_name;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -3038,8 +3370,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_vbios_version_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "vbios_version:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated vbios version string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "vbios_version:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated vbios version string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_vbios_version;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -3056,8 +3391,11 @@ static int _rocm_smi_add_native_events(void)
         scan = nextEvent(scan, device, "rsmi_dev_vendor_name_get");
         if (scan != NULL) {
             thisEvent = &AllEvents[TotalEvents];
-            snprintf(thisEvent->name, PAPI_MAX_STR_LEN-1, "vendor_name:device=%i", device);
-            strcpy(thisEvent->desc, "Returns char* to  z-terminated vendor name string; do not free().");
+            strErr=snprintf(thisEvent->name, PAPI_MAX_STR_LEN, "vendor_name:device=%i", device);
+            thisEvent->name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strcpy(thisEvent->desc, "Returns char* to  z-terminated vendor name string; do not free().");
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             thisEvent->reader = &er_vendor_name;
             thisEvent->writer = NULL;                           // Can't be written.
             thisEvent->device=device;
@@ -3101,7 +3439,7 @@ static int _rocm_smi_init_thread(hwd_context_t * ctx)
 
 static int _rocm_smi_init_component(int cidx)
 {
-    int i, ret;
+    int i, ret, strErr;
     (void) i;
     uint32_t dev;
     scanEvent_info_t* scan=NULL;                        // a scan event pointer.
@@ -3116,15 +3454,19 @@ static int _rocm_smi_init_component(int cidx)
 
     rsmi_status_t status;
     if (rsmi_initPtr == NULL) {
-        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+        strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
             "rsmi_init() function not found.");
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
     status = (*rsmi_initPtr)(0);
     if (status != RSMI_STATUS_SUCCESS) {
-        snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+        strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
             "rsmi_init() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
      
@@ -3169,15 +3511,19 @@ static int _rocm_smi_init_component(int cidx)
                 continue;                                               // Y. Skip if variant unrecognized.
             int idx = dev*freqTablePerDevice+scan->variant;             // idx into FreqTable.
             if (rsmi_dev_gpu_clk_freq_getPtr == NULL) {
-                snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
                     "rsmi_dev_gpu_clk_freq_get() function not found.");
+                _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 return(PAPI_ENOSUPP);
             }
 
             status = (*rsmi_dev_gpu_clk_freq_getPtr)(dev, scan->variant, &FreqTable[idx]);
             if (status != RSMI_STATUS_SUCCESS) {
-                snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+                strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
                     "rsmi_dev_gpu_clk_freq_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+                _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 return(PAPI_ENOSUPP);
             }
         } 
@@ -3190,15 +3536,19 @@ static int _rocm_smi_init_component(int cidx)
         scan = nextEvent(scan, dev, "rsmi_dev_pci_bandwidth_get");
         if (scan == NULL) continue;                                     // Skip if not avail on this device.
         if (rsmi_dev_pci_bandwidth_getPtr == NULL) {
-            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+            strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
                 "rsmi_dev_pci_bandwidth_get() function not found.");
+            _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);
         }
 
         status = (*rsmi_dev_pci_bandwidth_getPtr)(dev, &PCITable[dev]);
         if (status != RSMI_STATUS_SUCCESS) {
-            snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
+            strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
                 "rsmi_dev_pci_bandwidth_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
+            _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);
         }
     }

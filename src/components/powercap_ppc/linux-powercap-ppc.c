@@ -21,6 +21,11 @@
 
 #include "linux-powercap-ppc.h"
 
+// The following macro exit if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 
 static char read_buff[PAPI_MAX_STR_LEN];
 static char write_buff[PAPI_MAX_STR_LEN];
@@ -109,6 +114,7 @@ _powercap_ppc_init_component( int cidx )
     int e = -1;
     char events_dir[128];
     char event_path[128];
+    char *strCpy;
 
     DIR *events;
 
@@ -117,7 +123,9 @@ _powercap_ppc_init_component( int cidx )
 
     /* check if IBM processor */
     if ( hw_info->vendor!=PAPI_VENDOR_IBM ) {
-        strncpy(_powercap_ppc_vector.cmp_info.disabled_reason, "Not an IBM Power9 processor", PAPI_MAX_STR_LEN);
+        strCpy=strncpy(_powercap_ppc_vector.cmp_info.disabled_reason, "Not an IBM Power9 processor", PAPI_MAX_STR_LEN);
+        _powercap_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
@@ -125,13 +133,14 @@ _powercap_ppc_init_component( int cidx )
 
     /* Check the existence, and correct access modes to pkg directory path */
     size_t ret = snprintf(events_dir, sizeof(events_dir), "/sys/firmware/opal/powercap/system-powercap/");
-    if (ret <= 0 || sizeof(events_dir) <= ret)
-        return PAPI_ENOSUPP;
+    if (ret <= 0 || sizeof(events_dir) <= ret) HANDLE_STRING_ERROR;
 
     if ( NULL == (events = opendir(events_dir)) ) {
-        strncpy(_powercap_ppc_vector.cmp_info.disabled_reason,
+        strCpy=strncpy(_powercap_ppc_vector.cmp_info.disabled_reason,
             "Directory /sys/firmware/opal/powercap/system-powercap missing.",
             PAPI_MAX_STR_LEN);
+        _powercap_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
@@ -142,22 +151,26 @@ _powercap_ppc_init_component( int cidx )
     for ( e = 0; e < PKG_NUM_EVENTS; ++e ) {
         /* compose string to individual event */
         size_t ret = snprintf(event_path, sizeof(event_path), "%s%s", events_dir, pkg_sys_names[e]);
-        if (ret <= 0 || sizeof(event_path) <= ret)
-            continue;
+        if (ret <= 0 || sizeof(event_path) <= ret) HANDLE_STRING_ERROR;
+
         /* if it's not a valid pkg event path we skip it */
         if (access(event_path, F_OK) == -1) continue;
 
         ret = snprintf(powercap_ppc_ntv_events[num_events].name,
                        sizeof(powercap_ppc_ntv_events[num_events].name),
                        "%s", pkg_event_names[e]);
-        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].name) <= ret) continue;
+        powercap_ppc_ntv_events[num_events].name[sizeof(powercap_ppc_ntv_events[num_events].name)-1]=0;
+        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].name) <= ret) HANDLE_STRING_ERROR;
+
         ret = snprintf(powercap_ppc_ntv_events[num_events].description,
                        sizeof(powercap_ppc_ntv_events[num_events].description),
                        "%s", pkg_event_descs[e]);
-        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].description) <= ret) continue;
+        powercap_ppc_ntv_events[num_events].description[sizeof(powercap_ppc_ntv_events[num_events].description)-1]=0;
+        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].description) <= ret) HANDLE_STRING_ERROR;
         ret = snprintf(powercap_ppc_ntv_events[num_events].units,
-                       sizeof(powercap_ppc_ntv_events[num_events].name), "W");
-        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].name) <= ret) continue;
+                       sizeof(powercap_ppc_ntv_events[num_events].units), "W");
+        powercap_ppc_ntv_events[num_events].units[sizeof(powercap_ppc_ntv_events[num_events].units)-1]=0;
+        if (ret <= 0 || sizeof(powercap_ppc_ntv_events[num_events].units) <= ret) HANDLE_STRING_ERROR;
 
         powercap_ppc_ntv_events[num_events].return_type = PAPI_DATATYPE_INT64;
         powercap_ppc_ntv_events[num_events].type = pkg_events[e];

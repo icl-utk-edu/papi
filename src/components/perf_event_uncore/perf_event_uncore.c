@@ -60,6 +60,11 @@ static int our_cidx;
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 static int _peu_set_domain( hwd_control_state_t *ctl, int domain);
 static int _peu_shutdown_component( void );
 
@@ -592,6 +597,7 @@ _peu_init_component( int cidx )
    int paranoid_level;
 
    FILE *fff;
+   char *strCpy;
 
    our_cidx=cidx;
 
@@ -601,8 +607,9 @@ _peu_init_component( int cidx )
 
    fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
    if (fff==NULL) {
-     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+     strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	    "perf_event support not detected",PAPI_MAX_STR_LEN);
+     if (strCpy == NULL) HANDLE_STRING_ERROR;
      return PAPI_ENOCMP;
    }
    retval=fscanf(fff,"%d",&paranoid_level);
@@ -614,9 +621,10 @@ _peu_init_component( int cidx )
 
    retval = _papi_libpfm4_init(_papi_hwd[cidx]);
    if (retval) {
-     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+     strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
+     if (strCpy == NULL) HANDLE_STRING_ERROR;
      return PAPI_ENOCMP;
    }
 
@@ -627,18 +635,20 @@ _peu_init_component( int cidx )
 			       &uncore_native_event_table,
                                PMU_TYPE_UNCORE);
    if (retval) {
-     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+     strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error setting up libpfm4",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
+     if (strCpy == NULL) HANDLE_STRING_ERROR;
      return PAPI_ENOCMP;
    }
 
    /* Check if no uncore events found */
 
    if (_papi_hwd[cidx]->cmp_info.num_native_events==0) {
-     strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+     strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "No uncore PMUs or events found",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
+     if (strCpy == NULL) HANDLE_STRING_ERROR;
      return PAPI_ENOCMP;
    }
 
@@ -650,10 +660,11 @@ _peu_init_component( int cidx )
    /* -1 means no restrictions                 */
 
    if ((paranoid_level>0) && (getuid()!=0)) {
-      strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+      strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	    "Insufficient permissions for uncore access.  Set /proc/sys/kernel/perf_event_paranoid to 0 or run as root.",
 	    PAPI_MAX_STR_LEN);
       _peu_shutdown_component( );
+     if (strCpy == NULL) HANDLE_STRING_ERROR;
      return PAPI_ENOCMP;
    }
 
