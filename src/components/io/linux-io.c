@@ -35,6 +35,11 @@ papi_vector_t _io_vector;
 // File name to access.
 #define IO_FILENAME "/proc/self/io"
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 /** This structure is used to build the table of events */
 typedef struct IO_native_event_entry
 {
@@ -79,8 +84,10 @@ static int io_count_events(_io_context_t *myCtx)
     myCtx->EventCount = 0;
     myCtx->pFile = fopen (IO_FILENAME,"r");
     if (myCtx->pFile == NULL) {
-        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "Failed to open target file '%s'.", IO_FILENAME);
+        _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
@@ -93,8 +100,10 @@ static int io_count_events(_io_context_t *myCtx)
         // If the read filled the whole buffer, line is too long.
         if (strlen(myCtx->line) == (FILE_LINE_SIZE-1)) {
             fclose(myCtx->pFile);
-            snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+            int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "File '%s' line %i too long.", IO_FILENAME, myCtx->EventCount+1);
+            _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return PAPI_ENOSUPP;
         }
 
@@ -103,8 +112,10 @@ static int io_count_events(_io_context_t *myCtx)
         int nf = sscanf( myCtx->line, "%s %lld\n", dummy, &tmplong);
         if (nf != 2 || strlen(dummy)<2 || dummy[strlen(dummy)-1] != ':') {
             fclose(myCtx->pFile);
-            snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+            int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "File '%s' line %i bad format.", IO_FILENAME, myCtx->EventCount+1);
+            _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return PAPI_ENOSUPP;
         }
 
@@ -163,12 +174,21 @@ _io_init_component( int cidx )
     SUBDBG( "_io_init_component..." );
    
     ret = io_count_events(&myCtx);
-    if (ret != PAPI_OK) return(ret);
+    if (ret != PAPI_OK) {
+        int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Failed counting events.");
+        _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(ret);
+    }
+ 
     rewind(myCtx.pFile);
 
     if (myCtx.EventCount > IO_COUNTERS) {
-        snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-1,
+        int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "File '%s' has %i events, exceeds counter limit of %i.", IO_FILENAME, myCtx.EventCount, IO_COUNTERS);
+        _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
         return PAPI_ENOSUPP;
     }
@@ -180,6 +200,10 @@ _io_init_component( int cidx )
         ( IO_native_event_entry_t * )
         papi_calloc(gEventCount, sizeof(IO_native_event_entry_t) );
     if ( io_native_table == NULL ) {
+        int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Failed to allocate %lu bytes for _io_native_table.", gEventCount*sizeof(IO_native_event_entry_t));
+        _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
         return PAPI_ENOMEM;
     }

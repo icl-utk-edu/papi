@@ -28,6 +28,11 @@
 #define EXAMPLE_MAX_SIMULTANEOUS_COUNTERS 3
 #define EXAMPLE_MAX_MULTIPLEX_COUNTERS 4
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 /* Declare our vector in advance */
 /* This allows us to modify the component info */
 papi_vector_t _example_vector;
@@ -188,12 +193,15 @@ _example_init_component( int cidx )
 {
 
 	SUBDBG( "_example_init_component..." );
-
    
-        /* First, detect that our hardware is available */
-        if (detect_example()!=PAPI_OK) {
-	   return PAPI_ECMP;
-	}
+   /* First, detect that our hardware is available */
+   if (detect_example()!=PAPI_OK) {
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+         "Example Hardware not present.");
+      _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+      return PAPI_ENOSUPP;
+   }
    
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
@@ -204,7 +212,10 @@ _example_init_component( int cidx )
 		( example_native_event_entry_t * )
 		papi_calloc( num_events, sizeof(example_native_event_entry_t) );
 	if ( example_native_table == NULL ) {
-		PAPIERROR( "malloc():Could not get memory for events table" );
+      int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+      "Could not allocate %lu bytes of memory for EXAMPLE device structure.", num_events*sizeof(example_native_event_entry_t));
+      _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		return PAPI_ENOMEM;
 	}
 
@@ -237,8 +248,6 @@ _example_init_component( int cidx )
 
 	/* Export the component id */
 	_example_vector.cmp_info.CmpIdx = cidx;
-
-	
 
 	return PAPI_OK;
 }
