@@ -85,6 +85,8 @@ typedef struct cuda_device_desc {
     CUdevice    cuDev;
     int         deviceNum;
     char        deviceName[PAPI_MIN_STR_LEN];
+    struct cudaDeviceProp myProperties;
+    int         cupti_1_0;
     uint32_t    maxDomains;                 /* number of domains per device */
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
@@ -269,6 +271,7 @@ DECLARECUFUNC(cuCtxSynchronize, ());
 #define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  cudaError_t( *funcname##Ptr ) funcsig;
 DECLARECUDAFUNC(cudaGetDevice, (int *));
 DECLARECUDAFUNC(cudaSetDevice, (int));
+DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
 DECLARECUDAFUNC(cudaFree, (void *));
 
 #define CUPTIAPIWEAK __attribute__( ( weak ) )
@@ -467,6 +470,7 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl2. (libcudart.so).
 
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
+    cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
@@ -648,24 +652,40 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        // First CUPTI Call: This will fail if CUPTI is not supported,
-        // which happens on compute capability >=7.5. 
-        // #0x00000026='CUPTI_ERROR_LEGACY_PROFILER_NOT_SUPPORTED'. (error 38 decimal).
+        // The routine cuptiDeviceGetNumEventDomains() is illegal in with compute capability >= 7.5.
         // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
         // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
         // From https://developer.nvidia.com/cuda-gpus#compute):
         // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
 
+        cudaErr = (*cudaGetDevicePropertiesPtr) (&mydevice->myProperties, deviceNum);
+        if (cudaErr != cudaSuccess) {
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        }
+
+        mydevice->cupti_1_0 = 0;   // Presume < 7.5.
+        if (mydevice->myProperties.major > 7 || 
+            (mydevice->myProperties.major == 7 && mydevice->myProperties.minor >=5)) {
+            mydevice->cupti_1_0 = 1;
+        }
+
+        if (mydevice->cupti_1_0) { 
+            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            return PAPI_ENOSUPP;
+        }
+
+        // fprintf(stderr, "%s:%i device %i has CC=%i.%i\n", __FILE__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor);
+
+        // Should be safe to call CUpti now.
         cuptiError=(*cuptiDeviceGetNumEventDomainsPtr) (mydevice->cuDev, &mydevice->maxDomains);
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
-            if (cuptiError == 38) { 
-                char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
-                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-                if (strCpy == NULL) HANDLE_STRING_ERROR;
-                return PAPI_ENOSUPP;
-            }
-
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuptiDeviceGetNumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
