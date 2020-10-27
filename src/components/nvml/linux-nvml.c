@@ -1110,19 +1110,52 @@ int _papi_nvml_init_component(int cidx)
 
     /* A per device representation of what events are present */
     features = (int*)papi_malloc(sizeof(int) * device_count);
+    if (features == NULL) { 
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "%s failed to alloc %lu bytes for features.", __func__, sizeof(int)*device_count);
+                    _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
+        return(PAPI_ENOMEM);
+    }
 
     /* Handles to each device */
     devices = (nvmlDevice_t*)papi_malloc(sizeof(nvmlDevice_t) * device_count);
+    if (devices == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "%s failed to alloc %lu bytes for features.", __func__, (sizeof(nvmlDevice_t) * device_count));
+                    _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
+        return(PAPI_ENOMEM);
+    }
 
     /* For each device, store the intial power value to enable reset if power is altered */
     power_management_initial_limit = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
+    if (power_management_initial_limit == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "%s failed to alloc %lu bytes for power_management_initial_limit.", __func__, (sizeof(unsigned int) * device_count));
+                    _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
+        return(PAPI_ENOMEM);
+    }
     power_management_limit_constraint_min = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
+    if (power_management_limit_constraint_min == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "%s failed to alloc %lu bytes for power_management_limit_constraint_min.", __func__, (sizeof(unsigned int) * device_count));
+                    _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
+        return(PAPI_ENOMEM);
+    }
     power_management_limit_constraint_max = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
+    if (power_management_limit_constraint_max == NULL) {
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                    "%s failed to alloc %lu bytes for power_management_limit_constraint_max.", __func__, (sizeof(unsigned int) * device_count));
+                    _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
+        return(PAPI_ENOMEM);
+    }
 
     /* Figure out what events are supported on each card. */
     if ((papi_errorcode = detectDevices()) != PAPI_OK) {
-        papi_free(features);
-        papi_free(devices);
         sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
         return PAPI_ENOSUPP;

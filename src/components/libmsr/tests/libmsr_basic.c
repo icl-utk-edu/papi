@@ -91,6 +91,7 @@ int main ( int argc, char **argv )
     ll_dbl_union_t tmp_ll_dbl;
     int repeat;
 
+    (void) do_wrap; // 'wrap' option is not implemented.
     /* Set TESTS_QUIET variable */
     tests_quiet( argc, argv );
     if ( argc > 1 && strstr( argv[1], "-w" ) )
@@ -183,7 +184,7 @@ int main ( int argc, char **argv )
                 if ( data_type[i]==PAPI_DATATYPE_FP64 ) {
                     printf( "%-40s %12.6f %s\n", event_names[i], tmp_ll_dbl.dbl, units[i] );
                 } else if ( data_type[i]==PAPI_DATATYPE_UINT64 ) {
-                    printf( "%-40s %12ld %s\n", event_names[i], tmp_ll_dbl.ll, units[i] );
+                    printf( "%-40s %12lld %s\n", event_names[i], tmp_ll_dbl.ll, units[i] );
                 }
             }            
             printf( "\n" );

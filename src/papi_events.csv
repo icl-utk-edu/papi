@@ -453,9 +453,37 @@ PRESET,PAPI_L1_DCA,NOT_DERIVED,perf::PERF_COUNT_HW_CACHE_L1D:ACCESS
 PRESET,PAPI_L2_DCM,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:LS_RD_BLK_C
 PRESET,PAPI_L2_DCR,NOT_DERIVED,REQUESTS_TO_L2_GROUP1:RD_BLK_L
 PRESET,PAPI_L2_DCH,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:LS_RD_BLK_L_HIT_X
+#
+PRESET,PAPI_L1_ICM,NOT_DERIVED,REQUESTS_TO_L2_GROUP1:CACHEABLE_IC_READ
+#
+PRESET,PAPI_L2_ICR,NOT_DERIVED,REQUESTS_TO_L2_GROUP1:CACHEABLE_IC_READ
+PRESET,PAPI_L2_ICM,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:IC_FILL_MISS
+PRESET,PAPI_L2_ICH,NOT_DERIVED,CORE_TO_L2_CACHEABLE_REQUEST_ACCESS_STATUS:IC_FILL_HIT_X:IC_FILL_HIT_S
+# New FLOP event on zen2
+# PPR (under section 2.1.15.3. --
+# https://www.amd.com/system/files/TechDocs/54945_3.03_ppr_ZP_B2_pub.zip)
+# explains that FLOP events require MergeEvent support, which was included 
+# in the 5.6 kernel. 
+# Hence, a kernel version 5.6 or greater is required.
+# NOTE: without the MergeEvent support in the kernel, there is no guarantee
+# that this SSE/AVX FLOP event produces any useful data whatsoever.  
+PRESET,PAPI_FP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+# Since FP_OPS counts both single- and double-prec operations
+# correctly, we don't need to confuse the user with additional
+# DP_OPS and SP_OPS events. So, I'm taking them out.  
+#PRESET,PAPI_DP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+#PRESET,PAPI_SP_OPS,NOT_DERIVED,RETIRED_SSE_AVX_FLOPS:ANY
+#
+# Floating-point instructions (including non-numeric floating-point instructions,
+# e.g. Move or Merge Scalar Double-Precision Floating-Point values)
+PRESET,PAPI_FP_INS,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
+# Since FP_INS counts both single- and double-prec instuctions
+# correctly, we don't need to confuse the user with additional
+# VEC_DP and VEC_SP events. So, I'm taking them out.  
+#PRESET,PAPI_VEC_DP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
+#PRESET,PAPI_VEC_SP,NOT_DERIVED,RETIRED_MMX_FP_INSTRUCTIONS:SSE_INSTR:MMX_INSTR:X87_INSTR
 
-#
-#
+
 CPU,Intel architectural PMU
 CPU,ix86arch
 #

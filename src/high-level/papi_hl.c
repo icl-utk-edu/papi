@@ -92,6 +92,8 @@ typedef struct
 {
    long_long offset;       /**< Event value for region_begin */
    long_long total;        /**< Event value for region_end - region_begin + previous value */
+   long_long min;          /**< Minimum event value (only applies for instantaneous events) */
+   long_long max;          /**< Maximum event value (only applies for instantaneous events) */
    reads_t *read_values;   /**< List of read event values inside a region */
 } value_t;
 
@@ -182,6 +184,9 @@ static int _internal_hl_create_global_binary_tree();
 static int _internal_hl_mkdir(const char *dir);
 static int _internal_hl_determine_output_path();
 static void _internal_hl_json_line_break_and_indent(FILE* f, bool b, int width);
+static void _internal_hl_json_definitions(FILE* f, bool beautifier);
+static void _internal_hl_json_region_events_instant(FILE* f, bool beautifier, int region_cnt,
+         long_long min, long_long total, long_long max);
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions);
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
 static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
@@ -429,7 +434,7 @@ static int _internal_hl_read_user_events(const char *user_events)
       }
    }
 
-   num_of_requested_events = num_of_req_events;
+   num_of_requested_events = req_event_index;
    free(user_events_copy);
    if ( num_of_requested_events == 0 )
       return PAPI_EINVAL;
@@ -838,10 +843,26 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             /* if event type is instantaneous only save last value */
-            if ( components[i].event_types[j] == 1 )
+            if ( components[i].event_types[j] == 1 ) {
+
+               /* determine minimum */
+               if ( node->values[0].total == 1 ) {
+                  /* set the first minimum value */
+                  node->values[cmp_iter].min = _local_components[i].values[j];
+               } else {
+                  if ( node->values[cmp_iter].min > _local_components[i].values[j] )
+                     node->values[cmp_iter].min = _local_components[i].values[j];
+               }
+
                node->values[cmp_iter].total += _local_components[i].values[j];
-            else
+               
+               /* determine maximum value */
+               if ( node->values[cmp_iter].max < _local_components[i].values[j] )
+                  node->values[cmp_iter].max = _local_components[i].values[j];
+
+            } else {
                node->values[cmp_iter].total += _local_components[i].values[j] - node->values[cmp_iter].offset;
+            }
             cmp_iter++;
          }
    }
@@ -873,6 +894,8 @@ static inline regions_t* _internal_hl_insert_region_node(regions_t** head_node, 
    strcpy(new_node->region, region);
    for ( i = 0; i < extended_total_num_events; i++ ) {
       new_node->values[i].total = 0;
+      new_node->values[i].min = 0;
+      new_node->values[i].max = 0;
       new_node->values[i].read_values = NULL;
    }
 
@@ -1159,23 +1182,76 @@ static void _internal_hl_json_line_break_and_indent( FILE* f, bool b, int width 
    }
 }
 
+static void _internal_hl_json_definitions(FILE* f, bool beautifier)
+{
+   int num_events, i, j;
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "\"event_definitions\":{");
+
+   /* get all events + types */
+   num_events = 1;
+   for ( i = 0; i < num_of_components; i++ ) {
+      for ( j = 0; j < components[i].num_of_events; j++ ) {
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+
+         if ( components[i].event_types[j] == 0 )
+            fprintf(f, "\"%s\":\"delta\"", components[i].event_names[j]);
+         else
+            fprintf(f, "\"%s\":\"instant\"", components[i].event_names[j]);
+
+         if ( num_events < total_num_events )
+            fprintf(f, ",");
+         num_events++;
+      }
+   }
+
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "},");
+}
+
+static void _internal_hl_json_region_events_instant(FILE* f, bool beautifier, int region_cnt,
+         long_long min, long_long total, long_long max)
+{
+   fprintf(f, "\"min\":\"%lld\",", min);
+   _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+   fprintf(f, "\"avg\":\"%lld\",", total/region_cnt);
+   _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+   fprintf(f, "\"max\":\"%lld\"", max);
+}
+
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions)
 {
    char **all_event_names = NULL;
+   int *all_event_types = NULL;
    int extended_total_num_events;
-   int i, j, cmp_iter;
+   int i, j, cmp_iter, region_count;
 
    /* generate array of all events including region count and CPU cycles for output */
    extended_total_num_events = total_num_events + 2;
    all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
    all_event_names[0] = "region_count";
    all_event_names[1] = "cycles";
+
+   all_event_types = (int*)malloc(extended_total_num_events * sizeof(int));
+   all_event_types[0] = 0;
+   all_event_types[1] = 0;
+
+
    cmp_iter = 2;
    for ( i = 0; i < num_of_components; i++ ) {
       for ( j = 0; j < components[i].num_of_events; j++ ) {
-         all_event_names[cmp_iter++] = components[i].event_names[j];
+         all_event_names[cmp_iter] = components[i].event_names[j];
+         if ( components[i].event_types[j] == 0 )
+            all_event_types[cmp_iter] = 0;
+         else
+            all_event_types[cmp_iter] = 1;
+         cmp_iter++;
       }
    }
+
+   /* remember region count for instant values */
+   region_count = regions->values[0].total;
 
    for ( j = 0; j < extended_total_num_events; j++ ) {
 
@@ -1193,7 +1269,15 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
          fprintf(f, "\"%s\":{", all_event_names[j]);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-         fprintf(f, "\"total\":\"%lld\",", regions->values[j].total);
+         if ( all_event_types[j] == 0 ) {
+            fprintf(f, "\"total\":\"%lld\",", regions->values[j].total);
+         } else {
+
+            _internal_hl_json_region_events_instant(f, beautifier, region_count,
+               regions->values[j].min, regions->values[j].total, regions->values[j].max);
+
+            fprintf(f, ",");
+         }
 
          while ( read_node != NULL ) {
             _internal_hl_json_line_break_and_indent(f, beautifier, 7);
@@ -1215,15 +1299,26 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
       } else {
          HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
 
-         if ( j == ( extended_total_num_events - 1 ) ) {
+         if ( all_event_types[j] == 0 ) {
             fprintf(f, "\"%s\":\"%lld\"", all_event_names[j], regions->values[j].total);
          } else {
-            fprintf(f, "\"%s\":\"%lld\",", all_event_names[j], regions->values[j].total);
+            fprintf(f, "\"%s\":{", all_event_names[j]);
+            _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+
+            _internal_hl_json_region_events_instant(f, beautifier, region_count,
+               regions->values[j].min, regions->values[j].total, regions->values[j].max);
+
+            _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+            fprintf(f, "}");
          }
+
+         if ( j < ( extended_total_num_events - 1 ) )
+            fprintf(f, ",");
       }
    }
 
    free(all_event_names);
+   free(all_event_types);
 }
 
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node)
@@ -1398,6 +1493,9 @@ static void _internal_hl_write_output()
             fprintf(output_file, "{");
             _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
             fprintf(output_file, "\"cpu in mhz\":\"%d\",", cpu_freq);
+
+            /* write definitions */
+            _internal_hl_json_definitions(output_file, beautifier);
 
             /* write all regions with events per thread */
             _internal_hl_json_threads(output_file, beautifier, tids, number_of_threads);

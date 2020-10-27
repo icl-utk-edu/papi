@@ -949,9 +949,8 @@ static const intel_x86_umask_t intel_icl_assists[]={
   },
   { .uname   = "FP",
     .udesc   = "Counts all microcode FP assists.",
-    .ucode   = 0x0200ull | (0x1 << INTEL_X86_CMASK_BIT),
+    .ucode   = 0x0200ull,
     .uflags  = INTEL_X86_NCOMBO,
-    .modhw   = _INTEL_X86_ATTR_C,
   },
 };
 
@@ -2496,7 +2495,7 @@ static const intel_x86_entry_t intel_icl_pe[]={
     .modmsk = INTEL_V5_ATTRS,
     .cntmsk = 0x200000000ull,
     .ngrp   = 1,
-    .flags  = 0,
+    .flags  = INTEL_X86_SPEC,
     .numasks= LIBPFM_ARRAY_SIZE(intel_icl_cpu_clk_unhalted),
     .umasks = intel_icl_cpu_clk_unhalted,
   },

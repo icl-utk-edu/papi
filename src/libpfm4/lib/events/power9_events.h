@@ -1216,8 +1216,8 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_CMPLU_STALL_DMISS_L21_L31 ] = {
 	.pme_name = "PM_CMPLU_STALL_DMISS_L21_L31",
 	.pme_code = 0x000002C018,
-	.pme_short_desc = "Completion stall by Dcache miss which resolved on chip ( excluding local L2/L3)",
-	.pme_long_desc = "Completion stall by Dcache miss which resolved on chip ( excluding local L2/L3)",
+	.pme_short_desc = "Completion stall by Dcache miss which resolved on chip (excluding local L2/L3)",
+	.pme_long_desc = "Completion stall by Dcache miss which resolved on chip (excluding local L2/L3)",
 },
 [ POWER9_PME_PM_CMPLU_STALL_DMISS_L2L3_CONFLICT ] = {
 	.pme_name = "PM_CMPLU_STALL_DMISS_L2L3_CONFLICT",
@@ -1829,14 +1829,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_DATA_FROM_RL4 ] = {
 	.pme_name = "PM_DATA_FROM_RL4",
 	.pme_code = 0x000002C04A,
-	.pme_short_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to a demand load",
-	.pme_long_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to a demand load",
+	.pme_short_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to a demand load",
+	.pme_long_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to a demand load",
 },
 [ POWER9_PME_PM_DATA_FROM_RMEM ] = {
 	.pme_name = "PM_DATA_FROM_RMEM",
 	.pme_code = 0x000003C04A,
-	.pme_short_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to a demand load",
-	.pme_long_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to a demand load",
+	.pme_short_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group (Remote) due to a demand load",
+	.pme_long_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group (Remote) due to a demand load",
 },
 [ POWER9_PME_PM_DATA_GRP_PUMP_CPRED ] = {
 	.pme_name = "PM_DATA_GRP_PUMP_CPRED",
@@ -2243,14 +2243,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_DPTEG_FROM_RL4 ] = {
 	.pme_name = "PM_DPTEG_FROM_RL4",
 	.pme_code = 0x000002E04A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a data side request.",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a data side request.",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
 },
 [ POWER9_PME_PM_DPTEG_FROM_RMEM ] = {
 	.pme_name = "PM_DPTEG_FROM_RMEM",
 	.pme_code = 0x000003E04A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a data side request.",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a data side request.",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
 },
 [ POWER9_PME_PM_DSIDE_L2MEMACC ] = {
 	.pme_name = "PM_DSIDE_L2MEMACC",
@@ -2507,14 +2507,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_IC_DEMAND_L2_BHT_REDIRECT ] = {
 	.pme_name = "PM_IC_DEMAND_L2_BHT_REDIRECT",
 	.pme_code = 0x0000004098,
-	.pme_short_desc = "L2 I cache demand request due to BHT redirect, branch redirect ( 2 bubbles 3 cycles)",
-	.pme_long_desc = "L2 I cache demand request due to BHT redirect, branch redirect ( 2 bubbles 3 cycles)",
+	.pme_short_desc = "L2 I cache demand request due to BHT redirect, branch redirect (2 bubbles 3 cycles)",
+	.pme_long_desc = "L2 I cache demand request due to BHT redirect, branch redirect (2 bubbles 3 cycles)",
 },
 [ POWER9_PME_PM_IC_DEMAND_L2_BR_REDIRECT ] = {
 	.pme_name = "PM_IC_DEMAND_L2_BR_REDIRECT",
 	.pme_code = 0x0000004898,
-	.pme_short_desc = "L2 I cache demand request due to branch Mispredict ( 15 cycle path)",
-	.pme_long_desc = "L2 I cache demand request due to branch Mispredict ( 15 cycle path)",
+	.pme_short_desc = "L2 I cache demand request due to branch Mispredict (15 cycle path)",
+	.pme_long_desc = "L2 I cache demand request due to branch Mispredict (15 cycle path)",
 },
 [ POWER9_PME_PM_IC_DEMAND_REQ ] = {
 	.pme_name = "PM_IC_DEMAND_REQ",
@@ -2881,14 +2881,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_INST_FROM_RL4 ] = {
 	.pme_name = "PM_INST_FROM_RL4",
 	.pme_code = 0x000002404A,
-	.pme_short_desc = "The processor's Instruction cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to an instruction fetch (not prefetch)",
-	.pme_long_desc = "The processor's Instruction cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to an instruction fetch (not prefetch)",
+	.pme_short_desc = "The processor's Instruction cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to an instruction fetch (not prefetch)",
+	.pme_long_desc = "The processor's Instruction cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to an instruction fetch (not prefetch)",
 },
 [ POWER9_PME_PM_INST_FROM_RMEM ] = {
 	.pme_name = "PM_INST_FROM_RMEM",
 	.pme_code = 0x000003404A,
-	.pme_short_desc = "The processor's Instruction cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to an instruction fetch (not prefetch)",
-	.pme_long_desc = "The processor's Instruction cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to an instruction fetch (not prefetch)",
+	.pme_short_desc = "The processor's Instruction cache was reloaded from another chip's memory on the same Node or Group (Remote) due to an instruction fetch (not prefetch)",
+	.pme_long_desc = "The processor's Instruction cache was reloaded from another chip's memory on the same Node or Group (Remote) due to an instruction fetch (not prefetch)",
 },
 [ POWER9_PME_PM_INST_GRP_PUMP_CPRED ] = {
 	.pme_name = "PM_INST_GRP_PUMP_CPRED",
@@ -3109,14 +3109,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_IPTEG_FROM_RL4 ] = {
 	.pme_name = "PM_IPTEG_FROM_RL4",
 	.pme_code = 0x000002504A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a instruction side request",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a instruction side request",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a instruction side request",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a instruction side request",
 },
 [ POWER9_PME_PM_IPTEG_FROM_RMEM ] = {
 	.pme_name = "PM_IPTEG_FROM_RMEM",
 	.pme_code = 0x000003504A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a instruction side request",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a instruction side request",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a instruction side request",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a instruction side request",
 },
 [ POWER9_PME_PM_ISIDE_DISP_FAIL_ADDR ] = {
 	.pme_name = "PM_ISIDE_DISP_FAIL_ADDR",
@@ -3241,8 +3241,8 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_L1_ICACHE_RELOADED_PREF ] = {
 	.pme_name = "PM_L1_ICACHE_RELOADED_PREF",
 	.pme_code = 0x0000030068,
-	.pme_short_desc = "Counts all Icache prefetch reloads ( includes demand turned into prefetch)",
-	.pme_long_desc = "Counts all Icache prefetch reloads ( includes demand turned into prefetch)",
+	.pme_short_desc = "Counts all Icache prefetch reloads (includes demand turned into prefetch)",
+	.pme_long_desc = "Counts all Icache prefetch reloads (includes demand turned into prefetch)",
 },
 [ POWER9_PME_PM_L1PF_L2MEMACC ] = {
 	.pme_name = "PM_L1PF_L2MEMACC",
@@ -5006,26 +5006,26 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_MRK_DATA_FROM_RL4_CYC ] = {
 	.pme_name = "PM_MRK_DATA_FROM_RL4_CYC",
 	.pme_code = 0x000004D12A,
-	.pme_short_desc = "Duration in cycles to reload from another chip's L4 on the same Node or Group ( Remote) due to a marked load",
-	.pme_long_desc = "Duration in cycles to reload from another chip's L4 on the same Node or Group ( Remote) due to a marked load",
+	.pme_short_desc = "Duration in cycles to reload from another chip's L4 on the same Node or Group (Remote) due to a marked load",
+	.pme_long_desc = "Duration in cycles to reload from another chip's L4 on the same Node or Group (Remote) due to a marked load",
 },
 [ POWER9_PME_PM_MRK_DATA_FROM_RL4 ] = {
 	.pme_name = "PM_MRK_DATA_FROM_RL4",
 	.pme_code = 0x000003515C,
-	.pme_short_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to a marked load",
-	.pme_long_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group ( Remote) due to a marked load",
+	.pme_short_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to a marked load",
+	.pme_long_desc = "The processor's data cache was reloaded from another chip's L4 on the same Node or Group (Remote) due to a marked load",
 },
 [ POWER9_PME_PM_MRK_DATA_FROM_RMEM_CYC ] = {
 	.pme_name = "PM_MRK_DATA_FROM_RMEM_CYC",
 	.pme_code = 0x000002C12A,
-	.pme_short_desc = "Duration in cycles to reload from another chip's memory on the same Node or Group ( Remote) due to a marked load",
-	.pme_long_desc = "Duration in cycles to reload from another chip's memory on the same Node or Group ( Remote) due to a marked load",
+	.pme_short_desc = "Duration in cycles to reload from another chip's memory on the same Node or Group (Remote) due to a marked load",
+	.pme_long_desc = "Duration in cycles to reload from another chip's memory on the same Node or Group (Remote) due to a marked load",
 },
 [ POWER9_PME_PM_MRK_DATA_FROM_RMEM ] = {
 	.pme_name = "PM_MRK_DATA_FROM_RMEM",
 	.pme_code = 0x000001D148,
-	.pme_short_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to a marked load",
-	.pme_long_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group ( Remote) due to a marked load",
+	.pme_short_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group (Remote) due to a marked load",
+	.pme_long_desc = "The processor's data cache was reloaded from another chip's memory on the same Node or Group (Remote) due to a marked load",
 },
 [ POWER9_PME_PM_MRK_DCACHE_RELOAD_INTV ] = {
 	.pme_name = "PM_MRK_DCACHE_RELOAD_INTV",
@@ -5240,14 +5240,14 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_MRK_DPTEG_FROM_RL4 ] = {
 	.pme_name = "PM_MRK_DPTEG_FROM_RL4",
 	.pme_code = 0x000002F14A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a marked data side request.",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group ( Remote) due to a marked data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a marked data side request.",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's L4 on the same Node or Group (Remote) due to a marked data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
 },
 [ POWER9_PME_PM_MRK_DPTEG_FROM_RMEM ] = {
 	.pme_name = "PM_MRK_DPTEG_FROM_RMEM",
 	.pme_code = 0x000003F14A,
-	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a marked data side request.",
-	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group ( Remote) due to a marked data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
+	.pme_short_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a marked data side request.",
+	.pme_long_desc = "A Page Table Entry was loaded into the TLB from another chip's memory on the same Node or Group (Remote) due to a marked data side request. When using Radix Page Translation, this count excludes PDE reloads. Only PTE reloads are included",
 },
 [ POWER9_PME_PM_MRK_DTLB_MISS_16G ] = {
 	.pme_name = "PM_MRK_DTLB_MISS_16G",
@@ -5576,8 +5576,8 @@ static const pme_power_entry_t power9_pe[] = {
 [ POWER9_PME_PM_MRK_ST_DONE_L2 ] = {
 	.pme_name = "PM_MRK_ST_DONE_L2",
 	.pme_code = 0x0000010134,
-	.pme_short_desc = "marked store completed in L2 ( RC machine done)",
-	.pme_long_desc = "marked store completed in L2 ( RC machine done)",
+	.pme_short_desc = "marked store completed in L2 (RC machine done)",
+	.pme_long_desc = "marked store completed in L2 (RC machine done)",
 },
 [ POWER9_PME_PM_MRK_ST_DRAIN_TO_L2DISP_CYC ] = {
 	.pme_name = "PM_MRK_ST_DRAIN_TO_L2DISP_CYC",

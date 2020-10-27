@@ -117,6 +117,9 @@ generateNetEventList( void )
     if (fin == NULL) {
         SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
            NET_PROC_FILE);
+        snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        "Failed to find /proc file-system.");
+        _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         return 0;
     }
 
@@ -126,6 +129,9 @@ generateNetEventList( void )
         if (retval == NULL) {
         	fclose(fin);
             SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
+            snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            "Not enough lines in '%s'.", NET_PROC_FILE);
+            _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             return 0;
         }
     }
@@ -150,6 +156,9 @@ generateNetEventList( void )
             if (!temp) {
                 PAPIERROR("out of memory!");
                 fclose(fin);
+                snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "%s failed to allocate %lu bytes for temp_event.", __func__, sizeof(struct temp_event));
+                _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 return PAPI_ENOMEM;
             }
             temp->next = NULL;
@@ -162,6 +171,9 @@ generateNetEventList( void )
                 free(temp);
                 fclose(fin);
                 PAPIERROR("This shouldn't be possible\n");
+                snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                "%s Error navigating linked list.", __func__);
+                _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 return PAPI_ECMP;
             }
             last = temp;
@@ -314,7 +326,7 @@ _net_init_component( int cidx  )
     /* The network interfaces are listed in /proc/net/dev */
     num_events = generateNetEventList();
 
-    if ( num_events < 0 )  /* PAPI errors */
+    if ( num_events < 0 )  /* disabled_reason already set */
         return num_events;
 
     if ( num_events == 0 )  /* No network interfaces found */

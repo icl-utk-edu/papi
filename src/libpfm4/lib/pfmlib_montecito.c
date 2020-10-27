@@ -1661,7 +1661,7 @@ pfm_dispatch_irange(pfmlib_input_param_t *inp, pfmlib_mont_input_param_t *mod_in
 	 *
 	 * - if the fine mode fails, then for all events, except IA64_TAGGED_INST_RETIRED_*, only
 	 *   the first pair of ibr is available: ibrp0. This imposes some severe restrictions on the
-	 *   size and alignement of the range. It can be bigger than 64KB and must be properly aligned
+	 *   size and alignment of the range. It can be bigger than 64KB and must be properly aligned
 	 *   on its size. The library relaxes these constraints by allowing the covered areas to be
 	 *   larger than the expected range. It may start before and end after the requested range. 
 	 *   You can determine the amount of overrun in either direction for each range by looking at 
