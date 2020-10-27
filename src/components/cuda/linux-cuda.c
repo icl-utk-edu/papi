@@ -678,7 +678,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        // The routine cuptiDeviceGetNumEventDomains() is illegal in with compute capability >= 7.5.
+        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute capability >= 7.5.
         // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
         // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
         // From https://developer.nvidia.com/cuda-gpus#compute):
@@ -688,7 +688,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (cudaErr != cudaSuccess) {
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC);    
         }
