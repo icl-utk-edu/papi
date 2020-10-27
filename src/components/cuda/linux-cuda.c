@@ -40,6 +40,9 @@
 // We use a define so we can use it as a static array dimension. Increase as needed.
 #define PAPICUDA_MAX_COUNTERS 512
 
+// Will include code to time the multi-pass metric elimination code.
+// #define TIME_MULTIPASS_ELIM
+
 // CUDA metrics use events that are not "exposed" by the normal enumeration of
 // performance events; they are only identified by an event number (no name, 
 // no description). But we have to track them for accumulating purposes, they
@@ -85,6 +88,8 @@ typedef struct cuda_device_desc {
     CUdevice    cuDev;
     int         deviceNum;
     char        deviceName[PAPI_MIN_STR_LEN];
+    struct cudaDeviceProp myProperties;
+    int         cupti_1_0;
     uint32_t    maxDomains;                 /* number of domains per device */
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
@@ -269,6 +274,7 @@ DECLARECUFUNC(cuCtxSynchronize, ());
 #define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  cudaError_t( *funcname##Ptr ) funcsig;
 DECLARECUDAFUNC(cudaGetDevice, (int *));
 DECLARECUDAFUNC(cudaSetDevice, (int));
+DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
 DECLARECUDAFUNC(cudaFree, (void *));
 
 #define CUPTIAPIWEAK __attribute__( ( weak ) )
@@ -467,6 +473,7 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl2. (libcudart.so).
 
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
+    cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
 
@@ -546,7 +553,6 @@ static int _cuda_linkCudaLibraries(void)
     return (PAPI_OK);
 }
 
-
 static int _cuda_add_native_events(cuda_context_t * gctxt)
 {
     SUBDBG("Entering\n");
@@ -562,6 +568,30 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     cudaError_t cudaErr;
     uint32_t maxEventSize;
     int strErr;
+    long long elim_ns = 0;
+    (void) elim_ns;
+
+    // Create a current default context needed for cupti calls in multi-pass elimination.
+    CUcontext currCuCtx;
+    cudaErr = (*cudaFreePtr) (NULL);
+    if (cudaErr != cudaSuccess) {
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Function cudaFreePtr(NULL) error code=%d.", cudaErr);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_EMISC);    
+    } // else fprintf(stderr, "%s:%i cudaFreePtr(NULL) success.\n", __FILE__, __LINE__);
+
+    cuErr = (*cuCtxGetCurrentPtr) (&currCuCtx);
+    if (cuErr != CUDA_SUCCESS) {
+        const char *errString=NULL;
+        (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Function cuCtxGetCurrentPtr) failed: %s.", errString);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_EMISC);    
+    } // else fprintf(stderr, "%s:%i cuCtxGetCurrent(&currCuCtx) success.\n", __FILE__, __LINE__);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
@@ -648,24 +678,40 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        // First CUPTI Call: This will fail if CUPTI is not supported,
-        // which happens on compute capability >=7.5. 
-        // #0x00000026='CUPTI_ERROR_LEGACY_PROFILER_NOT_SUPPORTED'. (error 38 decimal).
+        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute capability >= 7.5.
         // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
         // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
         // From https://developer.nvidia.com/cuda-gpus#compute):
         // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
 
+        cudaErr = (*cudaGetDevicePropertiesPtr) (&mydevice->myProperties, deviceNum);
+        if (cudaErr != cudaSuccess) {
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        }
+
+        mydevice->cupti_1_0 = 0;   // Presume < 7.5.
+        if (mydevice->myProperties.major > 7 || 
+            (mydevice->myProperties.major == 7 && mydevice->myProperties.minor >=5)) {
+            mydevice->cupti_1_0 = 1;
+        }
+
+        if (mydevice->cupti_1_0) { 
+            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            return PAPI_ENOSUPP;
+        }
+
+        // fprintf(stderr, "%s:%i device %i has CC=%i.%i\n", __FILE__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor);
+
+        // Should be safe to call CUpti now.
         cuptiError=(*cuptiDeviceGetNumEventDomainsPtr) (mydevice->cuDev, &mydevice->maxDomains);
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
-            if (cuptiError == 38) { 
-                char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
-                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-                if (strCpy == NULL) HANDLE_STRING_ERROR;
-                return PAPI_ENOSUPP;
-            }
-
             (*cuptiGetResultStringPtr)(cuptiError, &errstr);
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuptiDeviceGetNumEventDomains() failed; error code=%d [%s].", cuptiError, errstr);
@@ -947,33 +993,59 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             // Note that 'size' also returned total bytes written.
             tmpStr[size] = '\0';
 
-            if (strcmp("branch_efficiency", tmpStr) == 0) continue;                 // If it is branch efficiency, skip it.
+            // We reject anything requiring more than 1 set.
 
-            // We'd like to reject anything requiring more than 1
-            // set, but there is a problem I cannot find; I have
-            // been unable to create a CUcontext here so I can
-            // execute the CreateEventGroups. I've tried both
-            // ways, it returns an error saying no cuda devices
-            // available.  There does not seem to be a way to get
-            // the number of "sets" (passes) for a metric without
-            // having a context.
+            #if defined(TIME_MULTIPASS_ELIM)
+            long long start_ns = PAPI_get_real_nsec();
+            #endif 
 
-            // CUpti_EventGroupSets *thisEventGroupSets = NULL;
-            //CUPTI_CALL ((*cuptiMetricCreateEventGroupSetsPtr) (
-            //    tempContext,
-            //    sizeof(CUpti_MetricID),
-            //    &metricIdList[i],
-            //    &thisEventGroupSets),
-            //    return (PAPI_EMISC));
-            //
-            //int numSets = 0;                                                        // # of sets (passes) required.
-            //if (thisEventGroupSets != NULL) {
-            //    numSets=thisEventGroupSets->numSets;                                // Get sets if a grouping is necessary.
-            //    CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (thisEventGroupSets),   // Done with this.
-            //        return (PAPI_EMISC));
-            //}
-            //
-            //if (numSets > 1) continue;                                              // skip this metric too many passes.
+            CUpti_EventGroupSets *thisEventGroupSets = NULL;
+            cuptiError=(*cuptiMetricCreateEventGroupSetsPtr) (
+                currCuCtx,
+                sizeof(CUpti_MetricID),
+                &metricIdList[i],
+                &thisEventGroupSets);
+
+            if (cuptiError != CUPTI_SUCCESS) {
+               const char *errstr;
+               (*cuptiGetResultStringPtr) (cuptiError, &errstr);
+               strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                  "Function cuptiMetricCreateEventGroupSets() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+               if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+               return(PAPI_EMISC);    
+            } // else fprintf(stderr, "%s:%i cuptiMetricCreateEventGroupSets() success.\n", __FILE__, __LINE__);
+            
+            int numSets = 0;                                                        // # of sets (passes) required.
+            if (thisEventGroupSets != NULL) {
+                numSets=thisEventGroupSets->numSets;                                // Get sets if a grouping is necessary.
+                cuptiError=(*cuptiEventGroupSetsDestroyPtr) (thisEventGroupSets);     // Done with this.
+               if (cuptiError != CUPTI_SUCCESS) {
+                  const char *errstr;
+                  (*cuptiGetResultStringPtr) (cuptiError, &errstr);
+                  strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                     "Function cuptiEventGroupSetsDestroy() failed; error code=%d [%s].", cuptiError, errstr);
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC);    
+               } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
+            } else {
+               strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                  "Function cuptiMetricCreateEventGroupSets() returned an invalid NULL pointer.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+               if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+               return(PAPI_EMISC);    
+            }
+
+            #if defined(TIME_MULTIPASS_ELIM)
+            long long net_ns = PAPI_get_real_nsec() - start_ns;
+            elim_ns += net_ns;
+            #endif 
+
+            if (numSets > 1) {                                                // skip this metric too many passes.
+                // fprintf(stderr, "%s:%i skipping metric %s has %i sets.\n", __FILE__, __LINE__, tmpStr, numSets);
+                continue;
+            }
 
             metricIdList[j++] = metricIdList[i];                                    // we are compressing if we skipped any.
         } // end elimination loop.
@@ -1077,8 +1149,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         } // end maxMetrics loop.
 
         papi_free(metricIdList);                                                    // Done with this enumeration of metrics.
-        // Part of problem above, cannot create tempContext for unknown reason.
-        // CU_CALL((*cuCtxDestroyPtr) (tempContext),     return (PAPI_EMISC));         // destroy the temporary context.
+
         cudaErr = (*cudaSetDevicePtr)(saveDeviceNum);
         if (cudaErr != cudaSuccess) {
             char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "cudaSetDevicePtr failed, invalid return code.", PAPI_MAX_STR_LEN);
@@ -1099,6 +1170,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             return(PAPI_EMISC);
         }
     } // end of device loop, for metrics.
+
+    // Not sure why we can't destroy this context for cleanup; we get an error; CUDA_ERROR_INVALID_CONTEXT,
+    // which says it is not bound to our thread.     
+//  cuErr = (*cuCtxDestroyPtr) (currCuCtx);         // destroy the temporary context.
+//  currCuCtx = NULL;
+//  if (cuErr != CUDA_SUCCESS) {
+//      const char *errString=NULL;
+//      (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+//      strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+//      "Function cuCtxDestroy(currCuCtx) failed: %s.", errString);
+//      _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+//      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+//      return(PAPI_EMISC);    
+//  } else fprintf(stderr, "%s:%i cuCtxDestroy(currCuCtx) succeeded.\n", __FILE__, __LINE__);
 
     //-------------------------------------------------------------------------
     // The NVIDIA code, by design, zeros counters once events are read. PAPI
@@ -1285,6 +1370,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     gctxt->availEventSize = idxEventArray;
 #endif /* END IF we should expose Unenumerated Events */
+
+    #if defined(TIME_MULTIPASS_ELIM)
+    fprintf(stderr, "%s:%i metric set>1 elimination usec=%lld.\n", __FILE__, __LINE__, (elim_ns+500)/1000);
+    #endif 
 
     return 0;
 } // end _cuda_add_native_events
