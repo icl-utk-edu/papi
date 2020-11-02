@@ -248,7 +248,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
 {
     size_t linelen = 0;
     int cnt = 0, status = 0;
-    char *line, *place;
+    char *line = NULL, *place;
     FILE *input;
     int evnt_count = 256;
   
@@ -266,6 +266,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         {
             evnt_count *= 2;
             names = realloc(names, evnt_count*sizeof(char *));
+            cards = realloc(cards, evnt_count*sizeof(int));
         }
 
         place = strstr(line, " ");
