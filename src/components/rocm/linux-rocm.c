@@ -15,6 +15,7 @@
 #include <hsa.h>
 #include <rocprofiler.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "papi.h"
 #include "papi_memory.h"
@@ -222,7 +223,9 @@ static _rocm_control_t *global__rocm_control = NULL;
 static int _rocm_linkRocmLibraries(void)
 {
     int strErr;
-    char *strCpy;
+    char *strCpy, *env_value;
+    char hsa_root[PATH_MAX];
+    char profiler_root[PATH_MAX];
     ROCMDBG("Entering _rocm_linkRocmLibraries\n");
 
     char path_name[1024];
@@ -236,6 +239,7 @@ static int _rocm_linkRocmLibraries(void)
 
     // collect any defined environment variables, or "NULL" if not present.
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
+
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
     // Step 1: Process override if given.
@@ -255,7 +259,7 @@ static int _rocm_linkRocmLibraries(void)
     }
 
     // Step 3: Try the explicit install default.
-    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
+    if (dl1 == NULL && rocm_root != NULL) {                          // if env. var. PAPI_ROCM_ROOT given, try it.
         strErr=snprintf(path_name, 1024, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
@@ -264,7 +268,9 @@ static int _rocm_linkRocmLibraries(void)
 
     // Check for failure.
     if (dl1 == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libhsa-runtime64.so not found.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+        "libhsa-runtime64.so not found. Need LD_LIBRARY_PATH set, or\n"
+        "Env Var PAPI_ROCM_ROOT set, or module load rocm.");
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
@@ -279,7 +285,16 @@ static int _rocm_linkRocmLibraries(void)
     DLSYM_AND_CHECK(dl1, hsa_shut_down);
     DLSYM_AND_CHECK(dl1, hsa_queue_destroy);
 
-    //-------------------------------------------------------------------------
+    Dl_info hsa_rt_info;
+    dladdr(hsa_initPtr, &hsa_rt_info);
+    // fprintf(stderr, "hsa_rt_info.dli_fname='%s'\n", hsa_rt_info.dli_fname);
+    // Actual example:  hsa_rt_info.dli_fname='/opt/rocm/hsa/lib/libhsa-runtime64.so'
+    // Make hsa_root = portion before /hsa.
+    strncpy(hsa_root, hsa_rt_info.dli_fname, PATH_MAX-1);
+    strCpy = strstr(hsa_root, "/hsa");
+    if (strCpy != NULL) strCpy[0]=0;      // Terminate where found,
+    else hsa_root[0]=0;                   // or make string empty.
+    //------------------------------------------------------------------------------------------
 
     dl2 = NULL;                                                 // Ensure reset to NULL.
 
@@ -302,8 +317,14 @@ static int _rocm_linkRocmLibraries(void)
     // Step 3: Try the explicit install default.
     if (dl2 == NULL && rocm_root != NULL) {                          // if root given, try it.
         strErr=snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr > 1024) HANDLE_STRING_ERROR;
+        dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    }
+
+    // Step 4: Try the derived hsa_root.
+    if (dl2 == NULL && hsa_root[0] != 0) {                           // if plausible root discovered, try it.
+        strErr=snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", hsa_root);
+        if (strErr > 1024) HANDLE_STRING_ERROR;
         dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
@@ -330,34 +351,154 @@ static int _rocm_linkRocmLibraries(void)
     DLSYM_AND_CHECK(dl2, rocprofiler_reset);
     DLSYM_AND_CHECK(dl2, rocprofiler_error_string);
 
-    // Disable if ROCPROFILER env vars not present.
-    if (getenv("ROCP_METRICS") == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCP_METRICS not set; rocprofiler is not configured.");
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    Dl_info rocprofiler_info;
+    dladdr(rocprofiler_get_infoPtr, &rocprofiler_info);
+    // fprintf(stderr, "rocprofiler_info.dli_fname='%s'\n", rocprofiler_info.dli_fname);
+    // Actual example (caffeine): rocprofiler_info.dli_fname='/opt/rocm/rocprofiler/lib/librocprofiler64.so'
+    // Actual example (tulip):    rocprofiler_info.dli_fname='/opt/rocm-3.9.0/lib/librocprofiler64.so'
+    // Make profiler_root = portion up to /lib/ (for metrics.xml).
+    strCpy = strncpy(profiler_root, rocprofiler_info.dli_fname, PATH_MAX-1);
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
+    strCpy = strstr(profiler_root, "/lib/");
+    if (strCpy != NULL) strCpy[5]=0;      // Terminate after '/lib/'.
+    else profiler_root[0]=0;              // or make string empty.
+    //------------------------------------------------------------------------------------------
+   
+    struct stat myStat;
+    char *rocp_metrics;
+    // Look for ROCPROFILER env vars, try to set if missing.
+    rocp_metrics = getenv("ROCP_METRICS");
+    if (rocp_metrics == NULL) {
+        // first attempt.
+        strErr=snprintf(path_name, 1024, "%smetrics.xml", profiler_root);
+        if (strErr > 1024) HANDLE_STRING_ERROR;
+        int err = stat(path_name, &myStat);
+        if (err < 0) { 
+            // subsequent attempt.
+            strErr=snprintf(path_name, 1024, "%s../rocprofiler/lib/metrics.xml", profiler_root);
+            if (strErr > 1024) HANDLE_STRING_ERROR;
+            err = stat(path_name, &myStat);
+        }
+
+        // After all attempts,
+        if (err < 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "file 'metrics.xml' required for rocprofiler not found in standard location, set in Env. Var. ROCP_METRICS.");
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        } else {
+            // file WAS found. Put into the environment.
+            int err = setenv("ROCP_METRICS", path_name, 0);
+            if (err != 0) {
+                strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+                "Cannot set Env. Var. ROCP_METRICS required for rocprofiler operation. Must be set manually.");
+                _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+                return(PAPI_ENOSUPP);   // Wouldn't have any events.
+            }
+            // fprintf(stderr, "Successfully setenv(\"ROCP_METRICS\",\"%s\", 0).\n", path_name);
+        }
+    } else {
+        // Found env var, check if it is a real file.
+        int err = stat(rocp_metrics, &myStat);
+        if (err < 0) { 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "File '%s' given in Env. var. ROCP_METRICS missing; required for rocprofiler.", rocp_metrics);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }
     }
 
-    if (getenv("ROCPROFILER_LOG") == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCPROFILER_LOG not set; rocprofiler is not configured.");
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    // ROCP_METRICS passed.
+
+    env_value = getenv("ROCPROFILER_LOG");            
+    if (env_value == NULL) {
+        int err = setenv("ROCPROFILER_LOG", "1", 0);
+        if (err != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Cannot set Env. Var. ROCPROFILER_LOG=1; required for rocprofiler operation. Must be set manually.");
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
+    } else {
+        if (strcmp(env_value, "1") != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Env. Var. ROCPROFILER_LOG='%s' is not a supported value; must be '1'.", env_value);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
     }
 
-    if (getenv("HSA_VEN_AMD_AQLPROFILE_LOG") == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG not set; rocprofiler is not configured.");
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    // ROCPROFILER_LOG passed.
+
+    env_value = getenv("HSA_VEN_AMD_AQLPROFILE_LOG");            
+    if (env_value == NULL) {
+        int err = setenv("HSA_VEN_AMD_AQLPROFILE_LOG", "1", 0);
+        if (err != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Cannot set Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG=1; required for rocprofiler operation. Must be set manually.");
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
+    } else {
+        if (strcmp(env_value, "1") != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG=%s is not a supported value; must be '1'.", env_value);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
     }
 
-    if (getenv("AQLPROFILE_READ_API") == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var.AQLPROFILE_READ_API not set; rocprofiler is not configured.");
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Wouldn't have any events.
+    // HSA_VEN_AMD_AQLPROFILE_LOG passed.
+
+    env_value = getenv("AQLPROFILE_READ_API");            
+    if (env_value == NULL) {
+        int err = setenv("AQLPROFILE_READ_API", "1", 0);
+        if (err != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Cannot set Env. Var. AQLPROFILE_READ_API=1; required for rocprofiler operation. Must be set manually.");
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
+    } else {
+        if (strcmp(env_value, "1") != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Env. Var. AQLPROFILE_READ_API=%s is not a supported value; must be '1'.", env_value);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
     }
+
+    // AQLPROFIE_READ_API is set.
+
+    // Note we still have a valid rocprofiler_info. dli_fname, we need to strip away path info to set HSA_TOOLS_LIB.
+    // Actual example:  rocprofiler_info dli_fname='/opt/rocm/rocprofiler/lib/librocprofiler64.so'
+    env_value = getenv("HSA_TOOLS_LIB");            
+    if (env_value == NULL) {
+        int i=strlen(rocprofiler_info.dli_fname);
+        while (i>1 && rocprofiler_info.dli_fname[i-1] != '/') i--;
+        // fprintf(stderr, "for HSA_TOOLS_LIB discovered name is '%s'.\n", rocprofiler_info.dli_fname+i);
+        int err = setenv("HSA_TOOLS_LIB", rocprofiler_info.dli_fname+i, 0);
+        if (err != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "Cannot set Env. Var. HSA_TOOLS_LIB='%s' required for rocprofiler operation. Must be set manually.", rocprofiler_info.dli_fname+i);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }            
+    } else {
+        // We don't analyze the name used; the library was found.
+    }
+
+    // HSA_TOOLS_LIB passed.
 
     return (PAPI_OK);
 }

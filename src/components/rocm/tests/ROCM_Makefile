@@ -2,35 +2,31 @@
 # Modified for testing in a PAPI environment.
 
 include ../../Makefile_comp_tests.target
-HIP_PATH= ${PAPI_ROCM_ROOT}/hip
-ifeq (,$(HIP_PATH))
-	HIP_PATH=../../..
-endif
 
-HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
-HIPCC=$(HIP_PATH)/bin/hipcc
+HIPCC_FOUND := $(shell hipcc --version)
+
+HIPCC=hipcc
 
 INCLUDE+=-I${HOME}/papi/src/
 
-ifeq (${HIP_PLATFORM}, nvcc)
-	SOURCES=square.cu
-else
-	SOURCES=square.cpp
-endif
-
 all: 
 
-# Step
-square.cpp: square.cu
-	$(HIP_PATH)/bin/hipify-perl square.cu > square.cpp
+# I'm not sure why, but on Tulip we fail to compile and link due to library issues.
+# Breaking into two steps, Object and Link, solves the issue.
+rocm_all.o: rocm_all.cpp test_hipcc
+	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.cpp -c -o $@ 
 
-square.out: square.cpp
-	$(HIPCC) $(CXXFLAGS) square.cpp -o $@
+rocm_all.out: rocm_all.o test_hipcc
+	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.o -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+	rm -f rocm_all.o 
 
-rocm_all.out: rocm_all.cpp 
-	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.cpp -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+test_hipcc:
+ifeq ("" , "$(HIPCC_FOUND)")
+$(error hipcc compiler not found. Perhaps a 'module load rocm' is required, or 'PATH' environment variable needs to be updated.)
+endif
 
 checkpath: 
+	echo HIPCC_FOUND = '$(HIPCC_FOUND)'
 	echo HIP_PATH = $(HIP_PATH)
 	echo SOURCES = $(SOURCES)
 	echo HIP_PLATFORM = $(HIP_PLATFORM)
