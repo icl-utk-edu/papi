@@ -2,31 +2,50 @@
 # Modified for testing in a PAPI environment.
 
 include ../../Makefile_comp_tests.target
+ifeq (,$(PAPI_ROCM_ROOT))
+$(error Makefile error, PAPI_ROCM_ROOT environment variable must be defined.)
+endif
 
-HIPCC_FOUND := $(shell hipcc --version)
+HIP_PATH= ${PAPI_ROCM_ROOT}/hip
+ifeq (,$(HIP_PATH))
+	HIP_PATH=../../..
+endif
 
-HIPCC=hipcc
+HIP_PLATFORM=$(shell $(HIP_PATH)/bin/hipconfig --platform)
+HIPCC=$(HIP_PATH)/bin/hipcc
+
+# These allow "Instinct" GPU targets; MI25, [MI50, MI60], MI100. This allows 
+# compiling on ICL Caffeine, Cray Tulip, etc. May need modification for 
+# older or newer AMD GPUs. See Reference, search for AMDGPU Processors. 
+# https://rocmdocs.amd.com/en/latest/ROCm_Compiler_SDK/ROCm-Native-ISA.html
+
+HIP_FLAGS=--amdgpu-target=gfx900,gfx906,gfx908
 
 INCLUDE+=-I${HOME}/papi/src/
 
-all: 
-
-# I'm not sure why, but on Tulip we fail to compile and link due to library issues.
-# Breaking into two steps, Object and Link, solves the issue.
-rocm_all.o: rocm_all.cpp test_hipcc
-	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.cpp -c -o $@ 
-
-rocm_all.out: rocm_all.o test_hipcc
-	$(HIPCC) $(CXXFLAGS) $(INCLUDE) rocm_all.o -o $@ $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
-	rm -f rocm_all.o 
-
-test_hipcc:
-ifeq ("" , "$(HIPCC_FOUND)")
-$(error hipcc compiler not found. Perhaps a 'module load rocm' is required, or 'PATH' environment variable needs to be updated.)
+ifeq (${HIP_PLATFORM}, nvcc)
+	SOURCES=square.cu
+else
+	SOURCES=square.cpp
 endif
 
+all: 
+
+# Step
+square.cpp: square.cu
+	$(HIP_PATH)/bin/hipify-perl square.cu > square.cpp
+
+square.out: square.cpp
+	$(HIPCC) $(CXXFLAGS) square.cpp -o $@
+
+rocm_all.o: rocm_all.cpp
+	$(HIPCC) $(CXXFLAGS) $(HIP_FLAGS) $(INCLUDE) rocm_all.cpp -c -o $@
+
+rocm_all.out: rocm_all.o 
+	$(HIPCC) $(CXXFLAGS) $(HIP_FLAGS) -o $@ rocm_all.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+	rm rocm_all.o
+
 checkpath: 
-	echo HIPCC_FOUND = '$(HIPCC_FOUND)'
 	echo HIP_PATH = $(HIP_PATH)
 	echo SOURCES = $(SOURCES)
 	echo HIP_PLATFORM = $(HIP_PLATFORM)

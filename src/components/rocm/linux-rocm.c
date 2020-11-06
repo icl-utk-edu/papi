@@ -269,7 +269,7 @@ static int _rocm_linkRocmLibraries(void)
     // Check for failure.
     if (dl1 == NULL) {
         strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
-        "libhsa-runtime64.so not found. Need LD_LIBRARY_PATH set, or\n"
+        "libhsa-runtime64.so not found. Need LD_LIBRARY_PATH set, or "
         "Env Var PAPI_ROCM_ROOT set, or module load rocm.");
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
@@ -330,7 +330,9 @@ static int _rocm_linkRocmLibraries(void)
 
     // Check for failure.
     if (dl2 == NULL) {
-        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocprofiler64.so not found.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "librocprofiler64.so not found. Need LD_LIBRARY_PATH set, or "
+        "Env Var PAPI_ROCM_ROOT set, or module load rocm.");
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
@@ -369,10 +371,12 @@ static int _rocm_linkRocmLibraries(void)
     // Look for ROCPROFILER env vars, try to set if missing.
     rocp_metrics = getenv("ROCP_METRICS");
     if (rocp_metrics == NULL) {
-        // first attempt.
+        // Attempt 1: Look for metrics.xml in same directory as library.
         strErr=snprintf(path_name, 1024, "%smetrics.xml", profiler_root);
         if (strErr > 1024) HANDLE_STRING_ERROR;
         int err = stat(path_name, &myStat);
+
+        // Attempt 2: Might have been in ROOT/lib, try in ROOT/rocprofiler/lib/
         if (err < 0) { 
             // subsequent attempt.
             strErr=snprintf(path_name, 1024, "%s../rocprofiler/lib/metrics.xml", profiler_root);
@@ -380,10 +384,18 @@ static int _rocm_linkRocmLibraries(void)
             err = stat(path_name, &myStat);
         }
 
+        // Attempt 3: Might have been in /usr or something, Try PAPI_ROCM_ROOT/rocprofiler/lib
+        if (err < 0 && rocm_root != NULL) { 
+            // subsequent attempt.
+            strErr=snprintf(path_name, 1024, "%s/rocprofiler/lib/metrics.xml",rocm_root);
+            if (strErr > 1024) HANDLE_STRING_ERROR;
+            err = stat(path_name, &myStat);
+        }
+
         // After all attempts,
         if (err < 0) {
             strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
-            "file 'metrics.xml' required for rocprofiler not found in standard location, set in Env. Var. ROCP_METRICS.");
+            "file 'metrics.xml' not found; set in Env. Var. ROCP_METRICS, or ensure PAPI_ROCM_ROOT is valid.");
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
