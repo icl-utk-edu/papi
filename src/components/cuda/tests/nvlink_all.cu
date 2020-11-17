@@ -342,9 +342,10 @@ void conductGpuToGpu(int EventSet, int device, long long *values) {
 static void printUsage()
 {
     printf("usage: Demonstrate use of NVlink CUPTI APIs\n");
-    printf("       -help           : display help message\n");
-    printf("       --cpu-to-gpu    : Show results for data transfer between CPU and GPU \n");
-    printf("       --gpu-to-gpu    : Show results for data transfer between two GPUs \n");
+    printf("    -h, -help, --help: display this help message.\n");
+    printf("    Otherwise, exactly one of these options:\n");
+    printf("    --cpu-to-gpu: Show results for data transfer between CPU and GPU.\n");
+    printf("    --gpu-to-gpu: Show results for data transfer between two GPUs.\n");
 } // end routine.
 
 
@@ -355,6 +356,7 @@ void parseCommandLineArgs(int argc, char *argv[])
 {
     if(argc != 2) {
         printf("Invalid number of options\n");
+        printUsage();
         exit(0);
     }
 
@@ -368,7 +370,9 @@ void parseCommandLineArgs(int argc, char *argv[])
         printUsage();
         exit(0);
     } else {
-        cpuToGpu = 1;
+        printf("Failed to understand argument '%s'.\n", argv[1]);
+        printUsage();
+        exit(-1);
     }
 } // end routine.
 
@@ -402,10 +406,14 @@ int main(int argc, char *argv[])
     cudaDeviceProp prop[MAX_DEVICES];
 
     // Parse command line arguments
+    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     parseCommandLineArgs(argc, argv);
 
+    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     DRIVER_API_CALL(cuInit(0));
+    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     RUNTIME_API_CALL(cudaGetDeviceCount(&deviceCount));
+    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     printf("There are %d devices.\n", deviceCount);
 
     if(deviceCount == 0) {
@@ -451,7 +459,7 @@ int main(int argc, char *argv[])
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     // Nvlink-topology Records are generated even before cudaMemcpy API is called.
-    CUPTI_CALL(cuptiActivityFlushAll(0));
+//  CUPTI_CALL(cuptiActivityFlushAll(0));
 
     // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
@@ -477,7 +485,7 @@ int main(int argc, char *argv[])
     k = PAPI_num_components();                                          // get number of components.
     for (i=0; i<k && cid<0; i++) {                                      // while not found,
         PAPI_component_info_t *aComponent = 
-            (PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
+            ( PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
         if (aComponent == NULL) {                                       // if we failed,
             fprintf(stderr,  "PAPI_get_component_info(%i) failed, "
                 "returned NULL. %i components reported.\n", i,k);
