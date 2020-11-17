@@ -406,14 +406,10 @@ int main(int argc, char *argv[])
     cudaDeviceProp prop[MAX_DEVICES];
 
     // Parse command line arguments
-    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     parseCommandLineArgs(argc, argv);
 
-    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     DRIVER_API_CALL(cuInit(0));
-    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     RUNTIME_API_CALL(cudaGetDeviceCount(&deviceCount));
-    fprintf(stderr, "%s:%s:%i Checkpoint.\n", __FILE__, __func__, __LINE__);
     printf("There are %d devices.\n", deviceCount);
 
     if(deviceCount == 0) {
