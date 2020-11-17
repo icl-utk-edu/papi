@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
     RUNTIME_API_CALL(cudaDeviceSynchronize());
 
     // Nvlink-topology Records are generated even before cudaMemcpy API is called.
-//  CUPTI_CALL(cuptiActivityFlushAll(0));
+    CUPTI_CALL(cuptiActivityFlushAll(0));
 
     // fprintf(stderr, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
@@ -481,7 +481,7 @@ int main(int argc, char *argv[])
     k = PAPI_num_components();                                          // get number of components.
     for (i=0; i<k && cid<0; i++) {                                      // while not found,
         PAPI_component_info_t *aComponent = 
-            ( PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
+            (PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
         if (aComponent == NULL) {                                       // if we failed,
             fprintf(stderr,  "PAPI_get_component_info(%i) failed, "
                 "returned NULL. %i components reported.\n", i,k);
