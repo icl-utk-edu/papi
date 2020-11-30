@@ -38,13 +38,4 @@ Threads are handled using thread-specific structures in the backend. However, no
 1. [Testing](#markdown-header-testing)
 
 ## Testing
-Tests lie in the tests/ sub-directory. All but one test take no argument.
-
-The iozone test (appio_test_iozone) needs arguments just like iozone does.
-It is not built by default as part of the PAPI tests. To build it:
-
-    cd appio/tests; make appio_test_iozone
-
-An example run for the iozone test could be:
-
-    ./appio_test_iozone -s 100m -r 64 -i 0 -i 1 -t 1
+Tests lie in the tests/ sub-directory. All test take no argument.
