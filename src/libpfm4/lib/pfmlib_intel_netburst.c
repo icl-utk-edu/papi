@@ -349,6 +349,8 @@ pfm_netburst_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_even
 	info->ctrl = PFM_ATTR_CTRL_PMU;
 	info->idx = idx; /* namespace specific index */
 	info->dfl_val64 = 0;
+	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	return PFM_SUCCESS;
 }
@@ -368,6 +370,9 @@ pfm_netburst_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->equiv = NULL;
 	info->idx   = idx; /* private index */
 	info->pmu   = pmu->pmu;
+
+	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	info->nattrs  = netburst_get_numasks(idx);
 	info->nattrs += NETBURST_MODS_COUNT;
