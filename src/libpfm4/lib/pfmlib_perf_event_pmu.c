@@ -765,6 +765,7 @@ pfm_perf_get_event_attr_info(void *this, int idx, int attr_idx, pfmlib_event_att
 	info->ctrl = PFM_ATTR_CTRL_PMU;
 
 	info->is_precise =  !!(um->uflags & PERF_FL_PRECISE);
+	info->support_hw_smpl = info->is_precise;
 	info->is_dfl = 0;
 	info->idx = attr_idx;
 	info->dfl_val64 = 0;
@@ -783,6 +784,7 @@ pfm_perf_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->idx   = idx;
 	info->pmu   = pmu->pmu;
 	info->is_precise =  !!(perf_pe[idx].flags & PERF_FL_PRECISE);
+	info->support_hw_smpl = info->is_precise;
 
 	/* unit masks + modifiers */
 	info->nattrs  = perf_pe[idx].numasks;
@@ -989,6 +991,10 @@ pfm_perf_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 			if (e->pattrs[i].idx == PERF_ATTR_H)
 				compact = 1;
 		}
+
+		/* hardware sampling not supported on AMD */
+		if (e->pattrs[i].idx == PERF_ATTR_HWS)
+			compact = 1;
 
 		if (compact) {
 			pfmlib_compact_pattrs(e, i);
