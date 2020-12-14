@@ -900,6 +900,7 @@ pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfml
 	info->ctrl = PFM_ATTR_CTRL_PMU;
 	info->idx = idx; /* namespace specific index */
 	info->dfl_val64 = 0;
+	info->support_hw_smpl = 0;
 
 	return PFM_SUCCESS;
 }

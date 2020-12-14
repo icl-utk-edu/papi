@@ -134,6 +134,10 @@ pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 				compact = 1;
 		}
 
+		/* hardware sampling not supported */
+		if (e->pattrs[i].idx == PERF_ATTR_HWS)
+			compact = 1;
+
 		if (compact) {
 			pfmlib_compact_pattrs(e, i);
 			i--;
@@ -160,6 +164,11 @@ pfm_amd64_nb_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
 			compact = 1;
 		}
+
+		/* hardware sampling not supported on AMD */
+		if (e->pattrs[i].idx == PERF_ATTR_HWS)
+			compact = 1;
+
 
 		if (compact) {
 			pfmlib_compact_pattrs(e, i);
