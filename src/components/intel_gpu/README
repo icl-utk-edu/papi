@@ -1,0 +1,57 @@
+Intel GPU Component: (intel_gpu)
+Support Intel Graphics Performance metrics
+
+====================
+
+General Information
+-----------------------
+PAPI "intel_gpu" component is for accessing Intel Graphics Processing Unit (GPU) hardware performance metrics through Intel oneAPI Level0 Interface.
+
+
+Code layout
+------------------
+The codes are in components/intel_gpu:
+intel_gpu/linux_intel_gpu_metrics.c:    implement PAPI component vector functions.
+intel_gpu/internal/src:                 source codes for accessing Intel GPU metrics using oneAPI Level0 API
+intel_gpu/internal/inc:                 header files and data structure needed for presenting metric data
+intel_gpu/tests:                        test cases
+   gpu_metric_list.c                    list available metrics
+   gpu_metric_read.c                    get metric data through time based sampling. Use METRICS_SAMPLING_PERIOD environment to change the sampling period.
+   gpu_thread_read.c                    multi-thrad read metric data through time based sampling.
+   gpu_query_gemm.cc                     get metric data for an offload kernel (gemm).
+                                        Do time based metrics sampling if only set "ZE_ENABLE_METRICS=1"
+                                        Do query metrics on kernel if set both "ZE_ENABLE_METRICS=1" and "ZE_ENABLE_API_TRACING=1"
+
+Build component
+-----------------
+./configure --with-components="intel_gpu"
+Need to build in a machine with oneAPI Level0 header files
+The directory of Level0 header files can be defined using INTEL_L0_HEADERS
+Default installation location is /usr/include/level_zero/
+
+
+System dependency to run 
+-------------------------
+(1) Have oneAPI Level0 installed  libze_loader.so in the lib path
+(2) Have Intel graphics driver installed, software library libmd.so is in the lib path. 
+(3) /proc/sys/dev/i915/perf_stream_paranoid is set to "0"
+(4) User needs to be added into render/video group
+(5) set environment varaibale ZET_ENABLE_METRICS=1  (enable metrics).
+(6) [option]  set environement variable ZET_ENABLE_API_TRACING_EXP=1 to enable metric query mode.
+
+Runtime environment:
+(1) Enable metrics. This must be set.
+    ZET_ENABLE_METRICS=1
+(2) Change the sampling period,  default is 400000
+    METRICS_SAMPLING_PERIOD=<value>
+(3) Enable metrics query on an kernel
+    ZET_ENABLE_API_TRACING_EXP=1
+
+
+Note:
+There are two collection modes supported.
+(1) Time based sampling.
+(2) Metrics query on a kernel. In this mode,  the PAPI_start() and PAPI_stop must be called before kernel launch and after kernel execution completes. When setting ZE_ENABLE_API_TRACTING=1,  the collection will switch to metrics query mode.
+
+
+
