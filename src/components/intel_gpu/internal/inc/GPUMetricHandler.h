@@ -98,7 +98,7 @@ public:
     void          DestroyMetricDevice();
     int           EnableMetricGroup(const char *metricGroupName,
                         uint32_t *metricSelected, uint32_t mtype);
-    int           EnableTimeBasedSampling(uint32_t timePeriod, uint32_t numReports);
+    int           EnableTimeBasedStream(uint32_t timePeriod, uint32_t numReports);
     int           EnableEventBasedQuery();
     void          DisableMetricGroup();
     int           GetMetricsInfo(int type, MetricInfo *data);
@@ -114,8 +114,8 @@ private:
     void      operator=(GPUMetricHandler const&);
     int       InitMetricGroups(ze_device_handle_t device);
     string    GetDeviceName(ze_device_handle_t device);
-    uint8_t  *ReadSamplingData(size_t *rawDataSize);
-    uint8_t  *ReadQueryData(QueryData &data, size_t *rawDataSize);
+    uint8_t  *ReadStreamData(size_t *rawDataSize);
+    uint8_t  *ReadQueryData(QueryData &data, size_t *rawDataSize, ze_result_t *retStatus);
     void      GenerateMetricsData(uint8_t *rawData, size_t rawDataSize, uint32_t  mode);
 
 private: // Fields

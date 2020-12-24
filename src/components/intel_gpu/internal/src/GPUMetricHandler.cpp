@@ -1060,7 +1060,7 @@ GPUMetricHandler::EnableMetricGroup(const char *metricGroupName,
 
 /*------------------------------------------------------------------------------*/
 /*!
- * @fn      int GPUMetricHandler::EnableTimeBasedSampling(
+ * @fn      int GPUMetricHandler::EnableTimeBasedStream(
  *                     uint32_t timePeriod, uint32_t numReports)
  *
  * @brief   Enable a named metric group for collection
@@ -1071,7 +1071,7 @@ GPUMetricHandler::EnableMetricGroup(const char *metricGroupName,
  *
  * @return  Status, 0 for success.
  */
-int GPUMetricHandler::EnableTimeBasedSampling(uint32_t timePeriod, uint32_t numReports)
+int GPUMetricHandler::EnableTimeBasedStream(uint32_t timePeriod, uint32_t numReports)
 {
     int          ret        = 0;
     int          retError   = 1;
@@ -1112,7 +1112,7 @@ int GPUMetricHandler::EnableTimeBasedSampling(uint32_t timePeriod, uint32_t numR
         ret = 0;
         m_status = COLLECTION_ENABLED;
     } else {
-        DebugPrintError("EnableTimeBasedSampling: failed with status 0x%x, cleanup\n", status);
+        DebugPrintError("EnableTimeBasedStream: failed with status 0x%x, cleanup\n", status);
         if (m_metricStreamer) {
             status = zetMetricStreamerCloseFunc(m_metricStreamer);
             m_metricStreamer = nullptr;
@@ -1305,25 +1305,32 @@ GPUMetricHandler::GetMetricsData(
     *numMetrics              = 0;
 
     if  (m_groupType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
-        rawBuffer = ReadSamplingData(&rawDataSize);
+        rawBuffer = ReadStreamData(&rawDataSize);
         if (rawBuffer) {
             GenerateMetricsData(rawBuffer, rawDataSize,  mode);
             delete [] rawBuffer;
         }
     } else {
         gQueryState->lock.lock();
+        vector<QueryData>  qList;
         for (auto query : gQueryState->queryList) {
             rawDataSize = 0;
             rawBuffer = nullptr;
-            rawBuffer = ReadQueryData(query, &rawDataSize);
+            ze_result_t status = ZE_RESULT_SUCCESS;
+            rawBuffer = ReadQueryData(query, &rawDataSize, &status);
+            if (status == ZE_RESULT_NOT_READY) {
+                qList.push_back(query);
+            }
             if (rawBuffer) {
-                GenerateMetricsData(rawBuffer, rawDataSize,  mode);
-                delete [] rawBuffer;
+                 GenerateMetricsData(rawBuffer, rawDataSize,  mode);
+                 delete [] rawBuffer;
             }
         }
         gQueryState->queryList.clear();
+        for (auto query : qList) {
+             gQueryState->queryList.push_back(query);
+        }
         gQueryState->lock.unlock();
-
     }
 
     // only SUMMARY mode
@@ -1475,7 +1482,7 @@ GPUMetricHandler::GenerateMetricsData(
 
 /*------------------------------------------------------------------------------*/
 /*!
- * @fn        uint8_t * GPUMetricHandler::ReadSamplingData(size_t *rawDataSize)
+ * @fn        uint8_t * GPUMetricHandler::ReadStreamData(size_t *rawDataSize)
  *
  * @brief      read raw time based sampling data
  *
@@ -1485,7 +1492,7 @@ GPUMetricHandler::GenerateMetricsData(
  *                                 nullptr will be return if failed.
  */
 uint8_t *
-GPUMetricHandler::ReadSamplingData(size_t *rawDataSize)
+GPUMetricHandler::ReadStreamData(size_t *rawDataSize)
 {
     ze_result_t status  = ZE_RESULT_SUCCESS;
     size_t      rawSize = 0;
@@ -1495,7 +1502,7 @@ GPUMetricHandler::ReadSamplingData(size_t *rawDataSize)
     status = zetMetricStreamerReadDataFunc(m_metricStreamer, UINT32_MAX,
                                           &rawSize, nullptr);
     if (status !=  ZE_RESULT_SUCCESS) {
-        DebugPrintError("GetMetricsSamplingData failed, status 0x%x, rawSize %d\n", status, (int)rawSize);
+        DebugPrintError("ReadStreamData failed, status 0x%x, rawSize %d\n", status, (int)rawSize);
         return nullptr;
     }
 
@@ -1508,7 +1515,7 @@ GPUMetricHandler::ReadSamplingData(size_t *rawDataSize)
     status = zetMetricStreamerReadDataFunc(m_metricStreamer, UINT32_MAX,
                                    &rawSize, (uint8_t *)rawBuffer);
     if (status !=  ZE_RESULT_SUCCESS) {
-        DebugPrintError("GetMetricsSamplingData failed, status 0x%x\n", status);
+        DebugPrintError("ReadStreamData failed, status 0x%x\n", status);
         delete [] rawBuffer;
         return nullptr;
     }
@@ -1522,17 +1529,21 @@ GPUMetricHandler::ReadSamplingData(size_t *rawDataSize)
 
 /*------------------------------------------------------------------------------*/
 /*!
- *  @fn        uint8_t * GPUMetricHandler::ReadQueryData(size_t *rawDataSize)
+ *  @fn        uint8_t * GPUMetricHandler::ReadQueryData(
+ *                            QueryData &data,
+ *                            size_t *rawDataSize,
+ *                            ze_result_t * status)
  *
  *  @brief     read raw query based sampling data
  *
  *  @param OUT rawDataSize      - total # of bytes of raw data read.
+ *  @param OUT retStatus        - return status
  *
  *  @return                     - the buffer pointer which contains the raw data.
  *                                 nullptr will be return if failed.
  */
 uint8_t *
-GPUMetricHandler::ReadQueryData(QueryData &data, size_t *rawDataSize)
+GPUMetricHandler::ReadQueryData(QueryData &data, size_t *rawDataSize, ze_result_t *retStatus)
 {
 
     size_t      rawSize = 0;
@@ -1540,21 +1551,25 @@ GPUMetricHandler::ReadQueryData(QueryData &data, size_t *rawDataSize)
 
     std::map<std::string, MetricData> dataMap;
     ze_result_t status = ZE_RESULT_SUCCESS;
-    status = zeEventHostSynchronizeFunc(data.event, UINT32_MAX);
+    status = zeEventHostSynchronizeFunc(data.event, 1000);
+    *retStatus = status;
     CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
-
     status = zeEventDestroyFunc(data.event);
+    *retStatus = status;
     CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
 
     status = zetMetricQueryGetDataFunc(data.metricQuery, &rawSize, nullptr);
+    *retStatus = status;
     CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
 
     uint8_t *rawBuffer = new uint8_t[rawSize];
     CHECK_N_RETURN_STATUS((rawBuffer==nullptr), nullptr);
     status = zetMetricQueryGetDataFunc(data.metricQuery, &rawSize, rawBuffer);
+    *retStatus = status;
     CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
 
     status = zetMetricQueryDestroyFunc(data.metricQuery);
+    *retStatus = status;
     CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
 
     *rawDataSize = rawSize;

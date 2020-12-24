@@ -281,7 +281,7 @@ int GPUEnableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName,  unsigned 
         goto cleanup;
     }
     if (mtype == TIME_BASED) {
-        ret = curMetricHandle->EnableTimeBasedSampling(period, numReports);
+        ret = curMetricHandle->EnableTimeBasedStream(period, numReports);
     } else {
         ret = curMetricHandle->EnableEventBasedQuery();
     }
@@ -394,7 +394,7 @@ int GPUEnableMetrics(DEVICE_HANDLE handle, char **metricNameList,
     }
 
     if (mtype == TIME_BASED) {
-        ret = curMetricHandle->EnableTimeBasedSampling(period, numReports);
+        ret = curMetricHandle->EnableTimeBasedStream(period, numReports);
     } else {
         ret = curMetricHandle->EnableEventBasedQuery();
     }
