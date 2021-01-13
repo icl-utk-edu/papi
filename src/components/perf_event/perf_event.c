@@ -273,7 +273,7 @@ get_read_format( unsigned int multiplex,
 /* attr.exclude_guest is enabled by default in recent libpfm4 */
 /* however older kernels will reject events with it set */
 /* because the reserved field is not all zeros */
-static int
+void
 check_exclude_guest( void )
 {
 	int ev_fd;
@@ -288,7 +288,7 @@ check_exclude_guest( void )
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
 		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test");
-		return -1;
+		return;
 	}
 	close(ev_fd);
 
@@ -310,7 +310,7 @@ check_exclude_guest( void )
 		close(ev_fd);
 	}
 
-	return PAPI_OK;
+	return;
 }
 
 /*****************************************************************/
@@ -2581,12 +2581,7 @@ _pe_init_component( int cidx )
 	}
 
 	/* check for exclude_guest issue */
-	if (check_exclude_guest() != PAPI_OK) {
-		strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
-			"check_exclude_guest Failed",PAPI_MAX_STR_LEN);
-      if (strCpy == NULL) HANDLE_STRING_ERROR;
-		return PAPI_ENOSUPP;
-   }
+	check_exclude_guest();
 
 	return PAPI_OK;
 

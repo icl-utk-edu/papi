@@ -12,12 +12,16 @@
 static inline pid_t
 mygettid( void )
 {
+#if defined(__NEC__)
+    return 0;
+#else
 #ifdef SYS_gettid
 	return syscall( SYS_gettid );
 #elif defined(__NR_gettid)
 	return syscall( __NR_gettid );
 #else
 #error "cannot find gettid"
+#endif
 #endif
 }
 

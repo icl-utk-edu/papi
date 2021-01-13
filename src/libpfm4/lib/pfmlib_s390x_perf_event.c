@@ -87,3 +87,33 @@ int pfm_s390x_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 
 	return rc;
 }
+
+void
+pfm_s390x_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
+{
+	int i, compact;
+
+	for (i=0; i < e->npattrs; i++) {
+		compact = 0;
+
+		/* umasks never conflict */
+		if (e->pattrs[i].type == PFM_ATTR_UMASK)
+			continue;
+
+		if (e->pattrs[i].ctrl == PFM_ATTR_CTRL_PERF_EVENT) {
+			/* No precise mode on s390x */
+			if (e->pattrs[i].idx == PERF_ATTR_PR)
+				compact = 1;
+
+		}
+
+		/* hardware sampling not supported */
+		if (e->pattrs[i].idx == PERF_ATTR_HWS)
+			compact = 1;
+
+		if (compact) {
+			pfmlib_compact_pattrs(e, i);
+			i--;
+		}
+	}
+}
