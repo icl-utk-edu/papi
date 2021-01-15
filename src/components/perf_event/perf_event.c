@@ -64,6 +64,11 @@
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 /* Forward declaration */
 papi_vector_t _perf_event_vector;
 
@@ -268,7 +273,7 @@ get_read_format( unsigned int multiplex,
 /* attr.exclude_guest is enabled by default in recent libpfm4 */
 /* however older kernels will reject events with it set */
 /* because the reserved field is not all zeros */
-static int
+void
 check_exclude_guest( void )
 {
 	int ev_fd;
@@ -283,7 +288,7 @@ check_exclude_guest( void )
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
 		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test");
-		return -1;
+		return;
 	}
 	close(ev_fd);
 
@@ -305,7 +310,7 @@ check_exclude_guest( void )
 		close(ev_fd);
 	}
 
-	return PAPI_OK;
+	return;
 }
 
 /*****************************************************************/
@@ -2372,6 +2377,7 @@ _pe_handle_paranoid(papi_vector_t *component) {
 	FILE *fff;
 	int paranoid_level;
 	int retval;
+   char *strCpy;
 
 	/* The is the official way to detect if perf_event support exists */
 	/* The file is called perf_counter_paranoid on 2.6.31             */
@@ -2379,8 +2385,9 @@ _pe_handle_paranoid(papi_vector_t *component) {
 
 	fff=fopen("/proc/sys/kernel/perf_event_paranoid","r");
 	if (fff==NULL) {
-		strncpy(component->cmp_info.disabled_reason,
+		strCpy=strncpy(component->cmp_info.disabled_reason,
 			"perf_event support not detected",PAPI_MAX_STR_LEN);
+      if (strCpy == NULL) HANDLE_STRING_ERROR;
 		return PAPI_ENOCMP;
 	}
 
@@ -2394,8 +2401,9 @@ _pe_handle_paranoid(papi_vector_t *component) {
 	fclose(fff);
 
 	if (paranoid_level==3) {
-		strncpy(component->cmp_info.disabled_reason,
+		strCpy=strncpy(component->cmp_info.disabled_reason,
 			"perf_event support disabled by Linux with paranoid=3",PAPI_MAX_STR_LEN);
+      if (strCpy == NULL) HANDLE_STRING_ERROR;
 		return PAPI_ENOCMP;
 	}
 
@@ -2458,12 +2466,14 @@ _pe_init_component( int cidx )
 {
 
 	int retval;
+   char *strCpy;
 
 	our_cidx=cidx;
 
 	/* Update component behavior based on paranoid setting */
 	retval=_pe_handle_paranoid(_papi_hwd[cidx]);
-	if (retval!=PAPI_OK) return retval;
+   
+	if (retval!=PAPI_OK) return retval; // disabled_reason handled by _pe_handle_paranoid.
 
 #if (OBSOLETE_WORKAROUNDS==1)
 	/* Handle any kernel version related workarounds */
@@ -2473,8 +2483,9 @@ _pe_init_component( int cidx )
 	/* Setup mmtimers, if appropriate */
 	retval=mmtimer_setup();
 	if (retval) {
-		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+		strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 			"Error initializing mmtimer",PAPI_MAX_STR_LEN);
+      if (strCpy == NULL) HANDLE_STRING_ERROR;
 		return retval;
 	}
 
@@ -2504,9 +2515,9 @@ _pe_init_component( int cidx )
 	/* Run the libpfm4-specific setup */
 	retval = _papi_libpfm4_init(_papi_hwd[cidx]);
 	if (retval) {
-
-		strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+		strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 			"Error initializing libpfm4",PAPI_MAX_STR_LEN);
+      if (strCpy == NULL) HANDLE_STRING_ERROR;
 		return retval;
 
 	}
@@ -2520,34 +2531,40 @@ _pe_init_component( int cidx )
 	if (retval) {
 		switch(retval) {
 			case PAPI_ENOMEM:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error libpfm4 memory allocation",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
 			case PAPI_ENOSUPP:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error libpfm4 no PMUs found",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
 			case PAPI_ENOCMP:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error libpfm4 no default PMU found",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
 			case PAPI_ECOUNT:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error libpfm4 too many default PMUs found",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
 			case PAPI_ENOEVNT:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error loading preset events",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
 			default:
-				strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
+				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Unknown libpfm4 related error",
 					PAPI_MAX_STR_LEN);
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
 
 		}
 		return retval;

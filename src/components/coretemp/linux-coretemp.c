@@ -28,6 +28,10 @@ struct temp_event {
   struct temp_event *next;
 };
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
 static CORETEMP_native_event_entry_t * _coretemp_native_events;
 static int num_events		= 0;
@@ -369,7 +373,7 @@ _coretemp_init_component( int cidx )
      struct temp_event *t,*last;
 
      if ( is_initialized )
-	return (PAPI_OK );
+        return (PAPI_OK );
 
      is_initialized = 1;
 
@@ -379,37 +383,57 @@ _coretemp_init_component( int cidx )
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
-        strncpy(_coretemp_vector.cmp_info.disabled_reason,
-		"Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
-	return PAPI_ENOCMP;
+        char* strCpy;
+        strCpy=strncpy(_coretemp_vector.cmp_info.disabled_reason,
+        "Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
+        _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        return PAPI_ENOCMP;
      }
 
      if ( num_events == 0 ) {
-        strncpy(_coretemp_vector.cmp_info.disabled_reason,
-		"No coretemp events found",PAPI_MAX_STR_LEN);
-	return PAPI_ENOCMP;
+        char* strCpy=strncpy(_coretemp_vector.cmp_info.disabled_reason,
+        "No coretemp events found",PAPI_MAX_STR_LEN);
+        _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        return PAPI_ENOCMP;
      }
 
      t = root;
   
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
           papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
+     if (_coretemp_native_events == NULL) {
+          int strErr=snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() of _coretemp_native_events failed for %lu bytes.", num_events*sizeof(CORETEMP_native_event_entry_t));
+          _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+          if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+          return(PAPI_ENOMEM);
+     }
 
      do {
-	strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
+        char *strCpy;
+        strCpy=strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN-2);
         _coretemp_native_events[i].name[PAPI_MAX_STR_LEN-1] = '\0';
-	strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
         _coretemp_native_events[i].path[PATH_MAX-1] = '\0';
-	strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN);
-	_coretemp_native_events[i].units[PAPI_MIN_STR_LEN-1] = '\0';
-	strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN);
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN-2);
+	    _coretemp_native_events[i].units[PAPI_MIN_STR_LEN-1] = '\0';
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN-2);
         _coretemp_native_events[i].description[PAPI_MAX_STR_LEN-1] = '\0';
-	_coretemp_native_events[i].stone = 0;
-	_coretemp_native_events[i].resources.selector = i + 1;
-	last	= t;
-	t		= t->next;
-	papi_free(last);
-	i++;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+	    _coretemp_native_events[i].stone = 0;
+	    _coretemp_native_events[i].resources.selector = i + 1;
+	    last	= t;
+	    t		= t->next;
+	    papi_free(last);
+	    i++;
      } while (t != NULL);
      root = NULL;
 

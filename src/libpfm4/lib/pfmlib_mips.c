@@ -144,7 +144,7 @@ pfm_mips_detect(void *this)
 	if (strstr(buffer,"MIPS") == NULL)
 	  return PFM_ERR_NOTSUPP;
 
-	strncpy(pfm_mips_cfg.model,buffer,strlen(buffer));
+	strcpy(pfm_mips_cfg.model, buffer);
 
 /*	ret = pfmlib_getcpuinfo_attr("CPU implementer", buffer, sizeof(buffer));
 	if (ret == -1)
@@ -346,6 +346,7 @@ pfm_mips_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_at
 	info->code = attr_idx;
 	info->is_dfl = 0;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 	info->ctrl = PFM_ATTR_CTRL_PMU;;
 
 	return PFM_SUCCESS;
@@ -364,6 +365,7 @@ pfm_mips_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->idx   = idx; /* private index */
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	/* no attributes defined for MIPS yet */
 	info->nattrs = pfm_mips_get_event_nattrs(this, idx);

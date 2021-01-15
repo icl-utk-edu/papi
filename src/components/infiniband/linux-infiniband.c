@@ -408,7 +408,7 @@ find_ib_device_events(ib_device_t *dev, int extended)
         if (   !strcmp("port_rcv_data", ev_name)
             || !strcmp("port_rcv_packets", ev_name)
             || !strcmp("port_xmit_data", ev_name))
-            fixed_extended = 1-extended;
+            fixed_extended = 3-extended; // higher bit, location is wrong, mark it, and flip the size, 2 + (1-extended)
 
         /* Create new counter */
         snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
@@ -547,7 +547,8 @@ read_ib_counter_value(int index)
     long long value = 0ll;
     infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
 
-    if ( iter->extended ) {
+    if ( iter->extended == 1 || iter->extended == 2 ) {
+        /* extended == 1, counter is 32b, in the 32b location || 2, counter is 64b in the 64b dir */
         /* mofed driver version <4.0 */
         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
                 ib_dir_path, iter->device->dev_name, iter->device->dev_port, "_ext");
@@ -563,6 +564,7 @@ read_ib_counter_value(int index)
         }
     }
     else {
+        /* extended == 0, counter is 32b, in the 64b location || 3, counter is 64b in the 32b dir */
         snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
                 ib_dir_path, iter->device->dev_name, iter->device->dev_port );
         cnt_dir = opendir(counters_path);

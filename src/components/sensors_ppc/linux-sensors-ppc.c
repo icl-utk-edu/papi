@@ -23,6 +23,11 @@
 
 #include "linux-sensors-ppc.h"
 
+// The following macro exit if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 papi_vector_t _sensors_ppc_vector;
 
 /***************************************************************************/
@@ -238,39 +243,63 @@ static int
 _sensors_ppc_init_component( int cidx )
 {
     int s = -1;
+    int strErr;
     char events_dir[128];
     char event_path[128];
-
+    char *strCpy;
     DIR *events;
 
     const PAPI_hw_info_t *hw_info;
     hw_info=&( _papi_hwi_system_info.hw_info );
 
     if ( PAPI_VENDOR_IBM != hw_info->vendor ) {
-        strncpy(_sensors_ppc_vector.cmp_info.disabled_reason, "Not an IBM processor", PAPI_MAX_STR_LEN);
+        strCpy=strncpy(_sensors_ppc_vector.cmp_info.disabled_reason, "Not an IBM processor", PAPI_MAX_STR_LEN);
+        _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
     int ret = snprintf(events_dir, sizeof(events_dir), "/sys/firmware/opal/exports/");
-    if (ret <= 0 || (int)(sizeof(events_dir)) <= ret)
+    if (ret <= 0 || (int)(sizeof(events_dir)) <= ret) HANDLE_STRING_ERROR;
+    if (NULL == (events = opendir(events_dir))) {
+        strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+          "%s:%i Could not open events_dir='%s'.", __FILE__, __LINE__, events_dir);
+        _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
-    if (NULL == (events = opendir(events_dir)))
-        return PAPI_ENOSUPP;
+    }
 
     ret = snprintf(event_path, sizeof(event_path), "%s%s", events_dir, pkg_sys_name);
-    if (ret <= 0 || (int)(sizeof(event_path)) <= ret)
+    if (ret <= 0 || (int)(sizeof(event_path)) <= ret) HANDLE_STRING_ERROR;
+    if (-1 == access(event_path, F_OK)) {
+        strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+          "%s:%i Could not access event_path='%s'.", __FILE__, __LINE__, event_path);
+        _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
-    if (-1 == access(event_path, F_OK))
-        return PAPI_ENOSUPP;
+    }
 
     event_fd = open(event_path, pkg_sys_flag);
+    if (event_fd < 0) {
+        strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+          "%s:%i Could not open event_path='%s'.", __FILE__, __LINE__, event_path);
+        _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return PAPI_ENOSUPP;
+    }
 
     memset(occ_num_events, 0, (MAX_OCCS+1)*sizeof(int));
     num_events = 0;
     for ( s = 0; s < MAX_OCCS; ++s ) {
         void *buf = NULL;
-        if (NULL == (buf = malloc(OCC_SENSOR_DATA_BLOCK_SIZE)))
-            return PAPI_ENOSUPP;
+        if (NULL == (buf = malloc(OCC_SENSOR_DATA_BLOCK_SIZE))) {
+            strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "%s:%i Failed to alloc %i bytes for buf.", __FILE__, __LINE__, OCC_SENSOR_DATA_BLOCK_SIZE);
+            _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return PAPI_ENOMEM;
+        }
+
         occ_hdr[s] = (struct occ_sensor_data_header_s*)buf;
 
         lseek (event_fd, s * OCC_SENSOR_DATA_BLOCK_SIZE, SEEK_SET);
@@ -304,7 +333,23 @@ _sensors_ppc_init_component( int cidx )
         int buff_size = pong_off - ping_off + OCC_PING_DATA_BLOCK_SIZE;
 
         ping[s] = (uint32_t*)malloc(buff_size);
+        if (ping[s] == NULL) {
+            strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "%s:%i Failed to alloc %i bytes for ping[%i].", __FILE__, __LINE__, buff_size, s);
+            _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return PAPI_ENOMEM;
+        }
+
         double_ping[s] = (uint32_t*)malloc(buff_size);
+        if (double_ping[s] == NULL) {
+            strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "%s:%i Failed to alloc %i bytes for double_ping[%i].", __FILE__, __LINE__, buff_size, s);
+            _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return PAPI_ENOMEM;
+        }
+
         double_pong[s] = double_ping[s];
 
         refresh_data(s, 1);
@@ -442,6 +487,8 @@ _sensors_ppc_shutdown_component( void )
     papi_sensors_ppc_lock();
     for (s = 0; s < num_occs; ++s) {
         free(occ_hdr[s]);
+        if (ping[s] != NULL) free(ping[s]);
+        if (double_ping[s] != NULL) free(double_ping[s]);
     }
     papi_sensors_ppc_unlock();
     return PAPI_OK;

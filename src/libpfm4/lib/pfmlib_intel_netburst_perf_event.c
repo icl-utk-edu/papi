@@ -93,6 +93,11 @@ pfm_netburst_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 				compact = 1;
 		}
 
+		/* hardware sampling not supported */
+		if (e->pattrs[i].idx == PERF_ATTR_HWS)
+			compact = 1;
+
+
 		if (compact) {
 			pfmlib_compact_pattrs(e, i);
 			i--;

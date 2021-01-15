@@ -29,6 +29,11 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 
 /***************/
 /* AMD Support */
@@ -329,6 +334,8 @@ _rapl_init_component( int cidx )
      int i,j,k,fd;
      FILE *fff;
      char filename[BUFSIZ];
+     long unsigned int strErr;
+     char *strCpy;
 
 	int package_avail, dram_avail, pp0_avail, pp1_avail, psys_avail;
 	int different_units;
@@ -363,8 +370,10 @@ _rapl_init_component( int cidx )
 		case PAPI_VENDOR_AMD:
 			break;
 		default:
-			strncpy(_rapl_vector.cmp_info.disabled_reason,
+			strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 			"Not a supported processor",PAPI_MAX_STR_LEN);
+			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+         if (strCpy == NULL) HANDLE_STRING_ERROR;
 		        return PAPI_ENOSUPP;
 	}
 
@@ -379,8 +388,10 @@ _rapl_init_component( int cidx )
 
 		if (hw_info->cpuid_family!=6) {
 			/* Not a family 6 machine */
-			strncpy(_rapl_vector.cmp_info.disabled_reason,
+			strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 				"CPU family not supported",PAPI_MAX_STR_LEN);
+			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+         if (strCpy == NULL) HANDLE_STRING_ERROR;
 			return PAPI_ENOIMPL;
 		}
 
@@ -471,9 +482,11 @@ _rapl_init_component( int cidx )
 			break;
 
 		default:	/* not a supported model */
-			strncpy(_rapl_vector.cmp_info.disabled_reason,
+			strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 				"CPU model not supported",
 				PAPI_MAX_STR_LEN);
+			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+         if (strCpy == NULL) HANDLE_STRING_ERROR;
 			return PAPI_ENOIMPL;
 		}
 	}
@@ -486,8 +499,10 @@ _rapl_init_component( int cidx )
 
 		if (hw_info->cpuid_family!=0x17) {
 			/* Not a family 17h machine */
-			strncpy(_rapl_vector.cmp_info.disabled_reason,
+			strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 				"CPU family not supported",PAPI_MAX_STR_LEN);
+			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+         if (strCpy == NULL) HANDLE_STRING_ERROR;
 			return PAPI_ENOIMPL;
 		}
 
@@ -511,16 +526,20 @@ _rapl_init_component( int cidx )
      while(1) {
        int num_read;
 
-       sprintf(filename,
+       strErr=snprintf(filename, BUFSIZ, 
 	       "/sys/devices/system/cpu/cpu%d/topology/physical_package_id",j);
+       filename[BUFSIZ-1]=0;
+       if (strErr > BUFSIZ) HANDLE_STRING_ERROR;
        fff=fopen(filename,"r");
        if (fff==NULL) break;
        num_read=fscanf(fff,"%d",&package);
        fclose(fff);
        if (num_read!=1) {
-    		 strcpy(_rapl_vector.cmp_info.disabled_reason, "Error reading file: ");
-    		 strncat(_rapl_vector.cmp_info.disabled_reason, filename, PAPI_MAX_STR_LEN - strlen(_rapl_vector.cmp_info.disabled_reason) - 1);
+    		 strCpy=strcpy(_rapl_vector.cmp_info.disabled_reason, "Error reading file: ");
+          if (strCpy == NULL) HANDLE_STRING_ERROR;
+    		 strCpy=strncat(_rapl_vector.cmp_info.disabled_reason, filename, PAPI_MAX_STR_LEN - strlen(_rapl_vector.cmp_info.disabled_reason) - 1);
     		 _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1] = '\0';
+          if (strCpy == NULL) HANDLE_STRING_ERROR;
     		 return PAPI_ESYS;
        }
 
@@ -534,8 +553,10 @@ _rapl_init_component( int cidx )
          }
        } else {
 	 SUBDBG("Package outside of allowed range\n");
-	 strncpy(_rapl_vector.cmp_info.disabled_reason,
+	 strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Package outside of allowed range",PAPI_MAX_STR_LEN);
+	 _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
 	 return PAPI_ESYS;
        }
 
@@ -545,8 +566,10 @@ _rapl_init_component( int cidx )
 
      if (num_packages==0) {
         SUBDBG("Can't access /dev/cpu/*/<msr_safe | msr>\n");
-	strncpy(_rapl_vector.cmp_info.disabled_reason,
+    strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 		"Can't access /dev/cpu/*/<msr_safe | msr>",PAPI_MAX_STR_LEN);
+    _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+    if (strCpy == NULL) HANDLE_STRING_ERROR;
 	return PAPI_ESYS;
      }
 
@@ -559,15 +582,19 @@ _rapl_init_component( int cidx )
 
      fd=open_fd(cpu_to_use[0]);
      if (fd<0) {
-        sprintf(_rapl_vector.cmp_info.disabled_reason,
-		"Can't open fd for cpu0: %s",strerror(errno));
+        strErr=snprintf(_rapl_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Can't open fd for cpu0: %s",strerror(errno));
+        _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return PAPI_ESYS;
      }
 
      /* Verify needed MSR is readable. In a guest VM it may not be readable*/
      if (pread(fd, &result, sizeof result, msr_rapl_power_unit) != sizeof result ) {
-        strncpy(_rapl_vector.cmp_info.disabled_reason,
+        strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
                "Unable to access RAPL registers",PAPI_MAX_STR_LEN);
+        _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ESYS;
      }
 
@@ -612,7 +639,13 @@ _rapl_init_component( int cidx )
 
      rapl_native_events = (_rapl_native_event_entry_t*)
           papi_calloc(num_events, sizeof(_rapl_native_event_entry_t));
-
+     if (rapl_native_events == NULL) {
+        strErr=snprintf(_rapl_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "%s:%i rapl_native_events papi_calloc for %lu bytes failed.", __FILE__, __LINE__, num_events*sizeof(_rapl_native_event_entry_t));
+        _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return PAPI_ENOMEM;
+     }
 
      i = 0;
      k = num_events/2;
@@ -621,21 +654,34 @@ _rapl_init_component( int cidx )
 
 	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
-     	sprintf(rapl_native_events[i].name,
+        strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN, 
 			"THERMAL_SPEC_CNT:PACKAGE%d",j);
-		sprintf(rapl_native_events[i].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+
+        strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   "Thermal specification in counts; package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[i].fd_offset=cpu_to_use[j];
 		rapl_native_events[i].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[i].resources.selector = i + 1;
 		rapl_native_events[i].type=PACKAGE_THERMAL_CNT;
 		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-     	sprintf(rapl_native_events[k].name,
+        strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 			"THERMAL_SPEC:PACKAGE%d",j);
-		strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
-		sprintf(rapl_native_events[k].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+
+        strCpy=strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
+        rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+
+        strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   "Thermal specification for package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[k].fd_offset=cpu_to_use[j];
 		rapl_native_events[k].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[k].resources.selector = k + 1;
@@ -648,21 +694,31 @@ _rapl_init_component( int cidx )
 
 	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
-		sprintf(rapl_native_events[i].name,
+        strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 			"MINIMUM_POWER_CNT:PACKAGE%d",j);
-		sprintf(rapl_native_events[i].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   "Minimum power in counts; package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[i].fd_offset=cpu_to_use[j];
 		rapl_native_events[i].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[i].resources.selector = i + 1;
 		rapl_native_events[i].type=PACKAGE_MINIMUM_CNT;
 		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-		sprintf(rapl_native_events[k].name,
+        strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 			"MINIMUM_POWER:PACKAGE%d",j);
-		strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
-		sprintf(rapl_native_events[k].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        strCpy=strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
+        rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   "Minimum power for package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[k].fd_offset=cpu_to_use[j];
 		rapl_native_events[k].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[k].resources.selector = k + 1;
@@ -675,21 +731,31 @@ _rapl_init_component( int cidx )
 
 	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
-		sprintf(rapl_native_events[i].name,
+        strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 			"MAXIMUM_POWER_CNT:PACKAGE%d",j);
-		sprintf(rapl_native_events[i].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   "Maximum power in counts; package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[i].fd_offset=cpu_to_use[j];
 		rapl_native_events[i].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[i].resources.selector = i + 1;
 		rapl_native_events[i].type=PACKAGE_MAXIMUM_CNT;
 		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-		sprintf(rapl_native_events[k].name,
+        strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 			"MAXIMUM_POWER:PACKAGE%d",j);
-		strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
-		sprintf(rapl_native_events[k].description,
+        rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        strCpy=strncpy(rapl_native_events[k].units,"W",PAPI_MIN_STR_LEN);
+        rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   "Maximum power for package %d",j);
+        rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[k].fd_offset=cpu_to_use[j];
 		rapl_native_events[k].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[k].resources.selector = k + 1;
@@ -702,21 +768,31 @@ _rapl_init_component( int cidx )
 
 	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
-		sprintf(rapl_native_events[i].name,
+         strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 			"MAXIMUM_TIME_WINDOW_CNT:PACKAGE%d",j);
-		sprintf(rapl_native_events[i].description,
+         rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+         strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   "Maximum time window in counts; package %d",j);
+         rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[i].fd_offset=cpu_to_use[j];
 		rapl_native_events[i].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[i].resources.selector = i + 1;
 		rapl_native_events[i].type=PACKAGE_TIME_WINDOW_CNT;
 		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-		sprintf(rapl_native_events[k].name,
+         strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 			"MAXIMUM_TIME_WINDOW:PACKAGE%d",j);
-		strncpy(rapl_native_events[k].units,"s",PAPI_MIN_STR_LEN);
-		sprintf(rapl_native_events[k].description,
+         rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+         strCpy=strncpy(rapl_native_events[k].units,"s",PAPI_MIN_STR_LEN);
+         rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+         if (strCpy == NULL) HANDLE_STRING_ERROR;
+         strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   "Maximum time window for package %d",j);
+         rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 		rapl_native_events[k].fd_offset=cpu_to_use[j];
 		rapl_native_events[k].msr=MSR_PKG_POWER_INFO;
 		rapl_native_events[k].resources.selector = k + 1;
@@ -731,21 +807,31 @@ _rapl_init_component( int cidx )
 
      if (package_avail) {
         for(j=0;j<num_packages;j++) {
-	   		sprintf(rapl_native_events[i].name,
+            strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 		   		"PACKAGE_ENERGY_CNT:PACKAGE%d",j);
-	   		sprintf(rapl_native_events[i].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   		"Energy used in counts by chip package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[i].msr=msr_pkg_energy_status;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-	   		sprintf(rapl_native_events[k].name,
+            strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 		   		"PACKAGE_ENERGY:PACKAGE%d",j);
-	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
-	   		sprintf(rapl_native_events[k].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+            rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   		"Energy used by chip package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=msr_pkg_energy_status;
 	   		rapl_native_events[k].resources.selector = k + 1;
@@ -759,21 +845,31 @@ _rapl_init_component( int cidx )
 
      if (pp1_avail) {
         for(j=0;j<num_packages;j++) {
-	   		sprintf(rapl_native_events[i].name,
+            strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 		   		"PP1_ENERGY_CNT:PACKAGE%d",j);
-	   		sprintf(rapl_native_events[i].description,
-		   		"Energy used in counts by Power Plane 1 (Often GPU) on package %d",j);
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
+		   	"Energy used in counts by Power Plane 1 (Often GPU) on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
            	rapl_native_events[i].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[i].msr=MSR_PP1_ENERGY_STATUS;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-	   		sprintf(rapl_native_events[k].name,
+            strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 		   		"PP1_ENERGY:PACKAGE%d",j);
-	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
-	   		sprintf(rapl_native_events[k].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+            rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   		"Energy used by Power Plane 1 (Often GPU) on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
            	rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=MSR_PP1_ENERGY_STATUS;
 	   		rapl_native_events[k].resources.selector = k + 1;
@@ -787,21 +883,31 @@ _rapl_init_component( int cidx )
 
      if (dram_avail) {
         for(j=0;j<num_packages;j++) {
-	   		sprintf(rapl_native_events[i].name,
+            strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 		   		"DRAM_ENERGY_CNT:PACKAGE%d",j);
-           	sprintf(rapl_native_events[i].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   		"Energy used in counts by DRAM on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[i].msr=MSR_DRAM_ENERGY_STATUS;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-	   		sprintf(rapl_native_events[k].name,
+            strErr=snprintf(rapl_native_events[k].name,PAPI_MAX_STR_LEN,
 		   		"DRAM_ENERGY:PACKAGE%d",j);
-	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
-           	sprintf(rapl_native_events[k].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+            rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   		"Energy used by DRAM on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=MSR_DRAM_ENERGY_STATUS;
 	   		rapl_native_events[k].resources.selector = k + 1;
@@ -816,21 +922,31 @@ _rapl_init_component( int cidx )
      if (psys_avail) {
         for(j=0;j<num_packages;j++) {
 
-	   		sprintf(rapl_native_events[i].name,
+         strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 		   		"PSYS_ENERGY_CNT:PACKAGE%d",j);
-           	sprintf(rapl_native_events[i].description,
+         rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   		"Energy used in counts by SoC on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[i].msr=MSR_PLATFORM_ENERGY_STATUS;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-	   		sprintf(rapl_native_events[k].name,
+            strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 		   		"PSYS_ENERGY:PACKAGE%d",j);
-	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
-           	sprintf(rapl_native_events[k].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+            rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   		"Energy used by SoC on package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=MSR_PLATFORM_ENERGY_STATUS;
 	   		rapl_native_events[k].resources.selector = k + 1;
@@ -844,21 +960,31 @@ _rapl_init_component( int cidx )
 
      if (pp0_avail) {
         for(j=0;j<num_packages;j++) {
-			sprintf(rapl_native_events[i].name,
+            strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 		   		"PP0_ENERGY_CNT:PACKAGE%d",j);
-	   		sprintf(rapl_native_events[i].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[i].description, PAPI_MAX_STR_LEN,
 		   		"Energy used in counts by all cores in package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[i].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[i].msr=msr_pp0_energy_status;
 	   		rapl_native_events[i].resources.selector = i + 1;
 	   		rapl_native_events[i].type=PACKAGE_ENERGY_CNT;
 	   		rapl_native_events[i].return_type=PAPI_DATATYPE_UINT64;
 
-			sprintf(rapl_native_events[k].name,
+            strErr=snprintf(rapl_native_events[k].name, PAPI_MAX_STR_LEN,
 		   		"PP0_ENERGY:PACKAGE%d",j);
-	   		strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
-	   		sprintf(rapl_native_events[k].description,
+            rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            strCpy=strncpy(rapl_native_events[k].units,"nJ",PAPI_MIN_STR_LEN);
+            rapl_native_events[k].units[PAPI_MIN_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
+            strErr=snprintf(rapl_native_events[k].description, PAPI_MAX_STR_LEN,
 		   		"Energy used by all cores in package %d",j);
+            rapl_native_events[i].description[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 	   		rapl_native_events[k].fd_offset=cpu_to_use[j];
 	   		rapl_native_events[k].msr=msr_pp0_energy_status;
 	   		rapl_native_events[k].resources.selector = k + 1;

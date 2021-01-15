@@ -146,7 +146,10 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
     if(READ_FROM_FILE == mode)
     {
         // Compute the total number of qualifier combinations and allocate memory to store them.
-        (*indexmemo) = (int*)malloc(ct*sizeof(int));
+        if (NULL == ((*indexmemo) = (int*)malloc(ct*sizeof(int)))) {
+            fprintf(stderr, "Failed to allocate memory.\n");
+            return 0;
+        }
 
         // Find the index in the main stock whose event corresponds to that in the file provided.
         // This simplifies looking up event qualifiers later.
@@ -248,12 +251,17 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
 {
     size_t linelen = 0;
     int cnt = 0, status = 0;
-    char *line, *place;
+    char *line = NULL, *place;
     FILE *input;
     int evnt_count = 256;
   
     char **names = (char **)calloc(evnt_count, sizeof(char *));
     int *cards = (int *)calloc(evnt_count, sizeof(int));
+
+    if (NULL == names || NULL == cards) {
+        fprintf(stderr, "Failed to allocate memory.\n");
+        return 0;
+    }
 
     // Read the base event name and cardinality columns.
     input = fopen(inputfile, "r");
@@ -266,6 +274,12 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         {
             evnt_count *= 2;
             names = realloc(names, evnt_count*sizeof(char *));
+            cards = realloc(cards, evnt_count*sizeof(int));
+
+            if (NULL == names || NULL == cards) {
+                fprintf(stderr, "Failed to allocate memory.\n");
+                return 0;
+            }
         }
 
         place = strstr(line, " ");
@@ -355,7 +369,11 @@ void combine_qualifiers(int n, int pk, int ct, char** list, char* name, char** a
                 }
             }
 
-            chunk = (char*)malloc((evtsize+1)*sizeof(char));
+            if (NULL == (chunk = (char*)malloc((evtsize+1)*sizeof(char)))) {
+                fprintf(stderr, "Failed to allocate memory.\n");
+                return;
+            }
+
             strcpy(chunk,name);
             for(i = 0; i < n; ++i)
             {
@@ -418,6 +436,11 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             {
                 chosen = (char**)malloc(n*sizeof(char*));
                 bitmap = (int*)calloc(n, sizeof(int));    
+                
+                if (NULL == chosen || NULL == bitmap) {
+                    fprintf(stderr, "Failed to allocate memory.\n");
+                    return;
+                }
 
                 // Store the qualifiers for the current event.
                 for(k = 0; k < n; ++k)
@@ -465,6 +488,11 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             // Create a list to contain the qualifiers.
             chosen = (char**)malloc(n*sizeof(char*));
             bitmap = (int*)calloc(n, sizeof(int));    
+
+            if (NULL == chosen || NULL == bitmap) {
+                fprintf(stderr, "Failed to allocate memory.\n");
+                return;
+            }
 
             // Store the qualifiers for the current event.
             for(j = 0; j < n; ++j)
@@ -800,6 +828,12 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     // Write output files in the user-specified directory.
     dirlen = strlen(tmp);
     *outputdir = (char*)malloc((2+dirlen)*sizeof(char));
+
+    if (NULL == outputdir) {
+        fprintf(stderr, "Failed to allocate memory.\n");
+        return -1;
+    }
+
     len = snprintf( *outputdir, 2+dirlen, "%s/", tmp);
     if( len < 1+dirlen )
     {

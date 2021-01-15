@@ -376,6 +376,7 @@ pfmlib_pmu_t s390x_cpum_cf_support = {
 	.validate_table		= pfm_cpumcf_validate_table,
 	.get_event_info		= pfm_cpumf_get_event_info,
 	.get_event_attr_info	= pfm_cpumf_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_s390x_perf_validate_pattrs),
 };
 
 pfmlib_pmu_t s390x_cpum_sf_support = {
@@ -402,4 +403,5 @@ pfmlib_pmu_t s390x_cpum_sf_support = {
 	.validate_table		= pfm_cpumf_validate_table,
 	.get_event_info		= pfm_cpumf_get_event_info,
 	.get_event_attr_info	= pfm_cpumf_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_s390x_perf_validate_pattrs),
 };

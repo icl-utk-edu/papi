@@ -386,7 +386,7 @@ static intel_x86_entry_t intel_skx_unc_m_pe[]={
   },
   { .name   = "UNC_M_MAJOR_MODES",
     .code   = 0x7,
-    .desc   = "Counts the total number of cycles spent in a major mode (selected by a filter) on the given channel.   Major modea are channel-wide, and not a per-rank (or dimm or bank) mode.",
+    .desc   = "Counts the total number of cycles spent in a major mode (selected by a filter) on the given channel.  Major modes are channel-wide, and not a per-rank (or dimm or bank) mode.",
     .modmsk = SKX_UNC_IMC_ATTRS,
     .cntmsk = 0xf,
     .ngrp   = 1,

@@ -108,6 +108,7 @@ pfm_perf_raw_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->idx   = 0;
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	/* unit masks + modifiers */
 	info->nattrs  = 0;

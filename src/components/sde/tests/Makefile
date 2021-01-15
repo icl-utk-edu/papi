@@ -3,6 +3,8 @@ include ../../Makefile_comp_tests.target
 INCLUDE += -I../interface -I..
 ifeq ($(notdir $(F77)),gfortran)
 	FFLAGS +=-ffree-form -ffree-line-length-none
+else ifeq ($(notdir $(F77)),flang)
+	FFLAGS +=-ffree-form
 else
 	FFLAGS +=-free
 endif

@@ -288,6 +288,7 @@ pfm_sparc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_a
 
 	info->is_dfl = 0;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 	info->ctrl = PFM_ATTR_CTRL_PMU;;
 
 	return PFM_SUCCESS;
@@ -308,6 +309,7 @@ pfm_sparc_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->idx   = idx; /* private index */
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	info->nattrs  = pe[idx].numasks;
 

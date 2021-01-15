@@ -21,6 +21,11 @@
 #include "papi_internal.h"
 #include "papi_vector.h"
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 /* this number assumes that there will never be more events than indicated */
 #define PAPIROCM_MAX_COUNTERS 512
 
@@ -73,12 +78,12 @@
     do {                                                                \
         name##Ptr = dlsym(dllib, #name);                                \
         if (dlerror()!=NULL) {                                          \
-            snprintf(_rocm_vector.cmp_info.disabled_reason,             \
-                PAPI_MAX_STR_LEN,                                                   \
+            int strErr=snprintf(_rocm_vector.cmp_info.disabled_reason,  \
+                PAPI_MAX_STR_LEN,                                       \
                 "The ROCM required function '%s' was not found in dynamic libs",    \
-                #name);                                                             \
-            fprintf(stderr, "%s:%i ROCM component disabled: %s\n",                  \
-                __FILE__, __LINE__, _rocm_vector.cmp_info.disabled_reason);         \
+                #name);                                                 \
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;\
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;         \
           return ( PAPI_ENOSUPP );                                      \
         }                                                               \
     } while (0)
@@ -216,12 +221,16 @@ static _rocm_control_t *global__rocm_control = NULL;
  */
 static int _rocm_linkRocmLibraries(void)
 {
+    int strErr;
+    char *strCpy;
     ROCMDBG("Entering _rocm_linkRocmLibraries\n");
 
     char path_name[1024];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
-        strncpy(_rocm_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
+        strCpy=strncpy(_rocm_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strCpy == NULL) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
@@ -233,7 +242,9 @@ static int _rocm_linkRocmLibraries(void)
     if (strlen(rocm_hsa) > 0) {                             // If override given, it has to work.
         dl1 = dlopen(rocm_hsa, RTLD_NOW | RTLD_GLOBAL);     // Try to open that path.
         if (dl1 == NULL) {
-            snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_HSA override '%s' given in Rules.rocm not found.", rocm_hsa);
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_HSA override '%s' given in Rules.rocm not found.", rocm_hsa);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -245,13 +256,17 @@ static int _rocm_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
-        snprintf(path_name, 1024, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
+        strErr=snprintf(path_name, 1024, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
     // Check for failure.
     if (dl1 == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libhsa-runtime64.so not found.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libhsa-runtime64.so not found.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -272,7 +287,9 @@ static int _rocm_linkRocmLibraries(void)
     if (strlen(rocm_prof) > 0) {                             // If override given, it has to work.
         dl2 = dlopen(rocm_prof, RTLD_NOW | RTLD_GLOBAL);     // Try to open that path.
         if (dl1 == NULL) {
-            snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_PROF override '%s' given in Rules.rocm not found.", rocm_prof);
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_ROCM_PROF override '%s' given in Rules.rocm not found.", rocm_prof);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -284,13 +301,17 @@ static int _rocm_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl2 == NULL && rocm_root != NULL) {                          // if root given, try it.
-        snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
+        strErr=snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
     // Check for failure.
     if (dl2 == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocprofiler64.so not found.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocprofiler64.so not found.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -311,22 +332,30 @@ static int _rocm_linkRocmLibraries(void)
 
     // Disable if ROCPROFILER env vars not present.
     if (getenv("ROCP_METRICS") == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCP_METRICS not set; rocprofiler is not configured.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCP_METRICS not set; rocprofiler is not configured.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);   // Wouldn't have any events.
     }
 
     if (getenv("ROCPROFILER_LOG") == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCPROFILER_LOG not set; rocprofiler is not configured.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. ROCPROFILER_LOG not set; rocprofiler is not configured.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);   // Wouldn't have any events.
     }
 
     if (getenv("HSA_VEN_AMD_AQLPROFILE_LOG") == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG not set; rocprofiler is not configured.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG not set; rocprofiler is not configured.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);   // Wouldn't have any events.
     }
 
     if (getenv("AQLPROFILE_READ_API") == NULL) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var.AQLPROFILE_READ_API not set; rocprofiler is not configured.");
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Env. Var.AQLPROFILE_READ_API not set; rocprofiler is not configured.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);   // Wouldn't have any events.
     }
 
@@ -489,6 +518,7 @@ static int _rocm_init_thread(hwd_context_t * ctx)
  */
 static int _rocm_init_component(int cidx)
 {
+    int strErr;
     ROCMDBG("Entering _rocm_init_component\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
@@ -501,20 +531,32 @@ static int _rocm_init_component(int cidx)
     hsa_status_t status;
     status = (*hsa_initPtr)();
     if (status != HSA_STATUS_SUCCESS && status != HSA_STATUS_INFO_BREAK) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
             "ROCM hsa_init() failed with error %d.", status);
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_EMISC);
     }
         
     /* Create the structure */
-    if(global__rocm_context == NULL)
+    if(global__rocm_context == NULL) {
         global__rocm_context = (_rocm_context_t *) papi_calloc(1, sizeof(_rocm_context_t));
+        if (global__rocm_context == NULL) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            "%s:%i global__rocm_context alloc of %lu bytes failed.", __FILE__, __LINE__, sizeof(_rocm_context_t));
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return PAPI_ENOMEM;
+        }
+    }
 
     /* Get GPU agent */
     status = (*hsa_iterate_agentsPtr)(_rocm_get_gpu_handle, global__rocm_context);
     if (status != HSA_STATUS_SUCCESS && status != HSA_STATUS_INFO_BREAK) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
             "ROCM hsa_iterate_agents() failed with error %d.", status);
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_EMISC);
     }
 
@@ -523,8 +565,10 @@ static int _rocm_init_component(int cidx)
     /* Get list of all native ROCM events supported */
     rv = _rocm_add_native_events(global__rocm_context);
     if(rv != 0) {
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
             "ROCM component routine _rocm_add_native_events() failed.");
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return (rv);
     }
 
@@ -543,11 +587,15 @@ static int _rocm_init_component(int cidx)
     if (_rocm_vector.cmp_info.num_native_events == 0) {
         char *metrics = getenv("ROCP_METRICS");
         if (metrics == NULL) {
-            strncpy(_rocm_vector.cmp_info.disabled_reason, "Environment Variable ROCP_METRICS is not defined, should point to a valid metrics.xml.", PAPI_MAX_STR_LEN);
+            char *strCpy=strncpy(_rocm_vector.cmp_info.disabled_reason, "Environment Variable ROCP_METRICS is not defined, should point to a valid metrics.xml.", PAPI_MAX_STR_LEN);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strCpy == NULL) HANDLE_STRING_ERROR;
             return (PAPI_EMISC);
         }
 
-        snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "No events.  Ensure ROCP_METRICS=%s is correct.", metrics);
+        strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "No events.  Ensure ROCP_METRICS=%s is correct.", metrics);
+        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return (PAPI_EMISC);
     }
 
