@@ -12,7 +12,6 @@ try:
 except NameError:
   to_unicode = str
 
-cpu_freq = 0
 event_definitions = {}
 process_num = {}
 
@@ -55,9 +54,6 @@ def merge_json_files(source):
 
     #store global data
     if events_stored == False:
-      #determine cpu frequency
-      global cpu_freq
-      cpu_freq = int(data['cpu in mhz']) * 1000000
       global event_definitions
       event_definitions = data['event_definitions']
       events_stored = True
@@ -179,7 +175,7 @@ class Sum_Counters(object):
               global event_definitions
               if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
                 events[event_key] = OrderedDict()
-                if event_key == 'cycles':
+                if event_key == 'cycles' or event_key == 'real_time_nsec':
                   events[event_key]['total'] = event_value.get_sum()
                 else:
                   if event_definitions[event_key] == 'delta':
@@ -189,7 +185,7 @@ class Sum_Counters(object):
                 events[event_key]['max'] = event_value.get_max()
               else:
                 #sequential code
-                if event_key == 'cycles':
+                if event_key == 'cycles' or event_key == 'real_time_nsec':
                   events[event_key] = event_value.get_min()
                 else:
                   if event_definitions[event_key] == 'instant' and region_count > 1:
@@ -229,17 +225,30 @@ def derive_sum_json_object(json):
       derive_events['Region count'] = int(events['region_count'])
       del events['region_count']
 
-    #Real Time
+    #Real Time Cycles
     if 'cycles' in events:
+      event_name = 'Real time cycles'
+      if proc_num > 1:
+        for metric in ['total', 'min', 'median', 'max']:
+          rt[metric] = convert_value(events['cycles'][metric], 'Cycles')
+        derive_events[event_name] = rt['max']
+      else:
+        rt['total'] = convert_value(events['cycles'], 'Cycles')
+        derive_events[event_name] = rt['total']
+      del events['cycles']
+
+    #Real Time
+    if 'real_time_nsec' in events:
       event_name = 'Real time in s'
       if proc_num > 1:
         for metric in ['total', 'min', 'median', 'max']:
-          rt[metric] = convert_value(events['cycles'][metric], 'Runtime')
+          rt[metric] = convert_value(events['real_time_nsec'][metric], 'Runtime')
         derive_events[event_name] = rt['max']
       else:
-        rt['total'] = convert_value(events['cycles'], 'Runtime')
+        rt['total'] = convert_value(events['real_time_nsec'], 'Runtime')
         derive_events[event_name] = rt['total']
-      del events['cycles']
+      del events['real_time_nsec']
+
 
     #CPU Time
     if 'perf::TASK-CLOCK' in events:
@@ -333,13 +342,14 @@ def get_ops_dict(ops, rt):
 
 
 def convert_value(value, event_type = 'Other'):
-  global cpu_freq
   if event_type == 'Other':
     result = float(value)
     result = float(format(result, '.2f'))
+  elif event_type == 'Cycles':
+    result = int(value)
   elif event_type == 'Runtime':
     try:
-      result = float(value) / int(cpu_freq)
+      result = float(value) / 1.e09
     except:
       result = 1.0
     result = float(format(result, '.2f'))
@@ -358,7 +368,6 @@ def derive_read_events(events, event_type = 'Other'):
 
 
 def derive_events(events):
-  global cpu_freq
   #keep order as declared
   derive_events = OrderedDict()
   #remember runtime for other metrics like MFLOPS
@@ -370,16 +379,24 @@ def derive_events(events):
     derive_events['Region count'] = int(events['region_count'])
     del events['region_count']
 
-  #Real Time
+  #Real Time Cycles
   if 'cycles' in events:
     if isinstance(events['cycles'],dict):
-      for read_key,read_value in events['cycles'].items():
-        rt_dict[read_key] = float(read_value) / int(cpu_freq)
-      derive_events['Real time in s'] = derive_read_events(events['cycles'],'Runtime')
+      derive_events['Real time cycles'] = derive_read_events(events['cycles'], 'Cycles')
     else:
-      rt = float(events['cycles']) / int(cpu_freq)
-      derive_events['Real time in s'] = convert_value(events['cycles'], 'Runtime')
+      derive_events['Real time cycles'] = convert_value(events['cycles'], 'Cycles')
     del events['cycles']
+
+  #Real Time
+  if 'real_time_nsec' in events:
+    if isinstance(events['real_time_nsec'],dict):
+      for read_key,read_value in events['real_time_nsec'].items():
+        rt_dict[read_key] = convert_value(read_value, 'Runtime')
+      derive_events['Real time in s'] = derive_read_events(events['real_time_nsec'],'Runtime')
+    else:
+      rt = convert_value(events['real_time_nsec'], 'Runtime')
+      derive_events['Real time in s'] = convert_value(events['real_time_nsec'], 'Runtime')
+    del events['real_time_nsec']
 
   #CPU Time
   if 'perf::TASK-CLOCK' in events:
