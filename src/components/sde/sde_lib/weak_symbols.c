@@ -19,8 +19,8 @@
 #pragma weak papi_sde_compare_double
 #pragma weak papi_sde_compare_float
 
-papi_handle_t 
-__attribute__((weak)) 
+papi_handle_t
+__attribute__((weak))
 papi_sde_init(const char *name_of_library)
 {
     (void) name_of_library;
@@ -28,8 +28,8 @@ papi_sde_init(const char *name_of_library)
     return NULL;
 }
 
-int 
-__attribute__((weak)) 
+int
+__attribute__((weak))
 papi_sde_register_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter)
 {
     (void) handle;
@@ -43,8 +43,8 @@ papi_sde_register_counter(papi_handle_t handle, const char *event_name, int cntr
     return 0;
 }
 
-int 
-__attribute__((weak)) 
+int
+__attribute__((weak))
 papi_sde_register_fp_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t func_ptr, void *param )
 {
     (void) handle;
@@ -59,7 +59,7 @@ papi_sde_register_fp_counter(papi_handle_t handle, const char *event_name, int c
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_unregister_counter( void *handle, const char *event_name)
 {
@@ -71,8 +71,8 @@ papi_sde_unregister_counter( void *handle, const char *event_name)
     return 0;
 }
 
-int 
-__attribute__((weak)) 
+int
+__attribute__((weak))
 papi_sde_describe_counter(papi_handle_t handle, const char *event_name, const char *event_description)
 {
     (void) handle;
@@ -85,7 +85,7 @@ papi_sde_describe_counter(papi_handle_t handle, const char *event_name, const ch
 }
 
 int
-__attribute__((weak)) 
+__attribute__((weak))
 papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, const char *group_name, uint32_t group_flags)
 {
     (void) handle;
@@ -99,7 +99,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 }
 
 
-int 
+int
 __attribute__((weak))
 papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_type, void **cntr_handle )
 {
@@ -114,7 +114,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 }
 
 
-int 
+int
 __attribute__((weak))
 papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 {
@@ -126,7 +126,7 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_fptr)(const void *p1, const void *p2), void **record_handle )
 {
@@ -142,7 +142,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
 }
 
 
-int 
+int
 __attribute__((weak))
 papi_sde_record( void *record_handle, size_t typesize, void *value)
 {
@@ -155,7 +155,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_reset_recorder(void *record_handle )
 {
@@ -166,7 +166,7 @@ papi_sde_reset_recorder(void *record_handle )
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_reset_counter( void *cntr_handle )
 {
@@ -177,7 +177,7 @@ papi_sde_reset_counter( void *cntr_handle )
     return 0;
 }
 
-void 
+void
 __attribute__((weak))
 *papi_sde_get_counter_handle( void *handle, const char *event_name)
 {
@@ -190,7 +190,7 @@ __attribute__((weak))
 }
 
 
-int 
+int
 __attribute__((weak))
 papi_sde_compare_long_long(const void *p1, const void *p2)
 {
@@ -202,7 +202,7 @@ papi_sde_compare_long_long(const void *p1, const void *p2)
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_compare_int(const void *p1, const void *p2)
 {
@@ -214,7 +214,7 @@ papi_sde_compare_int(const void *p1, const void *p2)
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_compare_double(const void *p1, const void *p2)
 {
@@ -226,7 +226,7 @@ papi_sde_compare_double(const void *p1, const void *p2)
     return 0;
 }
 
-int 
+int
 __attribute__((weak))
 papi_sde_compare_float(const void *p1, const void *p2)
 {

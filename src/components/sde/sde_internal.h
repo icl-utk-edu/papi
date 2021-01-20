@@ -30,14 +30,14 @@ typedef struct sde_reg_alloc
 	sde_register_t junk;
 } sde_reg_alloc_t;
 
-/** 
+/**
  *  There's one of these per event-set to hold data specific to the EventSet, like
  *  counter start values, number of events in a set and counter uniq ids.
  */
 typedef struct sde_control_state
 {
   int num_events;
-  unsigned int which_counter[SDE_MAX_SIMULTANEOUS_COUNTERS]; 
+  unsigned int which_counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
   long long counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
   long long previous_value[SDE_MAX_SIMULTANEOUS_COUNTERS];
 #if defined(SDE_HAVE_OVERFLOW)

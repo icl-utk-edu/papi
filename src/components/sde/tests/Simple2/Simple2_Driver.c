@@ -43,7 +43,7 @@ int main(int argc, char **argv){
         if((ret=PAPI_read(event_set, counter_values)) != PAPI_OK){
             test_fail( __FILE__, __LINE__, "PAPI_read", ret );
         }
-    
+
         // PAPI has packed the bits of the double inside the long long.
         dbl_ptr = (double *)&counter_values[4];
         if( be_verbose ) printf("Low Watermark=%lld, High Watermark=%lld, Any Watermark=%lld, Total Iterations=%lld, Comp. Value=%lf\n",
@@ -53,7 +53,7 @@ int main(int argc, char **argv){
             counter_values[1] != high_mark[i] ||
             counter_values[2] != (low_mark[i]+high_mark[i]) ||
             counter_values[3] != tot_iter[i] ||
-            (*dbl_ptr-comp_val[i]) > 0.00001 || 
+            (*dbl_ptr-comp_val[i]) > 0.00001 ||
             (*dbl_ptr-comp_val[i]) < -0.00001 ){
            discrepancies++;
        }
@@ -81,7 +81,7 @@ void setup_PAPI(int *event_set){
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
         test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
     }
-    
+
     if((ret=PAPI_create_eventset(event_set)) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
     }

@@ -23,7 +23,7 @@ papisde_control_t *_papisde_global_control = NULL;
     and allocates it if has not.
   @return a pointer to the global structure.
   */
-papisde_control_t 
+papisde_control_t
 __attribute__((visibility("default")))
 *papisde_get_global_struct(void){
     // Allocate the global control structure, unless it has already been allocated by another library
@@ -236,7 +236,7 @@ sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_valu
 
     char *event_name = counter->name;
 
-    if ( counter->data != NULL ) { 
+    if ( counter->data != NULL ) {
         SUBDBG("Reading %s by accessing data pointer.\n", event_name);
         tmp_data = counter->data;
     } else if( NULL != counter->func_ptr ){
@@ -313,9 +313,9 @@ _sde_init_control_state( hwd_control_state_t * ctl )
 
 /** Triggered by eventset operations like add or remove */
 static int
-_sde_update_control_state( hwd_control_state_t *ctl, 
+_sde_update_control_state( hwd_control_state_t *ctl,
         NativeInfo_t *native,
-        int count, 
+        int count,
         hwd_context_t *ctx )
 {
 
@@ -324,7 +324,7 @@ _sde_update_control_state( hwd_control_state_t *ctl,
 
     SUBDBG( "_sde_update_control_state %p %p...\n", ctl, ctx );
 
-    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;   
+    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     for( i = 0; i < count; i++ ) {
         index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
@@ -473,11 +473,11 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
     (void) flags;
     (void) ctx;
 
-    papisde_control_t *gctl = _papisde_global_control;   
+    papisde_control_t *gctl = _papisde_global_control;
 
     SUBDBG( "_sde_read... %p %d\n", ctx, flags );
 
-    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;   
+    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     // Lock before we read num_reg_events and the hash-tables.
     papi_sde_lock();
@@ -544,7 +544,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
         }
 
         ret_val = sde_hardware_read_and_store( counter, counter->previous_data, &(sde_ctl->counter[i]) );
-     
+
         if( PAPI_OK != ret_val ){
             PAPIERROR("_sde_read(): Error occured when reading counter: '%s'.\n",counter->name);
         }
@@ -566,11 +566,11 @@ _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *values )
     (void) ctx;
     (void) ctl;
 
-    papisde_control_t *gctl = _papisde_global_control;   
+    papisde_control_t *gctl = _papisde_global_control;
 
     SUBDBG( "_sde_write... %p\n", ctx );
 
-    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;   
+    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     // Lock before we access global data structures.
     papi_sde_lock();
@@ -631,8 +631,8 @@ _sde_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
     SUBDBG( "_sde_reset ctx=%p ctrl=%p...\n", ctx, ctl );
 
-    papisde_control_t *gctl = _papisde_global_control;   
-    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;   
+    papisde_control_t *gctl = _papisde_global_control;
+    sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     // Lock before we read num_reg_events and the hash-tables.
     papi_sde_lock();
@@ -684,7 +684,7 @@ _sde_shutdown_component(void)
     papisde_library_desc_t *curr_lib, *next_lib;
 
     SUBDBG( "sde_shutdown_component...\n" );
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
 
     if( NULL == gctl )
         return PAPI_OK;
@@ -724,7 +724,7 @@ _sde_shutdown_thread( hwd_context_t *ctx )
 
 /** This function sets various options in the component
   @param[in] ctx -- hardware context
-  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
+  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN,
   PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param[in] option -- options to be set
   */
@@ -799,7 +799,7 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
 
     SUBDBG("_sde_ntv_enum_events begin\n\tEventCode=%u modifier=%d\n", *EventCode, modifier);
 
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
     if( NULL == gctl ){
         return PAPI_ENOEVNT;
     }
@@ -835,7 +835,7 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
                 sde_counter_t *item = ht_lookup_by_id(gctl->all_reg_counters, next_code);
                 if( (NULL != item) && (NULL != item->name) ){
                     *EventCode = next_code;
-                    SUBDBG("Event name = %s (unique id = %d)\n", item->name, item->glb_uniq_id); 
+                    SUBDBG("Event name = %s (unique id = %d)\n", item->name, item->glb_uniq_id);
                     papi_sde_unlock();
                     return PAPI_OK;
                 }
@@ -852,7 +852,7 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
     return PAPI_EINVAL;
 }
 
-/** Takes a native event code and passes back the name 
+/** Takes a native event code and passes back the name
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
@@ -860,7 +860,7 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
 static int
 _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
     unsigned int code = EventCode & PAPI_NATIVE_AND_MASK;
 
     SUBDBG("_sde_ntv_code_to_name %u\n", code);
@@ -878,9 +878,9 @@ _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len )
         papi_sde_unlock();
         return PAPI_ENOEVNT;
     }
-    SUBDBG("Event name = %s (unique id = %d)\n", counter->name, counter->glb_uniq_id); 
+    SUBDBG("Event name = %s (unique id = %d)\n", counter->name, counter->glb_uniq_id);
 
-    (void)strncpy( name, counter->name, len );  
+    (void)strncpy( name, counter->name, len );
 
     papi_sde_unlock();
     return PAPI_OK;
@@ -897,7 +897,7 @@ _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
     unsigned int code = EventCode & PAPI_NATIVE_AND_MASK;
     SUBDBG("_sde_ntv_code_to_descr %u\n", code);
 
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
 
     // Lock before we read num_reg_events and the hash-tables.
     papi_sde_lock();
@@ -912,21 +912,21 @@ _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
         papi_sde_unlock();
         return PAPI_ENOEVNT;
     }
-    SUBDBG("Event (unique id = %d) description: %s\n", counter->glb_uniq_id, counter->description); 
+    SUBDBG("Event (unique id = %d) description: %s\n", counter->glb_uniq_id, counter->description);
 
-    (void)strncpy( descr, counter->description, len );  
+    (void)strncpy( descr, counter->description, len );
     descr[len] = '\0';
 
     papi_sde_unlock();
     return PAPI_OK;
 }
 
-/** Takes a native event name and passes back the code 
+/** Takes a native event name and passes back the code
  * @param event_name -- a pointer for the name to be copied to
  * @param event_code -- the native event code
  */
 static int
-_sde_ntv_name_to_code(const char *event_name, unsigned int *event_code ) 
+_sde_ntv_name_to_code(const char *event_name, unsigned int *event_code )
 {
     papisde_library_desc_t *lib_handle;
     char *pos, *tmp_lib_name;
@@ -991,7 +991,7 @@ _sde_ntv_name_to_code(const char *event_name, unsigned int *event_code )
             papi_sde_unlock();
             return PAPI_OK;
         } else {
-            SUBDBG("Did not find event %s in library %s. Registering a placeholder.\n", event_name, lib_handle->libraryName );  
+            SUBDBG("Did not find event %s in library %s. Registering a placeholder.\n", event_name, lib_handle->libraryName );
 
             // Use the current number of registered events as the index of the new one, and increment it.
             unsigned int counter_uniq_id = gctl->num_reg_events++;
@@ -1032,7 +1032,7 @@ _sde_ntv_name_to_code(const char *event_name, unsigned int *event_code )
             SUBDBG("Found matching counter with global uniq id: %d in library: %s\n", tmp_item->glb_uniq_id, lib_handle->libraryName );
             return PAPI_OK;
         } else {
-            SUBDBG("Failed to find event %s in library %s. Looking in other libraries.\n", event_name, lib_handle->libraryName );  
+            SUBDBG("Failed to find event %s in library %s. Looking in other libraries.\n", event_name, lib_handle->libraryName );
         }
 
         lib_handle = lib_handle->next;
@@ -1054,7 +1054,7 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
     SUBDBG("_sde_set_overflow(%d, %d).\n",EventIndex, threshold);
 
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
 
     // pos[0] holds the first among the native events that compose the given event. If it is a derived event,
     // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
@@ -1078,7 +1078,7 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
         counter->overflow = 1;
         return PAPI_OK;
     }
-  
+
     // A threshold of zero indicates that overflowing is not needed anymore.
     if( 0 == threshold ){
         counter->overflow = 0;
@@ -1356,7 +1356,7 @@ static void invoke_user_handler(sde_counter_t *cntr_handle){
 
     sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
 
-    papisde_control_t *gctl = _papisde_global_control; 
+    papisde_control_t *gctl = _papisde_global_control;
 
     if( NULL == gctl ){
         return;
@@ -1407,7 +1407,7 @@ papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest)
 
     ESI = thread->running_eventset[cidx];
     // Check if there is a running event set and it has some events set to overflow
-    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) 
+    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) )
         return;
 
     sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
@@ -1463,7 +1463,7 @@ papi_sde_set_timer_for_overflow(void){
     // Get the current running eventset and check if it has some events set to overflow.
     int cidx = _sde_vector.cmp_info.CmpIdx;
     ESI = thread->running_eventset[cidx];
-    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) ) 
+    if( (NULL == ESI) || !(ESI->overflow.flags & PAPI_OVERFLOW_HARDWARE) )
         return PAPI_OK;
 
     sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
@@ -1497,7 +1497,7 @@ papi_vector_t _sde_vector = {
         .version = "1.15",
         .support_version = "n/a",
         .kernel_version = "n/a",
-        .num_cntrs =               SDE_MAX_SIMULTANEOUS_COUNTERS, 
+        .num_cntrs =               SDE_MAX_SIMULTANEOUS_COUNTERS,
         .num_mpx_cntrs =           SDE_MAX_SIMULTANEOUS_COUNTERS,
         .default_domain =          PAPI_DOM_USER,
         .available_domains =       PAPI_DOM_USER,
@@ -1528,13 +1528,13 @@ papi_vector_t _sde_vector = {
     .start =                _sde_start,
     .stop =                 _sde_stop,
     .read =                 _sde_read,
-    .reset =                _sde_reset, 
+    .reset =                _sde_reset,
     .write =                _sde_write,
-    .init_component =       _sde_init_component,    
+    .init_component =       _sde_init_component,
     .init_thread =          _sde_init_thread,
     .init_control_state =   _sde_init_control_state,
-    .update_control_state = _sde_update_control_state,  
-    .ctl =                  _sde_ctl,   
+    .update_control_state = _sde_update_control_state,
+    .ctl =                  _sde_ctl,
     .shutdown_thread =      _sde_shutdown_thread,
     .shutdown_component =   _sde_shutdown_component,
     .set_domain =           _sde_set_domain,

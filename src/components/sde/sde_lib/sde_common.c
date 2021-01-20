@@ -65,7 +65,7 @@ void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_t *sde_
 
     // If we made it here it means that the head was occupied, so we
     // will allocate a new element and put it just after the head.
-    new_entry = (papisde_list_entry_t *)calloc(1, sizeof(papisde_list_entry_t));    
+    new_entry = (papisde_list_entry_t *)calloc(1, sizeof(papisde_list_entry_t));
     new_entry->item = sde_counter;
     new_entry->next = list_head->next;
     list_head->next = new_entry;
@@ -208,7 +208,7 @@ void insert_library_handle(papisde_library_desc_t *lib_handle, papisde_control_t
 // initialized. This function is _not_ thread safe, so it needs to be called
 // from within regions protected by papi_sde_lock()/papi_sde_unlock().
 papi_handle_t do_sde_init(const char *name_of_library, papisde_control_t *gctl){
-    
+
     papisde_library_desc_t *tmp_lib;
 
     SDEDBG("Registering library: '%s'\n",name_of_library);
@@ -232,19 +232,17 @@ sde_counter_t *allocate_and_insert( papisde_control_t *gctl, papisde_library_des
 
     // make sure to calloc() the structure, so all the fields which we do not explicitly set remain zero.
     sde_counter_t *item = (sde_counter_t *)calloc(1, sizeof(sde_counter_t));
-    item->data = data; 
+    item->data = data;
     item->func_ptr = func_ptr;
     item->param = param;
-    item->cntr_type = cntr_type; 
-    item->cntr_mode = cntr_mode; 
+    item->cntr_type = cntr_type;
+    item->cntr_mode = cntr_mode;
     item->glb_uniq_id = uniq_id;
     item->name = strdup( name );
     item->description = strdup( name );
     item->which_lib = lib_handle;
 
-    (void)ht_insert(lib_handle->lib_counters, ht_hash_name(name), item); 
-
-    
+    (void)ht_insert(lib_handle->lib_counters, ht_hash_name(name), item);
     (void)ht_insert(gctl->all_reg_counters, ht_hash_id(uniq_id), item);
 
     return item;

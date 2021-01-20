@@ -31,7 +31,7 @@ int main(int argc, char **argv){
         test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
         exit(-1);
     }
-    
+
     if((ret=PAPI_create_eventset(&Eventset)) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
         exit(-1);

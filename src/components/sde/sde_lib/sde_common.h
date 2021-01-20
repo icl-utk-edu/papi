@@ -54,13 +54,13 @@ struct sde_counter_s {
    unsigned int glb_uniq_id;
    char *name;
    char *description;
-   void *data; 
+   void *data;
    long long int previous_data;
    recorder_data_t *recorder_data;
    int is_created;
    int overflow;
-   papi_sde_fptr_t func_ptr;   
-   void *param;   
+   papi_sde_fptr_t func_ptr;
+   void *param;
    int cntr_type;
    int cntr_mode;
    papisde_library_desc_t *which_lib;

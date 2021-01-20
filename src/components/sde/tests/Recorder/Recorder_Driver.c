@@ -37,7 +37,7 @@ int main(int argc, char **argv){
         if((ret=PAPI_read(event_set, counter_values)) != PAPI_OK){
             test_fail( __FILE__, __LINE__, "PAPI_read", ret );
         }
-    
+
         long long *ptr = (long long *)counter_values[1];
 
         if( be_verbose ){
@@ -84,7 +84,7 @@ void setup_PAPI(int *event_set){
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
         test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
     }
-    
+
     if((ret=PAPI_create_eventset(event_set)) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
     }

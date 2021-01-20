@@ -50,7 +50,7 @@ int main(int argc, char **argv){
         }
         if( be_verbose ) printf("Epsilon count in cclib_do_more_work(): %lld\n",counter_values[0]);
         counter_values[0] = 0;
-    
+
     }
 
     // --- Stop PAPI
@@ -110,7 +110,7 @@ void setup_PAPI(int *event_set, int threshold){
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
         test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
     }
-    
+
     if((ret=PAPI_create_eventset(event_set)) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
     }

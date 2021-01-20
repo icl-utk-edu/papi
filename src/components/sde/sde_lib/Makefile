@@ -3,7 +3,7 @@ SDE_LD = -ldl -pthread
 
 F90FLAGS += -ffree-form -ffree-line-length-none -fPIC
 
-all: obj 
+all: obj
 		make link_em
 
 obj: sde_lib.c sde_common.c weak_symbols.c

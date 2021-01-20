@@ -234,7 +234,7 @@ static inline void free_counter(sde_counter_t *counter)
     free(counter);
 }
 
-static int delete_counter(papisde_library_desc_t* lib_handle, const char* name) 
+static int delete_counter(papisde_library_desc_t* lib_handle, const char* name)
 {
 
     sde_counter_t *tmp_item;
@@ -281,12 +281,12 @@ static int delete_counter(papisde_library_desc_t* lib_handle, const char* name)
 /* API Functions.                                                        */
 /*************************************************************************/
 
-/** This function creates the SDE component structure for an individual 
+/** This function creates the SDE component structure for an individual
   software library and returns a handle to the structure.
   @param[in] name_of_library -- (const char *) library name.
   @param[out] sde_handle -- (papi_handle_t) opaque pointer to sde structure for initialized library.
   */
-papi_handle_t 
+papi_handle_t
 __attribute__((visibility("default")))
 papi_sde_init(const char *name_of_library)
 {
@@ -328,8 +328,8 @@ papi_sde_init(const char *name_of_library)
     return tmp_lib;
 }
 
-/** This function registers an event name and counter within the SDE component 
-  structure attached to the handle. A default description for an event is 
+/** This function registers an event name and counter within the SDE component
+  structure attached to the handle. A default description for an event is
   synthesized from the library name and the event name when they are registered.
   @param[in] handle -- pointer (of opaque type papi_handle_t) to sde structure for an individual library.
   @param[in] event_name -- (const char *) name of the event.
@@ -338,7 +338,7 @@ papi_sde_init(const char *name_of_library)
   @param[in] counter -- pointer to a variable that stores the value for the event.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter )
 {
@@ -356,7 +356,7 @@ papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cnt
 
 /** This function registers an event name and (caller provided) callback function
   within the SDE component structure attached to the handle.
-  A default description for an event is 
+  A default description for an event is
   synthesized from the library name and the event name when they are registered.
   @param[in] handle -- pointer (of opaque type papi_handle_t) to sde structure for an individual library.
   @param[in] event_name -- (const char *) name of the event.
@@ -366,7 +366,7 @@ papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cnt
   @param[in] param -- (void *) opaque parameter that will be passed to the callback function every time it's called.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t fp_counter, void *param )
 {
@@ -387,7 +387,7 @@ papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mod
   @param[in] event_name -- (const char *) name of the event that is being unregistered.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_unregister_counter( void *handle, const char *event_name)
 {
@@ -431,18 +431,18 @@ papi_sde_unregister_counter( void *handle, const char *event_name)
 }
 
 
-/** This function optionally replaces an event's default description with a 
-  description provided by the library developer within the SDE component 
-  structure attached to the handle.  
+/** This function optionally replaces an event's default description with a
+  description provided by the library developer within the SDE component
+  structure attached to the handle.
   @param[in] handle -- pointer (of opaque type papi_handle_t) to sde structure for an individual library.
   @param[in] event_name -- (const char *) name of the event.
   @param[in] event_description -- (const char *) description of the event.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_describe_counter( void *handle, const char *event_name, const char *event_description )
-{   
+{
     sde_counter_t *tmp_item;
     papisde_library_desc_t *lib_handle;
     char *full_event_name;
@@ -487,7 +487,7 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
   @param[in] group_flags -- (uint32_t) one of PAPI_SDE_SUM, PAPI_SDE_MAX, PAPI_SDE_MIN to define how the members of the group will be used to compute the group's value.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, const char *group_name, uint32_t group_flags)
 {
@@ -558,12 +558,12 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
         tmp_group->which_lib = lib_handle;
         tmp_group->counter_group_flags = group_flags;
         // Be explicit so that people reading the code can spot the initialization easier.
-        tmp_group->data = NULL; 
+        tmp_group->data = NULL;
         tmp_group->func_ptr = NULL;
         tmp_group->param = NULL;
         tmp_group->counter_group_head = NULL;
 
-        (void)ht_insert(lib_handle->lib_counters, ht_hash_name(full_group_name), tmp_group); 
+        (void)ht_insert(lib_handle->lib_counters, ht_hash_name(full_group_name), tmp_group);
         (void)ht_insert(gctl->all_reg_counters, ht_hash_id(cntr_group_uniq_id), tmp_group);
 
     }else{
@@ -612,7 +612,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
   @param[out] cntr_handle -- address of a pointer in which libsde will store a handle to the newly created counter.
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
 */
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_mode, void **cntr_handle )
 {
@@ -667,7 +667,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
 
 // The following function works only for counters created using papi_sde_create_counter().
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 {
@@ -717,7 +717,7 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 }
 
 
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2), void **record_handle )
 {
@@ -786,7 +786,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
             str_len = tmp_len;
     }
     str_len += strlen(event_name)+1;
-    aux_event_name = calloc(str_len, sizeof(char)); 
+    aux_event_name = calloc(str_len, sizeof(char));
 
     snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[0]);
     SDEDBG("papi_sde_create_recorder(): Preparing to register aux counter: '%s' in SDE library: %s.\n", aux_event_name, lib_handle->libraryName);
@@ -829,7 +829,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
 
 
 // UPDATED for EXP-storage
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_record( void *record_handle, size_t typesize, void *value)
 {
@@ -881,7 +881,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
 
     if( used_entries == total_entries ){
         long long new_segment_size;
- 
+
         // If we had used all the available entries (and thus we are allocating more), we start from the beginning of the new chunk.
         offset = 0;
 
@@ -903,7 +903,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
 
 // This function neither frees the allocated, nor does it zero it. It only resets the counter of used entries so that
 // the allocated space can be resused (and overwritten) by future calls to record().
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_reset_recorder( void *record_handle )
 {
@@ -931,7 +931,7 @@ papi_sde_reset_recorder( void *record_handle )
 
 
 // The following function works only for counters created using papi_sde_create_counter().
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_reset_counter( void *cntr_handle )
 {
@@ -975,7 +975,7 @@ papi_sde_reset_counter( void *cntr_handle )
 /*************************************************************************/
 
 static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param )
-{   
+{
     sde_counter_t *placeholder;
     int ret;
 
@@ -999,7 +999,7 @@ static inline int sde_do_register( papi_handle_t handle, const char *event_name,
 }
 
 
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_compare_long_long(const void *p1, const void *p2){
     long long n1, n2;
@@ -1011,7 +1011,7 @@ papi_sde_compare_long_long(const void *p1, const void *p2){
     return 0;
 }
 
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_compare_int(const void *p1, const void *p2){
     int n1, n2;
@@ -1023,7 +1023,7 @@ papi_sde_compare_int(const void *p1, const void *p2){
     return 0;
 }
 
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_compare_double(const void *p1, const void *p2){
     double n1, n2;
@@ -1035,7 +1035,7 @@ papi_sde_compare_double(const void *p1, const void *p2){
     return 0;
 }
 
-int 
+int
 __attribute__((visibility("default")))
 papi_sde_compare_float(const void *p1, const void *p2){
     float n1, n2;
@@ -1223,14 +1223,14 @@ static long long _sde_compute_max(void *param){
 
 /** This function finds the handle associated with a created counter, or a recorder,
   given the library handle and the event name.
-  @param[in] handle -- (void *) pointer to sde structure for an individual 
+  @param[in] handle -- (void *) pointer to sde structure for an individual
   library
-  @param[in] event_name -- name of the event 
+  @param[in] event_name -- name of the event
   */
-void 
+void
 __attribute__((visibility("default")))
 *papi_sde_get_counter_handle( void *handle, const char *event_name)
-{   
+{
     sde_counter_t *counter_handle;
     papisde_library_desc_t *lib_handle;
     char *full_event_name;
@@ -1261,7 +1261,7 @@ __attribute__((visibility("default")))
 
 
 static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder )
-{   
+{
     papisde_library_desc_t *lib_handle;
     sde_counter_t *tmp_item;
     unsigned int counter_uniq_id;
@@ -1320,13 +1320,13 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
         // Both "counter" and "fp_counter" can be NULL, if we are creating a recorder.
         if( counter ){
-            tmp_item->data = counter; 
+            tmp_item->data = counter;
         }else if( fp_counter ){
             tmp_item->func_ptr = fp_counter;
             tmp_item->param = param;
         }
-        tmp_item->cntr_mode = cntr_mode; 
-        tmp_item->cntr_type = cntr_type; 
+        tmp_item->cntr_mode = cntr_mode;
+        tmp_item->cntr_type = cntr_type;
         free(full_event_name);
 
         if( placeholder )

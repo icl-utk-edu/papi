@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 
     // This test exists just to check that a code that links against libsde
     // _without_ linking against libpapi will still compile and run. Therefore,
-    // if we got to this point then the test has passed. 
+    // if we got to this point then the test has passed.
     fprintf( stdout, "%sPASSED%s\n","\033[1;32m","\033[0m");
 
     return 0;

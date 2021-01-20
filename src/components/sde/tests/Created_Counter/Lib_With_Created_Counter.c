@@ -41,7 +41,7 @@ void cclib_init(void){
     z1=42;
     z2=420;
     z3=42000;
-    z4=424242; 
+    z4=424242;
 
     return;
 }

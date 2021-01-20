@@ -83,12 +83,12 @@ long long counter_accessor_function( void *param ){
 double simple_compute(double x){
     double sum = 0.0;
     int lcl_iter = 0;
-    
+
     while( 1 ){
         double y,tmp;
         lcl_iter++;
 
-        // Compute a function with range [0:1] so we can iterate 
+        // Compute a function with range [0:1] so we can iterate
         // multiple times without diverging or creating FP exceptions.
         tmp = (2.0+sin(314.0*x)+sin(11.0*x*x));
         tmp = tmp*tmp;
