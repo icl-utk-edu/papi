@@ -16,6 +16,8 @@ typedef ucontext_t hwd_ucontext_t;
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.sc_ip
 #elif defined(__i386__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_EIP]
+#elif defined(__NEC__)
+#define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(__x86_64__)
 #define OVERFLOW_ADDRESS(ctx) ctx.ucontext->uc_mcontext.gregs[REG_RIP]
 #elif defined(__powerpc__) && !defined(__powerpc64__)
