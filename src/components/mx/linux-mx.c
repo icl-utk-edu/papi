@@ -225,7 +225,7 @@ _mx_init_component( int cidx )
 
 	FILE *fff;
 	char *path;
-	int len, pathlen;
+	int checklen, len, pathlen;
 
 	/* detect if MX available */
 
@@ -233,13 +233,31 @@ _mx_init_component( int cidx )
 	pathlen = strlen(path);
 	while(pathlen > 0) {
 	   len = strcspn(path, ":");
-	   strncpy(mx_counters_exe, path, len);
+	   if (len < BUFSIZ) {
+	      strncpy(mx_counters_exe, path, len);
+	   } else {
+	      fff = NULL;
+	      break;
+	   }
 	   mx_counters_exe[len] = '\0';
-	   strcat(mx_counters_exe, "/mx_counters");
+	   checklen = len + strlen("/mx_counters");
+	   if (checklen < BUFSIZ) {
+	      strcat(mx_counters_exe, "/mx_counters");
+	   } else {
+	      fff = NULL;
+	      break;
+	   }
 	   fff = fopen(mx_counters_exe, "r");
 	   if (fff != NULL) {
-	      strcat(mx_counters_exe, " 2> /dev/null");
-	      break;
+	      checklen = checklen + strlen(" 2> /dev/null");
+	      if (checklen < BUFSIZ) {
+	         strcat(mx_counters_exe, " 2> /dev/null");
+	         break;
+	      } else {
+	         fclose(fff);
+	         fff = NULL;
+	         break;
+	      }
 	   }
 	   pathlen = pathlen - len - 1;
 	   if (pathlen > 0) {
@@ -247,7 +265,7 @@ _mx_init_component( int cidx )
 	   }
 	}
 	if (fff == NULL) {
-	   /* neither real nor fake found */
+	   /* mx_counters not found */
 	   strncpy(_mx_vector.cmp_info.disabled_reason,
 		   "No MX utilities found",PAPI_MAX_STR_LEN);
 	   return PAPI_ECMP;
