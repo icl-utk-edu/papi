@@ -4,7 +4,7 @@
 #undef CPU
 
 /* POSIX 1b clock */
-#undef HAVE_CLOCK_GETTIME
+#cmakedefine HAVE_CLOCK_GETTIME
 
 /* POSIX 1b realtime clock */
 #undef HAVE_CLOCK_GETTIME_REALTIME
@@ -19,7 +19,7 @@
 #undef HAVE_CYCLE
 
 /* Define to 1 if you have the <c_asm.h> header file. */
-#undef HAVE_C_ASM_H
+#cmakedefine HAVE_C_ASM_H
 
 /* This platform has the ffsll() function */
 #undef HAVE_FFSLL
@@ -37,10 +37,10 @@
 #undef HAVE_HRTIME_T
 
 /* Define to 1 if you have the <intrinsics.h> header file. */
-#undef HAVE_INTRINSICS_H
+#cmakedefine HAVE_INTRINSICS_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H
 
 /* Define to 1 if you have the `cpc' library (-lcpc). */
 #undef HAVE_LIBCPC
@@ -49,22 +49,22 @@
 #undef HAVE_LIBPERFCTR_H
 
 /* Define to 1 if you have the `mach_absolute_time' function. */
-#undef HAVE_MACH_ABSOLUTE_TIME
+#cmakedefine HAVE_MACH_ABSOLUTE_TIME
 
 /* Define to 1 if you have the <mach/mach_time.h> header file. */
-#undef HAVE_MACH_MACH_TIME_H
+#cmakedefine HAVE_MACH_MACH_TIME_H
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#cmakedefine HAVE_MEMORY_H
 
 /* Altix memory mapped global cycle counter */
 #undef HAVE_MMTIMER
 
 /* Define to 1 if you have the <perfmon/pfmlib.h> header file. */
-#undef HAVE_PERFMON_PFMLIB_H
+#cmakedefine HAVE_PERFMON_PFMLIB_H
 
 /* Montecito headers */
-#undef HAVE_PERFMON_PFMLIB_MONTECITO_H
+#cmakedefine HAVE_PERFMON_PFMLIB_MONTECITO_H
 
 /* Working per thread getrusage */
 #undef HAVE_PER_THREAD_GETRUSAGE

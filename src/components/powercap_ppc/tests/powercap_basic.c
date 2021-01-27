@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include "papi.h"
-#include "papi_test.h"
 
 #define MAX_powercap_EVENTS 64
 

@@ -78,7 +78,7 @@ static void work (int EventSet, int sleep_test, int quiet)
 		sleep(2);
 	}
 	else {
-		do_flops( numflops, 1 );
+		my_very_unique_do_flops( numflops, 1 );
 	}
 
 	/* Stop PAPI */

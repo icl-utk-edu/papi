@@ -19,7 +19,7 @@ int flops_double_init_matrix(void);
 double flops_double_matrix_matrix_multiply(void);
 double flops_double_swapped_matrix_matrix_multiply(void);
 double do_flops3( double x, int iters, int quiet );
-double do_flops( int n, int quiet );
+double my_very_unique_do_flops( int n, int quiet );
 
 /* cache_testcode.c */
 int cache_write_test(double *array, int size);

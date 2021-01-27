@@ -457,44 +457,45 @@ AC_ARG_WITH(CPU,
 			family=nec
 		;;
 	       freebsd)
-                   family=`uname -m`
+                 family=`uname -m`
 
-		   if test "$family" = "amd64"; then
+                 if test "$family" = "amd64"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
 
-		   elif test "$family" = "i386"; then
+		         elif test "$family" = "i386"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
-		   fi ;;
+		         fi ;;
 
 	       darwin)
-                   family=`uname -m`
+                 family=`uname -m`
 
-                   MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
+                 MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
 
-		   ;;
+		         ;;
 
-               linux)
-                   family=`uname -m`
+            linux)
+                 family=`uname -m`
 
-		   if test "$family" = "x86_64"; then
+		         if test "$family" = "x86_64"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
-		      CPU="x86"
+		              CPU="x86"
 
-		   elif test "$family" = "i686"; then
+		         elif test "$family" = "i686"; then
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
-		      CPU="x86"
+		              CPU="x86"
 
-                   elif test "$family" = "ppc64"; then
-                     CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
-                     case "$CPU_info" in
-                       PPC970*) CPU="PPC970";;
-                       POWER5)  CPU="POWER5";;
-                       POWER5+) CPU="POWER5+";;
-                       POWER6)  CPU="POWER6";;
-                       POWER7)  CPU="POWER7";;
-                     esac
-	           fi ;;
-               solaris)
+                 elif test "$family" = "ppc64"; then
+                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                      case "$CPU_info" in
+                         PPC970*) CPU="PPC970";;
+                         POWER5)  CPU="POWER5";;
+                         POWER5+) CPU="POWER5+";;
+                         POWER6)  CPU="POWER6";;
+                         POWER7)  CPU="POWER7";;
+                      esac
+	             fi ;;
+
+            solaris)
                  AC_CHECK_HEADER([libcpc.h],
                                  [CFLAGS="$CFLAGS -lcpc"
                                   AC_TRY_RUN([#include <stdlib.h>
@@ -511,20 +512,20 @@ AC_ARG_WITH(CPU,
                  processor=`uname -p`
                  machinetype=`uname -m`
                  if test "$processor" = "sparc"; then
-                   if test "$machinetype" = "sun4u"; then
-                     CPU=ultra
-                     AC_CHECK_LIB([cpc], [cpc_take_sample], [], 
+                    if test "$machinetype" = "sun4u"; then
+                         CPU=ultra
+                         AC_CHECK_LIB([cpc], [cpc_take_sample], [], 
                                   [AC_MSG_ERROR([libcpc.a is needed on Solaris, install SUNWcpc]) ])
-                   elif test "$machinetype" = "sun4v"; then
-                     CPU=niagara2
-                     if test "$cpc_version" != "2"; then
-                       AC_MSG_ERROR([libcpc2 needed for Niagara 2])
-                     fi
-                   else
-                     AC_MSG_ERROR([$machinetype not supported])
-                   fi
+                    elif test "$machinetype" = "sun4v"; then
+                         CPU=niagara2
+                         if test "$cpc_version" != "2"; then
+                            AC_MSG_ERROR([libcpc2 needed for Niagara 2])
+                         fi
+                    else
+                         AC_MSG_ERROR([$machinetype not supported])
+                    fi
                  else
-                   AC_MSG_ERROR([Only SPARC processors are supported on Solaris])
+                    AC_MSG_ERROR([Only SPARC processors are supported on Solaris])
                  fi ;;
                bgp)
 	             CPU=bgp ;;

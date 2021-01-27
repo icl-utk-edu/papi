@@ -178,16 +178,16 @@ do_flops3( double x, int iters, int quiet )
 }
 
 
-volatile double a = 0.5, b = 2.2;
+volatile double valid_a = 0.5, valid_b = 2.2;
 
 double
-do_flops( int n, int quiet )
+my_very_unique_do_flops( int n, int quiet )
 {
         int i;
         double c = 0.11;
 
         for ( i = 0; i < n; i++ ) {
-                c += a * b;
+                c += valid_a * valid_b;
         }
 
 	if (!quiet) printf("%lf\n",c);

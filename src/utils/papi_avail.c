@@ -187,7 +187,7 @@
 static char *
 is_derived( PAPI_event_info_t * info )
 {
-	if ( strlen( info->derived ) == 0 )
+    if ( strlen( info->derived ) == 0 )
 		return ( "No" );
 	else if ( strcmp( info->derived, "NOT_DERIVED" ) == 0 )
 		return ( "No" );
