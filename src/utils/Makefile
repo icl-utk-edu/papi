@@ -52,8 +52,8 @@ ifneq ($(SDE_ENABLED),1)
 papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o sde_weak_symbols.o
 	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o sde_weak_symbols.o $(LDFLAGS)
 else
-papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o libsde
-	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o ../components/sde/sde_lib/libsde.a $(LDFLAGS)
+papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o
+	$(CC) -o papi_native_avail -DSTATIC_SDE papi_native_avail.o $(SDE_LIB_FILES) $(PAPILIB) print_header.o $(LDFLAGS)
 endif
 
 papi_version: papi_version.o $(PAPILIB)
@@ -74,10 +74,6 @@ ifneq ($(SDE_ENABLED),1)
 sde_weak_symbols.o: ../components/sde/sde_lib/weak_symbols.c
 	$(CC) -o sde_weak_symbols.o $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -I../components/sde/sde_lib/ -c $<
 endif
-
-.PHONY: libsde
-libsde: ../components/sde/sde_lib/sde_lib.c ../components/sde/sde_lib/sde_common.c
-	make -C ../components/sde/sde_lib
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)

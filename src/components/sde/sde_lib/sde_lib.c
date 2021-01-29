@@ -287,7 +287,7 @@ static int delete_counter(papisde_library_desc_t* lib_handle, const char* name)
   @param[out] sde_handle -- (papi_handle_t) opaque pointer to sde structure for initialized library.
   */
 papi_handle_t
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_init(const char *name_of_library)
 {
     papisde_library_desc_t *tmp_lib;
@@ -339,7 +339,7 @@ papi_sde_init(const char *name_of_library)
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter )
 {
     int ret_val;
@@ -367,7 +367,7 @@ papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cnt
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t fp_counter, void *param )
 {
     int ret_val;
@@ -388,7 +388,7 @@ papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mod
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_unregister_counter( void *handle, const char *event_name)
 {
     papisde_library_desc_t *lib_handle;
@@ -440,7 +440,7 @@ papi_sde_unregister_counter( void *handle, const char *event_name)
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_describe_counter( void *handle, const char *event_name, const char *event_description )
 {
     sde_counter_t *tmp_item;
@@ -488,7 +488,7 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
   */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, const char *group_name, uint32_t group_flags)
 {
     papisde_library_desc_t *lib_handle;
@@ -613,7 +613,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
   @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
 */
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_mode, void **cntr_handle )
 {
     int ret_val;
@@ -668,7 +668,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
 // The following function works only for counters created using papi_sde_create_counter().
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 {
     long long int *ptr;
@@ -718,7 +718,7 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 
 
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2), void **record_handle )
 {
 
@@ -830,7 +830,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
 
 // UPDATED for EXP-storage
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_record( void *record_handle, size_t typesize, void *value)
 {
     sde_counter_t *tmp_item;
@@ -904,7 +904,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
 // This function neither frees the allocated, nor does it zero it. It only resets the counter of used entries so that
 // the allocated space can be resused (and overwritten) by future calls to record().
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_reset_recorder( void *record_handle )
 {
     sde_counter_t *tmp_rcrdr;
@@ -932,7 +932,7 @@ papi_sde_reset_recorder( void *record_handle )
 
 // The following function works only for counters created using papi_sde_create_counter().
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_reset_counter( void *cntr_handle )
 {
     long long int *ptr;
@@ -1000,7 +1000,7 @@ static inline int sde_do_register( papi_handle_t handle, const char *event_name,
 
 
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_compare_long_long(const void *p1, const void *p2){
     long long n1, n2;
     n1 = *(long long *)p1;
@@ -1012,7 +1012,7 @@ papi_sde_compare_long_long(const void *p1, const void *p2){
 }
 
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_compare_int(const void *p1, const void *p2){
     int n1, n2;
     n1 = *(int *)p1;
@@ -1024,7 +1024,7 @@ papi_sde_compare_int(const void *p1, const void *p2){
 }
 
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_compare_double(const void *p1, const void *p2){
     double n1, n2;
     n1 = *(double *)p1;
@@ -1036,7 +1036,7 @@ papi_sde_compare_double(const void *p1, const void *p2){
 }
 
 int
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 papi_sde_compare_float(const void *p1, const void *p2){
     float n1, n2;
     n1 = *(float *)p1;
@@ -1228,7 +1228,7 @@ static long long _sde_compute_max(void *param){
   @param[in] event_name -- name of the event
   */
 void
-__attribute__((visibility("default")))
+__attribute__((visibility("hidden")))
 *papi_sde_get_counter_handle( void *handle, const char *event_name)
 {
     sde_counter_t *counter_handle;

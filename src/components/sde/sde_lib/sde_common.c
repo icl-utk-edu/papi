@@ -13,32 +13,26 @@
 #include <stdarg.h>
 #include "sde_common.h"
 
+__attribute__((visibility("hidden")))
 int _sde_be_verbose = 0;
+
+__attribute__((visibility("hidden")))
 int _sde_debug = 0;
 
 static papisde_library_desc_t *find_library_by_name(const char *library_name, papisde_control_t *gctl);
 static void insert_library_handle(papisde_library_desc_t *lib_handle, papisde_control_t *gctl);
 
-void SDE_ERROR( char *format, ... ){
-    va_list args;
-    if ( _sde_be_verbose ) {
-        va_start( args, format );
-        fprintf( stderr, "PAPI SDE Error: " );
-        vfprintf( stderr, format, args );
-        fprintf( stderr, "\n" );
-        va_end( args );
-    }
-}
-
 /*************************************************************************/
 /* Functions related to internal hashing of events                       */
 /*************************************************************************/
 
+__attribute__((visibility("hidden")))
 unsigned int ht_hash_id(unsigned int uniq_id){
     return uniq_id%PAPISDE_HT_SIZE;
 }
 
 // djb2 hash
+__attribute__((visibility("hidden")))
 unsigned long ht_hash_name(const char *str)
 {
     unsigned long hash = 5381;
@@ -50,6 +44,7 @@ unsigned long ht_hash_name(const char *str)
     return hash % PAPISDE_HT_SIZE;
 }
 
+__attribute__((visibility("hidden")))
 void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_t *sde_counter)
 {
     papisde_list_entry_t *list_head, *new_entry;
@@ -73,6 +68,7 @@ void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_t *sde_
     return;
 }
 
+__attribute__((visibility("hidden")))
 sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned int uniq_id)
 {
     papisde_list_entry_t *list_head, *curr, *prev;
@@ -114,6 +110,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
     return NULL;
 }
 
+__attribute__((visibility("hidden")))
 sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *name)
 {
     papisde_list_entry_t *list_head, *curr;

@@ -25,6 +25,8 @@ papi_sde_init(const char *name_of_library)
 {
     (void) name_of_library;
 
+    /* do nothing */
+
     return NULL;
 }
 
