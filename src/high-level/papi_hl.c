@@ -806,12 +806,17 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
 {
    int i, j;
    int region_count = 1;
-   int cmp_iter = 2;
+   long_long ts;
+   int cmp_iter = 3;
+
+   /* get timestamp */
+   ts = PAPI_get_real_nsec();
 
    if ( reg_typ == REGION_BEGIN ) {
       /* set first fixed counters */
       node->values[0].offset = region_count;
       node->values[1].offset = _local_cycles;
+      node->values[2].offset = ts;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ )
@@ -822,9 +827,11 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       if ( ( read_node = _internal_hl_insert_read_node(&node->values[1].read_values) ) == NULL )
          return ( PAPI_ENOMEM );
       read_node->value = _local_cycles - node->values[1].offset;
+      if ( ( read_node = _internal_hl_insert_read_node(&node->values[2].read_values) ) == NULL )
+         return ( PAPI_ENOMEM );
+      read_node->value = ts - node->values[2].offset;
       for ( i = 0; i < num_of_components; i++ ) {
          for ( j = 0; j < components[i].num_of_events; j++ ) {
-            reads_t* read_node;
             if ( ( read_node = _internal_hl_insert_read_node(&node->values[cmp_iter].read_values) ) == NULL )
                return ( PAPI_ENOMEM );
             if ( components[i].event_types[j] == 1 )
@@ -839,6 +846,7 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
          previous total value */
       node->values[0].total += node->values[0].offset;
       node->values[1].total += _local_cycles - node->values[1].offset;
+      node->values[2].total += ts - node->values[2].offset;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ ) {
@@ -876,8 +884,8 @@ static inline regions_t* _internal_hl_insert_region_node(regions_t** head_node, 
    int i;
    int extended_total_num_events;
 
-   /* number of all events including region count and CPU cycles */
-   extended_total_num_events = total_num_events + 2;
+   /* number of all events including region count, CPU cycles and real time */
+   extended_total_num_events = total_num_events + 3;
 
    /* create new region node */
    new_node = malloc(sizeof(regions_t) + extended_total_num_events * sizeof(value_t));
@@ -1227,18 +1235,20 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
    int extended_total_num_events;
    int i, j, cmp_iter, region_count;
 
-   /* generate array of all events including region count and CPU cycles for output */
-   extended_total_num_events = total_num_events + 2;
+   /* generate array of all events including region count, CPU cycles and real time for output */
+   extended_total_num_events = total_num_events + 3;
    all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
    all_event_names[0] = "region_count";
    all_event_names[1] = "cycles";
+   all_event_names[2] = "real_time_nsec";
 
    all_event_types = (int*)malloc(extended_total_num_events * sizeof(int));
    all_event_types[0] = 0;
    all_event_types[1] = 0;
+   all_event_types[2] = 0;
 
 
-   cmp_iter = 2;
+   cmp_iter = 3;
    for ( i = 0; i < num_of_components; i++ ) {
       for ( j = 0; j < components[i].num_of_events; j++ ) {
          all_event_names[cmp_iter] = components[i].event_names[j];
@@ -1492,7 +1502,7 @@ static void _internal_hl_write_output()
             /* start of JSON file */
             fprintf(output_file, "{");
             _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
-            fprintf(output_file, "\"cpu in mhz\":\"%d\",", cpu_freq);
+            fprintf(output_file, "\"max_cpu_rate_mhz\":\"%d\",", cpu_freq);
 
             /* write definitions */
             _internal_hl_json_definitions(output_file, beautifier);
@@ -1577,7 +1587,7 @@ static void _internal_hl_clean_up_global_data()
          while ( region != NULL ) {
 
             /* clean up read node list */
-            extended_total_num_events = total_num_events + 2;
+            extended_total_num_events = total_num_events + 3;
             for ( i = 0; i < extended_total_num_events; i++ ) {
                reads_t *read_node = region->values[i].read_values;
                reads_t *read_node_tmp;
