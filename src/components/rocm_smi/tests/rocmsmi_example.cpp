@@ -21,7 +21,9 @@
 // no PAPI instrumentation in it. The pthread approach coded here has the
 // advantage of being a single executable and more flexible, for example you
 // can incorporate other elements into your output, such as PAPI event values
-// into the timed outputs, labels to indicate processing landmarks, etc.
+// into the timed outputs, labels to indicate processing landmarks, etc. For
+// example, we could also read device temperature with every sample, or memory
+// usage or cache statistics, or I/O bandwidth statistics.
 
 // rocblas is generally part of the installed package from AMD, in
 // $PAPI_ROCM_ROOT/rocblas/, with subdirectories /lib and /include.  We don't
@@ -105,10 +107,17 @@ typedef struct rb_sgemm_parms {
     rocblas_int       ldc;
 } rb_sgemm_parms_t;
 
+enum {
+    samplingCommand_wait = -1,
+    samplingCommand_record = 0,
+    samplingCommand_exit = 1
+};
+
 typedef struct samplingOrders {
+    // To avoid any multi-thread race conditions:
     // The following variables are only written by Main, not by the sampling Thread.
     int               EventSet;     // The events to read.
-    int               command;      // -1=wait, 0=sample and record, 1=exit.
+    volatile int      command;      // -1=wait, 0=sample and record, 1=exit.
     int               maxSamples;   // extent of array.
 
     // The following variables are only written by the Thread, not by Main.
@@ -158,7 +167,7 @@ void* sampler(void* vMyOrders) {
     myOrders->eventsRead[0]=0;
     
     // Sleep for time given in req. If interrupted by a signal, time remaining in rem.
-    while (myOrders->command < 1) {         // run until instructed to exit. 
+    while (myOrders->command != samplingCommand_exit) {  // run until instructed to exit. 
         ret = nanosleep(&req, &rem);        // sleep.
         while (ret != 0) {                  // If interrupted by a signal (almost never happens),
             countInterrupts++; 
@@ -167,7 +176,8 @@ void* sampler(void* vMyOrders) {
         }
         
         // We have completed a sleep cycle. If we need to sample, do that.
-        if (myOrders->command == 0 && myOrders->sampleIdx < myOrders->maxSamples) {   
+        if (myOrders->command == samplingCommand_record && 
+            myOrders->sampleIdx < myOrders->maxSamples) {   
             long long nsElapsed=0;
             int x2 = myOrders->sampleIdx<<1;            // compute double the sample index.
             long long tstamp = PAPI_get_real_nsec();    // PAPI function returns 
@@ -198,7 +208,7 @@ int main( int argc, char **argv )
     (void) argc;
     (void) argv;
 
-    int i, retval;
+    int i, x2, retval;
     int EventSet = PAPI_NULL;
 
     // Step 1: Initialize the PAPI library. The library returns its version,
@@ -289,7 +299,7 @@ int main( int argc, char **argv )
     pthread_t samplingThread;
     samplingOrders_t myOrders;
     myOrders.EventSet = EventSet;
-    myOrders.command = -1;          // Wait for me to say start.
+    myOrders.command = samplingCommand_wait;            // Wait for me to say start.
     myOrders.maxSamples = 20*1000/MS_SAMPLE_INTERVAL;   // 20 seconds worth.
     myOrders.sampleIdx = 0;
     myOrders.samples = (long long*) calloc(myOrders.maxSamples*2, sizeof(long long));   // allocate space.
@@ -310,7 +320,7 @@ int main( int argc, char **argv )
     if (myParms->rb_ret != rocblas_status_success) exit(myParms->rb_ret);
 
     // Start sampling.
-    myOrders.command = 0;
+    myOrders.command = samplingCommand_record;
     while (myOrders.sampleIdx < 1); 
 
     // Call rocblas and do an SGEMM.
@@ -326,7 +336,7 @@ int main( int argc, char **argv )
     // Wait for some trailing samples, if possible.
     while (myOrders.sampleIdx <= checkTime+5 && myOrders.sampleIdx < myOrders.maxSamples);
     if (VERBOSE) fprintf(stderr, "Stopping Sampler, joining thread.\n");
-    myOrders.command = 1;       // Tell the sampling thread to exit.
+    myOrders.command = samplingCommand_exit;       // Tell the sampling thread to exit.
 
     // Wait for the sampler thread to finish.
     retval = pthread_join(samplingThread, NULL); 
@@ -340,20 +350,35 @@ int main( int argc, char **argv )
     if (VERBOSE) printf("Read %d samples, =%.3f seconds. %llu nanosleepInterrupts.\n", myOrders.sampleIdx, (myOrders.sampleIdx*MS_SAMPLE_INTERVAL)/1000., countInterrupts);
     printf("ns timeStamp, ns Diff, microWatts, Joules (Watts*Seconds)\n");
 
+    float duration, avgWatts=0.0, totJoules=0.0;
+    long long minWatts=myOrders.samples[1];
+    long long maxWatts=minWatts;
     for (i=0; i<myOrders.sampleIdx; i++) {
-        int x2 = i<<1;
+        x2 = i<<1;
         printf("%llu,", myOrders.samples[x2]);
         if (i==0) printf("0,");
         else      printf("%llu,", myOrders.samples[x2]-myOrders.samples[x2-2]);
+        if (myOrders.samples[x2+1] < minWatts) minWatts = myOrders.samples[x2+1];
+        if (myOrders.samples[x2+1] > maxWatts) maxWatts = myOrders.samples[x2+1];
+        avgWatts += (myOrders.samples[x2+1]+0.0)*1.e-6;
         printf("%llu,", myOrders.samples[x2+1]);
         if (i==0) printf("0.0\n");
         else {
             float w= myOrders.samples[x2+1]*1.e-6;
             float s= (myOrders.samples[x2]-myOrders.samples[x2-2])*1.e-9;
+            totJoules += (w*s);
             printf("%.6f\n", (w*s));
         }
     }
    
+    x2 = (myOrders.sampleIdx-1)<<1; // Final index.
+    duration = (float) (myOrders.samples[x2]-myOrders.samples[0]);
+    duration *= 1.e-6;  // compute milliseconds from nano seconds.
+    avgWatts /= (myOrders.sampleIdx-1.0);   // one less, first reading is zero.
+    printf("ms Duration=%.3f\n", duration);
+    printf("ms AvgInterval=%.3f\n", duration/(myOrders.sampleIdx-1));
+    printf("avg Watts=%.3f, minWatts=%.3f, maxWatts=%.3f\n", avgWatts, (minWatts*1.e-6), (maxWatts*1.e-6));
+    printf("total Joules=%.3f\n", totJoules); 
 
     // Now we clean up. First, we stop the event set. This will re-do the read;
     // we could prevent that by passing a NULL pointer for the 'values'.
