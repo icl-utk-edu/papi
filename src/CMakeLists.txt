@@ -1357,7 +1357,7 @@ foreach (comp ${COMPONENTS_LIST})
     endif (comp STREQUAL "sde")
 endforeach (comp ${COMPONENTS_LIST})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if (TARGET papi)
@@ -1554,7 +1554,7 @@ write_basic_package_version_file (${CMAKE_CURRENT_BINARY_DIR}/PAPIConfigVersion.
 	VERSION ${PAPI_VERSION_MAJOR}.${PAPI_VERSION_MINOR}.${PAPI_VERSION_PATCH}
         COMPATIBILITY SameMajorVersion)
 
-install(FILES                                                                                              
+install(FILES
 	${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIConfig.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/PAPIConfigVersion.cmake
 	DESTINATION ${CONFIG_INSTALL_DIR})
@@ -1589,7 +1589,7 @@ set(CPACK_GENERATOR "TBZ2")
 #set (CPACK_RESOURCE_FILE_LICENSE
 #    "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
 set (CPACK_PACKAGE_VERSION_MAJOR "${PAPI_VERSION_MAJOR}")
-set (CPACK_PACKAGE_VERSION_MINOR "${PAPI_VERSION_MINOR}")                                                
+set (CPACK_PACKAGE_VERSION_MINOR "${PAPI_VERSION_MINOR}")
 set (CPACK_PACKAGE_VERSION_PATCH "${PAPI_VERSION_PATCH}")
 include (CPack)
 

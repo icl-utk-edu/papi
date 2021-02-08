@@ -3,7 +3,7 @@ if (NOT TARGET papi)
     message(FATAL "Target papi is missing, components are compiled through the framework")
 endif (NOT TARGET papi)
 
-option(WITH_PERF_EVENTS "Build Perf Events component" OFF)
+option(WITH_PERF_EVENTS "Build Perf Events component" ON)
 
 if (MIC)
     set (perf_events no PARENT_SCOPE)
