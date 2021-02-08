@@ -1,0 +1,10 @@
+if (NOT WITH_TESTS)
+    return ()
+endif (NOT WITH_TESTS)
+
+add_papi_component_test (borken_events)
+add_papi_component_test (event_name_lib)
+add_papi_component_test (nmi_watchdog)
+add_papi_component_test (perf_event_offcore_response)
+add_papi_component_test (perf_event_system_wide)
+add_papi_component_test (perf_event_user_kernel)

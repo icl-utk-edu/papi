@@ -1,0 +1,10 @@
+if (NOT WITH_TESTS)
+      #    return ()
+endif (NOT WITH_TESTS)
+
+add_papi_component_test (perf_event_amd_northbridge)
+add_papi_component_test (perf_event_uncore_attach)
+add_papi_component_test (perf_event_uncore)
+add_papi_component_test (perf_event_uncore_cbox)
+add_papi_component_test (perf_event_uncore_lib)
+add_papi_component_test (perf_event_uncore_multiple)
