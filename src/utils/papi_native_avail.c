@@ -52,7 +52,7 @@
 #include "papi.h"
 #include "print_header.h"
 #if SDE
-#include "components/sde/interface/papi_sde_interface.h"
+#include "components/sde/sde_lib/papi_sde_interface.h"
 #endif
 
 #define EVT_LINE 80
