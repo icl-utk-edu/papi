@@ -2,6 +2,7 @@
 #define _DATA_CACHE_
 
 #include <stdio.h>
+#include <omp.h>
 
 int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode);
 int experiment_main(void *arg);
