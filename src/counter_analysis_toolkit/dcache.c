@@ -100,11 +100,10 @@ error0:
 
 void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
     int i,j;
-    pthread_t tid;
     int *values;
     double **rslts, *sorted_rslts, *latencies;
     double **counter, *sorted_counter;
-    int *thread_msg;
+    int status;
 
     // Replace this by modifying function header and global vars.
     global_pattern = pattern;
@@ -146,10 +145,9 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     data.latency_only = latency_only;
     data.mode = mode;
 
-    // A new thread will run the actual experiment.
-    pthread_create(&tid, NULL, thread_main, &data);
-    pthread_join(tid, (void **)&thread_msg);
-    if( -7 == *thread_msg ){
+    // Run the pointer chases.
+    status = experiment_main(&data);
+    if( 0 != status ){
         return;
     }
 
@@ -188,15 +186,14 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     return;
 }
 
-void *thread_main(void *arg){
+int experiment_main(void *arg){
     int i, latency_only, mode;
     int native, ret_val;
     int *values;
     double **rslts;
     double **counter;
     data_t *data;
-    int *error_flag = (int *)malloc(sizeof(int));
-    *error_flag = -7;
+    int status = 0;
 
     data = (data_t *)arg;
     values   = data->values;
@@ -205,50 +202,46 @@ void *thread_main(void *arg){
     latency_only = data->latency_only;
     mode = data->mode;
 
-    if( !latency_only){
+    if( !latency_only ){
         _papi_eventset = PAPI_NULL;
-        if( PAPI_thread_init(pthread_self) != PAPI_OK ){
-            fprintf(stderr,"PAPI was NOT initialized correctly.\n");
-            pthread_exit((void *)error_flag); 
-        }        
 
         /* Set the event */
         ret_val = PAPI_create_eventset( &_papi_eventset );
         if (ret_val != PAPI_OK ){
-            pthread_exit((void *)error_flag); 
+            return -1;
         }
 
         ret_val = PAPI_event_name_to_code( data->event_name, &native );
         if (ret_val != PAPI_OK ){
-            pthread_exit((void *)error_flag);
+            return -1;
         }
 
         ret_val = PAPI_add_event( _papi_eventset, native );
         if (ret_val != PAPI_OK ){
-            pthread_exit((void *)error_flag);
+            return -1;
         }
         /* Done setting the event. */
     }
 
     for(i=0; i<global_max_iter; ++i){
-        *error_flag = varyBufferSizes(values, rslts[i], counter[i], global_line_size_in_bytes, global_pages_per_block, latency_only, mode);
+        status = varyBufferSizes(values, rslts[i], counter[i], global_line_size_in_bytes, global_pages_per_block, latency_only, mode);
     }
 
     if( !latency_only ){
         ret_val = PAPI_cleanup_eventset(_papi_eventset);
         if (ret_val != PAPI_OK ){
             fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
-            pthread_exit((void *)error_flag);
+            return -1;
         }
         ret_val = PAPI_destroy_eventset(&_papi_eventset);
         if (ret_val != PAPI_OK ){
             fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
-            pthread_exit((void *)error_flag);
+            return -1;
         }
 
     }
 
-    return error_flag;
+    return status;
 }
 
 int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode){
@@ -275,7 +268,7 @@ int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_i
     out = probeBufferSize(16*line_size, line_size, pages_per_block, v, &rslt, latency_only, mode);
     if(out.status != 0)
     {
-        return -7;
+        return -1;
     }
     out = probeBufferSize(2*16*line_size, line_size, pages_per_block, v, &rslt, latency_only, mode);
 
