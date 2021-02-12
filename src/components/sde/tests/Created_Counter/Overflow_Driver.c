@@ -1,31 +1,34 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "papi.h"
+#include "papi_test.h"
 
 #define EV_THRESHOLD 10
 
 void cclib_init(void);
 void cclib_do_work(void);
 void cclib_do_more_work(void);
-int setup_PAPI(int *event_set, int threshold);
+void setup_PAPI(int *event_set, int threshold);
+
+int remaining_handler_invocations = 22;
+int be_verbose = 0;
 
 int main(int argc, char **argv){
     int i, ret, event_set = PAPI_NULL;
     long long counter_values[1] = {0};
 
-    (void)argc;
-    (void)argv;
+    if( (argc > 1) && !strcmp(argv[1], "-verbose") )
+        be_verbose = 1;
 
     cclib_init();
 
-    if( 0 != setup_PAPI(&event_set, EV_THRESHOLD) )
-        exit(-1);
+    setup_PAPI(&event_set, EV_THRESHOLD);
 
     // --- Start PAPI
     if((ret=PAPI_start(event_set)) != PAPI_OK){
-        fprintf(stderr,"PAPI_start error:%s \n",PAPI_strerror(ret));
-        exit(-1);
+        test_fail( __FILE__, __LINE__, "PAPI_start", ret );
     }
 
     for(i=0; i<4; i++){
@@ -34,30 +37,34 @@ int main(int argc, char **argv){
 
         // --- Read the event counters _and_ reset them
         if((ret=PAPI_accum(event_set, counter_values)) != PAPI_OK){
-            fprintf(stderr,"PAPI_accum error:%s \n",PAPI_strerror(ret));
-            exit(-1);
+            test_fail( __FILE__, __LINE__, "PAPI_accum", ret );
         }
-        printf("Epsilon count in cclib_do_work(): %lld\n",counter_values[0]);
+        if( be_verbose ) printf("Epsilon count in cclib_do_work(): %lld\n",counter_values[0]);
         counter_values[0] = 0;
 
         cclib_do_more_work();
 
         // --- Read the event counters _and_ reset them
         if((ret=PAPI_accum(event_set, counter_values)) != PAPI_OK){
-            fprintf(stderr,"PAPI_accum error:%s \n",PAPI_strerror(ret));
-            exit(-1);
+            test_fail( __FILE__, __LINE__, "PAPI_accum", ret );
         }
-        printf("Epsilon count in cclib_do_more_work(): %lld\n",counter_values[0]);
+        if( be_verbose ) printf("Epsilon count in cclib_do_more_work(): %lld\n",counter_values[0]);
         counter_values[0] = 0;
-    
+
     }
 
     // --- Stop PAPI
     if((ret=PAPI_stop(event_set, counter_values)) != PAPI_OK){
-        fprintf(stderr,"PAPI_stop error:%s \n",PAPI_strerror(ret));
-        exit(-1);
+        test_fail( __FILE__, __LINE__, "PAPI_stop", ret );
     }
 
+    if( remaining_handler_invocations <= 1 ) // Let's allow for up to one missed signal, or race condition.
+        test_pass(__FILE__);
+    else
+        test_fail( __FILE__, __LINE__, "SDE overflow handler was not invoked as expected!", 0 );
+
+    // The following "return" is dead code, because both test_pass() and test_fail() call exit(),
+    // however, we need it to prevent compiler warnings.
     return 0;
 }
 
@@ -70,58 +77,56 @@ void overflow_handler(int event_set, void *address, long long overflow_vector, v
     (void)context;
 
     if( (ret = PAPI_get_overflow_event_index(event_set, overflow_vector, &event_index, &number)) != PAPI_OK){
-        fprintf(stderr,"PAPI_get_overflow_event_index() error:%s \n",PAPI_strerror(ret));
-        return;
+        test_fail( __FILE__, __LINE__, "PAPI_get_overflow_event_index", ret );
     }
 
     number = event_index+1;
     event_codes = (int *)calloc(number, sizeof(int));
 
     if( (ret = PAPI_list_events( event_set, event_codes, &number)) != PAPI_OK ){
-        fprintf(stderr,"PAPI_list_events() error:%s \n",PAPI_strerror(ret));
-        return;
+        test_fail( __FILE__, __LINE__, "PAPI_list_events", ret );
     }
 
     if( (ret=PAPI_event_code_to_name(event_codes[event_index], event_name)) != PAPI_OK){
-        fprintf(stderr,"PAPI_event_code_to_name() error:%s \n",PAPI_strerror(ret));
-        return;
+        test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", ret );
     }
     free(event_codes);
 
-    printf("Event \"%s\" at index: %d exceeded its threshold again.\n",event_name, event_index);
-    fflush(stdout);
+    if( be_verbose ){
+        printf("Event \"%s\" at index: %d exceeded its threshold again.\n",event_name, event_index);
+        fflush(stdout);
+    }
+
+    if( !strcmp(event_name, "sde:::Lib_With_CC::epsilon_count") || !event_index )
+        remaining_handler_invocations--;
+
 
     return;
 }
 
-int setup_PAPI(int *event_set, int threshold){
+void setup_PAPI(int *event_set, int threshold){
     int ret, event_code;
 
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
-        fprintf(stderr,"PAPI_library_init() error:%s \n",PAPI_strerror(ret));
-        return -1;
+        test_fail( __FILE__, __LINE__, "PAPI_library_init", ret );
     }
-    
+
     if((ret=PAPI_create_eventset(event_set)) != PAPI_OK){
-        fprintf(stderr,"PAPI_create_eventset() error:%s \n",PAPI_strerror(ret));
-        return -1;
+        test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
     }
 
     if((ret=PAPI_event_name_to_code("sde:::Lib_With_CC::epsilon_count", &event_code)) != PAPI_OK){
-        fprintf(stderr,"PAPI_event_name_to_code() error:%s \n",PAPI_strerror(ret));
-        return -1;
+        test_fail( __FILE__, __LINE__, "PAPI_event_name_to_code", ret );
     }
 
     if((ret=PAPI_add_event(*event_set, event_code)) != PAPI_OK){
-        fprintf(stderr,"PAPI_add_event() error:%s \n",PAPI_strerror(ret));
-        return -1;
+        test_fail( __FILE__, __LINE__, "PAPI_add_event", ret );
     }
 
     if((ret = PAPI_overflow(*event_set, event_code, threshold, PAPI_OVERFLOW_HARDWARE, overflow_handler)) != PAPI_OK){
-        fprintf(stderr,"PAPI_overflow() error:%s \n",PAPI_strerror(ret));
-        return -1;
+        test_fail( __FILE__, __LINE__, "PAPI_overflow", ret );
     }
 
-    return 0;
+    return;
 }
 
