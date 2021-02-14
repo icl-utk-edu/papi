@@ -42,6 +42,9 @@
 #define PAPIHL_ACTIVE 1
 #define PAPIHL_DEACTIVATED 0
 
+/* number of nested regions */
+#define PAPIHL_MAX_STACK_SIZE 10
+
 /* global components data begin *****************************************/
 typedef struct components
 {
@@ -74,8 +77,12 @@ typedef struct local_components
 THREAD_LOCAL_STORAGE_KEYWORD local_components_t *_local_components = NULL;
 THREAD_LOCAL_STORAGE_KEYWORD long_long _local_cycles;
 THREAD_LOCAL_STORAGE_KEYWORD volatile bool _local_state = PAPIHL_ACTIVE;
-THREAD_LOCAL_STORAGE_KEYWORD int _local_region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
-THREAD_LOCAL_STORAGE_KEYWORD int _local_region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
+THREAD_LOCAL_STORAGE_KEYWORD unsigned int _local_region_begin_cnt = 0; /**< Count each PAPI_hl_region_begin call */
+THREAD_LOCAL_STORAGE_KEYWORD unsigned int _local_region_end_cnt = 0;   /**< Count each PAPI_hl_region_end call */
+
+THREAD_LOCAL_STORAGE_KEYWORD unsigned int _local_region_id_stack[PAPIHL_MAX_STACK_SIZE];
+THREAD_LOCAL_STORAGE_KEYWORD int _local_region_id_top = -1;
+
 
 /* thread local components data end *************************************/
 
@@ -90,15 +97,15 @@ typedef struct reads
 
 typedef struct
 {
-   long_long offset;       /**< Event value for region_begin */
-   long_long total;        /**< Event value for region_end - region_begin + previous value */
-   long_long min;          /**< Minimum event value (only applies for instantaneous events) */
-   long_long max;          /**< Maximum event value (only applies for instantaneous events) */
+   long_long begin;        /**< Event value for region_begin */
+   long_long region_value; /**< Delta value for region_end - region_begin */
    reads_t *read_values;   /**< List of read event values inside a region */
 } value_t;
 
 typedef struct regions
 {
+   unsigned int region_id; /**< Unique region ID */
+   int parent_region_id;   /**< Region ID of parent region */
    char *region;           /**< Region name */
    struct regions *next;
    struct regions *prev;
@@ -168,6 +175,10 @@ static int _internal_hl_create_event_sets();
 static int _internal_hl_start_counters();
 
 /* functions for storing events */
+static int _internal_hl_region_id_pop();
+static int _internal_hl_region_id_push();
+static int _internal_hl_region_id_stack_peak();
+
 static inline reads_t* _internal_hl_insert_read_node( reads_t** head_node );
 static inline int _internal_hl_add_values_to_region( regions_t *node, enum region_type reg_typ );
 static inline regions_t* _internal_hl_insert_region_node( regions_t** head_node, const char *region );
@@ -185,8 +196,6 @@ static int _internal_hl_mkdir(const char *dir);
 static int _internal_hl_determine_output_path();
 static void _internal_hl_json_line_break_and_indent(FILE* f, bool b, int width);
 static void _internal_hl_json_definitions(FILE* f, bool beautifier);
-static void _internal_hl_json_region_events_instant(FILE* f, bool beautifier, int region_cnt,
-         long_long min, long_long total, long_long max);
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions);
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
 static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
@@ -728,13 +737,13 @@ static int _internal_hl_create_event_sets()
             /* multiplex only for cpu core events */
             if ( components[i].component_id == 0 ) {
                retval = PAPI_assign_eventset_component(_local_components[i].EventSet, components[i].component_id );
-	            if ( retval != PAPI_OK ) {
-		            verbose_fprintf(stdout, "PAPI-HL Error: PAPI_assign_eventset_component failed.\n");
+               if ( retval != PAPI_OK ) {
+                  verbose_fprintf(stdout, "PAPI-HL Error: PAPI_assign_eventset_component failed.\n");
                } else {
                   if ( PAPI_get_multiplex(_local_components[i].EventSet) == false ) {
                      retval = PAPI_set_multiplex(_local_components[i].EventSet);
                      if ( retval != PAPI_OK ) {
-		                  verbose_fprintf(stdout, "PAPI-HL Error: PAPI_set_multiplex failed.\n");
+                        verbose_fprintf(stdout, "PAPI-HL Error: PAPI_set_multiplex failed.\n");
                      }
                   }
                }
@@ -780,6 +789,33 @@ static int _internal_hl_start_counters()
    return ( PAPI_EMISC );
 }
 
+static int _internal_hl_region_id_pop() {
+   if ( _local_region_id_top == -1 ) {
+      return PAPI_ENOEVNT;
+   } else {
+      _local_region_id_top--;
+   }
+   return PAPI_OK;
+}
+
+static int _internal_hl_region_id_push() {
+   if ( _local_region_id_top == PAPIHL_MAX_STACK_SIZE ) {
+      return PAPI_ENOMEM;
+   } else {
+      _local_region_id_top++;
+      _local_region_id_stack[_local_region_id_top] = _local_region_begin_cnt;
+   }
+   return PAPI_OK;
+}
+
+static int _internal_hl_region_id_stack_peak() {
+   if ( _local_region_id_top == -1 ) {
+      return -1;
+   } else {
+      return _local_region_id_stack[_local_region_id_top];
+   }
+}
+
 static inline reads_t* _internal_hl_insert_read_node(reads_t** head_node)
 {
    reads_t *new_node;
@@ -805,31 +841,29 @@ static inline reads_t* _internal_hl_insert_read_node(reads_t** head_node)
 static inline int _internal_hl_add_values_to_region( regions_t *node, enum region_type reg_typ )
 {
    int i, j;
-   int region_count = 1;
    long_long ts;
-   int cmp_iter = 3;
+   int cmp_iter = 2;
 
    /* get timestamp */
    ts = PAPI_get_real_nsec();
 
    if ( reg_typ == REGION_BEGIN ) {
       /* set first fixed counters */
-      node->values[0].offset = region_count;
-      node->values[1].offset = _local_cycles;
-      node->values[2].offset = ts;
+      node->values[0].begin = _local_cycles;
+      node->values[1].begin = ts;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ )
-            node->values[cmp_iter++].offset = _local_components[i].values[j];
+            node->values[cmp_iter++].begin = _local_components[i].values[j];
    } else if ( reg_typ == REGION_READ ) {
       /* create a new read node and add values*/
       reads_t* read_node;
+      if ( ( read_node = _internal_hl_insert_read_node(&node->values[0].read_values) ) == NULL )
+         return ( PAPI_ENOMEM );
+      read_node->value = _local_cycles - node->values[0].begin;
       if ( ( read_node = _internal_hl_insert_read_node(&node->values[1].read_values) ) == NULL )
          return ( PAPI_ENOMEM );
-      read_node->value = _local_cycles - node->values[1].offset;
-      if ( ( read_node = _internal_hl_insert_read_node(&node->values[2].read_values) ) == NULL )
-         return ( PAPI_ENOMEM );
-      read_node->value = ts - node->values[2].offset;
+      read_node->value = ts - node->values[1].begin;
       for ( i = 0; i < num_of_components; i++ ) {
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             if ( ( read_node = _internal_hl_insert_read_node(&node->values[cmp_iter].read_values) ) == NULL )
@@ -837,39 +871,22 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
             if ( components[i].event_types[j] == 1 )
                read_node->value = _local_components[i].values[j];
             else
-               read_node->value = _local_components[i].values[j] - node->values[cmp_iter].offset;
+               read_node->value = _local_components[i].values[j] - node->values[cmp_iter].begin;
             cmp_iter++;
          }
       }
    } else if ( reg_typ == REGION_END ) {
-      /* determine difference of current value and offset and add
-         previous total value */
-      node->values[0].total += node->values[0].offset;
-      node->values[1].total += _local_cycles - node->values[1].offset;
-      node->values[2].total += ts - node->values[2].offset;
+      /* determine difference of current value and begin */
+      node->values[0].region_value = _local_cycles - node->values[0].begin;
+      node->values[1].region_value = ts - node->values[1].begin;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             /* if event type is instantaneous only save last value */
             if ( components[i].event_types[j] == 1 ) {
-
-               /* determine minimum */
-               if ( node->values[0].total == 1 ) {
-                  /* set the first minimum value */
-                  node->values[cmp_iter].min = _local_components[i].values[j];
-               } else {
-                  if ( node->values[cmp_iter].min > _local_components[i].values[j] )
-                     node->values[cmp_iter].min = _local_components[i].values[j];
-               }
-
-               node->values[cmp_iter].total += _local_components[i].values[j];
-               
-               /* determine maximum value */
-               if ( node->values[cmp_iter].max < _local_components[i].values[j] )
-                  node->values[cmp_iter].max = _local_components[i].values[j];
-
+               node->values[cmp_iter].region_value = _local_components[i].values[j];
             } else {
-               node->values[cmp_iter].total += _local_components[i].values[j] - node->values[cmp_iter].offset;
+               node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;
             }
             cmp_iter++;
          }
@@ -884,8 +901,8 @@ static inline regions_t* _internal_hl_insert_region_node(regions_t** head_node, 
    int i;
    int extended_total_num_events;
 
-   /* number of all events including region count, CPU cycles and real time */
-   extended_total_num_events = total_num_events + 3;
+   /* number of all events including CPU cycles and real time */
+   extended_total_num_events = total_num_events + 2;
 
    /* create new region node */
    new_node = malloc(sizeof(regions_t) + extended_total_num_events * sizeof(value_t));
@@ -899,11 +916,11 @@ static inline regions_t* _internal_hl_insert_region_node(regions_t** head_node, 
 
    new_node->next = NULL;
    new_node->prev = NULL;
+
+   new_node->region_id = _local_region_begin_cnt;
+   new_node->parent_region_id = _internal_hl_region_id_stack_peak();
    strcpy(new_node->region, region);
    for ( i = 0; i < extended_total_num_events; i++ ) {
-      new_node->values[i].total = 0;
-      new_node->values[i].min = 0;
-      new_node->values[i].max = 0;
       new_node->values[i].read_values = NULL;
    }
 
@@ -924,7 +941,7 @@ static inline regions_t* _internal_hl_find_region_node(regions_t* head_node, con
 {
    regions_t* find_node = head_node;
    while ( find_node != NULL ) {
-      if ( strcmp(find_node->region, region) == 0 ) {
+      if ( ((int)find_node->region_id == _internal_hl_region_id_stack_peak()) && (strcmp(find_node->region, region) == 0) ) {
          return find_node;
       }
       find_node = find_node->next;
@@ -981,19 +998,11 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
    }
 
    regions_t* current_region_node;
-   /* check if node for current region already exists */
-   current_region_node = _internal_hl_find_region_node(current_thread_node->value, region);
-
-   if ( current_region_node == NULL ) {
-      /* create new node for current region in list if type is REGION_BEGIN */
-      if ( reg_typ == REGION_BEGIN ) {
-         if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value,region) ) == NULL ) {
-            _papi_hwi_unlock( HIGHLEVEL_LOCK );
-            return ( PAPI_ENOMEM );
-         }
-      } else {
-         /* ignore no matching REGION_READ */
+   if ( reg_typ == REGION_READ || reg_typ == REGION_END ) {
+      current_region_node = _internal_hl_find_region_node(current_thread_node->value, region);
+      if ( current_region_node == NULL ) {
          if ( reg_typ == REGION_READ ) {
+            /* ignore no matching REGION_READ */
             verbose_fprintf(stdout, "PAPI-HL Warning: Cannot find matching region for PAPI_hl_read(\"%s\") for thread id=%lu.\n", region, PAPI_thread_id());
             retval = PAPI_OK;
          } else {
@@ -1002,8 +1011,15 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
          }
          _papi_hwi_unlock( HIGHLEVEL_LOCK );
          return ( retval );
+      } 
+   } else {
+      /* create new node for current region in list if type is REGION_BEGIN */
+      if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value, region) ) == NULL ) {
+         _papi_hwi_unlock( HIGHLEVEL_LOCK );
+         return ( PAPI_ENOMEM );
       }
    }
+
 
    /* add recorded values to current region */
    if ( ( retval = _internal_hl_add_values_to_region( current_region_node, reg_typ ) ) != PAPI_OK ) {
@@ -1218,37 +1234,25 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
    fprintf(f, "},");
 }
 
-static void _internal_hl_json_region_events_instant(FILE* f, bool beautifier, int region_cnt,
-         long_long min, long_long total, long_long max)
-{
-   fprintf(f, "\"min\":\"%lld\",", min);
-   _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-   fprintf(f, "\"avg\":\"%lld\",", total/region_cnt);
-   _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-   fprintf(f, "\"max\":\"%lld\"", max);
-}
-
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions)
 {
    char **all_event_names = NULL;
    int *all_event_types = NULL;
    int extended_total_num_events;
-   int i, j, cmp_iter, region_count;
+   int i, j, cmp_iter;
 
-   /* generate array of all events including region count, CPU cycles and real time for output */
-   extended_total_num_events = total_num_events + 3;
+   /* generate array of all events including CPU cycles and real time for output */
+   extended_total_num_events = total_num_events + 2;
    all_event_names = (char**)malloc(extended_total_num_events * sizeof(char*));
-   all_event_names[0] = "region_count";
-   all_event_names[1] = "cycles";
-   all_event_names[2] = "real_time_nsec";
+   all_event_names[0] = "cycles";
+   all_event_names[1] = "real_time_nsec";
 
    all_event_types = (int*)malloc(extended_total_num_events * sizeof(int));
    all_event_types[0] = 0;
    all_event_types[1] = 0;
-   all_event_types[2] = 0;
 
 
-   cmp_iter = 3;
+   cmp_iter = 2;
    for ( i = 0; i < num_of_components; i++ ) {
       for ( j = 0; j < components[i].num_of_events; j++ ) {
          all_event_names[cmp_iter] = components[i].event_names[j];
@@ -1259,9 +1263,6 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
          cmp_iter++;
       }
    }
-
-   /* remember region count for instant values */
-   region_count = regions->values[0].total;
 
    for ( j = 0; j < extended_total_num_events; j++ ) {
 
@@ -1279,15 +1280,7 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
          fprintf(f, "\"%s\":{", all_event_names[j]);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-         if ( all_event_types[j] == 0 ) {
-            fprintf(f, "\"total\":\"%lld\",", regions->values[j].total);
-         } else {
-
-            _internal_hl_json_region_events_instant(f, beautifier, region_count,
-               regions->values[j].min, regions->values[j].total, regions->values[j].max);
-
-            fprintf(f, ",");
-         }
+         fprintf(f, "\"region_value\":\"%lld\",", regions->values[j].region_value);
 
          while ( read_node != NULL ) {
             _internal_hl_json_line_break_and_indent(f, beautifier, 7);
@@ -1307,21 +1300,8 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
             read_cnt++;
          }
       } else {
-         HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].total);
-
-         if ( all_event_types[j] == 0 ) {
-            fprintf(f, "\"%s\":\"%lld\"", all_event_names[j], regions->values[j].total);
-         } else {
-            fprintf(f, "\"%s\":{", all_event_names[j]);
-            _internal_hl_json_line_break_and_indent(f, beautifier, 7);
-
-            _internal_hl_json_region_events_instant(f, beautifier, region_count,
-               regions->values[j].min, regions->values[j].total, regions->values[j].max);
-
-            _internal_hl_json_line_break_and_indent(f, beautifier, 6);
-            fprintf(f, "}");
-         }
-
+         HLDBG("  %s:%lld\n", all_event_names[j], regions->values[j].region_value);
+         fprintf(f, "\"%s\":\"%lld\"", all_event_names[j], regions->values[j].region_value);
          if ( j < ( extended_total_num_events - 1 ) )
             fprintf(f, ",");
       }
@@ -1343,12 +1323,17 @@ static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* threa
 
    /* read regions in reverse order */
    while (regions != NULL) {
-      HLDBG("  Region:%s\n", regions->region);
+      HLDBG("  Region:%u\n", regions->region_id);
 
       _internal_hl_json_line_break_and_indent(f, beautifier, 4);
       fprintf(f, "{");
       _internal_hl_json_line_break_and_indent(f, beautifier, 5);
-      fprintf(f, "\"%s\":{", regions->region);
+      fprintf(f, "\"%u\":{", regions->region_id);
+
+      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+      fprintf(f, "\"name\":\"%s\",", regions->region);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+      fprintf(f, "\"parent_region_id\":\"%d\",", regions->parent_region_id);
 
       _internal_hl_json_region_events(f, beautifier, regions);
 
@@ -1587,7 +1572,7 @@ static void _internal_hl_clean_up_global_data()
          while ( region != NULL ) {
 
             /* clean up read node list */
-            extended_total_num_events = total_num_events + 3;
+            extended_total_num_events = total_num_events + 2;
             for ( i = 0; i < extended_total_num_events; i++ ) {
                reads_t *read_node = region->values[i].read_values;
                reads_t *read_node_tmp;
@@ -1883,6 +1868,11 @@ PAPI_hl_region_begin( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_BEGIN) ) != PAPI_OK )
       return ( retval );
 
+   if ( ( retval = _internal_hl_region_id_push() ) != PAPI_OK ) {
+      verbose_fprintf(stdout, "PAPI-HL Warning: Number of nested regions exceeded for thread %lu.\n", PAPI_thread_id());
+      _internal_hl_clean_up_all(true);
+      return ( retval );
+   }
    _local_region_begin_cnt++;
    return ( PAPI_OK );
 }
@@ -2083,6 +2073,7 @@ PAPI_hl_region_end( const char* region )
    if ( ( retval = _internal_hl_read_and_store_counters(region, REGION_END) ) != PAPI_OK )
       return ( retval );
 
+   _internal_hl_region_id_pop();
    _local_region_end_cnt++;
    return ( PAPI_OK );
 }
