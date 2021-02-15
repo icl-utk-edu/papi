@@ -246,61 +246,87 @@ int experiment_main(void *arg){
 
 int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode){
     int i, j, active_buf_len;
-    uintptr_t rslt=42, *v, *ptr;
+    int ONT = 1;
+    int allocErr = 0;
     run_output_t out;
 
-    ptr = (uintptr_t *)malloc( (2*max_size+line_size/*_in_bytes*/)*sizeof(uintptr_t) );
-    if( !ptr ){
-        fprintf(stderr, "Error: cannot allocate space for experiment.\n");
-        exit(-1);
-    }
-    // align v to the line size
-    v = (uintptr_t *)(line_size_in_bytes*(((uintptr_t)ptr+line_size_in_bytes)/line_size_in_bytes));
-
-    // touch every page at least a few times
-    for(j=0; j<2; ++j){
-        for(i=0; i<2*max_size; i+=512){
-            rslt += v[i];
+    // Get the number of threads.
+    #pragma omp parallel
+    {
+        if(!omp_get_thread_num()) {
+            ONT = omp_get_num_threads();
         }
     }
 
+    uintptr_t rslt=42, *v[ONT], *ptr[ONT];
+
+    // Allocate memory for each thread to traverse.
+    #pragma omp parallel
+    {
+        int idx = omp_get_thread_num();
+
+        ptr[idx] = (uintptr_t *)malloc( (2*max_size+line_size)*sizeof(uintptr_t) );
+        if( !ptr[idx] ){
+            fprintf(stderr, "Error: cannot allocate space for experiment.\n");
+            #pragma omp critical
+            {
+                allocErr = -1;
+            }
+        }
+
+        // align v to the line size
+        v[idx] = (uintptr_t *)(line_size_in_bytes*(((uintptr_t)ptr[idx]+line_size_in_bytes)/line_size_in_bytes));
+
+        // touch every page at least a few times
+        for(i=0; i<2*max_size; i+=512){
+            rslt += v[idx][i];
+        }
+    }
+    if(allocErr != 0)
+    {
+        return -1;
+    }
+
     // Make a couple of cold runs
-    out = probeBufferSize(16*line_size, line_size, pages_per_block, v, &rslt, latency_only, mode);
+    out = probeBufferSize(16*line_size, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
+    out = probeBufferSize(2*16*line_size, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
     if(out.status != 0)
     {
         return -1;
     }
-    out = probeBufferSize(2*16*line_size, line_size, pages_per_block, v, &rslt, latency_only, mode);
 
     // run the actual experiment
     i = 0;
     for(active_buf_len=min_size; active_buf_len<max_size; active_buf_len*=2){
         usleep(1000);
-        out = probeBufferSize(active_buf_len, line_size, pages_per_block, v, &rslt, latency_only, mode);
+        out = probeBufferSize(active_buf_len, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
         rslts[i] = out.dt;
         counter[i] = out.counter;
         values[i++] = sizeof(uintptr_t)*active_buf_len;
 
         usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.25), line_size, pages_per_block, v, &rslt, latency_only, mode);
+        out = probeBufferSize((int)((double)active_buf_len*1.25), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
         rslts[i] = out.dt;
         counter[i] = out.counter;
         values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.25));
 
         usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.5), line_size, pages_per_block, v, &rslt, latency_only, mode);
+        out = probeBufferSize((int)((double)active_buf_len*1.5), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
         rslts[i] = out.dt;
         counter[i] = out.counter;
         values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.5));
 
         usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.75), line_size, pages_per_block, v, &rslt, latency_only, mode);
+        out = probeBufferSize((int)((double)active_buf_len*1.75), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
         rslts[i] = out.dt;
         counter[i] = out.counter;
         values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
     }
 
-    free(ptr);
+    // Free each thread's memory.
+    for(j=0; j<ONT; ++j){
+        free(ptr[j]);
+    }
 
     return 0;
 }
