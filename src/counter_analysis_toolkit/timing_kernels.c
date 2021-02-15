@@ -15,7 +15,7 @@ int _papi_eventset = PAPI_NULL;
 extern int max_size;
 
 run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int ONT, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode){
-    int count, idx, retval, cntr;
+    int count, retval;
     int buffer = 0;
     register uintptr_t *p = NULL;
     double time1=0.0, time2=1.0;
@@ -36,8 +36,11 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     int countMax = 1024*1024*1024/(line_size*sizeof(uintptr_t));
 
     // Clean up the memory.
-    for(cntr=0; cntr<ONT; ++cntr){
-        memset(v[cntr],0,active_buf_len*sizeof(uintptr_t));
+    #pragma omp parallel
+    {
+        int idx = omp_get_thread_num();
+
+        memset(v[idx],0,active_buf_len*sizeof(uintptr_t));
     }
 
     // Get the size of a page of memory.
@@ -50,8 +53,11 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
 
     // Compute the size of a block in the pointer chain and create the pointer chain.
     blockSize = (long)(pageCountPerBlock*(float)pageSize);
-    for(cntr=0; cntr<ONT; ++cntr){
-        out.status = prepareArray(v[cntr], active_buf_len, line_size, blockSize);
+    #pragma omp parallel
+    {
+        int idx = omp_get_thread_num();
+
+        out.status = prepareArray(v[idx], active_buf_len, line_size, blockSize);
     }
 
     // Pointer-chasing benchmark.
@@ -92,9 +98,9 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         }
 
         // Start of threaded benchmark.
-        #pragma omp parallel private(p,count,idx) reduction(+:buffer)
+        #pragma omp parallel private(p,count) reduction(+:buffer)
         {
-            idx = omp_get_thread_num();
+            int idx = omp_get_thread_num();
 
             // Start the actual test.
             count = countMax;

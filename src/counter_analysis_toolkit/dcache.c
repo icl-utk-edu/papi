@@ -245,8 +245,9 @@ int experiment_main(void *arg){
 }
 
 int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode){
-    int i, j, k, active_buf_len;
+    int i, j, active_buf_len;
     int ONT = 1;
+    int allocErr = 0;
     run_output_t out;
 
     // Get the number of threads.
@@ -260,25 +261,30 @@ int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_i
     uintptr_t rslt=42, *v[ONT], *ptr[ONT];
 
     // Allocate memory for each thread to traverse.
-    for(j=0; j<ONT; ++j){
+    #pragma omp parallel
+    {
+        int idx = omp_get_thread_num();
 
-        ptr[j] = (uintptr_t *)malloc( (2*max_size+line_size)*sizeof(uintptr_t) );
-        if( !ptr[j] ){
+        ptr[idx] = (uintptr_t *)malloc( (2*max_size+line_size)*sizeof(uintptr_t) );
+        if( !ptr[idx] ){
             fprintf(stderr, "Error: cannot allocate space for experiment.\n");
-            return -1;
+            #pragma omp critical
+            {
+                allocErr = -1;
+            }
         }
 
         // align v to the line size
-        v[j] = (uintptr_t *)(line_size_in_bytes*(((uintptr_t)ptr[j]+line_size_in_bytes)/line_size_in_bytes));
-    }
+        v[idx] = (uintptr_t *)(line_size_in_bytes*(((uintptr_t)ptr[idx]+line_size_in_bytes)/line_size_in_bytes));
 
-    // touch every page at least a few times
-    for(k=0; k<ONT; ++k){
-        for(j=0; j<2; ++j){
-            for(i=0; i<2*max_size; i+=512){
-                rslt += v[k][i];
-            }
+        // touch every page at least a few times
+        for(i=0; i<2*max_size; i+=512){
+            rslt += v[idx][i];
         }
+    }
+    if(allocErr != 0)
+    {
+        return -1;
     }
 
     // Make a couple of cold runs
