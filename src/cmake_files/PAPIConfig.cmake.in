@@ -13,4 +13,5 @@ set (PAPI_LIBRARIES "")
 
 
 # Pull the PAPI::targets
-include (${CMAKE_CURRENT_LIST_DIR}/PAPITargets.cmake)
+include (${PAPI_SYSCONFIG_DIRS}/PAPITargets.cmake)
+

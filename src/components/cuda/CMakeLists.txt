@@ -59,10 +59,11 @@ if (WITH_CUDA)
         PATHS
         ${PAPI_CUDA_CUPTI}
         $ENV{PAPI_CUDA_CUPTI}
-	${PAPI_CUDA_ROOT}
-	$ENV{PAPI_CUDA_ROOT}
+        ${PAPI_CUDA_ROOT}
+        $ENV{PAPI_CUDA_ROOT}
         PATH_SUFFIXES
         include)
+      message(STATUS "include ${CUPTI_H}")
 
     if (NOT CUDA_H)
         message (STATUS "Path to include/cuda.h was not found, please provide PAPI_CUDA_ROOT.")
@@ -127,7 +128,8 @@ if (WITH_CUDA)
         target_include_directories (papi
             PRIVATE
             ${PAPI_CUDA_ROOT}/include
-            ${PAPI_CUDA_ROOT}/extras/CUPTI/include)
+            ${PAPI_CUDA_ROOT}/extras/CUPTI/include
+            ${CUPTI_H})
         target_compile_definitions (papi
             PRIVATE
             PAPI_CUDA_MAIN=\"${CUDA_MAIN_LIB}\"

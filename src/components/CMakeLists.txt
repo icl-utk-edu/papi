@@ -1,13 +1,14 @@
 
-macro (add_papi_component_test test_name)
-    add_executable(${test_name}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.c)
-    target_link_libraries (${test_name}
+macro (add_papi_component_test source_file)
+    string(REGEX REPLACE "\\.[^.]*$" "" basename ${source_file})
+    add_executable(${basename}
+        ${CMAKE_CURRENT_SOURCE_DIR}/${source_file})
+    target_link_libraries (${basename}
         PRIVATE papi)
-    add_test(NAME test_${test_name}
-        COMMAND ${test_name}
+    add_test(NAME test_${basename}
+        COMMAND ${basename}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endmacro (add_papi_component_test test_name)
+endmacro (add_papi_component_test source_file)
 
 
 set (component_dir ${CMAKE_CURRENT_SOURCE_DIR})
