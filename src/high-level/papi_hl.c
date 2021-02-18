@@ -1219,11 +1219,19 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
       for ( j = 0; j < components[i].num_of_events; j++ ) {
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
 
-         if ( components[i].event_types[j] == 0 )
-            fprintf(f, "\"%s\":\"delta\"", components[i].event_names[j]);
-         else
-            fprintf(f, "\"%s\":\"instant\"", components[i].event_names[j]);
+         const char *event_type = "delta";
+         if ( components[i].event_types[j] == 1 )
+            event_type = "instant";
+         const PAPI_component_info_t* cmpinfo;
+         cmpinfo = PAPI_get_component_info( components[i].component_id );
 
+         fprintf(f, "\"%s\":{", components[i].event_names[j]);
+         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
+         fprintf(f, "\"component\":\"%s\"", cmpinfo->name);
+         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
+         fprintf(f, "\"type\":\"%s\"", event_type);
+         _internal_hl_json_line_break_and_indent(f, beautifier, 2);
+         fprintf(f, "}");
          if ( num_events < total_num_events )
             fprintf(f, ",");
          num_events++;
