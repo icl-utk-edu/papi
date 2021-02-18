@@ -1227,7 +1227,7 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
 
          fprintf(f, "\"%s\":{", components[i].event_names[j]);
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "\"component\":\"%s\"", cmpinfo->name);
+         fprintf(f, "\"component\":\"%s\",", cmpinfo->name);
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
          fprintf(f, "\"type\":\"%s\"", event_type);
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
