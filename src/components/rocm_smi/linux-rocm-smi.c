@@ -409,10 +409,6 @@ static void MakeRoomScanEvents(void)
 //----------------------------------------------------------------------------
 void addScanEvent(const char* routine, int32_t device, uint64_t variant, uint64_t subvariant)
 {
-    if (subvariant != ((uint64_t) -1)) {
-        subvariant--;
-    }
-
     MakeRoomScanEvents();                                                           // Make room if needed.
     strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen);   // Copy name.
     ScanEvents[TotalScanEvents].device=device;                                      // Device ID.
@@ -455,6 +451,8 @@ static void scanEvents(void) {
     rsmi_func_id_value_t v_name, v_enum, v_sensor;
     rsmi_status_t err;
     unsigned int ui;
+    int i, editState;
+
     for (ui=0; ui<TotalDevices; ++ui) {                                         // For each device,
         err = (*rsmi_dev_supported_func_iterator_openPtr)(ui, &iter_handle);    // begin iterator.
         while (1) {                                                             // until we break out,
@@ -500,6 +498,46 @@ static void scanEvents(void) {
 
     // sort by device, name, variant, sub-variant.
     qsort(ScanEvents, TotalScanEvents, sizeof(scanEvent_info_t), sortScanEvents);
+
+    // Early versions of the rocm library returned -1 for events with no 
+    // subvariants; but [1,2,...] for those with subvariants. These have
+    // to be adjusted to [0,1,...] in actual routine calls. Later versions 
+    // return [0,1,...] as they should. We handle both versions. 
+
+    // State machine. If first in a group subvariant=1, reduce all subvariants in group by 1,
+    //                otherwise search for the next group.
+    editState = 1; 
+    for (i=0; i<TotalScanEvents; i++) {
+        switch(editState) {
+            case 1:                         // Looking at first in a group.
+                if (ScanEvents[i].subvariant==1) {
+                    editState=2;
+                    ScanEvents[i].subvariant=0;
+                } else editState=3;
+
+                break;
+
+            case 2:                         // Looking for group change while reducing.
+                if (ScanEvents[i].variant != ScanEvents[i-1].variant ||
+                    strcmp(ScanEvents[i].funcname, ScanEvents[i-1].funcname) != 0 ||
+                    ScanEvents[i].device != ScanEvents[i-1].device) {
+                    editState=1; // re-run as first in set.
+                    i--;
+                } else {
+                    ScanEvents[i].subvariant--;
+                }
+            break;
+
+            case 3:                         // Looking for group change while not reducing.
+                if (ScanEvents[i].variant != ScanEvents[i-1].variant ||
+                    strcmp(ScanEvents[i].funcname, ScanEvents[i-1].funcname) != 0 ||
+                    ScanEvents[i].device != ScanEvents[i-1].device) {
+                    editState=1; // re-run as first in set.
+                    i--;
+                }
+            break;
+        }
+    }
 
     // Create an end of list marker; for scanning without an index.
     MakeRoomScanEvents();                                                           // Make room if needed.
