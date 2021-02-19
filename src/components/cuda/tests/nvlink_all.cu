@@ -342,9 +342,10 @@ void conductGpuToGpu(int EventSet, int device, long long *values) {
 static void printUsage()
 {
     printf("usage: Demonstrate use of NVlink CUPTI APIs\n");
-    printf("       -help           : display help message\n");
-    printf("       --cpu-to-gpu    : Show results for data transfer between CPU and GPU \n");
-    printf("       --gpu-to-gpu    : Show results for data transfer between two GPUs \n");
+    printf("    -h, -help, --help: display this help message.\n");
+    printf("    Otherwise, exactly one of these options:\n");
+    printf("    --cpu-to-gpu: Show results for data transfer between CPU and GPU.\n");
+    printf("    --gpu-to-gpu: Show results for data transfer between two GPUs.\n");
 } // end routine.
 
 
@@ -355,6 +356,7 @@ void parseCommandLineArgs(int argc, char *argv[])
 {
     if(argc != 2) {
         printf("Invalid number of options\n");
+        printUsage();
         exit(0);
     }
 
@@ -368,7 +370,9 @@ void parseCommandLineArgs(int argc, char *argv[])
         printUsage();
         exit(0);
     } else {
-        cpuToGpu = 1;
+        printf("Failed to understand argument '%s'.\n", argv[1]);
+        printUsage();
+        exit(-1);
     }
 } // end routine.
 
