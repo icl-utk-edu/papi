@@ -199,6 +199,7 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier);
 static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t *regions);
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
 static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
+static int _internal_hl_cmpfunc(const void * a, const void * b);
 static void _internal_hl_write_output();
 
 /* functions for cleaning up heap memory */
@@ -1376,10 +1377,9 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
          fprintf(f, "{");
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "\"id\":\"%lu\",", thread_node->key);
 
-         /* in case we only store iterator id as thread id */
-         //fprintf(f, "\"ID\":%d,", i);
+         /* we only store iterator id as thread id, not thread_node->key */
+         fprintf(f, "\"id\":%d,", i);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
          fprintf(f, "\"regions\":[");
@@ -1400,6 +1400,10 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
    fprintf(f, "]");
+}
+
+static int _internal_hl_cmpfunc(const void * a, const void * b) {
+   return ( *(int*)a - *(int*)b );
 }
 
 static void _internal_hl_write_output()
@@ -1486,6 +1490,9 @@ static void _internal_hl_write_output()
                free(absolute_output_file_path);
                return;
             }
+
+            /* sort thread ids in ascending order */
+            qsort(tids, number_of_threads, sizeof(unsigned long), _internal_hl_cmpfunc);
 
             /* start writing json file */
 
