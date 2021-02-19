@@ -555,16 +555,18 @@ scanEvent_info_t* nextEvent(scanEvent_info_t* currentEvent, int device, char* fu
 // installed and on systems where these libraries are not installed.
 static int _rocm_smi_linkRocmLibraries(void)
 {
-    char path_name[1024];
+    char path_name[PATH_MAX];
     // Attempt to guess if we were statically linked to libc, if so, get out.
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_rocm_smi_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         return PAPI_ENOSUPP;
     }
 
     // collect any defined environment variables, or "NULL" if not present.
-    char *rocmsmi_root =       getenv("PAPI_ROCMSMI_ROOT");
-    char *rocmsmi_lib  =       getenv("PAPI_ROCMSMI_LIB");
+    char *rocm_root    = getenv("PAPI_ROCM_ROOT");
+    char *rocmsmi_root = getenv("PAPI_ROCMSMI_ROOT");
+    char *rocmsmi_lib  = getenv("PAPI_ROCMSMI_LIB");
 
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
@@ -573,6 +575,7 @@ static int _rocm_smi_linkRocmLibraries(void)
         dl1 = dlopen(rocmsmi_lib, RTLD_NOW | RTLD_GLOBAL);  // Try to open that path.
         if (dl1 == NULL) {
             snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to open PAPI_ROCMSMI_LIB='%s'.", rocmsmi_lib);
+            _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -584,13 +587,21 @@ static int _rocm_smi_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl1 == NULL && rocmsmi_root != NULL) {                          // if root given, try it.
-        snprintf(path_name, 1024, "%s/lib/librocm_smi64.so", rocmsmi_root);  // PAPI Root check.
+        snprintf(path_name, PATH_MAX, "%s/lib/librocm_smi64.so", rocmsmi_root);  // PAPI Root check.
+        path_name[PATH_MAX-1]=0;
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
+    // Step 4: If PAPI_ROCM_ROOT was given, try using it.
+    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, PATH_MAX, "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);  // PAPI rocm Root check.
+        path_name[PATH_MAX-1]=0;
+        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    }
     // Check for failure.
     if (dl1 == NULL) {
         snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocm_smi64.so not found.");
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         return(PAPI_ENOSUPP);
     }
 

@@ -228,7 +228,7 @@ static int _rocm_linkRocmLibraries(void)
     char profiler_root[PATH_MAX];
     ROCMDBG("Entering _rocm_linkRocmLibraries\n");
 
-    char path_name[1024];
+    char path_name[PATH_MAX];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
         strCpy=strncpy(_rocm_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
@@ -260,9 +260,9 @@ static int _rocm_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl1 == NULL && rocm_root != NULL) {                          // if env. var. PAPI_ROCM_ROOT given, try it.
-        strErr=snprintf(path_name, 1024, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
-        _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        strErr=snprintf(path_name, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
+        path_name[PATH_MAX-1]=0;
+        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
@@ -289,9 +289,9 @@ static int _rocm_linkRocmLibraries(void)
     dladdr(hsa_initPtr, &hsa_rt_info);
     // fprintf(stderr, "hsa_rt_info.dli_fname='%s'\n", hsa_rt_info.dli_fname);
     // Actual example:  hsa_rt_info.dli_fname='/opt/rocm/hsa/lib/libhsa-runtime64.so'
-    // Make hsa_root = portion before /hsa.
+    // Make hsa_root = portion before /hsa/lib/libhsa-runtime64.so.
     strncpy(hsa_root, hsa_rt_info.dli_fname, PATH_MAX-1);
-    strCpy = strstr(hsa_root, "/hsa");
+    strCpy = strstr(hsa_root, "/hsa/lib/libhsa-runtime64.so");
     if (strCpy != NULL) strCpy[0]=0;      // Terminate where found,
     else hsa_root[0]=0;                   // or make string empty.
     //------------------------------------------------------------------------------------------
@@ -316,15 +316,17 @@ static int _rocm_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl2 == NULL && rocm_root != NULL) {                          // if root given, try it.
-        strErr=snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
-        if (strErr > 1024) HANDLE_STRING_ERROR;
+        strErr=snprintf(path_name, PATH_MAX, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
+        path_name[PATH_MAX-1]=0;
+        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
         dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
     // Step 4: Try the derived hsa_root.
     if (dl2 == NULL && hsa_root[0] != 0) {                           // if plausible root discovered, try it.
-        strErr=snprintf(path_name, 1024, "%s/lib/librocprofiler64.so", hsa_root);
-        if (strErr > 1024) HANDLE_STRING_ERROR;
+        strErr=snprintf(path_name, PATH_MAX, "%s/lib/librocprofiler64.so", hsa_root);
+        path_name[PATH_MAX-1]=0;
+        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
         dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
@@ -368,27 +370,33 @@ static int _rocm_linkRocmLibraries(void)
    
     struct stat myStat;
     char *rocp_metrics;
+
     // Look for ROCPROFILER env vars, try to set if missing.
+    // NOTE: putenv() doesn't work once the function ends; setenv() does.
+
     rocp_metrics = getenv("ROCP_METRICS");
     if (rocp_metrics == NULL) {
         // Attempt 1: Look for metrics.xml in same directory as library.
-        strErr=snprintf(path_name, 1024, "%smetrics.xml", profiler_root);
-        if (strErr > 1024) HANDLE_STRING_ERROR;
+        strErr=snprintf(path_name, PATH_MAX, "%smetrics.xml", profiler_root);
+        path_name[PATH_MAX-1]=0;
+        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
         int err = stat(path_name, &myStat);
 
         // Attempt 2: Might have been in ROOT/lib, try in ROOT/rocprofiler/lib/
         if (err < 0) { 
             // subsequent attempt.
-            strErr=snprintf(path_name, 1024, "%s../rocprofiler/lib/metrics.xml", profiler_root);
-            if (strErr > 1024) HANDLE_STRING_ERROR;
+            strErr=snprintf(path_name, PATH_MAX, "%s../rocprofiler/lib/metrics.xml", profiler_root);
+            path_name[PATH_MAX-1]=0;
+            if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
             err = stat(path_name, &myStat);
         }
 
         // Attempt 3: Might have been in /usr or something, Try PAPI_ROCM_ROOT/rocprofiler/lib
         if (err < 0 && rocm_root != NULL) { 
             // subsequent attempt.
-            strErr=snprintf(path_name, 1024, "%s/rocprofiler/lib/metrics.xml",rocm_root);
-            if (strErr > 1024) HANDLE_STRING_ERROR;
+            strErr=snprintf(path_name, PATH_MAX, "%s/rocprofiler/lib/metrics.xml",rocm_root);
+            path_name[PATH_MAX-1]=0;
+            if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
             err = stat(path_name, &myStat);
         }
 
@@ -489,7 +497,7 @@ static int _rocm_linkRocmLibraries(void)
         }            
     }
 
-    // AQLPROFIE_READ_API is set.
+    // AQLPROFILE_READ_API is set.
 
     // Note we still have a valid rocprofiler_info. dli_fname, we need to strip away path info to set HSA_TOOLS_LIB.
     // Actual example:  rocprofiler_info dli_fname='/opt/rocm/rocprofiler/lib/librocprofiler64.so'
@@ -507,7 +515,7 @@ static int _rocm_linkRocmLibraries(void)
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
         }            
     } else {
-        // We don't analyze the name used; the library was found.
+        // We don't analyze the name used; the environment variable was found.
     }
 
     // HSA_TOOLS_LIB passed.
