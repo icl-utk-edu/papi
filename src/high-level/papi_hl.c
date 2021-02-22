@@ -1275,7 +1275,7 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
 
    for ( j = 0; j < extended_total_num_events; j++ ) {
 
-      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
 
       /* print read values if available */
       if ( regions->values[j].read_values != NULL) {
@@ -1288,17 +1288,17 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
          int read_cnt = 1;
          fprintf(f, "\"%s\":{", all_event_names[j]);
 
-         _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+         _internal_hl_json_line_break_and_indent(f, beautifier, 6);
          fprintf(f, "\"region_value\":\"%lld\",", regions->values[j].region_value);
 
          while ( read_node != NULL ) {
-            _internal_hl_json_line_break_and_indent(f, beautifier, 7);
+            _internal_hl_json_line_break_and_indent(f, beautifier, 6);
             fprintf(f, "\"read_%d\":\"%lld\"", read_cnt,read_node->value);
 
             read_node = read_node->prev;
 
             if ( read_node == NULL ) {
-               _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+               _internal_hl_json_line_break_and_indent(f, beautifier, 5);
                fprintf(f, "}");
                if ( j < extended_total_num_events - 1 )
                   fprintf(f, ",");
@@ -1335,19 +1335,14 @@ static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* threa
       HLDBG("  Region:%u\n", regions->region_id);
 
       _internal_hl_json_line_break_and_indent(f, beautifier, 4);
-      fprintf(f, "{");
-      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
       fprintf(f, "\"%u\":{", regions->region_id);
 
-      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
       fprintf(f, "\"name\":\"%s\",", regions->region);
-      _internal_hl_json_line_break_and_indent(f, beautifier, 6);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
       fprintf(f, "\"parent_region_id\":\"%d\",", regions->parent_region_id);
 
       _internal_hl_json_region_events(f, beautifier, regions);
-
-      _internal_hl_json_line_break_and_indent(f, beautifier, 5);
-      fprintf(f, "}");
 
       regions = regions->prev;
       _internal_hl_json_line_break_and_indent(f, beautifier, 4);
@@ -1364,7 +1359,7 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
    int i;
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
-   fprintf(f, "\"threads\":[");
+   fprintf(f, "\"threads\":{");
 
    /* get regions of all threads */
    for ( i = 0; i < threads_num; i++ )
@@ -1374,20 +1369,17 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
       threads_t* thread_node = _internal_hl_find_thread_node(tids[i]);
       if ( thread_node != NULL ) {
          /* do we really need the exact thread id? */
+         /* we only store iterator id as thread id, not tids[i] */
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
-         fprintf(f, "{");
-         _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-
-         /* we only store iterator id as thread id, not thread_node->key */
-         fprintf(f, "\"id\":%d,", i);
+         fprintf(f, "\"%d\":{", i);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "\"regions\":[");
+         fprintf(f, "\"regions\":{");
 
          _internal_hl_json_regions(f, beautifier, thread_node);
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 3);
-         fprintf(f, "]");
+         fprintf(f, "}");
 
          _internal_hl_json_line_break_and_indent(f, beautifier, 2);
          if ( i < threads_num - 1 ) {
@@ -1399,7 +1391,8 @@ static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* t
    }
 
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
-   fprintf(f, "]");
+   fprintf(f, "}");
+
 }
 
 static int _internal_hl_cmpfunc(const void * a, const void * b) {

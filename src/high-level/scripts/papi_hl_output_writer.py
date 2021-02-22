@@ -32,17 +32,16 @@ event_rate_names = OrderedDict([
     ])
 
 def merge_json_files(source):
-  json_object = OrderedDict()
-  json_object["ranks"] = []
+  json_object = {}
   events_stored = False
 
   #get measurement files
   file_list = os.listdir(source)
   file_list.sort()
   rank_cnt = 0
+  json_rank = OrderedDict()
+  
   for item in file_list:
-    json_rank = OrderedDict()
-
     #determine mpi rank based on file name (rank_#)
     rank = item.split('_', 1)[1]
     rank = rank.rsplit('.', 1)[0]
@@ -50,8 +49,6 @@ def merge_json_files(source):
       rank = int(rank)
     except:
       rank = rank_cnt
-
-    json_rank["id"] = rank
 
     #open measurement file
     file_name = str(source) + "/" + str(item)
@@ -71,11 +68,12 @@ def merge_json_files(source):
       events_stored = True
 
     #get all threads
-    json_rank["threads"] = data["threads"]
+    json_rank[str(rank)] = OrderedDict()
+    json_rank[str(rank)]['threads'] = data['threads']
 
-    #append current rank to json file
-    json_object["ranks"].append(json_rank)
     rank_cnt = rank_cnt + 1
+  
+  json_object['ranks'] = json_rank
 
   # print json.dumps(json_object,indent=2, sort_keys=False,
   #                  separators=(',', ': '), ensure_ascii=False)
@@ -163,10 +161,12 @@ class Sum_Counters(object):
         self.sum_counters[region_name][key] = Sum_Counter()
         self.sum_counters[region_name][key].add_event(value)
     else:
-      #increase number of ranks when rank_id has changed
+      #increase number of ranks and threads when rank_id has changed
       if self.regions_last_rank_id[region_name] != rank_id:
         self.regions_last_rank_id[region_name] = rank_id
         self.regions_rank_num[region_name] += 1
+        self.regions_last_thread_id[region_name] = thread_id
+        self.regions_thread_num[region_name] += 1
 
       #increase number of threads when thread_id has changed
       if self.regions_last_thread_id[region_name] != thread_id:
@@ -219,6 +219,7 @@ class Sum_Counters(object):
           break
 
       #add number of ranks and threads in case of a parallel code
+      #print(name, self.regions[name]['rank_num'], self.regions[name]['thread_num'])
       if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
         events['Number of ranks'] = self.regions[name]['rank_num']
         events['Number of threads per rank'] = int(self.regions[name]['thread_num'] / self.regions[name]['rank_num'])
@@ -228,10 +229,10 @@ class Sum_Counters(object):
       process_num[name] = self.regions[name]['rank_num'] * self.regions[name]['thread_num']
     return sum_json
 
-def derive_sum_json_object(json):
+def derive_sum_json_object(data):
   json_object = OrderedDict()
 
-  for region_key,region_value in json.items():
+  for region_key,region_value in data.items():
     derive_events = OrderedDict()
     events = region_value.copy()
 
@@ -316,14 +317,12 @@ def derive_sum_json_object(json):
 
   return json_object
 
-def sum_json_object(json, derived = False):
+def sum_json_object(data, derived = False):
   sum_cnt = Sum_Counters()
-  for ranks in json['ranks']:
-    for threads in ranks['threads']:
-      for regions in threads['regions']:
-        for region_key,region_value in regions.items():
-          events = region_value
-          sum_cnt.add_region(ranks['id'], threads['id'], events)
+  for rank, rank_value in data['ranks'].items():
+    for thread, thread_value in rank_value['threads'].items():
+      for region_value in thread_value['regions'].values():
+        sum_cnt.add_region(rank, thread, region_value)
 
   if derived == True:
     return derive_sum_json_object(sum_cnt.get_json())
@@ -457,34 +456,12 @@ def derive_events(events):
   return derive_events
 
 
-def derive_json_object(json):
-  json_object = {}
-  json_object['ranks'] = []
-
-  for rank in json['ranks']:
-    # print rank['id']
-    # print rank['threads']
-    json_rank = {}
-    json_rank['id'] = rank['id']
-    json_rank['threads'] = []
-
-    for thread in rank['threads']:
-      # print thread['id']
-      json_thread = {}
-      json_thread['id'] = thread['id']
-      json_thread['regions'] = []
-      for region in thread['regions']:
-        json_region = {}
-        for region_key,region_value in region.items():
-          # print region_key
-          # print region_value
-          json_region[region_key] = derive_events(region_value)
-
-        json_thread['regions'].append(json_region)
-      json_rank['threads'].append(json_thread)
-    json_object['ranks'].append(json_rank)
-
-  return json_object
+def derive_json_object(data):
+  for rank, rank_value in data['ranks'].items():
+    for thread, thread_value in rank_value['threads'].items():
+      for region, region_value in thread_value['regions'].items():
+        data['ranks'][rank]['threads'][thread]['regions'][region] = derive_events(region_value)
+  return data
 
 def write_json_file(data, file_name):
   with io.open(file_name, 'w', encoding='utf8') as outfile:
