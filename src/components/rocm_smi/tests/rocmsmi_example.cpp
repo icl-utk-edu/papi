@@ -4,8 +4,9 @@
 // sensors such as fan speed, temperature, and power consumption.
 //
 // Unfortunately, the power consumption is a "spot" reading, and most users
-// want a reading *during* the execution of a function, not after it returns,
-// when the GPU will likely be at or near its idling power.
+// want a reading *during* the execution of a function, not just before or
+// after a call to the GPU kernel returns; when the GPU will likely be at or
+// near its idling power.
 //
 // In this example, we will show how to call a function from rocblas (the sgemm
 // routine (single precision general matrix multiply), while using a separate
@@ -14,26 +15,33 @@
 // This is intended as a simple example upon which programmers can expand; for
 // a more comprehensive approach see power_monitor_rocm.cpp, that can deal with
 // multiple GPUs and allows power-capping and other output control. It is in
-// this same directory. power_monitor_rocm is a standalone code run in the
+// this same directory. power_monitor_rocm is a standalone code, run in the
 // background to monitor another application (two processes). (On some clusters
 // you must ensure the GPU *can* be shared by two processes simultaneously.)
-// This has the advantage of monitoring library code and application code with
-// no PAPI instrumentation in it. The pthread approach coded here has the
-// advantage of being a single executable and more flexible, for example you
-// can incorporate other elements into your output, such as PAPI event values
-// into the timed outputs, labels to indicate processing landmarks, etc. For
-// example, we could also read device temperature with every sample, or memory
-// usage or cache statistics, or I/O bandwidth statistics.
+
+// A separate process has the advantage of being able to monitor library code
+// and other application code that has no PAPI instrumentation code in it. The
+// pthread approach coded here has the advantage of being a single executable
+// and more flexible, for example you can incorporate other elements into your
+// output, such as PAPI event values into the timed outputs, or output labels
+// to indicate processing landmarks, etc. For example, with multiple papi event
+// sets, we could also read device temperature with every sample, or memory
+// usage or cache statistics, or even I/O bandwidth statistics on devices other
+// than the GPU, and output those stats for the same time steps as our power
+// consumption.
 
 // rocblas is generally part of the installed package from AMD, in
 // $PAPI_ROCM_ROOT/rocblas/, with subdirectories /lib and /include.  We don't
-// use HipBlas (also included), it is a higher level "switch" that calls either
-// cuBlas or rocBlas; not a necessary distinction for this example.  The
-// corresponding Makefile is also instructional. An advantage of rocblas is it
-// is also a "switch", automatically detecting the hardware and using the
-// appropriate tuned code for it.
+// use HipBlas (also included by AMD), HipBlas is a higher level "switch" that
+// calls either cuBlas or rocBlas. This would be an unnecessary complication
+// for this example.
+//
+// The corresponding Makefile is also instructional. 
 
-// > make -f rocmsmi_example 
+// An advantage of rocblas is it is also a "switch", automatically detecting
+// the hardware and using the appropriate tuned code for it.
+
+// > make rocmsmi_example 
 
 // This code is intentionally heavily commented to be instructional.  We use
 // the library code to exercise the GPU with a realistic workload instead of a
@@ -41,22 +49,17 @@
 // distribution directory $PAPI_ROCM_ROOT/hip/samples/, which contains
 // sub-directories with working applications.
 
-// ***NOTE*** To Compile, the environment variable PAPI_ROCM_ROOT must be
-// defined to point at a rocm directory; AND the environment variables
-// necessary for the rocprofiler to function must be set prior to execution.
-// Typically these are: 
+// To Compile, the environment variable PAPI_ROCM_ROOT must be defined to point
+// at a rocm directory. No other environment variables are necessary, but if
+// you wish to use ROCM events or events from other components, check the
+// appropriate README.md files for instructions. These will be found in
+// papi/src/components/COMPONENT_NAME/README.md files. 
 
-//  export ROCP_METRICS=$PAPI_ROCM_ROOT/rocprofiler/lib/metrics.xml
-//  export ROCPROFILER_LOG=1
-//  export HSA_VEN_AMD_AQLPROFILE_LOG=1
-//  export AQLPROFILE_READ_API=1
-//  export HSA_TOOLS_LIB=librocprofiler64.so
+// Because this program uses AMD HIP functions to manage memory on the GPU, it
+// must be compiled with the hipcc compiler. Typically this is found in:
+// $PAPI_ROCM_ROOT/bin/hipcc 
 
-// But check papi/src/components/rocm/README.md for any modifications. This
-// program must be compiled with the hipcc compiler, because it uses AMD HIP
-// functions to manage memory on the GPU. Typically $PAPI_ROCM_ROOT/bin/hipcc 
-
-// This is a c++ compiler, so c++ conventions for strings must be followed.
+// hipcc is a c++ compiler, so c++ conventions for strings must be followed.
 // (PAPI does not require c++; it is simple C; but PAPI++ will require c++).
 
 // Note for Clusters: Many clusters have "head nodes" (aka "login nodes") that
