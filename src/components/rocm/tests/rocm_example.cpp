@@ -5,21 +5,28 @@
 // executing kernel. rocblas is generally part of the installed package from
 // AMD, in $PAPI_ROCM_ROOT/rocblas/, with subdirectories /lib and /include.  We
 // don't use HipBlas (also included), it is a higher level "switch" that calls
-// either cuBlas or rocBlas; not a necessary distinction for this example.  The
-// corresponding ROCM_Example_Makefile is also instructional.
+// either cuBlas or rocBlas; not a necessary distinction for this example. The
+// corresponding Makefile is also instructional.
 
-// > make -f ROCM_Example_Makefile rocm_example 
+// > make rocm_example 
 
 // This code is intentionally heavily commented to be instructional.  We use
-// the library code so we do not have to provide a kernel, and it will be
+// the library code so we do not have to provide a kernel, and so it will be
 // reasonably tuned and representative of real work. For examples of how to
 // include your own kernels, see the distribution directory
 // $PAPI_ROCM_ROOT/hip/samples/, which contains sub-directories with working
 // applications.
 
-// To Compile, the environment variable PAPI_ROCM_ROOT must be defined to 
-// point at a rocm directory; AND the environment variables necessary for 
-// the rocprofiler to function must be set also. Typically these are: 
+// To Compile, the environment variable PAPI_ROCM_ROOT must be defined to point
+// at a rocm directory. Typically, no other environment variables are
+// necessary.
+
+// However, to Execute, PAPI relies on the rocprofiler; and it needs certain
+// environment variables set as well. PAPI will attempt to set these if they
+// are missing, but may fail if the resources are not in the expected places
+// within the file structure.
+
+// These may be set by the user; the following are typical settings:
 
 //  export ROCP_METRICS=$PAPI_ROCM_ROOT/rocprofiler/lib/metrics.xml
 //  export ROCPROFILER_LOG=1
@@ -27,12 +34,18 @@
 //  export AQLPROFILE_READ_API=1
 //  export HSA_TOOLS_LIB=librocprofiler64.so
 
-// but check papi/src/components/rocm/README.md for any modifications. This
-// program must be compiled with the hipcc compiler, because it uses AMD HIP
-// functions to manage memory on the GPU. Typically $PAPI_ROCM_ROOT/bin/hipcc 
+// Check papi/src/components/rocm/README.md for any modifications. 
 
-// This is a c++ compiler, so c++ conventions for strings must be followed.
-// (PAPI does not require c++; it is simple C; but PAPI++ will requre c++).
+// if you wish to use events from other components, check the appropriate
+// README.md files for instructions. These will be found in
+// papi/src/components/COMPONENT_NAME/README.md files. 
+
+// Because this program uses AMD HIP functions to manage memory on the GPU, it
+// must be compiled with the hipcc compiler. Typically this is found in:
+// $PAPI_ROCM_ROOT/bin/hipcc 
+
+// hipcc is a c++ compiler, so c++ conventions for strings must be followed.
+// (PAPI does not require c++; it is simple C; but PAPI++ will require c++).
 
 // Note for Clusters: Many clusters have "head nodes" (aka "login nodes") that
 // do not contain any gpus; the head node is used for compiling but the code is
