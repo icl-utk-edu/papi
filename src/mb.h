@@ -51,6 +51,9 @@
 #elif defined(__i386__)
 #define rmb() asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
 
+#elif defined(__NEC__)
+#define rmb() asm volatile("lfence":::"memory")
+
 #elif defined(__x86_64)
 
 #if defined(__KNC__)

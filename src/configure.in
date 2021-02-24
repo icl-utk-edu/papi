@@ -94,6 +94,23 @@ AC_MSG_CHECKING([for if MIC should be used])
 AC_MSG_RESULT($MIC)
 AC_SUBST(MIC)
 
+AC_MSG_CHECKING([for if NEC should be used])
+AC_ARG_WITH(nec,
+	[AS_HELP_STRING([]--with-nec,
+		[To compile for NEC])],
+	[NEC=yes
+		tls=__thread
+		cross_compiling=yes
+		ffsll=/opt/nec/ve/lib/libc-2.21.so
+		virtualtimer=cputime_id
+		walltimer=clock_realtime_hr
+		CC=ncc
+		CC_COMMON_NAME=ncc],
+	[NEC=no])
+AC_MSG_RESULT($NEC)
+AC_SUBST(NEC)
+
+
 CFLAGS="$CFLAGS -g"
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
@@ -110,7 +127,9 @@ AC_CHECK_PROG( [MPICC], mpicc, [mpicc], [])
 
 # Lets figure out what CC actually is...
 # Used in later checks to set compiler specific options
-if `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
+if `$CC --version 2>&1 | grep '^ncc (NCC)' >/dev/null 2>&1` ; then
+	CC_COMMON_NAME="ncc"
+elif `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
   CC_COMMON_NAME="icc"
   if test "$MPICC" = "mpicc"; then
     # Check if mpiicc is available
@@ -199,7 +218,22 @@ else
 		AC_MSG_RESULT([found])
 	LRT="-lrt"
 	else
-		AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt])
+		AC_MSG_RESULT([not found])
+		AC_MSG_CHECKING([for timer_create and timer_*ettime symbols in -lrt -lpthread])
+		SAVED_LIBS=${LIBS}
+                LIBS="${LIBS} -lrt -lpthread"
+                AC_TRY_LINK([#include <signal.h>
+                             #include <time.h>],
+                            [timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);],
+                            [has_lrt_lpthd="yes"],
+                            [has_lrt_lpthd="no"])
+                LIBS=${SAVED_LIBS}
+                if test "${has_lrt_lpthd}" = "yes" ; then
+                        AC_MSG_RESULT([found])
+                        LRT="-lrt -lpthread"
+                else
+			AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
+		fi
 	fi
 fi
 AC_SUBST(LRT)
@@ -419,6 +453,9 @@ AC_ARG_WITH(CPU,
                  if test "$CPU" = ""; then
                    CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr '[A-Z]' '[a-z]'`"
                  fi ;;
+		nec)
+			family=nec
+		;;
 	       freebsd)
                    family=`uname -m`
 
@@ -1071,6 +1108,28 @@ fi
 
 user_specified_interface=no
 ##################################################
+#          perfnec
+##################################################
+force_perfnec=no
+perfnec=0
+
+AC_ARG_WITH(perfnec,
+            [AS_HELP_STRING([--with-perfnec],
+            [Specify perf_nec as the performance interface])],
+            [perfnec=$withval 
+             user_specified_interface=perfnec
+	     force_perfnec=yes
+		pfm_root=libperfnec
+	     pfm_incdir="libperfnec/include"],
+            [perfnec=0
+               if test "$perfnec" != 0; then
+	         pfm_incdir="libpperfnec/include"
+	         fi])
+
+
+force_pfm_incdir=no
+
+##################################################
 #          perfmon
 ##################################################
 old_pfmv2=n
@@ -1229,18 +1288,30 @@ if test "$user_specified_interface" != "no"; then
    if test "$user_specified_interface" = "perfctr"; then
       perfmon=0
       perf_events="no"
+      perfnec=0
    else
 	if test "$user_specified_interface" = "perfmon"; then
 	   perfctr=0
 	   perf_events="no"
 	   PAPICFLAGS+=" $PFMCFLAGS"
+	   perfnec=0
 	else
 		if test "$user_specified_interface" = "pe"; then
 			   perfctr=0
 			   perfmon=0
 			   PAPICFLAGS+=" $PECFLAGS"
+			   perfnec=0
 		else
-			AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events")
+			if test "$user_specified_interface" = "perfnec"; then
+				perfctr=0
+				perfmon=0
+				perf_events=0
+				PAPICFLAGS+=" -DPERFNEC"
+				AC_MSG_NOTICE([XXXXX user_specified_interface perfnec])
+
+			else
+				AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events perfnec=$perfnec")
+			fi
 		fi								 
 	fi
    fi
@@ -1264,6 +1335,7 @@ fi
 # based on the settings of pfm_root, pfm_prefix, pfm_incdir, pfm_libdir
 #
 
+# Both should be 0 for NEC
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
    # if prefix set, then yes
    if test "x$pfm_prefix" != "x"; then
@@ -1304,6 +1376,9 @@ fi
 ##################################################
 AC_MSG_CHECKING(platform)
 case "$OS" in
+	nec)
+	MAKEVER=nec-nec
+	;;
   aix)
     MAKEVER="$OS"-"$CPU" ;;
   bgp)
@@ -1465,6 +1540,11 @@ elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
     OSLOCK="freebsd-lock.h"
     OSCONTEXT="freebsd-context.h"
+elif (test "$OS" = "nec"); then
+    OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
+    OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
+    OSLOCK="linux-lock.h"
+    OSCONTEXT="linux-context.h"
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
     OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
@@ -1666,6 +1746,11 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     fi
     CFLAGS="$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors"
     FFLAGS='-D_$(CPU_MODEL)'
+
+elif test "$MAKEVER" = "nec-nec"; then
+    FILENAME=Rules.perfnec
+    CPUCOMPONENT_NAME=perfnec
+    components="perfnec"
 
 elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.perfmon2
@@ -1890,6 +1975,12 @@ for comp in $components; do
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
     SDE_ENABLED=1
+    SDE_LIB_DIR="../components/sde/sde_lib"
+    if test "$shlib_tools" = "yes"; then
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
+    else
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
+    fi
   fi
 done
 
@@ -1986,6 +2077,7 @@ AC_SUBST(BITFLAGS)
 AC_SUBST(COMPONENT_RULES)
 AC_SUBST(COMPONENTS)
 AC_SUBST(SDE_ENABLED)
+AC_SUBST(SDE_LIB_FILES)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(BGPM_INSTALL_DIR)

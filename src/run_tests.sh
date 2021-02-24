@@ -42,7 +42,7 @@ VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
-COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" \)`;
+COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" -o -name "*.so" \)`;
 #EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
 EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
@@ -215,10 +215,15 @@ do
   done
   if [ $MATCH -ne 1 ]; then
     if [ -x $i ]; then
-	RAN="$i $RAN"
-    printf "Running $i:\n";
-    printf "%-59s" ""
-    $VALGRIND ./$i $TESTS_QUIET
+	    RAN="$i $RAN"
+        printf "Running $i:\n";
+        printf "%-59s" ""
+        cmp=`echo $i | sed 's:components/::' | sed 's:/.*$::'`;
+        if [ x$cmp == xsde ]; then
+            LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/components/sde/sde_lib:${PWD}/components/sde/tests/lib $VALGRIND ./$i $TESTS_QUIET
+        else
+            $VALGRIND ./$i $TESTS_QUIET
+        fi;
     fi;
   fi;
   MATCH=0
