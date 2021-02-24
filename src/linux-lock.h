@@ -49,6 +49,22 @@ extern volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #endif
 
 /***********/
+/* NEC     */
+/* TODO: need CAS instructions for NEC card */
+/***********/
+
+#elif defined(__NEC__)
+#define  _papi_hwd_lock(lck)                    \
+do                                              \
+{                                               \
+   unsigned int res = 0;                        \
+} while(0)
+#define  _papi_hwd_unlock(lck)                  \
+do                                              \
+{                                               \
+   unsigned int res = 0;                       \
+} while(0)
+/***********/
 /* x86     */
 /***********/
 

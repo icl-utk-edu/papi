@@ -126,7 +126,7 @@ void conductTest(int EventSet, int device, long long *values) {
     float *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(float);
-    int i, ret, thisDev, verbose=0;
+    int ret, thisDev, verbose=0;
 
 	ret = PAPI_start( EventSet );
 	if (ret != PAPI_OK ) {
@@ -164,6 +164,8 @@ void conductTest(int EventSet, int device, long long *values) {
 
     const unsigned blocks = 512;
     const unsigned threadsPerBlock = 256;
+    (void) blocks;
+    (void) threadsPerBlock; 
 
     if (verbose) fprintf (stderr, "info: launch 'vector_square' kernel\n");
 //  hipLaunchKernelGGL((vector_square), dim3(blocks), dim3(threadsPerBlock), 0, 0, C_d, A_d, N);
@@ -198,6 +200,8 @@ int main(int argc, char *argv[])
 {
     int devices, device, i = 0;
     char str[64];
+    (void) device;
+    (void) str;
 
     // Parse command line arguments
     parseCommandLineArgs(argc, argv);
@@ -207,6 +211,7 @@ int main(int argc, char *argv[])
     int eventCount;
     int ret;
     int k, m, cid=-1;
+    (void) m;
 
     /* PAPI Initialization */
     ret = PAPI_library_init(PAPI_VER_CURRENT);
@@ -248,6 +253,7 @@ int main(int argc, char *argv[])
     // Add events at a GPU specific level ... eg rocm:::device=0:Whatever
     eventCount = 0;
     int eventsRead=0;
+    (void) eventsRead;
 
    // Begin enumeration of all events.
 

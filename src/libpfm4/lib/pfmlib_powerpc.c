@@ -49,6 +49,7 @@ pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info)
 	info->idx   = pidx; /* private index */
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;
+	info->support_hw_smpl = 0;
 
 	info->nattrs = 0;
 

@@ -158,11 +158,12 @@ void addEventsFound(char *eventName, long long value) {
 // Eventset.
 //-----------------------------------------------------------------------------
 void conductTest(int EventSet, int device, long long *values, int numValues) {
+    (void) numValues;
     float *A_d, *C_d;
     float *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(float);
-    int i, ret, thisDev, verbose=0;
+    int ret, thisDev, verbose=0;
 
 	ret = PAPI_start( EventSet );
 	if (ret != PAPI_OK ) {
@@ -234,6 +235,9 @@ int main(int argc, char *argv[])
     int device, i = 0;
     size_t freeMemory = 0, totalMemory = 0;
     char str[64];
+    (void) freeMemory;
+    (void) totalMemory;
+    (void) str;
 
     eventsFoundMax = eventsFoundAdd;                            // space allocated.
     eventsFound = (eventStore_t*) calloc(eventsFoundMax, sizeof(eventStore_t)); // make some space.

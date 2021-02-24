@@ -52,7 +52,7 @@
 #include "papi.h"
 #include "print_header.h"
 #if SDE
-#include "components/sde/interface/papi_sde_interface.h"
+#include "components/sde/sde_lib/papi_sde_interface.h"
 #endif
 
 #define EVT_LINE 80
@@ -590,14 +590,14 @@ no_sdes:
 		/* Don't just assume it'll be the first numeric value */
 		i = 0 | PAPI_NATIVE_MASK;
 
-		retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
+        retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
-		if (retval==PAPI_OK) {
+        if (retval==PAPI_OK) {
 			do {
 				memset( &info, 0, sizeof ( info ) );
 				retval = PAPI_get_event_info( i, &info );
 
-				/* This event may not exist */
+                /* This event may not exist */
 				if ( retval != PAPI_OK ) continue;
 
 				/* Bail if event name doesn't contain include string */

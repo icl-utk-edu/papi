@@ -224,26 +224,53 @@ _mx_init_component( int cidx )
 {
 
 	FILE *fff;
-	char test_string[BUFSIZ];
+	char *path;
+	int checklen, len, pathlen;
 
 	/* detect if MX available */
 
-	strncpy(mx_counters_exe,"mx_counters 2> /dev/null",BUFSIZ);
-	fff=popen(mx_counters_exe,"r");
-	/* popen only returns NULL if "sh" fails, not the actual command */
-	if (fgets(test_string,BUFSIZ,fff)==NULL) {
-	   pclose(fff);
-	   strncpy(mx_counters_exe,"./components/mx/utils/fake_mx_counters 2> /dev/null",BUFSIZ);
-	   fff=popen(mx_counters_exe,"r");
-	   if (fgets(test_string,BUFSIZ,fff)==NULL) {
-	      pclose(fff);
-	      /* neither real nor fake found */
-	      strncpy(_mx_vector.cmp_info.disabled_reason,
-		      "No MX utilities found",PAPI_MAX_STR_LEN);
-	      return PAPI_ECMP;
+	path = getenv("PATH");
+	pathlen = strlen(path);
+	while(pathlen > 0) {
+	   len = strcspn(path, ":");
+	   if (len < BUFSIZ) {
+	      strncpy(mx_counters_exe, path, len);
+	   } else {
+	      fff = NULL;
+	      break;
+	   }
+	   mx_counters_exe[len] = '\0';
+	   checklen = len + strlen("/mx_counters");
+	   if (checklen < BUFSIZ) {
+	      strcat(mx_counters_exe, "/mx_counters");
+	   } else {
+	      fff = NULL;
+	      break;
+	   }
+	   fff = fopen(mx_counters_exe, "r");
+	   if (fff != NULL) {
+	      checklen = checklen + strlen(" 2> /dev/null");
+	      if (checklen < BUFSIZ) {
+	         strcat(mx_counters_exe, " 2> /dev/null");
+	         break;
+	      } else {
+	         fclose(fff);
+	         fff = NULL;
+	         break;
+	      }
+	   }
+	   pathlen = pathlen - len - 1;
+	   if (pathlen > 0) {
+	      path = path + len + 1;
 	   }
 	}
-	pclose(fff);
+	if (fff == NULL) {
+	   /* mx_counters not found */
+	   strncpy(_mx_vector.cmp_info.disabled_reason,
+		   "No MX utilities found",PAPI_MAX_STR_LEN);
+	   return PAPI_ECMP;
+	}
+	fclose(fff);
 
 	num_events=MX_MAX_COUNTERS;
 	_mx_vector.cmp_info.num_native_events=num_events;

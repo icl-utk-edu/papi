@@ -1149,6 +1149,7 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 
 	pfm_err_t retval = PFM_SUCCESS;
 	pfm_pmu_info_t pinfo;
+	unsigned int strSize;
 
 	/* allocate the native event structure */
 	event_table->num_native_events=0;
@@ -1246,6 +1247,13 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 					    memcpy(&(event_table->default_pmu),
 						    &pinfo,sizeof(pfm_pmu_info_t));
                         found_default++;
+				}
+				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
+					( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM)) {
+					if (strlen(_papi_hwi_system_info.hw_info.model_string) == 0) {
+						strSize = sizeof(_papi_hwi_system_info.hw_info.model_string);
+						strncpy( _papi_hwi_system_info.hw_info.model_string, pinfo.desc, strSize - 1);
+					}
 				}
 			}
 
