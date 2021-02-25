@@ -1,0 +1,38 @@
+PACKAGE_TARNAME = papi
+exec_prefix = ${prefix}
+prefix = /usr/local
+datarootdir = ${prefix}/share
+datadir = ../../..
+testlibdir = $(datadir)/testlib
+validationlibdir = $(datadir)/validation_tests
+INCLUDE = -I. -I${prefix}/include -I$(datadir) -I$(testlibdir) -I$(validationlibdir)
+LIBDIR  = ${exec_prefix}/lib
+LIBRARY = libpapi.a
+SHLIB   = libpapi.so.6.0.0.1
+PAPILIB = $(datadir)/$(LIBRARY)
+TESTLIB = $(testlibdir)/libtestlib.a
+LDFLAGS =  -ldl
+CC	= /spack/opt/spack/linux-scientific7-nehalem/gcc-7.3.0/gcc-9.2.0-ahblr6cyhlvd75xmcg465n5fser4e7ly/bin/gcc
+MPICC	= 
+F77	= /spack/opt/spack/linux-scientific7-nehalem/gcc-7.3.0/gcc-9.2.0-ahblr6cyhlvd75xmcg465n5fser4e7ly/bin/gfortran
+CC_R	= $(CC) -pthread
+CFLAGS	=  -g -Wextra  -Wall
+OPTFLAGS= -O2
+TOPTFLAGS= -O1
+OMPCFLGS = -fopenmp
+UTILOBJS = $(TESTLIB)
+
+tests: $(NAME)_tests
+
+install:
+	@echo "$(NAME) tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	-mkdir -p $(DATADIR)/$(NAME)/tests
+	-chmod go+rx $(DATADIR)
+	-chmod go+rx $(DATADIR)/$(NAME)/tests
+	-find . -perm -100 -type f -exec cp {} $(DATADIR)/$(NAME)/tests \;
+	-chmod go+rx $(DATADIR)/$(NAME)/*
+	-find . -name "*.[ch]" -type f -exec cp {} $(DATADIR)/$(NAME)/tests \;
+	-cp Makefile $(DATADIR)/$(NAME)/tests
+	-cp ../../Makefile_comp_tests $(DATADIR)
+
+

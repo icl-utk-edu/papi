@@ -1,22 +1,22 @@
 NAME=powercap_ppc
 include ../../Makefile_comp_tests.target
 
-TESTS = powercap_basic powercap_limit
+TESTS = powercap_ppc_basic powercap_ppc_limit
 
 powercap_ppc_tests: $(TESTS)
 
-powercap_basic.o:	powercap_basic.c
-	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c powercap_basic.c -o powercap_basic.o
+powercap_ppc_basic.o:	powercap_ppc_basic.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c powercap_ppc_basic.c -o powercap_ppc_basic.o
 
-powercap_basic: powercap_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o powercap_basic powercap_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+powercap_ppc_basic: powercap_ppc_basic.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) -o powercap_ppc_basic powercap_ppc_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
 
 
-powercap_limit.o:	powercap_limit.c
-	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c powercap_limit.c -o powercap_limit.o
+powercap_ppc_limit.o:	powercap_ppc_limit.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c powercap_ppc_limit.c -o powercap_ppc_limit.o
 
-powercap_limit: powercap_limit.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o powercap_limit powercap_limit.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+powercap_ppc_limit: powercap_ppc_limit.o $(UTILOBJS) $(PAPILIB)
+	$(CC) $(INCLUDE) -o powercap_ppc_limit powercap_ppc_limit.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o *~

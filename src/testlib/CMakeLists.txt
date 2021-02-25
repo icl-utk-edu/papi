@@ -17,4 +17,6 @@ target_sources (testlib PRIVATE ${c_testlib_srcs} ${f_testlib_srcs})
 target_include_directories (testlib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories (testlib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
+target_link_libraries(testlib PUBLIC m)
+
 set_target_properties (testlib PROPERTIES LINKER_LANGUAGE Fortran)

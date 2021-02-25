@@ -3,8 +3,10 @@ macro (add_papi_component_test source_file)
     string(REGEX REPLACE "\\.[^.]*$" "" basename ${source_file})
     add_executable(${basename}
         ${CMAKE_CURRENT_SOURCE_DIR}/${source_file})
+    target_include_directories(${basename}
+        PRIVATE ${CMAKE_SOURCE_DIR}/testlib)
     target_link_libraries (${basename}
-        PRIVATE papi)
+        PRIVATE testlib papi)
     add_test(NAME test_${basename}
         COMMAND ${basename}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

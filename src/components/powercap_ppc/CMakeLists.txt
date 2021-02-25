@@ -32,8 +32,8 @@ if (WITH_POWERCAP_PPC)
     add_subdirectory(tests)
 
     set (POWERCAP_PPC_TESTS_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/powercap_basic.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/powercap_limit.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/powercap_ppc_basic.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/powercap_ppc_limit.c
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/Makefile
     )
 

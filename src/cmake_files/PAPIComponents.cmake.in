@@ -1,0 +1,3 @@
+# Export the list of compiled-in components for external packages
+set (PAPI_COMPONENTS    "@COMPONENTS_LIST@")
+set (PAPI_SUBCOMPONENTS "@SUBCOMPONENTS_LIST@")

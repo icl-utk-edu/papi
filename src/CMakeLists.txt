@@ -5,9 +5,9 @@ project (PAPI C)
 # Allow targets from different subdirectories to be linked together
 cmake_policy (SET CMP0079 NEW)
 
-set (PAPI_VERSION_MAJOR 5)
-set (PAPI_VERSION_MINOR 7)
-set (PAPI_VERSION_PATCH 1)
+set (PAPI_VERSION_MAJOR 6)
+set (PAPI_VERSION_MINOR 0)
+set (PAPI_VERSION_PATCH 0)
 
 include(CMakePrintHelpers)
 
@@ -775,7 +775,27 @@ add_subdirectory(components)
 
 set (COMPONENT_RULES components/Rules.components)
 
-#message (STATUS "2/ perf_events = ${perf_events}")
+if (TARGET papi_shared)
+ message(STATUS "Adding properties to papi_shared ${COMPONENTS_LIST}")
+  set_target_properties(papi_shared
+    PROPERTIES
+    "COMPONENTS"    "${COMPONENTS_LIST}" #without quotes, only the first element is copied
+    "SUBCOMPONENTS" "${SUBCOMPONENTS_LIST}")
+  set_target_properties(papi_shared
+    PROPERTIES
+    EXPORT_PROPERTIES "COMPONENTS;SUBCOMPONENTS")
+endif (TARGET papi_shared)
+
+if (TARGET papi_static)
+  set_target_properties(papi_static
+    PROPERTIES
+    "COMPONENTS"    "${COMPONENTS_LIST}"
+    "SUBCOMPONENTS" "${SUBCOMPONENTS_LIST}")
+  set_target_properties(papi_static
+    PROPERTIES
+    EXPORT_PROPERTIES "COMPONENTS;SUBCOMPONENTS")
+endif (TARGET papi_static)
+
 
 # TODO : add custom commands for the custom target of the makefile
 # > showconf, etc... (see $PAPI_ROOT/Makefile.inc for the list)
@@ -1520,22 +1540,22 @@ set (PAPI_INSTALL_PKGCONFIG ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 #configure_file ()
 
 if (TARGET papi_static)
-	install (TARGETS papi_static
-		DESTINATION lib
-		EXPORT papi-targets)
+    install (TARGETS papi_static
+        DESTINATION lib
+        EXPORT papi-targets)
 endif (TARGET papi_static)
 
 if (TARGET papi_shared)
-	install (TARGETS papi_shared
-		DESTINATION lib
-		EXPORT papi-targets)
+  install (TARGETS papi_shared
+        DESTINATION lib
+        EXPORT papi-targets)
 endif (TARGET papi_shared)
 
 # Targets Export
 install (EXPORT papi-targets
-	FILE PAPITargets.cmake
-	NAMESPACE PAPI::
-	DESTINATION ${PAPI_INSTALL_SHARE})
+    FILE PAPITargets.cmake
+    NAMESPACE PAPI::
+    DESTINATION ${PAPI_INSTALL_SHARE})
 
 include (CMakePackageConfigHelpers)
 
@@ -1546,38 +1566,42 @@ set (SYSCONFIG_INSTALL_DIR share)
 set (CONFIG_INSTALL_DIR    lib/cmake)
 
 configure_package_config_file (cmake_files/PAPIConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake
-        PATH_VARS LIB_INSTALL_DIR SYSCONFIG_INSTALL_DIR
-        INCLUDE_INSTALL_DIR
-        RUNTIME_INSTALL_DIR CONFIG_INSTALL_DIR)
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake
+    PATH_VARS LIB_INSTALL_DIR SYSCONFIG_INSTALL_DIR
+    INCLUDE_INSTALL_DIR
+    RUNTIME_INSTALL_DIR CONFIG_INSTALL_DIR)
 
 write_basic_package_version_file (${CMAKE_CURRENT_BINARY_DIR}/PAPIConfigVersion.cmake
-	VERSION ${PAPI_VERSION_MAJOR}.${PAPI_VERSION_MINOR}.${PAPI_VERSION_PATCH}
-        COMPATIBILITY SameMajorVersion)
+    VERSION ${PAPI_VERSION_MAJOR}.${PAPI_VERSION_MINOR}.${PAPI_VERSION_PATCH}
+    COMPATIBILITY SameMajorVersion)
+
+configure_file(cmake_files/PAPIComponents.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIComponents.cmake)
 
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIConfig.cmake
-	${CMAKE_CURRENT_BINARY_DIR}/PAPIConfigVersion.cmake
-	DESTINATION ${CONFIG_INSTALL_DIR})
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake_files/PAPIComponents.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/PAPIConfigVersion.cmake
+    DESTINATION ${CONFIG_INSTALL_DIR})
 
 # Pkg-Config file configuration + installation
 configure_file(cmake_files/papi.pc.cmake
-	${CMAKE_CURRENT_BINARY_DIR}/papi.pc)
+    ${CMAKE_CURRENT_BINARY_DIR}/papi.pc)
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/papi.pc
-	DESTINATION lib/pkgconfig)
+    DESTINATION lib/pkgconfig)
 
 # Generated headers + Lib headers
 set (PAPI_HDRS
-	${CMAKE_CURRENT_BINARY_DIR}/f77papi.h
-	${CMAKE_CURRENT_BINARY_DIR}/f90papi.h
-	${CMAKE_CURRENT_BINARY_DIR}/fpapi.h
-	${CMAKE_CURRENT_SOURCE_DIR}/papi.h
-	${CMAKE_CURRENT_SOURCE_DIR}/papiStdEventDefs.h)
+    ${CMAKE_CURRENT_BINARY_DIR}/f77papi.h
+    ${CMAKE_CURRENT_BINARY_DIR}/f90papi.h
+    ${CMAKE_CURRENT_BINARY_DIR}/fpapi.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/papi.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/papiStdEventDefs.h)
 
 install (FILES ${PAPI_HDRS}
-	DESTINATION include)
+    DESTINATION include)
 
 # Utility binaries
 # > each one of them has its own rule in utils/CMakeLists.txt
