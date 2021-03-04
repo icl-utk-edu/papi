@@ -572,27 +572,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     long long elim_ns = 0;
     (void) elim_ns;
 
-    // Create a current default context needed for cupti calls in multi-pass elimination.
     CUcontext currCuCtx;
-    cudaErr = (*cudaFreePtr) (NULL);
-    if (cudaErr != cudaSuccess) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Function cudaFreePtr(NULL) error code=%d.", cudaErr);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_EMISC);    
-    } // else fprintf(stderr, "%s:%i cudaFreePtr(NULL) success.\n", __FILE__, __LINE__);
-
-    cuErr = (*cuCtxGetCurrentPtr) (&currCuCtx);
-    if (cuErr != CUDA_SUCCESS) {
-        const char *errString=NULL;
-        (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Function cuCtxGetCurrentPtr) failed: %s.", errString);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_EMISC);    
-    } // else fprintf(stderr, "%s:%i cuCtxGetCurrent(&currCuCtx) success.\n", __FILE__, __LINE__);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
@@ -925,6 +905,17 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     SUBDBG("Checking for metrics\n");
     for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
+        cuErr = (*cuCtxCreatePtr) (&currCuCtx, 0, deviceNum); // flags default=0.
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cuCtxCreatePtr) failed: %s.", errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        } // else fprintf(stderr, "%s:%i cuCtxCreate(&currCuCtx,0,%i) success.\n", __FILE__, __LINE__, deviceNum);
+
         uint32_t maxMetrics = 0, i, j;
         CUpti_MetricID *metricIdList = NULL;
         CUptiResult cuptiRet;
@@ -1170,21 +1161,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strCpy == NULL) HANDLE_STRING_ERROR;
             return(PAPI_EMISC);
         }
-    } // end of device loop, for metrics.
 
-    // Not sure why we can't destroy this context for cleanup; we get an error; CUDA_ERROR_INVALID_CONTEXT,
-    // which says it is not bound to our thread.     
-//  cuErr = (*cuCtxDestroyPtr) (currCuCtx);         // destroy the temporary context.
-//  currCuCtx = NULL;
-//  if (cuErr != CUDA_SUCCESS) {
-//      const char *errString=NULL;
-//      (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-//      strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-//      "Function cuCtxDestroy(currCuCtx) failed: %s.", errString);
-//      _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-//      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-//      return(PAPI_EMISC);    
-//  } else fprintf(stderr, "%s:%i cuCtxDestroy(currCuCtx) succeeded.\n", __FILE__, __LINE__);
+        cuErr = (*cuCtxDestroyPtr) (currCuCtx);         // destroy the temporary context.
+        currCuCtx = NULL;
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cuCtxDestroy(currCuCtx) failed: %s.", errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        } // else fprintf(stderr, "%s:%i cuCtxDestroy(currCuCtx) succeeded.\n", __FILE__, __LINE__);
+    } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
     // The NVIDIA code, by design, zeros counters once events are read. PAPI

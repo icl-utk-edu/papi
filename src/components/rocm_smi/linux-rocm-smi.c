@@ -409,10 +409,6 @@ static void MakeRoomScanEvents(void)
 //----------------------------------------------------------------------------
 void addScanEvent(const char* routine, int32_t device, uint64_t variant, uint64_t subvariant)
 {
-    if (subvariant != ((uint64_t) -1)) {
-        subvariant--;
-    }
-
     MakeRoomScanEvents();                                                           // Make room if needed.
     strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen);   // Copy name.
     ScanEvents[TotalScanEvents].device=device;                                      // Device ID.
@@ -455,6 +451,8 @@ static void scanEvents(void) {
     rsmi_func_id_value_t v_name, v_enum, v_sensor;
     rsmi_status_t err;
     unsigned int ui;
+    int i, editState;
+
     for (ui=0; ui<TotalDevices; ++ui) {                                         // For each device,
         err = (*rsmi_dev_supported_func_iterator_openPtr)(ui, &iter_handle);    // begin iterator.
         while (1) {                                                             // until we break out,
@@ -500,6 +498,46 @@ static void scanEvents(void) {
 
     // sort by device, name, variant, sub-variant.
     qsort(ScanEvents, TotalScanEvents, sizeof(scanEvent_info_t), sortScanEvents);
+
+    // Early versions of the rocm library returned -1 for events with no 
+    // subvariants; but [1,2,...] for those with subvariants. These have
+    // to be adjusted to [0,1,...] in actual routine calls. Later versions 
+    // return [0,1,...] as they should. We handle both versions. 
+
+    // State machine. If first in a group subvariant=1, reduce all subvariants in group by 1,
+    //                otherwise search for the next group.
+    editState = 1; 
+    for (i=0; i<TotalScanEvents; i++) {
+        switch(editState) {
+            case 1:                         // Looking at first in a group.
+                if (ScanEvents[i].subvariant==1) {
+                    editState=2;
+                    ScanEvents[i].subvariant=0;
+                } else editState=3;
+
+                break;
+
+            case 2:                         // Looking for group change while reducing.
+                if (ScanEvents[i].variant != ScanEvents[i-1].variant ||
+                    strcmp(ScanEvents[i].funcname, ScanEvents[i-1].funcname) != 0 ||
+                    ScanEvents[i].device != ScanEvents[i-1].device) {
+                    editState=1; // re-run as first in set.
+                    i--;
+                } else {
+                    ScanEvents[i].subvariant--;
+                }
+            break;
+
+            case 3:                         // Looking for group change while not reducing.
+                if (ScanEvents[i].variant != ScanEvents[i-1].variant ||
+                    strcmp(ScanEvents[i].funcname, ScanEvents[i-1].funcname) != 0 ||
+                    ScanEvents[i].device != ScanEvents[i-1].device) {
+                    editState=1; // re-run as first in set.
+                    i--;
+                }
+            break;
+        }
+    }
 
     // Create an end of list marker; for scanning without an index.
     MakeRoomScanEvents();                                                           // Make room if needed.
@@ -555,16 +593,18 @@ scanEvent_info_t* nextEvent(scanEvent_info_t* currentEvent, int device, char* fu
 // installed and on systems where these libraries are not installed.
 static int _rocm_smi_linkRocmLibraries(void)
 {
-    char path_name[1024];
+    char path_name[PATH_MAX];
     // Attempt to guess if we were statically linked to libc, if so, get out.
     if(_dl_non_dynamic_init != NULL) {
         strncpy(_rocm_smi_vector.cmp_info.disabled_reason, "The ROCM component does not support statically linking to libc.", PAPI_MAX_STR_LEN);
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         return PAPI_ENOSUPP;
     }
 
     // collect any defined environment variables, or "NULL" if not present.
-    char *rocmsmi_root =       getenv("PAPI_ROCMSMI_ROOT");
-    char *rocmsmi_lib  =       getenv("PAPI_ROCMSMI_LIB");
+    char *rocm_root    = getenv("PAPI_ROCM_ROOT");
+    char *rocmsmi_root = getenv("PAPI_ROCMSMI_ROOT");
+    char *rocmsmi_lib  = getenv("PAPI_ROCMSMI_LIB");
 
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
@@ -573,6 +613,7 @@ static int _rocm_smi_linkRocmLibraries(void)
         dl1 = dlopen(rocmsmi_lib, RTLD_NOW | RTLD_GLOBAL);  // Try to open that path.
         if (dl1 == NULL) {
             snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to open PAPI_ROCMSMI_LIB='%s'.", rocmsmi_lib);
+            _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -584,13 +625,21 @@ static int _rocm_smi_linkRocmLibraries(void)
 
     // Step 3: Try the explicit install default.
     if (dl1 == NULL && rocmsmi_root != NULL) {                          // if root given, try it.
-        snprintf(path_name, 1024, "%s/lib/librocm_smi64.so", rocmsmi_root);  // PAPI Root check.
+        snprintf(path_name, PATH_MAX, "%s/lib/librocm_smi64.so", rocmsmi_root);  // PAPI Root check.
+        path_name[PATH_MAX-1]=0;
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
+    // Step 4: If PAPI_ROCM_ROOT was given, try using it.
+    if (dl1 == NULL && rocm_root != NULL) {                          // if root given, try it.
+        snprintf(path_name, PATH_MAX, "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);  // PAPI rocm Root check.
+        path_name[PATH_MAX-1]=0;
+        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    }
     // Check for failure.
     if (dl1 == NULL) {
         snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "librocm_smi64.so not found.");
+        _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         return(PAPI_ENOSUPP);
     }
 

@@ -33,7 +33,7 @@ Within PAPI\_ROCM\_ROOT, we expect the following standard directories:
     PAPI_ROCM_ROOT/rocprofiler/lib
     PAPI_ROCM_ROOT/rocprofiler/include
 
-Besides the PAPI\_ROCM\_ROOT environment variable, four more environment variables are required at runtime. These are not needed by PAPI, but by the AMD ROCPROFILER software we interface with. These added environment variables are typically set as follows, after PAPI\_ROCM\_ROOT has been exported. An example is provided below:
+Besides the PAPI\_ROCM\_ROOT environment variable, five more environment variables are required at runtime. These are not needed by PAPI, but by the AMD ROCPROFILER software we interface with. These added environment variables are typically set as follows, after PAPI\_ROCM\_ROOT has been exported. An example is provided below:
 
     export ROCP_METRICS=$PAPI_ROCM_ROOT/rocprofiler/lib/metrics.xml
     export ROCPROFILER_LOG=1
@@ -41,7 +41,7 @@ Besides the PAPI\_ROCM\_ROOT environment variable, four more environment variabl
     export AQLPROFILE_READ_API=1
     export HSA_TOOLS_LIB=librocprofiler64.so
 
-The first of these, ROCP\_METRICS, must point at a file containing the descriptions of metrics. The standard location is shown above, the final three exports are fixed settings.
+The first of these, ROCP\_METRICS, must point at a file containing the descriptions of metrics. The standard location is shown above, the final four exports are fixed settings.
     
 
 ## Known Limitations
