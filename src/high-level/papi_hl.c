@@ -19,6 +19,8 @@
 #include <search.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <time.h>
 #include <stdint.h>
@@ -200,6 +202,9 @@ static void _internal_hl_json_region_events(FILE* f, bool beautifier, regions_t 
 static void _internal_hl_json_regions(FILE* f, bool beautifier, threads_t* thread_node);
 static void _internal_hl_json_threads(FILE* f, bool beautifier, unsigned long* tids, int threads_num);
 static int _internal_hl_cmpfunc(const void * a, const void * b);
+static int _internal_get_sorted_thread_list(unsigned long** tids, int* threads_num);
+static void _internal_hl_write_json_file(FILE* f, unsigned long* tids, int threads_num);
+static void _internal_hl_read_json_file(const char* path);
 static void _internal_hl_write_output();
 
 /* functions for cleaning up heap memory */
@@ -1399,6 +1404,66 @@ static int _internal_hl_cmpfunc(const void * a, const void * b) {
    return ( *(int*)a - *(int*)b );
 }
 
+static int _internal_get_sorted_thread_list(unsigned long** tids, int* threads_num)
+{
+   if ( PAPI_list_threads( *tids, threads_num ) != PAPI_OK ) {
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+      return -1;
+   }
+   if ( ( *tids = malloc( *(threads_num) * sizeof(unsigned long) ) ) == NULL ) {
+      verbose_fprintf(stdout, "PAPI-HL Error: OOM!\n");
+      return -1;
+   }
+   if ( PAPI_list_threads( *tids, threads_num ) != PAPI_OK ) {
+      verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
+      return -1;
+   }
+
+   /* sort thread ids in ascending order */
+   qsort(*tids, *(threads_num), sizeof(unsigned long), _internal_hl_cmpfunc);
+   return PAPI_OK;
+}
+
+static void _internal_hl_write_json_file(FILE* f, unsigned long* tids, int threads_num)
+{
+   /* JSON beautifier (line break and indent) */
+   bool beautifier = true;
+
+   /* determine max cpu frequency */
+   int cpu_freq = PAPI_get_opt( PAPI_CLOCKRATE, NULL );
+
+   /* start of JSON file */
+   fprintf(f, "{");
+   _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+   fprintf(f, "\"max_cpu_rate_mhz\":\"%d\",", cpu_freq);
+
+   /* write definitions */
+   _internal_hl_json_definitions(f, beautifier);
+
+   /* write all regions with events per thread */
+   _internal_hl_json_threads(f, beautifier, tids, threads_num);
+
+   /* end of JSON file */
+   _internal_hl_json_line_break_and_indent(f, beautifier, 0);
+   fprintf(f, "}");
+   fprintf(f, "\n");
+}
+
+static void _internal_hl_read_json_file(const char* path)
+{
+   /* print output to stdout */
+   printf("\n\nPAPI-HL Output:\n");
+   FILE* output_file = fopen(path, "r");
+   int c = fgetc(output_file);
+   while (c != EOF)
+   {
+      printf("%c", c);
+      c = fgetc(output_file);
+   }
+   printf("\n");
+   fclose(output_file);
+}
+
 static void _internal_hl_write_output()
 {
    if ( output_generated == false )
@@ -1411,11 +1476,6 @@ static void _internal_hl_write_output()
             free(absolute_output_file_path);
             return;
          }
-         unsigned long *tids = NULL;
-         int number_of_threads;
-         FILE *output_file;
-         /* current CPU frequency in MHz */
-         int cpu_freq;
 
          if ( region_begin_cnt == region_end_cnt ) {
             verbose_fprintf(stdout, "PAPI-HL Info: Print results...\n");
@@ -1438,97 +1498,80 @@ static void _internal_hl_write_output()
          /* determine rank for output file */
          int rank = _internal_hl_determine_rank();
 
-         if ( rank < 0 )
-         {
-            /* generate unique rank number */
-            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_XXXXXX");
-            int fd;
-            fd = mkstemp(absolute_output_file_path);
-            close(fd);
-         }
-         else
-         {
-            sprintf(absolute_output_file_path + strlen(absolute_output_file_path), "/rank_%04d", rank);
+         /* if system does not provide rank id, create a random id */
+         if ( rank < 0 ) {
+            srand(time(NULL));
+            rank = (rand() + getpid() ) % 1000000;
          }
 
-         /* determine current cpu frequency */
-         cpu_freq = PAPI_get_opt( PAPI_CLOCKRATE, NULL );
+         int unique_output_file_created = 0;
+         char *final_absolute_output_file_path = NULL;
+         int fd;
+         int random_cnt = 0;
 
-         output_file = fopen(absolute_output_file_path, "w");
-
-         if ( output_file == NULL )
-         {
-            verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file %s!\n", absolute_output_file_path);
+         /* allocate memory for final output file path */
+         if ( ( final_absolute_output_file_path = (char *)malloc((strlen(absolute_output_file_path) + 20) * sizeof(char)) ) == NULL ) {
+            verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file.\n");
             free(absolute_output_file_path);
+            free(final_absolute_output_file_path);
             return;
          }
-         else
-         {
-            /* list all threads */
-            if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
-               verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
-               fclose(output_file);
+
+         /* create unique output file per process based on rank variable */
+         while ( unique_output_file_created == 0 ) {
+            rank += random_cnt;
+            sprintf(final_absolute_output_file_path, "%s/rank_%06d.json", absolute_output_file_path, rank);
+
+            fd = open(final_absolute_output_file_path, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+            if ( fd == -1 ) {
+               verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file.\n");
                free(absolute_output_file_path);
-               return;
-            }
-            if ( ( tids = malloc( number_of_threads * sizeof(unsigned long) ) ) == NULL ) {
-               verbose_fprintf(stdout, "PAPI-HL Error: OOM!\n");
-               fclose(output_file);
-               free(absolute_output_file_path);
-               return;
-            }
-            if ( PAPI_list_threads( tids, &number_of_threads ) != PAPI_OK ) {
-               verbose_fprintf(stdout, "PAPI-HL Error: PAPI_list_threads call failed!\n");
-               fclose(output_file);
-               free(absolute_output_file_path);
+               free(final_absolute_output_file_path);
                return;
             }
 
-            /* sort thread ids in ascending order */
-            qsort(tids, number_of_threads, sizeof(unsigned long), _internal_hl_cmpfunc);
+            if ( flock(fd, LOCK_EX|LOCK_NB) == 0 ) {
+               unique_output_file_created = 1;
+               free(absolute_output_file_path);
 
-            /* start writing json file */
+               /* write into file */
+               FILE *fp = fdopen(fd, "w");
+               if ( fp != NULL ) {
+                  
+                  /* list all threads */
+                  unsigned long *tids = NULL;
+                  int threads_num;
+                  if ( _internal_get_sorted_thread_list(&tids, &threads_num) != PAPI_OK ) {
+                     fclose(fp);
+                     free(final_absolute_output_file_path);
+                     return;
+                  }
 
-            /* JSON beautifier (line break and indent) */
-            bool beautifier = true;
+                  /* start writing json output */
+                  _internal_hl_write_json_file(fp, tids, threads_num);
+                  free(tids);
+                  fclose(fp);
 
-            /* start of JSON file */
-            fprintf(output_file, "{");
-            _internal_hl_json_line_break_and_indent(output_file, beautifier, 1);
-            fprintf(output_file, "\"max_cpu_rate_mhz\":\"%d\",", cpu_freq);
+                  if ( getenv("PAPI_REPORT") != NULL ) {
+                     _internal_hl_read_json_file(final_absolute_output_file_path);
+                  }
 
-            /* write definitions */
-            _internal_hl_json_definitions(output_file, beautifier);
-
-            /* write all regions with events per thread */
-            _internal_hl_json_threads(output_file, beautifier, tids, number_of_threads);
-
-            /* end of JSON file */
-            _internal_hl_json_line_break_and_indent(output_file, beautifier, 0);
-            fprintf(output_file, "}");
-            fprintf(output_file, "\n");
-
-            fclose(output_file);
-            free(tids);
-
-            if ( getenv("PAPI_REPORT") != NULL ) {
-               /* print output to stdout */
-               printf("\n\nPAPI-HL Output:\n");
-               output_file = fopen(absolute_output_file_path, "r");
-               int c = fgetc(output_file); 
-               while (c != EOF)
-               {
-                  printf("%c", c);
-                  c = fgetc(output_file);
+               } else {
+                  verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file: %s\n", strerror( errno ));
+                  free(final_absolute_output_file_path);
+                  flock(fd, LOCK_UN);
+                  return;
                }
-               printf("\n");
-               fclose(output_file);
+               flock(fd, LOCK_UN);
+            } else {
+               /* try another file name */
+               close(fd);
+               random_cnt++;
             }
-
          }
 
          output_generated = true;
-         free(absolute_output_file_path);
+         free(final_absolute_output_file_path);
       }
       _papi_hwi_unlock( HIGHLEVEL_LOCK );
    }
