@@ -165,7 +165,7 @@ static void _internal_hl_onetime_library_init(void);
 /* functions for creating eventsets for different components */
 static int _internal_hl_checkCounter ( char* counter );
 static int _internal_hl_determine_rank();
-static char *_internal_hl_remove_spaces( char *str );
+static char *_internal_hl_remove_spaces( char *str, int mode );
 static int _internal_hl_determine_default_events();
 static int _internal_hl_read_user_events();
 static int _internal_hl_new_component(int component_id, components_t *component);
@@ -339,12 +339,18 @@ static int _internal_hl_determine_rank()
    return rank;
 }
 
-static char *_internal_hl_remove_spaces( char *str )
+static char *_internal_hl_remove_spaces( char *str, int mode )
 {
    char *out = str, *put = str;
    for(; *str != '\0'; ++str) {
-      if(*str != ' ')
+      if ( mode == 0 ) {
+         if(*str != ' ')
+            *put++ = *str;
+      } else {
+         while (*str == ' ' && *(str + 1) == ' ')
+            str++;
          *put++ = *str;
+      }
    }
    *put = '\0';
    return out;
@@ -439,7 +445,7 @@ static int _internal_hl_read_user_events(const char *user_events)
             free(user_events_copy);
             return PAPI_EINVAL;
          }
-         requested_event_names[req_event_index] = strdup(_internal_hl_remove_spaces(token));
+         requested_event_names[req_event_index] = strdup(_internal_hl_remove_spaces(token, 0));
          if ( requested_event_names[req_event_index] == NULL ) {
             free(user_events_copy);
             return ( PAPI_ENOMEM );
@@ -1429,13 +1435,26 @@ static void _internal_hl_write_json_file(FILE* f, unsigned long* tids, int threa
    /* JSON beautifier (line break and indent) */
    bool beautifier = true;
 
-   /* determine max cpu frequency */
-   int cpu_freq = PAPI_get_opt( PAPI_CLOCKRATE, NULL );
-
    /* start of JSON file */
    fprintf(f, "{");
    _internal_hl_json_line_break_and_indent(f, beautifier, 1);
-   fprintf(f, "\"max_cpu_rate_mhz\":\"%d\",", cpu_freq);
+   fprintf(f, "\"papi_version\":\"%d.%d.%d.%d\",", PAPI_VERSION_MAJOR( PAPI_VERSION ),
+      PAPI_VERSION_MINOR( PAPI_VERSION ),
+      PAPI_VERSION_REVISION( PAPI_VERSION ),
+      PAPI_VERSION_INCREMENT( PAPI_VERSION ) );
+
+   /* add some hardware info */
+   const PAPI_hw_info_t *hwinfo;
+   if ( ( hwinfo = PAPI_get_hardware_info(  ) ) != NULL ) {
+      _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+      char* cpu_info = _internal_hl_remove_spaces(strdup(hwinfo->model_string), 1);
+      fprintf(f, "\"cpu_info\":\"%s\",", cpu_info);
+      free(cpu_info);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+      fprintf(f, "\"max_cpu_rate_mhz\":\"%d\",", hwinfo->cpu_max_mhz);
+      _internal_hl_json_line_break_and_indent(f, beautifier, 1);
+      fprintf(f, "\"min_cpu_rate_mhz\":\"%d\",", hwinfo->cpu_min_mhz);
+   }
 
    /* write definitions */
    _internal_hl_json_definitions(f, beautifier);
@@ -1520,7 +1539,7 @@ static void _internal_hl_write_output()
          /* create unique output file per process based on rank variable */
          while ( unique_output_file_created == 0 ) {
             rank += random_cnt;
-            sprintf(final_absolute_output_file_path, "%s/rank_%06d.json", absolute_output_file_path, rank);
+            sprintf(final_absolute_output_file_path, "%s/rank_%04d.json", absolute_output_file_path, rank);
 
             fd = open(final_absolute_output_file_path, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
             if ( fd == -1 ) {
