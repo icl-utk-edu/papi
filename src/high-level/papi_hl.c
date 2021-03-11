@@ -1519,8 +1519,8 @@ static void _internal_hl_write_output()
 
          /* if system does not provide rank id, create a random id */
          if ( rank < 0 ) {
-            srand(time(NULL));
-            rank = (rand() + getpid() ) % 1000000;
+            srandom( time(NULL) + getpid() );
+            rank = random() % 1000000;
          }
 
          int unique_output_file_created = 0;
@@ -1539,7 +1539,7 @@ static void _internal_hl_write_output()
          /* create unique output file per process based on rank variable */
          while ( unique_output_file_created == 0 ) {
             rank += random_cnt;
-            sprintf(final_absolute_output_file_path, "%s/rank_%04d.json", absolute_output_file_path, rank);
+            sprintf(final_absolute_output_file_path, "%s/rank_%06d.json", absolute_output_file_path, rank);
 
             fd = open(final_absolute_output_file_path, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
             if ( fd == -1 ) {
