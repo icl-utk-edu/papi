@@ -22,6 +22,8 @@ components/nvml/tests/Makefile
 components/perf_event_uncore/tests/Makefile
 components/rapl/tests/Makefile
 components/bcs/tests/Makefile
+components/sde/tests/Makefile
+components/sde/tests/README.txt
 testlib/Makefile
 testlib/Makefile.target.in
 
