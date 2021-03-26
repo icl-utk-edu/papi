@@ -1350,7 +1350,8 @@ const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
 {
 	APIDBG( "Entry: Component Index %d\n", cidx);
-	if ( _papi_hwi_invalid_cmp( cidx ) )
+  if (_papi_hwd[cidx]->init_private) _papi_hwd[cidx]->init_private();
+  if ( _papi_hwi_invalid_cmp( cidx ) )
 		return ( NULL );
 	else
 		return ( &( _papi_hwd[cidx]->cmp_info ) );
