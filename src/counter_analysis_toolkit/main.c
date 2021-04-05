@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -110,8 +111,11 @@ int main(int argc, char*argv[])
     // Create the qualifier combinations for each event.
     trav_evts(data, pk, cards, nevts, ct, mode, allevts, &track, indexmemo, basenames);
 
+    char *conf_file_name = ".cat_cfg";
+    hw_desc_t *hw_desc = obtain_hardware_description(conf_file_name);
+
     // Run the benchmark for each qualifier combination.
-    testbench(allevts, cmbtotal, max_iter, argc, outdir, bench_type, show_progress);
+    testbench(allevts, cmbtotal, hw_desc, max_iter, argc, outdir, bench_type, show_progress);
 
     // Free dynamically allocated memory.
     free(outdir);
@@ -244,6 +248,161 @@ int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct,
     }
 
     return cmbtotal;
+}
+
+static hw_desc_t *obtain_hardware_description(char *conf_file_name){
+    int i,j;
+    hw_desc_t *hw_desc;
+	PAPI_mh_level_t *L;
+    const PAPI_hw_info_t *meminfo;
+
+    // Allocate some space.
+    hw_desc = (hw_desc_t *)calloc(1, sizeof(hw_desc_t));
+
+    // Set at least the L1 cache size to a default value.
+    hw_desc->dcache_line_size[0] = 64;
+
+    // Obtain hardware values through PAPI_get_hardware_info().
+    meminfo = PAPI_get_hardware_info();
+    if( NULL != meminfo ) {
+        hw_desc->cache_levels = meminfo->mem_hierarchy.levels;
+	    L = ( PAPI_mh_level_t * ) & ( meminfo->mem_hierarchy.level[0] );
+        for ( i = 0; i < meminfo->mem_hierarchy.levels && i<_MAX_SUPPORTED_CACHE_LEVELS; i++ ) {
+            for ( j = 0; j < 2; j++ ) {
+                if ( (PAPI_MH_TYPE_DATA == PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) ||
+                     (PAPI_MH_TYPE_UNIFIED == PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) ){
+                    hw_desc->dcache_line_size[i] = L[i].cache[j].line_size;
+                    hw_desc->dcache_size[i] =      L[i].cache[j].size;
+                    hw_desc->dcache_assoc[i] =     L[i].cache[j].associativity;
+                }
+                if ( (PAPI_MH_TYPE_INST == PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) ||
+                     (PAPI_MH_TYPE_UNIFIED == PAPI_MH_CACHE_TYPE(L[i].cache[j].type)) ){
+                    hw_desc->icache_line_size[i] = L[i].cache[j].line_size;
+                    hw_desc->icache_size[i] =      L[i].cache[j].size;
+                    hw_desc->icache_assoc[i] =     L[i].cache[j].associativity;
+                }
+            }
+        }
+    }
+
+    // Read the config file, if there, in case the user wants to overwrite some values.
+    read_conf_file(conf_file_name, hw_desc);
+    return hw_desc;
+}
+
+
+
+static int parse_line(FILE *input, char **key, int *value){
+    int status;
+    size_t linelen=0, len;
+    char *line=NULL;
+    char *pos=NULL;
+
+    // Read one line from the input file.
+    int ret_val = (int)getline(&line, &linelen, input);
+    if( ret_val < 0 )
+        return ret_val;
+
+    // Kill the part of the line after the comment character '#'.
+    pos = strchr(line, '#');
+    if( NULL != pos ){
+        *pos = '\0';
+    }
+
+    // Make sure the line is an assignment.
+    pos = strchr(line, '=');
+    if( NULL == pos ){
+        goto handle_error;
+    }
+
+    len = strcspn(line, " =");
+    *key = (char *)calloc((1+len),sizeof(char));
+    strncpy(*key, line, len);
+
+    // Scan the line to make sure it has the form "key = value"
+    status = sscanf(pos, "= %d", value);
+    if(1 != status){
+        fprintf(stderr,"Malformed line in conf file: '%s'\n", line);
+        goto handle_error;
+    }
+
+    return 0;
+
+handle_error:
+    free(line);
+    key = NULL;
+    *value = 0;
+    line = NULL;
+    linelen = 0;
+    return 1;
+}
+
+
+static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
+    FILE *input;
+
+    // Try to open the file.
+    input = fopen(conf_file_name, "r");
+    if (NULL == input ){
+        return;
+    }
+
+    while(1){
+        int value;
+        char *key=NULL;
+
+        int ret_val = parse_line(input, &key, &value);
+        if( ret_val < 0 ){
+            break;
+        }else if( ret_val > 0 ){
+            continue;
+        }
+
+        // If the user has set "AUTO_DISCOVERY_MODE = 1" then we don't need to process this file.
+        // Otherwise, any entry in this file should overwrite what we auto discovered.
+        if( !strcmp(key, "AUTO_DISCOVERY_MODE") && (value == 1) ){
+            return;
+        // Data caches (including unified caches)
+        }else if( !strcmp(key, "L1_DCACHE_LINE_SIZE") || !strcmp(key, "L1_UCACHE_LINE_SIZE") ){
+            hw_desc->dcache_line_size[0] = value;
+        }else if( !strcmp(key, "L2_DCACHE_LINE_SIZE") || !strcmp(key, "L2_UCACHE_LINE_SIZE") ){
+            hw_desc->dcache_line_size[1] = value;
+        }else if( !strcmp(key, "L3_DCACHE_LINE_SIZE") || !strcmp(key, "L3_UCACHE_LINE_SIZE") ){
+            hw_desc->dcache_line_size[2] = value;
+        }else if( !strcmp(key, "L4_DCACHE_LINE_SIZE") || !strcmp(key, "L4_UCACHE_LINE_SIZE") ){
+            hw_desc->dcache_line_size[3] = value;
+        }else if( !strcmp(key, "L1_DCACHE_SIZE") || !strcmp(key, "L1_UCACHE_SIZE") ){
+            hw_desc->dcache_size[0] = value;
+        }else if( !strcmp(key, "L2_DCACHE_SIZE") || !strcmp(key, "L2_UCACHE_SIZE") ){
+            hw_desc->dcache_size[1] = value;
+        }else if( !strcmp(key, "L3_DCACHE_SIZE") || !strcmp(key, "L3_UCACHE_SIZE") ){
+            hw_desc->dcache_size[2] = value;
+        }else if( !strcmp(key, "L4_DCACHE_SIZE") || !strcmp(key, "L4_UCACHE_SIZE") ){
+            hw_desc->dcache_size[3] = value;
+        // Instruction caches (including unified caches)
+        }else if( !strcmp(key, "L1_ICACHE_LINE_SIZE") || !strcmp(key, "L1_UCACHE_LINE_SIZE") ){
+            hw_desc->icache_line_size[0] = value;
+        }else if( !strcmp(key, "L2_ICACHE_LINE_SIZE") || !strcmp(key, "L2_UCACHE_LINE_SIZE") ){
+            hw_desc->icache_line_size[1] = value;
+        }else if( !strcmp(key, "L3_ICACHE_LINE_SIZE") || !strcmp(key, "L3_UCACHE_LINE_SIZE") ){
+            hw_desc->icache_line_size[2] = value;
+        }else if( !strcmp(key, "L4_ICACHE_LINE_SIZE") || !strcmp(key, "L4_UCACHE_LINE_SIZE") ){
+            hw_desc->icache_line_size[3] = value;
+        }else if( !strcmp(key, "L1_ICACHE_SIZE") || !strcmp(key, "L1_UCACHE_SIZE") ){
+            hw_desc->icache_size[0] = value;
+        }else if( !strcmp(key, "L2_ICACHE_SIZE") || !strcmp(key, "L2_UCACHE_SIZE") ){
+            hw_desc->icache_size[1] = value;
+        }else if( !strcmp(key, "L3_ICACHE_SIZE") || !strcmp(key, "L3_UCACHE_SIZE") ){
+            hw_desc->icache_size[2] = value;
+        }else if( !strcmp(key, "L4_ICACHE_SIZE") || !strcmp(key, "L4_UCACHE_SIZE") ){
+            hw_desc->icache_size[3] = value;
+        }
+
+        free(key);
+        key = NULL;
+    }
+    fclose(input);
+    return;
 }
 
 // Read the contents of the file supplied by the user.
@@ -548,8 +707,9 @@ int comb(int n, int k)
 
 // Measures the read latencies of the data cache. This information is
 // useful for analyzing data cache-related event signatures.
-void get_dcache_latencies(int max_iter, char *outputdir){
+void get_dcache_latencies(int max_iter, hw_desc_t *hw_desc, char *outputdir){
     FILE *ofp;
+    int stride, ppb;
 
     // Make sure the output files could be opened.
     int l = strlen(outputdir)+strlen("latencies.txt");
@@ -567,7 +727,13 @@ void get_dcache_latencies(int max_iter, char *outputdir){
         return;
     }
 
-    d_cache_test(3, max_iter, 256, 128, NULL, 1, 0, ofp);
+    if( (NULL==hw_desc) || (hw_desc->cache_levels<=0) || (0==hw_desc->dcache_line_size[0]) ){
+        stride = 256;
+    }else{
+        stride = 2*hw_desc->dcache_line_size[0];
+    }
+    ppb = 128;
+    d_cache_test(3, max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
 
     fclose(ofp);
 
@@ -594,7 +760,7 @@ static void print_progress2(int prg)
     fflush(stdout);
 }
 
-void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outputdir, int bench_type, int show_progress )
+void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, int max_iter, int init, char* outputdir, int bench_type, int show_progress )
 {
     int i;
 
@@ -622,7 +788,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
             if(show_progress) print_progress((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                branch_driver(allevts[i], init, outputdir);
+                branch_driver(allevts[i], init, hw_desc, outputdir);
         }
         if(show_progress) print_progress(100);
     }
@@ -632,10 +798,10 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
     {
         if(show_progress)
         {
-            printf("D-Cache Latencies: ");
+            printf("D-Cache Latencies: 0%%\b\b");
             fflush(stdout);
         }
-        get_dcache_latencies(max_iter, outputdir);
+        get_dcache_latencies(max_iter, hw_desc, outputdir);
         if(show_progress) printf("100%%\n");
 
         if(show_progress) printf("D-Cache Read Benchmarks: ");
@@ -644,7 +810,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
             if(show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, outputdir, 0, 0, show_progress);
+                d_cache_driver(allevts[i], max_iter, hw_desc, outputdir, 0, 0, show_progress);
             }
         }
         if(show_progress) print_progress2(100);
@@ -658,10 +824,10 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
         {
             if(show_progress)
             {
-                printf("D-Cache Latencies: ");
+                printf("D-Cache Latencies: 0%%\b\b");
                 fflush(stdout);
             }
-            get_dcache_latencies(max_iter, outputdir);
+            get_dcache_latencies(max_iter, hw_desc, outputdir);
             if(show_progress) printf("100%%\n");
         }
 
@@ -671,7 +837,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
             if(show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, outputdir, 0, 1, show_progress);
+                d_cache_driver(allevts[i], max_iter, hw_desc, outputdir, 0, 1, show_progress);
             }
         }
         if(show_progress) print_progress2(100);
@@ -687,7 +853,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
             if(show_progress) print_progress((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                flops_driver(allevts[i], outputdir);
+                flops_driver(allevts[i], hw_desc, outputdir);
         }
         if(show_progress) print_progress(100);
     }
@@ -702,7 +868,7 @@ void testbench(char** allevts, int cmbtotal, int max_iter, int init, char* outpu
             if(show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                i_cache_driver(allevts[i], init, outputdir, show_progress);
+                i_cache_driver(allevts[i], init, hw_desc, outputdir, show_progress);
         }
         if(show_progress) print_progress2(100);
     }

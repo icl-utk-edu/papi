@@ -12,7 +12,7 @@ volatile int iter_count, global_var1, global_var2;
 volatile int result;
 volatile unsigned int b, z1, z2, z3, z4;
 
-void branch_driver(char *papi_event_name, int init, char* outdir){
+void branch_driver(char *papi_event_name, int init, hw_desc_t *hw_desc, char* outdir){
     int papi_eventset = PAPI_NULL;
     int i, iter, sz, ret_val, max_iter = 16*1024;
     long long int cnt;
@@ -20,6 +20,8 @@ void branch_driver(char *papi_event_name, int init, char* outdir){
     FILE* ofp_papi;
     const char *sufx = ".branch";
     int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
+
+    (void)hw_desc;
 
     char *papiFileName = (char *)calloc( 1+l, sizeof(char) );
     if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {

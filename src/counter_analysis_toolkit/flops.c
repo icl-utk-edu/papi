@@ -286,13 +286,15 @@ void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
 
 }
 
-void flops_driver(char* papi_event_name, char* outdir)
+void flops_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
 {
     int retval = PAPI_OK;
     int EventSet = PAPI_NULL;
     FILE* ofp_papi;
     const char *sufx = ".flops";
     char *papiFileName;
+
+    (void)hw_desc;
 
     int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
     if (NULL == (papiFileName = (char *)calloc( 1+l, sizeof(char)))) {

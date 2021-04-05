@@ -1,29 +1,18 @@
 #include "papi.h"
 #include "caches.h"
-#include "prepareArray.h"
 #include "timing_kernels.h"
 #include "dcache.h"
+#include <math.h>
 
-typedef struct {
-    int *values;
-    double **rslts;
-    double **counter;
-    char *event_name;
-    int latency_only;
-    int mode;
-} data_t;
-
+#define _SIZE_SAMPLES_ 40
 extern int _papi_eventset;
 
-int global_max_iter, global_line_size_in_bytes, global_pattern;
-float global_pages_per_block;
-int line_size;
-int guessCount, min_size, max_size;
+int min_size, max_size;
 
-void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int latency_only, int mode, int show_progress)
+void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, char* outdir, int latency_only, int mode, int show_progress)
 {
     int pattern = 3;
-    int ls = 64;
+    int stride, f, cache_line;
     int test_cnt = 0;
     float ppb = 16;
     FILE *ofp_papi;
@@ -51,11 +40,17 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int laten
         goto error1;
     }
 
+    if( (NULL==hw_desc) || (0==hw_desc->dcache_line_size[0]) )
+        cache_line = 64;
+    else
+        cache_line = hw_desc->dcache_line_size[0];
+
     // Go through each parameter variant.
     for(pattern = 3; pattern <= 4; ++pattern)
     {
-        for(ls = 64; ls <= 128; ls *= 2)
+        for(f = 1; f <= 2; f *= 2)
         {
+            stride = cache_line*f;
             // PPB variation only makes sense if the pattern is not sequential.
             if(pattern != 4) 
             {
@@ -66,7 +61,7 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int laten
                         printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                         fflush(stdout);
                     }
-                    d_cache_test(pattern, max_iter, ls, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                    d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
                 }
             }
             else
@@ -76,7 +71,7 @@ void d_cache_driver(char* papi_event_name, int max_iter, char* outdir, int laten
                     printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                     fflush(stdout);
                 }
-                d_cache_test(pattern, max_iter, ls, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
             }
         }
     }
@@ -98,28 +93,25 @@ error0:
     return;
 }
 
-void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
+void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
     int i,j;
     int *values;
     double **rslts, *sorted_rslts, *latencies;
     double **counter, *sorted_counter;
-    int status;
+    int status, ret_val, guessCount;
 
-    // Replace this by modifying function header and global vars.
-    global_pattern = pattern;
-    global_max_iter = max_iter;
-    global_line_size_in_bytes = line_size_in_bytes;
-    global_pages_per_block = pages_per_block;
-
-    line_size = line_size_in_bytes/sizeof(uintptr_t);
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
 
     // The number of different sizes we will guess, trying to find the right size.
     guessCount = 0;
-    for(i=min_size; i<max_size; i*=2){
-        // += 4 for i, i*1.25, i*1.5, i*1.75
-        guessCount += 4;
+    if( (NULL==hw_desc) || (hw_desc->cache_levels<=0) ){
+        for(i=min_size; i<max_size; i*=2){
+            // += 4 for i, i*1.25, i*1.5, i*1.75
+            guessCount += 4;
+        }
+    }else{
+        guessCount = _SIZE_SAMPLES_;
     }
 
     rslts = (double **)malloc(max_iter*sizeof(double *));
@@ -137,20 +129,44 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
 
     values = (int *)malloc(guessCount*sizeof(int));
 
-    data_t data;
-    data.values   = values;
-    data.rslts    = rslts;
-    data.counter  = counter;
-    data.event_name = papi_event_name;
-    data.latency_only = latency_only;
-    data.mode = mode;
+    if( !latency_only ){
+        int native;
+        _papi_eventset = PAPI_NULL;
 
-    // Run the pointer chases.
-    status = experiment_main(&data);
-    if( 0 != status ){
-        return;
+        /* Set the event */
+        ret_val = PAPI_create_eventset( &_papi_eventset );
+        if (ret_val != PAPI_OK ){
+            return;
+        }
+
+        ret_val = PAPI_event_name_to_code( papi_event_name, &native );
+        if (ret_val != PAPI_OK ){
+            return;
+        }
+
+        ret_val = PAPI_add_event( _papi_eventset, native );
+        if (ret_val != PAPI_OK ){
+            return;
+        }
     }
 
+    for(i=0; i<max_iter; ++i){
+        status = varyBufferSizes(values, rslts[i], counter[i], hw_desc, stride_in_bytes, pages_per_block, pattern, latency_only, mode);
+        if( status < 0 )
+            goto cleanup;
+    }
+
+    if(latency_only)
+    {
+        int ONT=1;
+        #pragma omp parallel
+        {
+            if(!omp_get_thread_num()) {
+                ONT = omp_get_num_threads();
+            }
+        }
+        fprintf(ofp, "# ThreadCount %d\n", ONT);
+    }
     for(j=0; j<guessCount; ++j){
         for(i=0; i<max_iter; ++i){
             sorted_rslts[i] = rslts[i][j];
@@ -171,7 +187,7 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
         }
     }
 
-    // Free dynamically allocated memory.
+cleanup:
     for(i=0; i<max_iter; ++i){
         free(rslts[i]);
         free(counter[i]);
@@ -183,72 +199,31 @@ void d_cache_test(int pattern, int max_iter, int line_size_in_bytes, float pages
     free(latencies);
     free(values);
 
-    return;
-}
-
-int experiment_main(void *arg){
-    int i, latency_only, mode;
-    int native, ret_val;
-    int *values;
-    double **rslts;
-    double **counter;
-    data_t *data;
-    int status = 0;
-
-    data = (data_t *)arg;
-    values   = data->values;
-    rslts    = data->rslts;
-    counter  = data->counter;
-    latency_only = data->latency_only;
-    mode = data->mode;
-
-    if( !latency_only ){
-        _papi_eventset = PAPI_NULL;
-
-        /* Set the event */
-        ret_val = PAPI_create_eventset( &_papi_eventset );
-        if (ret_val != PAPI_OK ){
-            return -1;
-        }
-
-        ret_val = PAPI_event_name_to_code( data->event_name, &native );
-        if (ret_val != PAPI_OK ){
-            return -1;
-        }
-
-        ret_val = PAPI_add_event( _papi_eventset, native );
-        if (ret_val != PAPI_OK ){
-            return -1;
-        }
-        /* Done setting the event. */
-    }
-
-    for(i=0; i<global_max_iter; ++i){
-        status = varyBufferSizes(values, rslts[i], counter[i], global_line_size_in_bytes, global_pages_per_block, latency_only, mode);
-    }
-
     if( !latency_only ){
         ret_val = PAPI_cleanup_eventset(_papi_eventset);
         if (ret_val != PAPI_OK ){
             fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
-            return -1;
+            return;
         }
         ret_val = PAPI_destroy_eventset(&_papi_eventset);
         if (ret_val != PAPI_OK ){
             fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
-            return -1;
+            return;
         }
-
     }
 
-    return status;
+    return;
 }
 
-int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_in_bytes, float pages_per_block, int latency_only, int mode){
-    int i, j, active_buf_len;
+
+int varyBufferSizes(int *values, double *rslts, double *counter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode){
+    int i, j, cnt;
+    long active_buf_len;
     int ONT = 1;
     int allocErr = 0;
     run_output_t out;
+
+    int stride = stride_in_bytes/sizeof(uintptr_t);
 
     // Get the number of threads.
     #pragma omp parallel
@@ -257,7 +232,6 @@ int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_i
             ONT = omp_get_num_threads();
         }
     }
-
     uintptr_t rslt=42, *v[ONT], *ptr[ONT];
 
     // Allocate memory for each thread to traverse.
@@ -265,68 +239,105 @@ int varyBufferSizes(int *values, double *rslts, double *counter, int line_size_i
     {
         int idx = omp_get_thread_num();
 
-        ptr[idx] = (uintptr_t *)malloc( (2*max_size+line_size)*sizeof(uintptr_t) );
+        ptr[idx] = (uintptr_t *)malloc( (2*max_size+stride)*sizeof(uintptr_t) );
         if( !ptr[idx] ){
             fprintf(stderr, "Error: cannot allocate space for experiment.\n");
             #pragma omp critical
             {
                 allocErr = -1;
             }
-        }
+        }else{
+            // align v to the stride.
+            v[idx] = (uintptr_t *)(stride_in_bytes*(((uintptr_t)ptr[idx]+stride_in_bytes)/stride_in_bytes));
 
-        // align v to the line size
-        v[idx] = (uintptr_t *)(line_size_in_bytes*(((uintptr_t)ptr[idx]+line_size_in_bytes)/line_size_in_bytes));
-
-        // touch every page at least a few times
-        for(i=0; i<2*max_size; i+=512){
-            rslt += v[idx][i];
+            // touch every page at least a few times
+            for(i=0; i<2*max_size; i+=512){
+                rslt += v[idx][i];
+            }
         }
     }
     if(allocErr != 0)
     {
-        return -1;
+        goto error;
     }
 
-    // Make a couple of cold runs
-    out = probeBufferSize(16*line_size, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
-    out = probeBufferSize(2*16*line_size, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
+    // Make a cold run
+    out = probeBufferSize(16*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
     if(out.status != 0)
-    {
-        return -1;
-    }
+        goto error;
 
-    // run the actual experiment
-    i = 0;
-    for(active_buf_len=min_size; active_buf_len<max_size; active_buf_len*=2){
-        usleep(1000);
-        out = probeBufferSize(active_buf_len, line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
-        rslts[i] = out.dt;
-        counter[i] = out.counter;
-        values[i++] = sizeof(uintptr_t)*active_buf_len;
+    // Run the actual experiment
+    if( (NULL==hw_desc) || (hw_desc->cache_levels<=0) ){
+        cnt = 0;
+        // If we don't know the cache sizes, space the measurements between two default values.
+        for(active_buf_len=min_size; active_buf_len<max_size; active_buf_len*=2){
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            if(out.status != 0)
+                goto error;
+            rslts[cnt] = out.dt;
+            counter[cnt] = out.counter;
+            values[cnt++] = ONT*sizeof(uintptr_t)*active_buf_len;
 
-        usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.25), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
-        rslts[i] = out.dt;
-        counter[i] = out.counter;
-        values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.25));
+            out = probeBufferSize((int)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            if(out.status != 0)
+                goto error;
+            rslts[cnt] = out.dt;
+            counter[cnt] = out.counter;
+            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.25));
 
-        usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.5), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
-        rslts[i] = out.dt;
-        counter[i] = out.counter;
-        values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.5));
+            out = probeBufferSize((int)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            if(out.status != 0)
+                goto error;
+            rslts[cnt] = out.dt;
+            counter[cnt] = out.counter;
+            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.5));
 
-        usleep(1000);
-        out = probeBufferSize((int)((double)active_buf_len*1.75), line_size, pages_per_block, ONT, v, &rslt, latency_only, mode);
-        rslts[i] = out.dt;
-        counter[i] = out.counter;
-        values[i++] = sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
+            out = probeBufferSize((int)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            if(out.status != 0)
+                goto error;
+            rslts[cnt] = out.dt;
+            counter[cnt] = out.counter;
+            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
+        }
+    }else{
+        int llc;
+        double f, small_size, large_size, curr_size;
+
+        // If we know the cache sizes, space the measurements between a buffer size equal to L1/8
+        // and a buffer size that all threads cumulatively will exceed the LLC by a factor of 8.
+        // The rationale is that the L1 is typically private, while the LLC is shared among all cores.
+        llc = hw_desc->dcache_size[hw_desc->cache_levels-1];
+        small_size = hw_desc->dcache_size[0]/8;
+        large_size = (double)llc;
+        large_size = 8*large_size/ONT;
+        // Choose a factor "f" to grow the buffer size by, such that we collect "_SIZE_SAMPLES_"
+        // number of samples between "small_size" and "large_size", evenly distributed
+        // in a geometric fashion (i.e., sizes will be equally spaced in a log graph).
+        f = pow(large_size/small_size, 1.0/(_SIZE_SAMPLES_-1));
+        curr_size = small_size;
+        cnt=0;
+        for(j=0; j<_SIZE_SAMPLES_; j++){
+            active_buf_len = (long)(curr_size/sizeof(uintptr_t));
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            if(out.status != 0)
+                goto error;
+            rslts[cnt] = out.dt;
+            counter[cnt] = out.counter;
+            values[cnt++] = sizeof(uintptr_t)*active_buf_len;
+            curr_size *= f;
+        }
     }
 
     // Free each thread's memory.
     for(j=0; j<ONT; ++j){
         free(ptr[j]);
     }
-
     return 0;
+
+error:
+    // Free each thread's memory.
+    for(j=0; j<ONT; ++j){
+        free(ptr[j]);
+    }
+    return -1;
 }

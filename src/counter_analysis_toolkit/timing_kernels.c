@@ -14,7 +14,7 @@ volatile double x,y;
 int _papi_eventset = PAPI_NULL;
 extern int max_size;
 
-run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int ONT, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode){
+run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode){
     int count, retval;
     int buffer = 0;
     register uintptr_t *p = NULL;
@@ -32,16 +32,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     if( x > 0 || y > 0 )
         printf("WARNING: x=%lf y=%lf\n",x,y);
 
-    // Max counter value to access 1GB worth of buffer.
-    int countMax = 1024*1024*1024/(line_size*sizeof(uintptr_t));
-
-    // Clean up the memory.
-    #pragma omp parallel
-    {
-        int idx = omp_get_thread_num();
-
-        memset(v[idx],0,active_buf_len*sizeof(uintptr_t));
-    }
+    int countMax = 50*active_buf_len/line_size;
 
     // Get the size of a page of memory.
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);
@@ -57,24 +48,65 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     {
         int idx = omp_get_thread_num();
 
-        out.status = prepareArray(v[idx], active_buf_len, line_size, blockSize);
+        out.status = 0;
+        out.status = prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
     }
 
-    // Pointer-chasing benchmark.
-    if ( latency_only )
+    if ( !latency_only )
     {
-        count = countMax;
-        p = &v[0][0];
-
-        time1 = getticks();
-        while(count > 0){
-            N_128;
-            count -= 128;
+        // Start the counters.
+        retval = PAPI_start(_papi_eventset);
+        if ( PAPI_OK != retval )
+        {
+            error_handler(1, __LINE__);
+            out.status = -1;
         }
-        time2 = getticks();
+    }
+
+    // Start of threaded benchmark.
+    #pragma omp parallel private(p,count) reduction(+:buffer)
+    {
+        int idx = omp_get_thread_num();
+
+        // Start the actual test.
+        count = countMax;
+        p = &v[idx][0];
+
+        // Micro-kernel for memory reading.
+        if( CACHE_READ_ONLY == mode || latency_only )
+        {
+            if( latency_only ) time1 = getticks();
+            while(count > 0){
+                N_128;
+                count -= 128;
+            }
+            if( latency_only ) time2 = getticks();
+        }
+        // Micro-kernel for memory writing.
+        else
+        {
+            while(count > 0){
+                NW_128;
+                count -= 128;
+            }
+        }
 
         buffer += (uintptr_t)p+(uintptr_t)(x+y);
+    }
+    
+    if ( !latency_only )
+    {
+        // Stop the counters.
+        retval = PAPI_stop(_papi_eventset, &counter);
+        if ( PAPI_OK != retval ) 
+        {
+            error_handler(1, __LINE__);
+            out.status = -1;
+        }
 
+        // Get the average event count per access in pointer chase.
+        out.counter = (1.0*counter)/(1.0*countMax);
+    }else{
         // Compute the duration of the pointer chase.
         dt = elapsed(time2, time1);
 
@@ -86,56 +118,6 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
 
         // Get the average nanoseconds per access.
         out.dt = dt*factor;
-    }
-    else
-    {
-        // Start the counters.
-        retval = PAPI_start(_papi_eventset);
-        if ( PAPI_OK != retval )
-        {
-            error_handler(1, __LINE__);
-            out.status = -1;
-        }
-
-        // Start of threaded benchmark.
-        #pragma omp parallel private(p,count) reduction(+:buffer)
-        {
-            int idx = omp_get_thread_num();
-
-            // Start the actual test.
-            count = countMax;
-            p = &v[idx][0];
-
-            // Micro-kernel for memory reading.
-            if( CACHE_READ_ONLY == mode )
-            {
-                while(count > 0){
-                    N_128;
-                    count -= 128;
-                }
-            }
-            // Micro-kernel for memory writing.
-            else
-            {
-                while(count > 0){
-                    NW_128;
-                    count -= 128;
-                }
-            }
-
-            buffer += (uintptr_t)p+(uintptr_t)(x+y);
-        }
-    
-        // Stop the counters.
-        retval = PAPI_stop(_papi_eventset, &counter);
-        if ( PAPI_OK != retval ) 
-        {
-            error_handler(1, __LINE__);
-            out.status = -1;
-        }
-
-        // Get the average event count per access in pointer chase.
-        out.counter = (1.0*counter)/(1.0*countMax*ONT);
     }
 
     // Prevent compiler optimization.
