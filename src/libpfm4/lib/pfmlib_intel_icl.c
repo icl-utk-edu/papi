@@ -32,6 +32,9 @@ static const int icl_models[] = {
 	125, /* Icelake */
 	126, /* Icelake L */
 	157, /* Icelake NNPI */
+	140, /* Tigerlake L */
+	141, /* Tigerlake */
+	167, /* Rocketlake */
 	0
 };
 
