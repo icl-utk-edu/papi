@@ -372,12 +372,16 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
         }else if( !strcmp(key, "L4_DCACHE_LINE_SIZE") || !strcmp(key, "L4_UCACHE_LINE_SIZE") ){
             hw_desc->dcache_line_size[3] = value;
         }else if( !strcmp(key, "L1_DCACHE_SIZE") || !strcmp(key, "L1_UCACHE_SIZE") ){
+            if( hw_desc->cache_levels < 1 ) hw_desc->cache_levels = 1;
             hw_desc->dcache_size[0] = value;
         }else if( !strcmp(key, "L2_DCACHE_SIZE") || !strcmp(key, "L2_UCACHE_SIZE") ){
+            if( hw_desc->cache_levels < 2 ) hw_desc->cache_levels = 2;
             hw_desc->dcache_size[1] = value;
         }else if( !strcmp(key, "L3_DCACHE_SIZE") || !strcmp(key, "L3_UCACHE_SIZE") ){
+            if( hw_desc->cache_levels < 3 ) hw_desc->cache_levels = 3;
             hw_desc->dcache_size[2] = value;
         }else if( !strcmp(key, "L4_DCACHE_SIZE") || !strcmp(key, "L4_UCACHE_SIZE") ){
+            if( hw_desc->cache_levels < 4 ) hw_desc->cache_levels = 4;
             hw_desc->dcache_size[3] = value;
         // Instruction caches (including unified caches)
         }else if( !strcmp(key, "L1_ICACHE_LINE_SIZE") || !strcmp(key, "L1_UCACHE_LINE_SIZE") ){
