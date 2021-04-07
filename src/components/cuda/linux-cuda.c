@@ -1461,8 +1461,6 @@ static int _cuda_init_component(int cidx)
     _cuda_vector.cmp_info.num_cntrs = -1;
     _cuda_vector.cmp_info.num_mpx_cntrs = -1;
 
-    _cuda_vector.cmp_info.initialized = 0;
-
     return PAPI_OK;
 }
 
@@ -1484,7 +1482,6 @@ static int _cuda_init_private(void)
     int rv, err = PAPI_OK;
     PAPI_lock(COMPONENT_LOCK);
     if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
-
 
     SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
     /* link in all the cuda libraries and resolve the symbols we need to use */
@@ -2447,7 +2444,8 @@ papi_vector_t _cuda_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-                 }
+                 .initiliazed = 0,
+    }
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {

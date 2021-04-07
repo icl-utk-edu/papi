@@ -215,6 +215,22 @@ static _rocm_control_t *global__rocm_control = NULL;
  *****************************************************************************/
 
 /*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_rocm_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private)
+      return vector->init_private();
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _rocm_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
+
+/*
  * Link the necessary ROCM libraries to use the rocm component.  If any of them can not be found, then
  * the ROCM component will just be disabled.  This is done at runtime so that a version of PAPI built
  * with the ROCM component can be installed and used on systems which have the ROCM libraries installed
@@ -672,21 +688,37 @@ static int _rocm_init_thread(hwd_context_t * ctx)
     return PAPI_OK;
 }
 
+static int _rocm_init_component(int cidx)
+{
+    int strErr;
+    ROCMDBG("Entering _rocm_init_component\n");
+    _rocm_vector.cmp_info.CmpIdx = cidx;
+
+    _rocm_vector.cmp_info.num_native_events = -1;
+    _rocm_vector.cmp_info.num_cntrs = -1;
+    _rocm_vector.cmp_info.num_mpx_cntrs = -1;
+
+    return PAPI_OK;
+}
 
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-static int _rocm_init_component(int cidx)
+static int _rocm_init_private(int cidx)
 {
-    int strErr;
-    ROCMDBG("Entering _rocm_init_component\n");
+    int strErr, err = PAPI_OK;
+    PAPI_lock(COMPONENT_LOCK);
+    if (_rocm_vector.cmp_info.initialized) goto rocm_init_private_exit;
+
+    ROCMDBG("Entering _rocm_init_private\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
     if(_rocm_linkRocmLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of ROCM libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        err = (PAPI_ENOSUPP);
+        goto rocm_init_private_exit;
     }
 
     hsa_status_t status;
@@ -696,7 +728,8 @@ static int _rocm_init_component(int cidx)
             "ROCM hsa_init() failed with error %d.", status);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_EMISC);
+        err = (PAPI_EMISC);
+        goto rocm_init_private_exit;
     }
         
     /* Create the structure */
@@ -707,7 +740,8 @@ static int _rocm_init_component(int cidx)
             "%s:%i global__rocm_context alloc of %lu bytes failed.", __FILE__, __LINE__, sizeof(_rocm_context_t));
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return PAPI_ENOMEM;
+            err = PAPI_ENOMEM;
+            goto rocm_init_private_exit;
         }
     }
 
@@ -718,7 +752,8 @@ static int _rocm_init_component(int cidx)
             "ROCM hsa_iterate_agents() failed with error %d.", status);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_EMISC);
+        err = (PAPI_EMISC);
+        goto rocm_init_private_exit;
     }
 
     int rv;
@@ -730,17 +765,17 @@ static int _rocm_init_component(int cidx)
             "ROCM component routine _rocm_add_native_events() failed.");
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return (rv);
+        err = (rv);
+        goto rocm_init_private_exit;
     }
 
     /* Export some information */
-    _rocm_vector.cmp_info.CmpIdx = cidx;
     _rocm_vector.cmp_info.num_native_events = global__rocm_context->availEventSize;
     _rocm_vector.cmp_info.num_cntrs = _rocm_vector.cmp_info.num_native_events;
     _rocm_vector.cmp_info.num_mpx_cntrs = _rocm_vector.cmp_info.num_native_events;
 
     ROCMDBG("Exiting _rocm_init_component cidx %d num_native_events %d num_cntrs %d num_mpx_cntrs %d\n",
-        cidx,
+        _rocm_vector.cmp_info.CmpIdx,
         _rocm_vector.cmp_info.num_native_events,
         _rocm_vector.cmp_info.num_cntrs,
         _rocm_vector.cmp_info.num_mpx_cntrs);
@@ -751,16 +786,24 @@ static int _rocm_init_component(int cidx)
             char *strCpy=strncpy(_rocm_vector.cmp_info.disabled_reason, "Environment Variable ROCP_METRICS is not defined, should point to a valid metrics.xml.", PAPI_MAX_STR_LEN);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
-            return (PAPI_EMISC);
+            err = (PAPI_EMISC);
+            goto rocm_init_private_exit;
         }
 
         strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "No events.  Ensure ROCP_METRICS=%s is correct.", metrics);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return (PAPI_EMISC);
+        err = PAPI_EMISC;
+        goto rocm_init_private_exit;
     }
 
-    return (PAPI_OK);
+rocm_init_private_exit:
+    _rocm_vector.cmp_info.initialized = 1;
+    _rocm_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return err;
 }
 
 
@@ -773,6 +816,8 @@ static int _rocm_init_control_state(hwd_control_state_t * ctrl)
     ROCMDBG("Entering _rocm_init_control_state\n");
 
     (void) ctrl;
+    DO_SOME_CHECKING(&_cuda_vector);
+
     _rocm_context_t *gctxt = global__rocm_context;
 
     CHECK_PRINT_EVAL((gctxt == NULL), "Error: The PAPI ROCM component needs to be initialized first", return (PAPI_ENOINIT));
@@ -800,8 +845,9 @@ static int _rocm_init_control_state(hwd_control_state_t * ctrl)
 static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
 {
     ROCMDBG("Entering _rocm_update_control_state with nativeCount %d\n", nativeCount);
-
     (void) ctx;
+    DO_SOME_CHECKING(&_cuda_vector);
+
     _rocm_control_t *gctrl = global__rocm_control;
     _rocm_context_t *gctxt = global__rocm_context;
     int eventContextIdx = 0;
@@ -1184,6 +1230,7 @@ static int _rocm_set_domain(hwd_control_state_t * ctrl, int domain)
 static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     //ROCMDBG("Entering (get next event after %u)\n", *EventCode );
+    DO_SOME_CHECKING(&_rocm_vector);
 
     switch (modifier) {
     case PAPI_ENUM_FIRST:
@@ -1217,6 +1264,7 @@ static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 static int _rocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     //ROCMDBG("Entering EventCode %d\n", EventCode );
+    DO_SOME_CHECKING(&_rocm_vector);
 
     unsigned int index = EventCode;
     _rocm_context_t *gctxt = global__rocm_context;
@@ -1270,7 +1318,8 @@ papi_vector_t _rocm_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-                 }
+                 .initiliazed = 0,
+    }
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {
@@ -1289,6 +1338,7 @@ papi_vector_t _rocm_vector = {
 
     .init_component = _rocm_init_component,  /* ( int cidx ) */
     .init_thread = _rocm_init_thread,        /* ( hwd_context_t * ctx ) */
+    .init_private = _rocm_init_private,
     .init_control_state = _rocm_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _rocm_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
 
