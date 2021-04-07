@@ -50,6 +50,7 @@ const pfmlib_attr_desc_t l3_mods[]={
 pfmlib_pmu_t amd64_fam19h_zen3_l3_support = {
 	.desc			= "AMD64 Fam19h Zen3 L3",
 	.name			= "amd64_fam19h_zen3_l3",
+	.perf_name		= "amd_l3",
 	.pmu			= PFM_PMU_AMD64_FAM19H_ZEN3_L3,
 	.pmu_rev		= 0,
 	.pme_count		= LIBPFM_ARRAY_SIZE(amd64_fam19h_zen3_l3_pe),
