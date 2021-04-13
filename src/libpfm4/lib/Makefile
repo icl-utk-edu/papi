@@ -124,7 +124,9 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_amd64_k7.c pfmlib_amd64_k8.c pfmlib_amd64_fam10h.c \
 	  pfmlib_amd64_fam11h.c pfmlib_amd64_fam12h.c \
 	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c \
-	  pfmlib_amd64_fam17h.c pfmlib_amd64_fam16h.c
+	  pfmlib_amd64_fam17h.c pfmlib_amd64_fam16h.c \
+	  pfmlib_amd64_fam19h.c pfmlib_amd64_rapl.c \
+	  pfmlib_amd64_fam19h_l3.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
 
@@ -252,6 +254,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam15h.h	\
 	events/amd64_events_fam17h_zen1.h \
 	events/amd64_events_fam17h_zen2.h \
+	events/amd64_events_fam19h_zen3.h \
+	events/amd64_events_fam19h_zen3_l3.h \
 	events/amd64_events_fam16h.h	\
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
@@ -371,6 +375,7 @@ INC_ARM64=events/arm_cortex_a57_events.h	\
         events/arm_xgene_events.h		\
 	events/arm_cavium_tx2_events.h		\
 	events/arm_marvell_tx2_unc_events.h	\
+	events/arm_fujitsu_a64fx_events.h	\
 	events/arm_neoverse_n1_events.h
 
 INCDEP=$(INC_COMMON) $(INCARCH)

@@ -254,7 +254,7 @@ pfmlib_pmu_t arm_fujitsu_a64fx_support={
 
 	.pmu_detect		= pfm_arm_detect_a64fx,
 	.max_encoding		= 1,
-	.num_cntrs		= 6,
+	.num_cntrs		= 8,
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
