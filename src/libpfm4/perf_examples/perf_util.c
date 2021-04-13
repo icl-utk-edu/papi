@@ -270,7 +270,7 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	ret = perf_read_buffer_32(hw, &raw_sz);
 	if (ret) {
 		warnx("cannot read raw size");
-		return -1;
+		return (size_t)-1;
 	}
 
 	sz += sizeof(raw_sz);
@@ -280,7 +280,7 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	buf = malloc(raw_sz);
 	if (!buf) {
 		warn("cannot allocate raw buffer");
-		return -1;
+		return (size_t)-1;
 	}
 
 
@@ -288,7 +288,7 @@ __perf_handle_raw(perf_event_desc_t *hw)
 	if (ret) {
 		warnx("cannot read raw data");
 		free(buf);
-		return -1;
+		return (size_t)-1;
 	}
 
 	if (raw_sz)
@@ -571,7 +571,7 @@ perf_display_sample(perf_event_desc_t *fds, int num_fds, int idx, struct perf_ev
 			values[1] = time_enabled;
 			values[2] = time_running;
 			while(nr--) {
-				grp.id = -1;
+				grp.id = ~0ULL;
 				ret = perf_read_buffer_64(hw, &grp.value);
 				if (ret) {
 					warnx( "cannot read group value");

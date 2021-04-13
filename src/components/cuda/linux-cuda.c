@@ -324,6 +324,7 @@ DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
 
 //-----------------------------------------------------------------------------
 // Binary Search of gctxt->allEvents[gctxt->numAllEvents]. Returns idx, or -1.
+// No thread locks, the event array is static after init_component().
 //-----------------------------------------------------------------------------
 static int _search_all_events(cuda_context_t * gctxt, CUpti_EventID id, int device) {
     cuda_all_events_t *list =gctxt->allEvents; 
@@ -571,27 +572,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     long long elim_ns = 0;
     (void) elim_ns;
 
-    // Create a current default context needed for cupti calls in multi-pass elimination.
     CUcontext currCuCtx;
-    cudaErr = (*cudaFreePtr) (NULL);
-    if (cudaErr != cudaSuccess) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Function cudaFreePtr(NULL) error code=%d.", cudaErr);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_EMISC);    
-    } // else fprintf(stderr, "%s:%i cudaFreePtr(NULL) success.\n", __FILE__, __LINE__);
-
-    cuErr = (*cuCtxGetCurrentPtr) (&currCuCtx);
-    if (cuErr != CUDA_SUCCESS) {
-        const char *errString=NULL;
-        (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Function cuCtxGetCurrentPtr) failed: %s.", errString);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_EMISC);    
-    } // else fprintf(stderr, "%s:%i cuCtxGetCurrent(&currCuCtx) success.\n", __FILE__, __LINE__);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
@@ -924,6 +905,17 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     SUBDBG("Checking for metrics\n");
     for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
+        cuErr = (*cuCtxCreatePtr) (&currCuCtx, 0, deviceNum); // flags default=0.
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cuCtxCreatePtr) failed: %s.", errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        } // else fprintf(stderr, "%s:%i cuCtxCreate(&currCuCtx,0,%i) success.\n", __FILE__, __LINE__, deviceNum);
+
         uint32_t maxMetrics = 0, i, j;
         CUpti_MetricID *metricIdList = NULL;
         CUptiResult cuptiRet;
@@ -1169,21 +1161,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strCpy == NULL) HANDLE_STRING_ERROR;
             return(PAPI_EMISC);
         }
-    } // end of device loop, for metrics.
 
-    // Not sure why we can't destroy this context for cleanup; we get an error; CUDA_ERROR_INVALID_CONTEXT,
-    // which says it is not bound to our thread.     
-//  cuErr = (*cuCtxDestroyPtr) (currCuCtx);         // destroy the temporary context.
-//  currCuCtx = NULL;
-//  if (cuErr != CUDA_SUCCESS) {
-//      const char *errString=NULL;
-//      (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-//      strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-//      "Function cuCtxDestroy(currCuCtx) failed: %s.", errString);
-//      _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-//      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-//      return(PAPI_EMISC);    
-//  } else fprintf(stderr, "%s:%i cuCtxDestroy(currCuCtx) succeeded.\n", __FILE__, __LINE__);
+        cuErr = (*cuCtxDestroyPtr) (currCuCtx);         // destroy the temporary context.
+        currCuCtx = NULL;
+        if (cuErr != CUDA_SUCCESS) {
+            const char *errString=NULL;
+            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cuCtxDestroy(currCuCtx) failed: %s.", errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC);    
+        } // else fprintf(stderr, "%s:%i cuCtxDestroy(currCuCtx) succeeded.\n", __FILE__, __LINE__);
+    } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
     // The NVIDIA code, by design, zeros counters once events are read. PAPI
@@ -1572,6 +1562,7 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
         (void) eventName;                                                   // Useful in checkpoint and debug, don't warn if not used.
 
         /* if this event is already added continue to next ii, if not, mark it as being added */
+        _papi_hwi_lock( COMPONENT_LOCK );
         if (gctxt->availEventIsBeingMeasuredInEventset[index] == 1) {       // If already being collected, skip it.
             SUBDBG("Skipping event %s which is already added\n", eventName);
             continue;
@@ -1581,7 +1572,8 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 
         /* Find context/control in papicuda, creating it if does not exist */
         for(cc = 0; cc < (int) gctrl->countOfActiveCUContexts; cc++) {              // Scan all active contexts.
-            CHECK_PRINT_EVAL(cc >= PAPICUDA_MAX_COUNTERS, "Exceeded hardcoded maximum number of contexts (PAPICUDA_MAX_COUNTERS)", return (PAPI_EMISC));
+            CHECK_PRINT_EVAL(cc >= PAPICUDA_MAX_COUNTERS, "Exceeded hardcoded maximum number of contexts (PAPICUDA_MAX_COUNTERS)", 
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
             if(gctrl->arrayOfActiveCUContexts[cc]->deviceNum == eventDeviceNum) {   // If this cuda context is for the device for this event,
                 eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;             // Remember that context.
@@ -1589,7 +1581,7 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 
                 if(eventCuCtx != currCuCtx)                                         // If that is not our CURRENT context, push and make it so.
                     CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx),                    // .. Stack the current counter, replace with this one.
-                        return (PAPI_EMISC));                                       // .. .. on failure.
+                        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));     // .. .. on failure.
                 break;                                                              // .. exit the loop.
             } // end if found.
         } // end loop through active contexts.
@@ -1598,16 +1590,18 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
             SUBDBG("Event %s device %d does not have a cuCtx registered yet...\n", eventName, eventDeviceNum);
             if(currDeviceNum != eventDeviceNum) {                           // .. If we need to switch to another device,
                 CUDA_CALL((*cudaSetDevicePtr) (eventDeviceNum),             // .. .. set the device pointer to the event's device.
-                    return (PAPI_EMISC));                                   // .. .. .. (on failure).
-                CUDA_CALL((*cudaFreePtr) (NULL), return (PAPI_EMISC));      // .. .. This is a no-op, but used to force init of a context.
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC)); // .. .. .. (on failure).
+                CUDA_CALL((*cudaFreePtr) (NULL), 
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC)); // .. .. This is a no-op, but used to force init of a context.
                 CU_CALL((*cuCtxGetCurrentPtr) (&eventCuCtx),                // .. .. So we can get a pointer to it.
-                    return (PAPI_EMISC));                                   // .. .. .. On failure.
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC)); // .. .. .. On failure.
             } else {                                                        // .. If we are already on the right device,
                 eventCuCtx = currCuCtx;                                     // .. .. just get the current context.
             }
 
             gctrl->arrayOfActiveCUContexts[cc] = papi_calloc(1, sizeof(cuda_active_cucontext_t));   // allocate a structure.
-            CHECK_PRINT_EVAL(gctrl->arrayOfActiveCUContexts[cc] == NULL, "Memory allocation for new active context failed", return (PAPI_ENOMEM));
+            CHECK_PRINT_EVAL(gctrl->arrayOfActiveCUContexts[cc] == NULL, "Memory allocation for new active context failed", 
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_ENOMEM));
             gctrl->arrayOfActiveCUContexts[cc]->deviceNum = eventDeviceNum; // Fill in everything.
             gctrl->arrayOfActiveCUContexts[cc]->cuCtx = eventCuCtx;
             gctrl->arrayOfActiveCUContexts[cc]->allEventsCount = 0;         // All events read by this context on this device.
@@ -1634,7 +1628,7 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
             eventctrl->allEvents[eventctrl->allEventsCount++] = itemId;         // add to aggregate list, count it.
             if (eventctrl->allEventsCount >= PAPICUDA_MAX_COUNTERS) {           // .. Fail if we exceed size of array.
                 SUBDBG("Num events (generated by metric) exceeded PAPICUDA_MAX_COUNTERS\n");
-                return(PAPI_EINVAL);
+                _papi_hwi_unlock( COMPONENT_LOCK ); return(PAPI_EINVAL);
             }
         } else {                                                                // dealing with a metric.
             // cuda events and metrics have already been skipped if duplicates,
@@ -1654,7 +1648,7 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 
                 if (eventctrl->allEventsCount >= PAPICUDA_MAX_COUNTERS) {       // Fail if we exceed size of array.
                     SUBDBG("Num events (generated by metric) exceeded PAPICUDA_MAX_COUNTERS\n");
-                    return(PAPI_EINVAL);
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return(PAPI_EINVAL);
                 }
             } // end for each event in metric.
         } // end if we must process all sub-events of a metric.
@@ -1701,7 +1695,8 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
             // SUBDBG("Destroy previous eventGroupPasses for the context \n");
             if(eventctrl->eventGroupSets != NULL) {                                 // if we have a previous analysis;
                 CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr)                         // .. Destroy it.
-                    (eventctrl->eventGroupSets), return (PAPI_EMISC));              // .. If we can't, return error.
+                    (eventctrl->eventGroupSets), 
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. If we can't, return error.
                 eventctrl->eventGroupSets = NULL;                                   // .. Reset pointer.
             }
 
@@ -1710,11 +1705,11 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
             // SUBDBG("About to create eventGroupPasses for the context (sizeBytes %zu) \n", sizeBytes);
 #ifdef PAPICUDA_KERNEL_REPLAY_MODE
             CUPTI_CALL((*cuptiEnableKernelReplayModePtr) (eventCuCtx),
-                return (PAPI_ECMP));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_ECMP));
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr)
                 (eventCuCtx, sizeBytes, eventctrl->allEvents,
                 &eventctrl->eventGroupSets),
-                return (PAPI_ECMP));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_ECMP));
 
 #else // Normal operation.
             // Note: We no longer fail if this collection mode does not work. It will only work
@@ -1732,12 +1727,12 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
             CUPTI_CALL((*cuptiEventGroupSetsCreatePtr)
                 (eventCuCtx, sizeBytes, eventctrl->allEvents,
                 &eventctrl->eventGroupSets),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
             if (eventctrl->eventGroupSets->numSets > 1) {                       // If more than one pass is required,
                 SUBDBG("Error occurred: The combined CUPTI events cannot be collected simultaneously ... try different events\n");
                 _cuda_cleanup_eventset(ctrl);                                // Will do cuptiEventGroupSetsDestroy() to clean up memory.
-                return(PAPI_ECOMBO);
+                _papi_hwi_unlock( COMPONENT_LOCK ); return(PAPI_ECOMBO);
             } else  {
                 SUBDBG("Created eventGroupSets. nativeCount %d, allEventsCount %d. Sets (passes-required) = %d) \n", gctrl->activeEventCount, eventctrl->allEventsCount, eventctrl->eventGroupSets->numSets);
             }
@@ -1747,9 +1742,11 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
         } // end if we had any events.
 
         if(eventCuCtx != currCuCtx)                                                 // restore original context for caller, if we changed it.
-            CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx), return (PAPI_EMISC));
+            CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx), 
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
     }
+    _papi_hwi_unlock( COMPONENT_LOCK );
     return (PAPI_OK);
 } // end PAPI_update_control_state.
 
@@ -1768,6 +1765,7 @@ static int _cuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
     SUBDBG("Reset all active event values\n");
     // Zeroing values for the local read.
+    _papi_hwi_lock( COMPONENT_LOCK );
     for(ii = 0; ii < gctrl->activeEventCount; ii++) {
         gctrl->activeEventValues[ii] = 0;
     }
@@ -1778,15 +1776,19 @@ static int _cuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     }
 
     SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
-    CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiStartTimestampNs), return (PAPI_EMISC));
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiStartTimestampNs),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {                    // For each context,
         int eventDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;     // .. get device number.
         CUcontext eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;       // .. get this context,
         SUBDBG("Set to device %d cuCtx %p \n", eventDeviceNum, eventCuCtx);
         if(eventDeviceNum != saveDeviceNum) {                                   // .. If we need to switch,
-            CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx), return (PAPI_EMISC));  // .. .. push current on stack, use this one.
+            CU_CALL((*cuCtxPushCurrentPtr) (eventCuCtx),                        // .. .. push current on stack, use this one.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
         }
 
         CUpti_EventGroupSets *eventGroupSets =                                  // .. Shortcut to eventGroupSets for this context.
@@ -1798,17 +1800,19 @@ static int _cuda_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
                     groupset->eventGroups[gg],
                     CUPTI_EVENT_GROUP_ATTR_PROFILE_ALL_DOMAIN_INSTANCES,
                     sizeof(uint32_t), &one),
-                    return (PAPI_EMISC));                                       // .. .. on failure of call.
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));     // .. .. on failure of call.
             } // end for each group.
 
             CUPTI_CALL((*cuptiEventGroupSetEnablePtr) (groupset),               // .. Enable all groups in set (start collecting).
-                return (PAPI_EMISC));                                           // .. on failure of call.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. .. on failure of call.
 
         if(eventDeviceNum != saveDeviceNum) {                                   // .. If we pushed a context,
-            CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx), return (PAPI_EMISC));  // .. Pop it.
+            CU_CALL((*cuCtxPopCurrentPtr) (&eventCuCtx),                        // .. Pop it.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. .. on failure of call.
         }
     } // end of loop on all contexts.
 
+    _papi_hwi_unlock( COMPONENT_LOCK );
     return (PAPI_OK);                                                           // We started all groups.
 } // end routine.
 
@@ -1835,16 +1839,17 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
     uint32_t gg, i, j, cc;
     int saveDeviceNum;
 
+    _papi_hwi_lock( COMPONENT_LOCK );
     // Get read time stamp
     CUPTI_CALL((*cuptiGetTimestampPtr)                                          // Read current timestamp.
         (&gctrl->cuptiReadTimestampNs),
-        return (PAPI_EMISC));
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
     uint64_t durationNs = gctrl->cuptiReadTimestampNs -
                           gctrl->cuptiStartTimestampNs;                         // compute duration from start.
     gctrl->cuptiStartTimestampNs = gctrl->cuptiReadTimestampNs;                 // Change start to value just read.
 
     SUBDBG("Save current context, then switch to each active device/context and enable context-specific eventgroups\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));       // Save Caller's current device number on entry.
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // Save Caller's current device number on entry.
 
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {                    // For each active context,
         cuda_active_cucontext_t *activeCuCtxt =
@@ -1854,13 +1859,15 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
 
         SUBDBG("Set to device %d cuCtx %p \n", currDeviceNum, currCuCtx);
         if(currDeviceNum != saveDeviceNum) {                                    // If my current is not the same as callers,
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));   // .. Push the current, and replace with mine.
-            // Note, cuCtxPushCurrent()  implicitly includes a cudaSetDevice().
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx),                         // .. Push the current, and replace with mine.
+               _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));        // Note, cuCtxPushCurrent()  implicitly includes a cudaSetDevice().
         } else {                                                                // If my current IS the same as callers,
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));    // .. No push. Just set the current.
+            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx),                          // .. No push. Just set the current.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. .. on failure of call.
         }
 
-        CU_CALL((*cuCtxSynchronizePtr) (), return (PAPI_EMISC));                // Block until device finishes all prior tasks.
+        CU_CALL((*cuCtxSynchronizePtr) (),                                      // Block until device finishes all prior tasks.
+            _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));           // .. on failure of call.
         CUpti_EventGroupSets *myEventGroupSets =  activeCuCtxt->eventGroupSets; // Make a copy of pointer to EventGroupSets.
 
         uint32_t numEvents, numInstances, numTotalInstances;
@@ -1884,7 +1891,7 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
             CUPTI_CALL((*cuptiEventGroupGetAttributePtr)                        // Get 'groupDomainID' for this group.
                 (group, CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID,
                 &groupDomainIDSize, &groupDomainID),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. on failure of call.
 
             // 'numTotalInstances' and 'numInstances are needed for scaling
             // the values retrieved. (Nvidia instructions and samples).
@@ -1894,21 +1901,21 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
                 CUPTI_EVENT_DOMAIN_ATTR_TOTAL_INSTANCE_COUNT,
                 &sizeofuint32num,
                 &numTotalInstances),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. on failure of call.
 
             CUPTI_CALL((*cuptiEventGroupGetAttributePtr)                        // Get 'numInstances' for this domain.
                 (group,
                 CUPTI_EVENT_GROUP_ATTR_INSTANCE_COUNT,
                 &sizeofuint32num,
                 &numInstances),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. on failure of call.
 
             CUPTI_CALL((*cuptiEventGroupGetAttributePtr)                        // Get 'numEvents' in this group.
                 (group,
                 CUPTI_EVENT_GROUP_ATTR_NUM_EVENTS,
                 &sizeofuint32num,
                 &numEvents),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. on failure of call.
 
             // Now we will read all events in this group; aggregate the values
             // and then distribute them.  We do not calculate metrics here;
@@ -1922,19 +1929,20 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
             uint64_t *resultArray       = (uint64_t *)      papi_malloc(resultArrayBytes);
             uint64_t *aggrResultArray   = (uint64_t *)      papi_calloc(numEvents, sizeof(uint64_t));
 
-            for (i=0; i<(resultArrayBytes/sizeof(uint64_t)); i++) resultArray[i]=0;
-
             if (eventIdArray == NULL || resultArray == NULL || aggrResultArray == NULL) {
                 fprintf(stderr, "%s:%i failed to allocate memory.\n", __FILE__, __LINE__);
+                _papi_hwi_unlock( COMPONENT_LOCK );                             // .. on failure of malloc.
                 return(PAPI_EMISC);
             }
+
+            for (i=0; i<(resultArrayBytes/sizeof(uint64_t)); i++) resultArray[i]=0;
 
             CUPTI_CALL( (*cuptiEventGroupReadAllEventsPtr)                      // Read all events.
                 (group, CUPTI_EVENT_READ_FLAG_NONE,                             // This flag is the only allowed flag.
                 &resultArrayBytes, resultArray,
                 &eventIdArrayBytes, eventIdArray,
                 &numCountersRead),
-                return (PAPI_EMISC));
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. on failure of call.
 
             // Now (per Nvidia) we must sum up all domains for each event.
             // Arrangement of 2-d Array returned in resultArray:
@@ -2008,7 +2016,7 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
             activeIdx=ctxActive[j];                                             // get index into activeEventIdx.
             availIdx = gctrl->activeEventIndex[activeIdx];                      // Get the availEventIdx.
             CUpti_EventID thisEventId = gctxt->availEventIDArray[availIdx];     // Get the event ID (or metric ID).
-            struct cuda_name_desc *myDesc=&(gctxt->availEventDesc[availIdx]);  // get pointer to the description.
+            struct cuda_name_desc *myDesc=&(gctxt->availEventDesc[availIdx]);   // get pointer to the description.
 
             if (myDesc->numMetricEvents == 0) {                                 // If this is a simple cuda event (not a metric),
                 int k;
@@ -2030,7 +2038,7 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
                     AEIdx * sizeof(uint64_t),                                   // size of corresponding event values,
                     activeCuCtxt->allEventValues,                               // the event values.
                     durationNs, &myValue),                                      // duration (for rates), and where to return the value.
-                    return(PAPI_EMISC));                                        // In case of error.
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));   // .. on failure of call.
 
                 _cuda_convert_metric_value_to_long_long(                        // convert the value computed to long long and store it.
                     myValue, myDesc->MV_Kind,
@@ -2040,12 +2048,14 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
 
         if(currDeviceNum != saveDeviceNum) {                                    // If we had to change the context from user's,
             CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum),                      // set the device pointer to the user's original.
-                return (PAPI_EMISC));                                           // .. .. (on failure).
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));   // .. pop the pushed context back to user's.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. .. (on failure).
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),                         // .. pop the pushed context back to user's.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));       // .. .. on failure of call.
         }
     } // end of loop for each active context.
 
     *values = gctrl->activeEventValues;                                         // Return ptr to the list of computed values to user.
+    _papi_hwi_unlock( COMPONENT_LOCK );                                         // Done with reading.
     return (PAPI_OK);
 } // end of cuda_read().
 
@@ -2059,27 +2069,38 @@ static int _cuda_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     uint32_t cc, ss;
     int saveDeviceNum;
 
-    SUBDBG("Save current context, then switch to each active device/context and enable eventgroups\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
+    SUBDBG("Save current context, then switch to each active device/context and disable eventgroups\n");
+    _papi_hwi_lock( COMPONENT_LOCK );
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
         CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
         SUBDBG("Set to device %d cuCtx %p \n", currDeviceNum, currCuCtx);
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        else
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+        if(currDeviceNum != saveDeviceNum) {
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        } else {
+            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        }
+
         CUpti_EventGroupSets *currEventGroupSets = gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets;
         for (ss=0; ss<currEventGroupSets->numSets; ss++) {                      // For each group in the set,
             CUpti_EventGroupSet groupset = currEventGroupSets->sets[ss];        // get the set,
             CUPTI_CALL((*cuptiEventGroupSetDisablePtr) (&groupset),             // disable the whole set.
-                return (PAPI_EMISC));                                           // .. on failure.
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
         }
+
         /* Pop the pushed context */
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
+        if(currDeviceNum != saveDeviceNum) {
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        } 
 
     }
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
     return (PAPI_OK);
 } // end of cuda_stop.
 
@@ -2100,14 +2121,19 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl)
     CUcontext saveCtx;  
 
     SUBDBG("Save current device/context, then switch to each active device/context and enable eventgroups\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
-    CU_CALL((*cuCtxGetCurrentPtr) (&saveCtx), return (PAPI_EMISC));
+    _papi_hwi_lock( COMPONENT_LOCK );
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
+    CU_CALL((*cuCtxGetCurrentPtr) (&saveCtx),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
 
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
         CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
-        CUDA_CALL((*cudaSetDevicePtr) (currDeviceNum), return(PAPI_EMISC));
-        CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+        CUDA_CALL((*cudaSetDevicePtr) (currDeviceNum),
+            _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));             // .. on failure of call.
+        CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx),
+            _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));             // .. on failure of call.
         CUpti_EventGroupSets *currEventGroupSets = gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets;
 
         //CUPTI_CALL((*cuptiEventGroupSetsDestroyPtr) (currEventGroupPasses), return (PAPI_EMISC));
@@ -2116,8 +2142,10 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl)
         papi_free( gctrl->arrayOfActiveCUContexts[cc] );
     }
     /* Restore saved context, device pointer */
-    CU_CALL((*cuCtxSetCurrentPtr) (saveCtx), return (PAPI_EMISC));
-    CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum), return(PAPI_EMISC));
+    CU_CALL((*cuCtxSetCurrentPtr) (saveCtx),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
+    CUDA_CALL((*cudaSetDevicePtr) (saveDeviceNum),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
 
     /* Record that there are no active contexts or events */
     for (ui=0; ui<gctrl->activeEventCount; ui++) {              // For each active event,
@@ -2127,6 +2155,7 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl)
 
     gctrl->countOfActiveCUContexts = 0;
     gctrl->activeEventCount = 0;
+    _papi_hwi_unlock( COMPONENT_LOCK );
     return (PAPI_OK);
 } // end cuda_cleanup_eventset
 
@@ -2206,30 +2235,42 @@ static int _cuda_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     int saveDeviceNum;
 
     SUBDBG("Reset all active event values\n");
+    _papi_hwi_lock( COMPONENT_LOCK );
     for(ii = 0; ii < gctrl->activeEventCount; ii++)
         gctrl->activeEventValues[ii] = 0;
 
     SUBDBG("Save current context, then switch to each active device/context and reset\n");
-    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum), return (PAPI_EMISC));
+    CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
         CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return (PAPI_EMISC));
-        else
-            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx), return (PAPI_EMISC));
+        if(currDeviceNum != saveDeviceNum) {
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), 
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        } else {
+            CU_CALL((*cuCtxSetCurrentPtr) (currCuCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        }
+
         CUpti_EventGroupSets *currEventGroupSets = gctrl->arrayOfActiveCUContexts[cc]->eventGroupSets;
         for (ss=0; ss<currEventGroupSets->numSets; ss++) {
             CUpti_EventGroupSet groupset = currEventGroupSets->sets[ss];
             for(gg = 0; gg < groupset.numEventGroups; gg++) {
                 CUpti_EventGroup group = groupset.eventGroups[gg];
-                CUPTI_CALL((*cuptiEventGroupResetAllEventsPtr) (group), return (PAPI_EMISC));
+                CUPTI_CALL((*cuptiEventGroupResetAllEventsPtr) (group),
+                    _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));     // .. on failure of call.
             }
-            CUPTI_CALL((*cuptiEventGroupSetEnablePtr) (&groupset), return (PAPI_EMISC));
+            CUPTI_CALL((*cuptiEventGroupSetEnablePtr) (&groupset),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
         }
-        if(currDeviceNum != saveDeviceNum)
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
+        if(currDeviceNum != saveDeviceNum) {
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));         // .. on failure of call.
+        }
     }
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
     return (PAPI_OK);
 } // end cuda_reset().
 

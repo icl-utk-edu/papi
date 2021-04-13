@@ -288,13 +288,23 @@ get_cycles( void )
   return 0;
 }
 
+/************************/
+/* NEC get_cycles()     */
+/************************/
+
+#elif defined(__NEC__)
+static inline long long
+get_cycles( void )
+{
+	long long ret = 0;
+	return ret;
+}
+
+
 
 #elif !defined(HAVE_GETTIMEOFDAY) && !defined(HAVE_CLOCK_GETTIME)
 #error "No get_cycles support for this architecture. "
 #endif
-
-
-
 
 
 

@@ -17,7 +17,7 @@ branch.o: branch.c branch.h
 	$(CC) $(OPT0) $(CFLAGS) $(INCFLAGS) -c branch.c -o branch.o
 
 timing_kernels.o: timing_kernels.c timing_kernels.h
-	$(CC) $(OPT2) $(CFLAGS) $(INCFLAGS) -c timing_kernels.c -o timing_kernels.o
+	$(CC) $(OPT2) $(CFLAGS) -fopenmp $(INCFLAGS) -c timing_kernels.c -o timing_kernels.o
 
 prepareArray.o: prepareArray.c prepareArray.h
 	$(CC) $(OPT2) $(CFLAGS) -c prepareArray.c -o prepareArray.o
@@ -26,7 +26,7 @@ compar.o: compar.c
 	$(CC) $(CFLAGS) $(OPT2) -c compar.c -o compar.o
 
 dcache.o: dcache.c dcache.h
-	$(CC) $(CFLAGS) $(OPT2) $(INCFLAGS) -c dcache.c -o dcache.o
+	$(CC) $(CFLAGS) $(OPT2) -fopenmp $(INCFLAGS) -c dcache.c -o dcache.o
 
 eventstock.o: eventstock.c eventstock.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c eventstock.c -o eventstock.o
@@ -46,7 +46,7 @@ icache_seq_kernel_0.o: icache_seq.c icache_seq.h
 	bash replicate.sh
 
 cat_collect: main.c branch.o d_cache eventstock.o flops i_cache
-	$(CC) $(CFLAGS) $(INCFLAGS) main.c flops_aux.o flops.o icache_seq.o icache.o branch.o dcache.o timing_kernels.o prepareArray.o compar.o eventstock.o -o cat_collect $(LDFLAGS)
+	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c flops_aux.o flops.o icache_seq.o icache.o branch.o dcache.o timing_kernels.o prepareArray.o compar.o eventstock.o -o cat_collect $(LDFLAGS)
 
 clean:
 	rm -f *.o

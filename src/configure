@@ -628,6 +628,7 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
+SDE_LIB_FILES
 SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
@@ -715,6 +716,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+NEC
 MIC
 target_alias
 host_alias
@@ -763,6 +765,7 @@ with_OS
 with_OSVER
 with_assumed_kernel
 with_mic
+with_nec
 with_bgpm_installdir
 with_nativecc
 with_tests
@@ -785,6 +788,7 @@ with_perfctr_root
 with_perfctr_prefix
 with_perfctr_incdir
 with_perfctr_libdir
+with_perfnec
 with_perfmon
 with_pfm_root
 with_pfm_prefix
@@ -1433,6 +1437,7 @@ Optional Packages:
                           Assume kernel version is <ver> for purposes of
                           workarounds
   --with-mic              To compile for Intel MIC
+  --with-nec              To compile for NEC
   --with-bgpm_installdir=<path>
                           Specify the installation path of BGPM
   --with-nativecc=<path>  Specify native C compiler for header generation
@@ -1476,6 +1481,7 @@ Optional Packages:
   --with-perfctr-libdir=<path>
                           Specify directory of perfctr library in non-standard
                           location
+  --with-perfnec          Specify perf_nec as the performance interface
   --with-perfmon=<x.y>    Specify perfmon as the performance interface and
                           specify version
   --with-pfm-root=<path>  Specify path to source tree (for use by developers
@@ -2530,6 +2536,28 @@ fi
 $as_echo "$MIC" >&6; }
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for if NEC should be used" >&5
+$as_echo_n "checking for if NEC should be used... " >&6; }
+
+# Check whether --with-nec was given.
+if test "${with_nec+set}" = set; then :
+  withval=$with_nec; NEC=yes
+		tls=__thread
+		cross_compiling=yes
+		ffsll=/opt/nec/ve/lib/libc-2.21.so
+		virtualtimer=cputime_id
+		walltimer=clock_realtime_hr
+		CC=ncc
+		CC_COMMON_NAME=ncc
+else
+  NEC=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $NEC" >&5
+$as_echo "$NEC" >&6; }
+
+
+
 CFLAGS="$CFLAGS -g"
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
@@ -3388,7 +3416,9 @@ fi
 
 # Lets figure out what CC actually is...
 # Used in later checks to set compiler specific options
-if `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
+if `$CC --version 2>&1 | grep '^ncc (NCC)' >/dev/null 2>&1` ; then
+	CC_COMMON_NAME="ncc"
+elif `$CC -V 2>&1 | grep '^Intel(R) C' >/dev/null 2>&1` ; then
   CC_COMMON_NAME="icc"
   if test "$MPICC" = "mpicc"; then
     # Check if mpiicc is available
@@ -4390,7 +4420,39 @@ rm -f core conftest.err conftest.$ac_objext \
 $as_echo "found" >&6; }
 	LRT="-lrt"
 	else
-		as_fn_error $? "cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt" "$LINENO" 5
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for timer_create and timer_*ettime symbols in -lrt -lpthread" >&5
+$as_echo_n "checking for timer_create and timer_*ettime symbols in -lrt -lpthread... " >&6; }
+		SAVED_LIBS=${LIBS}
+                LIBS="${LIBS} -lrt -lpthread"
+                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <signal.h>
+                             #include <time.h>
+int
+main ()
+{
+timer_t timerid; timer_create(CLOCK_REALTIME, NULL, &timerid);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  has_lrt_lpthd="yes"
+else
+  has_lrt_lpthd="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+                LIBS=${SAVED_LIBS}
+                if test "${has_lrt_lpthd}" = "yes" ; then
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+                        LRT="-lrt -lpthread"
+                else
+			as_fn_error $? "cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread" "$LINENO" 5
+		fi
 	fi
 fi
 
@@ -4653,7 +4715,8 @@ else
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $debug" >&5
 $as_echo "$debug" >&6; }
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC_COMMON_NAME" >&5
+$as_echo "$CC_COMMON_NAME" >&6; }
 if test "$CC_COMMON_NAME" = "gcc"; then
   gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
   major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
@@ -4684,8 +4747,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		CFLAGS="$oldcflags"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_NO_OVERRIDE_INIT" >&5
 $as_echo "$HAVE_NO_OVERRIDE_INIT" >&6; }
-
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CFLAGS" >&5
+$as_echo "$CFLAGS" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CPU type" >&5
 $as_echo_n "checking for CPU type... " >&6; }
 
@@ -4703,6 +4767,10 @@ else
                  if test "$CPU" = ""; then
                    CPU="`/usr/sbin/lsattr -E -l proc1 | grep type | cut -d '_' -f 2 | cut -d ' ' -f 1 | tr 'A-Z' 'a-z'`"
                  fi ;;
+		nec)
+			family=nec
+
+		;;
 	       freebsd)
                    family=`uname -m`
 
@@ -5861,6 +5929,31 @@ fi
 
 user_specified_interface=no
 ##################################################
+#          perfnec
+##################################################
+force_perfnec=no
+perfnec=0
+
+
+# Check whether --with-perfnec was given.
+if test "${with_perfnec+set}" = set; then :
+  withval=$with_perfnec; perfnec=$withval
+             user_specified_interface=perfnec
+	     force_perfnec=yes
+		pfm_root=libperfnec
+	     pfm_incdir="libperfnec/include"
+else
+  perfnec=0
+               if test "$perfnec" != 0; then
+	         pfm_incdir="libpperfnec/include"
+	         fi
+fi
+
+
+
+force_pfm_incdir=no
+
+##################################################
 #          perfmon
 ##################################################
 old_pfmv2=n
@@ -6111,22 +6204,36 @@ fi
 #
 # MESSING WITH CFLAGS IS STUPID!
 #
+
 if test "$user_specified_interface" != "no"; then
    if test "$user_specified_interface" = "perfctr"; then
       perfmon=0
       perf_events="no"
+      perfnec=0
    else
 	if test "$user_specified_interface" = "perfmon"; then
 	   perfctr=0
 	   perf_events="no"
 	   PAPICFLAGS+=" $PFMCFLAGS"
+	   perfnec=0
 	else
 		if test "$user_specified_interface" = "pe"; then
 			   perfctr=0
 			   perfmon=0
 			   PAPICFLAGS+=" $PECFLAGS"
+			   perfnec=0
 		else
-			as_fn_error $? "\"Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events\"" "$LINENO" 5
+			if test "$user_specified_interface" = "perfnec"; then
+				perfctr=0
+				perfmon=0
+				perf_events=0
+				PAPICFLAGS+=" -DPERFNEC"
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: XXXXX user_specified_interface perfnec" >&5
+$as_echo "$as_me: XXXXX user_specified_interface perfnec" >&6;}
+
+			else
+				as_fn_error $? "\"Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events perfnec=$perfnec\"" "$LINENO" 5
+			fi
 		fi
 	fi
    fi
@@ -6150,6 +6257,7 @@ fi
 # based on the settings of pfm_root, pfm_prefix, pfm_incdir, pfm_libdir
 #
 
+# Both should be 0 for NEC
 if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
    # if prefix set, then yes
    if test "x$pfm_prefix" != "x"; then
@@ -6281,6 +6389,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking platform" >&5
 $as_echo_n "checking platform... " >&6; }
 case "$OS" in
+	nec)
+	MAKEVER=nec-nec
+	;;
   aix)
     MAKEVER="$OS"-"$CPU" ;;
   bgp)
@@ -6475,6 +6586,11 @@ elif (test "$OS" = "freebsd"); then
     OSFILESSRC=freebsd-memory.c
     OSLOCK="freebsd-lock.h"
     OSCONTEXT="freebsd-context.h"
+elif (test "$OS" = "nec"); then
+    OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
+    OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
+    OSLOCK="linux-lock.h"
+    OSCONTEXT="linux-context.h"
 elif (test "$OS" = "linux"); then
     OSFILESSRC="linux-memory.c linux-timer.c linux-common.c"
     OSFILESHDR="linux-memory.h linux-timer.h linux-common.h"
@@ -6718,6 +6834,11 @@ elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfc
     CFLAGS="$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors"
     FFLAGS='-D_$(CPU_MODEL)'
 
+elif test "$MAKEVER" = "nec-nec"; then
+    FILENAME=Rules.perfnec
+    CPUCOMPONENT_NAME=perfnec
+    components="perfnec"
+
 elif test "$MAKEVER" = "linux-perfmon2"; then
     FILENAME=Rules.perfmon2
     CPUCOMPONENT_NAME=perfmon2
@@ -6937,13 +7058,24 @@ for comp in $components; do
 done
 tests="$tests comp_tests"
 
-# check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
+  # check for SDE component to determine if we need -lrt in LDFLAGS
   if test "x$comp" = "xsde" ; then
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
     SDE_ENABLED=1
+    SDE_LIB_DIR="../components/sde/sde_lib"
+    if test "$shlib_tools" = "yes"; then
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
+    else
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
+    fi
+  fi
+
+  # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
+  if test "x$comp" = "xintel_gpu" ; then
+    LDFLAGS="$LDFLAGS -lstdc++"
   fi
 done
 
@@ -6957,96 +7089,6 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 if test "$cross_compiling" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5
