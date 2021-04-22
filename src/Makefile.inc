@@ -289,7 +289,7 @@ null:
 
 #need to go to the git repo top level directory to do this
 dist-targz:
-	cd $(PAPI_SRCDIR)/..; git status | grep working.directory.clean || (echo "You should commit your changes before 'make rpm'.")
+	cd $(PAPI_SRCDIR)/..; git status | grep working.directory.clean || (echo "You should commit your changes before 'make dist-targz'.")
 	(cd $(PAPI_SRCDIR)/..; git archive --prefix=papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE)/ --format=tar HEAD) | gzip > papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).tar.gz
 
 dist: 
