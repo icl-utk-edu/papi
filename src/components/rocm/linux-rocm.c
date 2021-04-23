@@ -267,7 +267,6 @@ static int _rocm_linkRocmLibraries(void)
     for (i=0; i<rocm_roots; i++) {
         if (dl1 == NULL && rocm_root[i] != NULL) {                       // if env. var. given, try it.
             strErr=snprintf(path_name, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root[i]);  // PAPI Root check.
-            path_name[PATH_MAX-1]=0;
             if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
             dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
         }
