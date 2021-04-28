@@ -227,6 +227,11 @@ main( int argc, char **argv )
   array = (long long *)malloc(sizeof(long long) * 2 * num_iters);
   Events = ( int* )malloc(sizeof(int) * options.max);
 
+	if ( values == NULL || array == NULL || Events == NULL ) {
+		fprintf(stderr,"Error allocating memory!\n");
+		exit(1);
+	}
+
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if (retval != PAPI_VER_CURRENT ) {
 		fprintf(stderr, "Error! PAPI_library_init\n");
