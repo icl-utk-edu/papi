@@ -35,29 +35,30 @@
 #define ALIGN_BUFFER(buffer, align)                                     \
   (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
-#if 0
-#define ROCMDBG(format, args...) fprintf(stderr, format, ## args)
-#else
-//#define ROCMDBG(format, args...) do {} while(0)
-#define ROCMDBG SUBDBG
-#endif
+// Choose one.
+#define ROCMDBG(format, args...) {;}
+// #define ROCMDBG(format, args...) fprintf(stderr, format, ## args)
 
 /* Macros for error checking... each arg is only referenced/evaluated once */
 #define CHECK_PRINT_EVAL(checkcond, str, evalthis)                      \
     do {                                                                \
         int _cond = (checkcond);                                        \
         if (_cond) {                                                    \
-            if (0) fprintf(stderr, "%s:%i error: condition %s failed: %s.\n", __FILE__, __LINE__, #checkcond, str); \
+            ROCMDBG("%s:%i error: condition %s failed: %s.\n", __FILE__, __LINE__, #checkcond, str); \
             evalthis;                                                   \
         }                                                               \
     } while (0)
+
+// Choose one.
+#define LIBCALL_DBG(format, args...) {;}
+//#define LIBCALL_DBG(format, args...) fprintf(stderr, format, ## args)
 
 #define ROCM_CALL_CK(call, args, handleerror)                           \
     do {                                                                \
         hsa_status_t _status = (*call##Ptr)args;                        \
         if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {    \
-            if (0) fprintf(stderr, "%s:%i error: function %s failed with error %d.\n",     \
-            __FILE__, __LINE__, #call, _status);                                    \
+            LIBCALL_DBG("%s:%i error: function %s failed with error %d.\n",         \
+            __FILE__, __LINE__, #call, _status);                        \
             handleerror;                                                \
         }                                                               \
     } while (0)
@@ -66,10 +67,10 @@
 #define ROCP_CALL_CK(call, args, handleerror)                           \
     do {                                                                \
         hsa_status_t _status = (*call##Ptr)args;                        \
-        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {     \
-            const char *profErr;                                                     \
-            (*rocprofiler_error_stringPtr)(&profErr);                              \
-            if (0) fprintf(stderr, "%s:%i error: function %s failed with error %d [%s].\n", \
+        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {    \
+            const char *profErr;                                                    \
+            (*rocprofiler_error_stringPtr)(&profErr);                               \
+            LIBCALL_DBG("%s:%i error: function %s failed with error %d [%s].\n",    \
             __FILE__, __LINE__, #call, _status, profErr);               \
             handleerror;                                                \
         }                                                               \
@@ -83,7 +84,6 @@
                 PAPI_MAX_STR_LEN,                                       \
                 "The ROCM required function '%s' was not found in dynamic libs",    \
                 #name);                                                 \
-            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;\
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;         \
           return ( PAPI_ENOSUPP );                                      \
         }                                                               \
