@@ -7058,8 +7058,8 @@ for comp in $components; do
 done
 tests="$tests comp_tests"
 
-# check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
+  # check for SDE component to determine if we need -lrt in LDFLAGS
   if test "x$comp" = "xsde" ; then
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
@@ -7071,6 +7071,11 @@ for comp in $components; do
     else
       SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
     fi
+  fi
+
+  # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
+  if test "x$comp" = "xintel_gpu" ; then
+    LDFLAGS="$LDFLAGS -lstdc++"
   fi
 done
 
