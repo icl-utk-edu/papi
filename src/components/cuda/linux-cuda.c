@@ -576,7 +576,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     // Get any current user cuda context. If it fails, leave it
     // at NULL. (Also the function may work and return NULL).
 
-    cuErr = (*cuCtxGetCurrent)(&userCuCtx);
+    cuErr = (*cuCtxGetCurrentPtr)(&userCuCtx);
     cudaErr = (*cudaGetDevicePtr)(&userDeviceNum);
     // fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
 
