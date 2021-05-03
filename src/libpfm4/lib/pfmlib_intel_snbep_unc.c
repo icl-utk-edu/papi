@@ -331,7 +331,7 @@ snbep_unc_add_defaults(void *this, pfmlib_event_desc_t *e,
 						DPRINT("two max_grpid, old=%d new=%d\n", max_grpid, get_grpid(ent->umasks[idx].grpid));
 						return PFM_ERR_UMASK;
 					}
-					max_grpid = ent->umasks[idx].grpid;
+					max_grpid = get_grpid(ent->umasks[idx].grpid);
 				}
 			}
 		}
@@ -483,7 +483,7 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			um >>= 8;
 			umask2  |= um;
 
-			ugrpmsk |= 1 << pe[e->event].umasks[a->idx].grpid;
+			ugrpmsk |= 1 << grpid;
 
 			/* PCU occ event */
 			if (is_occ_event(this, e->event)) {

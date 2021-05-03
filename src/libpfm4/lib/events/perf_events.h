@@ -30,7 +30,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":WRITE:ACCESS"\
        },\
        {\
@@ -39,7 +39,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":WRITE:MISS"\
        }
 
@@ -50,7 +50,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":PREFETCH:ACCESS"\
        },\
        {\
@@ -59,7 +59,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":PREFETCH:MISS"\
        }
 
@@ -71,7 +71,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":READ:ACCESS"\
        },\
        {\
@@ -80,7 +80,7 @@
 	.id   = PERF_COUNT_HW_CACHE_##e,\
 	.type = PERF_TYPE_HW_CACHE,\
 	.modmsk = PERF_ATTR_HW,\
-	.umask_ovfl_idx = -1,\
+	.umask_ovfl_idx = ~0UL,\
 	.equiv = "PERF_COUNT_HW_CACHE_"#e":READ:MISS"\
        }
 
@@ -158,7 +158,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 5,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -198,7 +198,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 4,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -233,7 +233,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 5,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -273,7 +273,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 5,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -313,7 +313,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 3,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -343,7 +343,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 3,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",
@@ -373,7 +373,7 @@ static perf_event_t perf_static_events[]={
 	.type = PERF_TYPE_HW_CACHE,
 	.numasks = 5,
 	.modmsk = PERF_ATTR_HW,
-	.umask_ovfl_idx = -1,
+	.umask_ovfl_idx = ~0UL,
 	.ngrp = 2,
 	.umasks = {
 		{ .uname = "READ",

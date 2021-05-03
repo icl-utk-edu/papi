@@ -129,6 +129,7 @@ extern pfm_amd64_config_t pfm_amd64_cfg;
 #define AMD64_FAM14H_ATTRS		AMD64_FAM10H_ATTRS
 #define AMD64_FAM15H_ATTRS		AMD64_FAM10H_ATTRS
 #define AMD64_FAM17H_ATTRS		AMD64_FAM10H_ATTRS
+#define AMD64_FAM19H_ATTRS		AMD64_FAM10H_ATTRS
 
 #define AMD64_FAM10H_PLM	(PFM_PLM0|PFM_PLM3|PFM_PLMH)
 #define AMD64_K7_PLM		(PFM_PLM0|PFM_PLM3)
@@ -179,6 +180,21 @@ typedef union {
 		uint64_t val:1;
 		uint64_t reserved2:45;
 	} ibsop;
+	struct { /* Zen3 L3 */
+		uint64_t event:8;		/* event mask */
+		uint64_t umask:8;		/* unit mask */
+		uint64_t reserved1:6;		/* reserved */
+		uint64_t en:1;			/* enable */
+		uint64_t reserved2:19;		/* reserved */
+		uint64_t core_id:3;		/* Core ID */
+		uint64_t reserved3:1;		/* reserved */
+		uint64_t en_all_slices:1;	/* enable all slices */
+		uint64_t en_all_cores:1;	/* enable all cores */
+		uint64_t slice_id:3;		/* Slice ID */
+		uint64_t reserved4:5;		/* reserved */
+		uint64_t thread_id:4;		/* reserved */
+		uint64_t reserved5:4;		/* reserved */
+	} l3;
 } pfm_amd64_reg_t; /* MSR 0xc001000-0xc001003 */
 
 /* let's define some handy shortcuts! */
