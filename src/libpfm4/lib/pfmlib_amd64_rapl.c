@@ -55,6 +55,9 @@ pfm_amd64_rapl_detect(void *this)
 	case PFM_PMU_AMD64_FAM17H_ZEN2:
 		ret = PFM_SUCCESS;
 		break;
+	case PFM_PMU_AMD64_FAM19H_ZEN3:
+		ret = PFM_SUCCESS;
+		break;
 	default:
 		ret = PFM_ERR_NOTSUPP;
 	}
