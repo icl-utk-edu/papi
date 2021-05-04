@@ -94,7 +94,17 @@ PAPI_ROCM_PROF = \"\"
 # static char rocm_hsa[]=PAPI_ROCM_HSA;
 # static char rocm_prof[]=PAPI_ROCM_PROF;
 
-ROCM_MACS = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF) 
+colon:= :
+empty:=
+space:= $(empty) $(empty)
+ROCM_MyPath=${LD_LIBRARY_PATH}
+ROCM_MyPath:= $(subst $(colon),$(space),$(ROCM_MyPath))
+ROCM_IDIRS:=
+ifneq (, $(shell which awk))
+ROCM_IDIRS:= $(foreach adir,$(ROCM_MyPath),`echo "$(adir)" | awk -f components/rocm/rocm_IncDirs.awk`)
+endif
+
+ROCM_MACS = -DPAPI_ROCM_HSA=$(PAPI_ROCM_HSA) -DPAPI_ROCM_PROF=$(PAPI_ROCM_PROF)
 
 COMPSRCS += components/rocm/linux-rocm.c
 COMPOBJS += linux-rocm.o
@@ -102,7 +112,8 @@ COMPOBJS += linux-rocm.o
 # Order is important here; there are multiple DIFFERENT hsa.h files.
 CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
 CFLAGS += -I$(PAPI_ROCM_ROOT)/rocprofiler/include
-CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(ROCM_MACS) -g 
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include $(ROCM_MACS)
+CFLAGS += $(ROCM_MACS) $(ROCM_IDIRS) -g
 LDFLAGS += $(LDL) -g
 
 linux-rocm.o: components/rocm/linux-rocm.c $(HEADERS)
