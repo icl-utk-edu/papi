@@ -576,7 +576,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     // Get any current user cuda context. If it fails, leave it
     // at NULL. (Also the function may work and return NULL).
 
-    cuErr = (*cuCtxGetCurrent)(&userCuCtx);
+    cuErr = (*cuCtxGetCurrentPtr)(&userCuCtx);
     cudaErr = (*cudaGetDevicePtr)(&userDeviceNum);
     // fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
 
@@ -923,9 +923,12 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // that works if the application has not done a cuCtxCreate(), but it
         // fails if the application *has* done a cuCtxCreate().
         // cuDevicePrimaryCtxRetain() creates a context, but doesn't set it as
-        // the current context. We push that context, which automatically does
-        // a cudaSetDevice(), it works, and we can pop it later (restoring the
-        // application's context, if any). 
+        // the current context. (The manual says it does, but experimentation
+        // shows differently: if the current context is NOT the primary
+        // context, it is not replaced.) We check to make sure the current context (userCtx) 
+        // is not the same as the primary context, if they differ we push the primary, which
+        // automatically does a cudaSetDevice(), it works, and we can pop it
+        // later (restoring the application's context, if any). But only if we pushed it.
 
         // Get/create primary context for device, must later
         // cuDevicePrimaryCtxRelease(deviceNum). Does not make
@@ -933,9 +936,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
        
         CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
             return(PAPI_EMISC););
-        
-        CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), 
-            return(PAPI_EMISC););
+
+        if (currCuCtx != userCuCtx) { 
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
+        }
 
         uint32_t maxMetrics = 0, i, j;
         CUpti_MetricID *metricIdList = NULL;
@@ -954,6 +958,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 "Could not allocate %lu bytes of memory for metricIdList.", maxMetrics*sizeof(CUpti_EventID));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            if (currCuCtx != userCuCtx) { 
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            }
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return (PAPI_ENOMEM);
         }
 
@@ -965,6 +973,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 "Function cuptiDeviceEnumMetrics failed; error code=%d [%s].", cuptiError, errstr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            if (currCuCtx != userCuCtx) { 
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            }
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return(PAPI_EMISC);    
         }
 
@@ -979,6 +991,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1018,6 +1034,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                      "Function cuptiEventGroupSetsDestroy() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
                } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
             } else {
@@ -1025,6 +1045,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                   "Function cuptiMetricCreateEventGroupSets() returned an invalid NULL pointer.");
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                return(PAPI_EMISC);    
             }
 
@@ -1058,6 +1082,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricGetAttribute(METRIC_NAME)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1075,6 +1103,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricGetAttribute(METRIC_KIND)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1091,6 +1123,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricGetAttribute(METRIC_LONG_DESC)) failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1108,6 +1144,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricGetNumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1118,6 +1158,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Could not allocate %lu bytes of memory for subEventIds.", sizeBytes);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return (PAPI_ENOMEM);
             }
 
@@ -1129,6 +1173,10 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     "Function cuptiMetricEnumEvents() failed; error code=%d [%s].", cuptiError, errstr);
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                if (currCuCtx != userCuCtx) { 
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                }
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1141,11 +1189,11 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         papi_free(metricIdList);                                                    // Done with this enumeration of metrics.
 
-        CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
-            return(PAPI_EMISC));
+        if (currCuCtx != userCuCtx) { 
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+        }
 
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
-            return(PAPI_EMISC));
+        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------

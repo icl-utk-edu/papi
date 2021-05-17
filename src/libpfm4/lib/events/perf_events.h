@@ -151,6 +151,10 @@ static perf_event_t perf_static_events[]={
 
         PCL_EVT_SW(PAGE_FAULTS_MAJ),
         PCL_EVT_ASW(MAJOR-FAULTS, PAGE_FAULTS_MAJ),
+
+	PCL_EVT_SW(CGROUP_SWITCHES),
+	PCL_EVT_ASW(CGROUP-SWITCHES, CGROUP_SWITCHES),
+
 	{
 	.name = "PERF_COUNT_HW_CACHE_L1D",
 	.desc = "L1 data cache",
