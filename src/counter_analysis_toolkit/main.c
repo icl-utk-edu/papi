@@ -741,6 +741,9 @@ void get_dcache_latencies(int max_iter, hw_desc_t *hw_desc, char *outputdir){
 
     fclose(ofp);
 
+    // Get latencies for all parameter combinations.
+    d_cache_driver("cat::latencies", max_iter, hw_desc, outputdir, 1, 0, 0);
+
     return;
 }
 

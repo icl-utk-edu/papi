@@ -15,7 +15,8 @@ int _papi_eventset = PAPI_NULL;
 extern int max_size;
 
 run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode){
-    int count, retval;
+    long count;
+    int retval;
     int buffer = 0;
     register uintptr_t *p = NULL;
     double time1=0.0, time2=1.0;
@@ -32,7 +33,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     if( x > 0 || y > 0 )
         printf("WARNING: x=%lf y=%lf\n",x,y);
 
-    int countMax = 50*active_buf_len/line_size;
+    long countMax = 50*((long)active_buf_len)/line_size;
 
     // Get the size of a page of memory.
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);

@@ -165,7 +165,7 @@ void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_b
                 ONT = omp_get_num_threads();
             }
         }
-        fprintf(ofp, "# ThreadCount %d\n", ONT);
+        fprintf(ofp, "# PTRN=%d, STRIDE=%d, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
     }
     for(j=0; j<guessCount; ++j){
         for(i=0; i<max_iter; ++i){
