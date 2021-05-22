@@ -349,6 +349,22 @@ static rsmi_pcie_bandwidth_t *PCITable = NULL;          // For rsmi_dev_pci_band
 //*******  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
 //****************************************************************************
 
+/*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_rocm_smi_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private)
+      return vector->init_private();
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _rocm_smi_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
+
 static char *RSMI_ERROR_STR(int err)
 {
     int modErr=err;
@@ -3488,17 +3504,38 @@ static int _rocm_smi_init_thread(hwd_context_t * ctx)
 
 static int _rocm_smi_init_component(int cidx)
 {
-    int i, ret, strErr;
+    SUBDBG("Entry: cidx: %d\n", cidx);
+    /* Export the total number of events available */
+    _rocm_smi_vector.cmp_info.num_native_events = -1;
+
+    /* Export the component id */
+    _rocm_smi_vector.cmp_info.CmpIdx = cidx;
+
+    /* Export the number of 'counters' */
+    _rocm_smi_vector.cmp_info.num_cntrs = -1;
+    _rocm_smi_vector.cmp_info.num_mpx_cntrs = -1;
+
+    return PAPI_OK;
+}
+
+static int _rocm_smi_init_private(void)
+{
+  int i, ret, strErr, err = PAPI_OK;
     (void) i;
     uint32_t dev;
     scanEvent_info_t* scan=NULL;                        // a scan event pointer.
+
+    PAPI_lock(COMPONENT_LOCK);
+    if (_rocm_smi_vector.cmp_info.initialized) goto rocm_smi_init_private_exit;
+
     SUBDBG("Entering _rocm_smi_init_component\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
     if(_rocm_smi_linkRocmLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of ROCM libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        err = PAPI_ENOSUPP;
+        goto rocm_smi_init_private_exit;
     }
 
     rsmi_status_t status;
@@ -3507,7 +3544,8 @@ static int _rocm_smi_init_component(int cidx)
             "rsmi_init() function not found.");
         _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);
+        err = PAPI_ENOSUPP;
+        goto rocm_smi_init_private_exit;
     }
 
     status = (*rsmi_initPtr)(0);
@@ -3516,11 +3554,15 @@ static int _rocm_smi_init_component(int cidx)
             "rsmi_init() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
         _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);
+        err = PAPI_ENOSUPP;
+        goto rocm_smi_init_private_exit;
     }
      
     ret = _rocm_smi_find_devices();             // Find AMD devices. Must find at least 1.
-    if (ret != PAPI_OK) return(ret);            // check for failure.
+    if (ret != PAPI_OK) {
+        err = ret;            // check for failure.
+        goto rocm_smi_init_private_exit;
+    }
 
     // Before we can build the list of all potential events,
     // we have to scan the events available to determine 
@@ -3564,7 +3606,7 @@ static int _rocm_smi_init_component(int cidx)
                     "rsmi_dev_gpu_clk_freq_get() function not found.");
                 _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-                return(PAPI_ENOSUPP);
+                err = PAPI_ENOSUPP;
             }
 
             status = (*rsmi_dev_gpu_clk_freq_getPtr)(dev, scan->variant, &FreqTable[idx]);
@@ -3573,7 +3615,8 @@ static int _rocm_smi_init_component(int cidx)
                     "rsmi_dev_gpu_clk_freq_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
                 _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-                return(PAPI_ENOSUPP);
+                err = PAPI_ENOSUPP;
+                goto rocm_smi_init_private_exit;
             }
         } 
     }
@@ -3589,7 +3632,8 @@ static int _rocm_smi_init_component(int cidx)
                 "rsmi_dev_pci_bandwidth_get() function not found.");
             _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return(PAPI_ENOSUPP);
+            err = PAPI_ENOSUPP;
+            goto rocm_smi_init_private_exit;
         }
 
         status = (*rsmi_dev_pci_bandwidth_getPtr)(dev, &PCITable[dev]);
@@ -3598,7 +3642,8 @@ static int _rocm_smi_init_component(int cidx)
                 "rsmi_dev_pci_bandwidth_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
             _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return(PAPI_ENOSUPP);
+            err = PAPI_ENOSUPP;
+            goto rocm_smi_init_private_exit;
         }
     }
 
@@ -3608,7 +3653,10 @@ static int _rocm_smi_init_component(int cidx)
     // produce TotalEvents.
 
     ret = _rocm_smi_add_native_events();
-    if (ret != 0) return (ret);                 // check for failure.
+    if (ret != PAPI_OK) {
+        err = ret;                 // check for failure.
+        goto rocm_smi_init_private_exit;
+    }
 
     // This is for diagnostic/debug purposes, it shows which
     // routines were enumerated as available, but we do not
@@ -3625,12 +3673,17 @@ static int _rocm_smi_init_component(int cidx)
 #endif
  
     // Export info to PAPI.
-    _rocm_smi_vector.cmp_info.CmpIdx = cidx;
     _rocm_smi_vector.cmp_info.num_native_events = TotalEvents;
     _rocm_smi_vector.cmp_info.num_cntrs = TotalEvents;
     _rocm_smi_vector.cmp_info.num_mpx_cntrs = TotalEvents;
 
-    return (PAPI_OK);
+rocm_smi_init_private_exit:
+    _rocm_smi_vector.cmp_info.initialized = 1;
+    _rocm_smi_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return err;
 } // END ROUTINE.
 
 
@@ -3641,6 +3694,9 @@ static int _rocm_smi_init_control_state(hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering _rocm_smi_init_control_state\n");
     (void) ctrl;                    // avoid 'unused' warning.
+
+    DO_SOME_CHECKING(&_rocm_smi_vector);
+
     return PAPI_OK;
 } // END ROUTINE.
 
@@ -3655,6 +3711,8 @@ static int _rocm_smi_update_control_state(hwd_control_state_t * ctrl, NativeInfo
     (void) ctrl;
     (void) ctx;
     int i, idx;
+
+    DO_SOME_CHECKING(&_rocm_smi_vector);
 
     if(nativeCount == 0) return (PAPI_OK);      // If no events provided, success!
 
@@ -3893,6 +3951,8 @@ static int _rocm_smi_set_domain(hwd_control_state_t * ctrl, int domain)
 // 'modifier' is either PAPI_ENUM_FIRST or PAPI_ENUM_EVENTS
 static int _rocm_smi_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+    DO_SOME_CHECKING(&_rocm_smi_vector);
+
     if (modifier == PAPI_ENUM_FIRST) {
         *EventCode = 0;                         // Our first index.
         return(PAPI_OK);                        // Exit.
@@ -3914,6 +3974,8 @@ static int _rocm_smi_ntv_enum_events(unsigned int *EventCode, int modifier)
 // Takes a native event code and passes back the name.
 static int _rocm_smi_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
+    DO_SOME_CHECKING(&_rocm_smi_vector);
+
     if (EventCode >= ((unsigned int) TotalEvents)) return(PAPI_ENOEVNT);    // Bad event code.
     if (name == NULL || len < 2) return(PAPI_EINVAL);                       // Invalid arguments.
 
@@ -3952,6 +4014,7 @@ papi_vector_t _rocm_smi_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
+                 .initialized = 0,
                  }
     ,
     // sizes of framework-opaque component-private structures...
@@ -3973,6 +4036,7 @@ papi_vector_t _rocm_smi_vector = {
 
     .init_component = _rocm_smi_init_component,     // ( int cidx )
     .init_thread = _rocm_smi_init_thread,           // ( hwd_context_t * ctx )
+    .init_private = _rocm_smi_init_private,         // (void)
     .init_control_state = _rocm_smi_init_control_state,     // ( hwd_control_state_t * ctrl )
     .update_control_state = _rocm_smi_update_control_state, // ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx )
 
