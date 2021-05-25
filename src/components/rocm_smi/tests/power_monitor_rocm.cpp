@@ -48,6 +48,7 @@ FILE *myGnuplot = NULL;
 int CTL_Z = 0;                         // No SIGTSTP signalled yet.
 
 void cbSignal_SIGTSTP(int signalNumber) {
+   (void) signalNumber;                // No warning about unused.
    CTL_Z = 1;                          // Indicate it was received.
 } // end signal handler.
 
@@ -155,7 +156,7 @@ void rocmGetDeviceCount(long long *deviceCount)
 } // end Get Devices.
 
 void parseArgs(int argc, char **argv) {
-    int i, j, n, p;
+    int i, j, n;
     double dn;
     for (i=0; i<NUM_EVENTS; i++) UserLimitGiven[i]=-1; 
     if (argc < 1) exit(-1);

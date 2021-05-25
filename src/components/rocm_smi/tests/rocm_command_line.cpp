@@ -3,7 +3,7 @@
 /* file rocm_command_line.c
  * Nearly identical to "papi/src/utils/papi_command_line.c". 
  * This simply tries to add the events listed on the command line,
- * all into a single event set. It will the conduct a test using
+ * all into a single event set. It will then conduct a test using
  * the HIP interface to the AMD GPUs. It must be compiled with 
  * hipcc; see tests/ROCM_Makefile.
 */
@@ -78,7 +78,7 @@ void conductTest(int device) {
     float *A_h, *C_h;
     size_t N = 1000000;
     size_t Nbytes = N * sizeof(float);
-    int ret, thisDev, verbose=0;
+    int thisDev, verbose=0;
 
     HIPCHECK(hipSetDevice(device));                      // Set device requested.
     HIPCHECK(hipGetDevice(&thisDev));                    // Double check.

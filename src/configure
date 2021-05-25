@@ -628,6 +628,7 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
+SDE_LIB_FILES
 SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
@@ -7057,13 +7058,24 @@ for comp in $components; do
 done
 tests="$tests comp_tests"
 
-# check for SDE component to determine if we need -lrt in LDFLAGS
 for comp in $components; do
+  # check for SDE component to determine if we need -lrt in LDFLAGS
   if test "x$comp" = "xsde" ; then
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
     SDE_ENABLED=1
+    SDE_LIB_DIR="../components/sde/sde_lib"
+    if test "$shlib_tools" = "yes"; then
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
+    else
+      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
+    fi
+  fi
+
+  # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
+  if test "x$comp" = "xintel_gpu" ; then
+    LDFLAGS="$LDFLAGS -lstdc++"
   fi
 done
 
@@ -7077,96 +7089,6 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 if test "$cross_compiling" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5

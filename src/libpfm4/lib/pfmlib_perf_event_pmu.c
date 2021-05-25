@@ -74,7 +74,7 @@ typedef struct {
 #define PERF_FL_DEFAULT	0x1	/* umask is default for group */
 #define PERF_FL_PRECISE	0x2	/* support precise sampling */
 
-#define PERF_INVAL_OVFL_IDX ((unsigned long)-1)
+#define PERF_INVAL_OVFL_IDX (~0UL)
 
 #define PCL_EVT(f, t, m, fl)	\
 	{ .name = #f,		\
@@ -385,7 +385,7 @@ gen_tracepoint_table(void)
 		}
 
 		p->desc = "tracepoint";
-		p->id = -1;
+		p->id = ~0ULL;
 		p->type = PERF_TYPE_TRACEPOINT;
 		p->umask_ovfl_idx = PERF_INVAL_OVFL_IDX;
 		p->modmsk = 0,
