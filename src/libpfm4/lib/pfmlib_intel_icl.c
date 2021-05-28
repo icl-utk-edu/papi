@@ -27,7 +27,6 @@
 #include "events/intel_icl_events.h"
 
 static const int icl_models[] = {
-	106, /* IcelakeX */
 	108, /* Icelake D */
 	125, /* Icelake */
 	126, /* Icelake L */
@@ -38,12 +37,18 @@ static const int icl_models[] = {
 	0
 };
 
+static const int icx_models[] = {
+	106, /* IcelakeX */
+	0
+};
+
 static int
 pfm_icl_init(void *this)
 {
 	pfm_intel_x86_cfg.arch_version = 4;
 	return PFM_SUCCESS;
 }
+
 
 pfmlib_pmu_t intel_icl_support={
 	.desc			= "Intel Icelake",
@@ -63,6 +68,40 @@ pfmlib_pmu_t intel_icl_support={
 				| INTEL_X86_PMU_FL_EXTPEBS,
 	.cpu_family		= 6,
 	.cpu_models		= icl_models,
+	.pmu_detect		= pfm_intel_x86_model_detect,
+	.pmu_init		= pfm_icl_init,
+	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_intel_x86_get_perf_encoding),
+	.get_event_first	= pfm_intel_x86_get_event_first,
+	.get_event_next		= pfm_intel_x86_get_event_next,
+	.event_is_valid		= pfm_intel_x86_event_is_valid,
+	.validate_table		= pfm_intel_x86_validate_table,
+	.get_event_info		= pfm_intel_x86_get_event_info,
+	.get_event_attr_info	= pfm_intel_x86_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_intel_x86_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_intel_x86_get_event_nattrs,
+	.can_auto_encode	= pfm_intel_x86_can_auto_encode,
+	.get_num_events		= pfm_intel_x86_get_num_events,
+};
+
+pfmlib_pmu_t intel_icx_support={
+	.desc			= "Intel IcelakeX",
+	.name			= "icx",
+	.pmu			= PFM_PMU_INTEL_ICX,
+	.pme_count		= LIBPFM_ARRAY_SIZE(intel_icl_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm		= INTEL_X86_PLM,
+	.num_cntrs		= 16, /* consider with HT off by default */
+	.num_fixed_cntrs	= 4,
+	.max_encoding		= 2, /* offcore_response */
+	.pe			= intel_icl_pe,
+	.atdesc			= intel_x86_mods,
+	.flags			= PFMLIB_PMU_FL_RAW_UMASK
+				| PFMLIB_PMU_FL_SPEC
+				| INTEL_X86_PMU_FL_ECMASK
+				| INTEL_X86_PMU_FL_EXTPEBS,
+	.cpu_family		= 6,
+	.cpu_models		= icx_models,
 	.pmu_detect		= pfm_intel_x86_model_detect,
 	.pmu_init		= pfm_icl_init,
 	.get_event_encoding[PFM_OS_NONE] = pfm_intel_x86_get_encoding,

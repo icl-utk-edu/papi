@@ -174,13 +174,10 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
 	} else if (cfg->family == 21) { /* family 15h */
 		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
 	} else if (cfg->family == 23) { /* family 17h */
-                switch (cfg->model) {
-                case 49:
+                if (cfg->model >= 48)
 			rev = PFM_PMU_AMD64_FAM17H_ZEN2;
-			break;
-                default:
+		else
                         rev = PFM_PMU_AMD64_FAM17H_ZEN1;
-                }
 	} else if (cfg->family == 22) { /* family 16h */
 		rev = PFM_PMU_AMD64_FAM16H;
 	} else if (cfg->family == 25) { /* family 19h */
