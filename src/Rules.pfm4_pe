@@ -32,7 +32,6 @@ ifeq (yes,$(MIC))
 	FORCE_PFM_ARCH="CONFIG_PFMLIB_ARCH_X86=y"
 endif
 
-ifneq (,$(STATIC))
 ifeq (,$(PFM_OBJS))
 $(PFM_LIB_PATH)/libpfm.a:
 ifneq (,${PFM_ROOT})
@@ -49,7 +48,6 @@ else
 	@echo '$@ not installed!'; exit 1
 endif
 	$(MAKE)
-endif
 endif
 
 include Makefile.inc
