@@ -256,7 +256,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	attr->pinned	     = pinned;
 
 	__pfm_vbprintf("PERF[type=%x config=0x%"PRIx64" config1=0x%"PRIx64
-                       " excl=%d e_u=%d e_k=%d e_hv=%d e_host=%d e_gu=%d period=%"PRIu64" freq=%d"
+                       " excl=%d excl_user=%d excl_kernel=%d excl_hv=%d excl_host=%d excl_guest=%d period=%"PRIu64" freq=%d"
                        " precise=%d pinned=%d] %s\n",
 			attr->type,
 			attr->config,
