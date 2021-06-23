@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	 * Install the signal handler (SIGIO)
 	 */
 	memset(&act, 0, sizeof(act));
-	act.sa_sigaction = (void *)sigio_handler;
+	act.sa_sigaction = (void (*)(int, siginfo_t *, void *)) sigio_handler;
 	act.sa_flags = SA_SIGINFO;
 	sigaction (SIGIO, &act, 0);
 
