@@ -82,6 +82,7 @@ int
 pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
+	pfm_intel_x86_reg_t reg;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
@@ -117,7 +118,20 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		}
 	}
 
-	attr->config = e->codes[0];
+	reg.val = e->codes[0];
+
+	/*
+	 * suppress the bits which are under the control of perf_events
+	 * they will be ignore by the perf tool and the kernel interface
+	 * the OS/USR bits are controlled by the attr.exclude_* fields
+	 * the EN/INT bits are controlled by the kernel
+	 */
+	reg.sel_en   = 0;
+	reg.sel_int  = 0;
+	reg.sel_os   = 0;
+	reg.sel_usr  = 0;
+
+	attr->config = reg.val;
 
 	if (e->count > 1) {
 		/*

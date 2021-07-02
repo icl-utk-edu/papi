@@ -57,5 +57,5 @@ pfmlib_pmu_t amd64_fam11h_##n##_support={			\
 	.get_event_nattrs	= pfm_amd64_get_event_nattrs,	\
 }
 
-DEFINE_FAM11H_REV(Turion, turion, 0, PFM_PMU_AMD64_FAM11H_TURION);
+DEFINE_FAM11H_REV(Turion, turion, AMD64_FAM11H, PFM_PMU_AMD64_FAM11H_TURION);
 

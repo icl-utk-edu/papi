@@ -57,5 +57,5 @@ pfmlib_pmu_t amd64_fam12h_##n##_support={			\
 	.get_event_nattrs	= pfm_amd64_get_event_nattrs,	\
 }
 
-DEFINE_FAM12H_REV(Llano, llano, 0, PFM_PMU_AMD64_FAM12H_LLANO);
+DEFINE_FAM12H_REV(Llano, llano, AMD64_FAM12H, PFM_PMU_AMD64_FAM12H_LLANO);
 
