@@ -28,6 +28,9 @@ HelloWorld_CUPTI11: HelloWorld_CUPTI11.o $(UTILOBJS)
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
+HelloWorld_NP_Ctx: HelloWorld_NP_Ctx.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) -o HelloWorld_NP_Ctx HelloWorld_NP_Ctx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 

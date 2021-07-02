@@ -33,23 +33,25 @@ event_rate_names = OrderedDict([
 
 def merge_json_files(source):
   json_object = {}
-  json_object["ranks"] = []
   events_stored = False
 
   #get measurement files
   file_list = os.listdir(source)
+  file_list.sort()
+  rank_cnt = 0
+  json_rank = OrderedDict()
+  
   for item in file_list:
-    json_rank = {}
-
     #determine mpi rank based on file name (rank_#)
     rank = item.split('_', 1)[1]
     rank = rank.rsplit('.', 1)[0]
-    #print("rank: {}".format(rank))
-
-    json_rank["id"] = rank
+    try:
+      rank = int(rank)
+    except:
+      rank = rank_cnt
 
     #open measurement file
-    file_name = str(source) + "/rank_" + str(rank) 
+    file_name = str(source) + "/" + str(item)
 
     try:
       with open(file_name) as json_file:
@@ -66,10 +68,12 @@ def merge_json_files(source):
       events_stored = True
 
     #get all threads
-    json_rank["threads"] = data["threads"]
+    json_rank[str(rank)] = OrderedDict()
+    json_rank[str(rank)]['threads'] = data['threads']
 
-    #append current rank to json file
-    json_object["ranks"].append(json_rank)
+    rank_cnt = rank_cnt + 1
+  
+  json_object['ranks'] = json_rank
 
   # print json.dumps(json_object,indent=2, sort_keys=False,
   #                  separators=(',', ': '), ensure_ascii=False)
@@ -120,51 +124,60 @@ class Sum_Counters(object):
     self.regions = OrderedDict()
     self.regions_last_rank_id = {}
     self.regions_rank_num = {}
+    self.regions_last_thread_id = {}
     self.regions_thread_num = {}
 
     self.clean_regions = OrderedDict()
     self.sum_counters = OrderedDict()
 
-  def add_region(self, rank_id, region, events=OrderedDict()):
+  def add_region(self, rank_id, thread_id, events=OrderedDict()):
 
     #remove all read values caused by PAPI_hl_read
     cleaned_events = OrderedDict()
+    region_name = 'unknown'
+    cleaned_events['region_count'] = 1
     for key,value in events.items():
+      if 'name' in key:
+        region_name = value
+        continue
+      if 'parent_region_id' in key:
+        continue
       metric_value = value
       if isinstance(value, dict):
-        if "total" in value:
-          metric_value = float(value['total'])
-        elif "min" in value and "avg" in value and "max" in value:
-          metric_value = {"min":value['min'], "avg":value['avg'], "max":value['max']}
-        else:
-          metric_value = value
+        if "region_value" in value:
+          metric_value = float(value['region_value'])
       cleaned_events[key] = metric_value
       #print("add_region ", rank_id, region, key, metric_value)
 
     #create new Sum_Counter object for each new region
-    if region not in self.regions:
-      self.regions[region] = {}
-      self.regions_last_rank_id[region] = rank_id
-      self.regions_rank_num[region] = 1
-      self.regions_thread_num[region] = 1
-      self.sum_counters[region] = OrderedDict()
+    if region_name not in self.regions:
+      self.regions[region_name] = {}
+      self.regions_last_rank_id[region_name] = rank_id
+      self.regions_last_thread_id[region_name] = thread_id
+      self.regions_rank_num[region_name] = 1
+      self.regions_thread_num[region_name] = 1
+      self.sum_counters[region_name] = OrderedDict()
       for key,value in cleaned_events.items():
-        self.sum_counters[region][key] = Sum_Counter()
-        self.sum_counters[region][key].add_event(value)
+        self.sum_counters[region_name][key] = Sum_Counter()
+        self.sum_counters[region_name][key].add_event(value)
     else:
-      #increase number of ranks when rank_id has changed
-      if self.regions_last_rank_id[region] != rank_id:
-        self.regions_last_rank_id[region] = rank_id
-        self.regions_rank_num[region] += 1
+      #increase number of ranks and threads when rank_id has changed
+      if self.regions_last_rank_id[region_name] != rank_id:
+        self.regions_last_rank_id[region_name] = rank_id
+        self.regions_rank_num[region_name] += 1
+        self.regions_last_thread_id[region_name] = thread_id
+        self.regions_thread_num[region_name] += 1
 
-      #always increase number of threads
-      self.regions_thread_num[region] += 1
+      #increase number of threads when thread_id has changed
+      if self.regions_last_thread_id[region_name] != thread_id:
+        self.regions_last_thread_id[region_name] = thread_id
+        self.regions_thread_num[region_name] += 1
 
       for key,value in cleaned_events.items():
-        self.sum_counters[region][key].add_event(value)
+        self.sum_counters[region_name][key].add_event(value)
 
-    self.regions[region]['rank_num'] = self.regions_rank_num[region]
-    self.regions[region]['thread_num'] = self.regions_thread_num[region]
+    self.regions[region_name]['rank_num'] = self.regions_rank_num[region_name]
+    self.regions[region_name]['thread_num'] = self.regions_thread_num[region_name]
 
 
   def get_json(self):
@@ -180,12 +193,13 @@ class Sum_Counters(object):
               region_count = events[event_key]
             else:
               global event_definitions
-              if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
+              if region_count > 1:
                 events[event_key] = OrderedDict()
                 if event_key == 'cycles' or event_key == 'real_time_nsec':
                   events[event_key]['total'] = event_value.get_sum()
                 else:
-                  if event_definitions[event_key] == 'delta':
+                  if ( event_definitions[event_key]['type'] == 'delta' and
+                       event_definitions[event_key]['component'] == 'perf_event' ):
                     events[event_key]['total'] = event_value.get_sum()
                 events[event_key]['min'] = event_value.get_min()
                 events[event_key]['median'] = event_value.get_median()
@@ -205,6 +219,7 @@ class Sum_Counters(object):
           break
 
       #add number of ranks and threads in case of a parallel code
+      #print(name, self.regions[name]['rank_num'], self.regions[name]['thread_num'])
       if self.regions[name]['rank_num'] > 1 or self.regions[name]['thread_num'] > 1:
         events['Number of ranks'] = self.regions[name]['rank_num']
         events['Number of threads per rank'] = int(self.regions[name]['thread_num'] / self.regions[name]['rank_num'])
@@ -214,40 +229,33 @@ class Sum_Counters(object):
       process_num[name] = self.regions[name]['rank_num'] * self.regions[name]['thread_num']
     return sum_json
 
-def derive_sum_json_object(json):
+def derive_sum_json_object(data):
   json_object = OrderedDict()
 
-  for region_key,region_value in json.items():
-    #print("region: ", region_key)
+  for region_key,region_value in data.items():
     derive_events = OrderedDict()
     events = region_value.copy()
-    global process_num
-    proc_num = process_num[region_key]
 
     #remember runtime for other metrics like MFLOPS
     rt = {}
 
+    #remember region count
+    region_cnt = 1
+
     #Region Count
     if 'region_count' in events:
       derive_events[derived_metric_names['region_count']] = int(events['region_count'])
+      region_cnt = int(events['region_count'])
       del events['region_count']
 
-    #Real Time Cycles
+    #skip cycles
     if 'cycles' in events:
-      # event_name = derived_metric_names['cycles']
-      # if proc_num > 1:
-      #   for metric in ['total', 'min', 'median', 'max']:
-      #     rt[metric] = convert_value(events['cycles'][metric], 'Cycles')
-      #   derive_events[event_name] = rt['total']
-      # else:
-      #   rt['total'] = convert_value(events['cycles'], 'Cycles')
-      #   derive_events[event_name] = rt['total']
       del events['cycles']
 
     #Real Time
     if 'real_time_nsec' in events:
       event_name = derived_metric_names['real_time_nsec']
-      if proc_num > 1:
+      if region_cnt > 1:
         for metric in ['total', 'min', 'median', 'max']:
           rt[metric] = convert_value(events['real_time_nsec'][metric], 'Runtime')
         derive_events[event_name] = rt['max']
@@ -260,7 +268,7 @@ def derive_sum_json_object(json):
     #CPU Time
     if 'perf::TASK-CLOCK' in events:
       event_name = derived_metric_names['perf::TASK-CLOCK']
-      if proc_num > 1:
+      if region_cnt > 1:
         derive_events[event_name] = convert_value(events['perf::TASK-CLOCK']['total'], 'CPUtime')
       else:
         derive_events[event_name] = convert_value(events['perf::TASK-CLOCK'], 'CPUtime')
@@ -271,7 +279,7 @@ def derive_sum_json_object(json):
       event_name = 'IPC'
       metric = 'total'
       try:
-        if proc_num > 1: 
+        if region_cnt > 1: 
           ipc = float(format(float(int(events['PAPI_TOT_INS'][metric]) / int(events['PAPI_TOT_CYC'][metric])), '.2f'))
         else:
           ipc = float(format(float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC'])), '.2f'))
@@ -289,7 +297,7 @@ def derive_sum_json_object(json):
         event_name = event_rate_names[rate_event]
         metric = 'total'
         try:
-          if proc_num > 1:
+          if region_cnt > 1:
             rate = float(format(float(events[rate_event][metric]) / 1000000 / rt[metric], '.2f'))
           else:
             rate = float(format(float(events[rate_event]) / 1000000 / rt[metric], '.2f'))
@@ -309,15 +317,12 @@ def derive_sum_json_object(json):
 
   return json_object
 
-def sum_json_object(json, derived = False):
+def sum_json_object(data, derived = False):
   sum_cnt = Sum_Counters()
-  for ranks in json['ranks']:
-    for threads in ranks['threads']:
-      for regions in threads['regions']:
-        for region_key,region_value in regions.items():
-          name = region_key
-          events = region_value
-          sum_cnt.add_region(ranks['id'], name, events)
+  for rank, rank_value in data['ranks'].items():
+    for thread, thread_value in rank_value['threads'].items():
+      for region_value in thread_value['regions'].values():
+        sum_cnt.add_region(rank, thread, region_value)
 
   if derived == True:
     return derive_sum_json_object(sum_cnt.get_json())
@@ -343,7 +348,10 @@ def get_ops_dict(ops, rt):
   for (ops_key,ops_value), (rt_key,rt_value) in zip(ops.items(), rt.items()):
     #print str(ops_key) + "," + str(ops_value)
     #print str(rt_key) + "," + str(rt_value)
-    ops = float(ops_value) / 1000000 / rt_value
+    try:
+      ops = float(ops_value) / 1000000 / rt_value
+    except:
+      ops = 0
     ops_dict[ops_key] = float(format(ops, '.2f'))
   return ops_dict
 
@@ -378,17 +386,14 @@ def derive_events(events):
   rt = 1.0
   rt_dict = OrderedDict()
 
-  #Region Count
-  if 'region_count' in events:
-    derive_events[derived_metric_names['region_count']] = int(events['region_count'])
-    del events['region_count']
+  #name
+  if 'name' in events:
+    derive_events['name'] = events['name']
+    del events['name']
 
-  #Real Time Cycles
-  if 'cycles' in events:
-    # if isinstance(events['cycles'],dict):
-    #   derive_events[derived_metric_names['cycles']] = derive_read_events(events['cycles'], 'Cycles')
-    # else:
-    #   derive_events[derived_metric_names['cycles']] = convert_value(events['cycles'], 'Cycles')
+  #skip parent_region_id and cycles
+  if 'parent_region_id' in events or 'cycles' in events:
+    del events['parent_region_id']
     del events['cycles']
 
   #Real Time
@@ -434,7 +439,10 @@ def derive_events(events):
         rate_dict = get_ops_dict(events[rate_event], rt_dict)
         derive_events[event_name] = rate_dict
       else:
-        rate = float(format(float(events[rate_event]) / 1000000 / rt, '.2f'))
+        try:
+          rate = float(format(float(events[rate_event]) / 1000000 / rt, '.2f'))
+        except:
+          rate = 0
         derive_events[event_name] = rate
       del events[rate_event]
 
@@ -448,34 +456,12 @@ def derive_events(events):
   return derive_events
 
 
-def derive_json_object(json):
-  json_object = {}
-  json_object['ranks'] = []
-
-  for rank in json['ranks']:
-    # print rank['id']
-    # print rank['threads']
-    json_rank = {}
-    json_rank['id'] = rank['id']
-    json_rank['threads'] = []
-
-    for thread in rank['threads']:
-      # print thread['id']
-      json_thread = {}
-      json_thread['id'] = thread['id']
-      json_thread['regions'] = []
-      for region in thread['regions']:
-        json_region = {}
-        for region_key,region_value in region.items():
-          # print region_key
-          # print region_value
-          json_region[region_key] = derive_events(region_value)
-
-        json_thread['regions'].append(json_region)
-      json_rank['threads'].append(json_thread)
-    json_object['ranks'].append(json_rank)
-
-  return json_object
+def derive_json_object(data):
+  for rank, rank_value in data['ranks'].items():
+    for thread, thread_value in rank_value['threads'].items():
+      for region, region_value in thread_value['regions'].items():
+        data['ranks'][rank]['threads'][thread]['regions'][region] = derive_events(region_value)
+  return data
 
 def write_json_file(data, file_name):
   with io.open(file_name, 'w', encoding='utf8') as outfile:
@@ -496,7 +482,7 @@ def main(source, format, type, notation):
       else:
         write_json_file(json, 'papi.json')
 
-    #summarize data over threads and ranks
+    #summarize data over regions with the same name, threads and ranks
     if type == 'summary':
       if notation == 'derived':
         write_json_file(sum_json_object(json, True), 'papi_sum.json')

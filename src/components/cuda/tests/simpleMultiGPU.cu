@@ -30,6 +30,17 @@
  * SLI in the nvidia control panel. Otherwise only one GPU is visible to the
  * application. On the other side, you can still extend your desktop to screens
  * attached to both GPUs.
+ *
+ *  CUDA Context notes for CUPTI_11: Although a cudaSetDevice() will create a
+ *  primary context for the device that allows kernel execution; PAPI cannot
+ *  use a primary context to control the Nvidia Performance Profiler.
+ *  Applications must create a context using cuCtxCreate() that will execute
+ *  the kernel, this must be done prior to the PAPI_add_events() invocation in
+ *  the code below. When multiple GPUs are in use, each requires its own
+ *  context, and that context should be active when PAPI_events are added for
+ *  each device. See cuCtxPushCurrent() and cuCtxPopCurrent() below.  This
+ *  means using Seperate PAPI_add_events() for each device, as we do here.
+ * 
  */
 
 // System includes
@@ -160,8 +171,8 @@ int main( int argc, char **argv )
     // create one context per device
     for (i = 0; i < GPU_N; i++) {
         CHECK_CUDA_ERROR( cudaSetDevice( i ) );
-        CHECK_CU_ERROR( cuCtxCreate( &(ctx[i]), 0, device[i] ), "cuCtxCreate" );
-        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+        CHECK_CU_ERROR( cuCtxCreate( &(ctx[i]), 0, device[i] ), "cuCtxCreate" ); // automatically pushes on context stack.
+        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );         // ... so take it off.
     }
 
     printf( "Generating input data...\n" );
@@ -261,8 +272,11 @@ int main( int argc, char **argv )
     // In this example measure events from each GPU
     int numEventEndings = 2;
     char const *EventEndings[] = { 
-        "cuda:::metric:nvlink_total_data_transmitted",
-        "cuda:::metric:nvlink_total_data_received",
+//      "cuda:::metric:nvlink_total_data_transmitted",
+//      "cuda:::metric:nvlink_total_data_received",
+        // CUPTI11 events.
+        "cuda:::dram__bytes_read.sum",
+        "cuda:::fe__cycles_elapsed.sum"
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm

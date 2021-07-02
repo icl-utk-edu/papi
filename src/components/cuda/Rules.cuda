@@ -22,9 +22,10 @@ PAPI_CUDA_ROOT ?= /opt/cuda
 # libcupti.so
 
 # The standard installed locations for these libraries, with overrides:
-# $(PAPI_CUDA_ROOT)/lib64/libcuda.so               #O.R. PAPI_CUDA_MAIN
-# $(PAPI_CUDA_ROOT)/lib64/libcudart.so             #O.R. PAPI_CUDA_RUNTIME
-# $(PAPI_CUDA_ROOT)/extras/CUPTI/lib64/libcupti.so #O.R. PAPI_CUDA_CUPTI
+# $(PAPI_CUDA_ROOT)/lib64/libcuda.so                        #O.R. PAPI_CUDA_MAIN
+# $(PAPI_CUDA_ROOT)/lib64/libcudart.so                      #O.R. PAPI_CUDA_RUNTIME
+# $(PAPI_CUDA_ROOT)/extras/CUPTI/lib64/libcupti.so          #O.R. PAPI_CUDA_CUPTI
+# $(PAPI_CUDA_ROOT)/extras/CUPTI/lib64/libnvperf_host.so    #O.R. PAPI_CUDA_PERFWORKS
 #
 # There are many ways to cause these paths to be known. 
 # Spack is a package manager used on supercomputers, Linux and MacOS. If Spack
@@ -56,6 +57,7 @@ PAPI_CUDA_ROOT ?= /opt/cuda
 PAPI_CUDA_MAIN = \"\"
 PAPI_CUDA_RUNTIME = \"\"
 PAPI_CUDA_CUPTI = \"\"
+PAPI_CUDA_PERFWORKS = \"\"
 
 # An example of an override:
 # PAPI_CUDA_CUPTI = \"$(PAPI_CUDA_ROOT)/extras/CUPTI/lib64/libcupti.so\"
@@ -89,7 +91,8 @@ PAPI_CUDA_CUPTI = \"\"
 # static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
 # static char cuda_cupti[]=PAPI_CUDA_CUPTI;
 
-CUDA_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME) -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI)
+CUDA_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME)
+CUDA_MACS+= -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI) -DPAPI_CUDA_PERFWORKS=$(PAPI_CUDA_PERFWORKS)
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o
