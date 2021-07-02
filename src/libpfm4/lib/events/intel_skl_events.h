@@ -1687,7 +1687,7 @@ static const intel_x86_umask_t skl_offcore_response[]={
      .ucode  = 1ULL << (26+8),
      .grpid  = 1,
    },
-   { .uname  = "L3_MISS_MISS_REMOTE_HOP1_DRAM",
+   { .uname  = "L3_MISS_REMOTE_HOP1_DRAM",
      .udesc  = "Supplier: counts L3 misses to remote DRAM with 1 hop",
      .ucode  = 1ULL << (28+8),
      .grpid  = 1,

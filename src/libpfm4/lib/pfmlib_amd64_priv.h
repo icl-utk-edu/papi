@@ -52,7 +52,6 @@ typedef struct {
  * which would not fit into the 8 bits reserved
  * in amd64_entry_t.flags or amd64_umask_t.flags
  */
-#define AMD64_FAM10H AMD64_FAM10H_REV_B
 typedef enum {
         AMD64_CPU_UN = 0,
         AMD64_K7,
@@ -65,9 +64,16 @@ typedef enum {
         AMD64_FAM10H_REV_B,
         AMD64_FAM10H_REV_C,
         AMD64_FAM10H_REV_D,
+        AMD64_FAM11H,
+        AMD64_FAM12H, /* first with Host/Guest filtering */
 
         AMD64_FAM14H_REV_B,
+        AMD64_FAM15H,
+        AMD64_FAM16H,
+        AMD64_FAM17H,
+        AMD64_FAM19H,
 } amd64_rev_t;
+#define AMD64_FAM10H AMD64_FAM10H_REV_B
 
 typedef struct {
         pfm_pmu_t		revision;
@@ -212,9 +218,6 @@ typedef union {
 #define sel_guest	perfsel.sel_guest
 #define sel_host	perfsel.sel_host
 
-#define IS_FAMILY_10H(p) (((pfmlib_pmu_t *)(p))->pmu_rev >= AMD64_FAM10H)
-#define IS_FAMILY_15H(p) (((pfmlib_pmu_t *)(p))->pmu == PFM_PMU_AMD64_FAM15H_INTERLAGOS)
-
 extern int pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_get_event_first(void *this);
 extern int pfm_amd64_get_event_next(void *this, int idx);
@@ -231,4 +234,10 @@ extern int pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern void pfm_amd64_nb_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e);
 extern int pfm_amd64_family_detect(void *this);
+
+static inline int pfm_amd64_supports_virt(pfmlib_pmu_t *pmu)
+{
+	return pmu->pmu_rev >= AMD64_FAM10H && pmu->pmu_rev != AMD64_FAM11H;
+}
+
 #endif /* __PFMLIB_AMD64_PRIV_H__ */

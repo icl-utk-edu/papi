@@ -496,6 +496,21 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
 
+/*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_cuda_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private)
+      return vector->init_private();
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _cuda_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
 
 //-----------------------------------------------------------------------------
 // Binary Search of gctxt->allEvents[gctxt->numAllEvents]. Returns idx, or -1.
@@ -1588,7 +1603,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
         }
 
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+            return(PAPI_EMISC));
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
@@ -1883,12 +1899,42 @@ static int _cuda_init_thread(hwd_context_t * ctx)
 static int _cuda_init_component(int cidx)
 {
     SUBDBG("Entering with component idx: %d\n", cidx);
-    int rv;
+    _cuda_vector.cmp_info.CmpIdx = cidx;
+
+    _cuda_vector.cmp_info.num_native_events = -1;
+    _cuda_vector.cmp_info.num_cntrs = -1;
+    _cuda_vector.cmp_info.num_mpx_cntrs = -1;
+
+    return PAPI_OK;
+}
+
+  /* Initialize hardware counters, setup the function vector table
+ * and get hardware information, this routine is called when the
+ * PAPI process is initialized (IE PAPI_library_init)
+ */
+/* NOTE: only called by main thread (not by every thread) !!! Starting
+   in CUDA 4.0, multiple CPU threads can access the same CUDA
+   context. This is a much easier programming model then pre-4.0 as
+   threads - using the same context - can share memory, data,
+   etc. It's possible to create a different context for each
+   thread. That's why CUDA context creation is done in
+   CUDA_init_component() (called only by main thread) rather than
+   CUDA_init() or CUDA_init_control_state() (both called by each
+   thread). */
+static int _cuda_init_private(void)
+{
+    int rv, err = PAPI_OK;
+    PAPI_lock(COMPONENT_LOCK);
+    if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
+
+    SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
+
     /* link in all the cuda libraries and resolve the symbols we need to use */
     if(_cuda_linkCudaLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        err = (PAPI_ENOSUPP);
+        goto cuda_init_private_exit;
     }
 
     /* Create the structure */
@@ -1899,21 +1945,29 @@ static int _cuda_init_component(int cidx)
                 "Could not allocate %lu bytes of memory for global_cuda_context.", sizeof(cuda_context_t));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            return(PAPI_ENOMEM);
+            err = (PAPI_ENOMEM);
+            goto cuda_init_private_exit;
         }
     }
     /* Get list of all native CUDA events supported */
     rv = _cuda_add_native_events(global_cuda_context);
     if(rv != 0) {
-        return (rv);
+        err = (rv);
+        goto cuda_init_private_exit;
     }
     /* Export some information */
-    _cuda_vector.cmp_info.CmpIdx = cidx;
     _cuda_vector.cmp_info.num_native_events = global_cuda_context->availEventSize;
     _cuda_vector.cmp_info.num_cntrs = _cuda_vector.cmp_info.num_native_events;
     _cuda_vector.cmp_info.num_mpx_cntrs = _cuda_vector.cmp_info.num_native_events;
+    err = PAPI_OK;
 
-    return (PAPI_OK);
+cuda_init_private_exit:
+    _cuda_vector.cmp_info.initialized = 1;
+    _cuda_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return (err);
 } // end init_component
 
 
@@ -1925,6 +1979,9 @@ static int _cuda_init_control_state(hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering\n");
     (void) ctrl;
+    DO_SOME_CHECKING(&_cuda_vector);
+    //_cuda_check_n_initialize(&_cuda_vector);
+
     cuda_context_t *gctxt = global_cuda_context;
 
     CHECK_PRINT_EVAL(!gctxt, "Error: The PAPI CUDA component needs to be initialized first", return (PAPI_ENOINIT));
@@ -1955,6 +2012,8 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 {
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
+    DO_SOME_CHECKING(&_cuda_vector);
+
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
     int currDeviceNum;
@@ -1971,11 +2030,9 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d \n", currDeviceNum);
 
-    // cudaFree(NULL) does nothing, but will init a new cuda context if one
-    // does not exist. This prevents cuCtxGetCurrent() from giving us a bad
-    // context (which it can, the failure is in cuptiEventGroupSetsCreate).  
-    // If cudaFree() returns an error, we ignore it.
-
+    // cudaFree(NULL) does nothing real, but initializes a new cuda context
+    // if one does not exist. This prevents cuCtxGetCurrent() from failing.
+    // If it returns an error, we ignore it.
     CUDA_CALL((*cudaFreePtr) (NULL), );
     CU_CALL((*cuCtxGetCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d cuCtx %p \n", currDeviceNum, currCuCtx);
@@ -2745,6 +2802,9 @@ static int _cuda_set_domain(hwd_control_state_t * ctrl, int domain)
 static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     // SUBDBG( "Entering (get next event after %u)\n", *EventCode );
+    DO_SOME_CHECKING(&_cuda_vector);
+    //_cuda_check_n_initialize(&_cuda_vector);
+
     switch (modifier) {
     case PAPI_ENUM_FIRST:
         *EventCode = 0;
@@ -2774,6 +2834,9 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
  */
 static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
+    DO_SOME_CHECKING(&_cuda_vector);
+    //_cuda_check_n_initialize(&_cuda_vector);
+
     // SUBDBG( "Entering EventCode %d\n", EventCode );
     unsigned int index = EventCode;
     cuda_context_t *gctxt = global_cuda_context;
@@ -2826,7 +2889,8 @@ papi_vector_t _cuda_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-                 }
+                 .initialized = 0,
+    }
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {
@@ -2844,6 +2908,7 @@ papi_vector_t _cuda_vector = {
     .cleanup_eventset = _cuda_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
 
     .init_component = _cuda_init_component,  /* ( int cidx ) */
+    .init_private = _cuda_init_private,      /* (void) */
     .init_thread = _cuda_init_thread,        /* ( hwd_context_t * ctx ) */
     .init_control_state = _cuda_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _cuda_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
