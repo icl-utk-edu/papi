@@ -44,27 +44,61 @@
  *
  * As the CPU Measurement counter facility does not change on a running
  * system, read out the type value on first read and cache it.
+ *
+ * There are several PMUs for s390, so find the correct one first and return
+ * its PMU type value assigned at system boot time.
  */
-#define CPUM_CF_DEVICE_TYPE  "/sys/bus/event_source/devices/cpum_cf/type"
-static int cpum_cf_type;
-static int pfm_s390_get_perf_attr_type(void)
+static struct pfm_s390_perf_aptt {	/* Perf attribute PMU type table */
+	pfm_pmu_t pmutype;		/* PMU Type number */
+	const char *fname;		/* File name to read type from */
+	unsigned int value;		/* Type value, 0 --> unused */
+} pfm_s390_perf_aptt[] = {
+	{
+		.pmutype = PFM_PMU_S390X_CPUM_CF,
+		.fname = "/sys/bus/event_source/devices/cpum_cf/type"
+	},
+	{
+		.pmutype = PFM_PMU_S390X_CPUM_SF,
+		.fname = "/sys/bus/event_source/devices/cpum_sf/type"
+	},
+};
+#define S390_APTT_COUNT LIBPFM_ARRAY_SIZE(pfm_s390_perf_aptt)
+
+static int pfm_s390_get_perf_attr_type(pfm_pmu_t pmutype)
 {
+	int cpum_cf_type;
 	size_t buflen;
 	char *buffer;
 	FILE *fp;
+	size_t i;
 
-	if (cpum_cf_type)
-		return cpum_cf_type;
+	/* Find type of PMU and return known and cached value */
+	for (i = 0; i < S390_APTT_COUNT; ++i) {
+		if (pfm_s390_perf_aptt[i].pmutype == pmutype)
+			break;
+	}
 
-	fp = fopen(CPUM_CF_DEVICE_TYPE, "r");
+	if (i == S390_APTT_COUNT)
+		return PFM_ERR_NOTFOUND;
+
+	if (pfm_s390_perf_aptt[i].value)
+		return pfm_s390_perf_aptt[i].value;
+
+	/* Value unknown, read from file */
+	fp = fopen(pfm_s390_perf_aptt[i].fname, "r");
 	if (fp == NULL)
-		return cpum_cf_type;
+		return PFM_ERR_NOTFOUND;
+
 	buffer = NULL;
+
 	if (pfmlib_getl(&buffer, &buflen, fp) != -1 &&
 	    sscanf(buffer, "%u", &cpum_cf_type) == -1)
 		cpum_cf_type = PERF_TYPE_RAW;
+
 	fclose(fp);
 	free(buffer);
+
+	pfm_s390_perf_aptt[i].value = cpum_cf_type;
 	return cpum_cf_type;
 }
 
@@ -81,8 +115,12 @@ int pfm_s390x_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	rc = pmu->get_event_encoding[PFM_OS_NONE](this, e);
 	if (rc == PFM_SUCCESS) {
 		/* currently use raw events only */
-		attr->type = pfm_s390_get_perf_attr_type();
-		attr->config = e->codes[0];
+		rc = pfm_s390_get_perf_attr_type(pmu->pmu);
+		if (rc > 0) {		/* PMU types are positive */
+			attr->type = rc;
+			attr->config = e->codes[0];
+			rc = PFM_SUCCESS;
+		}
 	}
 
 	return rc;

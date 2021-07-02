@@ -284,34 +284,23 @@ void amd64_display_reg(void *this, pfmlib_event_desc_t *e, pfm_amd64_reg_t reg)
 {
 	pfmlib_pmu_t *pmu = this;
 
-	if (IS_FAMILY_10H(pmu) || IS_FAMILY_15H(pmu))
-		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d guest=%d host=%d] %s\n",
-			reg.val,
-			reg.sel_event_mask | (reg.sel_event_mask2 << 8),
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			reg.sel_guest,
-			reg.sel_host,
-			e->fstr);
-	else
-		__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d] %s\n",
-			reg.val,
-			reg.sel_event_mask,
-			reg.sel_unit_mask,
-			reg.sel_os,
-			reg.sel_usr,
-			reg.sel_en,
-			reg.sel_int,
-			reg.sel_inv,
-			reg.sel_edge,
-			reg.sel_cnt_mask,
-			e->fstr);
+	__pfm_vbprintf("[0x%"PRIx64" event_sel=0x%x umask=0x%x os=%d usr=%d en=%d int=%d inv=%d edge=%d cnt_mask=%d",
+		reg.val,
+		reg.sel_event_mask | (reg.sel_event_mask2 << 8),
+		reg.sel_unit_mask,
+		reg.sel_os,
+		reg.sel_usr,
+		reg.sel_en,
+		reg.sel_int,
+		reg.sel_inv,
+		reg.sel_edge,
+		reg.sel_cnt_mask);
+
+	/* Fam10h or later has host/guest filterting except Fam11h */
+	if (pfm_amd64_supports_virt(pmu))
+		__pfm_vbprintf(" guest=%d host=%d", reg.sel_guest, reg.sel_host);
+
+	__pfm_vbprintf("] %s\n", e->fstr);
 }
 
 int
@@ -543,8 +532,7 @@ pfm_amd64_get_encoding(void *this, pfmlib_event_desc_t *e)
 			reg.sel_os = 1;
 		if (e->dfl_plm & PFM_PLM3)
 			reg.sel_usr = 1;
-		if ((IS_FAMILY_10H(this) || IS_FAMILY_15H(this))
-		     && e->dfl_plm & PFM_PLMH)
+		if (e->dfl_plm & PFM_PLMH)
 			reg.sel_host = 1;
 	}
 
