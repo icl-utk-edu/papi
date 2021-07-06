@@ -60,6 +60,7 @@ int
 pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
+	pfm_amd64_reg_t reg;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
@@ -92,7 +93,22 @@ pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	}
 	DPRINT("amd64_get_perf_encoding: PMU type=%d\n", ret);
 	attr->type = ret;
-	attr->config = e->codes[0];
+
+	reg.val = e->codes[0];
+	/*
+	 * suppress the bits which are under the control of perf_events
+	 * they will be ignore by the perf tool and the kernel interface
+	 * the OS/USR bits are controlled by the attr.exclude_* fields
+	 * the EN/INT bits are controlled by the kernel
+	 */
+	reg.sel_en    = 0;
+	reg.sel_int   = 0;
+	reg.sel_os    = 0;
+	reg.sel_usr   = 0;
+	reg.sel_guest = 0;
+	reg.sel_host  = 0;
+
+	attr->config = reg.val;
 
 	return PFM_SUCCESS;
 }
@@ -130,7 +146,7 @@ pfm_amd64_perf_validate_pattrs(void *this, pfmlib_event_desc_t *e)
 				compact = 1;
 
 			/* older processors do not support hypervisor priv level */
-			if (!IS_FAMILY_10H(pmu) && e->pattrs[i].idx == PERF_ATTR_H)
+			if (e->pattrs[i].idx == PERF_ATTR_H &&!pfm_amd64_supports_virt(pmu))
 				compact = 1;
 		}
 

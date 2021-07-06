@@ -35,29 +35,30 @@
 #define ALIGN_BUFFER(buffer, align)                                     \
   (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
-#if 0
-#define ROCMDBG(format, args...) fprintf(stderr, format, ## args)
-#else
-//#define ROCMDBG(format, args...) do {} while(0)
-#define ROCMDBG SUBDBG
-#endif
+// Choose one.
+#define ROCMDBG(format, args...) {;}
+// #define ROCMDBG(format, args...) fprintf(stderr, format, ## args)
 
 /* Macros for error checking... each arg is only referenced/evaluated once */
 #define CHECK_PRINT_EVAL(checkcond, str, evalthis)                      \
     do {                                                                \
         int _cond = (checkcond);                                        \
         if (_cond) {                                                    \
-            fprintf(stderr, "%s:%i error: condition %s failed: %s.\n", __FILE__, __LINE__, #checkcond, str); \
+            ROCMDBG("%s:%i error: condition %s failed: %s.\n", __FILE__, __LINE__, #checkcond, str); \
             evalthis;                                                   \
         }                                                               \
     } while (0)
+
+// Choose one.
+#define LIBCALL_DBG(format, args...) {;}
+//#define LIBCALL_DBG(format, args...) fprintf(stderr, format, ## args)
 
 #define ROCM_CALL_CK(call, args, handleerror)                           \
     do {                                                                \
         hsa_status_t _status = (*call##Ptr)args;                        \
         if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {    \
-            fprintf(stderr, "%s:%i error: function %s failed with error %d.\n",     \
-            __FILE__, __LINE__, #call, _status);                                    \
+            LIBCALL_DBG("%s:%i error: function %s failed with error %d.\n",         \
+            __FILE__, __LINE__, #call, _status);                        \
             handleerror;                                                \
         }                                                               \
     } while (0)
@@ -66,10 +67,10 @@
 #define ROCP_CALL_CK(call, args, handleerror)                           \
     do {                                                                \
         hsa_status_t _status = (*call##Ptr)args;                        \
-        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {     \
-            const char *profErr;                                                     \
-            (*rocprofiler_error_stringPtr)(&profErr);                              \
-            fprintf(stderr, "%s:%i error: function %s failed with error %d [%s].\n", \
+        if (_status != HSA_STATUS_SUCCESS && _status != HSA_STATUS_INFO_BREAK) {    \
+            const char *profErr;                                                    \
+            (*rocprofiler_error_stringPtr)(&profErr);                               \
+            LIBCALL_DBG("%s:%i error: function %s failed with error %d [%s].\n",    \
             __FILE__, __LINE__, #call, _status, profErr);               \
             handleerror;                                                \
         }                                                               \
@@ -83,7 +84,6 @@
                 PAPI_MAX_STR_LEN,                                       \
                 "The ROCM required function '%s' was not found in dynamic libs",    \
                 #name);                                                 \
-            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;\
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;         \
           return ( PAPI_ENOSUPP );                                      \
         }                                                               \
@@ -215,6 +215,22 @@ static _rocm_control_t *global__rocm_control = NULL;
  *****************************************************************************/
 
 /*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_rocm_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private)
+      return vector->init_private();
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _rocm_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
+
+/*
  * Link the necessary ROCM libraries to use the rocm component.  If any of them can not be found, then
  * the ROCM component will just be disabled.  This is done at runtime so that a version of PAPI built
  * with the ROCM component can be installed and used on systems which have the ROCM libraries installed
@@ -238,7 +254,12 @@ static int _rocm_linkRocmLibraries(void)
     }
 
     // collect any defined environment variables, or "NULL" if not present.
-    char *rocm_root = getenv("PAPI_ROCM_ROOT");
+    char *rocm_root[4];
+    rocm_root[0] = getenv("PAPI_ROCM_ROOT");
+    rocm_root[1] = getenv("ROCM_PATH");
+    rocm_root[2] = getenv("ROCM_DIR");
+    rocm_root[3] = getenv("ROCMDIR");
+    int i, rocm_roots = sizeof(rocm_root)/sizeof(char*);
 
     dl1 = NULL;                                                 // Ensure reset to NULL.
 
@@ -258,12 +279,13 @@ static int _rocm_linkRocmLibraries(void)
         dl1 = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
-    // Step 3: Try the explicit install default.
-    if (dl1 == NULL && rocm_root != NULL) {                          // if env. var. PAPI_ROCM_ROOT given, try it.
-        strErr=snprintf(path_name, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root);  // PAPI Root check.
-        path_name[PATH_MAX-1]=0;
-        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
-        dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    // Step 3: Try  the explicit env vars.
+    for (i=0; i<rocm_roots; i++) {
+        if (dl1 == NULL && rocm_root[i] != NULL) {                       // if env. var. given, try it.
+            strErr=snprintf(path_name, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root[i]);  // PAPI Root check.
+            if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
+            dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+        }
     }
 
     // Check for failure.
@@ -315,11 +337,13 @@ static int _rocm_linkRocmLibraries(void)
     }
 
     // Step 3: Try the explicit install default.
-    if (dl2 == NULL && rocm_root != NULL) {                          // if root given, try it.
-        strErr=snprintf(path_name, PATH_MAX, "%s/lib/librocprofiler64.so", rocm_root);  // PAPI Root check.
-        path_name[PATH_MAX-1]=0;
-        if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
-        dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+    for (i=0; i<rocm_roots; i++) {
+        if (dl2 == NULL && rocm_root[i] != NULL) {                          // if root given, try it.
+            strErr=snprintf(path_name, PATH_MAX, "%s/lib/librocprofiler64.so", rocm_root[i]);  // PAPI Root check.
+            path_name[PATH_MAX-1]=0;
+            if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
+            dl2 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+        }
     }
 
     // Step 4: Try the derived hsa_root.
@@ -391,13 +415,15 @@ static int _rocm_linkRocmLibraries(void)
             err = stat(path_name, &myStat);
         }
 
-        // Attempt 3: Might have been in /usr or something, Try PAPI_ROCM_ROOT/rocprofiler/lib
-        if (err < 0 && rocm_root != NULL) { 
-            // subsequent attempt.
-            strErr=snprintf(path_name, PATH_MAX, "%s/rocprofiler/lib/metrics.xml",rocm_root);
-            path_name[PATH_MAX-1]=0;
-            if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
-            err = stat(path_name, &myStat);
+        // Attempt 3: Might have been in /usr or something, Try roots[]/rocprofiler/lib
+        for (i=0; i<rocm_roots; i++) {
+            if (err < 0 && rocm_root[i] != NULL) { 
+                // subsequent attempt.
+                strErr=snprintf(path_name, PATH_MAX, "%s/rocprofiler/lib/metrics.xml",rocm_root[i]);
+                path_name[PATH_MAX-1]=0;
+                if (strErr > PATH_MAX) HANDLE_STRING_ERROR;
+                err = stat(path_name, &myStat);
+            }
         }
 
         // After all attempts,
@@ -417,7 +443,6 @@ static int _rocm_linkRocmLibraries(void)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
                 return(PAPI_ENOSUPP);   // Wouldn't have any events.
             }
-            // fprintf(stderr, "Successfully setenv(\"ROCP_METRICS\",\"%s\", 0).\n", path_name);
         }
     } else {
         // Found env var, check if it is a real file.
@@ -672,21 +697,36 @@ static int _rocm_init_thread(hwd_context_t * ctx)
     return PAPI_OK;
 }
 
+static int _rocm_init_component(int cidx)
+{
+    ROCMDBG("Entering _rocm_init_component\n");
+    _rocm_vector.cmp_info.CmpIdx = cidx;
+
+    _rocm_vector.cmp_info.num_native_events = -1;
+    _rocm_vector.cmp_info.num_cntrs = -1;
+    _rocm_vector.cmp_info.num_mpx_cntrs = -1;
+
+    return PAPI_OK;
+}
 
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-static int _rocm_init_component(int cidx)
+static int _rocm_init_private(void)
 {
-    int strErr;
-    ROCMDBG("Entering _rocm_init_component\n");
+    int strErr, err = PAPI_OK;
+    PAPI_lock(COMPONENT_LOCK);
+    if (_rocm_vector.cmp_info.initialized) goto rocm_init_private_exit;
+
+    ROCMDBG("Entering _rocm_init_private\n");
 
     /* link in all the rocm libraries and resolve the symbols we need to use */
     if(_rocm_linkRocmLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of ROCM libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        err = (PAPI_ENOSUPP);
+        goto rocm_init_private_exit;
     }
 
     hsa_status_t status;
@@ -696,7 +736,8 @@ static int _rocm_init_component(int cidx)
             "ROCM hsa_init() failed with error %d.", status);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_EMISC);
+        err = (PAPI_EMISC);
+        goto rocm_init_private_exit;
     }
         
     /* Create the structure */
@@ -707,7 +748,8 @@ static int _rocm_init_component(int cidx)
             "%s:%i global__rocm_context alloc of %lu bytes failed.", __FILE__, __LINE__, sizeof(_rocm_context_t));
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return PAPI_ENOMEM;
+            err = PAPI_ENOMEM;
+            goto rocm_init_private_exit;
         }
     }
 
@@ -718,7 +760,8 @@ static int _rocm_init_component(int cidx)
             "ROCM hsa_iterate_agents() failed with error %d.", status);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_EMISC);
+        err = (PAPI_EMISC);
+        goto rocm_init_private_exit;
     }
 
     int rv;
@@ -730,17 +773,17 @@ static int _rocm_init_component(int cidx)
             "ROCM component routine _rocm_add_native_events() failed.");
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return (rv);
+        err = (rv);
+        goto rocm_init_private_exit;
     }
 
     /* Export some information */
-    _rocm_vector.cmp_info.CmpIdx = cidx;
     _rocm_vector.cmp_info.num_native_events = global__rocm_context->availEventSize;
     _rocm_vector.cmp_info.num_cntrs = _rocm_vector.cmp_info.num_native_events;
     _rocm_vector.cmp_info.num_mpx_cntrs = _rocm_vector.cmp_info.num_native_events;
 
     ROCMDBG("Exiting _rocm_init_component cidx %d num_native_events %d num_cntrs %d num_mpx_cntrs %d\n",
-        cidx,
+        _rocm_vector.cmp_info.CmpIdx,
         _rocm_vector.cmp_info.num_native_events,
         _rocm_vector.cmp_info.num_cntrs,
         _rocm_vector.cmp_info.num_mpx_cntrs);
@@ -751,16 +794,24 @@ static int _rocm_init_component(int cidx)
             char *strCpy=strncpy(_rocm_vector.cmp_info.disabled_reason, "Environment Variable ROCP_METRICS is not defined, should point to a valid metrics.xml.", PAPI_MAX_STR_LEN);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
-            return (PAPI_EMISC);
+            err = (PAPI_EMISC);
+            goto rocm_init_private_exit;
         }
 
         strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "No events.  Ensure ROCP_METRICS=%s is correct.", metrics);
         _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return (PAPI_EMISC);
+        err = PAPI_EMISC;
+        goto rocm_init_private_exit;
     }
 
-    return (PAPI_OK);
+rocm_init_private_exit:
+    _rocm_vector.cmp_info.initialized = 1;
+    _rocm_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return err;
 }
 
 
@@ -773,6 +824,8 @@ static int _rocm_init_control_state(hwd_control_state_t * ctrl)
     ROCMDBG("Entering _rocm_init_control_state\n");
 
     (void) ctrl;
+    DO_SOME_CHECKING(&_rocm_vector);
+
     _rocm_context_t *gctxt = global__rocm_context;
 
     CHECK_PRINT_EVAL((gctxt == NULL), "Error: The PAPI ROCM component needs to be initialized first", return (PAPI_ENOINIT));
@@ -800,8 +853,9 @@ static int _rocm_init_control_state(hwd_control_state_t * ctrl)
 static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
 {
     ROCMDBG("Entering _rocm_update_control_state with nativeCount %d\n", nativeCount);
-
     (void) ctx;
+    DO_SOME_CHECKING(&_rocm_vector);
+
     _rocm_control_t *gctrl = global__rocm_control;
     _rocm_context_t *gctxt = global__rocm_context;
     int eventContextIdx = 0;
@@ -879,15 +933,12 @@ static int _rocm_update_control_state(hwd_control_state_t * ctrl, NativeInfo_t *
                 ROCP_CALL_CK(rocprofiler_close, (eventctrl->ctx), return (PAPI_EMISC));
             }
             int openFailed=0;
-//          fprintf(stderr,"%s:%i calling rocprofiler_open, ii=%i device=%i numEvents=%i name='%s'.\n", __FILE__, __LINE__, ii, eventDeviceNum, eventctrl->conEventsCount, eventId.name);
             const uint32_t mode = (global__ctx_properties.queue != NULL) ? ROCPROFILER_MODE_STANDALONE : ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE;
             ROCP_CALL_CK(rocprofiler_open, (gctxt->availAgentArray[eventDeviceNum], eventctrl->conEvents, eventctrl->conEventsCount, &(eventctrl->ctx),
                          mode, &global__ctx_properties), openFailed=1);
             if (openFailed) {                       // If the open failed,
                 ROCMDBG("Error occurred: The ROCM event was not accepted by the ROCPROFILER.\n");
-//              fprintf(stderr, "Error occurred: The ROCM event '%s' was not accepted by the ROCPROFILER.\n", eventId.name);
                 _rocm_cleanup_eventset(ctrl);       // Try to cleanup,
-//              fprintf(stderr, "%s:%i Returning PAPI_ECOMBO.\n", __FILE__, __LINE__);
                 return(PAPI_ECOMBO);                // Say its a bad combo.
             }
 
@@ -942,7 +993,6 @@ static int _rocm_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 static int _rocm_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
 {
     ROCMDBG("Entering _rocm_read\n");
-
     (void) ctx;
     (void) ctrl;
     (void) flags;
@@ -1020,7 +1070,6 @@ static int _rocm_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
 {
     ROCMDBG("Entering _rocm_cleanup_eventset\n");
-//  fprintf(stderr, "%s:%i _rocm_cleanup_eventset called.\n", __FILE__, __LINE__);
 
     (void) ctrl;
     _rocm_control_t *gctrl = global__rocm_control;
@@ -1031,18 +1080,14 @@ static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
         (void) eventDeviceNum;                                          // Suppress 'not used' warning when not debug.
         Context eventCtx = gctrl->arrayOfActiveContexts[cc]->ctx;
         ROCMDBG("Destroy device %d ctx %p \n", eventDeviceNum, eventCtx);
-//      fprintf(stderr, "%s:%i About to call rocprofiler_close.\n", __FILE__, __LINE__);
         ROCP_CALL_CK(rocprofiler_close, (eventCtx), return (PAPI_EMISC));
-//      fprintf(stderr, "%s:%i Returned from call to rocprofiler_close, papi_free ptr=%p.\n", __FILE__, __LINE__, gctrl->arrayOfActiveContexts[cc] );
         papi_free( gctrl->arrayOfActiveContexts[cc] );
-//      fprintf(stderr, "%s:%i Returned from call to papi_free.\n", __FILE__, __LINE__);
     }
     if (global__ctx_properties.queue != NULL) {
       ROCM_CALL_CK(hsa_queue_destroy, (global__ctx_properties.queue), return (PAPI_EMISC));
       global__ctx_properties.queue = NULL;
     }
     /* Record that there are no active contexts or events */
-//  fprintf(stderr, "%s:%i Checkpoint, maxEventSize=%i.\n", __FILE__, __LINE__, maxEventSize);
     gctrl->countOfActiveContexts = 0;
     gctrl->activeEventCount = 0;
 
@@ -1052,7 +1097,6 @@ static int _rocm_cleanup_eventset(hwd_control_state_t * ctrl)
             gctxt->availEventIsBeingMeasuredInEventset[i] = 0;
     }
 
-//  fprintf(stderr, "%s:%i Returning from _rocm_cleanup_eventset.\n", __FILE__, __LINE__);
     return (PAPI_OK);
 }
 
@@ -1184,6 +1228,7 @@ static int _rocm_set_domain(hwd_control_state_t * ctrl, int domain)
 static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     //ROCMDBG("Entering (get next event after %u)\n", *EventCode );
+    DO_SOME_CHECKING(&_rocm_vector);
 
     switch (modifier) {
     case PAPI_ENUM_FIRST:
@@ -1217,6 +1262,7 @@ static int _rocm_ntv_enum_events(unsigned int *EventCode, int modifier)
 static int _rocm_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     //ROCMDBG("Entering EventCode %d\n", EventCode );
+    DO_SOME_CHECKING(&_rocm_vector);
 
     unsigned int index = EventCode;
     _rocm_context_t *gctxt = global__rocm_context;
@@ -1270,7 +1316,8 @@ papi_vector_t _rocm_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-                 }
+                 .initialized = 0,
+    }
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {
@@ -1289,6 +1336,7 @@ papi_vector_t _rocm_vector = {
 
     .init_component = _rocm_init_component,  /* ( int cidx ) */
     .init_thread = _rocm_init_thread,        /* ( hwd_context_t * ctx ) */
+    .init_private = _rocm_init_private,      /* (void) */
     .init_control_state = _rocm_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _rocm_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
 

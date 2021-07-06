@@ -1,15 +1,15 @@
-.TH LIBPFM 3  "August, 2019" "" "Linux Programmer's Manual"
+.TH LIBPFM 3  "May, 2021" "" "Linux Programmer's Manual"
 .SH NAME
-libpfm_intel_icl - support for Intel IceLake core PMU
+libpfm_intel_icx - support for Intel IceLakeX core PMU
 .SH SYNOPSIS
 .nf
 .B #include <perfmon/pfmlib.h>
 .sp
-.B PMU name: icl
-.B PMU desc: Intel IceLake
+.B PMU name: icx
+.B PMU desc: Intel IceLakeX
 .sp
 .SH DESCRIPTION
-The library supports the Intel IceLake core PMU. It should be noted that
+The library supports the Intel IceLakeX core PMU. It should be noted that
 this PMU model only covers each core's PMU and not the socket level
 PMU.
 
@@ -19,7 +19,7 @@ The \fBpfm_get_pmu_info()\fR function returns the maximum number
 of generic counters in \fBnum_cntrs\fr.
 
 .SH MODIFIERS
-The following modifiers are supported on Intel IceLake processors:
+The following modifiers are supported on Intel IceLakeX processors:
 .TP
 .B u
 Measure at user level which includes privilege levels 1, 2, 3. This corresponds to \fBPFM_PLM3\fR.
@@ -62,7 +62,7 @@ counts. It acts as a threshold, i.e., at least a period of N core cycles where t
 be used with the IDQ_*_BUBBLES umasks. If not specified, the default threshold value is 1 cycle. the valid values are in [1-4095].
 
 .SH OFFCORE_RESPONSE events
-Intel IceLake supports two encodings for offcore_response events. In the library, these are called OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1.
+Intel IceLakeX supports two encodings for offcore_response events. In the library, these are called OFFCORE_RESPONSE_0 and OFFCORE_RESPONSE_1.
 
 Those events need special treatment in the performance monitoring infrastructure
 because each event uses an extra register to store some settings. Thus, in
@@ -73,7 +73,7 @@ The offcore_response events are exposed as a normal events by the library. The e
 settings are exposed as regular umasks. The library takes care of encoding the
 events according to the underlying kernel interface.
 
-On Intel IceLake unlike older processors, the event is treated as a regular event with a flat set of umasks to choose from.
+On Intel IceLakeX unlike older processors, the event is treated as a regular event with a flat set of umasks to choose from.
 It is not possible to combine the various requests, supplier, snoop bits anymore. Therefore the
 library offers the list of validated combinations as per Intel's official event list.
 
