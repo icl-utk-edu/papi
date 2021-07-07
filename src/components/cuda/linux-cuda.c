@@ -248,7 +248,14 @@ static int cuda11_maxEvents = 0;       // allocated space for events in array.
 static cuda11_eventData** cuda11_AllEvents;
 static cuda11_hash_entry_t* cuda11_NameHashTable[CUDA11_HASH_SIZE];
 
-// prototypes for cuda11 replacements.
+// prototypes for cuda->cuda11 hand offs.
+static int _cuda11_init_control_state(hwd_control_state_t * ctrl);
+static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
+    NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx);
+static int _cuda11_ntv_enum_events(unsigned int *EventCode, int modifier);
+static int _cuda11_ntv_name_to_code(const char *nameIn, unsigned int *out);
+static int _cuda11_ntv_code_to_name(unsigned int EventCode, char *name, int len);
+
 static int _cuda11_add_native_events(cuda_context_t * gctxt);
 static void _cuda11_cuda_vector(void);
 
@@ -967,7 +974,6 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             return(PAPI_EMISC);    
         } 
 
-
         cuErr = (*cuDeviceGetNamePtr) ((char*) &mydevice->deviceName, PAPI_MIN_STR_LEN - 1, mydevice->cuDev);
         if (cuErr != CUDA_SUCCESS) {
             const char *errString=NULL;
@@ -998,19 +1004,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             return(PAPI_EMISC);    
         }
 
-        mydevice->cupti_11 = 0;   // Presume < 7.5.
-        if (mydevice->myProperties.major >= 7 || // DEBUG: instead of >7, say >=7, to force use of profiler on xsdk (Titan GPUs with cc=7.0) 
-            (mydevice->myProperties.major == 7 && mydevice->myProperties.minor >=5)) {
+        mydevice->cupti_11 = 0;   // Presume < 7.
+        // we CAN use cupti11 on 7.0, it only becomes exclusive at 7.5.
+        // We don't handle that nuance, 7.0 or greater uses cupti11.
+        if (mydevice->myProperties.major >= 7) {
             mydevice->cupti_11 = 1;
         }
 
         total_11 += mydevice->cupti_11;
-         // fprintf(stderr, "%s:%i device %i has CC=%i.%i, total_11=%d\n", __func__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor, total_11);
+        if (0) fprintf(stderr, "%s:%i device %i has CC=%i.%i, total_11=%d\n", __func__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor, total_11);
     }
 
     if (total_11 > 0 && total_11 < gctxt->deviceCount) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Mixed compute capabilities, %d device with %d having CC>7.5.", gctxt->deviceCount, total_11);
+        "Mixed compute capabilities, %d devices with %d having CC>=7.0.", gctxt->deviceCount, total_11);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return(PAPI_ENOSUPP);    
@@ -1027,85 +1034,13 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         return(ret);
     } // Done with init_component if cuda11 worked.
 
-    // If not cupti_11, it is safe to call CUpti now, we have CC<7.5.
+    // If not cupti_11, it is safe to call CUpti now, we have CC<7.0.
     // For each device, get domains and domain-events counts.
     maxEventSize = 0;
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         mydevice = &gctxt->deviceArray[deviceNum];
-        /* Get device id, name, numeventdomains for each device */
-        cuErr = (*cuDeviceGetPtr) (&mydevice->cuDev, deviceNum);
-        if (cuErr != CUDA_SUCCESS) {
-            const char *errString=NULL;
-            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-            "Function cuDeviceGet() failed; error code=%d [%s].", cuErr, errString);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            return(PAPI_EMISC);    
-        } 
+        /* Get numeventdomains for each device */
 
-
-        cuErr = (*cuDeviceGetNamePtr) ((char*) &mydevice->deviceName, PAPI_MIN_STR_LEN - 1, mydevice->cuDev);
-        if (cuErr != CUDA_SUCCESS) {
-            const char *errString=NULL;
-            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-            "Function cuDeviceGetName() failed; error code=%d [%s].", cuErr, errString);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            return(PAPI_EMISC);    
-        } 
-
-        mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
-
-        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute capability >= 7.5.
-        // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
-        // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
-        // From https://developer.nvidia.com/cuda-gpus#compute):
-        // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
-
-        cudaErr = (*cudaGetDevicePropertiesPtr) (&mydevice->myProperties, deviceNum);
-        if (cudaErr != cudaSuccess) {
-            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-            "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            return(PAPI_EMISC);    
-        }
-
-        if (mydevice->myProperties.major >= 7 || // DEBUG: instead of >7, say >=7, to force use of profiler on xsdk (Titan GPUs with cc=7.0) 
-            (mydevice->myProperties.major == 7 && mydevice->myProperties.minor >=5)) {
-            mydevice->cupti_11 = 1;
-        }
-
-        total_11 += mydevice->cupti_11;
-         // fprintf(stderr, "%s:%i device %i has CC=%i.%i, total_11=%d\n", __func__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor, total_11);
-    }
-
-    if (total_11 > 0 && total_11 < gctxt->deviceCount) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Mixed compute capabilities, %d device with %d having CC>7.5.", gctxt->deviceCount, total_11);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_ENOSUPP);    
-    }
-
-    // Here we diverge; if we are cupti_11 we start using the profiler.
-    if (total_11) {
-        int ret = _cuda11_add_native_events(gctxt);
-        if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
-
-        // this is to trick the final return from component_init(), to set
-        // the  _cuda_vector.cmp_info.num_native_events correctly. 
-        global_cuda_context->availEventSize = cuda11_numEvents;
-        return(ret);
-    } // Done with init_component if cuda11 worked.
-
-    // If not cupti_11, it is safe to call CUpti now.
-    // For each device, get domains and domain-events counts.
-    maxEventSize = 0;
-    for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
-        mydevice = &gctxt->deviceArray[deviceNum];
         cuptiError=(*cuptiDeviceGetNumEventDomainsPtr) (mydevice->cuDev, &mydevice->maxDomains);
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
@@ -1301,6 +1236,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                     return(PAPI_EMISC);    
                 }
+
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0'; // Ensure null terminator.
                 gctxt->availEventDesc[idxEventArray].numMetricEvents = 0;                       // Not a metric.
                 gctxt->availEventDesc[idxEventArray].metricEvents = NULL;                       // No space allocated.
@@ -1429,9 +1365,9 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                   const char *errstr;
                   (*cuptiGetResultStringPtr) (cuptiError, &errstr);
-                  // fprintf(stderr, "%s:%s:%i metric '%s:device=%d' failed cuptiMetricCreateEventGroupSets() cuptiError=%d [%s].\n", __FILE__, __func__, __LINE__, tmpStr, deviceNum, cuptiError, errstr);
+                  if (0) fprintf(stderr, "%s:%s:%i metric '%s:device=%d' failed cuptiMetricCreateEventGroupSets() cuptiError=%d [%s].\n", __FILE__, __func__, __LINE__, tmpStr, deviceNum, cuptiError, errstr);
                 continue;
-            } // else fprintf(stderr, "%s:%i cuptiMetricCreateEventGroupSets() success.\n", __FILE__, __LINE__);
+            } else if (0) fprintf(stderr, "%s:%i cuptiMetricCreateEventGroupSets() success.\n", __FILE__, __LINE__);
             
             int numSets = 0;                                                        // # of sets (passes) required.
             if (thisEventGroupSets != NULL) {
@@ -1925,6 +1861,9 @@ static int _cuda_init_private(void)
 {
     int rv, err = PAPI_OK;
     PAPI_lock(COMPONENT_LOCK);
+    // The entire init, for cupti11, timed at 913 ms.
+    // The entire init, for legalcy cupti, timed at 2376 ms.
+    long long ns = -PAPI_get_real_nsec();
     if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
 
     SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
@@ -1967,6 +1906,11 @@ cuda_init_private_exit:
 
     PAPI_unlock(COMPONENT_LOCK);
 
+    // the entire init, for cupti11, timed at 913 ms.
+    // the entire init, for legacy cupti, timed at 2376 ms.
+    ns += PAPI_get_real_nsec();
+    if (0) fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
+    
     return (err);
 } // end init_component
 
@@ -1980,7 +1924,10 @@ static int _cuda_init_control_state(hwd_control_state_t * ctrl)
     SUBDBG("Entering\n");
     (void) ctrl;
     DO_SOME_CHECKING(&_cuda_vector);
-    //_cuda_check_n_initialize(&_cuda_vector);
+    // If first device is cupti 11, pass to cupti11 version.
+    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+        return(_cuda11_init_control_state(ctrl));
+    }
 
     cuda_context_t *gctxt = global_cuda_context;
 
@@ -2013,6 +1960,10 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
     DO_SOME_CHECKING(&_cuda_vector);
+    // If first device is cupti 11, pass to cupti11 version.
+    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+        return(_cuda11_update_control_state(ctrl, nativeInfo, nativeCount, ctx));
+    }
 
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
@@ -2801,9 +2752,11 @@ static int _cuda_set_domain(hwd_control_state_t * ctrl, int domain)
  */
 static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-    // SUBDBG( "Entering (get next event after %u)\n", *EventCode );
     DO_SOME_CHECKING(&_cuda_vector);
-    //_cuda_check_n_initialize(&_cuda_vector);
+    // If first device is cupti 11, pass to cupti11 version.
+    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+        return(_cuda11_ntv_enum_events(EventCode, modifier));
+    }
 
     switch (modifier) {
     case PAPI_ENUM_FIRST:
@@ -2827,6 +2780,19 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 }
 
 
+static int _cuda_ntv_name_to_code(const char *nameIn, unsigned int *out)
+{
+    DO_SOME_CHECKING(&_cuda_vector);
+    // If first device is cupti 11, pass to cupti11 version.
+    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+        return(_cuda11_ntv_name_to_code(nameIn, out));
+    }
+    (void) nameIn;
+    (void) out;
+    // Not supported by cuda component.
+    return(PAPI_ECMP); 
+}
+
 /* Takes a native event code and passes back the name
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
@@ -2835,7 +2801,10 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     DO_SOME_CHECKING(&_cuda_vector);
-    //_cuda_check_n_initialize(&_cuda_vector);
+    // If first device is cupti 11, pass to cupti11 version.
+    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+        return(_cuda11_ntv_code_to_name(EventCode, name, len));
+    }
 
     // SUBDBG( "Entering EventCode %d\n", EventCode );
     unsigned int index = EventCode;
@@ -2916,6 +2885,7 @@ papi_vector_t _cuda_vector = {
     .ctl = _cuda_ctrl,       /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
     .set_domain = _cuda_set_domain,  /* ( hwd_control_state_t * cntrl, int domain ) */
     .ntv_enum_events = _cuda_ntv_enum_events,        /* ( unsigned int *EventCode, int modifier ) */
+    .ntv_name_to_code = _cuda_ntv_name_to_code,      /* ( unsigned char *name, int *code ) */
     .ntv_code_to_name = _cuda_ntv_code_to_name,      /* ( unsigned int EventCode, char *name, int len ) */
     .ntv_code_to_descr = _cuda_ntv_code_to_descr,    /* ( unsigned int EventCode, char *name, int len ) */
     .shutdown_thread = _cuda_shutdown_thread,        /* ( hwd_context_t * ctx ) */
@@ -3114,7 +3084,8 @@ void cuda11_makeRoomAllEvents(void) {
 }
 
 // free elements of cuda11_eventData structure.
-static void free_cuda11_eventData_contents(cuda11_eventData* myEvent) {
+static void free_cuda11_eventData_contents(cuda11_eventData* myEvent) 
+{
     int i;
     for (i=0; i<myEvent->numRawMetrics; i++) {
         // The name had to be copied by strdup.
@@ -3147,14 +3118,14 @@ static NVPW_CUDA_MetricsContext_Create_Params* cuda11_getMetricsContextPtr(int d
     NVPW_CUDA_MetricsContext_Create_Params *pMCCP;
     pMCCP = calloc(1, sizeof(NVPW_CUDA_MetricsContext_Create_Params));
     if (pMCCP == NULL) {
-        if (1) fprintf(stderr, "%s:%s:%i failed to allocate memory.\n", __FILE__, __func__, __LINE__);
+        if (0) fprintf(stderr, "%s:%s:%i failed to allocate memory.\n", __FILE__, __func__, __LINE__);
         return(NULL);
     }
 
     pMCCP->structSize = NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE;
     pMCCP->pChipName = mydevice->cuda11_chipName;
     NVPW_CALL((*NVPW_CUDA_MetricsContext_CreatePtr)(pMCCP), // LEAK
-        if (1) fprintf(stderr, "%s:%s:%i failed to create.\n", __FILE__, __func__, __LINE__);
+        if (0) fprintf(stderr, "%s:%s:%i failed to create.\n", __FILE__, __func__, __LINE__);
         return(NULL));
 
     // We created successfully. populate.
@@ -3196,7 +3167,7 @@ static int cuda11_destroyMetricsContexts(void) {
         MetricsContextDestroyParams.structSize = NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE;
         MetricsContextDestroyParams.pMetricsContext = mydevice->pMetricsContextCreateParams->pMetricsContext;
         NVPW_CALL((*NVPW_MetricsContext_DestroyPtr)(&MetricsContextDestroyParams),
-            fprintf(stderr, "%s:%s:%i failed to destroy MetricsContextCreateParams.\n", __FILE__, __func__, __LINE__);
+            if (0) fprintf(stderr, "%s:%s:%i failed to destroy MetricsContextCreateParams.\n", __FILE__, __func__, __LINE__);
             );
         free (mydevice->pMetricsContextCreateParams);
         mydevice->pMetricsContextCreateParams = NULL;
@@ -3861,7 +3832,7 @@ static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
         mydevice = &gctxt->deviceArray[dev];
         int err  = cuda11_getMetricDetails(cuda11_AllEvents[idx], mydevice->cuda11_chipName, pMCCP);
         if (err != PAPI_OK) {
-            if (1) fprintf(stderr, "%s:%s:%i cuda11_getMetricDetails() failed, index=%d err=%d '%s'.\n",
+            if (0) fprintf(stderr, "%s:%s:%i cuda11_getMetricDetails() failed, index=%d err=%d '%s'.\n",
                      __FILE__, __func__, __LINE__, idx, err, PAPI_strerror(err));
             return(err);
         }
@@ -5119,13 +5090,13 @@ static int _cuda11_ntv_name_to_code(const char *nameIn, unsigned int *out)
     if (myName != NULL) myName +=3;
     else myName = (char*) nameIn;
 
-    fprintf(stderr, "%s:%s:%i on entry, name='%s', myName='%s'.\n", __FILE__, __func__, __LINE__, nameIn, myName);
+    if (0) fprintf(stderr, "%s:%s:%i on entry, name='%s', myName='%s'.\n", __FILE__, __func__, __LINE__, nameIn, myName);
     int myIdx = findNameHash(myName);
     if (myIdx < 0) return(PAPI_EINVAL);
     *out = (unsigned int) myIdx;
-    fprintf(stderr, "%s:%s:%i Found, returning myIdx=%d, papi_name='%s'.\n", __FILE__, __func__, __LINE__, myIdx, cuda11_AllEvents[myIdx]->papi_name);
+    if (0) fprintf(stderr, "%s:%s:%i Found, returning myIdx=%d, papi_name='%s'.\n", __FILE__, __func__, __LINE__, myIdx, cuda11_AllEvents[myIdx]->papi_name);
 	return(PAPI_OK);
-} // end _cuda11_ntv_code_to_name
+} // end _cuda11_ntv_name_to_code
 
 // Takes a native event code and passes back the name
 // @param EventCode is the native event code

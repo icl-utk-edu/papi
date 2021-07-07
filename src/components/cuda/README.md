@@ -49,11 +49,24 @@ If those libraries cannot be found or some of those are stub libraries in the st
 
 ## Known Limitations
 
-* NVIDIA made a significant change in their performance reporting software 
-relegating the interface upon which this component is based to "legacy" status.
-This component is (at this writing) not capable of interfacing with devices
-that have Compute Capability >=7.5. However, the component can detect the
-Compute Capability and disable itself with an appropriate message.
+* NVIDIA libraries now regard Compute Capability (CC) < 7.0 as 'legacy', and
+going forward CC>=7.0 is 'cupti 11' code. These are completely different
+interfaces; the cupti 11 uses the PerfWorks profiler, the legacy code does not.
+This component automatically distinguishes between the two.
+
+HOWEVER, with Cupti 11, users calling PAPI must have created a valid cuda context
+for each device (GPU), and they must make those cuda contexts active by 
+pushing them on the GPU stack when they are adding PAPI_events for that GPU 
+to the PAPI eventset.
+
+An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu
+The relevant calls are:
+
+CUcontext ctx[maxDevices];
+cuCtxCreate(&sessionCtx[deviceNum], 0, deviceNum); // for each device
+cuCtxPushCurrent(ctx[deviceNum]); // when adding events for that device.
+cuCtxPopCurrent(&(ctx[deviceNum]); // when done adding events for that device.
+
 ***
 
 ## FAQ
