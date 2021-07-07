@@ -88,7 +88,7 @@ This value causes the event to be encoded for the perf_event Linux kernel interf
 The \fBarg\fR must be a pointer to a \fBpfm_perf_encode_arg_t\fR structure. The PFM_OS_PERF_EVENT layer
 provides the modifiers exported by the underlying PMU hardware, some of which may actually be overridden
 by the perf_event interface, such as the monitoring privilege levels. The \fBPFM_OS_PERF_EVENT_EXT\fR extends
-\fBPFM_OS_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
+\fBPFM_OS_PERF_EVENT\fR to add modifiers controlled only by the perf_event interface, such as sampling period (\fBperiod\fR),
 frequency (\fBfreq\fR) and exclusive resource access (\fBexcl\fR).
 
 .nf

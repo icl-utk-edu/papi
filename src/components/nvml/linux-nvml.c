@@ -416,6 +416,22 @@ unsigned long long getPowerManagementLimit(nvmlDevice_t dev)
     return (unsigned long long) limit;
 }
 
+/*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_nvml_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private)
+      return vector->init_private();
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _nvml_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
+
 static void
 nvml_hardware_reset()
 {
@@ -1051,36 +1067,58 @@ int _papi_nvml_shutdown_component()
  * PAPI process is initialized (IE PAPI_library_init)
  */
 
-int _papi_nvml_init_component(int cidx)
+static int _papi_nvml_init_component(int cidx)
 {
     SUBDBG("Entry: cidx: %d\n", cidx);
+    /* Export the total number of events available */
+    _nvml_vector.cmp_info.num_native_events = -1;
+
+    /* Export the component id */
+    _nvml_vector.cmp_info.CmpIdx = cidx;
+
+    /* Export the number of 'counters' */
+    _nvml_vector.cmp_info.num_cntrs = -1;
+    _nvml_vector.cmp_info.num_mpx_cntrs = -1;
+
+    return PAPI_OK;
+}
+
+static int _papi_nvml_init_private(void)
+{
     nvmlReturn_t ret;
     cudaError_t cuerr;
-    int papi_errorcode;
+    int err = PAPI_OK;
 
     int cuda_count = 0;
     unsigned int nvml_count = 0;
 
+    PAPI_lock(COMPONENT_LOCK);
+    if (_nvml_vector.cmp_info.initialized) goto nvml_init_private_exit;
+
+    SUBDBG("Private init with component idx: %d\n", _nvml_vector.cmp_info.CmpIdx);
     /* link in the cuda and nvml libraries and resolve the symbols we need to use */
     if (linkCudaLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return (PAPI_ENOSUPP);
+        err = (PAPI_ENOSUPP);
+        goto nvml_init_private_exit;
     }
 
     ret = (*nvmlInitPtr)();
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The NVIDIA management library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     cuerr = (*cuInitPtr)(0);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     /* Figure out the number of CUDA devices in the system */
@@ -1088,21 +1126,24 @@ int _papi_nvml_init_component(int cidx)
     if (NVML_SUCCESS != ret) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a count of devices from the NVIDIA management library.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     cuerr = (*cudaGetDeviceCountPtr)(&cuda_count);
     if (cudaSuccess != cuerr) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "Unable to get a device count from CUDA.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     /* We can probably recover from this, when we're clever */
     if ((cuda_count > 0) && (nvml_count != (unsigned int)cuda_count)) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "CUDA and the NVIDIA management library have different device counts.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     device_count = cuda_count;
@@ -1115,7 +1156,8 @@ int _papi_nvml_init_component(int cidx)
                     "%s failed to alloc %lu bytes for features.", __func__, sizeof(int)*device_count);
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return(PAPI_ENOMEM);
+        err = PAPI_ENOMEM;
+        goto nvml_init_private_exit;
     }
 
     /* Handles to each device */
@@ -1125,7 +1167,8 @@ int _papi_nvml_init_component(int cidx)
                     "%s failed to alloc %lu bytes for features.", __func__, (sizeof(nvmlDevice_t) * device_count));
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return(PAPI_ENOMEM);
+        err = PAPI_ENOMEM;
+        goto nvml_init_private_exit;
     }
 
     /* For each device, store the intial power value to enable reset if power is altered */
@@ -1135,7 +1178,8 @@ int _papi_nvml_init_component(int cidx)
                     "%s failed to alloc %lu bytes for power_management_initial_limit.", __func__, (sizeof(unsigned int) * device_count));
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return(PAPI_ENOMEM);
+        err = PAPI_ENOMEM;
+        goto nvml_init_private_exit;
     }
     power_management_limit_constraint_min = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
     if (power_management_limit_constraint_min == NULL) {
@@ -1143,7 +1187,8 @@ int _papi_nvml_init_component(int cidx)
                     "%s failed to alloc %lu bytes for power_management_limit_constraint_min.", __func__, (sizeof(unsigned int) * device_count));
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return(PAPI_ENOMEM);
+        err = PAPI_ENOMEM;
+        goto nvml_init_private_exit;
     }
     power_management_limit_constraint_max = (unsigned int*)papi_malloc(sizeof(unsigned int) * device_count);
     if (power_management_limit_constraint_max == NULL) {
@@ -1151,14 +1196,16 @@ int _papi_nvml_init_component(int cidx)
                     "%s failed to alloc %lu bytes for power_management_limit_constraint_max.", __func__, (sizeof(unsigned int) * device_count));
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return(PAPI_ENOMEM);
+        err = PAPI_ENOMEM;
+        goto nvml_init_private_exit;
     }
 
     /* Figure out what events are supported on each card. */
-    if ((papi_errorcode = detectDevices()) != PAPI_OK) {
+    if (detectDevices() != PAPI_OK) {
         sprintf(_nvml_vector.cmp_info.disabled_reason, "An error occured in device feature detection, please check your NVIDIA Management Library and CUDA install.");
         _papi_nvml_shutdown_component();                        // clean up any open dynLibs, mallocs, etc.
-        return PAPI_ENOSUPP;
+        err = PAPI_ENOSUPP;
+        goto nvml_init_private_exit;
     }
 
     /* The assumption is that if everything went swimmingly in detectDevices,
@@ -1168,14 +1215,17 @@ int _papi_nvml_init_component(int cidx)
     /* Export the total number of events available */
     _nvml_vector.cmp_info.num_native_events = num_events;
 
-    /* Export the component id */
-    _nvml_vector.cmp_info.CmpIdx = cidx;
-
     /* Export the number of 'counters' */
     _nvml_vector.cmp_info.num_cntrs = num_events;
     _nvml_vector.cmp_info.num_mpx_cntrs = num_events;
 
-    return PAPI_OK;
+nvml_init_private_exit:
+    _nvml_vector.cmp_info.initialized = 1;
+    _nvml_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return err;
 }
 
 /*
@@ -1428,6 +1478,7 @@ int
 _papi_nvml_init_control_state(hwd_control_state_t * ctl)
 {
     SUBDBG("nvml_init_control_state... %p\n", ctl);
+    DO_SOME_CHECKING(&_nvml_vector);
     nvml_control_state_t *nvml_ctl = (nvml_control_state_t *) ctl;
     memset(nvml_ctl, 0, sizeof(nvml_control_state_t));
 
@@ -1447,6 +1498,7 @@ _papi_nvml_update_control_state(hwd_control_state_t *ctl,
     nvml_control_state_t *nvml_ctl = (nvml_control_state_t *) ctl;
     (void) ctx;
 
+    DO_SOME_CHECKING(&_nvml_vector);
     /* if no events, return */
     if (count == 0) return PAPI_OK;
 
@@ -1654,6 +1706,8 @@ _papi_nvml_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     int index;
 
+    DO_SOME_CHECKING(&_nvml_vector);
+
     switch (modifier) {
 
     /* return EventCode of first event */
@@ -1695,6 +1749,8 @@ _papi_nvml_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     SUBDBG("Entry: EventCode: %#x, name: %s, len: %d\n", EventCode, name, len);
     int index;
+
+    DO_SOME_CHECKING(&_nvml_vector);
 
     index = EventCode;
 
@@ -1785,6 +1841,7 @@ papi_vector_t _nvml_vector = {
         .cntr_umasks = 0,
         .cpu = 0,
         .inherit = 0,
+        .initialized = 0,
     },
 
     /* sizes of framework-opaque component-private structures */
@@ -1805,6 +1862,7 @@ papi_vector_t _nvml_vector = {
     .write =                _papi_nvml_write,
     .init_component =       _papi_nvml_init_component,
     .init_thread =          _papi_nvml_init_thread,
+    .init_private =         _papi_nvml_init_private,
     .init_control_state =   _papi_nvml_init_control_state,
     .update_control_state = _papi_nvml_update_control_state,
     .ctl =                  _papi_nvml_ctl,
