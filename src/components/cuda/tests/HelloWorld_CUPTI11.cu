@@ -80,7 +80,8 @@ int main(int argc, char** argv)
 	   supported on your machine */
         //char *EventName[] = { "PAPI_FP_OPS" };
         // char const *EventName[] = { "cuda:::fe__cycles_elapsed.sum:device=0"};
-        char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
+        // char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
+        char const *EventName[] = { "cuda:::dram__bytes.avg.pct_of_peak_burst_elapsed:device=0"};
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
     }
 
 	for( i = 0; i < eventCount; i++ )
-		if (!quiet) printf( "read: %12lld \t\t --> %s \n", values[i], EventName[i] );
+		if (!quiet) printf( "read: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], EventName[i] );
 
 	retval = PAPI_stop( EventSet, values );
 	if( retval != PAPI_OK )
@@ -299,7 +300,7 @@ int main(int argc, char** argv)
     }
 
 	for( i = 0; i < eventCount; i++ )
-		if (!quiet) printf( "stop: %12lld \t\t --> %s \n", values[i], EventName[i] );
+		if (!quiet) printf( "stop: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], EventName[i] );
 #endif
 
 	test_pass(__FILE__);

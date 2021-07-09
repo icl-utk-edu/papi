@@ -201,6 +201,7 @@ typedef struct {
     int     deviceNum;                      // idx to gctxt->deviceArray[].
     char*   nv_name;                        // The nvidia name.
     char*   papi_name;                      // The papi name (with :device=i). PAPI_MAX_STR_LEN.
+    int     detailsDone;                    // If details are already done.
     char*   description;                    
     char*   dimUnits;                    
     double  gpuBurstRate;
@@ -3288,6 +3289,10 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
     size_t numOfPasses=0;
     int    i, numDep;
 
+    // Don't repeat this exercise.
+    if (thisEventData->detailsDone == 1) return(PAPI_OK);
+    // No matter how it turns out, don't do it again.
+    thisEventData->detailsDone=1;
     //----------------SECTION----------------
     // build structure needed for call.
     NVPA_RawMetricsConfigOptions nvpa_metricsConfigOptions;
@@ -3425,7 +3430,6 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
     NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr)((NVPW_RawMetricsConfig_Destroy_Params*) &rawMetricsConfigDestroyParams),
               return(PAPI_ENOSUPP));
 
-    return(PAPI_OK);
     //----------------SECTION----------------
     // Modify description to include type and number of passes.
     char added[PAPI_MAX_STR_LEN];
@@ -3451,9 +3455,11 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
 
     int olen = strlen(thisEventData->description);
     int alen = strlen(added);
+
     if ((olen+alen) >= PAPI_HUGE_STR_LEN) {
         olen = PAPI_HUGE_STR_LEN - alen;
     }
+
 
     // Truncate original description if necessary to make room for unuts, passes, accum.
     thisEventData->description[olen] = 0;
@@ -3870,7 +3876,7 @@ static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
     for (ii = 0; ii < nativeCount; ii++) {
         int idx = nativeInfo[ii].ni_event;
         // skip if already initialized.
-        if (cuda11_AllEvents[idx]->rawMetricRequests != NULL) continue;
+        if (cuda11_AllEvents[idx]->detailsDone == 1) continue;
         dev = cuda11_AllEvents[idx]->deviceNum;
         // get or create the appropriate Metrics Context.
         NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
