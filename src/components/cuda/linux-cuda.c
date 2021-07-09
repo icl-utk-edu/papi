@@ -39,11 +39,10 @@
 #if CUPTI_PROFILER == 1
 #include <cupti_target.h>
 #include <cupti_profiler_target.h>
-#endif 
-
 #include <nvperf_host.h>
 #include <nvperf_cuda_host.h>
 #include <nvperf_target.h>
+#endif 
 
 #include "papi.h"
 #include "papi_memory.h"
@@ -110,7 +109,9 @@ typedef struct cuda_device_desc {
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 
-    int         cupti_11;                   /* also used in legacy to see if legacy not supported. */
+    int         cupti_le70;                 /* <= 7.0 can use legacy. */
+    int         cupti_ge70;                 /* >= 7.0 can use profiler. */
+
 #if CUPTI_PROFILER == 1
     CUcontext   cuContext;                      // context created during cuda11_add_native_events.
     CUcontext   sessionCtx;                     // context created for profiling session.
@@ -528,8 +529,9 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
 static int
 _cuda_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private)
+  if (!vector->cmp_info.initialized && vector->init_private) {
       return vector->init_private();
+  }
   return PAPI_OK;
 }
 
@@ -921,7 +923,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     cuErr = (*cuCtxGetCurrentPtr)(&userCuCtx);
     cudaErr = (*cudaGetDevicePtr)(&userDeviceNum);
-    // fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
+    if (0) fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
@@ -980,8 +982,9 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         return (PAPI_ENOMEM);
     }
 
+    int total_le70=0, total_ge70=0;
+
     // For each device, get some device information.
-    int total_11 = 0;
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         mydevice = &gctxt->deviceArray[deviceNum];
         /* Get device id, name, compute capability for each device */
@@ -1027,28 +1030,30 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             return(PAPI_EMISC);    
         }
 
-        mydevice->cupti_11 = 0;   // Presume < 7.
-        // we CAN use cupti11 on 7.0, it only becomes exclusive at 7.5.
-        // We don't handle that nuance, 7.0 or greater uses cupti11.
-        if (mydevice->myProperties.major >= 7) {
-            mydevice->cupti_11 = 1;
+        // If profiler is available and we CAN use profiler, we do.
+        // If profiler is unavailable we must be able to use Legacy.
+        mydevice->cupti_le70 = 0;
+        mydevice->cupti_ge70 = 0;
+
+        if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d minor=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
+            mydevice->deviceName, mydevice->myProperties.major, mydevice->myProperties.minor);
+
+        if (mydevice->myProperties.major <= 7) {
+            mydevice->cupti_le70 = 1;
         }
 
-        total_11 += mydevice->cupti_11;
-        if (0) fprintf(stderr, "%s:%i device %i has CC=%i.%i, total_11=%d\n", __func__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor, total_11);
-    }
+        if (mydevice->myProperties.major >= 7) {
+            mydevice->cupti_ge70 = 1;
+        }
 
-    if (total_11 > 0 && total_11 < gctxt->deviceCount) {
-        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Mixed compute capabilities, %d devices with %d having CC>=7.0.", gctxt->deviceCount, total_11);
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-        return(PAPI_ENOSUPP);    
-    }
 
-    // Here we diverge; if we are cupti_11 we start using the profiler.
+        total_le70 += mydevice->cupti_le70;
+        total_ge70 += mydevice->cupti_ge70;
+    } // END per device.
+
 #if CUPTI_PROFILER == 1
-    if (total_11) {
+    // Profiler exists, use it if all devices can use it.
+    if (total_ge70 == gctxt->deviceCount) {
         int ret = _cuda11_add_native_events(gctxt);
         if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
 
@@ -1057,18 +1062,35 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         global_cuda_context->availEventSize = cuda11_numEvents;
         return(ret);
     } // Done with init_component if cuda11 worked.
-#else
-    if (total_11) {
+
+    // Profile exists, but not all devices are >= 7.0, so must use legacy.
+    if (total_le70 != gctxt->deviceCount) {
+        // some devices are 7.5 and cannot use legacy. We cannot support this.
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Legacy CUpti does not support devices with Compute Capabilites >=7.0.");
+        "Mixed compute capabilities, %d devices, only %d with CC<=7.0", gctxt->deviceCount, total_le70);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return(PAPI_ENOSUPP);    
     }
+
+    // We'll be okay with legacy.
+
 #endif 
 
-    // If not cupti_11, it is safe to call CUpti now, we have CC<7.0.
+    // If profiler existed, we are proceeding without it. But 
+    // it may not, so we need to check again if Legacy will work.
+     if (total_le70 != gctxt->deviceCount) {
+        // some devices are 7.5 and cannot use legacy. We cannot support this.
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Mixed compute capabilities, %d devices, only %d with CC<=7.0", gctxt->deviceCount, total_le70);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_ENOSUPP);    
+    }
+
+    // It is safe to proceed with Legacy CUPTI interace.
     // For each device, get domains and domain-events counts.
+
     maxEventSize = 0;
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         mydevice = &gctxt->deviceArray[deviceNum];
@@ -1159,6 +1181,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventDeviceNum = (int *) papi_calloc(maxEventSize, sizeof(int));
     if (!gctxt->availEventDeviceNum) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -1167,6 +1190,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventIDArray = (CUpti_EventID *) papi_calloc(maxEventSize, sizeof(CUpti_EventID));
     if (!gctxt->availEventIDArray) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -1175,6 +1199,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_calloc(maxEventSize, sizeof(uint32_t));
     if (!gctxt->availEventIsBeingMeasuredInEventset) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -1183,6 +1208,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_calloc(maxEventSize, sizeof(cuda_name_desc_t));
     if (!gctxt->availEventDesc) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -1958,8 +1984,8 @@ static int _cuda_init_control_state(hwd_control_state_t * ctrl)
     (void) ctrl;
     DO_SOME_CHECKING(&_cuda_vector);
     #if CUPTI_PROFILER == 1
-    // If first device is cupti 11, pass to cupti11 version.
-    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.init_control_state != _cuda_init_control_state) {
         return(_cuda11_init_control_state(ctrl));
     }
     #endif
@@ -1996,8 +2022,8 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     (void) ctx;
     DO_SOME_CHECKING(&_cuda_vector);
     #if CUPTI_PROFILER == 1
-    // If first device is cupti 11, pass to cupti11 version.
-    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.update_control_state != _cuda_update_control_state) {
         return(_cuda11_update_control_state(ctrl, nativeInfo, nativeCount, ctx));
     }
     #endif
@@ -2689,7 +2715,11 @@ static int _cuda_shutdown_component(void)
     dlclose(dl1);
     dlclose(dl2);
     dlclose(dl3);
+
+    #if CUPTI_PROFILER == 1
     dlclose(dl4);
+    #endif
+
     return (PAPI_OK);
 } // end cuda_shutdown_component().
 
@@ -2791,8 +2821,8 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     DO_SOME_CHECKING(&_cuda_vector);
     #if CUPTI_PROFILER == 1
-    // If first device is cupti 11, pass to cupti11 version.
-    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_enum_events != _cuda_ntv_enum_events) {
         return(_cuda11_ntv_enum_events(EventCode, modifier));
     }
     #endif
@@ -2823,15 +2853,15 @@ static int _cuda_ntv_name_to_code(const char *nameIn, unsigned int *out)
 {
     DO_SOME_CHECKING(&_cuda_vector);
     #if CUPTI_PROFILER == 1
-    // If first device is cupti 11, pass to cupti11 version.
-    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_name_to_code != _cuda_ntv_name_to_code) {
         return(_cuda11_ntv_name_to_code(nameIn, out));
     }
     #endif
 
     (void) nameIn;
     (void) out;
-    // Not supported by cuda component.
+    // Not supported by legacy cuda component.
     return(PAPI_ECMP); 
 }
 
@@ -2844,8 +2874,8 @@ static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     DO_SOME_CHECKING(&_cuda_vector);
     #if CUPTI_PROFILER == 1
-    // If first device is cupti 11, pass to cupti11 version.
-    if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_code_to_name != _cuda_ntv_code_to_name) {
         return(_cuda11_ntv_code_to_name(EventCode, name, len));
     }
     #endif
