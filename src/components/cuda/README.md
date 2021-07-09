@@ -59,13 +59,31 @@ for each device (GPU), and they must make those cuda contexts active by
 pushing them on the GPU stack when they are adding PAPI_events for that GPU 
 to the PAPI eventset.
 
-An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu
-The relevant calls are:
+An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu.
+Note that Cuda Contexts are device specific. The relevant calls are:
 
-CUcontext ctx[maxDevices];
-cuCtxCreate(&sessionCtx[deviceNum], 0, deviceNum); // for each device
-cuCtxPushCurrent(ctx[deviceNum]); // when adding events for that device.
-cuCtxPopCurrent(&(ctx[deviceNum]); // when done adding events for that device.
+CUcontext ctx[maxDevices]; // Space to create a context for each GPU.
+
+Execute cuCtxCreate for each device, note it is pushed on the internal Nvidia stack.
+cuCtxCreate(&sessionCtx[deviceNum], 0, deviceNum); 
+
+Use cuCtxPushCurrent to switch to a created context, this is not pushed on the 
+software stack but an internal Nvidia driver stack. Note it will automatically
+also make the relevant device for that context the current device.
+cuCtxPushCurrent(ctx[deviceNum]);
+
+use cuCtxPopcurrent to undo a Push, it pops it off the internal Nvidia stack; and
+restores whatever the previous context may be, also making that context's device 
+the current device.
+cuCtxPopCurrent(&(ctx[deviceNum]);
+
+Note that "cudaSetDevice(deviceNum)" will change the device number and the context
+to that device's 'Primary' context ('Primary' is what Nvidia documentation calls it).
+Basically a default context. But in our experience Primary contexts do not allow all
+the Profiler functionality of a created ("non-Primary") context. We recommend always
+using a created context; and in particular if you are collecting performance events
+for a kernel, then when adding PAPI events use the same created context you will
+subsequently use to execute the kernel.
 
 ***
 

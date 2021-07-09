@@ -36,8 +36,10 @@
 #include <cuda.h>
 
 // These two cupti headers don't appear in older cuda versions.
+#if CUPTI_PROFILER == 1
 #include <cupti_target.h>
 #include <cupti_profiler_target.h>
+#endif 
 
 #include <nvperf_host.h>
 #include <nvperf_cuda_host.h>
@@ -108,7 +110,8 @@ typedef struct cuda_device_desc {
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 
-    int         cupti_11;
+    int         cupti_11;                   /* also used in legacy to see if legacy not supported. */
+#if CUPTI_PROFILER == 1
     CUcontext   cuContext;                      // context created during cuda11_add_native_events.
     CUcontext   sessionCtx;                     // context created for profiling session.
     char        cuda11_chipName[PAPI_MIN_STR_LEN];
@@ -135,7 +138,8 @@ typedef struct cuda_device_desc {
     CUpti_Profiler_SetConfig_Params setConfigParams;
     CUpti_Profiler_PushRange_Params pushRangeParams;
     NVPW_CUDA_MetricsContext_Create_Params *pMetricsContextCreateParams;
-    int ownsMetricsContext;    
+    int ownsMetricsContext;   
+#endif 
 } cuda_device_desc_t;
 
 // Contains device list, pointer to device description, and the list of all available events.
@@ -188,6 +192,7 @@ typedef struct cuda_control {
     uint64_t    cuptiReadTimestampNs;                                   // ..
 } cuda_control_t;
 
+#if CUPTI_PROFILER == 1
 //*****************************************************************************
 // CUDA 11 structures.
 //*****************************************************************************
@@ -213,6 +218,7 @@ typedef struct cuda11_hash_entry_s {
    int idx;                                        // The entry that matches this hash.
    void *next;                                     // next entry that matches this hash, or NULL.
 } cuda11_hash_entry_t;
+#endif
 
 // file handles used to access cuda libraries with dlopen
 static void *dl1 = NULL;
@@ -223,15 +229,20 @@ static void *dl4 = NULL;
 static char cuda_main[]=PAPI_CUDA_MAIN;
 static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
 static char cuda_cupti[]=PAPI_CUDA_CUPTI;
+#if CUPTI_PROFILER == 1
 static char cuda_perfworks[]=PAPI_CUDA_PERFWORKS;
+#endif
 
 static int cuda_version=0;
 static int cuda_runtime_version=0;
+
+#if CUPTI_PROFILER == 1
 // The following structure sizes change from version 10 to version 11.
 static int GetChipName_Params_STRUCT_SIZE=0;
 static int Profiler_SetConfig_Params_STRUCT_SIZE=0;
 static int Profiler_EndPass_Params_STRUCT_SIZE=0;
 static int Profiler_FlushCounterData_Params_STRUCT_SIZE=0;
+#endif
 
 /* The PAPI side (external) variable as a global */
 papi_vector_t _cuda_vector;
@@ -242,6 +253,7 @@ static cuda_context_t *global_cuda_context = NULL;
 /* This global variable points to the head of the control state list */
 static cuda_control_t *global_cuda_control = NULL;
 
+#if CUPTI_PROFILER == 1
 // This global variable tracks all cuda11 metrics.
 static int cuda11_numEvents = 0;       // actual number of events in array.
 static int cuda11_maxEvents = 0;       // allocated space for events in array.
@@ -258,6 +270,7 @@ static int _cuda11_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 
 static int _cuda11_add_native_events(cuda_context_t * gctxt);
 static void _cuda11_cuda_vector(void);
+#endif
 
 /* Macros for error checking... each arg is only referenced/evaluated once */
 #define DEBUG_CALLS 0
@@ -322,6 +335,7 @@ static void _cuda11_cuda_vector(void);
         }                                                                                           \
     } while (0)
 
+#if CUPTI_PROFILER == 1
 #define NVPW_CALL(call, handleerror)                                                                \
     do {                                                                                            \
         if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i NVPW_CALL %s\n", __FILE__, __func__, __LINE__, #call);     \
@@ -336,6 +350,7 @@ static void _cuda11_cuda_vector(void);
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
+#endif
 
 #define BUF_SIZE (32 * PATH_MAX)
 #define ALIGN_SIZE (8)
@@ -440,7 +455,9 @@ DECLARECUPTIFUNC(cuptiGetResultString, (CUptiResult result, const char **str));
 DECLARECUPTIFUNC(cuptiEnableKernelReplayMode, ( CUcontext context ));
 DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
 
+#if CUPTI_PROFILER == 1
 // Functions for perfworks profiler.
+// cuptiDeviceGetChipName relies on cupti_target.h, not in legacy Cuda distributions.
 DECLARECUPTIFUNC(cuptiDeviceGetChipName, (CUpti_Device_GetChipName_Params* params));
 DECLARECUPTIFUNC(cuptiProfilerInitialize, (CUpti_Profiler_Initialize_Params* params));
 DECLARECUPTIFUNC(cuptiProfilerDeInitialize, (CUpti_Profiler_DeInitialize_Params* params));
@@ -498,6 +515,7 @@ DECLARENVPWFUNC(NVPW_RawMetricsConfig_IsAddMetricsPossible, (NVPW_RawMetricsConf
 
 DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_Begin, (NVPW_MetricsContext_GetCounterNames_Begin_Params* pParams));
 DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_GetCounterNames_End_Params* pParams));
+#endif
 
 /*****************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
@@ -756,8 +774,12 @@ static int _cuda_linkCudaLibraries(void)
     cuptiEnableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
     cuptiDisableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
 
+    dl4 = NULL;                                                 // Ensure reset to NULL.
+
+#if CUPTI_PROFILER == 1
     cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerInitialize");
     cuptiProfilerDeInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerDeInitialize");
+// cuptiDeviceGetChipName relies on cupti_target.h, not in legacy Cuda distributions.
     cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl3, "cuptiDeviceGetChipName");
     cuptiProfilerCounterDataImageCalculateSizePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageCalculateSize");
     cuptiProfilerCounterDataImageInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageInitialize");
@@ -774,9 +796,6 @@ static int _cuda_linkCudaLibraries(void)
     cuptiProfilerFlushCounterDataPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerFlushCounterData");
     cuptiProfilerUnsetConfigPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerUnsetConfig");
     cuptiProfilerEndSessionPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerEndSession");
-
-
-    dl4 = NULL;                                                 // Ensure reset to NULL.
 
     // Step 1: Process override if given.
     if (strlen(cuda_perfworks) > 0) {                                       // If override given, it MUST work.
@@ -843,6 +862,7 @@ static int _cuda_linkCudaLibraries(void)
 
     NVPW_MetricsContext_GetCounterNames_BeginPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetCounterNames_Begin");
     NVPW_MetricsContext_GetCounterNames_EndPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetCounterNames_End");
+#endif
 
     int curDeviceId = -1;
     CUdevice dev;
@@ -858,6 +878,7 @@ static int _cuda_linkCudaLibraries(void)
 
     if (0) fprintf(stderr, "%s:%s:%i, cuda_version=%d cuda_runtime_version=%d.\n", __FILE__, __func__, __LINE__, cuda_version, cuda_runtime_version);
 
+#if CUPTI_PROFILER == 1
     if (cuda_version >= 11000 && cuda_runtime_version >= 11000)
     {
         cuptiProfilerGetCounterAvailabilityPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerGetCounterAvailability");
@@ -868,6 +889,7 @@ static int _cuda_linkCudaLibraries(void)
         cuptiProfilerGetCounterAvailabilityPtr = NULL;
         NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
     }
+#endif
 
     return (PAPI_OK);
 } // END _cuda_linkCudaLibraries
@@ -1024,6 +1046,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     }
 
     // Here we diverge; if we are cupti_11 we start using the profiler.
+#if CUPTI_PROFILER == 1
     if (total_11) {
         int ret = _cuda11_add_native_events(gctxt);
         if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
@@ -1033,6 +1056,15 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         global_cuda_context->availEventSize = cuda11_numEvents;
         return(ret);
     } // Done with init_component if cuda11 worked.
+#else
+    if (total_11) {
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Legacy CUpti does not support devices with Compute Capabilites >=7.0.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_ENOSUPP);    
+    }
+#endif 
 
     // If not cupti_11, it is safe to call CUpti now, we have CC<7.0.
     // For each device, get domains and domain-events counts.
@@ -1924,10 +1956,12 @@ static int _cuda_init_control_state(hwd_control_state_t * ctrl)
     SUBDBG("Entering\n");
     (void) ctrl;
     DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
     // If first device is cupti 11, pass to cupti11 version.
     if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
         return(_cuda11_init_control_state(ctrl));
     }
+    #endif
 
     cuda_context_t *gctxt = global_cuda_context;
 
@@ -1960,10 +1994,12 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
     DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
     // If first device is cupti 11, pass to cupti11 version.
     if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
         return(_cuda11_update_control_state(ctrl, nativeInfo, nativeCount, ctx));
     }
+    #endif
 
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
@@ -2753,10 +2789,12 @@ static int _cuda_set_domain(hwd_control_state_t * ctrl, int domain)
 static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
     DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
     // If first device is cupti 11, pass to cupti11 version.
     if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
         return(_cuda11_ntv_enum_events(EventCode, modifier));
     }
+    #endif
 
     switch (modifier) {
     case PAPI_ENUM_FIRST:
@@ -2783,10 +2821,13 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 static int _cuda_ntv_name_to_code(const char *nameIn, unsigned int *out)
 {
     DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
     // If first device is cupti 11, pass to cupti11 version.
     if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
         return(_cuda11_ntv_name_to_code(nameIn, out));
     }
+    #endif
+
     (void) nameIn;
     (void) out;
     // Not supported by cuda component.
@@ -2801,10 +2842,12 @@ static int _cuda_ntv_name_to_code(const char *nameIn, unsigned int *out)
 static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
     DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
     // If first device is cupti 11, pass to cupti11 version.
     if (global_cuda_context->deviceArray[0].cupti_11 == 1) {
         return(_cuda11_ntv_code_to_name(EventCode, name, len));
     }
+    #endif
 
     // SUBDBG( "Entering EventCode %d\n", EventCode );
     unsigned int index = EventCode;
@@ -2967,6 +3010,7 @@ void readMetricValue(CUpti_EventGroup eventGroup,
 } // end readMetricValue.
 
 
+#if CUPTI_PROFILER == 1
 //*************************************************************************************************
 //-------------------------------------------------------------------------------------------------
 // CUPTI 11 routines; adapted from Thomas Gruber PerfWorks code.
@@ -3485,6 +3529,7 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
         int strErr;
         int ctxPushed=0;
         mydevice = &gctxt->deviceArray[deviceNum];
+        // CUpti_Device_GetChipName_Params relies on cupti_target.h, not in legacy cuda distributions.
         CUpti_Device_GetChipName_Params ChipNameParams;
         memset(&ChipNameParams, 0,  GetChipName_Params_STRUCT_SIZE);
         ChipNameParams.structSize = GetChipName_Params_STRUCT_SIZE;
@@ -5188,7 +5233,7 @@ static void _cuda11_cuda_vector(void)
     _cuda_vector.shutdown_thread = _cuda11_shutdown_thread;        /* ( hwd_context_t * ctx ) */
     _cuda_vector.shutdown_component = _cuda11_shutdown_component;  /* ( void ) */
 } // end _cuda11_cuda_vector 
-
+#endif // CUPTI_PROFILER=1 
 
 
 
