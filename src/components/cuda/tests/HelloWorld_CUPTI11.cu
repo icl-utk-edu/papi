@@ -80,8 +80,8 @@ int main(int argc, char** argv)
 	   supported on your machine */
         //char *EventName[] = { "PAPI_FP_OPS" };
         // char const *EventName[] = { "cuda:::fe__cycles_elapsed.sum:device=0"};
-        // char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
-        char const *EventName[] = { "cuda:::dram__bytes.avg.pct_of_peak_burst_elapsed:device=0"};
+        char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
+        // 2 pass var. char const *EventName[] = { "cuda:::dram__bytes.avg.pct_of_peak_burst_elapsed:device=0"};
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 

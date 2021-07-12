@@ -3701,7 +3701,7 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
     //      NVPW_MetricsContext_GetCounterNames_Begin_Params getCounterNames;
     //      getCounterNames.structSize = NVPW_MetricsContext_GetCounterNames_Begin_Params_STRUCT_SIZE;
     //      getCounterNames.pPriv = NULL;
-    //      getCounterNames.pMetricsContext = MetricsContextCreateParams.pMetricsContext;
+    //      getCounterNames.pMetricsContext = pMCCP->pMetricsContext;
     //      NVPW_CALL((*NVPW_MetricsContext_GetCounterNames_BeginPtr)(&getCounterNames),
     //          return(PAPI_ENOSUPP));
     //      
@@ -4643,18 +4643,7 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         // Note: This is a "metricsContext", not the same as cuGetCurrentContext.
         // Eval.cpp:PrintMetricValues:121 pChipName='GV100'
         // Eval.cpp:PrintMetricValues:122 Call: NVPW_CUDA_MetricsContext_Create(&metricsContextCreateParams)
-        NVPW_CUDA_MetricsContext_Create_Params metricsContextCreateParams;
-        memset(&metricsContextCreateParams, 0,   NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE);
-        metricsContextCreateParams.structSize = NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE;
-        metricsContextCreateParams.pChipName = mydevice->cuda11_chipName; 
-        CUPTI_CALL(
-            (*NVPW_CUDA_MetricsContext_CreatePtr) (&metricsContextCreateParams),    // LEAK
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
+        
 /******* The commented out code here compiles and worked correctly in development, but it is
  ******* not necessary in PAPI, and eliminated for efficiency. We don't need the multiple
  ******* ranges or their names; we have only one range per device.
@@ -4719,11 +4708,13 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         // Space to receive values from profiler.        
         double *gpuValues = calloc(mydevice->cuda11_numMetricNames, sizeof(double) );
 
+        NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
+
         // Eval.cpp:PrintMetricValues:188 setCounterDataParams.rangeIndex=0
         NVPW_MetricsContext_SetCounterData_Params setCounterDataParams;
         memset(&setCounterDataParams, 0,   NVPW_MetricsContext_SetCounterData_Params_STRUCT_SIZE);
         setCounterDataParams.structSize =  NVPW_MetricsContext_SetCounterData_Params_STRUCT_SIZE;
-        setCounterDataParams.pMetricsContext = metricsContextCreateParams.pMetricsContext;
+        setCounterDataParams.pMetricsContext = pMCCP->pMetricsContext;
         setCounterDataParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
         setCounterDataParams.isolated = 1;
         setCounterDataParams.rangeIndex = 0; // Note Eval.cpp:155 uses zero relative; we have only one range per device.
@@ -4738,7 +4729,7 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         NVPW_MetricsContext_EvaluateToGpuValues_Params evalToGpuParams;
         memset(&evalToGpuParams, 0,  NVPW_MetricsContext_EvaluateToGpuValues_Params_STRUCT_SIZE);
         evalToGpuParams.structSize = NVPW_MetricsContext_EvaluateToGpuValues_Params_STRUCT_SIZE;
-        evalToGpuParams.pMetricsContext = metricsContextCreateParams.pMetricsContext;
+        evalToGpuParams.pMetricsContext = pMCCP->pMetricsContext;
 
         evalToGpuParams.numMetrics = mydevice->cuda11_numMetricNames;
         evalToGpuParams.ppMetricNames = (const char* const *) (mydevice->cuda11_MetricNames);
@@ -4790,23 +4781,6 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         }
 
         free(gpuValues);
-
-        // Nvidia Sample Code sometimes destroys params but still uses the results. 
-        // This is not safe; we have had segfaults and other errors when we emulate
-        // that approach. The "Destroy" frees allocated memory, which can then be
-        // corrupted. We don't destroy params until we are done with them.
-        // Eval.cpp:PrintMetricValues:126 Call: [&]() { NVPW_MetricsContext_Destroy((NVPW_MetricsContext_Destroy_Params *)&metricsContextDestroyParams); }
-        NVPW_MetricsContext_Destroy_Params metricsContextDestroyParams;
-        memset(&metricsContextDestroyParams, 0,   NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE);
-        metricsContextDestroyParams.structSize = NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE;
-        metricsContextDestroyParams.pMetricsContext = metricsContextCreateParams.pMetricsContext;
-        CUPTI_CALL(
-            (*NVPW_MetricsContext_DestroyPtr) ((NVPW_MetricsContext_Destroy_Params *)&metricsContextDestroyParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
 
         // Restore previous context.
         if (ctxPushed) {
