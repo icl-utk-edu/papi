@@ -22,6 +22,9 @@ default: $(TESTS)
 %.mac:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
 
+HelloWorld_CUPTI11: HelloWorld_CUPTI11.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) -o HelloWorld_CUPTI11 HelloWorld_CUPTI11.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
