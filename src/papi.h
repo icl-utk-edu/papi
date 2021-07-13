@@ -754,6 +754,10 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
 #define PAPI_MH_TYPE_TLB       0x1000  /* tlb, not memory cache */
 #define PAPI_MH_TYPE_PREF      0x2000  /* prefetch buffer */
+#define PAPI_MH_TYPE_RD_ALLOC       0x10000	/* read-allocation cache */
+#define PAPI_MH_TYPE_WR_ALLOC       0x20000	/* write-allocation cache */
+#define PAPI_MH_TYPE_RW_ALLOC       0x40000	/* read-write-allocation cache */
+#define PAPI_MH_CACHE_ALLOCATION_POLICY(a) (a & 0xf0000)
 #define PAPI_MH_MAX_LEVELS    6		   /* # descriptors for each TLB or cache level */
 #define PAPI_MAX_MEM_HIERARCHY_LEVELS 	  4
 

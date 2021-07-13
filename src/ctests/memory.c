@@ -128,6 +128,8 @@ main( int argc, char **argv )
 				if (!TESTS_QUIET) printf( "Write back " );
 			} else if ( tmp == PAPI_MH_TYPE_WT ) {
 				if (!TESTS_QUIET) printf( "Write through " );
+			} else if ( tmp == PAPI_MH_TYPE_UNKNOWN ) {
+				if (!TESTS_QUIET) printf( "Unknown Write policy " );
 			} else {
 				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
 						   PAPI_EBUG );
@@ -139,7 +141,21 @@ main( int argc, char **argv )
 			} else if ( tmp == PAPI_MH_TYPE_LRU ) {
 				if (!TESTS_QUIET) printf( "LRU policy " );
 			} else if ( tmp == PAPI_MH_TYPE_UNKNOWN ) {
-				if (!TESTS_QUIET) printf( "Unknown policy " );
+				if (!TESTS_QUIET) printf( "Unknown Replacement policy " );
+			} else {
+				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
+						   PAPI_EBUG );
+			}
+
+			tmp = PAPI_MH_CACHE_ALLOCATION_POLICY( L[i].cache[j].type );
+			if ( tmp == PAPI_MH_TYPE_RD_ALLOC ) {
+				if (!TESTS_QUIET) printf( "Read Allocate " );
+			} else if ( tmp == PAPI_MH_TYPE_WR_ALLOC ) {
+				if (!TESTS_QUIET) printf( "Write Allocate " );
+			} else if ( tmp == PAPI_MH_TYPE_RW_ALLOC ) {
+				if (!TESTS_QUIET) printf( "Read Write Allocate " );
+			} else if ( tmp == PAPI_MH_TYPE_UNKNOWN ) {
+				if (!TESTS_QUIET) printf( "Unknown Allocate policy " );
 			} else {
 				test_fail( __FILE__, __LINE__, "PAPI_get_hardware_info",
 						   PAPI_EBUG );
