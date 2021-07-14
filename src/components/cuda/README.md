@@ -49,11 +49,42 @@ If those libraries cannot be found or some of those are stub libraries in the st
 
 ## Known Limitations
 
-* NVIDIA made a significant change in their performance reporting software 
-relegating the interface upon which this component is based to "legacy" status.
-This component is (at this writing) not capable of interfacing with devices
-that have Compute Capability >=7.5. However, the component can detect the
-Compute Capability and disable itself with an appropriate message.
+* NVIDIA libraries now regard Compute Capability (CC) < 7.0 as 'legacy', and
+going forward CC>=7.0 is 'cupti 11' code. These are completely different
+interfaces; the cupti 11 uses the PerfWorks profiler, the legacy code does not.
+This component automatically distinguishes between the two.
+
+HOWEVER, with Cupti 11, users calling PAPI must have created a valid cuda context
+for each device (GPU), and they must make those cuda contexts active by 
+pushing them on the GPU stack when they are adding PAPI_events for that GPU 
+to the PAPI eventset.
+
+An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu.
+Note that Cuda Contexts are device specific. The relevant calls are:
+
+CUcontext ctx[maxDevices]; // Space to create a context for each GPU.
+
+Execute cuCtxCreate for each device, note it is pushed on the internal Nvidia stack.
+cuCtxCreate(&sessionCtx[deviceNum], 0, deviceNum); 
+
+Use cuCtxPushCurrent to switch to a created context, this is not pushed on the 
+software stack but an internal Nvidia driver stack. Note it will automatically
+also make the relevant device for that context the current device.
+cuCtxPushCurrent(ctx[deviceNum]);
+
+use cuCtxPopcurrent to undo a Push, it pops it off the internal Nvidia stack; and
+restores whatever the previous context may be, also making that context's device 
+the current device.
+cuCtxPopCurrent(&(ctx[deviceNum]);
+
+Note that "cudaSetDevice(deviceNum)" will change the device number and the context
+to that device's 'Primary' context ('Primary' is what Nvidia documentation calls it).
+Basically a default context. But in our experience Primary contexts do not allow all
+the Profiler functionality of a created ("non-Primary") context. We recommend always
+using a created context; and in particular if you are collecting performance events
+for a kernel, then when adding PAPI events use the same created context you will
+subsequently use to execute the kernel.
+
 ***
 
 ## FAQ
