@@ -923,7 +923,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     cuErr = (*cuCtxGetCurrentPtr)(&userCuCtx);
     cudaErr = (*cudaGetDevicePtr)(&userDeviceNum);
-    if (1) fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
+    if (0) fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
@@ -1035,7 +1035,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         mydevice->cupti_le70 = 0;
         mydevice->cupti_ge70 = 0;
 
-        if (1) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d minor=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
+        if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d minor=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
             mydevice->deviceName, mydevice->myProperties.major, mydevice->myProperties.minor);
 
         if (mydevice->myProperties.major <= 7) {
@@ -1344,7 +1344,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (userCuCtx == NULL || deviceNum != userDeviceNum) {
             CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
                 return(PAPI_EMISC););
-            if (1) fprintf(stderr, "%s:%s:%i pushing currCuCtx=%p,  userCuCtx=%p.\n", __FILE__, __func__, __LINE__, currCuCtx, userCuCtx);
+            if (0) fprintf(stderr, "%s:%s:%i pushing currCuCtx=%p,  userCuCtx=%p.\n", __FILE__, __func__, __LINE__, currCuCtx, userCuCtx);
             CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
         }
 
