@@ -1922,7 +1922,9 @@ static int _cuda_init_private(void)
     PAPI_lock(COMPONENT_LOCK);
     // The entire init, for cupti11, timed at 913 ms.
     // The entire init, for legalcy cupti, timed at 2376 ms.
-    long long ns = -PAPI_get_real_nsec();
+    long long ns;
+    if (0) ns = -PAPI_get_real_nsec(); // begin timing.
+
     if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
 
     SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
@@ -1967,9 +1969,11 @@ cuda_init_private_exit:
 
     // the entire init, for cupti11, timed at 913 ms.
     // the entire init, for legacy cupti, timed at 2376 ms.
-    ns += PAPI_get_real_nsec();
-    if (0) fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
-    
+    if (0) {
+        ns += PAPI_get_real_nsec();
+        fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
+    }
+
     return (err);
 } // end init_component
 
@@ -2711,14 +2715,11 @@ static int _cuda_shutdown_component(void)
         papi_free(gctrl);
         global_cuda_control = gctrl = NULL;
     }
+
     // close the dynamic libraries needed by this component (opened in the init substrate call)
     dlclose(dl1);
     dlclose(dl2);
     dlclose(dl3);
-
-    #if CUPTI_PROFILER == 1
-    dlclose(dl4);
-    #endif
 
     return (PAPI_OK);
 } // end cuda_shutdown_component().
@@ -5040,6 +5041,13 @@ static int _cuda11_shutdown_component(void)
     free(cuda11_AllEvents); 
 
     if (global_cuda_control) free(global_cuda_control);
+
+    // close the dynamic libraries needed by this component (opened in the init substrate call)
+    dlclose(dl1);
+    dlclose(dl2);
+    dlclose(dl3);
+    dlclose(dl4);
+
     _papi_hwi_unlock( COMPONENT_LOCK );
 
     return(PAPI_OK);
