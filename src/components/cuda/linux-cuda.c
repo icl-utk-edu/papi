@@ -1338,11 +1338,13 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // Get/create primary context for device, must later
         // cuDevicePrimaryCtxRelease(deviceNum). Does not make
         // context active; push to make it active.
-       
-        CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
-            return(PAPI_EMISC););
 
-        if (currCuCtx != userCuCtx) { 
+        currCuCtx = userCuCtx; 
+        // If we cannot use the user's context,
+        if (userCuCtx == NULL || deviceNum != userDeviceNum) {
+            CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
+                return(PAPI_EMISC););
+            if (0) fprintf(stderr, "%s:%s:%i pushing currCuCtx=%p,  userCuCtx=%p.\n", __FILE__, __func__, __LINE__, currCuCtx, userCuCtx);
             CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
         }
 
@@ -1365,8 +1367,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
                 CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return (PAPI_ENOMEM);
         }
 
@@ -1380,8 +1382,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
                 CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return(PAPI_EMISC);    
         }
 
@@ -1398,8 +1400,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1441,8 +1443,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
                } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
             } else {
@@ -1452,8 +1454,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                return(PAPI_EMISC);    
             }
 
@@ -1489,8 +1491,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1510,8 +1512,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1530,8 +1532,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1551,8 +1553,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1565,8 +1567,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return (PAPI_ENOMEM);
             }
 
@@ -1580,8 +1582,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1596,10 +1598,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         if (currCuCtx != userCuCtx) { 
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
         }
-
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
-            return(PAPI_EMISC));
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
