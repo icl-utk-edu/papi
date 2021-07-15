@@ -291,16 +291,18 @@ static void _cuda11_cuda_vector(void);
         }                                                                   \
     } while (0)
 
-#define CUDA_CALL( call, handleerror )                                                          \
-    do {                                                                                        \
+#define CUDA_CALL( call, handleerror )                                                              \
+    do {                                                                                            \
         if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUDA_CALL %s\n", __FILE__, __func__, __LINE__, #call); \
-        cudaError_t _status = (call);                                                           \
-        if (_status != cudaSuccess) {                                                           \
-            SUBDBG("error: function %s failed with error %d.\n", #call, _status);               \
-            fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            fflush(stdout);  \
-            handleerror;                                                                            \
+        cudaError_t _status = (call);                                                               \
+        if (_status != cudaSuccess) {                                                               \
+            SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
+                printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
+            {handleerror;}                                                                              \
         }                                                                                           \
     } while (0)
 
@@ -310,11 +312,13 @@ static void _cuda11_cuda_vector(void);
         CUresult _status = (call);                                                                  \
         if (_status != CUDA_SUCCESS) {                                                              \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
-            fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n",               \
-                    __FILE__, __func__, __LINE__, #call, _status);                                  \
-            printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n",                    \
-                    __FILE__, __func__, __LINE__, #call, _status);                                  \
-            fflush(stdout);                                                                         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n",           \
+                        __FILE__, __func__, __LINE__, #call, _status);                              \
+                printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n",                \
+                        __FILE__, __func__, __LINE__, #call, _status);                              \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
@@ -328,11 +332,13 @@ static void _cuda11_cuda_vector(void);
             const char *errstr;                                                                     \
             (*cuptiGetResultStringPtr)(_status, &errstr);                                           \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n",       \
-                    __FILE__, __func__, __LINE__, #call, _status, errstr);                          \
-            printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n",            \
-                   __FILE__, __func__, __LINE__, #call, _status, errstr);                           \
-            fflush(stdout);                                                                         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n",   \
+                        __FILE__, __func__, __LINE__, #call, _status, errstr);                      \
+                printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n",        \
+                       __FILE__, __func__, __LINE__, #call, _status, errstr);                       \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
@@ -344,11 +350,13 @@ static void _cuda11_cuda_vector(void);
         NVPA_Status _status = (call);                                                               \
         if (_status != NVPA_STATUS_SUCCESS) {                                                       \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",     \
                     __FILE__, __func__, __LINE__, #call, _status);                                  \
-            printf("\"%s:%s:%i PerfWork error: function %s failed with error %d.\"\n",              \
+                printf("\"%s:%s:%i PerfWork error: function %s failed with error %d.\"\n",          \
                    __FILE__, __func__, __LINE__, #call, _status);                                   \
-            fflush(stdout);                                                                         \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
