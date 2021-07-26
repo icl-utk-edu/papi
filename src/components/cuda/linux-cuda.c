@@ -291,16 +291,18 @@ static void _cuda11_cuda_vector(void);
         }                                                                   \
     } while (0)
 
-#define CUDA_CALL( call, handleerror )                                                          \
-    do {                                                                                        \
+#define CUDA_CALL( call, handleerror )                                                              \
+    do {                                                                                            \
         if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUDA_CALL %s\n", __FILE__, __func__, __LINE__, #call); \
-        cudaError_t _status = (call);                                                           \
-        if (_status != cudaSuccess) {                                                           \
-            SUBDBG("error: function %s failed with error %d.\n", #call, _status);               \
-            fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            fflush(stdout);  \
-            handleerror;                                                                            \
+        cudaError_t _status = (call);                                                               \
+        if (_status != cudaSuccess) {                                                               \
+            SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
+                printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
+            {handleerror;}                                                                              \
         }                                                                                           \
     } while (0)
 
@@ -310,11 +312,13 @@ static void _cuda11_cuda_vector(void);
         CUresult _status = (call);                                                                  \
         if (_status != CUDA_SUCCESS) {                                                              \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
-            fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n",               \
-                    __FILE__, __func__, __LINE__, #call, _status);                                  \
-            printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n",                    \
-                    __FILE__, __func__, __LINE__, #call, _status);                                  \
-            fflush(stdout);                                                                         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n",           \
+                        __FILE__, __func__, __LINE__, #call, _status);                              \
+                printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n",                \
+                        __FILE__, __func__, __LINE__, #call, _status);                              \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
@@ -328,11 +332,13 @@ static void _cuda11_cuda_vector(void);
             const char *errstr;                                                                     \
             (*cuptiGetResultStringPtr)(_status, &errstr);                                           \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n",       \
-                    __FILE__, __func__, __LINE__, #call, _status, errstr);                          \
-            printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n",            \
-                   __FILE__, __func__, __LINE__, #call, _status, errstr);                           \
-            fflush(stdout);                                                                         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n",   \
+                        __FILE__, __func__, __LINE__, #call, _status, errstr);                      \
+                printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n",        \
+                       __FILE__, __func__, __LINE__, #call, _status, errstr);                       \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
@@ -344,11 +350,13 @@ static void _cuda11_cuda_vector(void);
         NVPA_Status _status = (call);                                                               \
         if (_status != NVPA_STATUS_SUCCESS) {                                                       \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",         \
+            if (DEBUG_CALLS) {                                                                      \
+                fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",     \
                     __FILE__, __func__, __LINE__, #call, _status);                                  \
-            printf("\"%s:%s:%i PerfWork error: function %s failed with error %d.\"\n",              \
+                printf("\"%s:%s:%i PerfWork error: function %s failed with error %d.\"\n",          \
                    __FILE__, __func__, __LINE__, #call, _status);                                   \
-            fflush(stdout);                                                                         \
+                fflush(stdout);                                                                     \
+            }                                                                                       \
             {handleerror;}                                                                          \
         }                                                                                           \
     } while (0)
@@ -1338,11 +1346,13 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // Get/create primary context for device, must later
         // cuDevicePrimaryCtxRelease(deviceNum). Does not make
         // context active; push to make it active.
-       
-        CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
-            return(PAPI_EMISC););
 
-        if (currCuCtx != userCuCtx) { 
+        currCuCtx = userCuCtx; 
+        // If we cannot use the user's context,
+        if (userCuCtx == NULL || deviceNum != userDeviceNum) {
+            CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
+                return(PAPI_EMISC););
+            if (0) fprintf(stderr, "%s:%s:%i pushing currCuCtx=%p,  userCuCtx=%p.\n", __FILE__, __func__, __LINE__, currCuCtx, userCuCtx);
             CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
         }
 
@@ -1365,8 +1375,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
                 CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return (PAPI_ENOMEM);
         }
 
@@ -1380,8 +1390,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
                 CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
             return(PAPI_EMISC);    
         }
 
@@ -1398,8 +1408,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1441,8 +1451,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
                } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
             } else {
@@ -1452,8 +1462,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                return(PAPI_EMISC);    
             }
 
@@ -1489,8 +1499,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1510,8 +1520,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1530,8 +1540,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EMISC);    
             }
 
@@ -1551,8 +1561,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1565,8 +1575,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return (PAPI_ENOMEM);
             }
 
@@ -1580,8 +1590,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
                     CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
                 return(PAPI_EINVAL);    
             }
 
@@ -1596,10 +1606,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         if (currCuCtx != userCuCtx) { 
             CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
         }
-
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
-            return(PAPI_EMISC));
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
@@ -1922,7 +1930,9 @@ static int _cuda_init_private(void)
     PAPI_lock(COMPONENT_LOCK);
     // The entire init, for cupti11, timed at 913 ms.
     // The entire init, for legalcy cupti, timed at 2376 ms.
-    long long ns = -PAPI_get_real_nsec();
+    long long ns;
+    if (0) ns = -PAPI_get_real_nsec(); // begin timing.
+
     if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
 
     SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
@@ -1967,9 +1977,11 @@ cuda_init_private_exit:
 
     // the entire init, for cupti11, timed at 913 ms.
     // the entire init, for legacy cupti, timed at 2376 ms.
-    ns += PAPI_get_real_nsec();
-    if (0) fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
-    
+    if (0) {
+        ns += PAPI_get_real_nsec();
+        fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
+    }
+
     return (err);
 } // end init_component
 
@@ -2711,14 +2723,11 @@ static int _cuda_shutdown_component(void)
         papi_free(gctrl);
         global_cuda_control = gctrl = NULL;
     }
+
     // close the dynamic libraries needed by this component (opened in the init substrate call)
     dlclose(dl1);
     dlclose(dl2);
     dlclose(dl3);
-
-    #if CUPTI_PROFILER == 1
-    dlclose(dl4);
-    #endif
 
     return (PAPI_OK);
 } // end cuda_shutdown_component().
@@ -5040,6 +5049,13 @@ static int _cuda11_shutdown_component(void)
     free(cuda11_AllEvents); 
 
     if (global_cuda_control) free(global_cuda_control);
+
+    // close the dynamic libraries needed by this component (opened in the init substrate call)
+    dlclose(dl1);
+    dlclose(dl2);
+    dlclose(dl3);
+    dlclose(dl4);
+
     _papi_hwi_unlock( COMPONENT_LOCK );
 
     return(PAPI_OK);
