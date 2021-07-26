@@ -30,6 +30,7 @@
 
 #define NUM_EVENTS 1
 #define PAPI 1
+#define TEST_ASSIGN_COMPONENT 1
 
 // Prototypes
 __global__ void helloWorld(char*);
@@ -47,14 +48,42 @@ int main(int argc, char** argv)
 	   RUN papi_native_avail to get a list of CUDA events that are 
 	   supported on your machine */
         //char *EventName[] = { "PAPI_FP_OPS" };
-        char const *EventName[] = { "cuda:::event:elapsed_cycles_sm:device=0" };
+        // char const *EventName[] = { "cuda:::event:elapsed_cycles_sm:device=0" };
+        char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
 	int events[NUM_EVENTS];
 	int eventCount = 0;
 	int quiet;
 
+    CUresult cuErr;
+
 	/* Set TESTS_QUIET variable */
 	quiet=tests_quiet( argc, argv );
-	
+
+    CUcontext sessionCtx=NULL, getCtx=NULL;
+    cuErr = cuInit(0);
+    if (cuErr != CUDA_SUCCESS) {  
+        const char *errString=NULL;
+        cuGetErrorString(cuErr, &errString); // Read the string.
+        fprintf(stderr, "%s:%s:%i cuCtxCreate cudaError='%s'.\n", __FILE__, __func__, __LINE__, errString);
+    }
+
+    cuErr = cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
+    if (cuErr != CUDA_SUCCESS) {  
+        const char *errString=NULL;
+        cuGetErrorString(cuErr, &errString); // Read the string.
+        fprintf(stderr, "%s:%s:%i cuCtxCreate cudaError='%s'.\n", __FILE__, __func__, __LINE__, errString);
+    }
+
+    if (1) {
+        cuErr = cuCtxGetCurrent(&getCtx);
+        if (cuErr != CUDA_SUCCESS) {  
+            const char *errString=NULL;
+            cuGetErrorString(cuErr, &errString); // Read the string.
+            fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cudaError='%s'.\n", __FILE__, __func__, __LINE__, errString);
+        }
+        fprintf(stderr, "%s:%s:%i before PAPI_library_init() and cuCtxCreate() sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
+    }
+
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if( retval != PAPI_VER_CURRENT ) {
@@ -69,6 +98,34 @@ int main(int argc, char** argv)
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ) );
 	}
+
+
+#if TEST_ASSIGN_COMPONENT == 1
+    // Find cuda component index.
+    int k = PAPI_num_components();                              // get number of components.
+    for (i=0; i<k; i++) {                                       // while not found,
+        PAPI_component_info_t *aComponent = 
+            (PAPI_component_info_t*) PAPI_get_component_info(i);// get the component info.     
+        if (aComponent == NULL) {                               // if we failed,
+            fprintf(stderr,  "PAPI_get_component_info(%i) failed, "
+                "returned NULL. %i components reported.\n", i,k);
+            exit(-1);    
+        }
+
+       if (strcmp("cuda", aComponent->name) == 0) break;        // If we found our match, record it.
+    } // end search components.
+
+    if (i == k) {                                               // if no CUDA component found,
+        fprintf(stderr, "Failed to find cuda component among %i "
+            "reported components.\n", k);
+        PAPI_shutdown();
+        exit(-1); 
+    }
+    
+    int cid = i;
+    printf("Found CUDA Component at id %d\n", cid);
+#endif // TEST_ASSIGN_COMPONENT == 1
+
 
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
@@ -88,11 +145,32 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	
+    if (1) {
+        cuErr = cuCtxGetCurrent(&getCtx);
+        if (cuErr != CUDA_SUCCESS) {  
+            const char *errString=NULL;
+            cuGetErrorString(cuErr, &errString); // Read the string.
+            fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cudaError='%s'.\n", __FILE__, __func__, __LINE__, errString);
+        }
+
+        fprintf(stderr, "%s:%s:%i before PAPI_create_eventset() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+    }
+
 	retval = PAPI_create_eventset( &EventSet );
 	if( retval != PAPI_OK ) {
 		if (!quiet) printf( "PAPI_create_eventset failed\n" );
 		test_fail(__FILE__,__LINE__,"Cannot create eventset",retval);
 	}	
+
+#if TEST_ASSIGN_COMPONENT == 1
+    retval = PAPI_assign_eventset_component(EventSet, cid); 
+	if( retval != PAPI_OK ) {
+		if (!quiet) printf( "PAPI_assign_eventset_component failed\n" );
+		test_fail(__FILE__,__LINE__,"Cannot create eventset",retval);
+	} else {
+        fprintf(stderr, "%s:%s:%i PAPI_assign_eventset_component success.\n", __FILE__, __func__, __LINE__);
+    }	
+#endif // TEST_ASSIGN_COMPONENT == 1
 
         // If multiple GPUs/contexts were being used, 
         // you need to switch to each device before adding its events
