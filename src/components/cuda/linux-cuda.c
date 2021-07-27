@@ -215,6 +215,7 @@ typedef struct cuda_control {
     uint64_t    cuptiReadTimestampNs;                                   // ..
 } cuda_control_t;
 
+#if CUPTI_PROFILER == 1
 // For _cuda_callback tracker.
 typedef struct {
     CUcontext ctxId;        // context as used by Nvidia.
@@ -228,7 +229,6 @@ typedef struct {
 // the root. But we do not duplicate any contexts.
 static cuda_context_chain_t *cuda_context_chain = NULL;
 
-#if CUPTI_PROFILER == 1
 //*****************************************************************************
 // CUDA 11 structures.
 //*****************************************************************************
@@ -261,7 +261,10 @@ typedef struct cuda11_hash_entry_s {
 static void *dl1 = NULL;
 static void *dl2 = NULL;
 static void *dl3 = NULL;
+
+#if CUPTI_PROFILER == 1
 static void *dl4 = NULL;
+#endif
 
 static char cuda_main[]=PAPI_CUDA_MAIN;
 static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
@@ -567,6 +570,7 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
 
+#if CUPTI_PROFILER == 1
 //-----------------------------------------------------------------------------
 // Context Chain Management [CCM].
 //-----------------------------------------------------------------------------
@@ -800,9 +804,11 @@ _cuda_callback(void *userdata, CUpti_CallbackDomain domain,
                 //  structures are identical. Does nothing.
                 //  (Doesn't identify or change any contexts.)
                 case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease:
+                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2
                 case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2:
+                #endif
                     if (0) {
-                        const cuDevicePrimaryCtxRelease_v2_params* myP;
+                        const cuDevicePrimaryCtxRelease_params* myP;
                         myP = cbInfo->functionParams;
                         if (0) fprintf(stderr, "%s:%s:%i '%s' dev=%d cbCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
                     }
@@ -812,9 +818,11 @@ _cuda_callback(void *userdata, CUpti_CallbackDomain domain,
                 //  cuDevicePrimaryCtxReset_v2_params; CUdevice dev;
                 //  structures are identical. Does nothing.
                 case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset:
+                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2
                 case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2:
+                #endif
                     if (0) {
-                        const cuDevicePrimaryCtxReset_v2_params* myP;
+                        const cuDevicePrimaryCtxReset_params* myP;
                         myP = cbInfo->functionParams;
                         fprintf(stderr, "%s:%s:%i '%s' dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
                     }
@@ -901,6 +909,7 @@ _cuda_callback(void *userdata, CUpti_CallbackDomain domain,
         }
     }        
 } // _cuda_callback
+#endif // CUPTI_PROFILER == 1
 
 
 /*
@@ -5780,7 +5789,3 @@ static void _cuda11_cuda_vector(void)
     _cuda_vector.shutdown_component = _cuda11_shutdown_component;  /* ( void ) */
 } // end _cuda11_cuda_vector 
 #endif // CUPTI_PROFILER=1 
-
-
-
-
