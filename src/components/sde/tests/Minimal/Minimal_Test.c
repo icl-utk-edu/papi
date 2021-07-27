@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "papi.h"
 #include "papi_test.h"
-#include "papi_sde_interface.h"
+#include "sde_lib.h"
 
 long long local_var;
 

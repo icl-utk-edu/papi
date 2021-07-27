@@ -628,8 +628,6 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
-SDE_LIB_FILES
-SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
 BITFLAGS
@@ -5667,7 +5665,6 @@ fi
 # Disable LDL AND SDE for static builds
 if test "$STATIC" = "-static"; then
   LDL=""
-  SDE_ENABLED=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linking with papi shared library of tests and utilities" >&5
@@ -7064,13 +7061,6 @@ for comp in $components; do
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
-    SDE_ENABLED=1
-    SDE_LIB_DIR="../components/sde/sde_lib"
-    if test "$shlib_tools" = "yes"; then
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
-    else
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
-    fi
   fi
 
   # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "papi_sde_interface.h"
+#include "sde_lib.h"
 
 // API functions (FORTRAN 77 friendly).
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct);

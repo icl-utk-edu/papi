@@ -971,7 +971,6 @@ AC_ARG_WITH(static_tools,
 # Disable LDL AND SDE for static builds
 if test "$STATIC" = "-static"; then
   LDL=""
-  SDE_ENABLED=
 fi
 
 AC_MSG_CHECKING(for linking with papi shared library of tests and utilities)
@@ -1974,13 +1973,6 @@ for comp in $components; do
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
-    SDE_ENABLED=1
-    SDE_LIB_DIR="../components/sde/sde_lib"
-    if test "$shlib_tools" = "yes"; then
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
-    else
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
-    fi
   fi
 
   # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
@@ -2081,8 +2073,6 @@ AC_SUBST(BGP_SYSDIR)
 AC_SUBST(BITFLAGS)
 AC_SUBST(COMPONENT_RULES)
 AC_SUBST(COMPONENTS)
-AC_SUBST(SDE_ENABLED)
-AC_SUBST(SDE_LIB_FILES)
 AC_SUBST(FTEST_TARGETS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(BGPM_INSTALL_DIR)
