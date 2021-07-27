@@ -11,10 +11,11 @@
 // For do_work macro in the header file
 volatile double x,y;
 
-int _papi_eventset = PAPI_NULL;
 extern int max_size;
+char* eventname = NULL;
 
-run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode){
+run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
+    int _papi_eventset = PAPI_NULL;
     long count;
     int retval;
     int buffer = 0;
@@ -22,7 +23,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     double time1=0.0, time2=1.0;
     double dt = 0.0, factor;
     long pageSize, blockSize;
-    long long int counter = 0;
+    long long int counter[ONT];
     run_output_t out;
 
     assert( sizeof(int) >= 4 );
@@ -59,21 +60,31 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         out.status = prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
     }
 
-    if ( !latency_only )
-    {
-        // Start the counters.
-        retval = PAPI_start(_papi_eventset);
-        if ( PAPI_OK != retval )
-        {
-            error_handler(1, __LINE__);
-            out.status = -1;
-        }
-    }
-
     // Start of threaded benchmark.
-    #pragma omp parallel private(p,count) reduction(+:buffer)
+    #pragma omp parallel private(p,count) reduction(+:buffer) firstprivate(_papi_eventset)
     {
         int idx = omp_get_thread_num();
+
+        if ( !latency_only ) {
+            retval = PAPI_create_eventset( &_papi_eventset );
+            if (retval != PAPI_OK ){
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+
+            retval = PAPI_add_named_event( _papi_eventset, eventname );
+            if (retval != PAPI_OK ){
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+
+            // Start the counters.
+            retval = PAPI_start(_papi_eventset);
+            if ( PAPI_OK != retval ) {
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+        }
 
         // Start the actual test.
         count = countMax;
@@ -99,32 +110,44 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         }
 
         buffer += (uintptr_t)p+(uintptr_t)(x+y);
-    }
-    
-    if ( !latency_only )
-    {
-        // Stop the counters.
-        retval = PAPI_stop(_papi_eventset, &counter);
-        if ( PAPI_OK != retval ) 
-        {
-            error_handler(1, __LINE__);
-            out.status = -1;
+
+        if ( !latency_only ) {
+            // Stop the counters.
+            retval = PAPI_stop(_papi_eventset, &counter[idx]);
+            if ( PAPI_OK != retval ) {
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+
+            // Get the average event count per access in pointer chase.
+            out.counter[idx] = (1.0*counter[idx])/(1.0*countMax);
+
+            retval = PAPI_cleanup_eventset(_papi_eventset);
+            if (retval != PAPI_OK ){
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+
+            retval = PAPI_destroy_eventset(&_papi_eventset);
+            if (retval != PAPI_OK ){
+                error_handler(1, __LINE__);
+                out.status = -1;
+            }
+
+        }else{
+            // Compute the duration of the pointer chase.
+            dt = elapsed(time2, time1);
+
+            // Convert time into nanoseconds.
+            factor = 1000.0;
+
+            // Number of accesses per pointer chase.
+            factor /= (1.0*countMax);
+
+            // Get the average nanoseconds per access.
+            out.dt = dt*factor;
         }
 
-        // Get the average event count per access in pointer chase.
-        out.counter = (1.0*counter)/(1.0*countMax);
-    }else{
-        // Compute the duration of the pointer chase.
-        dt = elapsed(time2, time1);
-
-        // Convert time into nanoseconds.
-        factor = 1000.0;
-
-        // Number of accesses per pointer chase.
-        factor /= (1.0*countMax);
-
-        // Get the average nanoseconds per access.
-        out.dt = dt*factor;
     }
 
     // Prevent compiler optimization.

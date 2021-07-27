@@ -36,9 +36,10 @@
 
 //#define DEBUG
 
+#define MAXTHREADS 128
 typedef struct run_output_s{
     double dt;
-    double counter;
+    double counter[MAXTHREADS];
     int status;
 }run_output_t;
 

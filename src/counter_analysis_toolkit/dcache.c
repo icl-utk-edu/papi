@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define _SIZE_SAMPLES_ 40
-extern int _papi_eventset;
+extern char* eventname;
 
 int min_size, max_size;
 
@@ -94,14 +94,23 @@ error0:
 }
 
 void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
-    int i,j;
+    int i,j,k;
     int *values;
-    double **rslts, *sorted_rslts, *latencies;
-    double **counter, *sorted_counter;
-    int status, ret_val, guessCount;
+    double **rslts, *sorted_rslts;
+    double ***counter, *sorted_counter;
+    int status, guessCount;
+    int ONT = 1;
 
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
+
+    // Get the number of threads.
+    #pragma omp parallel
+    {
+        if(!omp_get_thread_num()) {
+            ONT = omp_get_num_threads();
+        }
+    }
 
     // The number of different sizes we will guess, trying to find the right size.
     guessCount = 0;
@@ -114,124 +123,88 @@ void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_b
         guessCount = _SIZE_SAMPLES_;
     }
 
+    // Latency results from the benchmark.
     rslts = (double **)malloc(max_iter*sizeof(double *));
     for(i=0; i<max_iter; ++i){
         rslts[i] = (double *)malloc(guessCount*sizeof(double));
     }
     sorted_rslts = (double *)malloc(max_iter*sizeof(double));
 
-    counter = (double **)malloc(max_iter*sizeof(double *));
+    // Counter results from the benchmark.
+    counter = (double ***)malloc(max_iter*sizeof(double **));
     for(i=0; i<max_iter; ++i){
-        counter[i] = (double *)malloc(guessCount*sizeof(double));
+        counter[i] = (double **)malloc(guessCount*sizeof(double*));
+        for(j=0; j<guessCount; ++j){
+            counter[i][j] = (double *)malloc(ONT*sizeof(double));
+        }
     }
     sorted_counter = (double *)malloc(max_iter*sizeof(double));
-    latencies = (double *)malloc(guessCount*sizeof(double));
 
+    // List of buffer sizes which are used in the benchmark.
     values = (int *)malloc(guessCount*sizeof(int));
 
-    if( !latency_only ){
-        int native;
-        _papi_eventset = PAPI_NULL;
-
-        /* Set the event */
-        ret_val = PAPI_create_eventset( &_papi_eventset );
-        if (ret_val != PAPI_OK ){
-            return;
-        }
-
-        ret_val = PAPI_event_name_to_code( papi_event_name, &native );
-        if (ret_val != PAPI_OK ){
-            return;
-        }
-
-        ret_val = PAPI_add_event( _papi_eventset, native );
-        if (ret_val != PAPI_OK ){
-            return;
-        }
-    }
+    // Set the name of the event to be monitored during the benchmark.
+    eventname = papi_event_name;
 
     for(i=0; i<max_iter; ++i){
-        status = varyBufferSizes(values, rslts[i], counter[i], hw_desc, stride_in_bytes, pages_per_block, pattern, latency_only, mode);
+        status = varyBufferSizes(values, rslts[i], counter[i], hw_desc, stride_in_bytes, pages_per_block, pattern, latency_only, mode, ONT);
         if( status < 0 )
             goto cleanup;
     }
 
-    if(latency_only)
-    {
-        int ONT=1;
-        #pragma omp parallel
-        {
-            if(!omp_get_thread_num()) {
-                ONT = omp_get_num_threads();
-            }
-        }
+    // Sort and print latency and counter results.
+    if(latency_only) {
+
         fprintf(ofp, "# PTRN=%d, STRIDE=%d, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
-    }
-    for(j=0; j<guessCount; ++j){
-        for(i=0; i<max_iter; ++i){
-            sorted_rslts[i] = rslts[i][j];
-        }
-        qsort(sorted_rslts, max_iter, sizeof(double), compar_lf);
-        if(latency_only)
-        {
+        for(j=0; j<guessCount; ++j){
+            for(i=0; i<max_iter; ++i){
+                sorted_rslts[i] = rslts[i][j];
+            }
+            qsort(sorted_rslts, max_iter, sizeof(double), compar_lf);
             fprintf(ofp, "%d %.4lf\n", values[j], sorted_rslts[0]);
         }
-        latencies[j] = sorted_rslts[0];
-        for(i=0; i<max_iter; ++i){
-            sorted_counter[i] = counter[i][j];
-        }
-        qsort(sorted_counter, max_iter, sizeof(double), compar_lf);
-        if(!latency_only)
-        {
-            fprintf(ofp, "%d %lf\n", values[j], sorted_counter[0]);
+
+    } else {
+
+        for(j=0; j<guessCount; ++j){
+            fprintf(ofp, "%d", values[j]);
+            for(k=0; k<ONT; ++k){
+                for(i=0; i<max_iter; ++i){
+                    sorted_counter[i] = counter[i][j][k];
+                }
+                qsort(sorted_counter, max_iter, sizeof(double), compar_lf);
+                fprintf(ofp, " %lf", sorted_counter[0]);
+            }
+            fprintf(ofp, "\n");
         }
     }
 
 cleanup:
     for(i=0; i<max_iter; ++i){
         free(rslts[i]);
+        for(j=0; j<guessCount; ++j){
+            free(counter[i][j]);
+        }
         free(counter[i]);
     }
     free(rslts);
     free(counter);
     free(sorted_rslts);
     free(sorted_counter);
-    free(latencies);
     free(values);
-
-    if( !latency_only ){
-        ret_val = PAPI_cleanup_eventset(_papi_eventset);
-        if (ret_val != PAPI_OK ){
-            fprintf(stderr, "PAPI_cleanup_eventset() returned %d\n",ret_val);
-            return;
-        }
-        ret_val = PAPI_destroy_eventset(&_papi_eventset);
-        if (ret_val != PAPI_OK ){
-            fprintf(stderr, "PAPI_destroy_eventset() returned %d\n",ret_val);
-            return;
-        }
-    }
 
     return;
 }
 
 
-int varyBufferSizes(int *values, double *rslts, double *counter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode){
-    int i, j, cnt;
+int varyBufferSizes(int *values, double *rslts, double **counter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
+    int i, j, k, cnt;
     long active_buf_len;
-    int ONT = 1;
     int allocErr = 0;
     run_output_t out;
 
     int stride = stride_in_bytes/sizeof(uintptr_t);
 
-    // Get the number of threads.
-    #pragma omp parallel
-    {
-        if(!omp_get_thread_num()) {
-            ONT = omp_get_num_threads();
-        }
-    }
     uintptr_t rslt=42, *v[ONT], *ptr[ONT];
 
     // Allocate memory for each thread to traverse.
@@ -262,7 +235,7 @@ int varyBufferSizes(int *values, double *rslts, double *counter, hw_desc_t *hw_d
     }
 
     // Make a cold run
-    out = probeBufferSize(16*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+    out = probeBufferSize(16*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
     if(out.status != 0)
         goto error;
 
@@ -271,32 +244,40 @@ int varyBufferSizes(int *values, double *rslts, double *counter, hw_desc_t *hw_d
         cnt = 0;
         // If we don't know the cache sizes, space the measurements between two default values.
         for(active_buf_len=min_size; active_buf_len<max_size; active_buf_len*=2){
-            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             rslts[cnt] = out.dt;
-            counter[cnt] = out.counter;
+            for(k = 0; k < ONT; ++k) {
+                counter[cnt][k] = out.counter[k];
+            }
             values[cnt++] = ONT*sizeof(uintptr_t)*active_buf_len;
 
-            out = probeBufferSize((int)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            out = probeBufferSize((int)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             rslts[cnt] = out.dt;
-            counter[cnt] = out.counter;
+            for(k = 0; k < ONT; ++k) {
+                counter[cnt][k] = out.counter[k];
+            }
             values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.25));
 
-            out = probeBufferSize((int)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            out = probeBufferSize((int)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             rslts[cnt] = out.dt;
-            counter[cnt] = out.counter;
+            for(k = 0; k < ONT; ++k) {
+                counter[cnt][k] = out.counter[k];
+            }
             values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.5));
 
-            out = probeBufferSize((int)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            out = probeBufferSize((int)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             rslts[cnt] = out.dt;
-            counter[cnt] = out.counter;
+            for(k = 0; k < ONT; ++k) {
+                counter[cnt][k] = out.counter[k];
+            }
             values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
         }
     }else{
@@ -318,11 +299,13 @@ int varyBufferSizes(int *values, double *rslts, double *counter, hw_desc_t *hw_d
         cnt=0;
         for(j=0; j<_SIZE_SAMPLES_; j++){
             active_buf_len = (long)(curr_size/sizeof(uintptr_t));
-            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode);
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             rslts[cnt] = out.dt;
-            counter[cnt] = out.counter;
+            for(k = 0; k < ONT; ++k) {
+                counter[cnt][k] = out.counter[k];
+            }
             values[cnt++] = sizeof(uintptr_t)*active_buf_len;
             curr_size *= f;
         }

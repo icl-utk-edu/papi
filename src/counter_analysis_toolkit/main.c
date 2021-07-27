@@ -27,6 +27,14 @@ int main(int argc, char*argv[])
         return 0;
     }
 
+    // Initialize PAPI thread support.
+    ret = PAPI_thread_init( omp_get_thread_num_wrapper );
+    if( ret != PAPI_OK ) {
+
+        fprintf(stderr,"PAPI thread init error: %s Exiting...\n", PAPI_strerror(ret));
+        return 0;
+    }
+
     // Parse the command-line arguments.
     status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type, &show_progress );
     if(0 != status)
@@ -138,6 +146,10 @@ int main(int argc, char*argv[])
 
     PAPI_shutdown();
     return 0;
+}
+
+unsigned long int omp_get_thread_num_wrapper() {
+    return omp_get_thread_num();
 }
 
 // Verify that valid qualifier counts are provided and count their combinations.
