@@ -4,14 +4,13 @@
  * adapted to show the use of CUPTI and PAPI in collecting event
  * counters for multiple GPU contexts.  PAPI Team (2015)
  *
- * Update, July/2021, for CUPTI 11. The CUpti API this is based upon is
- * obsolete and doesn't work on Nvidia GPUs with Compute Capability >=
- * 7.5. The file simpleMultiGPU_CUPTI11.cu demonstrates using their new
- * performance API, called CUpti 11 here. It will only work on cuda 
- * distributions of 10.0 or better. For older devices, this code is still
- * functional; PAPI is informed of the CUcontexts that will be used to 
- * execute kernels at the time of adding PAPI events for that device; as
- * shown below. 
+ * Update, July/2021, for CUPTI 11. This version is for the CUPTI 11
+ * API, which PAPI uses for Nvidia GPUs with Compute Capability >=
+ * 7.0. It will only work on cuda distributions of 10.0 or better.
+ * Here, PAPI monitors the applications usage of CUcontexts; and at
+ * the time of PAPI_start() will use the most recently used CUcontext
+ * on each device to monitor performance events. See further comments
+ * below. 
  */
 
 /*
@@ -39,6 +38,19 @@
  * SLI in the nvidia control panel. Otherwise only one GPU is visible to the
  * application. On the other side, you can still extend your desktop to screens
  * attached to both GPUs.
+ *
+ *  CUDA Context notes for CUPTI_11: Although a cudaSetDevice() will
+ *  create a "primary" CUcontext for the device that allows kernel
+ *  execution; PAPI has had problems using such contexts to control
+ *  the Nvidia Performance Profiler.  Applications must create a
+ *  context using cuCtxCreate() that will execute the kernel, this
+ *  must be done prior to the PAPI_start() invocation in the code
+ *  below. Contexts are device specific, so when multiple GPUs are in
+ *  in use, each requires its own context. That context must be the
+ *  last active context on each device when PAPI_start() executes.
+ * 
+ *  Code that accomplishes this is shown just above the PAPI_start()
+ *  invocation. 
  */
 
 // System includes
@@ -281,25 +293,19 @@ int main( int argc, char **argv )
     char const *EventNames[] = { 
 //      "cuda:::metric:nvlink_total_data_transmitted",
 //      "cuda:::metric:nvlink_total_data_received",
-        // Legacy CUPTI events.
-        "cuda:::event:active_cycles_pm",
-        "cuda:::event:active_warps_pm"
+        // CUPTI11 events.
+        "cuda:::dram__bytes_read.sum",
+        "cuda:::fe__cycles_elapsed.sum"
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
-    // UNLIKE CUpti_11, we must change the contexts to the appropriate device to
-    // add events to inform PAPI of the context that will run the kernels.
-
-    // Save current context, will restore after adding events.
-    CUcontext userContext;
-    CHECK_CU_ERROR(cuCtxGetCurrent(&userContext), "cuCtxGetCurrent");
-
+    // For CUpti_11, we don't change contexts to add events, it is not necessary.
+    // (This is different than the Legacy CUpti approach.)
     char *EventName[NUM_EVENTS];
     char tmpEventName[64];
     eventCount = 0;
     for( i = 0; i < GPU_N; i++ ) {
         for ( ee=0; ee<numEventNames; ee++ ) {
-            CHECK_CU_ERROR(cuCtxSetCurrent(ctx[i]), "cuCtxSetCurrent");
             // Create a device specific event.
             snprintf( tmpEventName, 64, "%s:device=%d\0", EventNames[ee], i );
             retval = PAPI_add_named_event( EventSet, tmpEventName );
@@ -313,14 +319,37 @@ int main( int argc, char **argv )
             }
         }
     }
-
-    // Restore user context.
     
-    CHECK_CU_ERROR(cuCtxSetCurrent(userContext), "cuCtxSetCurrent");
-
     // Start PAPI event measurement
+    // For CUpti 11, the CUcontext to be used for executing kernels on each device 
+    // must be the last context used on that device when we invoke PAPI_start().
+    // But we cannot accomplish this with cuCtxPushCurrent() and cuCtxPopCurrent();
+    // the latter resets the current context.
+
+    // Instead, we save the current context (which is at the top of Nvidia's 
+    // stack), and replace it using cuCtxSetCurrent() for each device (which
+    // just replaces the top-of-stack context). Then we invoke PAPI_start(),
+    // and follow up with restoring the user's context.
+
+    // An alternative would be to push all the kernel contexts, invoke
+    // PAPI_start(), and then pop them all. If there are more than 2 GPUs,
+    // Push/Pop requires more calls than this cuCtxSetCurrent() approach. 
+
+    CUcontext userContext;
+    // Save current context.
+    CHECK_CU_ERROR(cuCtxGetCurrent(&userContext), "cuCtxGetCurrent");
+
+    // Set each kernel context.
+    for (i=0; i<GPU_N; i++) {
+        CHECK_CU_ERROR(cuCtxSetCurrent(ctx[i]), "cuCtxSetCurrent");
+    }
+
+    // Invoke PAPI_start().
     retval = PAPI_start( EventSet );
     if( retval != PAPI_OK )  fprintf( stderr, "PAPI_start failed, retval=%i [%s].\n", retval, PAPI_strerror(retval));
+
+    // Restore current context.
+    CHECK_CU_ERROR(cuCtxSetCurrent(userContext), "cuCtxSetCurrent");
 #endif
     
     // Start timing and compute on GPU(s)
