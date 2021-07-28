@@ -16,15 +16,13 @@ char* eventname = NULL;
 
 run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
     int _papi_eventset = PAPI_NULL;
-    long count;
-    int retval;
-    int buffer = 0;
+    int retval, buffer = 0, status = 0;
     register uintptr_t *p = NULL;
-    double time1=0.0, time2=1.0;
-    double dt = 0.0, factor;
-    long pageSize, blockSize;
+    double time1, time2, dt, factor;
+    long count, pageSize, blockSize;
     long long int counter[ONT];
     run_output_t out;
+    out.status = 0;
 
     assert( sizeof(int) >= 4 );
 
@@ -52,37 +50,37 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
 
     // Compute the size of a block in the pointer chain and create the pointer chain.
     blockSize = (long)(pageCountPerBlock*(float)pageSize);
-    #pragma omp parallel
+    #pragma omp parallel reduction(+:status) default(shared)
     {
         int idx = omp_get_thread_num();
 
-        out.status = 0;
-        out.status = prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
+        status += prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
     }
 
     // Start of threaded benchmark.
-    #pragma omp parallel private(p,count) reduction(+:buffer) firstprivate(_papi_eventset)
+    #pragma omp parallel private(p,count,dt,factor,time1,time2,retval) reduction(+:buffer) reduction(+:status) firstprivate(_papi_eventset) default(shared)
     {
         int idx = omp_get_thread_num();
+        int thdStatus = 0;
 
         if ( !latency_only ) {
             retval = PAPI_create_eventset( &_papi_eventset );
             if (retval != PAPI_OK ){
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
 
             retval = PAPI_add_named_event( _papi_eventset, eventname );
             if (retval != PAPI_OK ){
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
 
             // Start the counters.
             retval = PAPI_start(_papi_eventset);
             if ( PAPI_OK != retval ) {
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
         }
 
@@ -109,14 +107,12 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             }
         }
 
-        buffer += (uintptr_t)p+(uintptr_t)(x+y);
-
         if ( !latency_only ) {
             // Stop the counters.
             retval = PAPI_stop(_papi_eventset, &counter[idx]);
             if ( PAPI_OK != retval ) {
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
 
             // Get the average event count per access in pointer chase.
@@ -125,13 +121,13 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             retval = PAPI_cleanup_eventset(_papi_eventset);
             if (retval != PAPI_OK ){
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
 
             retval = PAPI_destroy_eventset(&_papi_eventset);
             if (retval != PAPI_OK ){
                 error_handler(1, __LINE__);
-                out.status = -1;
+                thdStatus = -1;
             }
 
         }else{
@@ -145,9 +141,16 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             factor /= (1.0*countMax);
 
             // Get the average nanoseconds per access.
-            out.dt = dt*factor;
+            out.dt[idx] = dt*factor;
         }
 
+        buffer += (uintptr_t)p+(uintptr_t)(x+y);
+        status += thdStatus;
+    }
+
+    // Get the collective status.
+    if(status < 0) {
+        out.status = -1;
     }
 
     // Prevent compiler optimization.
