@@ -297,12 +297,9 @@ static void _cuda11_cuda_vector(void);
         cudaError_t _status = (call);                                                               \
         if (_status != cudaSuccess) {                                                               \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
-            if (DEBUG_CALLS) {                                                                      \
+            if (DEBUG_CALLS)                                                                        \
                 fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
-                printf("\"%s:%s:%i CUDA error: function %s failed with error %d.\"\n", __FILE__, __func__, __LINE__, #call, _status);   \
-                fflush(stdout);                                                                     \
-            }                                                                                       \
-            {handleerror;}                                                                              \
+            handleerror;                                                                            \
         }                                                                                           \
     } while (0)
 
@@ -312,14 +309,10 @@ static void _cuda11_cuda_vector(void);
         CUresult _status = (call);                                                                  \
         if (_status != CUDA_SUCCESS) {                                                              \
             SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
-            if (DEBUG_CALLS) {                                                                      \
+            if (DEBUG_CALLS)                                                                        \
                 fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n",           \
                         __FILE__, __func__, __LINE__, #call, _status);                              \
-                printf("\"%s:%s:%i CU error: function %s failed with error %d.\"\n",                \
-                        __FILE__, __func__, __LINE__, #call, _status);                              \
-                fflush(stdout);                                                                     \
-            }                                                                                       \
-            {handleerror;}                                                                          \
+            handleerror;                                                                            \
         }                                                                                           \
     } while (0)
 
@@ -332,14 +325,10 @@ static void _cuda11_cuda_vector(void);
             const char *errstr;                                                                     \
             (*cuptiGetResultStringPtr)(_status, &errstr);                                           \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            if (DEBUG_CALLS) {                                                                      \
+            if (DEBUG_CALLS)                                                                        \
                 fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n",   \
                         __FILE__, __func__, __LINE__, #call, _status, errstr);                      \
-                printf("\"%s:%s:%i CUpti error: function %s failed with error %d (%s).\"\n",        \
-                       __FILE__, __func__, __LINE__, #call, _status, errstr);                       \
-                fflush(stdout);                                                                     \
-            }                                                                                       \
-            {handleerror;}                                                                          \
+            handleerror;                                                                            \
         }                                                                                           \
     } while (0)
 
@@ -350,14 +339,10 @@ static void _cuda11_cuda_vector(void);
         NVPA_Status _status = (call);                                                               \
         if (_status != NVPA_STATUS_SUCCESS) {                                                       \
             SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
-            if (DEBUG_CALLS) {                                                                      \
+            if (DEBUG_CALLS)                                                                        \
                 fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",     \
                     __FILE__, __func__, __LINE__, #call, _status);                                  \
-                printf("\"%s:%s:%i PerfWork error: function %s failed with error %d.\"\n",          \
-                   __FILE__, __func__, __LINE__, #call, _status);                                   \
-                fflush(stdout);                                                                     \
-            }                                                                                       \
-            {handleerror;}                                                                          \
+            handleerror;                                                                            \
         }                                                                                           \
     } while (0)
 #endif
@@ -1929,10 +1914,7 @@ static int _cuda_init_private(void)
     int rv, err = PAPI_OK;
     PAPI_lock(COMPONENT_LOCK);
     // The entire init, for cupti11, timed at 913 ms.
-    // The entire init, for legalcy cupti, timed at 2376 ms.
-    long long ns;
-    if (0) ns = -PAPI_get_real_nsec(); // begin timing.
-
+    // The entire init, for legacy cupti, timed at 2376 ms.
     if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
 
     SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
@@ -1977,11 +1959,6 @@ cuda_init_private_exit:
 
     // the entire init, for cupti11, timed at 913 ms.
     // the entire init, for legacy cupti, timed at 2376 ms.
-    if (0) {
-        ns += PAPI_get_real_nsec();
-        fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
-    }
-
     return (err);
 } // end init_component
 
