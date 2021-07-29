@@ -43,7 +43,7 @@
 
 #define NUM_EVENTS 1
 #define PAPI 1
-#define STEP_BY_STEP_DEBUG 0 /* helps ensure PAPI always preserves user context */
+#define STEP_BY_STEP_DEBUG 0 /* helps debug CUcontext issues. */
 
 // Prototypes
 __global__ void helloWorld(char*);
@@ -52,48 +52,12 @@ __global__ void helloWorld(char*);
 // Host function
 int main(int argc, char** argv)
 {
-	int quiet = 0;
-    CUcontext getCtx=NULL, sessionCtx=NULL, primaryCtx=NULL;
+	int retval, quiet = 0;
+    CUcontext getCtx=NULL, sessionCtx=NULL;
     cudaError_t cudaError;
     CUresult cuError; (void) cuError;
 
-    // We must do either a cuInit(), or get it done implicitly by cudaSetDevice().
-    cudaError = cudaSetDevice(0);   // Set device to zero, implicit cuInit().
-    if (STEP_BY_STEP_DEBUG) fprintf(stderr, "%s:%s:%i cudaSetDevice(0) Return Code: %s.\n", __FILE__, __func__, __LINE__, cudaGetErrorString(cudaError));
-
-    cuCtxGetCurrent(&primaryCtx);
-
-    if (STEP_BY_STEP_DEBUG) {
-        fprintf(stderr, "%s:%s:%i after cudaSetDevice(0), primaryCtx=%p.\n", __FILE__, __func__, __LINE__, primaryCtx);
-    }
-
-	/* Set TESTS_QUIET variable */
-	quiet=tests_quiet( argc, argv );
-	
-#ifdef PAPI
-	int i, retval;
-	int EventSet = PAPI_NULL;
-	long long values[NUM_EVENTS];
-	/* REPLACE THE EVENT NAME 'PAPI_FP_OPS' WITH A CUDA EVENT 
-	   FOR THE CUDA DEVICE YOU ARE RUNNING ON.
-	   RUN papi_native_avail to get a list of CUDA events that are 
-	   supported on your machine */
-        //char *EventName[] = { "PAPI_FP_OPS" };
-        // char const *EventName[] = { "cuda:::fe__cycles_elapsed.sum:device=0"};
-        char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"};
-        // 2 pass var. char const *EventName[] = { "cuda:::dram__bytes.avg.pct_of_peak_burst_elapsed:device=0"};
-	int events[NUM_EVENTS];
-	int eventCount = 0;
-
-    // Context Create Test Point 1. Here alone works. We recommend creating
-    // contexts for each device as early as possible.
-
-    cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i before PAPI_library_init() and cuCtxCreate() sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
-    }
-
+    // Init here before any cuXXX or cudaXXX calls; including cuInit(0).
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if( retval != PAPI_VER_CURRENT ) {
@@ -108,14 +72,24 @@ int main(int argc, char** argv)
 			PAPI_VERSION_MINOR( PAPI_VERSION ),
 			PAPI_VERSION_REVISION( PAPI_VERSION ) );
 	}
-
-    // Context Create Test Point 2. Here alone works.
-//  cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
     
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_library_init() and cuCtxCreate() sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
-    }
+	/* Set TESTS_QUIET variable */
+	quiet=tests_quiet( argc, argv );
+	
+#ifdef PAPI
+	int i;
+	int EventSet = PAPI_NULL;
+	long long values[NUM_EVENTS];
+	/* REPLACE THE EVENT NAME 'PAPI_FP_OPS' WITH A CUDA EVENT 
+	   FOR THE CUDA DEVICE YOU ARE RUNNING ON.
+	   RUN papi_native_avail to get a list of CUDA events that are 
+	   supported on your machine */
+        //char *EventName[] = { "PAPI_FP_OPS" };
+        // char const *EventName[] = { "cuda:::fe__cycles_elapsed.sum:device=0"}; // CUPTI_11 event. 
+        char const *EventName[] = { "cuda:::dram__bytes_read.sum:device=0"}; // CUPTI_11 event.
+        // 2 pass var. char const *EventName[] = { "cuda:::dram__bytes.avg.pct_of_peak_burst_elapsed:device=0"};
+	int events[NUM_EVENTS];
+	int eventCount = 0;
 
 	/* convert PAPI native events to PAPI code */
 	for( i = 0; i < NUM_EVENTS; i++ ){
@@ -151,12 +125,6 @@ int main(int argc, char** argv)
         fprintf(stderr, "%s:%s:%i getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
         
-        // If multiple GPUs/contexts were being used, you'd need to 
-        // create contexts for each device, and switch to that context
-        // before adding events for that device.
-
-    // Context Create Test Point 3. Here alone works.
-//  cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
         fprintf(stderr, "%s:%s:%i before PAPI_add_events(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
@@ -172,6 +140,27 @@ int main(int argc, char** argv)
         fprintf(stderr, "%s:%s:%i before PAPI_start(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
 
+        // If multiple GPUs/contexts were being used, you'd need to 
+        // create contexts for each device. See, for example, 
+        // simpleMultiGPU.cu.
+
+// Context Create. We will use this one to run our kernel.
+cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
+
+if (STEP_BY_STEP_DEBUG) {
+    cuCtxGetCurrent(&getCtx);
+    fprintf(stderr, "%s:%s:%i after cuCtxCreate(&sessionCtx), about to PAPI_start(), sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
+}
+
+    // Start PAPI event measurement
+    // For CUpti 11, the CUcontext to be used for executing kernels on each device 
+    // must be the last context used on that device when we invoke PAPI_start().
+    // For a single GPU, this is not difficult, but notice we created the CUcontext
+    // to run the kernel directly above; so it is indeed the current CUcontext on
+    // device 0 (our only device).
+    // This gets more complicated with multiple GPUs; see simpleMultiGPU.cu for an
+    // coding example of how to ensure each device has the correct kernel CUcontext.
+
 	retval = PAPI_start( EventSet );
 	if( retval != PAPI_OK ) {
 		fprintf( stderr, "PAPI_start failed\n" );
@@ -179,11 +168,10 @@ int main(int argc, char** argv)
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+        fprintf(stderr, "%s:%s:%i after PAPI_start(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
 
 #endif
-
 
 	int j;
 	
@@ -255,7 +243,7 @@ int main(int argc, char** argv)
 #ifdef PAPI
 	retval = PAPI_read( EventSet, values );
 	if( retval != PAPI_OK )
-		fprintf(stderr, "PAPI_read failed\n" );
+		fprintf(stderr, "PAPI_read failed, ret=%d (%s)\n", retval, PAPI_strerror(retval) );
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
@@ -265,9 +253,18 @@ int main(int argc, char** argv)
 	for( i = 0; i < eventCount; i++ )
 		if (!quiet) printf( "read: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], EventName[i] );
 
+    retval = cuCtxPopCurrent(&getCtx);
+	if( retval != CUDA_SUCCESS)
+		fprintf( stderr, "cuCtxPopCurrent failed, retval=%d (%s)\n", retval, PAPI_strerror(retval) );
+    
+    if (STEP_BY_STEP_DEBUG) {
+        cuCtxGetCurrent(&getCtx);
+        fprintf(stderr, "%s:%s:%i after cuCtxPopCurrent() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+    }
+   
 	retval = PAPI_stop( EventSet, values );
 	if( retval != PAPI_OK )
-		fprintf( stderr, "PAPI_stop failed\n" );
+		fprintf( stderr, "PAPI_stop failed, retval=%d (%s)\n", retval, PAPI_strerror(retval) );
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
@@ -276,7 +273,7 @@ int main(int argc, char** argv)
 
 	retval = PAPI_cleanup_eventset(EventSet);
 	if( retval != PAPI_OK )
-		fprintf(stderr, "PAPI_cleanup_eventset failed\n");
+		fprintf(stderr, "PAPI_cleanup_eventset failed, retval=%d (%s)\n", retval, PAPI_strerror(retval) );
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
@@ -285,11 +282,30 @@ int main(int argc, char** argv)
 
 	retval = PAPI_destroy_eventset(&EventSet);
 	if (retval != PAPI_OK)
-		fprintf(stderr, "PAPI_destroy_eventset failed\n");
+		fprintf(stderr, "PAPI_destroy_eventset failed, retval=%d (%s)\n", retval, PAPI_strerror(retval) );
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);
         fprintf(stderr, "%s:%s:%i after PAPI_destroy_eventset getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+    }
+
+
+	for( i = 0; i < eventCount; i++ )
+		if (!quiet) printf( "stop: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], EventName[i] );
+#endif
+
+    if (STEP_BY_STEP_DEBUG) {
+        fprintf(stderr, "%s:%s:%i before cuCtxDestroy sessionCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx);
+    }
+
+    // Test destroying the session Context.
+    if (sessionCtx != NULL) {
+        cuCtxDestroy(sessionCtx);
+    }
+
+    if (STEP_BY_STEP_DEBUG) {
+        cuCtxGetCurrent(&getCtx);
+        fprintf(stderr, "%s:%s:%i after cuCtxDestroy(%p) getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
     }
 
 	PAPI_shutdown();
@@ -299,18 +315,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "%s:%s:%i after PAPI_shutdown getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
 
-	for( i = 0; i < eventCount; i++ )
-		if (!quiet) printf( "stop: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], EventName[i] );
-#endif
-
 	test_pass(__FILE__);
-
-    cuCtxDestroy(sessionCtx);
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cuCtxDestroy() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
 
 	return 0;
 }
