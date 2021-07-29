@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <unistd.h>
-#include "papi_sde_interface.h"
+#include "sde_lib.h"
 
 #define MY_EPSILON 0.0001
 

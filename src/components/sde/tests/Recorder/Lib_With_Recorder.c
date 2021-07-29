@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "papi_sde_interface.h"
+#include "sde_lib.h"
 
 static const char *event_names[1] = {
     "simple_recording"

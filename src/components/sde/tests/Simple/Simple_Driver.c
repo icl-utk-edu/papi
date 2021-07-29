@@ -5,10 +5,11 @@
 #include "papi.h"
 #include "papi_test.h"
 
-long long int low_mark[10]  = { 2LL,  18LL,  67LL,  94LL, 110LL, 123LL,  180LL,  188LL,  200LL,  222LL};
-long long int high_mark[10] = { 3LL,  18LL,  96LL, 143LL, 167LL, 202LL,  286LL,  295LL,  314LL,  361LL};
-long long int tot_iter[10]  = {19LL, 126LL, 459LL, 658LL, 757LL, 903LL, 1271LL, 1314LL, 1400LL, 1588LL};
-double comp_val[10] = {7.401931, 48.169870, 161.865161, 231.191221, 265.836745, 322.240655, 446.704770, 460.555435, 495.383479, 560.832737};
+long long int low_mark[10]  = { 0LL,  2LL,  2LL,  7LL, 21LL,  29LL,  29LL,  29LL,  29LL,  34LL};
+long long int high_mark[10] = { 1LL,  1LL,  2LL,  3LL,  4LL,   8LL,   9LL,   9LL,   9LL,  13LL};
+long long int tot_iter[10]  = { 2LL,  9LL, 13LL, 33LL, 83LL, 122LL, 126LL, 130LL, 135LL, 176LL};
+double comp_val[10] = {0.653676, 3.160483, 4.400648, 10.286250, 25.162759, 36.454895, 37.965891, 39.680220, 41.709039, 53.453990};
+
 
 void setup_PAPI(int *event_set);
 void simple_init(void);
