@@ -15,7 +15,7 @@ LDFLAGS += -Llib -L$(datadir) -lpapi
 
 SDE_F08_API=../sde_F.F90
 
-TESTS = Minimal_Test Simple_Test Simple2_Test Simple2_NoPAPI_Test Recorder_Test Created_Counter_Test Overflow_Test sde_test_f08
+TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test sde_test_f08
 
 sde_tests: $(TESTS)
 
@@ -25,6 +25,9 @@ prfx=Minimal
 
 Minimal_Test: $(prfx)/Minimal_Test.c
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) $(LDFLAGS)
+
+Minimal_Test++: $(prfx)/Minimal_Test++.cpp
+	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) $(LDFLAGS)
 
 ################################################################################
 ## Simple test
@@ -49,6 +52,12 @@ Simple2_Test: $(prfx)/Simple2_Driver.c libSimple2.so
 Simple2_NoPAPI_Test: $(prfx)/Simple2_NoPAPI_Driver.c libSimple2.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) -Llib -lSimple2 -lm -ldl
 
+libSimple2++.so: $(prfx)/Simple2_Lib++.cpp
+	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
+
+Simple2_Test++: $(prfx)/Simple2_Driver++.cpp libSimple2++.so
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple2++ $(LDFLAGS) -lm
+
 ################################################################################
 ## Recorder test
 prfx=Recorder
@@ -58,6 +67,12 @@ libRecorder.so: $(prfx)/Lib_With_Recorder.c
 
 Recorder_Test: $(prfx)/Recorder_Driver.c libRecorder.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lRecorder $(LDFLAGS) -lm
+
+libRecorder++.so: $(prfx)/Lib_With_Recorder++.cpp
+	$(CXX) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
+
+Recorder_Test++: $(prfx)/Recorder_Driver++.cpp libRecorder++.so
+	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lRecorder++ $(LDFLAGS) -lm
 
 
 ################################################################################
@@ -71,6 +86,12 @@ Created_Counter_Test: $(prfx)/Created_Counter_Driver.c libCreated_Counter.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(LDFLAGS) -lm
 Overflow_Test: $(prfx)/Overflow_Driver.c libCreated_Counter.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(LDFLAGS) -lm
+
+libCreated_Counter++.so: $(prfx)/Lib_With_Created_Counter++.cpp
+	$(CXX) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
+
+Created_Counter_Test++: $(prfx)/Created_Counter_Driver++.cpp libCreated_Counter++.so
+	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter++ $(LDFLAGS) -lm
 
 ################################################################################
 ## Advanced test

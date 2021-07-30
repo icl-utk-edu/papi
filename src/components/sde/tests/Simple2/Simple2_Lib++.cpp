@@ -12,7 +12,6 @@ double simple_compute(double x);
 // this library, so they can not be accessed directly.
 static double comp_value;
 static long long int total_iter_cnt, low_wtrmrk, high_wtrmrk;
-static papi_handle_t handle;
 
 static const char *ev_names[4] = {
     "COMPUTED_VALUE",
@@ -21,9 +20,10 @@ static const char *ev_names[4] = {
     "HIGH_WATERMARK_REACHED"
 };
 
-long long int counter_accessor_function( void *param );
+long long int counter_accessor_function( double *param );
 
 void simple_init(void){
+    papi_sde::PapiSde sde("Simple2_CPP");
 
     // Initialize library specific variables
     comp_value = 0.0;
@@ -32,13 +32,12 @@ void simple_init(void){
     high_wtrmrk = 0;
 
     // Initialize PAPI SDEs
-    handle = papi_sde_init("Simple2");
-    papi_sde_register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, counter_accessor_function, &comp_value);
-    papi_sde_register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
-    papi_sde_register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
-    papi_sde_register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
-    papi_sde_add_counter_to_group(handle, ev_names[2], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
-    papi_sde_add_counter_to_group(handle, ev_names[3], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
+    sde.register_fp_counter(ev_names[0], PAPI_SDE_RO|PAPI_SDE_DELTA, counter_accessor_function, comp_value);
+    sde.register_counter(ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA, total_iter_cnt);
+    sde.register_counter(ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA, low_wtrmrk);
+    sde.register_counter(ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA, high_wtrmrk);
+    sde.add_counter_to_group(ev_names[2], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
+    sde.add_counter_to_group(ev_names[3], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
 
     return;
 }
@@ -47,8 +46,9 @@ void simple_init(void){
 // applications. It is a hook for the utility 'papi_native_avail' to be able to
 // discover the SDEs that are exported by this library.
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
-    handle = fptr_struct->init("Simple2");
-    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, counter_accessor_function, &comp_value);
+    papi_handle_t handle = fptr_struct->init("Simple2_CPP");
+    handle = fptr_struct->init("Simple2_CPP");
+    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, (long long (*)(void *))counter_accessor_function, &comp_value);
     fptr_struct->register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
     fptr_struct->register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
     fptr_struct->register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
@@ -65,9 +65,9 @@ papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
 }
 
 // This function allows the library to perform operations in order to compute the value of an SDE at run-time
-long long counter_accessor_function( void *param ){
+long long counter_accessor_function( double *param ){
     long long *ll_ptr;
-    double *dbl_ptr = (double *)param;
+    double *dbl_ptr = param;
 
     // Scale the variable by a factor of two. Real libraries will do meaningful work here.
     double value = *dbl_ptr * 2.0;
