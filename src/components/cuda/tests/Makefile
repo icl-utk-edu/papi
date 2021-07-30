@@ -22,6 +22,9 @@ default: $(TESTS)
 %.mac:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
 
+HelloWorld_CUPTI11: HelloWorld_CUPTI11.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) -o HelloWorld_CUPTI11 HelloWorld_CUPTI11.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
@@ -29,6 +32,9 @@ HelloWorld_NP_Ctx: HelloWorld_NP_Ctx.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld_NP_Ctx HelloWorld_NP_Ctx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.cu $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+simpleMultiGPU_CUPTI11: simpleMultiGPU_CUPTI11.cu $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -DPAPI -g -o $@ $+ $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_no_counters: simpleMultiGPU.cu $(UTILOBJS)

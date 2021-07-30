@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
-#include "papi_sde_interface.h"
+#include "sde_lib.h"
 
 // API functions
 void simple_init(void);
@@ -46,15 +46,24 @@ double simple_compute(double x){
     double sum = 0.0;
     int lcl_iter = 0;
 
+    if( x > 1.0 )
+        x = 1.0/x;
+    if( x < 0.000001 )
+        x += 0.3579;
+
     while( 1 ){
-        double y,tmp;
+        double y,x2,x3,x4;
         lcl_iter++;
 
         // Compute a function with range [0:1] so we can iterate
         // multiple times without diverging or creating FP exceptions.
-        tmp = (2.0+sin(314.0*x)+sin(11.0*x*x));
-        tmp = tmp*tmp;
-        y = 0.5+sin(3.5*tmp/4.0)/2.0;
+        x2 = x*x;
+        x3 = x2*x;
+        x4 = x2*x2;
+        y = 42.53*x4 -67.0*x3 +25.0*x2 +x/2.15;
+        y = y*y;
+        if( y < 0.01 )
+            y = 0.5-y;
 
         // Now set the next x to be the current y, so we can iterate again.
         x = y;
@@ -76,7 +85,7 @@ double simple_compute(double x){
         comp_value += y;
 
         // If some condition is met, terminate the loop
-        if( 0.67 < y && y < 0.68 )
+        if( 0.61 < y && y < 0.69 )
             break;
     }
     total_iter_cnt += lcl_iter;

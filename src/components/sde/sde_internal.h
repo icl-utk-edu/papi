@@ -13,8 +13,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "extras.h"
-#include "sde_common.h"
-#include "sde_lib/papi_sde_interface.h"
+#define SDE_COMMON_ONLY
+#include "sde_lib.h"
 
 #define REGISTERED_EVENT_MASK 0x2;
 
