@@ -1979,6 +1979,15 @@ for comp in $components; do
   if test "x$comp" = "xintel_gpu" ; then
     LDFLAGS="$LDFLAGS -lstdc++"
   fi
+
+  # check for cuda component to determine if we need to check on Profiler.
+  if test "x$comp" = "xcuda" ; then
+    if test "`find $PAPI_CUDA_ROOT -name "cupti_profiler_target.h"`" != "" ; then
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=1"
+    else
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=0"
+    fi
+  fi 
 done
 
 AC_MSG_RESULT($components)
