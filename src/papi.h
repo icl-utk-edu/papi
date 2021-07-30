@@ -777,6 +777,107 @@ typedef char* PAPI_user_defined_events_file_t;
       PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
 
+/** @ingroup papi_data_structures */
+    typedef enum {
+        PAPI_DEV_TYPE_ID__CPU,
+        PAPI_DEV_TYPE_ID__NVIDIA_GPU,
+        PAPI_DEV_TYPE_ID__AMD_GPU,
+        PAPI_DEV_TYPE_ID__MAX_NUM,
+    } PAPI_dev_type_id_e;
+
+/** @ingroup papi_data_structures */
+    typedef union _papi_gpu_info {
+        struct {
+            unsigned long uid;
+            char name[PAPI_2MAX_STR_LEN];
+            int warp_size;
+            int max_threads_per_block;
+            int max_blocks_per_multi_proc;
+            int max_shmmem_per_block;
+            int max_shmmem_per_multi_proc;
+            int max_block_dim_x;
+            int max_block_dim_y;
+            int max_block_dim_z;
+            int max_grid_dim_x;
+            int max_grid_dim_y;
+            int max_grid_dim_z;
+            int multi_processor_count;
+            int multi_kernel_per_ctx;
+            int can_map_host_mem;
+            int can_overlap_comp_and_data_xfer;
+            int unified_addressing;
+            int managed_memory;
+            int major;
+            int minor;
+            struct {
+                int proc_count;
+                int *proc_id_arr;
+            } affinity;
+        } nvidia;
+
+        struct {
+            unsigned long uid;
+            char name[PAPI_2MAX_STR_LEN];
+            unsigned int wavefront_size;
+            unsigned int simd_per_compute_unit;
+            unsigned int max_threads_per_workgroup;
+            unsigned int max_waves_per_compute_unit;
+            unsigned int max_shmmem_per_workgroup;
+            unsigned short max_workgroup_dim_x;
+            unsigned short max_workgroup_dim_y;
+            unsigned short max_workgroup_dim_z;
+            unsigned int max_grid_dim_x;
+            unsigned int max_grid_dim_y;
+            unsigned int max_grid_dim_z;
+            unsigned int compute_unit_count;
+            unsigned int major;
+            unsigned int minor;
+            struct {
+                int proc_count;
+                int *proc_id_arr;
+            } affinity;
+        } amd;
+    } PAPI_gpu_info_u;
+
+/** #ingroup papi_data_structures */
+    typedef struct _papi_cache_level_info {
+        int num_caches;
+        PAPI_mh_cache_info_t cache[PAPI_MH_MAX_LEVELS];
+    } PAPI_cache_level_info_t;
+
+/** @ingroup papi_data_structures */
+    typedef struct _papi_cpu_info {
+        char name[PAPI_MAX_STR_LEN];
+        int cpuid_family;
+        int cpuid_model;
+        int cpuid_stepping;
+        int sockets;
+        int numas;
+        int cores;
+        int threads;
+        int cache_levels;
+        PAPI_cache_level_info_t clevel[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+#define PAPI_MAX_NUM_NODES 32
+        int numa_memory[PAPI_MAX_NUM_NODES];
+#define PAPI_MAX_NUM_THREADS 512
+        int numa_affinity[PAPI_MAX_NUM_THREADS];
+    } PAPI_cpu_info_t;
+
+/** #ingroup papi_data_structures */
+    typedef union _papi_dev_info_u {
+        PAPI_gpu_info_u gpu;
+        PAPI_cpu_info_t cpu;
+    } PAPI_dev_info_u;
+
+/** @ingroup papi_data_structures */
+    typedef struct _papi_dev_type_info {
+        PAPI_dev_type_id_e id;
+        char vendor[PAPI_MAX_STR_LEN];
+        char status[PAPI_MAX_STR_LEN];
+        int num_devices;
+        PAPI_dev_info_u *dev_info_arr;
+    } PAPI_dev_type_info_t;
+
 /**  @ingroup papi_data_structures
   *  @brief Hardware info structure */
    typedef struct _papi_hw_info {
@@ -811,6 +912,9 @@ typedef char* PAPI_user_defined_events_file_t;
 
       /* For future expansion */
       int reserved[8];
+
+      /* Device information */
+      PAPI_dev_type_info_t *dev_type_arr;
 
    } PAPI_hw_info_t;
 
@@ -861,6 +965,7 @@ typedef char* PAPI_user_defined_events_file_t;
 		PAPI_multiplex_option_t multiplex;
 		PAPI_itimer_option_t itimer;
 		PAPI_hw_info_t *hw_info;
+		PAPI_dev_type_info_t *dev_type_info_arr;
 		PAPI_shlib_info_t *shlib_info;
 		PAPI_exe_info_t *exe_info;
 		PAPI_component_info_t *cmp_info;
@@ -1130,6 +1235,21 @@ enum {
 int   PAPI_num_hwctrs(void); /**< return the number of hardware counters for the cpu. for backward compatibility. Don't use! */
 #define PAPI_COMPONENT_INDEX(a) PAPI_get_event_component(a)
 #define PAPI_descr_error(a) PAPI_strerror(a)
+
+#define PAPI_DEV_COUNT(i)                                   \
+    info->dev_type_arr[i].num_devices
+
+#define PAPI_IS_DEV_GPU(vendor, info, i)                    \
+    (info->dev_type_arr[i].id == PAPI_DEV_TYPE_ID__ ## vendor ## _GPU)
+
+#define PAPI_IS_DEV_CPU(info, i)                            \
+    (info->dev_type_arr[i].id == PAPI_DEV_TYPE_ID__CPU)
+
+#define PAPI_GPU_INFO_STRUCT(info, i, j)                    \
+    ((PAPI_gpu_info_u *)(info->dev_type_arr[i].dev_info_arr) + j)
+
+#define PAPI_CPU_INFO_STRUCT(info, i, j)                    \
+    ((PAPI_cpu_info_t *)(info->dev_type_arr[i].dev_info_arr) + j)
 
 #ifdef __cplusplus
 }
