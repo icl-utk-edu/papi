@@ -1873,11 +1873,11 @@ namespace papi_sde
 
           template <typename T, typename P>
           int register_fp_counter(const char *event_name, int cntr_mode, T (*func_ptr)(P*), P const &param){
-//              if( std::is_same<long long int, T>::value ){
               if( sizeof(T) == sizeof(long long int) ){
                   return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (long long int (*)(void *))func_ptr, &param);
               }else{
                   SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type as wide as a 'long long int'.\n");
+                  return SDE_EINVAL;
               }
           }
 
