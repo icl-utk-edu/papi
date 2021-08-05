@@ -500,6 +500,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_thunderx2_ccpi1_support,
 	&arm_fujitsu_a64fx_support,
 	&arm_n1_support,
+	&arm_n2_support,
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_ARM64
 	&arm_cortex_a57_support,
@@ -514,6 +515,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_thunderx2_ccpi1_support,
 	&arm_fujitsu_a64fx_support,
 	&arm_n1_support,
+	&arm_n2_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_S390X
