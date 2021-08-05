@@ -45,6 +45,9 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
     else
         cache_line = hw_desc->dcache_line_size[0];
 
+    // Print the core to which each thread is pinned.
+    print_core_affinities(ofp_papi);
+
     // Go through each parameter variant.
     for(pattern = 3; pattern <= 4; ++pattern)
     {
@@ -98,19 +101,10 @@ void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_b
     int *values;
     double ***rslts, *sorted_rslts;
     double ***counter, *sorted_counter;
-    int status, guessCount;
-    int ONT = 1;
+    int status, guessCount, ONT;
 
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
-
-    // Get the number of threads.
-    #pragma omp parallel default(shared)
-    {
-        if(!omp_get_thread_num()) {
-            ONT = omp_get_num_threads();
-        }
-    }
 
     // The number of different sizes we will guess, trying to find the right size.
     guessCount = 0;
@@ -122,6 +116,9 @@ void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_b
     }else{
         guessCount = _SIZE_SAMPLES_;
     }
+
+    // Get the number of threads.
+    ONT = get_thread_count();
 
     // Latency results from the benchmark.
     rslts = (double ***)malloc(max_iter*sizeof(double **));
@@ -156,9 +153,10 @@ void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_b
     }
 
     // Sort and print latency and counter results.
+    fprintf(ofp, "# PTRN=%d, STRIDE=%d, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
+
     if(latency_only) {
 
-        fprintf(ofp, "# PTRN=%d, STRIDE=%d, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
         for(j=0; j<guessCount; ++j){
             fprintf(ofp, "%d", values[j]);
             for(k=0; k<ONT; ++k){
@@ -331,4 +329,51 @@ error:
         free(ptr[j]);
     }
     return -1;
+}
+
+int get_thread_count() {
+
+    int threadNum = 1;
+
+    #pragma omp parallel default(shared)
+    {
+        if(!omp_get_thread_num()) {
+            threadNum = omp_get_num_threads();
+        }
+    }
+
+    return threadNum;
+}
+
+void print_core_affinities(FILE *ofp) {
+
+    int k, ONT;
+    int *pinnings = NULL;
+
+    // Get the number of threads.
+    ONT = get_thread_count();
+
+    // List of core affinities in which the index is the thread ID.
+    pinnings = (int *)malloc(ONT*sizeof(int));
+    if( NULL == pinnings ) {
+        fprintf(stderr, "Error: cannot allocate space for experiment.\n");
+        return;
+    }
+
+    #pragma omp parallel default(shared)
+    {
+        int idx = omp_get_thread_num();
+
+        pinnings[idx] = sched_getcpu();
+    }
+
+    fprintf(ofp, "# Core:");
+    for(k=0; k<ONT; ++k) {
+        fprintf(ofp, " %d", pinnings[k]);
+    }
+    fprintf(ofp, "\n");
+
+    free(pinnings);
+
+    return;
 }

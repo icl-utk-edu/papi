@@ -749,8 +749,10 @@ void get_dcache_latencies(int max_iter, hw_desc_t *hw_desc, char *outputdir){
         stride = 2*hw_desc->dcache_line_size[0];
     }
     ppb = 128;
-    d_cache_test(3, max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
 
+    // Get the latencies from a custom set of parameters.
+    print_core_affinities(ofp);
+    d_cache_test(3, max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
     fclose(ofp);
 
     // Get latencies for all parameter combinations.
