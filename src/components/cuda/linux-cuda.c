@@ -1254,6 +1254,14 @@ static int _cuda_linkCudaLibraries(void)
 
     // We have a dl4. (libnvperf_host.so)
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl4, "NVPW_GetSupportedChipNames");
+
+    if (0) { // debug informative; this is how to show the full path of the actual library found.
+        Dl_info nvperf_info;
+        // requires address of any function within the library.
+        dladdr(NVPW_GetSupportedChipNamesPtr, &nvperf_info);
+        fprintf(stderr, "dl4 Location='%s'\n", nvperf_info.dli_fname);
+    }
+    
     NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK(dl4, "NVPW_CUDA_MetricsContext_Create");
     NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_Destroy");
     NVPW_MetricsContext_GetMetricNames_BeginPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetMetricNames_Begin");
@@ -1292,6 +1300,9 @@ static int _cuda_linkCudaLibraries(void)
 
     if (0) fprintf(stderr, "%s:%s:%i, cuda_version=%d cuda_runtime_version=%d.\n", __FILE__, __func__, __LINE__, cuda_version, cuda_runtime_version);
 
+    cuptiProfilerGetCounterAvailabilityPtr = NULL;
+    NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
+
 #if CUPTI_PROFILER == 1
     if (cuda_version >= 11000 && cuda_runtime_version >= 11000)
     {
@@ -1300,8 +1311,11 @@ static int _cuda_linkCudaLibraries(void)
     }
     else
     {
-        cuptiProfilerGetCounterAvailabilityPtr = NULL;
-        NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
+        // We cannot run without them; it may be possible to just eliminate them but haven't tried that yet. -TC
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Cuda and cuda_runtime lib versions must be >=11.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP); // We do not currently support cuda 10.x. 
     }
 #endif
 
@@ -4032,6 +4046,16 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
         Profiler_FlushCounterData_Params_STRUCT_SIZE=CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE11;
     }
 
+    // If any of these do not match the actual sizes, we have a mismatch between compile headers and actual library.
+    if (CUpti_Device_GetChipName_Params_STRUCT_SIZE != GetChipName_Params_STRUCT_SIZE ||
+        CUpti_Profiler_SetConfig_Params_STRUCT_SIZE != Profiler_SetConfig_Params_STRUCT_SIZE ||
+        CUpti_Profiler_EndPass_Params_STRUCT_SIZE != Profiler_EndPass_Params_STRUCT_SIZE ||
+        CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE != Profiler_FlushCounterData_Params_STRUCT_SIZE) {
+
+        strncpy(_cuda_vector.cmp_info.disabled_reason, "Profiler structures do not match Compiled Version. Possibly wrong libraries found.", PAPI_MAX_STR_LEN);
+        return (PAPI_EMISC);
+    }
+
     // Comparison for debugging if you want it.
     if (0) {
         fprintf(stderr, "%s:%s:%i Actual vs Set sizes:\n", __FILE__, __func__, __LINE__);
@@ -4384,10 +4408,10 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         setCounterAvailabilityParams.pRawMetricsConfig = pRawMetricsConfig;
         setCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
         NVPW_CALL((*NVPW_RawMetricsConfig_SetCounterAvailabilityPtr) (&setCounterAvailabilityParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock( COMPONENT_LOCK );
-            return(PAPI_EMISC));
+        // On error,
+        if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+        _papi_hwi_unlock( COMPONENT_LOCK );
+        return(PAPI_EMISC));
 
         // Note: The sample code sometimes creates params and then immediately
         // destroys them, but uses param structure elements later. But if I
