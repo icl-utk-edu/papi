@@ -388,7 +388,7 @@ static void _cuda11_cuda_vector(void);
             __FILE__, __func__, __LINE__, #call);                                                   \
         NVPA_Status _status = (call);                                                               \
         if (_status != NVPA_STATUS_SUCCESS) {                                                       \
-            SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
+            SUBDBG("error: function %s failed with error %s.\n", #call, _status);                   \
             if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",         \
                     __FILE__, __func__, __LINE__, #call, _status);                                  \
             {handleerror;}                                                                          \
