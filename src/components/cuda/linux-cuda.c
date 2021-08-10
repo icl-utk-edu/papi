@@ -571,6 +571,60 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
 
+//-----------------------------------------------------------------------------
+// Find devices: We search the file system for
+// /sys/class/drm/card?/device/vendor. These must be card0, card1, etc. When we
+// cannot open a file we stop looking. If they can be opened and return a line,
+// it will be a string 0xhhhh as a hex vendor ID. See the website 
+// https://pci-ids.ucw.cz/read/PC
+// for a list. 0x10de is the vendor ID for Nvidia.
+// This function returns the number of Nvidia devices in the system.
+// WARNING: This will count Nvidia devices that are not GPUs. Each device also
+// has it's own device code; but I am not sure if there is a way to tell in 
+// the file system if the device is a GPU or not. 'class', 'driver' etc may
+// help isolate just GPUs. Get Nvidia help if that is necessary. -Tony C.
+// 
+// Note we DO have cuDeviceGetCount(), but this requires cuInit() to be run;
+// and we don't want to do that before delayed_init. It causes problems for 
+// higher level tool vendors that use PAPI underneath. Without cuInit(); I 
+// know of no other way to check for Nvidia GPUs present in the system.
+//-----------------------------------------------------------------------------
+static int _cuda_count_nvidia_devices(void)
+{
+    char cardname[64]="/sys/class/drm/card?/device/vendor";     // card filename.
+    uint32_t myVendor = 0x10de;                                 // The NVIDIA GPU vendor ID.
+    char line[7];
+    size_t bytes;
+    int card;
+    long int devID;
+
+    int totalDevices=0;                                                 // Reset, in case called more than once.
+    line[6]=0;                                                          // ensure null terminator.
+
+    for (card=0; card<64; card++) {
+        sprintf(cardname, "/sys/class/drm/card%i/device/vendor", card); // make a name for myself.
+        FILE *fcard = fopen(cardname, "r");                             // Open for reading.
+        if (fcard == NULL) {                                            // Failed to open,
+            break;
+        }
+
+        bytes=fread(line, 1, 6, fcard);                                 // read six bytes.
+        fclose(fcard);                                                  // Always close it (avoid mem leak).
+        if (bytes != 6) {                                               // If we did not read 6,
+            break;                                                      // .. get out.
+        }
+
+        devID = strtol(line, NULL, 16);                                 // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
+        if (devID != myVendor) continue;                                // Not the droid I am looking for.
+
+        // Found one.
+        totalDevices++;                                                 // count it.
+    } // end loop through possible cards.
+
+    return(totalDevices);
+} // end __cuda_count_nvidia_devices
+
+
 #if CUPTI_PROFILER == 1
 //-----------------------------------------------------------------------------
 // Context Chain Management [CCM].
@@ -2359,6 +2413,19 @@ static int _cuda_init_component(int cidx)
     // num_mpx_cntrs must be >0 for _papi_hwi_assign_eventset() to work.
     _cuda_vector.cmp_info.num_mpx_cntrs = PAPICUDA_MAX_COUNTERS;
 
+    // Count if we have any devices with vendor ID for Nvidia.
+    int devices = _cuda_count_nvidia_devices();
+    if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
+    if (devices < 1) {
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "No Nvidia Devices Found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    }
+
     int err;
     PAPI_lock(COMPONENT_LOCK);
     err = _cuda_primaryLinkLibraries();
@@ -2444,7 +2511,11 @@ static int _cuda_init_private(void)
     // The entire init, for cupti11, timed at 913 ms.
     // The entire init, for legalcy cupti, timed at 2376 ms.
 
-    if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
+    if (_cuda_vector.cmp_info.initialized) {
+        // copy any previous disabled error code.
+        err = _cuda_vector.cmp_info.disabled;
+        goto cuda_init_private_exit;
+    }
 
     long long ns;
     if (0) ns = -PAPI_get_real_nsec();
