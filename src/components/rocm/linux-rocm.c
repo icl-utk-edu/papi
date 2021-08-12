@@ -1143,12 +1143,15 @@ static int _rocm_shutdown_component(void)
     }
 
     // Shutdown ROC runtime
-    // DEBUG: This causes a segfault.
-    ROCM_CALL_CK(hsa_shut_down, (), return (PAPI_EMISC));
+    // It is possible we never completed initialization.
+    if (hsa_shut_downPtr) {
+        ROCM_CALL_CK(hsa_shut_down, (), return (PAPI_EMISC));
+    }
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
-    dlclose(dl1);
-    dlclose(dl2);
+    // if we ever opened them.
+    if (dl1) dlclose(dl1);
+    if (dl2) dlclose(dl2);
     return (PAPI_OK);
 }
 
