@@ -571,6 +571,84 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
 
+//-----------------------------------------------------------------------------
+// This function returns the number of Nvidia devices in the system.
+// We search the file system for /sys/class/drm/card?/device/vendor. These must
+// be card0, card1, etc. When we cannot open a file we stop looking. If they
+// can be opened and return a line it will be a string 0xhhhh as a hex vendor
+// ID. See the website  https://pci-ids.ucw.cz, particularly 
+// https://pci-ids.ucw.cz/read/PC and  https://pci-ids.ucw.cz/read/PD/
+// for a list. 0x10de is the vendor ID for Nvidia.
+// The /sys/class/drm/card?/device/class, if present, must begin 0x03. This 
+// indicates a "Display Controller" (i.e. GPU) but on Nvidia we have seen both
+//  0x030200 and 0x030000, so we only match the beginning.
+// 
+// If your devices are not found; double check what the system is saying
+// manually; e.g. 
+// >cat /sys/class/drm/card0/device/vendor
+// >cat /sys/class/drm/card0/device/class
+// 
+// Note we DO have cuDeviceGetCount(), but this requires cuInit() to be run;
+// and we don't want to do that before delayed_init. It causes problems for 
+// higher level tool vendors that use PAPI underneath. Without cuInit(); I 
+// know of no other way to check for Nvidia GPUs present in the system.
+//-----------------------------------------------------------------------------
+static int _cuda_count_nvidia_devices(void)
+{
+    char vendor_id[64]="/sys/class/drm/card%i/device/vendor";
+    char class_id[64]="/sys/class/drm/card%i/device/class";
+    char filename[64];
+    uint32_t myVendor = 0x10de;                     // The NVIDIA GPU vendor ID.
+    char line[16];
+    size_t bytes;
+    int card;
+    long int devID;
+
+    int totalDevices=0;                             // Reset, in case called more than once.
+
+    for (card=0; card<64; card++) {
+        sprintf(filename, vendor_id, card);         // make a name for myself.
+        FILE *fcard = fopen(filename, "r");         // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            break;
+        }
+
+        bytes=fread(line, 1, 6, fcard);             // read six bytes.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes != 6) {                           // If we did not read 6,
+            continue;                               // skip this one, vendor id is malformed.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        devID = strtol(line, NULL, 16);             // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
+        if (devID != myVendor) continue;            // Not the droid I am looking for.
+
+        // Right vendor. Look for some class.
+        sprintf(filename, class_id, card);          // make a name for myself.
+        fcard = fopen(filename, "r");               // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            continue;                               // skip this one if no class file found.
+        }
+
+        // expecting 8 bytes for class; but some have a '0xa0' at the end and read nine bytes.
+        // e.g. '0x030200'. So I read 4, I only care if it starts with '0x03'; a Display Controller.
+        bytes=fread(line, 1, 4, fcard);             // read 1 byte x 4.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes < 4) {                            // If we did not read enough to match,
+            continue;                               // skip this one if class text is too short.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        if (strncasecmp("0x03", line, 4) != 0) continue;    // Not a Display Controller.
+
+        // Found one.
+        totalDevices++;                             // count it.
+    } // end loop through possible cards.
+
+    return(totalDevices);
+} // end __cuda_count_nvidia_devices
+
+
 #if CUPTI_PROFILER == 1
 //-----------------------------------------------------------------------------
 // Context Chain Management [CCM].
@@ -2359,6 +2437,19 @@ static int _cuda_init_component(int cidx)
     // num_mpx_cntrs must be >0 for _papi_hwi_assign_eventset() to work.
     _cuda_vector.cmp_info.num_mpx_cntrs = PAPICUDA_MAX_COUNTERS;
 
+    // Count if we have any devices with vendor ID for Nvidia.
+    int devices = _cuda_count_nvidia_devices();
+    if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
+    if (devices < 1) {
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "No Nvidia Devices Found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    }
+
     int err;
     PAPI_lock(COMPONENT_LOCK);
     err = _cuda_primaryLinkLibraries();
@@ -2444,7 +2535,11 @@ static int _cuda_init_private(void)
     // The entire init, for cupti11, timed at 913 ms.
     // The entire init, for legalcy cupti, timed at 2376 ms.
 
-    if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
+    if (_cuda_vector.cmp_info.initialized) {
+        // copy any previous disabled error code.
+        err = _cuda_vector.cmp_info.disabled;
+        goto cuda_init_private_exit;
+    }
 
     long long ns;
     if (0) ns = -PAPI_get_real_nsec();
