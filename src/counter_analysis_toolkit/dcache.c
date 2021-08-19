@@ -214,7 +214,7 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
     uintptr_t rslt=42, *v[ONT], *ptr[ONT];
 
     // Allocate memory for each thread to traverse.
-    #pragma omp parallel default(shared)
+    #pragma omp parallel private(i) reduction(+:rslt) default(shared)
     {
         int idx = omp_get_thread_num();
 
