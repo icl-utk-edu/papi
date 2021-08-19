@@ -2,6 +2,7 @@
 #define _INSTR_CACHE_
 
 #include <stdio.h>
+#include "hw_desc.h"
 
 #define NO_COPY 0
 #define DO_COPY 1
@@ -31,7 +32,7 @@
     result = z1 ^ z2 ^ z3 ^ z4;\
 }
 
-void i_cache_driver(char* papi_event_name, int init, char* outdir, int show_progress);
+void i_cache_driver(char* papi_event_name, int init, hw_desc_t *hw_desc, char* outdir, int show_progress);
 void seq_driver(FILE* ofp_papi, char* papi_event_name, int init, int show_progress);
 
 #endif
