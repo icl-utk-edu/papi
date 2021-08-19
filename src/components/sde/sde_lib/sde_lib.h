@@ -1873,10 +1873,10 @@ namespace papi_sde
 
           template <typename T, typename P>
           int register_fp_counter(const char *event_name, int cntr_mode, T (*func_ptr)(P*), P const &param){
-              if( sizeof(T) == sizeof(long long int) ){
-                  return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (long long int (*)(void *))func_ptr, &param);
+              if( std::is_same<long long int, T>::value ){
+                  return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (papi_sde_fptr_t)func_ptr, &param);
               }else{
-                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type as wide as a 'long long int'.\n");
+                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.\n");
                   return SDE_EINVAL;
               }
           }
@@ -1975,7 +1975,8 @@ namespace papi_sde
 
     }; // class PapiSde
 
-    PapiSde::CreatedCounter &operator+=(PapiSde::CreatedCounter &X, const long long int increment){
+    template <typename T>
+    PapiSde::CreatedCounter &operator+=(PapiSde::CreatedCounter &X, const T increment){
         X.increment(increment);
         return X;
     }
@@ -1984,18 +1985,8 @@ namespace papi_sde
         X.increment(1LL);
         return X;
     }
-    // Postfix increment x++;
-    PapiSde::CreatedCounter &operator++(PapiSde::CreatedCounter &X, int){
-        X.increment(1LL);
-        return X;
-    }
     // Prefix decrement --x;
     PapiSde::CreatedCounter &operator--(PapiSde::CreatedCounter &X){
-        X.increment(-1LL);
-        return X;
-    }
-    // Postfix decrement --x;
-    PapiSde::CreatedCounter &operator--(PapiSde::CreatedCounter &X, int ){
         X.increment(-1LL);
         return X;
     }

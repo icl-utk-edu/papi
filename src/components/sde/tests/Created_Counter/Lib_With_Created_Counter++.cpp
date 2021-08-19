@@ -55,7 +55,7 @@ void cclib_do_work(void){
         BRNG();
         double r = (1.0*result)/(1.0*INT_MAX);
         if( r < MY_EPSILON && r > -MY_EPSILON ){
-            (*sde_cntr)++;
+            ++(*sde_cntr);
         }
         // Do some usefull work here
         if( !(i%100) )

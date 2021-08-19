@@ -48,7 +48,7 @@ void simple_init(void){
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
     papi_handle_t handle = fptr_struct->init("Simple2_CPP");
     handle = fptr_struct->init("Simple2_CPP");
-    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, (long long (*)(void *))counter_accessor_function, &comp_value);
+    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, NULL, NULL);
     fptr_struct->register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
     fptr_struct->register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
     fptr_struct->register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
@@ -72,7 +72,7 @@ long long counter_accessor_function( double *param ){
     // Scale the variable by a factor of two. Real libraries will do meaningful work here.
     double value = *dbl_ptr * 2.0;
 
-    // Pack the bits of the result in a long long int. This ugliness will go away as soon as we have a C++ API.
+    // Pack the bits of the result in a long long int. This ugliness will go away as soon as we have a C++ backend for SDEs.
     ll_ptr = (long long *)&value;
 
     return *ll_ptr;

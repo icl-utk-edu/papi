@@ -72,7 +72,7 @@ long long counter_accessor_function( void *param ){
     // Scale the variable by a factor of two. Real libraries will do meaningful work here.
     double value = *dbl_ptr * 2.0;
 
-    // Pack the bits of the result in a long long int. This ugliness will go away as soon as we have a C++ API.
+    // Pack the bits of the result in a long long int.
     ll_ptr = (long long *)&value;
 
     return *ll_ptr;
