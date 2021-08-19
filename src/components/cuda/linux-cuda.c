@@ -126,7 +126,7 @@ typedef struct cuda_device_desc {
     CUdevice    cuDev;
     int         deviceNum;
     char        deviceName[PAPI_MIN_STR_LEN];
-    struct cudaDeviceProp myProperties;
+    int         CC_Major;                   /* Compute Capability Major */
     uint32_t    maxDomains;                 /* number of domains per device */
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
@@ -388,7 +388,7 @@ static void _cuda11_cuda_vector(void);
             __FILE__, __func__, __LINE__, #call);                                                   \
         NVPA_Status _status = (call);                                                               \
         if (_status != NVPA_STATUS_SUCCESS) {                                                       \
-            SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
+            SUBDBG("error: NVPW function %s failed with error %d.\n", #call, _status);              \
             if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",         \
                     __FILE__, __func__, __LINE__, #call, _status);                                  \
             {handleerror;}                                                                          \
@@ -456,7 +456,8 @@ DECLARECUFUNC(cuDeviceGetAttribute, (int *, CUdevice_attribute, CUdevice));
 #define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  cudaError_t( *funcname##Ptr ) funcsig;
 DECLARECUDAFUNC(cudaGetDevice, (int *));
 DECLARECUDAFUNC(cudaSetDevice, (int));
-DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
+// DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
+DECLARECUDAFUNC(cudaDeviceGetAttribute, (int *value, enum cudaDeviceAttr attr, int device));
 DECLARECUDAFUNC(cudaFree, (void *));
 DECLARECUDAFUNC(cudaDriverGetVersion, (int *));
 DECLARECUDAFUNC(cudaRuntimeGetVersion, (int *));
@@ -569,6 +570,84 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
 /*****************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
+
+//-----------------------------------------------------------------------------
+// This function returns the number of Nvidia devices in the system.
+// We search the file system for /sys/class/drm/card?/device/vendor. These must
+// be card0, card1, etc. When we cannot open a file we stop looking. If they
+// can be opened and return a line it will be a string 0xhhhh as a hex vendor
+// ID. See the website  https://pci-ids.ucw.cz, particularly 
+// https://pci-ids.ucw.cz/read/PC and  https://pci-ids.ucw.cz/read/PD/
+// for a list. 0x10de is the vendor ID for Nvidia.
+// The /sys/class/drm/card?/device/class, if present, must begin 0x03. This 
+// indicates a "Display Controller" (i.e. GPU) but on Nvidia we have seen both
+//  0x030200 and 0x030000, so we only match the beginning.
+// 
+// If your devices are not found; double check what the system is saying
+// manually; e.g. 
+// >cat /sys/class/drm/card0/device/vendor
+// >cat /sys/class/drm/card0/device/class
+// 
+// Note we DO have cuDeviceGetCount(), but this requires cuInit() to be run;
+// and we don't want to do that before delayed_init. It causes problems for 
+// higher level tool vendors that use PAPI underneath. Without cuInit(); I 
+// know of no other way to check for Nvidia GPUs present in the system.
+//-----------------------------------------------------------------------------
+static int _cuda_count_nvidia_devices(void)
+{
+    char vendor_id[64]="/sys/class/drm/card%i/device/vendor";
+    char class_id[64]="/sys/class/drm/card%i/device/class";
+    char filename[64];
+    uint32_t myVendor = 0x10de;                     // The NVIDIA GPU vendor ID.
+    char line[16];
+    size_t bytes;
+    int card;
+    long int devID;
+
+    int totalDevices=0;                             // Reset, in case called more than once.
+
+    for (card=0; card<64; card++) {
+        sprintf(filename, vendor_id, card);         // make a name for myself.
+        FILE *fcard = fopen(filename, "r");         // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            break;
+        }
+
+        bytes=fread(line, 1, 6, fcard);             // read six bytes.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes != 6) {                           // If we did not read 6,
+            continue;                               // skip this one, vendor id is malformed.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        devID = strtol(line, NULL, 16);             // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
+        if (devID != myVendor) continue;            // Not the droid I am looking for.
+
+        // Right vendor. Look for some class.
+        sprintf(filename, class_id, card);          // make a name for myself.
+        fcard = fopen(filename, "r");               // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            continue;                               // skip this one if no class file found.
+        }
+
+        // expecting 8 bytes for class; but some have a '0xa0' at the end and read nine bytes.
+        // e.g. '0x030200'. So I read 4, I only care if it starts with '0x03'; a Display Controller.
+        bytes=fread(line, 1, 4, fcard);             // read 1 byte x 4.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes < 4) {                            // If we did not read enough to match,
+            continue;                               // skip this one if class text is too short.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        if (strncasecmp("0x03", line, 4) != 0) continue;    // Not a Display Controller.
+
+        // Found one.
+        totalDevices++;                             // count it.
+    } // end loop through possible cards.
+
+    return(totalDevices);
+} // end __cuda_count_nvidia_devices
+
 
 #if CUPTI_PROFILER == 1
 //-----------------------------------------------------------------------------
@@ -978,6 +1057,15 @@ static int _search_all_events(cuda_context_t * gctxt, CUpti_EventID id, int devi
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;                 \
         return ( PAPI_ENOSUPP );                                            \
     }
+#define DLSYM_AND_CHECK_nvperf( dllib, name ) dlsym( dllib, name );         \
+    if ( dlerror()!=NULL ) {                                                \
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,   \
+        "A required function '%s' was not found in '%s'.",                  \
+        name, nvperf_info.dli_fname);                                       \
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;        \
+        return ( PAPI_ENOSUPP );                                            \
+    }
+
 
 // We need to link libcupti early, to acquire the callback functions. The rest
 // of the functions in these libraries are acquired by the delayed version; but
@@ -1145,7 +1233,8 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl2. (libcudart.so).
 
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
-    cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
+    // cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
+    cudaDeviceGetAttributePtr = DLSYM_AND_CHECK(dl2, "cudaDeviceGetAttribute");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
     cudaDriverGetVersionPtr = DLSYM_AND_CHECK(dl2, "cudaDriverGetVersion");
@@ -1254,37 +1343,46 @@ static int _cuda_linkCudaLibraries(void)
 
     // We have a dl4. (libnvperf_host.so)
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl4, "NVPW_GetSupportedChipNames");
-    NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK(dl4, "NVPW_CUDA_MetricsContext_Create");
-    NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_Destroy");
-    NVPW_MetricsContext_GetMetricNames_BeginPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetMetricNames_Begin");
-    NVPW_MetricsContext_GetMetricNames_EndPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetMetricNames_End");
-    NVPW_InitializeHostPtr = DLSYM_AND_CHECK(dl4, "NVPW_InitializeHost");
-    NVPW_MetricsContext_GetMetricProperties_BeginPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetMetricProperties_Begin");
-    NVPW_MetricsContext_GetMetricProperties_EndPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetMetricProperties_End");
 
-    NVPW_CUDA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK(dl4, "NVPW_CUDA_RawMetricsConfig_Create");
-    NVPA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK(dl4, "NVPA_RawMetricsConfig_Create"); 
-    NVPW_RawMetricsConfig_DestroyPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_Destroy");
-    NVPW_RawMetricsConfig_BeginPassGroupPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_BeginPassGroup");
-    NVPW_RawMetricsConfig_EndPassGroupPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_EndPassGroup")
-    NVPW_RawMetricsConfig_AddMetricsPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_AddMetrics");
-    NVPW_RawMetricsConfig_GenerateConfigImagePtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_GenerateConfigImage");
-    NVPW_RawMetricsConfig_GetConfigImagePtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_GetConfigImage");
+    Dl_info nvperf_info;
+    // requires address of any function within the library.
+    dladdr(NVPW_GetSupportedChipNamesPtr, &nvperf_info);
 
-    NVPW_CounterDataBuilder_CreatePtr = DLSYM_AND_CHECK(dl4, "NVPW_CounterDataBuilder_Create");
-    NVPW_CounterDataBuilder_DestroyPtr = DLSYM_AND_CHECK(dl4, "NVPW_CounterDataBuilder_Destroy");
-    NVPW_CounterDataBuilder_AddMetricsPtr = DLSYM_AND_CHECK(dl4, "NVPW_CounterDataBuilder_AddMetrics");
-    NVPW_CounterDataBuilder_GetCounterDataPrefixPtr = DLSYM_AND_CHECK(dl4, "NVPW_CounterDataBuilder_GetCounterDataPrefix");
+    if (0) { // debug informative; this is how to show the full path of the actual library found.
+        fprintf(stderr, "dl4 Location='%s'\n", nvperf_info.dli_fname);
+    }
+    
+    NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_MetricsContext_Create");
+    NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_Destroy");
+    NVPW_MetricsContext_GetMetricNames_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricNames_Begin");
+    NVPW_MetricsContext_GetMetricNames_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricNames_End");
+    NVPW_InitializeHostPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_InitializeHost");
+    NVPW_MetricsContext_GetMetricProperties_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricProperties_Begin");
+    NVPW_MetricsContext_GetMetricProperties_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricProperties_End");
 
-    NVPW_CounterData_GetNumRangesPtr = DLSYM_AND_CHECK(dl4, "NVPW_CounterData_GetNumRanges");
-    NVPW_Profiler_CounterData_GetRangeDescriptionsPtr = DLSYM_AND_CHECK(dl4, "NVPW_Profiler_CounterData_GetRangeDescriptions");
-    NVPW_MetricsContext_SetCounterDataPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_SetCounterData");
-    NVPW_MetricsContext_EvaluateToGpuValuesPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_EvaluateToGpuValues");
-    NVPW_RawMetricsConfig_GetNumPassesPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_GetNumPasses");
-    NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_IsAddMetricsPossible");
+    NVPW_CUDA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_RawMetricsConfig_Create");
+    NVPA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPA_RawMetricsConfig_Create"); 
+    NVPW_RawMetricsConfig_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_Destroy");
+    NVPW_RawMetricsConfig_BeginPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_BeginPassGroup");
+    NVPW_RawMetricsConfig_EndPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_EndPassGroup")
+    NVPW_RawMetricsConfig_AddMetricsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_AddMetrics");
+    NVPW_RawMetricsConfig_GenerateConfigImagePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GenerateConfigImage");
+    NVPW_RawMetricsConfig_GetConfigImagePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GetConfigImage");
 
-    NVPW_MetricsContext_GetCounterNames_BeginPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetCounterNames_Begin");
-    NVPW_MetricsContext_GetCounterNames_EndPtr = DLSYM_AND_CHECK(dl4, "NVPW_MetricsContext_GetCounterNames_End");
+    NVPW_CounterDataBuilder_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_Create");
+    NVPW_CounterDataBuilder_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_Destroy");
+    NVPW_CounterDataBuilder_AddMetricsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_AddMetrics");
+    NVPW_CounterDataBuilder_GetCounterDataPrefixPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_GetCounterDataPrefix");
+
+    NVPW_CounterData_GetNumRangesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterData_GetNumRanges");
+    NVPW_Profiler_CounterData_GetRangeDescriptionsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_Profiler_CounterData_GetRangeDescriptions");
+    NVPW_MetricsContext_SetCounterDataPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_SetCounterData");
+    NVPW_MetricsContext_EvaluateToGpuValuesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_EvaluateToGpuValues");
+    NVPW_RawMetricsConfig_GetNumPassesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GetNumPasses");
+    NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_IsAddMetricsPossible");
+
+    NVPW_MetricsContext_GetCounterNames_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetCounterNames_Begin");
+    NVPW_MetricsContext_GetCounterNames_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetCounterNames_End");
 #endif
 
     CUDA_CALL((*cudaDriverGetVersionPtr)(&cuda_version), return PAPI_ENOSUPP);
@@ -1293,15 +1391,21 @@ static int _cuda_linkCudaLibraries(void)
     if (0) fprintf(stderr, "%s:%s:%i, cuda_version=%d cuda_runtime_version=%d.\n", __FILE__, __func__, __LINE__, cuda_version, cuda_runtime_version);
 
 #if CUPTI_PROFILER == 1
+    cuptiProfilerGetCounterAvailabilityPtr = NULL;
+    NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
+
     if (cuda_version >= 11000 && cuda_runtime_version >= 11000)
     {
-        cuptiProfilerGetCounterAvailabilityPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerGetCounterAvailability");
-        NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = DLSYM_AND_CHECK(dl4, "NVPW_RawMetricsConfig_SetCounterAvailability");
+        cuptiProfilerGetCounterAvailabilityPtr = DLSYM_AND_CHECK_nvperf(dl3, "cuptiProfilerGetCounterAvailability");
+        NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_SetCounterAvailability");
     }
     else
     {
-        cuptiProfilerGetCounterAvailabilityPtr = NULL;
-        NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
+        // We cannot run without them; it may be possible to just eliminate them but haven't tried that yet. -TC
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Cuda and cuda_runtime lib versions must be >=11.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP); // We do not currently support cuda 10.x. 
     }
 #endif
 
@@ -1435,16 +1539,26 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute capability >= 7.5.
-        // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
-        // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
-        // From https://developer.nvidia.com/cuda-gpus#compute):
-        // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
+        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute
+        // capability >= 7.5.  From the online manual
+        // (https://docs.nvidia.com/cupti/Cupti/modules.html): Legacy CUPTI Profiling is not
+        // supported on devices with Compute Capability 7.5 or higher (Turing+).  From
+        // https://developer.nvidia.com/cuda-gpus#compute): We find the Quadro GTX 5000 (our first
+        // failure) has a Compute Capability of 7.5.
 
-        cudaErr = (*cudaGetDevicePropertiesPtr) (&mydevice->myProperties, deviceNum);
+        // Note: We use cudaDeviceGetAttribute() because it is consistent; the library routine knows
+        // where to find the major and minor within the properties structure. If we use
+        // cudaGetDeviceProperties; the returned structure depends on the current cuda driver
+        // loaded; e.g.  9.2.88 and 11.2.0 return different structures. So if we compile PAPI with
+        // 9.2.88, and run with 11.2.0, the major and minor we get (using the wrong structure
+        // definition) is 1024,64 instead of 7,0. If the minor is needed,
+        // cudaDevAttrComputeCapabilityMinor is the necessary attribute.
+
+        cudaErr = (*cudaDeviceGetAttributePtr) (&mydevice->CC_Major, cudaDevAttrComputeCapabilityMajor, deviceNum); 
+        if (0) fprintf(stderr, "%s:%s:%i Compute Capability Major=%d\n", __FILE__, __func__, __LINE__, mydevice->CC_Major);
         if (cudaErr != cudaSuccess) {
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-            "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
+            "Function cudaDeviceGetAttribute() error code=%d.", cudaErr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
@@ -1456,14 +1570,14 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         mydevice->cupti_le70 = 0;
         mydevice->cupti_ge70 = 0;
 
-        if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d minor=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
-            mydevice->deviceName, mydevice->myProperties.major, mydevice->myProperties.minor);
+        if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
+            mydevice->deviceName, mydevice->CC_Major);
 
-        if (mydevice->myProperties.major <= 7) {
+        if (mydevice->CC_Major <= 7) {
             mydevice->cupti_le70 = 1;
         }
 
-        if (mydevice->myProperties.major >= 7) {
+        if (mydevice->CC_Major >= 7) {
             mydevice->cupti_ge70 = 1;
         }
 
@@ -2323,6 +2437,19 @@ static int _cuda_init_component(int cidx)
     // num_mpx_cntrs must be >0 for _papi_hwi_assign_eventset() to work.
     _cuda_vector.cmp_info.num_mpx_cntrs = PAPICUDA_MAX_COUNTERS;
 
+    // Count if we have any devices with vendor ID for Nvidia.
+    int devices = _cuda_count_nvidia_devices();
+    if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
+    if (devices < 1) {
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "No Nvidia Devices Found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    }
+
     int err;
     PAPI_lock(COMPONENT_LOCK);
     err = _cuda_primaryLinkLibraries();
@@ -2408,7 +2535,11 @@ static int _cuda_init_private(void)
     // The entire init, for cupti11, timed at 913 ms.
     // The entire init, for legalcy cupti, timed at 2376 ms.
 
-    if (_cuda_vector.cmp_info.initialized) goto cuda_init_private_exit;
+    if (_cuda_vector.cmp_info.initialized) {
+        // copy any previous disabled error code.
+        err = _cuda_vector.cmp_info.disabled;
+        goto cuda_init_private_exit;
+    }
 
     long long ns;
     if (0) ns = -PAPI_get_real_nsec();
@@ -4032,6 +4163,16 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
         Profiler_FlushCounterData_Params_STRUCT_SIZE=CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE11;
     }
 
+    // If any of these do not match the actual sizes, we have a mismatch between compile headers and actual library.
+    if (CUpti_Device_GetChipName_Params_STRUCT_SIZE != GetChipName_Params_STRUCT_SIZE ||
+        CUpti_Profiler_SetConfig_Params_STRUCT_SIZE != Profiler_SetConfig_Params_STRUCT_SIZE ||
+        CUpti_Profiler_EndPass_Params_STRUCT_SIZE != Profiler_EndPass_Params_STRUCT_SIZE ||
+        CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE != Profiler_FlushCounterData_Params_STRUCT_SIZE) {
+
+        strncpy(_cuda_vector.cmp_info.disabled_reason, "Profiler structures do not match Compiled Version. Possibly wrong libraries found.", PAPI_MAX_STR_LEN);
+        return (PAPI_EMISC);
+    }
+
     // Comparison for debugging if you want it.
     if (0) {
         fprintf(stderr, "%s:%s:%i Actual vs Set sizes:\n", __FILE__, __func__, __LINE__);
@@ -4384,10 +4525,10 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         setCounterAvailabilityParams.pRawMetricsConfig = pRawMetricsConfig;
         setCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
         NVPW_CALL((*NVPW_RawMetricsConfig_SetCounterAvailabilityPtr) (&setCounterAvailabilityParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock( COMPONENT_LOCK );
-            return(PAPI_EMISC));
+        // On error,
+        if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+        _papi_hwi_unlock( COMPONENT_LOCK );
+        return(PAPI_EMISC));
 
         // Note: The sample code sometimes creates params and then immediately
         // destroys them, but uses param structure elements later. But if I
