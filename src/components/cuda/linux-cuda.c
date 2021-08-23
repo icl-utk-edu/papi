@@ -43,8 +43,7 @@
 
 // CUPTI_PROFILER is determined at compile time by Rules.cuda. If the file
 // "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory,
-// it is set to 1, if not but "cupti.h" is found, it is set to zero, if 
-// neither is found, it is set to -1.
+// it is set to 1, if not it is set to zero.
 // If 1, we compile for cuda11 (the Profiler Version). We need to know at
 // compile time if these include files are present or not.
 // These header files do not appear in cuda release versions <10.0.
