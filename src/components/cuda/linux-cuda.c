@@ -43,7 +43,9 @@
 
 // CUPTI_PROFILER is determined at compile time by Rules.cuda. If the file
 // "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory,
-// then we compile for cuda11 (the Profiler Version). We need to know at
+// it is set to 1, if not but "cupti.h" is found, it is set to zero, if 
+// neither is found, it is set to -1.
+// If 1, we compile for cuda11 (the Profiler Version). We need to know at
 // compile time if these include files are present or not.
 // These header files do not appear in cuda release versions <10.0.
 #if CUPTI_PROFILER == 1
@@ -1586,6 +1588,8 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         total_ge70 += mydevice->cupti_ge70;
     } // END per device.
 
+    // In the following messages; the "(#)" is (2) or (1) if CUPTI_PROFILER ==1, (0) if CUPTI_PROFILER==0,
+    // to aid in debugging the messages.
 #if CUPTI_PROFILER == 1
     // Profiler exists, use it if all devices can use it.
     if (total_ge70 == gctxt->deviceCount) {
@@ -1602,7 +1606,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     if (total_le70 != gctxt->deviceCount) {
         // some devices are 7.5 and cannot use legacy. We cannot support this.
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Mixed compute capabilities, %d devices, only %d with CC<=7.0", gctxt->deviceCount, total_le70);
+        "(2) Mixed compute capabilities, must use Legacy, but only %d of %d devices have CC<=7.0", total_le70, gctxt->deviceCount);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return(PAPI_ENOSUPP);    
@@ -1617,7 +1621,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
      if (total_le70 != gctxt->deviceCount) {
         // some devices are 7.5 and cannot use legacy. We cannot support this.
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-        "Mixed compute capabilities, %d devices, only %d with CC<=7.0", gctxt->deviceCount, total_le70);
+        "(%d) Mixed compute capabilities, must use Legacy, but only %d of %d devices have CC<=7.0", CUPTI_PROFILER, total_le70, gctxt->deviceCount);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return(PAPI_ENOSUPP);    
@@ -1875,10 +1879,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // context active; push to make it active.
        
         CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuDevicePrimaryCtxRetain failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC););
 
         if (currCuCtx != userCuCtx) { 
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), 
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuCtxPushCurrent() failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
         }
 
         uint32_t maxMetrics = 0, i, j;
@@ -1899,10 +1912,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
-                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), 
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuCtxPopCurrent() failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-            return (PAPI_ENOMEM);
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuDevicePrimaryCtxRelease failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
+            return(PAPI_EMISC);
         }
 
         cuptiError=(*cuptiDeviceEnumMetricsPtr)(mydevice->cuDev, &size, metricIdList);  // Enumerate into metricIDList.
@@ -1914,10 +1937,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
-                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuCtxPopCurrent() failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-            return(PAPI_EMISC);    
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuDevicePrimaryCtxRelease failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
+            return(PAPI_EMISC);
         }
 
         // Elimination loop for metrics we cannot support.
@@ -1932,10 +1965,21 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), 
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-                return(PAPI_EMISC);    
+
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
+                return(PAPI_EMISC);
             }
 
             // Note that 'size' also returned total bytes written.
@@ -1975,9 +2019,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
                } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
             } else {
@@ -1986,10 +2040,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-               return(PAPI_EMISC);    
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
+                return(PAPI_EMISC);    
             }
 
             #if defined(TIME_MULTIPASS_ELIM)
@@ -2023,9 +2087,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -2044,9 +2118,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -2064,9 +2148,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -2085,9 +2179,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EINVAL);    
             }
 
@@ -2099,9 +2203,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), 
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return (PAPI_ENOMEM);
             }
 
@@ -2114,9 +2228,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EINVAL);    
             }
 
@@ -2130,11 +2254,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         papi_free(metricIdList);                                                    // Done with this enumeration of metrics.
 
         if (currCuCtx != userCuCtx) { 
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuCtxPopCurrent() failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
         }
 
         CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
-            return(PAPI_EMISC));
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuDevicePrimaryCtxRelease failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC););
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
@@ -2330,10 +2463,18 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     // Restore user context, if we had one.
     if (userCuCtx != NULL) {
         CU_CALL((*cuCtxSetCurrentPtr) (userCuCtx),
-            return (PAPI_EMISC););
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuCtxSetCurrent() failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC););
     } else {
         // If the application did not have a current context, restore their device number.
         CUDA_CALL((*cudaSetDevicePtr)(userDeviceNum), 
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cudaSetDevice() failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC););
     }        
 
@@ -2592,7 +2733,15 @@ cuda_init_private_exit:
         ns += PAPI_get_real_nsec();
         fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
     }
-    
+
+    // We double check; if err != 0 and the disabled reason is null, we have a problem.
+    if (err != 0 && strlen(_cuda_vector.cmp_info.disabled_reason) < 1) {
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "CUDA init failed. Code failed to record a reason.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+    }
+
     return (err);
 } // end _cuda_init_private
 
