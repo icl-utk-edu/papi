@@ -8,9 +8,10 @@
 long long local_var;
 
 void mintest_init(void){
-    local_var =0;
-    papi_handle_t *handle = papi_sde_init("Min Example Code");
-    papi_sde_register_counter(handle, "Example Event", PAPI_SDE_RO|PAPI_SDE_DELTA, PAPI_SDE_long_long, &local_var);
+    papi_sde::PapiSde sde("Min Example Code in C++");
+
+    local_var=0;
+    sde.register_counter("Example Event", PAPI_SDE_RO|PAPI_SDE_DELTA, local_var);
 }
 
 void mintest_dowork(void){
@@ -37,7 +38,7 @@ int main(int argc, char **argv){
         exit(-1);
     }
 
-    if((ret=PAPI_add_named_event(Eventset, "sde:::Min Example Code::Example Event")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(Eventset, "sde:::Min Example Code in C++::Example Event")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
         exit(-1);
     }

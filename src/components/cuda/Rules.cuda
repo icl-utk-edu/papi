@@ -4,19 +4,6 @@
 # settings are optional.
 PAPI_CUDA_ROOT ?= /opt/cuda
 
-# Legacy CUPTI distributions do not have some files and libraries. We assume if
-# this one is present the distribution is good, any problems are idiosyncratic
-# to the installation and errors should be corrected. NULL if not found.
-cupti_prof_target = $(shell find $(PAPI_CUDA_ROOT) -name "cupti_profiler_target.h")
-
-# Default.
-CUPTI_PROFILER:= 1
-
-# Contrary to docs we cannot just compare the result to NULL.
-ifeq ("x$(cupti_prof_target)", "x")
-CUPTI_PROFILER:= 0
-endif
-
 # For non-typical system configurations, the following 'runtime overrides' can
 # be set, as just a library name, or a full path and name. There cannot be any
 # spaces between the double quotes (which must be escaped as \"). An example:
@@ -107,8 +94,10 @@ PAPI_CUDA_PERFWORKS = \"\"
 
 CUDA_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME)
 CUDA_MACS+= -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI) -DPAPI_CUDA_PERFWORKS=$(PAPI_CUDA_PERFWORKS)
-CUDA_MACS+= -DCUPTI_PROFILER=$(CUPTI_PROFILER)
-# DEBUG: CUDA_MACS+= -DJUNK=\"$(cupti_prof_target)\"
+
+# The line below can force a Legacy CUpti compile for older GPUs; but it will
+# generate a lot of warnings about CUPTI_PROFILER being redefined.
+# CUDA_MACS+= -DCUPTI_PROFILER=0
 
 COMPSRCS += components/cuda/linux-cuda.c
 COMPOBJS += linux-cuda.o

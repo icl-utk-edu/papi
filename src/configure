@@ -628,8 +628,6 @@ CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
 FTEST_TARGETS
-SDE_LIB_FILES
-SDE_ENABLED
 COMPONENTS
 COMPONENT_RULES
 BITFLAGS
@@ -4715,8 +4713,7 @@ else
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $debug" >&5
 $as_echo "$debug" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CC_COMMON_NAME" >&5
-$as_echo "$CC_COMMON_NAME" >&6; }
+
 if test "$CC_COMMON_NAME" = "gcc"; then
   gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
   major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
@@ -4747,9 +4744,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		CFLAGS="$oldcflags"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_NO_OVERRIDE_INIT" >&5
 $as_echo "$HAVE_NO_OVERRIDE_INIT" >&6; }
+
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CFLAGS" >&5
-$as_echo "$CFLAGS" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CPU type" >&5
 $as_echo_n "checking for CPU type... " >&6; }
 
@@ -4769,7 +4765,6 @@ else
                  fi ;;
 		nec)
 			family=nec
-
 		;;
 	       freebsd)
                    family=`uname -m`
@@ -5667,7 +5662,6 @@ fi
 # Disable LDL AND SDE for static builds
 if test "$STATIC" = "-static"; then
   LDL=""
-  SDE_ENABLED=
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linking with papi shared library of tests and utilities" >&5
@@ -6204,7 +6198,6 @@ fi
 #
 # MESSING WITH CFLAGS IS STUPID!
 #
-
 if test "$user_specified_interface" != "no"; then
    if test "$user_specified_interface" = "perfctr"; then
       perfmon=0
@@ -7064,18 +7057,20 @@ for comp in $components; do
     CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
-    SDE_ENABLED=1
-    SDE_LIB_DIR="../components/sde/sde_lib"
-    if test "$shlib_tools" = "yes"; then
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c ${SDE_LIB_DIR}/sde_common.c"
-    else
-      SDE_LIB_FILES="${SDE_LIB_DIR}/sde_lib.c"
-    fi
   fi
 
   # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
   if test "x$comp" = "xintel_gpu" ; then
     LDFLAGS="$LDFLAGS -lstdc++"
+  fi
+
+  # check for cuda component to determine if we need to check on Profiler.
+  if test "x$comp" = "xcuda" ; then
+    if test "`find $PAPI_CUDA_ROOT -name "cupti_profiler_target.h"`" != "" ; then
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=1"
+    else
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=0"
+    fi
   fi
 done
 
@@ -7089,6 +7084,95 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if test "$cross_compiling" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5

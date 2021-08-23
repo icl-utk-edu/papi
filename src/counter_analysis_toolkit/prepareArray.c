@@ -7,7 +7,6 @@
 #include "prepareArray.h"
 
 volatile uintptr_t opt_killer_zero;
-extern int global_pattern;
 static void _prepareArray_sections_random(uintptr_t *array, int len, int stride, long secSize);
 static void _prepareArray_sequential(uintptr_t *array, int len, int stride);
 
@@ -16,11 +15,11 @@ static void _prepareArray_sequential(uintptr_t *array, int len, int stride);
  * "stride" is in "uintptr_t" elements, NOT in bytes
  * Note: It is wise to provide an "array" that is aligned to the cache line size.
  */
-int prepareArray(uintptr_t *array, int len, int stride, long secSize){
+int prepareArray(uintptr_t *array, int len, int stride, long secSize, int pattern){
     assert( array != NULL );
     opt_killer_zero = (uintptr_t)( (len+37)/(len+36) - 1 );
 
-    switch(global_pattern){
+    switch(pattern){
         case SECRND:
             _prepareArray_sections_random(array, len, stride, secSize);
             break;
@@ -28,7 +27,7 @@ int prepareArray(uintptr_t *array, int len, int stride, long secSize){
             _prepareArray_sequential(array, len, stride);
             break;
         default:
-            fprintf(stderr,"prepareArray() unknown array access pattern: %d\n",global_pattern);
+            fprintf(stderr,"prepareArray() unknown array access pattern: %d\n",pattern);
             return -1;
             break;
     }

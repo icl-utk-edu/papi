@@ -3887,8 +3887,8 @@ static int _rocm_smi_shutdown_component(void)
     free(FreqTable);    FreqTable    = NULL;
     free(PCITable);     PCITable     = NULL;
 
-    // close the dynamic libraries needed by this component.
-    dlclose(dl1);
+    // close the dynamic libraries needed by this component. (If we opened it).
+    if (dl1) dlclose(dl1);
     return (PAPI_OK);
 } // END routine.
 

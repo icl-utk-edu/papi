@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <iostream>
 #include <stdint.h>
 #include <stdlib.h>
 #include "sde_lib.h"
@@ -23,16 +23,19 @@ volatile int result;
 volatile unsigned int b, z1, z2, z3, z4;
 
 void *rcrd_handle;
+papi_sde::PapiSde::Recorder *sde_rcrd;
 
 // API functions.
 void recorder_init_(void);
 void recorder_do_work_(void);
 
 void recorder_init_(void){
-    papi_handle_t tmp_handle;
-
-    tmp_handle = papi_sde_init("Lib_With_Recorder");
-    papi_sde_create_recorder(tmp_handle, event_names[0], sizeof(long long), papi_sde_compare_long_long, &rcrd_handle);
+    papi_sde::PapiSde sde("CPP_Lib_With_Recorder");
+    sde_rcrd = sde.create_recorder(event_names[0], sizeof(long long), papi_sde_compare_long_long);
+    if( nullptr == sde_rcrd ){
+        std::cerr << "Unable to create recorder: "<< event_names[0] << std::endl;
+        abort();
+    }
 
     z1=42;
     z2=420;
@@ -48,7 +51,7 @@ void recorder_do_work_(void){
     if( result < 0 )
         result *= -1;
     r = result%123456;
-    papi_sde_record(rcrd_handle, sizeof(r), &r);
+    sde_rcrd->record(r);
     return;
 }
 
@@ -57,7 +60,7 @@ void recorder_do_work_(void){
 // uses dlopen and dlclose on each library so it only has one version of this symbol at a time.
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
     papi_handle_t tmp_handle;
-    tmp_handle = fptr_struct->init("Lib_With_Recorder");
+    tmp_handle = fptr_struct->init("CPP_Lib_With_Recorder");
     fptr_struct->create_recorder(tmp_handle, event_names[0], sizeof(long long), papi_sde_compare_long_long, &rcrd_handle);
     return tmp_handle;
 }
