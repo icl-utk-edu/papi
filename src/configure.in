@@ -1984,8 +1984,10 @@ for comp in $components; do
   if test "x$comp" = "xcuda" ; then
     if test "`find $PAPI_CUDA_ROOT -name "cupti_profiler_target.h"`" != "" ; then
       CFLAGS="$CFLAGS -DCUPTI_PROFILER=1"
-    else
+    elif test "`find $PAPI_CUDA_ROOT -name "cupti.h"`" != "" ; then
       CFLAGS="$CFLAGS -DCUPTI_PROFILER=0"
+    else
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=-1"
     fi
   fi 
 done

@@ -2577,6 +2577,16 @@ static int _cuda_init_component(int cidx)
     // num_mpx_cntrs must be >0 for _papi_hwi_assign_eventset() to work.
     _cuda_vector.cmp_info.num_mpx_cntrs = PAPICUDA_MAX_COUNTERS;
 
+    #if CUPTI_PROFILER == -1
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "Environment variable PAPI_CUDA_ROOT must be specified before ./configure is executed.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    #endif
+
     // Count if we have any devices with vendor ID for Nvidia.
     int devices = _cuda_count_nvidia_devices();
     if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
