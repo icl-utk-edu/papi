@@ -42,11 +42,16 @@
 // #include <cupti_runtime_cbid.h>
 
 // CUPTI_PROFILER is determined at compile time by Rules.cuda. If the file
-// "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory,
-// it is set to 1, if not it is set to zero.
-// If 1, we compile for cuda11 (the Profiler Version). We need to know at
-// compile time if these include files are present or not.
-// These header files do not appear in cuda release versions <10.0.
+// "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory, we
+// set CUPTI_PROFILER=1. If it is not but the file "cupti.h" is found under the
+// $PAPI_CUDA_ROOT directory, we set CUPTI_PROFILER=0. If neither file is
+// found, we set CUPTI_PROFILER=-1. This last value will short circuit the init
+// and disable the component; it means that PAPI_CUDA_ROOT was not set before
+// executing ./configure. And we must be able to see the headers to know
+// whether we can include the following files or not; because these header
+// files do not appear in cuda release versions <10.0. That will cause missing
+// file compiler errors.
+
 #if CUPTI_PROFILER == 1
 #include <cupti_target.h>
 #include <cupti_profiler_target.h>
