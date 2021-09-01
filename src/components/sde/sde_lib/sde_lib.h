@@ -45,6 +45,9 @@
 #define PAPI_SDE_MAX       0x1
 #define PAPI_SDE_MIN       0x2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define GET_FLOAT_SDE(x) *((float *)&x)
 #define GET_DOUBLE_SDE(x) *((double *)&x)
@@ -62,20 +65,17 @@ typedef long long int (*papi_sde_fptr_t)( void * );
 typedef int (*papi_sde_cmpr_fptr_t)( void * );
 typedef void * papi_handle_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 typedef struct papi_sde_fptr_struct_s {
     papi_handle_t (*init)(const char *lib_name );
     int (*register_counter)( papi_handle_t handle, const char *event_name, int mode, int type, void *counter );
-    int (*register_fp_counter)( papi_handle_t handle, const char *event_name, int mode, int type, papi_sde_fptr_t fp_counter, void *param );
+    int (*register_fp_counter)( papi_handle_t handle, const char *event_name, int mode, int type, papi_sde_fptr_t fp_counter, const void *param );
     int (*unregister_counter)( papi_handle_t handle, const char *event_name );
     int (*describe_counter)( papi_handle_t handle, const char *event_name, const char *event_description );
     int (*add_counter_to_group)( papi_handle_t handle, const char *event_name, const char *group_name, uint32_t group_flags );
     int (*create_counter)( papi_handle_t handle, const char *event_name, int cntr_type, void **cntr_handle );
     int (*inc_counter)( papi_handle_t cntr_handle, long long int increment );
     int (*create_recorder)( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2), void **record_handle );
-    int (*record)( void *record_handle, size_t typesize, void *value );
+    int (*record)( void *record_handle, size_t typesize, const void *value );
     int (*reset_recorder)(void *record_handle );
     int (*reset_counter)( void *cntr_handle );
     void *(*get_counter_handle)(papi_handle_t handle, const char *event_name);
@@ -83,14 +83,14 @@ typedef struct papi_sde_fptr_struct_s {
 
 papi_handle_t papi_sde_init(const char *name_of_library );
 int papi_sde_register_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter );
-int papi_sde_register_fp_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t func_ptr, void *param );
+int papi_sde_register_fp_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t func_ptr, const void *param );
 int papi_sde_unregister_counter( void *handle, const char *event_name );
 int papi_sde_describe_counter(papi_handle_t handle, const char *event_name, const char *event_description );
 int papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, const char *group_name, uint32_t group_flags );
-int papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_type, void **cntr_handle );
+int papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_mode, void **cntr_handle );
 int papi_sde_inc_counter( void *cntr_handle, long long int increment );
 int papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2), void **record_handle );
-int papi_sde_record( void *record_handle, size_t typesize, void *value );
+int papi_sde_record( void *record_handle, size_t typesize, const void *value );
 int papi_sde_reset_recorder(void *record_handle );
 int papi_sde_reset_counter( void *cntr_handle );
 void *papi_sde_get_counter_handle( papi_handle_t handle, const char *event_name);
@@ -101,9 +101,6 @@ int papi_sde_compare_double(const void *p1, const void *p2);
 int papi_sde_compare_float(const void *p1, const void *p2);
 
 papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct);
-#ifdef __cplusplus
-}
-#endif
 
 #define POPULATE_SDE_FPTR_STRUCT( _A_ ) do{\
     _A_.init = papi_sde_init;\
@@ -205,7 +202,7 @@ extern void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_
 extern unsigned long ht_hash_name(const char *str);
 extern unsigned int ht_hash_id(unsigned int uniq_id);
 extern papi_handle_t do_sde_init(const char *name_of_library, papisde_control_t *gctl);
-extern sde_counter_t *allocate_and_insert(papisde_control_t *gctl, papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, void *param);
+extern sde_counter_t *allocate_and_insert(papisde_control_t *gctl, papisde_library_desc_t* lib_handle, const char *name, unsigned int uniq_id, int cntr_mode, int cntr_type, void *data, papi_sde_fptr_t func_ptr, const void *param);
 extern void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer);
 extern int _sde_be_verbose;
 extern int _sde_debug;
@@ -215,7 +212,7 @@ extern int _sde_debug;
 #define SDEDBG(format, args...) { ; }
 #endif
 
-static inline void SDE_ERROR( char *format, ... ){
+static inline void SDE_ERROR( const char *format, ... ){
     va_list args;
     if ( _sde_be_verbose ) {
         va_start( args, format );
@@ -441,13 +438,13 @@ papi_handle_t do_sde_init(const char *name_of_library, papisde_control_t *gctl){
     return tmp_lib;
 }
 
-sde_counter_t *allocate_and_insert( papisde_control_t *gctl, papisde_library_desc_t* lib_handle, const char* name, unsigned int uniq_id, int cntr_mode, int cntr_type, void* data, papi_sde_fptr_t func_ptr, void *param ){
+sde_counter_t *allocate_and_insert( papisde_control_t *gctl, papisde_library_desc_t* lib_handle, const char* name, unsigned int uniq_id, int cntr_mode, int cntr_type, void* data, papi_sde_fptr_t func_ptr, const void *param ){
 
     // make sure to calloc() the structure, so all the fields which we do not explicitly set remain zero.
     sde_counter_t *item = (sde_counter_t *)calloc(1, sizeof(sde_counter_t));
     item->data = data;
     item->func_ptr = func_ptr;
-    item->param = param;
+    item->param = (void *)param;
     item->cntr_type = cntr_type;
     item->cntr_mode = cntr_mode;
     item->glb_uniq_id = uniq_id;
@@ -472,7 +469,7 @@ void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer){
     for(i=0; i<EXP_CONTAINER_ENTRIES; i++){
        current_size = ((long long)1<<i) * EXP_CONTAINER_MIN_SIZE;
        src = recorder->recorder_data->exp_container[i];
-       dst = cont_buffer + tmp_size*typesize;
+       dst = (char *)cont_buffer + tmp_size*typesize;
        if ( (tmp_size+current_size) <= used_entries){
            memcpy(dst, src, current_size*typesize);
            if ( (tmp_size+current_size) == used_entries){
@@ -505,8 +502,8 @@ void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer){
 #define SDE_EINVAL     -1     /**< Invalid argument */
 #define SDE_ECMP       -4     /**< Not supported by component */
 
-static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder );
-static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param );
+static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, const void *param, sde_counter_t **placeholder );
+static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, const void *param );
 static int delete_counter(papisde_library_desc_t* lib_handle, const char *name);
 static inline void free_counter(sde_counter_t *counter);
 
@@ -633,7 +630,7 @@ void obtain_papi_symbols(void){
 
     // This function will give us the global structure that libpapi and libsde
     // will use to store and exchange information about SDEs.
-    get_struct_sym = dlsym(handle, "papisde_get_global_struct");
+    get_struct_sym = (papisde_control_t *(*)())dlsym(handle, "papisde_get_global_struct");
     if( (NULL != (err = dlerror())) || (NULL == get_struct_sym) ){
         SDEDBG("obtain_papi_symbols(): Unable to find symbols from libpapi.so. SDEs will not be accessible by external software. %s\n",err);
         dlsym_err = 1;
@@ -642,7 +639,7 @@ void obtain_papi_symbols(void){
 
     // We need this function to guarantee thread safety between the threads
     // that change the value of SDEs and the threads calling PAPI to read them.
-    papi_sde_lock_sym = dlsym(handle, "papi_sde_lock");
+    papi_sde_lock_sym = (int (*)())dlsym(handle, "papi_sde_lock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_lock_sym) ){
         SDEDBG("obtain_papi_symbols(): Unable to find libpapi.so function needed for thread safety. %s\n",err);
         dlsym_err = 1;
@@ -650,7 +647,7 @@ void obtain_papi_symbols(void){
 
     // We need this function to guarantee thread safety between the threads
     // that change the value of SDEs and the threads calling PAPI to read them.
-    papi_sde_unlock_sym = dlsym(handle, "papi_sde_unlock");
+    papi_sde_unlock_sym = (int (*)())dlsym(handle, "papi_sde_unlock");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_unlock_sym) ){
         SDEDBG("obtain_papi_symbols(): Unable to find libpapi.so function needed for thread safety. %s\n",err);
         dlsym_err = 1;
@@ -658,13 +655,13 @@ void obtain_papi_symbols(void){
 
     // We need this function to inform the SDE component about the value of created counters.
 #if defined(SDE_HAVE_OVERFLOW)
-    papi_sde_check_overflow_status_sym = dlsym(handle, "papi_sde_check_overflow_status");
+    papi_sde_check_overflow_status_sym = (void (*)(sde_counter_t*, long long int))dlsym(handle, "papi_sde_check_overflow_status");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_check_overflow_status_sym) ){
         SDEDBG("obtain_papi_symbols(): Unable to find libpapi.so function needed to support overflowing of SDEs. %s\n",err);
         dlsym_err = 1;
     }
 
-    papi_sde_set_timer_for_overflow_sym = dlsym(handle, "papi_sde_set_timer_for_overflow");
+    papi_sde_set_timer_for_overflow_sym = (int (*)())dlsym(handle, "papi_sde_set_timer_for_overflow");
     if( (NULL != (err = dlerror())) || (NULL == papi_sde_set_timer_for_overflow_sym) ){
         SDEDBG("obtain_papi_symbols(): Unable to find libpapi.so function needed to support overflowing of SDEs. %s\n",err);
         dlsym_err = 1;
@@ -801,7 +798,7 @@ papi_sde_init(const char *name_of_library)
     // places in the component.  We have to do this because we cannot call
     // papi_sde_init() from places in the code which already call
     // PAPI_lock()/PAPI_unlock(), or we will end up with deadlocks.
-    tmp_lib = do_sde_init(name_of_library, gctl);
+    tmp_lib = (papisde_library_desc_t *)do_sde_init(name_of_library, gctl);
 
     _sde_unlock();
 
@@ -850,7 +847,7 @@ papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cnt
   */
 int
 __attribute__((visibility("hidden")))
-papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t fp_counter, void *param )
+papi_sde_register_fp_counter( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, papi_sde_fptr_t fp_counter, const void *param )
 {
     int ret_val;
 
@@ -871,7 +868,7 @@ papi_sde_register_fp_counter( void *handle, const char *event_name, int cntr_mod
   */
 int
 __attribute__((visibility("hidden")))
-papi_sde_unregister_counter( void *handle, const char *event_name)
+papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
 {
     papisde_library_desc_t *lib_handle;
     int error;
@@ -887,7 +884,7 @@ papi_sde_unregister_counter( void *handle, const char *event_name)
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     SDEDBG("papi_sde_unregister_counter(): Preparing to unregister counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
@@ -939,7 +936,7 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
@@ -990,7 +987,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
@@ -1010,7 +1007,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     free(full_event_name);
 
     str_len = strlen(lib_handle->libraryName)+strlen(group_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_group_name = malloc(str_len*sizeof(char));
+    full_group_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_group_name, str_len, "%s::%s", lib_handle->libraryName, group_name);
 
     // Check to see if the group exists already. Otherwise we need to create it.
@@ -1064,7 +1061,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     }
 
     // Add the new counter to the group's head.
-    papisde_list_entry_t *new_head = calloc(1, sizeof(papisde_list_entry_t));
+    papisde_list_entry_t *new_head = (papisde_list_entry_t *)calloc(1, sizeof(papisde_list_entry_t));
     new_head->item = tmp_item;
     new_head->next = tmp_group->counter_group_head;
     tmp_group->counter_group_head = new_head;
@@ -1115,7 +1112,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
     SDEDBG("Preparing to create counter: '%s' with mode: '%d' in SDE library: %s.\n", event_name, cntr_mode, lib_handle->libraryName);
 
-    counter_data = calloc(1, sizeof(long long int));
+    counter_data = (long long int *)calloc(1, sizeof(long long int));
 
     ret_val = sde_setup_counter_internals( lib_handle, event_name, cntr_mode, PAPI_SDE_long_long, counter_data, NULL, NULL, &placeholder );
     if( SDE_OK != ret_val ){
@@ -1123,7 +1120,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     cntr = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
@@ -1218,7 +1215,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
-    papisde_library_desc_t *lib_handle = handle;
+    papisde_library_desc_t *lib_handle = (papisde_library_desc_t *)handle;
 
     _sde_lock();
 
@@ -1236,7 +1233,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
         return ret_val;
 
     str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     tmp_rec_handle = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
@@ -1248,7 +1245,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     }
 
     // Allocate the structure for the recorder data and meta-data.
-    tmp_rec_handle->recorder_data = calloc(1,sizeof(recorder_data_t));
+    tmp_rec_handle->recorder_data = (recorder_data_t *)calloc(1,sizeof(recorder_data_t));
     // Allocate the first chunk of recorder data.
     tmp_rec_handle->recorder_data->exp_container[0] = malloc(total_entries*typesize);
     tmp_rec_handle->recorder_data->total_entries = total_entries;
@@ -1268,7 +1265,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
             str_len = tmp_len;
     }
     str_len += strlen(event_name)+1;
-    aux_event_name = calloc(str_len, sizeof(char));
+    aux_event_name = (char *)calloc(str_len, sizeof(char));
 
     snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[0]);
     SDEDBG("papi_sde_create_recorder(): Preparing to register aux counter: '%s' in SDE library: %s.\n", aux_event_name, lib_handle->libraryName);
@@ -1287,7 +1284,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
         for(i=1; i<_SDE_MODIFIER_COUNT; i++){
             sde_sorting_params_t *sorting_params;
 
-            sorting_params = malloc(sizeof(sde_sorting_params_t)); // This will be free()-ed by papi_sde_unregister_counter()
+            sorting_params = (sde_sorting_params_t *)malloc(sizeof(sde_sorting_params_t)); // This will be free()-ed by papi_sde_unregister_counter()
             sorting_params->recording = tmp_rec_handle;
             sorting_params->cmpr_func_ptr = cmpr_func_ptr;
 
@@ -1313,7 +1310,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
 // UPDATED for EXP-storage
 int
 __attribute__((visibility("hidden")))
-papi_sde_record( void *record_handle, size_t typesize, void *value)
+papi_sde_record( void *record_handle, size_t typesize, const void *value)
 {
     sde_counter_t *tmp_item;
     long long used_entries, total_entries, prev_entries, offset;
@@ -1373,7 +1370,7 @@ papi_sde_record( void *record_handle, size_t typesize, void *value)
         tmp_item->recorder_data->total_entries += new_segment_size;
     }
 
-    void *dest = tmp_item->recorder_data->exp_container[chunk] + offset*typesize;
+    void *dest = (char *)(tmp_item->recorder_data->exp_container[chunk]) + offset*typesize;
     (void)memcpy( dest, value, typesize );
     tmp_item->recorder_data->used_entries++;
 
@@ -1456,7 +1453,7 @@ papi_sde_reset_counter( void *cntr_handle )
 /* Utility Functions.                                                    */
 /*************************************************************************/
 
-static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param )
+static inline int sde_do_register( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, const void *param )
 {
     sde_counter_t *placeholder;
     int ret;
@@ -1575,7 +1572,7 @@ static inline long long _sde_compute_edge(void *param, int which_edge){
         if( _SDE_CMP_MIN == which_edge )
             edge = rcrd->recorder_data->sorted_buffer;
         if( _SDE_CMP_MAX == which_edge )
-            edge = rcrd->recorder_data->sorted_buffer + (elem_cnt-1)*typesize;
+            edge = (char *)(rcrd->recorder_data->sorted_buffer) + (elem_cnt-1)*typesize;
     }else{
         // Make "edge" point to the beginning of the first chunk.
         edge = rcrd->recorder_data->exp_container[0];
@@ -1588,7 +1585,7 @@ static inline long long _sde_compute_edge(void *param, int which_edge){
            src = rcrd->recorder_data->exp_container[chunk];
 
            for(i=0; (i < (elem_cnt-cumul_size)) && (i < current_size); i++){
-               void *next_elem = src + i*typesize;
+               void *next_elem = (char *)src + i*typesize;
                int rslt = cmpr_func_ptr(next_elem, edge);
 
                // If the new element is smaller than the current min and we are looking for the min, then keep it.
@@ -1668,7 +1665,7 @@ static inline long long _sde_compute_quantile(void *param, int percent){
     void *sorted_buffer = rcrd->recorder_data->sorted_buffer;
 
     qsort(sorted_buffer, elem_cnt, typesize, cmpr_func_ptr);
-    void *tmp_ptr = sorted_buffer + typesize*((elem_cnt*percent)/100);
+    void *tmp_ptr = (char *)sorted_buffer + typesize*((elem_cnt*percent)/100);
 
     // We might free the sorted_buffer (when it becomes stale), so we can't return "tmp_ptr".
     // Therefore, we allocate fresh space for the resulting element and copy it there.
@@ -1727,7 +1724,7 @@ __attribute__((visibility("hidden")))
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     // After this point we will be accessing shared data structures, so we need to acquire a lock.
@@ -1742,7 +1739,7 @@ __attribute__((visibility("hidden")))
 
 
 
-static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, void *param, sde_counter_t **placeholder )
+static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, const void *param, sde_counter_t **placeholder )
 {
     papisde_library_desc_t *lib_handle;
     sde_counter_t *tmp_item;
@@ -1759,7 +1756,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
-    full_event_name = malloc(str_len*sizeof(char));
+    full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
     SDEDBG("%s: Counter: '%s' will be added in library: %s.\n", __FILE__, full_event_name, lib_handle->libraryName);
@@ -1805,7 +1802,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
             tmp_item->data = counter;
         }else if( fp_counter ){
             tmp_item->func_ptr = fp_counter;
-            tmp_item->param = param;
+            tmp_item->param = (void *)param;
         }
         tmp_item->cntr_mode = cntr_mode;
         tmp_item->cntr_type = cntr_type;
@@ -1839,5 +1836,162 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
     return SDE_OK;
 }
 #endif // !defined(SDE_COMMON_ONLY)
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+#include <type_traits>
+#include <exception>
+
+namespace papi_sde
+{
+    class PapiSde {
+        private:
+          papi_handle_t sde_handle;
+
+        public:
+          PapiSde(const char *name_of_library){
+              sde_handle = papi_sde_init(name_of_library);
+          }
+
+          class CreatedCounter;
+          class Recorder;
+
+          template <typename T>
+          int register_counter(const char *event_name, int cntr_mode, T &counter ){
+              if( std::is_same<long long int, T>::value )
+                  return papi_sde_register_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, &counter);
+              if( std::is_same<int, T>::value )
+                  return papi_sde_register_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_int, &counter);
+              if( std::is_same<double, T>::value )
+                  return papi_sde_register_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_double, &counter);
+              if( std::is_same<float, T>::value )
+                  return papi_sde_register_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_float, &counter);
+          }
+
+          template <typename T, typename P>
+          int register_fp_counter(const char *event_name, int cntr_mode, T (*func_ptr)(P*), P const &param){
+              if( std::is_same<long long int, T>::value ){
+                  return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (papi_sde_fptr_t)func_ptr, &param);
+              }else{
+                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.\n");
+                  return SDE_EINVAL;
+              }
+          }
+
+          int unregister_counter(const char *event_name ){
+              return papi_sde_unregister_counter(sde_handle, event_name);
+          }
+
+          int describe_counter(const char *event_name, const char *event_description ){
+              return papi_sde_describe_counter(sde_handle, event_name, event_description);
+          }
+
+          int add_counter_to_group(const char *event_name, const char *group_name, uint32_t group_flags ){
+              return papi_sde_add_counter_to_group(sde_handle, event_name, group_name, group_flags);
+          }
+
+          CreatedCounter *create_counter(const char *event_name, int cntr_mode){
+               CreatedCounter *ptr;
+               try{
+                   ptr = new CreatedCounter(sde_handle, event_name, cntr_mode);
+               }catch(std::exception const &e){
+                   return nullptr;
+               }
+               return ptr;
+          }
+
+          Recorder *create_recorder(const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2)){
+              Recorder *ptr;
+              try{
+                  ptr = new Recorder(sde_handle, event_name, typesize, cmpr_func_ptr);
+               }catch(std::exception const &e){
+                   return nullptr;
+               }
+               return ptr;
+          }
+
+        class Recorder {
+            private:
+              void *recorder_handle=nullptr;
+
+            public:
+              Recorder(papi_handle_t sde_handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2)){
+                  if( SDE_OK != papi_sde_create_recorder(sde_handle, event_name, typesize, cmpr_func_ptr, &recorder_handle ) )
+                      throw std::exception();
+              }
+
+              template <typename T>
+              int record(T const &value){
+                  if( nullptr != recorder_handle )
+                      return papi_sde_record(recorder_handle, sizeof(T), &value);
+                  else
+                      return SDE_EINVAL;
+              }
+
+              int reset(void){
+                  if( nullptr != recorder_handle )
+                      return papi_sde_reset_recorder(recorder_handle);
+                  else
+                      return SDE_EINVAL;
+              }
+        };
+
+        class CreatedCounter {
+            private:
+              void *counter_handle=nullptr;
+
+            public:
+              CreatedCounter(papi_handle_t sde_handle, const char *event_name, int cntr_mode){
+                  if( SDE_OK != papi_sde_create_counter(sde_handle, event_name, cntr_mode, &counter_handle) )
+                      throw std::exception();
+              }
+
+
+              template <typename T>
+              int increment(T const &increment){
+                  if( nullptr == counter_handle )
+                      return SDE_EINVAL;
+
+                  if( std::is_same<long long int, T>::value ){
+                      return papi_sde_inc_counter(counter_handle, increment );
+                  }else{
+                      // for now we don't have the C API to handle increments other than "long long",
+                      // but we can add this in the future transparently to the user.
+                      return papi_sde_inc_counter(counter_handle, (long long int)increment );
+                  }
+              }
+
+              int reset(void){
+                  if( nullptr != counter_handle )
+                      return papi_sde_reset_counter(counter_handle);
+                  else
+                      return SDE_EINVAL;
+              }
+
+        }; // class CreatedCounter
+
+    }; // class PapiSde
+
+    template <typename T>
+    PapiSde::CreatedCounter &operator+=(PapiSde::CreatedCounter &X, const T increment){
+        X.increment(increment);
+        return X;
+    }
+    // Prefix increment ++x;
+    PapiSde::CreatedCounter &operator++(PapiSde::CreatedCounter &X){
+        X.increment(1LL);
+        return X;
+    }
+    // Prefix decrement --x;
+    PapiSde::CreatedCounter &operator--(PapiSde::CreatedCounter &X){
+        X.increment(-1LL);
+        return X;
+    }
+
+} // namespace papi_sde
+#endif // __cplusplus
 
 #endif // !defined(PAPI_SDE_LIB_H)
