@@ -3098,7 +3098,7 @@ PAPI_reset( int EventSet )
  * do_100events();
  * if (PAPI_accum(EventSet, values) != PAPI_OK)
  *    handle_error(1);
- * // values[0] now equals 200
+ * // values[0] now equals 300
  * values[0] = -100;
  * do_100events();
  * if (PAPI_accum(EventSet, values) != PAPI_OK)
