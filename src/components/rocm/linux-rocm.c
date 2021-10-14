@@ -458,87 +458,109 @@ static int _rocm_linkRocmLibraries(void)
 
     // ROCP_METRICS passed.
 
-    env_value = getenv("ROCPROFILER_LOG");            
+    env_value = getenv("ROCP_HSA_INTERCEPT");
+    if (env_value == NULL) {
+        int err = setenv("ROCP_HSA_INTERCEPT", "1", 0);
+        if (err != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Cannot set Env. Var. ROCP_HSA_INTERCEPT=1; required for rocprofiler operation. Must be set manually.");
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }
+    } else {
+        if (strcmp(env_value, "1") != 0) {
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Env. Var. ROCP_HSA_INTERCEPT='%s' is not a supported value; must be '1'.", env_value);
+            _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Wouldn't have any events.
+        }
+    }
+
+    // ROCP_HSA_INTERCEPT passed.
+
+    env_value = getenv("ROCPROFILER_LOG");
     if (env_value == NULL) {
         int err = setenv("ROCPROFILER_LOG", "1", 0);
         if (err != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Cannot set Env. Var. ROCPROFILER_LOG=1; required for rocprofiler operation. Must be set manually.");
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     } else {
         if (strcmp(env_value, "1") != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Env. Var. ROCPROFILER_LOG='%s' is not a supported value; must be '1'.", env_value);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     }
 
     // ROCPROFILER_LOG passed.
 
-    env_value = getenv("HSA_VEN_AMD_AQLPROFILE_LOG");            
+    env_value = getenv("HSA_VEN_AMD_AQLPROFILE_LOG");
     if (env_value == NULL) {
         int err = setenv("HSA_VEN_AMD_AQLPROFILE_LOG", "1", 0);
         if (err != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Cannot set Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG=1; required for rocprofiler operation. Must be set manually.");
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     } else {
         if (strcmp(env_value, "1") != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Env. Var. HSA_VEN_AMD_AQLPROFILE_LOG=%s is not a supported value; must be '1'.", env_value);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     }
 
     // HSA_VEN_AMD_AQLPROFILE_LOG passed.
 
-    env_value = getenv("AQLPROFILE_READ_API");            
+    env_value = getenv("AQLPROFILE_READ_API");
     if (env_value == NULL) {
         int err = setenv("AQLPROFILE_READ_API", "1", 0);
         if (err != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Cannot set Env. Var. AQLPROFILE_READ_API=1; required for rocprofiler operation. Must be set manually.");
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     } else {
         if (strcmp(env_value, "1") != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Env. Var. AQLPROFILE_READ_API=%s is not a supported value; must be '1'.", env_value);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     }
 
     // AQLPROFILE_READ_API is set.
 
     // Note we still have a valid rocprofiler_info. dli_fname, we need to strip away path info to set HSA_TOOLS_LIB.
     // Actual example:  rocprofiler_info dli_fname='/opt/rocm/rocprofiler/lib/librocprofiler64.so'
-    env_value = getenv("HSA_TOOLS_LIB");            
+    env_value = getenv("HSA_TOOLS_LIB");
     if (env_value == NULL) {
         int i=strlen(rocprofiler_info.dli_fname);
         while (i>1 && rocprofiler_info.dli_fname[i-1] != '/') i--;
         // fprintf(stderr, "for HSA_TOOLS_LIB discovered name is '%s'.\n", rocprofiler_info.dli_fname+i);
         int err = setenv("HSA_TOOLS_LIB", rocprofiler_info.dli_fname+i, 0);
         if (err != 0) {
-            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, 
+            strErr=snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Cannot set Env. Var. HSA_TOOLS_LIB='%s' required for rocprofiler operation. Must be set manually.", rocprofiler_info.dli_fname+i);
             _rocm_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Wouldn't have any events.
-        }            
+        }
     } else {
         // We don't analyze the name used; the environment variable was found.
     }
