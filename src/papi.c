@@ -6956,7 +6956,7 @@ PAPI_get_virt_usec( void )
 int
 PAPI_lock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_lock( lck ) );
@@ -6976,7 +6976,7 @@ PAPI_lock( int lck )
 int
 PAPI_unlock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_unlock( lck ) );
