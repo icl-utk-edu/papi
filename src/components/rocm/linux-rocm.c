@@ -739,7 +739,10 @@ static int _rocm_init_private(void)
 {
     int strErr, err = PAPI_OK;
     PAPI_lock(COMPONENT_LOCK);
-    if (_rocm_vector.cmp_info.initialized) goto rocm_init_private_exit;
+    if (_rocm_vector.cmp_info.initialized) {
+        err = _rocm_vector.cmp_info.disabled;
+        goto rocm_init_private_exit;
+    }
 
     ROCMDBG("Entering _rocm_init_private\n");
 
