@@ -10,12 +10,14 @@
 #include "papi.h"
 #include "icache.h"
 
-void i_cache_driver(char* papi_event_name, int init, char* outdir, int show_progress)
+void i_cache_driver(char* papi_event_name, int init, hw_desc_t *hw_desc, char* outdir, int show_progress)
 {
     // Open output file.
     const char *sufx = ".instr";
     char *papiFileName;
     FILE *ofp_papi;
+
+    (void)hw_desc;
 
     int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
     if (NULL == (papiFileName = (char *)calloc( 1+l, sizeof(char) ))) {

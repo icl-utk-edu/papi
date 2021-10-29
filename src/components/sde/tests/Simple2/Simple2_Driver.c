@@ -5,10 +5,10 @@
 #include "papi.h"
 #include "papi_test.h"
 
-long long int low_mark[10]  = { 2LL,  18LL,  67LL,  94LL, 110LL, 123LL,  180LL,  188LL,  200LL,  222LL};
-long long int high_mark[10] = { 3LL,  18LL,  96LL, 143LL, 167LL, 202LL,  286LL,  295LL,  314LL,  361LL};
-long long int tot_iter[10]  = {19LL, 126LL, 459LL, 658LL, 757LL, 903LL, 1271LL, 1314LL, 1400LL, 1588LL};
-double comp_val[10] = {14.803861, 96.339740, 323.730323, 462.382443, 531.673490, 644.481310, 893.409541, 921.110871, 990.766957, 1121.665475};
+long long int low_mark[10]  = { 0LL,  2LL,  2LL,  7LL, 21LL,  29LL,  29LL,  29LL,  29LL,  34LL};
+long long int high_mark[10] = { 1LL,  1LL,  2LL,  3LL,  4LL,   8LL,   9LL,   9LL,   9LL,  13LL};
+long long int tot_iter[10]  = { 2LL,  9LL, 13LL, 33LL, 83LL, 122LL, 126LL, 130LL, 135LL, 176LL};
+double comp_val[10] = {0.653676, 3.160483, 4.400648, 10.286250, 25.162759, 36.454895, 37.965891, 39.680220, 41.709039, 53.453990};
 
 void setup_PAPI(int *event_set);
 void simple_init(void);
@@ -53,8 +53,8 @@ int main(int argc, char **argv){
             counter_values[1] != high_mark[i] ||
             counter_values[2] != (low_mark[i]+high_mark[i]) ||
             counter_values[3] != tot_iter[i] ||
-            (*dbl_ptr-comp_val[i]) > 0.00001 ||
-            (*dbl_ptr-comp_val[i]) < -0.00001 ){
+            (*dbl_ptr-2.0*comp_val[i]) > 0.00001 ||
+            (*dbl_ptr-2.0*comp_val[i]) < -0.00001 ){
            discrepancies++;
        }
     }
@@ -86,23 +86,23 @@ void setup_PAPI(int *event_set){
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset", ret );
     }
 
-    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple::LOW_WATERMARK_REACHED")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple2::LOW_WATERMARK_REACHED")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
     }
 
-    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple::HIGH_WATERMARK_REACHED")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple2::HIGH_WATERMARK_REACHED")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
     }
 
-    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple::ANY_WATERMARK_REACHED")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple2::ANY_WATERMARK_REACHED")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
     }
 
-    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple::TOTAL_ITERATIONS")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple2::TOTAL_ITERATIONS")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
     }
 
-    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple::COMPUTED_VALUE")) != PAPI_OK){
+    if((ret=PAPI_add_named_event(*event_set, "sde:::Simple2::COMPUTED_VALUE")) != PAPI_OK){
         test_fail( __FILE__, __LINE__, "PAPI_add_named_event", ret );
     }
 

@@ -48,13 +48,8 @@ papi_mem_info: papi_mem_info.o $(PAPILIB)
 papi_multiplex_cost: papi_multiplex_cost.o $(PAPILIB) cost_utils.o
 	$(CC) -o papi_multiplex_cost papi_multiplex_cost.o cost_utils.o $(PAPILIB) -lm $(LDFLAGS)
 
-ifneq ($(SDE_ENABLED),1)
-papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o sde_weak_symbols.o
-	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o sde_weak_symbols.o $(LDFLAGS)
-else
 papi_native_avail: papi_native_avail.o $(PAPILIB) print_header.o
-	$(CC) -o papi_native_avail -DSTATIC_SDE papi_native_avail.o $(SDE_LIB_FILES) $(PAPILIB) print_header.o $(LDFLAGS)
-endif
+	$(CC) -o papi_native_avail papi_native_avail.o $(PAPILIB) print_header.o $(LDFLAGS)
 
 papi_version: papi_version.o $(PAPILIB)
 	$(CC) -o papi_version papi_version.o $(PAPILIB) $(LDFLAGS)
@@ -69,11 +64,6 @@ cost_utils.o: ../testlib/papi_test.h cost_utils.c
 
 print_header.o: print_header.h print_header.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c print_header.c
-
-ifneq ($(SDE_ENABLED),1)
-sde_weak_symbols.o: ../components/sde/sde_lib/weak_symbols.c
-	$(CC) -o sde_weak_symbols.o $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -I../components/sde/sde_lib/ -c $<
-endif
 
 clean:
 	rm -f *.o *.stderr *.stdout core *~ $(ALL)

@@ -1349,11 +1349,13 @@ PAPI_query_named_event( const char *EventName )
 const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
 {
-	APIDBG( "Entry: Component Index %d\n", cidx);
-	if ( _papi_hwi_invalid_cmp( cidx ) )
-		return ( NULL );
-	else
-		return ( &( _papi_hwd[cidx]->cmp_info ) );
+   APIDBG( "Entry: Component Index %d\n", cidx);
+   if (_papi_hwd[cidx]->init_private)
+      _papi_hwd[cidx]->init_private();
+   if ( _papi_hwi_invalid_cmp( cidx ) )
+      return ( NULL );
+   else
+      return ( &( _papi_hwd[cidx]->cmp_info ) );
 }
 
 /* PAPI_get_event_info:
@@ -3096,7 +3098,7 @@ PAPI_reset( int EventSet )
  * do_100events();
  * if (PAPI_accum(EventSet, values) != PAPI_OK)
  *    handle_error(1);
- * // values[0] now equals 200
+ * // values[0] now equals 300
  * values[0] = -100;
  * do_100events();
  * if (PAPI_accum(EventSet, values) != PAPI_OK)
@@ -6954,7 +6956,7 @@ PAPI_get_virt_usec( void )
 int
 PAPI_lock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_lock( lck ) );
@@ -6974,7 +6976,7 @@ PAPI_lock( int lck )
 int
 PAPI_unlock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_unlock( lck ) );

@@ -27,20 +27,58 @@
 
 #include <dlfcn.h>
 #include <limits.h>
+#include <float.h> // For DBL_MAX. 
 
 // NOTE: We can't use extended directories; these include files have includes.
 #include <cupti.h>
 #include <cuda_runtime_api.h>
+
+#include <cuda.h>
+#include <cupti_callbacks.h>
+
+// Included by cupti_callbacks; but see these for
+// enums of driver or runtime calls we can trap. 
+// #include <cupti_driver_cbid.h>
+// #include <cupti_runtime_cbid.h>
+
+// CUPTI_PROFILER is determined at compile time by Rules.cuda. If the file
+// "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory, we
+// set CUPTI_PROFILER=1. If it is not but the file "cupti.h" is found under the
+// $PAPI_CUDA_ROOT directory, we set CUPTI_PROFILER=0. If neither file is
+// found, we set CUPTI_PROFILER=-1. This last value will short circuit the init
+// and disable the component; it means that PAPI_CUDA_ROOT was not set before
+// executing ./configure. And we must be able to see the headers to know
+// whether we can include the following files or not; because these header
+// files do not appear in cuda release versions <10.0. That will cause missing
+// file compiler errors.
+
+#if CUPTI_PROFILER == 1
+#include <cupti_target.h>
+#include <cupti_profiler_target.h>
+#include <nvperf_host.h>
+#include <nvperf_cuda_host.h>
+#include <nvperf_target.h>
+#endif 
 
 #include "papi.h"
 #include "papi_memory.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
 
-// We use a define so we can use it as a static array dimension. Increase as needed.
+// We use a define so we can use it as a static array dimension. 
+// This winds up defining the maximum number of events in a PAPI eventset.
+// Increase as needed, but 512 is probably sufficient!
 #define PAPICUDA_MAX_COUNTERS 512
 
-// Will include code to time the multi-pass metric elimination code.
+// Hash Table Size. Note in Cupti-11 we can have ~120,000 events per device.
+// This causes a performance problem in looking up events by name; especially
+// if we have 2 or more devices. This hash eliminates that issue.
+// 32768; 233K events hashed: inUse=99.927%, avgChain=7.02, maxChain=20.
+#define CUDA11_HASH_SIZE 32768
+
+// Will include code to time the multi-pass metric elimination code;
+// Only applies to Legacy CUpti, not CUDA11. In CUDA11 we do not eliminate 
+// multi-pass events.
 // #define TIME_MULTIPASS_ELIM
 
 // CUDA metrics use events that are not "exposed" by the normal enumeration of
@@ -50,6 +88,7 @@
 // full event report, showing the composition of metrics, etc. This is a 
 // diagnostic aid, it is possible these unenumerated events will vary by 
 // GPU version or model, should some metric seem to be misbehaving.
+// Only applies to Legacy CUpti, not CUDA11.
 // #define PRODUCE_EVENT_REPORT
 
 // For the same unenumerated events, for experimentation and diagnostics, this
@@ -58,19 +97,24 @@
 // "cuda:::unenum_event:0x16000001:device=0", with a description "Unenumerated
 // Event used in a metric". But this allows you to add it to a PAPI_EventSet
 // and see how it behaves under different test kernels. 
+// Only applies to Legacy CUpti, not CUDA11.
 // #define EXPOSE_UNENUMERATED_EVENTS 
 
+// An experimental alternative.
 // #define PAPICUDA_KERNEL_REPLAY_MODE
 
 // CUDA metrics can require events that do not appear in the 
 // enumerated event lists. A table of these tracks these for
 // cumulative valuing (necessary because a read of any counter
 // zeros it).
+
+// Some structures apply only to Legacy CUpti, not CUDA11.
+// See below for cuda11 structures.
 typedef struct cuda_all_events {
    CUpti_EventID  eventId;
    int            deviceNum;
    int            idx;              // -1 if unenumerated, otherwise idx into enumerated events.
-   int            nonCumulative;    // 1=do not accumulate. Spot value, or constant.
+   int            nonCumulative;    // 0=cumulative. 1=do not; spot value or constant. 
    long unsigned int cumulativeValue;
 } cuda_all_events_t;
 
@@ -88,11 +132,43 @@ typedef struct cuda_device_desc {
     CUdevice    cuDev;
     int         deviceNum;
     char        deviceName[PAPI_MIN_STR_LEN];
-    struct cudaDeviceProp myProperties;
-    int         cupti_1_0;
+    int         CC_Major;                   /* Compute Capability Major */
     uint32_t    maxDomains;                 /* number of domains per device */
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
+
+    int         cupti_le70;                 /* <= 7.0 can use legacy. */
+    int         cupti_ge70;                 /* >= 7.0 can use profiler. */
+
+#if CUPTI_PROFILER == 1
+    CUcontext   cuContext;                      // context created during cuda11_add_native_events.
+    CUcontext   sessionCtx;                     // context created for profiling session.
+    char        cuda11_chipName[PAPI_MIN_STR_LEN];
+    uint8_t*    cuda11_CounterAvailabilityImage; 
+    int         cuda11_CounterAvailabilityImageSize; 
+    uint8_t*    cuda11_ConfigImage;             // Part 1 of an 'eventset' for NV PerfWorks.
+    int         cuda11_ConfigImageSize;
+    uint8_t*    cuda11_CounterDataPrefixImage;  // Part 2 of an 'eventset' for NV PerfWorks.
+    int         cuda11_CounterDataPrefixImageSize;
+    uint8_t*    cuda11_CounterDataImage;        // actual data from an 'eventset' for NV PerfWorks.
+    int         cuda11_CounterDataImageSize;
+    uint8_t*    cuda11_CounterDataScratchBuffer;
+    int         cuda11_CounterDataScratchBufferSize;
+    char        cuda11_range_name[32];          // Name of the only range we have.
+
+    // Parameters init and used in _cuda11_start().
+    int  cuda11_RMR_count;
+    NVPA_RawMetricRequest *cuda11_RMR;
+    int  cuda11_numMetricNames;
+    int  *cuda11_ValueIdx;
+    int  *cuda11_MetricIdx;
+    char **cuda11_MetricNames;  
+    CUpti_Profiler_BeginSession_Params beginSessionParams;
+    CUpti_Profiler_SetConfig_Params setConfigParams;
+    CUpti_Profiler_PushRange_Params pushRangeParams;
+    NVPW_CUDA_MetricsContext_Create_Params *pMetricsContextCreateParams;
+    int ownsMetricsContext;   
+#endif 
 } cuda_device_desc_t;
 
 // Contains device list, pointer to device description, and the list of all available events.
@@ -145,14 +221,74 @@ typedef struct cuda_control {
     uint64_t    cuptiReadTimestampNs;                                   // ..
 } cuda_control_t;
 
+#if CUPTI_PROFILER == 1
+// For _cuda_callback tracker.
+typedef struct {
+    CUcontext ctxId;        // context as used by Nvidia.
+    int       device;       // device it references; -1 if unknown.
+    void      *next;        // pointer to next in chain.
+} cuda_context_chain_t;
+
+// cuda_context_chain management: The head is always a pointer.
+// The "most recent" context for a given device will always be
+// found first; the context for the current device should be
+// the root. But we do not duplicate any contexts.
+static cuda_context_chain_t *cuda_context_chain = NULL;
+
+//*****************************************************************************
+// CUDA 11 structures.
+//*****************************************************************************
+enum {SpotValue, RunningMin, RunningMax, RunningSum};
+typedef struct {
+    int     deviceNum;                      // idx to gctxt->deviceArray[].
+    char*   nv_name;                        // The nvidia name.
+    char*   papi_name;                      // The papi name (with :device=i). PAPI_MAX_STR_LEN.
+    int     detailsDone;                    // If details are already done.
+    char*   description;                    
+    char*   dimUnits;                    
+    double  gpuBurstRate;
+    double  gpuSustainedRate;
+    int     passes;
+    int     inEventSet;
+    int     numRawMetrics;
+    int     treatment;              // see enum above; SpotValue, etc.
+    NVPA_RawMetricRequest* rawMetricRequests;
+    double  cumulativeValue;        // cumulativeValue. 
+} cuda11_eventData;
+
+// Hash Table Entry; to look up by name.
+typedef struct cuda11_hash_entry_s {
+   int idx;                                        // The entry that matches this hash.
+   void *next;                                     // next entry that matches this hash, or NULL.
+} cuda11_hash_entry_t;
+#endif
+
 // file handles used to access cuda libraries with dlopen
 static void *dl1 = NULL;
 static void *dl2 = NULL;
 static void *dl3 = NULL;
 
+#if CUPTI_PROFILER == 1
+static void *dl4 = NULL;
+#endif
+
 static char cuda_main[]=PAPI_CUDA_MAIN;
 static char cuda_runtime[]=PAPI_CUDA_RUNTIME;
 static char cuda_cupti[]=PAPI_CUDA_CUPTI;
+#if CUPTI_PROFILER == 1
+static char cuda_perfworks[]=PAPI_CUDA_PERFWORKS;
+#endif
+
+static int cuda_version=0;
+static int cuda_runtime_version=0;
+
+#if CUPTI_PROFILER == 1
+// The following structure sizes change from version 10 to version 11.
+static int GetChipName_Params_STRUCT_SIZE=0;
+static int Profiler_SetConfig_Params_STRUCT_SIZE=0;
+static int Profiler_EndPass_Params_STRUCT_SIZE=0;
+static int Profiler_FlushCounterData_Params_STRUCT_SIZE=0;
+#endif
 
 /* The PAPI side (external) variable as a global */
 papi_vector_t _cuda_vector;
@@ -163,8 +299,38 @@ static cuda_context_t *global_cuda_context = NULL;
 /* This global variable points to the head of the control state list */
 static cuda_control_t *global_cuda_control = NULL;
 
-/* Macros for error checking... each arg is only referenced/evaluated once */
-#define REPORT_FAILED_CALLS 0
+
+#if CUPTI_PROFILER == 1
+static CUpti_SubscriberHandle callback_subscriber;
+
+// This global variable tracks all cuda11 metrics.
+static int cuda11_numEvents = 0;       // actual number of events in array.
+static int cuda11_maxEvents = 0;       // allocated space for events in array.
+static cuda11_eventData** cuda11_AllEvents;
+static cuda11_hash_entry_t* cuda11_NameHashTable[CUDA11_HASH_SIZE];
+
+// prototypes for cuda->cuda11 hand offs.
+static int _cuda11_init_control_state(hwd_control_state_t * ctrl);
+static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
+    NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx);
+static int _cuda11_ntv_enum_events(unsigned int *EventCode, int modifier);
+static int _cuda11_ntv_name_to_code(const char *nameIn, unsigned int *out);
+static int _cuda11_ntv_code_to_name(unsigned int EventCode, char *name, int len);
+
+static int _cuda11_add_native_events(cuda_context_t * gctxt);
+static void _cuda11_cuda_vector(void);
+#endif
+
+#define DEBUG_CALLS 0
+
+// Cupti Callback Domains to track. See _cuda_callback().
+// Change to 1 to subscribe.
+#define CCD_DRIVER 1
+#define CCD_RUNTIME 1
+#define CCD_RESOURCE 0
+#define CCD_SYNCHRONIZE 0
+#define CCD_NVTX 0
+
 // The following macro follows if a string function has an error. It should 
 // never happen; but it is necessary to prevent compiler warnings. We print 
 // something just in case there is programmer error in invoking the function.
@@ -179,42 +345,66 @@ static cuda_control_t *global_cuda_control = NULL;
         }                                                                   \
     } while (0)
 
-#define CUDA_CALL( call, handleerror )                                              \
-    do {                                                                            \
-        cudaError_t _status = (call);                                               \
-        if (_status != cudaSuccess) {                                               \
-            SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
-            if (REPORT_FAILED_CALLS) fprintf(stderr, "%s:%s:%i CUDA error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            handleerror;                                                            \
-        }                                                                           \
+#define CUDA_CALL( call, handleerror )                                                          \
+    do {                                                                                        \
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUDA_CALL %s\n",                             \
+             __FILE__, __func__, __LINE__, #call);                                              \
+        cudaError_t _status = (call);                                                           \
+        if (_status != cudaSuccess) {                                                           \
+            SUBDBG("error: function %s failed with error %d.\n", #call, _status);               \
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUDA error: function %s failed error %d.\n", \
+                __FILE__, __func__, __LINE__, #call, _status);                                  \
+            handleerror;                                                                        \
+        }                                                                                       \
     } while (0)
 
-#define CU_CALL( call, handleerror )                                                \
-    do {                                                                            \
-        CUresult _status = (call);                                                  \
-        if (_status != CUDA_SUCCESS) {                                              \
-            SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
-            if (REPORT_FAILED_CALLS) fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n", __FILE__, __func__, __LINE__, #call, _status);   \
-            handleerror;                                                            \
-        }                                                                           \
+#define CU_CALL( call, handleerror )                                                                \
+    do {                                                                                            \
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CU_CALL %s\n",                                   \
+            __FILE__, __func__, __LINE__, #call);                                                   \
+        CUresult _status = (call);                                                                  \
+        if (_status != CUDA_SUCCESS) {                                                              \
+            SUBDBG("error: function %s failed with error %d.\n", #call, _status);                   \
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CU error: function %s failed with error %d.\n", \
+                    __FILE__, __func__, __LINE__, #call, _status);                                  \
+            {handleerror;}                                                                          \
+        }                                                                                           \
     } while (0)
 
 
-#define CUPTI_CALL(call, handleerror)                                                                       \
-    do {                                                                                                    \
-        CUptiResult _status = (call);                                                                       \
-        if (_status != CUPTI_SUCCESS) {                                                                     \
-            const char *errstr;                                                                             \
-            (*cuptiGetResultStringPtr)(_status, &errstr);                                                   \
-            SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                            \
-            if (REPORT_FAILED_CALLS) fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n", __FILE__, __func__, __LINE__, #call, _status, errstr);   \
-            handleerror;                                                                                    \
-        }                                                                                                   \
+#define CUPTI_CALL(call, handleerror)                                                               \
+    do {                                                                                            \
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUPTI_CALL %s\n",                                \
+            __FILE__, __func__, __LINE__, #call);                                                   \
+        CUptiResult _status = (call);                                                               \
+        if (_status != CUPTI_SUCCESS) {                                                             \
+            const char *errstr;                                                                     \
+            (*cuptiGetResultStringPtr)(_status, &errstr);                                           \
+            SUBDBG("error: function %s failed with error %s.\n", #call, errstr);                    \
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i CUpti error: function %s failed with error %d (%s).\n", \
+                    __FILE__, __func__, __LINE__, #call, _status, errstr);                          \
+            {handleerror;}                                                                          \
+        }                                                                                           \
     } while (0)
+
+#if CUPTI_PROFILER == 1
+#define NVPW_CALL(call, handleerror)                                                                \
+    do {                                                                                            \
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i NVPW_CALL %s\n",                                 \
+            __FILE__, __func__, __LINE__, #call);                                                   \
+        NVPA_Status _status = (call);                                                               \
+        if (_status != NVPA_STATUS_SUCCESS) {                                                       \
+            SUBDBG("error: NVPW function %s failed with error %d.\n", #call, _status);              \
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i PerfWork error: function %s failed with error %d.\n",         \
+                    __FILE__, __func__, __LINE__, #call, _status);                                  \
+            {handleerror;}                                                                          \
+        }                                                                                           \
+    } while (0)
+#endif
 
 #define BUF_SIZE (32 * PATH_MAX)
 #define ALIGN_SIZE (8)
-#define ALIGN_BUFFER(buffer, align)                                                                                 \
+#define ALIGN_BUFFER(buffer, align)                                                                 \
   (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
 /* Function prototypes */
@@ -255,6 +445,7 @@ DECLARECUFUNC(cuCtxGetCurrent, (CUcontext *));
 DECLARECUFUNC(cuCtxSetCurrent, (CUcontext));
 DECLARECUFUNC(cuCtxDestroy, (CUcontext));
 DECLARECUFUNC(cuCtxCreate, (CUcontext *pctx, unsigned int flags, CUdevice dev));
+DECLARECUFUNC(cuCtxGetDevice, (CUdevice *));
 DECLARECUFUNC(cuDeviceGet, (CUdevice *, int));
 DECLARECUFUNC(cuDeviceGetCount, (int *));
 DECLARECUFUNC(cuDeviceGetName, (char *, int, CUdevice));
@@ -265,13 +456,17 @@ DECLARECUFUNC(cuGetErrorString, (CUresult error, const char** pStr));
 DECLARECUFUNC(cuCtxPopCurrent, (CUcontext * pctx));
 DECLARECUFUNC(cuCtxPushCurrent, (CUcontext pctx));
 DECLARECUFUNC(cuCtxSynchronize, ());
+DECLARECUFUNC(cuDeviceGetAttribute, (int *, CUdevice_attribute, CUdevice));
 
 #define CUDAAPIWEAK __attribute__( ( weak ) )
 #define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  cudaError_t( *funcname##Ptr ) funcsig;
 DECLARECUDAFUNC(cudaGetDevice, (int *));
 DECLARECUDAFUNC(cudaSetDevice, (int));
-DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
+// DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
+DECLARECUDAFUNC(cudaDeviceGetAttribute, (int *value, enum cudaDeviceAttr attr, int device));
 DECLARECUDAFUNC(cudaFree, (void *));
+DECLARECUDAFUNC(cudaDriverGetVersion, (int *));
+DECLARECUDAFUNC(cudaRuntimeGetVersion, (int *));
 
 #define CUPTIAPIWEAK __attribute__( ( weak ) )
 #define DECLARECUPTIFUNC(funcname, funcsig) CUptiResult CUPTIAPIWEAK funcname funcsig;  CUptiResult( *funcname##Ptr ) funcsig;
@@ -311,12 +506,513 @@ DECLARECUPTIFUNC(cuptiEventGroupResetAllEvents, (CUpti_EventGroup));
 DECLARECUPTIFUNC(cuptiGetResultString, (CUptiResult result, const char **str));
 DECLARECUPTIFUNC(cuptiEnableKernelReplayMode, ( CUcontext context ));
 DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
+// Callback functions.
+DECLARECUPTIFUNC(cuptiSubscribe, ( CUpti_SubscriberHandle* subscriber, CUpti_CallbackFunc callback, void* userdata ));
+DECLARECUPTIFUNC(cuptiUnsubscribe, ( CUpti_SubscriberHandle subscriber ));
+DECLARECUPTIFUNC(cuptiEnableDomain, ( uint32_t enable, CUpti_SubscriberHandle subscriber, CUpti_CallbackDomain domain ));
 
+#if CUPTI_PROFILER == 1
+// Functions for perfworks profiler.
+// cuptiDeviceGetChipName relies on cupti_target.h, not in legacy Cuda distributions.
+DECLARECUPTIFUNC(cuptiDeviceGetChipName, (CUpti_Device_GetChipName_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerInitialize, (CUpti_Profiler_Initialize_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerDeInitialize, (CUpti_Profiler_DeInitialize_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerCounterDataImageCalculateSize, (CUpti_Profiler_CounterDataImage_CalculateSize_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerCounterDataImageInitialize, (CUpti_Profiler_CounterDataImage_Initialize_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerCounterDataImageCalculateScratchBufferSize, (CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerCounterDataImageInitializeScratchBuffer, (CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params* params));
+
+DECLARECUPTIFUNC(cuptiProfilerBeginSession, (CUpti_Profiler_BeginSession_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerSetConfig, (CUpti_Profiler_SetConfig_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerBeginPass, (CUpti_Profiler_BeginPass_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerEnableProfiling, (CUpti_Profiler_EnableProfiling_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerPushRange, (CUpti_Profiler_PushRange_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerPopRange, (CUpti_Profiler_PopRange_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerDisableProfiling, (CUpti_Profiler_DisableProfiling_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerEndPass, (CUpti_Profiler_EndPass_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerFlushCounterData, (CUpti_Profiler_FlushCounterData_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerUnsetConfig, (CUpti_Profiler_UnsetConfig_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerEndSession, (CUpti_Profiler_EndSession_Params* params));
+DECLARECUPTIFUNC(cuptiProfilerGetCounterAvailability, (CUpti_Profiler_GetCounterAvailability_Params* params));
+
+#define NVPWAPIWEAK __attribute__( ( weak ) )
+#define DECLARENVPWFUNC(fname, fsig) NVPA_Status NVPWAPIWEAK fname fsig; NVPA_Status( *fname##Ptr ) fsig;
+
+DECLARENVPWFUNC(NVPW_GetSupportedChipNames, (NVPW_GetSupportedChipNames_Params* params));
+DECLARENVPWFUNC(NVPW_CUDA_MetricsContext_Create, (NVPW_CUDA_MetricsContext_Create_Params* params));
+DECLARENVPWFUNC(NVPW_MetricsContext_Destroy, (NVPW_MetricsContext_Destroy_Params * params));
+DECLARENVPWFUNC(NVPW_MetricsContext_GetMetricNames_Begin, (NVPW_MetricsContext_GetMetricNames_Begin_Params* params));
+DECLARENVPWFUNC(NVPW_MetricsContext_GetMetricNames_End, (NVPW_MetricsContext_GetMetricNames_End_Params* params));
+DECLARENVPWFUNC(NVPW_InitializeHost, (NVPW_InitializeHost_Params* params));
+DECLARENVPWFUNC(NVPW_MetricsContext_GetMetricProperties_Begin, (NVPW_MetricsContext_GetMetricProperties_Begin_Params* p));
+DECLARENVPWFUNC(NVPW_MetricsContext_GetMetricProperties_End, (NVPW_MetricsContext_GetMetricProperties_End_Params* p));
+DECLARENVPWFUNC(NVPW_CUDA_RawMetricsConfig_Create, (NVPW_CUDA_RawMetricsConfig_Create_Params*));
+
+// Already defined in nvperf_host.h. I don't use these, I just need the pointer.
+// DECLARENVPWFUNC(NVPA_RawMetricsConfig_Create, (NVPA_RawMetricsConfigOptions*, NVPA_RawMetricsConfig**));
+NVPA_Status (*NVPA_RawMetricsConfig_CreatePtr)(NVPA_RawMetricsConfigOptions*, NVPA_RawMetricsConfig**);
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_Destroy, (NVPW_RawMetricsConfig_Destroy_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_BeginPassGroup, (NVPW_RawMetricsConfig_BeginPassGroup_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_EndPassGroup, (NVPW_RawMetricsConfig_EndPassGroup_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_AddMetrics, (NVPW_RawMetricsConfig_AddMetrics_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_GenerateConfigImage, (NVPW_RawMetricsConfig_GenerateConfigImage_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_GetConfigImage, (NVPW_RawMetricsConfig_GetConfigImage_Params* params));
+DECLARENVPWFUNC(NVPW_CounterDataBuilder_Create, (NVPW_CounterDataBuilder_Create_Params* params));
+DECLARENVPWFUNC(NVPW_CounterDataBuilder_Destroy, (NVPW_CounterDataBuilder_Destroy_Params* params));
+DECLARENVPWFUNC(NVPW_CounterDataBuilder_AddMetrics, (NVPW_CounterDataBuilder_AddMetrics_Params* params));
+DECLARENVPWFUNC(NVPW_CounterDataBuilder_GetCounterDataPrefix, (NVPW_CounterDataBuilder_GetCounterDataPrefix_Params* params));
+DECLARENVPWFUNC(NVPW_CounterData_GetNumRanges, (NVPW_CounterData_GetNumRanges_Params* params));
+DECLARENVPWFUNC(NVPW_Profiler_CounterData_GetRangeDescriptions, (NVPW_Profiler_CounterData_GetRangeDescriptions_Params* params));
+DECLARENVPWFUNC(NVPW_MetricsContext_SetCounterData, (NVPW_MetricsContext_SetCounterData_Params* params));
+DECLARENVPWFUNC(NVPW_MetricsContext_EvaluateToGpuValues, (NVPW_MetricsContext_EvaluateToGpuValues_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_GetNumPasses, (NVPW_RawMetricsConfig_GetNumPasses_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_SetCounterAvailability, (NVPW_RawMetricsConfig_SetCounterAvailability_Params* params));
+DECLARENVPWFUNC(NVPW_RawMetricsConfig_IsAddMetricsPossible, (NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* params));
+
+DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_Begin, (NVPW_MetricsContext_GetCounterNames_Begin_Params* pParams));
+DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_GetCounterNames_End_Params* pParams));
+#endif
 
 /*****************************************************************************
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT *********
  *****************************************************************************/
 
+//-----------------------------------------------------------------------------
+// This function returns the number of Nvidia devices in the system.
+// We search the file system for /sys/class/drm/card?/device/vendor. These must
+// be card0, card1, etc. When we cannot open a file we stop looking. If they
+// can be opened and return a line it will be a string 0xhhhh as a hex vendor
+// ID. See the website  https://pci-ids.ucw.cz, particularly 
+// https://pci-ids.ucw.cz/read/PC and  https://pci-ids.ucw.cz/read/PD/
+// for a list. 0x10de is the vendor ID for Nvidia.
+// The /sys/class/drm/card?/device/class, if present, must begin 0x03. This 
+// indicates a "Display Controller" (i.e. GPU) but on Nvidia we have seen both
+//  0x030200 and 0x030000, so we only match the beginning.
+// 
+// If your devices are not found; double check what the system is saying
+// manually; e.g. 
+// >cat /sys/class/drm/card0/device/vendor
+// >cat /sys/class/drm/card0/device/class
+// 
+// Note we DO have cuDeviceGetCount(), but this requires cuInit() to be run;
+// and we don't want to do that before delayed_init. It causes problems for 
+// higher level tool vendors that use PAPI underneath. Without cuInit(); I 
+// know of no other way to check for Nvidia GPUs present in the system.
+//-----------------------------------------------------------------------------
+static int _cuda_count_nvidia_devices(void)
+{
+    char vendor_id[64]="/sys/class/drm/card%i/device/vendor";
+    char class_id[64]="/sys/class/drm/card%i/device/class";
+    char filename[64];
+    uint32_t myVendor = 0x10de;                     // The NVIDIA GPU vendor ID.
+    char line[16];
+    size_t bytes;
+    int card;
+    long int devID;
+
+    int totalDevices=0;                             // Reset, in case called more than once.
+
+    for (card=0; card<64; card++) {
+        sprintf(filename, vendor_id, card);         // make a name for myself.
+        FILE *fcard = fopen(filename, "r");         // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            break;
+        }
+
+        bytes=fread(line, 1, 6, fcard);             // read six bytes.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes != 6) {                           // If we did not read 6,
+            continue;                               // skip this one, vendor id is malformed.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        devID = strtol(line, NULL, 16);             // convert base 16 to long int. Handles '0xhhhh'. NULL=Don't need 'endPtr'.
+        if (devID != myVendor) continue;            // Not the droid I am looking for.
+
+        // Right vendor. Look for some class.
+        sprintf(filename, class_id, card);          // make a name for myself.
+        fcard = fopen(filename, "r");               // Open for reading.
+        if (fcard == NULL) {                        // Failed to open,
+            continue;                               // skip this one if no class file found.
+        }
+
+        // expecting 8 bytes for class; but some have a '0xa0' at the end and read nine bytes.
+        // e.g. '0x030200'. So I read 4, I only care if it starts with '0x03'; a Display Controller.
+        bytes=fread(line, 1, 4, fcard);             // read 1 byte x 4.
+        fclose(fcard);                              // Always close it (avoid mem leak).
+        if (bytes < 4) {                            // If we did not read enough to match,
+            continue;                               // skip this one if class text is too short.
+        }
+
+        line[bytes]=0;                              // Ensure null termination.
+        if (strncasecmp("0x03", line, 4) != 0) continue;    // Not a Display Controller.
+
+        // Found one.
+        totalDevices++;                             // count it.
+    } // end loop through possible cards.
+
+    return(totalDevices);
+} // end __cuda_count_nvidia_devices
+
+
+#if CUPTI_PROFILER == 1
+//-----------------------------------------------------------------------------
+// Context Chain Management [CCM].
+//-----------------------------------------------------------------------------
+static cuda_context_chain_t* CCM_findByCtx(CUcontext thisCtx) {
+    cuda_context_chain_t* test = cuda_context_chain;
+    while (test != NULL) {
+        if (0 && test->ctxId == thisCtx) fprintf(stderr, "%s:%s:%i context found; link=%p\n", __FILE__, __func__, __LINE__, test);
+        if (test->ctxId == thisCtx) return(test);
+        test = test->next;
+    }
+
+    // Not found.
+    if (0) fprintf(stderr, "%s:%s:%i context not found=%p\n", __FILE__, __func__, __LINE__, thisCtx);
+    return(NULL);
+} // end routine.
+
+// Finds first context for a given device.
+static cuda_context_chain_t* CCM_findByDev(int dev) {
+    cuda_context_chain_t* test = cuda_context_chain;
+    while (test != NULL) {
+        if (test->device == dev) return(test);
+        test = test->next;
+    }
+
+    // Not found.
+    return(NULL);
+} // end routine.
+
+// Will add or modify a context with new information.
+// Will return with pointer; if already added will 
+// update with previously unknown device or primary. 
+// If isCurrent, will move link to anchor position.
+// Use -1 for dev Unknown.
+// Defined as inline to avoid not-used warning; 
+// This is mostly a debugging function.
+static inline void CCM_report_chain(void) {
+    cuda_context_chain_t* workLink = cuda_context_chain;
+    fprintf(stderr, "Chain:");
+    while(workLink != NULL) {
+        fprintf(stderr, " %d:%p", workLink->device, workLink->ctxId);
+        workLink = workLink->next;
+    }
+    fprintf(stderr, "\n");
+} // end CCM_report_chain()
+
+
+static cuda_context_chain_t* CCM_addOrMod(CUcontext ctxId, int dev, int isCurrent) {
+    cuda_context_chain_t* workLink;
+    cuda_context_chain_t* myLink = CCM_findByCtx(ctxId);
+    if (0) fprintf(stderr, "%s:%s:%i dev=%d context=%p isCurrent=%d.\n", __FILE__, __func__, __LINE__, dev, ctxId, isCurrent);
+    if (myLink == NULL) {
+        cuda_context_chain_t* newLink = (cuda_context_chain_t*) calloc(1, sizeof(cuda_context_chain_t));
+        newLink->ctxId = ctxId;
+        newLink->device = dev;
+
+        // If we have to move this anyway,
+        if (isCurrent == 1) {
+            newLink->next = cuda_context_chain;
+            cuda_context_chain = newLink;
+            return(cuda_context_chain);
+        }
+
+        // Otherwise we put it at the end of the chain.
+        cuda_context_chain_t* workLink = cuda_context_chain;
+        // If there is no chain yet, init with this one.
+        if (workLink == NULL) {
+            cuda_context_chain = newLink;
+            return(cuda_context_chain);
+        }
+
+        // otherwise, search for end.
+        while (workLink->next != NULL) workLink = workLink->next;
+        workLink->next = newLink;
+        return(newLink);
+    } // END if we couldn't find it.
+
+    // Okay, we found it; in myLink.
+    if (myLink->device < 0) myLink->device = dev;
+
+    // If this context is now the current context, 
+    // it must be promoted. If it is not explicitly
+    // the current, we don't do anything; we can't
+    // know what the proper current context is, we
+    // presume some earlier context in the chain is
+    // appropriate.
+    if (isCurrent == 0) {return(myLink);}
+
+    // return if already at the head.
+    if (isCurrent == 1 && myLink == cuda_context_chain) {return(myLink);}
+
+    // We have to find its predecessor.
+    workLink = cuda_context_chain;
+    while(workLink->next != myLink && workLink != NULL) workLink=workLink->next;
+    if (workLink == NULL) {
+        fprintf(stderr, "%s:%s:%i Bug, workLink pointer should never be NULL here.\n", __FILE__, __func__, __LINE__);
+        return(NULL);
+    }
+
+    // Found predecessor. its workLink->next points at myLink.
+    // Link my parent to my child (if any).
+    workLink->next = myLink->next;
+    // Point myself at current head of chain.
+    myLink->next = cuda_context_chain;
+    // Point head of chain at myself. I'm the king!
+    cuda_context_chain = myLink;
+    // Tell my caller.
+    return(myLink);
+} // END CCM_addOrMod.
+
+// Delete a context from the chain. No errors; if it doesn't
+// exist we don't do anything.
+static void CCM_destroy(CUcontext ctxId) {
+    cuda_context_chain_t* workLink;
+    cuda_context_chain_t* myLink = CCM_findByCtx(ctxId);
+    if (0) fprintf(stderr, "%s:%s:%i myLink = %p\n", __FILE__, __func__, __LINE__, myLink);
+    // if it doesn't exist, 
+    if (myLink == NULL) return;
+    // If it is the head, change the head and free it.
+    if (myLink == cuda_context_chain) {
+        cuda_context_chain = cuda_context_chain->next;
+        free(myLink);
+        return;
+    }
+
+    // Have to find my predecessor.
+    workLink = cuda_context_chain;
+    while(workLink->next != myLink && workLink != NULL) workLink=workLink->next;
+    // If I don't have one, that is a bug.
+    if (workLink == NULL) {
+        fprintf(stderr, "%s:%s:%i Bug, workLink pointer should never be NULL here.\n", __FILE__, __func__, __LINE__);
+        return;
+    }
+
+    // Found predecessor. its workLink->next points at myLink.
+    // Link my parent to my child (if any).
+    workLink->next = myLink->next;
+    // Free the storage of destroyed context.
+    free(myLink);
+    return;
+} // END CCM_destroy.
+
+// Free the entire chain.
+static void CCM_free_chain(void) {
+    cuda_context_chain_t* workLink;
+    while (cuda_context_chain != NULL) {
+        workLink = cuda_context_chain;
+        cuda_context_chain = cuda_context_chain->next;
+        free(workLink);
+    }
+
+    return;
+} // END CCM_free_chain.
+
+
+//-----------------------------------------------------------------------------
+// The callbacks are used to track all contexts that we see, and infer the
+// device each can control. (we cannot tell from just the context itself).
+// 
+//-----------------------------------------------------------------------------
+static void CUPTIAPI
+_cuda_callback(void *userdata, CUpti_CallbackDomain domain,
+            CUpti_CallbackId cbid, const void *cbdata)
+{
+    (void) userdata; // don't generate warning for unused.
+    const CUpti_CallbackData *cbInfo = (CUpti_CallbackData *)cbdata;
+    char* site = NULL;
+    char siteEnter[]="ENTER";
+    char siteExit[]= "EXIT ";
+    if (cbInfo->callbackSite == CUPTI_API_ENTER) site=siteEnter;
+    if (cbInfo->callbackSite == CUPTI_API_EXIT ) site=siteExit;
+      
+
+//  you must cuptiEnableDomain to receive each, see end of _cuda_init_component.
+//  The case just returns if this is not a domain we need to see.
+
+    switch (domain) {
+        #if CCD_DRIVER == 1
+        case CUPTI_CB_DOMAIN_DRIVER_API:
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=DRIVER_API  site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
+            break;
+        #endif
+        #if CCD_RUNTIME == 1
+        case CUPTI_CB_DOMAIN_RUNTIME_API:
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=RUNTIME_API site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
+            break;
+        #endif
+        #if CCD_RESOURCE == 1 
+        case CUPTI_CB_DOMAIN_RESOURCE:
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=RESOURCE    site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
+            break;
+        #endif
+        #if CCD_SYNCHRONIZE == 1
+        case CUPTI_CB_DOMAIN_SYNCHRONIZE:
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=SYNCHRONIZE site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
+            break;
+        #endif
+        #if CCD_NVTX == 1
+        case CUPTI_CB_DOMAIN_NVTX:            
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=NVTX        site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
+            break;
+        #endif
+        default:
+            if (0) fprintf(stderr, "%s:%s:%i callback domain=%d unhandled; site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, domain, site, cbInfo->functionName, cbInfo->context);
+            // Exit without further processing.
+            return;
+            break;
+    } // end switch on domain.
+
+    if (domain == CUPTI_CB_DOMAIN_DRIVER_API)
+    {
+        // on EXIT, we want to see the new current context.
+        if (cbInfo->callbackSite == CUPTI_API_EXIT)
+        {
+            //  From cupti_driver_cbid: 
+            switch (cbid) {
+                //  cuDevicePrimaryCtxRetain_params; CUdevice dev,CUcontext *pctx.
+                //  Identifies a primary context, but does not make it current.
+                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRetain:
+                    {
+                        const cuDevicePrimaryCtxRetain_params *myP;
+                        myP = cbInfo->functionParams;
+                        if (0) fprintf(stderr, "%s:%s:%i '%s' dev=%d cbCtx=%p, paramCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context, myP->pctx[0]);
+                        if (NULL == CCM_addOrMod(myP->pctx[0], myP->dev, 0)) { // Not current; but while we know what it is.
+                            fprintf(stderr, "CCM_addOrMod error.\n");
+                        }
+                    }
+                    break;
+
+                //  cuDevicePrimaryCtxRelease_params; CUdevice dev;
+                //  cuDevicePrimaryCtxRelease_v2_params; CUdevice dev;
+                //  structures are identical. Does nothing.
+                //  (Doesn't identify or change any contexts.)
+                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease:
+                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2
+                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2:
+                #endif
+                    if (0) {
+                        const cuDevicePrimaryCtxRelease_params* myP;
+                        myP = cbInfo->functionParams;
+                        if (0) fprintf(stderr, "%s:%s:%i '%s' dev=%d cbCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
+                    }
+                    break;
+
+                //  cuDevicePrimaryCtxReset_params; CUdevice dev;
+                //  cuDevicePrimaryCtxReset_v2_params; CUdevice dev;
+                //  structures are identical. Does nothing.
+                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset:
+                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2
+                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2:
+                #endif
+                    if (0) {
+                        const cuDevicePrimaryCtxReset_params* myP;
+                        myP = cbInfo->functionParams;
+                        fprintf(stderr, "%s:%s:%i '%s' dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
+                    }
+                    break;
+
+                case CUPTI_DRIVER_TRACE_CBID_cuCtxGetCurrent:
+                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
+                    if (0) fprintf(stderr, "%s:%s:%i '%s' context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
+                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Device unknown, but is current.
+                        fprintf(stderr, "CCM_addOrMod error.\n");
+                    }
+                    break;
+
+                case CUPTI_DRIVER_TRACE_CBID_cuCtxCreate:
+                case CUPTI_DRIVER_TRACE_CBID_cuCtxCreate_v2:
+                    // Note: cuCtxCreate_v2_params and cuCtxCreate_params identical;
+                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
+                    {
+                        const cuCtxCreate_v2_params* myP;
+                        myP = cbInfo->functionParams;
+                        if (0) fprintf(stderr, "%s:%s:%i '%s', dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
+                        if (NULL == CCM_addOrMod(cbInfo->context, myP->dev, 1)) { // Is current.
+                            fprintf(stderr, "CCM_addOrMod error.\n");
+                        }
+                    }
+                    break;
+
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxDestroy:
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxDestroy_v2:
+                    // Note: cuCtxDestroy_v2_params and cuCtxDestroy_params identical;
+                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
+                    {
+                        const cuCtxDestroy_v2_params *myP;
+                        myP = cbInfo->functionParams;
+                        if (0) fprintf(stderr, "%s:%s:%i '%s' cbCtx=%p, paramCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context, myP->ctx);
+                        (void) CCM_destroy(myP->ctx); // May or may not be current.
+                    }
+                    break;
+
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPushCurrent:
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPushCurrent_v2:
+                    // Note: cuCtxPushCurrent_v2_params and cuCtxPushCurrent_params identical;
+                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
+                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
+                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
+                        fprintf(stderr, "CCM_addOrMod error.\n");
+                    }
+                    break;
+
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPopCurrent:
+                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPopCurrent_v2:
+                    // Note: cuCtxPopCurrent_v2_params and cuCtxPopCurrent_params identical;
+                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
+                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
+                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
+                        fprintf(stderr, "CCM_addOrMod error.\n");
+                    }
+                    break;
+
+                case CUPTI_DRIVER_TRACE_CBID_cuCtxSetCurrent:
+                    //  cuCtxSetCurrent_params.
+                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
+                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
+                        fprintf(stderr, "CCM_addOrMod error.\n");
+                    }
+                    break;
+
+                default: // Ignore.
+                    break;
+            }
+        }
+    }
+
+    if (domain == CUPTI_CB_DOMAIN_RUNTIME_API && 
+        cbInfo->callbackSite == CUPTI_API_EXIT &&
+        cbid == CUPTI_RUNTIME_TRACE_CBID_cudaSetDevice_v3020)
+    {
+        //  cudaSetDevice_v3020_params; int device.
+        const cudaSetDevice_v3020_params* myP;
+        myP = cbInfo->functionParams;
+        if (0) fprintf(stderr, "%s:%s:%i '%s', dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->device, cbInfo->context);
+        if (NULL == CCM_addOrMod(cbInfo->context, myP->device, 1)) { // Is current.
+            fprintf(stderr, "CCM_addOrMod error.\n");
+        }
+    }        
+} // _cuda_callback
+#endif // CUPTI_PROFILER == 1
+
+
+/*
+ * Check for the initialization step and does it if needed
+ */
+static int
+_cuda_check_n_initialize(papi_vector_t *vector)
+{
+  if (!vector->cmp_info.initialized && vector->init_private) {
+      return vector->init_private();
+  }
+  return PAPI_OK;
+}
+
+#define DO_SOME_CHECKING(vectorp) do {           \
+  int err = _cuda_check_n_initialize(vectorp);   \
+  if (PAPI_OK != err) return err;                \
+} while(0)
 
 //-----------------------------------------------------------------------------
 // Binary Search of gctxt->allEvents[gctxt->numAllEvents]. Returns idx, or -1.
@@ -356,9 +1052,7 @@ static int _search_all_events(cuda_context_t * gctxt, CUpti_EventID id, int devi
  * with the CUDA component can be installed and used on systems which have the CUDA libraries installed
  * and on systems where these libraries are not installed.
  */
-static int _cuda_linkCudaLibraries(void)
-{
-    char path_lib[PATH_MAX];
+
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );                \
     if ( dlerror()!=NULL ) {                                                \
         int strErr;                                                         \
@@ -369,6 +1063,22 @@ static int _cuda_linkCudaLibraries(void)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;                 \
         return ( PAPI_ENOSUPP );                                            \
     }
+#define DLSYM_AND_CHECK_nvperf( dllib, name ) dlsym( dllib, name );         \
+    if ( dlerror()!=NULL ) {                                                \
+        snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,   \
+        "A required function '%s' was not found in '%s'.",                  \
+        name, nvperf_info.dli_fname);                                       \
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;        \
+        return ( PAPI_ENOSUPP );                                            \
+    }
+
+
+// We need to link libcupti early, to acquire the callback functions. The rest
+// of the functions in these libraries are acquired by the delayed version; but
+// assume this function has been executed (so dl3 is valid).
+static int _cuda_primaryLinkLibraries(void)
+{
+    char path_lib[PATH_MAX];
 
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if(_dl_non_dynamic_init != NULL) {
@@ -379,6 +1089,59 @@ static int _cuda_linkCudaLibraries(void)
         return PAPI_ENOSUPP;
     }
     // Need to link in the cuda libraries, if any not found disable the component
+    // getenv returns NULL if environment variable is not found.
+    char *cuda_root = getenv("PAPI_CUDA_ROOT");
+
+    dl3 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.
+    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
+        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
+        if (dl3 == NULL) {
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                          // If no override,
+        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default.
+    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        int strErr=snprintf(path_lib, sizeof(path_lib)-2, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
+        path_lib[sizeof(path_lib)-1]=0;
+        if (strErr > (int) sizeof(path_lib)-2) HANDLE_STRING_ERROR;
+        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl3 == NULL) {
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP);   // Not found on default paths.
+    }
+
+    // We have a dl3. (libcupti.so)
+
+#if CUPTI_PROFILER == 1
+    // CALLBACK functions.
+    cuptiSubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiSubscribe");
+    cuptiUnsubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiUnsubscribe");
+    cuptiEnableDomainPtr = DLSYM_AND_CHECK(dl3, "cuptiEnableDomain");
+#endif 
+
+    return(PAPI_OK);
+} // END _cuda_primaryLinkLibraries
+
+static int _cuda_linkCudaLibraries(void)
+{
+    char path_lib[PATH_MAX];
+
     // getenv returns NULL if environment variable is not found.
     char *cuda_root = getenv("PAPI_CUDA_ROOT");
 
@@ -432,7 +1195,11 @@ static int _cuda_linkCudaLibraries(void)
     cuCtxPushCurrentPtr = DLSYM_AND_CHECK(dl1, "cuCtxPushCurrent");
     cuCtxDestroyPtr = DLSYM_AND_CHECK(dl1, "cuCtxDestroy");
     cuCtxCreatePtr  = DLSYM_AND_CHECK(dl1, "cuCtxCreate");
+    cuCtxGetDevicePtr = DLSYM_AND_CHECK(dl1, "cuCtxGetDevice");
     cuCtxSynchronizePtr = DLSYM_AND_CHECK(dl1, "cuCtxSynchronize");
+    cuDeviceGetAttributePtr = DLSYM_AND_CHECK(dl1, "cuDeviceGetAttribute");
+    cuDevicePrimaryCtxRetainPtr = DLSYM_AND_CHECK(dl1, "cuDevicePrimaryCtxRetain");
+
 
     /* Need to link in the cuda runtime library, if not found disable the component */
     dl2 = NULL;                                 // Ensure reset to NULL.
@@ -472,44 +1239,15 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl2. (libcudart.so).
 
     cudaGetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaGetDevice");
-    cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
+    // cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl2, "cudaGetDeviceProperties");
+    cudaDeviceGetAttributePtr = DLSYM_AND_CHECK(dl2, "cudaDeviceGetAttribute");
     cudaSetDevicePtr = DLSYM_AND_CHECK(dl2, "cudaSetDevice");
     cudaFreePtr = DLSYM_AND_CHECK(dl2, "cudaFree");
+    cudaDriverGetVersionPtr = DLSYM_AND_CHECK(dl2, "cudaDriverGetVersion");
+    cudaRuntimeGetVersionPtr = DLSYM_AND_CHECK(dl2, "cudaRuntimeGetVersion");
 
-    dl3 = NULL;                                                 // Ensure reset to NULL.
-
-    // Step 1: Process override if given.
-    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
-        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
-        if (dl3 == NULL) {
-            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return(PAPI_ENOSUPP);   // Override given but not found.
-        }
-    }
-
-    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl3 == NULL) {                                          // If no override,
-        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
-    }
-
-    // Step 3: Try the explicit install default.
-    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
-        int strErr=snprintf(path_lib, sizeof(path_lib)-2, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
-        path_lib[sizeof(path_lib)-1]=0;
-        if (strErr > (int) sizeof(path_lib)-2) HANDLE_STRING_ERROR;
-        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
-    }
-
-    // Check for failure.
-    if (dl3 == NULL) {
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Not found on default paths.
-    }
-
+    // dl3 should be set by _cuda_primary_LinkLibraries.
+    if (dl3 == NULL) return(PAPI_EMISC); 
     // We have a dl3. (libcupti.so)
 
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
@@ -549,8 +1287,136 @@ static int _cuda_linkCudaLibraries(void)
     cuptiGetResultStringPtr = DLSYM_AND_CHECK(dl3, "cuptiGetResultString");
     cuptiEnableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
     cuptiDisableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
+
+#if CUPTI_PROFILER == 1
+    cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerInitialize");
+    cuptiProfilerDeInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerDeInitialize");
+// cuptiDeviceGetChipName relies on cupti_target.h, not in legacy Cuda distributions.
+    cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl3, "cuptiDeviceGetChipName");
+    cuptiProfilerCounterDataImageCalculateSizePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageCalculateSize");
+    cuptiProfilerCounterDataImageInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageInitialize");
+    cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageCalculateScratchBufferSize");
+    cuptiProfilerCounterDataImageInitializeScratchBufferPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerCounterDataImageInitializeScratchBuffer");
+    cuptiProfilerBeginSessionPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerBeginSession");
+    cuptiProfilerSetConfigPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerSetConfig");
+    cuptiProfilerBeginPassPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerBeginPass");
+    cuptiProfilerEnableProfilingPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerEnableProfiling");
+    cuptiProfilerPushRangePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerPushRange");
+    cuptiProfilerPopRangePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerPopRange");
+    cuptiProfilerDisableProfilingPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerDisableProfiling");
+    cuptiProfilerEndPassPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerEndPass");
+    cuptiProfilerFlushCounterDataPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerFlushCounterData");
+    cuptiProfilerUnsetConfigPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerUnsetConfig");
+    cuptiProfilerEndSessionPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerEndSession");
+    // CALLBACK functions; already done by primary init.
+    // cuptiSubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiSubscribe");
+    // cuptiUnsubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiUnsubscribe");
+    // cuptiEnableDomainPtr = DLSYM_AND_CHECK(dl3, "cuptiEnableDomain");
+
+    dl4 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.
+    if (strlen(cuda_perfworks) > 0) {                                       // If override given, it MUST work.
+        dl4 = dlopen(cuda_perfworks, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
+        if (dl4 == NULL) {
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_PERFWORKS override '%s' given in Rules.cuda not found.", cuda_perfworks);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl4 == NULL) {                                          // If no override,
+        dl4 = dlopen("libnvperf_host.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default.
+    if (dl4 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        int strErr=snprintf(path_lib, sizeof(path_lib)-2, "%s/extras/CUPTI/lib64/libnvperf_host.so", cuda_root);   // PAPI Root check.
+        path_lib[sizeof(path_lib)-1]=0;
+        if (strErr > (int) sizeof(path_lib)-2) HANDLE_STRING_ERROR;
+        dl4 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl4 == NULL) {
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libnvperf_host.so not found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP);   // Not found on default paths.
+    }
+
+    // We have a dl4. (libnvperf_host.so)
+    NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl4, "NVPW_GetSupportedChipNames");
+
+    Dl_info nvperf_info;
+    // requires address of any function within the library.
+    dladdr(NVPW_GetSupportedChipNamesPtr, &nvperf_info);
+
+    if (0) { // debug informative; this is how to show the full path of the actual library found.
+        fprintf(stderr, "dl4 Location='%s'\n", nvperf_info.dli_fname);
+    }
+    
+    NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_MetricsContext_Create");
+    NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_Destroy");
+    NVPW_MetricsContext_GetMetricNames_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricNames_Begin");
+    NVPW_MetricsContext_GetMetricNames_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricNames_End");
+    NVPW_InitializeHostPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_InitializeHost");
+    NVPW_MetricsContext_GetMetricProperties_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricProperties_Begin");
+    NVPW_MetricsContext_GetMetricProperties_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricProperties_End");
+
+    NVPW_CUDA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_RawMetricsConfig_Create");
+    NVPA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPA_RawMetricsConfig_Create"); 
+    NVPW_RawMetricsConfig_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_Destroy");
+    NVPW_RawMetricsConfig_BeginPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_BeginPassGroup");
+    NVPW_RawMetricsConfig_EndPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_EndPassGroup")
+    NVPW_RawMetricsConfig_AddMetricsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_AddMetrics");
+    NVPW_RawMetricsConfig_GenerateConfigImagePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GenerateConfigImage");
+    NVPW_RawMetricsConfig_GetConfigImagePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GetConfigImage");
+
+    NVPW_CounterDataBuilder_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_Create");
+    NVPW_CounterDataBuilder_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_Destroy");
+    NVPW_CounterDataBuilder_AddMetricsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_AddMetrics");
+    NVPW_CounterDataBuilder_GetCounterDataPrefixPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterDataBuilder_GetCounterDataPrefix");
+
+    NVPW_CounterData_GetNumRangesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CounterData_GetNumRanges");
+    NVPW_Profiler_CounterData_GetRangeDescriptionsPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_Profiler_CounterData_GetRangeDescriptions");
+    NVPW_MetricsContext_SetCounterDataPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_SetCounterData");
+    NVPW_MetricsContext_EvaluateToGpuValuesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_EvaluateToGpuValues");
+    NVPW_RawMetricsConfig_GetNumPassesPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_GetNumPasses");
+    NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_IsAddMetricsPossible");
+
+    NVPW_MetricsContext_GetCounterNames_BeginPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetCounterNames_Begin");
+    NVPW_MetricsContext_GetCounterNames_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetCounterNames_End");
+#endif
+
+    CUDA_CALL((*cudaDriverGetVersionPtr)(&cuda_version), return PAPI_ENOSUPP);
+    CUDA_CALL((*cudaRuntimeGetVersionPtr)(&cuda_runtime_version), return PAPI_ENOSUPP);
+
+    if (0) fprintf(stderr, "%s:%s:%i, cuda_version=%d cuda_runtime_version=%d.\n", __FILE__, __func__, __LINE__, cuda_version, cuda_runtime_version);
+
+#if CUPTI_PROFILER == 1
+    cuptiProfilerGetCounterAvailabilityPtr = NULL;
+    NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = NULL; 
+
+    if (cuda_version >= 11000 && cuda_runtime_version >= 11000)
+    {
+        cuptiProfilerGetCounterAvailabilityPtr = DLSYM_AND_CHECK_nvperf(dl3, "cuptiProfilerGetCounterAvailability");
+        NVPW_RawMetricsConfig_SetCounterAvailabilityPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_SetCounterAvailability");
+    }
+    else
+    {
+        // We cannot run without them; it may be possible to just eliminate them but haven't tried that yet. -TC
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Cuda and cuda_runtime lib versions must be >=11.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP); // We do not currently support cuda 10.x. 
+    }
+#endif
+
     return (PAPI_OK);
-}
+} // END _cuda_linkCudaLibraries
 
 static int _cuda_add_native_events(cuda_context_t * gctxt)
 {
@@ -578,49 +1444,60 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
     cuErr = (*cuCtxGetCurrentPtr)(&userCuCtx);
     cudaErr = (*cudaGetDevicePtr)(&userDeviceNum);
-    // fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
+    if (0) fprintf(stderr, "%s:%s:%i cuCtxGetCurrent cuErr=%d userCuCtx=%p, cudaErr=%d, userDevice=%d.\n", __FILE__, __func__, __LINE__, cuErr, userCuCtx, cudaErr, userDeviceNum);
 
     /* How many CUDA devices do we have? */
     cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
     if(cuErr == CUDA_ERROR_NOT_INITIALIZED) {
         /* If CUDA not initialized, initialize CUDA and retry the device list */
         /* This is required for some of the PAPI tools, that do not call the init functions */
+        if (0) fprintf(stderr, "%s:%s:%i Executing cuInit(0).\n", __FILE__, __func__, __LINE__);
         cuErr = (cuInitPtr) (0); // Try the init.
         if(cuErr != CUDA_SUCCESS) {     // If that failed, we are bailing.
-            const char *errString=NULL;
-            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
-            if (errString != NULL) {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-                "CUDA initialization (cuInit) failed: %s", errString);
-                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            } else {
-                strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-                "CUDA initialization (cuInit) failed: Unrecognized Error Code=%d.", cuErr);
-                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            } // end dealing with error on cuInit(0).
-            return PAPI_ENOSUPP;
-        } // end if cuInit(0) failed.
-
-        
-        cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
-        if(cuErr != CUDA_SUCCESS) {
-            const char *errString=NULL;
-            (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            const char *errString="Unknown";
+            if (cuGetErrorStringPtr) (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cuDeviceGetCount() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            _cuda_vector.cmp_info.initialized = 1;
+            _cuda_vector.cmp_info.disabled = cuErr;
+            return PAPI_ENOSUPP;
+        } // end if cuInit(0) failed.
+
+        // Get number of cuda devices again.
+        cuErr = (*cuDeviceGetCountPtr) (&gctxt->deviceCount);
+        if(cuErr != CUDA_SUCCESS) {
+            const char *errString="Unknown";
+            if (cuGetErrorStringPtr) (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+            strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "Function cuDeviceGetCount() failed; error code=%d [%s].", cuErr, errString);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            _cuda_vector.cmp_info.initialized = 1;
+            _cuda_vector.cmp_info.disabled = cuErr;
             return(PAPI_EMISC);    
         } 
     } // end if CUDA was not initialized; try to init.
+    
+    if (cuErr != CUDA_SUCCESS) {
+        const char *errString="Unknown";
+        if (cuGetErrorStringPtr) (*cuGetErrorStringPtr) (cuErr, &errString); // Read the string.
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "Function cuDeviceGetCount() failed; error code=%d [%s].", cuErr, errString);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = cuErr;
+        return(PAPI_EMISC);    
+    } 
 
-    // cuInit(0) was successful.
+    // We have the device count.
     if(gctxt->deviceCount == 0) {
         char* strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "CUDA initialized but no CUDA devices found.", PAPI_MAX_STR_LEN);
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
         return PAPI_ENOSUPP;
     }
     SUBDBG("Found %d devices\n", gctxt->deviceCount);
@@ -632,14 +1509,16 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         "Could not allocate %lu bytes of memory for CUDA device structure.", gctxt->deviceCount*sizeof(cuda_device_desc_t));
         _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
         return (PAPI_ENOMEM);
     }
 
-    /* For each device, get domains and domain-events counts */
-    maxEventSize = 0;
+    int total_le70=0, total_ge70=0;
+
+    // For each device, get some device information.
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         mydevice = &gctxt->deviceArray[deviceNum];
-        /* Get device id, name, numeventdomains for each device */
+        /* Get device id, name, compute capability for each device */
         cuErr = (*cuDeviceGetPtr) (&mydevice->cuDev, deviceNum);
         if (cuErr != CUDA_SUCCESS) {
             const char *errString=NULL;
@@ -648,9 +1527,9 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             "Function cuDeviceGet() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
             return(PAPI_EMISC);    
         } 
-
 
         cuErr = (*cuDeviceGetNamePtr) ((char*) &mydevice->deviceName, PAPI_MIN_STR_LEN - 1, mydevice->cuDev);
         if (cuErr != CUDA_SUCCESS) {
@@ -660,42 +1539,106 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             "Function cuDeviceGetName() failed; error code=%d [%s].", cuErr, errString);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
             return(PAPI_EMISC);    
         } 
 
         mydevice->deviceName[PAPI_MIN_STR_LEN - 1] = '\0';                      // z-terminate it.
 
-        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute capability >= 7.5.
-        // From the online manual (https://docs.nvidia.com/cupti/Cupti/modules.html):
-        // Legacy CUPTI Profiling is not supported on devices with Compute Capability 7.5 or higher (Turing+).
-        // From https://developer.nvidia.com/cuda-gpus#compute):
-        // We find the Quadro GTX 5000 (our first failure) has a Compute Capability of 7.5.
+        // The routine cuptiDeviceGetNumEventDomains() is illegal for devices with compute
+        // capability >= 7.5.  From the online manual
+        // (https://docs.nvidia.com/cupti/Cupti/modules.html): Legacy CUPTI Profiling is not
+        // supported on devices with Compute Capability 7.5 or higher (Turing+).  From
+        // https://developer.nvidia.com/cuda-gpus#compute): We find the Quadro GTX 5000 (our first
+        // failure) has a Compute Capability of 7.5.
 
-        cudaErr = (*cudaGetDevicePropertiesPtr) (&mydevice->myProperties, deviceNum);
+        // Note: We use cudaDeviceGetAttribute() because it is consistent; the library routine knows
+        // where to find the major and minor within the properties structure. If we use
+        // cudaGetDeviceProperties; the returned structure depends on the current cuda driver
+        // loaded; e.g.  9.2.88 and 11.2.0 return different structures. So if we compile PAPI with
+        // 9.2.88, and run with 11.2.0, the major and minor we get (using the wrong structure
+        // definition) is 1024,64 instead of 7,0. If the minor is needed,
+        // cudaDevAttrComputeCapabilityMinor is the necessary attribute.
+
+        cudaErr = (*cudaDeviceGetAttributePtr) (&mydevice->CC_Major, cudaDevAttrComputeCapabilityMajor, deviceNum); 
+        if (0) fprintf(stderr, "%s:%s:%i Compute Capability Major=%d\n", __FILE__, __func__, __LINE__, mydevice->CC_Major);
         if (cudaErr != cudaSuccess) {
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-            "Function cudaGetDeviceProperties() error code=%d.", cudaErr);
+            "Function cudaDeviceGetAttribute() error code=%d.", cudaErr);
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            if (DEBUG_CALLS) fprintf(stderr, "%s:%s:%i '%s'\n", __FILE__, __func__, __LINE__, _cuda_vector.cmp_info.disabled_reason);
             return(PAPI_EMISC);    
         }
 
-        mydevice->cupti_1_0 = 0;   // Presume < 7.5.
-        if (mydevice->myProperties.major > 7 || 
-            (mydevice->myProperties.major == 7 && mydevice->myProperties.minor >=5)) {
-            mydevice->cupti_1_0 = 1;
+        // If profiler is available and we CAN use profiler, we do.
+        // If profiler is unavailable we must be able to use Legacy.
+        mydevice->cupti_le70 = 0;
+        mydevice->cupti_ge70 = 0;
+
+        if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
+            mydevice->deviceName, mydevice->CC_Major);
+
+        if (mydevice->CC_Major <= 7) {
+            mydevice->cupti_le70 = 1;
         }
 
-        if (mydevice->cupti_1_0) { 
-            char *strCpy=strncpy(_cuda_vector.cmp_info.disabled_reason, "Devices with compute capability >=7.5 no longer support Legacy CUPTI Interface.", PAPI_MAX_STR_LEN);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strCpy == NULL) HANDLE_STRING_ERROR;
-            return PAPI_ENOSUPP;
+        if (mydevice->CC_Major >= 7) {
+            mydevice->cupti_ge70 = 1;
         }
 
-        // fprintf(stderr, "%s:%i device %i has CC=%i.%i\n", __FILE__, __LINE__, deviceNum, mydevice->myProperties.major, mydevice->myProperties.minor);
 
-        // Should be safe to call CUpti now.
+        total_le70 += mydevice->cupti_le70;
+        total_ge70 += mydevice->cupti_ge70;
+    } // END per device.
+
+    // In the following messages; the "(#)" is (2) or (1) if CUPTI_PROFILER ==1, (0) if CUPTI_PROFILER==0,
+    // to aid in debugging the messages.
+#if CUPTI_PROFILER == 1
+    // Profiler exists, use it if all devices can use it.
+    if (total_ge70 == gctxt->deviceCount) {
+        int ret = _cuda11_add_native_events(gctxt);
+        if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
+
+        // this is to trick the final return from component_init(), to set
+        // the  _cuda_vector.cmp_info.num_native_events correctly. 
+        global_cuda_context->availEventSize = cuda11_numEvents;
+        return(ret);
+    } // Done with init_component if cuda11 worked.
+
+    // Profile exists, but not all devices are >= 7.0, so must use legacy.
+    if (total_le70 != gctxt->deviceCount) {
+        // some devices are 7.5 and cannot use legacy. We cannot support this.
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "(2) Mixed compute capabilities, must use Legacy, but only %d of %d devices have CC<=7.0", total_le70, gctxt->deviceCount);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_ENOSUPP);    
+    }
+
+    // We'll be okay with legacy.
+
+#endif 
+
+    // If profiler existed, we are proceeding without it. But 
+    // it may not, so we need to check again if Legacy will work.
+     if (total_le70 != gctxt->deviceCount) {
+        // some devices are 7.5 and cannot use legacy. We cannot support this.
+        strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+        "(%d) Mixed compute capabilities, must use Legacy, but only %d of %d devices have CC<=7.0", CUPTI_PROFILER, total_le70, gctxt->deviceCount);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+        return(PAPI_ENOSUPP);    
+    }
+
+    // It is safe to proceed with Legacy CUPTI interace.
+    // For each device, get domains and domain-events counts.
+
+    maxEventSize = 0;
+    for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
+        mydevice = &gctxt->deviceArray[deviceNum];
+        /* Get numeventdomains for each device */
+
         cuptiError=(*cuptiDeviceGetNumEventDomainsPtr) (mydevice->cuDev, &mydevice->maxDomains);
         if (cuptiError != CUPTI_SUCCESS) {
             const char *errstr;
@@ -781,6 +1724,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventDeviceNum = (int *) papi_calloc(maxEventSize, sizeof(int));
     if (!gctxt->availEventDeviceNum) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -789,6 +1733,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventIDArray = (CUpti_EventID *) papi_calloc(maxEventSize, sizeof(CUpti_EventID));
     if (!gctxt->availEventIDArray) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -797,6 +1742,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_calloc(maxEventSize, sizeof(uint32_t));
     if (!gctxt->availEventIsBeingMeasuredInEventset) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -805,6 +1751,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
         return (PAPI_ENOMEM);
     }
+
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_calloc(maxEventSize, sizeof(cuda_name_desc_t));
     if (!gctxt->availEventDesc) {
         strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -891,6 +1838,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                     if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                     return(PAPI_EMISC);    
                 }
+
                 gctxt->availEventDesc[idxEventArray].description[PAPI_2MAX_STR_LEN - 1] = '\0'; // Ensure null terminator.
                 gctxt->availEventDesc[idxEventArray].numMetricEvents = 0;                       // Not a metric.
                 gctxt->availEventDesc[idxEventArray].metricEvents = NULL;                       // No space allocated.
@@ -935,10 +1883,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // context active; push to make it active.
        
         CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&currCuCtx, deviceNum), 
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuDevicePrimaryCtxRetain failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC););
 
         if (currCuCtx != userCuCtx) { 
-            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuCtxPushCurrentPtr) (currCuCtx), 
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuCtxPushCurrent() failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
         }
 
         uint32_t maxMetrics = 0, i, j;
@@ -959,10 +1916,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
-                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), 
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuCtxPopCurrent() failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-            return (PAPI_ENOMEM);
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuDevicePrimaryCtxRelease failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
+            return(PAPI_EMISC);
         }
 
         cuptiError=(*cuptiDeviceEnumMetricsPtr)(mydevice->cuDev, &size, metricIdList);  // Enumerate into metricIDList.
@@ -974,10 +1941,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             if (currCuCtx != userCuCtx) { 
-                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuCtxPopCurrent() failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
             }
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-            return(PAPI_EMISC);    
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuDevicePrimaryCtxRelease failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
+            return(PAPI_EMISC);
         }
 
         // Elimination loop for metrics we cannot support.
@@ -992,10 +1969,21 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), 
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-                return(PAPI_EMISC);    
+
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
+                return(PAPI_EMISC);
             }
 
             // Note that 'size' also returned total bytes written.
@@ -1019,9 +2007,9 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             if (cuptiError != CUPTI_SUCCESS) {
                   const char *errstr;
                   (*cuptiGetResultStringPtr) (cuptiError, &errstr);
-                  // fprintf(stderr, "%s:%s:%i metric '%s:device=%d' failed cuptiMetricCreateEventGroupSets() cuptiError=%d [%s].\n", __FILE__, __func__, __LINE__, tmpStr, deviceNum, cuptiError, errstr);
+                  if (0) fprintf(stderr, "%s:%s:%i metric '%s:device=%d' failed cuptiMetricCreateEventGroupSets() cuptiError=%d [%s].\n", __FILE__, __func__, __LINE__, tmpStr, deviceNum, cuptiError, errstr);
                 continue;
-            } // else fprintf(stderr, "%s:%i cuptiMetricCreateEventGroupSets() success.\n", __FILE__, __LINE__);
+            } else if (0) fprintf(stderr, "%s:%i cuptiMetricCreateEventGroupSets() success.\n", __FILE__, __LINE__);
             
             int numSets = 0;                                                        // # of sets (passes) required.
             if (thisEventGroupSets != NULL) {
@@ -1035,9 +2023,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
                } // else fprintf(stderr, "%s:%i cuptiEventGroupSetsDestroy() success.\n", __FILE__, __LINE__);
             } else {
@@ -1046,10 +2044,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
-               return(PAPI_EMISC);    
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
+                return(PAPI_EMISC);    
             }
 
             #if defined(TIME_MULTIPASS_ELIM)
@@ -1083,9 +2091,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -1104,9 +2122,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -1124,9 +2152,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EMISC);    
             }
 
@@ -1145,9 +2183,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EINVAL);    
             }
 
@@ -1159,9 +2207,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), 
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return (PAPI_ENOMEM);
             }
 
@@ -1174,9 +2232,19 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
                 if (currCuCtx != userCuCtx) { 
-                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+                    CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                        "cuCtxPopCurrent() failed.");
+                        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                        return(PAPI_EMISC););
                 }
-                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+                CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+                    int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "cuDevicePrimaryCtxRelease failed.");
+                    _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                    if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                    return(PAPI_EMISC););
                 return(PAPI_EINVAL);    
             }
 
@@ -1190,10 +2258,20 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         papi_free(metricIdList);                                                    // Done with this enumeration of metrics.
 
         if (currCuCtx != userCuCtx) { 
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx), return(PAPI_EMISC));
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "cuCtxPopCurrent() failed.");
+                _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+                if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+                return(PAPI_EMISC););
         }
 
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuDevicePrimaryCtxRelease failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC););
     } // end of device loop, for metrics.
 
     //-------------------------------------------------------------------------
@@ -1313,7 +2391,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
     /* Reallocate space for all events and descriptors to make room. */
     maxEventSize += (j-firstMetricIdx); 
     gctxt->availEventKind = (CUpti_ActivityKind *) papi_realloc(gctxt->availEventKind, maxEventSize * sizeof(CUpti_ActivityKind));
-            if (!subEventIds) {
+            if (!gctxt->availEventKind) {
                 strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventKind.", maxEventSize * sizeof(CUpti_ActivityKind));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1322,7 +2400,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
     gctxt->availEventDeviceNum = (int *) papi_realloc(gctxt->availEventDeviceNum,maxEventSize * sizeof(int));
-            if (!subEventIds) {
+            if (!gctxt->availEventDeviceNum) {
                 strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventDeviceNum.", maxEventSize * sizeof(int));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1331,7 +2409,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
     gctxt->availEventIDArray = (CUpti_EventID *) papi_realloc(gctxt->availEventIDArray,maxEventSize * sizeof(CUpti_EventID));
-            if (!subEventIds) {
+            if (!gctxt->availEventIDArray) {
                 strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventIDArray.", maxEventSize * sizeof(CUpti_EventID));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1340,7 +2418,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
     gctxt->availEventIsBeingMeasuredInEventset = (uint32_t *) papi_realloc(gctxt->availEventIsBeingMeasuredInEventset,maxEventSize * sizeof(uint32_t));
-            if (!subEventIds) {
+            if (!gctxt->availEventIsBeingMeasuredInEventset) {
                 strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventIsBeingMeasured.", maxEventSize * sizeof(uint32_t));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1349,7 +2427,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             }
 
     gctxt->availEventDesc = (cuda_name_desc_t *) papi_realloc(gctxt->availEventDesc,maxEventSize * sizeof(cuda_name_desc_t));
-            if (!subEventIds) {
+            if (!gctxt->availEventDesc) {
                 strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                     "Could not allocate %lu bytes of memory for availEventDesc.", maxEventSize * sizeof(cuda_name_desc_t));
                 _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1383,16 +2461,24 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 #endif /* END IF we should expose Unenumerated Events */
 
     #if defined(TIME_MULTIPASS_ELIM)
-    fprintf(stderr, "%s:%i metric set>1 elimination usec=%lld.\n", __FILE__, __LINE__, (elim_ns+500)/1000);
+    fprintf(stderr, "%s:%i metric set>1 elimination usec=%lld for %d events.\n", __FILE__, __LINE__, (elim_ns+500)/1000, idxEventArray);
     #endif 
 
     // Restore user context, if we had one.
     if (userCuCtx != NULL) {
         CU_CALL((*cuCtxSetCurrentPtr) (userCuCtx),
-            return (PAPI_EMISC););
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cuCtxSetCurrent() failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
+            return(PAPI_EMISC););
     } else {
         // If the application did not have a current context, restore their device number.
         CUDA_CALL((*cudaSetDevicePtr)(userDeviceNum), 
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            "cudaSetDevice() failed.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
             return(PAPI_EMISC););
     }        
 
@@ -1488,39 +2574,190 @@ static int _cuda_init_thread(hwd_context_t * ctx)
 static int _cuda_init_component(int cidx)
 {
     SUBDBG("Entering with component idx: %d\n", cidx);
-    int rv;
 
-    /* link in all the cuda libraries and resolve the symbols we need to use */
+    _cuda_vector.cmp_info.CmpIdx = cidx;
+
+    _cuda_vector.cmp_info.num_native_events = -1;
+    _cuda_vector.cmp_info.num_cntrs = -1;
+    // num_mpx_cntrs must be >0 for _papi_hwi_assign_eventset() to work.
+    _cuda_vector.cmp_info.num_mpx_cntrs = PAPICUDA_MAX_COUNTERS;
+
+    #if CUPTI_PROFILER == -1
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "Environment variable PAPI_CUDA_ROOT must be specified before ./configure is executed.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    #endif
+
+    // Count if we have any devices with vendor ID for Nvidia.
+    int devices = _cuda_count_nvidia_devices();
+    if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
+    if (devices < 1) {
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "No Nvidia Devices Found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+        (void) strErr;
+        return(PAPI_ENOSUPP);
+    }
+
+    int err;
+    PAPI_lock(COMPONENT_LOCK);
+    err = _cuda_primaryLinkLibraries();
+    if(err != PAPI_OK) {
+        SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
+        SUBDBG("See disable reason in papi_component_avail output for more details.\n");
+        _cuda_vector.cmp_info.initialized = 1;
+        _cuda_vector.cmp_info.disabled = err;
+        PAPI_unlock(COMPONENT_LOCK);
+        return(err);
+    }
+
+    #if CUPTI_PROFILER == 1
+    if (0) fprintf(stderr, "%s:%s:%i Subscribing to callbacks.\n", __FILE__, __func__, __LINE__);
+    CUPTI_CALL( (*cuptiSubscribePtr) 
+        (&callback_subscriber, (CUpti_CallbackFunc) (_cuda_callback), NULL),
+        PAPI_unlock(COMPONENT_LOCK);
+        return(PAPI_EMISC)); // we have no user data.
+
+    // subscribe to domains we want to see.
+    // CCD means "Cuda Callback Domain". 
+    // See $PAPI_CUPTI_ROOT/include/cupti_callbacks.h.
+    // FORM: CUPTI_CB_DOMAIN_XYZ. XYZ=DRIVER_API,
+    // RUNTIME_API, RESOURCE, SYNCHRONIZE, NVTX.
+
+        #if CCD_DRIVER == 1
+    if (0) fprintf(stderr, "%s:%s:%i Subscribing to CCD_DRIVER.\n", __FILE__, __func__, __LINE__);
+        CUPTI_CALL( (*cuptiEnableDomainPtr) 
+            (1, callback_subscriber, CUPTI_CB_DOMAIN_DRIVER_API),
+            PAPI_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC));
+            if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=DRIVER_API.\n", __FILE__, __func__, __LINE__);
+        #endif
+    
+        #if CCD_RUNTIME == 1
+    if (0) fprintf(stderr, "%s:%s:%i Subscribing to CCD_RUNTIME.\n", __FILE__, __func__, __LINE__);
+        CUPTI_CALL( (*cuptiEnableDomainPtr) 
+            (1, callback_subscriber, CUPTI_CB_DOMAIN_RUNTIME_API),
+            PAPI_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC));
+        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=RUNTIME_API.\n", __FILE__, __func__, __LINE__);
+        #endif
+
+        #if CCD_RESOURCE == 1 
+        CUPTI_CALL( (*cuptiEnableDomainPtr) 
+            (1, callback_subscriber, CUPTI_CB_DOMAIN_RESOURCE),
+            PAPI_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC));
+        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=RESOURCE.\n", __FILE__, __func__, __LINE__);
+        #endif
+
+        #if CCD_SYNCHRONIZE == 1
+        CUPTI_CALL( (*cuptiEnableDomainPtr) 
+            (1, callback_subscriber, CUPTI_CB_DOMAIN_SYNCHRONIZE),
+            PAPI_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC));
+        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=SYNCHRONIZE.\n", __FILE__, __func__, __LINE__);
+        #endif
+
+        #if CCD_NVTX == 1
+        CUPTI_CALL( (*cuptiEnableDomainPtr) 
+            (1, callback_subscriber, CUPTI_CB_DOMAIN_NVTX),
+            PAPI_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC));
+        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=NVTX.\n", __FILE__, __func__, __LINE__);
+        #endif
+
+    if (0) fprintf(stderr, "%s:%s:%i callback subscriptions completed.\n", __FILE__, __func__, __LINE__);
+    #endif 
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    return PAPI_OK;
+} // END _cuda_init_component.
+
+// This is the "delayed initialization", called when the application user of
+// PAPI calls any API function. This prevents long initialization times and
+// memory usage for systems where PAPI is configured with the cuda component
+// but not all applications use the cuda component.
+static int _cuda_init_private(void)
+{
+    int rv, err = PAPI_OK;
+    // The entire init, for cupti11, timed at 913 ms.
+    // The entire init, for legalcy cupti, timed at 2376 ms.
+
+    if (_cuda_vector.cmp_info.initialized) {
+        // copy any previous disabled error code.
+        err = _cuda_vector.cmp_info.disabled;
+        goto cuda_init_private_exit;
+    }
+
+    long long ns;
+    if (0) ns = -PAPI_get_real_nsec();
+    SUBDBG("Private init with component idx: %d\n", _cuda_vector.cmp_info.CmpIdx);
+
     if(_cuda_linkCudaLibraries() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        err = (PAPI_ENOSUPP);
+        goto cuda_init_private_exit;
     }
 
     /* Create the structure */
     if(!global_cuda_context) {
         global_cuda_context = (cuda_context_t *) papi_calloc(1, sizeof(cuda_context_t));
         if (global_cuda_context == NULL) {
-            int strErr=strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
                 "Could not allocate %lu bytes of memory for global_cuda_context.", sizeof(cuda_context_t));
             _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-            return(PAPI_ENOMEM);
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            err = (PAPI_ENOMEM);
+            goto cuda_init_private_exit;
         }
     }
+
     /* Get list of all native CUDA events supported */
     rv = _cuda_add_native_events(global_cuda_context);
     if(rv != 0) {
-        return (rv);
+        err = (rv);
+        goto cuda_init_private_exit;
     }
     /* Export some information */
-    _cuda_vector.cmp_info.CmpIdx = cidx;
     _cuda_vector.cmp_info.num_native_events = global_cuda_context->availEventSize;
     _cuda_vector.cmp_info.num_cntrs = _cuda_vector.cmp_info.num_native_events;
-    _cuda_vector.cmp_info.num_mpx_cntrs = _cuda_vector.cmp_info.num_native_events;
+    // We do NOT CHANGE num_mpx_cntrs. We set that to PAPICUDA_MAX_COUNTERS, which
+    // is the maximum counters in an EventSet. The memory for that is already 
+    // allocated; if we increase num_mpx_cntrs beyond that we can get a segfault
+    // in the PAPI side of PAPI_cleanup_eventset. -TonyC
+    err = PAPI_OK;
 
-    return (PAPI_OK);
-} // end init_component
+cuda_init_private_exit:
+    _cuda_vector.cmp_info.initialized = 1;
+    _cuda_vector.cmp_info.disabled = err;
+
+    PAPI_unlock(COMPONENT_LOCK);
+
+    // the entire init, for cupti11, timed at 913 ms.
+    // the entire init, for legacy cupti, timed at 2376 ms.
+    if (0) {
+        ns += PAPI_get_real_nsec();
+        fprintf(stderr, "%s:%s:%i Duration ns=%lld.\n", __FILE__, __func__, __LINE__, ns);
+    }
+
+    // We double check; if err != 0 and the disabled reason is null, we have a problem.
+    if (err != 0 && strlen(_cuda_vector.cmp_info.disabled_reason) < 1) {
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                "CUDA init failed. Code failed to record a reason.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+    }
+
+    return (err);
+} // end _cuda_init_private
 
 
 /* Setup a counter control state.
@@ -1531,6 +2768,14 @@ static int _cuda_init_control_state(hwd_control_state_t * ctrl)
 {
     SUBDBG("Entering\n");
     (void) ctrl;
+    DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.init_control_state != _cuda_init_control_state) {
+        return(_cuda11_init_control_state(ctrl));
+    }
+    #endif
+
     cuda_context_t *gctxt = global_cuda_context;
 
     CHECK_PRINT_EVAL(!gctxt, "Error: The PAPI CUDA component needs to be initialized first", return (PAPI_ENOINIT));
@@ -1561,6 +2806,14 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
 {
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
+    DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.update_control_state != _cuda_update_control_state) {
+        return(_cuda11_update_control_state(ctrl, nativeInfo, nativeCount, ctx));
+    }
+    #endif
+
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
     int currDeviceNum;
@@ -1577,11 +2830,9 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     CUDA_CALL((*cudaGetDevicePtr) (&currDeviceNum), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d \n", currDeviceNum);
 
-    // cudaFree(NULL) does nothing, but will init a new cuda context if one
-    // does not exist. This prevents cuCtxGetCurrent() from giving us a bad
-    // context (which it can, the failure is in cuptiEventGroupSetsCreate).  
-    // If cudaFree() returns an error, we ignore it.
-
+    // cudaFree(NULL) does nothing real, but initializes a new cuda context
+    // if one does not exist. This prevents cuCtxGetCurrent() from failing.
+    // If it returns an error, we ignore it.
     CUDA_CALL((*cudaFreePtr) (NULL), );
     CU_CALL((*cuCtxGetCurrentPtr) (&currCuCtx), return (PAPI_EMISC));
     SUBDBG("currDeviceNum %d cuCtx %p \n", currDeviceNum, currCuCtx);
@@ -1612,9 +2863,9 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
                 eventCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;             // Remember that context.
                 SUBDBG("Event %s device %d already has a cuCtx %p registered\n", eventName, eventDeviceNum, eventCuCtx);
 
-                if(eventCuCtx != currCuCtx)                                         // If that is not our CURRENT context, make it so.
+                if(eventCuCtx != currCuCtx)                                         // If that is not our CURRENT context, push and make it so.
                     CU_CALL((*cuCtxSetCurrentPtr) (eventCuCtx),                     // .. Set as current.
-                        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));   // .. .. on failure.
+                        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));     // .. .. on failure.
                 break;                                                              // .. exit the loop.
             } // end if found.
         } // end loop through active contexts.
@@ -2028,7 +3279,7 @@ static int _cuda_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long
                 long unsigned int temp = gctxt->allEvents[myIdx].cumulativeValue;
                 gctxt->allEvents[myIdx].cumulativeValue += activeCuCtxt->allEventValues[i];
                 if (gctxt->allEvents[myIdx].cumulativeValue < temp) {
-                    fprintf(stderr, "%s:%s:%i temp=%ld, value=%ld, result=%ld.\n", __FILE__, __func__, __LINE__, 
+                    if (0) fprintf(stderr, "%s:%s:%i temp=%ld, value=%ld, result=%ld.\n", __FILE__, __func__, __LINE__, 
                     temp, gctxt->allEvents[myIdx].cumulativeValue, activeCuCtxt->allEventValues[i]);
                 }
                 activeCuCtxt->allEventValues[i] = gctxt->allEvents[myIdx].cumulativeValue;
@@ -2105,6 +3356,7 @@ static int _cuda_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     _papi_hwi_lock( COMPONENT_LOCK );
     CUDA_CALL((*cudaGetDevicePtr) (&saveDeviceNum),
         _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));                 // .. on failure of call.
+
     for(cc = 0; cc < gctrl->countOfActiveCUContexts; cc++) {
         int currDeviceNum = gctrl->arrayOfActiveCUContexts[cc]->deviceNum;
         CUcontext currCuCtx = gctrl->arrayOfActiveCUContexts[cc]->cuCtx;
@@ -2246,10 +3498,12 @@ static int _cuda_shutdown_component(void)
         papi_free(gctrl);
         global_cuda_control = gctrl = NULL;
     }
+
     // close the dynamic libraries needed by this component (opened in the init substrate call)
     dlclose(dl1);
     dlclose(dl2);
     dlclose(dl3);
+
     return (PAPI_OK);
 } // end cuda_shutdown_component().
 
@@ -2349,7 +3603,14 @@ static int _cuda_set_domain(hwd_control_state_t * ctrl, int domain)
  */
 static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-    // SUBDBG( "Entering (get next event after %u)\n", *EventCode );
+    DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_enum_events != _cuda_ntv_enum_events) {
+        return(_cuda11_ntv_enum_events(EventCode, modifier));
+    }
+    #endif
+
     switch (modifier) {
     case PAPI_ENUM_FIRST:
         *EventCode = 0;
@@ -2372,6 +3633,22 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
 }
 
 
+static int _cuda_ntv_name_to_code(const char *nameIn, unsigned int *out)
+{
+    DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_name_to_code != _cuda_ntv_name_to_code) {
+        return(_cuda11_ntv_name_to_code(nameIn, out));
+    }
+    #endif
+
+    (void) nameIn;
+    (void) out;
+    // Not supported by legacy cuda component.
+    return(PAPI_ECMP); 
+}
+
 /* Takes a native event code and passes back the name
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
@@ -2379,6 +3656,14 @@ static int _cuda_ntv_enum_events(unsigned int *EventCode, int modifier)
  */
 static int _cuda_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
+    DO_SOME_CHECKING(&_cuda_vector);
+    #if CUPTI_PROFILER == 1
+    // If the function pointer has changed, pass to cupti11 version.
+    if (_cuda_vector.ntv_code_to_name != _cuda_ntv_code_to_name) {
+        return(_cuda11_ntv_code_to_name(EventCode, name, len));
+    }
+    #endif
+
     // SUBDBG( "Entering EventCode %d\n", EventCode );
     unsigned int index = EventCode;
     cuda_context_t *gctxt = global_cuda_context;
@@ -2431,7 +3716,8 @@ papi_vector_t _cuda_vector = {
                  .attach = 0,
                  .attach_must_ptrace = 0,
                  .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
-                 }
+                 .initialized = 0,
+    }
     ,
     /* sizes of framework-opaque component-private structures... these are all unused in this component */
     .size = {
@@ -2449,6 +3735,7 @@ papi_vector_t _cuda_vector = {
     .cleanup_eventset = _cuda_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
 
     .init_component = _cuda_init_component,  /* ( int cidx ) */
+    .init_private = _cuda_init_private,      /* (void) */
     .init_thread = _cuda_init_thread,        /* ( hwd_context_t * ctx ) */
     .init_control_state = _cuda_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _cuda_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
@@ -2456,6 +3743,7 @@ papi_vector_t _cuda_vector = {
     .ctl = _cuda_ctrl,       /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
     .set_domain = _cuda_set_domain,  /* ( hwd_control_state_t * cntrl, int domain ) */
     .ntv_enum_events = _cuda_ntv_enum_events,        /* ( unsigned int *EventCode, int modifier ) */
+    .ntv_name_to_code = _cuda_ntv_name_to_code,      /* ( unsigned char *name, int *code ) */
     .ntv_code_to_name = _cuda_ntv_code_to_name,      /* ( unsigned int EventCode, char *name, int len ) */
     .ntv_code_to_descr = _cuda_ntv_code_to_descr,    /* ( unsigned int EventCode, char *name, int len ) */
     .shutdown_thread = _cuda_shutdown_thread,        /* ( hwd_context_t * ctx ) */
@@ -2537,3 +3825,2271 @@ void readMetricValue(CUpti_EventGroup eventGroup,
 } // end readMetricValue.
 
 
+#if CUPTI_PROFILER == 1
+//*************************************************************************************************
+//-------------------------------------------------------------------------------------------------
+// CUPTI 11 routines; adapted from Thomas Gruber PerfWorks code.
+// NOTE: CUPTI 11 cannot query counters directly! It has ONLY metrics. The "counters" are just
+//       names of a collection of values, e.g. 'dram__bytes_read", but cannot be read directly;
+//       there are several metrics based upon each, e.g.  dram__bytes_read.avg,
+//       dram__bytes_read.max, dram__bytes_read.min, dram__bytes_read.sum. So unlike CUPTI, there
+//       are no counters v. metrics. Only metrics can be read. On the Titan V development GPUs,
+//       we found 1417 "counters" and 6064 metrics; an average of 4.28 metrics per counter. Note
+//       that all counters have at least the four metrics of .min,.max,.avg,.sum.
+//-------------------------------------------------------------------------------------------------
+//*************************************************************************************************
+
+//*************************************************************************************************
+// Simple string hashing management functions.
+//*************************************************************************************************
+
+//-----------------------------------------------------------------------------
+// stringHash: returns unsigned long value for hashed string.  See djb2, Dan
+// Bernstein, http://www.cse.yorku.ca/~oz/hash.html Empirically a fast well
+// distributed hash, not theoretically explained.  On a test system with 1857
+// events, this gets about a 65% density in a 2000 element table; 35% of slots
+// have dups; max dups was 4.
+//-----------------------------------------------------------------------------
+static unsigned int stringHash(char *str)
+{
+  unsigned long hash = 5381;                             // seed value.
+  int c;
+  while ((c = (*str++))) {                               // ends when c == 0.
+     hash = ((hash << 5) + hash) + c;                    // hash * 33 + c.
+  }
+
+  return (hash % CUDA11_HASH_SIZE);                      // compute index and exit.
+} // end function.
+
+
+//-----------------------------------------------------------------------------
+// addNameHash: Given a string, hash it, and add to hash table.
+//-----------------------------------------------------------------------------
+static unsigned int addNameHash(char *key, int idx) 
+{
+    // need a new item no matter what.
+    cuda11_hash_entry_t* newItem = calloc(1, sizeof(cuda11_hash_entry_t));
+    newItem->idx = idx;
+    // compute slot.
+    unsigned int slot = stringHash(key);
+    // make next item of new entry previous head.
+    newItem->next = cuda11_NameHashTable[slot];
+    // replace head with new item (that chains to previous head).
+    cuda11_NameHashTable[slot] = newItem;
+    return(slot); 
+} // end routine.
+
+
+//-----------------------------------------------------------------------------
+// freeEntireNameHash: Deletes all alloced data. note head is just a pointer
+// to a hash entry; not an entry itself.
+//-----------------------------------------------------------------------------
+static void freeEntireNameHash(void) 
+{
+    int i;
+    cuda11_hash_entry_t *newHead;
+    for (i=0; i<CUDA11_HASH_SIZE; i++) {
+        while (cuda11_NameHashTable[i] != NULL) {
+            newHead = cuda11_NameHashTable[i]->next;    
+            free(cuda11_NameHashTable[i]);
+            cuda11_NameHashTable[i] = newHead;
+        }
+    }
+} // end routine.
+
+
+//-----------------------------------------------------------------------------
+// findNameHash: Returns the idx into cuda11_AllEvents[] or -1 if not found.
+//-----------------------------------------------------------------------------
+static int findNameHash(char *key) 
+{
+    int idx;
+    // compute hash slot it should be in.
+    unsigned int slot = stringHash(key);
+
+    cuda11_hash_entry_t* check = cuda11_NameHashTable[slot];    
+    while (check != NULL) {
+        idx = check->idx;
+        if (strcmp(cuda11_AllEvents[idx]->papi_name, key) == 0) {
+            // found it.
+            return(idx);
+        }
+        check = check->next;
+    }
+
+    // Failed to find a match.
+    return(-1);
+} // end routine.
+
+
+//-------------------------------------------------------------------------------------------------
+// Adjust the size of cuda11_AllEvents[] if needed.
+//-------------------------------------------------------------------------------------------------
+void cuda11_makeRoomAllEvents(void) {
+    int oldSize = cuda11_maxEvents;
+    if (cuda11_numEvents < cuda11_maxEvents) return;    // cuda11_numEvents is okay.
+    // We go big here; typical is 115,000 events on Titan V, may have multiple devices.
+    cuda11_maxEvents += 16384;
+    cuda11_AllEvents = (cuda11_eventData**) papi_realloc(cuda11_AllEvents, (cuda11_maxEvents*sizeof(cuda11_eventData*)));
+    if (!cuda11_AllEvents) {
+        fprintf(stderr, "%s:%s:%i Memory failure; failed to allocate %i entries for cuda11_AllEvents.\n",
+                __FILE__, __func__, __LINE__, cuda11_maxEvents);
+        exit(-1);
+    }
+
+    // Clear added memory.
+    memset(&cuda11_AllEvents[oldSize], 0, 128*sizeof(cuda11_eventData*));
+    return;
+}
+
+// free elements of cuda11_eventData structure.
+static void free_cuda11_eventData_contents(cuda11_eventData* myEvent) 
+{
+    int i;
+    for (i=0; i<myEvent->numRawMetrics; i++) {
+        // The name had to be copied by strdup.
+        char *name = (char*) myEvent->rawMetricRequests[i].pMetricName;
+        if (name != NULL) free(name);
+    }
+
+    if (myEvent->rawMetricRequests) free(myEvent->rawMetricRequests);
+    if (myEvent->papi_name  ) free(myEvent->papi_name  );
+    if (myEvent->nv_name    ) free(myEvent->nv_name    );
+    if (myEvent->description) free(myEvent->description);
+    if (myEvent->dimUnits   ) free(myEvent->dimUnits   );
+} // end routine.
+
+// Find or create a MetricsContext in the device list.
+// returns NULL if the creation fails. 
+static NVPW_CUDA_MetricsContext_Create_Params* cuda11_getMetricsContextPtr(int dev) 
+{
+    int i;
+    cuda_device_desc_t *mydevice;
+    cuda_context_t *gctxt = global_cuda_context;
+    mydevice = &gctxt->deviceArray[dev];
+
+    // If we have it, just return the pointer.
+    if (mydevice->pMetricsContextCreateParams != NULL) {
+        return(mydevice->pMetricsContextCreateParams);
+    }
+
+    // We don't have it. We must create it. this takes ~20ms.
+    
+    NVPW_CUDA_MetricsContext_Create_Params *pMCCP;
+    pMCCP = calloc(1, sizeof(NVPW_CUDA_MetricsContext_Create_Params));
+    if (pMCCP == NULL) {
+        if (0) fprintf(stderr, "%s:%s:%i failed to allocate memory.\n", __FILE__, __func__, __LINE__);
+        return(NULL);
+    }
+
+    pMCCP->structSize = NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE;
+    pMCCP->pChipName = mydevice->cuda11_chipName;
+    NVPW_CALL((*NVPW_CUDA_MetricsContext_CreatePtr)(pMCCP), // LEAK
+        if (0) fprintf(stderr, "%s:%s:%i failed to create.\n", __FILE__, __func__, __LINE__);
+        return(NULL));
+
+    // We created successfully. populate.
+    mydevice->pMetricsContextCreateParams = pMCCP;
+    mydevice->ownsMetricsContext = 1;
+
+    // Now populate all other same chip name devices with this one.
+    for (i=0; i<gctxt->deviceCount; i++) {
+        if (i == dev) continue;
+        cuda_device_desc_t *adevice;
+        adevice = &gctxt->deviceArray[i];
+        if (strcmp(mydevice->cuda11_chipName, adevice->cuda11_chipName) == 0) {
+            // found a sister with same name, populate with my context.
+            adevice->pMetricsContextCreateParams = pMCCP;
+            adevice->ownsMetricsContext = 0;
+        }
+    }
+
+    return(pMCCP);
+} // end routine
+
+// Destroys all MetricsContexts in the device list.
+static int cuda11_destroyMetricsContexts(void) 
+{
+    int i;
+    cuda_device_desc_t *mydevice;
+    cuda_context_t *gctxt = global_cuda_context;
+
+    for (i=0; i<gctxt->deviceCount; i++) {
+        mydevice = &gctxt->deviceArray[i];
+        // If I don't own it, just zero it.
+        if (mydevice->ownsMetricsContext == 0) {
+            mydevice->pMetricsContextCreateParams = NULL;
+            continue;
+        }
+
+        // otherwise, destroy it.
+        NVPW_MetricsContext_Destroy_Params MetricsContextDestroyParams;
+        memset(&MetricsContextDestroyParams, 0,  NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE);
+        MetricsContextDestroyParams.structSize = NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE;
+        MetricsContextDestroyParams.pMetricsContext = mydevice->pMetricsContextCreateParams->pMetricsContext;
+        NVPW_CALL((*NVPW_MetricsContext_DestroyPtr)(&MetricsContextDestroyParams),
+            if (0) fprintf(stderr, "%s:%s:%i failed to destroy MetricsContextCreateParams.\n", __FILE__, __func__, __LINE__);
+            );
+        free (mydevice->pMetricsContextCreateParams);
+        mydevice->pMetricsContextCreateParams = NULL;
+        mydevice->ownsMetricsContext = 0;
+    }
+
+    return(PAPI_OK);
+} // END routine.    
+
+//-------------------------------------------------------------------------------------------------
+// This routine is not complete on its own, it is a continuation of _cuda_add_native_events() once
+// we discover we are cupti 11 (or later).
+// This is an internal routine, it is the caller's responsibility to ensure thread safety.
+//-------------------------------------------------------------------------------------------------
+static int _cuda11_init_profiler(void)
+{
+    // Call to init the profiler.
+    CUptiResult cuptiRet;
+    CUpti_Profiler_Initialize_Params profilerInitializeParams;
+    memset(&profilerInitializeParams, 0,  CUpti_Profiler_Initialize_Params_STRUCT_SIZE);
+    profilerInitializeParams.structSize = CUpti_Profiler_Initialize_Params_STRUCT_SIZE;
+    cuptiRet = (*cuptiProfilerInitializePtr)(&profilerInitializeParams); // Mem leak in library.
+
+    if (cuptiRet != CUPTI_SUCCESS) {
+        const char *errstr;
+        (*cuptiGetResultStringPtr)(cuptiRet, &errstr);
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "cuptiProfilerInitialize failed; error '%s'.", errstr);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP);   // Override given but not found.
+    }
+
+    NVPW_InitializeHost_Params initializeHostParams;
+    memset(&initializeHostParams, 0,  NVPW_InitializeHost_Params_STRUCT_SIZE);
+    initializeHostParams.structSize = NVPW_InitializeHost_Params_STRUCT_SIZE;
+    NVPA_Status nvpaRet=(*NVPW_InitializeHostPtr)(&initializeHostParams);       // Mem leak in library.
+    if (nvpaRet != NVPA_STATUS_SUCCESS) {
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "NVPW_IntializeHost failed; error %d.", nvpaRet);
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP);   // Override given but not found.
+    }
+
+    return(PAPI_OK);
+} // END _cuda11_init_profiler
+
+// Deal with structure changes between runtime versions 10,11.
+#define CUpti_Device_GetChipName_Params_STRUCT_SIZE10 16
+#define CUpti_Device_GetChipName_Params_STRUCT_SIZE11 32
+
+#define CUpti_Profiler_SetConfig_Params_STRUCT_SIZE10 56
+#define CUpti_Profiler_SetConfig_Params_STRUCT_SIZE11 58
+
+#define CUpti_Profiler_EndPass_Params_STRUCT_SIZE10 24
+#define CUpti_Profiler_EndPass_Params_STRUCT_SIZE11 41
+
+#define CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE10 24
+#define CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE11 40
+
+// Accumulate event data and return it. Returns NULL on calloc failure, else papi_error is set.
+// All of this code is necessary to figure out the number of passes. We use this to extend the
+// description of the metric; with passes, dimUnits, and Accumulation type (set on enumeration). 
+//  
+// a variation of the is code could be used by cuda11_update_control_state() to determinine the
+// number of passes required for several metrics together.
+// 
+//
+static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipName, 
+    NVPW_CUDA_MetricsContext_Create_Params* pMetricsContextCreateParams) 
+{
+    size_t numNestingLevels;
+    size_t numIsolatedPasses;
+    size_t numPipelinedPasses;
+    size_t numOfPasses=0;
+    int    i, numDep;
+
+    // Don't repeat this exercise.
+    if (thisEventData->detailsDone == 1) return(PAPI_OK);
+    // No matter how it turns out, don't do it again.
+    thisEventData->detailsDone=1;
+    //----------------SECTION----------------
+    // build structure needed for call.
+    NVPA_RawMetricsConfigOptions nvpa_metricsConfigOptions;
+    // default to NULL.
+    memset(&nvpa_metricsConfigOptions, 0,   NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE);
+    nvpa_metricsConfigOptions.structSize =  NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE;
+    nvpa_metricsConfigOptions.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+    nvpa_metricsConfigOptions.pChipName = pChipName;
+
+    NVPA_RawMetricsConfig* pRawMetricsConfig; // for output.
+    NVPW_CALL((*NVPA_RawMetricsConfig_CreatePtr)(&nvpa_metricsConfigOptions, &pRawMetricsConfig),
+              return(PAPI_ENOSUPP));
+
+    //----------------SECTION----------------
+    // build structure needed for call.
+    NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams;
+    memset(&beginPassGroupParams, 0,  NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE); 
+    beginPassGroupParams.structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE; 
+    beginPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    NVPW_CALL((*NVPW_RawMetricsConfig_BeginPassGroupPtr)(&beginPassGroupParams),
+              return(PAPI_ENOSUPP));
+
+    // Note: Here is where nvidia simpleQuery.cpp example code calls GetRawMetricRequests, we are inlining it.
+    //----------------SECTION----------------
+    // Need to build a metric properties; contains pDescription, pDimUnits, and **ppRawMetricDependencies.
+    NVPW_MetricsContext_GetMetricProperties_Begin_Params getMetricPropertiesBeginParams;
+    memset(&getMetricPropertiesBeginParams, 0,  NVPW_MetricsContext_GetMetricProperties_Begin_Params_STRUCT_SIZE); 
+    getMetricPropertiesBeginParams.structSize = NVPW_MetricsContext_GetMetricProperties_Begin_Params_STRUCT_SIZE;
+    getMetricPropertiesBeginParams.pMetricsContext = pMetricsContextCreateParams->pMetricsContext;
+    getMetricPropertiesBeginParams.pMetricName     = thisEventData->nv_name;
+    
+    NVPW_CALL((*NVPW_MetricsContext_GetMetricProperties_BeginPtr)(&getMetricPropertiesBeginParams),
+              return(PAPI_ENOSUPP));
+
+    // Fill in what we learned with that call.
+    thisEventData->description = strdup(getMetricPropertiesBeginParams.pDescription);
+    thisEventData->dimUnits = strdup(getMetricPropertiesBeginParams.pDimUnits);
+    thisEventData->gpuBurstRate =       getMetricPropertiesBeginParams.gpuBurstRate;
+    thisEventData->gpuSustainedRate =   getMetricPropertiesBeginParams.gpuSustainedRate;
+
+    //----------------SECTION----------------
+    // count the dependencies, and build an array of NVPA_RawMetricRequest
+    // entries with them.  We remember this array with the event, it is
+    // necessary for both testing the compatibility of events in an eventset,
+    // and necessary for querying values. Note that these may also be the
+    // values we need to enforce accumulating events.
+    // See nvidia example simpleQuery.cpp:112-131. 
+    // Programmer Note: These dependency names are just 18 char hex strings. 
+    // At this writing, metrics have from 1 to 45 dependencies:
+    // event 'dram__bytes.avg' has 4 dependencies.
+    // 0: '0x1b6d0ab8e9f0135d'.
+    // 1: '0x667e0015f33a459f'.
+    // 2: '0xee48e1b9f1ebf302'.
+    // 3: '0xf53385f81b35356b'.
+
+    numDep = 0;
+    while (getMetricPropertiesBeginParams.ppRawMetricDependencies[numDep] != NULL) numDep++;
+    if (numDep == 0) return(PAPI_ENOSUPP);
+
+    // make space for all the raw metrics.
+    NVPA_RawMetricRequest* rawMetricRequests = (NVPA_RawMetricRequest*) calloc(numDep, sizeof(NVPA_RawMetricRequest));
+
+    if (rawMetricRequests == NULL) return(PAPI_ENOMEM);
+
+    // For each dependency, build a rawMetricRequest table entry.
+    for (i = 0; i<numDep; i++) {
+        rawMetricRequests[i].pMetricName = strdup(getMetricPropertiesBeginParams.ppRawMetricDependencies[i]);
+        if (rawMetricRequests[i].pMetricName == NULL) return(PAPI_ENOMEM);
+        rawMetricRequests[i].isolated = 1;
+        rawMetricRequests[i].keepInstances = 1;
+        }
+
+    // Remember it in the event data.
+    thisEventData->numRawMetrics=numDep;
+    thisEventData->rawMetricRequests = rawMetricRequests;
+
+    // Now cleanup after GetMetricProperties.
+    NVPW_MetricsContext_GetMetricProperties_End_Params getMetricPropertiesEndParams;
+    getMetricPropertiesEndParams.structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE;
+    getMetricPropertiesEndParams.pPriv           = NULL;
+    getMetricPropertiesEndParams.pMetricsContext = pMetricsContextCreateParams->pMetricsContext;
+    NVPW_CALL((*NVPW_MetricsContext_GetMetricProperties_EndPtr)(&getMetricPropertiesEndParams), 
+              return(PAPI_ENOSUPP));
+
+    //----------------SECTION----------------
+    // Collect info on the dependencies. See nvidia example simpleQuery.cpp:158.
+    //
+    NVPW_RawMetricsConfig_IsAddMetricsPossible_Params isAddMetricsPossibleParams;
+    isAddMetricsPossibleParams.structSize = NVPW_RawMetricsConfig_IsAddMetricsPossible_Params_STRUCT_SIZE;
+    isAddMetricsPossibleParams.pRawMetricsConfig = pRawMetricsConfig;
+    isAddMetricsPossibleParams.pRawMetricRequests = &rawMetricRequests[0];
+    isAddMetricsPossibleParams.numMetricRequests = numDep;
+    NVPW_CALL((*NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr)(&isAddMetricsPossibleParams),
+              return(PAPI_ENOSUPP));
+    
+    NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams;
+    addMetricsParams.structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE;
+    addMetricsParams.pRawMetricsConfig = pRawMetricsConfig;
+    addMetricsParams.pRawMetricRequests = &rawMetricRequests[0];
+    addMetricsParams.numMetricRequests = numDep;
+    NVPW_CALL((*NVPW_RawMetricsConfig_AddMetricsPtr)(&addMetricsParams),
+              return(PAPI_ENOSUPP));
+
+    NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams;
+    endPassGroupParams.structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE;
+    endPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    NVPW_CALL((*NVPW_RawMetricsConfig_EndPassGroupPtr)(&endPassGroupParams),
+              return(PAPI_ENOSUPP));
+
+    NVPW_RawMetricsConfig_GetNumPasses_Params rawMetricsConfigGetNumPassesParams;
+    rawMetricsConfigGetNumPassesParams.structSize = NVPW_RawMetricsConfig_GetNumPasses_Params_STRUCT_SIZE;
+    rawMetricsConfigGetNumPassesParams.pRawMetricsConfig = pRawMetricsConfig;
+    NVPW_CALL((*NVPW_RawMetricsConfig_GetNumPassesPtr)(&rawMetricsConfigGetNumPassesParams),
+              return(PAPI_ENOSUPP));
+
+    // No Nesting of ranges in case of CUPTI_AutoRange, in AutoRange the range
+    // is already at finest granularity of every kernel Launch so
+    // numNestingLevels = 1.
+    // That said, in PAPI we use CUPTI_UserRange; but we still have no nesting
+    // because we only allow one PAPI_start() for an EventSet. 
+
+    numNestingLevels = 1;
+    numIsolatedPasses  = rawMetricsConfigGetNumPassesParams.numIsolatedPasses;
+    numPipelinedPasses = rawMetricsConfigGetNumPassesParams.numPipelinedPasses;
+
+    //----------------SECTION----------------
+    // Compute the number of passes.
+
+    numOfPasses = numPipelinedPasses + numIsolatedPasses * numNestingLevels;
+    thisEventData->passes = (int) numOfPasses;
+
+    NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams;
+    rawMetricsConfigDestroyParams.structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE;
+    rawMetricsConfigDestroyParams.pRawMetricsConfig = pRawMetricsConfig;
+    NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr)((NVPW_RawMetricsConfig_Destroy_Params*) &rawMetricsConfigDestroyParams),
+              return(PAPI_ENOSUPP));
+
+    //----------------SECTION----------------
+    // Modify description to include type and number of passes.
+    char added[PAPI_MAX_STR_LEN];
+    char copyDesc[PAPI_HUGE_STR_LEN];
+    switch (thisEventData->treatment) {
+     
+        case SpotValue: 
+            snprintf(added, PAPI_MAX_STR_LEN, ". Units=%s Passes=%d Accum=Spot", thisEventData->dimUnits, thisEventData->passes);
+            break;
+
+        case RunningSum:
+            snprintf(added, PAPI_MAX_STR_LEN, ". Units=%s Passes=%d Accum=Sum", thisEventData->dimUnits, thisEventData->passes);
+            break;
+
+        case RunningMin:
+            snprintf(added, PAPI_MAX_STR_LEN, ". Units=%s Passes=%d Accum=Min", thisEventData->dimUnits, thisEventData->passes);
+            break;
+
+        case RunningMax:
+            snprintf(added, PAPI_MAX_STR_LEN, ". Units=%s Passes=%d Accum=Max", thisEventData->dimUnits, thisEventData->passes);
+            break;
+    }
+
+    int olen = strlen(thisEventData->description);
+    int alen = strlen(added);
+
+    if ((olen+alen) >= PAPI_HUGE_STR_LEN) {
+        olen = PAPI_HUGE_STR_LEN - alen;
+    }
+
+
+    // Truncate original description if necessary to make room for unuts, passes, accum.
+    thisEventData->description[olen] = 0;
+    // Create augmented description.
+    snprintf(copyDesc, PAPI_HUGE_STR_LEN, "%s%s", thisEventData->description, added);
+    // discard original description.
+    free(thisEventData->description);
+    // record augmented description. 
+    thisEventData->description = strdup(copyDesc); 
+    
+    return(PAPI_OK);
+} // end cuda11_getMetricDetails.
+
+
+//-------------------------------------------------------------------------------------------------
+// This routine is not complete on its own, it is a continuation of _cuda_add_native_events() once
+// we discover we are cupti 11 (or later).
+// This is an internal routine, it is the caller's responsibility to ensure thread safety.
+//-------------------------------------------------------------------------------------------------
+static int _cuda11_add_native_events(cuda_context_t * gctxt)
+{
+    (void) gctxt;
+    int i, ret;
+    int userDevice, deviceNum;
+    cuda_device_desc_t *mydevice;
+    CUresult cuErr; (void) cuErr;
+    CUcontext userCtx, currCuCtx;
+
+    // Get deviceNum.
+    CUDA_CALL((*cudaGetDevicePtr) (&userDevice), return (PAPI_EMISC));
+    CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),    return (PAPI_EMISC));
+
+    // I saw this in other sample code; it may not be relevant. It worries
+    // whether runtime version differs from the Header versions. To me that
+    // is a compile issue, not something to correct at runtime. -Tony C.
+
+    if (cuda_runtime_version < 11000) {
+        if (0) fprintf(stderr, "%s:%s:%i Setting for cuda_runtime_version=%d (SIZE10)\n", __FILE__, __func__, __LINE__, cuda_runtime_version);
+        GetChipName_Params_STRUCT_SIZE=CUpti_Device_GetChipName_Params_STRUCT_SIZE10;
+        Profiler_SetConfig_Params_STRUCT_SIZE=CUpti_Profiler_SetConfig_Params_STRUCT_SIZE10;
+        Profiler_EndPass_Params_STRUCT_SIZE=CUpti_Profiler_EndPass_Params_STRUCT_SIZE10;
+        Profiler_FlushCounterData_Params_STRUCT_SIZE=CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE10;
+    } else {
+        if (0) fprintf(stderr, "%s:%s:%i Setting for cuda_runtime_version=%d (SIZE11)\n", __FILE__, __func__, __LINE__, cuda_runtime_version);
+        GetChipName_Params_STRUCT_SIZE=CUpti_Device_GetChipName_Params_STRUCT_SIZE11;
+        Profiler_SetConfig_Params_STRUCT_SIZE=CUpti_Profiler_SetConfig_Params_STRUCT_SIZE11;
+        Profiler_EndPass_Params_STRUCT_SIZE=CUpti_Profiler_EndPass_Params_STRUCT_SIZE11;
+        Profiler_FlushCounterData_Params_STRUCT_SIZE=CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE11;
+    }
+
+    // If any of these do not match the actual sizes, we have a mismatch between compile headers and actual library.
+    if (CUpti_Device_GetChipName_Params_STRUCT_SIZE != GetChipName_Params_STRUCT_SIZE ||
+        CUpti_Profiler_SetConfig_Params_STRUCT_SIZE != Profiler_SetConfig_Params_STRUCT_SIZE ||
+        CUpti_Profiler_EndPass_Params_STRUCT_SIZE != Profiler_EndPass_Params_STRUCT_SIZE ||
+        CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE != Profiler_FlushCounterData_Params_STRUCT_SIZE) {
+
+        strncpy(_cuda_vector.cmp_info.disabled_reason, "Profiler structures do not match Compiled Version. Possibly wrong libraries found.", PAPI_MAX_STR_LEN);
+        return (PAPI_EMISC);
+    }
+
+    // Comparison for debugging if you want it.
+    if (0) {
+        fprintf(stderr, "%s:%s:%i Actual vs Set sizes:\n", __FILE__, __func__, __LINE__);
+        fprintf(stderr, "%s:%s:%i GetChipName : %zd, %d\n", __FILE__, __func__, __LINE__, CUpti_Device_GetChipName_Params_STRUCT_SIZE, GetChipName_Params_STRUCT_SIZE); 
+        fprintf(stderr, "%s:%s:%i SetConfig   : %zd, %d\n", __FILE__, __func__, __LINE__, CUpti_Profiler_SetConfig_Params_STRUCT_SIZE, Profiler_SetConfig_Params_STRUCT_SIZE);
+        fprintf(stderr, "%s:%s:%i EndPass     : %zd, %d\n", __FILE__, __func__, __LINE__, CUpti_Profiler_EndPass_Params_STRUCT_SIZE, Profiler_EndPass_Params_STRUCT_SIZE);
+        fprintf(stderr, "%s:%s:%i FlushCounter: %zd, %d\n", __FILE__, __func__, __LINE__, CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE, Profiler_FlushCounterData_Params_STRUCT_SIZE);
+    }
+  
+    // We have to initialize the profiler to get the chip names,
+    // And we need the chipnames to read the metrics we have.
+    // This performs cuptiProfilerInitialize(), and NVPW_InitializeHost().
+
+    ret = _cuda11_init_profiler();
+    if (ret != PAPI_OK) return(ret);
+
+    // Ensure the hashtable (all pointers) is cleared to empty state.
+    memset(&cuda11_NameHashTable[0], 0, CUDA11_HASH_SIZE*sizeof(cuda11_hash_entry_t*));
+
+    int *firstLast = calloc(2*gctxt->deviceCount, sizeof(int)); // space for first/last indices.
+
+    for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
+        int strErr;
+        int ctxPushed=0;
+        mydevice = &gctxt->deviceArray[deviceNum];
+        // CUpti_Device_GetChipName_Params relies on cupti_target.h, not in legacy cuda distributions.
+        CUpti_Device_GetChipName_Params ChipNameParams;
+        memset(&ChipNameParams, 0,  GetChipName_Params_STRUCT_SIZE);
+        ChipNameParams.structSize = GetChipName_Params_STRUCT_SIZE;
+        ChipNameParams.pPriv = NULL;
+        ChipNameParams.deviceIndex=deviceNum;
+
+        CUPTI_CALL((*cuptiDeviceGetChipNamePtr)(&ChipNameParams),);
+        strErr = snprintf(mydevice->cuda11_chipName, PAPI_MIN_STR_LEN, ChipNameParams.pChipName);
+        if (strErr > PAPI_MIN_STR_LEN) HANDLE_STRING_ERROR;
+        mydevice->cuda11_chipName[PAPI_MIN_STR_LEN-1]=0;
+
+        // We get CounterAvailabilityParams for this device.
+        // see $PAPI_CUPTI_ROOT/samples/userrange_profiling/simplecuda.cu Line 346.
+        // NVPW_RawMetricsConfig_SetCounterAvailability is apparently for shared
+        // GPUs. See the manual https://docs.nvidia.com/cupti/Cupti/r_main.html at 1.12
+        // discusses shared Compute (GPUs):
+        //
+        // A sharedCompute Instance uses GPU resources that can potentially also be
+        // accessed by other Compute Instances in the same GPU Instance. Due to this
+        // resource sharing, collecting profiling data from shared units is not permitted.
+        // Attempts to collect metrics from a shared unit will result in NaN values. Better
+        // error reporting will be done in a future release. Collecting metrics from GPU
+        // units that are exclusively owned by a shared Compute Instance is still possible.
+        // Tracing works for shared Compute Instances.
+        //
+        // To allow users to determine which metrics are available on a target device, new
+        // APIs have been added which can be used to query counter availability before
+        // starting the profiling session. See APIs
+
+        // Init session context; it will be updated in cuda11_start() if needed.
+        mydevice->sessionCtx = NULL;
+
+        // Get the device Primary Context.
+        CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&mydevice->cuContext, deviceNum), return(PAPI_EMISC)); // LEAK 9M+8M+5M.
+
+        if (0) fprintf(stderr, "%s:%s:%i after PrimaryCtxRetain, deviceNum=%d mydevice->cuContext=%p, userCtx=%p.\n",
+                    __FILE__, __func__, __LINE__, deviceNum, mydevice->cuContext, userCtx);
+
+        // We need a context. If we are on the user's device, we
+        // can use their context, if not null. Otherwise we must
+        // switch to the device's primary context.
+        if (deviceNum != userDevice) {
+            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->cuContext), 
+                return(PAPI_EMISC));
+            ctxPushed=1;
+        } else { // same device as user
+            if (userCtx == NULL) {
+                CU_CALL((*cuCtxPushCurrentPtr) (mydevice->cuContext), 
+                    return(PAPI_EMISC));
+                ctxPushed=1;
+            }
+        }
+        
+        // First we size the image structure (happens because .pCounterAvailabiityImage is NULL).
+        CUpti_Profiler_GetCounterAvailability_Params getCounterAvailabilityParams;
+        memset(&getCounterAvailabilityParams, 0,  CUpti_Profiler_GetCounterAvailability_Params_STRUCT_SIZE);
+        getCounterAvailabilityParams.structSize = CUpti_Profiler_GetCounterAvailability_Params_STRUCT_SIZE;
+        getCounterAvailabilityParams.ctx = NULL; // Use current context.
+        CUPTI_CALL((*cuptiProfilerGetCounterAvailabilityPtr) (&getCounterAvailabilityParams), 
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),);
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),);
+            return(PAPI_EMISC));
+
+        // Set up for second call that fills in the image. (.pCounterAvailabilityImage is not NULL).
+        mydevice->cuda11_CounterAvailabilityImageSize = getCounterAvailabilityParams.counterAvailabilityImageSize;
+        mydevice->cuda11_CounterAvailabilityImage = calloc(mydevice->cuda11_CounterAvailabilityImageSize, sizeof(uint8_t));
+        getCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
+        CUPTI_CALL((*cuptiProfilerGetCounterAvailabilityPtr) (&getCounterAvailabilityParams), 
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),);
+            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),);
+            return(PAPI_EMISC));
+ 
+        // Restore caller's context, and release primary.
+        if (ctxPushed == 1) {
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
+                return(PAPI_EMISC));
+            ctxPushed = 0;
+        }
+
+        // Always release after retain.
+        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
+
+        // Get or create the Metrics Context. 
+        NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(deviceNum);
+        if (pMCCP == NULL) {
+            return(PAPI_EMISC);
+        }
+
+        firstLast[0+(deviceNum<<1)] = cuda11_numEvents;
+        firstLast[1+(deviceNum<<1)] = cuda11_numEvents;
+
+        // figure out if this device has the same names as a previous device.
+        for (i=0; i<deviceNum; i++) {
+            // break if we find a match.
+            if (strcmp(mydevice->cuda11_chipName, gctxt->deviceArray[i].cuda11_chipName) == 0) break;
+        }
+
+        // If there is a previous device with my chipName, I can use
+        // the names it found. Note if deviceNum==0, i==0, Not less.
+        // In testing; COPY took 35 ms (best time) for 114K events; and
+        // using the NVPW routines takes 99 ms (best time). 
+        if (i<deviceNum) {
+            int idx;
+            for (idx = firstLast[0+(i<<1)]; idx <= firstLast[1+(i<<1)]; idx++) {
+                cuda11_makeRoomAllEvents();
+                cuda11_eventData* prevEventData = cuda11_AllEvents[idx];
+                cuda11_eventData* thisEventData = (cuda11_eventData*) calloc(1, sizeof(cuda11_eventData));
+                if (thisEventData == NULL) return(PAPI_ENOMEM);
+
+                thisEventData->nv_name = strdup(prevEventData->nv_name); // allocate and copy.  
+                thisEventData->treatment = prevEventData->treatment;
+                char PAPI_name[PAPI_MAX_STR_LEN];
+                snprintf(PAPI_name, PAPI_MAX_STR_LEN,  "%s:device=%d", thisEventData->nv_name, deviceNum);
+                thisEventData->papi_name = strdup(PAPI_name);
+                thisEventData->deviceNum = deviceNum;
+                cuda11_AllEvents[cuda11_numEvents]=thisEventData;
+                addNameHash(thisEventData->papi_name, cuda11_numEvents); 
+                firstLast[1+(deviceNum<<1)] = cuda11_numEvents;
+                cuda11_numEvents++; 
+            }
+        } else {
+            // Collect the names for this device.
+            //----------------SECTION----------------
+            // Collect Counter Names.
+            // Actually, we don't need to collect counter names! counters cannot be
+            // read directly, you MUST read a metric that consists of the counter
+            // name + .sum, .avg, .min, .max, or for sum additional suffixes.
+            // perfworks ONLY deals with metrics. You can collect these here, but
+            // then you must decorate the name with these suffixes.  See
+            // https://docs.nvidia.com/cupti/Cupti/r_main.html#r_host_metrics_api
+
+            // This is the code to get counters, which we don't need.
+    //      NVPW_MetricsContext_GetCounterNames_Begin_Params getCounterNames;
+    //      getCounterNames.structSize = NVPW_MetricsContext_GetCounterNames_Begin_Params_STRUCT_SIZE;
+    //      getCounterNames.pPriv = NULL;
+    //      getCounterNames.pMetricsContext = pMCCP->pMetricsContext;
+    //      NVPW_CALL((*NVPW_MetricsContext_GetCounterNames_BeginPtr)(&getCounterNames),
+    //          return(PAPI_ENOSUPP));
+    //      
+    //      fprintf(stderr, "%s:%i Counters Found: %zu.\n", __func__, __LINE__, getCounterNames.numCounters);
+    //      for (i=0; i< (int) getCounterNames.numCounters; i++) {
+    //          fprintf(stderr, "%s:%i Counter name='%s'\n", __func__, __LINE__, getCounterNames.ppCounterNames[i]);
+    //      }
+    //      NVPW_MetricsContext_GetCounterNames_End_Params endCounterNames;
+    //      endCounterNames.structSize = NVPW_MetricsContext_GetCounterNames_End_Params_STRUCT_SIZE;
+    //      endCounterNames.pPriv = NULL;
+    //      endCounterNames.pMetricsContext = MetricsContextCreateParams.pMetricsContext;
+    //      NVPW_CALL((*NVPW_MetricsContext_GetCounterNames_EndPtr)(&endCounterNames),
+    //          return(PAPI_ENOSUPP));
+                  
+            //----------------SECTION----------------
+            // Collect Metric Names, and get Metrics Data.
+            NVPW_MetricsContext_GetMetricNames_Begin_Params GetMetricNameBeginParams;
+            memset(&GetMetricNameBeginParams, 0,  NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE);
+            GetMetricNameBeginParams.structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE;
+            GetMetricNameBeginParams.pMetricsContext = pMCCP->pMetricsContext;
+
+            // in : if true, SKIPS enumerating \<metric\>.peak_{burst, sustained}
+            //      Adds 45 seconds and 57,120 events per device. (TITAN V)
+            GetMetricNameBeginParams.hidePeakSubMetrics = 0;
+            // in : if true, SKIPS enumerating \<metric\>.per_{active,elapsed,region,frame}_cycle
+            //      Adds 24 seconds and 20,990 events per device. (TITAN V)
+            GetMetricNameBeginParams.hidePerCycleSubMetrics = 0;
+            // in : if true, SKIPS enumerating \<metric\>.pct_of_peak_{burst,sustained}_{active,elapsed,region,frame}
+            //      Adds 50 seconds and 28,796 events per device. (TITAN V)
+            GetMetricNameBeginParams.hidePctOfPeakSubMetrics = 0;
+            // in : if true, SKIPS enumerating \<unit\>__throughput.pct_of_peak_sustained_elapsed even if hidePctOfPeakSubMetrics is true
+            //      Adds 0 seconds and 24 events per device. (TITAN V)
+            GetMetricNameBeginParams.hidePctOfPeakSubMetricsOnThroughputs=0;
+
+            // This call alone takes about 54ms to complete.
+            NVPW_CALL((*NVPW_MetricsContext_GetMetricNames_BeginPtr)(&GetMetricNameBeginParams),
+                return(PAPI_EMISC));
+            
+            //----------------SECTION----------------
+            //  We have the names of metrics, get details on them.
+            for (i = 0; i < (int) GetMetricNameBeginParams.numMetrics; i++) {
+                cuda11_eventData* thisEventData = (cuda11_eventData*) calloc(1, sizeof(cuda11_eventData));
+                if (thisEventData == NULL) return(PAPI_ENOMEM);
+
+                thisEventData->nv_name = strdup(GetMetricNameBeginParams.ppMetricNames[i]); // allocate and copy.  
+
+                // We have the name; enough to specify the treatment.
+                if      (strstr(thisEventData->nv_name, ".sum") != NULL) thisEventData->treatment = RunningSum;
+                else if (strstr(thisEventData->nv_name, ".min") != NULL) thisEventData->treatment = RunningMin;
+                else if (strstr(thisEventData->nv_name, ".max") != NULL) thisEventData->treatment = RunningMax;
+                else thisEventData->treatment = SpotValue;
+
+                char PAPI_name[PAPI_MAX_STR_LEN];
+                snprintf(PAPI_name, PAPI_MAX_STR_LEN,  "%s:device=%d", thisEventData->nv_name, deviceNum);
+                thisEventData->papi_name = strdup(PAPI_name);
+
+                // Here is the place to qualify events to be included,
+                // but all we've got at this point is the name and 
+                // derived treatment. Note 'if (1)' is always true.
+                if (1) {        // If it qualifies, add to list.
+                    cuda11_makeRoomAllEvents();
+                    thisEventData->deviceNum = deviceNum;
+                    cuda11_AllEvents[cuda11_numEvents]=thisEventData;
+                    addNameHash(thisEventData->papi_name, cuda11_numEvents); 
+                    firstLast[1+(deviceNum<<1)] = cuda11_numEvents;
+                    cuda11_numEvents++; 
+                } else {        // If it failed to qualify, discard it.
+                    free_cuda11_eventData_contents(thisEventData);
+                    free(thisEventData);
+                    thisEventData = NULL;
+                } // end if we need to discard event data.
+            } // end metrics loop.
+
+            // Finish up this GetMetricNames.
+            NVPW_MetricsContext_GetMetricNames_End_Params GetMetricNameEndParams;
+            memset(&GetMetricNameEndParams, 0,  NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE);
+            GetMetricNameEndParams.structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE;
+            GetMetricNameEndParams.pMetricsContext = pMCCP->pMetricsContext;
+            NVPW_CALL((*NVPW_MetricsContext_GetMetricNames_EndPtr)(&GetMetricNameEndParams),);
+        }
+    } // end for each device. 
+
+    // Performance report for hash table efficiency.
+    if (0) {
+        int inUse=0, avgChain=0, maxChain=0;
+        int i, j;
+        for (i=0; i<CUDA11_HASH_SIZE; i++) {
+            if (cuda11_NameHashTable[i] == NULL) continue;
+            inUse++;
+            j=1;
+            cuda11_hash_entry_t *item = cuda11_NameHashTable[i];
+            while (item->next != NULL) {j++; item=item->next;}
+            avgChain += j;
+            if (j > maxChain) maxChain = j;
+        }
+
+        fprintf(stderr, "%s:%s:%i, Hash Stats: inUse=%.3f%%, avgChain=%.2f, maxChain=%d.\n",
+            __FILE__, __func__, __LINE__, ((100.*inUse)/(CUDA11_HASH_SIZE+0.)),
+            (avgChain+0.)/(inUse+0.), maxChain);
+    }
+
+    return(PAPI_OK);    
+} // end _cuda11_add_native_events.
+
+
+//-------------------------------------------------------------------------------------------------
+// We don't do anything for a new thread initialization.
+//-------------------------------------------------------------------------------------------------
+static int _cuda11_init_thread(hwd_context_t * ctx)
+{
+    (void) ctx;
+    SUBDBG("Entering\n");
+    // needs work.
+    return PAPI_OK;
+} // end _cuda11_init_thread
+
+
+//-------------------------------------------------------------------------------------------------
+// Setup a counter control state.
+// In general a control state holds the hardware info for an EventSet.
+//-------------------------------------------------------------------------------------------------
+static int _cuda11_init_control_state(hwd_control_state_t * ctrl)
+{
+    SUBDBG("Entering\n");
+    (void) ctrl;
+    // If no events were found during the initial component initialization, return error.
+    if(global_cuda_context->availEventSize <= 0) {
+        strncpy(_cuda_vector.cmp_info.disabled_reason, "ERROR CUDA: No events exist", PAPI_MAX_STR_LEN);
+        return (PAPI_EMISC);
+    }
+
+    // If it does not exist, create the global structure to hold CUDA contexts and active events.
+    _papi_hwi_lock( COMPONENT_LOCK );
+    if(!global_cuda_control) {
+        global_cuda_control = (cuda_control_t *) papi_calloc(1, sizeof(cuda_control_t));
+        global_cuda_control->countOfActiveCUContexts = 0;
+        global_cuda_control->activeEventCount = 0;
+    }
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
+    return PAPI_OK;
+} // end _cuda11_init_control_state
+
+//-----------------------------------------------------------------------------
+// userCtx is the active context. We can only push a different context.
+static int _cuda11_build_profiling_structures(CUcontext userCtx) 
+{
+    cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
+    CUcontext popCtx;
+    int dev;
+
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        int ctxPushed=0;
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        // skip devices with no events to get, or no context.
+        if (mydevice->cuda11_RMR_count == 0 || 
+            mydevice->sessionCtx == NULL) continue;
+
+        if (mydevice->sessionCtx != userCtx) {
+            ctxPushed = 1;
+            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->sessionCtx),
+                // On error,  
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
+
+        // Create the configImage. 
+        NVPA_RawMetricsConfigOptions metricsConfigOptions;
+        memset(&metricsConfigOptions, 0,   NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE);  
+        metricsConfigOptions.structSize =  NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE;
+        metricsConfigOptions.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+        metricsConfigOptions.pChipName = mydevice->cuda11_chipName;
+
+        NVPA_RawMetricsConfig* pRawMetricsConfig;
+
+        // Create the structure.
+        NVPW_CALL((*NVPA_RawMetricsConfig_CreatePtr) 
+            (&metricsConfigOptions, &pRawMetricsConfig),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // See: $PAPI_CUPTI_ROOT/samples/extensions/src/profilerhost_util/Metric.cpp Line 117.
+        NVPW_RawMetricsConfig_SetCounterAvailability_Params setCounterAvailabilityParams;
+        memset(&setCounterAvailabilityParams, 0,  NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE);
+        setCounterAvailabilityParams.structSize = NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE;
+        setCounterAvailabilityParams.pRawMetricsConfig = pRawMetricsConfig;
+        setCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
+        NVPW_CALL((*NVPW_RawMetricsConfig_SetCounterAvailabilityPtr) (&setCounterAvailabilityParams),
+        // On error,
+        if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+        _papi_hwi_unlock( COMPONENT_LOCK );
+        return(PAPI_EMISC));
+
+        // Note: The sample code sometimes creates params and then immediately
+        // destroys them, but uses param structure elements later. But if I
+        // destroy pRawMetricsConfig here, I get an error when I try to call
+        // BeginPassGroup. I'm following standard coding practice and calling
+        // the destroy function when I'm done using the structure.
+
+        // creating params for beginPassGroup...
+        NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams;
+        memset(&beginPassGroupParams, 0,  NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE);  
+        beginPassGroupParams.structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE;
+        beginPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+        
+        // Actually calling BeginPassGroup.
+        NVPW_CALL((*NVPW_RawMetricsConfig_BeginPassGroupPtr) 
+            (&beginPassGroupParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Creating params for addMetrics.
+        NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams;
+        memset(&addMetricsParams, 0,  NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE);
+        addMetricsParams.structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE;
+        addMetricsParams.pRawMetricsConfig = pRawMetricsConfig;
+
+        // passing in the rawMetricsRequests array.
+        addMetricsParams.pRawMetricRequests = mydevice->cuda11_RMR;
+
+        // and number of entries.
+        addMetricsParams.numMetricRequests = mydevice->cuda11_RMR_count;
+
+        // Executing the AddMetrics.
+        NVPW_CALL( (*NVPW_RawMetricsConfig_AddMetricsPtr)
+            (&addMetricsParams),
+            // On error, 
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Creating params for EndPassGroup.
+        NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams;
+        memset(&endPassGroupParams, 0,  NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE);
+        endPassGroupParams.structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE;
+
+        // passing pRawMetricsConfig also used above.
+        endPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+
+        // Actually Call EndPassGroup.
+        NVPW_CALL( (*NVPW_RawMetricsConfig_EndPassGroupPtr)
+            (&endPassGroupParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+        
+        // Build structure to call generateConfigImage.
+        NVPW_RawMetricsConfig_GenerateConfigImage_Params generateConfigImageParams;
+        memset(&generateConfigImageParams, 0,  NVPW_RawMetricsConfig_GenerateConfigImage_Params_STRUCT_SIZE);
+        generateConfigImageParams.structSize = NVPW_RawMetricsConfig_GenerateConfigImage_Params_STRUCT_SIZE;
+        generateConfigImageParams.pRawMetricsConfig = pRawMetricsConfig;
+
+        // Actually call GenerateConfigImage.
+        NVPW_CALL( (*NVPW_RawMetricsConfig_GenerateConfigImagePtr)
+            (&generateConfigImageParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Image is built, but now we must get a copy. Build structure to getConfigImage.
+        // Before we can get it, we need to know its size.
+        NVPW_RawMetricsConfig_GetConfigImage_Params getConfigImageParams;
+        memset(&getConfigImageParams, 0,  NVPW_RawMetricsConfig_GetConfigImage_Params_STRUCT_SIZE);
+        getConfigImageParams.structSize = NVPW_RawMetricsConfig_GetConfigImage_Params_STRUCT_SIZE;
+        getConfigImageParams.pRawMetricsConfig = pRawMetricsConfig;
+        getConfigImageParams.bytesAllocated = 0;
+        getConfigImageParams.pBuffer = NULL;
+        // Notice pBuffer=NULL and bytesAllocated=0. This is a sizing call.
+        // bytes needed is reported in .bytesCopied.
+        NVPW_CALL( (*NVPW_RawMetricsConfig_GetConfigImagePtr)
+            (&getConfigImageParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // allocate memory for a vector of bytes.
+        mydevice->cuda11_ConfigImage = calloc(getConfigImageParams.bytesCopied, sizeof(uint8_t));
+        if (mydevice->cuda11_ConfigImage == NULL) {
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_ENOMEM);
+        }
+        mydevice->cuda11_ConfigImageSize = getConfigImageParams.bytesCopied;
+
+        // sets size and pointer based on allocation.
+        getConfigImageParams.bytesAllocated = getConfigImageParams.bytesCopied;
+        getConfigImageParams.pBuffer = mydevice->cuda11_ConfigImage;
+
+        // same call, get the actual image now. 
+        NVPW_CALL( (*NVPW_RawMetricsConfig_GetConfigImagePtr)
+            (&getConfigImageParams),
+            // On error, 
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // We are done with pRawMetricsConfig, we destroy it here.
+        NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams; 
+        memset(&rawMetricsConfigDestroyParams, 0,  NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE);
+        rawMetricsConfigDestroyParams.structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE;
+        rawMetricsConfigDestroyParams.pRawMetricsConfig = pRawMetricsConfig;
+        NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr) 
+            ((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Get the CounterDataPrefixImage. 
+
+        // Build structure to call CounterDataBuilder.
+        // (return is counterDataBuilderCreateParams.pCounterDataBuilder)
+        NVPW_CounterDataBuilder_Create_Params counterDataBuilderCreateParams;
+        memset(&counterDataBuilderCreateParams, 0,  NVPW_CounterDataBuilder_Create_Params_STRUCT_SIZE);
+        counterDataBuilderCreateParams.structSize = NVPW_CounterDataBuilder_Create_Params_STRUCT_SIZE;
+        counterDataBuilderCreateParams.pChipName = mydevice->cuda11_chipName;
+
+        // CounterDataBuilder_Create.
+        NVPW_CALL( (*NVPW_CounterDataBuilder_CreatePtr)
+            (&counterDataBuilderCreateParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Build the structure to call AddMetrics.
+        NVPW_CounterDataBuilder_AddMetrics_Params CD_addMetricsParams;
+        memset(&CD_addMetricsParams, 0, NVPW_CounterDataBuilder_AddMetrics_Params_STRUCT_SIZE);
+        CD_addMetricsParams.structSize = NVPW_CounterDataBuilder_AddMetrics_Params_STRUCT_SIZE;
+        CD_addMetricsParams.pCounterDataBuilder = counterDataBuilderCreateParams.pCounterDataBuilder;
+        CD_addMetricsParams.pRawMetricRequests = mydevice->cuda11_RMR;
+        CD_addMetricsParams.numMetricRequests = mydevice->cuda11_RMR_count;
+        // Call AddMetrics.
+        NVPW_CALL((*NVPW_CounterDataBuilder_AddMetricsPtr) (&CD_addMetricsParams),
+            // On error, 
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Build structure to call GetCounterDataPrefix.
+        NVPW_CounterDataBuilder_GetCounterDataPrefix_Params getCounterDataPrefixParams;
+        memset(&getCounterDataPrefixParams, 0,  NVPW_CounterDataBuilder_GetCounterDataPrefix_Params_STRUCT_SIZE);
+        getCounterDataPrefixParams.structSize = NVPW_CounterDataBuilder_GetCounterDataPrefix_Params_STRUCT_SIZE;
+        getCounterDataPrefixParams.pCounterDataBuilder = counterDataBuilderCreateParams.pCounterDataBuilder;
+        getCounterDataPrefixParams.bytesAllocated = 0;
+        getCounterDataPrefixParams.pBuffer = NULL;
+
+        // Just getting the size of the CounterDataPrefix here.
+        NVPW_CALL((*NVPW_CounterDataBuilder_GetCounterDataPrefixPtr)
+            (&getCounterDataPrefixParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Allocate data.
+        mydevice->cuda11_CounterDataPrefixImage = calloc(getCounterDataPrefixParams.bytesCopied, sizeof(uint8_t));
+        if (mydevice->cuda11_CounterDataPrefixImage == NULL) return(PAPI_ENOMEM);
+        mydevice->cuda11_CounterDataPrefixImageSize = getCounterDataPrefixParams.bytesCopied;
+
+        getCounterDataPrefixParams.bytesAllocated = getCounterDataPrefixParams.bytesCopied;
+        getCounterDataPrefixParams.pBuffer = mydevice->cuda11_CounterDataPrefixImage;
+
+        // Same call, get actual image this time.
+        NVPW_CALL((*NVPW_CounterDataBuilder_GetCounterDataPrefixPtr)
+            (&getCounterDataPrefixParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // We are done with the counterDataBuilder, destroy the params.
+        NVPW_CounterDataBuilder_Destroy_Params counterDataBuilderDestroyParams;
+        memset(&counterDataBuilderDestroyParams, 0,  NVPW_CounterDataBuilder_Destroy_Params_STRUCT_SIZE);
+        counterDataBuilderDestroyParams.structSize = NVPW_CounterDataBuilder_Destroy_Params_STRUCT_SIZE;
+        counterDataBuilderDestroyParams.pCounterDataBuilder = counterDataBuilderCreateParams.pCounterDataBuilder;
+        NVPW_CALL((*NVPW_CounterDataBuilder_DestroyPtr)
+            ((NVPW_CounterDataBuilder_Destroy_Params *)&counterDataBuilderDestroyParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Create the CounterDataImage.         
+        // See  $PAPI_CUDA_ROOT/extras/CUPTI/samples/userrange_profiling/simplecuda.cu
+        // routine CreateCounterDataImage.
+
+        // Create an options structure.
+        CUpti_Profiler_CounterDataImageOptions counterDataImageOptions;
+        memset(&counterDataImageOptions, 0,  sizeof(CUpti_Profiler_CounterDataImageOptions));
+        counterDataImageOptions.structSize = sizeof(CUpti_Profiler_CounterDataImageOptions);
+        counterDataImageOptions.pCounterDataPrefix = mydevice->cuda11_CounterDataPrefixImage;
+        counterDataImageOptions.counterDataPrefixSize = mydevice->cuda11_CounterDataPrefixImageSize;
+        counterDataImageOptions.maxNumRanges = 1;
+        counterDataImageOptions.maxNumRangeTreeNodes = 1;
+        counterDataImageOptions.maxRangeNameLength = 64;
+
+        // Use that to fill in a Calculate Size parameters.
+        CUpti_Profiler_CounterDataImage_CalculateSize_Params calculateSizeParams;
+        memset(&calculateSizeParams, 0,  CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE);
+        calculateSizeParams.structSize = CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE;
+        calculateSizeParams.pOptions = &counterDataImageOptions;
+        calculateSizeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
+
+        // Actually calculate the Size.
+        CUPTI_CALL((*cuptiProfilerCounterDataImageCalculateSizePtr) (&calculateSizeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Create params for initialization.
+        CUpti_Profiler_CounterDataImage_Initialize_Params initializeParams;
+        memset(&initializeParams, 0, CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE);
+        initializeParams.structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE;
+        initializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
+        initializeParams.pOptions = &counterDataImageOptions;
+        initializeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
+        
+        // Allocate space for the image.
+        mydevice->cuda11_CounterDataImage = calloc(calculateSizeParams.counterDataImageSize, sizeof(uint8_t));
+        if (mydevice->cuda11_CounterDataImage == NULL) {
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_ENOMEM);
+        }
+
+        mydevice->cuda11_CounterDataImageSize = calculateSizeParams.counterDataImageSize;
+ 
+        initializeParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializePtr) (&initializeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Params for calculating the size of the scratch buffer.
+        CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params scratchBufferSizeParams;
+        memset(&scratchBufferSizeParams, 0,  CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE);
+        scratchBufferSizeParams.structSize = CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE;
+        scratchBufferSizeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
+        scratchBufferSizeParams.pCounterDataImage = initializeParams.pCounterDataImage;
+
+        // Calculate the size of the scratch buffer.
+        CUPTI_CALL((*cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr) (&scratchBufferSizeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+    
+        // Allocate memory for it.
+        mydevice->cuda11_CounterDataScratchBuffer = calloc(scratchBufferSizeParams.counterDataScratchBufferSize, sizeof(uint8_t));
+        // Remember the size. 
+        mydevice->cuda11_CounterDataScratchBufferSize = scratchBufferSizeParams.counterDataScratchBufferSize;
+
+        // Params to initialize the scratch buffer.
+        CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initScratchBufferParams;
+        memset(&initScratchBufferParams, 0,  CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE);
+        initScratchBufferParams.structSize = CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE;
+        initScratchBufferParams.counterDataImageSize = mydevice->cuda11_CounterDataImageSize;
+        initScratchBufferParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        initScratchBufferParams.counterDataScratchBufferSize = mydevice->cuda11_CounterDataScratchBufferSize;
+        initScratchBufferParams.pCounterDataScratchBuffer = mydevice->cuda11_CounterDataScratchBuffer;
+
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializeScratchBufferPtr) (&initScratchBufferParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // Restore previous context.
+        if (ctxPushed) {
+            ctxPushed = 0;
+            CU_CALL((*cuCtxPopCurrentPtr) (&popCtx),
+                // On error,
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
+    } // end for each device.
+
+    return(PAPI_OK);
+} // end _cuda11_build_profiling_structures
+
+
+//-------------------------------------------------------------------------------------------------
+// Triggered by eventset operations like add or remove.  For CUDA, needs to be
+// called multiple times from each separate CUDA context with the events to be
+// measured from that context.  For each context, create eventgroups for the
+// events.
+// Note: NativeInfo_t is defined in papi_internal.h.
+//-------------------------------------------------------------------------------------------------
+static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
+    NativeInfo_t * nativeInfo, int nativeCount, hwd_context_t * ctx)
+{
+    (void) ctrl;
+    (void) nativeInfo;
+    (void) nativeCount;
+    (void) ctx;
+    cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
+    cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
+    (void) gctrl;
+    int dev, ii;
+
+    /* Return if no events */
+    if(nativeCount == 0)
+        return (PAPI_OK);
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+ 
+    // We need the rawMetricRequests, which we collected during event enumeration.
+    // We also need the nvidia names of the metrics: cuda11_AllEvents[]->nv_name.
+    // We need to assemble by device, and one array for all events on that device.
+   
+    int *deviceMetricCount =    calloc(gctxt->deviceCount, sizeof(int));
+    int *deviceRawMetricCount = calloc(gctxt->deviceCount, sizeof(int));
+
+    // Note, in cuda11, we do not use gctxt->availEventIsBeingMeasuredInEventset[idx].
+    // Always reset to zero. We rebuild the eventset from scratch on every call.
+    gctrl->activeEventCount=0;
+
+    // First up: ensure every event is populated.
+    cuda_device_desc_t *mydevice;
+    for (ii = 0; ii < nativeCount; ii++) {
+        int idx = nativeInfo[ii].ni_event;
+        // skip if already initialized.
+        if (cuda11_AllEvents[idx]->detailsDone == 1) continue;
+        dev = cuda11_AllEvents[idx]->deviceNum;
+        // get or create the appropriate Metrics Context.
+        NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
+        mydevice = &gctxt->deviceArray[dev];
+        int err  = cuda11_getMetricDetails(cuda11_AllEvents[idx], mydevice->cuda11_chipName, pMCCP);
+        if (err != PAPI_OK) {
+            if (0) fprintf(stderr, "%s:%s:%i cuda11_getMetricDetails() failed, index=%d err=%d '%s'.\n",
+                     __FILE__, __func__, __LINE__, idx, err, PAPI_strerror(err));
+            return(err);
+        }
+    }
+
+    for (ii = 0; ii < nativeCount; ii++) {                                  // For each event provided by caller,
+        nativeInfo[ii].ni_position = gctrl->activeEventCount++; 
+        int idx = nativeInfo[ii].ni_event;                                  // Get the index of the event (in the global context).
+        gctrl->activeEventIndex[ii] = idx;                                  // Remember global index for this value.
+        // Here we init the values for this event.
+        switch (cuda11_AllEvents[idx]->treatment) {
+            case SpotValue: cuda11_AllEvents[idx]->cumulativeValue = 0; break;
+            case RunningSum: cuda11_AllEvents[idx]->cumulativeValue = 0; break;
+            case RunningMin: cuda11_AllEvents[idx]->cumulativeValue = DBL_MAX; break;
+            case RunningMax: cuda11_AllEvents[idx]->cumulativeValue = -DBL_MAX; break;
+        }
+
+        // Get the device we need to count it towards.                
+        int eventDeviceNum = cuda11_AllEvents[idx]->deviceNum;              // Device number for this event.
+        deviceRawMetricCount[eventDeviceNum] += cuda11_AllEvents[idx]->numRawMetrics;   // Add to raw metrics for device.
+        deviceMetricCount[eventDeviceNum]++;                                // Add to metrics names for device.
+    }        
+
+    // Now same loop, but for each device, collect metrics names for that
+    // device into a separate collection.
+
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+
+        // Free all the allocations the profiler needs, to rebuild them.
+        if (mydevice->cuda11_ConfigImage) free(mydevice->cuda11_ConfigImage);
+        mydevice->cuda11_ConfigImage = NULL;
+        mydevice->cuda11_ConfigImageSize = 0;
+
+        if (mydevice->cuda11_CounterDataPrefixImage) free(mydevice->cuda11_CounterDataPrefixImage); 
+        mydevice->cuda11_CounterDataPrefixImage = NULL; 
+        mydevice->cuda11_CounterDataPrefixImageSize = 0; 
+
+        if (mydevice->cuda11_CounterDataImage) free(mydevice->cuda11_CounterDataImage); 
+        mydevice->cuda11_CounterDataImage = NULL; 
+        mydevice->cuda11_CounterDataImageSize = 0; 
+
+        if (mydevice->cuda11_CounterDataScratchBuffer) free(mydevice->cuda11_CounterDataScratchBuffer); 
+        mydevice->cuda11_CounterDataScratchBuffer = NULL; 
+        mydevice->cuda11_CounterDataScratchBufferSize = 0; 
+
+        if (mydevice->cuda11_RMR) free(mydevice->cuda11_RMR);
+        mydevice->cuda11_RMR = NULL;
+        mydevice->cuda11_RMR_count = 0;
+
+        if (mydevice->cuda11_ValueIdx) free(mydevice->cuda11_ValueIdx);
+        mydevice->cuda11_ValueIdx = NULL;
+
+        if (mydevice->cuda11_MetricIdx) free(mydevice->cuda11_MetricIdx);
+        mydevice->cuda11_MetricIdx = NULL;
+
+        if (mydevice->cuda11_MetricNames) free(mydevice->cuda11_MetricNames);
+        mydevice->cuda11_MetricNames = NULL;
+        mydevice->cuda11_numMetricNames = 0;
+
+        if (deviceRawMetricCount[dev] == 0) continue;
+
+        // make some room.
+        mydevice->cuda11_RMR_count = deviceRawMetricCount[dev];
+        mydevice->cuda11_RMR=calloc(deviceRawMetricCount[dev], sizeof(NVPA_RawMetricRequest));
+        if (mydevice->cuda11_RMR == NULL) return PAPI_ENOMEM;
+        mydevice->cuda11_ValueIdx = calloc(deviceMetricCount[dev], sizeof(int));
+        if (mydevice->cuda11_ValueIdx == NULL) return PAPI_ENOMEM;
+        mydevice->cuda11_MetricIdx = calloc(deviceMetricCount[dev], sizeof(int));
+        if (mydevice->cuda11_MetricIdx == NULL) return PAPI_ENOMEM;
+        mydevice->cuda11_MetricNames = calloc(deviceMetricCount[dev], sizeof(char*));
+        if (mydevice->cuda11_MetricNames == NULL) return PAPI_ENOMEM;
+        mydevice->cuda11_numMetricNames = deviceMetricCount[dev];
+        
+        int evIdx, midx=0, idx=0;
+
+        // We build two lists here. mydevice->cuda11_RMR[] is a list of all the
+        // raw metric requests (look like 0x...) for all the events on this
+        // device.  mydevice->cuda11_MetricNames[] is a list of all the name
+        // level metrics we are trying to compute.
+        for (ii =0; ii < nativeCount; ii++) {
+            int index          = nativeInfo[ii].ni_event;                       // Get the index of the event (in the global context).
+            if (cuda11_AllEvents[index]->deviceNum != dev) continue;            // Skip if not on current device.
+            // Copy over to master list.
+            mydevice->cuda11_ValueIdx[midx] = ii;                               // Position in user's list.
+            mydevice->cuda11_MetricIdx[midx] = index;                           // Position in cuda11_AllEvents[].
+            mydevice->cuda11_MetricNames[midx++] = cuda11_AllEvents[index]->nv_name;    // Nvidia name of metric.
+
+            // NOTE: The sample code does not eliminate duplicates in the 
+            //       list of raw metric events; since we don't know how the
+            //       internal evaluation process works, we don't either.
+            for (evIdx=0; evIdx < cuda11_AllEvents[index]->numRawMetrics; evIdx++) {
+                mydevice->cuda11_RMR[idx] = cuda11_AllEvents[index]->rawMetricRequests[evIdx];
+                if (0) fprintf(stderr, "%s:%s:%i ii=%d, index=%d, eventName=%s, RMR[%d].name='%s'.\n", 
+                    __FILE__, __func__, __LINE__, ii, index, cuda11_AllEvents[index]->nv_name, idx, mydevice->cuda11_RMR[idx].pMetricName);
+                idx++;
+            }
+        }
+
+        // NOTE: At this point, we could call NVPW_RawMetricsConfig_GetNumPasses() for this
+        //       combined set. see cuda11_getMetricDetails above, or simpleQuery.cpp. 
+    } // end each device.    
+
+    // Free temp allocations.
+    if (deviceRawMetricCount) free(deviceRawMetricCount);       
+    if (deviceMetricCount)    free(deviceMetricCount);
+
+    // See $PAPI_CUPTI_ROOT/samples/extensions/src/profilerhost_util/Metric.cpp
+    // See $PAPI_CUPTI_ROOT/samples/userrange_profiling/simplecuda.cu
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
+    return(PAPI_OK);
+} // end_cuda11_update_control_state
+
+
+// Triggered by PAPI_start().
+// For CUDA component, switch to each context and start all eventgroups.
+static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+{
+    SUBDBG("Entering\n");
+    (void) ctx;
+    (void) ctrl;
+    cuda_control_t *gctrl = global_cuda_control;
+    cuda_context_t *gctxt = global_cuda_context;
+    uint32_t dev;
+    int err, userDevice = -1;
+    CUcontext userContext;
+
+    // NOTE: Zero cumulative values for start
+    //       (work to be done)
+    // NOTE: Zero values for the local read.
+    //       (work to be done)
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+
+    CUDA_CALL((*cudaGetDevicePtr) (&userDevice),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    CU_CALL((*cuCtxGetCurrentPtr) (&userContext),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    // Before calling start, we require the user to have established
+    // a context for each device with events. We track that activity
+    // with _cuda_callback(). At this point we set a "sessionCtx" 
+    // for each device, and re-use that on read or stop.
+
+    for (dev=0; dev < (unsigned) gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        // skip if no events in it.
+        if (mydevice->cuda11_RMR_count == 0) continue;
+        
+        cuda_context_chain_t* myLink = CCM_findByDev(dev);
+        if (myLink == NULL) {
+            mydevice->sessionCtx = NULL;
+            continue;
+        }
+
+        mydevice->sessionCtx = myLink->ctxId;
+    } // end set all contexts for devices in use.
+
+    err = _cuda11_build_profiling_structures(userContext);
+    if (err != PAPI_OK) {
+        if (1) fprintf(stderr, "%s:%s:%i _cuda11_build_profiling_structures() failed; err=%d.\n",
+            __FILE__, __func__, __LINE__, err);
+        return(err);
+    }
+
+    CUPTI_CALL((*cuptiGetTimestampPtr) (&gctrl->cuptiStartTimestampNs),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    for (dev=0; dev < (unsigned) gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        // skip devices that have no events to start.
+        if (mydevice->sessionCtx == NULL ||
+            mydevice->cuda11_ConfigImage == NULL) continue;
+
+        // set up parameter structures in mydevice.
+        memset(&mydevice->beginSessionParams,       0, CUpti_Profiler_BeginSession_Params_STRUCT_SIZE);
+        mydevice->beginSessionParams.structSize     =  CUpti_Profiler_BeginSession_Params_STRUCT_SIZE;
+
+        memset(&mydevice->setConfigParams,          0, Profiler_SetConfig_Params_STRUCT_SIZE);
+        mydevice->setConfigParams.structSize        =  Profiler_SetConfig_Params_STRUCT_SIZE;
+
+        // We begin a session.
+        // mydevice->beginSessionParams.ctx = NULL; // NULL uses current cuda context.
+        mydevice->beginSessionParams.ctx = mydevice->sessionCtx; // set to current context for this device.
+        mydevice->beginSessionParams.counterDataImageSize = mydevice->cuda11_CounterDataImageSize;
+        mydevice->beginSessionParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        mydevice->beginSessionParams.counterDataScratchBufferSize = mydevice->cuda11_CounterDataScratchBufferSize;
+        mydevice->beginSessionParams.pCounterDataScratchBuffer = mydevice->cuda11_CounterDataScratchBuffer;
+        mydevice->beginSessionParams.range =        CUPTI_UserRange;
+        mydevice->beginSessionParams.replayMode =   CUPTI_UserReplay;
+        mydevice->beginSessionParams.maxRangesPerPass = 1;
+        mydevice->beginSessionParams.maxLaunchesPerPass = 1;
+        CUPTI_CALL(
+            (*cuptiProfilerBeginSessionPtr) (&mydevice->beginSessionParams),
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        mydevice->setConfigParams.ctx = mydevice->sessionCtx;
+        mydevice->setConfigParams.pConfig = mydevice->cuda11_ConfigImage;
+        mydevice->setConfigParams.configSize = mydevice->cuda11_ConfigImageSize;
+        mydevice->setConfigParams.passIndex = 0;
+        mydevice->setConfigParams.minNestingLevel = 1;
+        mydevice->setConfigParams.numNestingLevels = 1;
+        CUPTI_CALL(
+            (*cuptiProfilerSetConfigPtr) (&mydevice->setConfigParams),
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // Build necessary structures; including those for reading/stopping.
+        // Some of these structures are empty; if we don't set anything in 
+        // them, we don't store them in mydevice.
+        CUpti_Profiler_BeginPass_Params beginPassParams;
+        memset(&beginPassParams, 0,  CUpti_Profiler_BeginPass_Params_STRUCT_SIZE);
+        beginPassParams.structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE;
+        beginPassParams.ctx =  mydevice->sessionCtx;
+
+        memset(&mydevice->pushRangeParams, 0,  CUpti_Profiler_PushRange_Params_STRUCT_SIZE);
+        mydevice->pushRangeParams.structSize = CUpti_Profiler_PushRange_Params_STRUCT_SIZE;
+        mydevice->pushRangeParams.ctx = mydevice->sessionCtx;
+
+        //---------------------------------------------------------------------------------------------
+        // See $PAPI_CUPTI_ROOT/samples/userrange_profiling/simplecuda.cu circa line 247.  
+        // At this point, the sample code loops through all passes calling the kernel, with
+        // cuptiProfiler functions: 
+        // beginPass, EnableProfiling, pushRange, KernelCall, PopRange, DisableProfiling, endPass.
+        // We do the first three functions; kernel calls are up to the user, the final three
+        // (PopRange, Disable, endPass) be done before we can read.
+
+        // Empirical Note: We can't skip BeginPass / EndPass, it causes hang ups in the Read.
+        CUPTI_CALL(
+            (*cuptiProfilerBeginPassPtr) (&beginPassParams), 
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        CUpti_Profiler_EnableProfiling_Params enableProfilingParams;
+        memset(&enableProfilingParams,    0, CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE);
+        enableProfilingParams.structSize  =  CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE;
+        enableProfilingParams.ctx  = mydevice->sessionCtx;
+
+        CUPTI_CALL(
+            (*cuptiProfilerEnableProfilingPtr) (&enableProfilingParams),
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // We only need one range per device. 
+        snprintf(mydevice->cuda11_range_name, sizeof(((cuda_device_desc_t*)0)->cuda11_range_name), "PAPI_Range_%d", dev);
+        mydevice->pushRangeParams.pRangeName = &mydevice->cuda11_range_name[0];
+        CUPTI_CALL(
+            (*cuptiProfilerPushRangePtr) (&mydevice->pushRangeParams),
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+    } // end for each device.
+
+    _papi_hwi_unlock(COMPONENT_LOCK);
+
+    return(PAPI_OK);
+} //end _cuda11_start
+
+
+// Triggered by PAPI_read().  For CUDA component, switch to each context, read
+// all the eventgroups, and put the values in the correct places. Note that
+// parameters (ctx, ctrl, flags) are all ignored. The design of this components
+// doesn't pay attention to PAPI EventSets, because ONLY ONE is ever allowed
+// for a component.  So instead of maintaining ctx and ctrl, we use global
+// variables to keep track of the one and only eventset.  Note that **values is
+// where we have to give PAPI the address of an array of the values we read (or
+// composed).
+// ALSO note, cuda resets all event counters to zero after a read, while PAPI
+// promises monotonically increasing counters (from PAPI_start()). So we have
+// to synthesize that.
+
+
+static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long long **values, int flags)
+{
+    SUBDBG("Entering\n");
+    (void) ctx;
+    (void) ctrl;
+    (void) values;
+    (void) flags;
+    cuda_control_t *gctrl = global_cuda_control;
+    cuda_context_t *gctxt = global_cuda_context;
+    (void) gctrl;
+    int i, dev;
+    int ctxPushed=0, userDevice = -1;
+    CUcontext userCtx, popCtx;
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+
+    CUDA_CALL((*cudaGetDevicePtr) (&userDevice),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        if (mydevice->cuda11_ConfigImage == NULL) continue;
+        if (mydevice->sessionCtx == NULL) continue;
+
+        if (mydevice->sessionCtx != userCtx) {
+            ctxPushed = 1;
+            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->sessionCtx), 
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
+            
+        //---------------------------------------------------------------------------------------------
+        // See $PAPI_CUPTI_ROOT/samples/userrange_profiling/simplecuda.cu circa line 247.  
+
+        // simplecuda.cu:266: CUPTI_API_CALL(cuptiProfilerPopRange(&popRangeParams))
+        CUpti_Profiler_PopRange_Params popRangeParams;
+        memset(&popRangeParams, 0,  CUpti_Profiler_PopRange_Params_STRUCT_SIZE);
+        popRangeParams.structSize = CUpti_Profiler_PopRange_Params_STRUCT_SIZE;
+        popRangeParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerPopRangePtr) (&popRangeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:267: CUPTI_API_CALL(cuptiProfilerDisableProfiling(&disableProfilingParams))
+        CUpti_Profiler_DisableProfiling_Params disableProfilingParams;
+        memset(&disableProfilingParams,    0, CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE);
+        disableProfilingParams.structSize  =  CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE;
+        disableProfilingParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerDisableProfilingPtr) (&disableProfilingParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:269: CUPTI_API_CALL(cuptiProfilerEndPass(&endPassParams))
+        CUpti_Profiler_EndPass_Params endPassParams;
+        memset(&endPassParams, 0,  Profiler_EndPass_Params_STRUCT_SIZE);
+        endPassParams.structSize = Profiler_EndPass_Params_STRUCT_SIZE;
+        endPassParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerEndPassPtr) (&endPassParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:272: CUPTI_API_CALL(cuptiProfilerFlushCounterData(&flushCounterDataParams))
+        CUpti_Profiler_FlushCounterData_Params flushCounterDataParams;
+        memset(&flushCounterDataParams, 0,  Profiler_FlushCounterData_Params_STRUCT_SIZE);
+        flushCounterDataParams.structSize = Profiler_FlushCounterData_Params_STRUCT_SIZE;
+        flushCounterDataParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerFlushCounterDataPtr) (&flushCounterDataParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // It would be preferable to not do the following if we are reading for
+        // a PAPI_stop(), but we can't know that without modifying the PAPI
+        // main code; that is where the call is made, before _cuda11_stop() is
+        // called.  HERE, we must set up for a new read: BeginPass,
+        // EnableProfiling, PushRange.
+
+        CUpti_Profiler_BeginPass_Params beginPassParams;
+        memset(&beginPassParams, 0,  CUpti_Profiler_BeginPass_Params_STRUCT_SIZE);
+        beginPassParams.structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE;
+        beginPassParams.ctx = mydevice->sessionCtx;
+
+        CUPTI_CALL(
+            (*cuptiProfilerBeginPassPtr) (&beginPassParams), 
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        CUpti_Profiler_EnableProfiling_Params enableProfilingParams;
+        memset(&enableProfilingParams,    0, CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE);
+        enableProfilingParams.structSize  =  CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE;
+        enableProfilingParams.ctx = mydevice->sessionCtx;
+
+        CUPTI_CALL(
+            (*cuptiProfilerEnableProfilingPtr) (&enableProfilingParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // We re-use the structure we build in _cuda11_start.
+        CUPTI_CALL(
+            (*cuptiProfilerPushRangePtr) (&mydevice->pushRangeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // END restart section.
+
+        // In Sample code, this is where it executes:
+        // cuptiProfilerUnsetConfig;
+        // cuptiProfilerEndSession;
+        // cuptiProfilerDeInitialize, <<-- not done here. 
+        // and destroys the cuda context <<-- not done here.
+        // We have relocated the ProfileDeInitialize to _cuda11_shutdown().  We
+        // leave context management (the destroy) up to the application, but it
+        // does mean the rest of this code does not require a cuda context.
+        // simplecuda.cu:394: DRIVER_API_CALL(cuCtxDestroy(cuContext))
+
+        // Evaluation of metrics collected in counterDataImage.
+        // See  $PAPI_CUDA_ROOT/extras/CUPTI/samples/extensions/src/profilerhost_util/Eval.cpp
+        // NV::Metric::Eval::GetMetricGpuValues(chipName, counterDataImage, metricNames, metricNameValueMap)
+        if (mydevice->cuda11_CounterDataImageSize == 0) { // exit with problem if no image.
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC);
+        }
+
+        // Note: This is a "metricsContext", not the same as cuGetCurrentContext.
+        // Eval.cpp:PrintMetricValues:121 pChipName='GV100'
+        // Eval.cpp:PrintMetricValues:122 Call: NVPW_CUDA_MetricsContext_Create(&metricsContextCreateParams)
+        
+/******* The commented out code here compiles and worked correctly in development, but it is
+ ******* not necessary in PAPI, and eliminated for efficiency. We don't need the multiple
+ ******* ranges or their names; we have only one range per device.
+
+        // Not necessary, we always have 1 range. 
+        // Eval.cpp:PrintMetricValues:130 Call: NVPW_CounterData_GetNumRanges(&getNumRangesParams)
+        NVPW_CounterData_GetNumRanges_Params getNumRangesParams;
+        memset(&getNumRangesParams, 0,  NVPW_CounterData_GetNumRanges_Params_STRUCT_SIZE);
+        getNumRangesParams.structSize = NVPW_CounterData_GetNumRanges_Params_STRUCT_SIZE;
+        getNumRangesParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        CUPTI_CALL(
+            (*NVPW_CounterData_GetNumRangesPtr) (&getNumRangesParams),
+            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),);
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // Eval.cpp:PrintMetricValues:132 numRanges=1
+        fprintf(stderr, "%s:%s:%i dev=%d getNumRangesParams.numRanges=%zd.\n", 
+            __FILE__, __func__, __LINE__, dev, getNumRangesParams.numRanges); // DEBUG.
+
+        // sample code loops over ranges here. We only have 1 in test code.
+        // Eval.cpp:PrintMetricValues:137 metricNames.size()=1
+        // Eval.cpp:PrintMetricValues:148 metricNames[0]='fe__cycles_elapsed.sum'
+
+        // Eval.cpp:PrintMetricValues:158 getRangeDescParams.rangeIndex=0
+        // Eval.cpp:PrintMetricValues:159 Call: NVPW_Profiler_CounterData_GetRangeDescriptions(&getRangeDescParams)
+        // Setup params for "GetRangeDescriptions".
+        NVPW_Profiler_CounterData_GetRangeDescriptions_Params getRangeDescParams;
+        memset(&getRangeDescParams, 0,  NVPW_Profiler_CounterData_GetRangeDescriptions_Params_STRUCT_SIZE);
+        getRangeDescParams.structSize = NVPW_Profiler_CounterData_GetRangeDescriptions_Params_STRUCT_SIZE;
+        getRangeDescParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        getRangeDescParams.rangeIndex = 0;
+        // Call GetRangeDescriptions, but just to get NUMBER of descriptions.
+        NVPW_CALL((*NVPW_Profiler_CounterData_GetRangeDescriptionsPtr) (&getRangeDescParams),
+            CU_CALL(
+            (*cuCtxPopCurrentPtr) (&currCuCtx),);
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // Now we know the number, allocate space for range descriptions.
+        char **rangeDescriptions = calloc(getRangeDescParams.numDescriptions, sizeof(char*));
+        getRangeDescParams.ppDescriptions = (const char **) rangeDescriptions;
+
+        // Eval.cpp:PrintMetricValues:161 getRangeDescParams.numDescriptions=1
+        // Eval.cpp:PrintMetricValues:166 Call: NVPW_Profiler_CounterData_GetRangeDescriptions(&getRangeDescParams)
+        // Call Get Range Descriptions again, get actual descriptions this time.
+        NVPW_CALL((*NVPW_Profiler_CounterData_GetRangeDescriptionsPtr) (&getRangeDescParams),
+            CU_CALL(
+            (*cuCtxPopCurrentPtr) (&currCuCtx),);
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        fprintf(stderr, "%s:%s:%i dev=%d numRangeDescriptions=%zd, rangeDescription[0]='%s'\n", 
+            __FILE__, __func__, __LINE__, dev, getRangeDescParams.numDescriptions, rangeDescriptions[0]);
+******
+******   END OF working but unnecessary code.
+*****/
+
+        // Space to receive values from profiler.        
+        double *gpuValues = calloc(mydevice->cuda11_numMetricNames, sizeof(double) );
+
+        NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
+
+        // Eval.cpp:PrintMetricValues:188 setCounterDataParams.rangeIndex=0
+        NVPW_MetricsContext_SetCounterData_Params setCounterDataParams;
+        memset(&setCounterDataParams, 0,   NVPW_MetricsContext_SetCounterData_Params_STRUCT_SIZE);
+        setCounterDataParams.structSize =  NVPW_MetricsContext_SetCounterData_Params_STRUCT_SIZE;
+        setCounterDataParams.pMetricsContext = pMCCP->pMetricsContext;
+        setCounterDataParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        setCounterDataParams.isolated = 1;
+        setCounterDataParams.rangeIndex = 0; // Note Eval.cpp:155 uses zero relative; we have only one range per device.
+
+        CUPTI_CALL((*NVPW_MetricsContext_SetCounterDataPtr) (&setCounterDataParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        NVPW_MetricsContext_EvaluateToGpuValues_Params evalToGpuParams;
+        memset(&evalToGpuParams, 0,  NVPW_MetricsContext_EvaluateToGpuValues_Params_STRUCT_SIZE);
+        evalToGpuParams.structSize = NVPW_MetricsContext_EvaluateToGpuValues_Params_STRUCT_SIZE;
+        evalToGpuParams.pMetricsContext = pMCCP->pMetricsContext;
+
+        evalToGpuParams.numMetrics = mydevice->cuda11_numMetricNames;
+        evalToGpuParams.ppMetricNames = (const char* const *) (mydevice->cuda11_MetricNames);
+        evalToGpuParams.pMetricValues = &gpuValues[0];
+
+        // Eval.cpp:PrintMetricValues:197 evalToGpuParams.numMetrics=1, evalToGpuParams.metricNamePtrs[0]='fe__cycles_elapsed.sum'
+        CUPTI_CALL((*NVPW_MetricsContext_EvaluateToGpuValuesPtr) (&evalToGpuParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC);
+        );
+
+        // Accumulate values if necessary, and move the values 
+        // retrieved to gctrl->activeEventValues[].
+        for (i=0; i<mydevice->cuda11_numMetricNames; i++) {
+            int aeIdx = mydevice->cuda11_MetricIdx[i];
+            // Adjust for treatment.
+            switch (cuda11_AllEvents[aeIdx]->treatment) {
+                case SpotValue:
+                    if (0) fprintf(stderr, "%s:%s:%i SpotValue.\n", __FILE__, __func__, __LINE__);
+                    break;
+
+                case RunningMin:
+                    if (0) fprintf(stderr, "%s:%s:%i RunningMax.\n", __FILE__, __func__, __LINE__);
+                    if (gpuValues[i] < cuda11_AllEvents[aeIdx]->cumulativeValue) {
+                        cuda11_AllEvents[aeIdx]->cumulativeValue = gpuValues[i];
+                    }
+                    gpuValues[i] = cuda11_AllEvents[aeIdx]->cumulativeValue;
+                    break;
+
+                case RunningMax:
+                    if (0) fprintf(stderr, "%s:%s:%i RunningMax.\n", __FILE__, __func__, __LINE__);
+                    if (gpuValues[i] > cuda11_AllEvents[aeIdx]->cumulativeValue) {
+                        cuda11_AllEvents[aeIdx]->cumulativeValue = gpuValues[i];
+                    }
+                    gpuValues[i] = cuda11_AllEvents[aeIdx]->cumulativeValue;
+                    break;
+
+                case RunningSum:
+                    if (0) fprintf(stderr, "%s:%s:%i Adding %f to cumulative value %f.\n", __FILE__, __func__, __LINE__, gpuValues[i], cuda11_AllEvents[aeIdx]->cumulativeValue);
+                    cuda11_AllEvents[aeIdx]->cumulativeValue += gpuValues[i];
+                    gpuValues[i] = cuda11_AllEvents[aeIdx]->cumulativeValue;
+                    break;
+            }
+
+            int userIdx = mydevice->cuda11_ValueIdx[i];
+            gctrl->activeEventValues[userIdx] = (int64_t) (gpuValues[i]);
+        }
+
+        free(gpuValues);
+
+        // Restore previous context.
+        if (ctxPushed) {
+            ctxPushed = 0;
+            CU_CALL((*cuCtxPopCurrentPtr) (&popCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
+    } // end for each device.
+
+    *values = gctrl->activeEventValues;     // Full list of computed values to user.
+    _papi_hwi_unlock(COMPONENT_LOCK);
+    return(PAPI_OK);
+} // end _cuda11_read
+
+
+// Triggered by PAPI_stop().
+static int _cuda11_stop(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+{
+    SUBDBG("Entering\n");
+    (void) ctx;
+    (void) ctrl;
+    cuda_context_t *gctxt = global_cuda_context;
+    int dev;
+    int ctxPushed=0, userDevice = -1;
+    CUcontext userCtx, popCtx;
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+
+    CUDA_CALL((*cudaGetDevicePtr) (&userDevice),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),
+        _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
+
+    if (0) fprintf(stderr, "%s:%s:%i userDevice=%d userCtx=%p.\n", __FILE__, __func__, __LINE__, userDevice, userCtx);
+
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        if (mydevice->cuda11_ConfigImage == NULL) continue;
+        if (mydevice->sessionCtx == NULL) continue;
+
+        if (mydevice->sessionCtx != userCtx) {
+            ctxPushed = 1;
+            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->sessionCtx), 
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+            if (0) fprintf(stderr, "%s:%s:%i userCtx=%p pushed for sessionCtx=%p.\n", __FILE__, __func__, __LINE__, userCtx, mydevice->sessionCtx);
+        }
+
+        // We need to shut down the profiler; every time we do a read in
+        // cuda11, we have to shut it down (up to FlushCounterData), and then
+        // start it up. It would be preferable to skip that restart in
+        // _cuda11_read() if we knew it was part of a cuda_stop(), but that
+        // requires modifying the PAPI main code.
+
+        // simplecuda.cu:266: CUPTI_API_CALL(cuptiProfilerPopRange(&popRangeParams))
+        CUpti_Profiler_PopRange_Params popRangeParams;
+        memset(&popRangeParams, 0,  CUpti_Profiler_PopRange_Params_STRUCT_SIZE);
+        popRangeParams.structSize = CUpti_Profiler_PopRange_Params_STRUCT_SIZE;
+        popRangeParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerPopRangePtr) (&popRangeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:267: CUPTI_API_CALL(cuptiProfilerDisableProfiling(&disableProfilingParams))
+        CUpti_Profiler_DisableProfiling_Params disableProfilingParams;
+        memset(&disableProfilingParams,    0, CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE);
+        disableProfilingParams.structSize  =  CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE;
+        disableProfilingParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerDisableProfilingPtr) (&disableProfilingParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:269: CUPTI_API_CALL(cuptiProfilerEndPass(&endPassParams))
+        CUpti_Profiler_EndPass_Params endPassParams;
+        memset(&endPassParams, 0,  Profiler_EndPass_Params_STRUCT_SIZE);
+        endPassParams.structSize = Profiler_EndPass_Params_STRUCT_SIZE;
+        endPassParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerEndPassPtr) (&endPassParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:272: CUPTI_API_CALL(cuptiProfilerFlushCounterData(&flushCounterDataParams))
+        CUpti_Profiler_FlushCounterData_Params flushCounterDataParams;
+        memset(&flushCounterDataParams, 0,  Profiler_FlushCounterData_Params_STRUCT_SIZE);
+        flushCounterDataParams.structSize = Profiler_FlushCounterData_Params_STRUCT_SIZE;
+        flushCounterDataParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerFlushCounterDataPtr) (&flushCounterDataParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:274: CUPTI_API_CALL(cuptiProfilerUnsetConfig(&unsetConfigParams))
+        CUpti_Profiler_UnsetConfig_Params unsetConfigParams;
+        memset(&unsetConfigParams, 0,  CUpti_Profiler_UnsetConfig_Params_STRUCT_SIZE);
+        unsetConfigParams.structSize = CUpti_Profiler_UnsetConfig_Params_STRUCT_SIZE;
+        unsetConfigParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerUnsetConfigPtr) (&unsetConfigParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // simplecuda.cu:276: CUPTI_API_CALL(cuptiProfilerEndSession(&endSessionParams))
+        CUpti_Profiler_EndSession_Params endSessionParams;
+        memset(&endSessionParams, 0,  CUpti_Profiler_EndSession_Params_STRUCT_SIZE);
+        endSessionParams.structSize = CUpti_Profiler_EndSession_Params_STRUCT_SIZE;
+        endSessionParams.ctx = mydevice->sessionCtx;
+        CUPTI_CALL(
+            (*cuptiProfilerEndSessionPtr) (&endSessionParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK); 
+            return(PAPI_EMISC)
+        );
+
+        // Restore previous context.
+        if (ctxPushed) {
+            ctxPushed = 0;
+            CU_CALL((*cuCtxPopCurrentPtr) (&popCtx),
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+            if (0) fprintf(stderr, "%s:%s:%i PopCurrent popCtx=%p.\n", __FILE__, __func__, __LINE__, popCtx);
+        }
+    } // end for each device.
+
+    _papi_hwi_unlock(COMPONENT_LOCK);
+    return(PAPI_OK);
+} // end _cuda11_stop
+
+
+// Disable and destroy the CUDA eventGroup
+static int _cuda11_cleanup_eventset(hwd_control_state_t * ctrl)
+{
+    SUBDBG("Entering\n");
+    int dev;
+    (void) ctrl;
+    cuda_context_t *gctxt = global_cuda_context;
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        // Free all the allocations the profiler needs, to rebuild them.
+        if (mydevice->cuda11_ConfigImage) free(mydevice->cuda11_ConfigImage);
+        mydevice->cuda11_ConfigImage = NULL;
+        mydevice->cuda11_ConfigImageSize = 0;
+
+        if (mydevice->cuda11_CounterAvailabilityImage) free(mydevice->cuda11_CounterAvailabilityImage);
+        mydevice->cuda11_CounterAvailabilityImage = NULL;
+        mydevice->cuda11_CounterAvailabilityImageSize = 0;
+
+        if (mydevice->cuda11_CounterDataPrefixImage) free(mydevice->cuda11_CounterDataPrefixImage); 
+        mydevice->cuda11_CounterDataPrefixImage = NULL; 
+        mydevice->cuda11_CounterDataPrefixImageSize = 0; 
+
+        if (mydevice->cuda11_CounterDataImage) free(mydevice->cuda11_CounterDataImage); 
+        mydevice->cuda11_CounterDataImage = NULL; 
+        mydevice->cuda11_CounterDataImageSize = 0; 
+
+        if (mydevice->cuda11_CounterDataScratchBuffer) free(mydevice->cuda11_CounterDataScratchBuffer); 
+        mydevice->cuda11_CounterDataScratchBuffer = NULL; 
+        mydevice->cuda11_CounterDataScratchBufferSize = 0; 
+
+        if (mydevice->cuda11_RMR) free(mydevice->cuda11_RMR);
+        mydevice->cuda11_RMR = NULL;
+
+        mydevice->cuda11_numMetricNames = 0;
+
+        if (mydevice->cuda11_ValueIdx) free(mydevice->cuda11_ValueIdx); 
+        mydevice->cuda11_ValueIdx = NULL;
+        
+        if (mydevice->cuda11_MetricIdx) free(mydevice->cuda11_MetricIdx);
+        mydevice->cuda11_MetricIdx = NULL;
+
+        // cuda11_MetricNames is char**, but the individual pointers are not
+        // alloced so they don't have to be released. 
+        if (mydevice->cuda11_MetricNames) free(mydevice->cuda11_MetricNames); 
+        mydevice->cuda11_MetricNames = NULL;
+    }
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
+    return(PAPI_OK);
+} // end _cuda11_cleanup_eventset
+
+
+// Called at thread shutdown. Does nothing in the CUDA component.
+static int _cuda11_shutdown_thread(hwd_context_t * ctx)
+{
+    SUBDBG("Entering\n");
+    (void) ctx;
+    // nothing to do in cuda11.
+    return (PAPI_OK);
+} // end _cuda11_shutdown_thread 
+
+// Triggered by PAPI_shutdown() and frees memory allocated in the CUDA component.
+static int _cuda11_shutdown_component(void)
+{
+    cuda_context_t *gctxt = global_cuda_context;
+    int i, dev;
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+
+    // Release (for all devices) any EventSet allocations.
+    _cuda11_cleanup_eventset(NULL);
+
+    // Release the hash table entries.
+    freeEntireNameHash();
+
+    // destroy all metrics contexts.
+    cuda11_destroyMetricsContexts();
+
+    // release device specific allocs.
+    for (dev = 0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice;
+        mydevice = &gctxt->deviceArray[dev];
+
+        if (mydevice->domainIDArray) free(mydevice->domainIDArray);
+        mydevice->domainIDArray = NULL;
+
+        if (mydevice->domainIDNumEvents) free(mydevice->domainIDNumEvents);
+        mydevice->domainIDNumEvents = NULL;
+    }
+
+    // Release all memory in cuda11_AllEvents, then the array itself.
+    for (i=0; i < cuda11_numEvents; i++) {
+        // free all elements of one event.
+        if (cuda11_AllEvents[i]) {
+            free_cuda11_eventData_contents(cuda11_AllEvents[i]);
+            free(cuda11_AllEvents[i]);
+        }
+    }
+
+    // Free the whole table of pointers.
+    free(cuda11_AllEvents); 
+
+    if (global_cuda_control) free(global_cuda_control);
+
+    // simplecuda.cu:392: CUPTI_API_CALL(cuptiProfilerDeInitialize(&profilerDeInitializeParams))
+    CUpti_Profiler_DeInitialize_Params profilerDeInitializeParams;
+    memset(&profilerDeInitializeParams, 0,  CUpti_Profiler_DeInitialize_Params_STRUCT_SIZE);
+    profilerDeInitializeParams.structSize = CUpti_Profiler_DeInitialize_Params_STRUCT_SIZE;
+    CUPTI_CALL(
+        (*cuptiProfilerDeInitializePtr) (&profilerDeInitializeParams),
+        _papi_hwi_unlock(COMPONENT_LOCK); 
+        return(PAPI_EMISC)
+    );
+
+    // unsubscribe from callbacks.
+    if (0) fprintf(stderr, "%s:%s:%i Unsubscribing to callbacks.\n", __FILE__, __func__, __LINE__);
+    CUPTI_CALL( (*cuptiUnsubscribePtr) (callback_subscriber), return(PAPI_EMISC));
+
+    // Free our CUcontext tracking chain.
+    CCM_free_chain();
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
+
+    // close the dynamic libraries needed by this component (opened in the init substrate call)
+    dlclose(dl1);
+    dlclose(dl2);
+    dlclose(dl3);
+    dlclose(dl4);
+
+    return(PAPI_OK);
+} // end _cuda11_shutdown_component.
+
+
+// Triggered by PAPI_reset() but only if the EventSet is currently running. If
+// the eventset is not currently running, then the saved value in the EventSet
+// is set to zero without calling this routine.
+static int _cuda11_reset(hwd_context_t * ctx, hwd_control_state_t * ctrl)
+{
+    (void) ctx;
+    (void) ctrl;
+
+    cuda_context_t *gctxt = global_cuda_context;
+    int i, dev;
+
+    _papi_hwi_lock( COMPONENT_LOCK );
+    for (dev=0; dev < gctxt->deviceCount; dev++) {
+        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
+        for (i=0; i<mydevice->cuda11_numMetricNames; i++) {
+            int aeIdx = mydevice->cuda11_MetricIdx[i];
+            // Adjust for treatment.
+            switch (cuda11_AllEvents[aeIdx]->treatment) {
+                case SpotValue: cuda11_AllEvents[aeIdx]->cumulativeValue = 0; break;
+                case RunningSum: cuda11_AllEvents[aeIdx]->cumulativeValue = 0; break;
+                case RunningMin: cuda11_AllEvents[aeIdx]->cumulativeValue = DBL_MAX; break;
+                case RunningMax: cuda11_AllEvents[aeIdx]->cumulativeValue = -DBL_MAX; break;
+            }
+        }
+    }
+
+    _papi_hwi_unlock( COMPONENT_LOCK );
+    return(PAPI_OK);
+} // end _cuda11_reset
+
+
+// This function sets various options in the component - Does nothing in the CUDA component.
+//  @param[in] ctx -- hardware context
+//  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
+//  @param[in] option -- options to be set
+static int _cuda11_ctrl(hwd_context_t * ctx, int code, _papi_int_option_t * option)
+{
+    SUBDBG("Entering\n");
+    (void) ctx;
+    (void) code;
+    (void) option;
+    return (PAPI_OK);
+} // end _cuda11_ctrl
+
+
+// This function has to set the bits needed to count different domains
+// In particular: PAPI_DOM_USER, PAPI_DOM_KERNEL PAPI_DOM_OTHER
+// By default return PAPI_EINVAL if none of those are specified
+// and PAPI_OK with success
+// PAPI_DOM_USER is only user context is counted
+// PAPI_DOM_KERNEL is only the Kernel/OS context is counted
+// PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
+// PAPI_DOM_ALL   is all of the domains
+static int _cuda11_set_domain(hwd_control_state_t * ctrl, int domain)
+{
+    SUBDBG("Entering\n");
+    (void) ctrl;
+    if((PAPI_DOM_USER & domain) || (PAPI_DOM_KERNEL & domain) || (PAPI_DOM_OTHER & domain) || (PAPI_DOM_ALL & domain))
+        return (PAPI_OK);
+    else
+        return (PAPI_EINVAL);
+    return (PAPI_OK);
+} // end _cuda11_set_domain
+
+
+// Enumerate Native Events.
+//   @param EventCode is the event of interest
+//   @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
+static int _cuda11_ntv_enum_events(unsigned int *EventCode, int modifier)
+{
+    // SUBDBG( "Entering (get next event after %u)\n", *EventCode );
+    switch (modifier) {
+    case PAPI_ENUM_FIRST:
+        *EventCode = 0;
+        return (PAPI_OK);
+        break;
+    case PAPI_ENUM_EVENTS:
+        if (global_cuda_context == NULL) {
+            return (PAPI_ENOEVNT);
+        } else if (*EventCode < (unsigned) (cuda11_numEvents-1)) {
+            *EventCode = *EventCode + 1;
+            return (PAPI_OK);
+        } else {
+            return (PAPI_ENOEVNT);
+        }
+        break;
+    default:
+        return (PAPI_EINVAL);
+    }
+    return (PAPI_OK);
+} // end _cuda11_ntv_enum_events
+
+static int _cuda11_ntv_name_to_code(const char *nameIn, unsigned int *out)
+{
+    (void) out;
+    char *myName = strstr(nameIn, ":::");
+    if (myName != NULL) myName +=3;
+    else myName = (char*) nameIn;
+
+    if (0) fprintf(stderr, "%s:%s:%i on entry, name='%s', myName='%s'.\n", __FILE__, __func__, __LINE__, nameIn, myName);
+    int myIdx = findNameHash(myName);
+    if (myIdx < 0) return(PAPI_EINVAL);
+    *out = (unsigned int) myIdx;
+    if (0) fprintf(stderr, "%s:%s:%i Found, returning myIdx=%d, papi_name='%s'.\n", __FILE__, __func__, __LINE__, myIdx, cuda11_AllEvents[myIdx]->papi_name);
+	return(PAPI_OK);
+} // end _cuda11_ntv_name_to_code
+
+// Takes a native event code and passes back the name
+// @param EventCode is the native event code
+// @param name is a pointer for the name to be copied to
+// @param len is the size of the name string
+static int _cuda11_ntv_code_to_name(unsigned int EventCode, char *name, int len)
+{
+    SUBDBG( "Entering EventCode %d\n", EventCode );
+    unsigned int index = EventCode;
+    int dev = cuda11_AllEvents[index]->deviceNum;
+    cuda_device_desc_t *mydevice;
+    cuda_context_t *gctxt = global_cuda_context;
+    mydevice = &gctxt->deviceArray[dev];
+
+    NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
+
+    int err  = cuda11_getMetricDetails(cuda11_AllEvents[index], 
+                 mydevice->cuda11_chipName, pMCCP);
+
+    if (err != PAPI_OK) {
+        if (0) fprintf(stderr, "%s:%s:%i index=%d err=%d.\n", __FILE__, __func__, __LINE__, index, err);
+        return(err);
+    }
+
+    if (cuda11_AllEvents != NULL && index < (unsigned int) cuda11_numEvents) {
+        strncpy(name, cuda11_AllEvents[index]->papi_name, len);
+    } else {
+        return (PAPI_EINVAL);
+    }
+    // SUBDBG( "Exit: EventCode %d: Name %s\n", EventCode, name );
+    return (PAPI_OK);
+} // end _cuda11_ntv_code_to_name
+
+
+// Takes a native event code and passes back the event description
+// @param EventCode is the native event code
+// @param descr is a pointer for the description to be copied to
+// @param len is the size of the descr string
+static int _cuda11_ntv_code_to_descr(unsigned int EventCode, char *desc, int len)
+{
+    SUBDBG( "Entering\n" );
+    unsigned int index = EventCode;
+    int dev = cuda11_AllEvents[index]->deviceNum;
+    cuda_device_desc_t *mydevice;
+    cuda_context_t *gctxt = global_cuda_context;
+    mydevice = &gctxt->deviceArray[dev];
+
+    NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(dev);
+
+    int err  = cuda11_getMetricDetails(cuda11_AllEvents[index], 
+                 mydevice->cuda11_chipName, pMCCP);
+
+    if (err != PAPI_OK) {
+        if (0) fprintf(stderr, "%s:%s:%i index=%d err=%d.\n", __FILE__, __func__, __LINE__, index, err);
+        return(err);
+    }
+
+    if (cuda11_AllEvents != NULL && index < (unsigned int) cuda11_numEvents) {
+        strncpy(desc, cuda11_AllEvents[index]->description, len);
+
+    } else {
+        return (PAPI_EINVAL);
+    }
+    return (PAPI_OK);
+} // end _cuda11_ntv_code_to_descr
+
+//-------------------------------------------------------------------------------------------------
+// Change _cuda_vector functions to cuda11.
+//-------------------------------------------------------------------------------------------------
+static void _cuda11_cuda_vector(void)
+{
+    _cuda_vector.start = _cuda11_start;    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    _cuda_vector.stop = _cuda11_stop;      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    _cuda_vector.read = _cuda11_read;      /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl, long_long ** events, int flags ) */
+    _cuda_vector.reset = _cuda11_reset;    /* ( hwd_context_t * ctx, hwd_control_state_t * ctrl ) */
+    _cuda_vector.cleanup_eventset = _cuda11_cleanup_eventset;      /* ( hwd_control_state_t * ctrl ) */
+
+//  _cuda_vector.init_component  is unchanged.
+    _cuda_vector.init_thread = _cuda11_init_thread;        /* ( hwd_context_t * ctx ) */
+    _cuda_vector.init_control_state = _cuda11_init_control_state;  /* ( hwd_control_state_t * ctrl ) */
+    _cuda_vector.update_control_state = _cuda11_update_control_state;      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
+
+    _cuda_vector.ctl = _cuda11_ctrl;       /* ( hwd_context_t * ctx, int code, _papi_int_option_t * option ) */
+    _cuda_vector.set_domain = _cuda11_set_domain;  /* ( hwd_control_state_t * cntrl, int domain ) */
+    _cuda_vector.ntv_enum_events = _cuda11_ntv_enum_events;        /* ( unsigned int *EventCode, int modifier ) */
+    _cuda_vector.ntv_name_to_code = _cuda11_ntv_name_to_code;      /* ( unsigned char *name, int *code ) */
+    _cuda_vector.ntv_code_to_name = _cuda11_ntv_code_to_name;      /* ( unsigned int EventCode, char *name, int len ) */
+    _cuda_vector.ntv_code_to_descr = _cuda11_ntv_code_to_descr;    /* ( unsigned int EventCode, char *name, int len ) */
+    _cuda_vector.shutdown_thread = _cuda11_shutdown_thread;        /* ( hwd_context_t * ctx ) */
+    _cuda_vector.shutdown_component = _cuda11_shutdown_component;  /* ( void ) */
+} // end _cuda11_cuda_vector 
+#endif // CUPTI_PROFILER=1 

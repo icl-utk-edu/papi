@@ -1,4 +1,4 @@
-PAPIDIR?=/opt/papi
+PAPIDIR=${HOME}/usr
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
 INCFLAGS=-I$(PAPIDIR)/include
 CFLAGS+=-g -Wall -Wextra
