@@ -7074,7 +7074,32 @@ for comp in $components; do
       CFLAGS="$CFLAGS -DCUPTI_PROFILER=-1"
     fi
   fi
+
+  if test "x$comp" = "xsysdetect" ; then
+      if test "x`find $PAPI_CUDA_ROOT -name "cuda.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_CUDA"
+      fi
+
+      if test "x`find $PAPI_CUDA_ROOT -name "nvml.h"`" != "x" ; then
+		  CFLAGS="$CFLAGS -DHAVE_NVML"
+	  fi
+
+      if test "x`find $PAPI_ROCM_ROOT -name "hsa.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_ROCM"
+      fi
+
+      if test "x`find $PAPI_ROCM_ROOT -name "rocm_smi.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
+      fi
+  fi
 done
+
+ac_fn_c_check_header_mongrel "$LINENO" "mpi.h" "ac_cv_header_mpi_h" "$ac_includes_default"
+if test "x$ac_cv_header_mpi_h" = xyes; then :
+  CFLAGS="$CFLAGS -DHAVE_MPI"
+fi
+
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5
 $as_echo "$components" >&6; }
