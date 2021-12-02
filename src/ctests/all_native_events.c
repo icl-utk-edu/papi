@@ -133,6 +133,13 @@ main( int argc, char **argv )
 
 		do {
 			retval = PAPI_get_event_info( i, &info );
+			event_code = ( int ) info.event_code;
+			if ( check_event( event_code, info.symbol, quiet ) == PAPI_OK) {
+				add_count++;
+			}
+			else {
+				err_count++;
+			}
 
 			/* We used to skip OFFCORE and UNCORE events  */
 			/* Why? */
@@ -150,15 +157,6 @@ main( int argc, char **argv )
 		   err_count++;
 		}
 	     } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
-	  } else {
-	    /* Event didn't have any umasks */
-	    event_code = ( int ) info.event_code;
-	    if ( check_event( event_code, info.symbol, quiet ) == PAPI_OK) {
-	       add_count++;
-	    }
-	    else {
-	       err_count++;
-	    }
 	  }
 
        } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
