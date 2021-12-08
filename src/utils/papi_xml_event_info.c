@@ -226,9 +226,6 @@ enum_native_events( FILE * f, int cidx)
 	   k = i;
 	   if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK ) {
 
-	      /* Test if event can be added */
-	      if ( test_event( k ) == PAPI_OK ) {
-
 		 /* add the event */
 		 xmlize_event( f, &info, num );
 
@@ -237,13 +234,12 @@ enum_native_events( FILE * f, int cidx)
 		    retval = PAPI_get_event_info( k, &info );
 		    if ( retval == PAPI_OK ) {
 		       if ( test_event( k )!=PAPI_OK ) {
-			   break;
+			   continue;
 		       }
 		       xmlize_event( f, &info, -1 );
 		    }
 		 } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK);
 		 fprintf( f, "    </event>\n" );
-	      }
 	   } else {
               /* this event has no unit masks; test & write the event */
 	      if ( test_event( i ) == PAPI_OK ) {
