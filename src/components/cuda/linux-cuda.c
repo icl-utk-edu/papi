@@ -1024,14 +1024,16 @@ _cuda_callback(void *userdata, CUpti_CallbackDomain domain,
 #endif // CUPTI_PROFILER == 1
 
 
+static int _cuda_init_private(void);
+
 /*
  * Check for the initialization step and does it if needed
  */
 static int
 _cuda_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private) {
-      return vector->init_private();
+  if (!vector->cmp_info.initialized) {
+      return _cuda_init_private();
   }
   return PAPI_OK;
 }
@@ -2705,16 +2707,20 @@ static int _cuda_init_component(int cidx)
     if (0) fprintf(stderr, "%s:%s:%i callback subscriptions completed.\n", __FILE__, __func__, __LINE__);
     #endif 
 
+    sprintf(_cuda_vector.cmp_info.disabled_reason,
+            "Not initialized, call PAPI_enum_cmp_event or any other "
+            "component event access function to force lazy init.");
+
     PAPI_unlock(COMPONENT_LOCK);
 
-    return PAPI_OK;
+    return PAPI_EDELAY_INIT;
 } // END _cuda_init_component.
 
 // This is the "delayed initialization", called when the application user of
 // PAPI calls any API function. This prevents long initialization times and
 // memory usage for systems where PAPI is configured with the cuda component
 // but not all applications use the cuda component.
-static int _cuda_init_private(void)
+int _cuda_init_private(void)
 {
     int rv, err = PAPI_OK;
     // The entire init, for cupti11, timed at 913 ms.
@@ -3771,7 +3777,6 @@ papi_vector_t _cuda_vector = {
     .cleanup_eventset = _cuda_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
 
     .init_component = _cuda_init_component,  /* ( int cidx ) */
-    .init_private = _cuda_init_private,      /* (void) */
     .init_thread = _cuda_init_thread,        /* ( hwd_context_t * ctx ) */
     .init_control_state = _cuda_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _cuda_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
