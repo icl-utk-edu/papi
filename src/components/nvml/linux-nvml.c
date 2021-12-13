@@ -416,14 +416,16 @@ unsigned long long getPowerManagementLimit(nvmlDevice_t dev)
     return (unsigned long long) limit;
 }
 
+static int _papi_nvml_init_private(void);
+
 /*
  * Check for the initialization step and does it if needed
  */
 static int
 _nvml_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private)
-      return vector->init_private();
+  if (!vector->cmp_info.initialized)
+      return _papi_nvml_init_private();
   return PAPI_OK;
 }
 
@@ -1080,10 +1082,14 @@ static int _papi_nvml_init_component(int cidx)
     _nvml_vector.cmp_info.num_cntrs = -1;
     _nvml_vector.cmp_info.num_mpx_cntrs = -1;
 
-    return PAPI_OK;
+     sprintf(_nvml_vector.cmp_info.disabled_reason,
+             "Not initialized, call PAPI_enum_cmp_event or any other "
+             "component event access function to force lazy init.");
+
+    return PAPI_EDELAY_INIT;
 }
 
-static int _papi_nvml_init_private(void)
+int _papi_nvml_init_private(void)
 {
     nvmlReturn_t ret;
     cudaError_t cuerr;
@@ -1862,7 +1868,6 @@ papi_vector_t _nvml_vector = {
     .write =                _papi_nvml_write,
     .init_component =       _papi_nvml_init_component,
     .init_thread =          _papi_nvml_init_thread,
-    .init_private =         _papi_nvml_init_private,
     .init_control_state =   _papi_nvml_init_control_state,
     .update_control_state = _papi_nvml_update_control_state,
     .ctl =                  _papi_nvml_ctl,
