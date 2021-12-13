@@ -1984,11 +1984,33 @@ for comp in $components; do
   if test "x$comp" = "xcuda" ; then
     if test "`find $PAPI_CUDA_ROOT -name "cupti_profiler_target.h"`" != "" ; then
       CFLAGS="$CFLAGS -DCUPTI_PROFILER=1"
-    else
+    elif test "`find $PAPI_CUDA_ROOT -name "cupti.h"`" != "" ; then
       CFLAGS="$CFLAGS -DCUPTI_PROFILER=0"
+    else
+      CFLAGS="$CFLAGS -DCUPTI_PROFILER=-1"
     fi
-  fi 
+  fi
+
+  if test "x$comp" = "xsysdetect" ; then
+      if test "x`find $PAPI_CUDA_ROOT -name "cuda.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_CUDA"
+      fi
+
+      if test "x`find $PAPI_CUDA_ROOT -name "nvml.h"`" != "x" ; then
+		  CFLAGS="$CFLAGS -DHAVE_NVML"
+	  fi
+
+      if test "x`find $PAPI_ROCM_ROOT -name "hsa.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_ROCM"
+      fi
+
+      if test "x`find $PAPI_ROCM_ROOT -name "rocm_smi.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
+      fi
+  fi
 done
+
+AC_CHECK_HEADER([mpi.h],[CFLAGS="$CFLAGS -DHAVE_MPI"],[])
 
 AC_MSG_RESULT($components)
 

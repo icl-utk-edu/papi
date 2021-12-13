@@ -1020,66 +1020,79 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		/*************/
 		/* Line Size */
 		/*************/
+		L[level_index].cache[level_count].line_size=0;
+
 		sprintf(filename,
 			"/sys/devices/system/cpu/cpu0/cache/%s/coherency_line_size",
 			d->d_name);
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open linesize\n");
-			goto unrecoverable_error;
 		}
-		result=fscanf(fff,"%d",&line_size);
-		fclose(fff);
-		if (result!=1) {
-			MEMDBG("Could not read cache line-size\n");
-			goto unrecoverable_error;
+		else {
+			result=fscanf(fff,"%d",&line_size);
+			fclose(fff);
+			if (result!=1) {
+				MEMDBG("Could not read cache line-size\n");
+			} else {
+				L[level_index].cache[level_count].line_size=line_size;
+			}
 		}
-		L[level_index].cache[level_count].line_size=line_size;
 
 
 		/*********************/
 		/* Get Associativity */
 		/*********************/
+		L[level_index].cache[level_count].associativity=0;
+
 		sprintf(filename,
 			"/sys/devices/system/cpu/cpu0/cache/%s/ways_of_associativity",
 			d->d_name);
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open associativity\n");
-			goto unrecoverable_error;
 		}
-		result=fscanf(fff,"%d",&associativity);
-		fclose(fff);
-		if (result!=1) {
-			MEMDBG("Could not read cache associativity\n");
-			goto unrecoverable_error;
+		else {
+			result=fscanf(fff,"%d",&associativity);
+			fclose(fff);
+			if (result!=1) {
+				MEMDBG("Could not read cache associativity\n");
+			}
+			else {
+				L[level_index].cache[level_count].associativity=associativity;
+			}
 		}
-		L[level_index].cache[level_count].associativity=associativity;
 
 		/************/
 		/* Get Sets */
 		/************/
+		L[level_index].cache[level_count].num_lines=0;
+
 		sprintf(filename,
 			"/sys/devices/system/cpu/cpu0/cache/%s/number_of_sets",
 			d->d_name);
 		fff=fopen(filename,"r");
 		if (fff==NULL) {
 			MEMDBG("Cannot open sets\n");
-			goto unrecoverable_error;
 		}
-		result=fscanf(fff,"%d",&sets);
-		fclose(fff);
+		else {
+			result=fscanf(fff,"%d",&sets);
+			fclose(fff);
 
-		if (result!=1) {
-			MEMDBG("Could not read cache sets\n");
-			goto unrecoverable_error;
+			if (result!=1) {
+				MEMDBG("Could not read cache sets\n");
+			}
+			else {
+				L[level_index].cache[level_count].num_lines=sets;
+			}
 		}
-		L[level_index].cache[level_count].num_lines=sets;
 
-
-		if (((size*1024)/line_size/associativity)!=sets) {
-			MEMDBG("Warning!  sets %d != expected %d\n",
-				sets,((size*1024)/line_size/associativity));
+		/* Sanity check results */
+		if ((line_size!=0) && (associativity!=0)) {
+			if (((size*1024)/line_size/associativity)!=sets) {
+		 		MEMDBG("Warning!  sets %d != expected %d\n",
+					sets,((size*1024)/line_size/associativity));
+			}
 		}
 
 		MEMDBG("\tL%d %s cache\n",level,type_string);
