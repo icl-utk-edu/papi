@@ -218,13 +218,13 @@ void
 fill_dev_info( PAPI_gpu_info_u *dev_info )
 {
     hsa_status_t status;
-    char string[PAPI_MAX_STR_LEN];
+    const char *string = NULL;
 
     ROCM_CALL((*hsa_iterate_agentsPtr)(&get_device_properties, dev_info),
              status = _status);
 
     if (status != HSA_STATUS_SUCCESS) {
-        (*hsa_status_stringPtr)(status, string);
+        (*hsa_status_stringPtr)(status, &string);
         SUBDBG( "error: %s\n", string );
     }
 }
