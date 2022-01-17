@@ -25,7 +25,7 @@ nvidia_gpu.o: components/sysdetect/nvidia_gpu.c components/sysdetect/sysdetect.h
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/nvidia_gpu.c -o $@
 
 amd_gpu.o: components/sysdetect/amd_gpu.c components/sysdetect/amd_gpu.h $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/amd_gpu.c -o $@
+	$(CC) -I$(PAPI_ROCM_ROOT)/include/hsa $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/amd_gpu.c -o $@
 
 cpu.o: components/sysdetect/cpu.c components/sysdetect/sysdetect.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/cpu.c -o $@
