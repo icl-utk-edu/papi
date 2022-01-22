@@ -3500,9 +3500,15 @@ static int _cuda_shutdown_component(void)
     }
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
-    dlclose(dl1);
-    dlclose(dl2);
-    dlclose(dl3);
+    if (dl1) {
+        dlclose(dl1);
+    }
+    if (dl2) {
+        dlclose(dl2);
+    }
+    if (dl3) {
+        dlclose(dl3);
+    }
 
     return (PAPI_OK);
 } // end cuda_shutdown_component().
@@ -5886,10 +5892,18 @@ static int _cuda11_shutdown_component(void)
     _papi_hwi_unlock( COMPONENT_LOCK );
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
-    dlclose(dl1);
-    dlclose(dl2);
-    dlclose(dl3);
-    dlclose(dl4);
+    if (dl1) {
+        dlclose(dl1);
+    }
+    if (dl2) {
+        dlclose(dl2);
+    }
+    if (dl3) {
+        dlclose(dl3);
+    }
+    if (dl4) {
+        dlclose(dl4);
+    }
 
     return(PAPI_OK);
 } // end _cuda11_shutdown_component.
