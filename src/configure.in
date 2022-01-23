@@ -1928,6 +1928,7 @@ fi
     
 
 
+PAPI_NUM_COMP=0
 for comp in $components; do
   idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
   if test "$idx" = 0; then
@@ -1937,6 +1938,7 @@ for comp in $components; do
   fi
   COMPONENT_RULES="$COMPONENT_RULES components/$comp/Rules.$subcomp"
   echo "extern papi_vector_t _${subcomp}_vector;" >> components_config.h
+  PAPI_NUM_COMP=$((PAPI_NUM_COMP+1))
 done
 echo "" >> components_config.h
 echo "struct papi_vectors *_papi_hwd[[]] = {" >> components_config.h
@@ -2011,6 +2013,8 @@ for comp in $components; do
 done
 
 AC_CHECK_HEADER([mpi.h],[CFLAGS="$CFLAGS -DHAVE_MPI"],[])
+
+CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
 
 AC_MSG_RESULT($components)
 
