@@ -3,6 +3,14 @@
 
 #include "mb.h"
 
+/* Let's try to use the atomics from the libatomic_ops project, */
+/* unless the user explicitly asks us to fall back to the legacy */
+/* PAPI atomics by specifying the flag USE_LEGACY_ATOMICS.       */
+#include "atomic_ops.h"
+#if defined(AO_HAVE_test_and_set_acquire)&&!defined(USE_LEGACY_ATOMICS)
+#define USE_LIBAO_ATOMICS
+#endif
+
 /* Locking functions */
 
 #if defined(USE_PTHREAD_MUTEXES)
@@ -22,6 +30,11 @@ do                                                 \
   pthread_mutex_unlock(&_papi_hwd_lock_data[lck]); \
 } while(0)
 
+#elif defined(USE_LIBAO_ATOMICS)
+
+extern AO_TS_t _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#define _papi_hwd_lock(lck) {while (AO_test_and_set_acquire(&_papi_hwd_lock_data[lck]) != AO_TS_CLEAR) { ; } }
+#define _papi_hwd_unlock(lck) { AO_CLEAR(&_papi_hwd_lock_data[lck]); }
 
 #else
 
