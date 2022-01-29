@@ -28,6 +28,8 @@
 #include <dlfcn.h>
 #include <limits.h>
 #include <float.h> // For DBL_MAX. 
+#include <sys/stat.h>
+#include <dirent.h>
 
 // NOTE: We can't use extended directories; these include files have includes.
 #include <cupti.h>
@@ -653,6 +655,31 @@ static int _cuda_count_nvidia_devices(void)
 
     return(totalDevices);
 } // end __cuda_count_nvidia_devices
+
+static int _cuda_count_dev_proc(void)
+{
+    const char *proc_dir = "/proc/driver/nvidia/gpus";
+
+    struct stat proc_stat;
+    int err = stat(proc_dir, &proc_stat);
+    if (err) {
+        return 0;
+    }
+
+    DIR *dir = opendir(proc_dir);
+    if (dir == NULL) {
+        return 0;
+    }
+
+    int count = 0;
+    while (readdir(dir) != NULL) {
+        ++count;
+    }
+
+    closedir(dir);
+
+    return count;
+}
 
 
 #if CUPTI_PROFILER == 1
@@ -2596,13 +2623,16 @@ static int _cuda_init_component(int cidx)
     int devices = _cuda_count_nvidia_devices();
     if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
     if (devices < 1) {
-        _cuda_vector.cmp_info.initialized = 1;
-        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-                "No Nvidia Devices Found.");
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        (void) strErr;
-        return(PAPI_ENOSUPP);
+        devices = _cuda_count_dev_proc();
+        if (devices < 1) {
+            _cuda_vector.cmp_info.initialized = 1;
+            _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "No Nvidia Devices Found.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            (void) strErr;
+            return(PAPI_ENOSUPP);
+        }
     }
 
     int err;
