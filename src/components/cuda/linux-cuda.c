@@ -601,7 +601,7 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
 // higher level tool vendors that use PAPI underneath. Without cuInit(); I 
 // know of no other way to check for Nvidia GPUs present in the system.
 //-----------------------------------------------------------------------------
-static int _cuda_count_nvidia_devices(void)
+static int _cuda_count_dev_sys(void)
 {
     char vendor_id[64]="/sys/class/drm/card%i/device/vendor";
     char class_id[64]="/sys/class/drm/card%i/device/class";
@@ -654,7 +654,7 @@ static int _cuda_count_nvidia_devices(void)
     } // end loop through possible cards.
 
     return(totalDevices);
-} // end __cuda_count_nvidia_devices
+} // end __cuda_count_dev_sys
 
 static int _cuda_count_dev_proc(void)
 {
@@ -2620,7 +2620,7 @@ static int _cuda_init_component(int cidx)
     #endif
 
     // Count if we have any devices with vendor ID for Nvidia.
-    int devices = _cuda_count_nvidia_devices();
+    int devices = _cuda_count_dev_sys();
     if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
     if (devices < 1) {
         devices = _cuda_count_dev_proc();
