@@ -882,7 +882,7 @@ static int _pcp_init_component(int cidx)
 
    _prog_fprintf(stderr, "%s:%i retrieved hostname='%s'\n", __FILE__, __LINE__, hostname); // show progress.
 
-   ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, hostname);             // Set the new context to hostname retrieved.
+   ctxHandle = pcp_pmNewContext(PM_CONTEXT_HOST, "local:");             // Set the new context to local host.
    if (ctxHandle < 0) {
       int strErr=snprintf(reason, rLen, "Cannot connect to PM Daemon on host \"%s\".\n "
          "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);

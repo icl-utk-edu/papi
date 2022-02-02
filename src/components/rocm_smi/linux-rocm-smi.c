@@ -3526,7 +3526,10 @@ static int _rocm_smi_init_private(void)
     scanEvent_info_t* scan=NULL;                        // a scan event pointer.
 
     PAPI_lock(COMPONENT_LOCK);
-    if (_rocm_smi_vector.cmp_info.initialized) goto rocm_smi_init_private_exit;
+    if (_rocm_smi_vector.cmp_info.initialized) {
+        err = _rocm_smi_vector.cmp_info.disabled;
+        goto rocm_smi_init_private_exit;
+    }
 
     SUBDBG("Entering _rocm_smi_init_component\n");
 

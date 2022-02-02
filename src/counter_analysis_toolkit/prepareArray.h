@@ -7,6 +7,6 @@
 #define SECRND 0x3
 #define SEQUEN 0x4
 
-int prepareArray(uintptr_t *array, int len, int stride, long secSize);
+int prepareArray(uintptr_t *array, int len, int stride, long secSize, int pattern);
 
 #endif
