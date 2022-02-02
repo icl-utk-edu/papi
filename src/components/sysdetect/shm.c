@@ -50,7 +50,7 @@ static MPI_Comm shm_comm;
 static void *dlp_mpi = NULL;
 
 static int mpi_is_enabled( void );
-static int load_mpi_sym( void );
+static int load_mpi_sym( char * );
 static int unload_mpi_sym( void );
 static int get_free_shm_handle( void );
 

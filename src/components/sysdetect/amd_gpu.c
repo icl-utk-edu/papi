@@ -218,13 +218,13 @@ void
 fill_dev_info( PAPI_gpu_info_u *dev_info )
 {
     hsa_status_t status;
-    char string[PAPI_MAX_STR_LEN];
+    const char *string = NULL;
 
     ROCM_CALL((*hsa_iterate_agentsPtr)(&get_device_properties, dev_info),
              status = _status);
 
     if (status != HSA_STATUS_SUCCESS) {
-        (*hsa_status_stringPtr)(status, string);
+        (*hsa_status_stringPtr)(status, &string);
         SUBDBG( "error: %s\n", string );
     }
 }
@@ -244,7 +244,20 @@ hsa_is_enabled( void )
 int
 load_hsa_sym( char *status )
 {
-    rocm_dlp = dlopen("libhsa-runtime64.so", RTLD_NOW | RTLD_GLOBAL);
+    char pathname[PAPI_MAX_STR_LEN] = { 0 };
+    char *rocm_root = getenv("PAPI_ROCM_ROOT");
+    if (rocm_root == NULL) {
+        *status = "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
+        return -1;
+    }
+
+    int expect = snprintf(pathname, PAPI_MAX_STR_LEN,
+                          "%s/lib/libhsa-runtime64.so", rocm_root);
+    if (expect > PAPI_MAX_STR_LEN) {
+        HANDLE_STRING_ERROR;
+    }
+
+    rocm_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (rocm_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
