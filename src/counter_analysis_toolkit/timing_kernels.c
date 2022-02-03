@@ -17,6 +17,7 @@ char* eventname = NULL;
 run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
     int _papi_eventset = PAPI_NULL;
     int retval, buffer = 0, status = 0;
+    int error_line = -1, error_type = PAPI_OK;
     register uintptr_t *p = NULL;
     double time1, time2, dt, factor;
     long count, pageSize, blockSize;
@@ -63,30 +64,48 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         int idx = omp_get_thread_num();
         int thdStatus = 0;
 
+        // Initialize the result to a value indicating an error.
+        // If no error occurs, it will be overwritten.
+        if ( !latency_only ) {
+            out.counter[idx] = -1;
+        }
+
+        // We will use "p" even after the epilogue, so let's set
+        // it here in case an error occurs.
+        p = &v[idx][0];
+        count = countMax;
+
         if ( !latency_only ) {
             retval = PAPI_create_eventset( &_papi_eventset );
             if (retval != PAPI_OK ){
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
+                // If we can't measure events, no need to run the kernel.
+                goto skip_epilogue;
             }
 
             retval = PAPI_add_named_event( _papi_eventset, eventname );
             if (retval != PAPI_OK ){
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
+                // If we can't measure events, no need to run the kernel.
+                goto clean_up;
             }
 
             // Start the counters.
             retval = PAPI_start(_papi_eventset);
             if ( PAPI_OK != retval ) {
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
+                // If we can't measure events, no need to run the kernel.
+                goto clean_up;
             }
         }
 
         // Start the actual test.
-        count = countMax;
-        p = &v[idx][0];
 
         // Micro-kernel for memory reading.
         if( CACHE_READ_ONLY == mode || latency_only )
@@ -111,22 +130,27 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             // Stop the counters.
             retval = PAPI_stop(_papi_eventset, &counter[idx]);
             if ( PAPI_OK != retval ) {
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
+                goto clean_up;
             }
 
             // Get the average event count per access in pointer chase.
             out.counter[idx] = (1.0*counter[idx])/(1.0*countMax);
 
+clean_up:
             retval = PAPI_cleanup_eventset(_papi_eventset);
             if (retval != PAPI_OK ){
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
             }
 
             retval = PAPI_destroy_eventset(&_papi_eventset);
             if (retval != PAPI_OK ){
-                error_handler(1, __LINE__);
+                error_type = retval;
+                error_line = __LINE__;
                 thdStatus = -1;
             }
 
@@ -144,12 +168,14 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             out.dt[idx] = dt*factor;
         }
 
+skip_epilogue:
         buffer += (uintptr_t)p+(uintptr_t)(x+y);
         status += thdStatus;
     }
 
     // Get the collective status.
     if(status < 0) {
+        error_handler(error_type, error_line);
         out.status = -1;
     }
 
@@ -160,21 +186,43 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
 }
 
 void error_handler(int e, int line){
-    fprintf(stderr,"An error occured at line %d. Exiting\n", line);
-    switch(e){
-        case PAPI_EINVAL:
-            fprintf(stderr,"One or more of the arguments is invalid.\n"); break;
-        case PAPI_ENOMEM:
-            fprintf(stderr, "Insufficient memory to complete the operation.\n"); break;
-        case PAPI_ENOEVST:
-            fprintf(stderr, "The event set specified does not exist.\n"); break;
-        case PAPI_EISRUN:
-            fprintf(stderr, "The event set is currently counting events.\n"); break;
-        case PAPI_ECNFLCT:
-            fprintf(stderr, "The underlying counter hardware can not count this event and other events in the event set simultaneously.\n"); break;
-        case PAPI_ENOEVNT:
-            fprintf(stderr, "The PAPI preset is not available on the underlying hardware.\n"); break;
-        default:
-            fprintf(stderr, "Unknown error occured.\n");
-    }
+    int idx;
+    const char *errors[26] = {
+                              "No error",
+                              "Invalid argument",
+                              "Insufficient memory",
+                              "A System/C library call failed",
+                              "Not supported by component",
+                              "Access to the counters was lost or interrupted",
+                              "Internal error, please send mail to the developers",
+                              "Event does not exist",
+                              "Event exists, but cannot be counted due to counter resource limitations",
+                              "EventSet is currently not running",
+                              "EventSet is currently counting",
+                              "No such EventSet Available",
+                              "Event in argument is not a valid preset",
+                              "Hardware does not support performance counters",
+                              "Unknown error code",
+                              "Permission level does not permit operation",
+                              "PAPI hasn't been initialized yet",
+                              "Component Index isn't set",
+                              "Not supported",
+                              "Not implemented",
+                              "Buffer size exceeded",
+                              "EventSet domain is not supported for the operation",
+                              "Invalid or missing event attributes",
+                              "Too many events or attributes",
+                              "Bad combination of features",
+                              "Component containing event is disabled"
+    };
+
+    idx = -e;
+    if(idx >= 26 || idx < 0 )
+        idx = 15;
+
+    if( NULL != eventname )
+        fprintf(stderr,"\nError \"%s\" occured at line %d when processing event %s.\n", errors[idx], line, eventname);
+    else
+        fprintf(stderr,"\nError \"%s\" occured at line %d.\n", errors[idx], line);
+
 }
