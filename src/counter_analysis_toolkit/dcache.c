@@ -13,7 +13,7 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
 {
     int pattern = 3;
     int stride, f, cache_line;
-    int test_cnt = 0;
+    int status, test_cnt = 0;
     float ppb = 16;
     FILE *ofp_papi;
     char *sufx, *papiFileName;
@@ -64,7 +64,9 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
                         printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                         fflush(stdout);
                     }
-                    d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                    status = d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                    if( status < 0 )
+                        goto error2;
                 }
             }
             else
@@ -74,10 +76,13 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
                     printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                     fflush(stdout);
                 }
-                d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                status = d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                if( status < 0 )
+                    goto error2;
             }
         }
     }
+error2:
     if( show_progress )
     {
         size_t i;
@@ -96,12 +101,12 @@ error0:
     return;
 }
 
-void d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
+int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
     int i,j,k;
     int *values;
     double ***rslts, *sorted_rslts;
     double ***counter, *sorted_counter;
-    int status, guessCount, ONT;
+    int status=0, guessCount, ONT;
 
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
@@ -199,7 +204,7 @@ cleanup:
     free(sorted_counter);
     free(values);
 
-    return;
+    return status;
 }
 
 
