@@ -1920,7 +1920,8 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 		return PAPI_ENOCMP;
 	}
 
-	if (_papi_hwd[cidx]->cmp_info.disabled) {
+	if (_papi_hwd[cidx]->cmp_info.disabled &&
+        _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT) {
 	  return PAPI_ENOCMP;
 	}
 
