@@ -3518,8 +3518,7 @@ static int _rocm_smi_init_component(int cidx)
     _rocm_smi_vector.cmp_info.num_mpx_cntrs = -1;
 
     sprintf(_rocm_smi_vector.cmp_info.disabled_reason,
-            "Not initialized, call PAPI_enum_cmp_event or any other "
-            "component event access function to force lazy init.");
+            "Not initialized. Access component events to initialize it.");
 
     return PAPI_EDELAY_INIT;
 }
