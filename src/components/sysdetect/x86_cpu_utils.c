@@ -168,7 +168,7 @@ cpuid_get_attribute( CPU_attr_e attr, int *value )
             *value = PAPI_MAX_MEM_HIERARCHY_LEVELS;
             break;
         default:
-            status = CPU_ERROR;
+            status = os_cpu_get_attribute(attr, value);
     }
 
     return status;
