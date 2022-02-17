@@ -10,15 +10,15 @@
 #include "sysdetect.h"
 #include "linux_cpu_utils.h"
 
-#define VENDOR_UNINITED    0
-#define VENDOR_INTEL_X86   1
-#define VENDOR_INTEL_IA64  2
-#define VENDOR_AMD         3
-#define VENDOR_IBM         4
-#define VENDOR_MIPS        5
-#define VENDOR_ARM         6
-#define VENDOR_CRAY        7
-#define VENDOR_UNKNOWN     8
+#define VENDOR_UNKNOWN       -1
+#define VENDOR_UNINITED      0
+#define VENDOR_INTEL_X86     1
+#define VENDOR_AMD           2
+#define VENDOR_IBM           3
+#define VENDOR_CRAY          4
+#define VENDOR_ARM           7
+#define VENDOR_MIPS          8
+#define VENDOR_INTEL_IA64    9
 
 #define _PATH_SYS_SYSTEM "/sys/devices/system/"
 #define _PATH_SYS_CPU0   _PATH_SYS_SYSTEM "/cpu/cpu0"
@@ -846,7 +846,7 @@ get_vendor_id( void )
 {
     static int vendor_id; // VENDOR_UNINITED;
 
-    if (vendor_id > VENDOR_UNINITED)
+    if (vendor_id != VENDOR_UNINITED)
         return vendor_id;
 
     FILE *fp = fopen("/proc/cpuinfo", "r");
