@@ -288,7 +288,7 @@ pfm_arm_validate_table(void *this, FILE *fp)
 
 	pfmlib_pmu_t *pmu = this;
 	const arm_entry_t *pe = this_pe(this);
-	int i, error = 0;
+	int i, j, error = 0;
 
 	for(i=0; i < pmu->pme_count; i++) {
 		if (!pe[i].name) {
@@ -299,6 +299,12 @@ pfm_arm_validate_table(void *this, FILE *fp)
 		if (!pe[i].desc) {
 			fprintf(fp, "pmu: %s event%d: %s :: no description\n", pmu->name, i, pe[i].name);
 			error++;
+		}
+		for(j = i+1; j < pmu->pme_count; j++) {
+			if (pe[i].code == pe[j].code && !(pe[j].equiv || pe[i].equiv))  {
+				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
+				error++;
+				}
 		}
 	}
 	return error ? PFM_ERR_INVAL : PFM_SUCCESS;
@@ -342,7 +348,7 @@ pfm_arm_get_event_info(void *this, int idx, pfm_event_info_t *info)
 	info->name  = pe[idx].name;
 	info->desc  = pe[idx].desc;
 	info->code  = pe[idx].code;
-	info->equiv = NULL;
+	info->equiv = pe[idx].equiv;
 	info->idx   = idx; /* private index */
 	info->pmu   = pmu->pmu;
 	info->is_precise = 0;

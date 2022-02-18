@@ -76,6 +76,7 @@ The library supports many PMUs. The current version can handle:
 		Fujitsu A64FX
 		ARM Neoverse N1
 		ARM Neoverse N2
+		Huawei HiSilicon Kunpeng 920
 
 	- For SPARC
 		Ultra I, II

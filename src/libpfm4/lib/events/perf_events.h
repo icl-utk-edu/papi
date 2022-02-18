@@ -412,3 +412,15 @@ static perf_event_t perf_static_events[]={
        CACHE_ACCESS(NODE, "Node ", NODE)
 };
 #define PME_PERF_EVENT_COUNT (sizeof(perf_static_events)/sizeof(perf_event_t))
+
+/*
+ * the following events depend on the kernel exporting them. They may be dependent on hardware features
+ */
+static perf_event_t perf_optional_events[]={
+       PCL_EVT_RAW(slots, 0x00, 0x04, "issue slots per logical CPU (used for topdown toplevel computation, must be first event in the group)"),
+       PCL_EVT_RAW(topdown-retiring, 0x00, 0x80, "topdown useful slots retiring uops (must be used in a group with the other topdown- events with slots as leader)"),
+       PCL_EVT_RAW(topdown-bad-spec, 0x00, 0x81, "topdown wasted slots due to bad speculation (must be used in a group with the other topdown- events with slots as leader)"),
+       PCL_EVT_RAW(topdown-fe-bound, 0x00, 0x82, "topdown wasted slots due to frontend (must be used in a group with the other topdown- events with slots as leader)"),
+       PCL_EVT_RAW(topdown-be-bound, 0x00, 0x83, "topdown wasted slots due to backend (must be used in a group with the other topdown- events with slots as leader)"),
+};
+#define PME_PERF_EVENT_OPT_COUNT (sizeof(perf_optional_events)/sizeof(perf_event_t))
