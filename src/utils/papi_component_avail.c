@@ -114,11 +114,13 @@ main( int argc, char **argv )
 
 	printf("Compiled-in components:\n");
 	for ( cid = 0; cid < numcmp; cid++ ) {
-      force_lazy_init(cid);
 	  cmpinfo = PAPI_get_component_info( cid );
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
 
+      if (cmpinfo->disabled == PAPI_EDELAY_INIT) {
+          force_lazy_init(cid);
+      }
 	  if (cmpinfo->disabled) {
 	    printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
 	  }
