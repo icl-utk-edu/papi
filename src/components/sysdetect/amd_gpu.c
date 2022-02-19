@@ -247,7 +247,12 @@ load_hsa_sym( char *status )
     char pathname[PAPI_MAX_STR_LEN] = { 0 };
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        *status = "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
+        const char *message =
+            "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
+        int count = snprintf(status, strlen(message) + 1, message);
+        if (count >= PAPI_MAX_STR_LEN) {
+            HANDLE_STRING_ERROR;
+        }
         return -1;
     }
 
