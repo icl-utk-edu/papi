@@ -301,7 +301,7 @@ get_topology_info( const char *key, int *val )
     if (!strcmp("sockets", key)) {
         *val = sockets;
     } else if (!strcmp("nodes", key)) {
-        *val = nodes;
+        *val = (nodes == 0) ? nodes = 1 : nodes;
     } else if (!strcmp("cores", key)) {
         *val = cores;
     } else if (!strcmp("threads", key)) {
