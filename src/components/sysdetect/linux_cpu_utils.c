@@ -16,7 +16,6 @@
 #define VENDOR_AMD           2
 #define VENDOR_IBM           3
 #define VENDOR_CRAY          4
-#define VENDOR_ARM           7
 #define VENDOR_MIPS          8
 #define VENDOR_INTEL_IA64    9
 #define VENDOR_ARM_ARM       65
@@ -71,7 +70,7 @@ linux_cpu_get_vendor( char *vendor )
         namekey_ptr = namekey_ibm;
     } else if (vendor_id == VENDOR_MIPS) {
         namekey_ptr = namekey_mips;
-    } else if (vendor_id == VENDOR_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM) {
         namekey_ptr = namekey_arm;
     } else {
         namekey_ptr = namekey_dum;
@@ -96,8 +95,7 @@ linux_cpu_get_name( char *name )
         namekey_ptr = namekey_x86;
     } else if (vendor_id == VENDOR_IBM) {
         namekey_ptr = namekey_ibm;
-    } else if (vendor_id == VENDOR_ARM           ||
-               vendor_id == VENDOR_ARM_ARM       ||
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
                vendor_id == VENDOR_ARM_BROADCOM  ||
                vendor_id == VENDOR_ARM_CAVIUM    ||
                vendor_id == VENDOR_ARM_FUJITSU   ||
@@ -166,7 +164,7 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
         verkey_ptr = verkey_x86;
     } else if (vendor_id == VENDOR_IBM) {
         verkey_ptr = verkey_ibm;
-    } else if (vendor_id == VENDOR_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM) {
         verkey_ptr = verkey_arm;
     } else {
         verkey_ptr = verkey_dum;
@@ -857,7 +855,7 @@ decode_vendor_string( char *s, int *vendor )
         *vendor = VENDOR_IBM;
     else if (strcasecmp(s, "Cray") == 0)
         *vendor = VENDOR_CRAY;
-    else if (strcasecmp(s, "ARM") == 0)
+    else if (strcasecmp(s, "ARM_ARM") == 0)
         *vendor = VENDOR_ARM_ARM;
     else if (strcasecmp(s, "ARM_BROADCOM") == 0)
         *vendor = VENDOR_ARM_BROADCOM;
@@ -922,7 +920,7 @@ get_vendor_id( void )
                         sscanf(s, "%x", &tmp);
                         switch(tmp) {
                             case VENDOR_ARM_ARM:
-                                strcpy(vendor_string, "ARM");
+                                strcpy(vendor_string, "ARM_ARM");
                                 break;
                             case VENDOR_ARM_BROADCOM:
                                 strcpy(vendor_string, "ARM_BROADCOM");
