@@ -379,7 +379,7 @@ get_versioning_info( const char *key, int *val )
                 }
             }
         } else {
-            *val = atoi(str);
+            sscanf(str, "%x", val);
         }
     }
 
