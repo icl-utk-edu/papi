@@ -40,6 +40,8 @@ typedef struct command_flags
 	char *name;
 } command_flags_t;
 
+static void force_lazy_init(int cid);
+
 static void
 print_help( char **argv )
 {
@@ -112,6 +114,7 @@ main( int argc, char **argv )
 
 	printf("Compiled-in components:\n");
 	for ( cid = 0; cid < numcmp; cid++ ) {
+      force_lazy_init(cid);
 	  cmpinfo = PAPI_get_component_info( cid );
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
@@ -183,4 +186,10 @@ main( int argc, char **argv )
 	  ( "\n--------------------------------------------------------------------------------\n" );
 
 	return 0;
+}
+
+void force_lazy_init(int cid)
+{
+    int nvt_code = 0 | PAPI_NATIVE_MASK;
+    PAPI_enum_cmp_event(&nvt_code, PAPI_ENUM_FIRST, cid);
 }

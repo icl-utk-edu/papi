@@ -1350,7 +1350,6 @@ const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
 {
    APIDBG( "Entry: Component Index %d\n", cidx);
-   _papi_hwd[cidx]->init_private();
    if ( _papi_hwi_invalid_cmp( cidx ) )
       return ( NULL );
    else
@@ -1921,7 +1920,8 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 		return PAPI_ENOCMP;
 	}
 
-	if (_papi_hwd[cidx]->cmp_info.disabled) {
+	if (_papi_hwd[cidx]->cmp_info.disabled &&
+        _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT) {
 	  return PAPI_ENOCMP;
 	}
 

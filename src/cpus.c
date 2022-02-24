@@ -287,7 +287,9 @@ _papi_hwi_initialize_cpu( CpuInfo_t **dest, unsigned int cpu_num )
 
    /* Call the component to fill in anything special. */
    for ( i = 0; i < papi_num_components; i++ ) {
-      if (_papi_hwd[i]->cmp_info.disabled) continue;
+      if (_papi_hwd[i]->cmp_info.disabled &&
+          _papi_hwd[i]->cmp_info.disabled != PAPI_EDELAY_INIT)
+          continue;
       retval = _papi_hwd[i]->init_thread( cpu->context[i] );
       if ( retval ) {
 	 free_cpu( &cpu );
