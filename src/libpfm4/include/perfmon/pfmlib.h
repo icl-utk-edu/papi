@@ -569,6 +569,8 @@ typedef enum {
 
 	PFM_PMU_INTEL_ICX,		/* Intel IceLakeX */
 
+	PFM_PMU_ARM_N2,			/* ARM Neoverse N2 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

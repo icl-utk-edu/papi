@@ -75,6 +75,7 @@ The library supports many PMUs. The current version can handle:
 		Qualcomm Krait
 		Fujitsu A64FX
 		ARM Neoverse N1
+		ARM Neoverse N2
 
 	- For SPARC
 		Ultra I, II

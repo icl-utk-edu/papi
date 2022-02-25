@@ -34,6 +34,7 @@ int
 pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 {
 	pfmlib_pmu_t *pmu = this;
+	pfm_arm_reg_t reg;
 	struct perf_event_attr *attr = e->os_data;
 	int ret;
 
@@ -53,8 +54,18 @@ pfm_arm_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 	}
 
 	attr->type = PERF_TYPE_RAW;
-	attr->config = e->codes[0];
+	reg.val = e->codes[0];
+	/*
+	 * suppress the bits which are under the control of perf_events.
+	 * Recent version of the Linux perf tools may warn if bits which
+	 * should not be set by users are set. To avoid the warning,
+	 * clear the bits, they are overwritten by the kernel anyway.
+	 */
+	reg.evtsel.excl_pl1 = 0;
+	reg.evtsel.excl_usr = 0;
+	reg.evtsel.excl_hyp = 0;
 
+	attr->config = reg.val;
 	return PFM_SUCCESS;
 }
 
