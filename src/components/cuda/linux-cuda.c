@@ -672,7 +672,11 @@ static int _cuda_count_dev_proc(void)
     }
 
     int count = 0;
-    while (readdir(dir) != NULL) {
+    struct dirent *dentry;
+    while ((dentry = readdir(dir)) != NULL) {
+        if (dentry->d_name[0] == '.') {
+            continue;
+        }
         ++count;
     }
 
