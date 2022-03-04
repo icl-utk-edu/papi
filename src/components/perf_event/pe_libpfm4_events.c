@@ -1248,8 +1248,10 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 						    &pinfo,sizeof(pfm_pmu_info_t));
                         found_default++;
 				}
+
+				/* For ARM processors, */
 				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-					( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM)) {
+					( _papi_hwi_system_info.hw_info.vendor >= PAPI_VENDOR_ARM_ARM)) {
 					if (strlen(_papi_hwi_system_info.hw_info.model_string) == 0) {
 						strSize = sizeof(_papi_hwi_system_info.hw_info.model_string);
 						strncpy( _papi_hwi_system_info.hw_info.model_string, pinfo.desc, strSize - 1);
