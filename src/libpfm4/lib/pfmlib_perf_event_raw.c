@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
 
 #include "pfmlib_priv.h"
 #include "pfmlib_perf_event_priv.h"
@@ -137,14 +139,15 @@ static int
 pfm_perf_raw_match_event(void *this, pfmlib_event_desc_t *d, const char *e, const char *s)
 {
 	uint64_t code;
-	int ret;
+	char *endptr = NULL;
 
 	if (*s != 'r'  || !isxdigit(*(s+1)))
 		return 1;
 
-	ret = sscanf(s+1, "%"PRIx64, &code);
-	if (ret != 1)
+	code = strtoull(s+1, &endptr, 16);
+	if (code == ULLONG_MAX || errno == ERANGE|| (endptr && *endptr))
 		return 1;
+
 	/*
 	 * stash code in final position
 	 */
