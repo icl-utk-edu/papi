@@ -37,7 +37,7 @@ fill_cpu_info( PAPI_cpu_info_t *info )
     CPU_CALL(cpu_get_attribute(CPU_ATTR__CPUID_STEPPING, &info->cpuid_stepping),
              info->cpuid_stepping = -1);
     CPU_CALL(cpu_get_attribute( CPU_ATTR__NUM_SOCKETS, &info->sockets ),
-             info->numas = -1);
+             info->sockets = -1);
     CPU_CALL(cpu_get_attribute( CPU_ATTR__NUM_NODES, &info->numas ),
              info->numas = -1);
     CPU_CALL(cpu_get_attribute(CPU_ATTR__NUM_CORES, &info->cores),

@@ -191,51 +191,59 @@ main( int argc, char **argv )
                                                                  cpu_info[j].numas );
                 printf( "SMT threads per core                  : %d\n", cpu_info[j].threads );
 
-                if (cpu_info[j].clevel[0].cache[0].type == PAPI_MH_TYPE_INST) {
-                    printf( "L1i Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                            cpu_info[j].clevel[0].cache[0].size >> 10,
-                            cpu_info[j].clevel[0].cache[0].line_size,
-                            cpu_info[j].clevel[0].cache[0].num_lines,
-                            cpu_info[j].clevel[0].cache[0].associativity );
-                } else {
-                    printf( "L1d Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                            cpu_info[j].clevel[0].cache[0].size >> 10,
-                            cpu_info[j].clevel[0].cache[0].line_size,
-                            cpu_info[j].clevel[0].cache[0].num_lines,
-                            cpu_info[j].clevel[0].cache[0].associativity );
+                if (cpu_info[j].clevel[0].cache[0].size > 0) {
+                    if (cpu_info[j].clevel[0].cache[0].type == PAPI_MH_TYPE_INST) {
+                        printf( "L1i Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                                cpu_info[j].clevel[0].cache[0].size >> 10,
+                                cpu_info[j].clevel[0].cache[0].line_size,
+                                cpu_info[j].clevel[0].cache[0].num_lines,
+                                cpu_info[j].clevel[0].cache[0].associativity );
+                    } else {
+                        printf( "L1d Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                                cpu_info[j].clevel[0].cache[0].size >> 10,
+                                cpu_info[j].clevel[0].cache[0].line_size,
+                                cpu_info[j].clevel[0].cache[0].num_lines,
+                                cpu_info[j].clevel[0].cache[0].associativity );
+                    }
+
+                    if (cpu_info[j].clevel[0].cache[1].type == PAPI_MH_TYPE_DATA) {
+                        printf( "L1d Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                                cpu_info[j].clevel[0].cache[1].size >> 10,
+                                cpu_info[j].clevel[0].cache[1].line_size,
+                                cpu_info[j].clevel[0].cache[1].num_lines,
+                                cpu_info[j].clevel[0].cache[1].associativity );
+                    } else {
+                        printf( "L1i Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                                cpu_info[j].clevel[0].cache[1].size >> 10,
+                                cpu_info[j].clevel[0].cache[1].line_size,
+                                cpu_info[j].clevel[0].cache[1].num_lines,
+                                cpu_info[j].clevel[0].cache[1].associativity );
+                    }
                 }
 
-                if (cpu_info[j].clevel[0].cache[1].type == PAPI_MH_TYPE_DATA) {
-                    printf( "L1d Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                            cpu_info[j].clevel[0].cache[1].size >> 10,
-                            cpu_info[j].clevel[0].cache[1].line_size,
-                            cpu_info[j].clevel[0].cache[1].num_lines,
-                            cpu_info[j].clevel[0].cache[1].associativity );
-                } else {
-                    printf( "L1i Cache                             : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                            cpu_info[j].clevel[0].cache[1].size >> 10,
-                            cpu_info[j].clevel[0].cache[1].line_size,
-                            cpu_info[j].clevel[0].cache[1].num_lines,
-                            cpu_info[j].clevel[0].cache[1].associativity );
+                if (cpu_info[j].clevel[1].cache[0].size > 0) {
+                    printf( "L2 Cache                              : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                            cpu_info[j].clevel[1].cache[0].size >> 10,
+                            cpu_info[j].clevel[1].cache[0].line_size,
+                            cpu_info[j].clevel[1].cache[0].num_lines,
+                            cpu_info[j].clevel[1].cache[0].associativity );
                 }
 
-                printf( "L2 Cache                              : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                        cpu_info[j].clevel[1].cache[0].size >> 10,
-                        cpu_info[j].clevel[1].cache[0].line_size,
-                        cpu_info[j].clevel[1].cache[0].num_lines,
-                        cpu_info[j].clevel[1].cache[0].associativity );
-
-                printf( "L3 Cache                              : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
-                        cpu_info[j].clevel[2].cache[0].size >> 10,
-                        cpu_info[j].clevel[2].cache[0].line_size,
-                        cpu_info[j].clevel[2].cache[0].num_lines,
-                        cpu_info[j].clevel[2].cache[0].associativity );
+                if (cpu_info[j].clevel[2].cache[0].size > 0) {
+                    printf( "L3 Cache                              : Size/LineSize/Lines/Assoc %dKB/%dB/%d/%d\n",
+                            cpu_info[j].clevel[2].cache[0].size >> 10,
+                            cpu_info[j].clevel[2].cache[0].line_size,
+                            cpu_info[j].clevel[2].cache[0].num_lines,
+                            cpu_info[j].clevel[2].cache[0].associativity );
+                }
 
                 int k;
                 for (k = 0; k < cpu_info[j].numas; ++k) {
-                    printf( "Numa Node %d Memory                    : %d KB\n",
-                            k,
-                            cpu_info[j].numa_memory[k] );
+                    if (cpu_info[j].numa_memory[k] > 0) {
+                        printf( "Numa Node %d Memory                    : %d KB\n",
+                                k,
+                                cpu_info[j].numa_memory[k] );
+                    }
                 }
 
                 int threads = cpu_info[j].threads * cpu_info[j].cores * cpu_info[j].sockets;

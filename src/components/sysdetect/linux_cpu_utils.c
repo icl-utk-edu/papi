@@ -301,7 +301,7 @@ get_topology_info( const char *key, int *val )
     if (!strcmp("sockets", key)) {
         *val = sockets;
     } else if (!strcmp("nodes", key)) {
-        *val = nodes;
+        *val = (nodes == 0) ? nodes = 1 : nodes;
     } else if (!strcmp("cores", key)) {
         *val = cores;
     } else if (!strcmp("threads", key)) {
@@ -379,7 +379,7 @@ get_versioning_info( const char *key, int *val )
                 }
             }
         } else {
-            *val = atoi(str);
+            sscanf(str, "%x", val);
         }
     }
 
@@ -721,6 +721,11 @@ get_mem_info( int node, int *val )
 int
 get_thread_affinity( int thread, int *val )
 {
+    if (!path_exist(_PATH_SYS_SYSTEM "/cpu/cpu0/node0")) {
+        *val = 0;
+        return CPU_SUCCESS;
+    }
+
     int i = 0;
     while (!path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d/node%d", thread, i)) {
         ++i;
