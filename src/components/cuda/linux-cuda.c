@@ -28,6 +28,8 @@
 #include <dlfcn.h>
 #include <limits.h>
 #include <float.h> // For DBL_MAX. 
+#include <sys/stat.h>
+#include <dirent.h>
 
 // NOTE: We can't use extended directories; these include files have includes.
 #include <cupti.h>
@@ -599,7 +601,7 @@ DECLARENVPWFUNC(NVPW_MetricsContext_GetCounterNames_End, (NVPW_MetricsContext_Ge
 // higher level tool vendors that use PAPI underneath. Without cuInit(); I 
 // know of no other way to check for Nvidia GPUs present in the system.
 //-----------------------------------------------------------------------------
-static int _cuda_count_nvidia_devices(void)
+static int _cuda_count_dev_sys(void)
 {
     char vendor_id[64]="/sys/class/drm/card%i/device/vendor";
     char class_id[64]="/sys/class/drm/card%i/device/class";
@@ -652,7 +654,36 @@ static int _cuda_count_nvidia_devices(void)
     } // end loop through possible cards.
 
     return(totalDevices);
-} // end __cuda_count_nvidia_devices
+} // end __cuda_count_dev_sys
+
+static int _cuda_count_dev_proc(void)
+{
+    const char *proc_dir = "/proc/driver/nvidia/gpus";
+
+    struct stat proc_stat;
+    int err = stat(proc_dir, &proc_stat);
+    if (err) {
+        return 0;
+    }
+
+    DIR *dir = opendir(proc_dir);
+    if (dir == NULL) {
+        return 0;
+    }
+
+    int count = 0;
+    struct dirent *dentry;
+    while ((dentry = readdir(dir)) != NULL) {
+        if (dentry->d_name[0] == '.') {
+            continue;
+        }
+        ++count;
+    }
+
+    closedir(dir);
+
+    return count;
+}
 
 
 #if CUPTI_PROFILER == 1
@@ -997,14 +1028,16 @@ _cuda_callback(void *userdata, CUpti_CallbackDomain domain,
 #endif // CUPTI_PROFILER == 1
 
 
+static int _cuda_init_private(void);
+
 /*
  * Check for the initialization step and does it if needed
  */
 static int
 _cuda_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private) {
-      return vector->init_private();
+  if (!vector->cmp_info.initialized) {
+      return _cuda_init_private();
   }
   return PAPI_OK;
 }
@@ -2593,16 +2626,19 @@ static int _cuda_init_component(int cidx)
     #endif
 
     // Count if we have any devices with vendor ID for Nvidia.
-    int devices = _cuda_count_nvidia_devices();
+    int devices = _cuda_count_dev_sys();
     if (0) fprintf(stderr, "%s:%i Found %d Nvidia devices.\n", __func__, __LINE__, devices);
     if (devices < 1) {
-        _cuda_vector.cmp_info.initialized = 1;
-        _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-                "No Nvidia Devices Found.");
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        (void) strErr;
-        return(PAPI_ENOSUPP);
+        devices = _cuda_count_dev_proc();
+        if (devices < 1) {
+            _cuda_vector.cmp_info.initialized = 1;
+            _cuda_vector.cmp_info.disabled = PAPI_ENOSUPP;
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+                    "No Nvidia Devices Found.");
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
+            (void) strErr;
+            return(PAPI_ENOSUPP);
+        }
     }
 
     int err;
@@ -2675,16 +2711,19 @@ static int _cuda_init_component(int cidx)
     if (0) fprintf(stderr, "%s:%s:%i callback subscriptions completed.\n", __FILE__, __func__, __LINE__);
     #endif 
 
+    sprintf(_cuda_vector.cmp_info.disabled_reason,
+            "Not initialized. Access component events to initialize it.");
+
     PAPI_unlock(COMPONENT_LOCK);
 
-    return PAPI_OK;
+    return PAPI_EDELAY_INIT;
 } // END _cuda_init_component.
 
 // This is the "delayed initialization", called when the application user of
 // PAPI calls any API function. This prevents long initialization times and
 // memory usage for systems where PAPI is configured with the cuda component
 // but not all applications use the cuda component.
-static int _cuda_init_private(void)
+int _cuda_init_private(void)
 {
     int rv, err = PAPI_OK;
     // The entire init, for cupti11, timed at 913 ms.
@@ -3500,9 +3539,15 @@ static int _cuda_shutdown_component(void)
     }
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
-    dlclose(dl1);
-    dlclose(dl2);
-    dlclose(dl3);
+    if (dl1) {
+        dlclose(dl1);
+    }
+    if (dl2) {
+        dlclose(dl2);
+    }
+    if (dl3) {
+        dlclose(dl3);
+    }
 
     return (PAPI_OK);
 } // end cuda_shutdown_component().
@@ -3735,7 +3780,6 @@ papi_vector_t _cuda_vector = {
     .cleanup_eventset = _cuda_cleanup_eventset,      /* ( hwd_control_state_t * ctrl ) */
 
     .init_component = _cuda_init_component,  /* ( int cidx ) */
-    .init_private = _cuda_init_private,      /* (void) */
     .init_thread = _cuda_init_thread,        /* ( hwd_context_t * ctx ) */
     .init_control_state = _cuda_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _cuda_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
@@ -5886,10 +5930,18 @@ static int _cuda11_shutdown_component(void)
     _papi_hwi_unlock( COMPONENT_LOCK );
 
     // close the dynamic libraries needed by this component (opened in the init substrate call)
-    dlclose(dl1);
-    dlclose(dl2);
-    dlclose(dl3);
-    dlclose(dl4);
+    if (dl1) {
+        dlclose(dl1);
+    }
+    if (dl2) {
+        dlclose(dl2);
+    }
+    if (dl3) {
+        dlclose(dl3);
+    }
+    if (dl4) {
+        dlclose(dl4);
+    }
 
     return(PAPI_OK);
 } // end _cuda11_shutdown_component.

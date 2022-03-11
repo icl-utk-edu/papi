@@ -1350,8 +1350,6 @@ const PAPI_component_info_t *
 PAPI_get_component_info( int cidx )
 {
    APIDBG( "Entry: Component Index %d\n", cidx);
-   if (_papi_hwd[cidx]->init_private)
-      _papi_hwd[cidx]->init_private();
    if ( _papi_hwi_invalid_cmp( cidx ) )
       return ( NULL );
    else
@@ -1922,7 +1920,8 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
 		return PAPI_ENOCMP;
 	}
 
-	if (_papi_hwd[cidx]->cmp_info.disabled) {
+	if (_papi_hwd[cidx]->cmp_info.disabled &&
+        _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT) {
 	  return PAPI_ENOCMP;
 	}
 
@@ -6956,7 +6955,7 @@ PAPI_get_virt_usec( void )
 int
 PAPI_lock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_lock( lck ) );
@@ -6976,7 +6975,7 @@ PAPI_lock( int lck )
 int
 PAPI_unlock( int lck )
 {
-	if ( ( lck < 0 ) || ( lck >= PAPI_NUM_LOCK ) )
+	if ( ( lck < 0 ) || ( lck >= PAPI_MAX_LOCK ) )
 		papi_return( PAPI_EINVAL );
 
 	papi_return( _papi_hwi_unlock( lck ) );

@@ -112,8 +112,20 @@ decode_vendor_string( char *s, int *vendor )
 		*vendor = PAPI_VENDOR_IBM;
 	else if ( strcasecmp( s, "Cray" ) == 0 )
 		*vendor = PAPI_VENDOR_CRAY;
-	else if ( strcasecmp( s, "ARM" ) == 0 )
-		*vendor = PAPI_VENDOR_ARM;
+	else if ( strcasecmp( s, "ARM_ARM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_ARM;
+	else if ( strcasecmp( s, "ARM_BROADCOM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_BROADCOM;
+	else if ( strcasecmp( s, "ARM_CAVIUM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_CAVIUM;
+	else if ( strcasecmp( s, "ARM_FUJITSU" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_FUJITSU;
+	else if ( strcasecmp( s, "ARM_HISILICON") == 0 )
+		*vendor = PAPI_VENDOR_ARM_HISILICON;
+	else if ( strcasecmp( s, "ARM_APM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_APM;
+	else if ( strcasecmp( s, "ARM_QUALCOMM" ) == 0 )
+		*vendor = PAPI_VENDOR_ARM_QUALCOMM;
 	else if ( strcasecmp( s, "MIPS" ) == 0 )
 		*vendor = PAPI_VENDOR_MIPS;
 	else if ( strcasecmp( s, "SiCortex" ) == 0 )
@@ -409,9 +421,38 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 				}
 				else {
 					/* "CPU implementer" indicates ARM */
+					/* For ARM processors, hwinfo->vendor >= PAPI_VENDOR_ARM_ARM(0x41). */
+					/* If implementer is ARM Limited., hwinfo->vendor == PAPI_VENDOR_ARM_ARM. */
+					/* If implementer is Cavium Inc., hwinfo->vendor == PAPI_VENDOR_ARM_CAVIUM(0x43). */
 					s = search_cpu_info( f, "CPU implementer");
 					if ( s ) {
-						strcpy( hwinfo->vendor_string, "ARM" );
+						int tmp;
+						sscanf( s, "%x", &tmp );
+						switch( tmp ) {
+						case PAPI_VENDOR_ARM_ARM:
+							strcpy( hwinfo->vendor_string, "ARM_ARM" );
+							break;
+						case PAPI_VENDOR_ARM_BROADCOM:
+							strcpy( hwinfo->vendor_string, "ARM_BROADCOM" );
+							break;
+						case PAPI_VENDOR_ARM_CAVIUM:
+							strcpy( hwinfo->vendor_string, "ARM_CAVIUM" );
+							break;
+						case PAPI_VENDOR_ARM_FUJITSU:
+							strcpy( hwinfo->vendor_string, "ARM_FUJITSU" );
+							break;
+						case PAPI_VENDOR_ARM_HISILICON:
+							strcpy( hwinfo->vendor_string, "ARM_HISILICON" );
+							break;
+						case PAPI_VENDOR_ARM_APM:
+							strcpy( hwinfo->vendor_string, "ARM_APM" );
+							break;
+						case PAPI_VENDOR_ARM_QUALCOMM:
+							strcpy( hwinfo->vendor_string, "ARM_QUALCOMM" );
+							break;
+						default:
+							strcpy( hwinfo->vendor_string, "ARM_UNKNOWN" );
+						}
 					}
 				}
 			}
@@ -438,7 +479,7 @@ _linux_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 		decode_cpuinfo_power(f,hwinfo);
 	}
 
-	if (hwinfo->vendor==PAPI_VENDOR_ARM) {
+	if (hwinfo->vendor>=PAPI_VENDOR_ARM_ARM) {
 
 		decode_cpuinfo_arm(f,hwinfo);
 	}

@@ -87,14 +87,14 @@ class Sum_Counter(object):
 
   def add_event(self, value):
     if isinstance(value, dict):
-      if self.min > long(value['min']) or self.min is None:
-        self.min = long(value['min'])
-      self.all_values.append(long(value['avg']))
-      if self.max < long(value['max']):
-        self.max = long(value['max'])
+      if self.min is None or self.min > int(value['min']):
+        self.min = int(value['min'])
+      self.all_values.append(int(value['avg']))
+      if self.max < int(value['max']):
+        self.max = int(value['max'])
     else:
-      val = long(value)
-      if self.min > val or self.min is None:
+      val = int(value)
+      if self.min is None or self.min > val:
         self.min = val
       self.all_values.append(val)
       if self.max < val:

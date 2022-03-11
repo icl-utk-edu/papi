@@ -356,6 +356,7 @@ pfmlib_pmu_t s390x_cpum_cf_support = {
 	.pmu	   = PFM_PMU_S390X_CPUM_CF,
 	.type	   = PFM_PMU_TYPE_CORE,
 	.flags	   = PFMLIB_PMU_FL_ARCH_DFL,
+	.supported_plm = PFM_PLM3,
 
 	.num_cntrs	 = 0,	  /* no general-purpose counters */
 	.num_fixed_cntrs = CPUMF_COUNTER_MAX,	/* fixed counters only */

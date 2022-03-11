@@ -137,7 +137,8 @@ pe_vendor_fixups(papi_vector_t *vector)
   }
 
 	/* ARM */
-	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM) {
+	/* If implementer is ARM Limited. */
+	if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_ARM_ARM) {
 
 		/* Some ARMv7 and earlier could not measure	*/
 		/* KERNEL and USER separately.			*/

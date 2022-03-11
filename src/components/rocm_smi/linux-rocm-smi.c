@@ -349,14 +349,16 @@ static rsmi_pcie_bandwidth_t *PCITable = NULL;          // For rsmi_dev_pci_band
 //*******  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
 //****************************************************************************
 
+static int _rocm_smi_init_private(void);
+
 /*
  * Check for the initialization step and does it if needed
  */
 static int
 _rocm_smi_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private)
-      return vector->init_private();
+  if (!vector->cmp_info.initialized)
+      return _rocm_smi_init_private();
   return PAPI_OK;
 }
 
@@ -3515,7 +3517,10 @@ static int _rocm_smi_init_component(int cidx)
     _rocm_smi_vector.cmp_info.num_cntrs = -1;
     _rocm_smi_vector.cmp_info.num_mpx_cntrs = -1;
 
-    return PAPI_OK;
+    sprintf(_rocm_smi_vector.cmp_info.disabled_reason,
+            "Not initialized. Access component events to initialize it.");
+
+    return PAPI_EDELAY_INIT;
 }
 
 static int _rocm_smi_init_private(void)
@@ -3526,7 +3531,10 @@ static int _rocm_smi_init_private(void)
     scanEvent_info_t* scan=NULL;                        // a scan event pointer.
 
     PAPI_lock(COMPONENT_LOCK);
-    if (_rocm_smi_vector.cmp_info.initialized) goto rocm_smi_init_private_exit;
+    if (_rocm_smi_vector.cmp_info.initialized) {
+        err = _rocm_smi_vector.cmp_info.disabled;
+        goto rocm_smi_init_private_exit;
+    }
 
     SUBDBG("Entering _rocm_smi_init_component\n");
 
@@ -4036,7 +4044,6 @@ papi_vector_t _rocm_smi_vector = {
 
     .init_component = _rocm_smi_init_component,     // ( int cidx )
     .init_thread = _rocm_smi_init_thread,           // ( hwd_context_t * ctx )
-    .init_private = _rocm_smi_init_private,         // (void)
     .init_control_state = _rocm_smi_init_control_state,     // ( hwd_control_state_t * ctrl )
     .update_control_state = _rocm_smi_update_control_state, // ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx )
 

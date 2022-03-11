@@ -10,9 +10,9 @@ int instructions_million(void) {
 #if defined(__i386__) || (defined __x86_64__)
 	asm(	"	xor	%%ecx,%%ecx\n"
 		"	mov	$499999,%%ecx\n"
-		"test_loop:\n"
+		"55:\n"
 		"	dec	%%ecx\n"
-		"	jnz	test_loop\n"
+		"	jnz	55b\n"
 		: /* no output registers */
 		: /* no inputs */
 		: "cc", "%ecx" /* clobbered */
@@ -47,9 +47,9 @@ int instructions_million(void) {
 #elif defined(__sparc__)
 	asm(	"	sethi	%%hi(333333), %%l0\n"
 		"	or	%%l0,%%lo(333333),%%l0\n"
-		"test_loop:\n"
+		"55:\n"
 		"	deccc	%%l0		! decrement count\n"
-		"	bnz	test_loop	! repeat until zero\n"
+		"	bnz	55b		! repeat until zero\n"
 		"	nop			! branch delay slot\n"
 		: /* no output registers */
 		: /* no inputs */
@@ -57,13 +57,13 @@ int instructions_million(void) {
 	);
 	return 0;
 #elif defined(__arm__)
-	asm(	"	ldr	r2,count	@ set count\n"
-		"	b       test_loop\n"
-		"count:	.word 333332\n"
-		"test_loop:\n"
+	asm(	"	ldr	r2,42f		@ set count\n"
+		"	b       55f\n"
+		"42:	.word 333332\n"
+		"55:\n"
 		"	add	r2,r2,#-1\n"
 		"	cmp	r2,#0\n"
-		"	bne	test_loop	@ repeat till zero\n"
+		"	bne	55b		@ repeat till zero\n"
 		: /* no output registers */
 		: /* no inputs */
 		: "cc", "r2" /* clobbered */
@@ -71,10 +71,10 @@ int instructions_million(void) {
 	return 0;
 #elif defined(__aarch64__)
 	asm(	"	ldr	x2,=333332	// set count\n"
-		"test_loop:\n"
+		"55:\n"
 		"	add	x2,x2,#-1\n"
 		"	cmp	x2,#0\n"
-		"	bne	test_loop	// repeat till zero\n"
+		"	bne	55b		// repeat till zero\n"
 		: /* no output registers */
 		: /* no inputs */
 		: "cc", "r2" /* clobbered */
@@ -97,7 +97,7 @@ int instructions_fldcw(void) {
 	double three=3.0;
 
 	asm(	"	mov	$100000,%%ecx\n"
-		"big_loop:\n"
+		"44:\n"
 		"	fldl	%1		# load value onto fp stack\n"
 		"	fnstcw	%0		# store control word to mem\n"
 		"	movzwl	%0, %%eax	# load cw from mem, zero extending\n"
@@ -106,7 +106,7 @@ int instructions_fldcw(void) {
 		"	fldcw	%3		# save new rounding mode\n"
 		"	fistpl	%2		# save stack value as integer to mem\n"
 		"	fldcw	%0		# restore old cw\n"
-		"	loop	big_loop	# loop to make the count more obvious\n"
+		"	loop	44b		# loop to make the count more obvious\n"
 		: /* no output registers */
 		: "m"(saved_cw), "m"(three), "m"(result), "m"(cw) /* inputs */
 		: "cc", "%ecx","%eax" /* clobbered */
@@ -129,13 +129,13 @@ int instructions_rep(void) {
 
 	asm(	"	mov	$1000,%%edx\n"
 		"	cld\n"
-		"loadstore:			# test 8-bit store\n"
+		"66:				# test 8-bit store\n"
 		"	mov	$0xd, %%al	# set eax to d\n"
 		"	mov	$16384, %%ecx\n"
 		"	mov	%0, %%edi	# set destination\n"
 		"	rep	stosb		# store d 16384 times, auto-increment\n"
 		"	dec	%%edx\n"
-		"	jnz	loadstore\n"
+		"	jnz	66b\n"
 		: /* outputs */
 		: "rm" (buffer_out) /* inputs */
 		: "cc", "%esi","%edi","%edx","%ecx","%eax","memory" /* clobbered */
@@ -147,13 +147,13 @@ int instructions_rep(void) {
 
 	asm(	"	mov	$1000,%%edx\n"
 		"	cld\n"
-		"loadstore:			# test 8-bit store\n"
+		"66:				# test 8-bit store\n"
 		"	mov	$0xd, %%al	# set eax to d\n"
 		"	mov	$16384, %%ecx\n"
 		"	mov	%0, %%rdi	# set destination\n"
 		"	rep	stosb		# store d 16384 times, auto-increment\n"
 		"	dec	%%edx\n"
-		"	jnz	loadstore\n"
+		"	jnz	66b\n"
 		: /* outputs */
 		: "rm" (buffer_out) /* inputs */
 		: "cc", "%esi","%edi","%edx","%ecx","%eax","memory" /* clobbered */

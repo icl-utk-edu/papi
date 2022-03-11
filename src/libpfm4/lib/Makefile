@@ -181,7 +181,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
 endif
 
@@ -192,7 +192,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM64)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM64
 endif
 
@@ -368,15 +368,22 @@ INC_ARM=pfmlib_arm_priv.h			\
         events/arm_xgene_events.h		\
 	events/arm_cavium_tx2_events.h		\
 	events/arm_marvell_tx2_unc_events.h	\
-	events/arm_neoverse_n1_events.h
+	events/arm_neoverse_n1_events.h		\
+	events/arm_neoverse_n2_events.h		\
+	events/arm_hisilicon_kunpeng_events.h \
+	events/arm_hisilicon_kunpeng_unc_events.h
 
-INC_ARM64=events/arm_cortex_a57_events.h	\
+INC_ARM64=pfmlib_arm_priv.h			\
+	events/arm_cortex_a57_events.h		\
 	events/arm_cortex_a53_events.h		\
         events/arm_xgene_events.h		\
 	events/arm_cavium_tx2_events.h		\
 	events/arm_marvell_tx2_unc_events.h	\
 	events/arm_fujitsu_a64fx_events.h	\
-	events/arm_neoverse_n1_events.h
+	events/arm_neoverse_n1_events.h		\
+	events/arm_neoverse_n2_events.h		\
+	events/arm_hisilicon_kunpeng_events.h \
+	events/arm_hisilicon_kunpeng_unc_events.h
 
 INCDEP=$(INC_COMMON) $(INCARCH)
 
