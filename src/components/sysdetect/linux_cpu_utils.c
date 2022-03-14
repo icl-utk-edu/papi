@@ -70,7 +70,13 @@ linux_cpu_get_vendor( char *vendor )
         namekey_ptr = namekey_ibm;
     } else if (vendor_id == VENDOR_MIPS) {
         namekey_ptr = namekey_mips;
-    } else if (vendor_id == VENDOR_ARM_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
+               vendor_id == VENDOR_ARM_BROADCOM  ||
+               vendor_id == VENDOR_ARM_CAVIUM    ||
+               vendor_id == VENDOR_ARM_FUJITSU   ||
+               vendor_id == VENDOR_ARM_HISILICON ||
+               vendor_id == VENDOR_ARM_APM       ||
+               vendor_id == VENDOR_ARM_QUALCOMM) {
         namekey_ptr = namekey_arm;
     } else {
         namekey_ptr = namekey_dum;
@@ -164,7 +170,13 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
         verkey_ptr = verkey_x86;
     } else if (vendor_id == VENDOR_IBM) {
         verkey_ptr = verkey_ibm;
-    } else if (vendor_id == VENDOR_ARM_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
+               vendor_id == VENDOR_ARM_BROADCOM  ||
+               vendor_id == VENDOR_ARM_CAVIUM    ||
+               vendor_id == VENDOR_ARM_FUJITSU   ||
+               vendor_id == VENDOR_ARM_HISILICON ||
+               vendor_id == VENDOR_ARM_APM       ||
+               vendor_id == VENDOR_ARM_QUALCOMM) {
         verkey_ptr = verkey_arm;
     } else {
         verkey_ptr = verkey_dum;
