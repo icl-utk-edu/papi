@@ -19,7 +19,7 @@
 #include "x86_cpu_utils.h"
 #elif defined(__powerpc__)
 #include "powerpc_cpu_utils.h"
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
 #include "arm_cpu_utils.h"
 #endif
 
@@ -32,7 +32,7 @@ cpu_get_vendor( char *vendor )
     return x86_cpu_get_vendor(vendor);
 #elif defined(__powerpc__)
     return powerpc_cpu_get_vendor(vendor);
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_vendor(vendor);
 #endif
     return os_cpu_get_vendor(vendor);
@@ -45,7 +45,7 @@ cpu_get_name( char *name )
     return x86_cpu_get_name(name);
 #elif defined(__powerpc__)
     return powerpc_cpu_get_name(name);
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_name(name);
 #endif
     return os_cpu_get_name(name);
@@ -58,7 +58,7 @@ cpu_get_attribute( CPU_attr_e attr, int *value )
     return x86_cpu_get_attribute(attr, value);
 #elif defined(__powerpc__)
     return powerpc_cpu_get_attribute(attr, value);
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_attribute(attr, value);
 #endif
     return os_cpu_get_attribute(attr, value);
@@ -71,7 +71,7 @@ cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value )
     return x86_cpu_get_attribute_at(attr, loc, value);
 #elif defined(__powerpc__)
     return powerpc_cpu_get_attribute_at(attr, loc, value);
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_attribute_at(attr, loc, value);
 #endif
     return os_cpu_get_attribute_at(attr, loc, value);
