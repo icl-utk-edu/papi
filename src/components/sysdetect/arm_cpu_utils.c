@@ -8,8 +8,8 @@
 #define VENDOR_ARM_CAVIUM    67
 #define VENDOR_ARM_FUJITSU   70
 #define VENDOR_ARM_HISILICON 72
-#define VENDOR_ARM_APM       74
-#define VENDOR_ARM_QUALCOMM  75
+#define VENDOR_ARM_APM       80
+#define VENDOR_ARM_QUALCOMM  81
 
 int
 arm_cpu_init( void )
