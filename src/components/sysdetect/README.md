@@ -80,9 +80,12 @@ information:
 ## Enabling the SYSDETECT Component
 
 To enable reading of SYSDETECT counters the user needs to link against a
-PAPI library that was configured with the SYSDETECT component enabled.  As an
-example the following command: `./configure --with-components="sysdetect"` is
+PAPI library that was configured with the SYSDETECT component enabled.
+As an example the following command:
+`./configure --with-CPU=$CPU --with-components="sysdetect"` is
 sufficient to enable the component.
+$CPU can have the following values:.
+x86, POWER5, POWER5+, POWER6, POWER7, PPC970, arm
 
 Typically, the utility `papi_components_avail` (available in
 `papi/src/utils/papi_components_avail`) will display the components available
