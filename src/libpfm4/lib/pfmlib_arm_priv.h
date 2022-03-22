@@ -36,6 +36,7 @@
 typedef struct {
 	const char			*name;	/* event name */
 	const char			*desc;	/* event description */
+	const char			*equiv;	/* aliased to that event */
 	unsigned int			code; 	/* event code */
 	unsigned int			modmsk; /* modifiers bitmask */
 } arm_entry_t;

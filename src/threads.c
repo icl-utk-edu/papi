@@ -293,7 +293,9 @@ _papi_hwi_initialize_thread( ThreadInfo_t ** dest, int tid )
 	/* Call the component to fill in anything special. */
 
 	for ( i = 0; i < papi_num_components; i++ ) {
-	    if (_papi_hwd[i]->cmp_info.disabled) continue;
+	    if (_papi_hwd[i]->cmp_info.disabled &&
+            _papi_hwd[i]->cmp_info.disabled != PAPI_EDELAY_INIT)
+            continue;
 	    retval = _papi_hwd[i]->init_thread( thread->context[i] );
 	    if ( retval ) {
 	       free_thread( &thread );
@@ -447,7 +449,9 @@ _papi_hwi_shutdown_thread( ThreadInfo_t * thread, int force_shutdown )
 		remove_thread( thread );
 		THRDBG( "Shutting down thread %ld at %p\n", thread->tid, thread );
 		for( i = 0; i < papi_num_components; i++ ) {
-		   if (_papi_hwd[i]->cmp_info.disabled) continue;
+		   if (_papi_hwd[i]->cmp_info.disabled &&
+               _papi_hwd[i]->cmp_info.disabled != PAPI_EDELAY_INIT)
+               continue;
 		   retval = _papi_hwd[i]->shutdown_thread( thread->context[i]);
 		   if ( retval != PAPI_OK ) failure = retval;
 		}

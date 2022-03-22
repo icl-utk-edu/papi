@@ -1000,6 +1000,11 @@ static const intel_x86_umask_t skl_mem_inst_retired[]={
     .ucode  = 0x8200,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
+  { .uname = "ANY",
+    .udesc  = "All retired memory instructions",
+    .ucode  = 0x8300,
+    .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_DFL,
+  },
 };
 
 static const intel_x86_umask_t skl_misalign_mem_ref[]={
@@ -2144,8 +2149,13 @@ static const intel_x86_umask_t skl_exe_activity[]={
 
 static const intel_x86_umask_t skl_frontend_retired[]={
    { .uname  = "DSB_MISS",
-     .udesc  = "Retired instructions experiencing decode stream buffer (DSB) miss",
+     .udesc  = "Retired instructions experiencing a critical decode stream buffer (DSB) miss. A critical DSB miss can cause stalls in the backend",
      .ucode = 0x11 << 8,
+     .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+   },
+   { .uname  = "ANY_DSB_MISS",
+     .udesc  = "Retired Instructions experiencing a decode stream buffer (DSB) miss.",
+     .ucode = 0x1 << 8,
      .uflags= INTEL_X86_NCOMBO | INTEL_X86_PEBS,
    },
    { .uname  = "ITLB_MISS",
@@ -2209,8 +2219,8 @@ static const intel_x86_umask_t skl_offcore_requests_buffer[]={
 static const intel_x86_umask_t skl_mem_load_misc_retired[]={
    { .uname  = "UC",
      .udesc  = "Number of uncached load retired",
-     .ucode = 0x400,
-     .uflags= INTEL_X86_PEBS | INTEL_X86_DFL,
+     .ucode  = 0x400,
+     .uflags = INTEL_X86_PEBS | INTEL_X86_DFL,
    },
 };
 

@@ -214,14 +214,16 @@ static _rocm_control_t *global__rocm_control = NULL;
  ********  BEGIN FUNCTIONS USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
  *****************************************************************************/
 
+static int _rocm_init_private(void);
+
 /*
  * Check for the initialization step and does it if needed
  */
 static int
 _rocm_check_n_initialize(papi_vector_t *vector)
 {
-  if (!vector->cmp_info.initialized && vector->init_private)
-      return vector->init_private();
+  if (!vector->cmp_info.initialized)
+      return _rocm_init_private();
   return PAPI_OK;
 }
 
@@ -728,14 +730,17 @@ static int _rocm_init_component(int cidx)
     _rocm_vector.cmp_info.num_cntrs = -1;
     _rocm_vector.cmp_info.num_mpx_cntrs = -1;
 
-    return PAPI_OK;
+    sprintf(_rocm_vector.cmp_info.disabled_reason,
+            "Not initialized. Access component events to initialize it.");
+
+    return PAPI_EDELAY_INIT;
 }
 
 /* Initialize hardware counters, setup the function vector table
  * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-static int _rocm_init_private(void)
+int _rocm_init_private(void)
 {
     int strErr, err = PAPI_OK;
     PAPI_lock(COMPONENT_LOCK);
@@ -1364,7 +1369,6 @@ papi_vector_t _rocm_vector = {
 
     .init_component = _rocm_init_component,  /* ( int cidx ) */
     .init_thread = _rocm_init_thread,        /* ( hwd_context_t * ctx ) */
-    .init_private = _rocm_init_private,      /* (void) */
     .init_control_state = _rocm_init_control_state,  /* ( hwd_control_state_t * ctrl ) */
     .update_control_state = _rocm_update_control_state,      /* ( hwd_control_state_t * ptr, NativeInfo_t * native, int count, hwd_context_t * ctx ) */
 

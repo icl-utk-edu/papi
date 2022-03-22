@@ -37,6 +37,9 @@
 #include "events/arm_marvell_tx2_unc_events.h" 	/* Marvell ThunderX2 PMU tables */
 #include "events/arm_fujitsu_a64fx_events.h"	/* Fujitsu A64FX PMU tables */
 #include "events/arm_neoverse_n1_events.h"	/* ARM Neoverse N1 table */
+#include "events/arm_neoverse_n2_events.h"	/* ARM Neoverse N2 table */
+#include "events/arm_hisilicon_kunpeng_events.h" /* HiSilicon Kunpeng PMU tables */
+#include "events/arm_hisilicon_kunpeng_unc_events.h" /* Hisilicon Kunpeng PMU uncore tables */
 
 static int
 pfm_arm_detect_n1(void *this)
@@ -49,6 +52,22 @@ pfm_arm_detect_n1(void *this)
 
 	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
 		(pfm_arm_cfg.part == 0xd0c)) { /* Neoverse N1 */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
+static int
+pfm_arm_detect_n2(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
+		(pfm_arm_cfg.part == 0xd49)) { /* Neoverse N2 */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
@@ -133,6 +152,22 @@ pfm_arm_detect_a64fx(void *this)
 
 	if ((pfm_arm_cfg.implementer == 0x46) && /* Fujitsu */
 		(pfm_arm_cfg.part == 0x001)) { /* a64fx */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
+static int
+pfm_arm_detect_hisilicon_kunpeng(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x48) && /* Hisilicon */
+	    (pfm_arm_cfg.part == 0xd01)) { /* Kunpeng */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
@@ -268,6 +303,166 @@ pfmlib_pmu_t arm_fujitsu_a64fx_support={
 	.get_event_nattrs	= pfm_arm_get_event_nattrs,
 };
 
+/* HiSilicon Kunpeng support */
+pfmlib_pmu_t arm_hisilicon_kunpeng_support={
+	.desc           = "Hisilicon Kunpeng",
+	.name           = "arm_kunpeng",
+	.pmu            = PFM_PMU_ARM_KUNPENG,
+	.pme_count      = LIBPFM_ARRAY_SIZE(arm_kunpeng_pe),
+	.type           = PFM_PMU_TYPE_CORE,
+	.supported_plm  = ARMV8_PLM,
+	.pe             = arm_kunpeng_pe,
+	.pmu_detect     = pfm_arm_detect_hisilicon_kunpeng,
+	.max_encoding   = 1,
+	.num_cntrs      = 12,
+	.num_fixed_cntrs      = 1,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first        = pfm_arm_get_event_first,
+	.get_event_next         = pfm_arm_get_event_next,
+	.event_is_valid         = pfm_arm_event_is_valid,
+	.validate_table         = pfm_arm_validate_table,
+	.get_event_info         = pfm_arm_get_event_info,
+	.get_event_attr_info    = pfm_arm_get_event_attr_info,
+	PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs       = pfm_arm_get_event_nattrs,
+};
+
+/* Hisilicon Kunpeng support */
+// For uncore, each socket has a separate perf name, otherwise they are the same, use macro
+
+#define DEFINE_KUNPENG_DDRC(n,m) \
+pfmlib_pmu_t arm_hisilicon_kunpeng_sccl##n##_ddrc##m##_support={ \
+	.desc           = "Hisilicon Kunpeng SCCL"#n" DDRC"#m, \
+	.name           = "hisi_sccl"#n"_ddrc"#m, \
+	.perf_name      = "hisi_sccl"#n"_ddrc"#m, \
+	.pmu            = PFM_PMU_ARM_KUNPENG_UNC_SCCL##n##_DDRC##m, \
+	.pme_count      = LIBPFM_ARRAY_SIZE(arm_kunpeng_unc_ddrc_pe), \
+	.type           = PFM_PMU_TYPE_UNCORE, \
+	.pe             = arm_kunpeng_unc_ddrc_pe, \
+	.pmu_detect     = pfm_arm_detect_hisilicon_kunpeng, \
+	.max_encoding   = 1, \
+	.num_cntrs      = 4, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_kunpeng_unc_get_event_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_kunpeng_unc_get_perf_encoding), \
+	.get_event_first	= pfm_arm_get_event_first, \
+	.get_event_next		= pfm_arm_get_event_next, \
+	.event_is_valid		= pfm_arm_event_is_valid, \
+	.validate_table		= pfm_arm_validate_table, \
+	.get_event_info		= pfm_arm_get_event_info, \
+	.get_event_attr_info	= pfm_arm_get_event_attr_info, \
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs), \
+	.get_event_nattrs	= pfm_arm_get_event_nattrs, \
+};
+
+DEFINE_KUNPENG_DDRC(1,0);
+DEFINE_KUNPENG_DDRC(1,1);
+DEFINE_KUNPENG_DDRC(1,2);
+DEFINE_KUNPENG_DDRC(1,3);
+DEFINE_KUNPENG_DDRC(3,0);
+DEFINE_KUNPENG_DDRC(3,1);
+DEFINE_KUNPENG_DDRC(3,2);
+DEFINE_KUNPENG_DDRC(3,3);
+DEFINE_KUNPENG_DDRC(5,0);
+DEFINE_KUNPENG_DDRC(5,1);
+DEFINE_KUNPENG_DDRC(5,2);
+DEFINE_KUNPENG_DDRC(5,3);
+DEFINE_KUNPENG_DDRC(7,0);
+DEFINE_KUNPENG_DDRC(7,1);
+DEFINE_KUNPENG_DDRC(7,2);
+DEFINE_KUNPENG_DDRC(7,3);
+
+#define DEFINE_KUNPENG_HHA(n,m) \
+pfmlib_pmu_t arm_hisilicon_kunpeng_sccl##n##_hha##m##_support={ \
+	.desc           = "Hisilicon Kunpeng SCCL"#n" HHA"#m, \
+	.name           = "hisi_sccl"#n"_hha"#m, \
+	.perf_name      = "hisi_sccl"#n"_hha"#m, \
+	.pmu            = PFM_PMU_ARM_KUNPENG_UNC_SCCL##n##_HHA##m, \
+	.pme_count      = LIBPFM_ARRAY_SIZE(arm_kunpeng_unc_hha_pe), \
+	.type           = PFM_PMU_TYPE_UNCORE, \
+	.pe             = arm_kunpeng_unc_hha_pe, \
+	.pmu_detect     = pfm_arm_detect_hisilicon_kunpeng, \
+	.max_encoding   = 1, \
+	.num_cntrs      = 4, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_kunpeng_unc_get_event_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_kunpeng_unc_get_perf_encoding), \
+	.get_event_first	= pfm_arm_get_event_first, \
+	.get_event_next		= pfm_arm_get_event_next, \
+	.event_is_valid		= pfm_arm_event_is_valid, \
+	.validate_table		= pfm_arm_validate_table, \
+	.get_event_info		= pfm_arm_get_event_info, \
+	.get_event_attr_info	= pfm_arm_get_event_attr_info, \
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs), \
+	.get_event_nattrs	= pfm_arm_get_event_nattrs, \
+};
+
+DEFINE_KUNPENG_HHA(1,2);
+DEFINE_KUNPENG_HHA(1,3);
+DEFINE_KUNPENG_HHA(3,0);
+DEFINE_KUNPENG_HHA(3,1);
+DEFINE_KUNPENG_HHA(5,6);
+DEFINE_KUNPENG_HHA(5,7);
+DEFINE_KUNPENG_HHA(7,4);
+DEFINE_KUNPENG_HHA(7,5);
+
+#define DEFINE_KUNPENG_L3C(n,m) \
+pfmlib_pmu_t arm_hisilicon_kunpeng_sccl##n##_l3c##m##_support={ \
+	.desc           = "Hisilicon Kunpeng SCCL"#n" L3C"#m, \
+	.name           = "hisi_sccl"#n"_l3c"#m, \
+	.perf_name      = "hisi_sccl"#n"_l3c"#m, \
+	.pmu            = PFM_PMU_ARM_KUNPENG_UNC_SCCL##n##_L3C##m, \
+	.pme_count      = LIBPFM_ARRAY_SIZE(arm_kunpeng_unc_l3c_pe), \
+	.type           = PFM_PMU_TYPE_UNCORE, \
+	.pe             = arm_kunpeng_unc_l3c_pe, \
+	.pmu_detect     = pfm_arm_detect_hisilicon_kunpeng, \
+	.max_encoding   = 1, \
+	.num_cntrs      = 4, \
+	.get_event_encoding[PFM_OS_NONE] = pfm_kunpeng_unc_get_event_encoding, \
+	 PFMLIB_ENCODE_PERF(pfm_kunpeng_unc_get_perf_encoding), \
+	.get_event_first	= pfm_arm_get_event_first, \
+	.get_event_next		= pfm_arm_get_event_next, \
+	.event_is_valid		= pfm_arm_event_is_valid, \
+	.validate_table		= pfm_arm_validate_table, \
+	.get_event_info		= pfm_arm_get_event_info, \
+	.get_event_attr_info	= pfm_arm_get_event_attr_info, \
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs), \
+	.get_event_nattrs	= pfm_arm_get_event_nattrs, \
+};
+
+DEFINE_KUNPENG_L3C(1,10);
+DEFINE_KUNPENG_L3C(1,11);
+DEFINE_KUNPENG_L3C(1,12);
+DEFINE_KUNPENG_L3C(1,13);
+DEFINE_KUNPENG_L3C(1,14);
+DEFINE_KUNPENG_L3C(1,15);
+DEFINE_KUNPENG_L3C(1,8);
+DEFINE_KUNPENG_L3C(1,9);
+DEFINE_KUNPENG_L3C(3,0);
+DEFINE_KUNPENG_L3C(3,1);
+DEFINE_KUNPENG_L3C(3,2);
+DEFINE_KUNPENG_L3C(3,3);
+DEFINE_KUNPENG_L3C(3,4);
+DEFINE_KUNPENG_L3C(3,5);
+DEFINE_KUNPENG_L3C(3,6);
+DEFINE_KUNPENG_L3C(3,7);
+DEFINE_KUNPENG_L3C(5,24);
+DEFINE_KUNPENG_L3C(5,25);
+DEFINE_KUNPENG_L3C(5,26);
+DEFINE_KUNPENG_L3C(5,27);
+DEFINE_KUNPENG_L3C(5,28);
+DEFINE_KUNPENG_L3C(5,29);
+DEFINE_KUNPENG_L3C(5,30);
+DEFINE_KUNPENG_L3C(5,31);
+DEFINE_KUNPENG_L3C(7,16);
+DEFINE_KUNPENG_L3C(7,17);
+DEFINE_KUNPENG_L3C(7,18);
+DEFINE_KUNPENG_L3C(7,19);
+DEFINE_KUNPENG_L3C(7,20);
+DEFINE_KUNPENG_L3C(7,21);
+DEFINE_KUNPENG_L3C(7,22);
+DEFINE_KUNPENG_L3C(7,23);
+
 // For uncore, each socket has a separate perf name, otherwise they are the same, use macro
 
 #define DEFINE_TX2_DMC(n) \
@@ -328,7 +523,7 @@ DEFINE_TX2_LLC(1);
 pfmlib_pmu_t arm_thunderx2_ccpi##n##_support={ \
 	.desc			= "Marvell ThunderX2 node "#n" Cross-Socket Interconnect", \
 	.name			= "tx2_ccpi"#n, \
-	.perf_name		= "uncore_ccpi_"#n, \
+	.perf_name		= "uncore_ccpi2_"#n, \
 	.pmu			= PFM_PMU_ARM_THUNDERX2_CCPI##n, \
 	.pme_count		= LIBPFM_ARRAY_SIZE(arm_thunderx2_unc_ccpi_pe), \
 	.type			= PFM_PMU_TYPE_UNCORE, \
@@ -361,6 +556,31 @@ pfmlib_pmu_t arm_n1_support={
 	.pe			= arm_n1_pe,
 
 	.pmu_detect		= pfm_arm_detect_n1,
+	.max_encoding		= 1,
+	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+pfmlib_pmu_t arm_n2_support={
+	.desc			= "ARM Neoverse N2",
+	.name			= "arm_n2",
+	.pmu			= PFM_PMU_ARM_N2,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_n2_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV8_PLM,
+	.pe			= arm_n2_pe,
+
+	.pmu_detect		= pfm_arm_detect_n2,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
 

@@ -569,6 +569,65 @@ typedef enum {
 
 	PFM_PMU_INTEL_ICX,		/* Intel IceLakeX */
 
+	PFM_PMU_ARM_N2,			/* ARM Neoverse N2 */
+
+	PFM_PMU_ARM_KUNPENG,		/* HiSilicon Kunpeng processor */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_DDRC0, /* Hisilicon Kunpeng SCCL unit 1 DDRC 0 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_DDRC1, /* Hisilicon Kunpeng SCCL unit 1 DDRC 1 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_DDRC2, /* Hisilicon Kunpeng SCCL unit 1 DDRC 2 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_DDRC3, /* Hisilicon Kunpeng SCCL unit 1 DDRC 3 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_DDRC0, /* Hisilicon Kunpeng SCCL unit 3 DDRC 0 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_DDRC1, /* Hisilicon Kunpeng SCCL unit 3 DDRC 1 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_DDRC2, /* Hisilicon Kunpeng SCCL unit 3 DDRC 2 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_DDRC3, /* Hisilicon Kunpeng SCCL unit 3 DDRC 3 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_DDRC0, /* Hisilicon Kunpeng SCCL unit 5 DDRC 0 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_DDRC1, /* Hisilicon Kunpeng SCCL unit 5 DDRC 1 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_DDRC2, /* Hisilicon Kunpeng SCCL unit 5 DDRC 2 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_DDRC3, /* Hisilicon Kunpeng SCCL unit 5 DDRC 3 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_DDRC0, /* Hisilicon Kunpeng SCCL unit 7 DDRC 0 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_DDRC1, /* Hisilicon Kunpeng SCCL unit 7 DDRC 1 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_DDRC2, /* Hisilicon Kunpeng SCCL unit 7 DDRC 2 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_DDRC3, /* Hisilicon Kunpeng SCCL unit 7 DDRC 3 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_HHA2,  /* Hisilicon Kunpeng SCCL unit 1 HHA 2 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_HHA3,  /* Hisilicon Kunpeng SCCL unit 1 HHA 3 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_HHA0,  /* Hisilicon Kunpeng SCCL unit 3 HHA 0 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_HHA1,  /* Hisilicon Kunpeng SCCL unit 3 HHA 1 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_HHA6,  /* Hisilicon Kunpeng SCCL unit 5 HHA 6 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_HHA7,  /* Hisilicon Kunpeng SCCL unit 5 HHA 7 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_HHA4,  /* Hisilicon Kunpeng SCCL unit 7 HHA 4 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_HHA5,  /* Hisilicon Kunpeng SCCL unit 7 HHA 5 uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C10, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C11, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C12, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C13, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C14, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C15, /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C8,  /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_L3C9,  /* Hisilicon Kunpeng SCCL unit 1 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C0,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C1,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C2,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C3,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C4,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C5,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C6,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL3_L3C7,  /* Hisilicon Kunpeng SCCL unit 3 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C24, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C25, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C26, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C27, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C28, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C29, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C30, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL5_L3C31, /* Hisilicon Kunpeng SCCL unit 5 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C16, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C17, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C18, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C19, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C20, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C21, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C22, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
+	PFM_PMU_ARM_KUNPENG_UNC_SCCL7_L3C23, /* Hisilicon Kunpeng SCCL unit 7 L3C uncore */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

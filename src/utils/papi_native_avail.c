@@ -579,7 +579,7 @@ no_sdes:
 		component=PAPI_get_component_info(cid);
 
 		/* Skip disabled components */
-		if (component->disabled) continue;
+		if (component->disabled && component->disabled != PAPI_EDELAY_INIT) continue;
 
 		printf( "===============================================================================\n" );
 		printf( " Native Events in Component: %s\n",component->name);

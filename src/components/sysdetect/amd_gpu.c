@@ -47,7 +47,7 @@ hsa_status_t (*hsa_amd_memory_pool_get_infoPtr)( hsa_amd_memory_pool_t pool,
                                                  hsa_amd_memory_pool_info_t attribute,
                                                  void *value ) = NULL;
 hsa_status_t (*hsa_status_stringPtr)( hsa_status_t status,
-                                      char *string ) = NULL;
+                                      const char **string ) = NULL;
 
 #define ROCM_CALL(call, err_handle) do {   \
     hsa_status_t _status = (call);         \
@@ -247,7 +247,12 @@ load_hsa_sym( char *status )
     char pathname[PAPI_MAX_STR_LEN] = { 0 };
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        *status = "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
+        const char *message =
+            "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
+        int count = snprintf(status, strlen(message) + 1, message);
+        if (count >= PAPI_MAX_STR_LEN) {
+            HANDLE_STRING_ERROR;
+        }
         return -1;
     }
 
@@ -456,8 +461,8 @@ open_amd_gpu_dev_type( PAPI_dev_type_info_t *dev_type_info )
     hsa_status_t status = get_device_count(&dev_count);
     if (status != HSA_STATUS_SUCCESS) {
         if (status != HSA_STATUS_ERROR_NOT_INITIALIZED) {
-            char string[PAPI_MAX_STR_LEN];
-            (*hsa_status_stringPtr)(status, string);
+            const char *string;
+            (*hsa_status_stringPtr)(status, &string);
             printf( "error: %s\n", string );
         }
         return;

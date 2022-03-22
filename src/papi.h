@@ -278,7 +278,8 @@ failure.
 #define PAPI_ECOUNT		-23    /**< Too many events or attributes */
 #define PAPI_ECOMBO		-24    /**< Bad combination of features */
 #define PAPI_ECMP_DISABLED	-25    /**< Component containing event is disabled */
-#define PAPI_NUM_ERRORS	 26    /**< Number of error messages specified in this API */
+#define PAPI_EDELAY_INIT -26
+#define PAPI_NUM_ERRORS	 27    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -354,6 +355,13 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_FREESCALE 6
 #define PAPI_VENDOR_ARM     7
 #define PAPI_VENDOR_MIPS    8
+#define PAPI_VENDOR_ARM_ARM       0x41
+#define PAPI_VENDOR_ARM_BROADCOM  0x42
+#define PAPI_VENDOR_ARM_CAVIUM    0x43
+#define PAPI_VENDOR_ARM_FUJITSU   0x46
+#define PAPI_VENDOR_ARM_HISILICON 0x48
+#define PAPI_VENDOR_ARM_APM       0x50
+#define PAPI_VENDOR_ARM_QUALCOMM  0x51
 /** @} */
 
 /** @internal 
