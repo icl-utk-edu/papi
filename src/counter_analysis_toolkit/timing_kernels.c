@@ -19,6 +19,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     int retval, buffer = 0, status = 0;
     int error_line = -1, error_type = PAPI_OK;
     register uintptr_t *p = NULL;
+    register uintptr_t p_prime;
     double time1, time2, dt, factor;
     long count, pageSize, blockSize;
     long long int counter[ONT];

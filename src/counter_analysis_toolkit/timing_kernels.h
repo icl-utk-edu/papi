@@ -10,7 +10,16 @@
 #define N_16  N_2 N_2 N_2 N_2 N_2 N_2 N_2 N_2
 #define N_128 N_16 N_16 N_16 N_16 N_16 N_16 N_16 N_16
 
-#define NW_1   p = (uintptr_t *)*p; *(p+max_size) = 3;
+// NW_1 reads a pointer from an array and then modifies the pointer
+// and stores it back to the same place in the array. This way it
+// causes exactly one read and one write operation in memory, assuming
+// that the variable "p_prime" resides in a register. The exact steps
+// are the following:
+// 1. Reads the element pointed to by "p" into "p_prime". 
+//    This element is almost a pointer to the next element in the chain, but the least significant bit might be set to 1.
+// 2. Flip the least significant bit of "p_prime" and store it back into the buffer.
+// 3. Clear the least significant bit of "p_prime" and store the result in "p".
+#define NW_1   {p_prime = *p; *p = p_prime ^ 0x1; p = (uintptr_t *)(p_prime & (~0x1));}
 #define NW_2   NW_1 NW_1
 #define NW_16  NW_2 NW_2 NW_2 NW_2 NW_2 NW_2 NW_2 NW_2
 #define NW_128 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16 NW_16
