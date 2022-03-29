@@ -894,6 +894,21 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, int max_iter, i
         if(show_progress) print_progress2(100);
     }
 
+    /* Benchmark VI - Vector FLOPS*/
+    if( bench_type & BENCH_VEC )
+    {
+        if(show_progress) printf("Vector FLOP Benchmarks: ");
+
+        for(i = 0; i < cmbtotal; ++i)
+        {
+            if(show_progress) print_progress((100*i)/cmbtotal);
+
+            if( allevts[i] != NULL )
+                vec_driver(allevts[i], hw_desc, outputdir);
+        }
+        if(show_progress) print_progress(100);
+    }
+
     return;
 }
 
@@ -972,6 +987,10 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
         }
         if( !strcmp(argv[0],"-ic") ){
             *bench_type |= BENCH_ICACHE_READ;
+            continue;
+        }
+        if( !strcmp(argv[0],"-vec") ){
+            *bench_type |= BENCH_VEC;
             continue;
         }
 
@@ -1058,6 +1077,7 @@ void print_usage(char* name)
     fprintf(stdout, "  -dcw              Data cache writing kernels.\n");
     fprintf(stdout, "  -flops            Floating point operations kernels.\n");
     fprintf(stdout, "  -ic               Instruction cache kernels.\n");
+    fprintf(stdout, "  -vec              Vector FLOPs kernels.\n");
 
     fprintf(stdout, "\n");
     fprintf(stdout, "EXAMPLE: %s -in event_list.txt -out OUTPUT_DIRECTORY -branch -dcw\n", name);

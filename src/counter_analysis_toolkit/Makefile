@@ -1,4 +1,5 @@
-PAPIDIR=${HOME}/usr
+ARCH?=INTEL
+PAPIDIR?=${HOME}/usr
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
 INCFLAGS=-I$(PAPIDIR)/include
 CFLAGS+=-g -Wall -Wextra
@@ -7,11 +8,36 @@ OPT1=-O1
 OPT2=-O2
 CC=gcc
 
-all: cat_collect
+## Architecture determines vector instruction set.
+ifeq ($(ARCH),INTEL)
+    VEC=-mavx -O0 -DINTEL
+    VEC_FMA=-mfma4 -mfma -O0 -DINTEL
+    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DINTEL
+endif
+ifeq ($(ARCH),AMD)
+    VEC=-mavx -O0 -DAMD
+    VEC_FMA=-mfma4 -mfma -O0 -DAMD
+    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DAMD
+endif
+ifeq ($(ARCH),IBM)
+    VEC=-maltivec -O0 -DIBM
+    VEC_FMA=-maltivec -O0 -DIBM
+    VEC_ALL=$(VEC) -O0 -DIBM
+endif
+ifeq ($(ARCH),ARM)
+    VEC=-march=armv8.2-a+fp16 -O0 -DARM
+    VEC_FMA=-march=armv8.2-a+fp16 -O0 -DARM
+    VEC_ALL=$(VEC) -O0 -DARM
+endif
+
+all: branch.o d_cache eventstock.o flops i_cache vector
+	make cat_collect PAPIDIR=$(PAPIDIR)
 
 d_cache: timing_kernels.o prepareArray.o compar.o dcache.o
 
 i_cache: icache.o icache_seq_kernel_0.o
+
+vector: weak_symbols.o vec.o vec_scalar_verify.o vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
 
 branch.o: branch.c branch.h
 	$(CC) $(OPT0) $(CFLAGS) $(INCFLAGS) -c branch.c -o branch.o
@@ -44,9 +70,37 @@ icache_seq_kernel_0.o: icache_seq.c icache_seq.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -fPIC -c icache_seq_kernel.c -o icache_seq_kernel_0.o
 	$(CC) $(CFLAGS) $(OPT0) -shared -o icache_seq_kernel_0.so icache_seq_kernel_0.o
 	bash replicate.sh
+	rm icache_seq_kernel_0.o
 
-cat_collect: main.c branch.o d_cache eventstock.o flops i_cache
-	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c flops_aux.o flops.o icache_seq.o icache.o branch.o dcache.o timing_kernels.o prepareArray.o compar.o eventstock.o -o cat_collect $(LDFLAGS)
+weak_symbols.o: weak_symbols.c vec.h
+	-$(CC) -c $(CFLAGS) weak_symbols.c
+
+vec.o: vec.c vec.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) vec.c
+
+vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h vec_arch.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_ALL) vec_scalar_verify.c
+
+vec_fma_hp.o: vec_fma_hp.c vec_fma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_hp.c
+
+vec_fma_sp.o: vec_fma_sp.c vec_fma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_sp.c
+
+vec_fma_dp.o: vec_fma_dp.c vec_fma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_dp.c
+
+vec_nonfma_hp.o: vec_nonfma_hp.c vec_nonfma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_hp.c
+
+vec_nonfma_sp.o: vec_nonfma_sp.c vec_nonfma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_sp.c
+
+vec_nonfma_dp.o: vec_nonfma_dp.c vec_nonfma.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_dp.c
+
+cat_collect: main.c
+	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c $(wildcard *.o) -o cat_collect $(LDFLAGS)
 
 clean:
 	rm -f *.o

@@ -7,7 +7,7 @@ make PAPIDIR=/path/to/your/papi/installation
 
 
 Usage:
-./cit_collect -in event_list.txt -out OUTPUT_DIRECTORY -branch -dcr
+./cat_collect -in event_list.txt -out OUTPUT_DIRECTORY -branch -dcr
 
 The following five flags specify the corresponding benchmarks:
   -branch  Branch kernels.
@@ -15,6 +15,7 @@ The following five flags specify the corresponding benchmarks:
   -dcw     Data cache writing kernels.
   -flops   Floating point operations kernels.
   -ic      Instruction cache kernels.
+  -vec     Vector FLOPs kernels.
 
 Each line in the event-list file should contain ether the name of a base 
 event followed by the number of qualifiers to be appended, or a
