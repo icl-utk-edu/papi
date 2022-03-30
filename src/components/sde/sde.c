@@ -915,7 +915,7 @@ _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
     SUBDBG("Event (unique id = %d) description: %s\n", counter->glb_uniq_id, counter->description);
 
     (void)strncpy( descr, counter->description, len );
-    descr[len] = '\0';
+    descr[len-1] = '\0';
 
     papi_sde_unlock();
     return PAPI_OK;
