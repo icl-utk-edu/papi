@@ -881,6 +881,7 @@ typedef char* PAPI_user_defined_events_file_t;
     typedef struct _papi_dev_type_info {
         PAPI_dev_type_id_e id;
         char vendor[PAPI_MAX_STR_LEN];
+        int vendor_id;
         char status[PAPI_MAX_STR_LEN];
         int num_devices;
         PAPI_dev_info_u *dev_info_arr;
