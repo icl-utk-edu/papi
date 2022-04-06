@@ -235,7 +235,14 @@ static void _internal_hl_library_init(void)
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
    
    /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
-   if ((retval = PAPI_thread_init(_papi_gettid)) == PAPI_OK) {
+   char *multi_thread = getenv("PAPI_HL_THREAD_MULTIPLE");
+   if ( NULL == multi_thread || atoi(multi_thread) == 1 ) {
+      retval = PAPI_thread_init(_papi_gettid);
+   } else {
+      retval = PAPI_thread_init((unsigned long (*)(void)) getpid);
+   }
+
+   if (retval == PAPI_OK) {
 
       /* determine output directory and output file */
       if ( ( retval = _internal_hl_determine_output_path() ) != PAPI_OK ) {
