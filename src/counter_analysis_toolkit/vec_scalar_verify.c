@@ -57,7 +57,7 @@ float test_sp_scalar_AVX_24( uint64 iterations ){
     rD = _mm_set_ss(0.14);
     rE = _mm_set_ss(0.15);
     rF = _mm_set_ss(0.16);
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -76,7 +76,7 @@ float test_sp_scalar_AVX_24( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -89,7 +89,7 @@ float test_sp_scalar_AVX_24( uint64 iterations ){
             r9 = _mm_mul_ss(r9,rE);
             rA = _mm_add_ss(rA,rD);
             rB = _mm_mul_ss(rB,rC);
-            
+
             i++;
         }
         c++;
@@ -102,18 +102,18 @@ float test_sp_scalar_AVX_24( uint64 iterations ){
     r6 = _mm_add_ss(r6,r7);
     r8 = _mm_add_ss(r8,r9);
     rA = _mm_add_ss(rA,rB);
-    
+
     r0 = _mm_add_ss(r0,r2);
     r4 = _mm_add_ss(r4,r6);
     r8 = _mm_add_ss(r8,rA);
-    
+
     r0 = _mm_add_ss(r0,r4);
     r0 = _mm_add_ss(r0,r8);
-    
+
     float out = 0;
     __m128 temp = r0;
     out += ((float*)&temp)[0];
-    
+
     return out;
 }
 
@@ -140,7 +140,7 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
     rD = _mm_set_ss(0.14);
     rE = _mm_set_ss(0.15);
     rF = _mm_set_ss(0.16);
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -159,7 +159,7 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -172,7 +172,7 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_mul_ss(r9,rE);
             rA = _mm_add_ss(rA,rD);
             rB = _mm_mul_ss(rB,rC);
-            
+
             r0 = _mm_mul_ss(r0,rC);
             r1 = _mm_add_ss(r1,rD);
             r2 = _mm_mul_ss(r2,rE);
@@ -185,7 +185,7 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -198,12 +198,12 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_mul_ss(r9,rE);
             rA = _mm_add_ss(rA,rD);
             rB = _mm_mul_ss(rB,rC);
-            
+
             i++;
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_ss(r0,r1);
     r2 = _mm_add_ss(r2,r3);
@@ -211,18 +211,18 @@ float test_sp_scalar_AVX_48( uint64 iterations ){
     r6 = _mm_add_ss(r6,r7);
     r8 = _mm_add_ss(r8,r9);
     rA = _mm_add_ss(rA,rB);
-    
+
     r0 = _mm_add_ss(r0,r2);
     r4 = _mm_add_ss(r4,r6);
     r8 = _mm_add_ss(r8,rA);
-    
+
     r0 = _mm_add_ss(r0,r4);
     r0 = _mm_add_ss(r0,r8);
-    
+
     float out = 0;
     __m128 temp = r0;
     out += ((float*)&temp)[0];
-    
+
     return out;
 }
 
@@ -268,33 +268,7 @@ float test_sp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
-            r0 = _mm_add_ss(r0,rF);
-            r1 = _mm_mul_ss(r1,rE);
-            r2 = _mm_add_ss(r2,rD);
-            r3 = _mm_mul_ss(r3,rC);
-            r4 = _mm_add_ss(r4,rF);
-            r5 = _mm_mul_ss(r5,rE);
-            r6 = _mm_add_ss(r6,rD);
-            r7 = _mm_mul_ss(r7,rC);
-            r8 = _mm_add_ss(r8,rF);
-            r9 = _mm_mul_ss(r9,rE);
-            rA = _mm_add_ss(rA,rD);
-            rB = _mm_mul_ss(rB,rC);
-            
-            r0 = _mm_mul_ss(r0,rC);
-            r1 = _mm_add_ss(r1,rD);
-            r2 = _mm_mul_ss(r2,rE);
-            r3 = _mm_add_ss(r3,rF);
-            r4 = _mm_mul_ss(r4,rC);
-            r5 = _mm_add_ss(r5,rD);
-            r6 = _mm_mul_ss(r6,rE);
-            r7 = _mm_add_ss(r7,rF);
-            r8 = _mm_mul_ss(r8,rC);
-            r9 = _mm_add_ss(r9,rD);
-            rA = _mm_mul_ss(rA,rE);
-            rB = _mm_add_ss(rB,rF);
-            
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -320,7 +294,7 @@ float test_sp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -333,7 +307,7 @@ float test_sp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_mul_ss(r9,rE);
             rA = _mm_add_ss(rA,rD);
             rB = _mm_mul_ss(rB,rC);
-            
+
             r0 = _mm_mul_ss(r0,rC);
             r1 = _mm_add_ss(r1,rD);
             r2 = _mm_mul_ss(r2,rE);
@@ -346,7 +320,33 @@ float test_sp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_ss(r9,rD);
             rA = _mm_mul_ss(rA,rE);
             rB = _mm_add_ss(rB,rF);
-            
+
+            r0 = _mm_add_ss(r0,rF);
+            r1 = _mm_mul_ss(r1,rE);
+            r2 = _mm_add_ss(r2,rD);
+            r3 = _mm_mul_ss(r3,rC);
+            r4 = _mm_add_ss(r4,rF);
+            r5 = _mm_mul_ss(r5,rE);
+            r6 = _mm_add_ss(r6,rD);
+            r7 = _mm_mul_ss(r7,rC);
+            r8 = _mm_add_ss(r8,rF);
+            r9 = _mm_mul_ss(r9,rE);
+            rA = _mm_add_ss(rA,rD);
+            rB = _mm_mul_ss(rB,rC);
+
+            r0 = _mm_mul_ss(r0,rC);
+            r1 = _mm_add_ss(r1,rD);
+            r2 = _mm_mul_ss(r2,rE);
+            r3 = _mm_add_ss(r3,rF);
+            r4 = _mm_mul_ss(r4,rC);
+            r5 = _mm_add_ss(r5,rD);
+            r6 = _mm_mul_ss(r6,rE);
+            r7 = _mm_add_ss(r7,rF);
+            r8 = _mm_mul_ss(r8,rC);
+            r9 = _mm_add_ss(r9,rD);
+            rA = _mm_mul_ss(rA,rE);
+            rB = _mm_add_ss(rB,rF);
+
             r0 = _mm_add_ss(r0,rF);
             r1 = _mm_mul_ss(r1,rE);
             r2 = _mm_add_ss(r2,rD);
@@ -364,7 +364,7 @@ float test_sp_scalar_AVX_96( uint64 iterations ){
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_ss(r0,r1);
     r2 = _mm_add_ss(r2,r3);
@@ -410,7 +410,7 @@ double test_dp_scalar_AVX_24( uint64 iterations ){
     rD = _mm_set_sd(0.14);
     rE = _mm_set_sd(0.15);
     rF = _mm_set_sd(0.16);
-   
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -429,7 +429,7 @@ double test_dp_scalar_AVX_24( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -455,18 +455,18 @@ double test_dp_scalar_AVX_24( uint64 iterations ){
     r6 = _mm_add_sd(r6,r7);
     r8 = _mm_add_sd(r8,r9);
     rA = _mm_add_sd(rA,rB);
-    
+
     r0 = _mm_add_sd(r0,r2);
     r4 = _mm_add_sd(r4,r6);
     r8 = _mm_add_sd(r8,rA);
-    
+
     r0 = _mm_add_sd(r0,r4);
     r0 = _mm_add_sd(r0,r8);
-    
+
     double out = 0;
     __m128d temp = r0;
     out += ((double*)&temp)[0];
-    
+
     return out;
 }
 
@@ -512,7 +512,7 @@ double test_dp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -525,7 +525,7 @@ double test_dp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_mul_sd(r9,rE);
             rA = _mm_add_sd(rA,rD);
             rB = _mm_mul_sd(rB,rC);
-            
+
             r0 = _mm_mul_sd(r0,rC);
             r1 = _mm_add_sd(r1,rD);
             r2 = _mm_mul_sd(r2,rE);
@@ -538,7 +538,7 @@ double test_dp_scalar_AVX_48( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -564,18 +564,18 @@ double test_dp_scalar_AVX_48( uint64 iterations ){
     r6 = _mm_add_sd(r6,r7);
     r8 = _mm_add_sd(r8,r9);
     rA = _mm_add_sd(rA,rB);
-    
+
     r0 = _mm_add_sd(r0,r2);
     r4 = _mm_add_sd(r4,r6);
     r8 = _mm_add_sd(r8,rA);
-    
+
     r0 = _mm_add_sd(r0,r4);
     r0 = _mm_add_sd(r0,r8);
-    
+
     double out = 0;
     __m128d temp = r0;
     out += ((double*)&temp)[0];
-    
+
     return out;
 }
 
@@ -621,33 +621,7 @@ double test_dp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
-            r0 = _mm_add_sd(r0,rF);
-            r1 = _mm_mul_sd(r1,rE);
-            r2 = _mm_add_sd(r2,rD);
-            r3 = _mm_mul_sd(r3,rC);
-            r4 = _mm_add_sd(r4,rF);
-            r5 = _mm_mul_sd(r5,rE);
-            r6 = _mm_add_sd(r6,rD);
-            r7 = _mm_mul_sd(r7,rC);
-            r8 = _mm_add_sd(r8,rF);
-            r9 = _mm_mul_sd(r9,rE);
-            rA = _mm_add_sd(rA,rD);
-            rB = _mm_mul_sd(rB,rC);
-            
-            r0 = _mm_mul_sd(r0,rC);
-            r1 = _mm_add_sd(r1,rD);
-            r2 = _mm_mul_sd(r2,rE);
-            r3 = _mm_add_sd(r3,rF);
-            r4 = _mm_mul_sd(r4,rC);
-            r5 = _mm_add_sd(r5,rD);
-            r6 = _mm_mul_sd(r6,rE);
-            r7 = _mm_add_sd(r7,rF);
-            r8 = _mm_mul_sd(r8,rC);
-            r9 = _mm_add_sd(r9,rD);
-            rA = _mm_mul_sd(rA,rE);
-            rB = _mm_add_sd(rB,rF);
-            
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -673,7 +647,7 @@ double test_dp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -686,7 +660,7 @@ double test_dp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_mul_sd(r9,rE);
             rA = _mm_add_sd(rA,rD);
             rB = _mm_mul_sd(rB,rC);
-            
+
             r0 = _mm_mul_sd(r0,rC);
             r1 = _mm_add_sd(r1,rD);
             r2 = _mm_mul_sd(r2,rE);
@@ -699,7 +673,33 @@ double test_dp_scalar_AVX_96( uint64 iterations ){
             r9 = _mm_add_sd(r9,rD);
             rA = _mm_mul_sd(rA,rE);
             rB = _mm_add_sd(rB,rF);
-            
+
+            r0 = _mm_add_sd(r0,rF);
+            r1 = _mm_mul_sd(r1,rE);
+            r2 = _mm_add_sd(r2,rD);
+            r3 = _mm_mul_sd(r3,rC);
+            r4 = _mm_add_sd(r4,rF);
+            r5 = _mm_mul_sd(r5,rE);
+            r6 = _mm_add_sd(r6,rD);
+            r7 = _mm_mul_sd(r7,rC);
+            r8 = _mm_add_sd(r8,rF);
+            r9 = _mm_mul_sd(r9,rE);
+            rA = _mm_add_sd(rA,rD);
+            rB = _mm_mul_sd(rB,rC);
+
+            r0 = _mm_mul_sd(r0,rC);
+            r1 = _mm_add_sd(r1,rD);
+            r2 = _mm_mul_sd(r2,rE);
+            r3 = _mm_add_sd(r3,rF);
+            r4 = _mm_mul_sd(r4,rC);
+            r5 = _mm_add_sd(r5,rD);
+            r6 = _mm_mul_sd(r6,rE);
+            r7 = _mm_add_sd(r7,rF);
+            r8 = _mm_mul_sd(r8,rC);
+            r9 = _mm_add_sd(r9,rD);
+            rA = _mm_mul_sd(rA,rE);
+            rB = _mm_add_sd(rB,rF);
+
             r0 = _mm_add_sd(r0,rF);
             r1 = _mm_mul_sd(r1,rE);
             r2 = _mm_add_sd(r2,rD);
@@ -795,7 +795,7 @@ float test_sp_scalar_AVX_FMA_12( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -812,7 +812,7 @@ float test_sp_scalar_AVX_FMA_12( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -820,23 +820,23 @@ float test_sp_scalar_AVX_FMA_12( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,r9,rB);
             r5 = _mm_fmadd_ss(r5,r8,rA);
             //r6 = _mm_fmadd_ss(r6,r7,r9);
-#endif 
-            
+#endif
+
             i++;
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_ss(r0,r1);
     r2 = _mm_add_ss(r2,r3);
     r4 = _mm_add_ss(r4,r5);
-    
+
     r0 = _mm_add_ss(r0,r6);
     r2 = _mm_add_ss(r2,r4);
-    
+
     r0 = _mm_add_ss(r0,r2);
-    
+
     float out = 0;
     __m128 temp = r0;
     out += ((float*)&temp)[0];
@@ -867,7 +867,7 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
     rD = _mm_set_ss(0.14);
     rE = _mm_set_ss(0.15);
     rF = _mm_set_ss(0.16);
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -884,7 +884,7 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -900,7 +900,7 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -917,7 +917,7 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -933,7 +933,7 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -947,21 +947,21 @@ float test_sp_scalar_AVX_FMA_24( uint64 iterations ){
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_ss(r0,r1);
     r2 = _mm_add_ss(r2,r3);
     r4 = _mm_add_ss(r4,r5);
-    
+
     r0 = _mm_add_ss(r0,r6);
     r2 = _mm_add_ss(r2,r4);
-    
+
     r0 = _mm_add_ss(r0,r2);
-    
+
     float out = 0;
     __m128 temp = r0;
     out += ((float*)&temp)[0];
-    
+
     return out;
 }
 
@@ -1005,23 +1005,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
-            
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -1037,7 +1021,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -1045,7 +1029,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
             //r6 = _mm_macc_ss(r6,r7,r9);
-            
+
             r0 = _mm_macc_ss(r0,r7,r9);
             r1 = _mm_macc_ss(r1,r8,rA);
             r2 = _mm_macc_ss(r2,r9,rB);
@@ -1053,7 +1037,23 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
             //r6 = _mm_macc_ss(r6,rD,rF);
-            
+
+            r0 = _mm_macc_ss(r0,rD,rF);
+            r1 = _mm_macc_ss(r1,rC,rE);
+            r2 = _mm_macc_ss(r2,rB,rD);
+            r3 = _mm_macc_ss(r3,rA,rC);
+            r4 = _mm_macc_ss(r4,r9,rB);
+            r5 = _mm_macc_ss(r5,r8,rA);
+            //r6 = _mm_macc_ss(r6,r7,r9);
+
+            r0 = _mm_macc_ss(r0,r7,r9);
+            r1 = _mm_macc_ss(r1,r8,rA);
+            r2 = _mm_macc_ss(r2,r9,rB);
+            r3 = _mm_macc_ss(r3,rA,rC);
+            r4 = _mm_macc_ss(r4,rB,rD);
+            r5 = _mm_macc_ss(r5,rC,rE);
+            //r6 = _mm_macc_ss(r6,rD,rF);
+
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
             r2 = _mm_macc_ss(r2,rB,rD);
@@ -1070,23 +1070,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
-            r0 = _mm_fmadd_ss(r0,rD,rF);
-            r1 = _mm_fmadd_ss(r1,rC,rE);
-            r2 = _mm_fmadd_ss(r2,rB,rD);
-            r3 = _mm_fmadd_ss(r3,rA,rC);
-            r4 = _mm_fmadd_ss(r4,r9,rB);
-            r5 = _mm_fmadd_ss(r5,r8,rA);
-            //r6 = _mm_fmadd_ss(r6,r7,r9);
-            
-            r0 = _mm_fmadd_ss(r0,r7,r9);
-            r1 = _mm_fmadd_ss(r1,r8,rA);
-            r2 = _mm_fmadd_ss(r2,r9,rB);
-            r3 = _mm_fmadd_ss(r3,rA,rC);
-            r4 = _mm_fmadd_ss(r4,rB,rD);
-            r5 = _mm_fmadd_ss(r5,rC,rE);
-            //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -1102,7 +1086,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -1110,7 +1094,7 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,r9,rB);
             r5 = _mm_fmadd_ss(r5,r8,rA);
             //r6 = _mm_fmadd_ss(r6,r7,r9);
-            
+
             r0 = _mm_fmadd_ss(r0,r7,r9);
             r1 = _mm_fmadd_ss(r1,r8,rA);
             r2 = _mm_fmadd_ss(r2,r9,rB);
@@ -1118,7 +1102,23 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_ss(r4,rB,rD);
             r5 = _mm_fmadd_ss(r5,rC,rE);
             //r6 = _mm_fmadd_ss(r6,rD,rF);
-            
+
+            r0 = _mm_fmadd_ss(r0,rD,rF);
+            r1 = _mm_fmadd_ss(r1,rC,rE);
+            r2 = _mm_fmadd_ss(r2,rB,rD);
+            r3 = _mm_fmadd_ss(r3,rA,rC);
+            r4 = _mm_fmadd_ss(r4,r9,rB);
+            r5 = _mm_fmadd_ss(r5,r8,rA);
+            //r6 = _mm_fmadd_ss(r6,r7,r9);
+
+            r0 = _mm_fmadd_ss(r0,r7,r9);
+            r1 = _mm_fmadd_ss(r1,r8,rA);
+            r2 = _mm_fmadd_ss(r2,r9,rB);
+            r3 = _mm_fmadd_ss(r3,rA,rC);
+            r4 = _mm_fmadd_ss(r4,rB,rD);
+            r5 = _mm_fmadd_ss(r5,rC,rE);
+            //r6 = _mm_fmadd_ss(r6,rD,rF);
+
             r0 = _mm_fmadd_ss(r0,rD,rF);
             r1 = _mm_fmadd_ss(r1,rC,rE);
             r2 = _mm_fmadd_ss(r2,rB,rD);
@@ -1132,17 +1132,17 @@ float test_sp_scalar_AVX_FMA_48( uint64 iterations ){
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_ss(r0,r1);
     r2 = _mm_add_ss(r2,r3);
     r4 = _mm_add_ss(r4,r5);
-    
+
     r0 = _mm_add_ss(r0,r6);
     r2 = _mm_add_ss(r2,r4);
-    
+
     r0 = _mm_add_ss(r0,r2);
-    
+
     float out = 0;
     __m128 temp = r0;
     out += ((float*)&temp)[0];
@@ -1190,7 +1190,7 @@ double test_dp_scalar_AVX_FMA_12( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1215,23 +1215,23 @@ double test_dp_scalar_AVX_FMA_12( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,r9,rB);
             r5 = _mm_fmadd_sd(r5,r8,rA);
             //r6 = _mm_fmadd_sd(r6,r7,r9);
-#endif 
-            
+#endif
+
             i++;
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_sd(r0,r1);
     r2 = _mm_add_sd(r2,r3);
     r4 = _mm_add_sd(r4,r5);
-    
+
     r0 = _mm_add_sd(r0,r6);
     r2 = _mm_add_sd(r2,r4);
-    
+
     r0 = _mm_add_sd(r0,r2);
-    
+
     double out = 0;
     __m128d temp = r0;
     out += ((double*)&temp)[0];
@@ -1262,7 +1262,7 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
     rD = _mm_set_sd(0.14);
     rE = _mm_set_sd(0.15);
     rF = _mm_set_sd(0.16);
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -1279,7 +1279,7 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1295,7 +1295,7 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1312,7 +1312,7 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,rB,rD);
             r5 = _mm_fmadd_sd(r5,rC,rE);
             //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_sd(r0,rD,rF);
             r1 = _mm_fmadd_sd(r1,rC,rE);
             r2 = _mm_fmadd_sd(r2,rB,rD);
@@ -1328,7 +1328,7 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,rB,rD);
             r5 = _mm_fmadd_sd(r5,rC,rE);
             //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_sd(r0,rD,rF);
             r1 = _mm_fmadd_sd(r1,rC,rE);
             r2 = _mm_fmadd_sd(r2,rB,rD);
@@ -1342,21 +1342,21 @@ double test_dp_scalar_AVX_FMA_24( uint64 iterations ){
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_sd(r0,r1);
     r2 = _mm_add_sd(r2,r3);
     r4 = _mm_add_sd(r4,r5);
-    
+
     r0 = _mm_add_sd(r0,r6);
     r2 = _mm_add_sd(r2,r4);
-    
+
     r0 = _mm_add_sd(r0,r2);
-    
+
     double out = 0;
     __m128d temp = r0;
     out += ((double*)&temp)[0];
-    
+
     return out;
 }
 
@@ -1400,23 +1400,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
-            
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1432,7 +1416,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1440,7 +1424,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
             //r6 = _mm_macc_sd(r6,r7,r9);
-            
+
             r0 = _mm_macc_sd(r0,r7,r9);
             r1 = _mm_macc_sd(r1,r8,rA);
             r2 = _mm_macc_sd(r2,r9,rB);
@@ -1448,7 +1432,23 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
             //r6 = _mm_macc_sd(r6,rD,rF);
-            
+
+            r0 = _mm_macc_sd(r0,rD,rF);
+            r1 = _mm_macc_sd(r1,rC,rE);
+            r2 = _mm_macc_sd(r2,rB,rD);
+            r3 = _mm_macc_sd(r3,rA,rC);
+            r4 = _mm_macc_sd(r4,r9,rB);
+            r5 = _mm_macc_sd(r5,r8,rA);
+            //r6 = _mm_macc_sd(r6,r7,r9);
+
+            r0 = _mm_macc_sd(r0,r7,r9);
+            r1 = _mm_macc_sd(r1,r8,rA);
+            r2 = _mm_macc_sd(r2,r9,rB);
+            r3 = _mm_macc_sd(r3,rA,rC);
+            r4 = _mm_macc_sd(r4,rB,rD);
+            r5 = _mm_macc_sd(r5,rC,rE);
+            //r6 = _mm_macc_sd(r6,rD,rF);
+
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
             r2 = _mm_macc_sd(r2,rB,rD);
@@ -1465,23 +1465,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,rB,rD);
             r5 = _mm_fmadd_sd(r5,rC,rE);
             //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
-            r0 = _mm_fmadd_sd(r0,rD,rF);
-            r1 = _mm_fmadd_sd(r1,rC,rE);
-            r2 = _mm_fmadd_sd(r2,rB,rD);
-            r3 = _mm_fmadd_sd(r3,rA,rC);
-            r4 = _mm_fmadd_sd(r4,r9,rB);
-            r5 = _mm_fmadd_sd(r5,r8,rA);
-            //r6 = _mm_fmadd_sd(r6,r7,r9);
-            
-            r0 = _mm_fmadd_sd(r0,r7,r9);
-            r1 = _mm_fmadd_sd(r1,r8,rA);
-            r2 = _mm_fmadd_sd(r2,r9,rB);
-            r3 = _mm_fmadd_sd(r3,rA,rC);
-            r4 = _mm_fmadd_sd(r4,rB,rD);
-            r5 = _mm_fmadd_sd(r5,rC,rE);
-            //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_sd(r0,rD,rF);
             r1 = _mm_fmadd_sd(r1,rC,rE);
             r2 = _mm_fmadd_sd(r2,rB,rD);
@@ -1497,7 +1481,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,rB,rD);
             r5 = _mm_fmadd_sd(r5,rC,rE);
             //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
+
             r0 = _mm_fmadd_sd(r0,rD,rF);
             r1 = _mm_fmadd_sd(r1,rC,rE);
             r2 = _mm_fmadd_sd(r2,rB,rD);
@@ -1505,7 +1489,7 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,r9,rB);
             r5 = _mm_fmadd_sd(r5,r8,rA);
             //r6 = _mm_fmadd_sd(r6,r7,r9);
-            
+
             r0 = _mm_fmadd_sd(r0,r7,r9);
             r1 = _mm_fmadd_sd(r1,r8,rA);
             r2 = _mm_fmadd_sd(r2,r9,rB);
@@ -1513,7 +1497,23 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
             r4 = _mm_fmadd_sd(r4,rB,rD);
             r5 = _mm_fmadd_sd(r5,rC,rE);
             //r6 = _mm_fmadd_sd(r6,rD,rF);
-            
+
+            r0 = _mm_fmadd_sd(r0,rD,rF);
+            r1 = _mm_fmadd_sd(r1,rC,rE);
+            r2 = _mm_fmadd_sd(r2,rB,rD);
+            r3 = _mm_fmadd_sd(r3,rA,rC);
+            r4 = _mm_fmadd_sd(r4,r9,rB);
+            r5 = _mm_fmadd_sd(r5,r8,rA);
+            //r6 = _mm_fmadd_sd(r6,r7,r9);
+
+            r0 = _mm_fmadd_sd(r0,r7,r9);
+            r1 = _mm_fmadd_sd(r1,r8,rA);
+            r2 = _mm_fmadd_sd(r2,r9,rB);
+            r3 = _mm_fmadd_sd(r3,rA,rC);
+            r4 = _mm_fmadd_sd(r4,rB,rD);
+            r5 = _mm_fmadd_sd(r5,rC,rE);
+            //r6 = _mm_fmadd_sd(r6,rD,rF);
+
             r0 = _mm_fmadd_sd(r0,rD,rF);
             r1 = _mm_fmadd_sd(r1,rC,rE);
             r2 = _mm_fmadd_sd(r2,rB,rD);
@@ -1527,17 +1527,17 @@ double test_dp_scalar_AVX_FMA_48( uint64 iterations ){
         }
         c++;
     }
-    
+
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm_add_sd(r0,r1);
     r2 = _mm_add_sd(r2,r3);
     r4 = _mm_add_sd(r4,r5);
-    
+
     r0 = _mm_add_sd(r0,r6);
     r2 = _mm_add_sd(r2,r4);
-    
+
     r0 = _mm_add_sd(r0,r2);
-    
+
     double out = 0;
     __m128d temp = r0;
     out += ((double*)&temp)[0];
@@ -1567,63 +1567,63 @@ half test_hp_scalar_VEC_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
-            
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
+
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
             i++;
         }
         c++;
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    r6 = r6+r7;
-    r8 = r8+r9;
-    rA = rA+rB;
-   
-    r0 = r0+r2;
-    r4 = r4+r6;
-    r8 = r8+rA;
-    
-    r0 = r0+r4;
-    r0 = r0+r8;
-    
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+    r6 = vaddh_f16(r6,r7);
+    r8 = vaddh_f16(r8,r9);
+    rA = vaddh_f16(rA,rB);
+
+    r0 = vaddh_f16(r0,r2);
+    r4 = vaddh_f16(r4,r6);
+    r8 = vaddh_f16(r8,rA);
+
+    r0 = vaddh_f16(r0,r4);
+    r0 = vaddh_f16(r0,r8);
+
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -1647,89 +1647,89 @@ half test_hp_scalar_VEC_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
 
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
-            
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
+
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
             i++;
         }
         c++;
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    r6 = r6+r7;
-    r8 = r8+r9;
-    rA = rA+rB;
-   
-    r0 = r0+r2;
-    r4 = r4+r6;
-    r8 = r8+rA;
-    
-    r0 = r0+r4;
-    r0 = r0+r8;
-    
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+    r6 = vaddh_f16(r6,r7);
+    r8 = vaddh_f16(r8,r9);
+    rA = vaddh_f16(rA,rB);
+
+    r0 = vaddh_f16(r0,r2);
+    r4 = vaddh_f16(r4,r6);
+    r8 = vaddh_f16(r8,rA);
+
+    r0 = vaddh_f16(r0,r4);
+    r0 = vaddh_f16(r0,r8);
+
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -1753,141 +1753,141 @@ half test_hp_scalar_VEC_96( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
 
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
 
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
 
-            r0 = r0*rC;
-            r1 = r1+rD;
-            r2 = r2*rE;
-            r3 = r3+rF;
-            r4 = r4*rC;
-            r5 = r5+rD;
-            r6 = r6*rE;
-            r7 = r7+rF;
-            r8 = r8*rC;
-            r9 = r9+rD;
-            rA = rA*rE;
-            rB = rB+rF;
-            
-            r0 = r0+rF;
-            r1 = r1*rE;
-            r2 = r2+rD;
-            r3 = r3*rC;
-            r4 = r4+rF;
-            r5 = r5*rE;
-            r6 = r6+rD;
-            r7 = r7*rC;
-            r8 = r8+rF;
-            r9 = r9*rE;
-            rA = rA+rD;
-            rB = rB*rC;
-            
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
+
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
+            r0 = vmulh_f16(r0,rC);
+            r1 = vaddh_f16(r1,rD);
+            r2 = vmulh_f16(r2,rE);
+            r3 = vaddh_f16(r3,rF);
+            r4 = vmulh_f16(r4,rC);
+            r5 = vaddh_f16(r5,rD);
+            r6 = vmulh_f16(r6,rE);
+            r7 = vaddh_f16(r7,rF);
+            r8 = vmulh_f16(r8,rC);
+            r9 = vaddh_f16(r9,rD);
+            rA = vmulh_f16(rA,rE);
+            rB = vaddh_f16(rB,rF);
+
+            r0 = vaddh_f16(r0,rF);
+            r1 = vmulh_f16(r1,rE);
+            r2 = vaddh_f16(r2,rD);
+            r3 = vmulh_f16(r3,rC);
+            r4 = vaddh_f16(r4,rF);
+            r5 = vmulh_f16(r5,rE);
+            r6 = vaddh_f16(r6,rD);
+            r7 = vmulh_f16(r7,rC);
+            r8 = vaddh_f16(r8,rF);
+            r9 = vmulh_f16(r9,rE);
+            rA = vaddh_f16(rA,rD);
+            rB = vmulh_f16(rB,rC);
+
             i++;
         }
         c++;
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    r6 = r6+r7;
-    r8 = r8+r9;
-    rA = rA+rB;
-   
-    r0 = r0+r2;
-    r4 = r4+r6;
-    r8 = r8+rA;
-    
-    r0 = r0+r4;
-    r0 = r0+r8;
-    
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+    r6 = vaddh_f16(r6,r7);
+    r8 = vaddh_f16(r8,r9);
+    rA = vaddh_f16(rA,rB);
+
+    r0 = vaddh_f16(r0,r2);
+    r4 = vaddh_f16(r4,r6);
+    r8 = vaddh_f16(r8,rA);
+
+    r0 = vaddh_f16(r0,r4);
+    r0 = vaddh_f16(r0,r8);
+
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -1928,7 +1928,7 @@ float test_sp_scalar_VEC_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -1947,7 +1947,7 @@ float test_sp_scalar_VEC_24( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -1960,7 +1960,7 @@ float test_sp_scalar_VEC_24( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -1973,18 +1973,18 @@ float test_sp_scalar_VEC_24( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2008,7 +2008,7 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2027,7 +2027,7 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2053,7 +2053,7 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2066,7 +2066,7 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -2079,18 +2079,18 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2114,7 +2114,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2133,7 +2133,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2159,7 +2159,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2185,7 +2185,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2211,7 +2211,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2224,7 +2224,7 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -2237,18 +2237,18 @@ float test_sp_scalar_VEC_96( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2272,7 +2272,7 @@ double test_dp_scalar_VEC_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2291,7 +2291,7 @@ double test_dp_scalar_VEC_24( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2304,7 +2304,7 @@ double test_dp_scalar_VEC_24( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -2317,18 +2317,18 @@ double test_dp_scalar_VEC_24( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2352,7 +2352,7 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2371,7 +2371,7 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2397,7 +2397,7 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2410,7 +2410,7 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -2423,18 +2423,18 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2458,7 +2458,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2477,7 +2477,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2503,7 +2503,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2529,7 +2529,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2555,7 +2555,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
             r9 = r9+rD;
             rA = rA*rE;
             rB = rB+rF;
-            
+
             r0 = r0+rF;
             r1 = r1*rE;
             r2 = r2+rD;
@@ -2568,7 +2568,7 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
             r9 = r9*rE;
             rA = rA+rD;
             rB = rB*rC;
-            
+
             i++;
         }
         c++;
@@ -2581,18 +2581,18 @@ double test_dp_scalar_VEC_96( uint64 iterations ){
     r6 = r6+r7;
     r8 = r8+r9;
     rA = rA+rB;
-   
+
     r0 = r0+r2;
     r4 = r4+r6;
     r8 = r8+rA;
-    
+
     r0 = r0+r4;
     r0 = r0+r8;
-    
+
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2617,28 +2617,28 @@ half test_hp_scalar_VEC_FMA_12( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
+
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
 
             i++;
         }
@@ -2646,19 +2646,19 @@ half test_hp_scalar_VEC_FMA_12( uint64 iterations ){
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    
-    r0 = r0+r6;
-    r2 = r2+r4;
-    
-    r0 = r0+r2;
-    
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+
+    r0 = vaddh_f16(r0,r6);
+    r2 = vaddh_f16(r2,r4);
+
+    r0 = vaddh_f16(r0,r2);
+
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -2682,44 +2682,44 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
 
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
+
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
+
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
 
             i++;
         }
@@ -2727,19 +2727,19 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    
-    r0 = r0+r6;
-    r2 = r2+r4;
-    
-    r0 = r0+r2;
-    
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+
+    r0 = vaddh_f16(r0,r6);
+    r2 = vaddh_f16(r2,r4);
+
+    r0 = vaddh_f16(r0,r2);
+
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -2763,76 +2763,76 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
         while (i < 1000){
 
             /* The performance critical part */
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
 
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
 
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
 
-            r0 = r0*r7+r9;
-            r1 = r1*r8+rA;
-            r2 = r2*r9+rB;
-            r3 = r3*rA+rC;
-            r4 = r4*rB+rD;
-            r5 = r5*rC+rE;
-            //r6 = r6*rD+rF;
-            
-            r0 = r0*rD+rF;
-            r1 = r1*rC+rE;
-            r2 = r2*rB+rD;
-            r3 = r3*rA+rC;
-            r4 = r4*r9+rB;
-            r5 = r5*r8+rA;
-            //r6 = r6*r7+r9;
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
+
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
+
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
+
+            r0 = vaddh_f16(vmulh_f16(r0,r7),r9);
+            r1 = vaddh_f16(vmulh_f16(r1,r8),rA);
+            r2 = vaddh_f16(vmulh_f16(r2,r9),rB);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,rB),rD);
+            r5 = vaddh_f16(vmulh_f16(r5,rC),rE);
+            //r6 = vaddh_f16(vmulh_f16(r6,rD),rF);
+
+            r0 = vaddh_f16(vmulh_f16(r0,rD),rF);
+            r1 = vaddh_f16(vmulh_f16(r1,rC),rE);
+            r2 = vaddh_f16(vmulh_f16(r2,rB),rD);
+            r3 = vaddh_f16(vmulh_f16(r3,rA),rC);
+            r4 = vaddh_f16(vmulh_f16(r4,r9),rB);
+            r5 = vaddh_f16(vmulh_f16(r5,r8),rA);
+            //r6 = vaddh_f16(vmulh_f16(r6,r7),r9);
 
             i++;
         }
@@ -2840,19 +2840,19 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = r0+r1;
-    r2 = r2+r3;
-    r4 = r4+r5;
-    
-    r0 = r0+r6;
-    r2 = r2+r4;
-    
-    r0 = r0+r2;
+    r0 = vaddh_f16(r0,r1);
+    r2 = vaddh_f16(r2,r3);
+    r4 = vaddh_f16(r4,r5);
+
+    r0 = vaddh_f16(r0,r6);
+    r2 = vaddh_f16(r2,r4);
+
+    r0 = vaddh_f16(r0,r2);
 
     half out = 0;
     half temp = r0;
-    out += temp;
-    
+    out = vaddh_f16(out,temp);
+
     return out;
 }
 
@@ -2893,7 +2893,7 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2907,7 +2907,7 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -2925,16 +2925,16 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
-    
+
     r0 = r0+r2;
-    
+
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -2958,7 +2958,7 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -2972,7 +2972,7 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -2988,7 +2988,7 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3006,16 +3006,16 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
-    
+
     r0 = r0+r2;
-    
+
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -3039,7 +3039,7 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -3053,7 +3053,7 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3069,7 +3069,7 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3085,7 +3085,7 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3101,7 +3101,7 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3119,16 +3119,16 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
-    
+
     r0 = r0+r2;
 
     float out = 0;
     float temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -3152,7 +3152,7 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -3166,7 +3166,7 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3184,16 +3184,16 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
-    
+
     r0 = r0+r2;
 
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -3217,7 +3217,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -3231,7 +3231,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3247,7 +3247,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3265,7 +3265,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
     
@@ -3274,7 +3274,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 
@@ -3298,7 +3298,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
     rD = 0.14;
     rE = 0.15;
     rF = 0.16;
-    
+
     uint64 c = 0;
     while (c < iterations){
         size_t i = 0;
@@ -3312,7 +3312,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3328,7 +3328,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3344,7 +3344,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3360,7 +3360,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r4 = r4*rB+rD;
             r5 = r5*rC+rE;
             //r6 = r6*rD+rF;
-            
+
             r0 = r0*rD+rF;
             r1 = r1*rC+rE;
             r2 = r2*rB+rD;
@@ -3378,7 +3378,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
     r0 = r0+r1;
     r2 = r2+r3;
     r4 = r4+r5;
-    
+
     r0 = r0+r6;
     r2 = r2+r4;
     
@@ -3387,7 +3387,7 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
     double out = 0;
     double temp = r0;
     out += temp;
-    
+
     return out;
 }
 #endif

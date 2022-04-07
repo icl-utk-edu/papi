@@ -28,10 +28,6 @@ typedef float64x2_t DP_VEC_TYPE;
 #define MUL_VEC_PS(_I_,_J_) (float32x4_t)vmulq_f32( _I_ , _J_ );
 #define MUL_VEC_PD(_I_,_J_) (float64x2_t)vmulq_f64( _I_ , _J_ );
 
-//#define FMA_VEC_PH(_I_,_J_,_K_) (float16x8_t)vmlaq_f16( _K_ , _J_ , _I_ );
-//#define FMA_VEC_PS(_I_,_J_,_K_) (float32x4_t)vmlaq_f32( _K_ , _J_ , _I_ );
-//#define FMA_VEC_PD(_I_,_J_,_K_) (float64x2_t)vmlaq_f64( _K_ , _J_ , _I_ );
-
 #define FMA_VEC_PH(_I_,_J_,_K_) (float16x8_t)vfmaq_f16( _K_ , _J_ , _I_ );
 #define FMA_VEC_PS(_I_,_J_,_K_) (float32x4_t)vfmaq_f32( _K_ , _J_ , _I_ );
 #define FMA_VEC_PD(_I_,_J_,_K_) (float64x2_t)vfmaq_f64( _K_ , _J_ , _I_ );
