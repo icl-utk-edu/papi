@@ -170,7 +170,10 @@ main( int argc, char **argv )
         int j;
 
         if ( dev_type_info[i].id == PAPI_DEV_TYPE_ID__CPU && dev_type_info[i].num_devices > 0 ) {
-            printf( "Vendor                                : %s\n", dev_type_info[i].vendor );
+            printf( "Vendor                                : %s (%d,0x%x)\n",
+                                                             dev_type_info[i].vendor,
+                                                             dev_type_info[i].vendor_id,
+                                                             dev_type_info[i].vendor_id );
 
             PAPI_cpu_info_t *cpu_info = (PAPI_cpu_info_t *) dev_type_info[i].dev_info_arr;
             for ( j = 0; j < dev_type_info[i].num_devices; j++ ) {

@@ -135,6 +135,9 @@ open_cpu_dev_type( PAPI_dev_type_info_t *dev_type_info )
     CPU_CALL(cpu_get_vendor(dev_type_info->vendor),
              strcpy(dev_type_info->vendor, "UNKNOWN"));
 
+    CPU_CALL(cpu_get_attribute(CPU_ATTR__VENDOR_ID, &dev_type_info->vendor_id),
+             dev_type_info->vendor_id = -1);
+
     strcpy(dev_type_info->status, "Device Initialized");
     dev_type_info->num_devices = 1;
 

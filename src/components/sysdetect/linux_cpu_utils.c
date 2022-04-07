@@ -10,15 +10,21 @@
 #include "sysdetect.h"
 #include "linux_cpu_utils.h"
 
-#define VENDOR_UNINITED    0
-#define VENDOR_INTEL_X86   1
-#define VENDOR_INTEL_IA64  2
-#define VENDOR_AMD         3
-#define VENDOR_IBM         4
-#define VENDOR_MIPS        5
-#define VENDOR_ARM         6
-#define VENDOR_CRAY        7
-#define VENDOR_UNKNOWN     8
+#define VENDOR_UNKNOWN       -1
+#define VENDOR_UNINITED      0
+#define VENDOR_INTEL_X86     1
+#define VENDOR_AMD           2
+#define VENDOR_IBM           3
+#define VENDOR_CRAY          4
+#define VENDOR_MIPS          8
+#define VENDOR_INTEL_IA64    9
+#define VENDOR_ARM_ARM       65
+#define VENDOR_ARM_BROADCOM  66
+#define VENDOR_ARM_CAVIUM    67
+#define VENDOR_ARM_FUJITSU   70
+#define VENDOR_ARM_HISILICON 72
+#define VENDOR_ARM_APM       80
+#define VENDOR_ARM_QUALCOMM  81
 
 #define _PATH_SYS_SYSTEM "/sys/devices/system/"
 #define _PATH_SYS_CPU0   _PATH_SYS_SYSTEM "/cpu/cpu0"
@@ -64,7 +70,13 @@ linux_cpu_get_vendor( char *vendor )
         namekey_ptr = namekey_ibm;
     } else if (vendor_id == VENDOR_MIPS) {
         namekey_ptr = namekey_mips;
-    } else if (vendor_id == VENDOR_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
+               vendor_id == VENDOR_ARM_BROADCOM  ||
+               vendor_id == VENDOR_ARM_CAVIUM    ||
+               vendor_id == VENDOR_ARM_FUJITSU   ||
+               vendor_id == VENDOR_ARM_HISILICON ||
+               vendor_id == VENDOR_ARM_APM       ||
+               vendor_id == VENDOR_ARM_QUALCOMM) {
         namekey_ptr = namekey_arm;
     } else {
         namekey_ptr = namekey_dum;
@@ -89,7 +101,13 @@ linux_cpu_get_name( char *name )
         namekey_ptr = namekey_x86;
     } else if (vendor_id == VENDOR_IBM) {
         namekey_ptr = namekey_ibm;
-    } else if (vendor_id == VENDOR_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
+               vendor_id == VENDOR_ARM_BROADCOM  ||
+               vendor_id == VENDOR_ARM_CAVIUM    ||
+               vendor_id == VENDOR_ARM_FUJITSU   ||
+               vendor_id == VENDOR_ARM_HISILICON ||
+               vendor_id == VENDOR_ARM_APM       ||
+               vendor_id == VENDOR_ARM_QUALCOMM) {
         namekey_ptr = namekey_arm;
     } else {
         namekey_ptr = namekey_dum;
@@ -104,7 +122,7 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
     int status = CPU_SUCCESS;
 
 #define TOPOKEY_NUM_KEY 4
-#define VERKEY_NUM_KEY 3
+#define VERKEY_NUM_KEY 4
 
     int topo_idx = TOPOKEY_NUM_KEY;
     int ver_idx = VERKEY_NUM_KEY;
@@ -120,21 +138,25 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
         "cpu family",       /* cpuid_family */
         "model",            /* cpuid_model */
         "stepping",         /* cpuid_stepping */
+        "vendor_id",        /* vendor id */
     };
 
     const char *verkey_ibm[VERKEY_NUM_KEY] = {
         "none",             /* cpuid_family */
         "none",             /* cpuid_model */
         "revision",         /* cpuid_stepping */
+        "vendor_id",        /* vendor id */
     };
 
     const char *verkey_arm[VERKEY_NUM_KEY] = {
         "CPU architecture", /* cpuid_family */
         "CPU part",         /* cpuid_model */
         "CPU variant",      /* cpuid_stepping */
+        "CPU implementer",  /* vendor id */
     };
 
     const char *verkey_dum[VERKEY_NUM_KEY] = {
+        "none",
         "none",
         "none",
         "none",
@@ -148,7 +170,13 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
         verkey_ptr = verkey_x86;
     } else if (vendor_id == VENDOR_IBM) {
         verkey_ptr = verkey_ibm;
-    } else if (vendor_id == VENDOR_ARM) {
+    } else if (vendor_id == VENDOR_ARM_ARM       ||
+               vendor_id == VENDOR_ARM_BROADCOM  ||
+               vendor_id == VENDOR_ARM_CAVIUM    ||
+               vendor_id == VENDOR_ARM_FUJITSU   ||
+               vendor_id == VENDOR_ARM_HISILICON ||
+               vendor_id == VENDOR_ARM_APM       ||
+               vendor_id == VENDOR_ARM_QUALCOMM) {
         verkey_ptr = verkey_arm;
     } else {
         verkey_ptr = verkey_dum;
@@ -175,6 +203,9 @@ linux_cpu_get_attribute( CPU_attr_e attr, int *value )
             --ver_idx;
             // fall through
         case CPU_ATTR__CPUID_STEPPING:
+            --ver_idx;
+            // fall through
+        case CPU_ATTR__VENDOR_ID:
             --ver_idx;
             status = get_versioning_info(verkey_ptr[ver_idx], value);
             break;
@@ -342,6 +373,11 @@ get_versioning_info( const char *key, int *val )
 {
     if (!strcmp(key, "none")) {
         *val = -1;
+        return CPU_SUCCESS;
+    }
+
+    if (!strcmp(key, "vendor_id") || !strcmp(key, "CPU implementer")) {
+        *val = get_vendor_id();
         return CPU_SUCCESS;
     }
 
@@ -831,8 +867,20 @@ decode_vendor_string( char *s, int *vendor )
         *vendor = VENDOR_IBM;
     else if (strcasecmp(s, "Cray") == 0)
         *vendor = VENDOR_CRAY;
-    else if (strcasecmp(s, "ARM") == 0)
-        *vendor = VENDOR_ARM;
+    else if (strcasecmp(s, "ARM_ARM") == 0)
+        *vendor = VENDOR_ARM_ARM;
+    else if (strcasecmp(s, "ARM_BROADCOM") == 0)
+        *vendor = VENDOR_ARM_BROADCOM;
+    else if (strcasecmp(s, "ARM_CAVIUM") == 0)
+        *vendor = VENDOR_ARM_CAVIUM;
+    else if (strcasecmp(s, "ARM_FUJITSU") == 0)
+        *vendor = VENDOR_ARM_FUJITSU;
+    else if (strcasecmp(s, "ARM_HISILICON") == 0)
+        *vendor = VENDOR_ARM_HISILICON;
+    else if (strcasecmp(s, "ARM_APM") == 0)
+        *vendor = VENDOR_ARM_APM;
+    else if (strcasecmp(s, "ARM_QUALCOMM") == 0)
+        *vendor = VENDOR_ARM_QUALCOMM;
     else if (strcasecmp(s, "MIPS") == 0)
         *vendor = VENDOR_MIPS;
     else if (strcasecmp(s, "SiCortex") == 0)
@@ -846,7 +894,7 @@ get_vendor_id( void )
 {
     static int vendor_id; // VENDOR_UNINITED;
 
-    if (vendor_id > VENDOR_UNINITED)
+    if (vendor_id != VENDOR_UNINITED)
         return vendor_id;
 
     FILE *fp = fopen("/proc/cpuinfo", "r");
@@ -880,7 +928,33 @@ get_vendor_id( void )
                 } else {
                     s = search_cpu_info(fp, "CPU implementer");
                     if (s) {
-                        strcpy(vendor_string, "ARM");
+                        int tmp;
+                        sscanf(s, "%x", &tmp);
+                        switch(tmp) {
+                            case VENDOR_ARM_ARM:
+                                strcpy(vendor_string, "ARM_ARM");
+                                break;
+                            case VENDOR_ARM_BROADCOM:
+                                strcpy(vendor_string, "ARM_BROADCOM");
+                                break;
+                            case VENDOR_ARM_CAVIUM:
+                                strcpy(vendor_string, "ARM_CAVIUM");
+                                break;
+                            case VENDOR_ARM_FUJITSU:
+                                strcpy(vendor_string, "ARM_FUJITSU");
+                                break;
+                            case VENDOR_ARM_HISILICON:
+                                strcpy(vendor_string, "ARM_HISILICON");
+                                break;
+                            case VENDOR_ARM_APM:
+                                strcpy(vendor_string, "ARM_APM");
+                                break;
+                            case VENDOR_ARM_QUALCOMM:
+                                strcpy(vendor_string, "ARM_QUALCOMM");
+                                break;
+                            default:
+                                strcpy(vendor_string, "UNKNOWN");
+                        }
                     }
                 }
             }

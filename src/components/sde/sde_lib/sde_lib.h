@@ -1114,8 +1114,11 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
     counter_data = (long long int *)calloc(1, sizeof(long long int));
 
+    _sde_lock();
+
     ret_val = sde_setup_counter_internals( lib_handle, event_name, cntr_mode, PAPI_SDE_long_long, counter_data, NULL, NULL, &placeholder );
     if( SDE_OK != ret_val ){
+        _sde_unlock();
         return ret_val;
     }
 
@@ -1127,6 +1130,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     if(NULL == cntr) {
         SDEDBG("Logging counter '%s' not properly inserted in SDE library '%s'\n", full_event_name, lib_handle->libraryName);
         free(full_event_name);
+        _sde_unlock();
         return SDE_ECMP;
     }
 
@@ -1138,6 +1142,8 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     if( NULL != cntr_handle ){
         *(sde_counter_t **)cntr_handle = cntr;
     }
+
+    _sde_unlock();
 
     free(full_event_name);
 
@@ -1738,7 +1744,9 @@ __attribute__((visibility("hidden")))
 }
 
 
-
+// This function modifies data structures, BUT its callers are responsible for aquiring a lock, so it
+// is always called in an atomic fashion and thus should not acquire a lock. Actually, locking inside
+// this function will cause a deadlock.
 static int sde_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter, papi_sde_fptr_t fp_counter, const void *param, sde_counter_t **placeholder )
 {
     papisde_library_desc_t *lib_handle;
@@ -1773,10 +1781,6 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
         return 1;
     }
 
-    // After this point we will be modifying data structures, so we need to acquire a lock.
-    // This function has multiple exist points. If you add more, make sure you unlock before each one of them.
-    _sde_lock();
-
     // Look if the event is already registered.
     tmp_item = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
 
@@ -1784,14 +1788,12 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
         if( NULL != tmp_item->counter_group_head ){
             SDE_ERROR("sde_setup_counter_internals(): Unable to register counter '%s'. There is a counter group with the same name.\n",full_event_name);
             free(full_event_name);
-            _sde_unlock();
             return SDE_EINVAL;
         }
         if( (NULL != tmp_item->data) || (NULL != tmp_item->func_ptr) ){
             // If it is registered and it is _not_ a placeholder then ignore it silently.
             SDEDBG("%s: Counter: '%s' was already in library: %s.\n", __FILE__, full_event_name, lib_handle->libraryName);
             free(full_event_name);
-            _sde_unlock();
             return SDE_OK;
         }
         // If it is registered and it _is_ a placeholder then update the mode, the type, and the 'data' pointer or the function pointer.
@@ -1811,7 +1813,6 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
         if( placeholder )
             *placeholder = tmp_item;
 
-        _sde_unlock();
         return SDE_OK;
     }
 
@@ -1824,7 +1825,6 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     // allocate_and_insert() does not care if any (or all) of "counter", "fp_counter", or "param" are NULL. It will just assign them to the structure.
     tmp_item = allocate_and_insert( gctl, lib_handle, full_event_name, counter_uniq_id, cntr_mode, cntr_type, counter, fp_counter, param );
-    _sde_unlock();
     if(NULL == tmp_item) {
         SDEDBG("%s: Counter not inserted in SDE %s\n", __FILE__, lib_handle->libraryName);
         free(full_event_name);
