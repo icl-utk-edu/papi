@@ -1399,7 +1399,7 @@ static const intel_x86_umask_t intel_icl_uops_retired[]={
   { .uname   = "SLOTS",
     .udesc   = "Retirement slots used.",
     .ucode   = 0x0200ull,
-    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_FIXED,
+    .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "TOTAL_CYCLES",
     .udesc   = "Cycles with less than 10 actually retired uops.",
@@ -2295,7 +2295,7 @@ static const intel_x86_umask_t intel_icl_cpu_clk_unhalted[]={
   { .uname   = "REF_TSC",
     .udesc   = "Reference cycles when the core is not in halt state.",
     .ucode   = 0x0300ull,
-    .uflags  = INTEL_X86_NCOMBO,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_CODE_OVERRIDE,
   },
 };
 
@@ -2312,7 +2312,7 @@ static const intel_x86_umask_t intel_icl_inst_retired[]={
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "PREC_DIST",
-    .udesc   = "Precise instruction retired event with a reduced effect of PEBS shadow in IP distribution (Fixed counter 1 only. c, e, i, intx, intxcp modifiers not available)",
+    .udesc   = "Precise instruction retired event with a reduced effect of PEBS shadow in IP distribution (Fixed counter 0 only. c, e, i, intx, intxcp modifiers not available)",
     .ucode   = 0x0100ull,
     .ucntmsk = 0x100000000ull,
     .uflags  = INTEL_X86_NCOMBO | INTEL_X86_CODE_OVERRIDE | INTEL_X86_FIXED | INTEL_X86_PEBS,
