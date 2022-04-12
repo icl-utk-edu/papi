@@ -1,11 +1,11 @@
 #include "vec_scalar_verify.h"
 
-void resultline_placeholder(long long theory, FILE *fp)
+void papi_stop_and_print_placeholder(long long theory, FILE *fp)
 {
     fprintf(fp, "%lld 0\n", theory);
 }
 
-void resultline(long long theory, int EventSet, FILE *fp)
+void papi_stop_and_print(long long theory, int EventSet, FILE *fp)
 {
     long long flpins = 0;
     int retval;

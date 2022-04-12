@@ -79,7 +79,7 @@ float test_sp_mac_AVX_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(12, EventSet, fp);
+    papi_stop_and_print(12, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm256_add_ps(r0,r1);
@@ -211,7 +211,7 @@ float test_sp_mac_AVX_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(24, EventSet, fp);
+    papi_stop_and_print(24, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm256_add_ps(r0,r1);
@@ -407,7 +407,7 @@ float test_sp_mac_AVX_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(48, EventSet, fp);
+    papi_stop_and_print(48, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = _mm256_add_ps(r0,r1);
@@ -510,7 +510,7 @@ float test_sp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(12, EventSet, fp);
+    papi_stop_and_print(12, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PS(r0,r1);
@@ -605,7 +605,7 @@ float test_sp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(24, EventSet, fp);
+    papi_stop_and_print(24, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PS(r0,r1);
@@ -732,7 +732,7 @@ float test_sp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     }
 
     /* Stop PAPI counters */
-    resultline(48, EventSet, fp);
+    papi_stop_and_print(48, EventSet, fp);
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PS(r0,r1);

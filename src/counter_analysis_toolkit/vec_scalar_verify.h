@@ -6,8 +6,8 @@
 
 typedef unsigned long long uint64;
 
-void resultline_placeholder(long long theory, FILE *fp);
-void resultline(long long theory, int EventSet, FILE *fp);
+void papi_stop_and_print_placeholder(long long theory, FILE *fp);
+void papi_stop_and_print(long long theory, int EventSet, FILE *fp);
 
 #if defined(INTEL) || defined(AMD)
 
