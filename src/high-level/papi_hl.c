@@ -1548,7 +1548,7 @@ static void _internal_hl_write_output()
             rank += random_cnt;
             sprintf(final_absolute_output_file_path, "%s/rank_%06d.json", absolute_output_file_path, rank);
 
-            fd = open(final_absolute_output_file_path, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+            fd = open(final_absolute_output_file_path, O_WRONLY|O_APPEND|O_CREAT|O_NONBLOCK, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
             if ( fd == -1 ) {
                verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file.\n");
                free(absolute_output_file_path);
@@ -1556,7 +1556,13 @@ static void _internal_hl_write_output()
                return;
             }
 
-            if ( flock(fd, LOCK_EX|LOCK_NB) == 0 ) {
+            struct flock filelock;
+            filelock.l_type   = F_WRLCK; /* Test for any lock on any part of file. */
+            filelock.l_start  = 0;
+            filelock.l_whence = SEEK_SET;
+            filelock.l_len    = 0;
+
+            if ( fcntl(fd, F_SETLK, &filelock) == 0 ) {
                unique_output_file_created = 1;
                free(absolute_output_file_path);
 
@@ -1585,10 +1591,10 @@ static void _internal_hl_write_output()
                } else {
                   verbose_fprintf(stdout, "PAPI-HL Error: Cannot create output file: %s\n", strerror( errno ));
                   free(final_absolute_output_file_path);
-                  flock(fd, LOCK_UN);
+                  fcntl(fd, F_UNLCK, &filelock);
                   return;
                }
-               flock(fd, LOCK_UN);
+               fcntl(fd, F_UNLCK, &filelock);
             } else {
                /* try another file name */
                close(fd);
