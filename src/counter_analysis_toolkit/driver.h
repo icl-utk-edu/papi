@@ -3,6 +3,7 @@
 #include "branch.h"
 #include "icache.h"
 #include "flops.h"
+#include "vec.h"
 #include "hw_desc.h"
 
 #define USE_ALL_EVENTS 0x0
@@ -13,6 +14,7 @@
 #define BENCH_DCACHE_READ  0x04
 #define BENCH_DCACHE_WRITE 0x08
 #define BENCH_ICACHE_READ  0x10
+#define BENCH_VEC          0x20
 
 int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type, int *show_progress);
 int setup_evts(char* inputfile, char*** basenames, int** cards);
