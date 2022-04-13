@@ -87,11 +87,11 @@ typedef struct papi_sde_fptr_struct_s {
   #define _SDE_HASH_BUCKET_COUNT_ 61
   #define _SDE_HASH_BUCKET_WIDTH_ 5
 #else                        // 124KB storage (5222 elements)
-  #define _SDE_HASH_BUCKET_COUNT_ 373 
+  #define _SDE_HASH_BUCKET_COUNT_ 373
   #define _SDE_HASH_BUCKET_WIDTH_ 14
 #endif
 
-// defining SDE_HASH_IS_FUZZY to 1 will make the comparisons operation of the hash table 
+// defining SDE_HASH_IS_FUZZY to 1 will make the comparisons operation of the hash table
 // (which is used in the "counting sets") faster, but inaccurate. As a result, some input
 // elements might collide onto the same hash table entry, even if they are different.
 // If speed is more important than accurate counting for your library, then setting
@@ -249,11 +249,7 @@ extern sde_counter_t *allocate_and_insert(papisde_control_t *gctl, papisde_libra
 extern void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer);
 extern int _sde_be_verbose;
 extern int _sde_debug;
-#if defined(DEBUG)
 #define SDEDBG(format, args...) { if(_sde_debug){fprintf(stderr,format, ## args);} }
-#else // DEBUG
-#define SDEDBG(format, args...) { ; }
-#endif
 
 static inline void SDE_ERROR( const char *format, ... ){
     va_list args;
@@ -316,7 +312,7 @@ static inline uint64_t fasthash64(const void *buf, size_t len, uint64_t seed)
 	}
 
 	return mix(h);
-} 
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -331,7 +327,6 @@ int _sde_debug = 0;
 
 static papisde_library_desc_t *find_library_by_name(const char *library_name, papisde_control_t *gctl);
 static void insert_library_handle(papisde_library_desc_t *lib_handle, papisde_control_t *gctl);
-
 /*************************************************************************/
 /* Functions related to internal hashing of events                       */
 /*************************************************************************/
@@ -386,7 +381,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
 
     list_head = &hash_table[ht_key];
     if( NULL == list_head->item ){
-        SDE_ERROR("ht_delete(): the entry does not exist.\n");
+        SDE_ERROR("ht_delete(): the entry does not exist.");
         return NULL;
     }
 
@@ -402,7 +397,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
     // Traverse the linked list to find the element.
     for(curr=list_head->next; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This is only permitted for the head of the list.
-            SDE_ERROR("ht_delete(): the hash table is clobbered.\n");
+            SDE_ERROR("ht_delete(): the hash table is clobbered.");
             return NULL;
         }
         if(curr->item->glb_uniq_id == uniq_id){
@@ -414,7 +409,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
         prev = curr;
     }
 
-    SDE_ERROR("ht_delete(): the item is not in the list.\n");
+    SDE_ERROR("ht_delete(): the item is not in the list.");
     return NULL;
 }
 
@@ -430,7 +425,7 @@ sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *n
 
     for(curr=list_head; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This can only legally happen for the head of the list.
-            SDE_ERROR("ht_lookup_by_name() the hash table is clobbered\n");
+            SDE_ERROR("ht_lookup_by_name() the hash table is clobbered.");
             return NULL;
         }
         if( !strcmp(curr->item->name, name) ){
@@ -452,7 +447,7 @@ sde_counter_t *ht_lookup_by_id(papisde_list_entry_t *hash_table, unsigned int un
 
     for(curr=list_head; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This can only legally happen for the head of the list.
-            SDE_ERROR("ht_lookup_by_id() the hash table is clobbered\n");
+            SDE_ERROR("ht_lookup_by_id() the hash table is clobbered.");
             return NULL;
         }
         if(curr->item->glb_uniq_id == uniq_id){
@@ -483,7 +478,7 @@ papisde_library_desc_t *find_library_by_name(const char *library_name, papisde_c
     // Check to see if this library has already been initialized.
     while(NULL != tmp_lib){
         char *tmp_name = tmp_lib->libraryName;
-        SDEDBG("Checking library: '%s' against registered library: '%s'\n",library_name, tmp_lib->libraryName);
+        SDEDBG("Checking library: '%s' against registered library: '%s'\n", library_name, tmp_lib->libraryName);
         // If we find the same library already registered, we do not create a new entry.
         if( (NULL != tmp_name) && !strcmp(tmp_name, library_name) )
             return tmp_lib;
@@ -939,7 +934,7 @@ papi_sde_init(const char *name_of_library)
         _sde_debug = 1;
     }
 
-    SDEDBG("Registering library: '%s'\n",name_of_library);
+    SDEDBG("Registering library: '%s'\n", name_of_library);
 
 #if !defined(STATIC_SDE)
     obtain_papi_symbols();
@@ -1042,12 +1037,14 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     int error;
     char *full_event_name;
 
+    SDEDBG("Preparing to unregister counter\n");
+
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_unregister_counter(): 'handle' is clobbered. Unable to unregister counter.\n");
+        SDE_ERROR("papi_sde_unregister_counter(): 'handle' is clobbered. Unable to unregister counter.");
         return SDE_EINVAL;
     }
 
@@ -1055,7 +1052,7 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
-    SDEDBG("papi_sde_unregister_counter(): Preparing to unregister counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
+    SDEDBG("Unregistering counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
     // This function has multiple exist points. If you add more, make sure you unlock before each one of them.
@@ -1064,7 +1061,7 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     error = delete_counter( lib_handle, full_event_name );
     // Check if we found a registered counter, or if it never existed.
     if( error ){
-        SDE_ERROR("papi_sde_unregister_counter(): Counter '%s' has not been registered by library '%s'.\n", full_event_name, lib_handle->libraryName);
+        SDE_ERROR("Counter '%s' has not been registered by library '%s'.", full_event_name, lib_handle->libraryName);
         free(full_event_name);
         _sde_unlock();
         return SDE_EINVAL;
@@ -1099,7 +1096,7 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_describe_counter(): 'handle' is clobbered. Unable to add description for counter.\n");
+        SDE_ERROR("papi_sde_describe_counter(): 'handle' is clobbered. Unable to add description for counter.");
         return SDE_EINVAL;
     }
 
@@ -1146,11 +1143,11 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
-    SDEDBG("papi_sde_add_counter_to_group(): Adding counter: %s into group %s\n",event_name, group_name);
+    SDEDBG("Adding counter: %s into group %s\n",event_name, group_name);
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_add_counter_to_group(): 'handle' is clobbered. Unable to add counter to group.\n");
+        SDE_ERROR("papi_sde_add_counter_to_group(): 'handle' is clobbered. Unable to add counter to group.");
         return SDE_EINVAL;
     }
 
@@ -1166,7 +1163,7 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     tmp_item = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
     if( NULL == tmp_item ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_add_counter_to_group(): Unable to find counter: '%s'.\n",full_event_name);
+        SDE_ERROR("papi_sde_add_counter_to_group(): Unable to find counter: '%s'.",full_event_name);
         free(full_event_name);
         return SDE_EINVAL;
     }
@@ -1216,13 +1213,13 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     }else{
         // should the following branch ever be true? Why do we already have a group registered if it's empty?
         if( NULL == tmp_group->counter_group_head ){
-            SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.\n", group_name);
+            SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.", group_name);
         }
 
         // make sure the caller is not trying to change the flags of the group after it has been created.
         if( tmp_group->counter_group_flags != group_flags ){
             _sde_unlock();
-            SDE_ERROR("papi_sde_add_counter_to_group(): Attempting to add counter '%s' to counter group '%s' with incompatible group flags.\n", event_name, group_name);
+            SDE_ERROR("papi_sde_add_counter_to_group(): Attempting to add counter '%s' to counter group '%s' with incompatible group flags.", event_name, group_name);
             free(full_group_name);
             return SDE_EINVAL;
         }
@@ -1277,11 +1274,11 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_create_counter(): 'handle' is clobbered. Unable to create counter.\n");
+        SDE_ERROR("papi_sde_create_counter(): 'handle' is clobbered. Unable to create counter.");
         return SDE_EINVAL;
     }
 
-    SDEDBG("Preparing to create counter: '%s' with mode: '%d' in SDE library: %s.\n", event_name, cntr_mode, lib_handle->libraryName);
+    SDEDBG("Adding created counter: '%s' with mode: '%d' in SDE library: %s.\n", event_name, cntr_mode, lib_handle->libraryName);
 
     counter_data = (long long int *)calloc(1, sizeof(long long int));
 
@@ -1335,7 +1332,7 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
     tmp_cntr = (sde_counter_t *)cntr_handle;
     if( NULL == tmp_cntr ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): 'cntr_handle' is clobbered. Unable to modify value of counter.\n");
+        SDE_ERROR("papi_sde_inc_counter(): 'cntr_handle' is clobbered. Unable to modify value of counter.");
         return SDE_EINVAL;
     }
 
@@ -1345,19 +1342,19 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 
     if( NULL == ptr ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter structure is clobbered. Unable to modify value of counter.\n");
+        SDE_ERROR("papi_sde_inc_counter(): Counter structure is clobbered. Unable to modify value of counter.");
         return SDE_EINVAL;
     }
 
     if( !tmp_cntr->is_created ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter is not created by PAPI, cannot be modified using this function.\n");
+        SDE_ERROR("papi_sde_inc_counter(): Counter is not created by PAPI, cannot be modified using this function.");
         return SDE_EINVAL;
     }
 
     if( PAPI_SDE_long_long != tmp_cntr->cntr_type ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter is not of type \"long long int\" and cannot be modified using this function.\n");
+        SDE_ERROR("papi_sde_inc_counter(): Counter is not of type \"long long int\" and cannot be modified using this function.");
         return SDE_EINVAL;
     }
 
@@ -1619,7 +1616,7 @@ papi_sde_counting_set_insert( void *cset_handle, size_t element_size, size_t has
             // Since there are elements in the overflow list, we need to search there for the one we are looking for.
             sde_list_object_t *list_runner;
             for( list_runner = hash_ptr->overflow_list; list_runner != NULL; list_runner = list_runner->next){
-                // if we find the element in the overflow list, increment the counter and exit the loop. 
+                // if we find the element in the overflow list, increment the counter and exit the loop.
                 if( (hashable_size <= list_runner->object.typesize) && !memcmp(element, list_runner->object.ptr, hashable_size) ){
                     list_runner->object.count += 1;
                     break;
@@ -1669,7 +1666,7 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     _sde_lock();
 
     if( (NULL == lib_handle) || (NULL == lib_handle->libraryName) ){
-        SDE_ERROR("papi_sde_create_recorder(): 'handle' is clobbered. Unable to create recorder.\n");
+        SDE_ERROR("papi_sde_create_recorder(): 'handle' is clobbered. Unable to create recorder.");
         _sde_unlock();
         return SDE_EINVAL;
     }
@@ -1757,8 +1754,6 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     return SDE_OK;
 }
 
-
-// UPDATED for EXP-storage
 int
 __attribute__((visibility("hidden")))
 papi_sde_record( void *record_handle, size_t typesize, const void *value)
@@ -1776,13 +1771,13 @@ papi_sde_record( void *record_handle, size_t typesize, const void *value)
 
     if( NULL == tmp_item ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to record value.\n");
+        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to record value.");
         return SDE_EINVAL;
     }
 
     if( NULL == tmp_item->recorder_data || NULL == tmp_item->recorder_data->exp_container[0]){
         _sde_unlock();
-        SDE_ERROR("papi_sde_record(): Counter structure is clobbered. Unable to record event.\n");
+        SDE_ERROR("papi_sde_record(): Counter structure is clobbered. Unable to record event.");
         return SDE_EINVAL;
     }
 
@@ -1844,7 +1839,7 @@ papi_sde_reset_recorder( void *record_handle )
 
     if( NULL == tmp_rcrdr || NULL == tmp_rcrdr->recorder_data ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to reset recorder.\n");
+        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to reset recorder.");
         return SDE_EINVAL;
     }
 
@@ -1874,7 +1869,7 @@ papi_sde_reset_counter( void *cntr_handle )
 
     if( NULL == tmp_cntr ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): 'cntr_handle' is clobbered. Unable to reset value of counter.\n");
+        SDE_ERROR("papi_sde_reset_counter(): 'cntr_handle' is clobbered. Unable to reset value of counter.");
         return SDE_EINVAL;
     }
 
@@ -1882,13 +1877,13 @@ papi_sde_reset_counter( void *cntr_handle )
 
     if( NULL == ptr ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): Counter structure is clobbered. Unable to reset value of counter.\n");
+        SDE_ERROR("papi_sde_reset_counter(): Counter structure is clobbered. Unable to reset value of counter.");
         return SDE_EINVAL;
     }
 
     if( tmp_cntr->is_created ){
         _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): Counter is not created by PAPI, so it cannot be reset.\n");
+        SDE_ERROR("papi_sde_reset_counter(): Counter is not created by PAPI, so it cannot be reset.");
         return SDE_EINVAL;
     }
 
@@ -1909,7 +1904,7 @@ static inline int sde_do_register( papi_handle_t handle, const char *event_name,
     sde_counter_t *placeholder;
     int ret;
 
-    SDEDBG("%s: Preparing to register counter: '%s' with mode: '%d' and type: '%d'.\n", __FILE__, event_name, cntr_mode, cntr_type);
+    SDEDBG("Registering counter: '%s' with mode: '%d' and type: '%d'.\n", event_name, cntr_mode, cntr_type);
 
     ret = sde_setup_counter_internals( handle, event_name, cntr_mode, cntr_type, counter, fp_counter, param, &placeholder );
 
@@ -2170,7 +2165,7 @@ __attribute__((visibility("hidden")))
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_get_counter_handle(): 'handle' is clobbered.\n");
+        SDE_ERROR("papi_sde_get_counter_handle(): 'handle' is clobbered.");
         return NULL;
     }
 
@@ -2204,7 +2199,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( (NULL == lib_handle) || (NULL == lib_handle->libraryName) ){
-        SDE_ERROR("sde_setup_counter_internals(): 'handle' is clobbered. Unable to register counter.\n");
+        SDE_ERROR("sde_setup_counter_internals(): 'handle' is clobbered. Unable to register counter.");
         return SDE_EINVAL;
     }
 
@@ -2215,7 +2210,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
     SDEDBG("%s: Counter: '%s' will be added in library: %s.\n", __FILE__, full_event_name, lib_handle->libraryName);
 
     if( !is_instant(cntr_mode) && !is_delta(cntr_mode) ){
-        SDE_ERROR("Unknown mode %d. SDE counter mode must be either Instant or Delta.\n",cntr_mode);
+        SDE_ERROR("Unknown mode %d. SDE counter mode must be either Instant or Delta.",cntr_mode);
         free(full_event_name);
         return SDE_ECMP;
     }
@@ -2231,7 +2226,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     if( NULL != tmp_item ){
         if( NULL != tmp_item->counter_group_head ){
-            SDE_ERROR("sde_setup_counter_internals(): Unable to register counter '%s'. There is a counter group with the same name.\n",full_event_name);
+            SDE_ERROR("sde_setup_counter_internals(): Unable to register counter '%s'. There is a counter group with the same name.",full_event_name);
             free(full_event_name);
             return SDE_EINVAL;
         }
@@ -2322,7 +2317,7 @@ namespace papi_sde
               if( std::is_same<long long int, T>::value ){
                   return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (papi_sde_fptr_t)func_ptr, &param);
               }else{
-                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.\n");
+                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.");
                   return SDE_EINVAL;
               }
           }
@@ -2404,7 +2399,6 @@ namespace papi_sde
                   if( SDE_OK != papi_sde_create_counter(sde_handle, event_name, cntr_mode, &counter_handle) )
                       throw std::exception();
               }
-
 
               template <typename T>
               int increment(T const &increment){
