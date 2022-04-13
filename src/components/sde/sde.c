@@ -511,7 +511,7 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
         // Our convention is that read attempts on a placeholder will set the counter to "-1" to
         // signify semantically that there was an error, but the function will not return an error
         // to avoid breaking existing programs that do something funny when an error is returned.
-        if( (NULL == counter->data) && (NULL == counter->func_ptr) && (NULL == counter->recorder_data) ){
+        if( (NULL == counter->data) && (NULL == counter->func_ptr) && (NULL == counter->recorder_data) && (NULL == counter->hash_data) ){
             PAPIERROR("_sde_read(): Attempted read on a placeholder: '%s'.\n",counter->name);
             sde_ctl->counter[i] = -1;
             continue;
@@ -540,6 +540,13 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
             recorder_data_to_contiguous(counter, out_buffer);
             sde_ctl->counter[i] = (long long)out_buffer;
 
+            continue;
+        }
+
+        if( NULL != counter->hash_data ){
+            sde_list_object_t *list_head;
+            papi_sde_counting_set_to_list( counter, &list_head );
+            sde_ctl->counter[i] = (long long)list_head;
             continue;
         }
 
