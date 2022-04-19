@@ -713,8 +713,8 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 	pfmlib_pmu_t *pmu = this;
 	const amd64_entry_t *pe = this_pe(this);
 	const char *name =  pmu->name;
-	unsigned int j, k;
-	int i, ndfl;
+	unsigned int i, j, k;
+	int ndfl;
 	int error = 0;
 
 	if (!pmu->atdesc) {
@@ -727,7 +727,7 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 		error++;
 	}
 
-	for(i=0; i < pmu->pme_count; i++) {
+	for(i=0; i < (unsigned int)pmu->pme_count; i++) {
 
 		if (!pe[i].name) {
 			fprintf(fp, "pmu: %s event%d: :: no name (prev event was %s)\n", pmu->name, i,
@@ -820,6 +820,12 @@ pfm_amd64_validate_table(void *this, FILE *fp)
 					fprintf(fp, "pmu: %s event%d: %s :: umask %s and %s have overlapping code bits\n", name, i, pe[i].name, pe[i].umasks[j].uname, pe[i].umasks[k].uname);
 					error++;
 				}
+			}
+		}
+		for (j=i+1; j < (unsigned int)pmu->pme_count; j++) {
+			if (pe[i].code == pe[j].code && pe[i].flags == pe[j].flags) {
+				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
+				error++;
 			}
 		}
 	}
