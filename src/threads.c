@@ -630,3 +630,8 @@ _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where )
     return (unsigned long)(getpid());
   }
 #endif
+
+unsigned long _papi_getpid(void)
+{
+    return (unsigned long) getpid();
+}
