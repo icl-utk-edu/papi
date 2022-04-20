@@ -693,6 +693,8 @@ PMINIT
 PMAPI
 MAKEVER
 arch
+LIBSDEFLAGS
+BUILD_LIBSDE
 LDL
 LRT
 EGREP
@@ -767,6 +769,7 @@ with_nec
 with_bgpm_installdir
 with_nativecc
 with_tests
+with_libsde
 with_debug
 with_CPU
 with_pthread_mutexes
@@ -1442,6 +1445,7 @@ Optional Packages:
   --with-tests=<"ctests ftests mpitests", no>
                           Specify which tests to run on install, or "no" tests
                           (default: all available tests)
+  --with-libsde=<yes,no>  Build the standalone libsde (default: yes)
   --with-debug=<yes,memory,no>
                           Build a debug version, debug version plus memory
                           tracker or none
@@ -4688,6 +4692,36 @@ $as_echo "$tmp_tests" >&6; }
 fi
 
 
+## By default we want libsde built, so if the user does not
+## give an option, then we set BUILD_LIBSDE to yes.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building libsde" >&5
+$as_echo_n "checking for building libsde... " >&6; }
+
+# Check whether --with-libsde was given.
+if test "${with_libsde+set}" = set; then :
+  withval=$with_libsde;
+else
+  with_libsde=yes
+fi
+
+if test "$with_libsde" = "no"; then
+  BUILD_LIBSDE="no"
+else
+  BUILD_LIBSDE="yes"
+  if test "$PWD" != ""; then
+    TOPDIR=$PWD
+  else
+    TOPDIR=$(pwd)
+  fi
+  CFLAGS="$CFLAGS -DSDE"
+  LIBSDEFLAGS="${TOPDIR}/libsde.a"
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_libsde" >&5
+$as_echo "$with_libsde" >&6; }
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for debug build" >&5
 $as_echo_n "checking for debug build... " >&6; }
 
@@ -7062,7 +7096,6 @@ tests="$tests comp_tests"
 for comp in $components; do
   # check for SDE component to determine if we need -lrt in LDFLAGS
   if test "x$comp" = "xsde" ; then
-    CFLAGS="$CFLAGS -DSDE"
     LDFLAGS="$LDFLAGS $LRT"
     LIBS="$LIBS $LRT"
   fi

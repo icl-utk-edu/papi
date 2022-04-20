@@ -24,7 +24,7 @@ FHEADERS = fpapi.h f77papi.h f90papi.h
 # pkgconfig directory
 LIBPC = $(LIBDIR)/pkgconfig
 
-all: $(SHOW_CONF) $(LIBS) utils tests 
+all: $(SHOW_CONF) $(LIBS) libsde utils tests 
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests validation_tests null
 
 include $(COMPONENT_RULES)
@@ -69,6 +69,13 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	@set -ex; if test "$(POST_BUILD)" != "" ; then \
 		-$(POST_BUILD) ; \
 	fi
+
+libsde:
+ifeq ($(BUILD_LIBSDE),yes)
+		$(MAKE) -C sde_lib
+		ln -sf sde_lib/libsde.so.1.0 libsde.so
+		ln -sf sde_lib/libsde.a libsde.a
+endif
 
 papi_fwrappers_.c: papi_fwrappers.c $(HEADERS)
 	$(CPP) $(CPPFLAGS) -DFORTRANUNDERSCORE papi_fwrappers.c > papi_fwrappers_.c
@@ -282,7 +289,7 @@ clobber distclean: clean native_clobber
 	$(MAKE) -C utils distclean
 	$(MAKE) -C validation_tests distclean
 	$(MAKE) -C components -f Makefile_comp_tests distclean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so papi.pc components_config.h $(PAPI_EVENTS_TABLE)
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so sde_lib/libsde.so* sde_lib/libsde.a libsde.so libsde.a papi.pc components_config.h $(PAPI_EVENTS_TABLE)
 	rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
 null:
@@ -312,7 +319,8 @@ install-lib: native_install
 	-mkdir -p $(DESTDIR)$(INCDIR)
 	-chmod go+rx $(DESTDIR)$(INCDIR)
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
-	cd $(DESTDIR)$(INCDIR) && chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h
+	cp sde_lib/sde_lib.h sde_lib/sde_lib.hpp $(DESTDIR)$(INCDIR)
+	cd $(DESTDIR)$(INCDIR) && chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h sde_lib.h sde_lib.hpp
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
@@ -326,6 +334,17 @@ install-lib: native_install
 		cd $(DESTDIR)$(LIBDIR); \
 		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so.$(PAPISOVER); \
 		ln -sf libpapi.so.$(PAPIVER).$(PAPIREV).$(PAPIAGE).$(PAPIINC) libpapi.so; \
+	fi
+	@set -ex; if test -r libsde.so ; then \
+		cp sde_lib/libsde.so.1.0 $(DESTDIR)$(LIBDIR); \
+        chmod go+r $(DESTDIR)$(LIBDIR)/libsde.so.1.0; \
+		cd $(DESTDIR)$(LIBDIR); \
+		ln -sf libsde.so.1.0 libsde.so.1; \
+		ln -sf libsde.so.1.0 libsde.so; \
+	fi
+	@set -ex; if test -r libsde.a ; then \
+		cp sde_lib/libsde.a $(DESTDIR)$(LIBDIR); \
+        chmod go+r $(DESTDIR)$(LIBDIR)/libsde.a; \
 	fi
 
 install-man:  

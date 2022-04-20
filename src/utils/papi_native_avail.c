@@ -52,9 +52,7 @@
 #include "papi.h"
 #include "print_header.h"
 #if SDE
-#define STATIC_SDE
-#define EXCLUDE_SDE_COMMON
-#include "components/sde/sde_lib/sde_lib.h"
+#include "sde_lib/sde_lib.h"
 #endif
 
 #define EVT_LINE 80
@@ -145,7 +143,9 @@ parse_args( int argc, char **argv, command_flags_t * f )
 				printf( "Invalid argument for -e\n");
 				exit(1);
 			}
-		} else if ( !strcmp( argv[i], "-sde" ) ) {
+		}
+#if SDE
+		else if ( !strcmp( argv[i], "-sde" ) ) {
 			f->list_sdes = 1;
 			i++;
 			if ( i < argc )
@@ -154,7 +154,9 @@ parse_args( int argc, char **argv, command_flags_t * f )
 				printf( "Invalid argument for -sde\n");
 				exit(1);
 			}
-		} else if ( !strcmp( argv[i], "-i" ) ) {
+		}
+#endif
+		else if ( !strcmp( argv[i], "-i" ) ) {
 			f->include = 1;
 			i++;
 			if ( i < argc )
