@@ -15,7 +15,7 @@ LDFLAGS += -Llib -L$(datadir) -lpapi
 
 SDE_F08_API=../sde_F.F90
 
-TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test sde_test_f08
+TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++ sde_test_f08
 
 sde_tests: $(TESTS)
 
@@ -92,6 +92,28 @@ libCreated_Counter++.so: $(prfx)/Lib_With_Created_Counter++.cpp
 
 Created_Counter_Test++: $(prfx)/Created_Counter_Driver++.cpp libCreated_Counter++.so
 	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter++ $(LDFLAGS) -lm
+
+################################################################################
+## Counting Set test
+prfx=Counting_Set
+
+libCounting_Set++.so: $(prfx)/CountingSet_Lib++.cpp $(prfx)/cset_lib.hpp
+	$(CXX) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $<
+
+Counting_Set_MemLeak_Test++: $(prfx)/MemoryLeak_CountingSet_Driver++.cpp libCounting_Set++.so
+	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set++ $(LDFLAGS)
+
+Counting_Set_Simple_Test++: $(prfx)/Simple_CountingSet_Driver++.cpp libCounting_Set++.so
+	$(CXX) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set++ $(LDFLAGS)
+
+libCounting_Set.so: $(prfx)/CountingSet_Lib.c
+	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
+
+Counting_Set_Simple_Test: $(prfx)/Simple_CountingSet_Driver.c libCounting_Set.so
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(LDFLAGS)
+
+Counting_Set_MemLeak_Test: $(prfx)/MemoryLeak_CountingSet_Driver.c libCounting_Set.so
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(LDFLAGS)
 
 ################################################################################
 ## Advanced test

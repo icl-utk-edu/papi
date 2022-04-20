@@ -75,11 +75,52 @@ typedef struct papi_sde_fptr_struct_s {
     int (*create_counter)( papi_handle_t handle, const char *event_name, int cntr_type, void **cntr_handle );
     int (*inc_counter)( papi_handle_t cntr_handle, long long int increment );
     int (*create_recorder)( papi_handle_t handle, const char *event_name, size_t typesize, int (*cmpr_func_ptr)(const void *p1, const void *p2), void **record_handle );
+    int (*create_counting_set)( papi_handle_t handle, const char *cset_name, void **cset_handle );
     int (*record)( void *record_handle, size_t typesize, const void *value );
     int (*reset_recorder)(void *record_handle );
     int (*reset_counter)( void *cntr_handle );
     void *(*get_counter_handle)(papi_handle_t handle, const char *event_name);
 }papi_sde_fptr_struct_t;
+
+// _SDE_HASH_BUCKET_COUNT_ should not be a power of two, and even better it should be a prime.
+#if defined(SDE_HASH_SMALL) // 7.4KB storage
+  #define _SDE_HASH_BUCKET_COUNT_ 61
+  #define _SDE_HASH_BUCKET_WIDTH_ 5
+#else                        // 124KB storage (5222 elements)
+  #define _SDE_HASH_BUCKET_COUNT_ 373
+  #define _SDE_HASH_BUCKET_WIDTH_ 14
+#endif
+
+// defining SDE_HASH_IS_FUZZY to 1 will make the comparisons operation of the hash table
+// (which is used in the "counting sets") faster, but inaccurate. As a result, some input
+// elements might collide onto the same hash table entry, even if they are different.
+// If speed is more important than accurate counting for your library, then setting
+// SDE_HASH_IS_FUZZY to 1 is recommented.
+#define SDE_HASH_IS_FUZZY 0
+
+typedef struct sde_hash_decorated_object_s {
+    uint32_t count;
+    uint32_t typesize;
+    void *ptr;
+} sde_hash_decorated_object_t;
+
+typedef struct sde_list_object_s sde_list_object_t;
+struct sde_list_object_s {
+    sde_hash_decorated_object_t object;
+    sde_list_object_t *next;
+};
+
+
+typedef struct sde_hash_bucket_s {
+    uint32_t occupied;
+    uint64_t keys[_SDE_HASH_BUCKET_WIDTH_];
+    sde_hash_decorated_object_t objects[_SDE_HASH_BUCKET_WIDTH_];
+} sde_hash_bucket_t;
+
+typedef struct sde_hash_table_s {
+    sde_hash_bucket_t buckets[_SDE_HASH_BUCKET_COUNT_];
+    sde_list_object_t *overflow_list;
+} sde_hash_table_t;
 
 papi_handle_t papi_sde_init(const char *name_of_library );
 int papi_sde_register_counter(papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, void *counter );
@@ -112,6 +153,7 @@ papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct);
     _A_.create_counter = papi_sde_create_counter;\
     _A_.inc_counter = papi_sde_inc_counter;\
     _A_.create_recorder = papi_sde_create_recorder;\
+    _A_.create_counting_set = papi_sde_create_counting_set;\
     _A_.record = papi_sde_record;\
     _A_.reset_recorder = papi_sde_reset_recorder;\
     _A_.reset_counter = papi_sde_reset_counter;\
@@ -162,6 +204,7 @@ struct sde_counter_s {
    void *data;
    long long int previous_data;
    recorder_data_t *recorder_data;
+   sde_hash_table_t *hash_data;
    int is_created;
    int overflow;
    papi_sde_fptr_t func_ptr;
@@ -206,11 +249,7 @@ extern sde_counter_t *allocate_and_insert(papisde_control_t *gctl, papisde_libra
 extern void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer);
 extern int _sde_be_verbose;
 extern int _sde_debug;
-#if defined(DEBUG)
 #define SDEDBG(format, args...) { if(_sde_debug){fprintf(stderr,format, ## args);} }
-#else // DEBUG
-#define SDEDBG(format, args...) { ; }
-#endif
 
 static inline void SDE_ERROR( const char *format, ... ){
     va_list args;
@@ -221,6 +260,58 @@ static inline void SDE_ERROR( const char *format, ... ){
         fprintf( stderr, "\n" );
         va_end( args );
     }
+}
+
+
+/*************************************************************************/
+/* Hashing code below copied verbatim from the "fast-hash" project:      */
+/* https://github.com/ztanml/fast-hash                                   */
+/*************************************************************************/
+
+// Compression function for Merkle-Damgard construction.
+#define mix(h) ({                                \
+                 (h) ^= (h) >> 23;               \
+                 (h) *= 0x2127599bf4325c37ULL;   \
+                 (h) ^= (h) >> 47; })
+
+
+static inline uint64_t fasthash64(const void *buf, size_t len, uint64_t seed)
+{
+    const uint64_t    m = 0x880355f21e6d1965ULL;
+    const uint64_t *pos = (const uint64_t *)buf;
+    const uint64_t *end = pos + (len / 8);
+    const unsigned char *pos2;
+    uint64_t h = seed ^ (len * m);
+    uint64_t v;
+
+    while (pos != end) {
+        v  = *pos++;
+        h ^= mix(v);
+        h *= m;
+    }
+
+    pos2 = (const unsigned char*)pos;
+    v = 0;
+
+    switch (len & 7) {
+    case 7: v ^= (uint64_t)pos2[6] << 48;
+            /* fall through */
+    case 6: v ^= (uint64_t)pos2[5] << 40;
+            /* fall through */
+    case 5: v ^= (uint64_t)pos2[4] << 32;
+            /* fall through */
+    case 4: v ^= (uint64_t)pos2[3] << 24;
+            /* fall through */
+    case 3: v ^= (uint64_t)pos2[2] << 16;
+            /* fall through */
+    case 2: v ^= (uint64_t)pos2[1] << 8;
+            /* fall through */
+    case 1: v ^= (uint64_t)pos2[0];
+        h ^= mix(v);
+        h *= m;
+    }
+
+    return mix(h);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +327,6 @@ int _sde_debug = 0;
 
 static papisde_library_desc_t *find_library_by_name(const char *library_name, papisde_control_t *gctl);
 static void insert_library_handle(papisde_library_desc_t *lib_handle, papisde_control_t *gctl);
-
 /*************************************************************************/
 /* Functions related to internal hashing of events                       */
 /*************************************************************************/
@@ -291,7 +381,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
 
     list_head = &hash_table[ht_key];
     if( NULL == list_head->item ){
-        SDE_ERROR("ht_delete(): the entry does not exist.\n");
+        SDE_ERROR("ht_delete(): the entry does not exist.");
         return NULL;
     }
 
@@ -307,7 +397,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
     // Traverse the linked list to find the element.
     for(curr=list_head->next; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This is only permitted for the head of the list.
-            SDE_ERROR("ht_delete(): the hash table is clobbered.\n");
+            SDE_ERROR("ht_delete(): the hash table is clobbered.");
             return NULL;
         }
         if(curr->item->glb_uniq_id == uniq_id){
@@ -319,7 +409,7 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, unsigned 
         prev = curr;
     }
 
-    SDE_ERROR("ht_delete(): the item is not in the list.\n");
+    SDE_ERROR("ht_delete(): the item is not in the list.");
     return NULL;
 }
 
@@ -335,7 +425,7 @@ sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *n
 
     for(curr=list_head; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This can only legally happen for the head of the list.
-            SDE_ERROR("ht_lookup_by_name() the hash table is clobbered\n");
+            SDE_ERROR("ht_lookup_by_name() the hash table is clobbered.");
             return NULL;
         }
         if( !strcmp(curr->item->name, name) ){
@@ -357,7 +447,7 @@ sde_counter_t *ht_lookup_by_id(papisde_list_entry_t *hash_table, unsigned int un
 
     for(curr=list_head; NULL != curr; curr=curr->next){
         if(NULL == curr->item){ // This can only legally happen for the head of the list.
-            SDE_ERROR("ht_lookup_by_id() the hash table is clobbered\n");
+            SDE_ERROR("ht_lookup_by_id() the hash table is clobbered.");
             return NULL;
         }
         if(curr->item->glb_uniq_id == uniq_id){
@@ -388,7 +478,7 @@ papisde_library_desc_t *find_library_by_name(const char *library_name, papisde_c
     // Check to see if this library has already been initialized.
     while(NULL != tmp_lib){
         char *tmp_name = tmp_lib->libraryName;
-        SDEDBG("Checking library: '%s' against registered library: '%s'\n",library_name, tmp_lib->libraryName);
+        SDEDBG("Checking library: '%s' against registered library: '%s'\n", library_name, tmp_lib->libraryName);
         // If we find the same library already registered, we do not create a new entry.
         if( (NULL != tmp_name) && !strcmp(tmp_name, library_name) )
             return tmp_lib;
@@ -481,6 +571,72 @@ void recorder_data_to_contiguous(sde_counter_t *recorder, void *cont_buffer){
        }
        tmp_size += current_size;
     }
+}
+
+void
+__attribute__((visibility("hidden")))
+papi_sde_counting_set_to_list( void *cset_handle, sde_list_object_t **list_head )
+{
+    sde_hash_table_t *hash_ptr;
+    sde_hash_bucket_t *bucket_ptr;
+    sde_counter_t *tmp_cntr;
+    int bucket_idx;
+    uint32_t i, occupied;
+    sde_list_object_t *head_ptr = NULL;
+
+    if( NULL == list_head )
+        return;
+
+    if( NULL == cset_handle ){
+        SDE_ERROR("papi_sde_counting_set_to_list(): 'cset_handle' is clobbered.");
+        return;
+    }
+
+    tmp_cntr = (sde_counter_t *)cset_handle;
+    hash_ptr = tmp_cntr->hash_data;
+    if( NULL == hash_ptr ){
+        SDE_ERROR("papi_sde_counting_set_to_list(): Counting set is clobbered.");
+        return;
+    }
+    bucket_ptr = hash_ptr->buckets;
+
+    for( bucket_idx = 0; bucket_idx < _SDE_HASH_BUCKET_COUNT_; bucket_idx++){
+        sde_hash_decorated_object_t *obj_ptr = bucket_ptr[bucket_idx].objects;
+        occupied = bucket_ptr[bucket_idx].occupied;
+
+        for(i=0; i<occupied; i++){
+            int typesize = obj_ptr[i].typesize;
+            sde_list_object_t *new_list_element = (sde_list_object_t *)malloc(sizeof(sde_list_object_t));
+            // make the current list head be the element after the new one we are creating.
+            new_list_element->next = head_ptr;
+            new_list_element->object.count = obj_ptr[i].count;
+            new_list_element->object.typesize = typesize;
+            new_list_element->object.ptr = malloc(typesize);
+            (void)memcpy(new_list_element->object.ptr, obj_ptr[i].ptr, typesize);
+            // Update the head of the list to point to the new element.
+            head_ptr = new_list_element;
+        }
+     }
+
+    sde_list_object_t *list_runner;
+    // Since there are elements in the overflow list, we need to search for ours.
+    for( list_runner = hash_ptr->overflow_list; list_runner != NULL; list_runner = list_runner->next){
+        sde_hash_decorated_object_t *object = &(list_runner->object);
+        int typesize = object->typesize;
+        sde_list_object_t *new_list_element = (sde_list_object_t *)malloc(sizeof(sde_list_object_t));
+        // make the current list head be the element after the new one we are creating.
+        new_list_element->next = head_ptr;
+        new_list_element->object.count = object->count;
+        new_list_element->object.typesize = typesize;
+        new_list_element->object.ptr = malloc(typesize);
+        (void)memcpy(new_list_element->object.ptr, object->ptr, typesize);
+        // Update the head of the list to point to the new element.
+        head_ptr = new_list_element;
+    }
+
+    *list_head = head_ptr;
+
+    return;
 }
 
 #endif // !defined(EXCLUDE_SDE_COMMON)
@@ -774,10 +930,11 @@ papi_sde_init(const char *name_of_library)
     // We have to emulate PAPI's SUBDBG to get the same behavior
     _sde_be_verbose = (NULL != getenv("PAPI_VERBOSE"));
     char *tmp= getenv("PAPI_DEBUG");
-    if( (NULL != tmp) && (0 != strlen(tmp)) && strstr(tmp, "SUBSTRATE") )
+    if( (NULL != tmp) && (0 != strlen(tmp)) && (strstr(tmp, "SUBSTRATE") || strstr(tmp, "ALL")) ){
         _sde_debug = 1;
+    }
 
-    SDEDBG("Registering library: '%s'\n",name_of_library);
+    SDEDBG("Registering library: '%s'\n", name_of_library);
 
 #if !defined(STATIC_SDE)
     obtain_papi_symbols();
@@ -823,6 +980,9 @@ papi_sde_register_counter( papi_handle_t handle, const char *event_name, int cnt
 {
     int ret_val;
 
+    if( NULL != event_name )
+        SDEDBG("Prepaing to register counter: '%s'.\n", event_name);
+
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
@@ -851,6 +1011,9 @@ papi_sde_register_fp_counter( papi_handle_t handle, const char *event_name, int 
 {
     int ret_val;
 
+    if( NULL != event_name )
+        SDEDBG("Prepaing to register fp_counter: '%s'.\n", event_name);
+
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
@@ -873,13 +1036,16 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     papisde_library_desc_t *lib_handle;
     int error;
     char *full_event_name;
+    int ret_val;
+
+    SDEDBG("Preparing to unregister counter\n");
 
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_unregister_counter(): 'handle' is clobbered. Unable to unregister counter.\n");
+        SDE_ERROR("papi_sde_unregister_counter(): 'handle' is clobbered. Unable to unregister counter.");
         return SDE_EINVAL;
     }
 
@@ -887,7 +1053,7 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     full_event_name = (char *)malloc(str_len*sizeof(char));
     snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
 
-    SDEDBG("papi_sde_unregister_counter(): Preparing to unregister counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
+    SDEDBG("Unregistering counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
     // This function has multiple exist points. If you add more, make sure you unlock before each one of them.
@@ -896,17 +1062,18 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     error = delete_counter( lib_handle, full_event_name );
     // Check if we found a registered counter, or if it never existed.
     if( error ){
-        SDE_ERROR("papi_sde_unregister_counter(): Counter '%s' has not been registered by library '%s'.\n", full_event_name, lib_handle->libraryName);
+        SDE_ERROR("Counter '%s' has not been registered by library '%s'.", full_event_name, lib_handle->libraryName);
         free(full_event_name);
-        _sde_unlock();
-        return SDE_EINVAL;
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     // We will not use the name beyond this point
     free(full_event_name);
-
+    ret_val = SDE_OK;
+fn_exit:
     _sde_unlock();
-    return SDE_OK;
+    return ret_val;
 }
 
 
@@ -925,13 +1092,14 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
     sde_counter_t *tmp_item;
     papisde_library_desc_t *lib_handle;
     char *full_event_name;
+    int ret_val;
 
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_describe_counter(): 'handle' is clobbered. Unable to add description for counter.\n");
+        SDE_ERROR("papi_sde_describe_counter(): 'handle' is clobbered. Unable to add description for counter.");
         return SDE_EINVAL;
     }
 
@@ -947,14 +1115,16 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
     if( NULL != tmp_item ){
         tmp_item->description = strdup(event_description);
         free(full_event_name);
-        _sde_unlock();
-        return SDE_OK;
+        ret_val = SDE_OK;
+        goto fn_exit;
     }
     SDEDBG("papi_sde_describe_counter() Event: '%s' is not registered in SDE library: '%s'\n", full_event_name, lib_handle->libraryName);
     // We will not use the name beyond this point
     free(full_event_name);
+    ret_val = SDE_EINVAL;
+fn_exit:
     _sde_unlock();
-    return SDE_EINVAL;
+    return ret_val;
 }
 
 
@@ -974,15 +1144,16 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     sde_counter_t *tmp_item, *tmp_group;
     unsigned int cntr_group_uniq_id;
     char *full_event_name, *full_group_name;
+    int ret_val;
 
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
-    SDEDBG("papi_sde_add_counter_to_group(): Adding counter: %s into group %s\n",event_name, group_name);
+    SDEDBG("Adding counter: %s into group %s\n",event_name, group_name);
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_add_counter_to_group(): 'handle' is clobbered. Unable to add counter to group.\n");
+        SDE_ERROR("papi_sde_add_counter_to_group(): 'handle' is clobbered. Unable to add counter to group.");
         return SDE_EINVAL;
     }
 
@@ -997,10 +1168,10 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     // Check to make sure that the event is already registered. This is not the place to create a placeholder.
     tmp_item = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
     if( NULL == tmp_item ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_add_counter_to_group(): Unable to find counter: '%s'.\n",full_event_name);
+        SDE_ERROR("papi_sde_add_counter_to_group(): Unable to find counter: '%s'.",full_event_name);
         free(full_event_name);
-        return SDE_EINVAL;
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     // We will not use the name beyond this point
@@ -1016,7 +1187,8 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
         papisde_control_t *gctl = _get_global_struct();
         if( NULL == gctl ){
-            return SDE_EINVAL;
+            ret_val = SDE_EINVAL;
+            goto fn_exit;
         }
 
         // We use the current number of registered events as the uniq id of the counter group, and we
@@ -1048,15 +1220,15 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     }else{
         // should the following branch ever be true? Why do we already have a group registered if it's empty?
         if( NULL == tmp_group->counter_group_head ){
-            SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.\n", group_name);
+            SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.", group_name);
         }
 
         // make sure the caller is not trying to change the flags of the group after it has been created.
         if( tmp_group->counter_group_flags != group_flags ){
-            _sde_unlock();
-            SDE_ERROR("papi_sde_add_counter_to_group(): Attempting to add counter '%s' to counter group '%s' with incompatible group flags.\n", event_name, group_name);
+            SDE_ERROR("papi_sde_add_counter_to_group(): Attempting to add counter '%s' to counter group '%s' with incompatible group flags.", event_name, group_name);
             free(full_group_name);
-            return SDE_EINVAL;
+            ret_val = SDE_EINVAL;
+            goto fn_exit;
         }
     }
 
@@ -1066,9 +1238,11 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     new_head->next = tmp_group->counter_group_head;
     tmp_group->counter_group_head = new_head;
 
-    _sde_unlock();
     free(full_group_name);
-    return SDE_OK;
+    ret_val = SDE_OK;
+fn_exit:
+    _sde_unlock();
+    return ret_val;
 }
 
 /**
@@ -1101,16 +1275,19 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     papisde_library_desc_t *lib_handle;
     sde_counter_t *cntr, *placeholder;
 
+    if( NULL != event_name )
+        SDEDBG("Preparing to create counter: '%s'.\n", event_name);
+
     // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
     if( !handle ) return SDE_OK;
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_create_counter(): 'handle' is clobbered. Unable to create counter.\n");
+        SDE_ERROR("papi_sde_create_counter(): 'handle' is clobbered. Unable to create counter.");
         return SDE_EINVAL;
     }
 
-    SDEDBG("Preparing to create counter: '%s' with mode: '%d' in SDE library: %s.\n", event_name, cntr_mode, lib_handle->libraryName);
+    SDEDBG("Adding created counter: '%s' with mode: '%d' in SDE library: %s.\n", event_name, cntr_mode, lib_handle->libraryName);
 
     counter_data = (long long int *)calloc(1, sizeof(long long int));
 
@@ -1118,8 +1295,7 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
     ret_val = sde_setup_counter_internals( lib_handle, event_name, cntr_mode, PAPI_SDE_long_long, counter_data, NULL, NULL, &placeholder );
     if( SDE_OK != ret_val ){
-        _sde_unlock();
-        return ret_val;
+        goto fn_exit;
     }
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
@@ -1130,8 +1306,8 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
     if(NULL == cntr) {
         SDEDBG("Logging counter '%s' not properly inserted in SDE library '%s'\n", full_event_name, lib_handle->libraryName);
         free(full_event_name);
-        _sde_unlock();
-        return SDE_ECMP;
+        ret_val = SDE_ECMP;
+        goto fn_exit;
     }
 
     // Signify that this counter is a created counter (as opposed to a registered one).
@@ -1143,11 +1319,11 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
         *(sde_counter_t **)cntr_handle = cntr;
     }
 
-    _sde_unlock();
-
     free(full_event_name);
-
-    return SDE_OK;
+    ret_val = SDE_OK;
+fn_exit:
+    _sde_unlock();
+    return ret_val;
 }
 
 
@@ -1158,14 +1334,15 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
 {
     long long int *ptr;
     sde_counter_t *tmp_cntr;
+    int ret_val;
 
     _sde_lock();
 
     tmp_cntr = (sde_counter_t *)cntr_handle;
     if( NULL == tmp_cntr ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): 'cntr_handle' is clobbered. Unable to modify value of counter.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_inc_counter(): 'cntr_handle' is clobbered. Unable to modify value of counter.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     SDEDBG("Preparing to increment counter: '%s::%s' by %lld.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name, increment);
@@ -1173,21 +1350,21 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
     ptr = (long long int *)(tmp_cntr->data);
 
     if( NULL == ptr ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter structure is clobbered. Unable to modify value of counter.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_inc_counter(): Counter structure is clobbered. Unable to modify value of counter.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     if( !tmp_cntr->is_created ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter is not created by PAPI, cannot be modified using this function.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_inc_counter(): Counter is not created by PAPI, cannot be modified using this function.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     if( PAPI_SDE_long_long != tmp_cntr->cntr_type ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_inc_counter(): Counter is not of type \"long long int\" and cannot be modified using this function.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_inc_counter(): Counter is not of type \"long long int\" and cannot be modified using this function.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     *ptr += increment;
@@ -1196,11 +1373,290 @@ papi_sde_inc_counter( papi_handle_t cntr_handle, long long int increment)
     _sde_check_overflow_status(tmp_cntr, *ptr);
 #endif // SDE_HAVE_OVERFLOW
 
+    ret_val = SDE_OK;
+fn_exit:
     _sde_unlock();
+    return ret_val;
+}
+
+/*
+  @param[in] handle -- pointer (of opaque type papi_handle_t) to sde structure for an individual library.
+  @param[in] cset_name -- (const char *) name of the counting set.
+  @param[out] cset_handle -- address of a pointer in which libsde will store a handle to the newly created counting set.
+  @param[out] -- (int) the return value is SDE_OK on success, or an error code on failure.
+*/
+int
+__attribute__((visibility("hidden")))
+papi_sde_create_counting_set( papi_handle_t handle, const char *cset_name, void **cset_handle )
+{
+    int ret_val;
+    sde_counter_t *tmp_cset_handle;
+    char *full_cset_name;
+    papisde_library_desc_t *lib_handle;
+
+    SDEDBG("papi_sde_create_counting_set()\n");
+
+    if( NULL != cset_name )
+        SDEDBG("Preparing to create counting set: '%s'.\n", cset_name);
+
+    // if libpapi.so was not linked in with the application, the handle will be NULL, and that's ok.
+    if( !handle ) return SDE_OK;
+
+    lib_handle = (papisde_library_desc_t *) handle;
+    if( NULL == lib_handle->libraryName ){
+        SDE_ERROR("papi_sde_create_counting_set(): 'handle' is clobbered. Unable to create counting set.");
+        return SDE_EINVAL;
+    }
+
+    SDEDBG("Adding counting set: '%s' in SDE library: %s.\n", cset_name, lib_handle->libraryName);
+
+    // We setup the counting set like this, instead of using sde_do_register() because counting sets cannot be set to overflow.
+    // Maybe we should create an auxiliary counter that holds the number of elements in the counting set and we can allow that to overflow.
+    ret_val = sde_setup_counter_internals( lib_handle, cset_name, PAPI_SDE_DELTA|PAPI_SDE_RO, PAPI_SDE_long_long, NULL, NULL, NULL, NULL );
+    if( SDE_OK != ret_val )
+        return ret_val;
+
+    size_t str_len = strlen(lib_handle->libraryName)+strlen(cset_name)+2+1; // +2 for "::" and +1 for '\0'
+    full_cset_name = (char *)malloc(str_len*sizeof(char));
+    snprintf(full_cset_name, str_len, "%s::%s", lib_handle->libraryName, cset_name);
+
+    tmp_cset_handle = ht_lookup_by_name(lib_handle->lib_counters, full_cset_name);
+    if(NULL == tmp_cset_handle) {
+        SDEDBG("Recorder '%s' not properly inserted in SDE library '%s'\n", full_cset_name, lib_handle->libraryName);
+        free(full_cset_name);
+        return SDE_ECMP;
+    }
+
+    // Allocate the structure for the hash table.
+    tmp_cset_handle->hash_data = (sde_hash_table_t *)calloc(1,sizeof(sde_hash_table_t));
+
+    if( NULL != cset_handle ){
+        *(sde_counter_t **)cset_handle = tmp_cset_handle;
+    }
+
+    free(full_cset_name);
 
     return SDE_OK;
 }
 
+int
+__attribute__((visibility("hidden")))
+papi_sde_counting_set_remove( void *cset_handle, size_t hashable_size, const void *element)
+{
+    sde_hash_table_t *hash_ptr;
+    sde_hash_bucket_t *bucket_ptr;
+    sde_counter_t *tmp_cntr;
+    int element_found = 0;
+    uint32_t i, occupied;
+    int ret_val;
+
+    _sde_lock();
+
+    if( NULL == cset_handle ){
+        SDE_ERROR("papi_sde_counting_set_remove(): 'cset_handle' is clobbered. Unable to remove element from the counting set.");
+        return SDE_EINVAL;
+    }
+
+    tmp_cntr = (sde_counter_t *)cset_handle;
+    hash_ptr = tmp_cntr->hash_data;
+    if( NULL == hash_ptr ){
+        SDE_ERROR("papi_sde_counting_set_remove(): Counting set is clobbered. Unable to remove element.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
+    }
+    bucket_ptr = hash_ptr->buckets;
+
+    SDEDBG("Preparing to remove element from counting set: '%s::%s'.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name);
+
+    uint64_t seed = (uint64_t)79365; // decided to be a good seed by a committee.
+    uint64_t key = fasthash64(element, hashable_size, seed);
+    int bucket_idx = (int)(key % _SDE_HASH_BUCKET_COUNT_);
+    uint64_t *key_ptr = bucket_ptr[bucket_idx].keys;
+    sde_hash_decorated_object_t *obj_ptr = bucket_ptr[bucket_idx].objects;
+    occupied = bucket_ptr[bucket_idx].occupied;
+    if( occupied > _SDE_HASH_BUCKET_WIDTH_ ){
+        SDE_ERROR("papi_sde_counting_set_remove(): Counting set is clobbered, bucket %d has exceeded capacity.",bucket_idx);
+        ret_val = SDE_ECMP;
+        goto fn_exit;
+    }
+
+    // First look in the bucket where the hash function told us to look.
+    for(i=0; i<occupied; i++){
+        // If the key matches a stored element and the hashable_size is less or equal to
+        // the size of the stored element, then we are onto something.
+        if( (key == key_ptr[i]) && (hashable_size <= obj_ptr[i].typesize) ){
+            // If the actual element matches too (or if we don't care about perfect matches),
+            // then we update the count for this entry.
+            if( SDE_HASH_IS_FUZZY || !memcmp(element, obj_ptr[i].ptr, hashable_size) ){
+                obj_ptr[i].count -= 1;
+                // If the element reached a count of zero after we removed it, then shift all the other keys and entries in the bucket.
+                if( 0 == obj_ptr[i].count ){
+                    uint32_t j;
+                    // free the memory taken by the user object.
+                    free(obj_ptr[i].ptr);
+                    for(j=i; j<occupied-1; j++){
+                        key_ptr[j] = key_ptr[j+1];
+                        obj_ptr[j] = obj_ptr[j+1];
+                    }
+                    bucket_ptr[bucket_idx].occupied -= 1;
+                }
+                // since we found the element, we don't need to look further.
+                element_found = 1;
+                break;
+            }
+        }
+    }
+
+    // If we didn't find the element in the appropriate bucket, then we need to look for it in the overflow list.
+    if( !element_found ){
+        // If the overflow list is empty, then something went wrong.
+        if( NULL == hash_ptr->overflow_list ){
+            SDE_ERROR("papi_sde_counting_set_remove(): Attempted to remove element that is NOT in the counting set.");
+        }else{
+            // Since there are elements in the overflow list, we need to search there for the one we are looking for.
+            sde_list_object_t *list_runner, *prev;
+            prev = hash_ptr->overflow_list;
+            for( list_runner = hash_ptr->overflow_list; list_runner != NULL; list_runner = list_runner->next){
+                // if we find the element in the overflow list
+                if( (hashable_size <= list_runner->object.typesize) && !memcmp(element, list_runner->object.ptr, hashable_size) ){
+                    list_runner->object.count -= 1;
+                    // If the element reached a count of zero, then remove it from the list, and connect the list around it.
+                    if( 0 == list_runner->object.count ){
+                        // free the memory taken by the user object.
+                        free(list_runner->object.ptr);
+                        if( list_runner == hash_ptr->overflow_list ){
+                            hash_ptr->overflow_list = NULL;
+                        }else{
+                            prev->next = list_runner->next;
+                        }
+                        // free the memory taken by the link node.
+                        free(list_runner);
+                    }
+                    // since we found the element, we don't need to look at the rest of the list.
+                    break;
+                }
+                prev = list_runner;
+            }
+        }
+    }
+
+    ret_val = SDE_OK;
+fn_exit:
+    _sde_unlock();
+    return ret_val;
+}
+
+int
+__attribute__((visibility("hidden")))
+papi_sde_counting_set_insert( void *cset_handle, size_t element_size, size_t hashable_size, const void *element)
+{
+    sde_hash_table_t *hash_ptr;
+    sde_hash_bucket_t *bucket_ptr;
+    sde_counter_t *tmp_cntr;
+    int element_found = 0;
+    uint32_t i, occupied;
+    int ret_val;
+
+    _sde_lock();
+
+    if( NULL == cset_handle ){
+        SDE_ERROR("papi_sde_counting_set_insert(): 'cset_handle' is clobbered. Unable to insert element in the counting set.");
+        return SDE_EINVAL;
+    }
+
+    tmp_cntr = (sde_counter_t *)cset_handle;
+    hash_ptr = tmp_cntr->hash_data;
+    if( NULL == hash_ptr ){
+        SDE_ERROR("papi_sde_counting_set_insert(): Counting set is clobbered. Unable to insert element.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
+    }
+    bucket_ptr = hash_ptr->buckets;
+
+    SDEDBG("Preparing to insert element in counting set: '%s::%s'.\n", tmp_cntr->which_lib->libraryName, tmp_cntr->name);
+
+    uint64_t seed = (uint64_t)79365; // decided to be a good seed by a committee.
+    uint64_t key = fasthash64(element, hashable_size, seed);
+    int bucket_idx = (int)(key % _SDE_HASH_BUCKET_COUNT_);
+    uint64_t *key_ptr = bucket_ptr[bucket_idx].keys;
+    sde_hash_decorated_object_t *obj_ptr = bucket_ptr[bucket_idx].objects;
+    occupied = bucket_ptr[bucket_idx].occupied;
+    if( occupied > _SDE_HASH_BUCKET_WIDTH_ ){
+        SDE_ERROR("papi_sde_counting_set_insert(): Counting set is clobbered, bucket %d has exceeded capacity.",bucket_idx);
+        ret_val = SDE_ECMP;
+        goto fn_exit;
+    }
+
+    // First look in the bucket where the hash function told us to look.
+    for(i=0; i<occupied; i++){
+        // If the key matches a stored element and the hashable_size is less or equal to
+        // the size of the stored element, then we are onto something.
+        if( (key == key_ptr[i]) && (hashable_size <= obj_ptr[i].typesize) ){
+            // If the actual element matches too (or if we don't care about perfect matches),
+            // then we update the count for this entry and we are done.
+            if( SDE_HASH_IS_FUZZY || !memcmp(element, obj_ptr[i].ptr, hashable_size) ){
+                obj_ptr[i].count += 1;
+                element_found = 1;
+                break;
+            }
+        }
+    }
+
+    // If we didn't find the element in the appropriate bucket, then we need to add it (or look in the overflow list).
+    if( !element_found ){
+        // If the overflow list is empty, then we are certainly dealing with a new element.
+        if( NULL == hash_ptr->overflow_list ){
+            // Check if we still have room in the bucket, and if so, add the new element to the bucket.
+            if( i < _SDE_HASH_BUCKET_WIDTH_ ){
+                key_ptr[i] = key;
+                obj_ptr[i].count = 1;
+                obj_ptr[i].typesize = element_size;
+                obj_ptr[i].ptr = malloc(element_size);
+                (void)memcpy(obj_ptr[i].ptr, element, element_size);
+                // Let the bucket know that it now has one more element.
+                bucket_ptr[bucket_idx].occupied += 1;
+            }else{
+                // If the overflow list is empty and the bucket does not have room,
+                // then we add the new element at the head of the overflow list.
+                sde_list_object_t *new_list_element = (sde_list_object_t *)malloc(sizeof(sde_list_object_t));
+                new_list_element->next = NULL;
+                new_list_element->object.count = 1;
+                new_list_element->object.typesize = element_size;
+                new_list_element->object.ptr = malloc(element_size);
+                (void)memcpy(new_list_element->object.ptr, element, element_size);
+                // Make the head point to the new element.
+                hash_ptr->overflow_list = new_list_element;
+            }
+        }else{
+            // Since there are elements in the overflow list, we need to search there for the one we are looking for.
+            sde_list_object_t *list_runner;
+            for( list_runner = hash_ptr->overflow_list; list_runner != NULL; list_runner = list_runner->next){
+                // if we find the element in the overflow list, increment the counter and exit the loop.
+                if( (hashable_size <= list_runner->object.typesize) && !memcmp(element, list_runner->object.ptr, hashable_size) ){
+                    list_runner->object.count += 1;
+                    break;
+                }
+            }
+            // If we traversed the entire list and didn't find our element, insert it before the current head of the list.
+            if( NULL == list_runner ){
+                sde_list_object_t *new_list_element = (sde_list_object_t *)malloc(sizeof(sde_list_object_t));
+                // Make the new element's "next" pointer be the current head of the list.
+                new_list_element->next = hash_ptr->overflow_list;
+                new_list_element->object.count = 1;
+                new_list_element->object.typesize = element_size;
+                new_list_element->object.ptr = malloc(element_size);
+                (void)memcpy(new_list_element->object.ptr, element, element_size);
+                // Update the head of the list to point to the new element.
+                hash_ptr->overflow_list = new_list_element;
+            }
+        }
+    }
+
+    ret_val = SDE_OK;
+fn_exit:
+    _sde_unlock();
+    return ret_val;
+}
 
 int
 __attribute__((visibility("hidden")))
@@ -1226,9 +1682,9 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     _sde_lock();
 
     if( (NULL == lib_handle) || (NULL == lib_handle->libraryName) ){
-        SDE_ERROR("papi_sde_create_recorder(): 'handle' is clobbered. Unable to create recorder.\n");
-        _sde_unlock();
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_create_recorder(): 'handle' is clobbered. Unable to create recorder.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     SDEDBG("Preparing to create recorder: '%s' with typesize: '%d' in SDE library: %s.\n", event_name, (int)typesize, lib_handle->libraryName);
@@ -1246,8 +1702,8 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     if(NULL == tmp_rec_handle) {
         SDEDBG("Recorder '%s' not properly inserted in SDE library '%s'\n", full_event_name, lib_handle->libraryName);
         free(full_event_name);
-        _sde_unlock();
-        return SDE_ECMP;
+        ret_val = SDE_ECMP;
+        goto fn_exit;
     }
 
     // Allocate the structure for the recorder data and meta-data.
@@ -1258,7 +1714,9 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     tmp_rec_handle->recorder_data->typesize = typesize;
     tmp_rec_handle->recorder_data->used_entries = 0;
 
-    *(sde_counter_t **)record_handle = tmp_rec_handle;
+    if( NULL != record_handle ){
+      *(sde_counter_t **)record_handle = tmp_rec_handle;
+    }
 
     // We will not use the name beyond this point
     free(full_event_name);
@@ -1280,9 +1738,8 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     ret_val = sde_do_register( lib_handle, (const char *)aux_event_name, PAPI_SDE_INSTANT|PAPI_SDE_RO, PAPI_SDE_long_long, &(tmp_rec_handle->recorder_data->used_entries), NULL, NULL );
     if( SDE_OK != ret_val ){
         SDEDBG("papi_sde_create_recorder(): Registration of aux counter: '%s' in SDE library: %s FAILED.\n", aux_event_name, lib_handle->libraryName);
-        _sde_unlock();
         free(aux_event_name);
-        return ret_val;
+        goto fn_exit;
     }
 
     // If the caller passed NULL as the function pointer, then they do _not_ want the quantiles. Otherwise, create them.
@@ -1300,20 +1757,19 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
             ret_val = sde_do_register(lib_handle, (const char *)aux_event_name, PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_long_long, NULL, func_ptr_vec[i], sorting_params );
             if( SDE_OK != ret_val ){
                 SDEDBG("papi_sde_create_recorder(): Registration of aux counter: '%s' in SDE library: %s FAILED.\n", aux_event_name, lib_handle->libraryName);
-                _sde_unlock();
                 free(aux_event_name);
-                return ret_val;
+                goto fn_exit;
             }
         }
     }
 
-    _sde_unlock();
     free(aux_event_name);
-    return SDE_OK;
+    ret_val = SDE_OK;
+fn_exit:
+    _sde_unlock();
+    return ret_val;
 }
 
-
-// UPDATED for EXP-storage
 int
 __attribute__((visibility("hidden")))
 papi_sde_record( void *record_handle, size_t typesize, const void *value)
@@ -1322,6 +1778,7 @@ papi_sde_record( void *record_handle, size_t typesize, const void *value)
     long long used_entries, total_entries, prev_entries, offset;
     int i, chunk;
     long long tmp_size;
+    int ret_val;
 
     SDEDBG("Preparing to record value of size %lu at address: %p\n",typesize, value);
 
@@ -1330,15 +1787,15 @@ papi_sde_record( void *record_handle, size_t typesize, const void *value)
     tmp_item = (sde_counter_t *)record_handle;
 
     if( NULL == tmp_item ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to record value.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to record value.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     if( NULL == tmp_item->recorder_data || NULL == tmp_item->recorder_data->exp_container[0]){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_record(): Counter structure is clobbered. Unable to record event.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_record(): Counter structure is clobbered. Unable to record event.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     // At this point the recorder exists, but we must check if it has room for more elements
@@ -1380,8 +1837,10 @@ papi_sde_record( void *record_handle, size_t typesize, const void *value)
     (void)memcpy( dest, value, typesize );
     tmp_item->recorder_data->used_entries++;
 
+    ret_val = SDE_OK;
+fn_exit:
     _sde_unlock();
-    return SDE_OK;
+    return ret_val;
 }
 
 
@@ -1393,14 +1852,15 @@ __attribute__((visibility("hidden")))
 papi_sde_reset_recorder( void *record_handle )
 {
     sde_counter_t *tmp_rcrdr;
+    int ret_val;
 
     _sde_lock();
     tmp_rcrdr = (sde_counter_t *)record_handle;
 
     if( NULL == tmp_rcrdr || NULL == tmp_rcrdr->recorder_data ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to reset recorder.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_record(): 'record_handle' is clobbered. Unable to reset recorder.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     // NOTE: do _not_ free the chunks and do _not_ reset "recorder_data->total_entries"
@@ -1410,8 +1870,10 @@ papi_sde_reset_recorder( void *record_handle )
     tmp_rcrdr->recorder_data->sorted_buffer = NULL;
     tmp_rcrdr->recorder_data->sorted_entries = 0;
 
+    ret_val = SDE_OK;
+fn_exit:
     _sde_unlock();
-    return SDE_OK;
+    return ret_val;
 }
 
 
@@ -1422,36 +1884,38 @@ papi_sde_reset_counter( void *cntr_handle )
 {
     long long int *ptr;
     sde_counter_t *tmp_cntr;
+    int ret_val;
 
     _sde_lock();
 
     tmp_cntr = (sde_counter_t *)cntr_handle;
 
     if( NULL == tmp_cntr ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): 'cntr_handle' is clobbered. Unable to reset value of counter.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_reset_counter(): 'cntr_handle' is clobbered. Unable to reset value of counter.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     ptr = (long long int *)(tmp_cntr->data);
 
     if( NULL == ptr ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): Counter structure is clobbered. Unable to reset value of counter.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_reset_counter(): Counter structure is clobbered. Unable to reset value of counter.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     if( tmp_cntr->is_created ){
-        _sde_unlock();
-        SDE_ERROR("papi_sde_reset_counter(): Counter is not created by PAPI, so it cannot be reset.\n");
-        return SDE_EINVAL;
+        SDE_ERROR("papi_sde_reset_counter(): Counter is not created by PAPI, so it cannot be reset.");
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     *ptr = 0; // Reset the counter.
 
+    ret_val = SDE_OK;
+fn_exit:
     _sde_unlock();
-
-    return SDE_OK;
+    return ret_val;
 }
 
 
@@ -1464,7 +1928,7 @@ static inline int sde_do_register( papi_handle_t handle, const char *event_name,
     sde_counter_t *placeholder;
     int ret;
 
-    SDEDBG("%s: Preparing to register counter: '%s' with mode: '%d' and type: '%d'.\n", __FILE__, event_name, cntr_mode, cntr_type);
+    SDEDBG("Registering counter: '%s' with mode: '%d' and type: '%d'.\n", event_name, cntr_mode, cntr_type);
 
     ret = sde_setup_counter_internals( handle, event_name, cntr_mode, cntr_type, counter, fp_counter, param, &placeholder );
 
@@ -1539,7 +2003,7 @@ papi_sde_compare_float(const void *p1, const void *p2){
 // data element that corresponds to the edge (min/max), so that it works
 // for all types of data, not only integers.
 static inline long long _sde_compute_edge(void *param, int which_edge){
-	void *edge = NULL, *edge_copy;
+    void *edge = NULL, *edge_copy;
     long long elem_cnt;
     long long current_size, cumul_size = 0;
     void *src;
@@ -1725,7 +2189,7 @@ __attribute__((visibility("hidden")))
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( NULL == lib_handle->libraryName ){
-        SDE_ERROR("papi_sde_get_counter_handle(): 'handle' is clobbered.\n");
+        SDE_ERROR("papi_sde_get_counter_handle(): 'handle' is clobbered.");
         return NULL;
     }
 
@@ -1759,7 +2223,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     lib_handle = (papisde_library_desc_t *) handle;
     if( (NULL == lib_handle) || (NULL == lib_handle->libraryName) ){
-        SDE_ERROR("sde_setup_counter_internals(): 'handle' is clobbered. Unable to register counter.\n");
+        SDE_ERROR("sde_setup_counter_internals(): 'handle' is clobbered. Unable to register counter.");
         return SDE_EINVAL;
     }
 
@@ -1770,7 +2234,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
     SDEDBG("%s: Counter: '%s' will be added in library: %s.\n", __FILE__, full_event_name, lib_handle->libraryName);
 
     if( !is_instant(cntr_mode) && !is_delta(cntr_mode) ){
-        SDE_ERROR("Unknown mode %d. SDE counter mode must be either Instant or Delta.\n",cntr_mode);
+        SDE_ERROR("Unknown mode %d. SDE counter mode must be either Instant or Delta.",cntr_mode);
         free(full_event_name);
         return SDE_ECMP;
     }
@@ -1786,7 +2250,7 @@ static int sde_setup_counter_internals( papi_handle_t handle, const char *event_
 
     if( NULL != tmp_item ){
         if( NULL != tmp_item->counter_group_head ){
-            SDE_ERROR("sde_setup_counter_internals(): Unable to register counter '%s'. There is a counter group with the same name.\n",full_event_name);
+            SDE_ERROR("sde_setup_counter_internals(): Unable to register counter '%s'. There is a counter group with the same name.",full_event_name);
             free(full_event_name);
             return SDE_EINVAL;
         }
@@ -1858,6 +2322,7 @@ namespace papi_sde
 
           class CreatedCounter;
           class Recorder;
+          class CountingSet;
 
           template <typename T>
           int register_counter(const char *event_name, int cntr_mode, T &counter ){
@@ -1876,7 +2341,7 @@ namespace papi_sde
               if( std::is_same<long long int, T>::value ){
                   return papi_sde_register_fp_counter(sde_handle, event_name, cntr_mode, PAPI_SDE_long_long, (papi_sde_fptr_t)func_ptr, &param);
               }else{
-                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.\n");
+                  SDE_ERROR("register_fp_counter() is currently limited to callback functions that have a return type of 'long long int'.");
                   return SDE_EINVAL;
               }
           }
@@ -1907,6 +2372,16 @@ namespace papi_sde
               Recorder *ptr;
               try{
                   ptr = new Recorder(sde_handle, event_name, typesize, cmpr_func_ptr);
+               }catch(std::exception const &e){
+                   return nullptr;
+               }
+               return ptr;
+          }
+
+          CountingSet *create_counting_set(const char *cset_name){
+               CountingSet *ptr;
+               try{
+                   ptr = new CountingSet(sde_handle, cset_name);
                }catch(std::exception const &e){
                    return nullptr;
                }
@@ -1949,7 +2424,6 @@ namespace papi_sde
                       throw std::exception();
               }
 
-
               template <typename T>
               int increment(T const &increment){
                   if( nullptr == counter_handle )
@@ -1972,6 +2446,35 @@ namespace papi_sde
               }
 
         }; // class CreatedCounter
+
+        class CountingSet {
+            private:
+              void *cset_handle=nullptr;
+
+            public:
+              CountingSet(papi_handle_t sde_handle, const char *cset_name){
+                  if( SDE_OK != papi_sde_create_counting_set(sde_handle, cset_name, &cset_handle) )
+                      throw std::exception();
+              }
+
+              template <typename T> int insert(T const &element){
+                  if( nullptr == cset_handle )
+                      return SDE_EINVAL;
+                  return papi_sde_counting_set_insert( cset_handle, sizeof(T), sizeof(T), &element);
+              }
+
+              template <typename T> int insert(size_t hashable_size, T const &element){
+                  if( nullptr == cset_handle )
+                      return SDE_EINVAL;
+                  return papi_sde_counting_set_insert( cset_handle, sizeof(T), hashable_size, &element);
+              }
+
+              template <typename T> int remove(size_t hashable_size, T const &element){
+                  if( nullptr == cset_handle )
+                      return SDE_EINVAL;
+                  return papi_sde_counting_set_remove( cset_handle, hashable_size, &element);
+              }
+        }; // class CountingSet
 
     }; // class PapiSde
 
