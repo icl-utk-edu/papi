@@ -26,7 +26,7 @@
 } while(0)
 
 static void
-fill_cpu_info( PAPI_cpu_info_t *info )
+fill_cpu_info( _sysdetect_cpu_info_t *info )
 {
     CPU_CALL(cpu_get_name(info->name),
              strcpy(info->name, "UNKNOWN"));
@@ -127,7 +127,7 @@ fill_cpu_info( PAPI_cpu_info_t *info )
 }
 
 void
-open_cpu_dev_type( PAPI_dev_type_info_t *dev_type_info )
+open_cpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 {
     memset(dev_type_info, 0, sizeof(*dev_type_info));
     dev_type_info->id = PAPI_DEV_TYPE_ID__CPU;
@@ -141,13 +141,13 @@ open_cpu_dev_type( PAPI_dev_type_info_t *dev_type_info )
     strcpy(dev_type_info->status, "Device Initialized");
     dev_type_info->num_devices = 1;
 
-    PAPI_cpu_info_t *arr = papi_calloc(1, sizeof(*arr));
+    _sysdetect_cpu_info_t *arr = papi_calloc(1, sizeof(*arr));
     fill_cpu_info(arr);
-    dev_type_info->dev_info_arr = (PAPI_dev_info_u *)arr;
+    dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
 }
 
 void
-close_cpu_dev_type( PAPI_dev_type_info_t *dev_type_info )
+close_cpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 {
     papi_free(dev_type_info->dev_info_arr);
 }

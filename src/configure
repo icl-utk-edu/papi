@@ -7011,6 +7011,9 @@ elif test "x$VECTOR" != "x"; then
 fi
 
 
+# always enable sysdetect
+components="$components sysdetect"
+
 
 PAPI_NUM_COMP=0
 for comp in $components; do

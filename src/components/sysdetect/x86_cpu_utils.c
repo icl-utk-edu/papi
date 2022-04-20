@@ -28,7 +28,7 @@ typedef struct {
     unsigned int edx;
 } cpuid_reg_t;
 
-static PAPI_cache_level_info_t clevel[PAPI_MAX_MEM_HIERARCHY_LEVELS];
+static _sysdetect_cache_level_info_t clevel[PAPI_MAX_MEM_HIERARCHY_LEVELS];
 
 static int cpuid_get_vendor( char *vendor );
 static int cpuid_get_name( char *name );
@@ -313,7 +313,7 @@ cpuid_get_cache_info( CPU_attr_e attr, int level, int *value )
 int
 intel_get_cache_info( CPU_attr_e attr, int level, int *value )
 {
-    static PAPI_cache_level_info_t *clevel_ptr;
+    static _sysdetect_cache_level_info_t *clevel_ptr;
 
     if (clevel_ptr) {
         return cpu_get_cache_info(attr, level, clevel_ptr, value);
@@ -380,7 +380,7 @@ intel_get_cache_info( CPU_attr_e attr, int level, int *value )
 int
 amd_get_cache_info( CPU_attr_e attr, int level, int *value )
 {
-    static PAPI_cache_level_info_t *clevel_ptr;
+    static _sysdetect_cache_level_info_t *clevel_ptr;
 
     if (clevel_ptr) {
         return cpu_get_cache_info(attr, level, clevel_ptr, value);
