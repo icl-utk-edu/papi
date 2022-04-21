@@ -401,7 +401,25 @@ rsmi_is_enabled( void )
 int
 load_rsmi_sym( char *status )
 {
-    rsmi_dlp = dlopen("librocm_smi64.so", RTLD_NOW | RTLD_GLOBAL);
+    char pathname[PAPI_MAX_STR_LEN] = { 0 };
+    char *rocm_root = getenv("PAPI_ROCM_ROOT");
+    if (rocm_root == NULL) {
+        const char *message =
+            "Can't load librocm_smi64.so, PAPI_ROCM_ROOT not set.";
+        int count = snprintf(status, strlen(message) + 1, message);
+        if (count >= PAPI_MAX_STR_LEN) {
+            HANDLE_STRING_ERROR;
+        }
+        return -1;
+    }
+
+    int expect = snprintf(pathname, PAPI_MAX_STR_LEN,
+                          "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);
+    if (expect > PAPI_MAX_STR_LEN) {
+        HANDLE_STRING_ERROR;
+    }
+
+    rsmi_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (rsmi_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
