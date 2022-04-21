@@ -42,7 +42,7 @@ static const amd64_entry_t amd64_fam19h_zen3_l3_pe[]={
     .umasks = amd64_fam19h_zen3_l3_requests,
   },
   { .name   = "UNC_L3_MISS_LATENCY",
-    .desc   = "Accumulated miss latency in cycles - occupancy event",
+    .desc   = "Each cycle, this event increments by the total number of read requests outstanding from the CCX divided by XiSysFillLatencyDivider. The user can calculate the average system fill latency in cycles by multiplying by XiSysFillLatencyDivider and dividing by the total number of fill requests over the same period (counted by event 0x9A UserMask 0x1F). XiSysFillLatencyDivider is 16 for this product, but may change for future products",
     .code    = 0x90,
   },
   { .name   = "UNC_L3_MISSES",
