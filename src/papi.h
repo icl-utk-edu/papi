@@ -749,6 +749,7 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPI_MH_TYPE_UNKNOWN  0x000
 #define PAPI_MH_TYPE_LRU      0x100
 #define PAPI_MH_TYPE_PSEUDO_LRU 0x200
+#define PAPI_MH_TYPE_FIFO     0x400
 #define PAPI_MH_CACHE_REPLACEMENT_POLICY(a) (a & 0xf00)
 #define PAPI_MH_TYPE_TLB       0x1000  /* tlb, not memory cache */
 #define PAPI_MH_TYPE_PREF      0x2000  /* prefetch buffer */
