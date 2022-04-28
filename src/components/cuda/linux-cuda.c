@@ -129,12 +129,13 @@ typedef struct cuda_device_desc {
     int         deviceNum;
     char        deviceName[PAPI_MIN_STR_LEN];
     int         CC_Major;                   /* Compute Capability Major */
+    int         CC_Minor;
     uint32_t    maxDomains;                 /* number of domains per device */
     CUpti_EventDomainID *domainIDArray;     /* Array[maxDomains] of domain IDs */
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 
-    int         cupti_le70;                 /* <= 7.0 can use legacy. */
-    int         cupti_ge70;                 /* >= 7.0 can use profiler. */
+    int         cc_le70;                 /* <= 7.0 can use legacy. */
+    int         cc_gt70;                 /* > 7.0 can use profiler. */
 
 #if CUPTI_PROFILER == 1
     CUcontext   cuContext;                      // context created during cuda11_add_native_events.
@@ -1154,7 +1155,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         return (PAPI_ENOMEM);
     }
 
-    int total_le70=0, total_ge70=0;
+    int total_le70=0, total_gt70=0;
 
     // For each device, get some device information.
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
@@ -1202,7 +1203,9 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // cudaDevAttrComputeCapabilityMinor is the necessary attribute.
 
         cudaErr = (*cudaDeviceGetAttributePtr) (&mydevice->CC_Major, cudaDevAttrComputeCapabilityMajor, deviceNum); 
+        cudaErr |= (*cudaDeviceGetAttributePtr) (&mydevice->CC_Minor, cudaDevAttrComputeCapabilityMinor, deviceNum);
         if (0) fprintf(stderr, "%s:%s:%i Compute Capability Major=%d\n", __FILE__, __func__, __LINE__, mydevice->CC_Major);
+        if (0) fprintf(stderr, "%s:%s:%i Compute Capability Minor=%d\n", __FILE__, __func__, __LINE__, mydevice->CC_Minor);
         if (cudaErr != cudaSuccess) {
             strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Function cudaDeviceGetAttribute() error code=%d.", cudaErr);
@@ -1214,30 +1217,30 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
 
         // If profiler is available and we CAN use profiler, we do.
         // If profiler is unavailable we must be able to use Legacy.
-        mydevice->cupti_le70 = 0;
-        mydevice->cupti_ge70 = 0;
+        mydevice->cc_le70 = 0;
+        mydevice->cc_gt70 = 0;
 
         if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
             mydevice->deviceName, mydevice->CC_Major);
 
-        if (mydevice->CC_Major <= 7) {
-            mydevice->cupti_le70 = 1;
+        if (mydevice->CC_Major < 7 || (mydevice->CC_Major == 7 && mydevice->CC_Minor == 0)) {
+            mydevice->cc_le70 = 1;
         }
 
-        if (mydevice->CC_Major >= 7) {
-            mydevice->cupti_ge70 = 1;
+        if (mydevice->CC_Major > 7 || (mydevice->CC_Major == 7 && mydevice->CC_Minor > 0)) {
+            mydevice->cc_gt70 = 1;
         }
 
 
-        total_le70 += mydevice->cupti_le70;
-        total_ge70 += mydevice->cupti_ge70;
+        total_le70 += mydevice->cc_le70;
+        total_gt70 += mydevice->cc_gt70;
     } // END per device.
 
     // In the following messages; the "(#)" is (2) or (1) if CUPTI_PROFILER ==1, (0) if CUPTI_PROFILER==0,
     // to aid in debugging the messages.
 #if CUPTI_PROFILER == 1
     // Profiler exists, use it if all devices can use it.
-    if (total_ge70 == gctxt->deviceCount) {
+    if (total_gt70 == gctxt->deviceCount) {
         int ret = _cuda11_add_native_events(gctxt);
         if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
 
