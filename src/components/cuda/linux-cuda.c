@@ -5405,19 +5405,6 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
             return(PAPI_EMISC)
         );
 
-        // simplecuda.cu:267: CUPTI_API_CALL(cuptiProfilerDisableProfiling(&disableProfilingParams))
-        CUpti_Profiler_DisableProfiling_Params disableProfilingParams;
-        memset(&disableProfilingParams,    0, CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE);
-        disableProfilingParams.structSize  =  CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE;
-        disableProfilingParams.ctx = mydevice->sessionCtx;
-        CUPTI_CALL(
-            (*cuptiProfilerDisableProfilingPtr) (&disableProfilingParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
         // simplecuda.cu:269: CUPTI_API_CALL(cuptiProfilerEndPass(&endPassParams))
         CUpti_Profiler_EndPass_Params endPassParams;
         memset(&endPassParams, 0,  Profiler_EndPass_Params_STRUCT_SIZE);
@@ -5457,19 +5444,6 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
 
         CUPTI_CALL(
             (*cuptiProfilerBeginPassPtr) (&beginPassParams), 
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
-        CUpti_Profiler_EnableProfiling_Params enableProfilingParams;
-        memset(&enableProfilingParams,    0, CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE);
-        enableProfilingParams.structSize  =  CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE;
-        enableProfilingParams.ctx = mydevice->sessionCtx;
-
-        CUPTI_CALL(
-            (*cuptiProfilerEnableProfilingPtr) (&enableProfilingParams),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
