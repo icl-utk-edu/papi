@@ -155,7 +155,7 @@ get_device_properties( hsa_agent_t agent, void *info )
         PAPI_gpu_info_u *dev_info = &((PAPI_gpu_info_u *) info)[count];
 
         ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AMD_AGENT_INFO_PRODUCT_NAME,
+                                           HSA_AGENT_INFO_NAME,
                                            dev_info->amd.name),
                   return _status);
         ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
