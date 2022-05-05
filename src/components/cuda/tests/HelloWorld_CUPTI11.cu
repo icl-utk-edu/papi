@@ -57,7 +57,6 @@ int main(int argc, char** argv)
     cudaError_t cudaError;
     CUresult cuError; (void) cuError;
 
-    // Init here before any cuXXX or cudaXXX calls; including cuInit(0).
 	/* PAPI Initialization */
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 	if( retval != PAPI_VER_CURRENT ) {
@@ -130,7 +129,19 @@ int main(int argc, char** argv)
         fprintf(stderr, "%s:%s:%i before PAPI_add_events(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
 
-	retval = PAPI_add_events( EventSet, events, eventCount );
+    // If multiple GPUs/contexts were being used, you'd need to
+    // create contexts for each device. See, for example,
+    // simpleMultiGPU.cu.
+
+    // Context Create. We will use this one to run our kernel.
+    cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
+
+    if (STEP_BY_STEP_DEBUG) {
+        cuCtxGetCurrent(&getCtx);
+        fprintf(stderr, "%s:%s:%i after cuCtxCreate(&sessionCtx), about to PAPI_start(), sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
+    }
+
+    retval = PAPI_add_events( EventSet, events, eventCount );
 	if( retval != PAPI_OK ) {
 		fprintf( stderr, "PAPI_add_events failed\n" );
 	}
@@ -139,27 +150,6 @@ int main(int argc, char** argv)
         cuCtxGetCurrent(&getCtx);
         fprintf(stderr, "%s:%s:%i before PAPI_start(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
     }
-
-        // If multiple GPUs/contexts were being used, you'd need to 
-        // create contexts for each device. See, for example, 
-        // simpleMultiGPU.cu.
-
-// Context Create. We will use this one to run our kernel.
-cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
-
-if (STEP_BY_STEP_DEBUG) {
-    cuCtxGetCurrent(&getCtx);
-    fprintf(stderr, "%s:%s:%i after cuCtxCreate(&sessionCtx), about to PAPI_start(), sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
-}
-
-    // Start PAPI event measurement
-    // For CUpti 11, the CUcontext to be used for executing kernels on each device 
-    // must be the last context used on that device when we invoke PAPI_start().
-    // For a single GPU, this is not difficult, but notice we created the CUcontext
-    // to run the kernel directly above; so it is indeed the current CUcontext on
-    // device 0 (our only device).
-    // This gets more complicated with multiple GPUs; see simpleMultiGPU.cu for an
-    // coding example of how to ensure each device has the correct kernel CUcontext.
 
 	retval = PAPI_start( EventSet );
 	if( retval != PAPI_OK ) {

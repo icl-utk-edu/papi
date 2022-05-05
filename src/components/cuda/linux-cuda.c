@@ -36,12 +36,6 @@
 #include <cuda_runtime_api.h>
 
 #include <cuda.h>
-#include <cupti_callbacks.h>
-
-// Included by cupti_callbacks; but see these for
-// enums of driver or runtime calls we can trap. 
-// #include <cupti_driver_cbid.h>
-// #include <cupti_runtime_cbid.h>
 
 // CUPTI_PROFILER is determined at compile time by Rules.cuda. If the file
 // "cupti_profiler_target.h" is found under the $PAPI_CUDA_ROOT directory, we
@@ -230,19 +224,6 @@ typedef struct cuda_control {
 } cuda_control_t;
 
 #if CUPTI_PROFILER == 1
-// For _cuda_callback tracker.
-typedef struct {
-    CUcontext ctxId;        // context as used by Nvidia.
-    int       device;       // device it references; -1 if unknown.
-    void      *next;        // pointer to next in chain.
-} cuda_context_chain_t;
-
-// cuda_context_chain management: The head is always a pointer.
-// The "most recent" context for a given device will always be
-// found first; the context for the current device should be
-// the root. But we do not duplicate any contexts.
-static cuda_context_chain_t *cuda_context_chain = NULL;
-
 //*****************************************************************************
 // CUDA 11 structures.
 //*****************************************************************************
@@ -309,8 +290,6 @@ static cuda_control_t *global_cuda_control = NULL;
 
 
 #if CUPTI_PROFILER == 1
-static CUpti_SubscriberHandle callback_subscriber;
-
 // This global variable tracks all cuda11 metrics.
 static int cuda11_numEvents = 0;       // actual number of events in array.
 static int cuda11_maxEvents = 0;       // allocated space for events in array.
@@ -330,14 +309,6 @@ static void _cuda11_cuda_vector(void);
 #endif
 
 #define DEBUG_CALLS 0
-
-// Cupti Callback Domains to track. See _cuda_callback().
-// Change to 1 to subscribe.
-#define CCD_DRIVER 1
-#define CCD_RUNTIME 1
-#define CCD_RESOURCE 0
-#define CCD_SYNCHRONIZE 0
-#define CCD_NVTX 0
 
 // The following macro follows if a string function has an error. It should 
 // never happen; but it is necessary to prevent compiler warnings. We print 
@@ -514,10 +485,6 @@ DECLARECUPTIFUNC(cuptiEventGroupResetAllEvents, (CUpti_EventGroup));
 DECLARECUPTIFUNC(cuptiGetResultString, (CUptiResult result, const char **str));
 DECLARECUPTIFUNC(cuptiEnableKernelReplayMode, ( CUcontext context ));
 DECLARECUPTIFUNC(cuptiDisableKernelReplayMode, ( CUcontext context ));
-// Callback functions.
-DECLARECUPTIFUNC(cuptiSubscribe, ( CUpti_SubscriberHandle* subscriber, CUpti_CallbackFunc callback, void* userdata ));
-DECLARECUPTIFUNC(cuptiUnsubscribe, ( CUpti_SubscriberHandle subscriber ));
-DECLARECUPTIFUNC(cuptiEnableDomain, ( uint32_t enable, CUpti_SubscriberHandle subscriber, CUpti_CallbackDomain domain ));
 
 #if CUPTI_PROFILER == 1
 // Functions for perfworks profiler.
@@ -690,349 +657,6 @@ static int _cuda_count_dev_proc(void)
     return count;
 }
 
-
-#if CUPTI_PROFILER == 1
-//-----------------------------------------------------------------------------
-// Context Chain Management [CCM].
-//-----------------------------------------------------------------------------
-static cuda_context_chain_t* CCM_findByCtx(CUcontext thisCtx) {
-    cuda_context_chain_t* test = cuda_context_chain;
-    while (test != NULL) {
-        if (0 && test->ctxId == thisCtx) fprintf(stderr, "%s:%s:%i context found; link=%p\n", __FILE__, __func__, __LINE__, test);
-        if (test->ctxId == thisCtx) return(test);
-        test = test->next;
-    }
-
-    // Not found.
-    if (0) fprintf(stderr, "%s:%s:%i context not found=%p\n", __FILE__, __func__, __LINE__, thisCtx);
-    return(NULL);
-} // end routine.
-
-// Finds first context for a given device.
-static cuda_context_chain_t* CCM_findByDev(int dev) {
-    cuda_context_chain_t* test = cuda_context_chain;
-    while (test != NULL) {
-        if (test->device == dev) return(test);
-        test = test->next;
-    }
-
-    // Not found.
-    return(NULL);
-} // end routine.
-
-// Will add or modify a context with new information.
-// Will return with pointer; if already added will 
-// update with previously unknown device or primary. 
-// If isCurrent, will move link to anchor position.
-// Use -1 for dev Unknown.
-// Defined as inline to avoid not-used warning; 
-// This is mostly a debugging function.
-static inline void CCM_report_chain(void) {
-    cuda_context_chain_t* workLink = cuda_context_chain;
-    fprintf(stderr, "Chain:");
-    while(workLink != NULL) {
-        fprintf(stderr, " %d:%p", workLink->device, workLink->ctxId);
-        workLink = workLink->next;
-    }
-    fprintf(stderr, "\n");
-} // end CCM_report_chain()
-
-
-static cuda_context_chain_t* CCM_addOrMod(CUcontext ctxId, int dev, int isCurrent) {
-    cuda_context_chain_t* workLink;
-    cuda_context_chain_t* myLink = CCM_findByCtx(ctxId);
-    if (0) fprintf(stderr, "%s:%s:%i dev=%d context=%p isCurrent=%d.\n", __FILE__, __func__, __LINE__, dev, ctxId, isCurrent);
-    if (myLink == NULL) {
-        cuda_context_chain_t* newLink = (cuda_context_chain_t*) calloc(1, sizeof(cuda_context_chain_t));
-        newLink->ctxId = ctxId;
-        newLink->device = dev;
-
-        // If we have to move this anyway,
-        if (isCurrent == 1) {
-            newLink->next = cuda_context_chain;
-            cuda_context_chain = newLink;
-            return(cuda_context_chain);
-        }
-
-        // Otherwise we put it at the end of the chain.
-        cuda_context_chain_t* workLink = cuda_context_chain;
-        // If there is no chain yet, init with this one.
-        if (workLink == NULL) {
-            cuda_context_chain = newLink;
-            return(cuda_context_chain);
-        }
-
-        // otherwise, search for end.
-        while (workLink->next != NULL) workLink = workLink->next;
-        workLink->next = newLink;
-        return(newLink);
-    } // END if we couldn't find it.
-
-    // Okay, we found it; in myLink.
-    if (myLink->device < 0) myLink->device = dev;
-
-    // If this context is now the current context, 
-    // it must be promoted. If it is not explicitly
-    // the current, we don't do anything; we can't
-    // know what the proper current context is, we
-    // presume some earlier context in the chain is
-    // appropriate.
-    if (isCurrent == 0) {return(myLink);}
-
-    // return if already at the head.
-    if (isCurrent == 1 && myLink == cuda_context_chain) {return(myLink);}
-
-    // We have to find its predecessor.
-    workLink = cuda_context_chain;
-    while(workLink->next != myLink && workLink != NULL) workLink=workLink->next;
-    if (workLink == NULL) {
-        fprintf(stderr, "%s:%s:%i Bug, workLink pointer should never be NULL here.\n", __FILE__, __func__, __LINE__);
-        return(NULL);
-    }
-
-    // Found predecessor. its workLink->next points at myLink.
-    // Link my parent to my child (if any).
-    workLink->next = myLink->next;
-    // Point myself at current head of chain.
-    myLink->next = cuda_context_chain;
-    // Point head of chain at myself. I'm the king!
-    cuda_context_chain = myLink;
-    // Tell my caller.
-    return(myLink);
-} // END CCM_addOrMod.
-
-// Delete a context from the chain. No errors; if it doesn't
-// exist we don't do anything.
-static void CCM_destroy(CUcontext ctxId) {
-    cuda_context_chain_t* workLink;
-    cuda_context_chain_t* myLink = CCM_findByCtx(ctxId);
-    if (0) fprintf(stderr, "%s:%s:%i myLink = %p\n", __FILE__, __func__, __LINE__, myLink);
-    // if it doesn't exist, 
-    if (myLink == NULL) return;
-    // If it is the head, change the head and free it.
-    if (myLink == cuda_context_chain) {
-        cuda_context_chain = cuda_context_chain->next;
-        free(myLink);
-        return;
-    }
-
-    // Have to find my predecessor.
-    workLink = cuda_context_chain;
-    while(workLink->next != myLink && workLink != NULL) workLink=workLink->next;
-    // If I don't have one, that is a bug.
-    if (workLink == NULL) {
-        fprintf(stderr, "%s:%s:%i Bug, workLink pointer should never be NULL here.\n", __FILE__, __func__, __LINE__);
-        return;
-    }
-
-    // Found predecessor. its workLink->next points at myLink.
-    // Link my parent to my child (if any).
-    workLink->next = myLink->next;
-    // Free the storage of destroyed context.
-    free(myLink);
-    return;
-} // END CCM_destroy.
-
-// Free the entire chain.
-static void CCM_free_chain(void) {
-    cuda_context_chain_t* workLink;
-    while (cuda_context_chain != NULL) {
-        workLink = cuda_context_chain;
-        cuda_context_chain = cuda_context_chain->next;
-        free(workLink);
-    }
-
-    return;
-} // END CCM_free_chain.
-
-
-//-----------------------------------------------------------------------------
-// The callbacks are used to track all contexts that we see, and infer the
-// device each can control. (we cannot tell from just the context itself).
-// 
-//-----------------------------------------------------------------------------
-static void CUPTIAPI
-_cuda_callback(void *userdata, CUpti_CallbackDomain domain,
-            CUpti_CallbackId cbid, const void *cbdata)
-{
-    (void) userdata; // don't generate warning for unused.
-    const CUpti_CallbackData *cbInfo = (CUpti_CallbackData *)cbdata;
-    char* site = NULL;
-    char siteEnter[]="ENTER";
-    char siteExit[]= "EXIT ";
-    if (cbInfo->callbackSite == CUPTI_API_ENTER) site=siteEnter;
-    if (cbInfo->callbackSite == CUPTI_API_EXIT ) site=siteExit;
-      
-
-//  you must cuptiEnableDomain to receive each, see end of _cuda_init_component.
-//  The case just returns if this is not a domain we need to see.
-
-    switch (domain) {
-        #if CCD_DRIVER == 1
-        case CUPTI_CB_DOMAIN_DRIVER_API:
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=DRIVER_API  site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
-            break;
-        #endif
-        #if CCD_RUNTIME == 1
-        case CUPTI_CB_DOMAIN_RUNTIME_API:
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=RUNTIME_API site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
-            break;
-        #endif
-        #if CCD_RESOURCE == 1 
-        case CUPTI_CB_DOMAIN_RESOURCE:
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=RESOURCE    site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
-            break;
-        #endif
-        #if CCD_SYNCHRONIZE == 1
-        case CUPTI_CB_DOMAIN_SYNCHRONIZE:
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=SYNCHRONIZE site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
-            break;
-        #endif
-        #if CCD_NVTX == 1
-        case CUPTI_CB_DOMAIN_NVTX:            
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=NVTX        site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, site, cbInfo->functionName, cbInfo->context);
-            break;
-        #endif
-        default:
-            if (0) fprintf(stderr, "%s:%s:%i callback domain=%d unhandled; site=%s func='%s' context=%p.\n", __FILE__, __func__, __LINE__, domain, site, cbInfo->functionName, cbInfo->context);
-            // Exit without further processing.
-            return;
-            break;
-    } // end switch on domain.
-
-    if (domain == CUPTI_CB_DOMAIN_DRIVER_API)
-    {
-        // on EXIT, we want to see the new current context.
-        if (cbInfo->callbackSite == CUPTI_API_EXIT)
-        {
-            //  From cupti_driver_cbid: 
-            switch (cbid) {
-                //  cuDevicePrimaryCtxRetain_params; CUdevice dev,CUcontext *pctx.
-                //  Identifies a primary context, but does not make it current.
-                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRetain:
-                    {
-                        const cuDevicePrimaryCtxRetain_params *myP;
-                        myP = cbInfo->functionParams;
-                        if (0) fprintf(stderr, "%s:%s:%i '%s' dev=%d cbCtx=%p, paramCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context, myP->pctx[0]);
-                        if (NULL == CCM_addOrMod(myP->pctx[0], myP->dev, 0)) { // Not current; but while we know what it is.
-                            fprintf(stderr, "CCM_addOrMod error.\n");
-                        }
-                    }
-                    break;
-
-                //  cuDevicePrimaryCtxRelease_params; CUdevice dev;
-                //  cuDevicePrimaryCtxRelease_v2_params; CUdevice dev;
-                //  structures are identical. Does nothing.
-                //  (Doesn't identify or change any contexts.)
-                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease:
-                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2
-                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxRelease_v2:
-                #endif
-                    if (0) {
-                        const cuDevicePrimaryCtxRelease_params* myP;
-                        myP = cbInfo->functionParams;
-                        if (0) fprintf(stderr, "%s:%s:%i '%s' dev=%d cbCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
-                    }
-                    break;
-
-                //  cuDevicePrimaryCtxReset_params; CUdevice dev;
-                //  cuDevicePrimaryCtxReset_v2_params; CUdevice dev;
-                //  structures are identical. Does nothing.
-                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset:
-                #ifdef CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2
-                case CUPTI_DRIVER_TRACE_CBID_cuDevicePrimaryCtxReset_v2:
-                #endif
-                    if (0) {
-                        const cuDevicePrimaryCtxReset_params* myP;
-                        myP = cbInfo->functionParams;
-                        fprintf(stderr, "%s:%s:%i '%s' dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
-                    }
-                    break;
-
-                case CUPTI_DRIVER_TRACE_CBID_cuCtxGetCurrent:
-                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
-                    if (0) fprintf(stderr, "%s:%s:%i '%s' context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
-                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Device unknown, but is current.
-                        fprintf(stderr, "CCM_addOrMod error.\n");
-                    }
-                    break;
-
-                case CUPTI_DRIVER_TRACE_CBID_cuCtxCreate:
-                case CUPTI_DRIVER_TRACE_CBID_cuCtxCreate_v2:
-                    // Note: cuCtxCreate_v2_params and cuCtxCreate_params identical;
-                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
-                    {
-                        const cuCtxCreate_v2_params* myP;
-                        myP = cbInfo->functionParams;
-                        if (0) fprintf(stderr, "%s:%s:%i '%s', dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->dev, cbInfo->context);
-                        if (NULL == CCM_addOrMod(cbInfo->context, myP->dev, 1)) { // Is current.
-                            fprintf(stderr, "CCM_addOrMod error.\n");
-                        }
-                    }
-                    break;
-
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxDestroy:
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxDestroy_v2:
-                    // Note: cuCtxDestroy_v2_params and cuCtxDestroy_params identical;
-                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
-                    {
-                        const cuCtxDestroy_v2_params *myP;
-                        myP = cbInfo->functionParams;
-                        if (0) fprintf(stderr, "%s:%s:%i '%s' cbCtx=%p, paramCtx=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context, myP->ctx);
-                        (void) CCM_destroy(myP->ctx); // May or may not be current.
-                    }
-                    break;
-
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPushCurrent:
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPushCurrent_v2:
-                    // Note: cuCtxPushCurrent_v2_params and cuCtxPushCurrent_params identical;
-                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
-                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
-                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
-                        fprintf(stderr, "CCM_addOrMod error.\n");
-                    }
-                    break;
-
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPopCurrent:
-                case  CUPTI_DRIVER_TRACE_CBID_cuCtxPopCurrent_v2:
-                    // Note: cuCtxPopCurrent_v2_params and cuCtxPopCurrent_params identical;
-                    // see $PAPI_CUPTI_ROOT/include/generated_cuda_meta.h.
-                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
-                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
-                        fprintf(stderr, "CCM_addOrMod error.\n");
-                    }
-                    break;
-
-                case CUPTI_DRIVER_TRACE_CBID_cuCtxSetCurrent:
-                    //  cuCtxSetCurrent_params.
-                    if (0) fprintf(stderr, "%s:%s:%i '%s', context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, cbInfo->context);
-                    if (NULL == CCM_addOrMod(cbInfo->context, -1, 1)) { // Is current.
-                        fprintf(stderr, "CCM_addOrMod error.\n");
-                    }
-                    break;
-
-                default: // Ignore.
-                    break;
-            }
-        }
-    }
-
-    if (domain == CUPTI_CB_DOMAIN_RUNTIME_API && 
-        cbInfo->callbackSite == CUPTI_API_EXIT &&
-        cbid == CUPTI_RUNTIME_TRACE_CBID_cudaSetDevice_v3020)
-    {
-        //  cudaSetDevice_v3020_params; int device.
-        const cudaSetDevice_v3020_params* myP;
-        myP = cbInfo->functionParams;
-        if (0) fprintf(stderr, "%s:%s:%i '%s', dev=%d context=%p.\n", __FILE__, __func__, __LINE__, cbInfo->functionName, myP->device, cbInfo->context);
-        if (NULL == CCM_addOrMod(cbInfo->context, myP->device, 1)) { // Is current.
-            fprintf(stderr, "CCM_addOrMod error.\n");
-        }
-    }        
-} // _cuda_callback
-#endif // CUPTI_PROFILER == 1
-
-
 static int _cuda_init_private(void);
 
 /*
@@ -1111,10 +735,13 @@ static int _search_all_events(cuda_context_t * gctxt, CUpti_EventID id, int devi
     }
 
 
-// We need to link libcupti early, to acquire the callback functions. The rest
-// of the functions in these libraries are acquired by the delayed version; but
-// assume this function has been executed (so dl3 is valid).
-static int _cuda_primaryLinkLibraries(void)
+/*
+ * Link the necessary CUDA libraries to use the cuda component.  If any of them can not be found, then
+ * the CUDA component will just be disabled.  This is done at runtime so that a version of PAPI built
+ * with the CUDA component can be installed and used on systems which have the CUDA libraries installed
+ * and on systems where these libraries are not installed.
+ */
+static int _cuda_linkCudaLibraries(void)
 {
     char path_lib[PATH_MAX];
 
@@ -1127,59 +754,6 @@ static int _cuda_primaryLinkLibraries(void)
         return PAPI_ENOSUPP;
     }
     // Need to link in the cuda libraries, if any not found disable the component
-    // getenv returns NULL if environment variable is not found.
-    char *cuda_root = getenv("PAPI_CUDA_ROOT");
-
-    dl3 = NULL;                                                 // Ensure reset to NULL.
-
-    // Step 1: Process override if given.
-    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
-        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
-        if (dl3 == NULL) {
-            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
-            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-            return(PAPI_ENOSUPP);   // Override given but not found.
-        }
-    }
-
-    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl3 == NULL) {                                          // If no override,
-        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
-    }
-
-    // Step 3: Try the explicit install default.
-    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
-        int strErr=snprintf(path_lib, sizeof(path_lib)-2, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
-        path_lib[sizeof(path_lib)-1]=0;
-        if (strErr > (int) sizeof(path_lib)-2) HANDLE_STRING_ERROR;
-        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
-    }
-
-    // Check for failure.
-    if (dl3 == NULL) {
-        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
-        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(PAPI_ENOSUPP);   // Not found on default paths.
-    }
-
-    // We have a dl3. (libcupti.so)
-
-#if CUPTI_PROFILER == 1
-    // CALLBACK functions.
-    cuptiSubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiSubscribe");
-    cuptiUnsubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiUnsubscribe");
-    cuptiEnableDomainPtr = DLSYM_AND_CHECK(dl3, "cuptiEnableDomain");
-#endif 
-
-    return(PAPI_OK);
-} // END _cuda_primaryLinkLibraries
-
-static int _cuda_linkCudaLibraries(void)
-{
-    char path_lib[PATH_MAX];
-
     // getenv returns NULL if environment variable is not found.
     char *cuda_root = getenv("PAPI_CUDA_ROOT");
 
@@ -1284,8 +858,39 @@ static int _cuda_linkCudaLibraries(void)
     cudaDriverGetVersionPtr = DLSYM_AND_CHECK(dl2, "cudaDriverGetVersion");
     cudaRuntimeGetVersionPtr = DLSYM_AND_CHECK(dl2, "cudaRuntimeGetVersion");
 
-    // dl3 should be set by _cuda_primary_LinkLibraries.
-    if (dl3 == NULL) return(PAPI_EMISC); 
+    dl3 = NULL;                                                 // Ensure reset to NULL.
+
+    // Step 1: Process override if given.
+    if (strlen(cuda_cupti) > 0) {                                       // If override given, it MUST work.
+        dl3 = dlopen(cuda_cupti, RTLD_NOW | RTLD_GLOBAL);               // Try to open that path.
+        if (dl3 == NULL) {
+            int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_CUDA_CUPTI override '%s' given in Rules.cuda not found.", cuda_cupti);
+            _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            return(PAPI_ENOSUPP);   // Override given but not found.
+        }
+    }
+
+    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                          // If no override,
+        dl3 = dlopen("libcupti.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+    }
+
+    // Step 3: Try the explicit install default.
+    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
+        int strErr=snprintf(path_lib, sizeof(path_lib)-2, "%s/extras/CUPTI/lib64/libcupti.so", cuda_root);   // PAPI Root check.
+        path_lib[sizeof(path_lib)-1]=0;
+        if (strErr > (int) sizeof(path_lib)-2) HANDLE_STRING_ERROR;
+        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+    }
+
+    // Check for failure.
+    if (dl3 == NULL) {
+        int strErr=snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libcupti.so not found.");
+        _cuda_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
+        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        return(PAPI_ENOSUPP);   // Not found on default paths.
+    }
     // We have a dl3. (libcupti.so)
 
     /* The macro DLSYM_AND_CHECK results in the expansion example below */
@@ -1346,10 +951,6 @@ static int _cuda_linkCudaLibraries(void)
     cuptiProfilerFlushCounterDataPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerFlushCounterData");
     cuptiProfilerUnsetConfigPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerUnsetConfig");
     cuptiProfilerEndSessionPtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerEndSession");
-    // CALLBACK functions; already done by primary init.
-    // cuptiSubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiSubscribe");
-    // cuptiUnsubscribePtr = DLSYM_AND_CHECK(dl3, "cuptiUnsubscribe");
-    // cuptiEnableDomainPtr = DLSYM_AND_CHECK(dl3, "cuptiEnableDomain");
 
     dl4 = NULL;                                                 // Ensure reset to NULL.
 
@@ -2647,76 +2248,6 @@ static int _cuda_init_component(int cidx)
             return(PAPI_ENOSUPP);
         }
     }
-
-    int err;
-    PAPI_lock(COMPONENT_LOCK);
-    err = _cuda_primaryLinkLibraries();
-    if(err != PAPI_OK) {
-        SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
-        SUBDBG("See disable reason in papi_component_avail output for more details.\n");
-        _cuda_vector.cmp_info.initialized = 1;
-        _cuda_vector.cmp_info.disabled = err;
-        PAPI_unlock(COMPONENT_LOCK);
-        return(err);
-    }
-
-    #if CUPTI_PROFILER == 1
-    if (0) fprintf(stderr, "%s:%s:%i Subscribing to callbacks.\n", __FILE__, __func__, __LINE__);
-    CUPTI_CALL( (*cuptiSubscribePtr) 
-        (&callback_subscriber, (CUpti_CallbackFunc) (_cuda_callback), NULL),
-        PAPI_unlock(COMPONENT_LOCK);
-        return(PAPI_EMISC)); // we have no user data.
-
-    // subscribe to domains we want to see.
-    // CCD means "Cuda Callback Domain". 
-    // See $PAPI_CUPTI_ROOT/include/cupti_callbacks.h.
-    // FORM: CUPTI_CB_DOMAIN_XYZ. XYZ=DRIVER_API,
-    // RUNTIME_API, RESOURCE, SYNCHRONIZE, NVTX.
-
-        #if CCD_DRIVER == 1
-    if (0) fprintf(stderr, "%s:%s:%i Subscribing to CCD_DRIVER.\n", __FILE__, __func__, __LINE__);
-        CUPTI_CALL( (*cuptiEnableDomainPtr) 
-            (1, callback_subscriber, CUPTI_CB_DOMAIN_DRIVER_API),
-            PAPI_unlock(COMPONENT_LOCK);
-            return(PAPI_EMISC));
-            if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=DRIVER_API.\n", __FILE__, __func__, __LINE__);
-        #endif
-    
-        #if CCD_RUNTIME == 1
-    if (0) fprintf(stderr, "%s:%s:%i Subscribing to CCD_RUNTIME.\n", __FILE__, __func__, __LINE__);
-        CUPTI_CALL( (*cuptiEnableDomainPtr) 
-            (1, callback_subscriber, CUPTI_CB_DOMAIN_RUNTIME_API),
-            PAPI_unlock(COMPONENT_LOCK);
-            return(PAPI_EMISC));
-        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=RUNTIME_API.\n", __FILE__, __func__, __LINE__);
-        #endif
-
-        #if CCD_RESOURCE == 1 
-        CUPTI_CALL( (*cuptiEnableDomainPtr) 
-            (1, callback_subscriber, CUPTI_CB_DOMAIN_RESOURCE),
-            PAPI_unlock(COMPONENT_LOCK);
-            return(PAPI_EMISC));
-        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=RESOURCE.\n", __FILE__, __func__, __LINE__);
-        #endif
-
-        #if CCD_SYNCHRONIZE == 1
-        CUPTI_CALL( (*cuptiEnableDomainPtr) 
-            (1, callback_subscriber, CUPTI_CB_DOMAIN_SYNCHRONIZE),
-            PAPI_unlock(COMPONENT_LOCK);
-            return(PAPI_EMISC));
-        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=SYNCHRONIZE.\n", __FILE__, __func__, __LINE__);
-        #endif
-
-        #if CCD_NVTX == 1
-        CUPTI_CALL( (*cuptiEnableDomainPtr) 
-            (1, callback_subscriber, CUPTI_CB_DOMAIN_NVTX),
-            PAPI_unlock(COMPONENT_LOCK);
-            return(PAPI_EMISC));
-        if (0) fprintf(stderr, "%s:%s:%i Subscribed to Callback Domain=domain=NVTX.\n", __FILE__, __func__, __LINE__);
-        #endif
-
-    if (0) fprintf(stderr, "%s:%s:%i callback subscriptions completed.\n", __FILE__, __func__, __LINE__);
-    #endif 
 
     sprintf(_cuda_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
@@ -5047,13 +4578,31 @@ static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
     (void) gctrl;
-    int dev, ii;
+    int dev, ii, userDevice;
+    CUcontext userCtx;
 
     /* Return if no events */
     if(nativeCount == 0)
         return (PAPI_OK);
 
+    // Get deviceNum.
+    CUDA_CALL((*cudaGetDevicePtr) (&userDevice), return (PAPI_EMISC));
+    CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),    return (PAPI_EMISC));
+    if (userCtx == NULL) return(PAPI_ENOSUPP);  // We don't support no cuda context at all.
+
     _papi_hwi_lock( COMPONENT_LOCK );
+
+    // This is the protocol devised by the PAPI team in 2015; see:
+    // PAPI/src/components/cuda/tests/simpleMultiGPU.c.  If events from
+    // multiple devices are to be in the event set, the user must create a
+    // context for each device and make it active for PAPI_add. The context
+    // must be the one used to launch the kernel on that device. We remember
+    // the userCtx for current userDevice here; and use it during PAPI_start.
+
+    if (userDevice >=0 && userDevice < gctxt->deviceCount) {
+        gctxt->deviceArray[userDevice].sessionCtx = userCtx;
+        if (0) fprintf(stderr, "%s:%s:%i userDevice=%d, setting sessionCtx=%p.\n", __FILE__, __func__, __LINE__, userDevice, userCtx);
+    }
  
     // We need the rawMetricRequests, which we collected during event enumeration.
     // We also need the nvidia names of the metrics: cuda11_AllEvents[]->nv_name.
@@ -5219,25 +4768,6 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
     CU_CALL((*cuCtxGetCurrentPtr) (&userContext),
         _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
-
-    // Before calling start, we require the user to have established
-    // a context for each device with events. We track that activity
-    // with _cuda_callback(). At this point we set a "sessionCtx" 
-    // for each device, and re-use that on read or stop.
-
-    for (dev=0; dev < (unsigned) gctxt->deviceCount; dev++) {
-        cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
-        // skip if no events in it.
-        if (mydevice->cuda11_RMR_count == 0) continue;
-        
-        cuda_context_chain_t* myLink = CCM_findByDev(dev);
-        if (myLink == NULL) {
-            mydevice->sessionCtx = NULL;
-            continue;
-        }
-
-        mydevice->sessionCtx = myLink->ctxId;
-    } // end set all contexts for devices in use.
 
     err = _cuda11_build_profiling_structures(userContext);
     if (err != PAPI_OK) {
@@ -5900,13 +5430,6 @@ static int _cuda11_shutdown_component(void)
         _papi_hwi_unlock(COMPONENT_LOCK); 
         return(PAPI_EMISC)
     );
-
-    // unsubscribe from callbacks.
-    if (0) fprintf(stderr, "%s:%s:%i Unsubscribing to callbacks.\n", __FILE__, __func__, __LINE__);
-    CUPTI_CALL( (*cuptiUnsubscribePtr) (callback_subscriber), return(PAPI_EMISC));
-
-    // Free our CUcontext tracking chain.
-    CCM_free_chain();
 
     _papi_hwi_unlock( COMPONENT_LOCK );
 

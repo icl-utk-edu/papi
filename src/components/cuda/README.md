@@ -71,21 +71,12 @@ This can be set using export; e.g.
   as much as 2 to 4 minutes per GPU. If the output is redirected to a file, this 
   may appear to "hang up". Give it time.
 
-* With CUpti\_11, The PAPI component must be initialized before the application
-  begins creating, pushing or popping CUcontext (cuda contexts) for the
-  devices.  That includes the "cu" and "cuda" functions, like "cudaSetDevice",
-  which can implicitly create a new CUcontext.
-
-That is done with the "PAPI\_library\_init()" function. The purpose here is so PAPI 
-can monitor the application's CUcontext management; especially when multiple GPUs
-are being used. 
-
 Note CUcontexts are device specific, a context can only apply to one GPU. So
 each GPU must have its own context.
 
 If PAPI events are being used, the CUcontexts to be used for each kernel+device must 
 already exist and must be the most recent Current CUcontext on that device before 
-PAPI\_start() is invoked.
+PAPI\_add\_event() is invoked.
 
 An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu.
 
@@ -105,7 +96,7 @@ the context was created on a different device), and Pop makes the context
 that WAS the top before the Push the new current context (and device, if that
 changes for the new context).
 
-However, we do not used Push and Pop right before PAPI_start. It is possible,
+However, we do not used Push and Pop right before PAPI_add_event. It is possible,
 but we use cuCtxSetCurrent() because it is more efficient. cuCtxSetCurrent()
 does NOT remember the previous context on the top of the stack, it just
 replaces it with the context being set. However, we can use cuCtxGetCurrent()
@@ -119,9 +110,9 @@ device, a default context is created by cudaSetDevice(); but in our experience
 these default contexts do not allow all the Profiler functionality of a context
 explicitly created with cuCtxCreate().  Thus we recommend always using
 cuCtxCreate() for each device; and ensuring the context used to run a kernel is
-the most recent context active on that device when PAPI\_start() is invoked.
+the most recent context active on that device when PAPI\_add\_event() is invoked.
 
-Code details are in simpleMultiGpu.cu just before the PAPI_start invocation.
+Code details are in simpleMultiGpu.cu just before the PAPI_add_event invocation.
 
 ***
 
