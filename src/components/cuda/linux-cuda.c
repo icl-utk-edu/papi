@@ -4587,8 +4587,14 @@ static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
 
     // Get deviceNum.
     CUDA_CALL((*cudaGetDevicePtr) (&userDevice), return (PAPI_EMISC));
+    SUBDBG("userDevice %d \n", userDevice);
+
+    // cudaFree(NULL) does nothing real, but initializes a new cuda context
+    // if one does not exist. This prevents cuCtxGetCurrent() from failing.
+    // If it returns an error, we ignore it.
+    CUDA_CALL((*cudaFreePtr) (NULL), );
     CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),    return (PAPI_EMISC));
-    if (userCtx == NULL) return(PAPI_ENOSUPP);  // We don't support no cuda context at all.
+    SUBDBG("userDevice %d sessionCtx %p \n", userDevice, userCtx);
 
     _papi_hwi_lock( COMPONENT_LOCK );
 
