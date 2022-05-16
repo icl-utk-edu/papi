@@ -2364,12 +2364,6 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
     SUBDBG("Entering with nativeCount %d\n", nativeCount);
     (void) ctx;
     DO_SOME_CHECKING(&_cuda_vector);
-    #if CUPTI_API_VERSION >= 13
-    // If the function pointer has changed, pass to cupti11 version.
-    if (_cuda_vector.update_control_state != _cuda_update_control_state) {
-        return(_cuda11_update_control_state(ctrl, nativeInfo, nativeCount, ctx));
-    }
-    #endif
 
     cuda_control_t *gctrl = global_cuda_control;    // We don't use the passed-in parameter, we use a global.
     cuda_context_t *gctxt = global_cuda_context;    // We don't use the passed-in parameter, we use a global.
