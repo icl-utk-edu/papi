@@ -5,7 +5,7 @@ PAPI_CUDA_ROOT ?= /opt/cuda
 PAPI_CUPTI_ROOT ?= $(PAPI_CUDA_ROOT)/extras/CUPTI
 CUDRV_DIR ?= $(PAPI_CUDA_ROOT)
 
-TESTS = HelloWorld simpleMultiGPU simpleMultiGPU_no_counters 
+TESTS = cupti_multi_kernel_launch_monitoring HelloWorld simpleMultiGPU simpleMultiGPU_no_counters
 cuda_tests: $(TESTS) 
 
 PAPI_CUDA_ROOT ?= $(CUDA_PATH)
@@ -21,6 +21,9 @@ default: $(TESTS)
 
 %.mac:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
+
+cupti_multi_kernel_launch_monitoring: cupti_multi_kernel_launch_monitoring.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) -o cupti_multi_kernel_launch_monitoring cupti_multi_kernel_launch_monitoring.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 HelloWorld_CUPTI11: HelloWorld_CUPTI11.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) -o HelloWorld_CUPTI11 HelloWorld_CUPTI11.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
