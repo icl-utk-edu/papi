@@ -43,6 +43,8 @@ VmLib:      1360 kB
 VmPTE:        20 kB
 */
 
+int
+generic_get_memory_info( PAPI_hw_info_t *hw_info );
 
 int
 _linux_get_dmem_info( PAPI_dmem_info_t * d )
@@ -962,15 +964,14 @@ aarch64_get_memory_info( PAPI_hw_info_t * hw_info )
 {
 	unsigned int midr = mfmidr(  );
 
-	int index;
+	int index = -1;
 	switch ( midr ) {
 	case 0x461f0010:		 /* Fujitsu A64FX */
 		index = 0;
 		break;
 	default:
-		index = -1;
-		hw_info->mem_hierarchy.levels = 0;
-		break;
+		generic_get_memory_info (hw_info);
+		return 0;
 	}
 
 	if ( index != -1 ) {
