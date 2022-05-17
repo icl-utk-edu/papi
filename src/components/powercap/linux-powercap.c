@@ -357,18 +357,19 @@ _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
   long long start_val = 0;
   long long curr_val = 0;
-  int c;
+  int c, i;
 
   for( c = 0; c < num_events; c++ ) {
-    start_val = context->start_value[c];
-    curr_val = read_powercap_value(c);
+    i = control->which_counter[c];
+    start_val = context->start_value[i];
+    curr_val = read_powercap_value(i);
 
-    SUBDBG("%d, start value: %lld, current value %lld\n", c, start_val, curr_val);
+    SUBDBG("%d, start value: %lld, current value %lld\n", i, start_val, curr_val);
 
     if(start_val) {
 
       /* Make sure an event is a counter. */
-      if (control->need_difference[c] == 1) {
+      if (control->need_difference[i] == 1) {
 
 	/* Wraparound. */
 	if(start_val > curr_val) {
