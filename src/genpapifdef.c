@@ -184,7 +184,8 @@ const hwi_describe_t _papi_def[] = {
     /*22 */ {PAPI_EATTR, "PAPI_EATTR", "Invalid or missing event attributes"},
     /*23 */ {PAPI_ECOUNT, "PAPI_ECOUNT", "Too many events or attributes"},
     /*24 */ {PAPI_ECOMBO, "PAPI_ECOMBO", "Bad combination of features"},
-    /*25 */ {PAPI_ECMP_DISABLED, "PAPI_ECMP_DISABLED", "Component containing event is disabled"}
+    /*25 */ {PAPI_ECMP_DISABLED, "PAPI_ECMP_DISABLED", "Component containing event is disabled"},
+    /*27 */ {PAPI_EMULPASS, "PAPI_EMULPASS", "Event exists, but cannot be counted due to multiple passes required by hardware"}
 };
 
 
