@@ -2543,7 +2543,7 @@ _pe_init_component( int cidx )
 					PAPI_MAX_STR_LEN);
             if (strCpy == NULL) HANDLE_STRING_ERROR;
 				break;
-			case PAPI_ENOCMP:
+			case PAPI_ECMP:
 				strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 					"Error libpfm4 no default PMU found",
 					PAPI_MAX_STR_LEN);
