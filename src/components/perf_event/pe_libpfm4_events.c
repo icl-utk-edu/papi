@@ -1158,8 +1158,6 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 	event_table->native_events=calloc(NATIVE_EVENT_CHUNK,
 					sizeof(struct native_event_t));
 	if (event_table->native_events==NULL) {
-		strncpy(component->cmp_info.disabled_reason,
-			"calloc NATIVE_EVENT_CHUNK failed",PAPI_MAX_STR_LEN);
 		return PAPI_ENOMEM;
 	}
 
@@ -1274,14 +1272,10 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 	}
 
 	if (!found_default) {
-		strncpy(component->cmp_info.disabled_reason,
-			"could not find default PMU",PAPI_MAX_STR_LEN);
 		return PAPI_ECMP;
 	}
 
 	if (found_default>1) {
-		strncpy(component->cmp_info.disabled_reason,
-			"found more than one default PMU",PAPI_MAX_STR_LEN);
 		return PAPI_ECOUNT;
 	}
 
@@ -1297,7 +1291,6 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 		retval = _papi_load_preset_table( (char *)event_table->default_pmu.name,
 				event_table->default_pmu.pmu, cidx );
 		if ( retval!=PAPI_OK ) {
-			strncpy(component->cmp_info.disabled_reason,"_papi_load_preset_table failed",PAPI_MAX_STR_LEN);
 			return PAPI_ENOEVNT;
 		}
 	}
