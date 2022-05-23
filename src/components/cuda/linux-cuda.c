@@ -1382,13 +1382,16 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl4. (libnvperf_host.so)
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl4, "NVPW_GetSupportedChipNames");
 
-    Dl_info nvperf_info;
+    Dl_info dl1_i, dl2_i, dl3_i, nvperf_info;
     // requires address of any function within the library.
     dladdr(NVPW_GetSupportedChipNamesPtr, &nvperf_info);
-
-    if (0) { // debug informative; this is how to show the full path of the actual library found.
-        fprintf(stderr, "dl4 Location='%s'\n", nvperf_info.dli_fname);
-    }
+    dladdr(cuptiProfilerInitializePtr, &dl3_i);
+    dladdr(cudaGetDevicePtr, &dl2_i);
+    dladdr(cuCtxGetCurrentPtr, &dl1_i);
+    SUBDBG("CUDA driver library loaded='%s'\n", dl1_i.dli_fname);
+    SUBDBG("CUDA runtime library loaded='%s'\n", dl2_i.dli_fname);
+    SUBDBG("Cupti library loaded='%s'\n", dl3_i.dli_fname);
+    SUBDBG("PerfWorks library loaded='%s'\n", nvperf_info.dli_fname);
     
     NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_MetricsContext_Create");
     NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_Destroy");
