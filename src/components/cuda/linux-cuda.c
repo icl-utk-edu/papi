@@ -4760,7 +4760,7 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     cuda_context_t *gctxt = global_cuda_context;
     uint32_t dev;
     int err, userDevice = -1;
-    CUcontext userContext;
+    CUcontext userCtx;
     CUcontext popCtx;
 
     // NOTE: Zero cumulative values for start
@@ -4773,10 +4773,10 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     CUDA_CALL((*cudaGetDevicePtr) (&userDevice),
         _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
-    CU_CALL((*cuCtxGetCurrentPtr) (&userContext),
+    CU_CALL((*cuCtxGetCurrentPtr) (&userCtx),
         _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
-    err = _cuda11_build_profiling_structures(userContext);
+    err = _cuda11_build_profiling_structures(userCtx);
     if (err != PAPI_OK) {
         if (1) fprintf(stderr, "%s:%s:%i _cuda11_build_profiling_structures() failed; err=%d.\n",
             __FILE__, __func__, __LINE__, err);
