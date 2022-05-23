@@ -4761,6 +4761,7 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
     uint32_t dev;
     int err, userDevice = -1;
     CUcontext userContext;
+    CUcontext popCtx;
 
     // NOTE: Zero cumulative values for start
     //       (work to be done)
@@ -4786,10 +4787,19 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         _papi_hwi_unlock( COMPONENT_LOCK ); return (PAPI_EMISC));
 
     for (dev=0; dev < (unsigned) gctxt->deviceCount; dev++) {
+        int ctxPushed = 0;
         cuda_device_desc_t *mydevice = &gctxt->deviceArray[dev];
         // skip devices that have no events to start.
         if (mydevice->sessionCtx == NULL ||
             mydevice->cuda11_ConfigImage == NULL) continue;
+
+        if (mydevice->sessionCtx != userCtx) {
+            ctxPushed = 1;
+            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->sessionCtx),
+                // On error,
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
 
         // set up parameter structures in mydevice.
         memset(&mydevice->beginSessionParams,       0, CUpti_Profiler_BeginSession_Params_STRUCT_SIZE);
@@ -4811,6 +4821,8 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         mydevice->beginSessionParams.maxLaunchesPerPass = 1;
         CUPTI_CALL(
             (*cuptiProfilerBeginSessionPtr) (&mydevice->beginSessionParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
@@ -4823,6 +4835,8 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         mydevice->setConfigParams.numNestingLevels = 1;
         CUPTI_CALL(
             (*cuptiProfilerSetConfigPtr) (&mydevice->setConfigParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
@@ -4850,6 +4864,8 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         // Empirical Note: We can't skip BeginPass / EndPass, it causes hang ups in the Read.
         CUPTI_CALL(
             (*cuptiProfilerBeginPassPtr) (&beginPassParams), 
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
@@ -4861,6 +4877,8 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
 
         CUPTI_CALL(
             (*cuptiProfilerEnableProfilingPtr) (&enableProfilingParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
@@ -4870,9 +4888,20 @@ static int _cuda11_start(hwd_context_t * ctx, hwd_control_state_t * ctrl)
         mydevice->pushRangeParams.pRangeName = &mydevice->cuda11_range_name[0];
         CUPTI_CALL(
             (*cuptiProfilerPushRangePtr) (&mydevice->pushRangeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
+
+        // Restore previous context.
+        if (ctxPushed) {
+            ctxPushed = 0;
+            CU_CALL((*cuCtxPopCurrentPtr) (&popCtx),
+                // On error,
+                _papi_hwi_unlock( COMPONENT_LOCK );
+                return(PAPI_EMISC));
+        }
     } // end for each device.
 
     _papi_hwi_unlock(COMPONENT_LOCK);
