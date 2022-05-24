@@ -552,7 +552,6 @@ DECLARENVPWFUNC(NVPW_CUDA_RawMetricsConfig_Create, (NVPW_CUDA_RawMetricsConfig_C
 
 // Already defined in nvperf_host.h. I don't use these, I just need the pointer.
 // DECLARENVPWFUNC(NVPA_RawMetricsConfig_Create, (NVPA_RawMetricsConfigOptions*, NVPA_RawMetricsConfig**));
-NVPA_Status (*NVPA_RawMetricsConfig_CreatePtr)(NVPA_RawMetricsConfigOptions*, NVPA_RawMetricsConfig**);
 DECLARENVPWFUNC(NVPW_RawMetricsConfig_Destroy, (NVPW_RawMetricsConfig_Destroy_Params* params));
 DECLARENVPWFUNC(NVPW_RawMetricsConfig_BeginPassGroup, (NVPW_RawMetricsConfig_BeginPassGroup_Params* params));
 DECLARENVPWFUNC(NVPW_RawMetricsConfig_EndPassGroup, (NVPW_RawMetricsConfig_EndPassGroup_Params* params));
@@ -1383,13 +1382,16 @@ static int _cuda_linkCudaLibraries(void)
     // We have a dl4. (libnvperf_host.so)
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl4, "NVPW_GetSupportedChipNames");
 
-    Dl_info nvperf_info;
+    Dl_info dl1_i, dl2_i, dl3_i, nvperf_info;
     // requires address of any function within the library.
     dladdr(NVPW_GetSupportedChipNamesPtr, &nvperf_info);
-
-    if (0) { // debug informative; this is how to show the full path of the actual library found.
-        fprintf(stderr, "dl4 Location='%s'\n", nvperf_info.dli_fname);
-    }
+    dladdr(cuptiProfilerInitializePtr, &dl3_i);
+    dladdr(cudaGetDevicePtr, &dl2_i);
+    dladdr(cuCtxGetCurrentPtr, &dl1_i);
+    SUBDBG("CUDA driver library loaded='%s'\n", dl1_i.dli_fname);
+    SUBDBG("CUDA runtime library loaded='%s'\n", dl2_i.dli_fname);
+    SUBDBG("Cupti library loaded='%s'\n", dl3_i.dli_fname);
+    SUBDBG("PerfWorks library loaded='%s'\n", nvperf_info.dli_fname);
     
     NVPW_CUDA_MetricsContext_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_MetricsContext_Create");
     NVPW_MetricsContext_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_Destroy");
@@ -1400,7 +1402,6 @@ static int _cuda_linkCudaLibraries(void)
     NVPW_MetricsContext_GetMetricProperties_EndPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_MetricsContext_GetMetricProperties_End");
 
     NVPW_CUDA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_CUDA_RawMetricsConfig_Create");
-    NVPA_RawMetricsConfig_CreatePtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPA_RawMetricsConfig_Create"); 
     NVPW_RawMetricsConfig_DestroyPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_Destroy");
     NVPW_RawMetricsConfig_BeginPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_BeginPassGroup");
     NVPW_RawMetricsConfig_EndPassGroupPtr = DLSYM_AND_CHECK_nvperf(dl4, "NVPW_RawMetricsConfig_EndPassGroup")
@@ -4155,23 +4156,20 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
     thisEventData->detailsDone=1;
     //----------------SECTION----------------
     // build structure needed for call.
-    NVPA_RawMetricsConfigOptions nvpa_metricsConfigOptions;
-    // default to NULL.
-    memset(&nvpa_metricsConfigOptions, 0,   NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE);
-    nvpa_metricsConfigOptions.structSize =  NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE;
-    nvpa_metricsConfigOptions.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
-    nvpa_metricsConfigOptions.pChipName = pChipName;
-
-    NVPA_RawMetricsConfig* pRawMetricsConfig; // for output.
-    NVPW_CALL((*NVPA_RawMetricsConfig_CreatePtr)(&nvpa_metricsConfigOptions, &pRawMetricsConfig),
-              return(PAPI_ENOSUPP));
+    NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams;
+    nvpw_metricsConfigCreateParams.structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE;
+    nvpw_metricsConfigCreateParams.pPriv = NULL;
+    nvpw_metricsConfigCreateParams.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+    nvpw_metricsConfigCreateParams.pChipName = pChipName;
+    NVPW_CALL( (*NVPW_CUDA_RawMetricsConfig_CreatePtr)(&nvpw_metricsConfigCreateParams),
+            return(PAPI_ENOSUPP) );
 
     //----------------SECTION----------------
     // build structure needed for call.
     NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams;
     memset(&beginPassGroupParams, 0,  NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE); 
     beginPassGroupParams.structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE; 
-    beginPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    beginPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     NVPW_CALL((*NVPW_RawMetricsConfig_BeginPassGroupPtr)(&beginPassGroupParams),
               return(PAPI_ENOSUPP));
 
@@ -4242,7 +4240,7 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
     //
     NVPW_RawMetricsConfig_IsAddMetricsPossible_Params isAddMetricsPossibleParams;
     isAddMetricsPossibleParams.structSize = NVPW_RawMetricsConfig_IsAddMetricsPossible_Params_STRUCT_SIZE;
-    isAddMetricsPossibleParams.pRawMetricsConfig = pRawMetricsConfig;
+    isAddMetricsPossibleParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     isAddMetricsPossibleParams.pRawMetricRequests = &rawMetricRequests[0];
     isAddMetricsPossibleParams.numMetricRequests = numDep;
     NVPW_CALL((*NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr)(&isAddMetricsPossibleParams),
@@ -4250,7 +4248,7 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
     
     NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams;
     addMetricsParams.structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE;
-    addMetricsParams.pRawMetricsConfig = pRawMetricsConfig;
+    addMetricsParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     addMetricsParams.pRawMetricRequests = &rawMetricRequests[0];
     addMetricsParams.numMetricRequests = numDep;
     NVPW_CALL((*NVPW_RawMetricsConfig_AddMetricsPtr)(&addMetricsParams),
@@ -4258,13 +4256,13 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
 
     NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams;
     endPassGroupParams.structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE;
-    endPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    endPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     NVPW_CALL((*NVPW_RawMetricsConfig_EndPassGroupPtr)(&endPassGroupParams),
               return(PAPI_ENOSUPP));
 
     NVPW_RawMetricsConfig_GetNumPasses_Params rawMetricsConfigGetNumPassesParams;
     rawMetricsConfigGetNumPassesParams.structSize = NVPW_RawMetricsConfig_GetNumPasses_Params_STRUCT_SIZE;
-    rawMetricsConfigGetNumPassesParams.pRawMetricsConfig = pRawMetricsConfig;
+    rawMetricsConfigGetNumPassesParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     NVPW_CALL((*NVPW_RawMetricsConfig_GetNumPassesPtr)(&rawMetricsConfigGetNumPassesParams),
               return(PAPI_ENOSUPP));
 
@@ -4286,7 +4284,7 @@ static int cuda11_getMetricDetails(cuda11_eventData* thisEventData, char *pChipN
 
     NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams;
     rawMetricsConfigDestroyParams.structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE;
-    rawMetricsConfigDestroyParams.pRawMetricsConfig = pRawMetricsConfig;
+    rawMetricsConfigDestroyParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
     NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr)((NVPW_RawMetricsConfig_Destroy_Params*) &rawMetricsConfigDestroyParams),
               return(PAPI_ENOSUPP));
 
@@ -4709,17 +4707,12 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         }
 
         // Create the configImage. 
-        NVPA_RawMetricsConfigOptions metricsConfigOptions;
-        memset(&metricsConfigOptions, 0,   NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE);  
-        metricsConfigOptions.structSize =  NVPA_RAW_METRICS_CONFIG_OPTIONS_STRUCT_SIZE;
-        metricsConfigOptions.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
-        metricsConfigOptions.pChipName = mydevice->cuda11_chipName;
-
-        NVPA_RawMetricsConfig* pRawMetricsConfig;
-
-        // Create the structure.
-        NVPW_CALL((*NVPA_RawMetricsConfig_CreatePtr) 
-            (&metricsConfigOptions, &pRawMetricsConfig),
+        NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams;
+        nvpw_metricsConfigCreateParams.structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE;
+        nvpw_metricsConfigCreateParams.pPriv = NULL;
+        nvpw_metricsConfigCreateParams.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+        nvpw_metricsConfigCreateParams.pChipName = mydevice->cuda11_chipName;
+        NVPW_CALL( (*NVPW_CUDA_RawMetricsConfig_CreatePtr)(&nvpw_metricsConfigCreateParams),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock( COMPONENT_LOCK );
@@ -4729,7 +4722,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_SetCounterAvailability_Params setCounterAvailabilityParams;
         memset(&setCounterAvailabilityParams, 0,  NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE);
         setCounterAvailabilityParams.structSize = NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE;
-        setCounterAvailabilityParams.pRawMetricsConfig = pRawMetricsConfig;
+        setCounterAvailabilityParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
         setCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
         NVPW_CALL((*NVPW_RawMetricsConfig_SetCounterAvailabilityPtr) (&setCounterAvailabilityParams),
         // On error,
@@ -4747,7 +4740,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams;
         memset(&beginPassGroupParams, 0,  NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE);  
         beginPassGroupParams.structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE;
-        beginPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+        beginPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
         
         // Actually calling BeginPassGroup.
         NVPW_CALL((*NVPW_RawMetricsConfig_BeginPassGroupPtr) 
@@ -4761,7 +4754,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams;
         memset(&addMetricsParams, 0,  NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE);
         addMetricsParams.structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE;
-        addMetricsParams.pRawMetricsConfig = pRawMetricsConfig;
+        addMetricsParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
 
         // passing in the rawMetricsRequests array.
         addMetricsParams.pRawMetricRequests = mydevice->cuda11_RMR;
@@ -4783,7 +4776,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         endPassGroupParams.structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE;
 
         // passing pRawMetricsConfig also used above.
-        endPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+        endPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
 
         // Actually Call EndPassGroup.
         NVPW_CALL( (*NVPW_RawMetricsConfig_EndPassGroupPtr)
@@ -4797,7 +4790,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_GenerateConfigImage_Params generateConfigImageParams;
         memset(&generateConfigImageParams, 0,  NVPW_RawMetricsConfig_GenerateConfigImage_Params_STRUCT_SIZE);
         generateConfigImageParams.structSize = NVPW_RawMetricsConfig_GenerateConfigImage_Params_STRUCT_SIZE;
-        generateConfigImageParams.pRawMetricsConfig = pRawMetricsConfig;
+        generateConfigImageParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
 
         // Actually call GenerateConfigImage.
         NVPW_CALL( (*NVPW_RawMetricsConfig_GenerateConfigImagePtr)
@@ -4812,7 +4805,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_GetConfigImage_Params getConfigImageParams;
         memset(&getConfigImageParams, 0,  NVPW_RawMetricsConfig_GetConfigImage_Params_STRUCT_SIZE);
         getConfigImageParams.structSize = NVPW_RawMetricsConfig_GetConfigImage_Params_STRUCT_SIZE;
-        getConfigImageParams.pRawMetricsConfig = pRawMetricsConfig;
+        getConfigImageParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
         getConfigImageParams.bytesAllocated = 0;
         getConfigImageParams.pBuffer = NULL;
         // Notice pBuffer=NULL and bytesAllocated=0. This is a sizing call.
@@ -4849,7 +4842,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams; 
         memset(&rawMetricsConfigDestroyParams, 0,  NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE);
         rawMetricsConfigDestroyParams.structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE;
-        rawMetricsConfigDestroyParams.pRawMetricsConfig = pRawMetricsConfig;
+        rawMetricsConfigDestroyParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
         NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr) 
             ((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams),
             // On error,
