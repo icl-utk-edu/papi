@@ -287,7 +287,7 @@ int main( int argc, char **argv )
     };
 
     // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
-    // UNLIKE CUpti_11, we must change the contexts to the appropriate device to
+    // We must change the contexts to the appropriate device to
     // add events to inform PAPI of the context that will run the kernels.
 
     // Save current context, will restore after adding events.
