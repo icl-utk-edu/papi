@@ -7066,17 +7066,6 @@ for comp in $components; do
     LDFLAGS="$LDFLAGS -lstdc++"
   fi
 
-  # check for cuda component to determine if we need to check on Profiler.
-  if test "x$comp" = "xcuda" ; then
-    if test "`find $PAPI_CUDA_ROOT -name "cupti_profiler_target.h"`" != "" ; then
-      CFLAGS="$CFLAGS -DCUPTI_PROFILER=1"
-    elif test "`find $PAPI_CUDA_ROOT -name "cupti.h"`" != "" ; then
-      CFLAGS="$CFLAGS -DCUPTI_PROFILER=0"
-    else
-      CFLAGS="$CFLAGS -DCUPTI_PROFILER=-1"
-    fi
-  fi
-
   if test "x$comp" = "xsysdetect" ; then
       if test "x`find $PAPI_CUDA_ROOT -name "cuda.h"`" != "x" ; then
           CFLAGS="$CFLAGS -DHAVE_CUDA"
