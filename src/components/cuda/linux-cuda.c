@@ -170,6 +170,12 @@ typedef struct cuda_device_desc {
     CUpti_Profiler_PushRange_Params pushRangeParams;
     NVPW_CUDA_MetricsContext_Create_Params *pMetricsContextCreateParams;
     int ownsMetricsContext;   
+
+    // Parameters init in _cuda11_build_profiling_structures and used
+    // in every _cuda11_read to reset the counter images (buffers).
+    CUpti_Profiler_CounterDataImageOptions                         cuda11_CounterDataOptions;
+    CUpti_Profiler_CounterDataImage_Initialize_Params              cuda11_CounterDataInitParms;
+    CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params cuda11_CounterScratchInitParms;
 #endif 
 } cuda_device_desc_t;
 
@@ -4930,20 +4936,19 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         // routine CreateCounterDataImage.
 
         // Create an options structure.
-        CUpti_Profiler_CounterDataImageOptions counterDataImageOptions;
-        memset(&counterDataImageOptions, 0,  sizeof(CUpti_Profiler_CounterDataImageOptions));
-        counterDataImageOptions.structSize = sizeof(CUpti_Profiler_CounterDataImageOptions);
-        counterDataImageOptions.pCounterDataPrefix = mydevice->cuda11_CounterDataPrefixImage;
-        counterDataImageOptions.counterDataPrefixSize = mydevice->cuda11_CounterDataPrefixImageSize;
-        counterDataImageOptions.maxNumRanges = 1;
-        counterDataImageOptions.maxNumRangeTreeNodes = 1;
-        counterDataImageOptions.maxRangeNameLength = 64;
+        memset(&mydevice->cuda11_CounterDataOptions, 0,  sizeof(CUpti_Profiler_CounterDataImageOptions));
+        mydevice->cuda11_CounterDataOptions.structSize = sizeof(CUpti_Profiler_CounterDataImageOptions);
+        mydevice->cuda11_CounterDataOptions.pCounterDataPrefix = mydevice->cuda11_CounterDataPrefixImage;
+        mydevice->cuda11_CounterDataOptions.counterDataPrefixSize = mydevice->cuda11_CounterDataPrefixImageSize;
+        mydevice->cuda11_CounterDataOptions.maxNumRanges = 1;
+        mydevice->cuda11_CounterDataOptions.maxNumRangeTreeNodes = 1;
+        mydevice->cuda11_CounterDataOptions.maxRangeNameLength = 64;
 
         // Use that to fill in a Calculate Size parameters.
         CUpti_Profiler_CounterDataImage_CalculateSize_Params calculateSizeParams;
         memset(&calculateSizeParams, 0,  CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE);
         calculateSizeParams.structSize = CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE;
-        calculateSizeParams.pOptions = &counterDataImageOptions;
+        calculateSizeParams.pOptions = &mydevice->cuda11_CounterDataOptions;
         calculateSizeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
 
         // Actually calculate the Size.
@@ -4954,12 +4959,11 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
             return(PAPI_EMISC));
 
         // Create params for initialization.
-        CUpti_Profiler_CounterDataImage_Initialize_Params initializeParams;
-        memset(&initializeParams, 0, CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE);
-        initializeParams.structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE;
-        initializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
-        initializeParams.pOptions = &counterDataImageOptions;
-        initializeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
+        memset(&mydevice->cuda11_CounterDataInitParms, 0, CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE);
+        mydevice->cuda11_CounterDataInitParms.structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE;
+        mydevice->cuda11_CounterDataInitParms.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
+        mydevice->cuda11_CounterDataInitParms.pOptions = &mydevice->cuda11_CounterDataOptions;
+        mydevice->cuda11_CounterDataInitParms.counterDataImageSize = calculateSizeParams.counterDataImageSize;
         
         // Allocate space for the image.
         mydevice->cuda11_CounterDataImage = calloc(calculateSizeParams.counterDataImageSize, sizeof(uint8_t));
@@ -4971,9 +4975,9 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
 
         mydevice->cuda11_CounterDataImageSize = calculateSizeParams.counterDataImageSize;
  
-        initializeParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        mydevice->cuda11_CounterDataInitParms.pCounterDataImage = mydevice->cuda11_CounterDataImage;
 
-        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializePtr) (&initializeParams),
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializePtr) (&mydevice->cuda11_CounterDataInitParms),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock( COMPONENT_LOCK );
@@ -4984,7 +4988,7 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         memset(&scratchBufferSizeParams, 0,  CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE);
         scratchBufferSizeParams.structSize = CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE;
         scratchBufferSizeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-        scratchBufferSizeParams.pCounterDataImage = initializeParams.pCounterDataImage;
+        scratchBufferSizeParams.pCounterDataImage = mydevice->cuda11_CounterDataInitParms.pCounterDataImage;
 
         // Calculate the size of the scratch buffer.
         CUPTI_CALL((*cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr) (&scratchBufferSizeParams),
@@ -4999,15 +5003,14 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
         mydevice->cuda11_CounterDataScratchBufferSize = scratchBufferSizeParams.counterDataScratchBufferSize;
 
         // Params to initialize the scratch buffer.
-        CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initScratchBufferParams;
-        memset(&initScratchBufferParams, 0,  CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE);
-        initScratchBufferParams.structSize = CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE;
-        initScratchBufferParams.counterDataImageSize = mydevice->cuda11_CounterDataImageSize;
-        initScratchBufferParams.pCounterDataImage = mydevice->cuda11_CounterDataImage;
-        initScratchBufferParams.counterDataScratchBufferSize = mydevice->cuda11_CounterDataScratchBufferSize;
-        initScratchBufferParams.pCounterDataScratchBuffer = mydevice->cuda11_CounterDataScratchBuffer;
+        memset(&mydevice->cuda11_CounterScratchInitParms, 0,  CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE);
+        mydevice->cuda11_CounterScratchInitParms.structSize = CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE;
+        mydevice->cuda11_CounterScratchInitParms.counterDataImageSize = mydevice->cuda11_CounterDataImageSize;
+        mydevice->cuda11_CounterScratchInitParms.pCounterDataImage = mydevice->cuda11_CounterDataImage;
+        mydevice->cuda11_CounterScratchInitParms.counterDataScratchBufferSize = mydevice->cuda11_CounterDataScratchBufferSize;
+        mydevice->cuda11_CounterScratchInitParms.pCounterDataScratchBuffer = mydevice->cuda11_CounterDataScratchBuffer;
 
-        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializeScratchBufferPtr) (&initScratchBufferParams),
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializeScratchBufferPtr) (&mydevice->cuda11_CounterScratchInitParms),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock( COMPONENT_LOCK );
@@ -5405,19 +5408,6 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
             return(PAPI_EMISC)
         );
 
-        // simplecuda.cu:267: CUPTI_API_CALL(cuptiProfilerDisableProfiling(&disableProfilingParams))
-        CUpti_Profiler_DisableProfiling_Params disableProfilingParams;
-        memset(&disableProfilingParams,    0, CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE);
-        disableProfilingParams.structSize  =  CUpti_Profiler_DisableProfiling_Params_STRUCT_SIZE;
-        disableProfilingParams.ctx = mydevice->sessionCtx;
-        CUPTI_CALL(
-            (*cuptiProfilerDisableProfilingPtr) (&disableProfilingParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
         // simplecuda.cu:269: CUPTI_API_CALL(cuptiProfilerEndPass(&endPassParams))
         CUpti_Profiler_EndPass_Params endPassParams;
         memset(&endPassParams, 0,  Profiler_EndPass_Params_STRUCT_SIZE);
@@ -5443,59 +5433,6 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC)
         );
-
-        // It would be preferable to not do the following if we are reading for
-        // a PAPI_stop(), but we can't know that without modifying the PAPI
-        // main code; that is where the call is made, before _cuda11_stop() is
-        // called.  HERE, we must set up for a new read: BeginPass,
-        // EnableProfiling, PushRange.
-
-        CUpti_Profiler_BeginPass_Params beginPassParams;
-        memset(&beginPassParams, 0,  CUpti_Profiler_BeginPass_Params_STRUCT_SIZE);
-        beginPassParams.structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE;
-        beginPassParams.ctx = mydevice->sessionCtx;
-
-        CUPTI_CALL(
-            (*cuptiProfilerBeginPassPtr) (&beginPassParams), 
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
-        CUpti_Profiler_EnableProfiling_Params enableProfilingParams;
-        memset(&enableProfilingParams,    0, CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE);
-        enableProfilingParams.structSize  =  CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE;
-        enableProfilingParams.ctx = mydevice->sessionCtx;
-
-        CUPTI_CALL(
-            (*cuptiProfilerEnableProfilingPtr) (&enableProfilingParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
-        // We re-use the structure we build in _cuda11_start.
-        CUPTI_CALL(
-            (*cuptiProfilerPushRangePtr) (&mydevice->pushRangeParams),
-            // On error,
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-            _papi_hwi_unlock(COMPONENT_LOCK); 
-            return(PAPI_EMISC)
-        );
-
-        // END restart section.
-
-        // In Sample code, this is where it executes:
-        // cuptiProfilerUnsetConfig;
-        // cuptiProfilerEndSession;
-        // cuptiProfilerDeInitialize, <<-- not done here. 
-        // and destroys the cuda context <<-- not done here.
-        // We have relocated the ProfileDeInitialize to _cuda11_shutdown().  We
-        // leave context management (the destroy) up to the application, but it
-        // does mean the rest of this code does not require a cuda context.
-        // simplecuda.cu:394: DRIVER_API_CALL(cuCtxDestroy(cuContext))
 
         // Evaluation of metrics collected in counterDataImage.
         // See  $PAPI_CUDA_ROOT/extras/CUPTI/samples/extensions/src/profilerhost_util/Eval.cpp
@@ -5609,6 +5546,57 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
             _papi_hwi_unlock(COMPONENT_LOCK); 
             return(PAPI_EMISC);
         );
+
+        // Re-initialize CUDA11 profiling images to prevent erroneous values in repeated PAPI_read operations.
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializePtr) (&mydevice->cuda11_CounterDataInitParms),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+        CUPTI_CALL((*cuptiProfilerCounterDataImageInitializeScratchBufferPtr) (&mydevice->cuda11_CounterScratchInitParms),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock( COMPONENT_LOCK );
+            return(PAPI_EMISC));
+
+        // It would be preferable to not do the following if we are reading for
+        // a PAPI_stop(), but we can't know that without modifying the PAPI
+        // main code; that is where the call is made, before _cuda11_stop() is
+        // called.  HERE, we must set up for a new read: BeginPass, PushRange.
+
+        CUpti_Profiler_BeginPass_Params beginPassParams;
+        memset(&beginPassParams, 0,  CUpti_Profiler_BeginPass_Params_STRUCT_SIZE);
+        beginPassParams.structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE;
+        beginPassParams.ctx = mydevice->sessionCtx;
+
+        CUPTI_CALL(
+            (*cuptiProfilerBeginPassPtr) (&beginPassParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC)
+        );
+
+        // We re-use the structure we build in _cuda11_start.
+        CUPTI_CALL(
+            (*cuptiProfilerPushRangePtr) (&mydevice->pushRangeParams),
+            // On error,
+            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
+            _papi_hwi_unlock(COMPONENT_LOCK);
+            return(PAPI_EMISC)
+        );
+
+        // END restart section.
+
+        // In Sample code, this is where it executes:
+        // cuptiProfilerUnsetConfig;
+        // cuptiProfilerEndSession;
+        // cuptiProfilerDeInitialize, <<-- not done here.
+        // and destroys the cuda context <<-- not done here.
+        // We have relocated the ProfileDeInitialize to _cuda11_shutdown().  We
+        // leave context management (the destroy) up to the application, but it
+        // does mean the rest of this code does not require a cuda context.
+        // simplecuda.cu:394: DRIVER_API_CALL(cuCtxDestroy(cuContext))
 
         // Accumulate values if necessary, and move the values 
         // retrieved to gctrl->activeEventValues[].
