@@ -30,6 +30,8 @@ PAPI_os_info_t _papi_os_info;
 
 #if defined(USE_PTHREAD_MUTEXES)
 pthread_mutex_t _papi_hwd_lock_data[PAPI_MAX_LOCK];
+#elif defined(USE_LIBAO_ATOMICS)
+AO_TS_t _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #else
 volatile unsigned int _papi_hwd_lock_data[PAPI_MAX_LOCK];
 #endif
@@ -42,6 +44,8 @@ static int _linux_init_locks(void) {
    for ( i = 0; i < PAPI_MAX_LOCK; i++ ) {
 #if defined(USE_PTHREAD_MUTEXES)
        pthread_mutex_init(&_papi_hwd_lock_data[i],NULL);
+#elif defined(USE_LIBAO_ATOMICS)
+       _papi_hwd_lock_data[i] = AO_TS_INITIALIZER;
 #else
        _papi_hwd_lock_data[i] = MUTEX_OPEN;
 #endif
