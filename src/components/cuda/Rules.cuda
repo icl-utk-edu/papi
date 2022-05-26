@@ -105,7 +105,7 @@ COMPOBJS += linux-cuda.o
 CFLAGS += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include -g $(CUDA_MACS)
 LDFLAGS += $(LDL) -g
 
-linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS) cuda_sampling
+linux-cuda.o: components/cuda/linux-cuda.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/linux-cuda.c -o linux-cuda.o
 
 #	get just code expansion.
