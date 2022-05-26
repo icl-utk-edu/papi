@@ -657,14 +657,14 @@ cpuid_get_leaf11_mask( apic_subid_mask_t *mask )
          */
         switch (level_type) {
             case 1: /* level type is SMT, so the mask width is level shift */
-                mask->smt_mask  = ~((-1) << level_shift);
+                mask->smt_mask  = ~(0xFFFFFFFF << level_shift);
                 mask->smt_width = level_shift;
                 thread_reported = 1;
                 break;
             case 2: /* level type is core, so the core + smt mask width is level shift */
-                core_plus_smt_mask  = ~((-1) << level_shift);
+                core_plus_smt_mask  = ~(0xFFFFFFFF << level_shift);
                 core_plus_smt_width = level_shift;
-                mask->pkg_mask      = (-1) ^ core_plus_smt_mask;
+                mask->pkg_mask      = 0xFFFFFFFF ^ core_plus_smt_mask;
                 mask->pkg_width     = 8; /* use reasonably high value */
                 core_reported       = 1;
                 break;
@@ -680,7 +680,7 @@ cpuid_get_leaf11_mask( apic_subid_mask_t *mask )
     } else if (!core_reported && thread_reported) {
         mask->core_mask  = 0;
         mask->core_width = 0;
-        mask->pkg_mask   = (-1) ^ mask->smt_mask;
+        mask->pkg_mask   = 0xFFFFFFFF ^ mask->smt_mask;
         mask->pkg_width  = 8; /* use reasonably high value */
     } else {
         status = CPU_ERROR;
@@ -702,11 +702,11 @@ cpuid_get_leaf4_mask( apic_subid_mask_t *mask )
     unsigned int core_width = bit_width(core_max_cnt);
     unsigned int smt_width = bit_width(core_plus_smt_max_cnt) - core_width;
 
-    mask->smt_mask   = ~((-1) << smt_width);
+    mask->smt_mask   = ~(0xFFFFFFFF << smt_width);
     mask->smt_width  = smt_width;
-    mask->core_mask  = ~((-1) << bit_width(core_plus_smt_max_cnt)) ^ mask->smt_mask;
+    mask->core_mask  = ~(0xFFFFFFFF << bit_width(core_plus_smt_max_cnt)) ^ mask->smt_mask;
     mask->core_width = core_width;
-    mask->pkg_mask   = (-1) << bit_width(core_plus_smt_max_cnt);
+    mask->pkg_mask   = 0xFFFFFFFF << bit_width(core_plus_smt_max_cnt);
     mask->pkg_width  = 8; /* use reasonably high value */
 
     return CPU_SUCCESS;
