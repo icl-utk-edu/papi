@@ -170,5 +170,6 @@ void _papi_hwi_shutdown_the_thread_list( void );
 int _papi_hwi_get_thr_context( void ** );
 int _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where );
 unsigned long _papi_gettid(void);
+unsigned long _papi_getpid(void);
 
 #endif

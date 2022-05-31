@@ -239,7 +239,7 @@ static void _internal_hl_library_init(void)
    if ( NULL == multi_thread || atoi(multi_thread) == 1 ) {
       retval = PAPI_thread_init(_papi_gettid);
    } else {
-      retval = PAPI_thread_init((unsigned long (*)(void)) getpid);
+      retval = PAPI_thread_init(_papi_getpid);
    }
 
    if (retval == PAPI_OK) {
