@@ -251,7 +251,7 @@ cpuid_get_topology_info( CPU_attr_e attr, int *value )
         return CPU_ERROR;
 
     /* Get masks for later SUBIDs extraction */
-    apic_subid_mask_t mask;
+    apic_subid_mask_t mask = { 0 };
     if (cpuid_get_mask(&mask))
         goto fn_fail;
 
