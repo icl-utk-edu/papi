@@ -6,7 +6,6 @@ include ../../Makefile_comp_tests.target
 HIP_PATH= ${PAPI_ROCM_ROOT}/hip
 HIPCC=$(HIP_PATH)/bin/hipcc
 
-include ../../Makefile_comp_tests.target
 INCLUDE += -I$(PAPI_ROCM_ROOT)/rocm_smi/include
 INCLUDE += -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi
 INCLUDE += -I$(PAPI_ROCM_ROOT)/hip/include
