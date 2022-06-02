@@ -10,12 +10,10 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -101,6 +99,7 @@ typedef struct _powercap_control_state {
   long long which_counter[POWERCAP_MAX_COUNTERS];
   long long need_difference[POWERCAP_MAX_COUNTERS];
   long long lastupdate;
+  int active_counters;
 } _powercap_control_state_t;
 
 typedef struct _powercap_context {
@@ -113,6 +112,13 @@ papi_vector_t _powercap_vector;
 /***************************************************************************/
 /******  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT *******/
 /***************************************************************************/
+
+static long long map_index_to_counter( hwd_control_state_t *ctl,  int index )
+{
+  _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
+
+  return control->which_counter[index];
+}
 
 /* Null terminated version of strncpy */
 static char * _local_strlcpy( char *dst, const char *src, size_t size )
@@ -359,8 +365,8 @@ _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
   long long curr_val = 0;
   int c, i;
 
-  for( c = 0; c < num_events; c++ ) {
-    i = control->which_counter[c];
+  for( c = 0; c < control->active_counters; c++ ) {
+    i = map_index_to_counter(ctl, c);
     start_val = context->start_value[i];
     curr_val = read_powercap_value(i);
 
@@ -399,11 +405,12 @@ static int _powercap_write( hwd_context_t * ctx, hwd_control_state_t * ctl, long
     ( void ) ctx;
     _powercap_control_state_t *control = ( _powercap_control_state_t * ) ctl;
 
-    int i;
+    int c, i;
 
-    for(i=0;i<num_events;i++) {
-      if( (powercap_ntv_events[control->which_counter[i]].type == PKG_POWER_LIMIT_A) || (powercap_ntv_events[control->which_counter[i]].type == PKG_POWER_LIMIT_B) ) {
-        write_powercap_value(control->which_counter[i], values[i]);
+    for(c=0;c<control->active_counters;c++) {
+      i = map_index_to_counter(ctl, c);
+      if( (powercap_ntv_events[i].type == PKG_POWER_LIMIT_A) || (powercap_ntv_events[i].type == PKG_POWER_LIMIT_B) ) {
+        write_powercap_value(i, values[c]);
       }
     }
 
@@ -447,6 +454,8 @@ static int _powercap_update_control_state( hwd_control_state_t *ctl,
   int i, index;
 
   _powercap_control_state_t* control = ( _powercap_control_state_t* ) ctl;
+  control->active_counters = count;
+
   if (count==0) return PAPI_OK;
 
   for( i = 0; i < count; i++ ) {
