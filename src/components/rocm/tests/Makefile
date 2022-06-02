@@ -1,3 +1,6 @@
+NAME = rocm
+include ../../Makefile_comp_tests.target
+
 CC       = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CXX      = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CPPFLAGS = -I$(PAPI_ROCM_ROOT)/hip/include      \
@@ -14,6 +17,8 @@ LDFLAGS  = -L../../../libpfm4/lib -lpfm                    \
            -Wl,-rpath="$(PWD)/libpfm4/lib"                 \
            -Wl,-rpath="$(PWD)"
 CXXFLAGS = -g -O0 -fopenmp
+
+rocm_tests: ALL
 
 ALL: sample_single_kernel_monitoring       \
      sample_single_thread_monitoring       \
