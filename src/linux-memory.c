@@ -948,26 +948,28 @@ PAPI_mh_info_t sys_mem_info[] = {
 	 }						 // Fujitsu A64FX end
 };
 
-#define SRN_MIDR "MIDR_EL1"	 /* Main ID Register */
-static unsigned int
-mfmidr( void )
-{
-	unsigned long midr;
-
-  asm( "mrs            %0," SRN_MIDR: "=r"( midr ));
-	return midr;
-
-}
+#define IMPLEMENTER_FUJITSU 0x46
+#define PARTNUM_FUJITSU_A64FX 0x001
 
 int
 aarch64_get_memory_info( PAPI_hw_info_t * hw_info )
 {
-	unsigned int midr = mfmidr(  );
+	unsigned int implementer, partnum;
+
+	implementer = hw_info->vendor;
+	partnum = hw_info->cpuid_model;
 
 	int index = -1;
-	switch ( midr ) {
-	case 0x461f0010:		 /* Fujitsu A64FX */
-		index = 0;
+	switch ( implementer ) {
+	case IMPLEMENTER_FUJITSU:
+		switch ( partnum ) {
+		case PARTNUM_FUJITSU_A64FX: /* Fujitsu A64FX */
+			index = 0;
+			break;
+		default:
+			generic_get_memory_info (hw_info);
+			return 0;
+		}
 		break;
 	default:
 		generic_get_memory_info (hw_info);
