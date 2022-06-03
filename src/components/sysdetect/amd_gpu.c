@@ -211,7 +211,7 @@ get_device_properties( hsa_agent_t agent, void *info )
 void
 fill_dev_info( _sysdetect_gpu_info_u *dev_info )
 {
-    hsa_status_t status;
+    hsa_status_t status = HSA_STATUS_SUCCESS;
     const char *string = NULL;
 
     ROCM_CALL((*hsa_iterate_agentsPtr)(&get_device_properties, dev_info),
