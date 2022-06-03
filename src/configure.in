@@ -444,7 +444,7 @@ AC_ARG_WITH(CPU,
             [Specify CPU type])],
             [CPU=$withval
              case "$CPU" in
-               core|core2|i7|atom|p4|p3|opteron|athlon)
+               core|core2|i7|atom|p4|p3|opteron|athlon|x86)
                    MISCSRCS="$MISCSRCS x86_cpuid_info.c" 
              esac],
 	        [case "$OS" in
