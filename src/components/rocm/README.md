@@ -13,23 +13,12 @@ The component is an adapter to the ROCm profiling library (ROC-profiler) which i
 
 To enable reading ROCM events the user needs to link against a PAPI library that was configured with the ROCM component enabled. As an example the following command: `./configure --with-components="rocm"` is sufficient to enable the component.
 
-Typically, the utility `papi_components_avail` (available in `papi/src/utils/papi_components_avail`) will display the components available to the user, and whether they are disabled, and when they are disabled why.
+Typically, the utility `papi_component_avail` (available in `papi/src/utils/papi_component_avail`) will display the components available to the user, and whether they are disabled, and when they are disabled why.
 
 ## Environment Variables
 
 For ROCM, PAPI requires the location of the ROCM install directory. This can be
 specified by one environment variable: **PAPI\_ROCM\_ROOT**.
-
-If it is NOT specified, PAPI will attempt to find the ROCM install directory by
-examining\ $LD_LIBRARY\_PATH, if there are 'rocm' library paths in it, PAPI may
-automatically find the path. (LD\_LIBRARY\_PATH is typically modified by
-systems that use the 'module load' commands to set up). 
-
-PAPI will also look for some common environment variables; including
-"ROCM\_PATH", "ROCM\_DIR", and "ROCMDIR".
-
-However, if PAPI cannot automatically find the rocm include and library
-directories, the user needs to explictly export PAPI\_ROCM\_ROOT.
 
 Access to the rocm main directory is required at both compile (for include
 files) and at runtime (for libraries).
@@ -46,26 +35,21 @@ Within PAPI\_ROCM\_ROOT, we expect the following standard directories:
     PAPI_ROCM_ROOT/rocprofiler/lib
     PAPI_ROCM_ROOT/rocprofiler/include
 
-Besides the PAPI\_ROCM\_ROOT environment variable, five more environment
-variables are required at runtime. These are not needed by PAPI, but by the AMD
-ROCPROFILER software we interface with. 
-
-If these are not set at runtime, the PAPI will automatically export them (they 
-will vanish when PAPI exits). 
+Besides the PAPI\_ROCM\_ROOT environment variable, the PAPI user may optionally set
+two more environment variables that are otherwise set internally by the component
+based on the PAPI\_ROCM\_ROOT variable. These are not needed by PAPI, but by the AMD
+ROCPROFILER software we interface with.
 
 These added environment variables are typically set as follows, after
 PAPI\_ROCM\_ROOT has been exported. An example is provided below:
 
     export ROCP_METRICS=$PAPI_ROCM_ROOT/rocprofiler/lib/metrics.xml
-    export ROCPROFILER_LOG=1
-    export HSA_VEN_AMD_AQLPROFILE_LOG=1
-    export AQLPROFILE_READ_API=1
-    export HSA_TOOLS_LIB=librocprofiler64.so
+    export HSA_TOOLS_LIB=$PAPI_ROCM_ROOT/rocprofiler/lib/librocprofiler64.so
 
 The first of these, ROCP\_METRICS, must point at a file containing the
-descriptions of metrics. The standard location is shown above, the final four
-exports are fixed settings.
-    
+descriptions of metrics. The second is the location of the rocprofiler library
+needed by HSA runtime.
+
 If the user relies on PAPI to export these, then it is important to execute the
 function PAPI\_library\_init() in the user code BEFORE any HIP functions are
 executed. Because these values are read once by AMD with the first HIP function
@@ -74,11 +58,19 @@ call, and if HIP sets up without them, PAPI may not read counters correctly.
 If the user code cannot be changed, then export the variables explicitly before
 execution.
 
+One important exception is represented by the PAPI high-level API. In this case
+there is no explicit call to PAPI\_library\_init() in the user's code. Instead
+the PAPI library is initialized by the first high-level API call. In this case
+it is still possible to make PAPI export the above environment variables by
+setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
+
+    export ROCP_TOOL_LIB=<path_to_papi_lib>/libpapi.so
+
 ## Known Limitations
 
 * PAPI may read zeros for many events if rocprofiler environment variables are
   not exported and HIP functions are executed by the user before the user
-  executes PAPI\_library\_init(). 
+  executes PAPI\_library\_init().
 
 * Only sets of metrics and events that can be gathered in a single pass are supported.
 
@@ -92,8 +84,4 @@ execution.
 1. [Unusual installations](#markdown-header-unusual-installations)
 
 ## Unusual installations
-For the ROCM component to be operational, it must find the dynamic libraries `libhsa-runtime64.so` and `librocprofiler64.so`. These are normally found in the above standard directories, or one of the Linux default directories listed by `/etc/ld.so.conf`, usually `/usr/lib64`, `/lib64`, `/usr/lib` and `/lib`. If these libraries are not found (or are not functional) then the component will be listed as "disabled" with a reason explaining the problem. If libraries were not found, then they are not in the expected places. 
-
-The system will search the directories listed in **LD\_LIBRARY\_PATH**. You can add an additional path with a colon e.g. 
-
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereALibraryCanBeFound
+For the ROCM component to be operational, it must find the dynamic libraries `libhsa-runtime64.so` and `librocprofiler64.so`. These are normally found in the above standard directories. If these libraries are not found (or are not functional) then the component will be listed as "disabled" with a reason explaining the problem. If libraries were not found, then they are not in the expected places.
