@@ -268,6 +268,7 @@ perf_table_alloc_event(void)
 {
 	perf_event_t *new_pe;
 	perf_event_t *p;
+	size_t num_free;
 
 	/*
 	 * if we need to allocate an event and we have not yet
@@ -286,11 +287,20 @@ retry:
 
 	perf_pe_count += PERF_ALLOC_EVENT_COUNT;
 	
+	/*
+	 * compute number of free events left
+	 * before realloc() to avoid compiler warning (use-after-free)
+	 * even though we are simply doing pointer arithmetic and not
+	 * dereferencing the perf_pe after realloc when it may be stale
+	 * in case the memory was moved.
+	 */
+	num_free = perf_pe_free - perf_pe;
+
 	new_pe = realloc(perf_pe, perf_pe_count * sizeof(perf_event_t));
 	if (!new_pe) 
 		return NULL;
 	
-	perf_pe_free = new_pe + (perf_pe_free - perf_pe);
+	perf_pe_free = new_pe + num_free;
 	perf_pe_end = perf_pe_free + PERF_ALLOC_EVENT_COUNT;
 	perf_pe = new_pe;
 
@@ -315,18 +325,27 @@ static perf_umask_t *
 perf_table_alloc_umask(void)
 {
 	perf_umask_t *new_um;
+	size_t num_free;
 
 retry:
 	if (perf_um_free < perf_um_end)
 		return perf_um_free++;
 
 	perf_um_count += PERF_ALLOC_UMASK_COUNT;
-	
+
+	/*
+	 * compute number of free unmasks left
+	 * before realloc() to avoid compiler warning (use-after-free)
+	 * even though we are simply doing pointer arithmetic and not
+	 * dereferencing the perf_um after realloc when it may be stale
+	 * in case the memory was moved.
+	 */
+	num_free = perf_um_free - perf_um;
 	new_um = realloc(perf_um, perf_um_count * sizeof(*new_um));
 	if (!new_um) 
 		return NULL;
 	
-	perf_um_free = new_um + (perf_um_free - perf_um);
+	perf_um_free = new_um + num_free;
 	perf_um_end = perf_um_free + PERF_ALLOC_UMASK_COUNT;
 	perf_um = new_um;
 

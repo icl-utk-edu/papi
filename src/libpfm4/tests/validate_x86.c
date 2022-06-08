@@ -7679,7 +7679,7 @@ static const test_event_t x86_test_events[]={
 	  .name = "spr::CPU_CLK_UNHALTED.REF_DISTRIBUTED",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
-	  .codes[0] = 0x5308ec,
+	  .codes[0] = 0x53083c,
 	  .fstr = "spr::CPU_CLK_UNHALTED:REF_DISTRIBUTED:k=1:u=1:e=0:i=0:c=0:intx=0:intxcp=0",
 	},
 	{ SRC_LINE,
