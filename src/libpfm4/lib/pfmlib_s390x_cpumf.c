@@ -203,6 +203,11 @@ static int pfm_cpumcf_init(void *this)
 		ext_set = cpumcf_z15_counters;
 		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z15_counters);
 		break;
+	case 3931:  /* IBM Machine types 3931 and 3932 */
+	case 3932:
+		ext_set = cpumcf_z16_counters;
+		ext_set_count = LIBPFM_ARRAY_SIZE(cpumcf_z16_counters);
+		break;
 	default:
 		/* No extended counter set for this machine type or there
 		 * was an error retrieving the machine type */
