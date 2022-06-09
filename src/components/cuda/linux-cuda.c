@@ -124,7 +124,7 @@ typedef struct cuda_device_desc {
     uint32_t    *domainIDNumEvents;         /* Array[maxDomains] of num of events in that domain */
 
     int         cc_le70;                 /* <= 7.0 can use legacy. */
-    int         cc_gt70;                 /* > 7.0 can use profiler. */
+    int         cc_ge70;                 /* >= 7.0 can use profiler. */
 
 #if CUPTI_API_VERSION >= 13
     CUcontext   cuContext;                      // context created during cuda11_add_native_events.
@@ -1144,7 +1144,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         return (PAPI_ENOMEM);
     }
 
-    int total_le70=0, total_gt70=0;
+    int total_le70=0, total_ge70=0;
 
     // For each device, get some device information.
     for(deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
@@ -1207,7 +1207,7 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
         // If profiler is available and we CAN use profiler, we do.
         // If profiler is unavailable we must be able to use Legacy.
         mydevice->cc_le70 = 0;
-        mydevice->cc_gt70 = 0;
+        mydevice->cc_ge70 = 0;
 
         if (0) fprintf(stderr, "%s:%s:%i device=%d name=%s  major=%d.\n", __FILE__, __func__, __LINE__, deviceNum,
             mydevice->deviceName, mydevice->CC_Major);
@@ -1216,18 +1216,18 @@ static int _cuda_add_native_events(cuda_context_t * gctxt)
             mydevice->cc_le70 = 1;
         }
 
-        if (mydevice->CC_Major > 7 || (mydevice->CC_Major == 7 && mydevice->CC_Minor > 0)) {
-            mydevice->cc_gt70 = 1;
+        if (mydevice->CC_Major >= 7) {
+            mydevice->cc_ge70 = 1;
         }
 
 
         total_le70 += mydevice->cc_le70;
-        total_gt70 += mydevice->cc_gt70;
+        total_ge70 += mydevice->cc_ge70;
     } // END per device.
 
 #if CUPTI_API_VERSION >= 13
     // Profiler exists, use it if all devices can use it.
-    if (total_gt70 == gctxt->deviceCount) {
+    if (total_ge70 == gctxt->deviceCount) {
         int ret = _cuda11_add_native_events(gctxt);
         if (ret == PAPI_OK) _cuda11_cuda_vector();   // reset function pointers.
 
