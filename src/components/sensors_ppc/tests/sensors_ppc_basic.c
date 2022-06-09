@@ -87,7 +87,7 @@ int main ( int argc, char **argv )
 
     PAPI_start(EventSet);
 
-    retval = PAPI_read( EventSet, values );
+    PAPI_stop( EventSet, values );
 
     for (i = 0; i < num_events; ++i)
         fprintf(stdout, "%s > %lld %s\n", event_names[i], values[i], units[i]);
