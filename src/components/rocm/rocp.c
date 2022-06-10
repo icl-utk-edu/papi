@@ -101,7 +101,7 @@ static hsa_status_t (*rocp_pool_fetchPtr)(rocprofiler_pool_t *,
                                           rocprofiler_pool_entry_t *);
 static hsa_status_t (*rocp_pool_flushPtr)(rocprofiler_pool_t *);
 static hsa_status_t (*rocp_set_queue_cbsPtr)(rocprofiler_queue_callbacks_t,
-                                                   void *);
+                                             void *);
 static hsa_status_t (*rocp_start_queue_cbsPtr)(void);
 static hsa_status_t (*rocp_stop_queue_cbsPtr)(void);
 static hsa_status_t (*rocp_remove_queue_cbsPtr)(void);
@@ -747,7 +747,7 @@ static int sampling_ctx_init(ntv_event_table_t *, int *, unsigned,
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
-static unsigned get_user_counter_id(rocp_ctx_t, int *events_id, unsigned);
+static unsigned get_user_counter_id(rocp_ctx_t, int *, unsigned);
 static int ctx_init(ntv_event_table_t *, int *, unsigned, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
 
