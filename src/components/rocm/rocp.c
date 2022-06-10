@@ -871,7 +871,8 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, int *events_id, long long **counts)
         long long *counters = rocp_ctx->u.sampling.counters;
 
         for (j = 0; j < dev_feature_count; ++j) {
-            k = get_user_counter_id(rocp_ctx, events_id, j);
+            unsigned sorted_event_id = (i * dev_feature_count) + j;
+            k = get_user_counter_id(rocp_ctx, events_id, sorted_event_id);
             switch(dev_features[j].data.kind) {
                 case ROCPROFILER_DATA_KIND_INT32:
                     counters[k] = (long long) dev_features[j].data.result_int32;
