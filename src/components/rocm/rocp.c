@@ -748,6 +748,8 @@ static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
 static unsigned get_user_counter_id(rocp_ctx_t, int *events_id, unsigned);
+static int ctx_init(ntv_event_table_t *, int *, unsigned, rocp_ctx_t *);
+static int ctx_finalize(rocp_ctx_t *);
 
 int
 sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
@@ -761,8 +763,7 @@ sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
 
     _papi_hwi_lock(_rocm_lock);
 
-    papi_errno = sampling_ctx_init(ntv_table, events_id, num_events,
-                                   rocp_ctx);
+    papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -778,7 +779,7 @@ sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    sampling_ctx_finalize(rocp_ctx);
+    ctx_finalize(rocp_ctx);
     goto fn_exit;
 }
 
@@ -794,7 +795,7 @@ sampling_ctx_close(rocp_ctx_t rocp_ctx)
         goto fn_fail;
     }
 
-    sampling_ctx_finalize(&rocp_ctx);
+    ctx_finalize(&rocp_ctx);
 
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
@@ -1328,8 +1329,7 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
         }
     }
 
-    papi_errno = intercept_ctx_init(ntv_table, events_id, num_events,
-                                    rocp_ctx);
+    papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1354,7 +1354,7 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    intercept_ctx_finalize(rocp_ctx);
+    ctx_finalize(rocp_ctx);
     goto fn_exit;
 }
 
@@ -1375,7 +1375,7 @@ intercept_ctx_close(rocp_ctx_t rocp_ctx)
         goto fn_exit;
     }
 
-    intercept_ctx_finalize(&rocp_ctx);
+    ctx_finalize(&rocp_ctx);
 
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
@@ -1676,6 +1676,31 @@ intercept_ctx_finalize(rocp_ctx_t *rocp_ctx)
     *rocp_ctx = NULL;
 
     return PAPI_OK;
+}
+
+/**
+ * Context init and finalize
+ *
+ */
+int
+ctx_init(ntv_event_table_t *ntv_table, int *events_id, unsigned num_events,
+         rocp_ctx_t *rocp_ctx)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_init(ntv_table, events_id, num_events, rocp_ctx);
+    }
+
+    return intercept_ctx_init(ntv_table, events_id, num_events, rocp_ctx);
+}
+
+int
+ctx_finalize(rocp_ctx_t *rocp_ctx)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_finalize(rocp_ctx);
+    }
+
+    return intercept_ctx_finalize(rocp_ctx);
 }
 
 /**
