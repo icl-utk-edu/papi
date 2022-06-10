@@ -1291,8 +1291,8 @@ static struct {
 static int compare_events(ntv_event_table_t *, int *, int *, unsigned);
 static int init_callbacks(rocprofiler_feature_t *, unsigned);
 static int register_dispatch_counter(unsigned long, int *);
-static int increment_dispatch_counter(unsigned long);
-static int decrement_dispatch_counter(unsigned long);
+static int increment_and_fetch_dispatch_counter(unsigned long);
+static int decrement_and_fetch_dispatch_counter(unsigned long);
 static int unregister_dispatch_counter(unsigned long);
 static int fetch_dispatch_counter(unsigned long);
 static cb_context_node_t *alloc_context_node(unsigned);
@@ -1471,7 +1471,7 @@ intercept_ctx_read(rocp_ctx_t rocp_ctx, int *events_id, long long **counts)
             }
 
             get_context_counters(events_id, dev_id, n, rocp_ctx);
-            dispatch_count = decrement_dispatch_counter(tid);
+            dispatch_count = decrement_and_fetch_dispatch_counter(tid);
             free_context_node(n);
         }
     }
@@ -1952,14 +1952,14 @@ process_context_entry(cb_context_payload_t *payload,
     ROCP_CALL((*rocp_group_get_dataPtr)(&payload->group), goto fn_exit);
     ROCP_CALL((*rocp_get_metricsPtr)(payload->group.context), goto fn_exit);
 
-    if (increment_dispatch_counter(payload->tid) < 0) {
+    if (increment_and_fetch_dispatch_counter(payload->tid) < 0) {
         /* thread not registered, ignore counters */
         goto fn_exit;
     }
 
     cb_context_node_t *n = alloc_context_node(feature_count);
     if (n == NULL) {
-        decrement_dispatch_counter(payload->tid);
+        decrement_and_fetch_dispatch_counter(payload->tid);
         goto fn_exit;
     }
 
@@ -2027,7 +2027,7 @@ put_context_node(int dev_id, cb_context_node_t *n)
 }
 
 int
-increment_dispatch_counter(unsigned long tid)
+increment_and_fetch_dispatch_counter(unsigned long tid)
 {
     unsigned i;
 
@@ -2085,7 +2085,7 @@ get_context_node(int dev_id, cb_context_node_t **n)
 }
 
 int
-decrement_dispatch_counter(unsigned long tid)
+decrement_and_fetch_dispatch_counter(unsigned long tid)
 {
     unsigned i;
     for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
