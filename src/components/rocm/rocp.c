@@ -570,7 +570,7 @@ init_rocp_env(void)
     char *hsa_tools_lib = getenv("HSA_TOOLS_LIB");
     if (hsa_tools_lib) {
         err = stat(hsa_tools_lib, &stat_info);
-        if (err == 0) {
+        if (err == 0 && S_ISREG(stat_info.st_mode)) {
             override_hsa_tools_lib = 0;
         }
     }
@@ -590,7 +590,7 @@ init_rocp_env(void)
     char *rocp_metrics = getenv("ROCP_METRICS");
     if (rocp_metrics) {
         err = stat(rocp_metrics, &stat_info);
-        if (err == 0) {
+        if (err == 0 && S_ISREG(stat_info.st_mode)) {
             override_rocp_metrics = 0;
         }
     }
