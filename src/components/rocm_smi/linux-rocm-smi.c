@@ -3645,7 +3645,7 @@ static int _rocm_smi_init_private(void)
         }
 
         status = (*rsmi_dev_pci_bandwidth_getPtr)(dev, &PCITable[dev]);
-        if (status != RSMI_STATUS_SUCCESS) {
+        if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED) {
             strErr=snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,  
                 "rsmi_dev_pci_bandwidth_get() function failed with error=%d='%s'", status, RSMI_ERROR_STR(status));
             _rocm_smi_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
