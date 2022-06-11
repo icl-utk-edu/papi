@@ -1525,6 +1525,9 @@ static cb_dispatch_arg_t cb_dispatch_arg;
 int
 intercept_rocp_shutdown(ntv_event_table_t *ntv_table)
 {
+    /* calling rocprofiler_pool_close() here would cause
+     * a double free runtime error. */
+
     shutdown_event_table(ntv_table);
 
     (*hsa_shut_downPtr)();
