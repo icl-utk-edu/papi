@@ -47,8 +47,18 @@ the daemon installed and the other machine does not.
 
     For example, on the Summit supercomputer login nodes do not execute the PCP
 daemon, only work nodes do. Thus PCP code can be compiled but not tested on the
-login node, it can only be tested by submitting a batch job; for example on
-Summit `jsrun --np 1 someprogram`.
+login node, it can only be tested by submitting a batch job. In order for the
+PCP deamon to work resources have to be allocated using the `-alloc_flags "PMCD"`
+flag. This can be done either with an interactive job:
+
+  $ bsub -W 00:10 -nnodes 1 -P <PROJECT> -alloc_flags "PMCD" -Is /bin/bash
+  $ jsrun -n1 -a1 -r1 <program>
+
+or with a job script:
+
+  ...
+  #BSUB -alloc_flags "PMCD".
+  jsrun -n1 -a1 -r1 <program>
 
 * The P9 nest events contain both counters and "dutycycle" events.
 The dutycycle events return instantaneous double precision floating point
