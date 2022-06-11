@@ -605,8 +605,20 @@ init_rocp_env(void)
 
         err = stat(pathname, &stat_info);
         if (err < 0) {
-            ROCP_REC_ERR_STR("Rocprofiler metrics.xml file not found.");
-            return PAPI_EMISC;
+            /* Account for change of metrics file location in rocm-5.2.0
+             * directory structure */
+            expect = snprintf(pathname, PAPI_MAX_STR_LEN,
+                              "%s/lib/rocprofiler/metrics.xml",
+                              rocm_root);
+            if (expect > PAPI_MAX_STR_LEN) {
+                SUBDBG("Error string truncated");
+            }
+
+            err = stat(pathname, &stat_info);
+            if (err < 0) {
+                ROCP_REC_ERR_STR("Rocprofiler metrics.xml file not found.");
+                return PAPI_EMISC;
+            }
         }
 
         setenv("ROCP_METRICS", pathname, 1);
