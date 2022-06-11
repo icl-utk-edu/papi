@@ -624,10 +624,6 @@ init_rocp_env(void)
         setenv("ROCP_METRICS", pathname, 1);
     }
 
-    //setenv("AQLPROFILE_READ_API", "1", 0);
-    //setenv("ROCPROFILER_LOG", "1", 0);
-    //setenv("HSA_VEN_AMD_AQLPROFILE_LOG", "1", 0);
-
     rocp_env_initialized = 1;
     return PAPI_OK;
 }
@@ -1529,12 +1525,6 @@ static cb_dispatch_arg_t cb_dispatch_arg;
 int
 intercept_rocp_shutdown(ntv_event_table_t *ntv_table)
 {
-    /* Uncommenting this causes a double free error. */
-    //unsigned i;
-    //for (i = 0; i < agent_arr.count; ++i) {
-    //    ROCP_CALL((*rocp_pool_closePtr)(cb_dispatch_arg.pools[i]), );
-    //}
-
     shutdown_event_table(ntv_table);
 
     (*hsa_shut_downPtr)();
