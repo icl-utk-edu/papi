@@ -49,6 +49,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cupti_version.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -247,11 +248,19 @@ int main(int argc, char **argv) {
     }
     char cuda_event[50];
     // Account for counter name difference between legacy event API and current profiler API
+#if CUPTI_API_VERSION < 13
     if (computeCapabilityMajor < 7 || (computeCapabilityMajor == 7 && computeCapabilityMinor == 0)) {
+        sprintf(cuda_event, "cuda:::event:warps_launched:device=%d", target_device);
+    } else {
+        test_fail(__FILE__, __LINE__, "Incompatible cupti version", 0);
+    }
+#else
+    if (computeCapabilityMajor < 7) {
         sprintf(cuda_event, "cuda:::event:warps_launched:device=%d", target_device);
     } else {
         sprintf(cuda_event, "cuda:::sm__warps_launched.sum:device=%d", target_device);
     }
+#endif
 
     // Try adding counter to event set
     DRIVER_API_CALL(cuCtxSetCurrent(ctx));
