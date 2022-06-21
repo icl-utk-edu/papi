@@ -401,18 +401,11 @@ load_rocp_sym(void)
 {
     int papi_errno = PAPI_OK;
 
-    char pathname[PAPI_MAX_STR_LEN] = { 0 };
-    char *rocm_root = getenv("PAPI_ROCM_ROOT");
-    if (rocm_root == NULL) {
-        ROCP_REC_ERR_STR("Can't load librocprofiler64.so, PAPI_ROCM_ROOT not set.");
+    char *pathname = getenv("HSA_TOOLS_LIB");
+    if (pathname == NULL) {
+        ROCP_REC_ERR_STR("Can't load librocprofiler64.so, neither PAPI_ROCM_ROOT "
+                         " nor HSA_TOOLS_LIB are set.");
         goto fn_fail;
-    }
-
-    int expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/rocprofiler/lib/librocprofiler64.so",
-                          rocm_root);
-    if (expect > PAPI_MAX_STR_LEN) {
-        SUBDBG("Error string truncated");
     }
 
     rocp_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
