@@ -43,6 +43,8 @@ VmLib:      1360 kB
 VmPTE:        20 kB
 */
 
+int
+generic_get_memory_info( PAPI_hw_info_t *hw_info );
 
 int
 _linux_get_dmem_info( PAPI_dmem_info_t * d )
@@ -625,6 +627,7 @@ ppc64_get_memory_info( PAPI_hw_info_t * hw_info )
 		break;
 	default:
 		index = -1;
+		hw_info->mem_hierarchy.levels = 0;
 		break;
 	}
 
@@ -895,6 +898,128 @@ sparc_get_memory_info( PAPI_hw_info_t * hw_info )
 #endif
 
 
+#if defined(__aarch64__)
+
+PAPI_mh_info_t sys_mem_info[] = {
+	{2,						 // Fujitsu A64FX begin
+	 {
+	  [0] = { // level 1 begins
+		.tlb = {
+		[0] = { .type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_FIFO,
+				.num_entries = 16, .page_size = 65536,
+				.associativity = SHRT_MAX }
+		,
+		[1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_FIFO,
+				.num_entries = 16, .page_size = 65536,
+				.associativity = SHRT_MAX }
+		}
+		,
+		.cache = { // level 1 caches begin
+		[0] = { .type = PAPI_MH_TYPE_INST,
+				.size = 65536, .line_size = 256, .num_lines = 64,
+				.associativity = 4 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_WB,
+				.size = 65536, .line_size = 256, .num_lines = 64,
+				.associativity = 4 }
+		}
+	   }
+	  ,
+	  [1] = { // level 2 begins
+		.tlb = {
+		[0] = { .type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_LRU, .num_entries = 1024,
+			.page_size = 65536, .associativity = 4 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_LRU, .num_entries = 1024,
+			.page_size = 65536, .associativity = 4 }
+		}
+		,
+		.cache = {
+		[0] = { .type = PAPI_MH_TYPE_UNIFIED | PAPI_MH_TYPE_WB,
+				.size = 8388608, .line_size = 256, .num_lines = 2048,
+				.associativity = 16 }
+		,
+		[1] = { .type = PAPI_MH_TYPE_EMPTY, .size = -1, .line_size = -1,
+				.num_lines = -1, .associativity = -1 }
+		}
+	   }
+	  ,
+	  }
+	 }						 // Fujitsu A64FX end
+};
+
+#define IMPLEMENTER_FUJITSU 0x46
+#define PARTNUM_FUJITSU_A64FX 0x001
+
+int
+aarch64_get_memory_info( PAPI_hw_info_t * hw_info )
+{
+	unsigned int implementer, partnum;
+
+	implementer = hw_info->vendor;
+	partnum = hw_info->cpuid_model;
+
+	int index = -1;
+	switch ( implementer ) {
+	case IMPLEMENTER_FUJITSU:
+		switch ( partnum ) {
+		case PARTNUM_FUJITSU_A64FX: /* Fujitsu A64FX */
+			index = 0;
+			break;
+		default:
+			generic_get_memory_info (hw_info);
+			return 0;
+		}
+		break;
+	default:
+		generic_get_memory_info (hw_info);
+		return 0;
+	}
+
+	if ( index != -1 ) {
+		int cache_level;
+		PAPI_mh_info_t sys_mh_inf = sys_mem_info[index];
+		PAPI_mh_info_t *mh_inf = &hw_info->mem_hierarchy;
+		mh_inf->levels = sys_mh_inf.levels;
+		PAPI_mh_level_t *level = mh_inf->level;
+		PAPI_mh_level_t sys_mh_level;
+		for ( cache_level = 0; cache_level < sys_mh_inf.levels; cache_level++ ) {
+			sys_mh_level = sys_mh_inf.level[cache_level];
+			int cache_idx;
+			for ( cache_idx = 0; cache_idx < 2; cache_idx++ ) {
+				// process TLB info
+				PAPI_mh_tlb_info_t curr_tlb = sys_mh_level.tlb[cache_idx];
+				int type = curr_tlb.type;
+				if ( type != PAPI_MH_TYPE_EMPTY ) {
+					level[cache_level].tlb[cache_idx].type = type;
+					level[cache_level].tlb[cache_idx].associativity =
+						curr_tlb.associativity;
+					level[cache_level].tlb[cache_idx].num_entries =
+						curr_tlb.num_entries;
+				}
+			}
+			for ( cache_idx = 0; cache_idx < 2; cache_idx++ ) {
+				// process cache info
+				PAPI_mh_cache_info_t curr_cache = sys_mh_level.cache[cache_idx];
+				int type = curr_cache.type;
+				if ( type != PAPI_MH_TYPE_EMPTY ) {
+					level[cache_level].cache[cache_idx].type = type;
+					level[cache_level].cache[cache_idx].associativity =
+						curr_cache.associativity;
+					level[cache_level].cache[cache_idx].size = curr_cache.size;
+					level[cache_level].cache[cache_idx].line_size =
+						curr_cache.line_size;
+					level[cache_level].cache[cache_idx].num_lines =
+						curr_cache.num_lines;
+				}
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
+
 /* Fallback Linux code to read the cache info from /sys */
 int
 generic_get_memory_info( PAPI_hw_info_t *hw_info )
@@ -1145,6 +1270,8 @@ _linux_get_memory_info( PAPI_hw_info_t * hwinfo, int cpu_type )
 #elif defined(__arm__)
 	#warning "WARNING! linux_get_memory_info() does nothing on ARM32!"
         generic_get_memory_info (hwinfo);
+#elif defined(__aarch64__)
+	aarch64_get_memory_info( hwinfo );
 #else
         generic_get_memory_info (hwinfo);
 #endif
