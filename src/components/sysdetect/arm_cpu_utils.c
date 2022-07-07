@@ -27,6 +27,24 @@
 #define NAMEID_APM_XGENE          0x000
 #define NAMEID_QUALCOMM_KRAIT     0x040
 
+PAPI_cache_level_info_t fujitsu_a64fx_cache_info[] = {
+    { // level 1 begins
+        2,
+        {
+            {PAPI_MH_TYPE_INST, 65536, 256, 64, 4},
+            {PAPI_MH_TYPE_DATA, 65536, 256, 64, 4}
+        }
+    },
+    { // level 2 begins
+        1,
+        {
+            {PAPI_MH_TYPE_UNIFIED, 8388608, 256, 2048, 16},
+            {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+    },
+};
+
+static int get_cache_info( CPU_attr_e attr, int level, int *value );
 static int name_id_arm_cpu_get_name( int name_id, char *name );
 static int name_id_broadcom_cpu_get_name( int name_id, char *name );
 static int name_id_cavium_cpu_get_name( int name_id, char *name );
@@ -153,7 +171,50 @@ arm_cpu_get_attribute( CPU_attr_e attr, int *value )
 int
 arm_cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value )
 {
-    return os_cpu_get_attribute_at(attr, loc, value);
+    int status = CPU_SUCCESS;
+
+    switch(attr) {
+        case CPU_ATTR__CACHE_INST_PRESENT:
+            //fall through
+        case CPU_ATTR__CACHE_DATA_PRESENT:
+            //fall through
+        case CPU_ATTR__CACHE_UNIF_PRESENT:
+            //fall through
+        case CPU_ATTR__CACHE_INST_TOT_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_INST_LINE_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_INST_NUM_LINES:
+            //fall through
+        case CPU_ATTR__CACHE_INST_ASSOCIATIVITY:
+            //fall through
+        case CPU_ATTR__CACHE_DATA_TOT_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_DATA_LINE_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_DATA_NUM_LINES:
+            //fall through
+        case CPU_ATTR__CACHE_DATA_ASSOCIATIVITY:
+            //fall through
+        case CPU_ATTR__CACHE_UNIF_TOT_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_UNIF_LINE_SIZE:
+            //fall through
+        case CPU_ATTR__CACHE_UNIF_NUM_LINES:
+            //fall through
+        case CPU_ATTR__CACHE_UNIF_ASSOCIATIVITY:
+            status = get_cache_info(attr, loc, value);
+            break;
+        case CPU_ATTR__NUMA_MEM_SIZE:
+            //fall through
+        case CPU_ATTR__HWTHREAD_NUMA_AFFINITY:
+            status = os_cpu_get_attribute_at(attr, loc, value);
+            break;
+        default:
+            status = CPU_ERROR;
+    }
+
+    return status;
 }
 
 int
@@ -290,4 +351,39 @@ name_id_qualcomm_cpu_get_name( int name_id, char *name )
     }
 
     return papi_errno;
+}
+
+int
+get_cache_info( CPU_attr_e attr, int level, int *value )
+{
+    int impl, part;
+    unsigned int implementer, partnum;
+    static PAPI_cache_level_info_t *clevel_ptr;
+
+    int status;
+    status = arm_cpu_get_attribute(CPU_ATTR__VENDOR_ID, &impl);
+    if( status != CPU_SUCCESS ) return CPU_ERROR;
+    implementer = impl;
+
+    status = arm_cpu_get_attribute(CPU_ATTR__CPUID_MODEL, &part);
+    if( status != CPU_SUCCESS ) return CPU_ERROR;
+    partnum = part;
+
+    if (clevel_ptr) {
+        return cpu_get_cache_info(attr, level, clevel_ptr, value);
+    }
+
+    switch ( implementer ) {
+        case VENDOR_ARM_FUJITSU:
+            if ( NAMEID_FUJITSU_A64FX == partnum ) { /* Fujitsu A64FX */
+                clevel_ptr = fujitsu_a64fx_cache_info;
+            } else {
+                return CPU_ERROR;
+            }
+            break;
+        default:
+            return CPU_ERROR;
+    }
+
+    return cpu_get_cache_info(attr, level, clevel_ptr, value);
 }
