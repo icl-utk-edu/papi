@@ -101,7 +101,7 @@ static hsa_status_t (*rocp_pool_fetchPtr)(rocprofiler_pool_t *,
                                           rocprofiler_pool_entry_t *);
 static hsa_status_t (*rocp_pool_flushPtr)(rocprofiler_pool_t *);
 static hsa_status_t (*rocp_set_queue_cbsPtr)(rocprofiler_queue_callbacks_t,
-                                                   void *);
+                                             void *);
 static hsa_status_t (*rocp_start_queue_cbsPtr)(void);
 static hsa_status_t (*rocp_stop_queue_cbsPtr)(void);
 static hsa_status_t (*rocp_remove_queue_cbsPtr)(void);
@@ -570,7 +570,7 @@ init_rocp_env(void)
     char *hsa_tools_lib = getenv("HSA_TOOLS_LIB");
     if (hsa_tools_lib) {
         err = stat(hsa_tools_lib, &stat_info);
-        if (err == 0) {
+        if (err == 0 && S_ISREG(stat_info.st_mode)) {
             override_hsa_tools_lib = 0;
         }
     }
@@ -590,7 +590,7 @@ init_rocp_env(void)
     char *rocp_metrics = getenv("ROCP_METRICS");
     if (rocp_metrics) {
         err = stat(rocp_metrics, &stat_info);
-        if (err == 0) {
+        if (err == 0 && S_ISREG(stat_info.st_mode)) {
             override_rocp_metrics = 0;
         }
     }
@@ -605,16 +605,24 @@ init_rocp_env(void)
 
         err = stat(pathname, &stat_info);
         if (err < 0) {
-            ROCP_REC_ERR_STR("Rocprofiler metrics.xml file not found.");
-            return PAPI_EMISC;
+            /* Account for change of metrics file location in rocm-5.2.0
+             * directory structure */
+            expect = snprintf(pathname, PAPI_MAX_STR_LEN,
+                              "%s/lib/rocprofiler/metrics.xml",
+                              rocm_root);
+            if (expect > PAPI_MAX_STR_LEN) {
+                SUBDBG("Error string truncated");
+            }
+
+            err = stat(pathname, &stat_info);
+            if (err < 0) {
+                ROCP_REC_ERR_STR("Rocprofiler metrics.xml file not found.");
+                return PAPI_EMISC;
+            }
         }
 
         setenv("ROCP_METRICS", pathname, 1);
     }
-
-    //setenv("AQLPROFILE_READ_API", "1", 0);
-    //setenv("ROCPROFILER_LOG", "1", 0);
-    //setenv("HSA_VEN_AMD_AQLPROFILE_LOG", "1", 0);
 
     rocp_env_initialized = 1;
     return PAPI_OK;
@@ -747,7 +755,9 @@ static int sampling_ctx_init(ntv_event_table_t *, int *, unsigned,
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
-static unsigned get_user_counter_id(rocp_ctx_t, int *events_id, unsigned);
+static unsigned get_user_counter_id(rocp_ctx_t, int *, unsigned);
+static int ctx_init(ntv_event_table_t *, int *, unsigned, rocp_ctx_t *);
+static int ctx_finalize(rocp_ctx_t *);
 
 int
 sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
@@ -761,8 +771,7 @@ sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
 
     _papi_hwi_lock(_rocm_lock);
 
-    papi_errno = sampling_ctx_init(ntv_table, events_id, num_events,
-                                   rocp_ctx);
+    papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -778,7 +787,7 @@ sampling_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    sampling_ctx_finalize(rocp_ctx);
+    ctx_finalize(rocp_ctx);
     goto fn_exit;
 }
 
@@ -794,7 +803,7 @@ sampling_ctx_close(rocp_ctx_t rocp_ctx)
         goto fn_fail;
     }
 
-    sampling_ctx_finalize(&rocp_ctx);
+    ctx_finalize(&rocp_ctx);
 
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
@@ -870,7 +879,8 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, int *events_id, long long **counts)
         long long *counters = rocp_ctx->u.sampling.counters;
 
         for (j = 0; j < dev_feature_count; ++j) {
-            k = get_user_counter_id(rocp_ctx, events_id, j);
+            unsigned sorted_event_id = (i * dev_feature_count) + j;
+            k = get_user_counter_id(rocp_ctx, events_id, sorted_event_id);
             switch(dev_features[j].data.kind) {
                 case ROCPROFILER_DATA_KIND_INT32:
                     counters[k] = (long long) dev_features[j].data.result_int32;
@@ -1289,8 +1299,8 @@ static struct {
 static int compare_events(ntv_event_table_t *, int *, int *, unsigned);
 static int init_callbacks(rocprofiler_feature_t *, unsigned);
 static int register_dispatch_counter(unsigned long, int *);
-static int increment_dispatch_counter(unsigned long);
-static int decrement_dispatch_counter(unsigned long);
+static int increment_and_fetch_dispatch_counter(unsigned long);
+static int decrement_and_fetch_dispatch_counter(unsigned long);
 static int unregister_dispatch_counter(unsigned long);
 static int fetch_dispatch_counter(unsigned long);
 static cb_context_node_t *alloc_context_node(unsigned);
@@ -1328,8 +1338,7 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
         }
     }
 
-    papi_errno = intercept_ctx_init(ntv_table, events_id, num_events,
-                                    rocp_ctx);
+    papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1354,7 +1363,7 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    intercept_ctx_finalize(rocp_ctx);
+    ctx_finalize(rocp_ctx);
     goto fn_exit;
 }
 
@@ -1375,7 +1384,7 @@ intercept_ctx_close(rocp_ctx_t rocp_ctx)
         goto fn_exit;
     }
 
-    intercept_ctx_finalize(&rocp_ctx);
+    ctx_finalize(&rocp_ctx);
 
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
@@ -1470,7 +1479,7 @@ intercept_ctx_read(rocp_ctx_t rocp_ctx, int *events_id, long long **counts)
             }
 
             get_context_counters(events_id, dev_id, n, rocp_ctx);
-            dispatch_count = decrement_dispatch_counter(tid);
+            dispatch_count = decrement_and_fetch_dispatch_counter(tid);
             free_context_node(n);
         }
     }
@@ -1516,11 +1525,8 @@ static cb_dispatch_arg_t cb_dispatch_arg;
 int
 intercept_rocp_shutdown(ntv_event_table_t *ntv_table)
 {
-    /* Uncommenting this causes a double free error. */
-    //unsigned i;
-    //for (i = 0; i < agent_arr.count; ++i) {
-    //    ROCP_CALL((*rocp_pool_closePtr)(cb_dispatch_arg.pools[i]), );
-    //}
+    /* calling rocprofiler_pool_close() here would cause
+     * a double free runtime error. */
 
     shutdown_event_table(ntv_table);
 
@@ -1676,6 +1682,31 @@ intercept_ctx_finalize(rocp_ctx_t *rocp_ctx)
     *rocp_ctx = NULL;
 
     return PAPI_OK;
+}
+
+/**
+ * Context init and finalize
+ *
+ */
+int
+ctx_init(ntv_event_table_t *ntv_table, int *events_id, unsigned num_events,
+         rocp_ctx_t *rocp_ctx)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_init(ntv_table, events_id, num_events, rocp_ctx);
+    }
+
+    return intercept_ctx_init(ntv_table, events_id, num_events, rocp_ctx);
+}
+
+int
+ctx_finalize(rocp_ctx_t *rocp_ctx)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_finalize(rocp_ctx);
+    }
+
+    return intercept_ctx_finalize(rocp_ctx);
 }
 
 /**
@@ -1926,14 +1957,14 @@ process_context_entry(cb_context_payload_t *payload,
     ROCP_CALL((*rocp_group_get_dataPtr)(&payload->group), goto fn_exit);
     ROCP_CALL((*rocp_get_metricsPtr)(payload->group.context), goto fn_exit);
 
-    if (increment_dispatch_counter(payload->tid) < 0) {
+    if (increment_and_fetch_dispatch_counter(payload->tid) < 0) {
         /* thread not registered, ignore counters */
         goto fn_exit;
     }
 
     cb_context_node_t *n = alloc_context_node(feature_count);
     if (n == NULL) {
-        decrement_dispatch_counter(payload->tid);
+        decrement_and_fetch_dispatch_counter(payload->tid);
         goto fn_exit;
     }
 
@@ -2001,7 +2032,7 @@ put_context_node(int dev_id, cb_context_node_t *n)
 }
 
 int
-increment_dispatch_counter(unsigned long tid)
+increment_and_fetch_dispatch_counter(unsigned long tid)
 {
     unsigned i;
 
@@ -2059,7 +2090,7 @@ get_context_node(int dev_id, cb_context_node_t **n)
 }
 
 int
-decrement_dispatch_counter(unsigned long tid)
+decrement_and_fetch_dispatch_counter(unsigned long tid)
 {
     unsigned i;
     for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
