@@ -28,6 +28,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "force_init.h"
+
 #define dprintf if (0) printf /* debug printf; change to (1) to enable. */
 
 // --------- GLOBALS -----------
@@ -336,6 +338,8 @@ int main( int argc, char** argv )
         fprintf(stderr, "ROCM_SMI PAPI Component was not found.\n");       
         exit(-1);
     }
+
+    force_rocm_smi_init(cid);
 
     if (cmpinfo->disabled) {
         fprintf(stderr, "ROCM_SMI PAPI Component is disabled.\n");

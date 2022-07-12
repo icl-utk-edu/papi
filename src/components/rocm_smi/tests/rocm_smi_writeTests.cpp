@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include "rocm_smi.h"   // Need some enumerations.
 
+#include "force_init.h"
+
 #define CHECK(cmd) \
 {\
     hipError_t error  = cmd;\
@@ -260,6 +262,8 @@ int main(int argc, char *argv[])
     long long value=0;                                              // The only value we read.
     std::string eventName;
     eventName = "rocm_smi:::NUMDevices";
+
+    force_rocm_smi_init(cid);
 
     CALL_PAPI_OK(PAPI_create_eventset(&EventSet)); 
     CALL_PAPI_OK(PAPI_assign_eventset_component(EventSet, cid)); 
