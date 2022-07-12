@@ -25,6 +25,8 @@
 #include "papi.h"
 #include "papi_test.h"
 
+#include "force_init.h"
+
 // Host function
 int main( int argc, char** argv )
 {
@@ -70,6 +72,8 @@ int main( int argc, char** argv )
         fprintf(stderr, "NVML PAPI Component was not found.\n");       
         test_skip( __FILE__, __LINE__,"Component nvml is not present\n",-1 );
     }
+
+    force_nvml_init(cid);
 
     printf( "NVML found as Component %d of %d: %s: %d events\n", (1+cmpinfo->CmpIdx), numcmp, cmpinfo->name, cmpinfo->num_native_events );
     if (cmpinfo->disabled) {                                    // If disabled,
