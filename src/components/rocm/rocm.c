@@ -129,7 +129,6 @@ rocm_init_component(int cid)
     _rocm_vector.cmp_info.CmpIdx = cid;
     _rocm_vector.cmp_info.num_native_events = -1;
     _rocm_vector.cmp_info.num_cntrs = -1;
-    _rocm_vector.cmp_info.num_mpx_cntrs = -1;
     _rocm_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cid;
 
     const char *err_string;
@@ -195,7 +194,6 @@ rocm_init_private(void)
 
     _rocm_vector.cmp_info.num_native_events = ntv_table.count;
     _rocm_vector.cmp_info.num_cntrs = ntv_table.count;
-    _rocm_vector.cmp_info.num_mpx_cntrs = ntv_table.count;
 
   fn_exit:
     _rocm_vector.cmp_info.initialized = 1;
