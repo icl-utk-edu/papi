@@ -3,19 +3,13 @@ include ../../Makefile_comp_tests.target
 
 CC       = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CXX      = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
-CPPFLAGS = -I$(PAPI_ROCM_ROOT)/hip/include      \
+CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/hip/include      \
            -I$(PAPI_ROCM_ROOT)/hsa/include/hsa  \
-           -I../../..                           \
-           -I../../../testlib
-LDFLAGS  = -L../../../libpfm4/lib -lpfm                    \
-           -L../../.. -lpapi                               \
-           ../../../testlib/test_utils.o                   \
+           $(INCLUDE)
+LDFLAGS += -L$(datadir)/libpfm4/lib -lpfm                  \
+           -L$(datadir) -lpapi                             \
            -L$(PAPI_ROCM_ROOT)/lib -lhsa-runtime64         \
-           -fopenmp                                        \
-           -Wl,-rpath="$(PWD)/../../../libpfm4/lib"        \
-           -Wl,-rpath="$(PWD)/../../../"                   \
-           -Wl,-rpath="$(PWD)/libpfm4/lib"                 \
-           -Wl,-rpath="$(PWD)"
+            $(TESTLIB) -fopenmp
 CXXFLAGS = -g -O0 -fopenmp
 
 rocm_tests: ALL
