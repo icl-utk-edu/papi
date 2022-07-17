@@ -17,6 +17,7 @@
 #include "papi_vector.h"
 #include "extras.h"
 #include "rocp.h"
+#include "htable.h"
 
 /* Init and finalize */
 static int rocm_init_component(int cid);
@@ -45,13 +46,18 @@ static int rocm_reset(hwd_context_t *ctx, hwd_control_state_t *ctl);
 /* event conversion utilities */
 static int rocm_ntv_enum_events(unsigned int *event_code, int modifier);
 static int rocm_ntv_code_to_name(unsigned int event_code, char *name, int len);
+static int rocm_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
+
+static int insert_ntv_events_to_htable(void);
 
 extern unsigned rocm_prof_mode;
 
 /* table containing all ROCm events */
 ntv_event_table_t ntv_table;
+void *htable;
+
 
 typedef struct {
     int initialized;
@@ -118,6 +124,7 @@ papi_vector_t _rocm_vector = {
 
     .ntv_enum_events = rocm_ntv_enum_events,
     .ntv_code_to_name = rocm_ntv_code_to_name,
+    .ntv_name_to_code = rocm_ntv_name_to_code,
     .ntv_code_to_descr = rocm_ntv_code_to_descr,
 };
 
@@ -143,6 +150,8 @@ rocm_init_component(int cid)
         }
         return papi_errno;
     }
+
+    htable_init(&htable);
 
     sprintf(_rocm_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
@@ -192,6 +201,8 @@ rocm_init_private(void)
         goto fn_fail;
     }
 
+    insert_ntv_events_to_htable();
+
     _rocm_vector.cmp_info.num_native_events = ntv_table.count;
     _rocm_vector.cmp_info.num_cntrs = ntv_table.count;
 
@@ -216,9 +227,14 @@ rocm_shutdown_component(void)
     }
 
     int papi_errno = rocp_shutdown(&ntv_table);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
 
+    htable_shutdown(htable);
+
+  fn_exit:
     _rocm_vector.cmp_info.initialized = 0;
-
     return papi_errno;
 }
 
@@ -566,6 +582,26 @@ rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 }
 
 int
+rocm_ntv_name_to_code(const char *name, unsigned int *code)
+{
+    int papi_errno = PAPI_OK;
+    int htable_errno;
+
+    check_n_initialize();
+
+    ntv_event_t *event;
+    htable_errno = htable_lookup(htable, name, (void **) &event);
+    if (htable_errno != HTABLE_SUCCESS) {
+        papi_errno = PAPI_ECMP;
+        goto fn_exit;
+    }
+    *code = event->ntv_id;
+
+  fn_exit:
+    return papi_errno;
+}
+
+int
 rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
 {
     int papi_errno = PAPI_OK;
@@ -587,4 +623,34 @@ check_n_initialize(void)
     if (!_rocm_vector.cmp_info.initialized) {
         rocm_init_private();
     }
+}
+
+int
+insert_ntv_events_to_htable(void)
+{
+    int papi_errno = PAPI_OK;
+    int htable_errno;
+    unsigned event_code;
+
+    for (event_code = 0; event_code < ntv_table.count; ++event_code) {
+        char key[PAPI_2MAX_STR_LEN] = { 0 };
+        if (ntv_table.events[event_code].instance >= 0) {
+            snprintf(key, PAPI_2MAX_STR_LEN, "%s:device=%u:instance=%i",
+                     ntv_table.events[event_code].name,
+                     ntv_table.events[event_code].ntv_dev,
+                     ntv_table.events[event_code].instance);
+        } else {
+            snprintf(key, PAPI_2MAX_STR_LEN, "%s:device=%u",
+                     ntv_table.events[event_code].name,
+                     ntv_table.events[event_code].ntv_dev);
+        }
+
+        htable_errno = htable_insert(htable, key, &ntv_table.events[event_code]);
+        if (htable_errno != HTABLE_SUCCESS) {
+            papi_errno = PAPI_ECMP;
+            break;
+        }
+    }
+
+    return papi_errno;
 }
