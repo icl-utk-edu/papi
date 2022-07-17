@@ -1,7 +1,8 @@
 PAPI_ROCM_ROOT ?= /opt/rocm
 
 COMPSRCS += components/rocm/rocm.c \
-            components/rocm/rocp.c
+            components/rocm/rocp.c \
+            components/rocm/htable.c
 
 COMPOBJS += rocm.o rocp.o
 
