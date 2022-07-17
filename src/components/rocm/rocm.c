@@ -556,6 +556,8 @@ rocm_ntv_enum_events(unsigned int *event_code, int modifier)
     return papi_errno;
 }
 
+static void get_ntv_event_name(unsigned int event_code, char *name, int len);
+
 int
 rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 {
@@ -567,16 +569,7 @@ rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
         return PAPI_EINVAL;
     }
 
-    if (ntv_table.events[event_code].instance >= 0) {
-        snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev,
-                 ntv_table.events[event_code].instance);
-    } else {
-        snprintf(name, (size_t) len, "%s:device=%u",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev);
-    }
+    get_ntv_event_name(event_code, name, len);
 
     return papi_errno;
 }
@@ -590,7 +583,7 @@ rocm_ntv_name_to_code(const char *name, unsigned int *code)
     check_n_initialize();
 
     ntv_event_t *event;
-    htable_errno = htable_lookup(htable, name, (void **) &event);
+    htable_errno = htable_find(htable, name, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
         papi_errno = PAPI_ECMP;
         goto fn_exit;
@@ -634,16 +627,8 @@ insert_ntv_events_to_htable(void)
 
     for (event_code = 0; event_code < ntv_table.count; ++event_code) {
         char key[PAPI_2MAX_STR_LEN] = { 0 };
-        if (ntv_table.events[event_code].instance >= 0) {
-            snprintf(key, PAPI_2MAX_STR_LEN, "%s:device=%u:instance=%i",
-                     ntv_table.events[event_code].name,
-                     ntv_table.events[event_code].ntv_dev,
-                     ntv_table.events[event_code].instance);
-        } else {
-            snprintf(key, PAPI_2MAX_STR_LEN, "%s:device=%u",
-                     ntv_table.events[event_code].name,
-                     ntv_table.events[event_code].ntv_dev);
-        }
+
+        get_ntv_event_name(event_code, key, PAPI_2MAX_STR_LEN);
 
         htable_errno = htable_insert(htable, key, &ntv_table.events[event_code]);
         if (htable_errno != HTABLE_SUCCESS) {
@@ -653,4 +638,19 @@ insert_ntv_events_to_htable(void)
     }
 
     return papi_errno;
+}
+
+void
+get_ntv_event_name(unsigned int event_code, char *name, int len)
+{
+    if (ntv_table.events[event_code].instance >= 0) {
+        snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
+                 ntv_table.events[event_code].name,
+                 ntv_table.events[event_code].ntv_dev,
+                 ntv_table.events[event_code].instance);
+    } else {
+        snprintf(name, (size_t) len, "%s:device=%u",
+                 ntv_table.events[event_code].name,
+                 ntv_table.events[event_code].ntv_dev);
+    }
 }
