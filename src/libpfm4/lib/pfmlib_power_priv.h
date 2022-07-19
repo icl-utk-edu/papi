@@ -97,10 +97,12 @@ typedef struct {
 #define PV_POWER8NVL	0x004c
 #define PV_POWER8	0x004d
 #define PV_POWER9	0x004e
+#define PV_POWER10	0x0080
 
 #define POWER_PLM (PFM_PLM0|PFM_PLM3)
 #define POWER8_PLM (POWER_PLM|PFM_PLMH)
 #define POWER9_PLM (POWER_PLM|PFM_PLMH)
+#define POWER10_PLM (POWER_PLM|PFM_PLMH)
 
 extern int pfm_gen_powerpc_get_event_info(void *this, int pidx, pfm_event_info_t *info);
 extern int pfm_gen_powerpc_get_event_attr_info(void *this, int pidx, int umask_idx, pfmlib_event_attr_info_t *info);

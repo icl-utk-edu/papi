@@ -93,6 +93,7 @@ The library supports many PMUs. The current version can handle:
 		Power 8
 		Power 8 Nest
 		Power 9
+		Power 10
 		PPC970
 		Torrent
 		System z (s390x)
