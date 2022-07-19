@@ -260,6 +260,7 @@ static char cuda_perfworks[]=PAPI_CUDA_PERFWORKS;
 
 static int cuda_version=0;
 static int cuda_runtime_version=0;
+static uint32_t cupti_runtime_version=0;
 
 #if CUPTI_API_VERSION >= 13
 // The following structure sizes change from version 10 to version 11.
@@ -454,6 +455,7 @@ DECLARECUPTIFUNC(cuptiMetricCreateEventGroupSets, (CUcontext context, size_t met
 DECLARECUPTIFUNC(cuptiEventGroupSetsDestroy, (CUpti_EventGroupSets * eventGroupSets));
 DECLARECUPTIFUNC(cuptiMetricGetRequiredEventGroupSets, (CUcontext ctx, CUpti_MetricID metricId, CUpti_EventGroupSets **thisEventGroupSet));
 DECLARECUPTIFUNC(cuptiGetTimestamp, (uint64_t * timestamp));
+DECLARECUPTIFUNC(cuptiGetVersion, (uint32_t * version));
 DECLARECUPTIFUNC(cuptiMetricEnumEvents, (CUpti_MetricID metric, size_t * eventIdArraySizeBytes, CUpti_EventID * eventIdArray));
 DECLARECUPTIFUNC(cuptiMetricGetAttribute, (CUpti_MetricID metric, CUpti_MetricAttribute attrib, size_t * valueSize, void *value));
 DECLARECUPTIFUNC(cuptiMetricGetNumEvents, (CUpti_MetricID metric, uint32_t * numEvents));
@@ -898,6 +900,7 @@ static int _cuda_linkCudaLibraries(void)
     cuptiEventGroupSetsCreatePtr = DLSYM_AND_CHECK(dl3, "cuptiEventGroupSetsCreate");
     cuptiEventGroupSetsDestroyPtr = DLSYM_AND_CHECK(dl3, "cuptiEventGroupSetsDestroy");
     cuptiGetTimestampPtr = DLSYM_AND_CHECK(dl3, "cuptiGetTimestamp");
+    cuptiGetVersionPtr = DLSYM_AND_CHECK(dl3, "cuptiGetVersion");
     cuptiMetricEnumEventsPtr = DLSYM_AND_CHECK(dl3, "cuptiMetricEnumEvents");
     cuptiMetricGetAttributePtr = DLSYM_AND_CHECK(dl3, "cuptiMetricGetAttribute");
     cuptiMetricGetNumEventsPtr = DLSYM_AND_CHECK(dl3, "cuptiMetricGetNumEvents");
@@ -1024,8 +1027,10 @@ static int _cuda_linkCudaLibraries(void)
 
     CUDA_CALL((*cudaDriverGetVersionPtr)(&cuda_version), return PAPI_ENOSUPP);
     CUDA_CALL((*cudaRuntimeGetVersionPtr)(&cuda_runtime_version), return PAPI_ENOSUPP);
+    CUPTI_CALL((*cuptiGetVersionPtr)(&cupti_runtime_version), return PAPI_ENOSUPP);
 
-    if (0) fprintf(stderr, "%s:%s:%i, cuda_version=%d cuda_runtime_version=%d.\n", __FILE__, __func__, __LINE__, cuda_version, cuda_runtime_version);
+    SUBDBG("CUDA Compile Versions: driver=%d, runtime=%d, cupti=%d\n", CUDA_VERSION, CUDART_VERSION, CUPTI_API_VERSION);
+    SUBDBG("CUDA Runtime Versions: driver=%d, runtime=%d, cupti=%d\n", cuda_version, cuda_runtime_version, cupti_runtime_version);
 
 #if CUPTI_API_VERSION >= 13
     cuptiProfilerGetCounterAvailabilityPtr = NULL;
