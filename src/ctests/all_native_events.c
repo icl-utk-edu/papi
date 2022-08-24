@@ -116,7 +116,7 @@ main( int argc, char **argv )
 		}
 
 		/* Skip disabled components */
-		if (cmpinfo->disabled) {
+		if (cmpinfo->disabled != PAPI_OK && cmpinfo->disabled != PAPI_EDELAY_INIT) {
 			if (!quiet) {
 				printf( "Name:   %-23s %s\n",
 					cmpinfo->name ,cmpinfo->description);

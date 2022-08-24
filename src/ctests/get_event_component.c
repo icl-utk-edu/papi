@@ -45,7 +45,7 @@ main( int argc, char **argv )
             test_fail( __FILE__, __LINE__, "PAPI_get_component_info", 2 );
          }
 
-         if (cmpinfo->disabled && !TESTS_QUIET) {
+         if (cmpinfo->disabled != PAPI_OK && cmpinfo->disabled != PAPI_EDELAY_INIT && !TESTS_QUIET) {
            printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
            printf("   \\-> Disabled: %s\n",cmpinfo->disabled_reason);
            continue;
