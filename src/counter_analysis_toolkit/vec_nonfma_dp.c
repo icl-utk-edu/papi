@@ -1,419 +1,29 @@
-#include "vec_nonfma.h"
+#include "vec_scalar_verify.h"
 
-#if defined(INTEL) || defined(AMD)
+static double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp );
+static double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp );
+static double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp );
+static void   test_dp_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+
+/* Wrapper functions of different vector widths. */
+#if defined(VEC_WIDTH_128)
+void test_dp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+}
+#elif defined(VEC_WIDTH_512)
+void test_dp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+}
+#else
+void test_dp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+}
+#endif
+
 /************************************/
 /* Loop unrolling:  24 instructions */
 /************************************/
-double test_dp_mac_AVX_24( uint64 iterations, int EventSet, FILE *fp ){
-    register __m256d r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
-
-    /* Generate starting data */
-    r0 = _mm256_set1_pd(0.01);
-    r1 = _mm256_set1_pd(0.02);
-    r2 = _mm256_set1_pd(0.03);
-    r3 = _mm256_set1_pd(0.04);
-    r4 = _mm256_set1_pd(0.05);
-    r5 = _mm256_set1_pd(0.06);
-    r6 = _mm256_set1_pd(0.07);
-    r7 = _mm256_set1_pd(0.08);
-    r8 = _mm256_set1_pd(0.09);
-    r9 = _mm256_set1_pd(0.10);
-    rA = _mm256_set1_pd(0.11);
-    rB = _mm256_set1_pd(0.12);
-    rC = _mm256_set1_pd(0.13);
-    rD = _mm256_set1_pd(0.14);
-    rE = _mm256_set1_pd(0.15);
-    rF = _mm256_set1_pd(0.16);
-
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
-
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < 1000){
-            /* The performance critical part */
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            i++;
-        }
-        c++;
-    }
-
-    /* Stop PAPI counters */
-    papi_stop_and_print(24, EventSet, fp);
-
-    /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = _mm256_add_pd(r0,r1);
-    r2 = _mm256_add_pd(r2,r3);
-    r4 = _mm256_add_pd(r4,r5);
-    r6 = _mm256_add_pd(r6,r7);
-    r8 = _mm256_add_pd(r8,r9);
-    rA = _mm256_add_pd(rA,rB);
-
-    r0 = _mm256_add_pd(r0,r2);
-    r4 = _mm256_add_pd(r4,r6);
-    r8 = _mm256_add_pd(r8,rA);
-
-    r0 = _mm256_add_pd(r0,r4);
-    r0 = _mm256_add_pd(r0,r8);
-
-    double out = 0;
-    __m256d temp = r0;
-    out += ((double*)&temp)[0];
-    out += ((double*)&temp)[1];
-    out += ((double*)&temp)[2];
-    out += ((double*)&temp)[3];
-
-    return out;
-}
-
-/************************************/
-/* Loop unrolling:  48 instructions */
-/************************************/
-double test_dp_mac_AVX_48( uint64 iterations, int EventSet, FILE *fp ){
-    register __m256d r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
-
-    /* Generate starting data */
-    r0 = _mm256_set1_pd(0.01);
-    r1 = _mm256_set1_pd(0.02);
-    r2 = _mm256_set1_pd(0.03);
-    r3 = _mm256_set1_pd(0.04);
-    r4 = _mm256_set1_pd(0.05);
-    r5 = _mm256_set1_pd(0.06);
-    r6 = _mm256_set1_pd(0.07);
-    r7 = _mm256_set1_pd(0.08);
-    r8 = _mm256_set1_pd(0.09);
-    r9 = _mm256_set1_pd(0.10);
-    rA = _mm256_set1_pd(0.11);
-    rB = _mm256_set1_pd(0.12);
-    rC = _mm256_set1_pd(0.13);
-    rD = _mm256_set1_pd(0.14);
-    rE = _mm256_set1_pd(0.15);
-    rF = _mm256_set1_pd(0.16);
-
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
-
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < 1000){
-            /* The performance critical part */
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            i++;
-        }
-        c++;
-    }
-
-    /* Stop PAPI counters */
-    papi_stop_and_print(48, EventSet, fp);
-
-    /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = _mm256_add_pd(r0,r1);
-    r2 = _mm256_add_pd(r2,r3);
-    r4 = _mm256_add_pd(r4,r5);
-    r6 = _mm256_add_pd(r6,r7);
-    r8 = _mm256_add_pd(r8,r9);
-    rA = _mm256_add_pd(rA,rB);
-
-    r0 = _mm256_add_pd(r0,r2);
-    r4 = _mm256_add_pd(r4,r6);
-    r8 = _mm256_add_pd(r8,rA);
-
-    r0 = _mm256_add_pd(r0,r4);
-    r0 = _mm256_add_pd(r0,r8);
-
-    double out = 0;
-    __m256d temp = r0;
-    out += ((double*)&temp)[0];
-    out += ((double*)&temp)[1];
-    out += ((double*)&temp)[2];
-    out += ((double*)&temp)[3];
-
-    return out;
-}
-
-/************************************/
-/* Loop unrolling:  96 instructions */
-/************************************/
-double test_dp_mac_AVX_96( uint64 iterations, int EventSet, FILE *fp ){
-    register __m256d r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
-
-    //  Generate starting data.
-    r0 = _mm256_set1_pd(0.01);
-    r1 = _mm256_set1_pd(0.02);
-    r2 = _mm256_set1_pd(0.03);
-    r3 = _mm256_set1_pd(0.04);
-    r4 = _mm256_set1_pd(0.05);
-    r5 = _mm256_set1_pd(0.06);
-    r6 = _mm256_set1_pd(0.07);
-    r7 = _mm256_set1_pd(0.08);
-    r8 = _mm256_set1_pd(0.09);
-    r9 = _mm256_set1_pd(0.10);
-    rA = _mm256_set1_pd(0.11);
-    rB = _mm256_set1_pd(0.12);
-    rC = _mm256_set1_pd(0.13);
-    rD = _mm256_set1_pd(0.14);
-    rE = _mm256_set1_pd(0.15);
-    rF = _mm256_set1_pd(0.16);
-
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
-
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < 1000){
-            /* The performance critical part */
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            r0 = _mm256_mul_pd(r0,rC);
-            r1 = _mm256_add_pd(r1,rD);
-            r2 = _mm256_mul_pd(r2,rE);
-            r3 = _mm256_add_pd(r3,rF);
-            r4 = _mm256_mul_pd(r4,rC);
-            r5 = _mm256_add_pd(r5,rD);
-            r6 = _mm256_mul_pd(r6,rE);
-            r7 = _mm256_add_pd(r7,rF);
-            r8 = _mm256_mul_pd(r8,rC);
-            r9 = _mm256_add_pd(r9,rD);
-            rA = _mm256_mul_pd(rA,rE);
-            rB = _mm256_add_pd(rB,rF);
-
-            r0 = _mm256_add_pd(r0,rF);
-            r1 = _mm256_mul_pd(r1,rE);
-            r2 = _mm256_add_pd(r2,rD);
-            r3 = _mm256_mul_pd(r3,rC);
-            r4 = _mm256_add_pd(r4,rF);
-            r5 = _mm256_mul_pd(r5,rE);
-            r6 = _mm256_add_pd(r6,rD);
-            r7 = _mm256_mul_pd(r7,rC);
-            r8 = _mm256_add_pd(r8,rF);
-            r9 = _mm256_mul_pd(r9,rE);
-            rA = _mm256_add_pd(rA,rD);
-            rB = _mm256_mul_pd(rB,rC);
-
-            i++;
-        }
-        c++;
-    }
-
-    /* Stop PAPI counters */
-    papi_stop_and_print(96, EventSet, fp);
-
-    /* Use data so that compiler does not eliminate it when using -O2 */
-    r0 = _mm256_add_pd(r0,r1);
-    r2 = _mm256_add_pd(r2,r3);
-    r4 = _mm256_add_pd(r4,r5);
-    r6 = _mm256_add_pd(r6,r7);
-    r8 = _mm256_add_pd(r8,r9);
-    rA = _mm256_add_pd(rA,rB);
-
-    r0 = _mm256_add_pd(r0,r2);
-    r4 = _mm256_add_pd(r4,r6);
-    r8 = _mm256_add_pd(r8,rA);
-
-    r0 = _mm256_add_pd(r0,r4);
-    r0 = _mm256_add_pd(r0,r8);
-
-    double out = 0;
-    __m256d temp = r0;
-    out += ((double*)&temp)[0];
-    out += ((double*)&temp)[1];
-    out += ((double*)&temp)[2];
-    out += ((double*)&temp)[3];
-
-    return out;
-}
-
-void test_dp_AVX( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
-{
-    double sum = 0.0;
-    double scalar_sum = 0.0;
-
-    if ( instr_per_loop == 24 ) {
-       sum += test_dp_mac_AVX_24( iterations, EventSet, fp );
-       scalar_sum += test_dp_scalar_AVX_24( iterations );
-    }
-    else if ( instr_per_loop == 48 ) {
-        sum += test_dp_mac_AVX_48( iterations, EventSet, fp );
-        scalar_sum += test_dp_scalar_AVX_48( iterations );
-    }
-    else if ( instr_per_loop == 96 ) {
-        sum += test_dp_mac_AVX_96( iterations, EventSet, fp );
-        scalar_sum += test_dp_scalar_AVX_96( iterations );
-    }
-
-    if( sum/4.0 != scalar_sum ) {
-        fprintf(stderr, "Inconsistent FLOP results detected!\n");
-    }
-}
-
-#elif defined(ARM) || defined(IBM)
-/************************************/
-/* Loop unrolling:  24 instructions */
-/************************************/
+static
 double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
     register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -506,6 +116,7 @@ double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
 /************************************/
 /* Loop unrolling:  48 instructions */
 /************************************/
+static
 double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
     register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -624,6 +235,7 @@ double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
 /************************************/
 /* Loop unrolling:  96 instructions */
 /************************************/
+static
 double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
     register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -791,6 +403,7 @@ double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
     return out;
 }
 
+static
 void test_dp_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
 {
     double sum = 0.0;
@@ -813,4 +426,3 @@ void test_dp_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp 
         fprintf(stderr, "Inconsistent FLOP results detected!\n");
     }
 }
-#endif

@@ -1,54 +1,36 @@
-#include "vec_fma.h"
+#include "vec_scalar_verify.h"
 
-#if defined(INTEL) || defined(AMD)
-float test_hp_mac_AVX_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
+#if defined(ARM)
+static half  test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp );
+static half  test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp );
+static half  test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp );
+#else
+static float test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp );
+static float test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp );
+static float test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp );
+#endif
+static void  test_hp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-    papi_stop_and_print_placeholder(12, fp);
-
-    return 0.0;
+/* Wrapper functions of different vector widths. */
+#if defined(VEC_WIDTH_128)
+void test_hp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-
-float test_hp_mac_AVX_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
-
-    papi_stop_and_print_placeholder(24, fp);
-
-    return 0.0;
+#elif defined(VEC_WIDTH_512)
+void test_hp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-
-float test_hp_mac_AVX_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
-
-    papi_stop_and_print_placeholder(48, fp);
-
-    return 0.0;
+#else
+void test_hp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
+#endif
 
-void test_hp_AVX_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
-{
-    float sum = 0.0;
-    float scalar_sum = 0.0;
-
-    if ( instr_per_loop == 12 ) {
-        sum += test_hp_mac_AVX_FMA_12( iterations, EventSet, fp );
-        scalar_sum += test_hp_scalar_AVX_FMA_12( iterations );
-    }
-    else if ( instr_per_loop == 24 ) {
-        sum += test_hp_mac_AVX_FMA_24( iterations, EventSet, fp );
-        scalar_sum += test_hp_scalar_AVX_FMA_24( iterations );
-    }
-    else if ( instr_per_loop == 48 ) {
-        sum += test_hp_mac_AVX_FMA_48( iterations, EventSet, fp );
-        scalar_sum += test_hp_scalar_AVX_FMA_48( iterations );
-    }
-
-    if( sum/4.0 != scalar_sum ) {
-        fprintf(stderr, "FMA: Inconsistent FLOP results detected!\n");
-    }
-}
-
-#elif defined(ARM)
+#if defined(ARM)
 /************************************/
 /* Loop unrolling:  12 instructions */
 /************************************/
+static
 half test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
     register HP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -132,6 +114,7 @@ half test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
 /************************************/
 /* Loop unrolling:  24 instructions */
 /************************************/
+static
 half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
     register HP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -231,6 +214,7 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
 /************************************/
 /* Loop unrolling:  48 instructions */
 /************************************/
+static
 half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     register HP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
@@ -359,6 +343,7 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     return out;
 }
 
+static
 void test_hp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
 {
     half sum = 0.0;
@@ -382,28 +367,38 @@ void test_hp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE 
     }
 }
 
-#elif defined(IBM)
+#else
+static
 float test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
 
+    (void)iterations;
+    (void)EventSet;
     papi_stop_and_print_placeholder(12, fp);
 
     return 0.0;
 }
 
+static
 float test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
 
+    (void)iterations;
+    (void)EventSet;
     papi_stop_and_print_placeholder(24, fp);
 
     return 0.0;
 }
 
+static
 float test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
 
+    (void)iterations;
+    (void)EventSet;
     papi_stop_and_print_placeholder(48, fp);
 
     return 0.0;
 }
 
+static
 void test_hp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
 {
     float sum = 0.0;
