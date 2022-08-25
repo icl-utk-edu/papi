@@ -581,7 +581,7 @@ float test_sp_scalar_VEC_48( uint64 iterations ){
 float test_sp_scalar_VEC_96( uint64 iterations ){
     register SP_SCALAR_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
-    //  Generate starting data.
+    /* Generate starting data */
     r0 = SET_VEC_SS(0.01);
     r1 = SET_VEC_SS(0.02);
     r2 = SET_VEC_SS(0.03);
@@ -934,7 +934,7 @@ double test_dp_scalar_VEC_48( uint64 iterations ){
 double test_dp_scalar_VEC_96( uint64 iterations ){
     register DP_SCALAR_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
-    //  Generate starting data.
+    /* Generate starting data */
     r0 = SET_VEC_SD(0.01);
     r1 = SET_VEC_SD(0.02);
     r2 = SET_VEC_SD(0.03);
@@ -1585,7 +1585,7 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
 float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
     register SP_SCALAR_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
-    //  Generate starting data.
+    /* Generate starting data */
     r0 = SET_VEC_SS(0.01);
     r1 = SET_VEC_SS(0.02);
     r2 = SET_VEC_SS(0.03);
@@ -1980,7 +1980,7 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
 double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
     register DP_SCALAR_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
-    //  Generate starting data.
+    /* Generate starting data */
     r0 = SET_VEC_SD(0.01);
     r1 = SET_VEC_SD(0.02);
     r2 = SET_VEC_SD(0.03);

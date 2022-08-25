@@ -261,7 +261,7 @@ static
 double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
 
-    //  Generate starting data.
+    /* Generate starting data */
     r0 = SET_VEC_PD(0.01);
     r1 = SET_VEC_PD(0.02);
     r2 = SET_VEC_PD(0.03);
