@@ -1123,7 +1123,6 @@ half test_hp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1131,7 +1130,6 @@ half test_hp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             i++;
         }
@@ -1188,7 +1186,6 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1196,7 +1193,6 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             r0 = FMA_VEC_SH(r0,r7,r9);
             r1 = FMA_VEC_SH(r1,r8,rA);
@@ -1204,7 +1200,6 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1212,7 +1207,6 @@ half test_hp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             i++;
         }
@@ -1269,7 +1263,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1277,7 +1270,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             r0 = FMA_VEC_SH(r0,r7,r9);
             r1 = FMA_VEC_SH(r1,r8,rA);
@@ -1285,7 +1277,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1293,7 +1284,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             r0 = FMA_VEC_SH(r0,r7,r9);
             r1 = FMA_VEC_SH(r1,r8,rA);
@@ -1301,7 +1291,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1309,7 +1298,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             r0 = FMA_VEC_SH(r0,r7,r9);
             r1 = FMA_VEC_SH(r1,r8,rA);
@@ -1317,7 +1305,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,rB,rD);
             r5 = FMA_VEC_SH(r5,rC,rE);
-            //r6 = FMA_VEC_SH(r6,rD,rF);
 
             r0 = FMA_VEC_SH(r0,rD,rF);
             r1 = FMA_VEC_SH(r1,rC,rE);
@@ -1325,7 +1312,6 @@ half test_hp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SH(r3,rA,rC);
             r4 = FMA_VEC_SH(r4,r9,rB);
             r5 = FMA_VEC_SH(r5,r8,rA);
-            //r6 = FMA_VEC_SH(r6,r7,r9);
 
             i++;
         }
@@ -1408,7 +1394,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1416,7 +1401,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
@@ -1425,7 +1409,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1433,7 +1416,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 #endif
 
             i++;
@@ -1497,7 +1479,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1505,7 +1486,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 
             r0 = _mm_macc_ss(r0,r7,r9);
             r1 = _mm_macc_ss(r1,r8,rA);
@@ -1513,7 +1493,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1521,7 +1500,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
@@ -1530,7 +1508,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1538,7 +1515,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
@@ -1546,7 +1522,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1554,7 +1529,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 #endif
 
             i++;
@@ -1618,7 +1592,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1626,7 +1599,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 
             r0 = _mm_macc_ss(r0,r7,r9);
             r1 = _mm_macc_ss(r1,r8,rA);
@@ -1634,7 +1606,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1642,7 +1613,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 
             r0 = _mm_macc_ss(r0,r7,r9);
             r1 = _mm_macc_ss(r1,r8,rA);
@@ -1650,7 +1620,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1658,7 +1627,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 
             r0 = _mm_macc_ss(r0,r7,r9);
             r1 = _mm_macc_ss(r1,r8,rA);
@@ -1666,7 +1634,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,rB,rD);
             r5 = _mm_macc_ss(r5,rC,rE);
-            //r6 = _mm_macc_ss(r6,rD,rF);
 
             r0 = _mm_macc_ss(r0,rD,rF);
             r1 = _mm_macc_ss(r1,rC,rE);
@@ -1674,7 +1641,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_ss(r3,rA,rC);
             r4 = _mm_macc_ss(r4,r9,rB);
             r5 = _mm_macc_ss(r5,r8,rA);
-            //r6 = _mm_macc_ss(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
@@ -1683,7 +1649,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1691,7 +1656,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
@@ -1699,7 +1663,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1707,7 +1670,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
@@ -1715,7 +1677,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1723,7 +1684,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
@@ -1731,7 +1691,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,rB,rD);
             r5 = FMA_VEC_SS(r5,rC,rE);
-            //r6 = FMA_VEC_SS(r6,rD,rF);
 
             r0 = FMA_VEC_SS(r0,rD,rF);
             r1 = FMA_VEC_SS(r1,rC,rE);
@@ -1739,7 +1698,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-            //r6 = FMA_VEC_SS(r6,r7,r9);
 #endif
 
             i++;
@@ -1803,7 +1761,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -1811,7 +1768,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
@@ -1820,7 +1776,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
             
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -1828,7 +1783,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 #endif
 
             i++;
@@ -1892,7 +1846,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -1900,7 +1853,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 
             r0 = _mm_macc_sd(r0,r7,r9);
             r1 = _mm_macc_sd(r1,r8,rA);
@@ -1908,7 +1860,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -1916,7 +1867,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
@@ -1925,7 +1875,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -1933,7 +1882,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
@@ -1941,7 +1889,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -1949,7 +1896,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 #endif
 
             i++;
@@ -2013,7 +1959,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -2021,7 +1966,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 
             r0 = _mm_macc_sd(r0,r7,r9);
             r1 = _mm_macc_sd(r1,r8,rA);
@@ -2029,7 +1973,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -2037,7 +1980,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 
             r0 = _mm_macc_sd(r0,r7,r9);
             r1 = _mm_macc_sd(r1,r8,rA);
@@ -2045,7 +1987,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -2053,7 +1994,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 
             r0 = _mm_macc_sd(r0,r7,r9);
             r1 = _mm_macc_sd(r1,r8,rA);
@@ -2061,7 +2001,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,rB,rD);
             r5 = _mm_macc_sd(r5,rC,rE);
-            //r6 = _mm_macc_sd(r6,rD,rF);
 
             r0 = _mm_macc_sd(r0,rD,rF);
             r1 = _mm_macc_sd(r1,rC,rE);
@@ -2069,7 +2008,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = _mm_macc_sd(r3,rA,rC);
             r4 = _mm_macc_sd(r4,r9,rB);
             r5 = _mm_macc_sd(r5,r8,rA);
-            //r6 = _mm_macc_sd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
@@ -2078,7 +2016,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -2086,7 +2023,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
@@ -2094,7 +2030,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -2102,7 +2037,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
@@ -2110,7 +2044,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -2118,7 +2051,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
@@ -2126,7 +2058,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,rB,rD);
             r5 = FMA_VEC_SD(r5,rC,rE);
-            //r6 = FMA_VEC_SD(r6,rD,rF);
 
             r0 = FMA_VEC_SD(r0,rD,rF);
             r1 = FMA_VEC_SD(r1,rC,rE);
@@ -2134,7 +2065,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-            //r6 = FMA_VEC_SD(r6,r7,r9);
 #endif
 
             i++;

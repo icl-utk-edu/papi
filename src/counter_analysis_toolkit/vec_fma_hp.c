@@ -69,7 +69,6 @@ half test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -77,7 +76,6 @@ half test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             i++;
         }
@@ -103,10 +101,6 @@ half test_hp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }
@@ -153,7 +147,6 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -161,7 +154,6 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             r0 = FMA_VEC_PH(r0,r7,r9);
             r1 = FMA_VEC_PH(r1,r8,rA);
@@ -169,7 +161,6 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -177,7 +168,6 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             i++;
         }
@@ -203,10 +193,6 @@ half test_hp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }
@@ -253,7 +239,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -261,7 +246,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             r0 = FMA_VEC_PH(r0,r7,r9);
             r1 = FMA_VEC_PH(r1,r8,rA);
@@ -269,7 +253,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -277,7 +260,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             r0 = FMA_VEC_PH(r0,r7,r9);
             r1 = FMA_VEC_PH(r1,r8,rA);
@@ -285,7 +267,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -293,7 +274,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             r0 = FMA_VEC_PH(r0,r7,r9);
             r1 = FMA_VEC_PH(r1,r8,rA);
@@ -301,7 +281,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,rB,rD);
             r5 = FMA_VEC_PH(r5,rC,rE);
-            //r6 = FMA_VEC_PH(r6,rD,rF);
 
             r0 = FMA_VEC_PH(r0,rD,rF);
             r1 = FMA_VEC_PH(r1,rC,rE);
@@ -309,7 +288,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PH(r3,rA,rC);
             r4 = FMA_VEC_PH(r4,r9,rB);
             r5 = FMA_VEC_PH(r5,r8,rA);
-            //r6 = FMA_VEC_PH(r6,r7,r9);
 
             i++;
         }
@@ -335,10 +313,6 @@ half test_hp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }

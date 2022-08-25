@@ -65,7 +65,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
             
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -73,7 +72,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
@@ -82,7 +80,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -90,7 +87,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 #endif
 
             i++;
@@ -115,8 +111,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
     DP_VEC_TYPE temp = r0;
     out += ((double*)&temp)[0];
     out += ((double*)&temp)[1];
-    //out += ((double*)&temp)[2];
-    //out += ((double*)&temp)[3];
 
     return out;
 }
@@ -166,7 +160,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -174,7 +167,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 
             r0 = _mm256_macc_pd(r0,r7,r9);
             r1 = _mm256_macc_pd(r1,r8,rA);
@@ -182,7 +174,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -190,7 +181,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
@@ -199,7 +189,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -207,7 +196,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
@@ -215,7 +203,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -223,7 +210,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 #endif
 
             i++;
@@ -248,8 +234,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
     DP_VEC_TYPE temp = r0;
     out += ((double*)&temp)[0];
     out += ((double*)&temp)[1];
-    //out += ((double*)&temp)[2];
-    //out += ((double*)&temp)[3];
 
     return out;
 }
@@ -299,7 +283,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -307,7 +290,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 
             r0 = _mm256_macc_pd(r0,r7,r9);
             r1 = _mm256_macc_pd(r1,r8,rA);
@@ -315,7 +297,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -323,7 +304,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 
             r0 = _mm256_macc_pd(r0,r7,r9);
             r1 = _mm256_macc_pd(r1,r8,rA);
@@ -331,7 +311,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -339,7 +318,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 
             r0 = _mm256_macc_pd(r0,r7,r9);
             r1 = _mm256_macc_pd(r1,r8,rA);
@@ -347,7 +325,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,rB,rD);
             r5 = _mm256_macc_pd(r5,rC,rE);
-            //r6 = _mm256_macc_pd(r6,rD,rF);
 
             r0 = _mm256_macc_pd(r0,rD,rF);
             r1 = _mm256_macc_pd(r1,rC,rE);
@@ -355,7 +332,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = _mm256_macc_pd(r3,rA,rC);
             r4 = _mm256_macc_pd(r4,r9,rB);
             r5 = _mm256_macc_pd(r5,r8,rA);
-            //r6 = _mm256_macc_pd(r6,r7,r9);
 #else
 /* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
@@ -364,7 +340,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -372,7 +347,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
@@ -380,7 +354,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -388,7 +361,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
@@ -396,7 +368,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -404,7 +375,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
@@ -412,7 +382,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,rB,rD);
             r5 = FMA_VEC_PD(r5,rC,rE);
-            //r6 = FMA_VEC_PD(r6,rD,rF);
 
             r0 = FMA_VEC_PD(r0,rD,rF);
             r1 = FMA_VEC_PD(r1,rC,rE);
@@ -420,7 +389,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-            //r6 = FMA_VEC_PD(r6,r7,r9);
 #endif
 
             i++;
@@ -445,8 +413,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
     DP_VEC_TYPE temp = r0;
     out += ((double*)&temp)[0];
     out += ((double*)&temp)[1];
-    //out += ((double*)&temp)[2];
-    //out += ((double*)&temp)[3];
 
     return out;
 }
@@ -470,7 +436,6 @@ void test_dp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE 
         scalar_sum += test_dp_scalar_VEC_FMA_48( iterations );
     }
 
-    //if( sum/4.0 != scalar_sum ) {
     if( sum/2.0 != scalar_sum ) {
         fprintf(stderr, "FMA: Inconsistent FLOP results detected!\n");
     }

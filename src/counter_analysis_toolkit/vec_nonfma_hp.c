@@ -118,10 +118,6 @@ half test_hp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }
@@ -243,10 +239,6 @@ half test_hp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }
@@ -420,10 +412,6 @@ half test_hp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
     out = vaddh_f16(out,((half*)&temp)[1]);
     out = vaddh_f16(out,((half*)&temp)[2]);
     out = vaddh_f16(out,((half*)&temp)[3]);
-    //out = vaddh_f16(out,((half*)&temp)[4]);
-    //out = vaddh_f16(out,((half*)&temp)[5]);
-    //out = vaddh_f16(out,((half*)&temp)[6]);
-    //out = vaddh_f16(out,((half*)&temp)[7]);
 
     return out;
 }
