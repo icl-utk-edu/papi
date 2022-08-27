@@ -2474,7 +2474,7 @@ _pe_init_component( int cidx )
 	/* Update component behavior based on paranoid setting */
 	retval=_pe_handle_paranoid(_papi_hwd[cidx]);
    
-	if (retval!=PAPI_OK) return retval; // disabled_reason handled by _pe_handle_paranoid.
+	if (retval!=PAPI_OK) goto fn_fail; // disabled_reason handled by _pe_handle_paranoid.
 
 #if (OBSOLETE_WORKAROUNDS==1)
 	/* Handle any kernel version related workarounds */
@@ -2487,7 +2487,7 @@ _pe_init_component( int cidx )
 		strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 			"Error initializing mmtimer",PAPI_MAX_STR_LEN);
       if (strCpy == NULL) HANDLE_STRING_ERROR;
-		return retval;
+		goto fn_fail;
 	}
 
 	/* Set the overflow signal */
@@ -2519,7 +2519,7 @@ _pe_init_component( int cidx )
 		strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 			"Error initializing libpfm4",PAPI_MAX_STR_LEN);
       if (strCpy == NULL) HANDLE_STRING_ERROR;
-		return retval;
+		goto fn_fail;
 
 	}
 
@@ -2568,7 +2568,7 @@ _pe_init_component( int cidx )
             if (strCpy == NULL) HANDLE_STRING_ERROR;
 
 		}
-		return retval;
+        goto fn_fail;
 	}
 
 	/* Detect NMI watchdog which can steal counters */
@@ -2584,7 +2584,10 @@ _pe_init_component( int cidx )
 	/* check for exclude_guest issue */
 	check_exclude_guest();
 
-	return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 
 }
 
