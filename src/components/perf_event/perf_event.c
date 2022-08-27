@@ -2389,7 +2389,7 @@ _pe_handle_paranoid(papi_vector_t *component) {
 		strCpy=strncpy(component->cmp_info.disabled_reason,
 			"perf_event support not detected",PAPI_MAX_STR_LEN);
       if (strCpy == NULL) HANDLE_STRING_ERROR;
-		return PAPI_ENOCMP;
+		return PAPI_ECMP;
 	}
 
 	/* 3 (vendor patch) means completely disabled */
@@ -2405,7 +2405,7 @@ _pe_handle_paranoid(papi_vector_t *component) {
 		strCpy=strncpy(component->cmp_info.disabled_reason,
 			"perf_event support disabled by Linux with paranoid=3",PAPI_MAX_STR_LEN);
       if (strCpy == NULL) HANDLE_STRING_ERROR;
-		return PAPI_ENOCMP;
+		return PAPI_ECMP;
 	}
 
 	if ((paranoid_level==2) && (getuid()!=0)) {
