@@ -610,7 +610,8 @@ _peu_init_component( int cidx )
      strCpy=strncpy(_papi_hwd[cidx]->cmp_info.disabled_reason,
 	    "perf_event support not detected",PAPI_MAX_STR_LEN);
      if (strCpy == NULL) HANDLE_STRING_ERROR;
-     return PAPI_ENOCMP;
+     retval = PAPI_ENOCMP;
+     goto fn_fail;
    }
    retval=fscanf(fff,"%d",&paranoid_level);
    if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
@@ -625,7 +626,8 @@ _peu_init_component( int cidx )
 	     "Error initializing libpfm4",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
      if (strCpy == NULL) HANDLE_STRING_ERROR;
-     return PAPI_ENOCMP;
+     retval = PAPI_ENOCMP;
+     goto fn_fail;
    }
 
 
@@ -639,7 +641,8 @@ _peu_init_component( int cidx )
 	     "Error setting up libpfm4",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
      if (strCpy == NULL) HANDLE_STRING_ERROR;
-     return PAPI_ENOCMP;
+     retval = PAPI_ENOCMP;
+     goto fn_fail;
    }
 
    /* Check if no uncore events found */
@@ -649,7 +652,8 @@ _peu_init_component( int cidx )
 	     "No uncore PMUs or events found",PAPI_MAX_STR_LEN);
      _peu_shutdown_component( );
      if (strCpy == NULL) HANDLE_STRING_ERROR;
-     return PAPI_ENOCMP;
+     retval = PAPI_ENOCMP;
+     goto fn_fail;
    }
 
    /* Check if we have enough permissions for uncore */
@@ -665,10 +669,14 @@ _peu_init_component( int cidx )
 	    PAPI_MAX_STR_LEN);
       _peu_shutdown_component( );
      if (strCpy == NULL) HANDLE_STRING_ERROR;
-     return PAPI_ENOCMP;
+     retval = PAPI_ENOCMP;
+     goto fn_fail;
    }
 
-   return PAPI_OK;
+  fn_exit:
+   return retval;
+  fn_fail:
+   goto fn_exit;
 
 }
 
