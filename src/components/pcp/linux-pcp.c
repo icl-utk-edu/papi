@@ -888,7 +888,7 @@ static int _pcp_init_component(int cidx)
          "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);
       reason[rLen-1]=0;
       if (strErr > rLen) HANDLE_STRING_ERROR;
-      return(ctxHandle);                                                // contains PAPI error code, not handle.
+      return PAPI_ESYS;
    }
 
    _prog_fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle); // show progress.
