@@ -389,7 +389,7 @@ _coretemp_init_component( int cidx )
         "Cannot open /sys/class/hwmon",PAPI_MAX_STR_LEN);
         _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        retval = PAPI_ENOCMP;
+        retval = PAPI_ECMP;
         goto fn_fail;
      }
 
@@ -398,7 +398,7 @@ _coretemp_init_component( int cidx )
         "No coretemp events found",PAPI_MAX_STR_LEN);
         _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        retval = PAPI_ENOCMP;
+        retval = PAPI_ECMP;
         goto fn_fail;
      }
 
