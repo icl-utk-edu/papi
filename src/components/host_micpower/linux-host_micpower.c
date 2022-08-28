@@ -201,7 +201,7 @@ _host_micpower_init_component( int cidx )
 	_host_micpower_vector.cmp_info.CmpIdx = cidx;
 
 	if ( loadFunctionPtrs() ) {
-		goto disable_me;
+		goto fn_fail;
 	}
 
 	memset( lastupdate, 0x0, sizeof(lastupdate));
@@ -210,13 +210,13 @@ _host_micpower_init_component( int cidx )
 	if ( MIC_ACCESS_API_SUCCESS != ret ) {
 		snprintf( _host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to init: %s", MicGetErrorStringPtr(ret));
 		MicCloseAPIPtr(&accessHandle);
-		goto disable_me;
+		goto fn_fail;
 	}
 	/* Sanity check on array size */
 	if ( nAdapters >= MAX_DEVICES ) {
 		snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Too many MIC cards [%d] found, bailing.", nAdapters);
 		MicCloseAPIPtr(&accessHandle);
-		goto disable_me;
+		goto fn_fail;
 	}
 
 /* XXX: This code initializes a token for each adapter, in testing this appeared to be required/
@@ -232,7 +232,7 @@ _host_micpower_init_component( int cidx )
 					MicCloseAPIPtr( &accessHandle );
 					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
-					goto disable_me;
+					goto fn_fail;
 			}
 			ret = MicInitAdapterPtr(&handles[adapterNum], &adapters[adapterNum]);
 			if (MIC_ACCESS_API_SUCCESS != ret) {
@@ -243,7 +243,7 @@ _host_micpower_init_component( int cidx )
 					MicCloseAPIPtr( &accessHandle );
 					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
-					goto disable_me;
+					goto fn_fail;
 			}
 	}
 
@@ -310,7 +310,7 @@ _host_micpower_init_component( int cidx )
 
 	return PAPI_OK;
 
-disable_me:
+  fn_fail:
 	_host_micpower_vector.cmp_info.num_cntrs = 0;
 	_host_micpower_vector.cmp_info.num_mpx_cntrs = 0;
 	_host_micpower_vector.cmp_info.num_native_events = 0;
