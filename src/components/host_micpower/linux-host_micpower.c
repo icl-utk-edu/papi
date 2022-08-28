@@ -194,6 +194,7 @@ loadFunctionPtrs()
 int 
 _host_micpower_init_component( int cidx ) 
 {
+    int retval = PAPI_OK;
 	U32 ret = MIC_ACCESS_API_ERROR_UNKNOWN;
 	U32 adapterNum = 0;
 	U32 throwaway = 1;
@@ -201,6 +202,7 @@ _host_micpower_init_component( int cidx )
 	_host_micpower_vector.cmp_info.CmpIdx = cidx;
 
 	if ( loadFunctionPtrs() ) {
+        retval = PAPI_ENOSUPP;
 		goto fn_fail;
 	}
 
@@ -210,12 +212,14 @@ _host_micpower_init_component( int cidx )
 	if ( MIC_ACCESS_API_SUCCESS != ret ) {
 		snprintf( _host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to init: %s", MicGetErrorStringPtr(ret));
 		MicCloseAPIPtr(&accessHandle);
+        retval = PAPI_ENOSUPP;
 		goto fn_fail;
 	}
 	/* Sanity check on array size */
 	if ( nAdapters >= MAX_DEVICES ) {
 		snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Too many MIC cards [%d] found, bailing.", nAdapters);
 		MicCloseAPIPtr(&accessHandle);
+        retval = PAPI_ENOSUPP;
 		goto fn_fail;
 	}
 
@@ -232,6 +236,7 @@ _host_micpower_init_component( int cidx )
 					MicCloseAPIPtr( &accessHandle );
 					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
+                    retval = PAPI_ENOSUPP;
 					goto fn_fail;
 			}
 			ret = MicInitAdapterPtr(&handles[adapterNum], &adapters[adapterNum]);
@@ -243,6 +248,7 @@ _host_micpower_init_component( int cidx )
 					MicCloseAPIPtr( &accessHandle );
 					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
+                    retval = PAPI_ENOSUPP;
 					goto fn_fail;
 			}
 	}
@@ -308,16 +314,11 @@ _host_micpower_init_component( int cidx )
 	_host_micpower_vector.cmp_info.num_mpx_cntrs = EVENTS_PER_DEVICE*nAdapters;
 	_host_micpower_vector.cmp_info.num_native_events = EVENTS_PER_DEVICE*nAdapters;
 
-	return PAPI_OK;
+    return retval;
 
   fn_fail:
-	_host_micpower_vector.cmp_info.num_cntrs = 0;
-	_host_micpower_vector.cmp_info.num_mpx_cntrs = 0;
-	_host_micpower_vector.cmp_info.num_native_events = 0;
-	_host_micpower_vector.cmp_info.disabled = 1;
-
 	nAdapters = 0;
-	return PAPI_ENOSUPP;
+    goto fn_exit;
 }
 
 int _host_micpower_init_thread( hwd_context_t *ctx) {
