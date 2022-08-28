@@ -303,6 +303,7 @@ _host_micpower_init_component( int cidx )
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].units, PAPI_MIN_STR_LEN, "uV");
 	}
 
+  fn_exit:
 	_host_micpower_vector.cmp_info.num_cntrs = EVENTS_PER_DEVICE*nAdapters;
 	_host_micpower_vector.cmp_info.num_mpx_cntrs = EVENTS_PER_DEVICE*nAdapters;
 
