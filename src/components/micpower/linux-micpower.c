@@ -201,7 +201,7 @@ _micpower_init_component( int cidx )
 		if ( 0 != access( "/sys/class/micras/power", R_OK ) ) {
 				strncpy(_micpower_vector.cmp_info.disabled_reason,
 								"Cannot read /sys/class/micras/power",PAPI_MAX_STR_LEN);
-				return PAPI_ENOCMP;
+				return PAPI_ECMP;
 		}
 
 
