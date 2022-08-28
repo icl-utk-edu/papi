@@ -255,7 +255,8 @@ _host_micpower_init_component( int cidx )
 
 	native_events_table = ( host_micpower_native_event_entry_t*)papi_malloc( nAdapters * EVENTS_PER_DEVICE * sizeof(host_micpower_native_event_entry_t));
 	if ( NULL == native_events_table ) {
-		return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
 	}
 	for (adapterNum=0; adapterNum < nAdapters; adapterNum++) {
         snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].name, PAPI_MAX_STR_LEN, "mic%d:tot0", adapterNum);
