@@ -855,7 +855,7 @@ static int getHelpText(unsigned int pcpIdx, char **helpText)
 //---------------------------------------------------------------------------
 static int _pcp_init_component(int cidx) 
 {
-
+    int retval = PAPI_OK;
    char *reason = _papi_hwd[cidx]->cmp_info.disabled_reason;            // For error messages.
    int rLen = PAPI_MAX_STR_LEN;                                         // Most I will print.
    reason[rLen-1]=0;                                                    // last resort terminator.
@@ -867,7 +867,8 @@ static int _pcp_init_component(int cidx)
 
    ret = _local_linkDynamicLibraries();
    if ( ret != PAPI_OK ) {                                              // Failure to get lib.
-      return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
    }
 
    ret = gethostname(hostname, hostnameLen);                            // Try to get the host hame.
@@ -876,7 +877,8 @@ static int _pcp_init_component(int cidx)
             "returned %i.", ret);   
       reason[rLen-1]=0;
       if (strErr > rLen) HANDLE_STRING_ERROR;
-      return PAPI_ESYS;
+      retval = PAPI_ESYS;
+      goto fn_fail;
    }
    #undef hostnameLen /* done with it. */
 
@@ -888,7 +890,8 @@ static int _pcp_init_component(int cidx)
          "(Ensure this machine has Performance Co-Pilot installed.)\n", hostname);
       reason[rLen-1]=0;
       if (strErr > rLen) HANDLE_STRING_ERROR;
-      return PAPI_ESYS;
+      retval = PAPI_ESYS;
+      goto fn_fail;
    }
 
    _prog_fprintf(stderr, "%s:%i Found ctxHandle=%i\n", __FILE__, __LINE__, ctxHandle); // show progress.
@@ -901,7 +904,8 @@ static int _pcp_init_component(int cidx)
           "Could not allocate %lu bytes of memory for pcp_event_info.", sEventInfoSize*sizeof(_pcp_event_info_t));
       _pcp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
       if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;    
-      return(PAPI_ENOMEM);
+      retval = PAPI_ENOMEM;
+      goto fn_fail;
    }
 
    sEventCount = 0;                                                     // begin at zero.
@@ -916,7 +920,8 @@ static int _pcp_init_component(int cidx)
       }
       reason[rLen-1]=0;
       if (strErr >rLen) HANDLE_STRING_ERROR;
-      return PAPI_ENOIMPL;                                              // Not implemented.
+      retval = PAPI_ENOIMPL;
+      goto fn_fail;
    }      
       
    _time_gettimeofday(&t2, NULL);
@@ -931,7 +936,8 @@ static int _pcp_init_component(int cidx)
          "for AGENT=\"%s\".\n", AGENT_NAME);
       reason[rLen-1]=0;
       if (strErr >rLen) HANDLE_STRING_ERROR;
-      return PAPI_ENOIMPL;                                              // Can't work with no names!
+      retval = PAPI_ENOIMPL;
+      goto fn_fail;
    }
 
    int i,j,k;
@@ -947,7 +953,8 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allPMID.", sEventCount*sizeof(pmID));
       free(allNames);
       if (strErr > rLen) HANDLE_STRING_ERROR;
-      return(PAPI_ENOMEM);                                              // memory failure.
+      retval = PAPI_ENOMEM;
+      goto fn_fail;
    } // end if calloc failed.
 
    //----------------------------------------------------------------
@@ -978,10 +985,12 @@ static int _pcp_init_component(int cidx)
                   __FILE__,k);
             reason[rLen-1]=0;
             if (strErr > rLen) HANDLE_STRING_ERROR;
-            return PAPI_EBUF;                                           // Give buffer exceeded.
+            retval = PAPI_EBUF;
+            goto fn_fail;
          }
 
-         return PAPI_ESYS;                                              // .. .. Can't work with no names!
+         retval = PAPI_ESYS;
+         goto fn_fail;
       }
 
       i+=j;                                                             // .. Adjust the pointer forward by what we read.
@@ -1002,7 +1011,8 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, "pcp_pmFetch failed, retcode=%d.", ret);
       reason[rLen-1]=0;
       if (strErr > rLen) HANDLE_STRING_ERROR;
-      return(PAPI_ENOSUPP);                                             // Exit with no support.
+      retval = PAPI_ENOSUPP;
+      goto fn_fail;
    }
 
    _time_fprintf(stderr, "pmFetch for all took %li uS, for %i events; ret=%i.\n", 
@@ -1051,7 +1061,8 @@ static int _pcp_init_component(int cidx)
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
             reason[rLen-1]=0;
             if( strErr > rLen) HANDLE_STRING_ERROR;
-            return PAPI_ENOSUPP;
+            retval = PAPI_ENOSUPP;
+            goto fn_fail;
          }
 
 //       pcp_event_info[i].valType = pB->vtype;                         // .. get the type.
@@ -1148,7 +1159,8 @@ static int _pcp_init_component(int cidx)
           "Could not reallocate %lu bytes of memory for pcp_event_info.", sEventCount*sizeof(_pcp_event_info_t));
       reason[rLen-1]=0;    // force null termination.
       if (strErr > rLen) HANDLE_STRING_ERROR;    
-      return(PAPI_ENOMEM);
+      retval = PAPI_ENOMEM;
+      goto fn_fail;
    } // end if realloc failed.
 
    qsort(pcp_event_info, sEventCount,                                   // sort by PMID, idx, name.
@@ -1217,7 +1229,10 @@ static int _pcp_init_component(int cidx)
    _pcp_vector.cmp_info.num_mpx_cntrs = sEventCount;
    _pcp_vector.cmp_info.CmpIdx = cidx;                                  // export the component ID.
 
-   return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 } // end routine.
 
 
