@@ -431,6 +431,7 @@ static int
 _appio_init_component( int cidx  )
 {
     int strErr;
+    int retval = PAPI_OK;
     SUBDBG("_appio_component %d\n", cidx);
     _appio_native_events = (APPIO_native_event_entry_t *) papi_calloc(APPIO_MAX_COUNTERS, sizeof(APPIO_native_event_entry_t));
 
@@ -439,7 +440,8 @@ _appio_init_component( int cidx  )
       strErr=snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
       _appio_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
       if (strErr>PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-      return PAPI_ENOMEM;
+      retval = PAPI_ENOMEM;
+      goto fn_fail;
     }
     int i;
     for (i=0; i<APPIO_MAX_COUNTERS; i++) {
@@ -454,7 +456,10 @@ _appio_init_component( int cidx  )
     /* Export the component id */
     _appio_vector.cmp_info.CmpIdx = cidx;
 
-    return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 
