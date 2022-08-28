@@ -328,7 +328,7 @@ _net_init_component( int cidx  )
     num_events = generateNetEventList();
 
     if ( num_events < 0 ) {  /* disabled_reason already set */
-        retval = num_events;
+        retval = PAPI_ECMP;
         goto fn_fail;
     }
 
