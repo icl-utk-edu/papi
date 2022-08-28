@@ -306,7 +306,6 @@ _host_micpower_init_component( int cidx )
   fn_exit:
 	_host_micpower_vector.cmp_info.num_cntrs = EVENTS_PER_DEVICE*nAdapters;
 	_host_micpower_vector.cmp_info.num_mpx_cntrs = EVENTS_PER_DEVICE*nAdapters;
-
 	_host_micpower_vector.cmp_info.num_native_events = EVENTS_PER_DEVICE*nAdapters;
 
 	return PAPI_OK;
