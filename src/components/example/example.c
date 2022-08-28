@@ -191,6 +191,7 @@ detect_example(void) {
 static int
 _example_init_component( int cidx )
 {
+    int retval = PAPI_OK;
 
 	SUBDBG( "_example_init_component..." );
    
@@ -200,7 +201,8 @@ _example_init_component( int cidx )
          "Example Hardware not present.");
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
       if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-      return PAPI_ENOSUPP;
+      retval = PAPI_ENOSUPP;
+      goto fn_fail;
    }
    
 	/* we know in advance how many events we want                       */
@@ -216,7 +218,8 @@ _example_init_component( int cidx )
       "Could not allocate %lu bytes of memory for EXAMPLE device structure.", num_events*sizeof(example_native_event_entry_t));
       _example_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
       if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-		return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
 	}
 
 	/* fill in the event table parameters */
@@ -249,7 +252,10 @@ _example_init_component( int cidx )
 	/* Export the component id */
 	_example_vector.cmp_info.CmpIdx = cidx;
 
-	return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 /** This is called whenever a thread is initialized */
