@@ -136,7 +136,7 @@ static int _stealtime_shutdown_component( void );  // prototype for later routin
 static int
 _stealtime_init_component( int cidx )
 {
-
+    int retval = PAPI_OK;
   (void)cidx;
 
 	FILE *fff;
@@ -149,7 +149,8 @@ _stealtime_init_component( int cidx )
 	   strncpy(_stealtime_vector.cmp_info.disabled_reason,
 		   "Cannot open /proc/stat",PAPI_MAX_STR_LEN);
        _stealtime_shutdown_component();
-	   return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 
 	num_events=0;
@@ -175,13 +176,15 @@ _stealtime_init_component( int cidx )
 		   "Cannot find enough CPU lines in /proc/stat",
 		   PAPI_MAX_STR_LEN);
        _stealtime_shutdown_component();
-	   return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 
 	event_info=calloc(num_events,sizeof(struct counter_info));
 	if (event_info==NULL) {
         _stealtime_shutdown_component();
-	   return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
 	}
 
 	
@@ -204,7 +207,10 @@ _stealtime_init_component( int cidx )
 	_stealtime_vector.cmp_info.num_cntrs=num_events;
 	_stealtime_vector.cmp_info.num_mpx_cntrs=num_events;
 
-	return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 
