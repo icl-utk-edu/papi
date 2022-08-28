@@ -162,7 +162,7 @@ static int _powercap_init_thread( hwd_context_t *ctx )
  */
 static int _powercap_init_component( int cidx )
 {
-
+    int retval = PAPI_OK;
   int num_sockets = -1;
   int s = -1, e = -1, c = -1;
   long unsigned int strErr;
@@ -181,7 +181,8 @@ static int _powercap_init_component( int cidx )
   if ( hw_info->vendor!=PAPI_VENDOR_INTEL ) {
     strCpy=strncpy(_powercap_vector.cmp_info.disabled_reason, "Not an Intel processor", PAPI_MAX_STR_LEN);
     if (strCpy == NULL) HANDLE_STRING_ERROR;
-    return PAPI_ENOSUPP;
+    retval = PAPI_ENOSUPP;
+    goto fn_fail;
   }
 
   // store number of sockets for adding events
@@ -296,7 +297,10 @@ static int _powercap_init_component( int cidx )
   /* Export the component id */
   _powercap_vector.cmp_info.CmpIdx = cidx;
 
-  return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 
