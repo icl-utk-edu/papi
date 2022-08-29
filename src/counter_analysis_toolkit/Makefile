@@ -10,21 +10,31 @@ CC=gcc
 
 ## Architecture determines vector instruction set.
 ifeq ($(ARCH),INTEL)
+    VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
+    VEC128=-mavx -O0 -DINTEL -DVEC_WIDTH_128
+    VEC256=-mavx -O0 -DINTEL -DVEC_WIDTH_256
+    VEC512=-mavx512f -O0 -DINTEL -DVEC_WIDTH_512
+    VEC128_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_128
+    VEC256_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_256
+    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DINTEL -DVEC_WIDTH_512
     VEC=-mavx -O0 -DINTEL
     VEC_FMA=-mfma4 -mfma -O0 -DINTEL
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DINTEL
 endif
 ifeq ($(ARCH),AMD)
+    VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
     VEC=-mavx -O0 -DAMD
     VEC_FMA=-mfma4 -mfma -O0 -DAMD
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DAMD
 endif
 ifeq ($(ARCH),IBM)
+    VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
     VEC=-maltivec -O0 -DIBM
     VEC_FMA=-maltivec -O0 -DIBM
     VEC_ALL=$(VEC) -O0 -DIBM
 endif
 ifeq ($(ARCH),ARM)
+    VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
     VEC=-march=armv8.2-a+fp16 -O0 -DARM
     VEC_FMA=-march=armv8.2-a+fp16 -O0 -DARM
     VEC_ALL=$(VEC) -O0 -DARM
@@ -37,7 +47,7 @@ d_cache: timing_kernels.o prepareArray.o compar.o dcache.o
 
 i_cache: icache.o icache_seq_kernel_0.o
 
-vector: weak_symbols.o vec.o vec_scalar_verify.o vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
+vector: weak_symbols.o vec.o vec_scalar_verify.o $(VECSRC)
 
 branch.o: branch.c branch.h
 	$(CC) $(OPT0) $(CFLAGS) $(INCFLAGS) -c branch.c -o branch.o
@@ -58,8 +68,8 @@ eventstock.o: eventstock.c eventstock.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c eventstock.c -o eventstock.o
 
 flops: flops_aux.c flops_aux.h flops.c flops.h
-	$(CC) $(CFLAGS) $(OPT1) $(INCFLAGS) -c flops.c -o flops.o
-	$(CC) $(CFLAGS) $(OPT1) $(INCFLAGS) -c flops_aux.c -o flops_aux.o
+	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops.c -o flops.o
+	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops_aux.c -o flops_aux.o
 
 icache.o: icache.c icache.h
 	bash gen_seq_dlopen.sh
@@ -81,23 +91,53 @@ vec.o: vec.c vec.h
 vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h vec_arch.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_ALL) vec_scalar_verify.c
 
-vec_fma_hp.o: vec_fma_hp.c vec_fma.h
+vec_fma_hp.o: vec_fma_hp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_hp.c
 
-vec_fma_sp.o: vec_fma_sp.c vec_fma.h
+vec_fma_hp: vec_fma_hp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128_FMA) vec_fma_hp.c -o vec_fma_hp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256_FMA) vec_fma_hp.c -o vec_fma_hp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512_FMA) vec_fma_hp.c -o vec_fma_hp-512B.o
+
+vec_fma_sp.o: vec_fma_sp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_sp.c
 
-vec_fma_dp.o: vec_fma_dp.c vec_fma.h
+vec_fma_sp: vec_fma_sp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128_FMA) vec_fma_sp.c -o vec_fma_sp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256_FMA) vec_fma_sp.c -o vec_fma_sp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512_FMA) vec_fma_sp.c -o vec_fma_sp-512B.o
+
+vec_fma_dp.o: vec_fma_dp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_FMA) vec_fma_dp.c
 
-vec_nonfma_hp.o: vec_nonfma_hp.c vec_nonfma.h
+vec_fma_dp: vec_fma_dp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128_FMA) vec_fma_dp.c -o vec_fma_dp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256_FMA) vec_fma_dp.c -o vec_fma_dp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512_FMA) vec_fma_dp.c -o vec_fma_dp-512B.o
+
+vec_nonfma_hp.o: vec_nonfma_hp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_hp.c
 
-vec_nonfma_sp.o: vec_nonfma_sp.c vec_nonfma.h
+vec_nonfma_hp: vec_nonfma_hp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128) vec_nonfma_hp.c -o vec_nonfma_hp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256) vec_nonfma_hp.c -o vec_nonfma_hp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512) vec_nonfma_hp.c -o vec_nonfma_hp-512B.o
+
+vec_nonfma_sp.o: vec_nonfma_sp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_sp.c
 
-vec_nonfma_dp.o: vec_nonfma_dp.c vec_nonfma.h
+vec_nonfma_sp: vec_nonfma_sp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128) vec_nonfma_sp.c -o vec_nonfma_sp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256) vec_nonfma_sp.c -o vec_nonfma_sp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512) vec_nonfma_sp.c -o vec_nonfma_sp-512B.o
+
+vec_nonfma_dp.o: vec_nonfma_dp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC) vec_nonfma_dp.c
+
+vec_nonfma_dp: vec_nonfma_dp.c vec_scalar_verify.h
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC128) vec_nonfma_dp.c -o vec_nonfma_dp-128B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256) vec_nonfma_dp.c -o vec_nonfma_dp-256B.o
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512) vec_nonfma_dp.c -o vec_nonfma_dp-512B.o
 
 cat_collect: main.c
 	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c $(wildcard *.o) -o cat_collect $(LDFLAGS)
