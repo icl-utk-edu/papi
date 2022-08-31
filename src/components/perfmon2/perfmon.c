@@ -763,7 +763,7 @@ _papi_pfm_init_component( int cidx )
    if ( retval != PAPI_OK ) {
       strncpy(_perfmon2_vector.cmp_info.disabled_reason,
 	     "/sys/kernel/perfmon/version not found",PAPI_MAX_STR_LEN);
-      return retval;
+      goto fn_fail;
    }
 
 #ifdef PFM_VERSION
@@ -779,7 +779,8 @@ _papi_pfm_init_component( int cidx )
 	 PAPIERROR( "Version mismatch of libpfm: compiled %s "
                     "vs. installed %s\n",
 		    buf, _perfmon2_vector.cmp_info.kernel_version );
-	 return PAPI_ESYS;
+     retval = PAPI_ESYS;
+     goto fn_fail;
       }
    }
 #endif
@@ -789,7 +790,7 @@ _papi_pfm_init_component( int cidx )
 
    /* Run the libpfm-specific setup */
    retval=_papi_libpfm_init(&_perfmon2_vector, cidx);
-   if (retval) return retval;
+   if (retval) goto fn_fail;
 
    /* Load the module, find out if any PMC's/PMD's are off limits */
 
@@ -812,7 +813,7 @@ _papi_pfm_init_component( int cidx )
 					       &_perfmon2_pfm_unavailable_pmds,
 					       &min_timeout_ns );
    if ( retval != PAPI_OK ) {
-      return ( retval );
+       goto fn_fail;
    }	
 
    if ( _papi_hwi_system_info.hw_info.vendor == PAPI_VENDOR_IBM ) {
@@ -856,7 +857,10 @@ _papi_pfm_init_component( int cidx )
       _perfmon2_vector.cmp_info.cntr_umasks = 1;
    }
 
-   return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
