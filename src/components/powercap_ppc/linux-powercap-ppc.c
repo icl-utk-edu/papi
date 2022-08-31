@@ -193,6 +193,7 @@ _powercap_ppc_init_component( int cidx )
     _powercap_ppc_vector.cmp_info.CmpIdx = cidx;
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;
