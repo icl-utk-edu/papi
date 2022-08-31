@@ -243,7 +243,7 @@ load_hsa_sym( char *status )
     if (rocm_root == NULL) {
         const char *message =
             "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -277,7 +277,7 @@ load_hsa_sym( char *status )
     if (!hsa_is_enabled() || (*hsa_initPtr)()) {
         const char *message = "dlsym() of HSA symbols failed or hsa_init() "
                               "failed";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -400,7 +400,7 @@ load_rsmi_sym( char *status )
     if (rocm_root == NULL) {
         const char *message =
             "Can't load librocm_smi64.so, PAPI_ROCM_ROOT not set.";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -430,7 +430,7 @@ load_rsmi_sym( char *status )
     if (!rsmi_is_enabled() || (*rsmi_initPtr)(0)) {
         const char *message = "dlsym() of RSMI symbols failed or rsmi_init() "
                               "failed";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -496,7 +496,7 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     }
 #else
     const char *message = "RSMI not configured, no device affinity available";
-    int count = snprintf(dev_type_info->status, strlen(message) + 1, message);
+    int count = snprintf(dev_type_info->status, strlen(message) + 1, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Error message truncated.");
     }
@@ -506,7 +506,7 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
 #else
     const char *message = "ROCm not configured, no ROCm device available";
-    int count = snprintf(dev_type_info->status, strlen(message) + 1, message);
+    int count = snprintf(dev_type_info->status, strlen(message) + 1, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Error message truncated.");
     }
