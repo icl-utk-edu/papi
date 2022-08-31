@@ -657,6 +657,7 @@ _infiniband_init_component( int cidx )
 
     /* Export the component id */
     _infiniband_vector.cmp_info.CmpIdx = cidx;
+    _papi_hwd[cidx]->cmp_info.disabled = result;
 
     return (result);
 }
