@@ -920,6 +920,7 @@ _vmware_init_component( int cidx )
 	_vmware_vector.cmp_info.num_native_events = num_events;
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;
