@@ -457,6 +457,7 @@ _lustre_init_component( int cidx )
 	_lustre_vector.cmp_info.CmpIdx = cidx;
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = ret;
 	SUBDBG("EXIT: ret: %d\n", ret);
 	return ret;
   fn_fail:
