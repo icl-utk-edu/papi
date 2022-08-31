@@ -128,14 +128,16 @@ _perfctr_init_component( int cidx )
 	if ( fd < 0 ) {
 	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
 		  VOPEN_ERROR,PAPI_MAX_STR_LEN);
-	   return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 	retval = perfctr_info( fd, &info );
 	close( fd );
 	if ( retval < 0 ) {
 	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
 		  VINFO_ERROR,PAPI_MAX_STR_LEN);
-	   return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 
 	/* copy tsc multiplier to local variable        */
@@ -146,7 +148,8 @@ _perfctr_init_component( int cidx )
 	if ( ( dev = vperfctr_open(  ) ) == NULL ) {
 	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
 		  VOPEN_ERROR,PAPI_MAX_STR_LEN);
-	   return PAPI_ESYS;
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 	SUBDBG( "_perfctr_init_component vperfctr_open = %p\n", dev );
 
@@ -155,7 +158,8 @@ _perfctr_init_component( int cidx )
 	if ( retval < 0 ) {
 	   strncpy(_perfctr_vector.cmp_info.disabled_reason,
 		  VINFO_ERROR,PAPI_MAX_STR_LEN);
-		return ( PAPI_ESYS );
+       retval = PAPI_ESYS;
+       goto fn_fail;
 	}
 	vperfctr_close( dev );
 #endif
@@ -163,13 +167,13 @@ _perfctr_init_component( int cidx )
 	/* Fill in what we can of the papi_system_info. */
 	retval = _papi_os_vector.get_system_info( &_papi_hwi_system_info );
 	if ( retval != PAPI_OK )
-		return ( retval );
+        goto fn_fail;
 
 	/* Setup memory info */
 	retval = _papi_os_vector.get_memory_info( &_papi_hwi_system_info.hw_info,
 						   ( int ) info.cpu_type );
 	if ( retval )
-		return ( retval );
+        goto fn_fail;
 
 	strcpy( _perfctr_vector.cmp_info.name,"perfctr.c" );
 	strcpy( _perfctr_vector.cmp_info.version, "$Revision$" );
@@ -232,10 +236,11 @@ _perfctr_init_component( int cidx )
 	if ( !retval )
 	  retval = setup_ppc64_presets( info.cpu_type, cidx );
 #endif
-	if ( retval )
-		return ( retval );
 
-	return ( PAPI_OK );
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 static int
