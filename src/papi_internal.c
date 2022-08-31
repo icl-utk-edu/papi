@@ -1956,7 +1956,6 @@ _papi_hwi_init_global( int PE_OR_PEU )
 	   /* We can be disabled by user before init */
 	   if (!_papi_hwd[i]->cmp_info.disabled && (PE_OR_PEU == is_pe_peu)) {
 	      retval = _papi_hwd[i]->init_component( i );
-	      _papi_hwd[i]->cmp_info.disabled=retval;
 
 	      /* Do some sanity checking */
 	      if (retval==PAPI_OK) {
