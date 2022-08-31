@@ -1230,6 +1230,7 @@ static int _pcp_init_component(int cidx)
    _pcp_vector.cmp_info.CmpIdx = cidx;                                  // export the component ID.
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;
