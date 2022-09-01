@@ -54,7 +54,7 @@ COMPOBJS += x86_cpu_utils.o
 x86_cpu_utils.o: components/sysdetect/x86_cpu_utils.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/x86_cpu_utils.c -o $@
 
-else ifneq (, $(filter $(CPU), POWER5 POWER5+ POWER6 POWER7 PPC970))
+else ifneq (, $(filter $(CPU), POWER5 POWER5+ POWER6 POWER7 POWER8 POWER9 POWER10 PPC970))
 COMPSRCS += components/sysdetect/powerpc_cpu_utils.c
 COMPOBJS += powerpc_cpu_utils.o
 
