@@ -4794,14 +4794,17 @@ else
                       MISCSRCS="$MISCSRCS x86_cpuid_info.c"
 		      CPU="x86"
 
-                   elif test "$family" = "ppc64"; then
-                     CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d'`"
+                   elif test "$family" = "ppc64" || test "$family" = "ppc64le"; then
+                     CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d' | tr -d ","`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
                        POWER5)  CPU="POWER5";;
                        POWER5+) CPU="POWER5+";;
                        POWER6)  CPU="POWER6";;
                        POWER7)  CPU="POWER7";;
+                       POWER8)  CPU="POWER8";;
+                       POWER9)  CPU="POWER9";;
+                       POWER10) CPU="POWER10";;
                      esac
 	           fi ;;
                solaris)
