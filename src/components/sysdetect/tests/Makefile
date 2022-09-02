@@ -5,8 +5,14 @@ include ../../Makefile_comp_tests.target
 %.o:%.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
+ifneq ($(MPICC),)
+MPITESTS = query_device_mpi
+else
+MPITESTS =
+endif
+
 TESTS = query_device_simple \
-        query_device_mpi
+        $(MPITESTS)
 
 sysdetect_tests: $(TESTS)
 
