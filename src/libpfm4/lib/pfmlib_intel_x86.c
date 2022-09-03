@@ -551,7 +551,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 					umodmsk |= _INTEL_X86_ATTR_T;
 					break;
 				case INTEL_X86_ATTR_LDLAT: /* load latency */
-					if (ival < 3 || ival > 65535)
+					/* as per Intel SDM, lowest value is 1, 16-bit field */
+					if (ival < 1 || ival > 65535)
 						return PFM_ERR_ATTR_VAL;
 					ldlat = ival;
 					break;
