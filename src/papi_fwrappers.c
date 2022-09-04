@@ -1410,6 +1410,251 @@ PAPI_FCALL( papif_rate_stop, PAPIF_RATE_STOP,
 	*check = PAPI_rate_stop( );
 }
 
+void *sysdetect_fort_handle;
+
+/** @class PAPIF_enum_dev_type
+ * @ingroup PAPIF
+ * @brief returns handle of next device type
+ *
+ * @par Fortran Interface:
+ * \#include "fpapi.h" @n
+ * PAPIF_enum_dev_type( C_INT modifier, C_INT handle_index, C_INT check )
+ *
+ * @see PAPI_enum_dev_type
+ */
+PAPI_FCALL( papif_enum_dev_type, PAPIF_ENUM_DEV_TYPE, ( int *modifier, int *handle_index, int *check ))
+{
+    *check = PAPI_enum_dev_type(*modifier, &sysdetect_fort_handle);
+    *handle_index = 0;
+}
+
+/** @class PAPIF_get_dev_type_attr
+ * @ingroup PAPIF
+ * @brief returns device type attributes
+ *
+ * @par Fortran Interface:
+ * \#include "fpapi.h" @n
+ * PAPIF_get_dev_type_attr( C_INT handle_index, C_INT attribute, @n
+ *                          C_INT value, C_STRING string, C_INT check )
+ *
+ * @see PAPIF_get_dev_type_attr
+ */
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_get_dev_type_attr, PAPIF_GET_DEV_TYPE_ATTR, (int *handle_index,
+                                                               int *attribute,
+                                                               int *value,
+                                                               char *string,
+                                                               int *check,
+                                                               int string_len) )
+#else
+PAPI_FCALL( papif_get_dev_type_attr, PAPIF_GET_DEV_TYPE_ATTR, (int *handle_index,
+                                                               int *attribute,
+                                                               int *value,
+                                                               char *string,
+                                                               int *check) )
+#endif
+{
+    const char *string_ptr;
+    int i;
+    *handle_index = 0;
+    *check = PAPI_OK;
+
+    assert(sysdetect_fort_handle);
+
+    switch(*attribute) {
+        case PAPI_DEV_TYPE_ATTR__INT_PAPI_ID:
+        case PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID:
+        case PAPI_DEV_TYPE_ATTR__INT_COUNT:
+            *check = PAPI_get_dev_type_attr(sysdetect_fort_handle, *attribute,
+                                            value);
+            break;
+        case PAPI_DEV_TYPE_ATTR__CHAR_NAME:
+        case PAPI_DEV_TYPE_ATTR__CHAR_STATUS:
+            *check = PAPI_get_dev_type_attr(sysdetect_fort_handle, *attribute,
+                                            &string_ptr);
+            if (*check != PAPI_OK) {
+                break;
+            }
+#if defined(_FORTRAN_STRLEN_AT_END)
+            strncpy(string, string_ptr, string_len);
+            for ( i = ( int ) string_len; i < PAPI_MAX_STR_LEN;
+                string[i++] = ' ' );
+#else
+            strcpy(string, string_ptr);
+            for ( i = ( int ) strlen(string_ptr); i < PAPI_MAX_STR_LEN;
+                string[i++] = ' ' );
+#endif
+            break;
+        default:
+            *check = PAPI_EINVAL;
+    }
+    *handle_index = 0;
+    return;
+}
+
+/** @class PAPIF_get_dev_attr
+ * @ingroup PAPIF
+ * @brief returns device attributes
+ *
+ * @par Fortran Interface:
+ * \#include "fpapi.h" @n
+ * PAPIF_get_dev_attr( C_INT handle, C_INT id, C_INT attribute, @n
+ *                     C_INT value, C_STRING string, C_INT check )
+ *
+ * @see PAPIF_get_dev_attr
+ */
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
+                                                     int *id,
+                                                     int *attribute,
+                                                     int *value,
+                                                     int *list,
+                                                     char *string,
+                                                     int *check,
+                                                     int string_len) )
+#else
+PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
+                                                     int *id,
+                                                     int *attribute,
+                                                     int *value,
+                                                     int *list,
+                                                     char *string,
+                                                     int *check) )
+#endif
+{
+    int i;
+    const char *string_ptr;
+    const unsigned int *list_ptr;
+    *handle_index = 0;
+    int list_len;
+    *check = PAPI_OK;
+
+    assert(sysdetect_fort_handle);
+
+    switch(*attribute) {
+        case PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_SIZE:
+        case PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_ASSOC:
+        case PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_ASSOC:
+        case PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_ASSOC:
+        case PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_ASSOC:
+        case PAPI_DEV_ATTR__CPU_UINT_FAMILY:
+        case PAPI_DEV_ATTR__CPU_UINT_MODEL:
+        case PAPI_DEV_ATTR__CPU_UINT_STEPPING:
+        case PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT:
+        case PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA:
+        case PAPI_DEV_ATTR__CUDA_ULONG_UID:
+        case PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME:
+        case PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE:
+        case PAPI_DEV_ATTR__CUDA_UINT_THR_PER_BLK:
+        case PAPI_DEV_ATTR__CUDA_UINT_BLK_PER_SM:
+        case PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_BLK:
+        case PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_SM:
+        case PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_X:
+        case PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Y:
+        case PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Z:
+        case PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_X:
+        case PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Y:
+        case PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Z:
+        case PAPI_DEV_ATTR__CUDA_UINT_SM_COUNT:
+        case PAPI_DEV_ATTR__CUDA_UINT_MULTI_KERNEL:
+        case PAPI_DEV_ATTR__CUDA_UINT_MAP_HOST_MEM:
+        case PAPI_DEV_ATTR__CUDA_UINT_MEMCPY_OVERLAP:
+        case PAPI_DEV_ATTR__CUDA_UINT_UNIFIED_ADDR:
+        case PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM:
+        case PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR:
+        case PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR:
+        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE:
+        case PAPI_DEV_ATTR__ROCM_ULONG_UID:
+        case PAPI_DEV_ATTR__ROCM_UINT_SIMD_PER_CU:
+        case PAPI_DEV_ATTR__ROCM_UINT_WORKGROUP_SIZE:
+        case PAPI_DEV_ATTR__ROCM_UINT_WAVEFRONT_SIZE:
+        case PAPI_DEV_ATTR__ROCM_UINT_WAVE_PER_CU:
+        case PAPI_DEV_ATTR__ROCM_UINT_SHM_PER_WG:
+        case PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_X:
+        case PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Y:
+        case PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Z:
+        case PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_X:
+        case PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Y:
+        case PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Z:
+        case PAPI_DEV_ATTR__ROCM_UINT_CU_COUNT:
+        case PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MAJOR:
+        case PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MINOR:
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
+                                       value);
+            break;
+        case PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST:
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
+                                       &list_ptr);
+            if (*check != PAPI_OK) {
+                break;
+            }
+
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id,
+                                       PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA,
+                                       &list_len);
+            if (*check != PAPI_OK) {
+                break;
+            }
+
+            for (i = 0; i < list_len; ++i) {
+                list[i] = list_ptr[i];
+            }
+            break;
+        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST:
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
+                                       &list_ptr);
+            if (*check != PAPI_OK) {
+                break;
+            }
+
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id,
+                                       PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE,
+                                       &list_len);
+            if (*check != PAPI_OK) {
+                break;
+            }
+
+            for (i = 0; i < list_len; ++i) {
+                list[i] = ((int *)list_ptr)[i];
+            }
+            break;
+        case PAPI_DEV_ATTR__CPU_CHAR_NAME:
+        case PAPI_DEV_ATTR__ROCM_CHAR_DEVICE_NAME:
+            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
+                                       &string_ptr);
+            if (*check != PAPI_OK) {
+                break;
+            }
+#if defined(_FORTRAN_STRLEN_AT_END)
+            strncpy(string, string_ptr, (size_t) string_len);
+            for ( i = ( int ) strlen(string_ptr); i < PAPI_MAX_STR_LEN;
+                string[i++] = ' ' );
+#else
+            strcpy(string, string_ptr);
+            for ( i = ( int ) strlen(string_ptr); i < PAPI_MAX_STR_LEN;
+                string[i++] = ' ' );
+#endif
+            break;
+        default:
+            *check = PAPI_EINVAL;
+    }
+    return;
+}
+
 /* The High Level API Wrappers */
 /** \internal @defgroup PAPIF-HL PAPI Fortran High Level API */
 
