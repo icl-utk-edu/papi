@@ -117,30 +117,30 @@ void vec_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
 #else
 
     // Non-FMA instruction trials.
-    test_hp_VEC( 24, 1000, EventSet, ofp_papi );
-    test_hp_VEC( 48, 1000, EventSet, ofp_papi );
-    test_hp_VEC( 96, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_sp_VEC( 24, 1000, EventSet, ofp_papi );
-    test_sp_VEC( 48, 1000, EventSet, ofp_papi );
-    test_sp_VEC( 96, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_dp_VEC( 24, 1000, EventSet, ofp_papi );
-    test_dp_VEC( 48, 1000, EventSet, ofp_papi );
-    test_dp_VEC( 96, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
 
     // FMA instruction trials.
-    test_hp_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_hp_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_hp_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_sp_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_sp_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_sp_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_dp_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_dp_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_dp_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
 #endif
 

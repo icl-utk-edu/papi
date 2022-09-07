@@ -20,8 +20,12 @@ void test_hp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, 
 void test_hp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#else
+#elif defined(VEC_WIDTH_256)
 void test_hp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+}
+#else
+void test_hp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #endif

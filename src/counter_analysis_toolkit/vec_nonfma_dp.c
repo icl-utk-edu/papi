@@ -14,8 +14,12 @@ void test_dp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE
 void test_dp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
-#else
+#elif defined(VEC_WIDTH_256)
 void test_dp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+}
+#else
+void test_dp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
 #endif
