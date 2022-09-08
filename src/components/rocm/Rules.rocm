@@ -1,9 +1,10 @@
 PAPI_ROCM_ROOT ?= /opt/rocm
 
 COMPSRCS += components/rocm/rocm.c \
-            components/rocm/rocp.c
+            components/rocm/rocp.c \
+            components/rocm/htable.c
 
-COMPOBJS += rocm.o rocp.o
+COMPOBJS += rocm.o rocp.o htable.o
 
 CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa \
           -I$(PAPI_ROCM_ROOT)/rocprofiler/include \
@@ -16,4 +17,7 @@ rocm.o: components/rocm/rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
 
 rocp.o: components/rocm/rocp.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
+
+htable.o: components/rocm/htable.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
