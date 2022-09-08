@@ -4712,8 +4712,58 @@ static int _cuda11_update_control_state(hwd_control_state_t * ctrl,
             }
         }
 
-        // NOTE: At this point, we could call NVPW_RawMetricsConfig_GetNumPasses() for this
-        //       combined set. see cuda11_getMetricDetails above, or simpleQuery.cpp. 
+        // Check that added metrics can be evaluated in a single pass, else return error.
+        NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams;
+        nvpw_metricsConfigCreateParams.structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE;
+        nvpw_metricsConfigCreateParams.pPriv = NULL;
+        nvpw_metricsConfigCreateParams.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+        nvpw_metricsConfigCreateParams.pChipName = mydevice->cuda11_chipName;
+        NVPW_CALL( (*NVPW_CUDA_RawMetricsConfig_CreatePtr)(&nvpw_metricsConfigCreateParams),
+                    return(PAPI_ENOSUPP) );
+
+        NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams;
+        memset(&beginPassGroupParams, 0,  NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE);
+        beginPassGroupParams.structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE;
+        beginPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
+        NVPW_CALL((*NVPW_RawMetricsConfig_BeginPassGroupPtr)(&beginPassGroupParams),
+                    return(PAPI_ENOSUPP));
+
+        NVPW_RawMetricsConfig_AddMetrics_Params nvpw_rawmetricsconfig_addmetrics;
+        nvpw_rawmetricsconfig_addmetrics.structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE;
+        nvpw_rawmetricsconfig_addmetrics.pPriv = NULL;
+        nvpw_rawmetricsconfig_addmetrics.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
+        nvpw_rawmetricsconfig_addmetrics.pRawMetricRequests = mydevice->cuda11_RMR;
+        nvpw_rawmetricsconfig_addmetrics.numMetricRequests = mydevice->cuda11_RMR_count;
+        NVPW_CALL( (*NVPW_RawMetricsConfig_AddMetricsPtr)(&nvpw_rawmetricsconfig_addmetrics),
+                    return(PAPI_ENOSUPP));
+
+        NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams;
+        endPassGroupParams.structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE;
+        endPassGroupParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
+        NVPW_CALL((*NVPW_RawMetricsConfig_EndPassGroupPtr)(&endPassGroupParams),
+                    return(PAPI_ENOSUPP));
+
+        NVPW_RawMetricsConfig_GetNumPasses_Params rawMetricsConfigGetNumPassesParams;
+        rawMetricsConfigGetNumPassesParams.structSize = NVPW_RawMetricsConfig_GetNumPasses_Params_STRUCT_SIZE;
+        rawMetricsConfigGetNumPassesParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
+        NVPW_CALL((*NVPW_RawMetricsConfig_GetNumPassesPtr)(&rawMetricsConfigGetNumPassesParams),
+                    return(PAPI_ENOSUPP));
+        int numNestingLevels = 1, numIsolatedPasses, numPipelinedPasses, numOfPasses;
+        numIsolatedPasses  = rawMetricsConfigGetNumPassesParams.numIsolatedPasses;
+        numPipelinedPasses = rawMetricsConfigGetNumPassesParams.numPipelinedPasses;
+
+        numOfPasses = numPipelinedPasses + numIsolatedPasses * numNestingLevels;
+
+        NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams;
+        rawMetricsConfigDestroyParams.structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE;
+        rawMetricsConfigDestroyParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
+        NVPW_CALL((*NVPW_RawMetricsConfig_DestroyPtr)((NVPW_RawMetricsConfig_Destroy_Params*) &rawMetricsConfigDestroyParams),
+                    return(PAPI_ENOSUPP));
+        if (numOfPasses > 1) {
+            SUBDBG("error: Metrics requested requires multiple passes to profile.\n");
+            return PAPI_EMULPASS;
+        }
+
     } // end each device.    
 
     // Free temp allocations.

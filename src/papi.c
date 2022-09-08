@@ -2184,6 +2184,8 @@ PAPI_get_eventset_component( int EventSet)
  *		The PAPI preset is not available on the underlying hardware.
  *	@retval PAPI_EBUG 
  *		Internal error, please send mail to the developers. 
+ *  @retval PAPI_EMULPASS
+ * 		Event exists, but cannot be counted due to multiple passes required by hardware.
  *
  *	@par Examples:
  *	@code
@@ -2403,6 +2405,8 @@ PAPI_remove_event( int EventSet, int EventCode )
  *		The PAPI preset is not available on the underlying hardware.
  *	@retval PAPI_EBUG 
  *		Internal error, please send mail to the developers. 
+ *  @retval PAPI_EMULPASS
+ * 		Event exists, but cannot be counted due to multiple passes required by hardware.
  *
  *	@par Examples:
  *	@code
