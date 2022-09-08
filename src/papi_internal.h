@@ -492,4 +492,34 @@ int _papi_hwi_component_index( int event_code );
 int _papi_hwi_native_to_eventcode(int cidx, int event_code, int ntv_idx, const char *event_name);
 int _papi_hwi_eventcode_to_native(int event_code);
 
+enum {
+    PAPI_SYSDETECT_QUERY__DEV_TYPE_ENUM,
+    PAPI_SYSDETECT_QUERY__DEV_TYPE_ATTR,
+    PAPI_SYSDETECT_QUERY__DEV_ATTR,
+};
+
+typedef struct {
+    int query_type;
+    union {
+        struct {
+            int modifier;
+        } enumerate;
+
+        struct {
+            void *handle;
+            PAPI_dev_type_attr_e attr;
+        } dev_type;
+
+        struct {
+            void *handle;
+            int id;
+            PAPI_dev_attr_e attr;
+        } dev;
+    } query;
+} _papi_hwi_sysdetect_t;
+
+int _papi_hwi_enum_dev_type(int enum_modifier, void **handle);
+int _papi_hwi_get_dev_type_attr(void *handle, PAPI_dev_type_attr_e attr, void *val);
+int _papi_hwi_get_dev_attr(void *handle, int id, PAPI_dev_attr_e attr, void *val);
+
 #endif /* PAPI_INTERNAL_H */

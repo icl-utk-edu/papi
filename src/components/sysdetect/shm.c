@@ -3,12 +3,6 @@
 #include "shm.h"
 #include "sysdetect.h"
 
-#define HANDLE_STRING_ERROR {                                    \
-    fprintf(stderr, "%s:%i unexpected string function error.\n", \
-            __FILE__, __LINE__);                                 \
-    exit(-1);                                                    \
-}
-
 #ifdef HAVE_MPI
 #include <mpi.h>
 
@@ -68,7 +62,7 @@ shm_init( char *status )
         const char *message = "MPI not initialized";
         int count = snprintf(status, strlen(message) + 1, message);
         if (count >= PAPI_MAX_STR_LEN) {
-            HANDLE_STRING_ERROR;
+            SUBDBG("Status string truncated.");
         }
         SUBDBG("Error: MPI library is not initialized.\n");
         return -1;
@@ -223,7 +217,7 @@ load_mpi_sym( char *status )
     if (dlp_mpi == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
-            HANDLE_STRING_ERROR;
+            SUBDBG("Status string truncated.");
         }
         status[PAPI_MAX_STR_LEN - 1] = 0;
         return -1;
@@ -245,7 +239,7 @@ load_mpi_sym( char *status )
         const char *message = "dlsym() of MPI symbols failed";
         int count = snprintf(status, strlen(message) + 1, message);
         if (count >= PAPI_MAX_STR_LEN) {
-            HANDLE_STRING_ERROR;
+            SUBDBG("Status string truncated.");
         }
         return -1;
     }
@@ -303,7 +297,7 @@ shm_init( char *status )
     const char *message = "MPI not configured";
     int count = snprintf(status, strlen(message) + 1, message);
     if (count >= PAPI_MAX_STR_LEN) {
-        HANDLE_STRING_ERROR;
+        SUBDBG("Status string truncated.");
     }
     return 0;
 }

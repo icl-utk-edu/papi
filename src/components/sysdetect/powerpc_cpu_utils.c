@@ -2,7 +2,7 @@
 #include "powerpc_cpu_utils.h"
 #include "os_cpu_utils.h"
 
-PAPI_cache_level_info_t ppc970_cache_info[] = {
+_sysdetect_cache_level_info_t ppc970_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -19,7 +19,7 @@ PAPI_cache_level_info_t ppc970_cache_info[] = {
     },
 };
 
-PAPI_cache_level_info_t power5_cache_info[] = {
+_sysdetect_cache_level_info_t power5_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -43,7 +43,7 @@ PAPI_cache_level_info_t power5_cache_info[] = {
     },
 };
 
-PAPI_cache_level_info_t power6_cache_info[] = {
+_sysdetect_cache_level_info_t power6_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -67,7 +67,7 @@ PAPI_cache_level_info_t power6_cache_info[] = {
     },
 };
 
-PAPI_cache_level_info_t power7_cache_info[] = {
+_sysdetect_cache_level_info_t power7_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -91,7 +91,7 @@ PAPI_cache_level_info_t power7_cache_info[] = {
     },
 };
 
-PAPI_cache_level_info_t power8_cache_info[] = {
+_sysdetect_cache_level_info_t power8_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -189,7 +189,7 @@ int
 get_cache_info( CPU_attr_e attr, int level, int *value )
 {
     unsigned int pvr = mfpvr() >> PVR_PROCESSOR_SHIFT;
-    static PAPI_cache_level_info_t *clevel_ptr;
+    static _sysdetect_cache_level_info_t *clevel_ptr;
 
     if (clevel_ptr) {
         return cpu_get_cache_info(attr, level, clevel_ptr, value);

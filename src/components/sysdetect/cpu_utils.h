@@ -42,6 +42,6 @@ int cpu_get_vendor( char *vendor );
 int cpu_get_name( char *name );
 int cpu_get_attribute( CPU_attr_e attr, int *value );
 int cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value );
-int cpu_get_cache_info( CPU_attr_e attr, int level, PAPI_cache_level_info_t *clevel_ptr, int *value );
+int cpu_get_cache_info( CPU_attr_e attr, int level, _sysdetect_cache_level_info_t *clevel_ptr, int *value );
 
 #endif /* End of __CPU_UTILS_H__ */

@@ -7290,3 +7290,220 @@ PAPI_disable_component_by_name(const char *name )
 
 	return PAPI_ENOCMP;
 }
+
+/** \class PAPI_enum_dev_type
+ *  \brief returns handle of next device type
+ *  \retval ENOCMP
+ *      component does not exist
+ *  \retval EINVAL
+        end of device type list
+ *  \param enum_modifier
+ *      device type modifier, used to filter out enumerated device types
+ *  \par Example:
+ *  \code
+    enum {
+        PAPI_DEV_TYPE_ENUM__FIRST,
+        PAPI_DEV_TYPE_ENUM__CPU,
+        PAPI_DEV_TYPE_ENUM__CUDA,
+        PAPI_DEV_TYPE_ENUM__ROCM,
+        PAPI_DEV_TYPE_ENUM__ALL
+    };
+
+    void *handle;
+    const char *vendor_name;
+    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
+    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
+        ...
+    }
+ *  \endcode
+ *  PAPI_enum_dev_type() allows the user to access all device types in the system.
+ *  It takes an enumerator modifier that allows users to enumerate only devices of
+ *  a predefined type and it returns an opaque handler that users can pass to other
+ *  functions in order to query device type attributes.
+ *
+ *  \bug none known
+ *  \see PAPI_get_dev_type_attr
+ *  \see PAPI_get_dev_attr
+ */
+int
+PAPI_enum_dev_type(int enum_modifier, void **handle)
+{
+    return _papi_hwi_enum_dev_type(enum_modifier, handle);
+}
+
+/** \class PAPI_get_dev_type_attr
+ *  \brief returns device type attributes
+ *  \retval ENOSUPP
+ *      invalid attribute
+ *  \param handle
+ *      opaque handle for device, obtained through PAPI_enum_dev_type
+ *  \param attr
+ *      device type attribute to query
+ *  \param val
+ *      value of the requested device type attribute
+ *  \par Example:
+ *  \code
+    typedef enum {
+        PAPI_DEV_TYPE_ATTR__INT_PAPI_ID,    // PAPI defined device type id
+        PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID,  // Vendor defined id
+        PAPI_DEV_TYPE_ATTR__CHAR_NAME,      // Vendor name
+        PAPI_DEV_TYPE_ATTR__INT_COUNT,      // Devices of that type and vendor
+        PAPI_DEV_TYPE_ATTR__CHAR_STATUS,    // Status string for the device type
+    } PAPI_dev_type_attr_e;
+
+    typedef enum {
+        PAPI_DEV_TYPE_ID__CPU,   // Device id for CPUs
+        PAPI_DEV_TYPE_ID__CUDA,  // Device id for Nvidia GPUs
+        PAPI_DEV_TYPE_ID__ROCM,  // Device id for AMD GPUs
+    } PAPI_dev_type_id_e;
+
+    void *handle;
+    int id;
+    int enum_modifier = PAPI_DEV_TYPE_ENUM__ALL;
+    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
+        switch (id) {
+            case PAPI_DEV_TYPE_ID__CPU:
+                // query cpu attributes
+                break;
+            case PAPI_DEV_TYPE_ID__CUDA:
+                // query nvidia gpu attributes
+                break;
+            case PAPI_DEV_TYPE_ID__ROCM:
+                // query amd gpu attributes
+                break;
+            default: ...
+        }
+    }
+ *  \endcode
+ *  PAPI_get_dev_type_attr() allows the user to query all device type attributes.
+ *  It takes a device type handle, returned by PAPI_enum_dev_type, and an attribute
+ *  to be queried for the device type and returns the attribute value.
+ *
+ *  \bug none known
+ *  \see PAPI_enum_dev_type
+ *  \see PAPI_get_dev_attr
+ */
+int
+PAPI_get_dev_type_attr(void *handle, PAPI_dev_type_attr_e attr, void *val)
+{
+    return _papi_hwi_get_dev_type_attr(handle, attr, val);
+}
+
+/** \class PAPI_get_dev_attr
+ *  \brief returns device attributes
+ *  \retval ENOSUPP
+ *      invalid/unsupported attribute
+ *  \param handle
+ *      opaque handle for device, obtained through PAPI_enum_dev_type
+ *  \param id
+ *      integer identifier of queried device
+ *  \param attr
+ *      device attribute to query
+ *  \param val
+ *      value of the requested device attribute
+ *  \par Example:
+ *  \code
+    typedef enum {
+        PAPI_DEV_ATTR__CPU_CHAR_NAME,
+        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_ASSOC,
+        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_ASSOC,
+        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_ASSOC,
+        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_ASSOC,
+        PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT,
+        PAPI_DEV_ATTR__CPU_UINT_FAMILY,
+        PAPI_DEV_ATTR__CPU_UINT_MODEL,
+        PAPI_DEV_ATTR__CPU_UINT_STEPPING,
+        PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE,
+        PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY,
+        PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST,
+        PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA,
+        PAPI_DEV_ATTR__CUDA_ULONG_UID,
+        PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME,
+        PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE,
+        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_BLK,
+        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_SM,
+        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_X,
+        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Y,
+        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Z,
+        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_X,
+        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Y,
+        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Z,
+        PAPI_DEV_ATTR__CUDA_UINT_THR_PER_BLK,
+        PAPI_DEV_ATTR__CUDA_UINT_SM_COUNT,
+        PAPI_DEV_ATTR__CUDA_UINT_MULTI_KERNEL,
+        PAPI_DEV_ATTR__CUDA_UINT_MAP_HOST_MEM,
+        PAPI_DEV_ATTR__CUDA_UINT_MEMCPY_OVERLAP,
+        PAPI_DEV_ATTR__CUDA_UINT_UNIFIED_ADDR,
+        PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM,
+        PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST,
+        PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE,
+        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR,
+        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR,
+        PAPI_DEV_ATTR__CUDA_UINT_BLK_PER_SM,
+        PAPI_DEV_ATTR__ROCM_ULONG_UID,
+        PAPI_DEV_ATTR__ROCM_CHAR_DEVICE_NAME,
+        PAPI_DEV_ATTR__ROCM_UINT_WAVEFRONT_SIZE,
+        PAPI_DEV_ATTR__ROCM_UINT_WORKGROUP_SIZE,
+        PAPI_DEV_ATTR__ROCM_UINT_WAVE_PER_CU,
+        PAPI_DEV_ATTR__ROCM_UINT_SHM_PER_WG,
+        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_X,
+        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Y,
+        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Z,
+        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_X,
+        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Y,
+        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Z,
+        PAPI_DEV_ATTR__ROCM_UINT_CU_COUNT,
+        PAPI_DEV_ATTR__ROCM_UINT_SIMD_PER_CU,
+        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MAJOR,
+        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MINOR,
+    } PAPI_dev_attr_e;
+
+    void *handle;
+    int id;
+    int count;
+    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
+    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &count);
+        if (PAPI_DEV_TYPE_ID__CUDA == id) {
+            for (int i = 0; i < count; ++i) {
+                unsigned int warp_size;
+                unsigned int cc_major, cc_minor;
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE, &warp_size);
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR, &cc_major);
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR, &cc_minor);
+                ...
+            }
+        }
+    }
+ *  \endcode
+ *  PAPI_get_dev_type_attr() allows the user to query all device type attributes.
+ *  It takes a device type handle, returned by PAPI_enum_dev_type, the device sequential id
+ *  and an attribute to be queried for the device and returns the attribute value.
+ *
+ *  \bug none known
+ *  \see PAPI_enum_dev_type
+ *  \see PAPI_get_dev_attr
+ */
+int
+PAPI_get_dev_attr(void *handle, int id, PAPI_dev_attr_e attr, void *val)
+{
+    return _papi_hwi_get_dev_attr(handle, id, attr, val);
+}

@@ -26,38 +26,38 @@ int main(int argc, char *argv[])
                PAPI_VERSION_REVISION(PAPI_VERSION));
     }
 
-    const PAPI_hw_info_t *info = PAPI_get_hardware_info();
+    void *handle;
+    int enum_modifier = PAPI_DEV_TYPE_ENUM__ALL;
+    int i, id;
+    const char *name = NULL;
+    int dev_count;
 
-    int dev_type_id, dev_id;
+    while (PAPI_enum_dev_type(enum_modifier, &handle) == PAPI_OK) {
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
 
-    for (dev_type_id = 0; dev_type_id < PAPI_DEV_TYPE_ID__MAX_NUM; dev_type_id++) {
-        if (PAPI_IS_DEV_GPU(NVIDIA, info, dev_type_id)) {
-            for (dev_id = 0; dev_id < PAPI_DEV_COUNT(dev_type_id); dev_id++) {
-                PAPI_gpu_info_u *dev_info = PAPI_GPU_INFO_STRUCT(info, dev_type_id, dev_id);
-                int affinity_count = dev_info->nvidia.affinity.proc_count;
-                int proc_id;
-                printf( "UID                                   : %lu\n", dev_info->nvidia.uid );
-                printf( "Name                                  : %s\n", dev_info->nvidia.name );
-                printf( "Affinity                              : " );
-                for (proc_id = 0; proc_id < affinity_count; proc_id++) {
-                    printf("%d ", dev_info->nvidia.affinity.proc_id_arr[proc_id]);
+        const unsigned int *list;
+        unsigned int list_len;
+        if (id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0) {
+            for (i = 0; i < dev_count; ++i) {
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME, &name);
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST, &list);
+                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE, &list_len);
+
+                if (!quiet) {
+                    if (list_len > 0) {
+                        printf( "UID                                   : %lu\n", (long unsigned int) i );
+                        printf( "Name                                  : %s\n", name );
+                        printf( "Affinity                              : " );
+
+                        unsigned int k;
+                        for (k = 0; k < list_len; ++k) {
+                            printf( "%u ", list[k] );
+                        }
+                        printf( "\n" );
+                    }
+                    printf( "\n" );
                 }
-                printf("\n");
-            }
-        }
-
-        if (PAPI_IS_DEV_GPU(AMD, info, dev_type_id)) {
-            for (dev_id = 0; dev_id < PAPI_DEV_COUNT(dev_type_id); dev_id++) {
-                PAPI_gpu_info_u *dev_info = PAPI_GPU_INFO_STRUCT(info, dev_type_id, dev_id);
-                int affinity_count = dev_info->amd.affinity.proc_count;
-                int proc_id;
-                printf( "UID                                   : %lu\n", dev_info->amd.uid );
-                printf( "Name                                  : %s\n", dev_info->amd.name );
-                printf( "Affinity                              : " );
-                for (proc_id = 0; proc_id < affinity_count; proc_id++) {
-                    printf("%d ", dev_info->amd.affinity.proc_id_arr[proc_id]);
-                }
-                printf("\n");
             }
         }
     }

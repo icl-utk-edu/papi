@@ -78,7 +78,7 @@ cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value )
 }
 
 static int
-get_cache_level( PAPI_cache_level_info_t *clevel_ptr, int type )
+get_cache_level( _sysdetect_cache_level_info_t *clevel_ptr, int type )
 {
     int i;
 
@@ -91,7 +91,7 @@ get_cache_level( PAPI_cache_level_info_t *clevel_ptr, int type )
 }
 
 int
-cpu_get_cache_info( CPU_attr_e attr, int level, PAPI_cache_level_info_t *clevel_ptr, int *value )
+cpu_get_cache_info( CPU_attr_e attr, int level, _sysdetect_cache_level_info_t *clevel_ptr, int *value )
 {
     int status = CPU_SUCCESS;
     int i;
