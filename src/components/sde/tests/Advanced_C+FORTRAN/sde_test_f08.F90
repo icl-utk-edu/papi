@@ -85,13 +85,13 @@
           ! the following call should be ignored by the SDE component, but the returned 'handle' should still be valid.
           call papif_sde_init('TESTLIB', handle, error)
           if(error .ne. PAPI_OK ) print *,'Error in sde_init'
-          call papif_sde_register_fp_counter(handle, 'FP_EVENT', PAPI_SDE_RO, PAPI_SDE_long_long, c_funloc(f08_callback), C_loc(internal_variable), error)
-          if(error .ne. PAPI_OK ) print *,'Error in sde_register_fp_counter'
+          call papif_sde_register_counter_cb(handle, 'FP_EVENT', PAPI_SDE_RO, PAPI_SDE_long_long, c_funloc(f08_callback), C_loc(internal_variable), error)
+          if(error .ne. PAPI_OK ) print *,'Error in sde_register_counter_cb'
           call papif_sde_describe_counter(handle, 'FP_EVENT', 'This is another counter.', error)
           if(error .ne. PAPI_OK ) print *,'Error in sde_describe_counter'
           ! The following call should be ignored by the SDE component (since this counter is already registered.)
-          call papif_sde_register_fp_counter(handle, 'FP_EVENT', PAPI_SDE_RO, PAPI_SDE_long_long, c_funloc(f08_callback), C_loc(ev_cnt1), error)
-          if(error .ne. PAPI_OK ) print *,'Error in sde_register_fp_counter'
+          call papif_sde_register_counter_cb(handle, 'FP_EVENT', PAPI_SDE_RO, PAPI_SDE_long_long, c_funloc(f08_callback), C_loc(ev_cnt1), error)
+          if(error .ne. PAPI_OK ) print *,'Error in sde_register_counter_cb'
 
           call xandria_init()
           call gamum_init()

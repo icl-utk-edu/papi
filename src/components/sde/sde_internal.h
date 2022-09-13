@@ -8,13 +8,13 @@
 #include <inttypes.h>
 #include <dlfcn.h>
 #include <assert.h>
+#include <time.h>
+#include <ucontext.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "extras.h"
-#define SDE_COMMON_ONLY
-#include "sde_lib.h"
 
 #define REGISTERED_EVENT_MASK 0x2;
 
@@ -37,13 +37,11 @@ typedef struct sde_reg_alloc
 typedef struct sde_control_state
 {
   int num_events;
-  unsigned int which_counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
+  uint32_t which_counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
   long long counter[SDE_MAX_SIMULTANEOUS_COUNTERS];
   long long previous_value[SDE_MAX_SIMULTANEOUS_COUNTERS];
-#if defined(SDE_HAVE_OVERFLOW)
   timer_t timerid;
   int has_timer;
-#endif //defined(SDE_HAVE_OVERFLOW)
 } sde_control_state_t;
 
 typedef struct sde_context {
@@ -70,22 +68,28 @@ static int _sde_ntv_enum_events( unsigned int *EventCode, int modifier );
 static int _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len );
 static int _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len );
 static int _sde_ntv_name_to_code(const char *name, unsigned int *event_code );
+static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
 
-static int sde_cast_and_store(void *data, long long int previous_value, void *rslt, int type);
-static int sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt );
-static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt );
-static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
+static void invoke_user_handler( unsigned int cntr_uniq_id );
+static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl );
+static inline int sde_arm_timer(sde_control_state_t *sde_ctl);
 
 int papi_sde_lock(void);
 int papi_sde_unlock(void);
+void papi_sde_check_overflow_status(unsigned int cntr_uniq_id, long long int latest);
+int papi_sde_set_timer_for_overflow(void);
 
-static void invoke_user_handler(sde_counter_t *cntr_handle);
-
-#if defined(SDE_HAVE_OVERFLOW)
-int __attribute__((visibility("default"))) papi_sde_set_timer_for_overflow(void);
-static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl );
-static void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc);
-static inline int _sde_arm_timer(sde_control_state_t *sde_ctl);
-#endif // defined(SDE_HAVE_OVERFLOW)
+// Function pointers that will be initialized by the linker if libpapi and libsde are static (.a)
+__attribute__((__common__)) int (*sde_ti_reset_counter_ptr)( uint32_t );
+__attribute__((__common__)) int (*sde_ti_read_counter_ptr)( uint32_t, long long int * );
+__attribute__((__common__)) int (*sde_ti_write_counter_ptr)( uint32_t, long long );
+__attribute__((__common__)) int (*sde_ti_name_to_code_ptr)( const char *, uint32_t * );
+__attribute__((__common__)) int (*sde_ti_is_simple_counter_ptr)( uint32_t );
+__attribute__((__common__)) int (*sde_ti_is_counter_set_to_overflow_ptr)( uint32_t );
+__attribute__((__common__)) int (*sde_ti_set_counter_overflow_ptr)( uint32_t, int );
+__attribute__((__common__)) char * (*sde_ti_get_event_name_ptr)( int );
+__attribute__((__common__)) char * (*sde_ti_get_event_description_ptr)( int );
+__attribute__((__common__)) int (*sde_ti_get_num_reg_events_ptr)( void );
+__attribute__((__common__)) int (*sde_ti_shutdown_ptr)( void );
 
 #endif

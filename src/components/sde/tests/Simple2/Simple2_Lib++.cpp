@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "sde_lib.h"
+#include "sde_lib.hpp"
 
 // API functions
 void simple_init(void);

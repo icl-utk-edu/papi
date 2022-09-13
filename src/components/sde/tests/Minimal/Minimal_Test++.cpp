@@ -4,6 +4,7 @@
 #include "papi.h"
 #include "papi_test.h"
 #include "sde_lib.h"
+#include "sde_lib.hpp"
 
 long long local_var;
 

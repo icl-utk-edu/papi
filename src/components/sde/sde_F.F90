@@ -23,7 +23,7 @@ module papi_sde_fortran_wrappers
   type, bind(C) :: fptr_struct_t
       type(C_funptr) init
       type(C_funptr) register_counter
-      type(C_funptr) register_fp_counter
+      type(C_funptr) register_counter_cb
       type(C_funptr) unregister_counter
       type(C_funptr) describe_counter
       type(C_funptr) add_counter_to_group
@@ -62,8 +62,8 @@ module papi_sde_fortran_wrappers
     end function papif_sde_unregister_counter_F08
   end interface papif_sde_unregister_counter_F08
 
-  interface papif_sde_register_fp_counter_F08
-    integer(kind=C_int) function papif_sde_register_fp_counter_F08(handle, event_name_C_str, cntr_mode, cntr_type, func_ptr, param) result(error) bind(C, name="papi_sde_register_fp_counter")
+  interface papif_sde_register_counter_cb_F08
+    integer(kind=C_int) function papif_sde_register_counter_cb_F08(handle, event_name_C_str, cntr_mode, cntr_type, func_ptr, param) result(error) bind(C, name="papi_sde_register_counter_cb")
       use, intrinsic :: ISO_C_BINDING, only : C_ptr, C_funptr, C_int
       type(C_ptr), value, intent(in)    :: handle
       type(C_ptr), value, intent(in)    :: event_name_C_str 
@@ -71,8 +71,8 @@ module papi_sde_fortran_wrappers
       integer(kind=C_int), value, intent(in) :: cntr_mode
       type(C_funptr), value, intent(in) :: func_ptr
       type(C_ptr), value, intent(in)    :: param
-    end function papif_sde_register_fp_counter_F08
-  end interface papif_sde_register_fp_counter_F08
+    end function papif_sde_register_counter_cb_F08
+  end interface papif_sde_register_counter_cb_F08
 
   interface papif_sde_describe_counter_F08
     integer(kind=C_int) function papif_sde_describe_counter_F08(handle, event_name_C_str, event_desc_C_str) result(error) bind(C, name="papi_sde_describe_counter")
@@ -197,7 +197,7 @@ module papi_sde_fortran_wrappers
   end interface
 
   interface
-    function register_fp_counter_t(lib_handle, event_name, cntr_mode, cntr_type, c_func_ptr, param ) result(ret_val)
+    function register_counter_cb_t(lib_handle, event_name, cntr_mode, cntr_type, c_func_ptr, param ) result(ret_val)
       use, intrinsic :: ISO_C_BINDING, only : C_ptr, C_funptr, C_int
       type(C_ptr), value, intent(in)    :: lib_handle
       type(C_ptr), value, intent(in)    :: event_name
@@ -206,7 +206,7 @@ module papi_sde_fortran_wrappers
       type(C_funptr), value, intent(in) :: c_func_ptr
       type(C_ptr), value, intent(in)    :: param
       integer(kind=C_int) :: ret_val
-    end function register_fp_counter_t
+    end function register_counter_cb_t
   end interface
 
   interface
@@ -358,7 +358,7 @@ module papi_sde_fortran_wrappers
 
 ! ---------------------------------------------------------
 
-  subroutine papif_sde_register_fp_counter( handle, event_name, cntr_mode, cntr_type, c_func_ptr, param, error )
+  subroutine papif_sde_register_counter_cb( handle, event_name, cntr_mode, cntr_type, c_func_ptr, param, error )
     type(C_ptr), intent(in)         :: handle
     character(len=*), intent(in)    :: event_name
     integer, intent(in) :: cntr_type
@@ -371,12 +371,12 @@ module papi_sde_fortran_wrappers
     type(C_ptr)    :: event_name_C_str
 
     event_name_C_str = F_str_to_C(event_name)
-    tmp = papif_sde_register_fp_counter_F08(handle, event_name_C_str, cntr_mode, cntr_type, c_func_ptr, param)
+    tmp = papif_sde_register_counter_cb_F08(handle, event_name_C_str, cntr_mode, cntr_type, c_func_ptr, param)
     if( present(error) ) then
         error = tmp
     end if
     call C_free(event_name_C_str)
-  end subroutine papif_sde_register_fp_counter
+  end subroutine papif_sde_register_counter_cb
 
 ! ---------------------------------------------------------
 

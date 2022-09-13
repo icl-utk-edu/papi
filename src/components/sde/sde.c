@@ -12,254 +12,101 @@
  */
 
 #include "sde_internal.h"
+#include <string.h>
 
 papi_vector_t _sde_vector;
+int _sde_component_lock;
 
-/** This global variable points to the head of the control state list **/
-papisde_control_t *_papisde_global_control = NULL;
+// The following two function pointers will be used by libsde in case PAPI is statically linked (libpapi.a)
+void (*papi_sde_check_overflow_status_ptr)(uint32_t cntr_id, long long int value) = &papi_sde_check_overflow_status;
+int  (*papi_sde_set_timer_for_overflow_ptr)(void) = &papi_sde_set_timer_for_overflow;
 
+#define DLSYM_CHECK(name)                                              \
+    do {                                                               \
+        if ( NULL != (err=dlerror()) ) {                               \
+            int strErr=snprintf(_sde_vector.cmp_info.disabled_reason,  \
+                PAPI_MAX_STR_LEN,                                      \
+                "Function '%s' not found in any dynamic lib",          \
+                #name);                                                \
+            if (strErr > PAPI_MAX_STR_LEN)                             \
+                SUBDBG("Unexpected snprintf error.\n");                \
+            name##_ptr = NULL;                                         \
+            SUBDBG("sde_load_sde_ti(): Unable to load symbol %s: %s\n", #name, err);\
+            return ( PAPI_ECMP );                                      \
+        }                                                              \
+    } while (0)
 
-/** This helper function checks if the global structure has been allocated
-    and allocates it if has not.
-  @return a pointer to the global structure.
-  */
-papisde_control_t
-__attribute__((visibility("default")))
-*papisde_get_global_struct(void){
-    // Allocate the global control structure, unless it has already been allocated by another library
-    // or the application code calling PAPI_name_to_code() for an SDE.
-    if ( !_papisde_global_control ) {
-        SUBDBG("papisde_get_global_struct(): global SDE control struct is being allocated.\n");
-        _papisde_global_control = ( papisde_control_t* ) papi_calloc( 1, sizeof( papisde_control_t ) );
-    }
-    return _papisde_global_control;
-}
+/*
+  If the library is being built statically then there is no need (or ability)
+  to access symbols through dlopen/dlsym; applications using the static version
+  of PAPI (libpapi.a) must also be linked against libsde for supporting SDEs.
+  However, if the dynamic library is used (libpapi.so) then we will look for
+  the symbols from libsde.so dynamically.
+*/
+static int sde_load_sde_ti( void ){
+    char *err;
 
-/*************************************************************************/
-/* We need externaly visible symbols for synchronizing between the SDE   */
-/* component in libpapi and the code in libsde.                          */
-/*************************************************************************/
-int
-__attribute__((visibility("default")))
-papi_sde_lock(void){
-    return _papi_hwi_lock(COMPONENT_LOCK);
-}
-
-int
-__attribute__((visibility("default")))
-papi_sde_unlock(void){
-    return _papi_hwi_unlock(COMPONENT_LOCK);
-}
-
-/*************************************************************************/
-/* Below is the actual "hardware implementation" of the sde counters     */
-/*************************************************************************/
-
-static int
-sde_cast_and_store(void *data, long long int previous_value, void *rslt, int cntr_type){
-    void *tmp_ptr;
-
-    switch(cntr_type){
-        case PAPI_SDE_long_long:
-            *(long long int *)rslt = *((long long int *)data) - previous_value;
-            SUBDBG(" value LL=%lld (%lld-%lld)\n", *(long long int *)rslt, *((long long int *)data), previous_value);
-            return PAPI_OK;
-        case PAPI_SDE_int:
-            // We need to cast the result to "long long" so it is expanded to 64bit to take up all the space
-            *(long long int *)rslt = (long long int) (*((int *)data) - (int)previous_value);
-            SUBDBG(" value LD=%lld (%d-%d)\n", *(long long int *)rslt, *((int *)data), (int)previous_value);
-            return PAPI_OK;
-        case PAPI_SDE_double:
-            tmp_ptr = &previous_value;
-            *(double *)rslt = (*((double *)data) - *((double *)tmp_ptr));
-            SUBDBG(" value LF=%lf (%lf-%lf)\n", *(double *)rslt, *((double *)data), *((double *)(&previous_value)));
-            return PAPI_OK;
-        case PAPI_SDE_float:
-            // We need to cast the result to "double" so it is expanded to 64bit to take up all the space
-            tmp_ptr = &previous_value;
-            *(double *)rslt = (double)(*((float *)data) - (float)(*((double *)tmp_ptr)) );
-            SUBDBG(" value F=%lf (%f-%f)\n", *(double *)rslt, *((float *)data), (float)(*((double *)(&previous_value))) );
-            return PAPI_OK;
-        default:
-            PAPIERROR("Unsupported counter type: %d\n",cntr_type);
-            return -1;
+    // In case of static linking the function pointers will be automatically set
+    // by the linker and the dlopen()/dlsym() would fail at runtime, so we want to
+    // check if the linker has done its magic first.
+    if( (NULL != sde_ti_reset_counter_ptr) &&
+        (NULL != sde_ti_reset_counter_ptr) &&
+        (NULL != sde_ti_read_counter_ptr) &&
+        (NULL != sde_ti_write_counter_ptr) &&
+        (NULL != sde_ti_name_to_code_ptr) &&
+        (NULL != sde_ti_is_simple_counter_ptr) &&
+        (NULL != sde_ti_is_counter_set_to_overflow_ptr) &&
+        (NULL != sde_ti_set_counter_overflow_ptr) &&
+        (NULL != sde_ti_get_event_name_ptr) &&
+        (NULL != sde_ti_get_event_description_ptr) &&
+        (NULL != sde_ti_get_num_reg_events_ptr) &&
+        (NULL != sde_ti_shutdown_ptr)
+      ){
+        return PAPI_OK;
     }
 
-}
+    (void)dlerror(); // Clear the internal string so we can diagnose errors later on.
 
-
-/* both "rslt" and "data" are local variables that this component stored after promoting to 64 bits. */
-#define _SDE_AGGREGATE( _TYPE, _RSLT_TYPE ) do{\
-                switch(group_flags){\
-                    case PAPI_SDE_SUM:\
-                        *(_RSLT_TYPE *)rslt = (_RSLT_TYPE)  ((_TYPE)(*(_RSLT_TYPE *)rslt) + (_TYPE)(*((_RSLT_TYPE *)data)) );\
-                        break;\
-                    case PAPI_SDE_MAX:\
-                        if( *(_RSLT_TYPE *)rslt < *((_RSLT_TYPE *)data) )\
-                            *(_RSLT_TYPE *)rslt = *((_RSLT_TYPE *)data);\
-                        break;\
-                    case PAPI_SDE_MIN:\
-                        if( *(_RSLT_TYPE *)rslt > *((_RSLT_TYPE *)data) )\
-                            *(_RSLT_TYPE *)rslt = *((_RSLT_TYPE *)data);\
-                        break;\
-                    default:\
-                        PAPIERROR("Unsupported counter group flag: %d\n",group_flags);\
-                        return -1;\
-                } \
-            }while(0)
-
-static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags){
-
-    switch(cntr_type){
-        case PAPI_SDE_long_long:
-            _SDE_AGGREGATE(long long int, long long int);
-            return PAPI_OK;
-        case PAPI_SDE_int:
-            // We need to cast the result to "long long" so it is expanded to 64bit to take up all the space
-            _SDE_AGGREGATE(int, long long int);
-            return PAPI_OK;
-        case PAPI_SDE_double:
-            _SDE_AGGREGATE(double, double);
-            return PAPI_OK;
-        case PAPI_SDE_float:
-            // We need to cast the result to "double" so it is expanded to 64bit to take up all the space
-            _SDE_AGGREGATE(float, double);
-            return PAPI_OK;
-        default:
-            PAPIERROR("Unsupported counter type: %d\n",cntr_type);
-            return -1;
+    void *handle = dlopen(NULL, RTLD_NOW|RTLD_GLOBAL);
+    if( NULL != (err = dlerror()) ){
+        SUBDBG("sde_load_sde_ti(): %s\n",err);
+        return PAPI_ENOSUPP;
     }
 
-}
+    sde_ti_reset_counter_ptr = (int (*)( uint32_t ))dlsym( handle, "sde_ti_reset_counter" );
+    DLSYM_CHECK(sde_ti_reset_counter);
 
-/**
-  This function assumes that all counters in a group (including recursive subgroups) have the same type.
-  */
-static int sde_read_counter_group( sde_counter_t *counter, long long int *rslt ){
-    papisde_list_entry_t *curr;
-    long long int final_value = 0;
+    sde_ti_read_counter_ptr = (int (*)( uint32_t, long long int * ))dlsym( handle, "sde_ti_read_counter" );
+    DLSYM_CHECK(sde_ti_read_counter);
 
-    if( NULL == counter ){
-        PAPIERROR("sde_read_counter_group(): Counter parameter is NULL.\n");
-        return PAPI_EINVAL;
-    }
+    sde_ti_write_counter_ptr = (int (*)( uint32_t, long long ))dlsym( handle, "sde_ti_write_counter" );
+    DLSYM_CHECK(sde_ti_write_counter);
 
-    curr = counter->counter_group_head;
-    if( NULL == curr ){
-        PAPIERROR("sde_read_counter_group(): Counter '%s' is not a counter group.\n",counter->name);
-        return PAPI_EINVAL;
-    }
+    sde_ti_name_to_code_ptr = (int (*)( const char *, uint32_t * ))dlsym( handle, "sde_ti_name_to_code" );
+    DLSYM_CHECK(sde_ti_name_to_code);
 
-    do{
-        long long int tmp_value = 0;
-        int ret_val;
+    sde_ti_is_simple_counter_ptr = (int (*)( uint32_t ))dlsym( handle, "sde_ti_is_simple_counter" );
+    DLSYM_CHECK(sde_ti_is_simple_counter);
 
-        sde_counter_t *tmp_cntr = curr->item;
-        if( NULL == tmp_cntr ){
-            PAPIERROR("sde_read_counter_group(): List of counters in counter group '%s' is clobbered.\n",counter->name);
-            return PAPI_EINVAL;
-        }
+    sde_ti_is_counter_set_to_overflow_ptr = (int (*)( uint32_t ))dlsym( handle, "sde_ti_is_counter_set_to_overflow" );
+    DLSYM_CHECK(sde_ti_is_counter_set_to_overflow);
 
-        // We can _not_ have a recorder inside a group.
-        if( NULL != tmp_cntr->recorder_data ){
-            PAPIERROR("sde_read_counter_group(): Recorder found inside counter group: %s.\n",tmp_cntr->name);
-        }else{
-            // We allow counter groups to contain other counter groups recursively.
-            if( NULL != tmp_cntr->counter_group_head ){
-                ret_val = sde_read_counter_group( tmp_cntr, &tmp_value );
-                if( ret_val != PAPI_OK ){
-                    // If something went wrong with one counter group, ignore it silently.
-                    continue;
-                }
-            }else{ // If we are here it means that we are trying to read a real counter.
-                if( (NULL == tmp_cntr->data) && (NULL == tmp_cntr->func_ptr) ){
-                    PAPIERROR("sde_read_counter_group(): Attempted read on a placeholder: %s.\n",tmp_cntr->name);
-                    // If something went wrong with one counter, ignore it silently.
-                    continue;
-                }
+    sde_ti_set_counter_overflow_ptr = (int (*)( uint32_t, int ))dlsym( handle, "sde_ti_set_counter_overflow" );
+    DLSYM_CHECK(sde_ti_set_counter_overflow);
 
-                ret_val = sde_hardware_read_and_store( tmp_cntr, tmp_cntr->previous_data, &tmp_value );
-                if( PAPI_OK != ret_val ){
-                    PAPIERROR("sde_read_counter_group(): Error occured when reading counter: %s.\n",tmp_cntr->name);
-                }
-            }
+    sde_ti_get_event_name_ptr = (char * (*)( int ))dlsym( handle, "sde_ti_get_event_name" );
+    DLSYM_CHECK(sde_ti_get_event_name);
 
-            // There is nothing meaningful we could do with the error code here, so ignore it.
-            (void)aggregate_value_in_group(&tmp_value, &final_value, tmp_cntr->cntr_type, counter->counter_group_flags);
-        }
+    sde_ti_get_event_description_ptr = (char * (*)( int ))dlsym( handle, "sde_ti_get_event_description" );
+    DLSYM_CHECK(sde_ti_get_event_description);
 
-        curr = curr->next;
-    }while(NULL != curr);
+    sde_ti_get_num_reg_events_ptr = (int (*)( void ))dlsym( handle, "sde_ti_get_num_reg_events" );
+    DLSYM_CHECK(sde_ti_get_num_reg_events);
 
-    *rslt = final_value;
-    return PAPI_OK;
-}
-
-static int
-sde_hardware_write( sde_counter_t *counter, long long int new_value )
-{
-    double tmp_double;
-    void *tmp_ptr;
-
-    switch(counter->cntr_type){
-        case PAPI_SDE_long_long:
-            *((long long int *)(counter->data)) = new_value;
-            break;
-        case PAPI_SDE_int:
-            *((int *)(counter->data)) = (int)new_value;
-            break;
-        case PAPI_SDE_double:
-            tmp_ptr = &new_value;
-            tmp_double = *((double *)tmp_ptr);
-            *((double *)(counter->data)) = tmp_double;
-            break;
-        case PAPI_SDE_float:
-            // The pointer has to be 64bit. We can cast the variable to safely convert between bit-widths later on.
-            tmp_ptr = &new_value;
-            tmp_double = *((double *)tmp_ptr);
-            *((float *)(counter->data)) = (float)tmp_double;
-            break;
-        default:
-            PAPIERROR("Unsupported counter type: %d\n",counter->cntr_type);
-            return -1;
-    }
+    sde_ti_shutdown_ptr = (int (*)( void ))dlsym( handle, "sde_ti_shutdown" );
+    DLSYM_CHECK(sde_ti_shutdown);
 
     return PAPI_OK;
-}
-
-static int
-sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_value, long long int *rslt )
-{
-    int ret_val;
-    long long int tmp_int;
-    void *tmp_data;
-
-    char *event_name = counter->name;
-
-    if ( counter->data != NULL ) {
-        SUBDBG("Reading %s by accessing data pointer.\n", event_name);
-        tmp_data = counter->data;
-    } else if( NULL != counter->func_ptr ){
-        SUBDBG("Reading %s by calling registered function pointer.\n", event_name);
-        tmp_int = counter->func_ptr(counter->param);
-        tmp_data = &tmp_int;
-    } else{
-        PAPIERROR("sde_hardware_read_and_store(): Event %s has neither a variable nor a function pointer associated with it.\n", event_name);
-        return -1;
-    }
-
-    if( is_instant(counter->cntr_mode) ){
-        /* Instant counter means that we don't subtract the previous value (which we read at PAPI_Start()) */
-        previous_value = 0;
-    } else if( is_delta(counter->cntr_mode) ){
-        /* Do nothing here, this is the default mode */
-    } else{
-        PAPIERROR("Unsupported mode (%d) for event: %s\n",counter->cntr_mode, event_name);
-        return -1;
-    }
-
-    ret_val = sde_cast_and_store(tmp_data, previous_value, rslt, counter->cntr_type);
-    return ret_val;
 }
 
 /********************************************************************/
@@ -269,16 +116,24 @@ sde_hardware_read_and_store( sde_counter_t *counter, long long int previous_valu
 static int
 _sde_init_component( int cidx )
 {
+    int ret_val = PAPI_OK;
     SUBDBG("_sde_init_component...\n");
 
     _sde_vector.cmp_info.num_native_events = 0;
     _sde_vector.cmp_info.CmpIdx = cidx;
+    _sde_component_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-#if defined(DEBUG)
-    _sde_debug = _papi_hwi_debug&DEBUG_SUBSTRATE;
-#endif
+    ret_val = sde_load_sde_ti();
+    if( PAPI_OK != ret_val ){
+        _sde_vector.cmp_info.disabled = ret_val;
+        int expect = snprintf(_sde_vector.cmp_info.disabled_reason,
+                              PAPI_MAX_STR_LEN, "libsde API not found. No SDEs exist in this executable.");
+        if (expect > PAPI_MAX_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+    }
 
-    return PAPI_OK;
+    return ret_val;
 }
 
 
@@ -333,7 +188,7 @@ _sde_update_control_state( hwd_control_state_t *ctl,
             return PAPI_EINVAL;
         }
         SUBDBG("_sde_update_control_state: i=%d index=%u\n", i, index );
-        sde_ctl->which_counter[i] = (unsigned)index;
+        sde_ctl->which_counter[i] = (uint32_t)index;
         native[i].ni_position = i;
     }
 
@@ -351,12 +206,10 @@ _sde_update_control_state( hwd_control_state_t *ctl,
 static int
 _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-    int ret_val;
-#if defined(SDE_HAVE_OVERFLOW)
+    int ret_val = PAPI_OK;
     ThreadInfo_t *thread;
     int cidx;
     struct itimerspec its;
-#endif // defined(SDE_HAVE_OVERFLOW)
     ( void ) ctx;
     ( void ) ctl;
 
@@ -364,7 +217,6 @@ _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
     ret_val = _sde_reset(ctx, ctl);
 
-#if defined(SDE_HAVE_OVERFLOW)
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     its.it_value.tv_sec = 0;
@@ -381,30 +233,15 @@ _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
         if( !(sde_ctl->has_timer) ){
             // No registered counters went through r[1-3]
             int i;
-            papisde_control_t *gctl = papisde_get_global_struct();
+            _papi_hwi_lock(_sde_component_lock);
             for( i = 0; i < sde_ctl->num_events; i++ ) {
-                unsigned int counter_uniq_id = sde_ctl->which_counter[i];
-                if( counter_uniq_id >= gctl->num_reg_events ){
-                    PAPIERROR("_sde_start(): Event at index %d does not correspond to a registered counter.\n",i);
-                    continue;
-                }
-
-                sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-                if( NULL == counter ){
-                    PAPIERROR("_sde_start(): Event at index %d corresponds to a clobbered counter.\n",i);
-                    continue;
-                }
-
-                // If the counter that we are checking was set to overflow and it is registered (not created), create the timer.
-                if( !(counter->is_created) && counter->overflow ){
+                if( sde_ti_is_counter_set_to_overflow_ptr(sde_ctl->which_counter[i]) ){
                     // Registered counters went through r4
-                    int ret = do_set_timer_for_overflow(sde_ctl);
-                    if( PAPI_OK != ret ){
-                        papi_sde_unlock();
-                    }
-                    break;
+                    if( PAPI_OK == do_set_timer_for_overflow(sde_ctl) )
+                        break;
                 }
             }
+            _papi_hwi_unlock(_sde_component_lock);
         }
 
         // r[1-4]
@@ -418,7 +255,6 @@ _sde_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
             }
         }
     }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
     return ret_val;
 }
@@ -431,16 +267,13 @@ _sde_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
     (void) ctx;
     (void) ctl;
-#if defined(SDE_HAVE_OVERFLOW)
     ThreadInfo_t *thread;
     int cidx;
     struct itimerspec zero_time;
-#endif // defined(SDE_HAVE_OVERFLOW)
 
     SUBDBG( "sde_stop %p %p...\n", ctx, ctl );
     /* anything that would need to be done at counter stop time */
 
-#if defined(SDE_HAVE_OVERFLOW)
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     cidx = _sde_vector.cmp_info.CmpIdx;
@@ -458,13 +291,11 @@ _sde_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
             }
         }
     }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
     return PAPI_OK;
 }
 
 /** Triggered by PAPI_read()     */
-/*     flags field is never set? */
 static int
 _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int flags )
 {
@@ -473,95 +304,24 @@ _sde_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int
     (void) flags;
     (void) ctx;
 
-    papisde_control_t *gctl = _papisde_global_control;
-
     SUBDBG( "_sde_read... %p %d\n", ctx, flags );
-
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
-    // Lock before we read num_reg_events and the hash-tables.
-    papi_sde_lock();
-
-
+    _papi_hwi_lock(_sde_component_lock);
     for( i = 0; i < sde_ctl->num_events; i++ ) {
-        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
-        if( counter_uniq_id >= gctl->num_reg_events ){
-            PAPIERROR("_sde_read(): Event at index %d does not correspond to a registered counter.\n",i);
-            *events[i] = -1;
-            continue;
-        }
-
-        sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-        if( NULL == counter ){
-            PAPIERROR("_sde_read(): Event at index %d corresponds to a clobbered counter.\n",i);
-            sde_ctl->counter[i] = -1;
-            continue;
-        }
-
-        // If the counter represents a counter group then we need to read the values of all the counters in the group.
-        if( NULL != counter->counter_group_head ){
-            ret_val = sde_read_counter_group( counter, &(sde_ctl->counter[i]) );
-            if( PAPI_OK != ret_val ){
-                PAPIERROR("_sde_read(): Error occured when reading counter group: '%s'.\n",counter->name);
-            }
-            // we are done reading this one, move to the next.
-            continue;
-        }
-
-        // Our convention is that read attempts on a placeholder will set the counter to "-1" to
-        // signify semantically that there was an error, but the function will not return an error
-        // to avoid breaking existing programs that do something funny when an error is returned.
-        if( (NULL == counter->data) && (NULL == counter->func_ptr) && (NULL == counter->recorder_data) && (NULL == counter->hash_data) ){
-            PAPIERROR("_sde_read(): Attempted read on a placeholder: '%s'.\n",counter->name);
-            sde_ctl->counter[i] = -1;
-            continue;
-        }
-
-        // If we are not dealing with a simple counter but with a recorder, we need to allocate
-        // a contiguous buffer, copy all the recorded data in it, and return to the user a pointer
-        // to this buffer cast as a long long.
-        if( NULL != counter->recorder_data ){
-            long long used_entries;
-            size_t typesize;
-            void *out_buffer;
-
-            // At least the first chunk should have been allocated at creation.
-            if( NULL == counter->recorder_data->exp_container[0] ){
-                SUBDBG( "No space has been allocated for recorder %s\n",counter->name);
-                sde_ctl->counter[i] = (long long)-1;
-                continue;
-            }
-
-            used_entries = counter->recorder_data->used_entries;
-            typesize = counter->recorder_data->typesize;
-
-            // NOTE: After returning this buffer we loose track of it, so it's the user's responsibility to free it.
-            out_buffer = malloc( used_entries*typesize );
-            recorder_data_to_contiguous(counter, out_buffer);
-            sde_ctl->counter[i] = (long long)out_buffer;
-
-            continue;
-        }
-
-        if( NULL != counter->hash_data ){
-            sde_list_object_t *list_head;
-            papi_sde_counting_set_to_list( counter, &list_head );
-            sde_ctl->counter[i] = (long long)list_head;
-            continue;
-        }
-
-        ret_val = sde_hardware_read_and_store( counter, counter->previous_data, &(sde_ctl->counter[i]) );
-
+        uint32_t counter_uniq_id = sde_ctl->which_counter[i];
+        ret_val = sde_ti_read_counter_ptr( counter_uniq_id, &(sde_ctl->counter[i]) );
         if( PAPI_OK != ret_val ){
-            PAPIERROR("_sde_read(): Error occured when reading counter: '%s'.\n",counter->name);
+            PAPIERROR("_sde_read(): Error when reading event at index %d.\n",i);
+            goto fnct_exit;
         }
+
     }
-
-    papi_sde_unlock();
-
     *events = sde_ctl->counter;
 
-    return PAPI_OK;
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
 }
 
 /** Triggered by PAPI_write(), but only if the counters are running */
@@ -573,57 +333,23 @@ _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *values )
     (void) ctx;
     (void) ctl;
 
-    papisde_control_t *gctl = _papisde_global_control;
-
     SUBDBG( "_sde_write... %p\n", ctx );
-
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
     // Lock before we access global data structures.
-    papi_sde_lock();
-
+    _papi_hwi_lock(_sde_component_lock);
     for( i = 0; i < sde_ctl->num_events; i++ ) {
-        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
-        if( counter_uniq_id >= gctl->num_reg_events ){
-            PAPIERROR("_sde_write(): Event at index %d does not correspond to a registered counter.\n",i);
-            continue;
-        }
-
-        sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-        if( NULL == counter ){
-            PAPIERROR("_sde_read(): Event at index %d corresponds to a clobbered counter.\n",i);
-            continue;
-        }
-
-        // We currently do not support writing in counter groups.
-        if( NULL != counter->counter_group_head ){
-            SUBDBG("_sde_write(): Event '%s' corresponds to a counter group, and writing groups is not supported yet.\n",counter->name);
-            continue;
-        }
-
-        if( NULL == counter->data ){
-            if( NULL == counter->func_ptr ){
-                // If we are not dealing with a simple counter but with a "recorder", which cannot be written, we have to error.
-                if( NULL != counter->recorder_data ){
-                    PAPIERROR("_sde_write(): Attempted write on a recorder: '%s'.\n",counter->name);
-                }else{
-                    PAPIERROR("_sde_write(): Attempted write on a placeholder: '%s'.\n",counter->name);
-                }
-            }else{
-                PAPIERROR("_sde_write(): Attempted write on an event based on a callback function instead of a counter: '%s'.\n",counter->name);
-            }
-            continue;
-        }
-
-        ret_val = sde_hardware_write( counter, values[i] );
+        uint32_t counter_uniq_id = sde_ctl->which_counter[i];
+        ret_val = sde_ti_write_counter_ptr( counter_uniq_id, values[i] );
         if( PAPI_OK != ret_val ){
-            PAPIERROR("_sde_write(): Error occured when writing counter: '%s'.\n",counter->name);
+            PAPIERROR("_sde_write(): Error when writing event at index %d.\n",i);
+            goto fnct_exit;
         }
     }
 
-    papi_sde_unlock();
-
-    return PAPI_OK;
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
 }
 
 
@@ -633,84 +359,34 @@ _sde_write( hwd_context_t *ctx, hwd_control_state_t *ctl, long long *values )
 static int
 _sde_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
-    int i;
+    int i, ret_val=PAPI_OK;
     (void) ctx;
 
     SUBDBG( "_sde_reset ctx=%p ctrl=%p...\n", ctx, ctl );
-
-    papisde_control_t *gctl = _papisde_global_control;
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ctl;
 
-    // Lock before we read num_reg_events and the hash-tables.
-    papi_sde_lock();
-
+    _papi_hwi_lock(_sde_component_lock);
     for( i = 0; i < sde_ctl->num_events; i++ ) {
-        int ret_val;
-        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
-        if( counter_uniq_id >= gctl->num_reg_events ){
-            PAPIERROR("_sde_reset(): Event at index %d does not correspond to a registered counter.\n",i);
-            continue;
-        }
-
-        sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-        if( NULL == counter ){
-            PAPIERROR("_sde_reset(): Event at index %d corresponds to a clobbered counter.\n",i);
-            continue;
-        }
-
-        // If the counter represents a counter group then we do not need to record the current value,
-        // because when we read the real value we will keep track of all the previous values of the
-        // individual counters (if they are DELTA), or not (if they are INSTANT)
-        if( NULL != counter->counter_group_head ){
-            // we are done with this one, move to the next.
-            continue;
-        }
-
-        // Our convention is that read attempts on a placeholder will not return an error
-        // to avoid breaking existing programs that do something funny when an error is returned.
-        if( (NULL == counter->data) && (NULL == counter->func_ptr) ){
-            PAPIERROR("_sde_reset(): Attempted read on a placeholder: %s.\n",counter->name);
-            continue;
-        }
-
-        ret_val = sde_hardware_read_and_store( counter, 0, &(counter->previous_data) );
+        uint32_t counter_uniq_id = sde_ctl->which_counter[i];
+        ret_val = sde_ti_reset_counter_ptr( counter_uniq_id );
         if( PAPI_OK != ret_val ){
-            PAPIERROR("_sde_reset(): Error occured when resetting counter: %s.\n",counter->name);
+            PAPIERROR("_sde_reset(): Error when reseting event at index %d.\n",i);
+            goto fnct_exit;
         }
+
     }
 
-    papi_sde_unlock();
-
-    return PAPI_OK;
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
 }
 
 /** Triggered by PAPI_shutdown() */
 static int
 _sde_shutdown_component(void)
 {
-    papisde_library_desc_t *curr_lib, *next_lib;
-
     SUBDBG( "sde_shutdown_component...\n" );
-    papisde_control_t *gctl = _papisde_global_control;
-
-    if( NULL == gctl )
-        return PAPI_OK;
-
-    /* Free all the meta-data we allocated for libraries that are still active */
-    curr_lib = gctl->lib_list_head;
-    while(NULL != curr_lib){
-        /* save a pointer to the next list element before we free the current */
-        next_lib = curr_lib->next;
-
-        if( NULL != curr_lib->libraryName ){
-            free( curr_lib->libraryName );
-        }
-        free(curr_lib);
-
-        curr_lib = next_lib;
-    }
-
-    return PAPI_OK;
+    return sde_ti_shutdown_ptr();
 }
 
 /** Called at thread shutdown */
@@ -802,33 +478,35 @@ _sde_set_domain( hwd_control_state_t * cntrl, int domain )
 static int
 _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
-    unsigned int curr_code, next_code;
+    unsigned int curr_code, next_code, num_reg_events;
+    int ret_val = PAPI_OK;
 
     SUBDBG("_sde_ntv_enum_events begin\n\tEventCode=%u modifier=%d\n", *EventCode, modifier);
-
-    papisde_control_t *gctl = _papisde_global_control;
-    if( NULL == gctl ){
-        return PAPI_ENOEVNT;
-    }
 
     switch ( modifier ) {
 
         /* return EventCode of first event */
         case PAPI_ENUM_FIRST:
             /* return the first event that we support */
+            if( sde_ti_get_num_reg_events_ptr() <= 0 ){
+                ret_val = PAPI_ENOEVNT;
+                break;
+            }
             *EventCode = 0;
-            return PAPI_OK;
+            ret_val = PAPI_OK;
+            break;
 
         /* return EventCode of next available event */
         case PAPI_ENUM_EVENTS:
             curr_code = *EventCode & PAPI_NATIVE_AND_MASK;
 
             // Lock before we read num_reg_events and the hash-tables.
-            papi_sde_lock();
+            _papi_hwi_lock(_sde_component_lock);
 
-            if( curr_code >= gctl->num_reg_events-1 ){
-                papi_sde_unlock();
-                return PAPI_ENOEVNT;
+            num_reg_events = (unsigned int)sde_ti_get_num_reg_events_ptr();
+            if( curr_code >= num_reg_events-1 ){
+                ret_val = PAPI_ENOEVNT;
+                goto unlock;
             }
 
             /*
@@ -839,24 +517,28 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
             next_code = curr_code;
             do{
                 next_code++;
-                sde_counter_t *item = ht_lookup_by_id(gctl->all_reg_counters, next_code);
-                if( (NULL != item) && (NULL != item->name) ){
+                char *ev_name = sde_ti_get_event_name_ptr((uint32_t)next_code);
+                if( NULL != ev_name ){
                     *EventCode = next_code;
-                    SUBDBG("Event name = %s (unique id = %d)\n", item->name, item->glb_uniq_id);
-                    papi_sde_unlock();
-                    return PAPI_OK;
+                    SUBDBG("Event name = %s (code = %d)\n", ev_name, next_code);
+                    ret_val = PAPI_OK;
+                    goto unlock;
                 }
-            }while(next_code < gctl->num_reg_events);
+            }while(next_code < num_reg_events);
 
-            papi_sde_unlock();
+            // If we make it here it means that we didn't find the event.
+            ret_val = PAPI_EINVAL;
 
+unlock:
+            _papi_hwi_unlock(_sde_component_lock);
             break;
 
         default:
-            return PAPI_EINVAL;
+            ret_val = PAPI_EINVAL;
+            break;
     }
 
-    return PAPI_EINVAL;
+    return ret_val;
 }
 
 /** Takes a native event code and passes back the name
@@ -867,30 +549,25 @@ _sde_ntv_enum_events( unsigned int *EventCode, int modifier )
 static int
 _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
-    papisde_control_t *gctl = _papisde_global_control;
+    int ret_val = PAPI_OK;
     unsigned int code = EventCode & PAPI_NATIVE_AND_MASK;
 
     SUBDBG("_sde_ntv_code_to_name %u\n", code);
 
-    // Lock before we read num_reg_events and the hash-tables.
-    papi_sde_lock();
+    _papi_hwi_lock(_sde_component_lock);
 
-    if( (NULL == gctl) || (code > gctl->num_reg_events) ){
-        papi_sde_unlock();
-        return PAPI_ENOEVNT;
+    char *ev_name = sde_ti_get_event_name_ptr((uint32_t)code);
+    if( NULL == ev_name ){
+        ret_val = PAPI_ENOEVNT;
+        goto fnct_exit;
     }
+    SUBDBG("Event name = %s (code = %d)\n", ev_name, code);
+    (void)strncpy( name, ev_name, len );
+    name[len-1] = '\0';
 
-    sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, code);
-    if( (NULL == counter) || (NULL == counter->name) ){
-        papi_sde_unlock();
-        return PAPI_ENOEVNT;
-    }
-    SUBDBG("Event name = %s (unique id = %d)\n", counter->name, counter->glb_uniq_id);
-
-    (void)strncpy( name, counter->name, len );
-
-    papi_sde_unlock();
-    return PAPI_OK;
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
 }
 
 /** Takes a native event code and passes back the event description
@@ -901,31 +578,26 @@ _sde_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 static int
 _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 {
+    int ret_val = PAPI_OK;
     unsigned int code = EventCode & PAPI_NATIVE_AND_MASK;
+
     SUBDBG("_sde_ntv_code_to_descr %u\n", code);
 
-    papisde_control_t *gctl = _papisde_global_control;
+    _papi_hwi_lock(_sde_component_lock);
 
-    // Lock before we read num_reg_events and the hash-tables.
-    papi_sde_lock();
-
-    if( (NULL == gctl) || (code > gctl->num_reg_events) ){
-        papi_sde_unlock();
-        return PAPI_ENOEVNT;
+    char *ev_descr = sde_ti_get_event_description_ptr((uint32_t)code);
+    if( NULL == ev_descr ){
+        ret_val = PAPI_ENOEVNT;
+        goto fnct_exit;
     }
+    SUBDBG("Event (code = %d) description: %s\n", code, ev_descr);
 
-    sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, code);
-    if( (NULL == counter) || (NULL == counter->description) ){
-        papi_sde_unlock();
-        return PAPI_ENOEVNT;
-    }
-    SUBDBG("Event (unique id = %d) description: %s\n", counter->glb_uniq_id, counter->description);
-
-    (void)strncpy( descr, counter->description, len );
+    (void)strncpy( descr, ev_descr, len );
     descr[len-1] = '\0';
 
-    papi_sde_unlock();
-    return PAPI_OK;
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
 }
 
 /** Takes a native event name and passes back the code
@@ -935,122 +607,16 @@ _sde_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
 static int
 _sde_ntv_name_to_code(const char *event_name, unsigned int *event_code )
 {
-    papisde_library_desc_t *lib_handle;
-    char *pos, *tmp_lib_name;
-    sde_counter_t *tmp_item = NULL;
+    int ret_val;
 
-    SUBDBG( "%s\n", event_name );
+    SUBDBG( "_sde_ntv_name_to_code(%s)\n", event_name );
 
-    papi_sde_lock();
+    ret_val = sde_ti_name_to_code_ptr(event_name, (uint32_t *)event_code);
 
-    papisde_control_t *gctl = _papisde_global_control;
-
-    // Let's see if the event has the library name as a prefix (as it should). Note that this is
-    // the event name as it comes from the framework, so it should contain the library name, although
-    // when the library registers an event counter it will not use the library name as part of the event name.
-    tmp_lib_name = strdup(event_name);
-    pos = strstr(tmp_lib_name, "::");
-    if( NULL != pos ){ // Good, it does.
-        *pos = '\0';
-
-        if( NULL == gctl ){
-            // If no library has initialized the library side of the component, and the application is already inquiring
-            // about an event, let's initialize the component pretending to be the library which corresponds to this event.
-            gctl = papisde_get_global_struct();
-            lib_handle = do_sde_init(tmp_lib_name, gctl);
-            if(NULL == lib_handle){
-                PAPIERROR("Unable to register library in SDE component.\n");
-                papi_sde_unlock();
-                return PAPI_ECMP;
-            }
-//            gctl = _papisde_global_control;
-        }else{
-            int is_library_present = 0;
-            // If the library side of the component has been initialized, then look for the library.
-            lib_handle = gctl->lib_list_head;
-            while(NULL != lib_handle){ // Look for the library.
-                if( !strcmp(lib_handle->libraryName, tmp_lib_name) ){
-                    // We found the library.
-                    is_library_present = 1;
-                    // Now, look for the event in the library.
-                    tmp_item = ht_lookup_by_name(lib_handle->lib_counters, event_name);
-                    break;
-                }
-                lib_handle = lib_handle->next;
-            }
-
-            if( !is_library_present ){
-                // If the library side of the component was initialized, but the specific library hasn't called
-                // papi_sde_init() then we call it here to allocate the data structures.
-                lib_handle = do_sde_init(tmp_lib_name, gctl);
-                if(NULL == lib_handle){
-                    PAPIERROR("Unable to register library in SDE component.\n");
-                    papi_sde_unlock();
-                    return PAPI_ECMP;
-                }
-             }
-        }
-        free(tmp_lib_name); // We don't need the library name any more.
-
-        if( NULL != tmp_item ){
-            SUBDBG("Found matching counter with global uniq id: %d in library: %s\n", tmp_item->glb_uniq_id, lib_handle->libraryName );
-            *event_code = tmp_item->glb_uniq_id;
-            papi_sde_unlock();
-            return PAPI_OK;
-        } else {
-            SUBDBG("Did not find event %s in library %s. Registering a placeholder.\n", event_name, lib_handle->libraryName );
-
-            // Use the current number of registered events as the index of the new one, and increment it.
-            unsigned int counter_uniq_id = gctl->num_reg_events++;
-            gctl->num_live_events++;
-            _sde_vector.cmp_info.num_native_events = gctl->num_live_events;
-
-            // At this point in the code "lib_handle" contains a pointer to the data structure for this library whether
-            // the actual library has been initialized or not.
-            tmp_item = allocate_and_insert(gctl, lib_handle, event_name, counter_uniq_id, PAPI_SDE_RO, PAPI_SDE_long_long, NULL, NULL, NULL );
-            if(NULL == tmp_item) {
-                papi_sde_unlock();
-                SUBDBG("Event %s does not exist in library %s and placeholder could not be inserted.\n", event_name, lib_handle->libraryName);
-                return PAPI_ECMP;
-            }
-            *event_code = tmp_item->glb_uniq_id;
-            papi_sde_unlock();
-            return PAPI_OK;
-        }
-    }else{
-        free(tmp_lib_name);
-    }
-
-    // If no library has initialized the component and we don't know a library name, then we have to return.
-    if( NULL == gctl ){
-        papi_sde_unlock();
-        return PAPI_ENOEVNT;
-    }
-
-    // If the event name does not have the library name as a prefix, then we need to look in all the libraries for the event. However, in this case
-    // we can _not_ register a placeholder because we don't know which library the event belongs to.
-    lib_handle = gctl->lib_list_head;
-    while(NULL != lib_handle){
-
-        tmp_item = ht_lookup_by_name(lib_handle->lib_counters, event_name);
-        if( NULL != tmp_item ){
-            *event_code = tmp_item->glb_uniq_id;
-            papi_sde_unlock();
-            SUBDBG("Found matching counter with global uniq id: %d in library: %s\n", tmp_item->glb_uniq_id, lib_handle->libraryName );
-            return PAPI_OK;
-        } else {
-            SUBDBG("Failed to find event %s in library %s. Looking in other libraries.\n", event_name, lib_handle->libraryName );
-        }
-
-        lib_handle = lib_handle->next;
-    }
-    papi_sde_unlock();
-
-    return PAPI_ENOEVNT;
+    return ret_val;
 }
 
 
-#if defined(SDE_HAVE_OVERFLOW)
 static int
 _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
 
@@ -1061,34 +627,22 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
     SUBDBG("_sde_set_overflow(%d, %d).\n",EventIndex, threshold);
 
     sde_control_state_t *sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
-    papisde_control_t *gctl = _papisde_global_control;
 
     // pos[0] holds the first among the native events that compose the given event. If it is a derived event,
     // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
     // does not have derived events (the groups are first class citizens, they don't have multiple pos[] entries).
     int pos = ESI->EventInfoArray[EventIndex].pos[0];
-    unsigned int counter_uniq_id = sde_ctl->which_counter[pos];
-    sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-    // If the counter is created then we will check for overflow every time its value gets updated, we don't need to poll.
-    // That is in cases c[1-3]
-    if( counter->is_created )
-        return PAPI_OK;
+    uint32_t counter_uniq_id = sde_ctl->which_counter[pos];
 
-    // We do not want to overflow on recorders, because we don't even know what this means (maybe we could check the number of recorder entries?)
-    if( (NULL != counter->recorder_data) && (threshold > 0) ){
-        return PAPI_EINVAL;
-    }
-
-    // If we still don't know what type the counter is, then we are _not_ in r[1-3] so we can't create a timer here.
-    if( (NULL == counter->data) && (NULL == counter->func_ptr) && (threshold > 0) ){
-        SUBDBG("Event is a placeholder (it has not been registered by a library yet), so we cannot start overflow, but we can remember it.\n");
-        counter->overflow = 1;
-        return PAPI_OK;
+    // If we still don't know what type the counter is, then we are _not_ in r[1-3] so we can't create a timer here,
+    // but we still have to tell the calling tool/app that there was no error, because the timer will be set in the future.
+    int ret_val = sde_ti_set_counter_overflow_ptr(counter_uniq_id, threshold);
+    if( PAPI_OK >= ret_val ){
+        return ret_val;
     }
 
     // A threshold of zero indicates that overflowing is not needed anymore.
     if( 0 == threshold ){
-        counter->overflow = 0;
         // If we had a timer (if the counter was created we wouldn't have one) then delete it.
         if( sde_ctl->has_timer )
             timer_delete(sde_ctl->timerid);
@@ -1100,9 +654,7 @@ _sde_set_overflow( EventSetInfo_t *ESI, int EventIndex, int threshold ){
 
     return PAPI_OK;
 }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
-#if defined(SDE_HAVE_OVERFLOW)
 /**
  *  This code assumes that it is called _ONLY_ for registered counters,
  *  and that is why it sets has_timer to REGISTERED_EVENT_MASK
@@ -1117,7 +669,7 @@ static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl ){
     // Choose a new real-time signal
     signo = SIGRTMIN+sig_offset;
     if(signo > SIGRTMAX){
-        PAPIERROR("_sde_set_overflow(): Unable to create new timer due to large number of existing timers. Overflowing will not be activated for the current event.\n");
+        PAPIERROR("do_set_timer_for_overflow(): Unable to create new timer due to large number of existing timers. Overflowing will not be activated for the current event.\n");
         return PAPI_ECMP;
     }
 
@@ -1126,7 +678,7 @@ static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl ){
     sa.sa_sigaction = _sde_dispatch_timer;
     sigemptyset(&sa.sa_mask);
     if (sigaction(signo, &sa, NULL) == -1){
-        PAPIERROR("sigaction");
+        PAPIERROR("do_set_timer_for_overflow(): sigaction() failed.");
         return PAPI_ECMP;
     }
 
@@ -1135,17 +687,15 @@ static int do_set_timer_for_overflow( sde_control_state_t *sde_ctl ){
     sigev.sigev_signo = signo;
     sigev.sigev_value.sival_ptr = &(sde_ctl->timerid);
     if (timer_create(CLOCK_REALTIME, &sigev, &(sde_ctl->timerid)) == -1){
-        PAPIERROR("timer_create");
+        PAPIERROR("do_set_timer_for_overflow(): timer_create() failed.");
         return PAPI_ECMP;
     }
     sde_ctl->has_timer |= REGISTERED_EVENT_MASK;
 
     return PAPI_OK;
 }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
-#if defined(SDE_HAVE_OVERFLOW)
-static inline int _sde_arm_timer(sde_control_state_t *sde_ctl){
+static inline int sde_arm_timer(sde_control_state_t *sde_ctl){
     struct itimerspec its;
 
     // We will start the timer at 100us because we adjust its period in _sde_dispatch_timer()
@@ -1155,9 +705,9 @@ static inline int _sde_arm_timer(sde_control_state_t *sde_ctl){
     its.it_interval.tv_sec = its.it_value.tv_sec;
     its.it_interval.tv_nsec = its.it_value.tv_nsec;
 
-    SDEDBG( "starting SDE internal timer for emulating HARDWARE overflowing\n");
+    SUBDBG( "starting SDE internal timer for emulating HARDWARE overflowing\n");
     if (timer_settime(sde_ctl->timerid, 0, &its, NULL) == -1){
-        SDE_ERROR("timer_settime");
+        PAPIERROR("timer_settime");
         timer_delete(sde_ctl->timerid);
         sde_ctl->has_timer = 0;
 
@@ -1167,9 +717,7 @@ static inline int _sde_arm_timer(sde_control_state_t *sde_ctl){
 
     return PAPI_OK;
 }
-#endif //defined(SDE_HAVE_OVERFLOW)
 
-#if defined(SDE_HAVE_OVERFLOW)
 void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
 
     _papi_hwi_context_t hw_context;
@@ -1181,7 +729,6 @@ void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
     struct itimerspec its;
     long long overflow_vector = 0;
     sde_control_state_t *sde_ctl;
-    papisde_control_t *gctl;
 
     (void) n;
 
@@ -1194,7 +741,6 @@ void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
     // This holds only the number of events in the eventset that are set to overflow.
     int event_counter = ESI->overflow.event_counter;
     sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
-    gctl = _papisde_global_control;
 
     retval = _papi_hwi_read( thread->context[cidx], ESI, ESI->sw_stop );
     if ( retval < PAPI_OK )
@@ -1208,11 +754,9 @@ void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
     for ( i = 0; i < event_counter; i++ ) {
         int papi_index = ESI->overflow.EventIndex[i];
         long long deadline, threshold, latest, previous, diff;
-        unsigned int counter_uniq_id;
 
-        counter_uniq_id = sde_ctl->which_counter[papi_index];
-        sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_uniq_id);
-        if( (NULL == counter) || counter->is_created )
+        uint32_t counter_uniq_id = sde_ctl->which_counter[papi_index];
+        if( !sde_ti_is_simple_counter_ptr( counter_uniq_id ) )
             continue;
 
         found_registered_counters = 1;
@@ -1336,10 +880,8 @@ no_change_in_period:
 
    return;
 }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
-#if defined(SDE_HAVE_OVERFLOW)
-static void invoke_user_handler(sde_counter_t *cntr_handle){
+static void invoke_user_handler(uint32_t cntr_uniq_id){
     EventSetInfo_t *ESI;
     int i, cidx;
     ThreadInfo_t *thread;
@@ -1348,9 +890,6 @@ static void invoke_user_handler(sde_counter_t *cntr_handle){
     ucontext_t uc;
     caddr_t address;
     long long overflow_vector;
-
-    if( NULL == cntr_handle )
-        return;
 
     thread = _papi_hwi_lookup_thread( 0 );
     cidx = _sde_vector.cmp_info.CmpIdx;
@@ -1363,25 +902,19 @@ static void invoke_user_handler(sde_counter_t *cntr_handle){
 
     sde_ctl = ( sde_control_state_t * ) ESI->ctl_state;
 
-    papisde_control_t *gctl = _papisde_global_control;
-
-    if( NULL == gctl ){
-        return;
-    }
-
     // This path comes from papi_sde_inc_counter() which increment _ONLY_ one counter, so we don't
     // need to check if any others have overflown.
     overflow_vector = 0;
     for( i = 0; i < sde_ctl->num_events; i++ ) {
-        unsigned int counter_uniq_id = sde_ctl->which_counter[i];
+        uint32_t uniq_id = sde_ctl->which_counter[i];
 
-        if( counter_uniq_id == cntr_handle->glb_uniq_id ){
+        if( uniq_id == cntr_uniq_id ){
             // pos[0] holds the first among the native events that compose the given event. If it is a derived event,
             // then it might be made up of multiple native events, but this is a CPU component concept. The SDE component
             // does not have derived events (the groups are first class citizens, they don't have multiple pos[] entries).
             int pos = ESI->EventInfoArray[i].pos[0];
             if( pos == -1 ){
-               SDE_ERROR( "The PAPI framework considers this event removed from the eventset, but the component does not\n");
+               PAPIERROR( "The PAPI framework considers this event removed from the eventset, but the component does not\n");
                return;
             }
             overflow_vector = ( long long ) 1 << pos;
@@ -1396,12 +929,10 @@ static void invoke_user_handler(sde_counter_t *cntr_handle){
     ESI->overflow.handler( ESI->EventSetIndex, ( void * ) address, overflow_vector, hw_context.ucontext );
     return;
 }
-#endif // SDE_HAVE_OVERFLOW
 
-#if defined(SDE_HAVE_OVERFLOW)
 void
 __attribute__((visibility("default")))
-papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest){
+papi_sde_check_overflow_status(uint32_t cntr_uniq_id, long long int latest){
     EventSetInfo_t *ESI;
     int cidx, i, index_in_ESI;
     ThreadInfo_t *thread;
@@ -1424,10 +955,10 @@ papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest)
     index_in_ESI = -1;
     for (i = 0; i < event_counter; i++ ) {
         int papi_index = ESI->overflow.EventIndex[i];
-        unsigned int counter_uniq_id = sde_ctl->which_counter[papi_index];
+        uint32_t uniq_id = sde_ctl->which_counter[papi_index];
         // If the created counter that we are incrementing corresponds to
         // an event that was set to overflow, read the deadline and threshold.
-        if( counter_uniq_id == cntr_handle->glb_uniq_id ){
+        if( uniq_id == cntr_uniq_id ){
             index_in_ESI = i;
             break;
         }
@@ -1440,20 +971,17 @@ papi_sde_check_overflow_status(sde_counter_t *cntr_handle, long long int latest)
 
         // If the current value has exceeded the deadline then
         // invoke the user handler and update the deadline.
-        SDEDBG("counter: '%s::%s' has value: %lld and the overflow deadline is at: %lld.\n", cntr_handle->which_lib->libraryName, cntr_handle->name, latest, deadline);
         if( latest > deadline ){
             // We adjust the deadline in a way that it remains a multiple of threshold
             // so we don't create an additive error.
             ESI->overflow.deadline[index_in_ESI] = threshold*(latest/threshold) + threshold;
-            invoke_user_handler(cntr_handle);
+            invoke_user_handler(cntr_uniq_id);
         }
     }
 
     return;
 }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
-#if defined(SDE_HAVE_OVERFLOW)
 // The following function should only be called from within
 // sde_do_register() in libsde.so, which guarantees we are in cases r[4-6].
 int
@@ -1482,13 +1010,12 @@ papi_sde_set_timer_for_overflow(void){
         if( PAPI_OK != ret ){
             return ret;
         }
-        ret = _sde_arm_timer(sde_ctl);
+        ret = sde_arm_timer(sde_ctl);
         return ret;
     }
 
     return PAPI_OK;
 }
-#endif // defined(SDE_HAVE_OVERFLOW)
 
 /** Vector that points to entry points for our component */
 papi_vector_t _sde_vector = {
@@ -1550,10 +1077,8 @@ papi_vector_t _sde_vector = {
     /* .allocate_registers =   NULL, */
 
     /* Used for overflow/profiling */
-#if defined(SDE_HAVE_OVERFLOW)
     .dispatch_timer =       _sde_dispatch_timer,
     .set_overflow =         _sde_set_overflow,
-#endif // defined(SDE_HAVE_OVERFLOW)
     /* .get_overflow_address = NULL, */
     /* .stop_profiling =       NULL, */
     /* .set_profile =          NULL, */

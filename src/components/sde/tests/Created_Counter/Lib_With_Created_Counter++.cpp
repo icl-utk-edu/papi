@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include "sde_lib.h"
+#include "sde_lib.hpp"
 
 #define MY_EPSILON 0.0001
 

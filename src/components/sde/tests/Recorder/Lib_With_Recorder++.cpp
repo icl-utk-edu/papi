@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "sde_lib.h"
+#include "sde_lib.hpp"
 
 static const char *event_names[1] = {
     "simple_recording"
