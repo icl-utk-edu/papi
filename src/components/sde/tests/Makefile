@@ -144,9 +144,4 @@ sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) libXandria.so libG
 ## Cleaning
 
 clean:
-	rm -f *.o *.mod lib/*.so lib/*.a
-
-distclean: clean
-	rm -f $(TESTS)
-
-
+	rm -f *.o *.mod lib/*.so lib/*.a $(TESTS)
