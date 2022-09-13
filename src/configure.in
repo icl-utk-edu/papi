@@ -409,8 +409,7 @@ else
   else
     TOPDIR=$(pwd)
   fi
-  CFLAGS="$CFLAGS -DSDE"
-  LIBSDEFLAGS="${TOPDIR}/libsde.a"
+  LIBSDEFLAGS="${TOPDIR}/libsde.a -DSDE"
 
 fi
 AC_MSG_RESULT($with_libsde)
