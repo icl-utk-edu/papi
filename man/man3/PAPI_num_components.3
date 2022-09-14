@@ -1,10 +1,8 @@
-.TH "PAPI_num_components" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_num_components" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_num_components \- 
-.PP
-Get the number of components available on the system\&.  
+PAPI_num_components \- Get the number of components available on the system\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,18 +11,15 @@ Get the number of components available on the system\&.
 .PP 
 
 .PP
-.nf
-@return 
-    Number of components available on the system
-
-.fi
-.PP
+\fBReturns\fP
+.RS 4
+Number of components available on the system
+.RE
 .PP
 .PP
 .nf
 // Query the library for a component count\&. 
 printf("%d components installed\&., PAPI_num_components() );
-  * 
 .fi
 .PP
  

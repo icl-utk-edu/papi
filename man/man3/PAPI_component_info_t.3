@@ -1,8 +1,8 @@
-.TH "PAPI_component_info_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_component_info_t" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_component_info_t \- 
+PAPI_component_info_t
 .SH SYNOPSIS
 .br
 .PP
@@ -32,6 +32,9 @@ PAPI_component_info_t \-
 .br
 .ti -1c
 .RI "int \fBdisabled\fP"
+.br
+.ti -1c
+.RI "int \fBinitialized\fP"
 .br
 .ti -1c
 .RI "int \fBCmpIdx\fP"
@@ -67,7 +70,7 @@ PAPI_component_info_t \-
 .RI "int \fBcomponent_type\fP"
 .br
 .ti -1c
-.RI "char * \fBpmu_names\fP [40]"
+.RI "char * \fBpmu_names\fP [80]"
 .br
 .ti -1c
 .RI "int \fBreserved\fP [8]"
@@ -115,9 +118,6 @@ PAPI_component_info_t \-
 .RI "unsigned int \fBreserved_bits\fP:12"
 .br
 .in -1c
-.SH "Detailed Description"
-.PP 
-
 .SH "Field Documentation"
 .PP 
 .SS "unsigned int PAPI_component_info_t::attach"
@@ -158,6 +158,8 @@ hw overflow intr, does not need to be emulated in software
 Signal used by hardware to deliver PMC events 
 .SS "unsigned int PAPI_component_info_t::inherit"
 Supports child processes inheriting parents counters 
+.SS "int PAPI_component_info_t::initialized"
+Component is ready to use 
 .SS "unsigned int PAPI_component_info_t::kernel_multiplex"
 In kernel multiplexing 
 .SS "unsigned int PAPI_component_info_t::kernel_profile"
@@ -174,21 +176,14 @@ Number of hardware counters the component or PAPI can multiplex supports
 Number of native events the component supports 
 .SS "int PAPI_component_info_t::num_preset_events"
 Number of preset events the component supports 
-.SS "char* PAPI_component_info_t::pmu_names[40]"
+.SS "char* PAPI_component_info_t::pmu_names[80]"
 list of pmu names supported by this component 
 .SS "unsigned int PAPI_component_info_t::posix1b_timers"
 Using POSIX 1b interval timers (timer_create) instead of setitimer 
 .SS "unsigned int PAPI_component_info_t::precise_intr"
 Performance interrupts happen precisely 
 .SS "char PAPI_component_info_t::short_name[64]"
-
-.PP
-.nf
-    Short name of component,
-
-.fi
-.PP
- to be prepended to event names 
+Short name of component, to be prepended to event names 
 .SS "char PAPI_component_info_t::support_version[64]"
 Version of the support library 
 .SS "char PAPI_component_info_t::version[64]"

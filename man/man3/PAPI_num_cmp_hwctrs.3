@@ -1,10 +1,8 @@
-.TH "PAPI_num_cmp_hwctrs" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_num_cmp_hwctrs" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_num_cmp_hwctrs \- 
-.PP
-Return the number of hardware counters for the specified component\&.  
+PAPI_num_cmp_hwctrs \- Return the number of hardware counters for the specified component\&.  
 
 .SH SYNOPSIS
 .br
@@ -21,10 +19,10 @@ On some components, especially for CPUs, the value returned is a theoretical max
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_num_cmp_hwctrs(int  cidx )\fP;
+int \fBPAPI_num_cmp_hwctrs(int  cidx )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcidx\fP -- An integer identifier for a component\&. By convention, component 0 is always the cpu component\&.
 .RE
@@ -34,15 +32,14 @@ On some components, especially for CPUs, the value returned is a theoretical max
 
 .PP
 .nf
-* // Query the cpu component for the number of counters\&.
-* printf(\"%d hardware counters found\&.\\n\", PAPI_num_cmp_hwctrs(0));
-* 
+// Query the cpu component for the number of counters\&.
+printf(\"%d hardware counters found\&.\\n\", PAPI_num_cmp_hwctrs(0));
 
 .fi
 .PP
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 On success, this function returns a value greater than zero\&.
 .br

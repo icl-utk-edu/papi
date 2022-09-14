@@ -1,14 +1,16 @@
-.TH "PAPI_addr_range_option_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_addr_range_option_t" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_addr_range_option_t \- 
-.PP
-address range specification for range restricted counting if both are zero, range is disabled  
+PAPI_addr_range_option_t \- address range specification for range restricted counting if both are zero, range is disabled 
+.br
+  
 
 .SH SYNOPSIS
 .br
 .PP
+.PP
+\fC#include <papi\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
@@ -16,10 +18,10 @@ address range specification for range restricted counting if both are zero, rang
 .RI "int \fBeventset\fP"
 .br
 .ti -1c
-.RI "caddr_t \fBstart\fP"
+.RI "vptr_t \fBstart\fP"
 .br
 .ti -1c
-.RI "caddr_t \fBend\fP"
+.RI "vptr_t \fBend\fP"
 .br
 .ti -1c
 .RI "int \fBstart_off\fP"
@@ -30,13 +32,13 @@ address range specification for range restricted counting if both are zero, rang
 .in -1c
 .SH "Field Documentation"
 .PP 
-.SS "caddr_t PAPI_addr_range_option_t::end"
+.SS "vptr_t PAPI_addr_range_option_t::end"
 user requested end address of an address range 
 .SS "int PAPI_addr_range_option_t::end_off"
 hardware specified offset from end address 
 .SS "int PAPI_addr_range_option_t::eventset"
 eventset to restrict 
-.SS "caddr_t PAPI_addr_range_option_t::start"
+.SS "vptr_t PAPI_addr_range_option_t::start"
 user requested start address of an address range 
 .SS "int PAPI_addr_range_option_t::start_off"
 hardware specified offset from start address 

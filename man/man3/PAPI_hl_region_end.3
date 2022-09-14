@@ -1,10 +1,8 @@
-.TH "PAPI_hl_region_end" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_region_end" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_hl_region_end \- 
-.PP
-Read performance events at the end of a region and store the difference to the corresponding beginning of the region\&.  
+PAPI_hl_region_end \- Read performance events at the end of a region and store the difference to the corresponding beginning of the region\&.  
 
 .SH SYNOPSIS
 .br
@@ -17,15 +15,15 @@ Read performance events at the end of a region and store the difference to the c
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_hl_region_end( const char* region )\fP;
+int \fBPAPI_hl_region_end( const char* region )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIregion\fP -- a unique region name corresponding to \fBPAPI_hl_region_begin\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -57,45 +55,41 @@ The generated measurement output can also be converted in a better readable outp
 .PP
 .PP
 .nf
-* int retval;
-*
-* retval = PAPI_hl_region_begin("computation");
-* if ( retval != PAPI_OK )
-*     handle_error(1);
-*
-*  //Do some computation here
-*
-* retval = PAPI_hl_region_end("computation");
-* if ( retval != PAPI_OK )
-*     handle_error(1);
-*
-* 
+int retval;
+
+retval = PAPI_hl_region_begin("computation");
+if ( retval != PAPI_OK )
+    handle_error(1);
+
+ //Do some computation here
+
+retval = PAPI_hl_region_end("computation");
+if ( retval != PAPI_OK )
+    handle_error(1);
 .fi
 .PP
 .PP
 .PP
 .nf
-* python papi_hl_output_writer\&.py --type=accumulate
-*
-* {
-*    "computation": {
-*       "Region count": 1,
-*       "Real time in s": 0\&.97 ,
-*       "CPU time in s": 0\&.98 ,
-*       "IPC": 1\&.41 ,
-*       "MFLIPS /s": 386\&.28 ,
-*       "MFLOPS /s": 386\&.28 ,
-*       "Number of ranks ": 1,
-*       "Number of threads ": 1,
-*       "Number of processes ": 1
-*    }
-* }
-*
-* 
+python papi_hl_output_writer\&.py --type=accumulate
+
+{
+   "computation": {
+      "Region count": 1,
+      "Real time in s": 0\&.97 ,
+      "CPU time in s": 0\&.98 ,
+      "IPC": 1\&.41 ,
+      "MFLIPS /s": 386\&.28 ,
+      "MFLOPS /s": 386\&.28 ,
+      "Number of ranks ": 1,
+      "Number of threads ": 1,
+      "Number of processes ": 1
+   }
+}
 .fi
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_hl_region_begin\fP 
 .PP

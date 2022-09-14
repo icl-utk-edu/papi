@@ -1,8 +1,8 @@
-.TH "value_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "value_t" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-value_t \- 
+value_t
 .SH SYNOPSIS
 .br
 .PP
@@ -10,10 +10,10 @@ value_t \-
 
 .in +1c
 .ti -1c
-.RI "long_long \fBoffset\fP"
+.RI "long_long \fBbegin\fP"
 .br
 .ti -1c
-.RI "long_long \fBtotal\fP"
+.RI "long_long \fBregion_value\fP"
 .br
 .ti -1c
 .RI "\fBreads_t\fP * \fBread_values\fP"
@@ -21,12 +21,12 @@ value_t \-
 .in -1c
 .SH "Field Documentation"
 .PP 
-.SS "long_long value_t::offset"
+.SS "long_long value_t::begin"
 Event value for region_begin 
 .SS "\fBreads_t\fP* value_t::read_values"
 List of read event values inside a region 
-.SS "long_long value_t::total"
-Event value for region_end - region_begin + previous value 
+.SS "long_long value_t::region_value"
+Delta value for region_end - region_begin 
 
 .SH "Author"
 .PP 

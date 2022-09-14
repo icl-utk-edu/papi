@@ -1,10 +1,8 @@
-.TH "PAPI_hl_region_begin" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_region_begin" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_hl_region_begin \- 
-.PP
-Read performance events at the beginning of a region\&.  
+PAPI_hl_region_begin \- Read performance events at the beginning of a region\&.  
 
 .SH SYNOPSIS
 .br
@@ -17,15 +15,15 @@ Read performance events at the beginning of a region\&.
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_hl_region_begin( const char* region )\fP;
+int \fBPAPI_hl_region_begin( const char* region )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIregion\fP -- a unique region name
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -47,31 +45,27 @@ Read performance events at the beginning of a region\&.
 .PP
 .PP
 .nf
-* export PAPI_EVENTS="PAPI_TOT_INS,PAPI_TOT_CYC"
-*
-* 
+export PAPI_EVENTS="PAPI_TOT_INS,PAPI_TOT_CYC"
 .fi
 .PP
 .PP
 .PP
 .nf
-* int retval;
-*
-* retval = PAPI_hl_region_begin("computation");
-* if ( retval != PAPI_OK )
-*     handle_error(1);
-*
-*  //Do some computation here
-*
-* retval = PAPI_hl_region_end("computation");
-* if ( retval != PAPI_OK )
-*     handle_error(1);
-*
-* 
+int retval;
+
+retval = PAPI_hl_region_begin("computation");
+if ( retval != PAPI_OK )
+    handle_error(1);
+
+ //Do some computation here
+
+retval = PAPI_hl_region_end("computation");
+if ( retval != PAPI_OK )
+    handle_error(1);
 .fi
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_hl_read\fP 
 .PP
