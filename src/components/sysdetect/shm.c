@@ -60,7 +60,7 @@ shm_init( char *status )
     MPI_CALL((*MPI_InitializedPtr)(&mpi_initialized), );
     if (!mpi_initialized) {
         const char *message = "MPI not initialized";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -237,7 +237,7 @@ load_mpi_sym( char *status )
 
     if (!mpi_is_enabled()) {
         const char *message = "dlsym() of MPI symbols failed";
-        int count = snprintf(status, strlen(message) + 1, message);
+        int count = snprintf(status, strlen(message) + 1, "%s", message);
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
@@ -295,7 +295,7 @@ int
 shm_init( char *status )
 {
     const char *message = "MPI not configured";
-    int count = snprintf(status, strlen(message) + 1, message);
+    int count = snprintf(status, strlen(message) + 1, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Status string truncated.");
     }
