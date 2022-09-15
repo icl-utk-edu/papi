@@ -195,7 +195,7 @@ static int _local_linkDynamicLibraries()
 
     // Check for failure.
     if (dl1 == NULL) {
-        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libmsr.so not found.");
+        int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", dlerror());
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
