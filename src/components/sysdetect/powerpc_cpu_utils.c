@@ -115,6 +115,30 @@ _sysdetect_cache_level_info_t power8_cache_info[] = {
     },
 };
 
+_sysdetect_cache_level_info_t power9_cache_info[] = {
+    { // level 1 begins
+        2,
+        {
+            {PAPI_MH_TYPE_INST, 32768, 128, 64, 8},
+            {PAPI_MH_TYPE_DATA, 32768, 128, 64, 8}
+        }
+    },
+    { // level 2 begins
+        1,
+        {
+            {PAPI_MH_TYPE_UNIFIED, 524288, 128, 4096, 8},
+            {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+    },
+    { // level 3 begins
+        1,
+        {
+            {PAPI_MH_TYPE_UNIFIED, 10485760, 128, 81920, 20},
+            {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+    },
+};
+
 #define SPRN_PVR            0x11F /* Processor Version Register */
 #define PVR_PROCESSOR_SHIFT 16
 
@@ -213,8 +237,10 @@ get_cache_info( CPU_attr_e attr, int level, int *value )
             clevel_ptr = power7_cache_info;
             break;
         case 0x4b:               /* POWER8 */
-        case 0x4e:               /* POWER9 */
             clevel_ptr = power8_cache_info;
+            break;
+        case 0x4e:               /* POWER9 */
+            clevel_ptr = power9_cache_info;
             break;
         default:
             return CPU_ERROR;
