@@ -1027,9 +1027,11 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 
 	int type=0,level,result;
 	int size,line_size,associativity,sets;
+	int write_policy,allocation_policy;
 	DIR *dir;
 	FILE *fff;
 	char filename[BUFSIZ],type_string[BUFSIZ];
+	char write_policy_string[BUFSIZ],allocation_policy_string[BUFSIZ];
 	struct dirent *d;
 	int max_level=0;
 	int level_count,level_index;
@@ -1120,7 +1122,62 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 		if (!strcmp(type_string,"Unified")) {
 			type=PAPI_MH_TYPE_UNIFIED;
 		}
-		L[level_index].cache[level_count].type=type;
+
+		/********************/
+		/* Get write_policy */
+		/********************/
+		write_policy=0;
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/write_policy",d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open write_policy\n");
+			goto get_allocation_policy;
+		}
+		result=fscanf(fff,"%s",write_policy_string);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache write_policy\n");
+			goto get_allocation_policy;
+		}
+		if (!strcmp(write_policy_string,"WriteThrough")) {
+			write_policy=PAPI_MH_TYPE_WT;
+		}
+		if (!strcmp(write_policy_string,"WriteBack")) {
+			write_policy=PAPI_MH_TYPE_WB;
+		}
+
+get_allocation_policy:
+
+		/*************************/
+		/* Get allocation_policy */
+		/*************************/
+		allocation_policy=0;
+		sprintf(filename,
+			"/sys/devices/system/cpu/cpu0/cache/%s/allocation_policy",d->d_name);
+		fff=fopen(filename,"r");
+		if (fff==NULL) {
+			MEMDBG("Cannot open allocation_policy\n");
+			goto get_size;
+		}
+		result=fscanf(fff,"%s",allocation_policy_string);
+		fclose(fff);
+		if (result!=1) {
+			MEMDBG("Could not read cache allocation_policy\n");
+			goto get_size;
+		}
+		if (!strcmp(allocation_policy_string,"ReadAllocate")) {
+			allocation_policy=PAPI_MH_TYPE_RD_ALLOC;
+		}
+		if (!strcmp(allocation_policy_string,"WriteAllocate")) {
+			allocation_policy=PAPI_MH_TYPE_WR_ALLOC;
+		}
+		if (!strcmp(allocation_policy_string,"ReadWriteAllocate")) {
+			allocation_policy=PAPI_MH_TYPE_RW_ALLOC;
+		}
+
+get_size:
+		L[level_index].cache[level_count].type=type | write_policy | allocation_policy;
 
 		/*************/
 		/* Get Size  */
