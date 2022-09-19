@@ -13,19 +13,23 @@ static void  test_hp_VEC( int instr_per_loop, uint64 iterations, int EventSet, F
 
 /* Wrapper functions of different vector widths. */
 #if defined(VEC_WIDTH_128)
-void test_hp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+void test_hp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(VEC_WIDTH_512)
-void test_hp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+void test_hp_x86_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(VEC_WIDTH_256)
-void test_hp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+void test_hp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
-#else
-void test_hp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+#elif defined(ARM)
+void test_hp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
+}
+#elif defined(IBM)
+void test_hp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
 #endif

@@ -41,106 +41,134 @@ void vec_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
 #if defined(INTEL) || defined(AMD)
 
     // Non-FMA instruction trials.
-    test_hp_128B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_hp_128B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_hp_128B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_hp_256B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_hp_256B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_hp_256B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_hp_512B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_hp_512B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_hp_512B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_sp_128B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_sp_128B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_sp_128B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_sp_256B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_sp_256B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_sp_256B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_sp_512B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_sp_512B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_sp_512B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_dp_128B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_dp_128B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_dp_128B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_dp_256B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_dp_256B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_dp_256B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_dp_512B_VEC( 24, 1000, EventSet, ofp_papi );
-    test_dp_512B_VEC( 48, 1000, EventSet, ofp_papi );
-    test_dp_512B_VEC( 96, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC( 96, 1000, EventSet, ofp_papi );
 
     // FMA instruction trials.
-    test_hp_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_hp_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_hp_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_hp_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_hp_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_hp_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_hp_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_hp_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_hp_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_x86_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_sp_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_sp_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_sp_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_sp_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_sp_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_sp_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_sp_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_sp_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_sp_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_x86_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_dp_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_dp_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_dp_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_128B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_dp_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_dp_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_dp_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_256B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_dp_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_dp_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_dp_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_x86_512B_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-#else
+#elif defined(ARM)
 
     // Non-FMA instruction trials.
-    test_hp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
-    test_hp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
-    test_hp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_sp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
-    test_sp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
-    test_sp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC( 96, 1000, EventSet, ofp_papi );
 
-    test_dp_non_x86_VEC( 24, 1000, EventSet, ofp_papi );
-    test_dp_non_x86_VEC( 48, 1000, EventSet, ofp_papi );
-    test_dp_non_x86_VEC( 96, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC( 96, 1000, EventSet, ofp_papi );
 
     // FMA instruction trials.
-    test_hp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_hp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_hp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_arm_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_sp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_sp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_sp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_arm_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-    test_dp_non_x86_VEC_FMA( 12, 1000, EventSet, ofp_papi );
-    test_dp_non_x86_VEC_FMA( 24, 1000, EventSet, ofp_papi );
-    test_dp_non_x86_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_arm_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+
+#elif defined(IBM)
+
+    // Non-FMA instruction trials.
+    test_hp_power_VEC( 24, 1000, EventSet, ofp_papi );
+    test_hp_power_VEC( 48, 1000, EventSet, ofp_papi );
+    test_hp_power_VEC( 96, 1000, EventSet, ofp_papi );
+
+    test_sp_power_VEC( 24, 1000, EventSet, ofp_papi );
+    test_sp_power_VEC( 48, 1000, EventSet, ofp_papi );
+    test_sp_power_VEC( 96, 1000, EventSet, ofp_papi );
+
+    test_dp_power_VEC( 24, 1000, EventSet, ofp_papi );
+    test_dp_power_VEC( 48, 1000, EventSet, ofp_papi );
+    test_dp_power_VEC( 96, 1000, EventSet, ofp_papi );
+
+    // FMA instruction trials.
+    test_hp_power_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_hp_power_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_hp_power_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+
+    test_sp_power_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_sp_power_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_sp_power_VEC_FMA( 48, 1000, EventSet, ofp_papi );
+
+    test_dp_power_VEC_FMA( 12, 1000, EventSet, ofp_papi );
+    test_dp_power_VEC_FMA( 24, 1000, EventSet, ofp_papi );
+    test_dp_power_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
 #endif
 

@@ -3,29 +3,29 @@
 typedef unsigned long long uint64;
 
 #if defined(INTEL) || defined(AMD)
-void test_hp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-void test_hp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-void test_hp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-void test_hp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-void test_hp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
-void test_hp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_sp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void test_dp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_hp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_sp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void test_dp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
 #include <immintrin.h>
 
@@ -86,12 +86,12 @@ typedef __m256d DP_VEC_TYPE;
 #endif
 
 #elif defined(ARM)
-void  test_hp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_sp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_dp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_hp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_sp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_dp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_hp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_sp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_dp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_hp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_sp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_dp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
 #include <arm_neon.h>
 
@@ -135,12 +135,12 @@ typedef float64x2_t DP_VEC_TYPE;
 #define FMA_VEC_PD(_I_,_J_,_K_) (float64x2_t)vfmaq_f64( _K_ , _J_ , _I_ );
 
 #elif defined(IBM)
-void  test_hp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_sp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_dp_non_x86_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_hp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_sp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
-void  test_dp_non_x86_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_hp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_sp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_dp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_hp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_sp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+void  test_dp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
 #include <altivec.h>
 
