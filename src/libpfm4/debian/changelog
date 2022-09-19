@@ -4,6 +4,29 @@ libpfm4 (11.1) unstable; urgency=low
 
  -- Stephane Eranian <eranian@gmail.com>  Wed, 23 Sep  2020 12:00:01 +0200
 
+libpfm4 (12.0) unstable; urgency=low
+  * Add IBM Power10 core PMU support
+  * Add Intel IcelakeX core PMU support
+  * Add Intel SapphireRapid core PMU support
+  * Add Intel SapphireRapid RAPL PMU support
+  * Update Intel Icelake RAPL PMU support
+  * Add support HiSilicon Kunpeng uncore PMUs
+  * Add support HiSilicon Kunpeng core PMU
+  * Remove arm_fujitsu_a64fx_support for ARM(32 bit)
+  * Update Intel Skylake event table
+  * Add Intel PERF_METRICS event support for Icelake
+  * Add support for ARM Neoverse N2 core PMU
+  * Add ARM SPE events for Neoverse N1 core PMU
+  * Add cgroup-switches software event
+  * Add Intel Tigerlake and Rocketlake core PMU support
+  * Add AMD64 Fam19h Zen3 L3 PMU support
+  * Add AMD64 Fam17h Zen2 RAPL support
+  * Add AMD64 Fam19h Zen3 core PMU support
+  * Add RAPL for AMD64 Fam19h Zen3 processor
+  * Update ARM N1 event table
+  * Update AMD Fam17h Zen2 event table
+  * s390: Update counter definition for IBM z16
+
 libpfm4 (11.0) unstable; urgency=low
   * Cavium TX2 core updates
   * Cavium TX2 uncore core

@@ -110,8 +110,8 @@ endif
 # Library version
 #
 VERSION=4
-REVISION=11
-AGE=1
+REVISION=12
+AGE=0
 
 #
 # Where should things (lib, headers, man) go in the end.
