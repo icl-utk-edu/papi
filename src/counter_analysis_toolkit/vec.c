@@ -38,7 +38,7 @@ void vec_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
         goto error1;
     }
 
-#if defined(INTEL) || defined(AMD)
+#if defined(X86)
 
     // Non-FMA instruction trials.
     test_hp_x86_128B_VEC( 24, 1000, EventSet, ofp_papi );

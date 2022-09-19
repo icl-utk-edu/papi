@@ -2,7 +2,7 @@
 
 typedef unsigned long long uint64;
 
-#if defined(INTEL) || defined(AMD)
+#if defined(X86)
 void test_hp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 void test_sp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 void test_dp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );

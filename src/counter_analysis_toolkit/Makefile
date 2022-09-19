@@ -1,4 +1,4 @@
-ARCH?=INTEL
+ARCH?=X86
 PAPIDIR?=${HOME}/usr
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
@@ -16,23 +16,17 @@ ifeq ($(USEMPI),true)
 endif
 
 ## Architecture determines vector instruction set.
-ifeq ($(ARCH),INTEL)
+ifeq ($(ARCH),X86)
     VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
-    VEC128=-mavx -O0 -DINTEL -DVEC_WIDTH_128
-    VEC256=-mavx -O0 -DINTEL -DVEC_WIDTH_256
-    VEC512=-mavx512f -O0 -DINTEL -DVEC_WIDTH_512
-    VEC128_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_128
-    VEC256_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_256
-    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DINTEL -DVEC_WIDTH_512
-    VEC=-mavx -O0 -DINTEL
-    VEC_FMA=-mfma4 -mfma -O0 -DINTEL
-    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DINTEL
-endif
-ifeq ($(ARCH),AMD)
-    VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
-    VEC=-mavx -O0 -DAMD
-    VEC_FMA=-mfma4 -mfma -O0 -DAMD
-    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DAMD
+    VEC128=-mavx -O0 -DX86 -DVEC_WIDTH_128
+    VEC256=-mavx -O0 -DX86 -DVEC_WIDTH_256
+    VEC512=-mavx512f -O0 -DX86 -DVEC_WIDTH_512
+    VEC128_FMA=-mfma4 -mfma -O0 -DX86 -DVEC_WIDTH_128
+    VEC256_FMA=-mfma4 -mfma -O0 -DX86 -DVEC_WIDTH_256
+    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 -DVEC_WIDTH_512
+    VEC=-mavx -O0 -DX86
+    VEC_FMA=-mfma4 -mfma -O0 -DX86
+    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
 endif
 ifeq ($(ARCH),IBM)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
