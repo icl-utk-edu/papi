@@ -33,6 +33,11 @@ int build_stock(evstock* stock)
         if( strcmp(cmp_info->name, _PAPI_CPU_COMPONENT_NAME) )
             continue;
 
+        if (cmp_info->disabled == PAPI_EDELAY_INIT) {
+            int nvt_code = 0 | PAPI_NATIVE_MASK;
+            PAPI_enum_cmp_event(&nvt_code, PAPI_ENUM_FIRST, cid);
+        }
+
         tmp_event_count = cmp_info->num_native_events;
 
         // Set the data stock's sizes all to zero.
