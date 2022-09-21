@@ -27,7 +27,7 @@
 #define NAMEID_APM_XGENE          0x000
 #define NAMEID_QUALCOMM_KRAIT     0x040
 
-PAPI_cache_level_info_t fujitsu_a64fx_cache_info[] = {
+_sysdetect_cache_level_info_t fujitsu_a64fx_cache_info[] = {
     { // level 1 begins
         2,
         {
@@ -358,7 +358,7 @@ get_cache_info( CPU_attr_e attr, int level, int *value )
 {
     int impl, part;
     unsigned int implementer, partnum;
-    static PAPI_cache_level_info_t *clevel_ptr;
+    static _sysdetect_cache_level_info_t *clevel_ptr;
 
     int status;
     status = arm_cpu_get_attribute(CPU_ATTR__VENDOR_ID, &impl);
