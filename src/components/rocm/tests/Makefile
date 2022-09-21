@@ -1,5 +1,6 @@
 NAME = rocm
 include ../../Makefile_comp_tests.target
+PAPI_ROCM_ROOT ?= /opt/rocm
 
 CC       = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CXX      = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
