@@ -5282,16 +5282,24 @@ fi
                  if test "x$tls" = "x__thread"; then
                    # On some linux distributions, TLS works in executables, but linking against
                    # a shared library containing TLS fails with: undefined reference to `__tls_get_addr'
-                   rm -f conftest.c conftest.so conftest
-                   echo "static __thread int foo; void main () { foo = 5; }" > conftest.c
-                   gcc -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
-                   gcc -o conftest conftest.so > /dev/null 2>&1
-                     if test ! -f conftest; then
-                       { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling usage of __thread." >&5
-$as_echo "$as_me: WARNING: Disabling usage of __thread." >&2;};
-                       tls="no"
-                     fi
-                   rm -f conftest.c conftest.so conftest
+                   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+                                                    static __thread int foo;
+                                                    void main() {
+                                                        foo = 5;
+                                                    }
+
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+else
+  tls="no" ; { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling usage of __thread" >&5
+$as_echo "$as_me: WARNING: Disabling usage of __thread" >&2;}
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
                  fi
                fi
 fi
