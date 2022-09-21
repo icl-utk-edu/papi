@@ -48,7 +48,7 @@
 extern volatile int result;
 extern volatile unsigned int b, z1, z2, z3, z4;
 
-void branch_driver(char *papi_event_name, int init, hw_desc_t *hw_desc, char* outdir);
+void branch_driver(char *papi_event_name, int junk, hw_desc_t *hw_desc, char* outdir);
 long long int branch_char_b1(int size, int papi_eventset);
 long long int branch_char_b2(int size, int papi_eventset);
 long long int branch_char_b3(int size, int papi_eventset);

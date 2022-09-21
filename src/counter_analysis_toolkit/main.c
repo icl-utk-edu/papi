@@ -12,12 +12,11 @@
 int main(int argc, char*argv[])
 {
     int cmbtotal = 0, ct = 0, track = 0, ret = 0;
-    int bench_type = 0;
-    int mode = 0, pk = 0, max_iter = 1, i = 0, nevts = 0, show_progress = 0, status;
+    int i, nevts = 0, status;
     int *cards = NULL, *indexmemo = NULL;
-    char *infile = NULL, *outdir = NULL;
     char **allevts = NULL, **basenames = NULL;
     evstock *data = NULL;
+    cat_params_t params = {-1,0,1,0,0,0,NULL,NULL};
 
     // Initialize PAPI.
     ret = PAPI_library_init(PAPI_VER_CURRENT);
@@ -36,10 +35,10 @@ int main(int argc, char*argv[])
     }
 
     // Parse the command-line arguments.
-    status = parseArgs(argc, argv, &pk, &mode, &max_iter, &infile, &outdir, &bench_type, &show_progress );
+    status = parseArgs(argc, argv, &params);
     if(0 != status)
     {
-        free(outdir);
+        free(params.outputdir);
         PAPI_shutdown();
         return 0;
     }
@@ -48,19 +47,19 @@ int main(int argc, char*argv[])
     data = (evstock*)calloc(1,sizeof(evstock));
     if(NULL == data)
     {
-        free(outdir);
+        free(params.outputdir);
         fprintf(stderr, "Could not initialize event stock. Exiting...\n");
         PAPI_shutdown();
         return 0;
     }
 
     // Read the list of base event names and maximum qualifier set cardinalities.
-    if( READ_FROM_FILE == mode)
+    if( READ_FROM_FILE == params.mode)
     {
-        ct = setup_evts(infile, &basenames, &cards);
+        ct = setup_evts(params.inputfile, &basenames, &cards);
         if(ct == -1)
         {
-            free(outdir);
+            free(params.outputdir);
             remove_stock(data);
             PAPI_shutdown();
             return 0;
@@ -71,9 +70,9 @@ int main(int argc, char*argv[])
     status = build_stock(data);
     if(status)
     {
-        free(outdir);
+        free(params.outputdir);
         remove_stock(data);
-        if(READ_FROM_FILE == mode)
+        if(READ_FROM_FILE == params.mode)
         {
             for(i = 0; i < ct; ++i)
             {
@@ -91,12 +90,12 @@ int main(int argc, char*argv[])
     nevts = num_evts(data);
 
     // Verify the validity of the cardinalities.
-    cmbtotal = check_cards(mode, &indexmemo, basenames, cards, ct, nevts, pk, data);
+    cmbtotal = check_cards(params, &indexmemo, basenames, cards, ct, nevts, data);
     if(-1 == cmbtotal)
     {
-        free(outdir);
+        free(params.outputdir);
         remove_stock(data);
-        if(READ_FROM_FILE == mode)
+        if(READ_FROM_FILE == params.mode)
         {
             for(i = 0; i < ct; ++i)
             {
@@ -117,18 +116,18 @@ int main(int argc, char*argv[])
     }
 
     // Create the qualifier combinations for each event.
-    trav_evts(data, pk, cards, nevts, ct, mode, allevts, &track, indexmemo, basenames);
+    trav_evts(data, params.subsetsize, cards, nevts, ct, params.mode, allevts, &track, indexmemo, basenames);
 
     char *conf_file_name = ".cat_cfg";
     hw_desc_t *hw_desc = obtain_hardware_description(conf_file_name);
 
     // Run the benchmark for each qualifier combination.
-    testbench(allevts, cmbtotal, hw_desc, max_iter, argc, outdir, bench_type, show_progress);
+    testbench(allevts, cmbtotal, hw_desc, params);
 
     // Free dynamically allocated memory.
-    free(outdir);
+    free(params.outputdir);
     remove_stock(data);
-    if(READ_FROM_FILE == mode)
+    if(READ_FROM_FILE == params.mode)
     {
         for(i = 0; i < ct; ++i)
         {
@@ -153,10 +152,12 @@ unsigned long int omp_get_thread_num_wrapper() {
 }
 
 // Verify that valid qualifier counts are provided and count their combinations.
-int check_cards(int mode, int** indexmemo, char** basenames, int* cards, int ct, int nevts, int pk, evstock* data)
+int check_cards(cat_params_t params, int** indexmemo, char** basenames, int* cards, int ct, int nevts, evstock* data)
 {
     int i, j, minim, n, cmbtotal = 0;
     char *name;
+    int mode = params.mode;
+    int pk = params.subsetsize;
 
     // User provided a file of events.
     if(READ_FROM_FILE == mode)
@@ -723,9 +724,10 @@ int comb(int n, int k)
 
 // Measures the read latencies of the data cache. This information is
 // useful for analyzing data cache-related event signatures.
-void get_dcache_latencies(int max_iter, hw_desc_t *hw_desc, char *outputdir){
+void get_dcache_latencies(hw_desc_t *hw_desc, cat_params_t params){
     FILE *ofp;
     int stride, ppb;
+    char *outputdir = params.outputdir;
 
     // Make sure the output files could be opened.
     int l = strlen(outputdir)+strlen("latencies.txt");
@@ -752,11 +754,11 @@ void get_dcache_latencies(int max_iter, hw_desc_t *hw_desc, char *outputdir){
 
     // Get the latencies from a custom set of parameters.
     print_core_affinities(ofp);
-    d_cache_test(3, max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
+    d_cache_test(3, params.max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
     fclose(ofp);
 
     // Get latencies for all parameter combinations.
-    d_cache_driver("cat::latencies", max_iter, hw_desc, outputdir, 1, 0, 0);
+    d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
 
     return;
 }
@@ -781,9 +783,10 @@ static void print_progress2(int prg)
     fflush(stdout);
 }
 
-void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, int max_iter, int init, char* outputdir, int bench_type, int show_progress )
+void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t params)
 {
     int i;
+    int junk=((int)getpid()+123)/456;
 
     // Make sure the user provided events and iterate through all events.
     if( 0 == cmbtotal )
@@ -793,127 +796,126 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, int max_iter, i
     }
 
     // Run the branch benchmark by default if none are specified.
-    if( 0 == bench_type )
+    if( 0 == params.bench_type )
     {
-        bench_type |= BENCH_BRANCH;
+        params.bench_type |= BENCH_BRANCH;
         fprintf(stderr, "Warning: No benchmark specified. Running 'branch' by default.\n");
     }
 
     /* Benchmark I - Branch*/
-    if( bench_type & BENCH_BRANCH )
+    if( params.bench_type & BENCH_BRANCH )
     {
-        if(show_progress) printf("Branch Benchmarks: ");
+        if(params.show_progress) printf("Branch Benchmarks: ");
 
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress((100*i)/cmbtotal);
+            if(params.show_progress) print_progress((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                branch_driver(allevts[i], init, hw_desc, outputdir);
+                branch_driver(allevts[i], junk, hw_desc, params.outputdir);
         }
-        if(show_progress) print_progress(100);
+        if(params.show_progress) print_progress(100);
     }
 
     /* Benchmark II - Data Cache Reads*/
-    if( bench_type & BENCH_DCACHE_READ )
+    if( params.bench_type & BENCH_DCACHE_READ )
     {
-        if(show_progress)
+        if(params.show_progress)
         {
-            printf("D-Cache Latencies: 0%%\b\b");
+            printf("D-Cache Latencies:  0%%\b\b\b\b");
             fflush(stdout);
         }
-        get_dcache_latencies(max_iter, hw_desc, outputdir);
-        if(show_progress) printf("100%%\n");
+        get_dcache_latencies(hw_desc, params);
+        if(params.show_progress) printf("100%%\n");
 
-        if(show_progress) printf("D-Cache Read Benchmarks: ");
+        if(params.show_progress) printf("D-Cache Read Benchmarks: ");
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress2((100*i)/cmbtotal);
+            if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, hw_desc, outputdir, 0, 0, show_progress);
+                d_cache_driver(allevts[i], params, hw_desc, 0, 0);
             }
         }
-        if(show_progress) print_progress2(100);
+        if(params.show_progress) print_progress2(100);
     }
 
     /* Benchmark III - Data Cache Writes*/
-    if( bench_type & BENCH_DCACHE_WRITE )
+    if( params.bench_type & BENCH_DCACHE_WRITE )
     {
         // If the READ benchmark was run, do not recompute the latencies.
-        if ( !(bench_type & BENCH_DCACHE_READ) )
+        if ( !(params.bench_type & BENCH_DCACHE_READ) )
         {
-            if(show_progress)
+            if(params.show_progress)
             {
-                printf("D-Cache Latencies: 0%%\b\b");
+                printf("D-Cache Latencies:  0%%\b\b\b\b");
                 fflush(stdout);
             }
-            get_dcache_latencies(max_iter, hw_desc, outputdir);
-            if(show_progress) printf("100%%\n");
+            get_dcache_latencies(hw_desc, params);
+            if(params.show_progress) printf("100%%\n");
         }
 
-        if(show_progress) printf("D-Cache Write Benchmarks: ");
+        if(params.show_progress) printf("D-Cache Write Benchmarks: ");
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress2((100*i)/cmbtotal);
+            if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL ) {
-                d_cache_driver(allevts[i], max_iter, hw_desc, outputdir, 0, 1, show_progress);
+                d_cache_driver(allevts[i], params, hw_desc, 0, 1);
             }
         }
-        if(show_progress) print_progress2(100);
+        if(params.show_progress) print_progress2(100);
     }
 
     /* Benchmark IV - FLOPS*/
-    if( bench_type & BENCH_FLOPS )
+    if( params.bench_type & BENCH_FLOPS )
     {
-        if(show_progress) printf("FLOP Benchmarks: ");
+        if(params.show_progress) printf("FLOP Benchmarks: ");
 
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress((100*i)/cmbtotal);
+            if(params.show_progress) print_progress((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                flops_driver(allevts[i], hw_desc, outputdir);
+                flops_driver(allevts[i], hw_desc, params.outputdir);
         }
-        if(show_progress) print_progress(100);
+        if(params.show_progress) print_progress(100);
     }
 
     /* Benchmark V - Instruction Cache*/
-    if( bench_type & BENCH_ICACHE_READ )
+    if( params.bench_type & BENCH_ICACHE_READ )
     {
-        if(show_progress) printf("I-Cache Benchmarks: ");
+        if(params.show_progress) printf("I-Cache Benchmarks: ");
 
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress2((100*i)/cmbtotal);
+            if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                i_cache_driver(allevts[i], init, hw_desc, outputdir, show_progress);
+                i_cache_driver(allevts[i], junk, hw_desc, params.outputdir, params.show_progress);
         }
-        if(show_progress) print_progress2(100);
+        if(params.show_progress) print_progress2(100);
     }
 
     /* Benchmark VI - Vector FLOPS*/
-    if( bench_type & BENCH_VEC )
+    if( params.bench_type & BENCH_VEC )
     {
-        if(show_progress) printf("Vector FLOP Benchmarks: ");
+        if(params.show_progress) printf("Vector FLOP Benchmarks: ");
 
         for(i = 0; i < cmbtotal; ++i)
         {
-            if(show_progress) print_progress((100*i)/cmbtotal);
+            if(params.show_progress) print_progress((100*i)/cmbtotal);
 
             if( allevts[i] != NULL )
-                vec_driver(allevts[i], hw_desc, outputdir);
+                vec_driver(allevts[i], hw_desc, params.outputdir);
         }
-        if(show_progress) print_progress(100);
+        if(params.show_progress) print_progress(100);
     }
 
     return;
 }
 
-int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, char **inputfile, char **outputdir, int *bench_type, int *show_progress){
-
+int parseArgs(int argc, char **argv, cat_params_t *params){
     char *name = argv[0];
     char *tmp = NULL;
     int dirlen = 0;
@@ -922,8 +924,7 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     FILE *test = NULL;
     int len, status = 0;
 
-    *subsetsize = -1;
-    *show_progress=0;
+    params->subsetsize = -1;
 
     // Parse the command line arguments
     while(--argc){
@@ -933,27 +934,27 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
             return -1;
         }
         if( argc > 1 && !strcmp(argv[0],"-k") ){
-            *subsetsize = atoi(argv[1]);
-            if( *subsetsize < 0 )
+            params->subsetsize = atoi(argv[1]);
+            if( params->subsetsize < 0 )
             {
-                *subsetsize = 0;
+                params->subsetsize = 0;
                 fprintf(stderr, "Warning: Cannot pass a negative value to -k.\n");
             }
-            *mode = USE_ALL_EVENTS;
+            params->mode = USE_ALL_EVENTS;
             kflag = 1;
             --argc;
             ++argv;
             continue;
         }
         if( argc > 1 && !strcmp(argv[0],"-n") ){
-            *numit = atoi(argv[1]);
+            params->max_iter = atoi(argv[1]);
             --argc;
             ++argv;
             continue;
         }
         if( argc > 1 && !strcmp(argv[0],"-in") ){
-            *inputfile = argv[1];
-            *mode = READ_FROM_FILE;
+            params->inputfile = argv[1];
+            params->mode = READ_FROM_FILE;
             inflag = 1;
             --argc;
             ++argv;
@@ -966,31 +967,31 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
             continue;
         }
         if( !strcmp(argv[0],"-verbose") ){
-            *show_progress=1;
+            params->show_progress = 1;
             continue;
         }
         if( !strcmp(argv[0],"-branch") ){
-            *bench_type |= BENCH_BRANCH;
+            params->bench_type |= BENCH_BRANCH;
             continue;
         }
         if( !strcmp(argv[0],"-dcr") ){
-            *bench_type |= BENCH_DCACHE_READ;
+            params->bench_type |= BENCH_DCACHE_READ;
             continue;
         }
         if( !strcmp(argv[0],"-dcw") ){
-            *bench_type |= BENCH_DCACHE_WRITE;
+            params->bench_type |= BENCH_DCACHE_WRITE;
             continue;
         }
         if( !strcmp(argv[0],"-flops") ){
-            *bench_type |= BENCH_FLOPS;
+            params->bench_type |= BENCH_FLOPS;
             continue;
         }
         if( !strcmp(argv[0],"-ic") ){
-            *bench_type |= BENCH_ICACHE_READ;
+            params->bench_type |= BENCH_ICACHE_READ;
             continue;
         }
         if( !strcmp(argv[0],"-vec") ){
-            *bench_type |= BENCH_VEC;
+            params->bench_type |= BENCH_VEC;
             continue;
         }
 
@@ -999,12 +1000,12 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     }
 
     // MODE INFO: mode 1 uses file; mode 2 uses all native events.
-    if(*mode == 1)
+    if(READ_FROM_FILE == params->mode)
     {
-        test = fopen(*inputfile, "r");
+        test = fopen(params->inputfile, "r");
         if(test == NULL)
         {
-            fprintf(stderr, "Could not open %s. Exiting...\n", *inputfile);
+            fprintf(stderr, "Could not open %s. Exiting...\n", params->inputfile);
             return -1;
         }
         fclose(test);
@@ -1017,7 +1018,7 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
         return -1;
     }
 
-    // Make sure user specifies mode implicitly.
+    // Make sure user specifies mode explicitly.
     if(kflag == 0 && inflag == 0)
     {
         print_usage(name);
@@ -1033,14 +1034,14 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
 
     // Write output files in the user-specified directory.
     dirlen = strlen(tmp);
-    *outputdir = (char*)malloc((2+dirlen)*sizeof(char));
+    params->outputdir = (char*)malloc((2+dirlen)*sizeof(char));
 
-    if (NULL == outputdir) {
+    if (NULL == params->outputdir) {
         fprintf(stderr, "Failed to allocate memory.\n");
         return -1;
     }
 
-    len = snprintf( *outputdir, 2+dirlen, "%s/", tmp);
+    len = snprintf( params->outputdir, 2+dirlen, "%s/", tmp);
     if( len < 1+dirlen )
     {
         fprintf(stderr, "Problem with output directory name.\n");
@@ -1048,7 +1049,7 @@ int parseArgs(int argc, char **argv, int *subsetsize, int *mode, int *numit, cha
     }
 
     // Make sure files can be written to the provided path.
-    status = access(*outputdir, W_OK);
+    status = access(params->outputdir, W_OK);
     if(status != 0)
     {
         fprintf(stderr, "Permission to write files to \"%s\" denied. Make sure the path exists and is writable.\n", tmp);
