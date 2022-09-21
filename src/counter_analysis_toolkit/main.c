@@ -820,13 +820,16 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark II - Data Cache Reads*/
     if( params.bench_type & BENCH_DCACHE_READ )
     {
-        if(params.show_progress)
+        if ( !params.quick )
         {
-            printf("D-Cache Latencies:  0%%\b\b\b\b");
-            fflush(stdout);
+            if(params.show_progress)
+            {
+                printf("D-Cache Latencies:  0%%\b\b\b\b");
+                fflush(stdout);
+            }
+            get_dcache_latencies(hw_desc, params);
+            if(params.show_progress) printf("100%%\n");
         }
-        get_dcache_latencies(hw_desc, params);
-        if(params.show_progress) printf("100%%\n");
 
         if(params.show_progress) printf("D-Cache Read Benchmarks: ");
         for(i = 0; i < cmbtotal; ++i)
@@ -844,7 +847,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     if( params.bench_type & BENCH_DCACHE_WRITE )
     {
         // If the READ benchmark was run, do not recompute the latencies.
-        if ( !(params.bench_type & BENCH_DCACHE_READ) )
+        if ( !(params.bench_type & BENCH_DCACHE_READ) && !params.quick)
         {
             if(params.show_progress)
             {
@@ -968,6 +971,10 @@ int parseArgs(int argc, char **argv, cat_params_t *params){
         }
         if( !strcmp(argv[0],"-verbose") ){
             params->show_progress = 1;
+            continue;
+        }
+        if( !strcmp(argv[0],"-quick") ){
+            params->quick = 1;
             continue;
         }
         if( !strcmp(argv[0],"-branch") ){
