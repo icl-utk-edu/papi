@@ -25,7 +25,6 @@ void combine_qualifiers(int n, int pk, int ct, char** list, char* name, char** a
 void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, int mode, char** allevts, int* track, int* indexmemo, char** basenames);
 int perm(int n, int k);
 int comb(int n, int k);
-void get_dcache_latencies(hw_desc_t *hw_desc, cat_params_t params);
 void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t params);
 void print_usage();
 static int parse_line(FILE *input, char **key, int *value);

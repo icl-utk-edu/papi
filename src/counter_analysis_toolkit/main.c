@@ -722,47 +722,6 @@ int comb(int n, int k)
     return perm(n, k)/perm(k, k);
 }
 
-// Measures the read latencies of the data cache. This information is
-// useful for analyzing data cache-related event signatures.
-void get_dcache_latencies(hw_desc_t *hw_desc, cat_params_t params){
-    FILE *ofp;
-    int stride, ppb;
-    char *outputdir = params.outputdir;
-
-    // Make sure the output files could be opened.
-    int l = strlen(outputdir)+strlen("latencies.txt");
-    char *latencyFileName = (char *)calloc( 1+l, sizeof(char) );
-    if (!latencyFileName) {
-        fprintf(stderr, "Unable to allocate memory. Skipping latency test.\n");
-        return;
-    }
-    if (l != (sprintf(latencyFileName, "%slatencies.txt", outputdir))) {
-        fprintf(stderr, "sprintf error.\n");
-        return;
-    }
-    if (NULL == (ofp = fopen(latencyFileName,"w"))) {
-        fprintf(stderr, "Unable to open file %s. Skipping latency test.\n", latencyFileName);
-        return;
-    }
-
-    if( (NULL==hw_desc) || (hw_desc->cache_levels<=0) || (0==hw_desc->dcache_line_size[0]) ){
-        stride = 256;
-    }else{
-        stride = 2*hw_desc->dcache_line_size[0];
-    }
-    ppb = 128;
-
-    // Get the latencies from a custom set of parameters.
-    print_core_affinities(ofp);
-    d_cache_test(3, params.max_iter, hw_desc, stride, ppb, NULL, 1, 0, ofp);
-    fclose(ofp);
-
-    // Get latencies for all parameter combinations.
-    d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
-
-    return;
-}
-
 static void print_progress(int prg)
 {
     if(prg < 100)
@@ -827,7 +786,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
                 printf("D-Cache Latencies:  0%%\b\b\b\b");
                 fflush(stdout);
             }
-            get_dcache_latencies(hw_desc, params);
+            d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
             if(params.show_progress) printf("100%%\n");
         }
 
@@ -854,7 +813,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
                 printf("D-Cache Latencies:  0%%\b\b\b\b");
                 fflush(stdout);
             }
-            get_dcache_latencies(hw_desc, params);
+            d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
             if(params.show_progress) printf("100%%\n");
         }
 
