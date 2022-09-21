@@ -7,10 +7,7 @@ CXX      = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/hip/include      \
            -I$(PAPI_ROCM_ROOT)/hsa/include/hsa  \
            $(INCLUDE)
-LDFLAGS += -L$(datadir)/libpfm4/lib -lpfm                  \
-           -L$(datadir) -lpapi                             \
-           -L$(PAPI_ROCM_ROOT)/lib -lhsa-runtime64         \
-            $(TESTLIB) -fopenmp
+LDFLAGS += $(PAPILIB) $(TESTLIB) -fopenmp
 CXXFLAGS = -g -O0 -fopenmp
 
 rocm_tests: ALL
