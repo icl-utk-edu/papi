@@ -520,6 +520,8 @@ AC_ARG_WITH(CPU,
                        POWER9)  CPU="POWER9";;
                        POWER10) CPU="POWER10";;
                      esac
+           elif test "${family:0:3}" = "arm" || test "$family" = "aarch64"; then
+              CPU="arm"
 	           fi ;;
                solaris)
                  AC_CHECK_HEADER([libcpc.h],
