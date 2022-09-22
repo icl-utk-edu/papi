@@ -4704,7 +4704,8 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 	APIDBG( "Entry: option: %d, ptr: %p\n", option, ptr);
 	EventSetInfo_t *ESI;
 
-	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
+	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) &&
+         ( option != PAPI_LIB_VERSION ) )
 		papi_return( PAPI_ENOINIT );
 
 	switch ( option ) {
