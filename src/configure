@@ -4839,6 +4839,8 @@ else
                        POWER9)  CPU="POWER9";;
                        POWER10) CPU="POWER10";;
                      esac
+           elif test "${family:0:3}" = "arm" || test "$family" = "aarch64"; then
+              CPU="arm"
 	           fi ;;
                solaris)
                  ac_fn_c_check_header_mongrel "$LINENO" "libcpc.h" "ac_cv_header_libcpc_h" "$ac_includes_default"
