@@ -16,10 +16,6 @@ int main( int argc, char **argv ) {
 	quiet = tests_quiet( argc, argv );
 
 	init_version = PAPI_library_init( PAPI_VER_CURRENT );
-	if ( init_version != PAPI_VER_CURRENT ) {
-		test_fail( __FILE__, __LINE__,
-				"PAPI_library_init", init_version );
-	}
 
 	lib_version = PAPI_get_opt( PAPI_LIB_VERSION, NULL );
 	if (lib_version == PAPI_EINVAL ) {
