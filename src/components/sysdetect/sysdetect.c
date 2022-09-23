@@ -89,6 +89,12 @@ _sysdetect_init_component( int cidx )
     return PAPI_OK;
 }
 
+static int
+_sysdetect_init_thread( hwd_context_t *ctx __attribute__((unused)) )
+{
+    return PAPI_OK;
+}
+
 /** Triggered by PAPI_shutdown() */
 static int
 _sysdetect_shutdown_component( void )
@@ -98,6 +104,12 @@ _sysdetect_shutdown_component( void )
 
     cleanup_dev_info( );
 
+    return PAPI_OK;
+}
+
+static int
+_sysdetect_shutdown_thread(hwd_context_t *ctx __attribute__((unused)) )
+{
     return PAPI_OK;
 }
 
@@ -489,6 +501,8 @@ papi_vector_t _sysdetect_vector = {
 
     /* Used for general PAPI interactions */
     .init_component = _sysdetect_init_component,
+    .init_thread = _sysdetect_init_thread,
     .shutdown_component = _sysdetect_shutdown_component,
+    .shutdown_thread = _sysdetect_shutdown_thread,
     .user = _sysdetect_user,
 };
