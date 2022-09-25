@@ -1,8 +1,8 @@
-libpfm4 (11.1) unstable; urgency=low
-  * Fix Makefile revision
-  * Fix Fujitsu A64Fx man page install in ARM64 mode
+libpfm4 (12.1) unstable; urgency=low
+  * fix debian changelog 12.0 entry order
+  * fix debian rules to build again
 
- -- Stephane Eranian <eranian@gmail.com>  Wed, 23 Sep  2020 12:00:01 +0200
+ -- Stephane Eranian <eranian@gmail.com>  Tue, 20 Sep  2022 08:00:01 +0200
 
 libpfm4 (12.0) unstable; urgency=low
   * Add IBM Power10 core PMU support
@@ -26,6 +26,14 @@ libpfm4 (12.0) unstable; urgency=low
   * Update ARM N1 event table
   * Update AMD Fam17h Zen2 event table
   * s390: Update counter definition for IBM z16
+
+ -- Stephane Eranian <eranian@gmail.com>  Fri, 16 Sep  2022 12:00:01 +0200
+
+libpfm4 (11.1) unstable; urgency=low
+  * Fix Makefile revision
+  * Fix Fujitsu A64Fx man page install in ARM64 mode
+
+ -- Stephane Eranian <eranian@gmail.com>  Wed, 23 Sep  2020 12:00:01 +0200
 
 libpfm4 (11.0) unstable; urgency=low
   * Cavium TX2 core updates
