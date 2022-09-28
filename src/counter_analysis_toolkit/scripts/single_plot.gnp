@@ -1,0 +1,92 @@
+L1_per_core=48*1024
+L2_per_core=1280*1024
+L3_per_core=36864*1024/4
+
+DIR="sample_data/"
+EVENT="L2_RQSTS:DEMAND_DATA_RD_HIT"
+PLOT_TITLE="Measurements of event ".EVENT
+
+SUFFIX=".data.reads.stat"
+
+set label 1 at     6000+(L1_per_core-6000)/20, graph 1.020 "L1" font ",9"
+set label 2 at  L1_per_core+(L2_per_core-L1_per_core)/20, graph 1.020 "L2" font ",9"
+set label 3 at  L2_per_core+(L3_per_core-L2_per_core)/20, graph 1.020 "L3" font ",9"
+
+################################################################################
+set terminal pdfcairo noenhanced font "Sans,12"
+set output "single_plot.pdf"
+
+load "default.gnp"
+set xtics   (""   L1_per_core, ""  L2_per_core, "" L3_per_core)
+
+FILE=DIR.EVENT.SUFFIX
+
+unset key
+
+set multiplot layout 1,6 title PLOT_TITLE."
+
+set margin 0,0,1.5,2.5
+set label 20 "Event Count" at screen 0.015,0.375 rotate by 90 # Y-label
+
+OFFSET=0.09
+GAP=0.015
+WIDTH=(1.0-(OFFSET+5.0*GAP+GAP/4.0))/6.0
+
+
+###
+set label 21 "RND:64:256" at graph 0.1,-0.05 font ",10"   # X-label
+set size 0.1475,1
+set size WIDTH,1
+set origin OFFSET,0.0
+plot \
+     FILE every :::0::0 using 1:2 w lp ls 1
+
+unset title
+unset ylabel
+set format y ''
+set ytics scale 0.1,0.5
+unset label 20
+
+###
+set label 21 "RND:64:16" at graph 0.16,-0.05 font ",10"   # X-label
+set object 1 rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#FFFAE8' fillstyle solid noborder
+set size WIDTH,1
+set origin OFFSET+(WIDTH+GAP)*1,0
+plot \
+     FILE every :::1::1 using 1:2 w lp ls 1
+
+unset object 1
+
+###
+set label 21 "RND:128:256" at graph 0.1,-0.05 font ",10"   # X-label
+set size WIDTH,1
+set origin OFFSET+(WIDTH+GAP)*2,0
+plot \
+     FILE every :::2::2 using 1:2 w lp ls 1
+
+###
+set label 21 "RND:128:16" at graph 0.1,-0.05 font ",10"   # X-label
+set object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#FFFAE8' fillstyle solid noborder
+set size WIDTH,1
+set origin OFFSET+(WIDTH+GAP)*3,0
+plot \
+     FILE every :::3::3 using 1:2 w lp ls 1
+
+###
+set label 21 "SEQ:64" at graph 0.25,-0.05 font ",10"   # X-label
+set object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#F0F6FF' fillstyle solid noborder
+set size WIDTH,1
+set origin OFFSET+(WIDTH+GAP)*4,0
+plot \
+     FILE every :::4::4 using 1:2 w lp ls 1
+
+###
+set label 21 "SEQ:128" at graph 0.2,-0.05 font ",10"   # X-label
+set object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#F0F6FF' fillstyle solid noborder
+set size WIDTH,1
+set origin OFFSET+(WIDTH+GAP)*5,0
+plot \
+     FILE every :::5::5 using 1:2 w lp ls 1
+
+unset multiplot
+
