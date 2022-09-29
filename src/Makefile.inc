@@ -72,7 +72,7 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 
 libsde:
 ifeq ($(BUILD_LIBSDE),yes)
-		$(MAKE) -C sde_lib
+		$(MAKE) CC=$(CC) -C sde_lib
 		ln -sf sde_lib/libsde.so.1.0 libsde.so
 		ln -sf sde_lib/libsde.a libsde.a
 endif
