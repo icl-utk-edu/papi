@@ -1,3 +1,4 @@
+CC ?= gcc
 SDE_INC = -I. -I..
 SDE_LD = -ldl -pthread
 CFLAGS = -Wextra -Wall -O2 -g
