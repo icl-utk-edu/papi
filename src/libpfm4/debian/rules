@@ -9,18 +9,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-include /usr/share/dpatch/dpatch.make
-
-build: patch-stamp
-
-clean: unpatch
+#include /usr/share/dpatch/dpatch.make
 
 override_dh_auto_install: build
-	dh_auto_test
-	dh_testroot
-	dh_prep
-	dh_installdirs
-	make install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr CONFIG_PFMLIB_NOPYTHON=n LDCONFIG=true
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp PREFIX=/usr CONFIG_PFMLIB_NOPYTHON=n LDCONFIG=true
 
 %:
 	dh  $@

@@ -1,7 +1,7 @@
 Source: libpfm4
 Priority: extra
 Maintainer: Stephane Eranian <eranian@gmail.com>
-Build-Depends: debhelper (>= 7), dpatch, python (>= 2.4), python-support,
+Build-Depends: debhelper (>= 7), python (>= 2.4), python-support,
                python-dev (>= 2.4), swig
 Standards-Version: 3.8.4
 Section: libs

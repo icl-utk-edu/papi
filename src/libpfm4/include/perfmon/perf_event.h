@@ -143,7 +143,12 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_TRANSACTION		= 1U << 17,
 	PERF_SAMPLE_REGS_INTR		= 1U << 18,
 	PERF_SAMPLE_PHYS_ADDR		= 1U << 19,
-	PERF_SAMPLE_MAX			= 1U << 19,
+	PERF_SAMPLE_AUX			= 1U << 20,
+	PERF_SAMPLE_CGROUP		= 1U << 21,
+	PERF_SAMPLE_DATA_PAGE_SIZE	= 1U << 22,
+	PERF_SAMPLE_CODE_PAGE_SIZE	= 1U << 23,
+	PERF_SAMPLE_WEIGHT_STRUCT	= 1U << 24,
+	PERF_SAMPLE_MAX			= 1U << 25,
 };
 enum {
 	PERF_TXN_ELISION        = (1 << 0),
@@ -180,6 +185,7 @@ enum perf_branch_sample_type_shift {
 	PERF_SAMPLE_BRANCH_NO_FLAGS_SHIFT	= 14,
 	PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT	= 15,
 	PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT	= 16,
+	PERF_SAMPLE_BRANCH_HW_INDEX_SHIFT	= 17,
 
 	PERF_SAMPLE_BRANCH_MAX_SHIFT		/* non-ABI */
 };
@@ -204,6 +210,7 @@ enum perf_branch_sample_type {
 	PERF_SAMPLE_BRANCH_NO_FLAGS	= 1U << PERF_SAMPLE_BRANCH_NO_FLAGS_SHIFT,
 	PERF_SAMPLE_BRANCH_NO_CYCLES	= 1U << PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT,
 	PERF_SAMPLE_BRANCH_TYPE_SAVE	= 1U << PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT,
+	PERF_SAMPLE_BRANCH_HW_INDEX	= 1U << PERF_SAMPLE_BRANCH_HW_INDEX_SHIFT,
 
 	PERF_SAMPLE_BRANCH_MAX		= 1U << PERF_SAMPLE_BRANCH_MAX_SHIFT,
 };
@@ -232,6 +239,8 @@ enum perf_event_read_format {
 					/* add: sample_stack_user */
 #define PERF_ATTR_SIZE_VER4	104	/* add: sample_regs_intr */
 #define PERF_ATTR_SIZE_VER5	112	/* add: aux_watermark */
+#define PERF_ATTR_SIZE_VER6	120	/* add: aux_sample_size */
+#define PERF_ATTR_SIZE_VER7	128	/* add: sig_data */
 
 
 /*
@@ -289,7 +298,16 @@ typedef struct perf_event_attr {
 			context_switch :  1,
 			write_backward :  1,
 			namespaces     :  1,
-			__reserved_1   : 35;
+			ksymbol        :  1,
+			bpf_event      :  1,
+			aux_output     :  1,
+			cgroup         :  1,
+			text_poke      :  1,
+			build_id       :  1,
+			inherit_thread :  1,
+			remove_on_exec :  1,
+			sigtrap        :  1,
+			__reserved_1   : 26;
 
 	union {
 		uint32_t	wakeup_events;
@@ -311,7 +329,11 @@ typedef struct perf_event_attr {
 	int32_t  clockid;
 	uint64_t sample_regs_intr;
 	uint32_t aux_watermark;
-	uint32_t __reserved_2;
+	uint16_t sample_max_stack;
+	uint16_t __reserved_2;
+	uint32_t aux_sample_size;
+	uint32_t __reserved_3;
+	uint64_t sig_data;
 } perf_event_attr_t;
 
 struct perf_branch_entry {
@@ -341,18 +363,31 @@ struct perf_branch_stack {
 };
 
 /*
+ * Structure used by below PERF_EVENT_IOC_QUERY_BPF command
+ * to query bpf programs attached to the same perf tracepoint
+ * as the given perf event.
+ */
+struct perf_event_query_bpf {
+	uint32_t	ids_len;
+	uint32_t	prog_cnt;
+	uint32_t	ids[0];
+};
+
+/*
  * perf_events ioctl commands, use with event fd
  */
-#define PERF_EVENT_IOC_ENABLE		_IO ('$', 0)
-#define PERF_EVENT_IOC_DISABLE		_IO ('$', 1)
-#define PERF_EVENT_IOC_REFRESH		_IO ('$', 2)
-#define PERF_EVENT_IOC_RESET		_IO ('$', 3)
-#define PERF_EVENT_IOC_PERIOD		_IOW('$', 4, uint64_t)
-#define PERF_EVENT_IOC_SET_OUTPUT	_IO ('$', 5)
-#define PERF_EVENT_IOC_SET_FILTER	_IOW('$', 6, char *)
-#define PERF_EVENT_IOC_ID		_IOR('$', 7, uint64_t *)
-#define PERF_EVENT_IOC_SET_BPF		_IOW('$', 8, uint32_t)
-#define PERF_EVENT_IOC_PAUSE_OUTPUT	_IOW('$', 9, __u32)
+#define PERF_EVENT_IOC_ENABLE			_IO ('$', 0)
+#define PERF_EVENT_IOC_DISABLE			_IO ('$', 1)
+#define PERF_EVENT_IOC_REFRESH			_IO ('$', 2)
+#define PERF_EVENT_IOC_RESET			_IO ('$', 3)
+#define PERF_EVENT_IOC_PERIOD			_IOW('$', 4, uint64_t)
+#define PERF_EVENT_IOC_SET_OUTPUT		_IO ('$', 5)
+#define PERF_EVENT_IOC_SET_FILTER		_IOW('$', 6, char *)
+#define PERF_EVENT_IOC_ID			_IOR('$', 7, uint64_t *)
+#define PERF_EVENT_IOC_SET_BPF			_IOW('$', 8, uint32_t)
+#define PERF_EVENT_IOC_PAUSE_OUTPUT		_IOW('$', 9, __u32)
+#define PERF_EVENT_IOC_QUERY_BPF		_IOWR('$', 10, struct perf_event_query_bpf *)
+#define PERF_EVENT_IOC_MODIFY_ATTRIBUTES	_IOW('$', 11, struct perf_event_attr *)
 
 /*
  * ioctl() 3rd argument
@@ -381,7 +416,8 @@ struct perf_event_mmap_page {
 				 cap_usr_rdpmc:1,
 				 cap_user_time:1,
 				 cap_user_time_zero:1,
-				 cap_____res:59;
+				 cap_user_time_short:1,
+				 cap_____res:58;
 		} SWIG_NAME(rdmap_cap_s);
 	} SWIG_NAME(rdmap_cap_u);
 	uint16_t	pmc_width;
@@ -391,7 +427,10 @@ struct perf_event_mmap_page {
 
 	uint64_t	time_zero;
 	uint32_t	size;
-	uint8_t		__reserved[118*8+4];
+	uint32_t	__reserved_1;
+	uint64_t	time_cycles;
+	uint64_t	time_mask;
+	uint8_t		__reserved[116*8];
 
 	uint64_t  	data_head;
 	uint64_t	data_tail;
@@ -450,8 +489,37 @@ enum perf_event_type {
 	PERF_RECORD_SWITCH		= 14,
 	PERF_RECORD_SWITCH_CPU_WIDE	= 15,
 	PERF_RECORD_NAMESPACES		= 16,
+	PERF_RECORD_KSYMBOL		= 17,
+	PERF_RECORD_BPF_EVENT		= 18,
+	PERF_RECORD_CGROUP		= 19,
+	PERF_RECORD_TEXT_POKE		= 20,
+	PERF_RECORD_AUX_OUTPUT_HW_ID	= 21,
 	PERF_RECORD_MAX
 };
+
+enum perf_record_ksymbol_type {
+	PERF_RECORD_KSYMBOL_TYPE_UNKNOWN	= 0,
+	PERF_RECORD_KSYMBOL_TYPE_BPF		= 1,
+	/*
+	 * Out of line code such as kprobe-replaced instructions or optimized
+	 * kprobes or ftrace trampolines.
+	 */
+	PERF_RECORD_KSYMBOL_TYPE_OOL		= 2,
+	PERF_RECORD_KSYMBOL_TYPE_MAX		/* non-ABI */
+};
+
+#define PERF_RECORD_KSYMBOL_FLAGS_UNREGISTER	(1 << 0)
+
+enum perf_bpf_event_type {
+	PERF_BPF_EVENT_UNKNOWN		= 0,
+	PERF_BPF_EVENT_PROG_LOAD	= 1,
+	PERF_BPF_EVENT_PROG_UNLOAD	= 2,
+	PERF_BPF_EVENT_MAX,		/* non-ABI */
+};
+
+#define PERF_MAX_STACK_DEPTH		127
+#define PERF_MAX_CONTEXTS_PER_STACK	  8
+
 
 enum perf_callchain_context {
 	PERF_CONTEXT_HV			= (uint64_t)-32,
@@ -465,8 +533,16 @@ enum perf_callchain_context {
 	PERF_CONTEXT_MAX		= (uint64_t)-4095,
 };
 
-#define PERF_AUX_FLAG_TRUNCATED		0x01
-#define PERF_AUX_FLAG_OVERWRITE		0x02
+#define PERF_AUX_FLAG_TRUNCATED			0x01
+#define PERF_AUX_FLAG_OVERWRITE			0x02
+#define PERF_AUX_FLAG_PARTIAL			0x04
+#define PERF_AUX_FLAG_COLLISION			0x08
+#define PERF_AUX_FLAG_PMU_FORMAT_TYPE_MASK	0xff00
+
+/* CoreSight PMU AUX buffer formats */
+#define PERF_AUX_FLAG_CORESIGHT_FORMAT_CORESIGHT	0x0000
+#define PERF_AUX_FLAG_CORESIGHT_FORMAT_RAW		0x0100
+
 
 /*
  * flags for perf_event_open()
@@ -544,12 +620,17 @@ perf_event_open(
 union perf_mem_data_src {
 	uint64_t val;
 	struct {
-		uint64_t   mem_op:5,	/* type of opcode */
-			   mem_lvl:14,	/* memory hierarchy level */
-			   mem_snoop:5,	/* snoop mode */
-			   mem_lock:2,	/* lock instr */
-			   mem_dtlb:7,	/* tlb access */
-			   mem_rsvd:31;
+		uint64_t   mem_op:5,		/* type of opcode */
+			   mem_lvl:14,		/* memory hierarchy level */
+			   mem_snoop:5,		/* snoop mode */
+			   mem_lock:2,		/* lock instr */
+			   mem_dtlb:7,		/* tlb access */
+			   mem_lvl_num:4,	/* memory hierarchy level number */
+			   mem_remote:1,	/* remote */
+			   mem_snoopx:2,	/* snoop mode, ext */
+			   mem_blk:3,		/* access blocked */
+			   mem_hops:3,		/* hop level */
+			   mem_rsvd:18;
 	};
 };
 
@@ -590,7 +671,8 @@ union perf_mem_data_src {
 #define PERF_MEM_SNOOP_SHIFT	19
 
 #define PERF_MEM_SNOOPX_FWD	0x01 /* forward */
-#define PERF_MEM_SNOOPX_SHIFT	37
+/* 1 free */
+#define PERF_MEM_SNOOPX_SHIFT	38
 
 /* locked instruction */
 #define PERF_MEM_LOCK_NA	0x01 /* not available */
@@ -606,6 +688,20 @@ union perf_mem_data_src {
 #define PERF_MEM_TLB_WK		0x20 /* Hardware Walker*/
 #define PERF_MEM_TLB_OS		0x40 /* OS fault handler */
 #define PERF_MEM_TLB_SHIFT	26
+
+/* Access blocked */
+#define PERF_MEM_BLK_NA		0x01 /* not available */
+#define PERF_MEM_BLK_DATA	0x02 /* data could not be forwarded */
+#define PERF_MEM_BLK_ADDR	0x04 /* address conflict */
+#define PERF_MEM_BLK_SHIFT	40
+
+/* hop level */
+#define PERF_MEM_HOPS_0		0x01 /* remote core, same node */
+#define PERF_MEM_HOPS_1		0x02 /* remote node, same socket */
+#define PERF_MEM_HOPS_2		0x03 /* remote socket, same board */
+#define PERF_MEM_HOPS_3		0x04 /* remote board */
+/* 5-7 available */
+#define PERF_MEM_HOPS_SHIFT	43
 
 #define PERF_MEM_S(a, s) \
 	(((u64)PERF_MEM_##a##_##s) << PERF_MEM_##a##_SHIFT)
