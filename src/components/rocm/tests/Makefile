@@ -1,19 +1,16 @@
+NAME = rocm
+include ../../Makefile_comp_tests.target
+PAPI_ROCM_ROOT ?= /opt/rocm
+
 CC       = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
 CXX      = $(PAPI_ROCM_ROOT)/hip/bin/hipcc
-CPPFLAGS = -I$(PAPI_ROCM_ROOT)/hip/include      \
+CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/hip/include      \
            -I$(PAPI_ROCM_ROOT)/hsa/include/hsa  \
-           -I../../..                           \
-           -I../../../testlib
-LDFLAGS  = -L../../../libpfm4/lib -lpfm                    \
-           -L../../.. -lpapi                               \
-           ../../../testlib/test_utils.o                   \
-           -L$(PAPI_ROCM_ROOT)/lib -lhsa-runtime64         \
-           -fopenmp                                        \
-           -Wl,-rpath="$(PWD)/../../../libpfm4/lib"        \
-           -Wl,-rpath="$(PWD)/../../../"                   \
-           -Wl,-rpath="$(PWD)/libpfm4/lib"                 \
-           -Wl,-rpath="$(PWD)"
+           $(INCLUDE)
+LDFLAGS += $(PAPILIB) $(TESTLIB) -fopenmp
 CXXFLAGS = -g -O0 -fopenmp
+
+rocm_tests: ALL
 
 ALL: sample_single_kernel_monitoring       \
      sample_single_thread_monitoring       \

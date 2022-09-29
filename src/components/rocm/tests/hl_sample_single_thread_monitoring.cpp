@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
     hipError_t hip_errno = hipSuccess;
     quiet = tests_quiet(argc, argv);
 
+    test_skip(__FILE__, __LINE__, "", papi_errno);
+
     setenv("HSA_TOOLS_LIB", "librocprofiler64.so", 0);
     setenv("ROCP_TOOL_LIB", "libpapi.so", 0);
     setenv("ROCP_HSA_INTERCEPT", "0", 1);
