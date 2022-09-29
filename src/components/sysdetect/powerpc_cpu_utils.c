@@ -119,8 +119,8 @@ _sysdetect_cache_level_info_t power9_cache_info[] = {
     { // level 1 begins
         2,
         {
-            {PAPI_MH_TYPE_INST, 32768, 128, 64, 8},
-            {PAPI_MH_TYPE_DATA, 32768, 128, 64, 8}
+            {PAPI_MH_TYPE_INST, 32768, 128, 256, 8},
+            {PAPI_MH_TYPE_DATA, 32768, 128, 256, 8}
         }
     },
     { // level 2 begins
