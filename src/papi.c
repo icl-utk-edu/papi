@@ -4617,7 +4617,7 @@ PAPI_get_multiplex( int EventSet )
  *	@retval PAPI_ENOEVST The EventSet specified does not exist.
  *	@retval PAPI_ECMP 
  *              The option is not implemented for the current component.
- *	@retval PAPI_ENOINIT PAPI has not been initialized.
+ *	@retval PAPI_ENOINIT specified option requires PAPI to be initialized first.
  *
  *	PAPI_get_opt() queries the options of the PAPI library or a specific event set created by 
  *	PAPI_create_eventset. Some options may require that the eventset be bound to a component
@@ -4657,7 +4657,7 @@ PAPI_get_multiplex( int EventSet )
  * PAPI_MAX_CPUS	Get number of CPUs.
  * PAPI_EXEINFO		Get Executable addresses for text/data/bss.
  * PAPI_HWINFO		Get information about the hardware.
- * PAPI_LIB_VERSION	Get the full PAPI version of the library.
+ * PAPI_LIB_VERSION	Get the full PAPI version of the library. This does not require PAPI to be initialized first.
  * PAPI_MAX_HWCTRS	Get number of counters. Requires a component index.
  * PAPI_MAX_MPX_CTRS	Get maximum number of multiplexing counters. Requires a component index.
  * PAPI_SHLIBINFO	Get shared library information used by the program.
@@ -4704,7 +4704,8 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
 	APIDBG( "Entry: option: %d, ptr: %p\n", option, ptr);
 	EventSetInfo_t *ESI;
 
-	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) )
+	if ( ( option != PAPI_DEBUG ) && ( init_level == PAPI_NOT_INITED ) &&
+         ( option != PAPI_LIB_VERSION ) )
 		papi_return( PAPI_ENOINIT );
 
 	switch ( option ) {
