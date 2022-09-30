@@ -3,6 +3,7 @@
 # contact your sysadmin if you cannot find it.
 NAME=rocm_smi
 include ../../Makefile_comp_tests.target
+PAPI_ROCM_ROOT ?= /opt/rocm
 HIP_PATH= ${PAPI_ROCM_ROOT}/hip
 HIPCC=$(HIP_PATH)/bin/hipcc
 
