@@ -310,11 +310,12 @@ _net_init_thread( hwd_context_t *ctx )
 static int
 _net_init_component( int cidx  )
 {
+    int retval = PAPI_OK;
     int i = 0;
     struct temp_event *t, *last;
 
     if ( is_initialized )
-        return PAPI_OK;
+        goto fn_exit;
 
     memset(_net_register_start, 0,
     		NET_MAX_COUNTERS*sizeof(_net_register_start[0]));
@@ -326,11 +327,13 @@ _net_init_component( int cidx  )
     /* The network interfaces are listed in /proc/net/dev */
     num_events = generateNetEventList();
 
-    if ( num_events < 0 )  /* disabled_reason already set */
-        return num_events;
+    if ( num_events < 0 ) {  /* disabled_reason already set */
+        retval = PAPI_ECMP;
+        goto fn_fail;
+    }
 
     if ( num_events == 0 )  /* No network interfaces found */
-        return PAPI_OK;
+        goto fn_exit;
 
     t = root;
     _net_native_events = (NET_native_event_entry_t*)
@@ -354,7 +357,10 @@ _net_init_component( int cidx  )
     /* Export the component id */
     _net_vector.cmp_info.CmpIdx = cidx;
 
-    return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 

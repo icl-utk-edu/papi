@@ -67,6 +67,8 @@ intel_gpu_init_thread(hwd_context_t *ctx)
 static int 
 intel_gpu_init_component(int cidx)
 {
+    int retval = PAPI_OK;
+
     GPUDEBUG("Entering intel_init_component\n");
     if (cidx < 0) {
         return  PAPI_EINVAL;
@@ -77,14 +79,16 @@ intel_gpu_init_component(int cidx)
         errStr = "The intel_gpu component does not support statically linking of libc.";
         strncpy_se(_intel_gpu_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         errStr, strlen(errStr));
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     if (GPUDetectDevice(&handle, &num_device) || (num_device==0)) {
         errStr = "The intel_gpu component does not detect metrics device.";
         strncpy_se(_intel_gpu_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         errStr, strlen(errStr));
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
     char *envStr = NULL;
     envStr =  getenv(ENABLE_API_TRACING);
@@ -103,7 +107,8 @@ intel_gpu_init_component(int cidx)
         strncpy_se(_intel_gpu_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         errStr, strlen(errStr));
         GPUFreeDevice(handle);
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }; 
     total_metrics = metricInfoList.numEntries;
     GPUDEBUG("total metrics %d\n", total_metrics);
@@ -115,7 +120,10 @@ intel_gpu_init_component(int cidx)
     /* Export the component id */
     _intel_gpu_vector.cmp_info.CmpIdx = cidx;
 
-    return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 /** Setup a counter control state.

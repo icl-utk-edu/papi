@@ -179,7 +179,7 @@ _io_init_component( int cidx )
         "Failed counting events.");
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return(ret);
+        goto fn_fail;
     }
  
     rewind(myCtx.pFile);
@@ -190,7 +190,8 @@ _io_init_component( int cidx )
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
-        return PAPI_ENOSUPP;
+        ret = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     // Must be same for all threads, now.
@@ -205,7 +206,8 @@ _io_init_component( int cidx )
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
-        return PAPI_ENOMEM;
+        ret = PAPI_ENOMEM;
+        goto fn_fail;
     }
 
     for (fileIdx = 0; fileIdx < gEventCount; fileIdx++) {
@@ -254,7 +256,10 @@ _io_init_component( int cidx )
 
     /* Export the component id */
     _io_vector.cmp_info.CmpIdx = cidx;
-    return PAPI_OK;
+  fn_exit:
+    return ret;
+  fn_fail:
+    goto fn_exit;
 } // END ROUTINE.
 
 // This is called whenever a thread is initialized.

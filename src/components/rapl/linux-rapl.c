@@ -331,6 +331,7 @@ _rapl_init_thread( hwd_context_t *ctx )
 static int
 _rapl_init_component( int cidx )
 {
+    int retval = PAPI_OK;
      int i,j,k,fd;
      FILE *fff;
      char filename[BUFSIZ];
@@ -374,7 +375,8 @@ _rapl_init_component( int cidx )
 			"Not a supported processor",PAPI_MAX_STR_LEN);
 			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
          if (strCpy == NULL) HANDLE_STRING_ERROR;
-		        return PAPI_ENOSUPP;
+         retval = PAPI_ENOSUPP;
+         goto fn_fail;
 	}
 
 
@@ -392,7 +394,8 @@ _rapl_init_component( int cidx )
 				"CPU family not supported",PAPI_MAX_STR_LEN);
 			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
          if (strCpy == NULL) HANDLE_STRING_ERROR;
-			return PAPI_ENOIMPL;
+         retval = PAPI_ENOIMPL;
+         goto fn_fail;
 		}
 
 		/* Detect RAPL support */
@@ -487,7 +490,8 @@ _rapl_init_component( int cidx )
 				PAPI_MAX_STR_LEN);
 			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
          if (strCpy == NULL) HANDLE_STRING_ERROR;
-			return PAPI_ENOIMPL;
+         retval = PAPI_ENOIMPL;
+         goto fn_fail;
 		}
 	}
 
@@ -503,7 +507,8 @@ _rapl_init_component( int cidx )
 				"CPU family not supported",PAPI_MAX_STR_LEN);
 			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
          if (strCpy == NULL) HANDLE_STRING_ERROR;
-			return PAPI_ENOIMPL;
+         retval = PAPI_ENOIMPL;
+         goto fn_fail;
 		}
 
 		package_avail=1;
@@ -540,7 +545,8 @@ _rapl_init_component( int cidx )
     		 strCpy=strncat(_rapl_vector.cmp_info.disabled_reason, filename, PAPI_MAX_STR_LEN - strlen(_rapl_vector.cmp_info.disabled_reason) - 1);
     		 _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1] = '\0';
           if (strCpy == NULL) HANDLE_STRING_ERROR;
-    		 return PAPI_ESYS;
+          retval = PAPI_ESYS;
+          goto fn_fail;
        }
 
        /* Check if a new package */
@@ -557,7 +563,8 @@ _rapl_init_component( int cidx )
 		"Package outside of allowed range",PAPI_MAX_STR_LEN);
 	 _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
     if (strCpy == NULL) HANDLE_STRING_ERROR;
-	 return PAPI_ESYS;
+    retval = PAPI_ESYS;
+    goto fn_fail;
        }
 
        j++;
@@ -570,7 +577,8 @@ _rapl_init_component( int cidx )
 		"Can't access /dev/cpu/*/<msr_safe | msr>",PAPI_MAX_STR_LEN);
     _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
     if (strCpy == NULL) HANDLE_STRING_ERROR;
-	return PAPI_ESYS;
+    retval = PAPI_ESYS;
+    goto fn_fail;
      }
 
      SUBDBG("Found %d packages with %d cpus\n",num_packages,num_cpus);
@@ -578,7 +586,10 @@ _rapl_init_component( int cidx )
      /* Init fd_array */
 
      fd_array=papi_calloc(num_cpus, sizeof(struct fd_array_t));
-     if (fd_array==NULL) return PAPI_ENOMEM;
+     if (fd_array==NULL) {
+         retval = PAPI_ENOMEM;
+         goto fn_fail;
+     }
 
      fd=open_fd(cpu_to_use[0]);
      if (fd<0) {
@@ -586,7 +597,8 @@ _rapl_init_component( int cidx )
         "Can't open fd for cpu0: %s",strerror(errno));
         _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return PAPI_ESYS;
+        retval = PAPI_ESYS;
+        goto fn_fail;
      }
 
      /* Verify needed MSR is readable. In a guest VM it may not be readable*/
@@ -595,7 +607,8 @@ _rapl_init_component( int cidx )
                "Unable to access RAPL registers",PAPI_MAX_STR_LEN);
         _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        return PAPI_ESYS;
+        retval = PAPI_ESYS;
+        goto fn_fail;
      }
 
      /* Calculate the units used */
@@ -644,7 +657,8 @@ _rapl_init_component( int cidx )
         "%s:%i rapl_native_events papi_calloc for %lu bytes failed.", __FILE__, __LINE__, num_events*sizeof(_rapl_native_event_entry_t));
         _rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
-        return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
      }
 
      i = 0;
@@ -1006,7 +1020,10 @@ _rapl_init_component( int cidx )
      /* Export the component id */
      _rapl_vector.cmp_info.CmpIdx = cidx;
 
-     return PAPI_OK;
+  fn_exit:
+     return retval;
+  fn_fail:
+     goto fn_exit;
 }
 
 

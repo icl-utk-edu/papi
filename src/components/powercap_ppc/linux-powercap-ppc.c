@@ -110,7 +110,7 @@ _powercap_ppc_init_thread( hwd_context_t *ctx )
 static int
 _powercap_ppc_init_component( int cidx )
 {
-
+    int retval = PAPI_OK;
     int e = -1;
     char events_dir[128];
     char event_path[128];
@@ -126,7 +126,8 @@ _powercap_ppc_init_component( int cidx )
         strCpy=strncpy(_powercap_ppc_vector.cmp_info.disabled_reason, "Not an IBM Power9 processor", PAPI_MAX_STR_LEN);
         _powercap_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     num_events = 0;
@@ -141,7 +142,8 @@ _powercap_ppc_init_component( int cidx )
             PAPI_MAX_STR_LEN);
         _powercap_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     /* opendir needs clean up. */
@@ -190,7 +192,10 @@ _powercap_ppc_init_component( int cidx )
     /* Export the component id */
     _powercap_ppc_vector.cmp_info.CmpIdx = cidx;
 
-    return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 

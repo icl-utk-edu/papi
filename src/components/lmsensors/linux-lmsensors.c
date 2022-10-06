@@ -298,14 +298,15 @@ _lmsensors_init_component( int cidx )
     if (link_lmsensors_libraries() != PAPI_OK) {
 	    SUBDBG ("Dynamic link of lmsensors libraries failed, component will be disabled.\n");
 	    SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
-	    return (PAPI_ENOSUPP);
+        res = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     /* Initialize libsensors library */
     if ( ( res = sensors_initPtr( NULL ) ) != 0 ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "Cannot enable libsensors",PAPI_MAX_STR_LEN);
-       return res;
+       goto fn_fail;
     }
 
     /* Create dyanmic events table */
@@ -320,7 +321,8 @@ _lmsensors_init_component( int cidx )
 				   == NULL ) {
        strncpy(_lmsensors_vector.cmp_info.disabled_reason,
 	      "Could not malloc room",PAPI_MAX_STR_LEN);
-       return PAPI_ENOMEM;
+       res = PAPI_ENOMEM;
+       goto fn_fail;
     }
 
     cached_counts = (long long*) calloc(num_events, sizeof(long long));
@@ -330,7 +332,8 @@ _lmsensors_init_component( int cidx )
                "Could not malloc room",PAPI_MAX_STR_LEN);
       free(lm_sensors_native_table);
       lm_sensors_native_table = NULL;
-	   return PAPI_ENOMEM;
+      res = PAPI_ENOMEM;
+      goto fn_fail;
     }
 
     if ( ( unsigned ) num_events != createNativeEvents(  ) ) {
@@ -340,13 +343,17 @@ _lmsensors_init_component( int cidx )
       cached_counts = NULL;
       free(lm_sensors_native_table);
       lm_sensors_native_table = NULL;
-       return PAPI_ECMP;
+      res = PAPI_ECMP;
+      goto fn_fail;
     }
 
     _lmsensors_vector.cmp_info.num_native_events=num_events;
     _lmsensors_vector.cmp_info.num_cntrs=num_events;
 
-    return PAPI_OK;
+  fn_exit:
+    return res;
+  fn_fail:
+    goto fn_exit;
 }
 
 /*

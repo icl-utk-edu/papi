@@ -125,6 +125,7 @@ int coretemp_init_component ()
 	int mib[4];
 	size_t len;
 	char tmp[128];
+    int retval = PAPI_OK;
 
 	SUBDBG("coretemp_init_component...\n");
 
@@ -144,7 +145,7 @@ int coretemp_init_component ()
 	}
 
 	if (CORETEMP_NUM_EVENTS == 0)
-		return PAPI_OK;
+        goto fn_exit;
 
 	/* Allocate memory for the our event table */
 	coretemp_native_table = (coretemp_native_event_entry_t *)
@@ -152,7 +153,8 @@ int coretemp_init_component ()
 	if (coretemp_native_table == NULL)
 	{
 		perror( "malloc():Could not get memory for coretemp events table" );
-		return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
 	}
 
 	/* Allocate native events internal structures */
@@ -167,13 +169,18 @@ int coretemp_init_component ()
 		/* Event extra bits -> save MIB to faster access later */
 		sprintf (tmp, "dev.cpu.%d.temperature", i);
 		len = 4;
-		if (sysctlnametomib (tmp, coretemp_native_table[i].resources.mib, &len) == -1)
-			return PAPI_ECMP;
+        if (sysctlnametomib (tmp, coretemp_native_table[i].resources.mib, &len) == -1) {
+            retval = PAPI_ECMP;
+            goto fn_fail;
+        }
 
 		coretemp_native_table[i].resources.selector = i+1;
 	}
 
-	return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 

@@ -192,6 +192,7 @@ _micpower_init_thread( hwd_context_t *ctx )
 static int 
 _micpower_init_component( int cidx )
 {
+    int retval = PAPI_OK;
 		if ( is_initialized )
 				return (PAPI_OK );
 
@@ -201,7 +202,8 @@ _micpower_init_component( int cidx )
 		if ( 0 != access( "/sys/class/micras/power", R_OK ) ) {
 				strncpy(_micpower_vector.cmp_info.disabled_reason,
 								"Cannot read /sys/class/micras/power",PAPI_MAX_STR_LEN);
-				return PAPI_ENOCMP;
+                retval = PAPI_ECMP;
+                goto fn_fail;
 		}
 
 
@@ -212,7 +214,10 @@ _micpower_init_component( int cidx )
 		/* Export the component id */
 		_micpower_vector.cmp_info.CmpIdx = cidx;
 
-		return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 

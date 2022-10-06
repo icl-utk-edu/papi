@@ -450,14 +450,17 @@ _lustre_init_component( int cidx )
 		   "No lustre filesystems found",PAPI_MAX_STR_LEN);
       host_finalize();                                         // cleanup.
 	   SUBDBG("EXIT: ret: %d\n", ret);
-	   return ret;
+       goto fn_fail;
 	}
 
 	_lustre_vector.cmp_info.num_native_events=num_events;
 	_lustre_vector.cmp_info.CmpIdx = cidx;
 
+  fn_exit:
 	SUBDBG("EXIT: ret: %d\n", ret);
 	return ret;
+  fn_fail:
+    goto fn_exit;
 }
 
 

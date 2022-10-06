@@ -559,7 +559,7 @@ _vmware_init_thread( hwd_context_t *ctx )
 int
 _vmware_init_component( int cidx )
 {
-
+    int retval = PAPI_OK;
   (void) cidx;
 
   int result;
@@ -574,7 +574,8 @@ _vmware_init_component( int cidx )
 	   strncpy(_vmware_vector.cmp_info.disabled_reason,
 		  "GuestLibTest: Failed to load shared library",
 		   PAPI_MAX_STR_LEN);
-	   return PAPI_ECMP;
+       retval = PAPI_ECMP;
+       goto fn_fail;
 	}
 
 	/* we know in advance how many events we want                       */
@@ -584,7 +585,8 @@ _vmware_init_component( int cidx )
 	_vmware_native_table = ( struct _vmware_native_event_entry * )
 	  calloc( VMWARE_MAX_COUNTERS, sizeof ( struct _vmware_native_event_entry ));
 	if ( _vmware_native_table == NULL ) {
-	   return PAPI_ENOMEM;
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
 	}
 
 
@@ -911,12 +913,16 @@ _vmware_init_component( int cidx )
 	   strncpy(_vmware_vector.cmp_info.disabled_reason,
 		  "VMware SDK not installed, and PAPI_VMWARE_PSEUDOPERFORMANCE not set",
 		   PAPI_MAX_STR_LEN);
-	  return PAPI_ECMP;
+       retval = PAPI_ECMP;
+       goto fn_fail;
 	}
 
 	_vmware_vector.cmp_info.num_native_events = num_events;
 
-	return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 /** Setup the counter control structure */

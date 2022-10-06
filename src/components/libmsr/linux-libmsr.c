@@ -285,7 +285,7 @@ int _libmsr_init_component( int cidx )
     int num_packages;
     /* int num_cpus; */
     const PAPI_hw_info_t *hw_info;
-    int retval;
+    int retval = PAPI_OK;
     struct rapl_data * libmsr_rapl_data;
     uint64_t * libmsr_rapl_flags;
     uint64_t coresPerSocket, threadsPerCore, numSockets;
@@ -298,7 +298,8 @@ int _libmsr_init_component( int cidx )
         char *strCpy = strncpy( _libmsr_vector.cmp_info.disabled_reason, "Not an Intel processor", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        return PAPI_ENOSUPP;
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     /* Dynamically load libmsr API and libraries  */
@@ -306,7 +307,8 @@ int _libmsr_init_component( int cidx )
     if ( retval!=PAPI_OK ) {
         SUBDBG ("Dynamic link of libmsr.so libraries failed, component will be disabled.\n");
         SUBDBG ("See disable reason in papi_component_avail output for more details.\n");
-        return (PAPI_ENOSUPP);
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     /* initialize libmsr */
@@ -315,7 +317,8 @@ int _libmsr_init_component( int cidx )
         char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr init failed; possible permission issue accessing /dev/cpu/<n>/msr)", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
-        return PAPI_ENOSUPP; 
+        retval = PAPI_ENOSUPP;
+        goto fn_fail;
     }
 
     /* Initialize libmsr RAPL */
@@ -325,7 +328,8 @@ int _libmsr_init_component( int cidx )
             char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)", PAPI_MAX_STR_LEN);
             _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
-            return PAPI_ENOSUPP;
+            retval = PAPI_ENOSUPP;
+            goto fn_fail;
         }
         already_called_libmsr_rapl_initialized_global = 1;
     }
@@ -386,7 +390,8 @@ int _libmsr_init_component( int cidx )
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         SUBDBG("Could not allocate memory\n" );
-        return(PAPI_ENOMEM);
+        retval = PAPI_ENOMEM;
+        goto fn_fail;
    }
 
     /* Create events for package power info */
@@ -482,7 +487,10 @@ int _libmsr_init_component( int cidx )
     /* Export the component id */
     _libmsr_vector.cmp_info.CmpIdx = cidx;
 
-    return PAPI_OK;
+  fn_exit:
+    return retval;
+  fn_fail:
+    goto fn_exit;
 }
 
 
