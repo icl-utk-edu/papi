@@ -575,7 +575,7 @@ read_ib_counter_value(int index)
         closedir(cnt_dir);
 
 
-    snprintf(ev_file, sizeof(ev_file), "%s/%s",
+    snprintf(ev_file, strlen(counters_path) + strlen(iter->file_name) + 2, "%s/%s",
             counters_path, iter->file_name);
 
     if (pscanf(ev_file, "%lld", &value) != 1) {
