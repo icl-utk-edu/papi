@@ -2,6 +2,7 @@
 #include "caches.h"
 #include "timing_kernels.h"
 #include "dcache.h"
+#include "params.h"
 #include <math.h>
 
 #define _SIZE_SAMPLES_ 40
@@ -9,7 +10,7 @@ extern char* eventname;
 
 int min_size, max_size;
 
-void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, char* outdir, int latency_only, int mode, int show_progress)
+void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_desc, int latency_only, int mode)
 {
     int pattern = 3;
     int stride, f, cache_line;
@@ -25,13 +26,13 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
         sufx = strdup(".data.reads");
     }
 
-    int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
+    int l = strlen(params.outputdir)+strlen(papi_event_name)+strlen(sufx);
     papiFileName = (char *)calloc( 1+l, sizeof(char) );
     if (!papiFileName) {
         fprintf(stderr, "Unable to allocate memory. Skipping event %s.\n", papi_event_name);
         goto error0;
     }
-    if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {
+    if (l != (sprintf(papiFileName, "%s%s%s", params.outputdir, papi_event_name, sufx))) {
         fprintf(stderr, "sprintf error. Skipping event %s.\n", papi_event_name);
         goto error1;
     }
@@ -59,31 +60,31 @@ void d_cache_driver(char* papi_event_name, int max_iter, hw_desc_t *hw_desc, cha
             {
                 for(ppb = 64; ppb >= 16; ppb -= 48)
                 {
-                    if( show_progress )
+                    if( params.show_progress )
                     {
                         printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                         fflush(stdout);
                     }
-                    status = d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                    status = d_cache_test(pattern, params.max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
                     if( status < 0 )
                         goto error2;
                 }
             }
             else
             {
-                if( show_progress )
+                if( params.show_progress )
                 {
                     printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                     fflush(stdout);
                 }
-                status = d_cache_test(pattern, max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                status = d_cache_test(pattern, params.max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
                 if( status < 0 )
                     goto error2;
             }
         }
     }
 error2:
-    if( show_progress )
+    if( params.show_progress )
     {
         size_t i;
         printf("100%%");

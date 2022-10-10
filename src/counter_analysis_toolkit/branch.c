@@ -12,7 +12,7 @@ volatile int iter_count, global_var1, global_var2;
 volatile int result;
 volatile unsigned int b, z1, z2, z3, z4;
 
-void branch_driver(char *papi_event_name, int init, hw_desc_t *hw_desc, char* outdir){
+void branch_driver(char *papi_event_name, int junk, hw_desc_t *hw_desc, char* outdir){
     int papi_eventset = PAPI_NULL;
     int i, iter, sz, ret_val, max_iter = 16*1024;
     long long int cnt;
@@ -33,9 +33,9 @@ void branch_driver(char *papi_event_name, int init, hw_desc_t *hw_desc, char* ou
     }
 
     // Initialize undecidible values for the BRNG macro.
-    z1 = init*7;
-    z2 = (init+4)/(init+1);
-    z3 = (unsigned int)getpid();
+    z1 = junk*7;
+    z2 = (junk+4)/(junk+1);
+    z3 = junk;
     z4 = (z3+z2)/z1;
 
     ret_val = PAPI_create_eventset( &papi_eventset );
