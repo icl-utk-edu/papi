@@ -247,7 +247,7 @@ PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 #endif
 {
 	PAPI_option_t e;
-/* WARNING: The casts from caddr_t to long below WILL BREAK on systems with
+/* WARNING: The casts from vptr_t to long below WILL BREAK on systems with
     64-bit addresses. I did it here because I was lazy. And because I wanted
     to get rid of those pesky gcc warnings. If you find a 64-bit system,
     conditionalize the cast with (yet another) #ifdef...

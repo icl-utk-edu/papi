@@ -1527,9 +1527,9 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 				if ( strcmp( mdi->exe_info.fullname, mapname )
 					 == 0 ) {
 					mdi->exe_info.address_info.text_start =
-						( caddr_t ) begin;
+						( vptr_t ) begin;
 					mdi->exe_info.address_info.text_end =
-						( caddr_t ) ( begin + size );
+						( vptr_t ) ( begin + size );
 				}
 				t_index++;
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
@@ -1539,9 +1539,9 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 						  ( mdi->exe_info.fullname,
 							mapname ) == 0 ) ) {
 				mdi->exe_info.address_info.data_start =
-					( caddr_t ) begin;
+					( vptr_t ) begin;
 				mdi->exe_info.address_info.data_end =
-					( caddr_t ) ( begin + size );
+					( vptr_t ) ( begin + size );
 				d_index++;
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
 						( inode == 0 )
@@ -1550,9 +1550,9 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 						  ( mdi->exe_info.fullname,
 							lastmapname ) == 0 ) ) {
 				mdi->exe_info.address_info.bss_start =
-					( caddr_t ) begin;
+					( vptr_t ) begin;
 				mdi->exe_info.address_info.bss_end =
-					( caddr_t ) ( begin + size );
+					( vptr_t ) ( begin + size );
 				b_index++;
 			}
 		} else if ( !counting ) {
@@ -1560,8 +1560,8 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 				if ( strcmp( mdi->exe_info.fullname, mapname )
 					 != 0 ) {
 					t_index++;
-					tmp[t_index - 1].text_start = ( caddr_t ) begin;
-					tmp[t_index - 1].text_end = ( caddr_t ) ( begin + size );
+					tmp[t_index - 1].text_start = ( vptr_t ) begin;
+					tmp[t_index - 1].text_end = ( vptr_t ) ( begin + size );
 					strncpy( tmp[t_index - 1].name, mapname, PAPI_HUGE_STR_LEN );
                tmp[t_index - 1].name[PAPI_HUGE_STR_LEN-1]=0;
 				}
@@ -1572,14 +1572,14 @@ _linux_update_shlib_info( papi_mdi_t *mdi )
 						 mapname ) != 0 )
 					 && ( t_index > 0 ) &&
 					 ( tmp[t_index - 1].data_start == 0 ) ) {
-					tmp[t_index - 1].data_start = ( caddr_t ) begin;
-					tmp[t_index - 1].data_end = ( caddr_t ) ( begin + size );
+					tmp[t_index - 1].data_start = ( vptr_t ) begin;
+					tmp[t_index - 1].data_end = ( vptr_t ) ( begin + size );
 				}
 			} else if ( ( perm[0] == 'r' ) && ( perm[1] == 'w' ) &&
 						( inode == 0 ) ) {
 				if ( ( t_index > 0 ) && ( tmp[t_index - 1].bss_start == 0 ) ) {
-					tmp[t_index - 1].bss_start = ( caddr_t ) begin;
-					tmp[t_index - 1].bss_end = ( caddr_t ) ( begin + size );
+					tmp[t_index - 1].bss_start = ( vptr_t ) begin;
+					tmp[t_index - 1].bss_end = ( vptr_t ) ( begin + size );
 				}
 			}
 		}

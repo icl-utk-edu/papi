@@ -1938,7 +1938,7 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 	( void ) n;                           /*unused */
 	_papi_hwi_context_t hw_context;
 	int found_evt_idx = -1, fd = info->si_fd;
-	caddr_t address;
+	vptr_t address;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	int i;
 	pe_control_t *ctl;
@@ -2067,7 +2067,7 @@ _pe_dispatch_timer( int n, hwd_siginfo_t *info, void *uc)
 	*/
 
 		_papi_hwi_dispatch_overflow_signal( ( void * ) &hw_context,
-					( caddr_t ) ( unsigned long ) ip,
+					( vptr_t ) ( unsigned long ) ip,
 					NULL, ( 1 << found_evt_idx ), 0,
 					&thread, cidx );
 

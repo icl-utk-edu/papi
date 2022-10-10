@@ -29,7 +29,7 @@ int main()
 {
 
     unsigned long length;
-    caddr_t start, end;
+    vptr_t start, end;
     PAPI_sprofil_t * prof; 
     int EventSet = PAPI_NULL;
     /*must be initialized to PAPI_NULL before calling PAPI_create_event*/

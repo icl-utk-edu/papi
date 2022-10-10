@@ -44,7 +44,7 @@ main( int argc, char **argv )
 	PAPI_sprofil_t sprof[3];
 	int retval;
 	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	vptr_t start, end;
 	int quiet;
 
 	/* Set TESTS_QUIET variable */
@@ -77,7 +77,7 @@ main( int argc, char **argv )
 	/* First half */
 	sprof[0].pr_base = buf[0];
 	sprof[0].pr_size = ( unsigned int ) blength;
-	sprof[0].pr_off = ( caddr_t ) DO_FLOPS;
+	sprof[0].pr_off = ( vptr_t ) DO_FLOPS;
 #if defined(linux) && defined(__ia64__)
 	if ( !quiet )
 		fprintf( stderr, "do_flops is at %p %p\n", &do_flops, sprof[0].pr_off );
@@ -86,7 +86,7 @@ main( int argc, char **argv )
 	/* Second half */
 	sprof[1].pr_base = buf[1];
 	sprof[1].pr_size = ( unsigned int ) blength;
-	sprof[1].pr_off = ( caddr_t ) DO_READS;
+	sprof[1].pr_off = ( vptr_t ) DO_READS;
 #if defined(linux) && defined(__ia64__)
 	if ( !quiet )
 		fprintf( stderr, "do_reads is at %p %p\n", &do_reads, sprof[1].pr_off );

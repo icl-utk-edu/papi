@@ -70,7 +70,7 @@ my_main( void )
 }
 
 static int
-do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
+do_profile( vptr_t start, unsigned long plength, unsigned scale, int thresh,
 	    int bucket, unsigned int mask ) {
 
 	int i, retval;
@@ -189,7 +189,7 @@ main( int argc, char **argv )
 	int mask;
 	int retval;
 	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	vptr_t start, end;
 	int quiet;
 
 	/* Set TESTS_QUIET variable */
@@ -229,16 +229,16 @@ main( int argc, char **argv )
 	values = allocate_test_space( 1, num_events );
 
 /* profile the cleara and my_main address space */
-	start = ( caddr_t ) cleara;
-	end = ( caddr_t ) my_dummy;
+	start = ( vptr_t ) cleara;
+	end = ( vptr_t ) my_dummy;
 
 /* Itanium and PowerPC64 processors return function descriptors instead
  * of function addresses. You must dereference the descriptor to get the address.
 */
 #if defined(ITANIUM1) || defined(ITANIUM2) \
     || (defined(__powerpc64__) && (_CALL_ELF != 2))
-	start = ( caddr_t ) ( ( ( struct fdesc * ) start )->ip );
-	end = ( caddr_t ) ( ( ( struct fdesc * ) end )->ip );
+	start = ( vptr_t ) ( ( ( struct fdesc * ) start )->ip );
+	end = ( vptr_t ) ( ( ( struct fdesc * ) end )->ip );
         /* PPC64 Big Endian is ELF version 1 which uses function descriptors.
          *  PPC64 Little Endian is ELF version 2 which does not use
          * function descriptors

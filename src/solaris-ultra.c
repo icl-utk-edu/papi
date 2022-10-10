@@ -133,7 +133,7 @@ dispatch_emt( int signal, siginfo_t * sip, void *arg )
 {
 	int event_counter;
 	_papi_hwi_context_t ctx;
-	caddr_t address;
+	vptr_t address;
 	ctx.si = sip;
 	ctx.ucontext = arg;
 	SUBDBG( "%d, %p, %p\n", signal, sip, arg );
@@ -746,7 +746,7 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
   _papi_hwi_context_t ctx;
   ThreadInfo_t *master = NULL;
   int isHardware = 0;
-  caddr_t address;
+  vptr_t address;
   int cidx = _solaris_vector.cmp_info.CmpIdx;
 
   ctx.si = si;
@@ -773,7 +773,7 @@ _ultra_hwd_dispatch_timer( int signal, siginfo_t * si, void *context )
         long_long results[MAX_COUNTERS];
         int i;
         _papi_hwi_context_t ctx;
-	caddr_t address;
+	vptr_t address;
 	int cidx = _solaris_vector.cmp_info.CmpIdx;
 
         ctx.si = si;

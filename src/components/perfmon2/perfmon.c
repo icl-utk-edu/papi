@@ -1445,7 +1445,7 @@ setup_ear_event( unsigned int native_index, pfarg_pmd_t * pd, int flags )
 
 static inline int
 process_smpl_entry( unsigned int native_pfm_index, int flags,
-					pfm_dfl_smpl_entry_t ** ent, caddr_t * pc )
+					pfm_dfl_smpl_entry_t ** ent, vptr_t * pc )
 {
 #ifndef __ia64__
 	( void ) native_pfm_index;	/*unused */
@@ -1501,14 +1501,14 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 		}
 
 		if ( flags & PAPI_PROFIL_DATA_EAR )
-			*pc = ( caddr_t ) data_addr.pmd_val;
+			*pc = ( vptr_t ) data_addr.pmd_val;
 		else if ( flags & PAPI_PROFIL_INST_EAR ) {
 			unsigned long tmp =
 				( ( load_addr.pmd36_mont_reg.dear_iaddr +
 					( unsigned long ) load_addr.pmd36_mont_reg.
 					dear_bn ) << 4 ) | ( unsigned long ) load_addr.
 				pmd36_mont_reg.dear_slot;
-			*pc = ( caddr_t ) tmp;
+			*pc = ( vptr_t ) tmp;
 		} else {
 			PAPIERROR( "BUG!" );
 			goto bail1;
@@ -1553,7 +1553,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 
 		if ( flags & PAPI_PROFIL_INST_EAR ) {
 			unsigned long tmp = icache_line_addr.pmd34_mont_reg.iear_iaddr << 5;
-			*pc = ( caddr_t ) tmp;
+			*pc = ( vptr_t ) tmp;
 		} else {
 			PAPIERROR( "BUG!" );
 			goto bail2;
@@ -1607,14 +1607,14 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 		}
 
 		if ( flags & PAPI_PROFIL_DATA_EAR )
-			*pc = ( caddr_t ) data_addr.pmd_val;
+			*pc = ( vptr_t ) data_addr.pmd_val;
 		else if ( flags & PAPI_PROFIL_INST_EAR ) {
 			unsigned long tmp =
 				( ( load_addr.pmd17_ita2_reg.dear_iaddr +
 					( unsigned long ) load_addr.pmd17_ita2_reg.
 					dear_bn ) << 4 ) | ( unsigned long ) load_addr.
 				pmd17_ita2_reg.dear_slot;
-			*pc = ( caddr_t ) tmp;
+			*pc = ( vptr_t ) tmp;
 		} else {
 			PAPIERROR( "BUG!" );
 			goto bail3;
@@ -1658,7 +1658,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
 
 		if ( flags & PAPI_PROFIL_INST_EAR ) {
 			unsigned long tmp = icache_line_addr.pmd0_ita2_reg.iear_iaddr << 5;
-			*pc = ( caddr_t ) tmp;
+			*pc = ( vptr_t ) tmp;
 		} else {
 			PAPIERROR( "BUG!" );
 			goto bail4;
@@ -1679,7 +1679,7 @@ process_smpl_entry( unsigned int native_pfm_index, int flags,
   safety:
 #endif
 	{
-		*pc = ( caddr_t ) ( ( size_t ) ( ( *ent )->ip ) );
+		*pc = ( vptr_t ) ( ( size_t ) ( ( *ent )->ip ) );
 		++( *ent );
 		return ( 0 );
 	}
@@ -1697,7 +1697,7 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 		( ( pfm_context_t * ) ( *thr )->context[cidx] )->smpl_buf;
 	int ret, profile_index, flags;
 	unsigned int native_pfm_index;
-	caddr_t pc = NULL;
+	vptr_t pc = NULL;
 	long long weight;
 
 	DEBUGCALL( DEBUG_SUBSTRATE, dump_smpl_hdr( hdr ) );
@@ -1744,7 +1744,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 	pfarg_msg_t msg;
 #endif
 	int ret, wanted_fd, fd = info->si_fd;
-	caddr_t address;
+	vptr_t address;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
 	int cidx = _perfmon2_vector.cmp_info.CmpIdx;
 
@@ -1856,7 +1856,7 @@ _papi_pfm_dispatch_timer( int n, hwd_siginfo_t * info, void *uc )
 					}
 				}
 				_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx,
-													( caddr_t ) ( ( size_t )
+													( vptr_t ) ( ( size_t )
 																  msg.
 																  pfm_ovfl_msg.
 																  msg_ovfl_ip ),

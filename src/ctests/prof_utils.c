@@ -90,7 +90,7 @@ prof_print_address( const char *title, const PAPI_exe_info_t * prginfo )
    Assumed globals: event_name, start, stop.
 */
 void
-prof_print_prof_info( caddr_t start, caddr_t end, int threshold,
+prof_print_prof_info( vptr_t start, vptr_t end, int threshold,
 					  char *event_name )
 {
 	printf( "Profiling event  : %s\n", event_name );
@@ -199,7 +199,7 @@ prof_head( unsigned long blength, int bucket, int num_buckets, const char *heade
    Assumes global profbuf[] array pointers.
 */
 void
-prof_out( caddr_t start, int n, int bucket, int num_buckets,
+prof_out( vptr_t start, int n, int bucket, int num_buckets,
 		  unsigned int scale )
 {
 	int i, j;
@@ -219,7 +219,7 @@ prof_out( caddr_t start, int n, int bucket, int num_buckets,
 				for ( j = 0, buf_16 = 0; j < n; j++ )
 					buf_16 |= ( buf16[j] )[i];
 				if ( buf_16 ) {
-/* On 32bit builds with gcc 4.3 gcc complained about casting caddr_t => long long
+/* On 32bit builds with gcc 4.3 gcc complained about casting vptr_t => long long
  * Thus the unsigned long to long long cast */
 					printf( "%#-16llx",
 						(long long) (unsigned long)start +

@@ -266,7 +266,7 @@ mmap_read( int cidx, ThreadInfo_t **thr, pe_event_info_t *pe,
 		switch ( event->header.type ) {
 			case PERF_RECORD_SAMPLE:
 				_papi_hwi_dispatch_profile( ( *thr )->running_eventset[cidx],
-					( caddr_t ) ( unsigned long ) event->ip.ip,
+					( vptr_t ) ( unsigned long ) event->ip.ip,
 					0, profile_index );
 				break;
 

@@ -55,7 +55,7 @@ ear_no_profile( void )
 }
 
 static int
-do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
+do_profile( vptr_t start, unsigned long plength, unsigned scale, int thresh,
 			int bucket )
 {
 	int i, retval;
@@ -122,7 +122,7 @@ main( int argc, char **argv )
 	int retval, retval2;
 	const PAPI_hw_info_t *hw_info;
 	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	vptr_t start, end;
 	int quiet;
 
 	/* Set TESTS_QUIET variable */
