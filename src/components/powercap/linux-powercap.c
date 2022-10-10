@@ -567,9 +567,9 @@ static int _powercap_ntv_code_to_info( unsigned int EventCode, PAPI_event_info_t
     if ( index < 0 || index >= num_events ) 
         return PAPI_ENOEVNT;
 
-    _local_strlcpy( info->symbol, powercap_ntv_events[index].name, sizeof( info->symbol ));
-    _local_strlcpy( info->long_descr, powercap_ntv_events[index].description, sizeof( info->long_descr ) );
-    _local_strlcpy( info->units, powercap_ntv_events[index].units, sizeof( info->units ) );
+    _local_strlcpy( info->symbol, powercap_ntv_events[index].name, PAPI_MAX_STR_LEN );
+    _local_strlcpy( info->long_descr, powercap_ntv_events[index].description, PAPI_MAX_STR_LEN );
+    _local_strlcpy( info->units, powercap_ntv_events[index].units, PAPI_MIN_STR_LEN-1 );
 
     info->data_type = powercap_ntv_events[index].return_type;
     return PAPI_OK;
