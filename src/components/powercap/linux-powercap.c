@@ -52,6 +52,9 @@ typedef struct _powercap_reg_alloc {
 static char read_buff[PAPI_MAX_STR_LEN];
 static char write_buff[PAPI_MAX_STR_LEN];
 
+static long long max_pkg_energy_count;
+static long long max_component_energy_count;
+
 static int num_events=0;
 
 // package events
@@ -234,6 +237,12 @@ static int _powercap_init_component( int cidx )
         if (strErr > sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
       }
 
+      if(powercap_ntv_events[num_events].type == PKG_MAX_ENERGY_RANGE) {
+        int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+        read_buff[sz] = '\0';
+        max_pkg_energy_count = atoll(read_buff);
+      }
+
       num_events++;
     }
 
@@ -274,6 +283,12 @@ static int _powercap_init_component( int cidx )
           strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
           powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
           if (strErr > sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
+        }
+
+        if(powercap_ntv_events[num_events].type == COMPONENT_MAX_ENERGY_RANGE) {
+          int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+          read_buff[sz] = '\0';
+          max_component_energy_count = atoll(read_buff);
         }
 
         num_events++;
@@ -384,7 +399,13 @@ _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	/* Wraparound. */
 	if(start_val > curr_val) {
 	  SUBDBG("Wraparound!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
-	  curr_val += (0x100000000 - start_val);
+      if( powercap_ntv_events[i].type == PKG_ENERGY ) {
+        curr_val += (max_pkg_energy_count - start_val);
+      } else if( powercap_ntv_events[i].type == COMPONENT_ENERGY ) {
+        curr_val += (max_component_energy_count - start_val);
+      } else {
+        curr_val += (0x100000000 - start_val);
+      }
 	}
 	/* Normal subtraction. */
 	else if (start_val < curr_val) {
