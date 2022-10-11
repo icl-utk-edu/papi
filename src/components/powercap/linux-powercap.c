@@ -62,12 +62,12 @@ static int num_events=0;
 #define PKG_MAX_ENERGY_RANGE        1
 #define PKG_MAX_POWER_A             2
 #define PKG_POWER_LIMIT_A           3
-#define PKG_TIME_WINDOW_A	        4
-#define PKG_MAX_POWER_B  	        5
+#define PKG_TIME_WINDOW_A           4
+#define PKG_MAX_POWER_B             5
 #define PKG_POWER_LIMIT_B           6
-#define PKG_TIME_WINDOW_B	        7
-#define PKG_ENABLED 	     	    8
-#define PKG_NAME 	     	        9
+#define PKG_TIME_WINDOW_B           7
+#define PKG_ENABLED                 8
+#define PKG_NAME                    9
 
 #define PKG_NUM_EVENTS              10
 static int   pkg_events[PKG_NUM_EVENTS]        = {PKG_ENERGY, PKG_MAX_ENERGY_RANGE, PKG_MAX_POWER_A, PKG_POWER_LIMIT_A, PKG_TIME_WINDOW_A, PKG_MAX_POWER_B, PKG_POWER_LIMIT_B, PKG_TIME_WINDOW_B, PKG_ENABLED, PKG_NAME};
@@ -81,9 +81,9 @@ static mode_t   pkg_sys_flags[PKG_NUM_EVENTS]  = {O_RDONLY, O_RDONLY, O_RDONLY, 
 #define COMPONENT_MAX_ENERGY_RANGE  11
 #define COMPONENT_MAX_POWER_A       12
 #define COMPONENT_POWER_LIMIT_A     13
-#define COMPONENT_TIME_WINDOW_A	    14
-#define COMPONENT_ENABLED 	     	15
-#define COMPONENT_NAME 	     	    16
+#define COMPONENT_TIME_WINDOW_A     14
+#define COMPONENT_ENABLED           15
+#define COMPONENT_NAME              16
 
 #define COMPONENT_NUM_EVENTS        7
 static int   component_events[COMPONENT_NUM_EVENTS]      = {COMPONENT_ENERGY, COMPONENT_MAX_ENERGY_RANGE, COMPONENT_MAX_POWER_A, COMPONENT_POWER_LIMIT_A, COMPONENT_TIME_WINDOW_A, COMPONENT_ENABLED, COMPONENT_NAME};
@@ -333,7 +333,7 @@ static int _powercap_init_control_state( hwd_control_state_t *ctl )
     int i;
     for (i = 0; i < num_events; i++) {
         if ((powercap_ntv_events[i].type == PKG_ENERGY) || (powercap_ntv_events[i].type == COMPONENT_ENERGY)) {
-  	    control->need_difference[i] = 1;
+            control->need_difference[i] = 1;
         }
     }
 
@@ -396,23 +396,24 @@ _powercap_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* Make sure an event is a counter. */
       if (control->need_difference[i] == 1) {
 
-	/* Wraparound. */
-	if(start_val > curr_val) {
-	  SUBDBG("Wraparound!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
-      if( powercap_ntv_events[i].type == PKG_ENERGY ) {
-        curr_val += (max_pkg_energy_count - start_val);
-      } else if( powercap_ntv_events[i].type == COMPONENT_ENERGY ) {
-        curr_val += (max_component_energy_count - start_val);
-      } else {
-        curr_val += (0x100000000 - start_val);
-      }
-	}
-	/* Normal subtraction. */
-	else if (start_val < curr_val) {
-	  SUBDBG("Normal subtraction!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
-	  curr_val -= start_val;
-	}
-	SUBDBG("Final value: %lld\n", curr_val);
+        /* Wraparound. */
+        if(start_val > curr_val) {
+          SUBDBG("Wraparound!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
+          if( powercap_ntv_events[i].type == PKG_ENERGY ) {
+            curr_val += (max_pkg_energy_count - start_val);
+          } else if( powercap_ntv_events[i].type == COMPONENT_ENERGY ) {
+            curr_val += (max_component_energy_count - start_val);
+          } else {
+            curr_val += (0x100000000 - start_val);
+          }
+        }
+
+        /* Normal subtraction. */
+        else if (start_val < curr_val) {
+          SUBDBG("Normal subtraction!\nstart value:\t%lld,\tcurrent value:%lld\n", start_val, curr_val);
+          curr_val -= start_val;
+        }
+        SUBDBG("Final value: %lld\n", curr_val);
 
       }
     }

@@ -92,14 +92,14 @@ int main ( int argc, char **argv )
     /* Set TESTS_QUIET variable */
     tests_quiet( argc, argv );
 
-	/* Currently unimplemented? */
+    /* Currently unimplemented? */
 #if 0
-	int do_wrap = 0;
-	if ( argc > 1 ) {
-		if ( strstr( argv[1], "-w" ) ) {
-			do_wrap = 1;
-		}
-	}
+    int do_wrap = 0;
+    if ( argc > 1 ) {
+        if ( strstr( argv[1], "-w" ) ) {
+            do_wrap = 1;
+        }
+    }
 #endif
 
     /* PAPI Initialization */
