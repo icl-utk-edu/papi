@@ -1385,24 +1385,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
             r2 = FMA_VEC_SS(r2,r9,rB);
@@ -1416,7 +1398,6 @@ float test_sp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -1470,38 +1451,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
             r2 = FMA_VEC_SS(r2,r9,rB);
@@ -1529,7 +1478,6 @@ float test_sp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -1583,66 +1531,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-
-            r0 = _mm_macc_ss(r0,r7,r9);
-            r1 = _mm_macc_ss(r1,r8,rA);
-            r2 = _mm_macc_ss(r2,r9,rB);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,rB,rD);
-            r5 = _mm_macc_ss(r5,rC,rE);
-
-            r0 = _mm_macc_ss(r0,rD,rF);
-            r1 = _mm_macc_ss(r1,rC,rE);
-            r2 = _mm_macc_ss(r2,rB,rD);
-            r3 = _mm_macc_ss(r3,rA,rC);
-            r4 = _mm_macc_ss(r4,r9,rB);
-            r5 = _mm_macc_ss(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SS(r0,r7,r9);
             r1 = FMA_VEC_SS(r1,r8,rA);
             r2 = FMA_VEC_SS(r2,r9,rB);
@@ -1698,7 +1586,6 @@ float test_sp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SS(r3,rA,rC);
             r4 = FMA_VEC_SS(r4,r9,rB);
             r5 = FMA_VEC_SS(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -1752,24 +1639,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
             r2 = FMA_VEC_SD(r2,r9,rB);
@@ -1783,7 +1652,6 @@ double test_dp_scalar_VEC_FMA_12( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -1837,38 +1705,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
             r2 = FMA_VEC_SD(r2,r9,rB);
@@ -1896,7 +1732,6 @@ double test_dp_scalar_VEC_FMA_24( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -1950,66 +1785,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#if defined(AMDBulldozer)
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-
-            r0 = _mm_macc_sd(r0,r7,r9);
-            r1 = _mm_macc_sd(r1,r8,rA);
-            r2 = _mm_macc_sd(r2,r9,rB);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,rB,rD);
-            r5 = _mm_macc_sd(r5,rC,rE);
-
-            r0 = _mm_macc_sd(r0,rD,rF);
-            r1 = _mm_macc_sd(r1,rC,rE);
-            r2 = _mm_macc_sd(r2,rB,rD);
-            r3 = _mm_macc_sd(r3,rA,rC);
-            r4 = _mm_macc_sd(r4,r9,rB);
-            r5 = _mm_macc_sd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_SD(r0,r7,r9);
             r1 = FMA_VEC_SD(r1,r8,rA);
             r2 = FMA_VEC_SD(r2,r9,rB);
@@ -2065,7 +1840,6 @@ double test_dp_scalar_VEC_FMA_48( uint64 iterations ){
             r3 = FMA_VEC_SD(r3,rA,rC);
             r4 = FMA_VEC_SD(r4,r9,rB);
             r5 = FMA_VEC_SD(r5,r8,rA);
-#endif
 
             i++;
         }
