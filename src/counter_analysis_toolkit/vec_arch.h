@@ -134,7 +134,7 @@ typedef float64x2_t DP_VEC_TYPE;
 #define FMA_VEC_PS(_I_,_J_,_K_) (float32x4_t)vfmaq_f32( _K_ , _J_ , _I_ );
 #define FMA_VEC_PD(_I_,_J_,_K_) (float64x2_t)vfmaq_f64( _K_ , _J_ , _I_ );
 
-#elif defined(IBM)
+#elif defined(POWER)
 void  test_hp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 void  test_sp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 void  test_dp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );

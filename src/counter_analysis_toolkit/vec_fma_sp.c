@@ -22,7 +22,7 @@ void test_sp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventS
 void test_sp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_sp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(IBM)
+#elif defined(POWER)
 void test_sp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_sp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }

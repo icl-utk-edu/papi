@@ -142,7 +142,7 @@ void vec_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
     test_dp_arm_VEC_FMA( 24, 1000, EventSet, ofp_papi );
     test_dp_arm_VEC_FMA( 48, 1000, EventSet, ofp_papi );
 
-#elif defined(IBM)
+#elif defined(POWER)
 
     // Non-FMA instruction trials.
     test_hp_power_VEC( 24, 1000, EventSet, ofp_papi );

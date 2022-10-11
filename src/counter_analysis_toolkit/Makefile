@@ -28,11 +28,11 @@ ifeq ($(ARCH),X86)
     VEC_FMA=-mfma4 -mfma -O0 -DX86
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
 endif
-ifeq ($(ARCH),IBM)
+ifeq ($(ARCH),POWER)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
-    VEC=-maltivec -O0 -DIBM
-    VEC_FMA=-maltivec -O0 -DIBM
-    VEC_ALL=$(VEC) -O0 -DIBM
+    VEC=-maltivec -O0 -DPOWER
+    VEC_FMA=-maltivec -O0 -DPOWER
+    VEC_ALL=$(VEC) -O0 -DPOWER
 endif
 ifeq ($(ARCH),ARM)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o

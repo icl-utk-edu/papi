@@ -22,7 +22,7 @@ void test_dp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, 
 void test_dp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(IBM)
+#elif defined(POWER)
 void test_dp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
 }

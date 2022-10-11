@@ -28,7 +28,7 @@ void test_hp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, 
 void test_hp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(IBM)
+#elif defined(POWER)
 void test_hp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_hp_VEC( instr_per_loop, iterations, EventSet, fp );
 }
