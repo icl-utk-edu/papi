@@ -9,6 +9,10 @@
 #include "papi.h"
 #include "driver.h"
 
+#if defined(USE_MPI)
+#include <mpi.h>
+#endif
+
 int main(int argc, char*argv[])
 {
     int cmbtotal = 0, ct = 0, track = 0, ret = 0;
@@ -17,6 +21,13 @@ int main(int argc, char*argv[])
     char **allevts = NULL, **basenames = NULL;
     evstock *data = NULL;
     cat_params_t params = {-1,0,1,0,0,0,NULL,NULL};
+    int nprocs = 1, myid = 0;
+
+#if defined(USE_MPI)
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+#endif
 
     // Initialize PAPI.
     ret = PAPI_library_init(PAPI_VER_CURRENT);
@@ -122,7 +133,7 @@ int main(int argc, char*argv[])
     hw_desc_t *hw_desc = obtain_hardware_description(conf_file_name);
 
     // Run the benchmark for each qualifier combination.
-    testbench(allevts, cmbtotal, hw_desc, params);
+    testbench(allevts, cmbtotal, hw_desc, params, myid, nprocs);
 
     // Free dynamically allocated memory.
     free(params.outputdir);
@@ -144,6 +155,11 @@ int main(int argc, char*argv[])
     free(allevts);
 
     PAPI_shutdown();
+
+#if defined(USE_MPI)
+    MPI_Finalize();
+#endif
+
     return 0;
 }
 
@@ -742,10 +758,19 @@ static void print_progress2(int prg)
     fflush(stdout);
 }
 
-void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t params)
+void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t params, int myid, int nprocs)
 {
     int i;
     int junk=((int)getpid()+123)/456;
+    int low = myid*(cmbtotal/nprocs);
+    int cap = (myid+1)*(cmbtotal/nprocs);
+    int offset = nprocs*(1+cmbtotal/nprocs)-cmbtotal;
+
+    // Divide the work as evenly as possible.
+    if(myid >= offset) {
+        cap += myid-offset+1;
+        low += myid-offset;
+    }
 
     // Make sure the user provided events and iterate through all events.
     if( 0 == cmbtotal )
@@ -766,7 +791,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     {
         if(params.show_progress) printf("Branch Benchmarks: ");
 
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress((100*i)/cmbtotal);
 
@@ -791,7 +816,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         }
 
         if(params.show_progress) printf("D-Cache Read Benchmarks: ");
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
@@ -818,7 +843,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         }
 
         if(params.show_progress) printf("D-Cache Write Benchmarks: ");
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
@@ -834,7 +859,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     {
         if(params.show_progress) printf("FLOP Benchmarks: ");
 
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress((100*i)/cmbtotal);
 
@@ -849,7 +874,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     {
         if(params.show_progress) printf("I-Cache Benchmarks: ");
 
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress2((100*i)/cmbtotal);
 
@@ -864,7 +889,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     {
         if(params.show_progress) printf("Vector FLOP Benchmarks: ");
 
-        for(i = 0; i < cmbtotal; ++i)
+        for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress((100*i)/cmbtotal);
 

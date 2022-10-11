@@ -1,5 +1,6 @@
 ARCH?=INTEL
 PAPIDIR?=${HOME}/usr
+USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
 INCFLAGS=-I$(PAPIDIR)/include
 CFLAGS+=-g -Wall -Wextra
@@ -7,6 +8,12 @@ OPT0=-O0
 OPT1=-O1
 OPT2=-O2
 CC=gcc
+
+## Check to see if MPI is used.
+ifeq ($(USEMPI),true)
+    CC=mpicc
+    CFLAGS+=-DUSE_MPI
+endif
 
 ## Architecture determines vector instruction set.
 ifeq ($(ARCH),INTEL)
