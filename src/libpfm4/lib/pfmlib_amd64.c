@@ -184,6 +184,7 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
                 switch (cfg->model) {
                 case 1:
                         rev = PFM_PMU_AMD64_FAM19H_ZEN3;
+			break;
                 default:
                        ;
                 }

@@ -991,7 +991,7 @@ static const intel_x86_umask_t intel_spr_uops_retired[]={
 static const intel_x86_umask_t intel_spr_assists[]={
   { .uname   = "ANY",
     .udesc   = "Number of occurrences where a microcode assist is invoked by hardware.",
-    .ucode   = 0x1f00ull,
+    .ucode   = 0x1b00ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "FP",
@@ -1381,8 +1381,13 @@ static const intel_x86_umask_t intel_spr_decode[]={
   { .uname   = "LCP",
     .udesc   = "Stalls caused by changing prefix length of the instruction.",
     .ucode   = 0x0100ull,
-    .uflags  = INTEL_X86_DFL,
+    .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "MS_BUSY",
+    .udesc   = "Cycles the Microcode Sequencer is busy.",
+    .ucode   = 0x0200ull,
+    .uflags  = INTEL_X86_NCOMBO,
+ },
 };
 
 static const intel_x86_umask_t intel_spr_icache_tag[]={
@@ -1520,7 +1525,7 @@ static const intel_x86_umask_t intel_spr_l1d_pend_miss[]={
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "FB_FULL_PERIODS",
-    .udesc   = "Number of phases a demand request has waited due to L1D Fill Buffer (FB) unavailablability.",
+    .udesc   = "Number of phases a demand request has waited due to L1D Fill Buffer (FB) unavailability.",
     .ucode   = 0x0200ull | (0x1 << INTEL_X86_CMASK_BIT) | (0x1 << INTEL_X86_EDGE_BIT),
     .uflags  = INTEL_X86_NCOMBO,
     .modhw   = _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_E,
