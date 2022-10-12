@@ -18,12 +18,13 @@ endif
 ## Architecture determines vector instruction set.
 ifeq ($(ARCH),X86)
     VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
-    VEC128=-mavx -O0 -DX86 -DX86_VEC_WIDTH_128B
-    VEC256=-mavx -O0 -DX86 -DX86_VEC_WIDTH_256B
-    VEC512=-mavx512f -O0 -DX86 -DX86_VEC_WIDTH_512B
-    VEC128_FMA=-mfma4 -mfma -O0 -DX86 -DX86_VEC_WIDTH_128B
-    VEC256_FMA=-mfma4 -mfma -O0 -DX86 -DX86_VEC_WIDTH_256B
-    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 -DX86_VEC_WIDTH_512B
+    VEC_META=-DAVX128_AVAIL -DAVX256_AVAIL -DAVX512_AVAIL
+    VEC128=-mavx -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_128B
+    VEC256=-mavx -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_256B
+    VEC512=-mavx512f -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_512B
+    VEC128_FMA=-mfma4 -mfma -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_128B
+    VEC256_FMA=-mfma4 -mfma -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_256B
+    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_512B
     VEC=-mavx -O0 -DX86
     VEC_FMA=-mfma4 -mfma -O0 -DX86
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
@@ -87,7 +88,7 @@ weak_symbols.o: weak_symbols.c vec.h
 	-$(CC) -c $(CFLAGS) weak_symbols.c
 
 vec.o: vec.c vec.h
-	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) vec.c
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) $(VEC_META) vec.c
 
 vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h vec_arch.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_ALL) vec_scalar_verify.c
