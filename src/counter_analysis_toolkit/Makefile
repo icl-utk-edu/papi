@@ -18,12 +18,12 @@ endif
 ## Architecture determines vector instruction set.
 ifeq ($(ARCH),X86)
     VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
-    VEC128=-mavx -O0 -DX86 -DVEC_WIDTH_128
-    VEC256=-mavx -O0 -DX86 -DVEC_WIDTH_256
-    VEC512=-mavx512f -O0 -DX86 -DVEC_WIDTH_512
-    VEC128_FMA=-mfma4 -mfma -O0 -DX86 -DVEC_WIDTH_128
-    VEC256_FMA=-mfma4 -mfma -O0 -DX86 -DVEC_WIDTH_256
-    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 -DVEC_WIDTH_512
+    VEC128=-mavx -O0 -DX86 -DX86_VEC_WIDTH_128B
+    VEC256=-mavx -O0 -DX86 -DX86_VEC_WIDTH_256B
+    VEC512=-mavx512f -O0 -DX86 -DX86_VEC_WIDTH_512B
+    VEC128_FMA=-mfma4 -mfma -O0 -DX86 -DX86_VEC_WIDTH_128B
+    VEC256_FMA=-mfma4 -mfma -O0 -DX86 -DX86_VEC_WIDTH_256B
+    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 -DX86_VEC_WIDTH_512B
     VEC=-mavx -O0 -DX86
     VEC_FMA=-mfma4 -mfma -O0 -DX86
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86

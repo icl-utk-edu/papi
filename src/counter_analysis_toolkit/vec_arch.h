@@ -42,7 +42,7 @@ typedef __m128d DP_SCALAR_TYPE;
 #define MUL_VEC_SD(_I_,_J_)     _mm_mul_sd( _I_ , _J_ );
 #define FMA_VEC_SD(_I_,_J_,_K_) _mm_fmadd_sd( _I_ , _J_ , _K_ );
 
-#if defined(VEC_WIDTH_128)
+#if defined(X86_VEC_WIDTH_128B)
 typedef __m128  SP_VEC_TYPE;
 typedef __m128d DP_VEC_TYPE;
 
@@ -56,7 +56,7 @@ typedef __m128d DP_VEC_TYPE;
 #define MUL_VEC_PD(_I_,_J_)     _mm_mul_pd( _I_ , _J_ );
 #define FMA_VEC_PD(_I_,_J_,_K_) _mm_fmadd_pd( _I_ , _J_ , _K_ );
 
-#elif defined(VEC_WIDTH_512)
+#elif defined(X86_VEC_WIDTH_512B)
 typedef __m512  SP_VEC_TYPE;
 typedef __m512d DP_VEC_TYPE;
 

@@ -6,15 +6,15 @@ static double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp 
 static void   test_dp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
 /* Wrapper functions of different vector widths. */
-#if defined(VEC_WIDTH_128)
+#if defined(X86_VEC_WIDTH_128B)
 void test_dp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(VEC_WIDTH_512)
+#elif defined(X86_VEC_WIDTH_512B)
 void test_dp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(VEC_WIDTH_256)
+#elif defined(X86_VEC_WIDTH_256B)
 void test_dp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
