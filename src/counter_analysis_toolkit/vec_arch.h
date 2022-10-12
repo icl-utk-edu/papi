@@ -95,7 +95,7 @@ void  test_dp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, 
 
 #include <arm_neon.h>
 
-typedef __fp16 HP_SCALAR_TYPE;
+typedef __fp16 half;
 typedef float  SP_SCALAR_TYPE;
 typedef double DP_SCALAR_TYPE;
 
