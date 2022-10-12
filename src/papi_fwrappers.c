@@ -1410,7 +1410,7 @@ PAPI_FCALL( papif_rate_stop, PAPIF_RATE_STOP,
 	*check = PAPI_rate_stop( );
 }
 
-void *sysdetect_fort_handle;
+static void *sysdetect_fort_handle;
 
 /** @class PAPIF_enum_dev_type
  * @ingroup PAPIF
