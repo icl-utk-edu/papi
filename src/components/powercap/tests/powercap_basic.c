@@ -158,7 +158,7 @@ int main ( int argc, char **argv )
         strncpy( event_descrs[num_events],evinfo.long_descr,PAPI_HUGE_STR_LEN );
         strncpy( units[num_events],evinfo.units,PAPI_MIN_STR_LEN );
         // buffer must be null terminated to safely use strstr operation on it below
-        units[num_events][PAPI_MIN_STR_LEN-1] = '\0';
+        event_names[num_events][PAPI_MAX_STR_LEN-1] = '\0';
         data_type[num_events] = evinfo.data_type;
         retval = PAPI_add_event( EventSet, code );
 
