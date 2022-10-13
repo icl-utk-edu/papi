@@ -376,8 +376,8 @@ typedef struct _papi_int_inherit
 typedef struct _papi_int_addr_range { /* if both are zero, range is disabled */
    EventSetInfo_t *ESI;
    int domain;
-   caddr_t start;                /**< start address of an address range */
-   caddr_t end;                  /**< end address of an address range */
+   vptr_t start;                /**< start address of an address range */
+   vptr_t end;                  /**< end address of an address range */
    int start_off;                /**< offset from start address as programmed in hardware */
    int end_off;                  /**< offset from end address as programmed in hardware */
                                  /**< if offsets are undefined, they are both set to -1 */

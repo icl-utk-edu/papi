@@ -16,11 +16,11 @@
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 #if (defined(linux) && defined(__ia64__)) || (defined(_AIX))
-#define DO_FLOPS1 (caddr_t)(*(void **)do_flops1)
-#define DO_FLOPS2 (caddr_t)(*(void **)do_flops2)
+#define DO_FLOPS1 (vptr_t)(*(void **)do_flops1)
+#define DO_FLOPS2 (vptr_t)(*(void **)do_flops2)
 #else
-#define DO_FLOPS1 (caddr_t)(do_flops1)
-#define DO_FLOPS2 (caddr_t)(do_flops2)
+#define DO_FLOPS1 (vptr_t)(do_flops1)
+#define DO_FLOPS2 (vptr_t)(do_flops2)
 #endif
 
 void do_flops2(int);
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
    unsigned short *profbuf2;
    unsigned short *profbuf3;
    unsigned long length;
-   caddr_t start, end;
+   vptr_t start, end;
    long long values[2];
    const PAPI_exe_info_t *prginfo = NULL;
    PAPI_sprofil_t sprof[3];

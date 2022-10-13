@@ -274,7 +274,7 @@ void
 rocm_dispatch_timer(int n __attribute__((unused)), hwd_siginfo_t *info, void *uc)
 {
     _papi_hwi_context_t hw_context;
-    caddr_t address;
+    vptr_t address;
     EventSetInfo_t *ESI;
     ThreadInfo_t *thread;
     int cidx;

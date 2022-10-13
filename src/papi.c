@@ -5579,12 +5579,12 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  * // First buffer
  * sprof[0].pr_base = profbuf1;
  * sprof[0].pr_size = length;
- * sprof[0].pr_off = (caddr_t) DO_FLOPS;
+ * sprof[0].pr_off = (vptr_t) DO_FLOPS;
  * sprof[0].pr_scale = 0x10000;
  * // Second buffer
  * sprof[1].pr_base = profbuf2;
  * sprof[1].pr_size = length;
- * sprof[1].pr_off = (caddr_t) DO_READS;
+ * sprof[1].pr_off = (vptr_t) DO_READS;
  * sprof[1].pr_scale = 0x10000;
  * // Overflow bucket
  * sprof[2].pr_base = profbucket;
@@ -5995,7 +5995,7 @@ PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
  *
  */
 int
-PAPI_profil( void *buf, unsigned bufsiz, caddr_t offset,
+PAPI_profil( void *buf, unsigned bufsiz, vptr_t offset,
 			 unsigned scale, int EventSet, int EventCode, int threshold,
 			 int flags )
 {

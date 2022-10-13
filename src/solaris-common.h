@@ -16,7 +16,7 @@ long long _solaris_get_virt_usec( void );
 /* Assembler prototypes */
 
 extern void cpu_sync( void );
-extern caddr_t _start, _end, _etext, _edata;
+extern vptr_t _start, _end, _etext, _edata;
 
 extern rwlock_t lock[PAPI_MAX_LOCK];
 

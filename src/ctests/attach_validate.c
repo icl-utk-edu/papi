@@ -157,7 +157,7 @@ int main( int argc, char **argv ) {
 	}
 
 #if defined(__FreeBSD__)
-	if ( ptrace( PT_CONTINUE, pid, (caddr_t) 1, 0 ) == -1 ) {
+	if ( ptrace( PT_CONTINUE, pid, (vptr_t) 1, 0 ) == -1 ) {
 		perror( "ptrace(PTRACE_CONT)" );
 		test_fail( __FILE__, __LINE__,
 			"Continuing", PAPI_EMISC);

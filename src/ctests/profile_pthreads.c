@@ -14,7 +14,7 @@
 #define FLOPS 100000000
 
 unsigned int length;
-caddr_t my_start, my_end;
+vptr_t my_start, my_end;
 
 void *
 Thread( void *arg )

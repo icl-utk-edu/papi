@@ -721,7 +721,7 @@ static inline int sde_arm_timer(sde_control_state_t *sde_ctl){
 void _sde_dispatch_timer( int n, hwd_siginfo_t *info, void *uc) {
 
     _papi_hwi_context_t hw_context;
-    caddr_t address;
+    vptr_t address;
     ThreadInfo_t *thread;
     int i, cidx, retval, isHardware, slow_down, speed_up;
     int found_registered_counters, period_has_changed = 0;
@@ -888,7 +888,7 @@ static void invoke_user_handler(uint32_t cntr_uniq_id){
     sde_control_state_t *sde_ctl;
     _papi_hwi_context_t hw_context;
     ucontext_t uc;
-    caddr_t address;
+    vptr_t address;
     long long overflow_vector;
 
     thread = _papi_hwi_lookup_thread( 0 );

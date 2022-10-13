@@ -400,7 +400,7 @@ setup_ear_event( unsigned int native_index, pfarg_pmd_t * pd, int flags )
 
 static inline int
 process_smpl_entry( unsigned int native_pfnec_index, int flags,
-					pfnec_dfl_smpl_entry_t ** ent, caddr_t * pc )
+					pfnec_dfl_smpl_entry_t ** ent, vptr_t * pc )
 {
 
 		return 0;

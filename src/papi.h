@@ -576,22 +576,13 @@ read the documentation carefully.  */
   typedef void (*PAPI_overflow_handler_t) (int EventSet, void *address,
                                 long long overflow_vector, void *context);
 
-        /* Handle C99 and more recent compilation */
-	/* caddr_t was never approved by POSIX and is obsolete */
-	/* We should probably switch all caddr_t to void * or long */
-#ifdef __STDC_VERSION__
-  #if (__STDC_VERSION__ >= 199901L)
-	typedef char *caddr_t;
-  #else
-
-  #endif
-#endif
+typedef void *vptr_t;
 
 	/** @ingroup papi_data_structures */
    typedef struct _papi_sprofil {
       void *pr_base;          /**< buffer base */
       unsigned pr_size;       /**< buffer size */
-      caddr_t pr_off;         /**< pc start address (offset) */
+      vptr_t pr_off;         /**< pc start address (offset) */
       unsigned pr_scale;      /**< pc scaling factor: 
                                  fixed point fraction
                                  0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc.
@@ -705,12 +696,12 @@ read the documentation carefully.  */
 	@brief get the executable's address space info */
    typedef struct _papi_address_map {
       char name[PAPI_HUGE_STR_LEN];
-      caddr_t text_start;       /**< Start address of program text segment */
-      caddr_t text_end;         /**< End address of program text segment */
-      caddr_t data_start;       /**< Start address of program data segment */
-      caddr_t data_end;         /**< End address of program data segment */
-      caddr_t bss_start;        /**< Start address of program bss segment */
-      caddr_t bss_end;          /**< End address of program bss segment */
+      vptr_t text_start;       /**< Start address of program text segment */
+      vptr_t text_end;         /**< End address of program text segment */
+      vptr_t data_start;       /**< Start address of program data segment */
+      vptr_t data_end;         /**< End address of program data segment */
+      vptr_t bss_start;        /**< Start address of program bss segment */
+      vptr_t bss_end;          /**< End address of program bss segment */
    } PAPI_address_map_t;
 
 /** @ingroup papi_data_structures
@@ -851,8 +842,8 @@ typedef char* PAPI_user_defined_events_file_t;
 	 *  @brief address range specification for range restricted counting if both are zero, range is disabled  */
    typedef struct _papi_addr_range_option { 
       int eventset;           /**< eventset to restrict */
-      caddr_t start;          /**< user requested start address of an address range */
-      caddr_t end;            /**< user requested end address of an address range */
+      vptr_t start;          /**< user requested start address of an address range */
+      vptr_t end;            /**< user requested end address of an address range */
       int start_off;          /**< hardware specified offset from start address */
       int end_off;            /**< hardware specified offset from end address */
    } PAPI_addr_range_option_t;
@@ -1203,8 +1194,8 @@ typedef enum {
    int   PAPI_overflow(int EventSet, int EventCode, int threshold,
                      int flags, PAPI_overflow_handler_t handler); /**< set up an event set to begin registering overflows */
    void  PAPI_perror(const char *msg ); /**< Print a PAPI error message */
-   int   PAPI_profil(void *buf, unsigned bufsiz, caddr_t offset, 
-					 unsigned scale, int EventSet, int EventCode, 
+   int   PAPI_profil(void *buf, unsigned bufsiz, vptr_t offset,
+					 unsigned scale, int EventSet, int EventCode,
 					 int threshold, int flags); /**< generate PC histogram data where hardware counter overflow occurs */
    int   PAPI_query_event(int EventCode); /**< query if a PAPI event exists */
    int   PAPI_query_named_event(const char *EventName); /**< query if a named PAPI event exists */

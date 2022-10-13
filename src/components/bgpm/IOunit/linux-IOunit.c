@@ -197,7 +197,7 @@ user_signal_handler_IOUNIT( int hEvtSet, uint64_t address, uint64_t ovfVector, c
 	int isHardware = 1;
 	int cidx = _IOunit_vector.cmp_info.CmpIdx;
 	long_long overflow_bit = 0;
-	caddr_t address1;
+	vptr_t address1;
 	_papi_hwi_context_t ctx;
 	ctx.ucontext = ( hwd_ucontext_t * ) pContext;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );

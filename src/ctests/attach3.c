@@ -172,7 +172,7 @@ main( int argc, char **argv )
 
 	if (!quiet) printf("Continuing\n");
 #if defined(__FreeBSD__)
-	if ( ptrace( PT_CONTINUE, pid, (caddr_t) 1, 0 ) == -1 ) {
+	if ( ptrace( PT_CONTINUE, pid, (vptr_t) 1, 0 ) == -1 ) {
 #else
 	if ( ptrace( PTRACE_CONT, pid, NULL, NULL ) == -1 ) {
 #endif

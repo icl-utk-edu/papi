@@ -24,7 +24,7 @@ main( int argc, char **argv )
 	char title[PAPI_2MAX_STR_LEN];
 	int retval;
 	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	vptr_t start, end;
 	int quiet;
 
 	/* Set TESTS_QUIET variable */

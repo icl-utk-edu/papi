@@ -148,12 +148,12 @@ enum
 typedef struct _papi_address_map
 {
 	char mapname[PAPI_HUGE_STR_LEN];
-	caddr_t text_start;				   /* Start address of program text segment */
-	caddr_t text_end;				   /* End address of program text segment */
-	caddr_t data_start;				   /* Start address of program data segment */
-	caddr_t data_end;				   /* End address of program data segment */
-	caddr_t bss_start;				   /* Start address of program bss segment */
-	caddr_t bss_end;				   /* End address of program bss segment */
+	vptr_t text_start;				   /* Start address of program text segment */
+	vptr_t text_end;				   /* End address of program text segment */
+	vptr_t data_start;				   /* Start address of program data segment */
+	vptr_t data_end;				   /* End address of program data segment */
+	vptr_t bss_start;				   /* Start address of program bss segment */
+	vptr_t bss_end;				   /* End address of program bss segment */
 } PAPI_address_map_t;
 
 /*

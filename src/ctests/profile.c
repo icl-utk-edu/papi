@@ -38,7 +38,7 @@
 #define PROFILE_ALL
 
 static int
-do_profile( caddr_t start, unsigned long plength, unsigned scale, int thresh,
+do_profile( vptr_t start, unsigned long plength, unsigned scale, int thresh,
 			int bucket )
 {
 	int i, retval;
@@ -143,7 +143,7 @@ main( int argc, char **argv )
 	int retval;
 	int mythreshold = THRESHOLD;
 	const PAPI_exe_info_t *prginfo;
-	caddr_t start, end;
+	vptr_t start, end;
 	int quiet;
 
 	/* Set TESTS_QUIET variable */
@@ -172,14 +172,14 @@ main( int argc, char **argv )
 	end = prginfo->address_info.text_end;
 #else
 /* use these lines to profile only do_flops address space */
-	start = ( caddr_t ) do_flops;
-	end = ( caddr_t ) fdo_flops;
+	start = ( vptr_t ) do_flops;
+	end = ( vptr_t ) fdo_flops;
 /* Itanium and ppc64 processors return function descriptors instead of function addresses.
    You must dereference the descriptor to get the address.
 */
 #if defined(ITANIUM1) || defined(ITANIUM2) || defined(__powerpc64__)
-	start = ( caddr_t ) ( ( ( struct fdesc * ) start )->ip );
-	end = ( caddr_t ) ( ( ( struct fdesc * ) end )->ip );
+	start = ( vptr_t ) ( ( ( struct fdesc * ) start )->ip );
+	end = ( vptr_t ) ( ( ( struct fdesc * ) end )->ip );
 #endif
 #endif
 

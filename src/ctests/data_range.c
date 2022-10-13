@@ -21,7 +21,7 @@
 static void init_array( void );
 static int do_malloc_work( long loop );
 static int do_static_work( long loop );
-static void measure_load_store( caddr_t start, caddr_t end );
+static void measure_load_store( vptr_t start, vptr_t end );
 static void measure_event( int index, PAPI_option_t * option );
 
 int *parray1, *parray2, *parray3;
@@ -99,26 +99,26 @@ main( int argc, char **argv )
 	printf
 		( "They will likely disappear with higher levels of optimization.\n" );
 
-	measure_load_store( ( caddr_t ) & parray1, ( caddr_t ) ( &parray1 + 1 ) );
-	measure_load_store( ( caddr_t ) & parray2, ( caddr_t ) ( &parray2 + 1 ) );
-	measure_load_store( ( caddr_t ) & parray3, ( caddr_t ) ( &parray3 + 1 ) );
+	measure_load_store( ( vptr_t ) & parray1, ( vptr_t ) ( &parray1 + 1 ) );
+	measure_load_store( ( vptr_t ) & parray2, ( vptr_t ) ( &parray2 + 1 ) );
+	measure_load_store( ( vptr_t ) & parray3, ( vptr_t ) ( &parray3 + 1 ) );
 /***************************************************************************************/
 	printf
 		( "\n\nMeasure loads and stores on the allocated arrays themselves\n" );
 	printf( "Expected loads: %d; Expected stores: %d\n", NUM, NUM );
 
-	measure_load_store( ( caddr_t ) parray1, ( caddr_t ) ( parray1 + NUM ) );
-	measure_load_store( ( caddr_t ) parray2, ( caddr_t ) ( parray2 + NUM ) );
-	measure_load_store( ( caddr_t ) parray3, ( caddr_t ) ( parray3 + NUM ) );
+	measure_load_store( ( vptr_t ) parray1, ( vptr_t ) ( parray1 + NUM ) );
+	measure_load_store( ( vptr_t ) parray2, ( vptr_t ) ( parray2 + NUM ) );
+	measure_load_store( ( vptr_t ) parray3, ( vptr_t ) ( parray3 + NUM ) );
 /***************************************************************************************/
 	printf( "\n\nMeasure loads and stores on the static arrays\n" );
 	printf
 		( "These values will differ from the expected values by the size of the offsets.\n" );
 	printf( "Expected loads: %d; Expected stores: %d\n", NUM, NUM );
 
-	measure_load_store( ( caddr_t ) array1, ( caddr_t ) ( array1 + NUM ) );
-	measure_load_store( ( caddr_t ) array2, ( caddr_t ) ( array2 + NUM ) );
-	measure_load_store( ( caddr_t ) array3, ( caddr_t ) ( array3 + NUM ) );
+	measure_load_store( ( vptr_t ) array1, ( vptr_t ) ( array1 + NUM ) );
+	measure_load_store( ( vptr_t ) array2, ( vptr_t ) ( array2 + NUM ) );
+	measure_load_store( ( vptr_t ) array3, ( vptr_t ) ( array3 + NUM ) );
 /***************************************************************************************/
 
 	retval = PAPI_destroy_eventset( &EventSet );
@@ -136,7 +136,7 @@ main( int argc, char **argv )
 }
 
 static void
-measure_load_store( caddr_t start, caddr_t end )
+measure_load_store( vptr_t start, vptr_t end )
 {
 	PAPI_option_t option;
 	int retval;

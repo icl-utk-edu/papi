@@ -47,14 +47,14 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 					 ( newp.pr_mflags & MA_READ ) ) {
 					if ( !( newp.pr_mflags & MA_WRITE ) ) {
 						_papi_hwi_system_info.exe_info.address_info.text_start =
-							( caddr_t ) newp.pr_vaddr;
+							( vptr_t ) newp.pr_vaddr;
 						_papi_hwi_system_info.exe_info.address_info.text_end =
-							( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
+							( vptr_t ) ( newp.pr_vaddr + newp.pr_size );
 					} else {
 						_papi_hwi_system_info.exe_info.address_info.data_start =
-							( caddr_t ) newp.pr_vaddr;
+							( vptr_t ) newp.pr_vaddr;
 						_papi_hwi_system_info.exe_info.address_info.data_end =
-							( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
+							( vptr_t ) ( newp.pr_vaddr + newp.pr_size );
 					}
 				}
 			}
@@ -81,18 +81,18 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 			if ( ( newp.pr_mflags & MA_EXEC ) && ( newp.pr_mflags & MA_READ ) ) {
 				if ( !( newp.pr_mflags & MA_WRITE ) ) {
 					t_index++;
-					tmp[t_index].text_start = ( caddr_t ) newp.pr_vaddr;
+					tmp[t_index].text_start = ( vptr_t ) newp.pr_vaddr;
 					tmp[t_index].text_end =
-						( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
+						( vptr_t ) ( newp.pr_vaddr + newp.pr_size );
 					strncpy( tmp[t_index].name, dlip.dli_fname,
 							 PAPI_HUGE_STR_LEN - 1 );
 					tmp[t_index].name[PAPI_HUGE_STR_LEN - 1] = '\0';
 				} else {
 					if ( t_index < 0 )
 						continue;
-					tmp[t_index].data_start = ( caddr_t ) newp.pr_vaddr;
+					tmp[t_index].data_start = ( vptr_t ) newp.pr_vaddr;
 					tmp[t_index].data_end =
-						( caddr_t ) ( newp.pr_vaddr + newp.pr_size );
+						( vptr_t ) ( newp.pr_vaddr + newp.pr_size );
 				}
 			}
 		}
@@ -227,30 +227,30 @@ _ultra_hwd_update_shlib_info( papi_mdi_t *mdi )
 					 basename( curr->objname ) ) == 0 ) {
 			if ( curr->flags ) {
 				_papi_hwi_system_info.exe_info.address_info.text_start =
-					( caddr_t ) curr->address;
+					( vptr_t ) curr->address;
 				_papi_hwi_system_info.exe_info.address_info.text_end =
-					( caddr_t ) ( curr->address + curr->size );
+					( vptr_t ) ( curr->address + curr->size );
 			} else {
 				_papi_hwi_system_info.exe_info.address_info.data_start =
-					( caddr_t ) curr->address;
+					( vptr_t ) curr->address;
 				_papi_hwi_system_info.exe_info.address_info.data_end =
-					( caddr_t ) ( curr->address + curr->size );
+					( vptr_t ) ( curr->address + curr->size );
 			}
 		} else {
 			if ( curr->flags ) {
 				t_index++;
-				tmp[t_index].text_start = ( caddr_t ) curr->address;
+				tmp[t_index].text_start = ( vptr_t ) curr->address;
 				tmp[t_index].text_end =
-					( caddr_t ) ( curr->address + curr->size );
+					( vptr_t ) ( curr->address + curr->size );
 				strncpy( tmp[t_index].name, curr->objname,
 						 PAPI_HUGE_STR_LEN - 1 );
 				tmp[t_index].name[PAPI_HUGE_STR_LEN - 1] = '\0';
 			} else {
 				if ( t_index < 0 )
 					continue;
-				tmp[t_index].data_start = ( caddr_t ) curr->address;
+				tmp[t_index].data_start = ( vptr_t ) curr->address;
 				tmp[t_index].data_end =
-					( caddr_t ) ( curr->address + curr->size );
+					( vptr_t ) ( curr->address + curr->size );
 			}
 		}
 		tmpr = curr->next;
@@ -286,7 +286,7 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 	prmap_t mapping;
 
 	int fd, count = 0, total = 0, position = -1, first = 1;
-	caddr_t t_min, t_max, d_min, d_max;
+	vptr_t t_min, t_max, d_min, d_max;
 
 	PAPI_address_map_t *pam, *cur;
 
@@ -381,9 +381,9 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 		if ( mapping.pr_mflags & MA_READ ) {
 			/* Data (MA_WRITE) or text (MA_READ) segment? */
 			if ( mapping.pr_mflags & MA_WRITE ) {
-				cur->data_start = ( caddr_t ) mapping.pr_vaddr;
+				cur->data_start = ( vptr_t ) mapping.pr_vaddr;
 				cur->data_end =
-					( caddr_t ) ( mapping.pr_vaddr + mapping.pr_size );
+					( vptr_t ) ( mapping.pr_vaddr + mapping.pr_size );
 
 				if ( strcmp
 					 ( cur->name,
@@ -407,9 +407,9 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 					d_max = cur->data_end;
 				}
 			} else if ( mapping.pr_mflags & MA_EXEC ) {
-				cur->text_start = ( caddr_t ) mapping.pr_vaddr;
+				cur->text_start = ( vptr_t ) mapping.pr_vaddr;
 				cur->text_end =
-					( caddr_t ) ( mapping.pr_vaddr + mapping.pr_size );
+					( vptr_t ) ( mapping.pr_vaddr + mapping.pr_size );
 
 				if ( strcmp
 					 ( cur->name,

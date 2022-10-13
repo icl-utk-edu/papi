@@ -531,17 +531,17 @@ _aix_mdi_init(  )
 		return ( PAPI_ESYS );
 	if ( AixVer.version[0] == '4' ) {
 		_papi_hwi_system_info.exe_info.address_info.text_start =
-			( caddr_t ) START_OF_TEXT;
+			( vptr_t ) START_OF_TEXT;
 		_papi_hwi_system_info.exe_info.address_info.text_end =
-			( caddr_t ) END_OF_TEXT;
+			( vptr_t ) END_OF_TEXT;
 		_papi_hwi_system_info.exe_info.address_info.data_start =
-			( caddr_t ) START_OF_DATA;
+			( vptr_t ) START_OF_DATA;
 		_papi_hwi_system_info.exe_info.address_info.data_end =
-			( caddr_t ) END_OF_DATA;
+			( vptr_t ) END_OF_DATA;
 		_papi_hwi_system_info.exe_info.address_info.bss_start =
-			( caddr_t ) START_OF_BSS;
+			( vptr_t ) START_OF_BSS;
 		_papi_hwi_system_info.exe_info.address_info.bss_end =
-			( caddr_t ) END_OF_BSS;
+			( vptr_t ) END_OF_BSS;
 	} else {
 		_aix_update_shlib_info( &_papi_hwi_system_info );
 	}
@@ -932,12 +932,12 @@ _aix_dispatch_timer( int signal, siginfo_t * si, void *i )
 {
 	_papi_hwi_context_t ctx;
 	ThreadInfo_t *t = NULL;
-	caddr_t address;
+	vptr_t address;
 
 	ctx.si = si;
 	ctx.ucontext = ( hwd_ucontext_t * ) i;
 
-	address = ( caddr_t ) GET_OVERFLOW_ADDRESS( ( &ctx ) );
+	address = ( vptr_t ) GET_OVERFLOW_ADDRESS( ( &ctx ) );
 	_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, address, NULL, 0, 0,
 					    &t, _aix_vector.cmp_info.CmpIdx );
 }
@@ -1140,16 +1140,16 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 			if ( tmp1[i].pr_mflags & MA_READ ) {
 				if ( tmp1[i].pr_mflags & MA_EXEC ) {
 					_papi_hwi_system_info.exe_info.address_info.
-						text_start = ( caddr_t ) tmp1[i].pr_vaddr;
+						text_start = ( vptr_t ) tmp1[i].pr_vaddr;
 					_papi_hwi_system_info.exe_info.address_info.
 						text_end =
-						( caddr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
+						( vptr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
 				} else if ( tmp1[i].pr_mflags & MA_WRITE ) {
 					_papi_hwi_system_info.exe_info.address_info.
-						data_start = ( caddr_t ) tmp1[i].pr_vaddr;
+						data_start = ( vptr_t ) tmp1[i].pr_vaddr;
 					_papi_hwi_system_info.exe_info.address_info.
 						data_end =
-						( caddr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
+						( vptr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
 				}
 			}
 
@@ -1165,14 +1165,14 @@ _aix_update_shlib_info( papi_mdi_t *mdi )
 			if ( tmp1[i].pr_mflags & MA_READ ) {
 				if ( tmp1[i].pr_mflags & MA_EXEC ) {
 					t_index++;
-					tmp2[t_index].text_start = ( caddr_t ) tmp1[i].pr_vaddr;
+					tmp2[t_index].text_start = ( vptr_t ) tmp1[i].pr_vaddr;
 					tmp2[t_index].text_end =
-						( caddr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
+						( vptr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
 					strncpy( tmp2[t_index].name, name, PAPI_MAX_STR_LEN );
 				} else if ( tmp1[i].pr_mflags & MA_WRITE ) {
-					tmp2[t_index].data_start = ( caddr_t ) tmp1[i].pr_vaddr;
+					tmp2[t_index].data_start = ( vptr_t ) tmp1[i].pr_vaddr;
 					tmp2[t_index].data_end =
-						( caddr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
+						( vptr_t ) ( tmp1[i].pr_vaddr + tmp1[i].pr_size );
 				}
 			}
 

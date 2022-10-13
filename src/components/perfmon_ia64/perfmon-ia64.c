@@ -2379,7 +2379,7 @@ ia64_ita_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 				buf_pos += ( hweight64( DEAR_REGS_MASK ) << 3 );
 			}
 
-			_papi_hwi_dispatch_profile( ESI, ( caddr_t ) pc, ( long long ) 0,
+			_papi_hwi_dispatch_profile( ESI, ( vptr_t ) pc, ( long long ) 0,
 										count );
 			overflow_vector ^= ( unsigned long ) 1 << reg_num;
 		}
@@ -2461,7 +2461,7 @@ ia64_ita2_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 				buf_pos += ( hweight64( DEAR_REGS_MASK ) << 3 );
 			}
 
-			_papi_hwi_dispatch_profile( ESI, ( caddr_t ) pc, ( long long ) 0,
+			_papi_hwi_dispatch_profile( ESI, ( vptr_t ) pc, ( long long ) 0,
 										count );
 			overflow_vector ^= ( unsigned long ) 1 << reg_num;
 		}
@@ -2544,7 +2544,7 @@ ia64_mont_process_profile_buffer( ThreadInfo_t * thread, EventSetInfo_t * ESI )
 				buf_pos += ( hweight64( DEAR_REGS_MASK ) << 3 );
 			}
 
-			_papi_hwi_dispatch_profile( ESI, ( caddr_t ) pc, ( long long ) 0,
+			_papi_hwi_dispatch_profile( ESI, ( vptr_t ) pc, ( long long ) 0,
 										count );
 			overflow_vector ^= ( unsigned long ) 1 << reg_num;
 		}
@@ -2580,7 +2580,7 @@ ia64_dispatch_sigprof( int n, hwd_siginfo_t * info, hwd_ucontext_t *sc )
 	( void ) n;				 /*unused */
 	_papi_hwi_context_t ctx;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	caddr_t address;
+	vptr_t address;
 	int cidx = _ia64_vector.cmp_info.CmpIdx;
 
 #if defined(DEBUG)

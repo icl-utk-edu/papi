@@ -65,7 +65,7 @@
 #define hwd_context_t       _niagara2_context_t
 #define hwd_register_t      _niagara2_register_t
 
-extern caddr_t _start, _end, _etext, _edata;
+extern vptr_t _start, _end, _etext, _edata;
 extern papi_vector_t _niagara2_vector;
 
 /* Synthetic events */
@@ -539,14 +539,14 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 		if ( signal == SIGEMT ) {
 			/* This is a hardware overflow */
 			hw = 1;
-			_papi_hwi_dispatch_overflow_signal( ctrl, ( caddr_t )
+			_papi_hwi_dispatch_overflow_signal( ctrl, ( vptr_t )
 												_niagara2_get_overflow_address
 												( info ), &hw, overflow_vector,
 												1, &thread, ESI->CmpIdx );
 		} else {
 			/* This is a software overflow */
 			hw = 0;
-			_papi_hwi_dispatch_overflow_signal( ctrl, ( caddr_t )
+			_papi_hwi_dispatch_overflow_signal( ctrl, ( vptr_t )
 												_niagara2_get_overflow_address
 												( info ), &hw, overflow_vector,
 												1, &thread, ESI->CmpIdx );
@@ -1338,7 +1338,7 @@ _niagara2_update_shlib_info( papi_mdi_t *mdi )
 	prmap_t mapping;
 
 	int fd, count = 0, total = 0, position = -1, first = 1;
-	caddr_t t_min, t_max, d_min, d_max;
+	vptr_t t_min, t_max, d_min, d_max;
 
 	PAPI_address_map_t *pam, *cur;
 
@@ -1433,9 +1433,9 @@ _niagara2_update_shlib_info( papi_mdi_t *mdi )
 		if ( mapping.pr_mflags & MA_READ ) {
 			/* Data (MA_WRITE) or text (MA_READ) segment? */
 			if ( mapping.pr_mflags & MA_WRITE ) {
-				cur->data_start = ( caddr_t ) mapping.pr_vaddr;
+				cur->data_start = ( vptr_t ) mapping.pr_vaddr;
 				cur->data_end =
-					( caddr_t ) ( mapping.pr_vaddr + mapping.pr_size );
+					( vptr_t ) ( mapping.pr_vaddr + mapping.pr_size );
 
 				if ( strcmp
 					 ( cur->name,
@@ -1459,9 +1459,9 @@ _niagara2_update_shlib_info( papi_mdi_t *mdi )
 					d_max = cur->data_end;
 				}
 			} else if ( mapping.pr_mflags & MA_EXEC ) {
-				cur->text_start = ( caddr_t ) mapping.pr_vaddr;
+				cur->text_start = ( vptr_t ) mapping.pr_vaddr;
 				cur->text_end =
-					( caddr_t ) ( mapping.pr_vaddr + mapping.pr_size );
+					( vptr_t ) ( mapping.pr_vaddr + mapping.pr_size );
 
 				if ( strcmp
 					 ( cur->name,

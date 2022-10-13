@@ -91,7 +91,7 @@ profil_increment( long long value,
 
 
 static void
-posix_profil( caddr_t address, PAPI_sprofil_t * prof,
+posix_profil( vptr_t address, PAPI_sprofil_t * prof,
 			  int flags, long long excess, long long threshold )
 {
 	unsigned short *buf16;
@@ -162,13 +162,13 @@ posix_profil( caddr_t address, PAPI_sprofil_t * prof,
 }
 
 void
-_papi_hwi_dispatch_profile( EventSetInfo_t * ESI, caddr_t pc,
+_papi_hwi_dispatch_profile( EventSetInfo_t * ESI, vptr_t pc,
 							long long over, int profile_index )
 {
 	EventSetProfileInfo_t *profile = &ESI->profile;
 	PAPI_sprofil_t *sprof;
-	caddr_t offset = 0;
-	caddr_t best_offset = 0;
+	vptr_t offset = 0;
+	vptr_t best_offset = 0;
 	int count;
 	int best_index = -1;
 	int i;
@@ -213,7 +213,7 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, caddr_t pc,
 */
 
 int
-_papi_hwi_dispatch_overflow_signal( void *papiContext, caddr_t address,
+_papi_hwi_dispatch_overflow_signal( void *papiContext, vptr_t address,
 				   int *isHardware, long long overflow_bit,
 				   int genOverflowBit, ThreadInfo_t ** t,
 				   int cidx )

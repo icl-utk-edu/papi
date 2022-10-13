@@ -544,7 +544,7 @@ user_signal_handler( int signum, hwd_siginfo_t * siginfo, void *mycontext )
 	EventSetInfo_t *ESI;
 	ThreadInfo_t *thread = NULL;
 	int isHardware = 1;
-	caddr_t pc;
+	vptr_t pc;
 	_papi_hwi_context_t ctx;
 	BGP_UPC_Event_Id_t xEventId = 0;
 //  int thresh;
@@ -556,7 +556,7 @@ user_signal_handler( int signum, hwd_siginfo_t * siginfo, void *mycontext )
 	ctx.ucontext = ( ucontext_t * ) mycontext;
 
 	ucontext_t *context = ( ucontext_t * ) mycontext;
-	pc = ( caddr_t ) context->uc_mcontext.regs->nip;
+	pc = ( vptr_t ) context->uc_mcontext.regs->nip;
 	thread = _papi_hwi_lookup_thread( 0 );
 	//int cidx = (int) &thread;
 	ESI = thread->running_eventset[0];
