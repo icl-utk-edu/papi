@@ -79,7 +79,7 @@ int main ( int argc, char **argv )
     int num_events=0;
     int code;
     char event_names[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
-    char event_descrs[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
+    char event_descrs[MAX_powercap_EVENTS][PAPI_HUGE_STR_LEN];
     char units[MAX_powercap_EVENTS][PAPI_MIN_STR_LEN];
     int data_type[MAX_powercap_EVENTS];
     int r,i;
@@ -92,14 +92,14 @@ int main ( int argc, char **argv )
     /* Set TESTS_QUIET variable */
     tests_quiet( argc, argv );
 
-	/* Currently unimplemented? */
+    /* Currently unimplemented? */
 #if 0
-	int do_wrap = 0;
-	if ( argc > 1 ) {
-		if ( strstr( argv[1], "-w" ) ) {
-			do_wrap = 1;
-		}
-	}
+    int do_wrap = 0;
+    if ( argc > 1 ) {
+        if ( strstr( argv[1], "-w" ) ) {
+            do_wrap = 1;
+        }
+    }
 #endif
 
     /* PAPI Initialization */
@@ -155,10 +155,10 @@ int main ( int argc, char **argv )
         if ( retval != PAPI_OK )
             test_fail( __FILE__, __LINE__, "Error getting event info\n",retval );
 
-        strncpy( event_descrs[num_events],evinfo.long_descr,sizeof( event_descrs[0] )-1 );
-        strncpy( units[num_events],evinfo.units,sizeof( units[0] )-1 );
+        strncpy( event_descrs[num_events],evinfo.long_descr,PAPI_HUGE_STR_LEN );
+        strncpy( units[num_events],evinfo.units,PAPI_MIN_STR_LEN );
         // buffer must be null terminated to safely use strstr operation on it below
-        units[num_events][sizeof( units[0] )-1] = '\0';
+        event_names[num_events][PAPI_MAX_STR_LEN-1] = '\0';
         data_type[num_events] = evinfo.data_type;
         retval = PAPI_add_event( EventSet, code );
 
