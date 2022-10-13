@@ -103,6 +103,17 @@ static const intel_x86_umask_t skl_br_misp_retired[]={
     .ucode  = 0x200,
     .uflags = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
+  { .uname   = "RET",
+    .udesc   = "This event counts the number of mispredicted ret instructions retired.",
+    .ucode   = 0x0800ull,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+  },
+  { .uname   = "NEAR_RETURN",
+    .udesc   = "This event counts the number of mispredicted ret instructions retired.",
+    .uequiv  = "RET",
+    .ucode   = 0x0800ull,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+  },
 };
 
 static const intel_x86_umask_t skl_cpu_clk_thread_unhalted[]={
