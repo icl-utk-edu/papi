@@ -15,6 +15,7 @@ int quiet;
 int main(int argc, char *argv[])
 {
     int papi_errno;
+    int pass_with_warning = 0;
     hipError_t hip_errno;
     quiet = tests_quiet(argc, argv);
 
@@ -25,11 +26,12 @@ int main(int argc, char *argv[])
         test_fail(__FILE__, __LINE__, "PAPI_library_init", papi_errno);
     }
 
-#define NUM_EVENTS (3)
+#define NUM_EVENTS (4)
     const char *events[NUM_EVENTS] = {
         "rocm:::SQ_INSTS_VALU",
         "rocm:::SQ_INSTS_SALU",
         "rocm:::SQ_WAVES",
+        "rocm:::SQ_WAVES_RESTORED",
     };
 
     int eventset = PAPI_NULL;
@@ -42,8 +44,10 @@ int main(int argc, char *argv[])
         char named_event[PAPI_MAX_STR_LEN] = { 0 };
         sprintf(named_event, "%s:device=0", events[i]);
         papi_errno = PAPI_add_named_event(eventset, named_event);
-        if (papi_errno != PAPI_OK) {
+        if (papi_errno != PAPI_OK && papi_errno != PAPI_ENOEVNT) {
             test_fail(__FILE__, __LINE__, "PAPI_add_named_event", papi_errno);
+        } else if (papi_errno == PAPI_ENOEVNT) {
+            pass_with_warning = 1;
         }
     }
 
@@ -157,8 +161,12 @@ int main(int argc, char *argv[])
     /* compute expected number of waves need to multiply two square matrices of ROWS x COLS elements */
     long long expected_waves = (long long) ((ROWS * COLS) / warp_size);
 
-    if (match_expected_counter(expected_waves, counters[2]) != 1) {
-        test_fail(__FILE__, __LINE__, "match_expected_counter", -1);
+    if (match_expected_counter(expected_waves, counters[2] - counters[3]) != 1) {
+        if (pass_with_warning) {
+            test_warn(__FILE__, __LINE__, "match_expected_counter", 1);
+        } else {
+            test_fail(__FILE__, __LINE__, "match_expected_counter", -1);
+        }
     }
 
     PAPI_shutdown();

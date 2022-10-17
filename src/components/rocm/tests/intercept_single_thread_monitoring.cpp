@@ -12,6 +12,5 @@ int main(int argc, char *argv[])
 
     single_thread(argc, argv);
 
-    test_pass(__FILE__);
     return 0;
 }
