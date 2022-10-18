@@ -323,7 +323,7 @@ update_ops_string(char **formula, int old_index, int new_index) {
 	subtoken = strtok_r(*formula, "|", &tok_save_ptr);
 	while ( subtoken != NULL) {
 //		INTDBG("subtoken: %s, newFormula: %s\n", subtoken, newFormula);
-		char work[10];
+		char work[16];
 		// if this is the token we want to replace with the new token index, do it now
 		if ((subtoken[0] == 'N')  &&  (isdigit(subtoken[1]))) {
 			cur_index = atoi(&subtoken[1]);
