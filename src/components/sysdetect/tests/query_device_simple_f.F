@@ -4,7 +4,7 @@
 
 #include "f90papi.h"
 
-          integer :: i, j, ret_val, error, handle, modifier, id, vendor_id
+          integer :: i, j, ret_val, handle, modifier, id, vendor_id
           integer :: dev_count, numas, dummy_val
           character(len=PAPI_MAX_STR_LEN) :: vendor_name, cpu_name
           character(len=1) :: dummy_str
@@ -139,7 +139,6 @@
               call papif_enum_dev_type(modifier, handle, ret_val)
           end do
 
-          10 format(9I5)
           call papif_shutdown()
 
       end program
