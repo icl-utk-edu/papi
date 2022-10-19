@@ -32,37 +32,59 @@
 #include "papi_memory.h"
 
 /* environment varaiable for changing the control */
-#define METRICS_SAMPLING_PERIOD   "METRICS_SAMPLING_PERIOD"       // setting sampling period
-#define ENABLE_API_TRACING        "ZET_ENABLE_API_TRACING_EXP"    // for oneAPI Level0 V1.0 +
-#define ENABLE_API_TRACING0       "ZE_ENABLE_API_TRACING"         // for oneAPI pre-Level0 V1.0
+#define METRICS_SAMPLING_PERIOD   "METRICS_SAMPLING_PERIOD"	   // setting sampling period
+#define ENABLE_API_TRACING		"ZET_ENABLE_API_TRACING_EXP"	// for oneAPI Level0 V1.0 +
+#define ENABLE_SUB_DEVICE		 "ENABLE_SUB_DEVICE"
 
 #define MINIMUM_SAMPLING_PERIOD  100000
 #define DEFAULT_SAMPLING_PERIOD  400000
 
-#define GPU_MAX_COUNTERS         54
-#define GPU_MAX_METRICS          128
+#define GPU_MAX_COUNTERS  54
+#define GPU_MAX_METRICS	  128
 
 void (*_dl_non_dynamic_init) (void) __attribute__ ((weak));
 
-typedef struct _metric_ctl_st {
-    uint32_t     interval;
-    uint32_t     metrics_type;
-    int          mode;
-    uint32_t     loops;
-    int          domain;
+
+typedef struct _metric_ctl_s {
+	uint32_t	 interval;
+	uint32_t	 metrics_type;
+	int		  mode;
+	uint32_t	 loops;
+	int		  domain;
 } MetricCtlState;
 
-typedef struct _metric_context {
-    int          cmp_id;
-    int          device_id;
-    int          domain;
-    int          thread_id;
-    int          data_avail;
-    uint32_t     num_metrics;
-    uint32_t     num_reports;
-    int          metric_idx[GPU_MAX_METRICS];
-    long long    metric_values[GPU_MAX_METRICS];
+
+typedef struct _device_context_s {
+	uint32_t	 device_code;
+	uint32_t	 mgroup_code;
+	uint32_t	 num_metrics;
+	uint32_t	 metric_code[GPU_MAX_METRICS];
+	DEVICE_HANDLE handle;
+	uint32_t	 num_reports;
+	uint32_t	 num_data_sets;
+	uint32_t	*data_set_sidx;
+	uint32_t	 data_size;
+	MetricData  *data;
+} DeviceContext;
+
+typedef struct _metric_context_s {
+	int		  cmp_id;
+	int		  device_id;
+	int		  domain;
+	int		  thread_id;
+	int		  data_avail;
+	uint32_t	 num_metrics;
+	uint32_t	 num_reports;
+	uint32_t	 num_devices;
+	uint32_t	*active_sub_devices;
+	uint32_t	*active_devices;
+	uint32_t	 metric_idx[GPU_MAX_METRICS];
+	uint32_t	 dev_ctx_idx[GPU_MAX_METRICS];
+	uint32_t	 subdev_idx[GPU_MAX_METRICS];
+	long long	metric_values[GPU_MAX_METRICS];
 } MetricContext;
+
+
 
 #endif /* _INTEL_GPU_METRICS_H */
 

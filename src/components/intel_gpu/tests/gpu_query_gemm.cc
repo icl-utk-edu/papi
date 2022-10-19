@@ -26,12 +26,11 @@
  *  @ brief Collect  metric data for offload kernel "gemm"
  *
  */
-
-
-
 #include <math.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -42,8 +41,11 @@
 
 #include  <level_zero/ze_api.h>
 
+#include "gpu_common_utils.h"
+
 #if defined(ENABLE_PAPI)
 #include "papi.h" 
+const char *env_str = "ZET_ENABLE_API_TRACING_EXP=1";
 #endif
 
 
@@ -60,27 +62,12 @@
 
 using namespace std;
 
-#define COMP_NAME   "intel_gpu"
-
-char const *metric_name[MAX_STR_LEN] = {
-           "ComputeBasic.GpuTime",
-           "ComputeBasic.GpuCoreClocks",
-           "ComputeBasic.AvgGpuCoreFrequencyMHz",
-           "ComputeBasic.EuActive",
-           "ComputeBasic.EuStall",
-           "ComputeBasic.GtiReadThroughput",
-           "ComputeBasic.GtiWriteThroughput",
-};
-
-int num_metrics = 7;
-
 #define CHECK_N_MSG_EXIT(status, msg, retVal) {                                         \
         if (status) {                                                                   \
             if (retVal) { fprintf(stderr, "%s, PAPI return status %d\n", msg, retVal);  \
             } else  { fprintf(stderr, "%s\n", msg); }                                   \
             PAPI_shutdown();                                                            \
             exit(-1); } }
-
 
 inline string GetExecutablePath() {
     char buffer[MAX_BUFF_SIZE] = { 0 };
@@ -90,8 +77,6 @@ inline string GetExecutablePath() {
     return path.substr(0, path.find_last_of("/\\") + 1);
 }
 
-
-
 inline 
 vector<uint8_t> LoadBinaryFile(const string& path) {
     vector<uint8_t> binary;
@@ -99,7 +84,6 @@ vector<uint8_t> LoadBinaryFile(const string& path) {
     if (!stream.good()) {
         return binary;
     }
-
     size_t size = 0;
     stream.seekg(0, ifstream::end);
     size = static_cast<size_t>(stream.tellg());
@@ -107,12 +91,10 @@ vector<uint8_t> LoadBinaryFile(const string& path) {
     if (size == 0) {
       return binary;
     }
-  
     binary.resize(size);
     stream.read(reinterpret_cast<char *>(binary.data()), size);
     return binary;
 }
-
 
 inline string GetDeviceName(ze_device_handle_t device) {
     assert(device != nullptr);
@@ -124,6 +106,7 @@ inline string GetDeviceName(ze_device_handle_t device) {
 }
 
 inline void GetIntelDeviceAndDriver(ze_device_type_t type,
+		                    uint32_t dev_idx, uint32_t tile_idx,
                                     ze_device_handle_t& device,
                                     ze_driver_handle_t& driver) {
     ze_result_t status = ZE_RESULT_SUCCESS;
@@ -133,7 +116,6 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
     if (status != ZE_RESULT_SUCCESS || driver_count == 0) {
         return;
     }
-  
     vector<ze_driver_handle_t> driver_list(driver_count, nullptr);
     status = zeDriverGet(&driver_count, driver_list.data());
     assert(status == ZE_RESULT_SUCCESS);
@@ -144,18 +126,30 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
         if (status != ZE_RESULT_SUCCESS || device_count == 0) {
             continue;
         }
-  
         vector<ze_device_handle_t> device_list(device_count, nullptr);
         status = zeDeviceGet(driver_list[i], &device_count, device_list.data());
         assert(status == ZE_RESULT_SUCCESS);
-  
+ 
         for (uint32_t j = 0; j < device_count; ++j) {
             ze_device_properties_t props;
             status = zeDeviceGetProperties(device_list[j], &props);
             assert(status == ZE_RESULT_SUCCESS);
   
             if (props.type == type && strstr(props.name, "Intel") != nullptr) {
-                device = device_list[j];
+                if (dev_idx != j) {
+                    continue;
+				}
+				uint32_t subdevice_count = 0;
+				zeDeviceGetSubDevices(device_list[j], &subdevice_count, nullptr);
+				// select a tile on a  multipl tiles device
+				if (subdevice_count && tile_idx && (tile_idx <= subdevice_count)) {
+					vector<ze_device_handle_t> subdevice_list(subdevice_count, nullptr);
+					status = zeDeviceGetSubDevices(device_list[j], &subdevice_count,
+							subdevice_list.data());
+							device=subdevice_list.at(tile_idx-1);
+				} else {
+					device = device_list[j];
+				}
                 driver = driver_list[i];
                 break;
             }
@@ -194,7 +188,6 @@ RunKernel(ze_kernel_handle_t kernel,
         cout << "Non-uniform workgroups are not supported" << endl;
         return;
     }
-
     void* dev_a = nullptr;
     ze_device_mem_alloc_desc_t alloc_desc = {
         ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, 0, 0};
@@ -213,7 +206,6 @@ RunKernel(ze_kernel_handle_t kernel,
     status = zeKernelSetGroupSize(kernel, group_size[0],
                                   group_size[1], group_size[2]);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeKernelSetArgumentValue(kernel, 0, sizeof(dev_a), &dev_a);
     assert(status == ZE_RESULT_SUCCESS);
     status = zeKernelSetArgumentValue(kernel, 1, sizeof(dev_a), &dev_b);
@@ -222,13 +214,11 @@ RunKernel(ze_kernel_handle_t kernel,
     assert(status == ZE_RESULT_SUCCESS);
     status = zeKernelSetArgumentValue(kernel, 3, sizeof(size), &size);
     assert(status == ZE_RESULT_SUCCESS);
-
     ze_command_list_desc_t cmd_list_desc = {
           ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, 0, 0};
     ze_command_list_handle_t cmd_list = nullptr;
     status = zeCommandListCreate(context, device, &cmd_list_desc, &cmd_list);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeCommandListAppendMemoryCopy(cmd_list, dev_a, a.data(),
                                            size * size * sizeof(float),
                                            nullptr, 0, nullptr);
@@ -237,19 +227,15 @@ RunKernel(ze_kernel_handle_t kernel,
                                            size * size * sizeof(float),
                                            nullptr, 0, nullptr);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeCommandListAppendBarrier(cmd_list, nullptr, 0, nullptr);
     assert(status == ZE_RESULT_SUCCESS);
-
     ze_event_pool_desc_t event_pool_desc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr,
         ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, 1};
     ze_event_pool_handle_t event_pool = nullptr;
-    // TODO: use nullptr for device list
     status = zeEventPoolCreate(context, &event_pool_desc,
                                0, nullptr, &event_pool);
     assert(status == ZE_RESULT_SUCCESS);
-
     ze_event_desc_t event_desc = {
         ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0,
         ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST};
@@ -263,15 +249,12 @@ RunKernel(ze_kernel_handle_t kernel,
     status = zeCommandListAppendLaunchKernel(cmd_list, kernel, &dim,
                                              event, 0, nullptr);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeCommandListAppendBarrier(cmd_list, nullptr, 0, nullptr);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeCommandListAppendMemoryCopy(cmd_list, c.data(), dev_c,
                                            size * size * sizeof(float),
                                            nullptr, 0, nullptr);
     assert(status == ZE_RESULT_SUCCESS);
-
     status = zeCommandListClose(cmd_list);
     assert(status == ZE_RESULT_SUCCESS);
 
@@ -336,7 +319,6 @@ static void Compute(ze_device_handle_t device,
         cout << "Unable to find module " << module_name << endl;
         return;
     }
-
     ze_result_t status = ZE_RESULT_SUCCESS;
     ze_context_handle_t context = nullptr;
     ze_context_desc_t context_desc = {
@@ -361,7 +343,6 @@ static void Compute(ze_device_handle_t device,
     for (int i = 0; i < repeat_count; ++i) {
         RunKernel(kernel, device, context, a, b, c, size);
     }
-
     status = zeKernelDestroy(kernel);
     assert(status == ZE_RESULT_SUCCESS);
 
@@ -369,86 +350,73 @@ static void Compute(ze_device_handle_t device,
     assert(status == ZE_RESULT_SUCCESS);
 }
 
-
-#if defined(ENABLE_PAPI)
-void
-initPAPIGPUMetrics(int *eventSet, int *numMetrics)
-{
-    PAPI_component_info_t *aComponent =  NULL;
-    int                    retVal     = 0;
-    int                    i          = 0; 
-    int                    cid        = -1;
-
-    // init all components including "intel_gpu"
-    retVal = PAPI_library_init( PAPI_VER_CURRENT );
-    if( retVal != PAPI_VER_CURRENT ) {
-        fprintf( stderr, "PAPI_library_init failed\n" );
-        exit(-1);
-    }
-
-    int numComponents  = PAPI_num_components();
-    for (i=0; i<numComponents && cid<0; i++) {
-        // get the component info.
-        aComponent = (PAPI_component_info_t*) PAPI_get_component_info(i);
-        if (aComponent == NULL) {
-            continue;
-        }
-        if (strcmp(COMP_NAME, aComponent->name) == 0) {
-            cid=i;                // If we found our match, record it.
-        } // end search components.
-    }
-    CHECK_N_MSG_EXIT((cid<0), "Failed to find component [intel_gpu]", 0);
-
-    int eSet = PAPI_NULL;
-
-    retVal = PAPI_create_eventset(&eSet);
-    CHECK_N_MSG_EXIT((retVal!=PAPI_OK), "Error on PAPI_create_eventset", retVal);
-    for (int i=0; i<num_metrics; i++) {
-        retVal = PAPI_add_named_event(eSet, metric_name[i]);
-        CHECK_N_MSG_EXIT((retVal!=PAPI_OK), "Error on PAPI_add_named_event", retVal);
-    }
-    *eventSet = eSet;
-    *numMetrics = num_metrics;
-}
-#endif
-
 int 
 main(int argc, char* argv[]) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     status = zeInit(ZE_INIT_FLAG_GPU_ONLY);
     assert(status == ZE_RESULT_SUCCESS);
+    int size = 1024;
 
+    int i = 1;
+    if (argc > 1) {
+        size = atoi(argv[i]);
+        //support max 32K matrix size, enaure size * size is a valid 32bit integer
+        if (size) {
+           if ((size <=32)  || (size > 0x8000)) {
+                cout << "input matrix size is invalid or too large (>32K), abort, "
+					 << "using defaut 1024." << endl;
+                size = 1024;
+			}
+			i++;
+        }
+    }
+    int repeat_count = 4;
+    if ((argc > 2 ) && (i > 1)) {
+        repeat_count = atoi(argv[i]);
+        if ((repeat_count <= 0) || (repeat_count > 0x100000)) {
+            repeat_count = 4;
+        }
+		i++;
+    }
+    InParams  param;
+    int retVal = parseInputParam(argc, argv, &param);
+    if (retVal) {
+		printf("Invalid input parameters.\n");
+		printf("usage: %s [-m metric[:device=0][:tile=0]]\n", argv[0]);
+		return 1;
+    }
     ze_device_handle_t device = nullptr;
     ze_driver_handle_t driver = nullptr;
-    GetIntelDeviceAndDriver(ZE_DEVICE_TYPE_GPU, device, driver);
+    GetIntelDeviceAndDriver(ZE_DEVICE_TYPE_GPU, param.app_dev, param.app_tile, device, driver);
     if (device == nullptr || driver == nullptr) {
         cout << "Unable to find target device" << endl;
         return 0;
     }
 
-    int size = 1024;
-    if (argc > 1) {
-        size = atoi(argv[1]);
-        //support max 32K matrix size, enaure size * size is a valid 32bit integer
-        if ((size <=32)  || (size > 0x8000)) {
-            cout << "input matrix size is invalid or too large (>32K), abort, using defaut 1024." << endl;
-            size = 1024;
-        }
-    }
-
-    int repeat_count = 4;
-    if (argc > 2) {
-        repeat_count = atoi(argv[2]);
-        if ((repeat_count <= 0) || (repeat_count > 0x100000)) {
-            repeat_count = 4;
-        }
-    }
-
-    // init PAPI intel_gpu component with selected metrics
 #if defined(ENABLE_PAPI)
-    int eventSet   = 0;
-    int numMetrics = 0;
-    initPAPIGPUMetrics(&eventSet, &numMetrics);
+    // init PAPI intel_gpu component with selected metrics
+    int    event_set      = PAPI_NULL;
+    int    num_metrics    = 0;
+    char **metric_names   = NULL;
+
+    int cid         = -1;
+    retVal = putenv((char *)env_str);
+    if (retVal) {
+		cout << "setting EXT_ENABLE_API_TRACING_EXP=1 failed. " 
+			 << "Not able to run query based data collection. " << endl;
+		return 1;
+    }
+    cid = initPAPIGPUComp();
+    if (cid < 0) {
+       return 1;
+    }
+    metric_names = (char **)(param.metric_names);
+    num_metrics = param.num_metrics;
+    retVal = initMetricSet(metric_names, num_metrics, &event_set);
+    if (retVal != PAPI_OK) {
+         PAPI_shutdown();
+         return 1;
+    }
 #endif
 
     cout << "Level Zero Matrix Multiplication (matrix size: " << size <<
@@ -460,31 +428,34 @@ main(int argc, char* argv[]) {
     vector<float> b(size * size, B_VALUE);
     vector<float> c(size * size, 0.0f);
 
-    auto start = chrono::steady_clock::now();
 
-    // enable tracing before offload start 
 #if defined(ENABLE_PAPI)
-    long long *metric_values = (long long *)calloc(numMetrics, sizeof(long long));
+    // enable tracing before offload start 
+    auto start_all = chrono::steady_clock::now();
+    long long *metric_values = (long long *)calloc(num_metrics, sizeof(long long));
     CHECK_N_MSG_EXIT((metric_values == NULL), "Error on allocating memory.", PAPI_ENOMEM);
-    int retVal = PAPI_start(eventSet);
+    retVal = PAPI_start(event_set);
     CHECK_N_MSG_EXIT((retVal!=PAPI_OK), "Error on PAPI_start", retVal);
 #endif
 
+    auto start = chrono::steady_clock::now();
     Compute(device, driver, a, b, c, size, repeat_count);
-
-    // data ready when offload finish
-#if defined(ENABLE_PAPI)
-    retVal = PAPI_stop(eventSet, metric_values);
-    CHECK_N_MSG_EXIT((retVal!=PAPI_OK), "Error on PAPI_stop", retVal);
-    for (int i=0; i<numMetrics; i++) {
-        printf("%-50s ......  %llu\n", metric_name[i], metric_values[i]);
-    }
-    free(metric_values);
-#endif
-
     auto end = chrono::steady_clock::now();
     chrono::duration<float> time = end - start;
-  
     cout << "Total execution time: " << time.count() << " sec" << endl;
+
+#if defined(ENABLE_PAPI)
+    // data ready when offload finish
+    retVal = PAPI_stop(event_set, metric_values);
+    CHECK_N_MSG_EXIT((retVal!=PAPI_OK), "Error on PAPI_stop", retVal);
+    for (int i=0; i<num_metrics; i++) {
+        printf("%-50s ......  %llu\n", metric_names[i], metric_values[i]);
+    }
+    free(metric_values);
+    auto end_all = chrono::steady_clock::now();
+    chrono::duration<float> time_all = end_all - start_all;
+    cout << "Total time: " << time_all.count() << " sec" << endl;
+#endif
+
     return 0;
 }
