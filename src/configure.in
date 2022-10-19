@@ -391,31 +391,6 @@ else
   fi
 fi
 
-
-## By default we want libsde built, so if the user does not
-## give an option, then we set BUILD_LIBSDE to yes.
-AC_MSG_CHECKING(for building libsde)
-AC_ARG_WITH(libsde,
-            [AS_HELP_STRING([--with-libsde=<yes,no>],
-                            [Build the standalone libsde (default: yes)])],
-            [],
-            [with_libsde=yes])
-if test "$with_libsde" = "no"; then
-  BUILD_LIBSDE="no"
-else
-  BUILD_LIBSDE="yes"
-  if test "$PWD" != ""; then
-    TOPDIR=$PWD
-  else
-    TOPDIR=$(pwd)
-  fi
-  LIBSDEFLAGS="${TOPDIR}/libsde.a -DSDE"
-
-fi
-AC_MSG_RESULT($with_libsde)
-AC_SUBST(BUILD_LIBSDE)
-AC_SUBST(LIBSDEFLAGS)
-
 AC_MSG_CHECKING(for debug build)
 AC_ARG_WITH(debug,
             [AS_HELP_STRING([--with-debug=<yes,memory,no>],
@@ -997,7 +972,7 @@ AC_ARG_WITH(static_tools,
 	    AC_MSG_RESULT(yes)],
 	    [AC_MSG_RESULT(no)])
 
-# Disable LDL AND SDE for static builds
+# Disable LDL for static builds
 if test "$STATIC" = "-static"; then
   LDL=""
 fi
@@ -1035,6 +1010,42 @@ elif test "$shlib_tools" = "no"; then
    fi
    LINKLIB='$(LIBRARY)'	
 fi
+
+## By default we want libsde built, so if the user does not
+## give an option, then we set BUILD_LIBSDE_* to yes.
+AC_MSG_CHECKING(for building libsde)
+AC_ARG_WITH(libsde,
+            [AS_HELP_STRING([--with-libsde=<yes,no>],
+                            [Build the standalone libsde (default: yes)])],
+            [],
+            [with_libsde=yes])
+if test "$with_libsde" = "no"; then
+  BUILD_LIBSDE_SHARED="no"
+  BUILD_LIBSDE_STATIC="no"
+  AC_MSG_RESULT(no)
+else
+  BUILD_LIBSDE_SHARED="yes"
+  if test "$static_lib" = "yes"; then
+    BUILD_LIBSDE_STATIC="yes"
+    AC_MSG_RESULT(shared and static)
+  else
+    BUILD_LIBSDE_STATIC="no"
+    AC_MSG_RESULT(shared only)
+  fi
+  if test "$PWD" != ""; then
+    TOPDIR=$PWD
+  else
+    TOPDIR=$(pwd)
+  fi
+  if test "$shlib_tools" = "yes"; then
+    LIBSDEFLAGS="-L${TOPDIR} -lsde -DSDE"
+  else
+    LIBSDEFLAGS="${TOPDIR}/libsde.a -DSDE"
+  fi
+fi
+AC_SUBST(BUILD_LIBSDE_SHARED)
+AC_SUBST(BUILD_LIBSDE_STATIC)
+AC_SUBST(LIBSDEFLAGS)
 
 ##################################################
 #          perfctr

@@ -11,10 +11,15 @@ CFLAGS = -Wextra -Wall -O2 -g
 DOBJS=$(patsubst %.c,%_d.o,$(wildcard *.c))
 SOBJS=$(patsubst %.c,%_s.o,$(wildcard *.c))
 
-all: $(DOBJS) $(SOBJS)
+all: dynamic static
+
+dynamic: $(DOBJS)
 	$(CC) -Bdynamic -fPIC -shared -Wl,-soname -Wl,libsde.so -fvisibility=hidden -Wextra -Wall -g -O2 $(DOBJS) -lrt -ldl -pthread -o libsde.so.1.0
+	rm -f *_d.o
+
+static: $(SOBJS)
 	ar rs libsde.a $(SOBJS)
-	rm -f *.o
+	rm -f *_s.o
 
 clean:
 	rm -f *.o libsde.so libsde.a
