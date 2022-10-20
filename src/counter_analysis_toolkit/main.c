@@ -132,6 +132,26 @@ int main(int argc, char*argv[])
     char *conf_file_name = ".cat_cfg";
     hw_desc_t *hw_desc = obtain_hardware_description(conf_file_name);
 
+    /* Set the default number of threads to the OMP_NUM_THREADS environment
+     * variable if it is defined. Otherwise, set it to the number of CPUs
+     * in a single socket. */
+    int numSetThreads = 1;
+    char* envVarDefined = getenv("OMP_NUM_THREADS");
+    if (NULL == envVarDefined) {
+        omp_set_num_threads(hw_desc->numcpus);
+
+        #pragma omp parallel default(shared)
+        {
+            if(!omp_get_thread_num()) {
+                numSetThreads = omp_get_num_threads();
+            }
+        }
+
+        if (numSetThreads != hw_desc->numcpus) {
+            fprintf(stderr, "Warning! Failed to set default number of threads to number of CPUs in a single socket.\n");
+        }
+    }
+
     // Run the benchmark for each qualifier combination.
     testbench(allevts, cmbtotal, hw_desc, params, myid, nprocs);
 
@@ -294,6 +314,7 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
     if( NULL != meminfo ) {
+        hw_desc->numcpus = meminfo->ncpu;
         hw_desc->cache_levels = meminfo->mem_hierarchy.levels;
 	    L = ( PAPI_mh_level_t * ) & ( meminfo->mem_hierarchy.level[0] );
         for ( i = 0; i < meminfo->mem_hierarchy.levels && i<_MAX_SUPPORTED_CACHE_LEVELS; i++ ) {
