@@ -173,6 +173,7 @@ int main(int argc, char*argv[])
         free(allevts[i]);
     }
     free(allevts);
+    free(hw_desc);
 
     PAPI_shutdown();
 
