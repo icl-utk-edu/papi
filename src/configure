@@ -694,7 +694,8 @@ PMAPI
 MAKEVER
 arch
 LIBSDEFLAGS
-BUILD_LIBSDE
+BUILD_LIBSDE_STATIC
+BUILD_LIBSDE_SHARED
 LDL
 LRT
 EGREP
@@ -769,7 +770,6 @@ with_nec
 with_bgpm_installdir
 with_nativecc
 with_tests
-with_libsde
 with_debug
 with_CPU
 with_pthread_mutexes
@@ -784,6 +784,7 @@ with_static_lib
 with_shared_lib
 with_static_tools
 with_shlib_tools
+with_libsde
 with_perfctr
 with_perfctr_root
 with_perfctr_prefix
@@ -1445,7 +1446,6 @@ Optional Packages:
   --with-tests=<"ctests ftests mpitests", no>
                           Specify which tests to run on install, or "no" tests
                           (default: all available tests)
-  --with-libsde=<yes,no>  Build the standalone libsde (default: yes)
   --with-debug=<yes,memory,no>
                           Build a debug version, debug version plus memory
                           tracker or none
@@ -1471,6 +1471,7 @@ Optional Packages:
   --with-static-tools     Specify static compile of tests and utilities
   --with-shlib-tools      Specify linking with papi library of tests and
                           utilities
+  --with-libsde=<yes,no>  Build the standalone libsde (default: yes)
   --with-perfctr          Specify perfctr as the performance interface
   --with-perfctr-root=<path>
                           Specify path to source tree (for use by developers
@@ -4691,36 +4692,6 @@ $as_echo "$tmp_tests" >&6; }
   fi
 fi
 
-
-## By default we want libsde built, so if the user does not
-## give an option, then we set BUILD_LIBSDE to yes.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building libsde" >&5
-$as_echo_n "checking for building libsde... " >&6; }
-
-# Check whether --with-libsde was given.
-if test "${with_libsde+set}" = set; then :
-  withval=$with_libsde;
-else
-  with_libsde=yes
-fi
-
-if test "$with_libsde" = "no"; then
-  BUILD_LIBSDE="no"
-else
-  BUILD_LIBSDE="yes"
-  if test "$PWD" != ""; then
-    TOPDIR=$PWD
-  else
-    TOPDIR=$(pwd)
-  fi
-  LIBSDEFLAGS="${TOPDIR}/libsde.a -DSDE"
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_libsde" >&5
-$as_echo "$with_libsde" >&6; }
-
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for debug build" >&5
 $as_echo_n "checking for debug build... " >&6; }
 
@@ -5705,7 +5676,7 @@ $as_echo "no" >&6; }
 fi
 
 
-# Disable LDL AND SDE for static builds
+# Disable LDL for static builds
 if test "$STATIC" = "-static"; then
   LDL=""
 fi
@@ -5749,6 +5720,49 @@ elif test "$shlib_tools" = "no"; then
    fi
    LINKLIB='$(LIBRARY)'
 fi
+
+## By default we want libsde built, so if the user does not
+## give an option, then we set BUILD_LIBSDE to yes.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building libsde" >&5
+$as_echo_n "checking for building libsde... " >&6; }
+
+# Check whether --with-libsde was given.
+if test "${with_libsde+set}" = set; then :
+  withval=$with_libsde;
+else
+  with_libsde=yes
+fi
+
+if test "$with_libsde" = "no"; then
+  BUILD_LIBSDE_SHARED="no"
+  BUILD_LIBSDE_STATIC="no"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  BUILD_LIBSDE_SHARED="yes"
+  if test "$static_lib" = "yes"; then
+    BUILD_LIBSDE_STATIC="yes"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: shared and static" >&5
+$as_echo "shared and static" >&6; }
+  else
+    BUILD_LIBSDE_STATIC="no"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: shared only" >&5
+$as_echo "shared only" >&6; }
+  fi
+  if test "$PWD" != ""; then
+    TOPDIR=$PWD
+  else
+    TOPDIR=$(pwd)
+  fi
+  if test "$shlib_tools" = "yes"; then
+    LIBSDEFLAGS="-L${TOPDIR} -lsde -DSDE"
+  else
+    LIBSDEFLAGS="${TOPDIR}/libsde.a -DSDE"
+  fi
+fi
+
+
+
 
 ##################################################
 #          perfctr

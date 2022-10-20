@@ -71,9 +71,12 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 	fi
 
 libsde:
-ifeq ($(BUILD_LIBSDE),yes)
-		$(MAKE) CC=$(CC) -C sde_lib
+ifeq ($(BUILD_LIBSDE_SHARED),yes)
+		$(MAKE) CC=$(CC) -C sde_lib dynamic
 		ln -sf sde_lib/libsde.so.1.0 libsde.so
+endif
+ifeq ($(BUILD_LIBSDE_STATIC),yes)
+		$(MAKE) CC=$(CC) -C sde_lib static
 		ln -sf sde_lib/libsde.a libsde.a
 endif
 

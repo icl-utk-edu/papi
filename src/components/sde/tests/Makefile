@@ -12,13 +12,23 @@ FFLAGS +=-g
 CFLAGS +=-g
 CXXFLAGS +=-g -std=c++11
 
-LDFLAGS += -Llib -L$(datadir) -lpapi -lsde
+ifeq ($(BUILD_LIBSDE_SHARED),yes)
+	LDFLAGS += -Llib -L$(datadir) -lpapi -lsde
+	LIBSDE=yes
+else ifeq ($(BUILD_LIBSDE_STATIC),yes)
+	LDFLAGS += -Llib $(datadir)/libsde.a -lpapi
+	LIBSDE=yes
+endif
 
 SDE_F08_API=../sde_F.F90
 
-ifeq ($(BUILD_LIBSDE),yes)
-TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Overflow_Static_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++ sde_test_f08
+ifeq ($(LIBSDE),yes)
+	TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++ sde_test_f08
 endif
+ifeq ($(BUILD_LIBSDE_STATIC),yes)
+	TESTS += Overflow_Static_Test
+endif
+
 
 sde_tests: $(TESTS)
 
