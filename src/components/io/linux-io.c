@@ -257,6 +257,7 @@ _io_init_component( int cidx )
     /* Export the component id */
     _io_vector.cmp_info.CmpIdx = cidx;
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = ret;
     return ret;
   fn_fail:
     goto fn_exit;

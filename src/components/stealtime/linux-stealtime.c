@@ -208,6 +208,7 @@ _stealtime_init_component( int cidx )
 	_stealtime_vector.cmp_info.num_mpx_cntrs=num_events;
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;

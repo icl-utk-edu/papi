@@ -315,6 +315,7 @@ _host_micpower_init_component( int cidx )
 	_host_micpower_vector.cmp_info.num_mpx_cntrs = EVENTS_PER_DEVICE*nAdapters;
 	_host_micpower_vector.cmp_info.num_native_events = EVENTS_PER_DEVICE*nAdapters;
 
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
 
   fn_fail:

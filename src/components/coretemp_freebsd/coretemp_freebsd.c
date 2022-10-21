@@ -178,6 +178,7 @@ int coretemp_init_component ()
 	}
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;

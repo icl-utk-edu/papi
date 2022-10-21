@@ -351,6 +351,7 @@ _lmsensors_init_component( int cidx )
     _lmsensors_vector.cmp_info.num_cntrs=num_events;
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = res;
     return res;
   fn_fail:
     goto fn_exit;

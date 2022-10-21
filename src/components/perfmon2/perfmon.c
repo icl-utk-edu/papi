@@ -858,6 +858,7 @@ _papi_pfm_init_component( int cidx )
    }
 
   fn_exit:
+    _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:
     goto fn_exit;
