@@ -21,6 +21,7 @@ int quiet;
 int single_thread(int argc, char *argv[])
 {
     int papi_errno;
+    int pass_with_warning = 0;
     hipError_t hip_errno;
     quiet = tests_quiet(argc, argv);
     int retcode;
@@ -35,11 +36,12 @@ int single_thread(int argc, char *argv[])
         test_fail(__FILE__, __LINE__, "PAPI_library_init", papi_errno);
     }
 
-#define NUM_EVENTS 3
+#define NUM_EVENTS 4
     const char *events[NUM_EVENTS] = {
         "rocm:::SQ_INSTS_VALU",
         "rocm:::SQ_INSTS_SALU",
         "rocm:::SQ_WAVES",
+        "rocm:::SQ_WAVES_RESTORED",
     };
 
     int dev_count;
@@ -63,9 +65,11 @@ int single_thread(int argc, char *argv[])
             sprintf(named_event, "%s:device=%d", events[j], i);
             papi_errno = PAPI_add_named_event(eventset,
                                               (const char *) named_event);
-            if (papi_errno != PAPI_OK) {
+            if (papi_errno != PAPI_OK && papi_errno != PAPI_ENOEVNT) {
                 test_fail(__FILE__, __LINE__, "PAPI_add_named_event",
                           papi_errno);
+            } else if (papi_errno == PAPI_ENOEVNT) {
+                pass_with_warning = 1;
             }
         }
     }
@@ -146,10 +150,16 @@ int single_thread(int argc, char *argv[])
     long long expected_waves = (long long) ((ROWS * COLS) / warp_size);
 
     for (int i = 0; i < dev_count; ++i) {
-        if (match_expected_counter(expected_waves, counters[i * NUM_EVENTS + 2]) != 1) {
-            test_fail(__FILE__, __LINE__, "match_expected_counter", -1);
+        if (match_expected_counter(expected_waves,
+                                   counters[i * NUM_EVENTS + 2] - counters[i * NUM_EVENTS + 3]) != 1) {
+            if (pass_with_warning) {
+                test_warn(__FILE__, __LINE__, "match_expected_counter", 1);
+            } else {
+                test_fail(__FILE__, __LINE__, "match_expected_counter", -1);
+            }
         }
     }
+    test_pass(__FILE__);
 
     PAPI_shutdown();
 

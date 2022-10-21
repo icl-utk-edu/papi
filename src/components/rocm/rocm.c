@@ -585,7 +585,8 @@ rocm_ntv_name_to_code(const char *name, unsigned int *code)
     ntv_event_t *event;
     htable_errno = htable_find(htable, name, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
-        papi_errno = PAPI_ECMP;
+        papi_errno = (htable_errno == HTABLE_ENOVAL) ?
+            PAPI_ENOEVNT : PAPI_ECMP;
         goto fn_exit;
     }
     *code = event->ntv_id;
