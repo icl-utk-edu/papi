@@ -1170,6 +1170,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 	DIR *dir;
 	FILE *fff;
 	char filename[BUFSIZ],type_string[BUFSIZ];
+	char *str_result;
 	char write_policy_string[BUFSIZ],allocation_policy_string[BUFSIZ];
 	struct dirent *d;
 	int max_level=0;
@@ -1246,9 +1247,9 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 			MEMDBG("Cannot open type\n");
 			goto unrecoverable_error;
 		}
-		result=fscanf(fff,"%s",type_string);
+		str_result=fgets(type_string, BUFSIZ, fff);
 		fclose(fff);
-		if (result!=1) {
+		if (str_result==NULL) {
 			MEMDBG("Could not read cache type\n");
 			goto unrecoverable_error;
 		}
@@ -1273,9 +1274,9 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 			MEMDBG("Cannot open write_policy\n");
 			goto get_allocation_policy;
 		}
-		result=fscanf(fff,"%s",write_policy_string);
+		str_result=fgets(write_policy_string, BUFSIZ, fff);
 		fclose(fff);
-		if (result!=1) {
+		if (str_result==NULL) {
 			MEMDBG("Could not read cache write_policy\n");
 			goto get_allocation_policy;
 		}
@@ -1299,9 +1300,9 @@ get_allocation_policy:
 			MEMDBG("Cannot open allocation_policy\n");
 			goto get_size;
 		}
-		result=fscanf(fff,"%s",allocation_policy_string);
+		str_result=fgets(allocation_policy_string, BUFSIZ, fff);
 		fclose(fff);
-		if (result!=1) {
+		if (str_result==NULL) {
 			MEMDBG("Could not read cache allocation_policy\n");
 			goto get_size;
 		}
