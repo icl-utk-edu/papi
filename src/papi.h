@@ -444,8 +444,6 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_DEFGRN  		6       /**< Granularity for all new eventsets */
 #define PAPI_GRANUL  		7       /**< Granularity for an eventset */
 #define PAPI_DEF_MPX_NS     8       /**< Multiplexing/overflowing interval in ns, same as PAPI_DEF_ITIMER_NS */
-  //#define PAPI_EDGE_DETECT    9       /**< Count cycles of events if supported [not implemented] */
-  //#define PAPI_INVERT         10		/**< Invert count detect if supported [not implemented] */
 #define PAPI_MAX_MPX_CTRS	11      /**< Maximum number of counters we can multiplex */
 #define PAPI_PROFIL  		12      /**< Option to turn on the overflow/profil reporting software [not implemented] */
 #define PAPI_PRELOAD 		13      /**< Option to find out the environment variable that can preload libraries */
@@ -647,7 +645,6 @@ typedef void *vptr_t;
      int default_granularity;     /**< The default granularity when this component is used */
      int available_granularities; /**< Available granularities */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
-//   int opcode_match_width;      /**< Width of opcode matcher if exists, 0 if not */
      int component_type;          /**< Type of component */
      char *pmu_names[PAPI_PMU_MAX];         /**< list of pmu names supported by this component */
      int reserved[8];             /* */
@@ -656,21 +653,12 @@ typedef void *vptr_t;
      unsigned int posix1b_timers:1;        /**< Using POSIX 1b interval timers (timer_create) instead of setitimer */
      unsigned int kernel_profile:1;        /**< Has kernel profiling support (buffered interrupts or sprofil-like) */
      unsigned int kernel_multiplex:1;      /**< In kernel multiplexing */
-//   unsigned int data_address_range:1;    /**< Supports data address range limiting */
-//   unsigned int instr_address_range:1;   /**< Supports instruction address range limiting */
      unsigned int fast_counter_read:1;     /**< Supports a user level PMC read instruction */
      unsigned int fast_real_timer:1;       /**< Supports a fast real timer */
      unsigned int fast_virtual_timer:1;    /**< Supports a fast virtual timer */
      unsigned int attach:1;                /**< Supports attach */
      unsigned int attach_must_ptrace:1;	   /**< Attach must first ptrace and stop the thread/process*/
-//   unsigned int edge_detect:1;           /**< Supports edge detection on events */
-//   unsigned int invert:1;                /**< Supports invert detection on events */
-//   unsigned int profile_ear:1;      	   /**< Supports data/instr/tlb miss address sampling */
-//     unsigned int cntr_groups:1;           /**< Underlying hardware uses counter groups (e.g. POWER5)*/
      unsigned int cntr_umasks:1;           /**< counters have unit masks */
-//   unsigned int cntr_IEAR_events:1;      /**< counters support instr event addr register */
-//   unsigned int cntr_DEAR_events:1;      /**< counters support data event addr register */
-//   unsigned int cntr_OPCM_events:1;      /**< counter events support opcode matching */
      /* This should be a granularity option */
      unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
      unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
