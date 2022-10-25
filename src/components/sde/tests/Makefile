@@ -13,7 +13,7 @@ CFLAGS +=-g
 CXXFLAGS +=-g -std=c++11
 
 ifeq ($(BUILD_LIBSDE_SHARED),yes)
-	LDFLAGS += -Llib -L$(datadir) -lpapi -lsde
+	LDFLAGS += -Llib -L$(datadir) -L$(datadir)/libpfm4/lib -lpapi -lpfm -lsde
 	LIBSDE=yes
 else ifeq ($(BUILD_LIBSDE_STATIC),yes)
 	LDFLAGS += -Llib $(datadir)/libsde.a -lpapi
