@@ -632,7 +632,7 @@ typedef void *vptr_t;
      char version[PAPI_MIN_STR_LEN];         /**< Version of this component */
      char support_version[PAPI_MIN_STR_LEN]; /**< Version of the support library */
      char kernel_version[PAPI_MIN_STR_LEN];  /**< Version of the kernel PMC support driver */
-     char disabled_reason[PAPI_MAX_STR_LEN]; /**< Reason for failure of initialization */
+     char disabled_reason[PAPI_HUGE_STR_LEN]; /**< Reason for failure of initialization */
      int disabled;   /**< 0 if enabled, otherwise error code from initialization */
      int initialized;                        /**< Component is ready to use */
      int CmpIdx;				/**< Index into the vector array for this component; set at init time */
