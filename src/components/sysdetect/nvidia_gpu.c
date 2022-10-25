@@ -16,7 +16,6 @@
 
 #include "sysdetect.h"
 #include "nvidia_gpu.h"
-#include "shm.h"
 
 #ifdef HAVE_CUDA
 #include "cuda.h"
@@ -83,7 +82,6 @@ nvmlReturn_t (*nvmlDeviceGetUUIDPtr)( nvmlDevice_t device, char *uuid,
 } while(0)
 
 static void fill_dev_affinity_info( _sysdetect_gpu_info_u *dev_info, int dev_count );
-static int procs_have_same_gpu_count( int dev_count );
 static int nvml_is_enabled( void );
 static int load_nvml_sym( char *status );
 static int unload_nvml_sym( void );
@@ -250,86 +248,23 @@ unload_cuda_sym( void )
 void
 fill_dev_affinity_info( _sysdetect_gpu_info_u *info, int dev_count )
 {
-    struct {
-        unsigned long uid;
-        int global_proc_id;
-    } uid_info;
-
-    int shm_elem_count, shm_handle;
-    if (shm_alloc(sizeof(uid_info), &shm_elem_count, &shm_handle)) {
-        return;
-    }
-
     int dev;
     for (dev = 0; dev < dev_count; ++dev) {
         char bus_id_str[20] = { 0 };
-        CU_CALL((*cuDeviceGetPCIBusIdPtr)(bus_id_str, 20, dev), goto fn_exit);
+        CU_CALL((*cuDeviceGetPCIBusIdPtr)(bus_id_str, 20, dev), return);
 
         nvmlDevice_t device;
         NVML_CALL((*nvmlDeviceGetHandleByPciBusIdPtr)(bus_id_str, &device),
-                  goto fn_exit);
+                  return);
 
         char uuid_str[NVML_DEVICE_UUID_V2_BUFFER_SIZE] = { 0 };
         NVML_CALL((*nvmlDeviceGetUUIDPtr)(device, uuid_str,
                                           NVML_DEVICE_UUID_V2_BUFFER_SIZE),
-                  goto fn_exit);
+                  return);
 
         _sysdetect_gpu_info_u *dev_info = &info[dev];
         dev_info->nvidia.uid = hash((unsigned char *) uuid_str);
-        uid_info.uid = dev_info->nvidia.uid;
-        uid_info.global_proc_id = shm_get_global_proc_id();
-        shm_put(shm_handle, shm_get_local_proc_id(), &uid_info, sizeof(uid_info));
-
-        dev_info->nvidia.affinity.proc_count = shm_elem_count;
-        dev_info->nvidia.affinity.proc_id_arr =
-            papi_malloc(shm_elem_count * sizeof(int));
-
-        int i, count = 0;
-        for (i = 0; i < shm_elem_count; ++i) {
-            shm_get(shm_handle, i, &uid_info, sizeof(uid_info));
-            if (uid_info.uid == dev_info->nvidia.uid) {
-                dev_info->nvidia.affinity.proc_id_arr[count++] =
-                    uid_info.global_proc_id;
-            }
-        }
-
-        if (count < shm_elem_count) {
-            dev_info->nvidia.affinity.proc_count = count;
-            dev_info->nvidia.affinity.proc_id_arr =
-                papi_realloc(dev_info->nvidia.affinity.proc_id_arr,
-                             count * sizeof(int));
-        }
     }
-
-  fn_exit:
-    shm_free(shm_handle);
-}
-
-int
-procs_have_same_gpu_count( int dev_count )
-{
-    int status = 1;
-
-    int shm_handle, shm_elem_count;
-    if (shm_alloc(sizeof(int), &shm_elem_count, &shm_handle)) {
-        return 0;
-    }
-
-    shm_put(shm_handle, shm_get_local_proc_id(), &dev_count, sizeof(dev_count));
-
-    int i;
-    for (i = 0; i < shm_elem_count; ++i) {
-        int others_dev_count;
-        shm_get(shm_handle, i, &others_dev_count, sizeof(others_dev_count));
-        if (dev_count != others_dev_count) {
-            status = 0;
-            break;
-        }
-    }
-
-    shm_free(shm_handle);
-
-    return status;
 }
 
 unsigned long
@@ -426,14 +361,9 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     }
 
 #ifdef HAVE_NVML
-    if (!load_nvml_sym(dev_type_info->status) &&
-        !shm_init(dev_type_info->status)) {
-        if (procs_have_same_gpu_count(dev_count)) {
-            fill_dev_affinity_info(arr, dev_count);
-        }
-
+    if (!load_nvml_sym(dev_type_info->status)) {
+        fill_dev_affinity_info(arr, dev_count);
         unload_nvml_sym();
-        shm_shutdown();
     }
 #else
     const char *message = "NVML not configured, no device affinity available";
@@ -457,13 +387,5 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 void
 close_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 {
-    int i;
-    for (i = 0; i < dev_type_info->num_devices; ++i) {
-        _sysdetect_gpu_info_u *dev_info =
-            ((_sysdetect_gpu_info_u *)dev_type_info->dev_info_arr) + i;
-        if (dev_info->nvidia.affinity.proc_count > 0) {
-            papi_free(dev_info->nvidia.affinity.proc_id_arr);
-        }
-    }
     papi_free(dev_type_info->dev_info_arr);
 }

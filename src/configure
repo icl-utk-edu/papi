@@ -7149,13 +7149,6 @@ for comp in $components; do
   fi
 done
 
-ac_fn_c_check_header_mongrel "$LINENO" "mpi.h" "ac_cv_header_mpi_h" "$ac_includes_default"
-if test "x$ac_cv_header_mpi_h" = xyes; then :
-  CFLAGS="$CFLAGS -DHAVE_MPI"
-fi
-
-
-
 CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5

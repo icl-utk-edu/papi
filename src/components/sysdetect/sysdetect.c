@@ -51,7 +51,6 @@ static int _sysdetect_get_dev_type_attr( void *handle,
 static int _sysdetect_get_dev_attr( void *handle, int id, PAPI_dev_attr_e attr,
                                     void *val );
 static void get_num_threads_per_numa( _sysdetect_cpu_info_t *cpu_info );
-static void get_threads_per_numa( _sysdetect_cpu_info_t *cpu_info );
 
 static void
 init_dev_info( void )
@@ -313,11 +312,6 @@ _sysdetect_get_dev_attr( void *handle, int id, PAPI_dev_attr_e attr, void *val )
         case PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT:
             *(int *) val = cpu_info->threads * cpu_info->cores * cpu_info->sockets;
             break;
-        case PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST:
-            get_num_threads_per_numa(cpu_info);
-            get_threads_per_numa(cpu_info);
-            *(int **) val = cpu_info->numa_threads[id];
-            break;
         case PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA:
             get_num_threads_per_numa(cpu_info);
             *(int *) val = cpu_info->num_threads_per_numa[id];
@@ -385,12 +379,6 @@ _sysdetect_get_dev_attr( void *handle, int id, PAPI_dev_attr_e attr, void *val )
             break;
         case PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR:
             *(unsigned int *) val = gpu_info->nvidia.minor;
-            break;
-        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST:
-            *(unsigned int **) val = gpu_info->nvidia.affinity.proc_id_arr;
-            break;
-        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE:
-            *(unsigned int *) val = gpu_info->nvidia.affinity.proc_count;
             break;
         /* AMD GPU attributes */
         case PAPI_DEV_ATTR__ROCM_ULONG_UID:
@@ -462,28 +450,6 @@ get_num_threads_per_numa( _sysdetect_cpu_info_t *cpu_info )
     for (k = 0; k < threads; ++k) {
         cpu_info->num_threads_per_numa[cpu_info->numa_affinity[k]]++;
     }
-
-    initialized = 1;
-}
-
-void
-get_threads_per_numa( _sysdetect_cpu_info_t *cpu_info )
-{
-    static int initialized;
-    int k;
-
-    if (initialized) {
-        return;
-    }
-
-    int *numa_threads_cnt = calloc(cpu_info->numas, sizeof(*numa_threads_cnt));
-    int threads = cpu_info->threads * cpu_info->cores * cpu_info->sockets;
-    for (k = 0; k < threads; ++k) {
-        int node = cpu_info->numa_affinity[k];
-        cpu_info->numa_threads[node][numa_threads_cnt[node]++] = k;
-    }
-
-    free(numa_threads_cnt);
 
     initialized = 1;
 }

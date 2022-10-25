@@ -1508,7 +1508,6 @@ PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
                                                      int *id,
                                                      int *attribute,
                                                      int *value,
-                                                     int *list,
                                                      char *string,
                                                      int *check,
                                                      int string_len) )
@@ -1517,16 +1516,13 @@ PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
                                                      int *id,
                                                      int *attribute,
                                                      int *value,
-                                                     int *list,
                                                      char *string,
                                                      int *check) )
 #endif
 {
     int i;
     const char *string_ptr;
-    const unsigned int *list_ptr;
     *handle_index = 0;
-    int list_len;
     *check = PAPI_OK;
 
     assert(sysdetect_fort_handle);
@@ -1577,7 +1573,6 @@ PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
         case PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM:
         case PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR:
         case PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR:
-        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE:
         case PAPI_DEV_ATTR__ROCM_ULONG_UID:
         case PAPI_DEV_ATTR__ROCM_UINT_SIMD_PER_CU:
         case PAPI_DEV_ATTR__ROCM_UINT_WORKGROUP_SIZE:
@@ -1595,42 +1590,6 @@ PAPI_FCALL( papif_get_dev_attr, PAPIF_GET_DEV_ATTR, (int *handle_index,
         case PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MINOR:
             *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
                                        value);
-            break;
-        case PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST:
-            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
-                                       &list_ptr);
-            if (*check != PAPI_OK) {
-                break;
-            }
-
-            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id,
-                                       PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA,
-                                       &list_len);
-            if (*check != PAPI_OK) {
-                break;
-            }
-
-            for (i = 0; i < list_len; ++i) {
-                list[i] = list_ptr[i];
-            }
-            break;
-        case PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST:
-            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id, *attribute,
-                                       &list_ptr);
-            if (*check != PAPI_OK) {
-                break;
-            }
-
-            *check = PAPI_get_dev_attr(sysdetect_fort_handle, *id,
-                                       PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE,
-                                       &list_len);
-            if (*check != PAPI_OK) {
-                break;
-            }
-
-            for (i = 0; i < list_len; ++i) {
-                list[i] = ((int *)list_ptr)[i];
-            }
             break;
         case PAPI_DEV_ATTR__CPU_CHAR_NAME:
         case PAPI_DEV_ATTR__ROCM_CHAR_DEVICE_NAME:
