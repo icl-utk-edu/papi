@@ -568,9 +568,9 @@ get_cache_type( const char *dirname, int *value )
         return CPU_ERROR;
     }
 
-    int result = fscanf(fff, "%s", type_string);
+    char *result = fgets(type_string, BUFSIZ, fff);
     fclose(fff);
-    if (result != 1) {
+    if (result == NULL) {
         MEMDBG("Could not read cache type\n");
         return CPU_ERROR;
     }
