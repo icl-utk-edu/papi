@@ -662,7 +662,7 @@ typedef void *vptr_t;
      /* This should be a granularity option */
      unsigned int cpu:1;                   /**< Supports specifying cpu number to use with event set */
      unsigned int inherit:1;               /**< Supports child processes inheriting parents counters */
-     unsigned int reserved_bits:12;
+     unsigned int reserved_bits:19;
    } PAPI_component_info_t;
 
 /**  @ingroup papi_data_structures*/
