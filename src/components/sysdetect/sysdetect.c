@@ -312,6 +312,9 @@ _sysdetect_get_dev_attr( void *handle, int id, PAPI_dev_attr_e attr, void *val )
         case PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT:
             *(int *) val = cpu_info->threads * cpu_info->cores * cpu_info->sockets;
             break;
+        case PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY:
+            *(int *) val = cpu_info->numa_affinity[id];
+            break;
         case PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA:
             get_num_threads_per_numa(cpu_info);
             *(int *) val = cpu_info->num_threads_per_numa[id];
