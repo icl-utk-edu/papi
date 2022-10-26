@@ -225,6 +225,8 @@ static struct native_event_t *allocate_native_event(
 		//return NULL;
 	}
 
+	// free string allocated by pfm_get_os_event_encoding
+	free(*(perf_arg.fstr));
 	// get a copy of the event name and break it up into its parts
 	event_string = strdup(name);
 
