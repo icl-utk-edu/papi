@@ -6,9 +6,11 @@ include ../../Makefile_comp_tests.target
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 ifneq ($(MPICC),)
-MPITESTS = query_device_mpi
-else
-MPITESTS =
+    ifeq ($(NO_MPI_TESTS),)
+        MPITESTS = query_device_mpi
+    else
+        MPITESTS =
+    endif
 endif
 
 ifeq ($(notdir $(F77)),gfortran)
