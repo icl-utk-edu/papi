@@ -3,6 +3,18 @@
 
 #include "testcode.h"
 
+#define BRNG() {\
+    b  = ((z1 << 6) ^ z1) >> 13;\
+    z1 = ((z1 & 4294967294U) << 18) ^ b;\
+    b  = ((z2 << 2) ^ z2) >> 27;\
+    z2 = ((z2 & 4294967288U) << 2) ^ b;\
+    b  = ((z3 << 13) ^ z3) >> 21;\
+    z3 = ((z3 & 4294967280U) << 7) ^ b;\
+    b  = ((z4 << 3) ^ z4) >> 12;\
+    z4 = ((z4 & 4294967168U) << 13) ^ b;\
+    z1++;\
+    result = z1 ^ z2 ^ z3 ^ z4;\
+}
 
 /* This code has 1,500,000 total branches       		*/
 /*                 500,000 not-taken conditional branches	*/
@@ -110,19 +122,24 @@ int random_branches_testcode(int number, int quiet) {
 
   int j,junk=0;
   double junk2=5.0;
+  long int b,z1,z2,z3,z4,result;
+  z1=236;
+  z2=347;
+  z3=458;
+  z4=9751;
 
    for(j=0;j<number;j++) {
 
-	if (( ((random()>>2)^(random()>>4)) %1000)>500) goto label_false;
-
-	junk++;   /* can't just add, the optimizer is way too clever */
-
-	junk2*=junk;
-
-	//printf("T");
-      label_false:
-	//printf("F");
-	;
+	BRNG();
+        if( (result%2)==0 ){
+            junk = result + j;
+            junk = 1 + j/junk;
+            junk2 *= (double)junk;
+        }
+        BRNG();
+        junk = result + j;
+        junk = 1 + j/junk;
+        junk2 *= (double)junk;
       }
    if (!quiet) printf("%lf\n",junk2);
 
