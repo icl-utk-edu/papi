@@ -20,6 +20,7 @@
  * <ul>
  * <li>--help, -h    print this help message
  * <li>--check, -c   attempts to add each event
+ * <li>-sde FILE     lists SDEs that are registered by the library or executable in FILE
  * <li>-e EVENTNAME  display detailed information about named native event
  * <li>-i EVENTSTR   include only event names that contain EVENTSTR
  * <li>-x EVENTSTR   exclude any event names that contain EVENTSTR
@@ -86,9 +87,7 @@ print_help( char **argv )
 	printf( "\nGeneral command options:\n" );
 	printf( "\t-h, --help       print this help message\n" );
 	printf( "\t-c, --check      attempts to add each event\n");
-#if SDE
 	printf( "\t-sde FILE        lists SDEs that are registered by the library or executable in FILE\n" );
-#endif
 	printf( "\t-e EVENTNAME     display detailed information about named native event\n" );
 	printf( "\t-i EVENTSTR      include only event names that contain EVENTSTR\n" );
 	printf( "\t-x EVENTSTR      exclude any event names that contain EVENTSTR\n" );
