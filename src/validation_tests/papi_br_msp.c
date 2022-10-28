@@ -172,9 +172,12 @@ int main(int argc, char **argv) {
 	average=total/num_runs;
 
 	if (!quiet) {
-		printf("\nOut of %lld branches, %lld were mispredicted\n",expected,average);
+                double rate = 100.0*(double)average/(double)num_random_branches;
+		printf("\nOut of %d random branches %lld were mispredicted,\n",num_random_branches,average);
+		printf("resulting in a misprediction rate = %.1lf%%.\n",rate);
 		printf("Assuming a good random number generator and no freaky luck\n");
-		printf("The mispredicts should be roughly between %d and %d\n",
+		printf("the misprediction rate should be around 50%%, and the\n");
+                printf("mispredicts should at least be between %d and %d.\n",
 			num_random_branches/4,(num_random_branches/4)*3);
 	}
 
