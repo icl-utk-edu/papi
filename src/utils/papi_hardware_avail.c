@@ -128,7 +128,7 @@ main( int argc, char **argv )
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
 
         if ( id == PAPI_DEV_TYPE_ID__CPU && dev_count > 0 ) {
-            int numas = 1;
+            unsigned int numas = 1;
             for ( i = 0; i < dev_count; ++i ) {
                 const char *cpu_name;
                 unsigned int family, model, stepping;
@@ -194,6 +194,27 @@ main( int argc, char **argv )
                             l3u_size >> 10, l3u_line_sz, l3u_line_cnt, l3u_cache_ass );
                 }
 
+#define MAX_NUMA_NODES  (16)
+#define MAX_CPU_THREADS (512)
+                unsigned int j;
+                unsigned int affinity[MAX_CPU_THREADS];
+                unsigned int numa_threads_count[MAX_NUMA_NODES] = { 0 };
+                unsigned int numa_threads[MAX_NUMA_NODES][MAX_CPU_THREADS];
+                for (j = 0; j < threads; ++j) {
+                    PAPI_get_dev_attr(handle, j, PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY, &affinity[j]);
+                    numa_threads[affinity[j]][numa_threads_count[affinity[j]]++] = j;
+                }
+
+                for ( j = 0; j < numas; ++j ) {
+                    unsigned int k, memsize;
+                    PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &memsize);
+                    printf( "Numa Node %u Memory                    : %uMB\n", j, memsize );
+                    printf( "Numa Node %u Threads                   : ", j );
+                    for (k = 0; k < numa_threads_count[j]; ++k) {
+                        printf( "%u ", numa_threads[j][k] );
+                    }
+                    printf( "\n" );
+                }
                 printf( "\n" );
             }
         }
