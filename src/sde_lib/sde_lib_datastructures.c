@@ -228,7 +228,7 @@ int cset_insert_elem(cset_hash_table_t *hash_ptr, size_t element_size, size_t ha
     uint32_t i, occupied;
     int ret_val;
 
-    if( NULL == hash_ptr || NULL == hash_ptr->buckets ){
+    if( NULL == hash_ptr ){
         ret_val = SDE_EINVAL;
         goto fn_exit;
     }
@@ -328,7 +328,7 @@ int cset_remove_elem(cset_hash_table_t *hash_ptr, size_t hashable_size, const vo
     uint32_t i, occupied;
     int ret_val;
 
-    if( NULL == hash_ptr || NULL == hash_ptr->buckets ){
+    if( NULL == hash_ptr ){
         ret_val = SDE_EINVAL;
         goto fn_exit;
     }
@@ -419,7 +419,7 @@ cset_list_object_t *cset_to_list(cset_hash_table_t *hash_ptr){
     uint32_t i, occupied;
     cset_list_object_t *head_ptr = NULL;
 
-    if( NULL == hash_ptr || NULL == hash_ptr->buckets ){
+    if( NULL == hash_ptr ){
         return NULL;
     }
     bucket_ptr = hash_ptr->buckets;
@@ -468,7 +468,7 @@ int cset_delete(cset_hash_table_t *hash_ptr){
     int bucket_idx;
     uint32_t i, occupied;
 
-    if( NULL == hash_ptr || NULL == hash_ptr->buckets ){
+    if( NULL == hash_ptr ){
         return SDE_EINVAL;
     }
     bucket_ptr = hash_ptr->buckets;
