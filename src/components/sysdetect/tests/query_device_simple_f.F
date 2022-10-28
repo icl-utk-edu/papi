@@ -123,17 +123,6 @@
                   do i = 0, numas - 1
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &
                           mem_size, dummy_list, dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST, &
-                          dummy_val, thr_list, dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA, &
-                          thread_count, dummy_list, dummy_str, ret_val)
-
-                      print *, 'Numa ', i, ' threads: '
-
-                      do j = 1, thread_count
-                          print *, thr_list(j)
-                      enddo
-
                   enddo
               endif
               call papif_enum_dev_type(modifier, handle, ret_val)

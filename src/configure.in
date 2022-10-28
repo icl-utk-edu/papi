@@ -2045,8 +2045,6 @@ for comp in $components; do
   fi
 done
 
-AC_CHECK_HEADER([mpi.h],[CFLAGS="$CFLAGS -DHAVE_MPI"],[])
-
 CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
 
 AC_MSG_RESULT($components)

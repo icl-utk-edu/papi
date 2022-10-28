@@ -193,24 +193,9 @@ main( int argc, char **argv )
                     printf( "L3 Cache                              : Size/LineSize/Lines/Assoc %uKB/%uB/%u/%u\n",
                             l3u_size >> 10, l3u_line_sz, l3u_line_cnt, l3u_cache_ass );
                 }
-            }
 
-            for ( i = 0; i < numas; ++i ) {
-                unsigned int memsize, thread_count;
-                const unsigned int *list;
-
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &memsize);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_THR_LIST, &list);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA, &thread_count);
-
-                printf( "Numa Node %u Threads                   : ", i );
-                unsigned int j;
-                for (j = 0; j < thread_count; ++j) {
-                    printf( "%u ", list[j] );
-                }
                 printf( "\n" );
             }
-            printf( "\n" );
         }
 
         if ( id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0 ) {
@@ -226,8 +211,6 @@ main( int argc, char **argv )
                 unsigned int unif_addr, managed_mem;
                 unsigned int cc_major, cc_minor;
                 const char *dev_name;
-                const unsigned int *list;
-                unsigned int list_len;
 
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_ULONG_UID, &uid);
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME, &dev_name);
@@ -248,8 +231,6 @@ main( int argc, char **argv )
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_MEMCPY_OVERLAP, &async_memcpy);
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_UNIFIED_ADDR, &unif_addr);
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM, &managed_mem);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST, &list);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE, &list_len);
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR, &cc_major);
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR, &cc_minor);
 
@@ -274,15 +255,6 @@ main( int argc, char **argv )
                 printf( "Has unified addressing                : %s\n", unif_addr ? "yes" : "no" );
                 printf( "Has managed memory                    : %s\n", managed_mem ? "yes" : "no" );
                 printf( "Compute capability                    : %u.%u\n", cc_major, cc_minor );
-
-                if (list_len > 0) {
-                    printf( "Affinity                              : ");
-                    unsigned int k;
-                    for (k = 0; k < list_len; ++k) {
-                        printf( "%u ", list[k] );
-                    }
-                    printf( "\n" );
-                }
                 printf( "\n" );
             }
         }

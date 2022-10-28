@@ -36,26 +36,13 @@ int main(int argc, char *argv[])
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
 
-        const unsigned int *list;
-        unsigned int list_len;
         if (id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0) {
             for (i = 0; i < dev_count; ++i) {
                 PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME, &name);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_AFFINITY_LIST, &list);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_CPU_THR_PER_DEVICE, &list_len);
 
                 if (!quiet) {
-                    if (list_len > 0) {
-                        printf( "UID                                   : %lu\n", (long unsigned int) i );
-                        printf( "Name                                  : %s\n", name );
-                        printf( "Affinity                              : " );
-
-                        unsigned int k;
-                        for (k = 0; k < list_len; ++k) {
-                            printf( "%u ", list[k] );
-                        }
-                        printf( "\n" );
-                    }
+                    printf( "UID                                   : %lu\n", (long unsigned int) i );
+                    printf( "Name                                  : %s\n", name );
                     printf( "\n" );
                 }
             }

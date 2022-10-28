@@ -4,8 +4,7 @@ COMPSRCS += components/sysdetect/sysdetect.c  \
 			components/sysdetect/cpu.c        \
 			components/sysdetect/cpu_utils.c  \
 			components/sysdetect/os_cpu_utils.c    \
-			components/sysdetect/linux_cpu_utils.c \
-			components/sysdetect/shm.c
+			components/sysdetect/linux_cpu_utils.c
 
 
 COMPOBJS += sysdetect.o  \
@@ -14,8 +13,7 @@ COMPOBJS += sysdetect.o  \
 			cpu.o        \
 			cpu_utils.o  \
 			os_cpu_utils.o    \
-			linux_cpu_utils.o \
-			shm.o
+			linux_cpu_utils.o
 
 CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include              \
           -I$(PAPI_ROCM_ROOT)/hsa/include/hsa          \
@@ -43,9 +41,6 @@ os_cpu_utils.o: components/sysdetect/os_cpu_utils.c $(HEADERS)
 
 linux_cpu_utils.o: components/sysdetect/linux_cpu_utils.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/linux_cpu_utils.c -o $@
-
-shm.o: components/sysdetect/shm.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/shm.c -o $@
 
 ifeq ($(CPU), x86)
 COMPSRCS += components/sysdetect/x86_cpu_utils.c

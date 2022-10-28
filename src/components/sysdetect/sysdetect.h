@@ -30,10 +30,6 @@ typedef union {
         int managed_memory;
         int major;
         int minor;
-        struct {
-            int proc_count;
-            unsigned int *proc_id_arr;
-        } affinity;
     } nvidia;
 
     struct {
@@ -53,10 +49,6 @@ typedef union {
         unsigned int compute_unit_count;
         unsigned int major;
         unsigned int minor;
-        struct {
-            int proc_count;
-            unsigned int *proc_id_arr;
-        } affinity;
     } amd;
 } _sysdetect_gpu_info_u;
 
@@ -81,7 +73,6 @@ typedef struct {
 #define PAPI_MAX_NUM_THREADS 512
     int numa_affinity[PAPI_MAX_NUM_THREADS];
 #define PAPI_MAX_THREADS_PER_NUMA (PAPI_MAX_NUM_THREADS / PAPI_MAX_NUM_NODES)
-    int numa_threads[PAPI_MAX_NUM_NODES][PAPI_MAX_THREADS_PER_NUMA];
     int num_threads_per_numa[PAPI_MAX_THREADS_PER_NUMA];
 } _sysdetect_cpu_info_t;
 
