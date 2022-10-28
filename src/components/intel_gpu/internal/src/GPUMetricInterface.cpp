@@ -39,92 +39,60 @@ extern "C" {
 
 //#define _DEBUG 1
 
-#define  DebugPrintError(format, args...)    fprintf(stderr, format, ## args)
+#define  DebugPrintError(format, args...)	fprintf(stderr, format, ## args)
 
 #if defined(_DEBUG)
-#define DebugPrint(format, args...)          fprintf(stderr, format, ## args)
+#define DebugPrint(format, args...)		  fprintf(stderr, format, ## args)
 #else
-#define DebugPrint(format, args...)          {do { } while(0);}
+#define DebugPrint(format, args...)		  {do { } while(0);}
 #endif
 
 
-#define UNINITED    0
-#define INITED      1
-#define ENABLED     2
+#define UNINITED	0
+#define INITED	  1
+#define ENABLED	 2
 
-#define MAX_ENTRY     256
-#define MAX_HANDLES    16
+#define MAX_ENTRY	256
+#define MAX_HANDLES	16
 
-/* current collection state */
-//static char          curMetricGroupName[MAX_STR_LEN];
-static char            *curMetricGroupName         = nullptr;
-static unsigned int     curMetricGroupCode         = 0;
-static int              numMetricsSelected         = 0;
-static MetricNode       metrics_selected[MAX_ENTRY];
-static unsigned int     curMetricList[MAX_ENTRY];
+/* global device information*/
+static DeviceInfo *gDeviceInfo = nullptr;
+static uint32_t	   gNumDeviceInfo = 0;
 
-static int              curHandleTableIndex        = 0;
-static GPUMetricHandler *handleTable[MAX_HANDLES];
+// maintail available handlers, one per subdevice
+static GPUMetricHandler **gHandlerTable	= nullptr;
+static uint32_t	 gNumHandles = 0;
+static DEVICE_HANDLE *gHandles = nullptr;
 
-static int              colState                   = UNINITED;
-static int              runningSessions            = 0;
+static int runningSessions = 0;
 
 // lock to make sure API is thread-safe
-static pthread_mutex_t  iflock                     = PTHREAD_MUTEX_INITIALIZER;
+static std::mutex  infLock;
+
+/*  build the key from <driver, device, handler, index> */
+static
+GPUMetricHandler *getHandler(DEVICE_HANDLE handle) {
+	 uint32_t index = GetIdx(handle);
+	 if (index >= gNumHandles) {
+		return nullptr;
+	 }
+	 return gHandlerTable[index];
+}
 
 /*
  * wrapper function for safe strncpy
  */
 void 
 strncpy_se(char *dest, size_t destSize,  char *src, size_t count)  {
-    if (dest && src) {
-        size_t toCopy = (count <= strlen(src))? count:strlen(src);
-        if (toCopy < destSize) {
-            memcpy(dest, src, toCopy);
-            dest[toCopy] = '\0';
-        }
-    }
+	if (dest && src) {
+		size_t toCopy = (count <= strlen(src))? count:strlen(src);
+		if (toCopy < destSize) {
+			memcpy(dest, src, toCopy);
+			dest[toCopy] = '\0';
+		}
+	}
 }
 
-/*
- * Check whether the metric code is already in the list
- */
-static int
-isInList(MetricNode *list,  int size,  int code) {
-    int retError = 1;
-    int ret      = 0;
-    for (int i=0; i<size; i++) {
-        if (list[i].code == code) {
-            return retError;
-    }
-    }
-    return ret;
-}
-
-static int
-findMetricName(char *fullName, char *groupName, char *metricName, int maxNameSize) {
-    int retError = 1;
-    int ret      = 0;
-    if (!fullName || !strlen(fullName)) {
-        return retError;
-    }
-    int   fullNameLen =  strlen(fullName);
-
-    char *pt = strchr(fullName, '.');
-    if (!pt || (pt == &fullName[0]) || (pt == &fullName[fullNameLen-1])) {
-        return retError;
-    }
-    // metric name in the format of  metricGroupName.metricNmae
-    int groupNameSize = pt - fullName;
-    int metricNameSize = fullNameLen - groupNameSize -1;
-    if ((groupNameSize >= maxNameSize) || (metricNameSize >= maxNameSize)) {
-        return retError;
-    }
-    strncpy_se(groupName, MAX_STR_LEN, fullName, groupNameSize);
-    pt++;
-    strncpy_se(metricName, MAX_STR_LEN, pt, metricNameSize);
-    return ret;
-}
 
 /*============================================================================
  * Below are Wrapper interface functions
@@ -132,531 +100,447 @@ findMetricName(char *fullName, char *groupName, char *metricName, int maxNameSiz
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn          int GPUDetectDevice(DEVICE_HANDLE *handle, int *num_device);
+ * @fn		  int GPUDetectDevice(DEVICE_HANDLE **handle, uint32_t *num_device);
  *
- * @brief       Detect and init GPU device which has performance metrics availale.
+ * @brief	   Detect and init GPU device which has performance metrics availale.
  *
- * @param       OUT  handle    - a array of handle, each for an instance of the device
- * @param       OUT  numDevice - total number of device detected
+ * @param	   OUT  handles   - a array of handle, each for an instance of the device
+ * @param	   OUT  numDevice - total number of device detected
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
-int GPUDetectDevice(DEVICE_HANDLE *handle, int *numDevice)
+int GPUDetectDevice(DEVICE_HANDLE **handles, uint32_t *numDevices)
 {
-    int               ret             = 0;
-    int               retError        = 1;
-    GPUMetricHandler *curMetricHandle = nullptr;
-    if ((colState != UNINITED) && curHandleTableIndex) {
-        *numDevice = 1;
-        *handle = curHandleTableIndex;
-        return ret;
-    }
+	int ret = 0;
+	int retError = 1;
 
-    if (!curHandleTableIndex) { // first time
-        memset((char *)&handleTable, 0, sizeof(GPUMetricHandler *)*16);
-    }
-    if (!curHandleTableIndex || !handleTable[curHandleTableIndex]) {
-        curMetricHandle = GPUMetricHandler::GetInstance();
-        ret =  curMetricHandle->InitMetricDevice(numDevice);
-        if (ret || !numDevice) {
-            curHandleTableIndex = 0;
-            DebugPrintError("GPUDetectDevice failed, device does not exist or being used, abort\n");
-            return retError;    
-        }
-        curHandleTableIndex = 1;
-        handleTable[curHandleTableIndex] = curMetricHandle;
-    }
-    // only deal with one device.
-    *handle = curHandleTableIndex;
-    *numDevice = 1;
-    curMetricGroupCode = 0;
+	infLock.lock();
 
-    colState = INITED;
-    return ret;    
+	if (gNumHandles) {
+		*handles =   gHandles;
+		*numDevices =  gNumHandles;
+		infLock.unlock();
+		return ret;
+	}
+
+	ret = GPUMetricHandler::InitMetricDevices(&gDeviceInfo, &gNumDeviceInfo, &gNumHandles);
+	if (!gDeviceInfo || !gNumDeviceInfo)  {
+		DebugPrintError("InitMetricDevices failed,"
+					   	" device does not exist or cannot find dependent libraries, abort\n");
+		infLock.unlock();
+		return retError;
+	}
+
+	gHandlerTable = (GPUMetricHandler **)calloc(gNumHandles, sizeof(GPUMetricHandler *));
+	gHandles = (DEVICE_HANDLE *)calloc(gNumHandles, sizeof(DEVICE_HANDLE));
+	uint32_t index = 0;
+	uint32_t dcode = 0;
+	for (uint32_t i=0; i<gNumDeviceInfo; i++) {
+		/* for root device */
+		dcode = CreateDeviceCode(gDeviceInfo[i].driverId, gDeviceInfo[i].deviceId, 0);
+		dcode = CreateIdxCode(dcode, index);
+		gHandlerTable[index] = GPUMetricHandler::GetInstance(gDeviceInfo[i].driverId,
+										gDeviceInfo[i].deviceId, 0);
+		gHandles[index++] = dcode;
+		if (gDeviceInfo[i].numSubdevices) {
+			for (uint32_t j=0; j<gDeviceInfo[i].numSubdevices; j++)  {
+				dcode = CreateDeviceCode(gDeviceInfo[i].driverId, gDeviceInfo[i].deviceId, (j+1));
+				dcode = CreateIdxCode(dcode, index);
+				gHandlerTable[index] = GPUMetricHandler::GetInstance(gDeviceInfo[i].driverId, 
+				gDeviceInfo[i].deviceId, j+1);
+				gHandles[index++] = dcode;
+			}
+		}
+	}
+	*handles = gHandles;
+	*numDevices = gNumHandles;
+
+	infLock.unlock();
+	return ret;	
 }
 
 /* ------------------------------------------------------------------------- */
 /*!
  * @fn void GPUFreeDevice(DEVICE_HANDLE handle);
  *
- * @brief       free the resouce related this device handle
+ * @brief	   free the resouce related this device handle
  *
- * @param       IN   handle       - handle to the selected device
+ * @param	   IN   handle	   - handle to the selected device
  *
- * @return      0 -- success,  otherwise, error code
  */
 void GPUFreeDevice(DEVICE_HANDLE handle)
 {
-    if (colState == UNINITED) {
-        return;
-    }
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUFreeDevice failed, handle is not valid or device is not initiated!\n");
-        return;
-    }
-
-    handleTable[handle]->DestroyMetricDevice();
-    handleTable[handle] = nullptr;
-    curHandleTableIndex = 0;
-    colState = UNINITED;
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUFreeDevice failed, handle is not valid or device is not initiated!\n");
+		return;
+	}
+	getHandler(handle)->DestroyMetricDevice();
 }
 
 
 /* ------------------------------------------------------------------------- */
 /*!
  * @fn int GPUEnableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName
- *                 unsigned int mtype,  unsigned int period, unsigned int numReports)
+ *				 unsigned int mtype,  unsigned int period, unsigned int numReports)
  *
- * @brief       add named metric group to collection.
+ * @brief	   add named metric group tby name or code o collection.
  *
- * @param       IN   handle              - handle to the selected device
- * @param       IN   metricGroupName     - a metric group name
- * @param       IN   mtype               - metric type <TIME_BASED,  EVENT_BASED>
- * @param       IN   period              - collection timer period
- * @param       IN   numReports          - number of reports. Default collect all available metrics
+ * @param	   IN   handle			  - handle to the selected device
+ * @param	   IN   metricGroupName	 - a metric group name
+ * @param	   IN   metricGroupCode	 - a metric group code
+ * @param	   IN   mtype			   - metric type <TIME_BASED,  EVENT_BASED>
+ * @param	   IN   period			  - collection timer period
+ * @param	   IN   numReports		  - number of reports. Default collect all available metrics
  *
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
-int GPUEnableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName,  unsigned int mtype,
-                 unsigned int period, unsigned int numReports)
+int GPUEnableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName, uint32_t metricGroupCode,
+		unsigned int mtype, unsigned int period, unsigned int numReports)
 {
-    int ret                 = 0;
-    int retError            = 1;
-    unsigned int groupCode  = 0;
+	int ret = 0;
+	int retError = 1;
+	unsigned int groupCode  = 0;
 
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUEnableMetricGroup: device handle is not initiated!\n");
-        return retError;
-    }
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUEnableMetricGroup: device handle is not initiated!\n");
+		return retError;
+	}
+	GPUMetricHandler *curMetricHandle = getHandler(handle);
+	uint32_t curMetricGroupCode = curMetricHandle->GetCurGroupCode();
 
-    if (!metricGroupName || !strlen(metricGroupName) || strlen(metricGroupName) >= MAX_STR_LEN) {
-        DebugPrintError("GPUEnableMetricGroup: no metric group selected\n");
-        return retError;
-    }
-    pthread_mutex_lock(&iflock);
-    runningSessions++; 
-    if (colState == ENABLED) {
-        pthread_mutex_unlock(&iflock);
-        return ret;
-    }
+	if (metricGroupName && strlen(metricGroupName))  {
+		ret=curMetricHandle->GetMetricCode(metricGroupName, "", mtype, &groupCode, nullptr);
+		if (ret) {
+			DebugPrintError("GPUEnableMetricGroup: metric group %s is not supported, abort!\n",
+				 metricGroupName);
+			return ret;
+		}
+	} else {
+		groupCode = metricGroupCode;
+	}
+	if (curMetricGroupCode) {   // already in collecting a metric group
+		if (groupCode == curMetricGroupCode)  {
+			runningSessions++;
+			return ret;
+		} else {
+			DebugPrintError("GPUEnableMetricGroup failed, reason:"
+					  " tried to collect more than one metric groups at the smae time."
+					  " Collection abort!\n");
+			return retError;
+		}
+	}
 
-    GPUMetricHandler *curMetricHandle = handleTable[handle];
+	infLock.lock();
+	int enabled = 0;
+	ret = curMetricHandle->EnableMetricGroup(groupCode, mtype, &enabled);
+	if (!ret && !enabled) {
+		if (mtype == TIME_BASED) {
+			ret = curMetricHandle->EnableTimeBasedStream(period, numReports);
+		} else {
+			ret = curMetricHandle->EnableEventBasedQuery();
+		}
+	}
 
-    if (!curMetricGroupCode) {
-        if (!curMetricGroupName) {
-            curMetricGroupName = (char *)calloc(MAX_STR_LEN, sizeof(char));
-            if (!curMetricGroupName) {
-                DebugPrintError("GPUEnableMetricGroup: memory alloc failed, abort!\n");
-                ret = retError;
-                goto cleanup;
-            }
-        }
-        strncpy_se(curMetricGroupName, MAX_STR_LEN,  metricGroupName, strlen(metricGroupName));
-        ret=curMetricHandle->GetMetricCode(metricGroupName, "", mtype, &groupCode, nullptr);
-        if (ret) {
-            DebugPrintError("GPUEnableMetricGroup: metric group %s is not supported, abort!\n",
-                 metricGroupName);
-            goto cleanup;
-        }
-        curMetricGroupCode = groupCode;
-        numMetricsSelected = 0;   // select all
-    } else {
-        if (strncmp(curMetricGroupName, metricGroupName, strlen(curMetricGroupName)) != 0) {
-            DebugPrintError("GPUEnableMetricGroup: metric group %s cannot be collected with metric group %s\n",
-                metricGroupName, curMetricGroupName);
-            ret = retError;
-            goto cleanup;
-        }
-    }
+	if (!ret) {
+		runningSessions++;
+	};
+	infLock.unlock();
 
-    if (!numMetricsSelected) {  // selected all
-        for (unsigned int i=0; i<MAX_ENTRY; i++) {
-            curMetricList[i] = 1;   
-        }
-    }
-    ret = curMetricHandle->EnableMetricGroup(metricGroupName, curMetricList, mtype);
-    if (ret) {
-        DebugPrintError("GPUEnableMetricGroup %s failed, return %d\n", metricGroupName, ret);
-        goto cleanup;
-    }
-    if (mtype == TIME_BASED) {
-        ret = curMetricHandle->EnableTimeBasedStream(period, numReports);
-    } else {
-        ret = curMetricHandle->EnableEventBasedQuery();
-    }
-
-cleanup:
-    if (!ret) {
-        colState = ENABLED;
-    } else {
-        runningSessions--;
-    }
-    pthread_mutex_unlock(&iflock);
-
-    return ret;
-}
-
-
-
-/* ------------------------------------------------------------------------- */
-/*!
- * @fn int GPUEnableMetrics(DEVICE_HANDLE handle, char **metricNameList, 
- *                    unsigned numMetrics, unsigned int mtype,
- *                        unsigned int period, unsigned int numReports)
- *
- * @brief       enable named metrics on a metric group to collection.
- *
- * @param       IN   handle             - handle to the selected device
- * @param       IN   metricNameList     - a list of metric names to be collected
- * @param       IN   numMetrics         - number of metrics to be collected
- * @param       IN   mtype              - metric type <TIME_BASED, EVENT_BASED>
- * @param       IN   period             - collection timer period
- * @param       IN   numReports         - number of reports. Default collect all available metrics
- *
- * @return      0 -- success,  otherwise, error code
- */
-int GPUEnableMetrics(DEVICE_HANDLE handle, char **metricNameList,  
-             unsigned int numMetrics, unsigned int mtype,
-             unsigned int period, unsigned int numReports)
-{
-    int          ret        = 0;
-    int          retError   = 1;
-    unsigned int groupCode  = 0;
-    unsigned int metricCode = 0;
-
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUEnableMetrics: device handle is not initiated!\n");
-        return retError;
-    }
-   
-    if (!metricNameList || !numMetrics) {
-        DebugPrintError("GPUEnableMetrics: no metric added\n");
-        return retError;
-    }
-
-    pthread_mutex_lock(&iflock);
-    runningSessions++; 
-    if (colState == ENABLED) {
-        pthread_mutex_unlock(&iflock);
-        return ret;
-    }
-
-    GPUMetricHandler *curMetricHandle = handleTable[handle];
-    char  groupName[MAX_STR_LEN]; 
-    char  metricName[MAX_STR_LEN]; 
-
-    for (unsigned int i=0; i<numMetrics; i++) {
-        if (findMetricName(metricNameList[i], groupName, metricName, MAX_STR_LEN)) {
-            DebugPrintError("GPUEnableMetrics: metric %s is not supported, expect format as <groupName.metricName>, abort!\n", metricNameList[i]);
-           ret = retError;
-           goto cleanup;
-        }
-        ret = curMetricHandle->GetMetricCode(groupName, metricName,  mtype, &groupCode, &metricCode);
-        if (ret || !groupCode || !metricCode) {
-            DebugPrintError("GPUEnableMetrics: metric %s is not supported, abort!\n", 
-                             metricNameList[i]);
-            ret = retError;
-            goto cleanup;
-        }
-
-        if (!curMetricGroupCode) {  // first event with metric group
-            curMetricGroupCode = groupCode;
-            if (!curMetricGroupName)  {
-                curMetricGroupName = (char *)calloc(MAX_STR_LEN, sizeof(char));
-                if (!curMetricGroupName) {
-                     DebugPrintError("GPUEnableMetrics: memory alloc failed, abort!\n");
-                     ret = retError;
-                     goto cleanup;
-                }
-            }
-            strncpy_se(curMetricGroupName, MAX_STR_LEN, groupName, strlen(groupName));
-        } else {
-            if (groupCode != curMetricGroupCode) {
-                DebugPrintError("GPUEnableMetrics: cannot enable metrics in multiple groups <%s, %s> at the same time, abort!\n", curMetricGroupName, groupName);
-                 ret = retError;
-                 goto cleanup;
-            }
-        }
-        if  (!isInList(metrics_selected, numMetricsSelected, metricCode)) {
-            strncpy_se(metrics_selected[numMetricsSelected].name, MAX_STR_LEN,
-               metricNameList[i], strlen(metricNameList[i]));
-            unsigned int mcode = ((metricCode & 0xff));  //  mcode start from 1.
-            curMetricList[mcode-1] = 1;
-            metrics_selected[numMetricsSelected].code =  metricCode;
-            numMetricsSelected++;
-        }
-    }
-    ret = curMetricHandle->EnableMetricGroup(curMetricGroupName, curMetricList, mtype);
-    if (ret) {
-        DebugPrintError("EnableMetricGroup %s failed, return %d\n", curMetricGroupName, ret);
-        goto cleanup;
-    }
-
-    if (mtype == TIME_BASED) {
-        ret = curMetricHandle->EnableTimeBasedStream(period, numReports);
-    } else {
-        ret = curMetricHandle->EnableEventBasedQuery();
-    }
-cleanup:
-    if (!ret) {
-        colState = ENABLED;
-    } else {
-        DebugPrintError("Enabling metrics %s failed, return %d\n", curMetricGroupName, ret);
-        runningSessions--; 
-    }
-    pthread_mutex_unlock(&iflock);
-    return ret;
+	return ret;
 }
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn int GPUDisableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName, unsigned int mtype);
+ * @fn int GPUDisableMetricGroup(DEVICE_HANDLE handle, unsigned int mtype);
  *
- * @brief       add named metric to collection.
+ * @brief	   disable a metric group configured for the device
  *
- * @param       IN   handle            - handle to the selected device
- * @param       IN   metricGroupName   - a metric group name
- * @param       IN   mtype             - a metric group type
+ * @param	   IN   handle			- handle to the selected device
+ * @param	   IN   mtype			 - a metric group type
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
-int GPUDisableMetricGroup(DEVICE_HANDLE handle, char *metricGroupName, unsigned mtype)
+int GPUDisableMetricGroup(DEVICE_HANDLE handle, unsigned mtype)
 {
 
-    (void)metricGroupName;
-    int ret               = 0;
-    int retError          = 1;
+	int ret = 0;
+	int retError = 1;
 
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUDisableMetricGroup: device handle is not initiated!\n");
-        return retError;
-    }
-    pthread_mutex_lock(&iflock);
-    runningSessions--;
-    if ((runningSessions == 0) && (colState == ENABLED)) {
-       if (mtype == TIME_BASED) {
-           handleTable[handle]->DisableMetricGroup();
-        }
-        colState = INITED;
-    }
-    pthread_mutex_unlock(&iflock);
-    return ret;
-
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUDisableMetricGroup: device handle is not initiated!\n");
+		return retError;
+	}
+	infLock.lock();
+	runningSessions--;
+	if (runningSessions == 0)  {
+	   if (mtype == TIME_BASED) {
+		   GPUMetricHandler *curMetricHandler = getHandler(handle);
+		   curMetricHandler->DisableMetricGroup();
+		}
+	}
+	infLock.unlock();
+	return ret;
 }
 
 /* ------------------------------------------------------------------------- */
 /*!
  * @fn int GPUSetMetricControl(DEVICE_HANDLE handle, unsigned int mode);
  *
- * @brief       set metroc collection control
+ * @brief	   set controls for metroc collection
  *
- * @param       IN   handle            - handle to the selected device
- * @param       IN   mode              - a metric collection control mode
+ * @param	   IN   handle			- handle to the selected device
+ * @param	   IN   mode			- a metric collection control mode
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
 int GPUSetMetricControl(DEVICE_HANDLE handle, unsigned int mode)
 {
-    int ret               = 0;
-    int retError          = 1;
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUStop: device handle is not initiated!\n");
-        return retError;
-    }
-    pthread_mutex_lock(&iflock);
-    handleTable[handle]->SetControl(mode);
-    pthread_mutex_unlock(&iflock);
-    return ret;
-}
+	int ret			   = 0;
+	int retError		  = 1;
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUStop: device handle is not initiated!\n");
+		return retError;
+	}
 
+	infLock.lock();
+	getHandler(handle)->SetControl(mode);
+	infLock.unlock();
+	return ret;
+}
 
 /* ----------------------------------------------------------------------------------------- */
 /*!
- * @fn         MetricData *GPUReadMetricData(DEVICE_HANDLE handle, unsigned int *reportCounts);
+ * @fn		 MetricData *GPUReadMetricData(DEVICE_HANDLE handle, 
+ *								int mode, unsigned int *reportCounts);
  *
- * @brief       read metric data
+ * @brief	   read metric data
  *
- * @param       IN   handle         - handle to the selected device
- * @param       IN   mode           - reprot data mode,  METRIC_SUMMARY, METIC_SAMPLE
- * @param       OUT  reportCounts   - returned metric data array size
+ * @param	   IN   handle		  - handle to the selected device
+ * @param	   IN   mode		  - reprot data mode,  METRIC_SUMMARY, METIC_SAMPLE
+ * @param	   OUT  reportCounts  - returned metric data array size
  *
- * @return      data                - returned metric data array
+ * @return	  data				- returned metric data array
  */
 MetricData *GPUReadMetricData(DEVICE_HANDLE handle, unsigned int mode, unsigned int *reportCounts)
 {
-    MetricData   *reportData = nullptr;
+	MetricData   *reportData = nullptr;
 
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUReadMetricData: device handle is not initiated!\n");
-        return nullptr;
-    }
-    DebugPrint("GPUReadMetricData:  numMtricsSelected %d\n", numMetricsSelected);
-
-    unsigned int numReports = 0;
-    unsigned int numMetrics = 0;
-
-    pthread_mutex_lock(&iflock);
-    reportData = handleTable[handle]->GetMetricsData(mode, &numReports, &numMetrics);
-    pthread_mutex_unlock(&iflock);
-    if (!reportData) {
-        DebugPrintError("Failed on GPUReadMetricData\n");
-       *reportCounts = 0;
-        return nullptr;
-    }
-
-    if (!numReports || !numMetrics) {
-        DebugPrintError("GPUReadMetricData: No metric is collected\n");
-       *reportCounts = 0;
-        freeMetricData(reportData, numReports);
-        return nullptr;
-    }
-    DebugPrint("GPUReadMetricData:  GetMetricsData numreport %d, numMetrics %d, numSelected %d\n", 
-                numReports, numMetrics, numMetricsSelected);
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUReadMetricData: device handle is not initiated!\n");
+		return nullptr;
+	}
+	unsigned int numReports = 0;
+	infLock.lock();
+	reportData = getHandler(handle)->GetMetricData(mode, &numReports);
+	infLock.unlock();
+	if (!reportData) {
+		DebugPrintError("Failed on GPUReadMetricData\n");
+	   *reportCounts = 0;
+		return nullptr;
+	}
+	if (!numReports) {
+		DebugPrintError("GPUReadMetricData: No metric is collected\n");
+	   *reportCounts = 0;
+		GPUFreeMetricData(reportData, numReports);
+		return nullptr;
+	}
+	DebugPrint("GPUReadMetricData:  GetMetricData numreport %d\n", numReports);
 
 #if defined(_DEBUG)
-    for (int j=0; j<(int)numReports; j++) {
-        DebugPrint("reportData[%d], numEntries %d\n", j, reportData[j].numEntries);
-        for (int i=0; i<reportData[j].numEntries; i++) {
-             DebugPrint("record[%d], metric [%d]: code 0x%x, ", j, i, reportData[j].dataEntries[i].code);
-            if (reportData[j].dataEntries[i].type) {
-                 DebugPrint("value %lf \n", reportData[j].dataEntries[i].value.fpval);
-            } else {
-                 DebugPrint("value %llu\n", reportData[j].dataEntries[i].value.ival);
-            }
-        }
-    }
+	for (int i=0; i<(int)numReports;  i++) {
+		DebugPrint("reportData[%d], metrics %d\n", i, reportData[i].metricCount);
+		for (int j=0; j<(int)reportData[i].numDataSets; j++) {
+			int sidx = reportData[i].dataSetStartIdx[j];
+			if (sidx < 0) {
+				 continue;
+			}
+			for (int k=0; k<(int)reportData[i].metricCount; k++) {
+				DebugPrint("record[%d], dataSet[%d], metric [%d]: code 0x%x, ",
+							i, j, k, reportData[i].dataEntries[sidx+k].code);
+				if (reportData[i].dataEntries[sidx+k].type) {
+					DebugPrint("value %lf \n", reportData[i].dataEntries[sidx+k].value.fpval);
+				} else {
+					DebugPrint("value %llu\n", reportData[i].dataEntries[sidx+k].value.ival);
+				}
+			}
+		}
+	}
 #endif
-
-    if (!numMetricsSelected) {
-        *reportCounts = numReports;
-        return reportData;
-    }
-
-    // only return selected metrics
-    int nums = reportData[0].numEntries;
-    for (unsigned int j=0; j<numReports; j++) {
-        DataEntry *entries = reportData[j].dataEntries; 
-        nums = reportData[j].numEntries;
-        reportData[j].numEntries = numMetricsSelected; 
-        allocMetricDataEntries(reportData[j].dataEntries, numMetricsSelected);
-        int index = 0;
-        for (int i=0; i<nums; i++) {
-            if (curMetricList[i]) {
-                reportData[j].dataEntries[index].code = entries[i].code;
-                reportData[j].dataEntries[index].type = entries[i].type;
-                DebugPrint("return entry[%d], reportData[%d].entries[%d], code 0x%x, type %d, ", 
-                            i, j, index, 
-                reportData[j].dataEntries[index].code,
-                reportData[j].dataEntries[index].type);
-                if (!reportData[j].dataEntries[index].type) {
-                    reportData[j].dataEntries[index].value.ival = entries[i].value.ival;
-                    DebugPrint("ival %llu\n", reportData[j].dataEntries[index].value.ival);
-                } else  {
-                    reportData[j].dataEntries[index].value.fpval = entries[i].value.fpval;
-                    DebugPrint("pfval %lf\n", reportData[j].dataEntries[index].value.fpval);
-                }
-                index++;
-            }
-        }
-        freeMetricDataEntries(entries);
-    }
-
-    *reportCounts = (int)numReports;
-    return reportData;
+	*reportCounts = (int)numReports;
+	return reportData;
 }
 
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn          int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *data);
+ * @fn		  int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *data);
  *
- * @brief       list all available metric groups for the selected type 
- * @param       IN   handle - handle to the selected device
- * @param       IN   mtype  - metric group type
- * @param       OUT  data   - metric data
+ * @brief	   list all available metric groups for the selected type 
+ * @param	   IN   handle - handle to the selected device
+ * @param	   IN   mtype  - metric group type
+ * @param	   OUT  data   - metric data
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
 int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *data)
 {
-    int ret               = 0;
-    int retError          = 1;
+	int ret			   = 0;
+	int retError		  = 1;
 
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUGetMetricGroups: device handle is not initiated!\n");
-        return retError;
-    }
-    pthread_mutex_lock(&iflock);
-    ret = handleTable[handle]->GetMetricsInfo(mtype, data);
-    pthread_mutex_unlock(&iflock);
-    if (ret) { 
-        DebugPrintError("GPUGetMetricGroups failed, return %d\n", ret);
-    }
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUGetMetricGroups: device handle is not initiated!\n");
+		return retError;
+	}
+	infLock.lock();
+	ret = getHandler(handle)->GetMetricInfo(mtype, data);
+	infLock.unlock();
+	if (ret) { 
+		DebugPrintError("GPUGetMetricGroups failed, return %d\n", ret);
+	}
 #if defined(_DEBUG)
-    for (int i=0; i<data->numEntries; i++) {
-        DebugPrint("GPUGetMetricGroups: metric group[%d]: %s, code 0x%x, numEntries %d\n",
-            i, data->infoEntries[i].name, data->infoEntries[i].code,
-            data->infoEntries[i].numEntries);
-    }
+	for (int i=0; i<data->numEntries; i++) {
+		DebugPrint("GPUGetMetricGroups: metric group[%d]: %s, code 0x%x, numEntries %d\n",
+			i, data->infoEntries[i].name, data->infoEntries[i].code,
+			data->infoEntries[i].numEntries);
+	}
 #endif
 
-    return ret;
+	return ret;
 }
-
 
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn          int GPUGetMetricList(DEVICE_HANDLE handle,
- *                                   char *groupName, unsigned int mtype, MetricInfo *data);
+ * @fn		  int GPUGetMetricList(DEVICE_HANDLE handle,
+ *								   char *groupName, unsigned int mtype, MetricInfo *data);
  *
- * @brief       list available metrics in the named group. 
- *              If name is "", list all available metrics in all groups
+ * @brief	   list available metrics in the named group. 
+ *			  If name is "", list all available metrics in all groups
  *
- * @param       IN   handle      - handle to the selected device
- * @param       IN   groupName   - metric group name. "" means all groups.
- * @param       In   mtype       - metric type <TIME_BASED, EVENT_BASED>
- * @param       OUT  data        - metric data
+ * @param	   IN   handle	  - handle to the selected device
+ * @param	   IN   groupName - metric group name. "" means all groups.
+ * @param	   In   mtype	  - metric type <TIME_BASED, EVENT_BASED>
+ * @param	   OUT  data	  - metric data
  *
- * @return      0 -- success,  otherwise, error code
+ * @return	  0 -- success,  otherwise, error code
  */
 int GPUGetMetricList(DEVICE_HANDLE handle, char *groupName, unsigned mtype, MetricInfo *data)
 {
-    int ret      = 0;
-    int retError = 1;
+	int ret	  = 0;
+	int retError = 1;
 
-    if (!handle || (handle != curHandleTableIndex) || !handleTable[handle]) {
-        DebugPrintError("GPUGetMetricList: device handle is not initiated!\n");
-        return retError;
-    }
-    if (groupName == nullptr) {
-        return retError;
-    }
-    if (strlen(groupName) > 0) {
-        ret = handleTable[handle]->GetMetricsInfo(groupName, mtype, data);
-    } else {
-        ret = handleTable[handle]->GetMetricsInfo("", mtype, data);
-    }
-    if (ret) {
-        DebugPrintError("GPUGetMetrics [%s] failed, return %d\n", groupName, ret);
-    }
-#if defined(_DEBUG)
-    for (int i=0; i<data->numEntries; i++) {
-        if (strlen(groupName) == 0) {
-            DebugPrint("GPUGetMetrics: get all metric groups\n");
-        } else {
-            DebugPrint("GPUGetMetrics: get metrics in metric group %s\n", groupName);
-        }
-        DebugPrint("data[%d]: %s, code 0x%x,  numEntries %d\n", 
-            i, data->infoEntries[i].name, data->infoEntries[i].code, 
-            data->infoEntries[i].numEntries);
-    }
-#endif
+	if (!handle || !getHandler(handle)) {
+		DebugPrintError("GPUGetMetricList: device handle (0x%x) is not initiated!\n", handle);
+		return retError;
+	}
 
-    return ret;
+	if (groupName == nullptr) {
+		return retError;
+	}
+
+	GPUMetricHandler *mHandler = getHandler(handle);
+
+	if (strlen(groupName) > 0) {
+		ret = mHandler->GetMetricInfo(groupName, mtype, data);
+	} else {
+		ret = mHandler->GetMetricInfo("", mtype, data);
+	}
+	if (ret) {
+		DebugPrintError("GPUGetMetrics [%s] failed, return %d\n", groupName, ret);
+	}
+	return ret;
 }
 
+/************************************************************************************************
+ * Memory allocate/free functions are defiend to allow C code caller to free up the memory space
+ ************************************************************************************************/
+/* ------------------------------------------------------------------------- */
+/*!
+ * @fn		  MetricInfo *GPUAllocMetricInfo(uint32_t count)
+ *
+ * @brief	   allocate memory for metrics info
+ * @param	   IN   count	  - number of entries of MetricInfo
+ *
+ * @return	   array of MetricInfo
+ */
+MetricInfo *
+GPUAllocMetricInfo(uint32_t count) {
+	return (MetricInfo *)calloc(count, sizeof(MetricInfo));
+}
+
+/* ------------------------------------------------------------------------- */
+/*!
+ * @fn		  void GPUFreeMetricInfo(MetricInfo *info, uint32_t count);
+ *
+ * @brief	   free  memory space for metrics info
+ * @param	   IN   count	  - number of entries of MetricInfo
+ *
+ */
+void
+GPUFreeMetricInfo(MetricInfo *info, uint32_t count) {
+	if (!info  || !count) {
+		return;
+	}
+	for (uint32_t i=0; i<count; i++) {
+		if (info[i].infoEntries) {
+			  free(info[i].infoEntries);
+		 }
+	}
+	free(info);
+}
+
+/* ------------------------------------------------------------------------- */
+/*!
+ * @fn		  MetricData * GPUAllocMetricData(uint32_t count, 
+ *									uint32_t numSets, uint32_t numMetrics) {
+ *
+ * @brief	   allocate memory space for metrics data
+ * @param	   IN   count	    - number of entries of MetricData
+ * @param	   IN   numSets	    - number of metrics sets
+ * @param	   IN   numMetrics  - number of metrics per set
+ *
+ * @return	   array of MetricData, nullptr if out of space.
+ */
+MetricData *
+GPUAllocMetricData(uint32_t count, uint32_t numSets, uint32_t numMetrics) {
+	MetricData *data = (MetricData *)calloc(count, sizeof(MetricData));
+	if (!data) {
+		return data;
+	}
+	uint32_t numEntries  = numSets * numMetrics;
+	for (uint32_t i=0; i<count; i++) {
+		data[i].numDataSets = numSets;
+		data[i].metricCount = numMetrics;
+		data[i].numEntries = numEntries;
+		data[i].dataSetStartIdx = (int *)calloc(numSets, sizeof(int));
+		data[i].dataEntries = (DataEntry *)calloc(numEntries, sizeof(DataEntry));
+		if (!data[i].dataSetStartIdx || !data[i].dataEntries) {
+			GPUFreeMetricData(data, count);
+			return nullptr;
+		}
+	}
+	return data;
+}
+
+/* ------------------------------------------------------------------------- */
+/*!
+ * @fn		  void GPUFreeMetricInfo(MetricData *data, uint32_t count);
+ *
+ * @brief	   free  memory space for metrics data
+ * @param	   IN   count	  - number of entries of MetricInfo
+ */
+void
+GPUFreeMetricData(MetricData *data, uint32_t count) {
+	if (!data  || !count) {
+		return;
+	}
+	for (uint32_t i=0; i<count; i++) {
+		if (data[i].dataSetStartIdx)  free(data[i].dataSetStartIdx);
+		if (data[i].dataEntries)  free(data[i].dataEntries);
+	}
+	free(data);
+}
 
 #if defined(__cplusplus)
 }

@@ -42,117 +42,167 @@
 #include "GPUMetricInterface.h"
 
 /* collection status */
-#define COLLECTION_IDLE      0
-#define COLLECTION_INIT      1
-#define COLLECTION_ENABLED   2
-#define COLLECTION_DISABLED  3
-#define COLLECTION_COMPLETED 4
-
+#define COLLECTION_IDLE	  0
+#define COLLECTION_INIT	  1
+#define COLLECTION_CONFIGED  2
+#define COLLECTION_ENABLED   3
+#define COLLECTION_DISABLED  4
+#define COLLECTION_COMPLETED 5
 
 using namespace std;
+class GPUMetricHandler;
 
 typedef struct TMetricNode_S 
 {
-    uint32_t                             code;           // 0 mean invalid
-    uint32_t                             metricId;
-    uint32_t                             metricGroupId;
-    uint32_t                             metricDomainId;
-    int                                  summaryOp;
-    zet_metric_properties_t              props;
-    zet_metric_handle_t                  handle;
+	uint32_t code;		   // 0 mean invalid
+	uint32_t metricId;
+	uint32_t metricGroupId;
+	uint32_t metricDomainId;
+	int	metricType;
+	zet_metric_properties_t props;
+	zet_metric_handle_t handle;
 } TMetricNode;
 
 typedef struct TMetricGroupNode_S
 {
-    uint32_t                               code;         // 0 mean invalid
-    uint32_t                               numMetrics;
-    TMetricNode                           *metricList;
-    int                                   *opList;       // list of metric operation
-    zet_metric_group_properties_t          props;
-    zet_metric_group_handle_t              handle;
+	uint32_t code;		 // 0 mean invalid
+	uint32_t numMetrics;
+	TMetricNode *metricList;
+	int *opList;	   // list of metric operation
+	zet_metric_group_properties_t props;
+	zet_metric_group_handle_t handle;
 }TMetricGroupNode;
 
+
+typedef struct TMetricGroupInfo_S {
+	uint32_t				 numMetricGroups;
+	uint32_t				 numMetrics;
+	uint32_t				 maxMetricsPerGroup;
+	uint32_t				 domainId;
+	TMetricGroupNode		*metricGroupList;
+}TMetricGroupInfo;
+
+
 typedef struct QueryData_S {
-    string                                  kernName;
-    zet_metric_query_handle_t               metricQuery;
-    ze_event_handle_t                       event;
+	string									kernName;
+	zet_metric_query_handle_t				metricQuery;
+	ze_event_handle_t						event;
 } QueryData;
 
-
 typedef struct QueryState_S {
-    atomic<uint32_t>                        kernelId{0};
-    std::mutex                              lock;
-    std::map<ze_kernel_handle_t, string>    nameMap;
-    zet_metric_query_pool_handle_t          queryPool;
-    ze_event_pool_handle_t                  eventPool;
-    vector<QueryData>                       queryList;
+	atomic<uint32_t>						kernelId{0};
+	std::mutex								lock;
+	std::map<ze_kernel_handle_t, string>	nameMap;
+	zet_metric_query_pool_handle_t			queryPool;
+	ze_event_pool_handle_t					eventPool;
+	GPUMetricHandler					   *handle;
+	vector<QueryData>						queryList;
 } QueryState;
+
+typedef struct InstanceData {
+	uint32_t    kernelId;
+	QueryState *queryState;
+	zet_metric_query_handle_t metricQuery;
+} InstanceData;
 
 
 class GPUMetricHandler
 {
 public:
-    static GPUMetricHandler* GetInstance();
-    ~GPUMetricHandler();
-    int           InitMetricDevice(int *numDevice);
-    void          DestroyMetricDevice();
-    int           EnableMetricGroup(const char *metricGroupName,
-                        uint32_t *metricSelected, uint32_t mtype);
-    int           EnableTimeBasedStream(uint32_t timePeriod, uint32_t numReports);
-    int           EnableEventBasedQuery();
-    void          DisableMetricGroup();
-    int           GetMetricsInfo(int type, MetricInfo *data);
-    int           GetMetricsInfo(const char * name, int type, MetricInfo *data);
-    int           GetMetricCode(const char *mGroupName, const char *metricName,    uint32_t mtype, 
-                        uint32_t *mGroupCode, uint32_t *metricCode);
-    MetricData   *GetMetricsData(uint32_t  mode, uint32_t *numReports, uint32_t *numMetrics);
-    int           SetControl(uint32_t mode);
+	static int InitMetricDevices(DeviceInfo **deviceInfoList, uint32_t *numDeviceInfo, 
+                     uint32_t *totalDevices);
+	static GPUMetricHandler* GetInstance(uint32_t driverId, uint32_t deviceId, 
+                     uint32_t subdeviceId);
+	~GPUMetricHandler();
+	void DestroyMetricDevice();
+	int  EnableMetricGroup(uint32_t metricGroupCode, uint32_t mtype, int *status);
+	int	 EnableMetricGroup(const char *metricGroupName,  uint32_t mtype, int *status);
+	int	 EnableTimeBasedStream(uint32_t timePeriod, uint32_t numReports);
+	int	 EnableEventBasedQuery();
+	void DisableMetricGroup();
+	int	 GetMetricInfo(int type, MetricInfo *data);
+	int	 GetMetricInfo(const char * name, int type, MetricInfo *data);
+	int  GetMetricCode(const char *mGroupName, const char *metricName,	uint32_t mtype, 
+						uint32_t *mGroupCode, uint32_t *metricCode);
+	MetricData   *GetMetricData(uint32_t  mode, uint32_t *numReports);
+	int	 SetControl(uint32_t mode);
+	uint32_t GetCurGroupCode();
+
 
 private:
-    GPUMetricHandler();
-    GPUMetricHandler(GPUMetricHandler const&);
-    void      operator=(GPUMetricHandler const&);
-    int       InitMetricGroups(ze_device_handle_t device);
-    string    GetDeviceName(ze_device_handle_t device);
-    uint8_t  *ReadStreamData(size_t *rawDataSize);
-    uint8_t  *ReadQueryData(QueryData &data, size_t *rawDataSize, ze_result_t *retStatus);
-    void      GenerateMetricsData(uint8_t *rawData, size_t rawDataSize, uint32_t  mode);
+	GPUMetricHandler(uint32_t driverid, uint32_t deviceid, uint32_t subdeviceid);
+	GPUMetricHandler(GPUMetricHandler const&);
+	void  operator=(GPUMetricHandler const&);
+	static int  InitMetricGroups(ze_device_handle_t device, TMetricGroupInfo *mgroups);
+	string  GetDeviceName(ze_device_handle_t device);
+	uint8_t	*ReadStreamData(size_t *rawDataSize);
+	uint8_t	*ReadQueryData(QueryData &data, size_t *rawDataSize, ze_result_t *retStatus);
+	void	GenerateMetricData(uint8_t *rawData, size_t rawDataSize, uint32_t  mode);
+	void	ProcessMetricDataSet(uint32_t dataSetId, zet_typed_value_t* typedDataList,
+					uint32_t startIdx, uint32_t dataSize,
+					uint32_t metricCount, uint32_t  mode);
 
 private: // Fields
-    static GPUMetricHandler*   m_handlerInstance;
+	static GPUMetricHandler*  m_handlerInstance;
+	static vector<int>		  driverList;
+	static vector<ze_device_handle_t> m_deviceList;
+	static vector<GPUMetricHandler>	  handlerList;
 
-    string                     m_dataDumpFileName;
-    string                     m_dataDumpFilePath;
-    fstream                    m_dataDump;
+	int m_driverId;
+	int m_deviceId;
+	int m_subdeviceId;
 
-    // current state
-    ze_driver_handle_t         m_driver;
-    ze_context_handle_t        m_context;
-    ze_device_handle_t         m_device;
-    TMetricGroupNode *         m_groupList;
-    uint32_t                   m_numGroups;
-    uint32_t                   m_numMetrics;
-    uint32_t                   m_maxMetricsPerGroup;
-    uint32_t                   m_domainId;
-    int                        m_groupId;
-    uint32_t                   m_groupType;
-    uint32_t                  *m_metricsSelected;
+	std::mutex	m_lock;
+	string		m_dataDumpFileName;
+	string		m_dataDumpFilePath;
+	fstream		m_dataDump;
 
-    ze_event_pool_handle_t     m_eventPool;
-    ze_event_handle_t          m_event;
+	// current state
+	ze_driver_handle_t  m_driver;
+	ze_context_handle_t	m_context;
+	ze_device_handle_t  m_device;
+	TMetricGroupInfo  *m_groupInfo;
+	uint32_t m_domainId;
+	int		 m_groupId;
+	uint32_t m_groupType;
+	QueryState *m_queryState;
 
-    zet_metric_streamer_handle_t m_metricStreamer;
+	ze_event_pool_handle_t m_eventPool;
+	ze_event_handle_t m_event;
 
-    zet_metric_query_pool_handle_t m_queryPool;
-    zet_tracer_exp_handle_t    m_tracer;
+	zet_metric_streamer_handle_t m_metricStreamer;
+	zet_metric_query_pool_handle_t m_queryPool;
+	zet_tracer_exp_handle_t	m_tracer;
 
-    volatile int               m_status;
-    int                        m_stdout;
-
-    MetricData                *m_reportData;
-    uint32_t                   m_reportCount;
+	volatile int	m_status;
+	uint32_t		m_numDevices;
+	uint32_t		m_numDataSet;
+	MetricData		*m_reportData;
+	uint32_t		*m_reportCount;
 };
 
+/* this struct maintains the <driver, device> information */
+typedef struct TMetricDevice_S {
+	uint32_t			 driverId;
+	uint32_t			 deviceId;
+	uint32_t			 metricHandlerIndex;
+	uint32_t			 numSubdevices;
+	TMetricGroupInfo	*groupList;
+	char				*devName;
+	ze_driver_handle_t  *ze_driver;
+	ze_device_handle_t  *ze_device;
+} TMetricDevice;
+
+/* This struct maintains the <driver, device, subdevice> information
+ * This is the based to access the GPUMetricHandler method
+ */
+typedef struct TMetricDeviceHandler_S {
+	uint32_t			 driverId;
+	uint32_t			 deviceId;
+	uint32_t			 subdeviceId;
+	uint32_t			 deviceListIndex;
+	GPUMetricHandler	*handler;
+} TMetricDeviceHandler;
 
 #endif
 
