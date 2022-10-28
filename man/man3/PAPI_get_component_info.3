@@ -1,10 +1,8 @@
-.TH "PAPI_get_component_info" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_component_info" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_component_info \- 
-.PP
-get information about a specific software component  
+PAPI_get_component_info \- get information about a specific software component  
 
 .SH SYNOPSIS
 .br
@@ -13,36 +11,31 @@ get information about a specific software component
 .PP 
 
 .PP
+\fBParameters\fP
+.RS 4
+\fIcidx\fP Component index
+.RE
+.PP
+This function returns a pointer to a structure containing detailed information about a specific software component in the PAPI library\&. This includes versioning information, preset and native event information, and more\&. For full details, see \fBPAPI_component_info_t\fP\&.
+.PP
+\fBExamples:\fP
+.RS 4
+
+.PP
 .nf
-@param cidx
-    Component index
-
-This function returns a pointer to a structure containing detailed 
-information about a specific software component in the PAPI library. 
-This includes versioning information, preset and native event 
-information, and more. 
-For full details, see @ref PAPI_component_info_t. 
-
-@par Examples:
+const PAPI_component_info_t *cmpinfo = NULL;
+if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+exit(1);
+if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
+exit(1);
+printf("This component supports %d Preset Events and %d Native events\&.\n",
+cmpinfo->num_preset_events, cmpinfo->num_native_events);
 
 .fi
 .PP
- 
+.RE
 .PP
-.nf
-        const PAPI_component_info_t *cmpinfo = NULL;
-        if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
-        exit(1);
-        if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
-        exit(1);
-        printf("This component supports %d Preset Events and %d Native events\&.\n",
-    cmpinfo->num_preset_events, cmpinfo->num_native_events);
-*   
-
-.fi
-.PP
-.PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_get_executable_info\fP 
 .PP

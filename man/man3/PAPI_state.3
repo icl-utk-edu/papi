@@ -1,10 +1,8 @@
-.TH "PAPI_state" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_state" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_state \- 
-.PP
-Return the counting state of an EventSet\&.  
+PAPI_state \- Return the counting state of an EventSet\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Return the counting state of an EventSet\&.
  int \fBPAPI_state( int  EventSet, int * status )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
@@ -45,55 +43,54 @@ PAPI_MULTIPLEXING -- EventSet has multiplexing enabled
 PAPI_ACCUMULATING -- reserved for future use 
 .IP "\(bu" 2
 PAPI_HWPROFILING -- reserved for future use  
-   
+ 
 .PP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
 \fIPAPI_ENOEVST\fP The EventSet specified does not exist\&.  
-   
+ 
 .RE
 .PP
 \fBPAPI_state()\fP returns the counting state of the specified event set\&.  
-   
+ 
 .PP
 \fBExample:\fP
 .RS 4
 
 .PP
 .nf
-*  int EventSet = PAPI_NULL;
-*  int status = 0;
-*  int ret;
-*  
-*  ret = PAPI_create_eventset(&EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Add Total Instructions Executed to our EventSet
-*  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Start counting
-*  ret = PAPI_state(EventSet, &status);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  printf("State is now %d\n",status);
-*  ret = PAPI_start(EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  ret = PAPI_state(EventSet, &status);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  printf("State is now %d\n",status);
-*  
+int EventSet = PAPI_NULL;
+int status = 0;
+int ret;
+
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+// Add Total Instructions Executed to our EventSet
+ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+if (ret != PAPI_OK) handle_error(ret);
+
+// Start counting
+ret = PAPI_state(EventSet, &status);
+if (ret != PAPI_OK) handle_error(ret);
+printf("State is now %d\n",status);
+ret = PAPI_start(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+ret = PAPI_state(EventSet, &status);
+if (ret != PAPI_OK) handle_error(ret);
+printf("State is now %d\n",status);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_stop\fP \fBPAPI_start\fP 
 .RE

@@ -1,10 +1,8 @@
-.TH "PAPI_start" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_start" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_start \- 
-.PP
-Start counting hardware events in an event set\&.  
+PAPI_start \- Start counting hardware events in an event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,12 +18,12 @@ Start counting hardware events in an event set\&.
  int \fBPAPI_start( int  EventSet )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -49,31 +47,30 @@ Start counting hardware events in an event set\&.
 
 .PP
 .nf
-*  int EventSet = PAPI_NULL;
-*  long long values[2];
-*  int ret;
-*  
-*  ret = PAPI_create_eventset(&EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Add Total Instructions Executed to our EventSet
-*  ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  
-*  // Start counting
-*  ret = PAPI_start(EventSet);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  poorly_tuned_function();
-*  ret = PAPI_stop(EventSet, values);
-*  if (ret != PAPI_OK) handle_error(ret);
-*  printf("%lld\\n",values[0]);
-*  
+int EventSet = PAPI_NULL;
+long long values[2];
+int ret;
+
+ret = PAPI_create_eventset(&EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+
+// Add Total Instructions Executed to our EventSet
+ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
+if (ret != PAPI_OK) handle_error(ret);
+
+// Start counting
+ret = PAPI_start(EventSet);
+if (ret != PAPI_OK) handle_error(ret);
+poorly_tuned_function();
+ret = PAPI_stop(EventSet, values);
+if (ret != PAPI_OK) handle_error(ret);
+printf("%lld\\n",values[0]);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_create_eventset\fP \fBPAPI_add_event\fP \fBPAPI_stop\fP 
 .RE

@@ -1,10 +1,8 @@
-.TH "PAPIf_hl_stop" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIf_hl_stop" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPIf_hl_stop \- 
-.PP
-Stop a running high-level event set\&.  
+PAPIf_hl_stop \- Stop a running high-level event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -17,10 +15,10 @@ Stop a running high-level event set\&.
 .RS 4
 #include 'fpapi\&.h' 
 .br
- \fBPAPIf_hl_stop( C_INT check )\fP
+\fBPAPIf_hl_stop( C_INT check )\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_ENOEVNT\fP -- The EventSet is not started yet\&. 
 .br
@@ -38,30 +36,28 @@ This call is optional and only necessary if the programmer wants to use the low-
 .PP
 .PP
 .nf
-* integer retval
-*
-* call PAPIf_hl_region_begin("computation", retval)
-* if ( retval \&.NE\&. PAPI_OK ) then
-*     write (*,*) "PAPIf_hl_region_begin failed!"
-* end if
-*
-* !do some computation here
-*
-* call PAPIf_hl_region_end("computation", retval)
-* if ( retval \&.NE\&. PAPI_OK ) then
-*     write (*,*) "PAPIf_hl_region_end failed!"
-* end if
-*
-* call PAPIf_hl_stop(retval)
-* if ( retval \&.NE\&. PAPI_OK ) then
-*     write (*,*) "PAPIf_hl_stop failed!"
-* end if
-*
-* 
+integer retval
+
+call PAPIf_hl_region_begin("computation", retval)
+if ( retval \&.NE\&. PAPI_OK ) then
+    write (*,*) "PAPIf_hl_region_begin failed!"
+end if
+
+!do some computation here
+
+call PAPIf_hl_region_end("computation", retval)
+if ( retval \&.NE\&. PAPI_OK ) then
+    write (*,*) "PAPIf_hl_region_end failed!"
+end if
+
+call PAPIf_hl_stop(retval)
+if ( retval \&.NE\&. PAPI_OK ) then
+    write (*,*) "PAPIf_hl_stop failed!"
+end if
 .fi
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_hl_stop\fP 
 .RE

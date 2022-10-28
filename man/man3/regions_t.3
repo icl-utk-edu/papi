@@ -1,14 +1,20 @@
-.TH "regions_t" 3 "Thu Feb 27 2020" "Version 6.0.0.0" "PAPI" \" -*- nroff -*-
+.TH "regions_t" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-regions_t \- 
+regions_t
 .SH SYNOPSIS
 .br
 .PP
 .SS "Data Fields"
 
 .in +1c
+.ti -1c
+.RI "unsigned int \fBregion_id\fP"
+.br
+.ti -1c
+.RI "int \fBparent_region_id\fP"
+.br
 .ti -1c
 .RI "char * \fBregion\fP"
 .br
@@ -24,8 +30,12 @@ regions_t \-
 .in -1c
 .SH "Field Documentation"
 .PP 
+.SS "int regions_t::parent_region_id"
+Region ID of parent region 
 .SS "char* regions_t::region"
 Region name 
+.SS "unsigned int regions_t::region_id"
+Unique region ID 
 .SS "\fBvalue_t\fP regions_t::values[]"
 Array of event values based on current eventset 
 
