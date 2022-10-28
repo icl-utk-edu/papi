@@ -1,4 +1,4 @@
-ARCH?=INTEL
+ARCH?=X86
 PAPIDIR?=${HOME}/usr
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
@@ -16,29 +16,24 @@ ifeq ($(USEMPI),true)
 endif
 
 ## Architecture determines vector instruction set.
-ifeq ($(ARCH),INTEL)
+ifeq ($(ARCH),X86)
     VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
-    VEC128=-mavx -O0 -DINTEL -DVEC_WIDTH_128
-    VEC256=-mavx -O0 -DINTEL -DVEC_WIDTH_256
-    VEC512=-mavx512f -O0 -DINTEL -DVEC_WIDTH_512
-    VEC128_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_128
-    VEC256_FMA=-mfma4 -mfma -O0 -DINTEL -DVEC_WIDTH_256
-    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DINTEL -DVEC_WIDTH_512
-    VEC=-mavx -O0 -DINTEL
-    VEC_FMA=-mfma4 -mfma -O0 -DINTEL
-    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DINTEL
+    VEC_META=-DAVX128_AVAIL -DAVX256_AVAIL -DAVX512_AVAIL
+    VEC128=-mavx -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_128B
+    VEC256=-mavx -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_256B
+    VEC512=-mavx512f -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_512B
+    VEC128_FMA=-mfma4 -mfma -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_128B
+    VEC256_FMA=-mfma4 -mfma -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_256B
+    VEC512_FMA=-mfma4 -mfma -mavx512f -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_512B
+    VEC=-mavx -O0 -DX86
+    VEC_FMA=-mfma4 -mfma -O0 -DX86
+    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
 endif
-ifeq ($(ARCH),AMD)
+ifeq ($(ARCH),POWER)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
-    VEC=-mavx -O0 -DAMD
-    VEC_FMA=-mfma4 -mfma -O0 -DAMD
-    VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DAMD
-endif
-ifeq ($(ARCH),IBM)
-    VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
-    VEC=-maltivec -O0 -DIBM
-    VEC_FMA=-maltivec -O0 -DIBM
-    VEC_ALL=$(VEC) -O0 -DIBM
+    VEC=-maltivec -O0 -DPOWER
+    VEC_FMA=-maltivec -O0 -DPOWER
+    VEC_ALL=$(VEC) -O0 -DPOWER
 endif
 ifeq ($(ARCH),ARM)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
@@ -93,7 +88,7 @@ weak_symbols.o: weak_symbols.c vec.h
 	-$(CC) -c $(CFLAGS) weak_symbols.c
 
 vec.o: vec.c vec.h
-	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) vec.c
+	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) $(VEC_META) vec.c
 
 vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h vec_arch.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_ALL) vec_scalar_verify.c

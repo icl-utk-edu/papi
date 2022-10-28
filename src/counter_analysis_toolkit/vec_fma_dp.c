@@ -6,16 +6,24 @@ static double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp 
 static void   test_dp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
 
 /* Wrapper functions of different vector widths. */
-#if defined(VEC_WIDTH_128)
-void test_dp_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+#if defined(X86_VEC_WIDTH_128B)
+void test_dp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#elif defined(VEC_WIDTH_512)
-void test_dp_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+#elif defined(X86_VEC_WIDTH_512B)
+void test_dp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
-#else
-void test_dp_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+#elif defined(X86_VEC_WIDTH_256B)
+void test_dp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+}
+#elif defined(ARM)
+void test_dp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
+    return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+}
+#elif defined(POWER)
+void test_dp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
     return test_dp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #endif
@@ -56,24 +64,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#ifdef AMDBulldozer
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-            
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
             r2 = FMA_VEC_PD(r2,r9,rB);
@@ -87,7 +77,6 @@ double test_dp_mac_VEC_FMA_12( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -151,38 +140,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#ifdef AMDBulldozer
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
             r2 = FMA_VEC_PD(r2,r9,rB);
@@ -210,7 +167,6 @@ double test_dp_mac_VEC_FMA_24( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-#endif
 
             i++;
         }
@@ -274,66 +230,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
         while (i < 1000){
 
             /* The performance critical part */
-
-#ifdef AMDBulldozer
-/* FMA4 Intrinsics: (XOP - AMD Bulldozer) */
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-
-            r0 = _mm256_macc_pd(r0,r7,r9);
-            r1 = _mm256_macc_pd(r1,r8,rA);
-            r2 = _mm256_macc_pd(r2,r9,rB);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,rB,rD);
-            r5 = _mm256_macc_pd(r5,rC,rE);
-
-            r0 = _mm256_macc_pd(r0,rD,rF);
-            r1 = _mm256_macc_pd(r1,rC,rE);
-            r2 = _mm256_macc_pd(r2,rB,rD);
-            r3 = _mm256_macc_pd(r3,rA,rC);
-            r4 = _mm256_macc_pd(r4,r9,rB);
-            r5 = _mm256_macc_pd(r5,r8,rA);
-#else
-/* For now, Intel: FMA3 Intrinsics: (AVX2 - Intel Haswell)*/
             r0 = FMA_VEC_PD(r0,r7,r9);
             r1 = FMA_VEC_PD(r1,r8,rA);
             r2 = FMA_VEC_PD(r2,r9,rB);
@@ -389,7 +285,6 @@ double test_dp_mac_VEC_FMA_48( uint64 iterations, int EventSet, FILE *fp ){
             r3 = FMA_VEC_PD(r3,rA,rC);
             r4 = FMA_VEC_PD(r4,r9,rB);
             r5 = FMA_VEC_PD(r5,r8,rA);
-#endif
 
             i++;
         }
