@@ -497,8 +497,18 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         }
 
         place = strstr(line, " ");
-        if( NULL == place )
-        {
+
+        // If this line was commented, silently ignore it.
+        if(strlen(line) > 0 && line[0] == '#') {
+            names[cnt] = NULL;
+            cards[cnt] = -1;
+            cnt--;
+
+            free(line);
+            line = NULL;
+            linelen = 0;
+            continue;
+        } else if( NULL == place ) {
             fprintf(stderr,"problem with line: '%s'\n",line);
             names[cnt] = NULL;
             cards[cnt] = -1;
@@ -513,7 +523,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
         names[cnt] = NULL;
         status = sscanf(line, "%ms %d", &(names[cnt]), &(cards[cnt]) );
 
-        // If this line was malformed, silently ignore it.
+        // If this line was malformed, ignore it.
         if(2 != status)
         {
             fprintf(stderr,"problem with line: '%s'\n",line);
