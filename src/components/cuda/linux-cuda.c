@@ -4088,6 +4088,8 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
             (avgChain+0.)/(inUse+0.), maxChain);
     }
 
+    free(firstLast);
+
     return(PAPI_OK);    
 } // end _cuda11_add_native_events.
 
