@@ -37,7 +37,7 @@ print_cuda_affinity( MPI_Comm comm, void *handle )
              return _status);
     MPI_CALL(MPI_Comm_size(shm_comm, &shm_comm_size), return _status);
     MPI_CALL(MPI_Comm_rank(shm_comm, &local_rank), return _status);
- 
+
     PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
     int i;
     for (i = 0; i < dev_count; ++i) {
@@ -50,7 +50,7 @@ print_cuda_affinity( MPI_Comm comm, void *handle )
         MPI_CALL(MPI_Alltoall(&uid, 1, MPI_UNSIGNED_LONG, uids, 1,
                               MPI_UNSIGNED_LONG, shm_comm),
                  return _status);
-    
+
         unsigned long sorted_uids[MAX_LOCAL_RANKS] = { 0 };
         unsigned long uniq_sorted_uids[MAX_LOCAL_RANKS] = { 0 };
         memcpy(sorted_uids, uids, sizeof(unsigned long) * shm_comm_size);
@@ -72,8 +72,8 @@ print_cuda_affinity( MPI_Comm comm, void *handle )
                     if (uids[k] == uniq_sorted_uids[j]) {
                         list[l++] = ranks[k];
                     }
-                } 
-    
+                }
+
                 printf( "GPU-%i Affinity                       : Name: %s, UID: %lu, Ranks: [ ",
                         i, name, uniq_sorted_uids[j] );
                 for (k = 0; k < l; ++k) {
@@ -83,7 +83,7 @@ print_cuda_affinity( MPI_Comm comm, void *handle )
             }
         }
     }
- 
+
     MPI_CALL(MPI_Comm_free(&shm_comm), return _status);
     return 0;
 }
