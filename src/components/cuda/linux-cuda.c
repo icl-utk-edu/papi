@@ -2236,6 +2236,7 @@ static int _cuda_init_component(int cidx)
 
     sprintf(_cuda_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
+    _cuda_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
 
     PAPI_unlock(COMPONENT_LOCK);
 
