@@ -130,8 +130,6 @@ typedef struct cuda_device_desc {
     CUcontext   cuContext;                      // context created during cuda11_add_native_events.
     CUcontext   sessionCtx;                     // context created for profiling session.
     char        cuda11_chipName[PAPI_MIN_STR_LEN];
-    uint8_t*    cuda11_CounterAvailabilityImage; 
-    int         cuda11_CounterAvailabilityImageSize; 
     uint8_t*    cuda11_ConfigImage;             // Part 1 of an 'eventset' for NV PerfWorks.
     int         cuda11_ConfigImageSize;
     uint8_t*    cuda11_CounterDataPrefixImage;  // Part 2 of an 'eventset' for NV PerfWorks.
@@ -3862,7 +3860,7 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
     int userDevice, deviceNum;
     cuda_device_desc_t *mydevice;
     CUresult cuErr; (void) cuErr;
-    CUcontext userCtx, currCuCtx;
+    CUcontext userCtx;
 
     // Get deviceNum.
     CUDA_CALL((*cudaGetDevicePtr) (&userDevice), return (PAPI_EMISC));
@@ -3919,7 +3917,6 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
 
     for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
         int strErr;
-        int ctxPushed=0;
         mydevice = &gctxt->deviceArray[deviceNum];
         // CUpti_Device_GetChipName_Params relies on cupti_target.h, not in legacy cuda distributions.
         CUpti_Device_GetChipName_Params ChipNameParams;
@@ -3933,76 +3930,8 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
         if (strErr > PAPI_MIN_STR_LEN) HANDLE_STRING_ERROR;
         mydevice->cuda11_chipName[PAPI_MIN_STR_LEN-1]=0;
 
-        // We get CounterAvailabilityParams for this device.
-        // see $PAPI_CUPTI_ROOT/samples/userrange_profiling/simplecuda.cu Line 346.
-        // NVPW_RawMetricsConfig_SetCounterAvailability is apparently for shared
-        // GPUs. See the manual https://docs.nvidia.com/cupti/Cupti/r_main.html at 1.12
-        // discusses shared Compute (GPUs):
-        //
-        // A sharedCompute Instance uses GPU resources that can potentially also be
-        // accessed by other Compute Instances in the same GPU Instance. Due to this
-        // resource sharing, collecting profiling data from shared units is not permitted.
-        // Attempts to collect metrics from a shared unit will result in NaN values. Better
-        // error reporting will be done in a future release. Collecting metrics from GPU
-        // units that are exclusively owned by a shared Compute Instance is still possible.
-        // Tracing works for shared Compute Instances.
-        //
-        // To allow users to determine which metrics are available on a target device, new
-        // APIs have been added which can be used to query counter availability before
-        // starting the profiling session. See APIs
-
         // Init session context; it will be updated in cuda11_start() if needed.
         mydevice->sessionCtx = NULL;
-
-        // Get the device Primary Context.
-        CU_CALL((*cuDevicePrimaryCtxRetainPtr) (&mydevice->cuContext, deviceNum), return(PAPI_EMISC)); // LEAK 9M+8M+5M.
-
-        if (0) fprintf(stderr, "%s:%s:%i after PrimaryCtxRetain, deviceNum=%d mydevice->cuContext=%p, userCtx=%p.\n",
-                    __FILE__, __func__, __LINE__, deviceNum, mydevice->cuContext, userCtx);
-
-        // We need a context. If we are on the user's device, we
-        // can use their context, if not null. Otherwise we must
-        // switch to the device's primary context.
-        if (deviceNum != userDevice) {
-            CU_CALL((*cuCtxPushCurrentPtr) (mydevice->cuContext), 
-                return(PAPI_EMISC));
-            ctxPushed=1;
-        } else { // same device as user
-            if (userCtx == NULL) {
-                CU_CALL((*cuCtxPushCurrentPtr) (mydevice->cuContext), 
-                    return(PAPI_EMISC));
-                ctxPushed=1;
-            }
-        }
-        
-        // First we size the image structure (happens because .pCounterAvailabiityImage is NULL).
-        CUpti_Profiler_GetCounterAvailability_Params getCounterAvailabilityParams;
-        memset(&getCounterAvailabilityParams, 0,  CUpti_Profiler_GetCounterAvailability_Params_STRUCT_SIZE);
-        getCounterAvailabilityParams.structSize = CUpti_Profiler_GetCounterAvailability_Params_STRUCT_SIZE;
-        getCounterAvailabilityParams.ctx = NULL; // Use current context.
-        CUPTI_CALL((*cuptiProfilerGetCounterAvailabilityPtr) (&getCounterAvailabilityParams), 
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),);
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),);
-            return(PAPI_EMISC));
-
-        // Set up for second call that fills in the image. (.pCounterAvailabilityImage is not NULL).
-        mydevice->cuda11_CounterAvailabilityImageSize = getCounterAvailabilityParams.counterAvailabilityImageSize;
-        mydevice->cuda11_CounterAvailabilityImage = calloc(mydevice->cuda11_CounterAvailabilityImageSize, sizeof(uint8_t));
-        getCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
-        CUPTI_CALL((*cuptiProfilerGetCounterAvailabilityPtr) (&getCounterAvailabilityParams), 
-            if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),);
-            CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum),);
-            return(PAPI_EMISC));
- 
-        // Restore caller's context, and release primary.
-        if (ctxPushed == 1) {
-            CU_CALL((*cuCtxPopCurrentPtr) (&currCuCtx),
-                return(PAPI_EMISC));
-            ctxPushed = 0;
-        }
-
-        // Always release after retain.
-        CU_CALL((*cuDevicePrimaryCtxReleasePtr) (deviceNum), return(PAPI_EMISC));
 
         // Get or create the Metrics Context. 
         NVPW_CUDA_MetricsContext_Create_Params *pMCCP = cuda11_getMetricsContextPtr(deviceNum);
@@ -4235,18 +4164,6 @@ static int _cuda11_build_profiling_structures(CUcontext userCtx)
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock( COMPONENT_LOCK );
             return(PAPI_EMISC));
-
-        // See: $PAPI_CUPTI_ROOT/samples/extensions/src/profilerhost_util/Metric.cpp Line 117.
-        NVPW_RawMetricsConfig_SetCounterAvailability_Params setCounterAvailabilityParams;
-        memset(&setCounterAvailabilityParams, 0,  NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE);
-        setCounterAvailabilityParams.structSize = NVPW_RawMetricsConfig_SetCounterAvailability_Params_STRUCT_SIZE;
-        setCounterAvailabilityParams.pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig;
-        setCounterAvailabilityParams.pCounterAvailabilityImage = mydevice->cuda11_CounterAvailabilityImage;
-        NVPW_CALL((*NVPW_RawMetricsConfig_SetCounterAvailabilityPtr) (&setCounterAvailabilityParams),
-        // On error,
-        if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
-        _papi_hwi_unlock( COMPONENT_LOCK );
-        return(PAPI_EMISC));
 
         // Note: The sample code sometimes creates params and then immediately
         // destroys them, but uses param structure elements later. But if I
@@ -5396,10 +5313,6 @@ static int _cuda11_cleanup_eventset(hwd_control_state_t * ctrl)
         if (mydevice->cuda11_ConfigImage) free(mydevice->cuda11_ConfigImage);
         mydevice->cuda11_ConfigImage = NULL;
         mydevice->cuda11_ConfigImageSize = 0;
-
-        if (mydevice->cuda11_CounterAvailabilityImage) free(mydevice->cuda11_CounterAvailabilityImage);
-        mydevice->cuda11_CounterAvailabilityImage = NULL;
-        mydevice->cuda11_CounterAvailabilityImageSize = 0;
 
         if (mydevice->cuda11_CounterDataPrefixImage) free(mydevice->cuda11_CounterDataPrefixImage); 
         mydevice->cuda11_CounterDataPrefixImage = NULL; 
