@@ -2406,6 +2406,7 @@ static int _cuda_update_control_state(hwd_control_state_t * ctrl,
         _papi_hwi_lock( COMPONENT_LOCK );
         if (gctxt->availEventIsBeingMeasuredInEventset[index] == 1) {       // If already being collected, skip it.
             SUBDBG("Skipping event %s which is already added\n", eventName);
+            _papi_hwi_unlock( COMPONENT_LOCK );
             continue;
         } else {
             gctxt->availEventIsBeingMeasuredInEventset[index] = 1;          // If not being collected yet, flag it as being collected now.
