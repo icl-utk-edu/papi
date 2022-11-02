@@ -3490,7 +3490,8 @@ void cuda11_makeRoomAllEvents(void) {
     int oldSize = cuda11_maxEvents;
     if (cuda11_numEvents < cuda11_maxEvents) return;    // cuda11_numEvents is okay.
     // We go big here; typical is 115,000 events on Titan V, may have multiple devices.
-    cuda11_maxEvents += 16384;
+    const int MEMORY_PAD = 16384;
+    cuda11_maxEvents += MEMORY_PAD;
     cuda11_AllEvents = (cuda11_eventData**) papi_realloc(cuda11_AllEvents, (cuda11_maxEvents*sizeof(cuda11_eventData*)));
     if (!cuda11_AllEvents) {
         fprintf(stderr, "%s:%s:%i Memory failure; failed to allocate %i entries for cuda11_AllEvents.\n",
@@ -3499,7 +3500,7 @@ void cuda11_makeRoomAllEvents(void) {
     }
 
     // Clear added memory.
-    memset(&cuda11_AllEvents[oldSize], 0, 128*sizeof(cuda11_eventData*));
+    memset(&cuda11_AllEvents[oldSize], 0, MEMORY_PAD*sizeof(cuda11_eventData*));
     return;
 }
 
