@@ -3913,6 +3913,24 @@ static int _cuda11_add_native_events(cuda_context_t * gctxt)
     // Ensure the hashtable (all pointers) is cleared to empty state.
     memset(&cuda11_NameHashTable[0], 0, CUDA11_HASH_SIZE*sizeof(cuda11_hash_entry_t*));
 
+    /* Create, and zero, initial allocation for CUDA11 Events.
+     * Total size [bytes] for cuda11_AllEvents =
+     *     NUM_EVENTS * 8 (sizeof(cuda11_eventData*)) * 96 (sizeof(cuda11_eventData))
+     * `papi_component_avail` reported number of events by GPU:
+     *     - V100-SXM2-32GB:    137,994
+     *     - V100-PCIE-32GB:    141,834
+     *     - A100-PCIE-40GB:    158,496
+     *     - A100-SXM4-40/80GB: 263,040
+     * Based on above, initial NUM_EVENTS of 160,000 should be reasonable.
+     * Note: Allocation can still be expanded by cuda11_makeRoomAllEvents().
+     */
+    const int INIT_NUM_EVENTS = 160000;
+    cuda11_maxEvents = gctxt->deviceCount * INIT_NUM_EVENTS;
+    cuda11_AllEvents = (cuda11_eventData**) calloc(cuda11_maxEvents, sizeof(cuda11_eventData*));
+    if (cuda11_AllEvents == NULL) {
+        return PAPI_ENOMEM;
+    }
+
     int *firstLast = calloc(2*gctxt->deviceCount, sizeof(int)); // space for first/last indices.
 
     for (deviceNum = 0; deviceNum < gctxt->deviceCount; deviceNum++) {
