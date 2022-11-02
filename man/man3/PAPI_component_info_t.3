@@ -1,4 +1,4 @@
-.TH "PAPI_component_info_t" 3 "Fri Oct 28 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_component_info_t" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,7 +28,7 @@ PAPI_component_info_t
 .RI "char \fBkernel_version\fP [64]"
 .br
 .ti -1c
-.RI "char \fBdisabled_reason\fP [128]"
+.RI "char \fBdisabled_reason\fP [1024]"
 .br
 .ti -1c
 .RI "int \fBdisabled\fP"
@@ -115,7 +115,7 @@ PAPI_component_info_t
 .RI "unsigned int \fBinherit\fP:1"
 .br
 .ti -1c
-.RI "unsigned int \fBreserved_bits\fP:12"
+.RI "unsigned int \fBreserved_bits\fP:19"
 .br
 .in -1c
 .SH "Field Documentation"
@@ -144,7 +144,7 @@ The default granularity when this component is used
 Description of the component 
 .SS "int PAPI_component_info_t::disabled"
 0 if enabled, otherwise error code from initialization 
-.SS "char PAPI_component_info_t::disabled_reason[128]"
+.SS "char PAPI_component_info_t::disabled_reason[1024]"
 Reason for failure of initialization 
 .SS "unsigned int PAPI_component_info_t::fast_counter_read"
 Supports a user level PMC read instruction 
