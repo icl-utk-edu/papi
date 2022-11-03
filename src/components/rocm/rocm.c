@@ -155,6 +155,8 @@ rocm_init_component(int cid)
 
     sprintf(_rocm_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
+    _rocm_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
+
     return PAPI_EDELAY_INIT;
 }
 
