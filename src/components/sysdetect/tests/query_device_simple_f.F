@@ -15,7 +15,6 @@
           integer :: l3u_line_cnt, l1i_cache_ass, l1d_cache_ass
           integer :: l2u_cache_ass, l3u_cache_ass
           integer :: thr_list(256)
-          integer :: dummy_list(1)
           integer :: mem_size, thread_count
 
           ret_val = PAPI_VER_CURRENT
@@ -42,54 +41,54 @@
               if (id == PAPI_DEV_TYPE_ID__CPU .and. dev_count > 0) then
                   numas = 1
                   do i = 0, dev_count - 1
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_CHAR_NAME, dummy_val, dummy_list, cpu_name, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_CHAR_NAME, dummy_val, cpu_name, &
                           ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_FAMILY, family, dummy_list, dummy_str, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_FAMILY, family, dummy_str, &
                           ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_MODEL, model, dummy_list, dummy_str, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_MODEL, model, dummy_str, &
                           ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_STEPPING, stepping, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_STEPPING, stepping, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT, sockets, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT, sockets, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT, numas, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT, numas, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT, cores, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT, cores, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT, threads, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT, threads, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE, l1i_size, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE, l1i_size, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE, l1d_size, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE, l1d_size, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE, l2u_size, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE, l2u_size, &
                           dummy_str, ret_val)
-                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE, l3u_size, dummy_list, &
+                      call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE, l3u_size, &
                           dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_SIZE, l1i_line_sz, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_SIZE, l1d_line_sz, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_SIZE, l2u_line_sz, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_SIZE, l3u_line_sz, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_COUNT, l1i_line_cnt,&
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_COUNT, l1d_line_cnt,&
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_COUNT, l2u_line_cnt,&
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_COUNT, l3u_line_cnt,&
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_ASSOC, l1i_cache_ass, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_ASSOC, l1d_cache_ass, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_ASSOC, l2u_cache_ass, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_ASSOC, l3u_cache_ass, &
-                          dummy_list, dummy_str, ret_val)
+                          dummy_str, ret_val)
 
                       print *, 'Vendor             : ', trim(vendor_name), '(', vendor_id, ')'
                       print *, 'Id                 : ', i
@@ -122,7 +121,7 @@
 
                   do i = 0, numas - 1
                       call papif_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &
-                          mem_size, dummy_list, dummy_str, ret_val)
+                          mem_size, dummy_str, ret_val)
                   enddo
               endif
               call papif_enum_dev_type(modifier, handle, ret_val)
