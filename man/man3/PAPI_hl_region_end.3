@@ -1,8 +1,10 @@
-.TH "PAPI_hl_region_end" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_region_end" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_hl_region_end \- Read performance events at the end of a region and store the difference to the corresponding beginning of the region\&.  
+PAPI_hl_region_end \- 
+.PP
+Read performance events at the end of a region and store the difference to the corresponding beginning of the region\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,12 +20,12 @@ PAPI_hl_region_end \- Read performance events at the end of a region and store t
 int \fBPAPI_hl_region_end( const char* region )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIregion\fP -- a unique region name corresponding to \fBPAPI_hl_region_begin\fP
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -89,7 +91,7 @@ python papi_hl_output_writer\&.py --type=accumulate
 .fi
 .PP
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_hl_region_begin\fP 
 .PP

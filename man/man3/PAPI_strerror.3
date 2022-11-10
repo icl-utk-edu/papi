@@ -1,8 +1,10 @@
-.TH "PAPI_strerror" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_strerror" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_strerror \- Returns a string describing the PAPI error code\&.  
+PAPI_strerror \- 
+.PP
+Returns a string describing the PAPI error code\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,14 +20,12 @@ PAPI_strerror \- Returns a string describing the PAPI error code\&.
  char * \fBPAPI_strerror( int errorCode )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
-\fIcode\fP 
-.br
- -- the error code to interpret
+\fIcode\fP -- the error code to interpret
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fI*error\fP -- a pointer to the error string\&. 
 .br
@@ -66,7 +66,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_perror\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP \fBPAPI_shutdown\fP \fBPAPI_set_debug\fP 
 .RE

@@ -1,8 +1,10 @@
-.TH "PAPI_profil" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_profil" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_profil \- Generate a histogram of hardware counter overflows vs\&. PC addresses\&.  
+PAPI_profil \- 
+.PP
+Generate a histogram of hardware counter overflows vs\&. PC addresses\&.  
 
 .SH SYNOPSIS
 .br
@@ -15,8 +17,7 @@ PAPI_profil \- Generate a histogram of hardware counter overflows vs\&. PC addre
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
-unsigned scale, int EventSet, int EventCode, int threshold, int flags )\fP;
+int \fBPAPI_profil\fP(void *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags );
 .RE
 .PP
 \fBFortran Interface\fP
@@ -24,7 +25,7 @@ unsigned scale, int EventSet, int EventCode, int threshold, int flags )\fP;
 The profiling routines have no Fortran interface\&.
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fI*buf\fP -- pointer to a buffer of bufsiz bytes in which the histogram counts are stored in an array of unsigned short, unsigned int, or unsigned long long values, or 'buckets'\&. The size of the buckets is determined by values in the flags argument\&. 
 .br
@@ -43,7 +44,7 @@ The profiling routines have no Fortran interface\&.
 \fIflags\fP -- bit pattern to control profiling behavior\&. Defined values are shown in the table above\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -169,7 +170,7 @@ if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
 .RE
 .PP
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_overflow\fP 
 .PP

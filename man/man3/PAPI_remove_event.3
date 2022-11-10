@@ -1,8 +1,10 @@
-.TH "PAPI_remove_event" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_remove_event" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_remove_event \- removes a hardware event from a PAPI event set\&.  
+PAPI_remove_event \- 
+.PP
+removes a hardware event from a PAPI event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,14 +20,14 @@ A hardware event can be either a PAPI Preset or a native hardware event code\&. 
 int \fBPAPI_remove_event( int  EventSet, int  EventCode )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
 \fIEventCode\fP -- a defined event such as PAPI_TOT_INS or a native event\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP Everything worked\&. 
 .br
@@ -72,7 +74,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_cleanup_eventset\fP 
 .PP

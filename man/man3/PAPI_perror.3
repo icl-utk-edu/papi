@@ -1,8 +1,10 @@
-.TH "PAPI_perror" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_perror" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_perror \- Produces a string on standard error, describing the last library error\&.  
+PAPI_perror \- 
+.PP
+Produces a string on standard error, describing the last library error\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,7 +20,7 @@ PAPI_perror \- Produces a string on standard error, describing the last library 
  void \fBPAPI_perror( const char *s )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIs\fP -- Optional message to print before the string describing the last error message\&.
 .RE
@@ -55,7 +57,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_strerror\fP 
 .RE

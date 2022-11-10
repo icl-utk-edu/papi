@@ -1,8 +1,10 @@
-.TH "PAPI_is_initialized" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_is_initialized" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_is_initialized \- check for initialization  
+PAPI_is_initialized \- 
+.PP
+check for initialization  
 
 .SH SYNOPSIS
 .br
@@ -11,7 +13,7 @@ PAPI_is_initialized \- check for initialization
 .PP 
 
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_NOT_INITED\fP Library has not been initialized 
 .br
@@ -19,12 +21,10 @@ PAPI_is_initialized \- check for initialization
 .br
 \fIPAPI_HIGH_LEVEL_INITED\fP High level has called library init 
 .br
-\fIPAPI_THREAD_LEVEL_INITED\fP 
-.br
- Threads have been inited
+\fIPAPI_THREAD_LEVEL_INITED\fP Threads have been inited
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled\&. This guards against portability problems when updating the PAPI shared libraries on your system\&. 
 .RE
@@ -50,7 +50,7 @@ handle_error(retval);
  \fBPAPI_is_initialized()\fP returns the status of the PAPI library\&. The PAPI library can be in one of four states, as described under RETURN VALUES\&. 
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 PAPI 
 .PP

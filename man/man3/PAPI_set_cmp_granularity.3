@@ -1,8 +1,10 @@
-.TH "PAPI_set_cmp_granularity" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_cmp_granularity" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_set_cmp_granularity \- Set the default counting granularity for eventsets bound to the specified component\&.  
+PAPI_set_cmp_granularity \- 
+.PP
+Set the default counting granularity for eventsets bound to the specified component\&.  
 
 .SH SYNOPSIS
 .br
@@ -11,39 +13,30 @@ PAPI_set_cmp_granularity \- Set the default counting granularity for eventsets b
 .PP 
 
 .PP
-\fBC Prototype:\fP
-.RS 4
-#include <\fBpapi\&.h\fP> 
-.br
- int \fBPAPI_set_cmp_granularity( int granularity, int cidx )\fP;
-.RE
-.PP
-\fBParameters\fP
-.RS 4
-\fIgranularity\fP one of the following constants as defined in the \fBpapi\&.h\fP header file 
-.PD 0
+.nf
+@par C Prototype:
+    \#include <papi.h> @n
+    int PAPI_set_cmp_granularity( int granularity, int cidx );
 
-.IP "\(bu" 2
-PAPI_GRN_THR Count each individual thread 
-.IP "\(bu" 2
-PAPI_GRN_PROC Count each individual process 
-.IP "\(bu" 2
-PAPI_GRN_PROCG Count each individual process group 
-.IP "\(bu" 2
-PAPI_GRN_SYS Count the current CPU 
-.IP "\(bu" 2
-PAPI_GRN_SYS_CPU Count all CPUs individually 
-.IP "\(bu" 2
-PAPI_GRN_MIN The finest available granularity 
-.IP "\(bu" 2
-PAPI_GRN_MAX The coarsest available granularity
+@param granularity one of the following constants as defined in the papi.h header file
+@arg PAPI_GRN_THR   Count each individual thread
+@arg PAPI_GRN_PROC  Count each individual process
+@arg PAPI_GRN_PROCG Count each individual process group
+@arg PAPI_GRN_SYS   Count the current CPU
+@arg PAPI_GRN_SYS_CPU   Count all CPUs individually
+@arg PAPI_GRN_MIN   The finest available granularity
+@arg PAPI_GRN_MAX   The coarsest available granularity
+
+@param cidx
+    An integer identifier for a component. 
+    By convention, component 0 is always the cpu component. 
+
+.fi
 .PP
-.br
-\fIcidx\fP An integer identifier for a component\&. By convention, component 0 is always the cpu component\&.  
+  
     
-.RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -82,7 +75,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_set_granularity\fP \fBPAPI_set_domain\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP 
 .RE

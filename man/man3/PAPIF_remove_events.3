@@ -1,8 +1,10 @@
-.TH "PAPIF_remove_events" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_remove_events" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPIF_remove_events \- Remove an array of hardware event codes from a PAPI event set\&.  
+PAPIF_remove_events \- 
+.PP
+Remove an array of hardware event codes from a PAPI event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -15,10 +17,10 @@ PAPIF_remove_events \- Remove an array of hardware event codes from a PAPI event
 .RS 4
 #include 'fpapi\&.h' 
 .br
- \fBPAPIF_remove_events( C_INT EventSet, C_INT(*) EventCode, C_INT number, C_INT check )\fP
+ \fBPAPIF_remove_events\fP( C_INT EventSet, C_INT(*) EventCode, C_INT number, C_INT check )
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_remove_events\fP 
 .RE

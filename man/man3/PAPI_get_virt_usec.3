@@ -1,8 +1,10 @@
-.TH "PAPI_get_virt_usec" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_virt_usec" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_virt_usec \- get virtual time counter values in microseconds  
+PAPI_get_virt_usec \- 
+.PP
+get virtual time counter values in microseconds  
 
 .SH SYNOPSIS
 .br
@@ -11,7 +13,7 @@ PAPI_get_virt_usec \- get virtual time counter values in microseconds
 .PP 
 
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_ECNFLCT\fP If there is no master event set\&. This will happen if the library has not been initialized, or for threaded applications, if there has been no thread id function defined by the \fBPAPI_thread_init\fP function\&. 
 .br
@@ -35,7 +37,7 @@ printf("Process has run for cycles: %lld\en",e-s);
  
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 PAPIF 
 .PP

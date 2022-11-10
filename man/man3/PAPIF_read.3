@@ -1,8 +1,10 @@
-.TH "PAPIF_read" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_read" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPIF_read \- Read hardware counters from an event set\&.  
+PAPIF_read \- 
+.PP
+Read hardware counters from an event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -15,10 +17,10 @@ PAPIF_read \- Read hardware counters from an event set\&.
 .RS 4
 #include 'fpapi\&.h' 
 .br
- \fBPAPIF_read(C_INT EventSet, C_LONG_LONG(*) values, C_INT check )\fP
+ \fBPAPIF_read\fP(C_INT EventSet, C_LONG_LONG(*) values, C_INT check )
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_read\fP 
 .RE
