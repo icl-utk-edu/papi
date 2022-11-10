@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 		test_fail( __FILE__, __LINE__, "PAPI_create_eventset", retval );
 	}
 
-	retval=PAPI_add_named_event(eventset_taken,"PAPI_BR_NTK");
+	retval=PAPI_add_named_event(eventset_nottaken,"PAPI_BR_NTK");
 	if (retval!=PAPI_OK) {
 		if (!quiet) printf("Could not add PAPI_BR_NTK\n");
 		nottaken_avail=0;
