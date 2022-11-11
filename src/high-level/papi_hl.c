@@ -368,11 +368,7 @@ static int _internal_hl_determine_default_events()
    int i;
    HLDBG("Default events\n");
    char *default_events[] = {
-      "perf::TASK-CLOCK",
-      "PAPI_TOT_INS",
       "PAPI_TOT_CYC",
-      "PAPI_FP_INS",
-      "PAPI_FP_OPS"
    };
    int num_of_defaults = sizeof(default_events) / sizeof(char*);
 
