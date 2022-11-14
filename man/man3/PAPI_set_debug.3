@@ -1,8 +1,10 @@
-.TH "PAPI_set_debug" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_debug" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_set_debug \- Set the current debug level for error output from PAPI\&.  
+PAPI_set_debug \- 
+.PP
+Set the current debug level for error output from PAPI\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,7 +20,7 @@ PAPI_set_debug \- Set the current debug level for error output from PAPI\&.
  int \fBPAPI_set_debug( int level )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIlevel\fP one of the constants shown in the table below and defined in the \fBpapi\&.h\fP header file\&. 
 .br
@@ -32,11 +34,11 @@ PAPI_VERB_ECONT Print error message and continue
 .IP "\(bu" 2
 PAPI_VERB_ESTOP Print error message and exit 
 .br
-
+ 
 .PP
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -65,7 +67,7 @@ The PAPI error handler prints out messages in the following form:
 .br
  
 .PP
-\fBNote\fP
+\fBNote:\fP
 .RS 4
 This is the ONLY function that may be called BEFORE \fBPAPI_library_init()\fP\&. 
 .br
@@ -85,7 +87,7 @@ if ( ret != PAPI_OK ) handle_error();
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_library_init\fP 
 .PP

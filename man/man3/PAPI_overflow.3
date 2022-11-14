@@ -1,8 +1,10 @@
-.TH "PAPI_overflow" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_overflow" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_overflow \- Set up an event set to begin registering overflows\&.  
+PAPI_overflow \- 
+.PP
+Set up an event set to begin registering overflows\&.  
 
 .SH SYNOPSIS
 .br
@@ -31,7 +33,7 @@ int \fBPAPI_overflow\fP (int EventSet, int EventCode, int threshold, int flags, 
 Not implemented
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP -- an integer handle to a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
@@ -45,22 +47,16 @@ Not implemented
 .br
 \fIaddress\fP -- the Program Counter address at the time of the overflow 
 .br
-\fIoverflow_vector\fP 
-.br
- -- a long long word containing flag bits to indicate which hardware counter(s) caused the overflow 
+\fIoverflow_vector\fP -- a long long word containing flag bits to indicate which hardware counter(s) caused the overflow 
 .br
 \fI*context\fP -- pointer to a machine specific structure that defines the register context at the time of overflow\&. This parameter is often unused and can be ignored in the user function\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP On success, \fBPAPI_overflow\fP returns PAPI_OK\&. 
 .br
- 
-.br
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
-.br
- Most likely a bad threshold value\&. 
+\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. Most likely a bad threshold value\&. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation\&. 
 .br
@@ -93,7 +89,7 @@ retval = PAPI_overflow(EventSet, PAPI_TOT_INS, 100000, 0, handler);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_overflow_event_index\fP 
 .RE

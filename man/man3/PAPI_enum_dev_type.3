@@ -1,8 +1,10 @@
-.TH "PAPI_enum_dev_type" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_enum_dev_type" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_enum_dev_type \- returns handle of next device type  
+PAPI_enum_dev_type \- 
+.PP
+returns handle of next device type  
 
 .SH SYNOPSIS
 .br
@@ -11,14 +13,14 @@ PAPI_enum_dev_type \- returns handle of next device type
 .PP 
 
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIENOCMP\fP component does not exist 
 .br
 \fIEINVAL\fP end of device type list 
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIenum_modifier\fP device type modifier, used to filter out enumerated device types 
 .RE
@@ -49,7 +51,7 @@ while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
  \fBPAPI_enum_dev_type()\fP allows the user to access all device types in the system\&. It takes an enumerator modifier that allows users to enumerate only devices of a predefined type and it returns an opaque handler that users can pass to other functions in order to query device type attributes\&.
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_dev_type_attr\fP 
 .PP

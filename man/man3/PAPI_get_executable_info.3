@@ -1,8 +1,10 @@
-.TH "PAPI_get_executable_info" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_executable_info" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_executable_info \- Get the executable's address space info\&.  
+PAPI_get_executable_info \- 
+.PP
+Get the executable's address space info\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +22,7 @@ const \fBPAPI_exe_info_t\fP *PAPI_get_executable_info( void );
 .PP
 This function returns a pointer to a structure containing information about the current program\&.
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIfullname\fP Fully qualified path + filename of the executable\&. 
 .br
@@ -33,7 +35,7 @@ This function returns a pointer to a structure containing information about the 
 \fIbss_start,bss_end\fP Start and End addresses of program bss segment\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&.
 .RE
@@ -56,7 +58,7 @@ printf( "Bss start: %p, Bss end: %p\n", exeinfo->address_info\&.bss_start, exein
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_opt\fP 
 .PP

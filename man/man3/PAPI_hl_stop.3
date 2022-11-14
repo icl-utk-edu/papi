@@ -1,8 +1,10 @@
-.TH "PAPI_hl_stop" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_stop" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_hl_stop \- Stop a running high-level event set\&.  
+PAPI_hl_stop \- 
+.PP
+Stop a running high-level event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,7 +20,7 @@ PAPI_hl_stop \- Stop a running high-level event set\&.
  int \fBPAPI_hl_stop()\fP;
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_ENOEVNT\fP -- The EventSet is not started yet\&. 
 .br
@@ -29,7 +31,7 @@ PAPI_hl_stop \- Stop a running high-level event set\&.
 .PP
 This call is optional and only necessary if the programmer wants to use the low-level API in addition to the high-level API\&. It should be noted that \fBPAPI_hl_stop\fP and low-level calls are not allowed inside of a marked region\&. Furthermore, \fBPAPI_hl_stop\fP is thread-local and therefore has to be called in the same thread as the corresponding marked region\&.
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_hl_region_begin\fP 
 .PP

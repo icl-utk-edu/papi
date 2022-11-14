@@ -1,8 +1,10 @@
-.TH "PAPI_enum_cmp_event" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_enum_cmp_event" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_enum_cmp_event \- Enumerate PAPI preset or native events for a given component\&.  
+PAPI_enum_cmp_event \- 
+.PP
+Enumerate PAPI preset or native events for a given component\&.  
 
 .SH SYNOPSIS
 .br
@@ -24,7 +26,7 @@ The modifier argument affects which events are returned\&. For all platforms and
 .br
  For native events, the effect of the modifier argument may be different on each platform\&. See the discussion below for platform-specific definitions\&.
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fI*EventCode\fP A defined preset or native event such as PAPI_TOT_INS\&. 
 .br
@@ -33,7 +35,7 @@ The modifier argument affects which events are returned\&. For all platforms and
 \fIcidx\fP Specifies the component to search in
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_ENOEVNT\fP The next requested PAPI preset or native event is not available on the underlying hardware\&.
 .RE
@@ -146,7 +148,7 @@ PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 PAPI 
 .br

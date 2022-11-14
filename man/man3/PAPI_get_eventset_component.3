@@ -1,8 +1,10 @@
-.TH "PAPI_get_eventset_component" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_eventset_component" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_eventset_component \- return index for component an eventset is assigned to  
+PAPI_get_eventset_component \- 
+.PP
+return index for component an eventset is assigned to  
 
 .SH SYNOPSIS
 .br
@@ -11,7 +13,7 @@ PAPI_get_eventset_component \- return index for component an eventset is assigne
 .PP 
 
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_ENOEVST\fP eventset does not exist 
 .br
@@ -20,7 +22,7 @@ PAPI_get_eventset_component \- return index for component an eventset is assigne
 \fIpositive\fP value valid component index
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP EventSet for which we want to know the component index 
 .RE
@@ -38,7 +40,7 @@ cidx = PAPI_get_eventset_component(eventset);
  \fBPAPI_get_eventset_component()\fP returns the component an event belongs to\&. 
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_get_event_component\fP 
 .RE

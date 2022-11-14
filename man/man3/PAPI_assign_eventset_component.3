@@ -1,8 +1,10 @@
-.TH "PAPI_assign_eventset_component" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_assign_eventset_component" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_assign_eventset_component \- Assign a component index to an existing but empty EventSet\&.  
+PAPI_assign_eventset_component \- 
+.PP
+Assign a component index to an existing but empty EventSet\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,14 +20,14 @@ PAPI_assign_eventset_component \- Assign a component index to an existing but em
 \fBPAPI_assign_eventset_component( int  EventSet, int  cidx )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP An integer identifier for an existing EventSet\&. 
 .br
 \fIcidx\fP An integer identifier for a component\&. By convention, component 0 is always the cpu component\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_ENOCMP\fP The argument cidx is not a valid component\&. 
 .br
@@ -55,7 +57,7 @@ handle_error( 1 );
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_set_opt\fP 
 .br

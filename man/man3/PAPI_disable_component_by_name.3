@@ -1,8 +1,10 @@
-.TH "PAPI_disable_component_by_name" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_disable_component_by_name" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_disable_component_by_name \- disables the named component  
+PAPI_disable_component_by_name \- 
+.PP
+disables the named component  
 
 .SH SYNOPSIS
 .br
@@ -11,14 +13,14 @@ PAPI_disable_component_by_name \- disables the named component
 .PP 
 
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIENOCMP\fP component does not exist 
 .br
 \fIENOINIT\fP unable to disable the component, the library has already been initialized 
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIcomponent_name\fP name of the component to disable\&. 
 .RE
@@ -42,7 +44,7 @@ PAPI_library_init(PAPI_VER_CURRENT);
 .PP
 \fBPAPI_disable_component_by_name()\fP must be called before \fBPAPI_library_init()\fP\&.
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_library_init\fP 
 .PP

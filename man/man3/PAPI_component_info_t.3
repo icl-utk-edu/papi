@@ -1,8 +1,8 @@
-.TH "PAPI_component_info_t" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_component_info_t" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_component_info_t
+PAPI_component_info_t \- 
 .SH SYNOPSIS
 .br
 .PP
@@ -118,6 +118,9 @@ PAPI_component_info_t
 .RI "unsigned int \fBreserved_bits\fP:19"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+
 .SH "Field Documentation"
 .PP 
 .SS "unsigned int PAPI_component_info_t::attach"
@@ -183,7 +186,14 @@ Using POSIX 1b interval timers (timer_create) instead of setitimer
 .SS "unsigned int PAPI_component_info_t::precise_intr"
 Performance interrupts happen precisely 
 .SS "char PAPI_component_info_t::short_name[64]"
-Short name of component, to be prepended to event names 
+
+.PP
+.nf
+    Short name of component,
+
+.fi
+.PP
+ to be prepended to event names 
 .SS "char PAPI_component_info_t::support_version[64]"
 Version of the support library 
 .SS "char PAPI_component_info_t::version[64]"

@@ -1,8 +1,10 @@
-.TH "PAPI_get_multiplex" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_multiplex" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_multiplex \- Get the multiplexing status of specified event set\&.  
+PAPI_get_multiplex \- 
+.PP
+Get the multiplexing status of specified event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -25,12 +27,12 @@ PAPI_get_multiplex \- Get the multiplexing status of specified event set\&.
  \fBPAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )\fP
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -44,8 +46,6 @@ PAPI_get_multiplex \- Get the multiplexing status of specified event set\&.
 .RE
 .PP
 \fBPAPI_get_multiplex\fP tests the state of the PAPI_MULTIPLEXING flag in the specified event set, returning \fITRUE\fP if a PAPI event set is multiplexed, or FALSE if not\&. 
-.br
- 
 .PP
 \fBExample:\fP
 .RS 4
@@ -80,7 +80,7 @@ else if (ret != PAPI_OK) handle_error(ret);
  
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_multiplex_init\fP 
 .PP

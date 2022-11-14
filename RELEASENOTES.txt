@@ -6,6 +6,56 @@ in this directory.
 
 
 ===============================================================================
+PAPI 7.0.0 RELEASE NOTES                                            14 Nov 2022
+===============================================================================
+
+This is a major release of PAPI, which offers several new components, including
+"intel_gpu" with monitoring capabilities on Intel GPUs; "sysdetect" (along with
+a new user API) for detecting details of the available hardware on a given
+compute system; a significant revision of the "rocm" component for AMD GPUs;
+the extension of the "cuda" component to enable performance monitoring on
+NVIDIA's compute capabilities 7.0 and beyond. Furthermore, PAPI 7.0.0 ships
+with a standalone "libsde" library and a new C++ API for software developers to
+define software-defined events from within their applications.
+
+For specific and detailed information on changes made for this release, see
+ChangeLogP700.txt for filenames or keywords of interest and change summaries,
+or go directly to the PAPI git repository.
+
+Some Major Changes for PAPI 7.0.0 include:
+
+* A new "intel_gpu" component with monitoring capabilities support for Intel
+  GPUs, including GPU hardware events and memory performance metrics (e.g.,
+  bytes read/written/transferred from/to L3). The PAPI "intel_gpu" component
+  offers two collection modes: (1) "Time-based Collection Mode," where metrics
+  can be read at any given time during the execution of kernels.
+  (2) "Kernel-based Collection Mode," where performance counter data is
+  available once the kernel execution is finished.
+* A new "sysdetect" component for detecting a machine's architectural details,
+  including the hardware's topology, specific aspects about the memory hierarchy,
+  number and type of GPUs and CPUs on a node, thread affinity to NUMA nodes and
+  GPU devices, etc. Additionally, PAPI offers a new API that enables users to get
+  "sysdetect" details from within their application.
+* A major redesign of the "rocm" component for advanced monitoring features for
+  the latest AMD GPUs. The PAPI "rocm" component is now thread-safe and offers
+  two collection modes: "sampling" and "kernel intercept" mode.
+* Support for NVIDIA compute capability 7.0 and greater. This implies support for
+  CUPTI's new Profiling and Perfworks APIs. The PAPI CUDA component has been
+  refactored to work equally for NVIDIA compute capabilities <7.0 and >= 7.0.
+* A significant redesign of the "sde" component into two separate entities: (1)
+  a standalone library "libsde" with a new API for software developers to define
+  software-based metrics from within their applications, and (2) the PAPI "sde"
+  component that enables monitoring of these new software-based events.
+* A new C++ interface for "libsde," which enables software developers to define
+  software-defined events from within their C++ applications.
+* New Counter Analysis Toolkit (CAT) benchmarks and refinements of PAPI's CAT
+  data analysis, specifically, the extension of PAPI's CAT with MPI and
+  "distributed memory"-aware benchmarks and analysis to stress all cores per
+  node.
+* Support for FUGAKU's A64FX Arm architecture, including monitoring capabilities
+  for memory bandwidth and other node-wide metrics.
+
+===============================================================================
 PAPI 6.0.0 RELEASE NOTES                                            29 Jan 2020
 ===============================================================================
 

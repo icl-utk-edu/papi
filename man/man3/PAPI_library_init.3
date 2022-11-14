@@ -1,8 +1,10 @@
-.TH "PAPI_library_init" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_library_init" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_library_init \- initialize the PAPI library\&.  
+PAPI_library_init \- 
+.PP
+initialize the PAPI library\&.  
 
 .SH SYNOPSIS
 .br
@@ -11,12 +13,12 @@ PAPI_library_init \- initialize the PAPI library\&.
 .PP 
 
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled\&. This guards against portability problems when updating the PAPI shared libraries on your system\&.
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_EINVAL\fP \fBpapi\&.h\fP is different from the version used to compile the PAPI library\&. 
 .br
@@ -50,7 +52,7 @@ if (retval != PAPI_LOW_LEVEL_INITED)
  
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_thread_init\fP PAPI 
 .RE

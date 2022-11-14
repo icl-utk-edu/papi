@@ -1,8 +1,10 @@
-.TH "PAPI_stop" 3 "Wed Nov 2 2022" "Version 6.0.0.1" "PAPI" \" -*- nroff -*-
+.TH "PAPI_stop" 3 "Mon Nov 14 2022" "Version 7.0.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_stop \- Stop counting hardware events in an event set\&.  
+PAPI_stop \- 
+.PP
+Stop counting hardware events in an event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -18,14 +20,14 @@ PAPI_stop \- Stop counting hardware events in an event set\&.
  int \fBPAPI_stop( int  EventSet, long long * values )\fP;
 .RE
 .PP
-\fBParameters\fP
+\fBParameters:\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
 \fIvalues\fP -- an array to hold the counter values of the counting events
 .RE
 .PP
-\fBReturn values\fP
+\fBReturn values:\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -68,7 +70,7 @@ printf("%lld\\n",values[0]);
 .PP
 .RE
 .PP
-\fBSee also\fP
+\fBSee Also:\fP
 .RS 4
 \fBPAPI_create_eventset\fP \fBPAPI_start\fP 
 .RE
