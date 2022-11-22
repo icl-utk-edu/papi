@@ -66,7 +66,7 @@ void (*_dl_non_dynamic_init)(void) __attribute__((weak));
 #define CUDAAPI __attribute__((weak))
 CUresult CUDAAPI cuInit(unsigned int);
 
-CUresult(*cuInitPtr)(unsigned int);
+static CUresult(*cuInitPtr)(unsigned int);
 
 #undef CUDARTAPI
 #define CUDARTAPI __attribute__((weak))
@@ -74,9 +74,9 @@ cudaError_t CUDARTAPI cudaGetDevice(int *);
 cudaError_t CUDARTAPI cudaGetDeviceCount(int *);
 cudaError_t CUDARTAPI cudaDeviceGetPCIBusId(char *, int, int);
 
-cudaError_t (*cudaGetDevicePtr)(int *);
-cudaError_t (*cudaGetDeviceCountPtr)(int *);
-cudaError_t (*cudaDeviceGetPCIBusIdPtr)(char *, int, int);
+static cudaError_t (*cudaGetDevicePtr)(int *);
+static cudaError_t (*cudaGetDeviceCountPtr)(int *);
+static cudaError_t (*cudaDeviceGetPCIBusIdPtr)(char *, int, int);
 
 #undef DECLDIR
 #define DECLDIR __attribute__((weak))
@@ -102,27 +102,27 @@ nvmlReturn_t DECLDIR nvmlDeviceGetPowerManagementLimit(nvmlDevice_t device, unsi
 nvmlReturn_t DECLDIR nvmlDeviceSetPowerManagementLimit(nvmlDevice_t device, unsigned int  limit);
 nvmlReturn_t DECLDIR nvmlDeviceGetPowerManagementLimitConstraints(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
-nvmlReturn_t (*nvmlDeviceGetClockInfoPtr)(nvmlDevice_t, nvmlClockType_t, unsigned int *);
-char* (*nvmlErrorStringPtr)(nvmlReturn_t);
-nvmlReturn_t (*nvmlDeviceGetDetailedEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, nvmlEccErrorCounts_t *);
-nvmlReturn_t (*nvmlDeviceGetFanSpeedPtr)(nvmlDevice_t, unsigned int *);
-nvmlReturn_t (*nvmlDeviceGetMemoryInfoPtr)(nvmlDevice_t, nvmlMemory_t *);
-nvmlReturn_t (*nvmlDeviceGetPerformanceStatePtr)(nvmlDevice_t, nvmlPstates_t *);
-nvmlReturn_t (*nvmlDeviceGetPowerUsagePtr)(nvmlDevice_t, unsigned int *);
-nvmlReturn_t (*nvmlDeviceGetTemperaturePtr)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
-nvmlReturn_t (*nvmlDeviceGetTotalEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
-nvmlReturn_t (*nvmlDeviceGetUtilizationRatesPtr)(nvmlDevice_t, nvmlUtilization_t *);
-nvmlReturn_t (*nvmlDeviceGetHandleByIndexPtr)(unsigned int, nvmlDevice_t *);
-nvmlReturn_t (*nvmlDeviceGetPciInfoPtr)(nvmlDevice_t, nvmlPciInfo_t *);
-nvmlReturn_t (*nvmlDeviceGetNamePtr)(nvmlDevice_t, char *, unsigned int);
-nvmlReturn_t (*nvmlDeviceGetInforomVersionPtr)(nvmlDevice_t, nvmlInforomObject_t, char *, unsigned int);
-nvmlReturn_t (*nvmlDeviceGetEccModePtr)(nvmlDevice_t, nvmlEnableState_t *, nvmlEnableState_t *);
-nvmlReturn_t (*nvmlInitPtr)(void);
-nvmlReturn_t (*nvmlDeviceGetCountPtr)(unsigned int *);
-nvmlReturn_t (*nvmlShutdownPtr)(void);
-nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int* limit);
-nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int  limit);
-nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
+static nvmlReturn_t (*nvmlDeviceGetClockInfoPtr)(nvmlDevice_t, nvmlClockType_t, unsigned int *);
+static char* (*nvmlErrorStringPtr)(nvmlReturn_t);
+static nvmlReturn_t (*nvmlDeviceGetDetailedEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, nvmlEccErrorCounts_t *);
+static nvmlReturn_t (*nvmlDeviceGetFanSpeedPtr)(nvmlDevice_t, unsigned int *);
+static nvmlReturn_t (*nvmlDeviceGetMemoryInfoPtr)(nvmlDevice_t, nvmlMemory_t *);
+static nvmlReturn_t (*nvmlDeviceGetPerformanceStatePtr)(nvmlDevice_t, nvmlPstates_t *);
+static nvmlReturn_t (*nvmlDeviceGetPowerUsagePtr)(nvmlDevice_t, unsigned int *);
+static nvmlReturn_t (*nvmlDeviceGetTemperaturePtr)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
+static nvmlReturn_t (*nvmlDeviceGetTotalEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
+static nvmlReturn_t (*nvmlDeviceGetUtilizationRatesPtr)(nvmlDevice_t, nvmlUtilization_t *);
+static nvmlReturn_t (*nvmlDeviceGetHandleByIndexPtr)(unsigned int, nvmlDevice_t *);
+static nvmlReturn_t (*nvmlDeviceGetPciInfoPtr)(nvmlDevice_t, nvmlPciInfo_t *);
+static nvmlReturn_t (*nvmlDeviceGetNamePtr)(nvmlDevice_t, char *, unsigned int);
+static nvmlReturn_t (*nvmlDeviceGetInforomVersionPtr)(nvmlDevice_t, nvmlInforomObject_t, char *, unsigned int);
+static nvmlReturn_t (*nvmlDeviceGetEccModePtr)(nvmlDevice_t, nvmlEnableState_t *, nvmlEnableState_t *);
+static nvmlReturn_t (*nvmlInitPtr)(void);
+static nvmlReturn_t (*nvmlDeviceGetCountPtr)(unsigned int *);
+static nvmlReturn_t (*nvmlShutdownPtr)(void);
+static nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int* limit);
+static nvmlReturn_t (*nvmlDeviceSetPowerManagementLimitPtr)(nvmlDevice_t device, unsigned int  limit);
+static nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevice_t device, unsigned int* minLimit, unsigned int* maxLimit);
 
 // file handles used to access cuda libraries with dlopen
 static void* dl1 = NULL;
