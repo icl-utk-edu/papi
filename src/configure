@@ -4985,7 +4985,8 @@ $as_echo_n "checking for working gettid... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
-                main() { pid_t a = gettid(); }
+                #include <unistd.h>
+                int main() { pid_t a = gettid(); }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -5002,7 +5003,8 @@ $as_echo_n "checking for working syscall(SYS_gettid)... " >&6; }
 /* end confdefs.h.  */
 #include <sys/types.h>
                                 #include <sys/syscall.h>
-                                main() { pid_t a = syscall(SYS_gettid); }
+                                #include <unistd.h>
+                                int main() { pid_t a = syscall(SYS_gettid); }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -5080,7 +5082,7 @@ else
                                      #include <stdio.h>
                                      #include <time.h>
                                      #include <syscall.h>
-                                     main() {
+                                     int main() {
                                        struct timespec t1, t2;
                                        double seconds;
                                        if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t1) == -1) exit(1);
@@ -5115,7 +5117,7 @@ else
                                                  #include <stdio.h>
                                                  #include <time.h>
                                                  #include <syscall.h>
-                                                 main() {
+                                                 int main() {
                                                    struct timespec t1, t2;
                                                    double seconds;
                                                    if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t1) == -1) exit(1);

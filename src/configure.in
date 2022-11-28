@@ -577,14 +577,16 @@ fi
 
 AC_MSG_CHECKING(for working gettid)
 AC_LINK_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
-                main() { pid_t a = gettid(); }])],
+                #include <unistd.h>
+                int main() { pid_t a = gettid(); }])],
                [AC_MSG_RESULT(yes)
                 AC_DEFINE(HAVE_GETTID, 1, [Full gettid function])],
                [AC_MSG_RESULT(no)
                 AC_MSG_CHECKING(for working syscall(SYS_gettid))
                 AC_LINK_IFELSE([AC_LANG_SOURCE([#include <sys/types.h>
                                 #include <sys/syscall.h>
-                                main() { pid_t a = syscall(SYS_gettid); }])],
+                                #include <unistd.h>
+                                int main() { pid_t a = syscall(SYS_gettid); }])],
                                [AC_MSG_RESULT(yes)
                                 AC_DEFINE(HAVE_SYSCALL_GETTID, 1, [gettid syscall function])],
                                [AC_MSG_RESULT(no)]) ])
@@ -625,7 +627,7 @@ AC_ARG_WITH(walltimer,
                                      #include <stdio.h>
                                      #include <time.h>
                                      #include <syscall.h>
-                                     main() {
+                                     int main() {
                                        struct timespec t1, t2;
                                        double seconds;
                                        if (syscall(__NR_clock_gettime,CLOCK_REALTIME_HR,&t1) == -1) exit(1);
@@ -646,7 +648,7 @@ AC_ARG_WITH(walltimer,
                                                  #include <stdio.h>
                                                  #include <time.h>
                                                  #include <syscall.h>
-                                                 main() {
+                                                 int main() {
                                                    struct timespec t1, t2;
                                                    double seconds;
                                                    if (syscall(__NR_clock_gettime,CLOCK_REALTIME,&t1) == -1) exit(1);
