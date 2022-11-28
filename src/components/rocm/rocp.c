@@ -682,8 +682,7 @@ init_thread_id_fn(void)
     }
 
     thread_id_fn = (_papi_hwi_thread_id_fn) ?
-        _papi_hwi_thread_id_fn :
-        (unsigned long (*)(void)) getpid;
+        _papi_hwi_thread_id_fn : _papi_getpid;
 }
 
 /**
@@ -1229,7 +1228,8 @@ init_features(ntv_event_table_t *ntv_table, int *events_id, unsigned num_events,
     unsigned i;
     for (i = 0; i < num_events; ++i) {
         char *name = ntv_table->events[events_id[i]].name;
-        features[i].kind = ROCPROFILER_INFO_KIND_METRIC;
+        features[i].kind =
+            (rocprofiler_feature_kind_t) ROCPROFILER_INFO_KIND_METRIC;
         features[i].name = (const char *) name;
     }
 
