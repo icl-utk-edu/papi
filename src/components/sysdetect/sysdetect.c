@@ -319,6 +319,9 @@ _sysdetect_get_dev_attr( void *handle, int id, PAPI_dev_attr_e attr, void *val )
             get_num_threads_per_numa(cpu_info);
             *(int *) val = cpu_info->num_threads_per_numa[id];
             break;
+        case PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE:
+            *(unsigned int *) val = (cpu_info->numa_memory[id] >> 10);
+            break;
         /* NVIDIA GPU attributes */
         case PAPI_DEV_ATTR__CUDA_ULONG_UID:
             *(unsigned long *) val = gpu_info->nvidia.uid;
