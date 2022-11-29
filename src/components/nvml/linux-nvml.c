@@ -1009,7 +1009,8 @@ createNativeEvents()
             sprintf(entry->name, "%s:power_management_limit", sanitized_name);
             // set the power event units value to "mW" for milliwatts
             strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-            strncpy(entry->description, "Power management limit in milliwatts associated with the device.  The power limit defines the upper boundary for the cards power draw. If the cards total power draw reaches this limit the power management algorithm kicks in. This should be writable (with appropriate privileges) on supported Kepler or later (unit milliWatts). ", PAPI_MAX_STR_LEN);
+            strncpy(entry->description, "Power draw upper bound limit (in mW) for the device. Writable (with appropriate privileges) on supported Kepler or later.", PAPI_MAX_STR_LEN - 1);
+            entry->description[PAPI_MAX_STR_LEN - 1] = '\0';
             entry->type = FEATURE_POWER_MANAGEMENT;
             entry++;
         }
