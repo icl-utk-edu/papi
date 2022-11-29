@@ -15,11 +15,13 @@ COMPOBJS += sysdetect.o  \
 			os_cpu_utils.o    \
 			linux_cpu_utils.o
 
-CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include              \
+CFLAGS += -I$(PAPI_ROCM_ROOT)/include                  \
+          -I$(PAPI_ROCM_ROOT)/include/hsa              \
+          -I$(PAPI_ROCM_ROOT)/hsa/include              \
           -I$(PAPI_ROCM_ROOT)/hsa/include/hsa          \
+          -I$(PAPI_ROCM_ROOT)/include/rocm_smi         \
           -I$(PAPI_ROCM_ROOT)/rocm_smi/include         \
-          -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi\
-          -I$(PAPI_ROCM_ROOT)/include
+          -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi
 
 sysdetect.o: components/sysdetect/sysdetect.c components/sysdetect/sysdetect.h $(HEADERS) 
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/sysdetect.c -o $@
