@@ -1119,8 +1119,8 @@ int _papi_nvml_init_private(void)
         goto nvml_init_private_exit;
     }
 
-    cuerr = (*cuInitPtr)(0);
-    if (cudaSuccess != cuerr) {
+    CUresult cures = (*cuInitPtr)(0);
+    if (CUDA_SUCCESS != cures) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         err = PAPI_ENOSUPP;
