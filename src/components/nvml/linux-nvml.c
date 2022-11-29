@@ -772,9 +772,9 @@ detectDevices()
 static void
 createNativeEvents()
 {
-    char name[64];
-    char sanitized_name[PAPI_MAX_STR_LEN];
-    char names[device_count][64];
+    char name[PAPI_MIN_STR_LEN];
+    char sanitized_name[PAPI_MIN_STR_LEN];
+    char names[device_count][PAPI_MAX_STR_LEN];
 
     int i, nameLen = 0, j;
 
@@ -787,7 +787,7 @@ createNativeEvents()
     entry = &nvml_native_table[0];
 
     for (i = 0; i < device_count; i++) {
-        memset(names[i], 0x0, 64);
+        memset(names[i], 0x0, PAPI_MAX_STR_LEN);
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
@@ -796,7 +796,7 @@ createNativeEvents()
         name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
         nameLen = strlen(name);
-        strncpy(sanitized_name, name, PAPI_MAX_STR_LEN);
+        strncpy(sanitized_name, name, PAPI_MIN_STR_LEN);
 
         int retval = snprintf(sanitized_name, sizeof(name), "%s:device_%d", name, i);
         if (retval > (int)sizeof(name)) {
