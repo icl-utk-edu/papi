@@ -22,8 +22,7 @@ C   PAPI values of the counters
       REAL*8 finaltime
       INTEGER ncpu,nnodes,totalcpus,vendor,model
       REAL revision, mhz
-      REAL*8 p(nrows1,ncols1),q(nrows2,ncols2),
-     &                 r(nrows1,ncols2)
+      real*8, allocatable, dimension(:,:) :: p, q, r
       integer tests_quiet, get_quiet
       external get_quiet
 
@@ -34,6 +33,9 @@ C   Setup default values
       numevents=0
       starttime=0
       stoptime=0
+      allocate(p(nrows1, ncols1))
+      allocate(q(nrows2, ncols2))
+      allocate(r(nrows1, ncols2))
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
@@ -168,6 +170,7 @@ C  Make sure the compiler does not optimize away the multiplication
           end if
       end if
 
+      deallocate(p, q, r)
       call ftests_pass(__FILE__)
       end
 
