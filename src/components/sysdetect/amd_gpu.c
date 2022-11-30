@@ -24,23 +24,23 @@
 
 static void *rocm_dlp = NULL;
 
-hsa_status_t (*hsa_initPtr)( void ) = NULL;
-hsa_status_t (*hsa_shut_downPtr)( void ) = NULL;
-hsa_status_t (*hsa_iterate_agentsPtr)( hsa_status_t (*)(hsa_agent_t agent,
-                                                        void *value),
-                                       void *value ) = NULL;
-hsa_status_t (*hsa_agent_get_infoPtr)( hsa_agent_t agent,
-                                       hsa_agent_info_t attribute,
-                                       void *value ) = NULL;
-hsa_status_t (*hsa_amd_agent_iterate_memory_poolsPtr)( hsa_agent_t agent,
-                                                       hsa_status_t (*)(hsa_amd_memory_pool_t pool,
-                                                                        void *value),
-                                                       void *value ) = NULL;
-hsa_status_t (*hsa_amd_memory_pool_get_infoPtr)( hsa_amd_memory_pool_t pool,
-                                                 hsa_amd_memory_pool_info_t attribute,
-                                                 void *value ) = NULL;
-hsa_status_t (*hsa_status_stringPtr)( hsa_status_t status,
-                                      const char **string ) = NULL;
+static hsa_status_t (*hsa_initPtr)( void ) = NULL;
+static hsa_status_t (*hsa_shut_downPtr)( void ) = NULL;
+static hsa_status_t (*hsa_iterate_agentsPtr)( hsa_status_t (*)(hsa_agent_t agent,
+                                                               void *value),
+                                              void *value ) = NULL;
+static hsa_status_t (*hsa_agent_get_infoPtr)( hsa_agent_t agent,
+                                              hsa_agent_info_t attribute,
+                                              void *value ) = NULL;
+static hsa_status_t (*hsa_amd_agent_iterate_memory_poolsPtr)( hsa_agent_t agent,
+                                                              hsa_status_t (*)(hsa_amd_memory_pool_t pool,
+                                                                               void *value),
+                                                              void *value ) = NULL;
+static hsa_status_t (*hsa_amd_memory_pool_get_infoPtr)( hsa_amd_memory_pool_t pool,
+                                                        hsa_amd_memory_pool_info_t attribute,
+                                                        void *value ) = NULL;
+static hsa_status_t (*hsa_status_stringPtr)( hsa_status_t status,
+                                             const char **string ) = NULL;
 
 #define ROCM_CALL(call, err_handle) do {   \
     hsa_status_t _status = (call);         \
@@ -66,9 +66,9 @@ static int unload_hsa_sym( void );
 
 static void *rsmi_dlp = NULL;
 
-rsmi_status_t (*rsmi_initPtr)( unsigned long init_flags ) = NULL;
-rsmi_status_t (*rsmi_shut_downPtr)( void ) = NULL;
-rsmi_status_t (*rsmi_dev_pci_id_getPtr)( unsigned int dev_idx, unsigned long *bdfid ) = NULL;
+static rsmi_status_t (*rsmi_initPtr)( unsigned long init_flags ) = NULL;
+static rsmi_status_t (*rsmi_shut_downPtr)( void ) = NULL;
+static rsmi_status_t (*rsmi_dev_pci_id_getPtr)( unsigned int dev_idx, unsigned long *bdfid ) = NULL;
 
 #define ROCM_SMI_CALL(call, err_handle) do {    \
     rsmi_status_t _status = (call);             \

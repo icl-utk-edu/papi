@@ -22,14 +22,14 @@
 
 static void *cuda_dlp = NULL;
 
-CUresult (*cuInitPtr)( unsigned int flags ) = NULL;
-CUresult (*cuDeviceGetPtr)( CUdevice *device, int ordinal ) = NULL;
-CUresult (*cuDeviceGetNamePtr)( char *name, int len, CUdevice dev ) = NULL;
-CUresult (*cuDeviceGetCountPtr)( int *count ) = NULL;
-CUresult (*cuDeviceGetAttributePtr)( int *pi, CUdevice_attribute attrib,
-                                     CUdevice dev ) = NULL;
-CUresult (*cuDeviceGetPCIBusIdPtr)( char *bus_id_string, int len,
-                                    CUdevice dev ) = NULL;
+static CUresult (*cuInitPtr)( unsigned int flags ) = NULL;
+static CUresult (*cuDeviceGetPtr)( CUdevice *device, int ordinal ) = NULL;
+static CUresult (*cuDeviceGetNamePtr)( char *name, int len, CUdevice dev ) = NULL;
+static CUresult (*cuDeviceGetCountPtr)( int *count ) = NULL;
+static CUresult (*cuDeviceGetAttributePtr)( int *pi, CUdevice_attribute attrib,
+                                            CUdevice dev ) = NULL;
+static CUresult (*cuDeviceGetPCIBusIdPtr)( char *bus_id_string, int len,
+                                           CUdevice dev ) = NULL;
 
 #define CU_CALL(call, err_handle) do {                                          \
     CUresult _status = (call);                                                  \
@@ -58,12 +58,12 @@ static int unload_cuda_sym( void );
 
 static void *nvml_dlp = NULL;
 
-nvmlReturn_t (*nvmlInitPtr)( void );
-nvmlReturn_t (*nvmlDeviceGetCountPtr)( unsigned int *deviceCount ) = NULL;
-nvmlReturn_t (*nvmlDeviceGetHandleByPciBusIdPtr)( const char *bus_id_str,
-                                                  nvmlDevice_t *device ) = NULL;
-nvmlReturn_t (*nvmlDeviceGetUUIDPtr)( nvmlDevice_t device, char *uuid,
-                                      unsigned int length ) = NULL;
+static nvmlReturn_t (*nvmlInitPtr)( void );
+static nvmlReturn_t (*nvmlDeviceGetCountPtr)( unsigned int *deviceCount ) = NULL;
+static nvmlReturn_t (*nvmlDeviceGetHandleByPciBusIdPtr)( const char *bus_id_str,
+                                                         nvmlDevice_t *device ) = NULL;
+static nvmlReturn_t (*nvmlDeviceGetUUIDPtr)( nvmlDevice_t device, char *uuid,
+                                             unsigned int length ) = NULL;
 
 #define NVML_CALL(call, err_handle) do {                                        \
     nvmlReturn_t _status = (call);                                              \

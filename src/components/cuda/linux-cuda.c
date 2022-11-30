@@ -408,7 +408,7 @@ static int _cuda_cleanup_eventset(hwd_control_state_t * ctrl);
 void (*_dl_non_dynamic_init) (void) __attribute__ ((weak));
 
 #define CUAPIWEAK __attribute__( ( weak ) )
-#define DECLARECUFUNC(funcname, funcsig) CUresult CUAPIWEAK funcname funcsig;  CUresult( *funcname##Ptr ) funcsig;
+#define DECLARECUFUNC(funcname, funcsig) CUresult CUAPIWEAK funcname funcsig;  static CUresult( *funcname##Ptr ) funcsig;
 DECLARECUFUNC(cuCtxGetCurrent, (CUcontext *));
 DECLARECUFUNC(cuCtxSetCurrent, (CUcontext));
 DECLARECUFUNC(cuCtxDestroy, (CUcontext));
@@ -427,7 +427,7 @@ DECLARECUFUNC(cuCtxSynchronize, ());
 DECLARECUFUNC(cuDeviceGetAttribute, (int *, CUdevice_attribute, CUdevice));
 
 #define CUDAAPIWEAK __attribute__( ( weak ) )
-#define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  cudaError_t( *funcname##Ptr ) funcsig;
+#define DECLARECUDAFUNC(funcname, funcsig) cudaError_t CUDAAPIWEAK funcname funcsig;  static cudaError_t( *funcname##Ptr ) funcsig;
 DECLARECUDAFUNC(cudaGetDevice, (int *));
 DECLARECUDAFUNC(cudaSetDevice, (int));
 // DECLARECUDAFUNC(cudaGetDeviceProperties, (struct cudaDeviceProp* prop, int  device));
@@ -437,7 +437,7 @@ DECLARECUDAFUNC(cudaDriverGetVersion, (int *));
 DECLARECUDAFUNC(cudaRuntimeGetVersion, (int *));
 
 #define CUPTIAPIWEAK __attribute__( ( weak ) )
-#define DECLARECUPTIFUNC(funcname, funcsig) CUptiResult CUPTIAPIWEAK funcname funcsig;  CUptiResult( *funcname##Ptr ) funcsig;
+#define DECLARECUPTIFUNC(funcname, funcsig) CUptiResult CUPTIAPIWEAK funcname funcsig;  static CUptiResult( *funcname##Ptr ) funcsig;
 /* CUptiResult CUPTIAPIWEAK cuptiDeviceEnumEventDomains( CUdevice, size_t *, CUpti_EventDomainID * ); */
 /* CUptiResult( *cuptiDeviceEnumEventDomainsPtr )( CUdevice, size_t *, CUpti_EventDomainID * ); */
 DECLARECUPTIFUNC(cuptiDeviceEnumMetrics, (CUdevice device, size_t * arraySizeBytes, CUpti_MetricID * metricArray));
@@ -501,7 +501,7 @@ DECLARECUPTIFUNC(cuptiProfilerEndSession, (CUpti_Profiler_EndSession_Params* par
 DECLARECUPTIFUNC(cuptiProfilerGetCounterAvailability, (CUpti_Profiler_GetCounterAvailability_Params* params));
 
 #define NVPWAPIWEAK __attribute__( ( weak ) )
-#define DECLARENVPWFUNC(fname, fsig) NVPA_Status NVPWAPIWEAK fname fsig; NVPA_Status( *fname##Ptr ) fsig;
+#define DECLARENVPWFUNC(fname, fsig) NVPA_Status NVPWAPIWEAK fname fsig; static NVPA_Status( *fname##Ptr ) fsig;
 
 DECLARENVPWFUNC(NVPW_GetSupportedChipNames, (NVPW_GetSupportedChipNames_Params* params));
 DECLARENVPWFUNC(NVPW_CUDA_MetricsContext_Create, (NVPW_CUDA_MetricsContext_Create_Params* params));
