@@ -642,10 +642,9 @@ detectDevices()
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
-            strncpy(name, "deviceNameUnknown", 17);
+            const char *name_unknown = "deviceNameUnknown";
+            strncpy(name, name_unknown, strlen(name_unknown) + 1);
         }
-
-        name[sizeof(name) - 1] = '\0';   // to safely use strstr operation below, the variable 'name' must be null terminated
 
         ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
         if (NVML_SUCCESS != ret) {
@@ -772,9 +771,9 @@ detectDevices()
 static void
 createNativeEvents()
 {
-    char name[64];
-    char sanitized_name[PAPI_MAX_STR_LEN];
-    char names[device_count][64];
+    char name[PAPI_MIN_STR_LEN];
+    char sanitized_name[PAPI_MIN_STR_LEN];
+    char names[device_count][PAPI_MAX_STR_LEN];
 
     int i, nameLen = 0, j;
 
@@ -787,16 +786,16 @@ createNativeEvents()
     entry = &nvml_native_table[0];
 
     for (i = 0; i < device_count; i++) {
-        memset(names[i], 0x0, 64);
+        memset(names[i], 0x0, PAPI_MAX_STR_LEN);
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
-            strncpy(name, "deviceNameUnknown", 17);
+            const char *name_unknown = "deviceNameUnknown";
+            strncpy(name, name_unknown, strlen(name_unknown) + 1);
         }
-        name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
         nameLen = strlen(name);
-        strncpy(sanitized_name, name, PAPI_MAX_STR_LEN);
+        strncpy(sanitized_name, name, PAPI_MIN_STR_LEN);
 
         int retval = snprintf(sanitized_name, sizeof(name), "%s:device_%d", name, i);
         if (retval > (int)sizeof(name)) {
@@ -1009,7 +1008,8 @@ createNativeEvents()
             sprintf(entry->name, "%s:power_management_limit", sanitized_name);
             // set the power event units value to "mW" for milliwatts
             strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-            strncpy(entry->description, "Power management limit in milliwatts associated with the device.  The power limit defines the upper boundary for the cards power draw. If the cards total power draw reaches this limit the power management algorithm kicks in. This should be writable (with appropriate privileges) on supported Kepler or later (unit milliWatts). ", PAPI_MAX_STR_LEN);
+            strncpy(entry->description, "Power draw upper bound limit (in mW) for the device. Writable (with appropriate privileges) on supported Kepler or later.", PAPI_MAX_STR_LEN - 1);
+            entry->description[PAPI_MAX_STR_LEN - 1] = '\0';
             entry->type = FEATURE_POWER_MANAGEMENT;
             entry++;
         }
@@ -1119,8 +1119,8 @@ int _papi_nvml_init_private(void)
         goto nvml_init_private_exit;
     }
 
-    cuerr = (*cuInitPtr)(0);
-    if (cudaSuccess != cuerr) {
+    CUresult cures = (*cuInitPtr)(0);
+    if (CUDA_SUCCESS != cures) {
         strcpy(_nvml_vector.cmp_info.disabled_reason, "The CUDA library failed to initialize.");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
         err = PAPI_ENOSUPP;
