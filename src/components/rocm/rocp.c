@@ -615,8 +615,10 @@ init_rocp_env(void)
     }
 
     if (override_rocp_metrics) {
+        /* Account for change of metrics file location in rocm-5.2.0
+         * directory structure */
         expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/rocprofiler/lib/metrics.xml",
+                          "%s/lib/rocprofiler/metrics.xml",
                           rocm_root);
         if (expect > PAPI_MAX_STR_LEN) {
             SUBDBG("Error string truncated");
@@ -624,10 +626,8 @@ init_rocp_env(void)
 
         err = stat(pathname, &stat_info);
         if (err < 0) {
-            /* Account for change of metrics file location in rocm-5.2.0
-             * directory structure */
             expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                              "%s/lib/rocprofiler/metrics.xml",
+                              "%s/rocprofiler/lib/metrics.xml",
                               rocm_root);
             if (expect > PAPI_MAX_STR_LEN) {
                 SUBDBG("Error string truncated");
