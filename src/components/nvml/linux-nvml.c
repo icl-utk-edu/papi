@@ -642,10 +642,9 @@ detectDevices()
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
-            strncpy(name, "deviceNameUnknown", 17);
+            const char *name_unknown = "deviceNameUnknown";
+            strncpy(name, name_unknown, strlen(name_unknown) + 1);
         }
-
-        name[sizeof(name) - 1] = '\0';   // to safely use strstr operation below, the variable 'name' must be null terminated
 
         ret = (*nvmlDeviceGetInforomVersionPtr)(devices[i], NVML_INFOROM_ECC, inforomECC, 16);
         if (NVML_SUCCESS != ret) {
@@ -791,9 +790,9 @@ createNativeEvents()
         ret = (*nvmlDeviceGetNamePtr)(devices[i], name, sizeof(name) - 1);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetName failed \n");
-            strncpy(name, "deviceNameUnknown", 17);
+            const char *name_unknown = "deviceNameUnknown";
+            strncpy(name, name_unknown, strlen(name_unknown) + 1);
         }
-        name[sizeof(name) - 1] = '\0';   // to safely use strlen operation below, the variable 'name' must be null terminated
 
         nameLen = strlen(name);
         strncpy(sanitized_name, name, PAPI_MIN_STR_LEN);
