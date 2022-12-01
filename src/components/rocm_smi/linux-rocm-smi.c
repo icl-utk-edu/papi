@@ -187,7 +187,7 @@ typedef struct {
 
 #define scanEventFuncNameLen 64
 typedef struct {
-    char        funcname[scanEventFuncNameLen];
+    char        funcname[scanEventFuncNameLen+1];
     int32_t     device;                     // Note: -1 == END OF LIST marker.
     int32_t     variant;
     int32_t     subvariant;
@@ -429,6 +429,7 @@ void addScanEvent(const char* routine, int32_t device, uint64_t variant, uint64_
 {
     MakeRoomScanEvents();                                                           // Make room if needed.
     strncpy(ScanEvents[TotalScanEvents].funcname, routine, scanEventFuncNameLen);   // Copy name.
+    ScanEvents[TotalScanEvents].funcname[scanEventFuncNameLen] = '\0';
     ScanEvents[TotalScanEvents].device=device;                                      // Device ID.
     ScanEvents[TotalScanEvents].variant=variant;                                    // variant is typically enum, may be a type.
     ScanEvents[TotalScanEvents].subvariant=subvariant;                              // subvariant is typically a sensor-ID.
