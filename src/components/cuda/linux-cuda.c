@@ -5057,7 +5057,7 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         setCounterDataParams.isolated = 1;
         setCounterDataParams.rangeIndex = 0; // Note Eval.cpp:155 uses zero relative; we have only one range per device.
 
-        CUPTI_CALL((*NVPW_MetricsContext_SetCounterDataPtr) (&setCounterDataParams),
+        NVPW_CALL((*NVPW_MetricsContext_SetCounterDataPtr) (&setCounterDataParams),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
@@ -5074,7 +5074,7 @@ static int _cuda11_read(hwd_context_t * ctx, hwd_control_state_t * ctrl, long lo
         evalToGpuParams.pMetricValues = &gpuValues[0];
 
         // Eval.cpp:PrintMetricValues:197 evalToGpuParams.numMetrics=1, evalToGpuParams.metricNamePtrs[0]='fe__cycles_elapsed.sum'
-        CUPTI_CALL((*NVPW_MetricsContext_EvaluateToGpuValuesPtr) (&evalToGpuParams),
+        NVPW_CALL((*NVPW_MetricsContext_EvaluateToGpuValuesPtr) (&evalToGpuParams),
             // On error,
             if (ctxPushed) CU_CALL((*cuCtxPopCurrentPtr) (&popCtx), );
             _papi_hwi_unlock(COMPONENT_LOCK); 
