@@ -41,7 +41,7 @@
 /*************************  DEFINES SECTION  ***********************************
  *******************************************************************************/
 /* this number assumes that there will never be more events than indicated */
-#define INFINIBAND_MAX_COUNTERS 128
+#define INFINIBAND_MAX_COUNTERS 256
 
 /** Structure that stores private information of each event */
 typedef struct infiniband_register
