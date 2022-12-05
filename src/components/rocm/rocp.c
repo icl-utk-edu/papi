@@ -18,6 +18,7 @@ struct rocp_ctx {
         struct {
             int state;                       /* state of kernel interception */
             ntv_event_table_t *ntv_table;    /* table containing all component events */
+            unsigned int *events_id;
             long long *counters;             /* thread's private counters */
             int dispatch_count;              /* how many kernel dispatches this thread has done */
             unsigned int *devs_id;           /* list of monitored devices */
@@ -27,6 +28,7 @@ struct rocp_ctx {
         struct {
             int state;                       /* state of sampling */
             ntv_event_table_t *ntv_table;    /* table containing all component events */
+            unsigned int *events_id;
             long long *counters;             /* thread's private counters */
             rocprofiler_feature_t *features; /* rocprofiler features */
             int feature_count;               /* number of features being monitored */
@@ -173,8 +175,8 @@ static int sampling_ctx_start(rocp_ctx_t);
 static int intercept_ctx_start(rocp_ctx_t);
 static int sampling_ctx_stop(rocp_ctx_t);
 static int intercept_ctx_stop(rocp_ctx_t);
-static int sampling_ctx_read(rocp_ctx_t, unsigned int *, long long **);
-static int intercept_ctx_read(rocp_ctx_t, unsigned int *, long long **);
+static int sampling_ctx_read(rocp_ctx_t, long long **);
+static int intercept_ctx_read(rocp_ctx_t, long long **);
 static int sampling_ctx_reset(rocp_ctx_t);
 static int intercept_ctx_reset(rocp_ctx_t);
 static int sampling_rocp_shutdown(ntv_event_table_t *);
@@ -292,13 +294,13 @@ rocp_ctx_stop(rocp_ctx_t rocp_ctx)
 }
 
 int
-rocp_ctx_read(rocp_ctx_t rocp_ctx, unsigned int *events_id, long long **counts)
+rocp_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
     if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
-        return sampling_ctx_read(rocp_ctx, events_id, counts);
+        return sampling_ctx_read(rocp_ctx, counts);
     }
 
-    return intercept_ctx_read(rocp_ctx, events_id, counts);
+    return intercept_ctx_read(rocp_ctx, counts);
 }
 
 int
@@ -878,10 +880,11 @@ sampling_ctx_stop(rocp_ctx_t rocp_ctx)
 }
 
 int
-sampling_ctx_read(rocp_ctx_t rocp_ctx, unsigned int *events_id, long long **counts)
+sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
     int i, j, k;
     int dev_count = rocp_ctx->u.sampling.devs_count;
+    unsigned int *events_id = rocp_ctx->u.sampling.events_id;
 
     for (i = 0; i < dev_count; ++i) {
         ROCP_CALL((*rocp_readPtr)(rocp_ctx->u.sampling.contexts[i], 0),
@@ -1049,6 +1052,7 @@ sampling_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
     }
 
     (*rocp_ctx)->u.sampling.ntv_table = ntv_table;
+    (*rocp_ctx)->u.sampling.events_id = events_id;
     (*rocp_ctx)->u.sampling.features = features;
     (*rocp_ctx)->u.sampling.feature_count = num_events;
     (*rocp_ctx)->u.sampling.contexts = contexts;
@@ -1476,9 +1480,10 @@ intercept_ctx_stop(rocp_ctx_t rocp_ctx)
 }
 
 int
-intercept_ctx_read(rocp_ctx_t rocp_ctx, unsigned int *events_id, long long **counts)
+intercept_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
     int papi_errno = PAPI_OK;
+    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
 
     _papi_hwi_lock(_rocm_lock);
 
@@ -1663,6 +1668,7 @@ intercept_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
     }
 
     (*rocp_ctx)->u.intercept.ntv_table = ntv_table;
+    (*rocp_ctx)->u.intercept.events_id = events_id;
     (*rocp_ctx)->u.intercept.counters = counters;
     (*rocp_ctx)->u.intercept.dispatch_count = 0;
     (*rocp_ctx)->u.intercept.devs_id = devs_id;

@@ -490,7 +490,7 @@ rocm_read(hwd_context_t *ctx __attribute__((unused)), hwd_control_state_t *ctl,
         return PAPI_EMISC;
     }
 
-    return rocp_ctx_read(rocm_ctl->rocp_ctx, rocm_ctl->events_id, val);
+    return rocp_ctx_read(rocm_ctl->rocp_ctx, val);
 }
 
 int
