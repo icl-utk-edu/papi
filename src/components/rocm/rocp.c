@@ -1318,8 +1318,8 @@ static struct {
 #define INTERCEPT_ACTIVE_THR_COUNT   (intercept_global_state.active_thread_count)
 #define INTERCEPT_KERNEL_COUNT       (intercept_global_state.kernel_count)
 
-static int compare_events(ntv_event_table_t *, unsigned int *, unsigned int *,
-                          int);
+static int verify_events(ntv_event_table_t *, unsigned int *, unsigned int *,
+                         int);
 static int init_callbacks(rocprofiler_feature_t *, int);
 static int register_dispatch_counter(unsigned long, int *);
 static int increment_and_fetch_dispatch_counter(unsigned long);
@@ -1350,15 +1350,13 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
 
     _papi_hwi_lock(_rocm_lock);
 
-    if (INTERCEPT_EVENTS_ID != NULL) {
-        int res = compare_events(ntv_table, events_id, INTERCEPT_EVENTS_ID,
-                                 num_events);
-        if (res != 0) {
-            SUBDBG("[ROCP intercept mode] Can only monitor one set of events "
-                   "per application run.");
-            papi_errno = PAPI_ECNFLCT;
-            goto fn_fail;
-        }
+    int res = verify_events(ntv_table, events_id, INTERCEPT_EVENTS_ID,
+                            num_events);
+    if (res != 0) {
+        SUBDBG("[ROCP intercept mode] Can only monitor one set of events "
+               "per application run.");
+        papi_errno = PAPI_ECNFLCT;
+        goto fn_fail;
     }
 
     papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
@@ -1569,11 +1567,15 @@ intercept_rocp_shutdown(ntv_event_table_t *ntv_table)
  *
  */
 int
-compare_events(ntv_event_table_t *ntv_table, unsigned int *events_id,
-               unsigned int *cb_events_id, int num_events)
+verify_events(ntv_event_table_t *ntv_table, unsigned int *events_id,
+              unsigned int *cb_events_id, int num_events)
 {
     int res;
     int i, j;
+
+    if (INTERCEPT_EVENTS_ID == NULL) {
+        return 0;
+    }
 
     if (INTERCEPT_EVENTS_COUNT != num_events) {
         return INTERCEPT_ROCP_FEATURE_COUNT - num_events;
