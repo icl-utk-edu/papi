@@ -1366,12 +1366,6 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
         goto fn_fail;
     }
 
-    papi_errno = init_callbacks(INTERCEPT_ROCP_FEATURES,
-                                INTERCEPT_ROCP_FEATURE_COUNT);
-    if (papi_errno != PAPI_OK) {
-        goto fn_fail;
-    }
-
     unsigned long tid = (*thread_id_fn)();
     papi_errno =
         register_dispatch_counter(tid,
@@ -1672,6 +1666,12 @@ intercept_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
     (*rocp_ctx)->u.intercept.devs_id = devs_id;
     (*rocp_ctx)->u.intercept.devs_count = num_devs;
     (*rocp_ctx)->u.intercept.feature_count = num_events;
+
+    papi_errno = init_callbacks(INTERCEPT_ROCP_FEATURES,
+                                INTERCEPT_ROCP_FEATURE_COUNT);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
 
   fn_exit:
     return papi_errno;
