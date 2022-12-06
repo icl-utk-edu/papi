@@ -10,6 +10,7 @@
 #include <hsa.h>
 #include <rocprofiler.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "rocp.h"
 
@@ -767,8 +768,7 @@ static struct {
 static int get_target_devs_id(ntv_event_table_t *, unsigned int *, int,
                               unsigned int **, int *);
 static int target_devs_avail(unsigned int *, int);
-static int sort_events_by_device(ntv_event_table_t *, unsigned int *, int,
-                                 unsigned int *, int, unsigned int *);
+static int sort_events_by_device(unsigned int *, int, unsigned int *);
 static int init_features(ntv_event_table_t *, unsigned int *, int,
                          rocprofiler_feature_t *);
 static int sampling_ctx_init(ntv_event_table_t *, unsigned int *, int,
@@ -1033,8 +1033,7 @@ sampling_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
         goto fn_fail;
     }
 
-    papi_errno = sort_events_by_device(ntv_table, events_id, num_events,
-                                       devs_id, num_devs, sorted_events_id);
+    papi_errno = sort_events_by_device(events_id, num_events, sorted_events_id);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1227,19 +1226,17 @@ int target_devs_avail(unsigned int *devs_id, int num_devs)
     return PAPI_OK;
 }
 
-int
-sort_events_by_device(ntv_event_table_t *ntv_table, unsigned int *events_id,
-                      int num_events, unsigned int *devs_id,
-                      int dev_count, unsigned int *sorted_events_id)
+static int
+compare(const void *a, const void *b)
 {
-    int i, j, k = 0;
-    for (i = 0; i < dev_count; ++i) {
-        for (j = 0; j < num_events; ++j) {
-            if (ntv_table->events[events_id[j]].ntv_dev == devs_id[i]) {
-                sorted_events_id[k++] = events_id[j];
-            }
-        }
-    }
+    return (*(int *) a - *(int *) b);
+}
+
+int
+sort_events_by_device(unsigned int *events_id, int num_events, unsigned int *sorted_events_id)
+{
+    memcpy(sorted_events_id, events_id, num_events * sizeof(unsigned int));
+    qsort(sorted_events_id, num_events, sizeof(unsigned int), compare);
     return PAPI_OK;
 }
 
@@ -1630,13 +1627,14 @@ intercept_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
             goto fn_fail;
         }
 
-        papi_errno = sort_events_by_device(ntv_table, events_id, num_events,
-                                           devs_id, num_devs,
+        papi_errno = sort_events_by_device(events_id, num_events,
                                            INTERCEPT_EVENTS_ID);
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
 
+        /* FIXME: assuming the same number of events per device might not be an
+         *        always valid assumption */
         int num_events_per_dev = num_events / num_devs;
         INTERCEPT_ROCP_FEATURES = papi_calloc(num_events_per_dev,
                                               sizeof(*INTERCEPT_ROCP_FEATURES));
