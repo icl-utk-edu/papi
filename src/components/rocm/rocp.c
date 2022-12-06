@@ -776,7 +776,7 @@ static int sampling_ctx_init(ntv_event_table_t *, unsigned int *, int,
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
-static int get_user_counter_id(rocp_ctx_t, unsigned int *, int);
+static int get_user_counter_id(rocp_ctx_t, int);
 static int ctx_init(ntv_event_table_t *, unsigned int *, int, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
 
@@ -884,7 +884,6 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
     int i, j, k;
     int dev_count = rocp_ctx->u.sampling.devs_count;
-    unsigned int *events_id = rocp_ctx->u.sampling.events_id;
 
     for (i = 0; i < dev_count; ++i) {
         ROCP_CALL((*rocp_readPtr)(rocp_ctx->u.sampling.contexts[i], 0),
@@ -902,7 +901,7 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 
         for (j = 0; j < dev_feature_count; ++j) {
             int sorted_event_id = (i * dev_feature_count) + j;
-            k = get_user_counter_id(rocp_ctx, events_id, sorted_event_id);
+            k = get_user_counter_id(rocp_ctx, sorted_event_id);
             switch(dev_features[j].data.kind) {
                 case ROCPROFILER_DATA_KIND_INT32:
                     counters[k] = (long long) dev_features[j].data.result_int32;
@@ -1262,12 +1261,12 @@ init_features(ntv_event_table_t *ntv_table, unsigned int *events_id,
  *
  */
 int
-get_user_counter_id(rocp_ctx_t rocp_ctx, unsigned int *events_id, int j)
+get_user_counter_id(rocp_ctx_t rocp_ctx, int j)
 {
     int i;
     unsigned int curr_event_id = rocp_ctx->u.sampling.sorted_events_id[j];
     for (i = 0; i < rocp_ctx->u.sampling.feature_count; ++i) {
-        unsigned int counter_event_id = events_id[i];
+        unsigned int counter_event_id = rocp_ctx->u.sampling.events_id[i];
         if (counter_event_id == curr_event_id) {
             break;
         }
