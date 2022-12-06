@@ -768,7 +768,7 @@ static struct {
 static int get_target_devs_id(ntv_event_table_t *, unsigned int *, int,
                               unsigned int **, int *);
 static int target_devs_avail(unsigned int *, int);
-static int sort_events_by_device(unsigned int *, int, unsigned int *);
+static int sort_events(unsigned int *, int, unsigned int *);
 static int init_features(ntv_event_table_t *, unsigned int *, int,
                          rocprofiler_feature_t *);
 static int sampling_ctx_init(ntv_event_table_t *, unsigned int *, int,
@@ -1033,7 +1033,7 @@ sampling_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
         goto fn_fail;
     }
 
-    papi_errno = sort_events_by_device(events_id, num_events, sorted_events_id);
+    papi_errno = sort_events(events_id, num_events, sorted_events_id);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1233,7 +1233,7 @@ compare(const void *a, const void *b)
 }
 
 int
-sort_events_by_device(unsigned int *events_id, int num_events, unsigned int *sorted_events_id)
+sort_events(unsigned int *events_id, int num_events, unsigned int *sorted_events_id)
 {
     memcpy(sorted_events_id, events_id, num_events * sizeof(unsigned int));
     qsort(sorted_events_id, num_events, sizeof(unsigned int), compare);
@@ -1623,8 +1623,7 @@ intercept_ctx_init(ntv_event_table_t *ntv_table, unsigned int *events_id,
             goto fn_fail;
         }
 
-        papi_errno = sort_events_by_device(events_id, num_events,
-                                           INTERCEPT_EVENTS_ID);
+        papi_errno = sort_events(events_id, num_events, INTERCEPT_EVENTS_ID);
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
