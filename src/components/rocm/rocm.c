@@ -419,8 +419,8 @@ try_open_events(rocm_control_t *rocm_ctl)
         return PAPI_OK;
     }
 
-    papi_errno = rocp_ctx_open(&ntv_table, rocm_ctl->events_id,
-                               rocm_ctl->num_events, &rocp_ctx);
+    papi_errno = rocp_ctx_open_v2(rocm_ctl->events_id, rocm_ctl->num_events,
+                                  &rocp_ctx);
     if (papi_errno != PAPI_OK) {
         rocm_cleanup_eventset(rocm_ctl);
         return papi_errno;
@@ -456,8 +456,8 @@ rocm_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
         return PAPI_ECNFLCT;
     }
 
-    papi_errno = rocp_ctx_open(&ntv_table, rocm_ctl->events_id,
-                               rocm_ctl->num_events, &rocm_ctl->rocp_ctx);
+    papi_errno = rocp_ctx_open_v2(rocm_ctl->events_id, rocm_ctl->num_events,
+                                  &rocm_ctl->rocp_ctx);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }

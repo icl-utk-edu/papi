@@ -171,6 +171,8 @@ static int sampling_ctx_open(ntv_event_table_t *, unsigned int *, int,
                              rocp_ctx_t *);
 static int intercept_ctx_open(ntv_event_table_t *, unsigned int *, int,
                               rocp_ctx_t *);
+static int sampling_ctx_open_v2(unsigned int *, int, rocp_ctx_t *);
+static int intercept_ctx_open_v2(unsigned int *, int, rocp_ctx_t *);
 static int sampling_ctx_close(rocp_ctx_t);
 static int intercept_ctx_close(rocp_ctx_t);
 static int sampling_ctx_start(rocp_ctx_t);
@@ -334,6 +336,16 @@ rocp_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
     }
 
     return intercept_ctx_open(ntv_table, events_id, num_events, rocp_ctx);
+}
+
+int
+rocp_ctx_open_v2(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_open_v2(events_id, num_events, rocp_ctx);
+    }
+
+    return intercept_ctx_open_v2(events_id, num_events, rocp_ctx);
 }
 
 int
@@ -905,6 +917,38 @@ sampling_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
 }
 
 int
+sampling_ctx_open_v2(unsigned int *events_id, int num_events,
+                     rocp_ctx_t *rocp_ctx)
+{
+    int papi_errno = PAPI_OK;
+
+    if (num_events <= 0) {
+        return PAPI_ENOEVNT;
+    }
+
+    _papi_hwi_lock(_rocm_lock);
+
+    papi_errno = ctx_init(ntv_table_p, events_id, num_events, rocp_ctx);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    papi_errno = ctx_open(*rocp_ctx);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    (*rocp_ctx)->u.sampling.state |= ROCM_EVENTS_OPENED;
+
+  fn_exit:
+    _papi_hwi_unlock(_rocm_lock);
+    return papi_errno;
+  fn_fail:
+    ctx_finalize(rocp_ctx);
+    goto fn_exit;
+}
+
+int
 sampling_ctx_close(rocp_ctx_t rocp_ctx)
 {
     int papi_errno = PAPI_OK;
@@ -1452,6 +1496,50 @@ intercept_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
     }
 
     papi_errno = ctx_init(ntv_table, events_id, num_events, rocp_ctx);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    unsigned long tid = (*thread_id_fn)();
+    papi_errno =
+        register_dispatch_counter(tid,
+                                  &(*rocp_ctx)->u.intercept.dispatch_count);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    (*rocp_ctx)->u.intercept.state |= ROCM_EVENTS_OPENED;
+
+  fn_exit:
+    _papi_hwi_unlock(_rocm_lock);
+    return papi_errno;
+  fn_fail:
+    ctx_finalize(rocp_ctx);
+    goto fn_exit;
+}
+
+int
+intercept_ctx_open_v2(unsigned int *events_id, int num_events,
+                      rocp_ctx_t *rocp_ctx)
+{
+    int papi_errno = PAPI_OK;
+
+    if (num_events <= 0) {
+        return PAPI_ENOEVNT;
+    }
+
+    _papi_hwi_lock(_rocm_lock);
+
+    int res = verify_events(ntv_table_p, events_id, INTERCEPT_EVENTS_ID,
+                            num_events);
+    if (res != 0) {
+        SUBDBG("[ROCP intercept mode] Can only monitor one set of events "
+               "per application run.");
+        papi_errno = PAPI_ECNFLCT;
+        goto fn_fail;
+    }
+
+    papi_errno = ctx_init(ntv_table_p, events_id, num_events, rocp_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
