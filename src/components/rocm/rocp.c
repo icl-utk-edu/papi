@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "rocp.h"
+#include "htable.h"
 
 struct rocp_ctx {
     union {
@@ -183,6 +184,7 @@ static int intercept_ctx_reset(rocp_ctx_t);
 static int sampling_rocp_shutdown(ntv_event_table_t *);
 static int intercept_rocp_shutdown(ntv_event_table_t *);
 static void init_thread_id_fn(void);
+static int evt_code_to_name(unsigned int event_code, char *name, int len);
 
 static void *hsa_dlp = NULL;
 static void *rocp_dlp = NULL;
@@ -190,6 +192,8 @@ static const char *init_err_str_ptr;
 static char init_err_str[PAPI_MAX_STR_LEN];
 static hsa_agent_arr_t agent_arr;
 static unsigned long (*thread_id_fn)(void);
+static ntv_event_table_t *ntv_table_p;
+static void *htable;
 
 int
 rocp_init_environment(const char **err_string)
@@ -236,6 +240,8 @@ rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
         goto fn_fail;
     }
 
+    htable_init(&htable);
+
     papi_errno = init_event_table(ntv_table);
     if (papi_errno != PAPI_OK) {
         ROCM_PUT_ERR_STR(*err_string);
@@ -244,6 +250,7 @@ rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
     }
 
     init_thread_id_fn();
+    ntv_table_p = ntv_table;
 
   fn_exit:
     return papi_errno;
@@ -251,6 +258,71 @@ rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
     unload_rocp_sym();
     unload_hsa_sym();
     goto fn_exit;
+}
+
+int
+rocp_evt_enum(unsigned int *event_code, int modifier)
+{
+    int papi_errno = PAPI_OK;
+
+    switch(modifier) {
+        case PAPI_ENUM_FIRST:
+            if (ntv_table_p->count == 0) {
+                papi_errno = PAPI_ENOEVNT;
+            }
+            *event_code = 0;
+            break;
+        case PAPI_ENUM_EVENTS:
+            if (*event_code + 1 < (unsigned int) ntv_table_p->count) {
+                ++(*event_code);
+            } else {
+                papi_errno = PAPI_END;
+            }
+            break;
+        default:
+            papi_errno = PAPI_EINVAL;
+    }
+
+    return papi_errno;
+}
+
+int
+rocp_evt_get_descr(unsigned int event_code, char *descr, int len)
+{
+    if (event_code >= (unsigned int) ntv_table_p->count) {
+        return PAPI_EINVAL;
+    }
+    /* FIXME: make sure descr is not longer than len */
+    strncpy(descr, ntv_table_p->events[event_code].descr, len);
+    return PAPI_OK;
+}
+
+int
+rocp_evt_name_to_code(const char *name, unsigned int *event_code)
+{
+    int papi_errno = PAPI_OK;
+    int htable_errno;
+
+    ntv_event_t *event;
+    htable_errno = htable_find(htable, name, (void **) &event);
+    if (htable_errno != HTABLE_SUCCESS) {
+        papi_errno = (htable_errno == HTABLE_ENOVAL) ?
+            PAPI_ENOEVNT : PAPI_ECMP;
+        goto fn_exit;
+    }
+    *event_code = event->ntv_id;
+
+  fn_exit:
+    return papi_errno;
+}
+
+int
+rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
+{
+    if (event_code >= (unsigned int) ntv_table_p->count) {
+        return PAPI_EINVAL;
+    }
+    return evt_code_to_name(event_code, name, len);
 }
 
 int
@@ -708,6 +780,23 @@ init_thread_id_fn(void)
         _papi_hwi_thread_id_fn : _papi_getpid;
 }
 
+int
+evt_code_to_name(unsigned int event_code, char *name, int len)
+{
+    /* FIXME: make sure the copied string is not longer than len */
+    if (ntv_table.events[event_code].instance >= 0) {
+        snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
+                 ntv_table.events[event_code].name,
+                 ntv_table.events[event_code].ntv_dev,
+                 ntv_table.events[event_code].instance);
+    } else {
+        snprintf(name, (size_t) len, "%s:device=%u",
+                 ntv_table.events[event_code].name,
+                 ntv_table.events[event_code].ntv_dev);
+    }
+    return PAPI_OK;
+}
+
 /**
  * init_event_table utility functions
  *
@@ -741,6 +830,9 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
         events[*count].ntv_dev = arg->dev_id;
         events[*count].ntv_id = *count;
         events[*count].instance = (instances > 1) ? (int) instance : -1;
+        char key[PAPI_MAX_STR_LEN + 1];
+        evt_code_to_name((unsigned int) *count, key, PAPI_MAX_STR_LEN);
+        htable_insert(htable, key, &events[*count]);
         ++(*count);
     }
 
@@ -949,6 +1041,7 @@ int
 sampling_rocp_shutdown(ntv_event_table_t *ntv_table)
 {
     shutdown_event_table(ntv_table);
+    htable_shutdown(htable);
 
     (*hsa_shut_downPtr)();
 

@@ -15,6 +15,10 @@ typedef struct rocp_ctx *rocp_ctx_t;
 
 int rocp_init_environment(const char **err_string);
 int rocp_init(ntv_event_table_t *ntv_table, const char **err_string);
+int rocp_evt_enum(unsigned int *event_code, int modifier);
+int rocp_evt_get_descr(unsigned int event_code, char *descr, int len);
+int rocp_evt_name_to_code(const char *name, unsigned int *event_code);
+int rocp_evt_code_to_name(unsigned int event_code, char *name, int len);
 int rocp_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
                   int num_events, rocp_ctx_t *ctx);
 int rocp_ctx_close(rocp_ctx_t ctx);
