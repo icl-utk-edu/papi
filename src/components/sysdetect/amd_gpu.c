@@ -176,15 +176,15 @@ get_device_properties( hsa_agent_t agent, void *info )
                                            HSA_AGENT_INFO_VERSION_MINOR,
                                            &dev_info->amd.minor),
                   return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
+        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
                                            HSA_AMD_AGENT_INFO_NUM_SIMDS_PER_CU,
                                            &dev_info->amd.simd_per_compute_unit),
                   return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
+        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
                                            HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
                                            &dev_info->amd.compute_unit_count),
                   return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
+        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
                                            HSA_AMD_AGENT_INFO_MAX_WAVES_PER_CU,
                                            &dev_info->amd.max_waves_per_compute_unit),
                   return _status);
