@@ -198,29 +198,23 @@ static ntv_event_table_t *ntv_table_p;
 static void *htable;
 
 int
-rocp_init_environment(const char **err_string)
+rocp_init_environment(void)
 {
-    int papi_errno = init_rocp_env();
-    if (papi_errno != PAPI_OK) {
-        ROCP_PUT_ERR_STR(*err_string);
-    }
-    return papi_errno;
+    return init_rocp_env();
 }
 
 int
-rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
+rocp_init(ntv_event_table_t *ntv_table)
 {
     int papi_errno = PAPI_OK;
 
     papi_errno = load_hsa_sym();
     if (papi_errno != PAPI_OK) {
-        ROCM_PUT_ERR_STR(*err_string);
         goto fn_fail;
     }
 
     papi_errno = load_rocp_sym();
     if (papi_errno != PAPI_OK) {
-        ROCM_PUT_ERR_STR(*err_string);
         goto fn_fail;
     }
 
@@ -230,14 +224,12 @@ rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
     hsa_status_t status = (*hsa_initPtr)();
     if (status != HSA_STATUS_SUCCESS) {
         ROCM_GET_ERR_STR(status);
-        ROCM_PUT_ERR_STR(*err_string);
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
 
     papi_errno = init_agent_array();
     if (papi_errno != PAPI_OK) {
-        ROCM_PUT_ERR_STR(*err_string);
         (*hsa_shut_downPtr)();
         goto fn_fail;
     }
@@ -246,7 +238,6 @@ rocp_init(ntv_event_table_t *ntv_table, const char **err_string)
 
     papi_errno = init_event_table(ntv_table);
     if (papi_errno != PAPI_OK) {
-        ROCM_PUT_ERR_STR(*err_string);
         (*hsa_shut_downPtr)();
         goto fn_fail;
     }

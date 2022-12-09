@@ -13,8 +13,8 @@
 
 typedef struct rocp_ctx *rocp_ctx_t;
 
-int rocp_init_environment(const char **err_string);
-int rocp_init(ntv_event_table_t *ntv_table, const char **err_string);
+int rocp_init_environment(void);
+int rocp_init(ntv_event_table_t *ntv_table);
 int rocp_evt_enum(unsigned int *event_code, int modifier);
 int rocp_evt_get_descr(unsigned int event_code, char *descr, int len);
 int rocp_evt_name_to_code(const char *name, unsigned int *event_code);
