@@ -17,7 +17,6 @@
 #include "papi_vector.h"
 #include "extras.h"
 #include "rocp.h"
-#include "htable.h"
 
 /* Init and finalize */
 static int rocm_init_component(int cid);
@@ -54,11 +53,6 @@ static int tokenize_event_string(char *event, char **name, int *device,
                                  int *instance);
 
 extern unsigned rocm_prof_mode;
-
-/* table containing all ROCm events */
-ntv_event_table_t ntv_table;
-void *htable;
-
 
 typedef struct {
     int initialized;
@@ -152,8 +146,6 @@ rocm_init_component(int cid)
         return papi_errno;
     }
 
-    htable_init(&htable);
-
     sprintf(_rocm_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
     _rocm_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
@@ -205,7 +197,7 @@ rocm_init_private(void)
         goto fn_exit;
     }
 
-    papi_errno = rocp_init(&ntv_table);
+    papi_errno = rocp_init();
     if (papi_errno != PAPI_OK) {
         _rocm_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
@@ -244,12 +236,10 @@ rocm_shutdown_component(void)
         return PAPI_OK;
     }
 
-    int papi_errno = rocp_shutdown(&ntv_table);
+    int papi_errno = rocp_shutdown();
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-
-    htable_shutdown(htable);
 
   fn_exit:
     _rocm_vector.cmp_info.initialized = 0;
