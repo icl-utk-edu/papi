@@ -388,7 +388,7 @@ find_ib_device_events(ib_device_t *dev, int extended)
         char *ev_name = ev_ent->d_name;
         long long value = -1;
         char event_path[FILENAME_MAX];
-        char counter_name[512];
+        char counter_name[PAPI_HUGE_STR_LEN];
 
         if (ev_name[0] == '.')
             continue;
@@ -932,17 +932,13 @@ _infiniband_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 
     if (infiniband_native_events[index].name)
     {
-        unsigned int len = strlen(infiniband_native_events[index].name);
-        if (len > sizeof(info->symbol)-1) len = sizeof(info->symbol)-1;
-        strncpy(info->symbol, infiniband_native_events[index].name, len);
-        info->symbol[len] = '\0';
+        strncpy(info->symbol, infiniband_native_events[index].name, PAPI_HUGE_STR_LEN);
+        info->symbol[PAPI_HUGE_STR_LEN-1] = '\0';
     }
     if (infiniband_native_events[index].description)
     {
-        unsigned int len = strlen(infiniband_native_events[index].description);
-        if (len > sizeof(info->long_descr)-1) len = sizeof(info->long_descr)-1;
-        strncpy(info->long_descr, infiniband_native_events[index].description, len);
-        info->long_descr[len] = '\0';
+        strncpy(info->long_descr, infiniband_native_events[index].description, PAPI_MAX_STR_LEN);
+        info->long_descr[PAPI_MAX_STR_LEN-1] = '\0';
     }
 
     strncpy(info->units, "\0", 1);
