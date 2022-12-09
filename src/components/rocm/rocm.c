@@ -178,6 +178,21 @@ rocm_init_control_state(hwd_control_state_t *ctl __attribute__((unused)))
     return PAPI_OK;
 }
 
+static int
+evt_get_count(int *count)
+{
+    unsigned int event_code = 0;
+
+    if (rocp_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
+        ++(*count);
+    }
+    while (rocp_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
+        ++(*count);
+    }
+
+    return PAPI_OK;
+}
+
 int
 rocm_init_private(void)
 {
@@ -204,8 +219,10 @@ rocm_init_private(void)
         goto fn_fail;
     }
 
-    _rocm_vector.cmp_info.num_native_events = ntv_table.count;
-    _rocm_vector.cmp_info.num_cntrs = ntv_table.count;
+    int count = 0;
+    papi_errno = evt_get_count(&count);
+    _rocm_vector.cmp_info.num_native_events = count;
+    _rocm_vector.cmp_info.num_cntrs = count;
 
   fn_exit:
     _rocm_vector.cmp_info.initialized = 1;
