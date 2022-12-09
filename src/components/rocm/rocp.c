@@ -328,6 +328,13 @@ rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
 }
 
 int
+rocp_err_get_last(const char **err_string)
+{
+    ROCM_PUT_ERR_STR(*err_string);
+    return PAPI_OK;
+}
+
+int
 rocp_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
               int num_events, rocp_ctx_t *rocp_ctx)
 {

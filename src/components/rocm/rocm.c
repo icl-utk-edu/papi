@@ -143,6 +143,7 @@ rocm_init_component(int cid)
     if (papi_errno != PAPI_OK) {
         _rocm_vector.cmp_info.initialized = 1;
         _rocm_vector.cmp_info.disabled = papi_errno;
+        rocp_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
         if (expect > PAPI_MAX_STR_LEN) {
@@ -194,6 +195,7 @@ rocm_init_private(void)
     papi_errno = rocp_init(&ntv_table, &err_string);
     if (papi_errno != PAPI_OK) {
         _rocm_vector.cmp_info.disabled = papi_errno;
+        rocp_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
         if (expect > PAPI_MAX_STR_LEN) {

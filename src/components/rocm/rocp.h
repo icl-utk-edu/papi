@@ -22,6 +22,7 @@ int rocp_evt_code_to_name(unsigned int event_code, char *name, int len);
 int rocp_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
                   int num_events, rocp_ctx_t *ctx);
 int rocp_ctx_open_v2(unsigned int *events_id, int num_events, rocp_ctx_t *ctx);
+int rocp_err_get_last(const char **err_string);
 int rocp_ctx_close(rocp_ctx_t ctx);
 int rocp_ctx_start(rocp_ctx_t ctx);
 int rocp_ctx_stop(rocp_ctx_t ctx);
