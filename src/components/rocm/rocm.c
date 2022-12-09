@@ -51,6 +51,8 @@ static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
 
 static int insert_ntv_events_to_htable(void);
+static int tokenize_event_string(char *event, char **name, int *device,
+                                 int *instance);
 
 extern unsigned rocm_prof_mode;
 
@@ -644,6 +646,31 @@ insert_ntv_events_to_htable(void)
     }
 
     return papi_errno;
+}
+
+int
+tokenize_event_string(char *event, char **name, int *device, int *instance)
+{
+    const char *sep = ":=";
+
+    /* event format -> "name:device=id:instance=id" */
+    *name = strtok(event, sep);
+    if (*name == NULL) {
+        return PAPI_EMISC;
+    }
+
+    char *device_str, *instance_str;
+    device_str = (strtok(NULL, sep), strtok(NULL, sep));
+    if (device_str == NULL) {
+        return PAPI_EMISC;
+    }
+
+    instance_str = (strtok(NULL, sep), strtok(NULL, sep));
+
+    *device = atoi(device_str);
+    *instance = (instance_str) ? atoi(instance_str) : -1;
+
+    return PAPI_OK;
 }
 
 void
