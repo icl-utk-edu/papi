@@ -576,11 +576,30 @@ init_rocp_env(void)
     }
 
     if (override_hsa_tools_lib) {
+        /* Account for change of librocprofiler64.so file location in rocm-5.2.0
+         * directory structure */
         expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/rocprofiler/lib/librocprofiler64.so",
+                          "%s/lib/librocprofiler64.so",
                           rocm_root);
         if (expect > PAPI_MAX_STR_LEN) {
             SUBDBG("Error string truncated");
+        }
+
+        err = stat(pathname, &stat_info);
+        if (err < 0) {
+            expect = snprintf(pathname, PAPI_MAX_STR_LEN,
+                              "%s/rocprofiler/lib/libprofiler64.so",
+                              rocm_root);
+            if (expect > PAPI_MAX_STR_LEN) {
+                SUBDBG("Error string truncated");
+            }
+
+            err = stat(pathname, &stat_info);
+            if (err < 0) {
+                ROCP_REC_ERR_STR("Rocprofiler librocprofiler64.so file not "
+                                 "found.");
+                return PAPI_EMISC;
+            }
         }
 
         setenv("HSA_TOOLS_LIB", pathname, 1);
@@ -596,8 +615,10 @@ init_rocp_env(void)
     }
 
     if (override_rocp_metrics) {
+        /* Account for change of metrics file location in rocm-5.2.0
+         * directory structure */
         expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/rocprofiler/lib/metrics.xml",
+                          "%s/lib/rocprofiler/metrics.xml",
                           rocm_root);
         if (expect > PAPI_MAX_STR_LEN) {
             SUBDBG("Error string truncated");
@@ -605,10 +626,8 @@ init_rocp_env(void)
 
         err = stat(pathname, &stat_info);
         if (err < 0) {
-            /* Account for change of metrics file location in rocm-5.2.0
-             * directory structure */
             expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                              "%s/lib/rocprofiler/metrics.xml",
+                              "%s/rocprofiler/lib/metrics.xml",
                               rocm_root);
             if (expect > PAPI_MAX_STR_LEN) {
                 SUBDBG("Error string truncated");
