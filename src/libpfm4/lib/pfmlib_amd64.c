@@ -181,12 +181,10 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
 	} else if (cfg->family == 22) { /* family 16h */
 		rev = PFM_PMU_AMD64_FAM16H;
 	} else if (cfg->family == 25) { /* family 19h */
-                switch (cfg->model) {
-                case 1:
-                        rev = PFM_PMU_AMD64_FAM19H_ZEN3;
-			break;
-                default:
-                       ;
+                if (cfg->model <= 0x0f || (cfg->model >= 0x20 && cfg->model <= 0x5f)) {
+                  rev = PFM_PMU_AMD64_FAM19H_ZEN3;
+		} else if (cfg->model == 17) {
+                        rev = PFM_PMU_AMD64_FAM19H_ZEN4;
                 }
         }
 

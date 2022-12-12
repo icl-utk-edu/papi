@@ -256,6 +256,7 @@ extern pfmlib_pmu_t amd64_fam17h_deprecated_support;
 extern pfmlib_pmu_t amd64_fam17h_zen1_support;
 extern pfmlib_pmu_t amd64_fam17h_zen2_support;
 extern pfmlib_pmu_t amd64_fam19h_zen3_support;
+extern pfmlib_pmu_t amd64_fam19h_zen4_support;
 extern pfmlib_pmu_t amd64_fam19h_zen3_l3_support;
 extern pfmlib_pmu_t amd64_rapl_support;
 extern pfmlib_pmu_t intel_p6_support;
