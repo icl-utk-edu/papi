@@ -4,7 +4,7 @@
       program clockres
       IMPLICIT integer (p)
 
-      INTEGER*8 elapsed_usec(ITERS), elapsed_cyc(ITERS)
+      integer*8, allocatable, dimension(:) :: elapsed_usec, elapsed_cyc
       INTEGER*8 total_usec, total_cyc
       INTEGER i,handle
       INTEGER retval
@@ -16,6 +16,8 @@
       total_usec=0
       total_cyc=0
       handle=0
+      allocate(elapsed_usec(ITERS))
+      allocate(elapsed_cyc(ITERS))
 
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
@@ -52,5 +54,6 @@
       print *,'PAPIf_get_real_usec: ',(total_usec/(ITERS-1))
       end if
 
+      deallocate(elapsed_usec, elapsed_cyc)
       call ftests_pass(__FILE__)
       end
