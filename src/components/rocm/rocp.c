@@ -178,8 +178,8 @@ static int init_event_table(void);
 static int unload_hsa_sym(void);
 static int unload_rocp_sym(void);
 static int init_agent_array(void);
-static int sampling_ctx_open_v2(unsigned int *, int, rocp_ctx_t *);
-static int intercept_ctx_open_v2(unsigned int *, int, rocp_ctx_t *);
+static int sampling_ctx_open(unsigned int *, int, rocp_ctx_t *);
+static int intercept_ctx_open(unsigned int *, int, rocp_ctx_t *);
 static int sampling_ctx_close(rocp_ctx_t);
 static int intercept_ctx_close(rocp_ctx_t);
 static int sampling_ctx_start(rocp_ctx_t);
@@ -334,13 +334,13 @@ rocp_err_get_last(const char **err_string)
 }
 
 int
-rocp_ctx_open_v2(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+rocp_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
-        return sampling_ctx_open_v2(events_id, num_events, rocp_ctx);
+        return sampling_ctx_open(events_id, num_events, rocp_ctx);
     }
 
-    return intercept_ctx_open_v2(events_id, num_events, rocp_ctx);
+    return intercept_ctx_open(events_id, num_events, rocp_ctx);
 }
 
 int
@@ -748,12 +748,12 @@ init_event_table(void)
         ROCP_CALL((*rocp_iterate_infoPtr)(&agent_arr.agents[i],
                                           ROCPROFILER_INFO_KIND_METRIC,
                                           &count_ntv_events_cb,
-                                          &ntv_table_p->count),
+                                          &ntv_table.count),
                   { ROCP_GET_ERR_STR(); goto fn_fail; });
     }
 
-    ntv_table_p->events = papi_calloc(ntv_table_p->count, sizeof(ntv_event_t));
-    assert(ntv_table_p->events);
+    ntv_table.events = papi_calloc(ntv_table.count, sizeof(ntv_event_t));
+    assert(ntv_table.events);
 
     struct ntv_arg arg;
     arg.count = 0;
@@ -818,9 +818,9 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
 {
     struct ntv_arg *arg = (struct ntv_arg *) ntv_arg;
     const int instances = info.metric.instances;
-    int capacity = ntv_table_p->count;
+    int capacity = ntv_table.count;
     int *count = &arg->count;
-    ntv_event_t *events = ntv_table_p->events;
+    ntv_event_t *events = ntv_table.events;
     int instance;
 
     if (*count + instances > capacity) {
@@ -874,8 +874,8 @@ static int ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
 
 int
-sampling_ctx_open_v2(unsigned int *events_id, int num_events,
-                     rocp_ctx_t *rocp_ctx)
+sampling_ctx_open(unsigned int *events_id, int num_events,
+                  rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
 
@@ -1426,8 +1426,8 @@ static int intercept_ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int intercept_ctx_finalize(rocp_ctx_t *);
 
 int
-intercept_ctx_open_v2(unsigned int *events_id, int num_events,
-                      rocp_ctx_t *rocp_ctx)
+intercept_ctx_open(unsigned int *events_id, int num_events,
+                   rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
 
