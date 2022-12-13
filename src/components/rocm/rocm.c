@@ -74,7 +74,7 @@ typedef struct {
     unsigned int overflow_signal;
     unsigned int attached;
     int component_id;
-    int *events_id;
+    unsigned int *events_id;
     rocp_ctx_t rocp_ctx;
 } rocm_control_t;
 
@@ -351,18 +351,18 @@ update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
 {
     int papi_errno = PAPI_OK;
     int i, j;
-    int *events_id = NULL;
+    unsigned int *events_id = NULL;
     int num_events = 0;
 
     for (i = 0; i < ntv_count; ++i) {
-        unsigned ntv_id = (unsigned) ntv_info[i].ni_event;
+        unsigned int ntv_id = (unsigned) ntv_info[i].ni_event;
         const char *ntv_name = ctx->ntv_table->events[ntv_id].name;
         unsigned ntv_dev = ctx->ntv_table->events[ntv_id].ntv_dev;
 
         for (j = 0; j < num_events; ++j) {
-            int ctl_ntv_id = events_id[j];
+            unsigned int ctl_ntv_id = events_id[j];
             char *ctl_ntv_name = ctx->ntv_table->events[ctl_ntv_id].name;
-            unsigned ctl_ntv_dev =
+            unsigned int ctl_ntv_dev =
                 ctx->ntv_table->events[ctl_ntv_id].ntv_dev;
 
             if (strcmp(ctl_ntv_name, ntv_name) == 0 &&
@@ -377,7 +377,7 @@ update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
         if (j == num_events) {
             ntv_info[i].ni_position = j;
 
-            events_id = papi_realloc(events_id, ++num_events * sizeof(int));
+            events_id = papi_realloc(events_id, ++num_events * sizeof(*events_id));
             if (events_id == NULL) {
                 SUBDBG("Cannot allocate memory for control events.");
                 goto fn_fail;
@@ -545,7 +545,7 @@ rocm_ntv_enum_events(unsigned int *event_code, int modifier)
             *event_code = 0;
             break;
         case PAPI_ENUM_EVENTS:
-            if (*event_code < ntv_table.count - 1) {
+            if (*event_code < (unsigned int) ntv_table.count - 1) {
                 ++(*event_code);
             } else {
                 papi_errno = PAPI_ENOEVNT;
@@ -567,7 +567,7 @@ rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 
     check_n_initialize();
 
-    if (event_code >= ntv_table.count) {
+    if (event_code >= (unsigned int) ntv_table.count) {
         return PAPI_EINVAL;
     }
 
@@ -604,7 +604,7 @@ rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
 
     check_n_initialize();
 
-    if (event_code >= ntv_table.count) {
+    if (event_code >= (unsigned int) ntv_table.count) {
         return PAPI_EINVAL;
     }
 
@@ -626,9 +626,10 @@ insert_ntv_events_to_htable(void)
 {
     int papi_errno = PAPI_OK;
     int htable_errno;
-    unsigned event_code;
+    unsigned int event_code;
 
-    for (event_code = 0; event_code < ntv_table.count; ++event_code) {
+    for (event_code = 0; event_code < (unsigned int) ntv_table.count;
+         ++event_code) {
         char key[PAPI_2MAX_STR_LEN] = { 0 };
 
         get_ntv_event_name(event_code, key, PAPI_2MAX_STR_LEN);

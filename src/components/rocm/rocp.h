@@ -15,12 +15,12 @@ typedef struct rocp_ctx *rocp_ctx_t;
 
 int rocp_init_environment(const char **err_string);
 int rocp_init(ntv_event_table_t *ntv_table, const char **err_string);
-int rocp_ctx_open(ntv_event_table_t *ntv_table, int *events_id,
-                  unsigned num_events, rocp_ctx_t *ctx);
+int rocp_ctx_open(ntv_event_table_t *ntv_table, unsigned int *events_id,
+                  int num_events, rocp_ctx_t *ctx);
 int rocp_ctx_close(rocp_ctx_t ctx);
 int rocp_ctx_start(rocp_ctx_t ctx);
 int rocp_ctx_stop(rocp_ctx_t ctx);
-int rocp_ctx_read(rocp_ctx_t ctx, int *events_id, long long **counts);
+int rocp_ctx_read(rocp_ctx_t ctx, unsigned int *events_id, long long **counts);
 int rocp_ctx_reset(rocp_ctx_t ctx);
 int rocp_shutdown(ntv_event_table_t *ntv_table);
 

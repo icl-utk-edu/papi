@@ -24,14 +24,14 @@
 typedef struct {
     char *name;
     char *descr;
-    unsigned ntv_dev;
-    unsigned ntv_id;
+    unsigned int ntv_dev;
+    unsigned int ntv_id;
     int instance;
 } ntv_event_t;
 
 typedef struct ntv_event_table {
     ntv_event_t *events;
-    unsigned count;
+    int count;
 } ntv_event_table_t;
 
 extern unsigned _rocm_lock;
