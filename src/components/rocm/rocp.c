@@ -1369,11 +1369,6 @@ get_user_counter_id(rocp_ctx_t rocp_ctx, int j)
  * rocp_ctx_{open,close,start,stop,read,reset} intercept mode utility functions
  *
  */
-typedef struct cb_dispatch_counter {
-    unsigned long tid;                               /* id of owning thread */
-    int *count;                                      /* pointer to rocp_ctx dispatch counter */
-} cb_dispatch_counter_t;
-
 typedef struct cb_context_node {
     unsigned long tid;
     long long *counters;
@@ -1390,9 +1385,6 @@ static struct {
                                                      mode */
     int feature_count;                            /* number of rocm features monitored
                                                      in intercept mode */
-    cb_dispatch_counter_t *dispatch_count_arr;    /* array containing, for each
-                                                     active thread, the number
-                                                     of kernel dispatches done */
     int active_thread_count;                      /* # threads that launched kernel
                                                      evices in intercept mode */
     int kernel_count;                             /* # number of kernels currently
@@ -1403,7 +1395,6 @@ static struct {
 #define INTERCEPT_EVENTS_COUNT       (intercept_global_state.events_count)
 #define INTERCEPT_ROCP_FEATURES      (intercept_global_state.features)
 #define INTERCEPT_ROCP_FEATURE_COUNT (intercept_global_state.feature_count)
-#define INTERCEPT_DISPATCH_COUNT_ARR (intercept_global_state.dispatch_count_arr)
 #define INTERCEPT_ACTIVE_THR_COUNT   (intercept_global_state.active_thread_count)
 #define INTERCEPT_KERNEL_COUNT       (intercept_global_state.kernel_count)
 
@@ -1904,40 +1895,19 @@ int
 register_dispatch_counter(unsigned long tid, int *counter)
 {
     int papi_errno = PAPI_OK;
+    int htable_errno = HTABLE_SUCCESS;
+    char key[PAPI_MIN_STR_LEN] = { 0 };
 
-    if (INTERCEPT_DISPATCH_COUNT_ARR) {
-        int i;
-        for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
-            if (INTERCEPT_DISPATCH_COUNT_ARR[i].tid == tid) {
-                SUBDBG("Trying to PAPI_start an eventset that has not been "
-                       "PAPI_stop'ed");
-                papi_errno = PAPI_ECNFLCT;
-                goto fn_exit;
-            }
-        }
-
-        INTERCEPT_DISPATCH_COUNT_ARR =
-            papi_realloc(INTERCEPT_DISPATCH_COUNT_ARR,
-                         ++INTERCEPT_ACTIVE_THR_COUNT *
-                         sizeof(*INTERCEPT_DISPATCH_COUNT_ARR));
-        if (INTERCEPT_DISPATCH_COUNT_ARR == NULL) {
-            papi_errno = PAPI_ENOMEM;
-            goto fn_exit;
-        }
-        INTERCEPT_DISPATCH_COUNT_ARR[INTERCEPT_ACTIVE_THR_COUNT - 1].tid = tid;
-        INTERCEPT_DISPATCH_COUNT_ARR[INTERCEPT_ACTIVE_THR_COUNT - 1].count = counter;
+    /* FIXME: probably better using a different hash table for this */
+    sprintf(key, "%lu", tid);
+    int *counter_p;
+    htable_errno = htable_find(htable, key, (void **) &counter_p);
+    if (htable_errno == HTABLE_SUCCESS) {
+        papi_errno = PAPI_EMISC;
         goto fn_exit;
     }
 
-    INTERCEPT_DISPATCH_COUNT_ARR =
-        papi_calloc(1, sizeof(*INTERCEPT_DISPATCH_COUNT_ARR));
-    if (INTERCEPT_DISPATCH_COUNT_ARR == NULL) {
-        papi_errno = PAPI_ENOMEM;
-        goto fn_exit;
-    }
-
-    INTERCEPT_DISPATCH_COUNT_ARR[INTERCEPT_ACTIVE_THR_COUNT].tid = tid;
-    INTERCEPT_DISPATCH_COUNT_ARR[INTERCEPT_ACTIVE_THR_COUNT].count = counter;
+    htable_insert(htable, (const char *) key, counter);
     ++INTERCEPT_ACTIVE_THR_COUNT;
 
   fn_exit:
@@ -1948,35 +1918,18 @@ int
 unregister_dispatch_counter(unsigned long tid)
 {
     int papi_errno = PAPI_OK;
+    int htable_errno = HTABLE_SUCCESS;
+    char key[PAPI_MIN_STR_LEN] = { 0 };
 
-    if (INTERCEPT_ACTIVE_THR_COUNT == 1) {
-        assert(INTERCEPT_DISPATCH_COUNT_ARR[0].tid == tid);
-        papi_free(INTERCEPT_DISPATCH_COUNT_ARR);
-        INTERCEPT_DISPATCH_COUNT_ARR = NULL;
-        INTERCEPT_ACTIVE_THR_COUNT = 0;
-        return papi_errno;
-    }
-
-    cb_dispatch_counter_t *tmp =
-        papi_calloc(INTERCEPT_ACTIVE_THR_COUNT - 1,
-                    sizeof(*tmp));
-    if (tmp == NULL) {
-        papi_errno = PAPI_ENOMEM;
+    sprintf(key, "%lu", tid);
+    int *counter_p;
+    htable_errno = htable_find(htable, (const char *) key, (void **) &counter_p);
+    if (htable_errno != HTABLE_SUCCESS) {
+        papi_errno = PAPI_EMISC;
         goto fn_exit;
     }
 
-    int i, j = 0;
-    for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
-        if (INTERCEPT_DISPATCH_COUNT_ARR[i].tid != tid) {
-            tmp[j].tid = INTERCEPT_DISPATCH_COUNT_ARR[i].tid;
-            tmp[j].count = INTERCEPT_DISPATCH_COUNT_ARR[i].count;
-            ++j;
-        }
-    }
-
-    papi_free(INTERCEPT_DISPATCH_COUNT_ARR);
-    INTERCEPT_DISPATCH_COUNT_ARR = tmp;
-
+    htable_delete(htable, (const char *) key);
     --INTERCEPT_ACTIVE_THR_COUNT;
 
   fn_exit:
@@ -2144,30 +2097,35 @@ put_context_node(unsigned int dev_id, cb_context_node_t *n)
 int
 increment_and_fetch_dispatch_counter(unsigned long tid)
 {
-    int i;
+    int htable_errno = HTABLE_SUCCESS;
+    char key[PAPI_MIN_STR_LEN] = { 0 };
 
-    for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
-        if (INTERCEPT_DISPATCH_COUNT_ARR[i].tid == tid) {
-            ++(*INTERCEPT_DISPATCH_COUNT_ARR[i].count);
-            break;
-        }
+    sprintf(key, "%lu", tid);
+    int *counter_p;
+    htable_errno = htable_find(htable, (const char *) key,
+                               (void **) &counter_p);
+    if (htable_errno != HTABLE_SUCCESS) {
+        return 0;
     }
 
-    return (i == INTERCEPT_ACTIVE_THR_COUNT) ?
-        -1 : *INTERCEPT_DISPATCH_COUNT_ARR[i].count;
+    return ++(*counter_p);
 }
 
 int
 fetch_dispatch_counter(unsigned long tid)
 {
-    int i;
-    for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
-        if (INTERCEPT_DISPATCH_COUNT_ARR[i].tid == tid) {
-            break;
-        }
+    int htable_errno = HTABLE_SUCCESS;
+    char key[PAPI_MIN_STR_LEN] = { 0 };
+
+    sprintf(key, "%lu", tid);
+    int *counter_p;
+    htable_errno = htable_find(htable, (const char *) key,
+                               (void **) &counter_p);
+    if (htable_errno != HTABLE_SUCCESS) {
+        return 0;
     }
-    assert(i < INTERCEPT_ACTIVE_THR_COUNT);
-    return *INTERCEPT_DISPATCH_COUNT_ARR[i].count;
+
+    return (*counter_p);
 }
 
 int
@@ -2202,16 +2160,18 @@ get_context_node(int dev_id, cb_context_node_t **n)
 int
 decrement_and_fetch_dispatch_counter(unsigned long tid)
 {
-    int i;
-    for (i = 0; i < INTERCEPT_ACTIVE_THR_COUNT; ++i) {
-        if (INTERCEPT_DISPATCH_COUNT_ARR[i].tid == tid) {
-            --(*INTERCEPT_DISPATCH_COUNT_ARR[i].count);
-            break;
-        }
+    int htable_errno = HTABLE_SUCCESS;
+    char key[PAPI_MIN_STR_LEN] = { 0 };
+
+    sprintf(key, "%lu", tid);
+    int *counter_p;
+    htable_errno = htable_find(htable, (const char *) key,
+                               (void **) &counter_p);
+    if (htable_errno != HTABLE_SUCCESS) {
+        return 0;
     }
 
-    return (i == INTERCEPT_ACTIVE_THR_COUNT) ?
-        -1 : *INTERCEPT_DISPATCH_COUNT_ARR[i].count;
+    return --(*counter_p);
 }
 
 int
