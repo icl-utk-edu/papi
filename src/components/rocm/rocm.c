@@ -49,9 +49,6 @@ static int rocm_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
 
-static int tokenize_event_string(char *event, char **name, int *device,
-                                 int *instance);
-
 extern unsigned rocm_prof_mode;
 
 typedef struct {
@@ -354,78 +351,27 @@ update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
                      int ntv_count)
 {
     int papi_errno = PAPI_OK;
-    int i, j;
-    unsigned int *events_id = NULL;
-    int num_events = 0;
+    int i;
+
+    if (ntv_count != ctl->num_events) {
+        ctl->events_id = papi_realloc(ctl->events_id,
+                                      ntv_count * sizeof(*ctl->events_id));
+        if (ctl->events_id == NULL) {
+            papi_errno = PAPI_ENOMEM;
+            goto fn_fail;
+        }
+
+        ctl->num_events = ntv_count;
+    }
 
     for (i = 0; i < ntv_count; ++i) {
-        unsigned int ntv_id = ntv_info[i].ni_event;
-        char ntv_str[PAPI_MAX_STR_LEN + 1] = { 0 };
-        papi_errno = rocp_evt_code_to_name(ntv_id, ntv_str, PAPI_MAX_STR_LEN);
-        if (papi_errno != PAPI_OK) {
-            goto fn_fail;
-        }
-
-        char *ntv_name;
-        int ntv_dev, ntv_inst;
-        papi_errno = tokenize_event_string(ntv_str, &ntv_name, &ntv_dev,
-                                           &ntv_inst);
-        if (papi_errno != PAPI_OK) {
-            goto fn_fail;
-        }
-
-        for (j = 0; j < num_events; ++j) {
-            unsigned int ctl_ntv_id = events_id[j];
-            char ctl_ntv_str[PAPI_MAX_STR_LEN + 1] = { 0 };
-            papi_errno = rocp_evt_code_to_name(ctl_ntv_id, ctl_ntv_str,
-                                               PAPI_MAX_STR_LEN);
-            if (papi_errno != PAPI_OK) {
-                goto fn_fail;
-            }
-
-            char *ctl_ntv_name;
-            int ctl_ntv_dev, ctl_ntv_inst;
-            papi_errno = tokenize_event_string(ctl_ntv_str, &ctl_ntv_name,
-                                               &ctl_ntv_dev, &ctl_ntv_inst);
-            if (papi_errno != PAPI_OK) {
-                goto fn_fail;
-            }
-
-            if (strcmp(ctl_ntv_name, ntv_name) == 0 &&
-                ctl_ntv_dev == ntv_dev) {
-                /* Do not add events that have the same name and
-                 * device as they refer to the same native rocm
-                 * event. */
-                SUBDBG("[ROCP] Event already in eventset.");
-                break;
-            }
-        }
-        if (j == num_events) {
-            ntv_info[i].ni_position = j;
-
-            events_id = papi_realloc(events_id, ++num_events * sizeof(*events_id));
-            if (events_id == NULL) {
-                SUBDBG("Cannot allocate memory for control events.");
-                papi_errno = PAPI_ENOMEM;
-                goto fn_fail;
-            }
-
-            events_id[j] = ntv_id;
-        }
+        ctl->events_id[i] = ntv_info[i].ni_event;
+        ntv_info[i].ni_position = i;
     }
-
-    if (ctl->events_id) {
-        papi_free(ctl->events_id);
-    }
-    ctl->events_id = events_id;
-    ctl->num_events = num_events;
 
   fn_exit:
     return papi_errno;
   fn_fail:
-    if (events_id) {
-        papi_free(events_id);
-    }
     ctl->num_events = 0;
     goto fn_exit;
 }
@@ -593,29 +539,4 @@ check_n_initialize(void)
     if (!_rocm_vector.cmp_info.initialized) {
         rocm_init_private();
     }
-}
-
-int
-tokenize_event_string(char *event, char **name, int *device, int *instance)
-{
-    const char *sep = ":=";
-
-    /* event format -> "name:device=id:instance=id" */
-    *name = strtok(event, sep);
-    if (*name == NULL) {
-        return PAPI_EMISC;
-    }
-
-    char *device_str, *instance_str;
-    device_str = (strtok(NULL, sep), strtok(NULL, sep));
-    if (device_str == NULL) {
-        return PAPI_EMISC;
-    }
-
-    instance_str = (strtok(NULL, sep), strtok(NULL, sep));
-
-    *device = atoi(device_str);
-    *instance = (instance_str) ? atoi(instance_str) : -1;
-
-    return PAPI_OK;
 }
