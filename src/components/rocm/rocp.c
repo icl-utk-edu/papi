@@ -1398,7 +1398,7 @@ static struct {
 #define INTERCEPT_ACTIVE_THR_COUNT   (intercept_global_state.active_thread_count)
 #define INTERCEPT_KERNEL_COUNT       (intercept_global_state.kernel_count)
 
-static int verify_events(unsigned int *, unsigned int *, int);
+static int verify_events(unsigned int *, int);
 static int init_callbacks(rocprofiler_feature_t *, int);
 static int register_dispatch_counter(unsigned long, int *);
 static int increment_and_fetch_dispatch_counter(unsigned long);
@@ -1428,11 +1428,10 @@ intercept_ctx_open(unsigned int *events_id, int num_events,
 
     _papi_hwi_lock(_rocm_lock);
 
-    int res = verify_events(events_id, INTERCEPT_EVENTS_ID, num_events);
-    if (res != 0) {
+    papi_errno = verify_events(events_id, num_events);
+    if (papi_errno != PAPI_OK) {
         SUBDBG("[ROCP intercept mode] Can only monitor one set of events "
                "per application run.");
-        papi_errno = PAPI_ECNFLCT;
         goto fn_fail;
     }
 
@@ -1644,36 +1643,26 @@ intercept_rocp_shutdown(void)
  *
  */
 int
-verify_events(unsigned int *events_id, unsigned int *cb_events_id, int num_events)
+verify_events(unsigned int *events_id, int num_events)
 {
-    int res;
-    int i, j;
+    int i;
 
     if (INTERCEPT_EVENTS_ID == NULL) {
-        return 0;
+        return PAPI_OK;
     }
 
     if (INTERCEPT_EVENTS_COUNT != num_events) {
-        return INTERCEPT_ROCP_FEATURE_COUNT - num_events;
+        return PAPI_ECNFLCT;
     }
 
-    /* brute force search is fine as an eventset will never contain more
-     * than a few tens of events */
     for (i = 0; i < num_events; ++i) {
-        char *event_name = ntv_table_p->events[events_id[i]].name;
-        for (j = 0; j < num_events; ++j) {
-            char *cb_event_name = ntv_table_p->events[cb_events_id[j]].name;
-            res = strcmp(event_name, cb_event_name);
-            if (res == 0) {
-                break;
-            }
-        }
-        if (res != 0) {
-            return res;
+        void *out;
+        if (htable_find(htable, ntv_table_p->events[events_id[i]].name, &out)) {
+            return PAPI_ECNFLCT;
         }
     }
 
-    return 0;
+    return PAPI_OK;
 }
 
 int
@@ -1722,6 +1711,11 @@ intercept_ctx_init(unsigned int *events_id, int num_events,
 
         INTERCEPT_EVENTS_COUNT = num_events;
         INTERCEPT_ROCP_FEATURE_COUNT = num_events_per_dev;
+
+        int i;
+        for (i = 0; i < num_events; ++i) {
+            htable_insert(htable, ntv_table_p->events[events_id[i]].name, NULL);
+        }
     }
 
     counters = papi_calloc(num_events, sizeof(*counters));
