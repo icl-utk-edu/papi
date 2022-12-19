@@ -190,8 +190,8 @@ static int sampling_ctx_read(rocp_ctx_t, long long **);
 static int intercept_ctx_read(rocp_ctx_t, long long **);
 static int sampling_ctx_reset(rocp_ctx_t);
 static int intercept_ctx_reset(rocp_ctx_t);
-static int sampling_rocp_shutdown(void);
-static int intercept_rocp_shutdown(void);
+static int sampling_shutdown(void);
+static int intercept_shutdown(void);
 static void init_thread_id_fn(void);
 static int evt_code_to_name(unsigned int event_code, char *name, int len);
 
@@ -397,10 +397,10 @@ int
 rocp_shutdown(void)
 {
     if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
-        return sampling_rocp_shutdown();
+        return sampling_shutdown();
     }
 
-    return intercept_rocp_shutdown();
+    return intercept_shutdown();
 }
 
 /**
@@ -1039,7 +1039,7 @@ sampling_ctx_reset(rocp_ctx_t rocp_ctx)
 static int shutdown_event_table(void);
 
 int
-sampling_rocp_shutdown(void)
+sampling_shutdown(void)
 {
     shutdown_event_table();
     htable_shutdown(htable);
@@ -1615,7 +1615,7 @@ typedef struct {
 static cb_dispatch_arg_t cb_dispatch_arg;
 
 int
-intercept_rocp_shutdown(void)
+intercept_shutdown(void)
 {
     /* calling rocprofiler_pool_close() here would cause
      * a double free runtime error. */
