@@ -207,7 +207,7 @@ main( int argc, char **argv )
 
                 for ( j = 0; j < numas; ++j ) {
                     unsigned int k, memsize;
-                    PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &memsize);
+                    PAPI_get_dev_attr(handle, j, PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE, &memsize);
                     printf( "Numa Node %u Memory                    : %uMB\n", j, memsize );
                     printf( "Numa Node %u Threads                   : ", j );
                     for (k = 0; k < numa_threads_count[j]; ++k) {
