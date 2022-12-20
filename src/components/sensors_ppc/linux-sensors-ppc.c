@@ -216,7 +216,8 @@ read_sensors_ppc_value( int index )
         case OCC_SENSOR_READING_COUNTER:
             if (OCC_SENSORS_ACCUMULATOR_TAG == midx)
                 return read_sensors_ppc_counter(s, gidx);
-            /* fallthrough: counters only return the accumulator */
+            /* fall through */
+            /* counters only return the accumulator */
         default:
             return 42;
     }
