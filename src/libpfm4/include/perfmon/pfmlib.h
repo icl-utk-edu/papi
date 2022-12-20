@@ -632,6 +632,7 @@ typedef enum {
 	PFM_PMU_INTEL_SPR,		/* Intel SapphireRapid */
 
 	PFM_PMU_POWER10,		/* IBM POWER10 */
+	PFM_PMU_AMD64_FAM19H_ZEN4,	/* AMD AMD64 Fam19h Zen4 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

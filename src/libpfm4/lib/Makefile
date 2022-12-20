@@ -258,6 +258,7 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam17h_zen1.h \
 	events/amd64_events_fam17h_zen2.h \
 	events/amd64_events_fam19h_zen3.h \
+	events/amd64_events_fam19h_zen4.h \
 	events/amd64_events_fam19h_zen3_l3.h \
 	events/amd64_events_fam16h.h	\
 	events/intel_p6_events.h	\
