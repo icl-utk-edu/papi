@@ -26,7 +26,7 @@ main( int argc, char **argv )
     int num_events=0;
     int code;
     char event_names[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
-    char event_descrs[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
+    char event_descrs[MAX_powercap_EVENTS][PAPI_HUGE_STR_LEN];
     char units[MAX_powercap_EVENTS][PAPI_MIN_STR_LEN];
     int data_type[MAX_powercap_EVENTS];
     int r,i, quiet = 1, passed = 0;
