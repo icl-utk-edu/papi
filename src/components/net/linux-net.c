@@ -178,9 +178,13 @@ generateNetEventList( void )
             }
             last = temp;
 
-            snprintf(temp->name, PAPI_MAX_STR_LEN, "%s:%s",
+            size_t str_len = strlen(ifname) + strlen(_net_counter_info[j].name) + 1;
+            str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
+            snprintf(temp->name, str_len, "%s:%s",
                     ifname, _net_counter_info[j].name);
-            snprintf(temp->description, PAPI_MAX_STR_LEN, "%s %s",
+            str_len = strlen(ifname) + strlen(_net_counter_info[j].description) + 1;
+            str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
+            snprintf(temp->description, str_len, "%s %s",
                     ifname, _net_counter_info[j].description);
 
             count++;
