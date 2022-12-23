@@ -178,9 +178,13 @@ generateNetEventList( void )
             }
             last = temp;
 
-            snprintf(temp->name, PAPI_MAX_STR_LEN, "%s:%s",
+            size_t str_len = strlen(ifname) + strlen(_net_counter_info[j].name) + 1;
+            str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
+            snprintf(temp->name, str_len, "%s:%s",
                     ifname, _net_counter_info[j].name);
-            snprintf(temp->description, PAPI_MAX_STR_LEN, "%s %s",
+            str_len = strlen(ifname) + strlen(_net_counter_info[j].description) + 1;
+            str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
+            snprintf(temp->description, str_len, "%s %s",
                     ifname, _net_counter_info[j].description);
 
             count++;
@@ -339,10 +343,8 @@ _net_init_component( int cidx  )
     _net_native_events = (NET_native_event_entry_t*)
         papi_malloc(sizeof(NET_native_event_entry_t) * num_events);
     do {
-        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN-1);
-        _net_native_events[i].name[PAPI_MAX_STR_LEN-1] = '\0';
-        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN-1);
-        _net_native_events[i].description[PAPI_MAX_STR_LEN-1] = '\0';
+        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN);
+        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN);
         _net_native_events[i].resources.selector = i + 1;
         last    = t;
         t       = t->next;
