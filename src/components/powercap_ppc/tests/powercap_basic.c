@@ -26,7 +26,7 @@ main( int argc, char **argv )
     int num_events=0;
     int code;
     char event_names[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
-    char event_descrs[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
+    char event_descrs[MAX_powercap_EVENTS][PAPI_HUGE_STR_LEN];
     char units[MAX_powercap_EVENTS][PAPI_MIN_STR_LEN];
     int data_type[MAX_powercap_EVENTS];
     int r,i, quiet = 1, passed = 0;
@@ -89,10 +89,8 @@ main( int argc, char **argv )
         if ( retval != PAPI_OK )
             fprintf(stderr, "Error getting event info\n");
 
-        strncpy( event_descrs[num_events],evinfo.long_descr,sizeof( event_descrs[0] )-1 );
-        strncpy( units[num_events],evinfo.units,sizeof( units[0] )-1 );
-        // buffer must be null terminated to safely use strstr operation on it below
-        units[num_events][sizeof( units[0] )-1] = '\0';
+        strncpy( event_descrs[num_events],evinfo.long_descr,sizeof( event_descrs[0] ) );
+        strncpy( units[num_events],evinfo.units,sizeof( units[0] ) );
         data_type[num_events] = evinfo.data_type;
 
         retval = PAPI_add_event( EventSet, code );
