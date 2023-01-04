@@ -205,12 +205,14 @@ static ntv_event_table_t ntv_table;
 static ntv_event_table_t *ntv_table_p;
 static void *htable;
 
+/* rocp_init_environment - initialize ROCm environment variables */
 int
 rocp_init_environment(void)
 {
     return init_rocp_env();
 }
 
+/* rocp_init - load runtime and profiling symbols, init runtime and profiling */
 int
 rocp_init(void)
 {
@@ -261,6 +263,7 @@ rocp_init(void)
     goto fn_exit;
 }
 
+/* rocp_evt_enum - enumerate native events */
 int
 rocp_evt_enum(unsigned int *event_code, int modifier)
 {
@@ -287,6 +290,7 @@ rocp_evt_enum(unsigned int *event_code, int modifier)
     return papi_errno;
 }
 
+/* rocp_evt_get_descr - return descriptor string for event_code */
 int
 rocp_evt_get_descr(unsigned int event_code, char *descr, int len)
 {
@@ -298,6 +302,7 @@ rocp_evt_get_descr(unsigned int event_code, char *descr, int len)
     return PAPI_OK;
 }
 
+/* rocp_evt_name_to_code - convert native event name to code */
 int
 rocp_evt_name_to_code(const char *name, unsigned int *event_code)
 {
@@ -317,6 +322,7 @@ rocp_evt_name_to_code(const char *name, unsigned int *event_code)
     return papi_errno;
 }
 
+/* rocp_evt_code_to_name - convert native event code to name */
 int
 rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
 {
@@ -326,6 +332,7 @@ rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
     return evt_code_to_name(event_code, name, len);
 }
 
+/* rocp_err_get_last - get error string for last occured error */
 int
 rocp_err_get_last(const char **err_string)
 {
@@ -333,6 +340,7 @@ rocp_err_get_last(const char **err_string)
     return PAPI_OK;
 }
 
+/* rocp_ctx_open - open a profiling context for the requested events */
 int
 rocp_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
@@ -343,6 +351,7 @@ rocp_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     return intercept_ctx_open(events_id, num_events, rocp_ctx);
 }
 
+/* rocp_ctx_close - close profiling context */
 int
 rocp_ctx_close(rocp_ctx_t rocp_ctx)
 {
@@ -353,6 +362,7 @@ rocp_ctx_close(rocp_ctx_t rocp_ctx)
     return intercept_ctx_close(rocp_ctx);
 }
 
+/* rocp_ctx_start - start monitoring events associated to profiling context */
 int
 rocp_ctx_start(rocp_ctx_t rocp_ctx)
 {
@@ -363,6 +373,7 @@ rocp_ctx_start(rocp_ctx_t rocp_ctx)
     return intercept_ctx_start(rocp_ctx);
 }
 
+/* rocp_ctx_stop - stop monitoring events associated to profiling context */
 int
 rocp_ctx_stop(rocp_ctx_t rocp_ctx)
 {
@@ -373,6 +384,7 @@ rocp_ctx_stop(rocp_ctx_t rocp_ctx)
     return intercept_ctx_stop(rocp_ctx);
 }
 
+/* rocp_ctx_read - read counters for events associated to profiling context */
 int
 rocp_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
@@ -383,6 +395,7 @@ rocp_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
     return intercept_ctx_read(rocp_ctx, counts);
 }
 
+/* rocp_ctx_reset - reset counters for events associated to profiling context */
 int
 rocp_ctx_reset(rocp_ctx_t rocp_ctx)
 {
@@ -393,6 +406,7 @@ rocp_ctx_reset(rocp_ctx_t rocp_ctx)
     return intercept_ctx_reset(rocp_ctx);
 }
 
+/* rocp_shutdown - shutdown runtime and profiling, unload runtime and profiling symbols */
 int
 rocp_shutdown(void)
 {
