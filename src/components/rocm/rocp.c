@@ -48,7 +48,6 @@ struct rocp_ctx {
             rocprofiler_t **contexts;        /* rocprofiler context array for multiple device monitoring */
             unsigned int *devs_id;           /* list of monitored device ids */
             int devs_count;                  /* number of monitored devices */
-            unsigned int *sorted_events_id;  /* list of event ids sorted by device */
         } sampling;
     } u;
 };
@@ -852,13 +851,11 @@ static struct {
 
 static int get_target_devs_id(unsigned int *, int, unsigned int **, int *);
 static int target_devs_avail(unsigned int *, int);
-static int sort_events(unsigned int *, int, unsigned int *);
 static int init_features(unsigned int *, int, rocprofiler_feature_t *);
 static int sampling_ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
-static int get_user_counter_id(rocp_ctx_t, int);
 static int ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
 
@@ -982,8 +979,7 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
         long long *counters = rocp_ctx->u.sampling.counters;
 
         for (j = 0; j < dev_feature_count; ++j) {
-            int sorted_event_id = (i * dev_feature_count) + j;
-            k = get_user_counter_id(rocp_ctx, sorted_event_id);
+            k = (i * dev_feature_count) + j;
             switch(dev_features[j].data.kind) {
                 case ROCPROFILER_DATA_KIND_INT32:
                     counters[k] = (long long) dev_features[j].data.result_int32;
@@ -1068,7 +1064,6 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     int papi_errno = PAPI_OK;
     int num_devs;
     unsigned int *devs_id = NULL;
-    unsigned int *sorted_events_id = NULL;
     rocprofiler_feature_t *features = NULL;
     rocprofiler_t **contexts = NULL;
     long long *counters = NULL;
@@ -1098,27 +1093,13 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         goto fn_fail;
     }
 
-    /* Events can be added to eventsets in any order. When contexts are opened
-     * the feature array has to contain events ordered by device. For this
-     * reason we need to remap events from the user order to device order. */
-    sorted_events_id = papi_malloc(num_events * sizeof(int));
-    if (sorted_events_id == NULL) {
-        papi_errno = PAPI_ENOMEM;
-        goto fn_fail;
-    }
-
     counters = papi_malloc(num_events * sizeof(*counters));
     if (counters == NULL) {
         papi_errno = PAPI_ENOMEM;
         goto fn_fail;
     }
 
-    papi_errno = sort_events(events_id, num_events, sorted_events_id);
-    if (papi_errno != PAPI_OK) {
-        goto fn_fail;
-    }
-
-    papi_errno = init_features(sorted_events_id, num_events, features);
+    papi_errno = init_features(events_id, num_events, features);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1133,7 +1114,6 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     (*rocp_ctx)->u.sampling.features = features;
     (*rocp_ctx)->u.sampling.feature_count = num_events;
     (*rocp_ctx)->u.sampling.contexts = contexts;
-    (*rocp_ctx)->u.sampling.sorted_events_id = sorted_events_id;
     (*rocp_ctx)->u.sampling.counters = counters;
     (*rocp_ctx)->u.sampling.devs_id = devs_id;
     (*rocp_ctx)->u.sampling.devs_count = num_devs;
@@ -1149,9 +1129,6 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     }
     if (features) {
         papi_free(features);
-    }
-    if (sorted_events_id) {
-        papi_free(sorted_events_id);
     }
     if (counters) {
         papi_free(counters);
@@ -1176,10 +1153,6 @@ sampling_ctx_finalize(rocp_ctx_t *rocp_ctx)
 
     if ((*rocp_ctx)->u.sampling.contexts) {
         papi_free((*rocp_ctx)->u.sampling.contexts);
-    }
-
-    if ((*rocp_ctx)->u.sampling.sorted_events_id) {
-        papi_free((*rocp_ctx)->u.sampling.sorted_events_id);
     }
 
     if ((*rocp_ctx)->u.sampling.counters) {
@@ -1304,20 +1277,6 @@ int target_devs_avail(unsigned int *devs_id, int num_devs)
     return PAPI_OK;
 }
 
-static int
-compare(const void *a, const void *b)
-{
-    return (*(int *) a - *(int *) b);
-}
-
-int
-sort_events(unsigned int *events_id, int num_events, unsigned int *sorted_events_id)
-{
-    memcpy(sorted_events_id, events_id, num_events * sizeof(unsigned int));
-    qsort(sorted_events_id, num_events, sizeof(unsigned int), compare);
-    return PAPI_OK;
-}
-
 int
 init_features(unsigned int *events_id, int num_events,
               rocprofiler_feature_t *features)
@@ -1333,25 +1292,6 @@ init_features(unsigned int *events_id, int num_events,
     }
 
     return papi_errno;
-}
-
-/**
- * sampling_ctx_read utility functions
- *
- */
-int
-get_user_counter_id(rocp_ctx_t rocp_ctx, int j)
-{
-    int i;
-    unsigned int curr_event_id = rocp_ctx->u.sampling.sorted_events_id[j];
-    for (i = 0; i < rocp_ctx->u.sampling.feature_count; ++i) {
-        unsigned int counter_event_id = rocp_ctx->u.sampling.events_id[i];
-        if (counter_event_id == curr_event_id) {
-            break;
-        }
-    }
-
-    return i;
 }
 
 /**
@@ -1677,10 +1617,7 @@ intercept_ctx_init(unsigned int *events_id, int num_events,
             goto fn_fail;
         }
 
-        papi_errno = sort_events(events_id, num_events, INTERCEPT_EVENTS_ID);
-        if (papi_errno != PAPI_OK) {
-            goto fn_fail;
-        }
+        memcpy(INTERCEPT_EVENTS_ID, events_id, num_events * sizeof(unsigned int));
 
         /* FIXME: assuming the same number of events per device might not be an
          *        always valid assumption */

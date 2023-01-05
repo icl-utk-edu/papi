@@ -346,12 +346,25 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
     return try_open_events(rocm_ctl);
 }
 
+struct event_map_item {
+    int event_id;
+    int frontend_idx;
+};
+
+static int
+compare(const void *a, const void *b)
+{
+    struct event_map_item *A = (struct event_map_item *) a;
+    struct event_map_item *B = (struct event_map_item *) b;
+    return  A->event_id - B->event_id;
+}
+
 int
 update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
                      int ntv_count)
 {
     int papi_errno = PAPI_OK;
-    int i;
+    struct event_map_item sorted_events[PAPI_ROCM_MAX_COUNTERS];
 
     if (ntv_count != ctl->num_events) {
         ctl->events_id = papi_realloc(ctl->events_id,
@@ -364,9 +377,17 @@ update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
         ctl->num_events = ntv_count;
     }
 
+    int i;
     for (i = 0; i < ntv_count; ++i) {
-        ctl->events_id[i] = ntv_info[i].ni_event;
-        ntv_info[i].ni_position = i;
+        sorted_events[i].event_id = ntv_info[i].ni_event;
+        sorted_events[i].frontend_idx = i;
+    }
+
+    qsort(sorted_events, ntv_count, sizeof(struct event_map_item), compare);
+
+    for (i = 0; i < ntv_count; ++i) {
+        ctl->events_id[i] = sorted_events[i].event_id;
+        ntv_info[sorted_events[i].frontend_idx].ni_position = i;
     }
 
   fn_exit:
