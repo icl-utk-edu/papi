@@ -69,7 +69,7 @@ pfmlib_pmu_t amd64_fam19h_zen4_support={
 	.pe		        = amd64_fam19h_zen4_pe,
 	.atdesc			= amd64_mods,
 	.flags			= PFMLIB_PMU_FL_RAW_UMASK,
-	.cpu_family		= PFM_PMU_AMD64_FAM19H_ZEN3,
+	.cpu_family		= PFM_PMU_AMD64_FAM19H_ZEN4,
 	.pmu_detect		= pfm_amd64_family_detect,
 	.get_event_encoding[PFM_OS_NONE] = pfm_amd64_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_amd64_get_perf_encoding),
