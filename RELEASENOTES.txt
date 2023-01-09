@@ -6,6 +6,20 @@ in this directory.
 
 
 ===============================================================================
+PAPI 7.0.1 RELEASE NOTES                                            22 Feb 2023
+===============================================================================
+
+This is a minor release of PAPI. It introduces the following changes:
+
+* Support for AMD Zen4 CPUs in libpfm4
+* Support for ARM Neoverse V1 and V2 in libpfm4
+* Fix a build error encountered when building the library with gcc 10 and later
+* Resolve build warnings across different components
+* Fix bug in the ROCm component when monitoring multiple GPUs in sampling mode
+* Refactor ROCm component to simplify code and prepare it for rocmtools support
+* Refactor ROCm SMI component and support XGMI events
+
+===============================================================================
 PAPI 7.0.0 RELEASE NOTES                                            14 Nov 2022
 ===============================================================================
 
