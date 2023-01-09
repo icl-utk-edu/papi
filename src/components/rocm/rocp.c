@@ -858,6 +858,7 @@ static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
 static int ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
+static int ctx_get_dev_feature_count(rocp_ctx_t, unsigned int);
 
 int
 sampling_ctx_open(unsigned int *events_id, int num_events,
@@ -961,8 +962,11 @@ sampling_ctx_stop(rocp_ctx_t rocp_ctx)
 int
 sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
-    int i, j, k;
+    int i, j, k = 0;
+    int dev_feature_offset = 0;
+    unsigned int *devs_id = rocp_ctx->u.sampling.devs_id;
     int dev_count = rocp_ctx->u.sampling.devs_count;
+    rocprofiler_feature_t *features = rocp_ctx->u.sampling.features;
 
     for (i = 0; i < dev_count; ++i) {
         ROCP_CALL((*rocp_readPtr)(rocp_ctx->u.sampling.contexts[i], 0),
@@ -972,31 +976,29 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
         ROCP_CALL((*rocp_get_metricsPtr)(rocp_ctx->u.sampling.contexts[i]),
                   return PAPI_EMISC);
 
-        int dev_feature_count =
-            rocp_ctx->u.sampling.feature_count / dev_count;
-        rocprofiler_feature_t *dev_features =
-            rocp_ctx->u.sampling.features + (i * dev_feature_count);
+        int dev_feature_count = ctx_get_dev_feature_count(rocp_ctx, devs_id[i]);
+        rocprofiler_feature_t *dev_features = features + dev_feature_offset;
         long long *counters = rocp_ctx->u.sampling.counters;
 
         for (j = 0; j < dev_feature_count; ++j) {
-            k = (i * dev_feature_count) + j;
             switch(dev_features[j].data.kind) {
                 case ROCPROFILER_DATA_KIND_INT32:
-                    counters[k] = (long long) dev_features[j].data.result_int32;
+                    counters[k++] = (long long) dev_features[j].data.result_int32;
                     break;
                 case ROCPROFILER_DATA_KIND_INT64:
-                    counters[k] = dev_features[j].data.result_int64;
+                    counters[k++] = dev_features[j].data.result_int64;
                     break;
                 case ROCPROFILER_DATA_KIND_FLOAT:
-                    counters[k] = (long long) dev_features[j].data.result_float;
+                    counters[k++] = (long long) dev_features[j].data.result_float;
                     break;
                 case ROCPROFILER_DATA_KIND_DOUBLE:
-                    counters[k] = (long long) dev_features[j].data.result_double;
+                    counters[k++] = (long long) dev_features[j].data.result_double;
                     break;
                 default:
                     return PAPI_EMISC;
             }
         }
+        dev_feature_offset += dev_feature_count;
     }
     *counts = rocp_ctx->u.sampling.counters;
 
@@ -1175,14 +1177,14 @@ ctx_open(rocp_ctx_t rocp_ctx)
     int papi_errno = PAPI_OK;
     int i, j;
     rocprofiler_feature_t *features = rocp_ctx->u.sampling.features;
-    int feature_count = rocp_ctx->u.sampling.feature_count;
+    int dev_feature_offset = 0;
     unsigned int *devs_id = rocp_ctx->u.sampling.devs_id;
     int dev_count = rocp_ctx->u.sampling.devs_count;
     rocprofiler_t **contexts = rocp_ctx->u.sampling.contexts;
 
     for (i = 0; i < dev_count; ++i) {
-        int dev_feature_count = feature_count / dev_count;
-        rocprofiler_feature_t *dev_features = features + (i * dev_feature_count);
+        int dev_feature_count = ctx_get_dev_feature_count(rocp_ctx, devs_id[i]);
+        rocprofiler_feature_t *dev_features = features + dev_feature_offset;
 
         const uint32_t mode =
             (SAMPLING_FETCH_AND_INCREMENT_QUEUE_COUNTER() == 0) ?
@@ -1196,6 +1198,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
                   { papi_errno = PAPI_ECOMBO; goto fn_fail; });
 
         SAMPLING_ACQUIRE_DEVICE(devs_id[i]);
+        dev_feature_offset += dev_feature_count;
     }
 
   fn_exit:
@@ -1292,6 +1295,65 @@ init_features(unsigned int *events_id, int num_events,
     }
 
     return papi_errno;
+}
+
+static int sampling_ctx_get_dev_feature_count(rocp_ctx_t, unsigned int);
+static int intercept_ctx_get_dev_feature_count(rocp_ctx_t, unsigned int);
+
+int
+ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, unsigned int i)
+{
+    if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
+        return sampling_ctx_get_dev_feature_count(rocp_ctx, i);
+    }
+
+    return intercept_ctx_get_dev_feature_count(rocp_ctx, i);
+}
+
+int
+sampling_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, unsigned int i)
+{
+    int start, stop, j = 0;
+    int num_events = rocp_ctx->u.sampling.feature_count;
+    unsigned int *events_id = rocp_ctx->u.sampling.events_id;
+    ntv_event_t *ntv_events = ntv_table_p->events;
+
+    while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
+        ++j;
+    }
+
+    start = j;
+
+    while (j < num_events && ntv_events[events_id[j]].ntv_dev == i) {
+        ++j;
+    }
+
+    stop = j;
+
+    return stop - start;
+}
+
+int
+intercept_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, unsigned int i)
+{
+    int start, stop, j = 0;
+    int num_events = rocp_ctx->u.intercept.feature_count;
+    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
+    ntv_event_t *ntv_events = ntv_table_p->events;
+
+    while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
+        ++j;
+    }
+
+    start = j;
+
+    while (j < num_events && ntv_events[events_id[j]].ntv_dev == i) {
+        ++j;
+    }
+
+    stop = j;
+
+    return stop - start;
 }
 
 /**
