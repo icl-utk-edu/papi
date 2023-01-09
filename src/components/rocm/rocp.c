@@ -1135,7 +1135,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
             ROCPROFILER_MODE_SINGLEGROUP :
             ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_SINGLEGROUP;
 
-        ROCP_CALL((*rocp_openPtr)(agent_arr.agents[i], dev_features,
+        ROCP_CALL((*rocp_openPtr)(agent_arr.agents[devs_id[i]], dev_features,
                                   dev_feature_count, &contexts[i], mode,
                                   &SAMPLING_CONTEXT_PROP),
                   { papi_errno = PAPI_ECOMBO; goto fn_fail; });
