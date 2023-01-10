@@ -1844,6 +1844,15 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
     properties.handler = context_handler_cb;
     properties.handler_arg = context_arg;
 
+    /* FIXME: the intercept code initializes callbacks for every device
+     *        regardless what the user asked for. Moreover, every device
+     *        is initialized with the same callback events (features).
+     *        The intercept code should eventually be changed to allow
+     *        user to initialize different callbacks on different devices
+     *        and also to reinitialize already initialized callbacks on
+     *        any given device. Rocm 5.3.0 still does not support this
+     *        callback initialization mechanism.
+     */
     int i;
     for (i = 0; i < agent_arr.count; ++i) {
         hsa_agent_t agent = agent_arr.agents[i];
