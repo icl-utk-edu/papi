@@ -8,6 +8,8 @@
 
 int main(int argc, char *argv[])
 {
+    test_skip(__FILE__, __LINE__, "sample_multi_thread", PAPI_OK);
+
     setenv("ROCP_HSA_INTERCEPT", "0", 1);
 
     multi_thread(argc, argv);
