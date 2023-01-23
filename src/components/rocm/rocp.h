@@ -9,6 +9,9 @@
 
 #include "common.h"
 
+#define ROCM_EVENTS_OPENED  (0x1)
+#define ROCM_EVENTS_RUNNING (0x2)
+
 #define ROCM_PROFILE_SAMPLING_MODE (0)
 
 typedef struct rocp_ctx *rocp_ctx_t;
