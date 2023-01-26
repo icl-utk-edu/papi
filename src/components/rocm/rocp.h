@@ -4,17 +4,11 @@
  *          gcongiu@icl.utk.edu
  */
 
+#ifdef ROCM_PROF_ROCPROFILER
 #ifndef __ROCP_H__
 #define __ROCP_H__
 
-#include "common.h"
-
-#define ROCM_EVENTS_OPENED  (0x1)
-#define ROCM_EVENTS_RUNNING (0x2)
-
-#define ROCM_PROFILE_SAMPLING_MODE (0)
-
-typedef struct rocp_ctx *rocp_ctx_t;
+typedef struct rocd_ctx *rocp_ctx_t;
 
 /* init and shutdown interfaces */
 int rocp_init_environment(void);
@@ -39,3 +33,4 @@ int rocp_ctx_read(rocp_ctx_t ctx, long long **counts);
 int rocp_ctx_reset(rocp_ctx_t ctx);
 
 #endif /* End of __ROCP_H__ */
+#endif /* End of ROCM_PROF_ROCPROFILER */

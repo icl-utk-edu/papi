@@ -5,6 +5,7 @@
  *
  */
 
+#ifdef ROCM_PROF_ROCPROFILER
 #include <sys/stat.h>
 #include <dlfcn.h>
 #include <hsa.h>
@@ -14,6 +15,7 @@
 
 #include "rocp.h"
 #include "htable.h"
+#include "common.h"
 
 typedef struct {
     char *name;
@@ -28,7 +30,7 @@ typedef struct ntv_event_table {
     int count;
 } ntv_event_table_t;
 
-struct rocp_ctx {
+struct rocd_ctx {
     union {
         struct {
             int state;                       /* state of kernel interception */
@@ -1106,7 +1108,7 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         goto fn_fail;
     }
 
-    *rocp_ctx = papi_calloc(1, sizeof(struct rocp_ctx));
+    *rocp_ctx = papi_calloc(1, sizeof(**rocp_ctx));
     if (*rocp_ctx == NULL) {
         papi_errno = PAPI_ENOMEM;
         goto fn_fail;
@@ -1712,7 +1714,7 @@ intercept_ctx_init(unsigned int *events_id, int num_events,
         goto fn_fail;
     }
 
-    *rocp_ctx = papi_calloc(1, sizeof(struct rocp_ctx));
+    *rocp_ctx = papi_calloc(1, sizeof(**rocp_ctx));
     if (*rocp_ctx == NULL) {
         return PAPI_ENOMEM;
     }
@@ -2226,3 +2228,4 @@ OnUnloadTool(void)
 {
     return;
 }
+#endif /* End of ROCM_PROF_ROCPROFILER */
