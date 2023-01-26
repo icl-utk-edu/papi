@@ -27,7 +27,7 @@ Example:
 
     export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
 
-Within PAPI_CUDA__ROOT, we expect the following standard directories:
+Within PAPI_CUDA_ROOT, we expect the following standard directories:
 
     PAPI_CUDA_ROOT/include
     PAPI_CUDA_ROOT/lib64
