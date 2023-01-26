@@ -34,15 +34,13 @@ Within PAPI_CUDA_ROOT, we expect the following standard directories:
     PAPI_CUDA_ROOT/extras/CUPTI/include
     PAPI_CUDA_ROOT/extras/CUPTI/lib64
 
-For the NVML component to be operational at runtime, it must find the following dynamic libraries:
+For the NVML component to be operational at runtime, it must find the following dynamic library:
 
-    libcuda.so
-    libcudart.so
     libnvidia-ml.so
 
-If those libraries cannot be found or some of those are stub libraries in the standard `PAPI_CUDA_ROOT` subdirectories, you have to add the correct paths, e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`. This can be set using export; e.g. 
+If this library cannot be found or is a stub library in the standard `PAPI_CUDA_ROOT` subdirectories, you have to add the correct path, e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`. This can be set using export; e.g. 
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLibCanBeFound
 
 
 ## Known Limitations
@@ -56,11 +54,10 @@ power limits; such permissions are typically granted by your sysadmin.
 1. [Unusual installations](#markdown-header-unusual-installations)
 
 ## Unusual installations
-Three libraries are required for the PAPI NVML component. `libcuda.so`,
-`libcudart.so' (The CUDA run-time library), and `libnvidia-ml.so`.  
+One library is required for the PAPI NVML component: `libnvidia-ml.so`.  
 
-For the NVML component to be operational, it must find the dynamic libraries
-mentioned above. If they are not found in the standard `PAPI_CUDA_ROOT`
+For the NVML component to be operational, it must find the dynamic library
+mentioned above. If it is not found in the standard `PAPI_CUDA_ROOT`
 subdirectories mentioned above, the component looks in the Linux default
 directories listed by `/etc/ld.so.conf`, usually `/usr/lib64`, `/lib64`,
 `/usr/lib` and `/lib`. 
@@ -68,4 +65,4 @@ directories listed by `/etc/ld.so.conf`, usually `/usr/lib64`, `/lib64`,
 The system will also search the directories listed in `LD_LIBRARY_PATH`,
 separated by colons `:`. This can be set using export; e.g. 
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLibCanBeFound
