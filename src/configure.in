@@ -484,6 +484,11 @@ AC_ARG_WITH(CPU,
 		      CPU="x86"
 
                    elif test "$family" = "ppc64" || test "$family" = "ppc64le"; then
+                     cuda_version=`grep -r '#define CUDA_VERSION [0-9]' $PAPI_CUDA_ROOT/include/cuda.h | awk '{print $3}'`
+                     if (test "$family" = "ppc64le" && test "$CC_COMMON_NAME" = "gcc" && test "$major" -ge 8 \
+                      && test "$major" -lt 9 && test "$cuda_version" -ge 10000 && test "$cuda_version" -lt 11000); then
+                        NVPPC64LEFLAGS="-Xcompiler -mno-float128"
+                     fi
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d' | tr -d ","`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
@@ -2145,6 +2150,7 @@ AC_SUBST(FTEST_TARGETS)
 AC_SUBST(HAVE_NO_OVERRIDE_INIT)
 AC_SUBST(BGPM_INSTALL_DIR)
 AC_SUBST(CC_COMMON_NAME)
+AC_SUBST(NVPPC64LEFLAGS)
 
 if test "$cross_compiling" = "yes" ; then
   AC_MSG_NOTICE(Compiling genpapifdef with $nativecc because cross compiling)

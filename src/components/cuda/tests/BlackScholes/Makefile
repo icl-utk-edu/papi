@@ -36,7 +36,7 @@
 # Location of the CUDA Toolkit
 CUDA_PATH ?= ${CUDA_HOME}
 NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc 
-NVCFLAGS = -g -ccbin='$(CC)'
+NVCFLAGS = -g -ccbin='$(CC)' $(NVPPC64LEFLAGS)
 INCLUDE  = -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUPTI_ROOT)/include -I../../../../
 CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -L$(PAPI_CUDA_ROOT)/lib64/stubs -L$(PAPI_CUPTI_ROOT)/lib64 -lcudart -lcupti -lcuda 
 PAPISTATIC = ../../../../libpapi.a 
