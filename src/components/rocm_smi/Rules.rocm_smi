@@ -75,18 +75,23 @@ PAPI_ROCMSMI_ROOT ?= /opt/rocm/rocm_smi
 # for disabling is shown using the papi utility,
 # papi/src/utils/papi_component_avail. 
 
-COMPSRCS += components/rocm_smi/linux-rocm-smi.c
-COMPOBJS += linux-rocm-smi.o
+COMPSRCS += components/rocm_smi/linux-rocm-smi.c \
+            components/rocm_smi/rocs.c
+COMPOBJS += linux-rocm-smi.o \
+            rocs.o
 
 # CFLAGS specifies compile flags; need include files here, and macro defines.
 # Where to find rocm_smi.h varied in early ROCM releases. If it changes again,
 # for backward compatibility add *more* -I paths, do not just replace this one.
 
 CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/../include/rocm_smi
+CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/../include
 CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi
-CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/include
 CFLAGS += -g
 LDFLAGS += $(LDL) -g
 
 linux-rocm-smi.o: components/rocm_smi/linux-rocm-smi.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm_smi/linux-rocm-smi.c -o linux-rocm-smi.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm_smi/linux-rocm-smi.c -o linux-rocm-smi.o
+
+rocs.o: components/rocm_smi/rocs.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/rocm_smi/rocs.c -o rocs.o
