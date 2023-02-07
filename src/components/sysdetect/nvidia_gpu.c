@@ -257,9 +257,9 @@ fill_dev_affinity_info( _sysdetect_gpu_info_u *info, int dev_count )
         NVML_CALL((*nvmlDeviceGetHandleByPciBusIdPtr)(bus_id_str, &device),
                   return);
 
-        char uuid_str[NVML_DEVICE_UUID_V2_BUFFER_SIZE] = { 0 };
+        char uuid_str[PAPI_NVML_DEV_BUFFER_SIZE] = { 0 };
         NVML_CALL((*nvmlDeviceGetUUIDPtr)(device, uuid_str,
-                                          NVML_DEVICE_UUID_V2_BUFFER_SIZE),
+                                          PAPI_NVML_DEV_BUFFER_SIZE),
                   return);
 
         _sysdetect_gpu_info_u *dev_info = &info[dev];
