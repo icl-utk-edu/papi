@@ -119,7 +119,7 @@ papi_vector_t _rocm_vector = {
     .ntv_code_to_descr = rocm_ntv_code_to_descr,
 };
 
-static void check_n_initialize(void);
+static int check_n_initialize(void);
 
 int
 rocm_init_component(int cid)
@@ -163,8 +163,7 @@ rocm_init_thread(hwd_context_t *ctx)
 int
 rocm_init_control_state(hwd_control_state_t *ctl __attribute__((unused)))
 {
-    check_n_initialize();
-    return PAPI_OK;
+    return check_n_initialize();
 }
 
 static int
@@ -328,7 +327,10 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
                           int ntv_count,
                           hwd_context_t *ctx __attribute__((unused)))
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
 
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
 
@@ -338,7 +340,7 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
         return PAPI_ECMP;
     }
 
-    int papi_errno = update_native_events(rocm_ctl, ntv_info, ntv_count);
+    papi_errno = update_native_events(rocm_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -529,35 +531,48 @@ rocm_reset(hwd_context_t *ctx __attribute__((unused)), hwd_control_state_t *ctl)
 int
 rocm_ntv_enum_events(unsigned int *event_code, int modifier)
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
     return rocd_evt_enum(event_code, modifier);
 }
 
 int
 rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
     return rocd_evt_code_to_name(event_code, name, len);
 }
 
 int
 rocm_ntv_name_to_code(const char *name, unsigned int *code)
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
     return rocd_evt_name_to_code(name, code);
 }
 
 int
 rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
     return rocd_evt_get_descr(event_code, descr, len);
 }
 
-void
+int
 check_n_initialize(void)
 {
     if (!_rocm_vector.cmp_info.initialized) {
-        rocm_init_private();
+        return rocm_init_private();
     }
+    return _rocm_vector.cmp_info.disabled;
 }
