@@ -1614,6 +1614,7 @@ intercept_shutdown(void)
      * a double free runtime error. */
 
     shutdown_event_table();
+    htable_shutdown(htable);
 
     (*hsa_shut_downPtr)();
 
