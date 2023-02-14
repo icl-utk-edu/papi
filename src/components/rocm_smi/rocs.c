@@ -67,6 +67,14 @@ static rsmi_status_t (*rsmi_shut_down_p)(void);
 static rsmi_status_t (*rsmi_version_get_p)(rsmi_version_t *);
 static rsmi_status_t (*rsmi_version_str_get_p)(rsmi_sw_component_t, char *, size_t);
 static rsmi_status_t (*rsmi_status_string_p)(rsmi_status_t, const char **);
+static rsmi_status_t (*rsmi_dev_counter_group_supported_p)(uint32_t, rsmi_event_group_t);
+static rsmi_status_t (*rsmi_dev_counter_create_p)(uint32_t, rsmi_event_type_t, rsmi_event_handle_t *);
+static rsmi_status_t (*rsmi_dev_counter_destroy_p)(rsmi_event_handle_t);
+static rsmi_status_t (*rsmi_counter_control_p)(rsmi_event_handle_t, rsmi_counter_command_t, void *);
+static rsmi_status_t (*rsmi_counter_read_p)(rsmi_event_type_t, rsmi_counter_value_t *);
+static rsmi_status_t (*rsmi_counter_available_counters_get_p)(uint32_t, rsmi_event_group_t, uint32_t *);
+static rsmi_status_t (*rsmi_is_P2P_accessible_p)(uint32_t, uint32_t, int *);
+static rsmi_status_t (*rsmi_minmax_bandwidth_get_p)(uint32_t, uint32_t, uint64_t *, uint64_t *);
 
 /*
  * rocs defined variant and subvariant
@@ -131,10 +139,41 @@ typedef enum {
     ROCS_PCI_BW_VARIANT__NUM,
 } rocs_pci_bw_variant_e;
 
+typedef enum {
+    /* XXX: the following events (variants) and the corresponding logic
+            are not tested */
+    ROCS_XGMI_VARIANT__MI50_0_NOP_TX = RSMI_EVNT_XGMI_0_NOP_TX,
+    ROCS_XGMI_VARIANT__MI50_0_REQUEST_TX = RSMI_EVNT_XGMI_0_REQUEST_TX,
+    ROCS_XGMI_VARIANT__MI50_0_RESPONSE_TX = RSMI_EVNT_XGMI_0_RESPONSE_TX,
+    ROCS_XGMI_VARIANT__MI50_0_BEATS_TX = RSMI_EVNT_XGMI_0_BEATS_TX,
+    ROCS_XGMI_VARIANT__MI50_1_NOP_TX = RSMI_EVNT_XGMI_1_NOP_TX,
+    ROCS_XGMI_VARIANT__MI50_1_REQUEST_TX = RSMI_EVNT_XGMI_1_REQUEST_TX,
+    ROCS_XGMI_VARIANT__MI50_1_RESPONSE_TX = RSMI_EVNT_XGMI_1_RESPONSE_TX,
+    ROCS_XGMI_VARIANT__MI50_1_BEATS_TX = RSMI_EVNT_XGMI_1_BEATS_TX,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_0 = RSMI_EVNT_XGMI_DATA_OUT_0,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_1 = RSMI_EVNT_XGMI_DATA_OUT_1,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_2 = RSMI_EVNT_XGMI_DATA_OUT_2,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_3 = RSMI_EVNT_XGMI_DATA_OUT_3,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_4 = RSMI_EVNT_XGMI_DATA_OUT_4,
+    ROCS_XGMI_VARIANT__MI100_DATA_OUT_5 = RSMI_EVNT_XGMI_DATA_OUT_5,
+} rocs_xgmi_variant_e;
+
+typedef enum {
+    ROCS_XGMI_BW_VARIANT__MIN,
+    ROCS_XGMI_BW_VARIANT__MAX,
+    ROCS_XGMI_BW_VARIANT__NUM,
+} rocs_xgmi_bw_variant_e;
+
 static int open_simple(void *);
 static int close_simple(void *);
 static int start_simple(void *);
 static int stop_simple(void *);
+static int open_xgmi_evt(void *);
+static int close_xgmi_evt(void *);
+static int start_xgmi_evt(void *);
+static int stop_xgmi_evt(void *);
+static int access_xgmi_evt(rocs_access_mode_e, void *);
+static int access_xgmi_bw(rocs_access_mode_e, void *);
 static int access_rsmi_dev_count(rocs_access_mode_e, void *);
 static int access_rsmi_lib_version(rocs_access_mode_e, void *);
 static int access_rsmi_dev_driver_version_str(rocs_access_mode_e, void *);
@@ -236,6 +275,8 @@ struct {
     {"rsmi_dev_subsystem_name_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_subsystem_name},
     {"rsmi_dev_vbios_version_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_vbios_version},
     {"rsmi_dev_vendor_name_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_vendor_name},
+    {"rsmi_dev_xgmi_evt_get", open_xgmi_evt, close_xgmi_evt, start_xgmi_evt, stop_xgmi_evt, access_xgmi_evt},
+    {"rsmi_dev_xgmi_bw_get", open_simple, close_simple, start_simple, stop_simple, access_xgmi_bw},
     {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -697,6 +738,14 @@ load_rsmi_sym(void)
     rsmi_version_get_p                         = dlsym(rsmi_dlp, "rsmi_version_get");
     rsmi_version_str_get_p                     = dlsym(rsmi_dlp, "rsmi_version_str_get");
     rsmi_status_string_p                       = dlsym(rsmi_dlp, "rsmi_status_string");
+    rsmi_dev_counter_group_supported_p         = dlsym(rsmi_dlp, "rsmi_dev_counter_group_supported");
+    rsmi_dev_counter_create_p                  = dlsym(rsmi_dlp, "rsmi_dev_counter_create");
+    rsmi_dev_counter_destroy_p                 = dlsym(rsmi_dlp, "rsmi_dev_counter_destroy");
+    rsmi_counter_control_p                     = dlsym(rsmi_dlp, "rsmi_counter_control");
+    rsmi_counter_read_p                        = dlsym(rsmi_dlp, "rsmi_counter_read");
+    rsmi_counter_available_counters_get_p      = dlsym(rsmi_dlp, "rsmi_counter_available_counters_get");
+    rsmi_is_P2P_accessible_p                   = dlsym(rsmi_dlp, "rsmi_is_P2P_accessible");
+    rsmi_minmax_bandwidth_get_p                = dlsym(rsmi_dlp, "rsmi_minmax_bandwidth_get");
 
     int rsmi_not_initialized = (!rsmi_num_monitor_dev_p                     ||
                                 !rsmi_func_iter_value_get_p                 ||
@@ -754,7 +803,15 @@ load_rsmi_sym(void)
                                 !rsmi_shut_down_p                           ||
                                 !rsmi_version_get_p                         ||
                                 !rsmi_version_str_get_p                     ||
-                                !rsmi_status_string_p);
+                                !rsmi_status_string_p                       ||
+                                !rsmi_dev_counter_group_supported_p         ||
+                                !rsmi_dev_counter_create_p                  ||
+                                !rsmi_dev_counter_destroy_p                 ||
+                                !rsmi_counter_control_p                     ||
+                                !rsmi_counter_read_p                        ||
+                                !rsmi_counter_available_counters_get_p      ||
+                                !rsmi_is_P2P_accessible_p                   ||
+                                !rsmi_minmax_bandwidth_get_p);
 
     papi_errno = (rsmi_not_initialized) ? PAPI_EMISC : PAPI_OK;
     if (papi_errno != PAPI_OK) {
@@ -828,6 +885,14 @@ unload_rsmi_sym(void)
     rsmi_version_get_p                         = NULL;
     rsmi_version_str_get_p                     = NULL;
     rsmi_status_string_p                       = NULL;
+    rsmi_dev_counter_group_supported_p         = NULL;
+    rsmi_dev_counter_create_p                  = NULL;
+    rsmi_dev_counter_destroy_p                 = NULL;
+    rsmi_counter_control_p                     = NULL;
+    rsmi_counter_read_p                        = NULL;
+    rsmi_counter_available_counters_get_p      = NULL;
+    rsmi_is_P2P_accessible_p                   = NULL;
+    rsmi_minmax_bandwidth_get_p                = NULL;
 
     dlclose(rsmi_dlp);
 
@@ -996,6 +1061,7 @@ typedef enum {
 } rocs_event_type_e;
 
 static int handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *count);
+static int handle_xgmi_events_count(int32_t dev, int *count);
 static char *get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvariant);
 
 int
@@ -1063,6 +1129,8 @@ get_ntv_events_count(void)
             }
         }
         status = rsmi_dev_supported_func_iterator_close_p(&iter);
+
+        handle_xgmi_events_count(dev, &events_count);
     }
 
     return events_count;
@@ -1076,6 +1144,7 @@ static start_function_f get_start_func(const char *name);
 static stop_function_f get_stop_func(const char *name);
 static access_function_f get_access_func(const char *name);
 static int handle_special_events(const char *name, int32_t dev, int64_t variant, int64_t subvariant, int *count, ntv_event_t *events);
+static int handle_xgmi_events(int32_t dev, int *count, ntv_event_t *events);
 
 int
 get_ntv_events(ntv_event_t *events, int count)
@@ -1203,6 +1272,8 @@ get_ntv_events(ntv_event_t *events, int count)
             }
         }
         status = rsmi_dev_supported_func_iterator_close_p(&iter);
+
+        handle_xgmi_events(dev, &events_count, events);
     }
 
     papi_errno = (events_count - count);
@@ -1308,6 +1379,45 @@ handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
 
 
     return ROCS_EVENT_TYPE__NORMAL;
+}
+
+int
+handle_xgmi_events_count(int32_t dev, int *events_count)
+{
+    rsmi_status_t status;
+
+    status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI);
+    if (status == RSMI_STATUS_SUCCESS) {
+        *events_count += RSMI_EVNT_XGMI_LAST - RSMI_EVNT_XGMI_FIRST;
+    }
+
+    status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI_DATA_OUT);
+    if (status == RSMI_STATUS_SUCCESS) {
+        *events_count += RSMI_EVNT_XGMI_DATA_OUT_LAST - RSMI_EVNT_XGMI_DATA_OUT_FIRST;
+    }
+
+    uint32_t i;
+    for (i = 0; i < (uint32_t) device_count; ++i) {
+        if (i == (uint32_t) dev) {
+            continue;
+        }
+        rsmi_status_t status;
+        int res = 0;
+        status = rsmi_is_P2P_accessible_p((uint32_t) dev, i, &res);
+        if (status != RSMI_STATUS_SUCCESS) {
+            break;
+        }
+        uint64_t min, max;
+        status = rsmi_minmax_bandwidth_get_p((uint32_t) dev, i, &min, &max);
+        if (status != RSMI_STATUS_SUCCESS) {
+            break;
+        }
+        if (res == 1) {
+            (*events_count) += ROCS_XGMI_BW_VARIANT__NUM;
+        }
+    }
+
+    return PAPI_OK;
 }
 
 int
@@ -1593,6 +1703,92 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
     }
 
     return ROCS_EVENT_TYPE__NORMAL;
+}
+
+int
+handle_xgmi_events(int32_t dev, int *events_count, ntv_event_t *events)
+{
+    int i;
+    rsmi_status_t status;
+
+    status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI);
+    if (status == RSMI_STATUS_SUCCESS) {
+        for (i = RSMI_EVNT_XGMI_FIRST; i <= RSMI_EVNT_XGMI_LAST; ++i) {
+            events[*events_count].id = *events_count;
+            events[*events_count].name = get_event_name("rsmi_dev_xgmi_evt_get", dev, i, -1);
+            events[*events_count].descr = get_event_descr("rsmi_dev_xgmi_evt_get", i, -1);
+            events[*events_count].device = dev;
+            events[*events_count].variant = i;
+            events[*events_count].subvariant = -1;
+            events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].close_func_p = get_close_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].start_func_p = get_start_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].stop_func_p = get_stop_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].access_func_p = get_access_func("rsmi_dev_xgmi_evt_get");
+            htable_insert(htable, events[*events_count].name, &events[*events_count]);
+            ++(*events_count);
+        }
+    }
+
+    status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI_DATA_OUT);
+    if (status == RSMI_STATUS_SUCCESS) {
+        for (i = RSMI_EVNT_XGMI_DATA_OUT_FIRST; i <= RSMI_EVNT_XGMI_DATA_OUT_LAST; ++i) {
+            events[*events_count].id = *events_count;
+            events[*events_count].name = get_event_name("rsmi_dev_xgmi_evt_get", dev, i, -1);
+            events[*events_count].descr = get_event_descr("rsmi_dev_xgmi_evt_get", i, -1);
+            events[*events_count].device = dev;
+            events[*events_count].variant = i;
+            events[*events_count].subvariant = -1;
+            events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].close_func_p = get_close_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].start_func_p = get_start_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].stop_func_p = get_stop_func("rsmi_dev_xgmi_evt_get");
+            events[*events_count].access_func_p = get_access_func("rsmi_dev_xgmi_evt_get");
+            htable_insert(htable, events[*events_count].name, &events[*events_count]);
+            ++(*events_count);
+        }
+    }
+
+    int j;
+    for (i = 0; i < device_count; ++i) {
+        if (i == dev) {
+            continue;
+        }
+        rsmi_status_t status;
+        int res = 0;
+        status = rsmi_is_P2P_accessible_p((uint32_t) i, (uint32_t) dev, &res);
+        if (status != RSMI_STATUS_SUCCESS) {
+            break;
+        }
+        if (res == 0) {
+            continue;
+        }
+        uint64_t min, max;
+        status = rsmi_minmax_bandwidth_get_p((uint32_t) dev, (uint32_t) i, &min, &max);
+        if (status != RSMI_STATUS_SUCCESS) {
+            break;
+        }
+        for (j = 0; j < ROCS_XGMI_BW_VARIANT__NUM; ++j) {
+            events[*events_count].id = *events_count;
+            events[*events_count].name = get_event_name("rsmi_dev_xgmi_bw_get", dev, (int64_t) j, (int64_t) i);
+            events[*events_count].descr = get_event_descr("rsmi_dev_xgmi_bw_get", (int64_t) j, -1);
+            events[*events_count].device = dev;
+            events[*events_count].variant = j;
+            events[*events_count].subvariant = i;
+            events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func("rsmi_dev_xgmi_bw_get");
+            events[*events_count].close_func_p = get_close_func("rsmi_dev_xgmi_bw_get");
+            events[*events_count].start_func_p = get_start_func("rsmi_dev_xgmi_bw_get");
+            events[*events_count].stop_func_p = get_stop_func("rsmi_dev_xgmi_bw_get");
+            events[*events_count].access_func_p = get_access_func("rsmi_dev_xgmi_bw_get");
+            htable_insert(htable, events[*events_count].name, &events[*events_count]);
+            ++(*events_count);
+        }
+    }
+
+    return PAPI_OK;
 }
 
 char *
@@ -2037,6 +2233,66 @@ get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvarian
         sprintf(event_name_str, "vbios_version:device=%i", dev);
     } else if (strcmp(name, "rsmi_dev_vendor_name_get") == 0) {
         sprintf(event_name_str, "vendor_name:device=%i", dev);
+    } else if (strcmp(name, "rsmi_dev_xgmi_evt_get") == 0) {
+        const char *variant_str = NULL;
+        switch (variant) {
+            case ROCS_XGMI_VARIANT__MI50_0_NOP_TX:
+                variant_str = "nop_sent_to_neighbor0";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_REQUEST_TX:
+                variant_str = "req_sent_to_neighbor0";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_RESPONSE_TX:
+                variant_str = "res_sent_to_neighbor0";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_BEATS_TX:
+                variant_str = "data_beats_sent_to_neighbor0";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_NOP_TX:
+                variant_str = "nop_sent_to_neighbor1";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_REQUEST_TX:
+                variant_str = "req_sent_to_neighbor1";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_RESPONSE_TX:
+                variant_str = "res_sent_to_neighbor1";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_BEATS_TX:
+                variant_str = "data_beats_sent_to_neighbor1";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_0:
+                variant_str = "data_beats_sent_to_neighbor0";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_1:
+                variant_str = "data_beats_sent_to_neighbor1";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_2:
+                variant_str = "data_beats_sent_to_neighbor2";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_3:
+                variant_str = "data_beats_sent_to_neighbor3";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_4:
+                variant_str = "data_beats_sent_to_neighbor4";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_5:
+                variant_str = "data_beats_sent_to_neighbor5";
+                break;
+            default:
+                return NULL;
+        }
+        sprintf(event_name_str, "xgmi_%s:device=%i", variant_str, dev);
+    } else if (strcmp(name, "rsmi_dev_xgmi_bw_get") == 0) {
+        switch (variant) {
+            case ROCS_XGMI_BW_VARIANT__MIN:
+                sprintf(event_name_str, "min_xgmi_internode_bw:device=%i:target=%i", dev, (int) subvariant);
+                break;
+            case ROCS_XGMI_BW_VARIANT__MAX:
+                sprintf(event_name_str, "max_xgmi_internode_bw:device=%i:target=%i", dev, (int) subvariant);
+                break;
+            default:
+                return NULL;
+        }
     } else {
         return NULL;
     }
@@ -2419,6 +2675,66 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
         return strdup("Returns char* to z-terminated vbios version string; do not free().");
     } else if (strcmp(name, "rsmi_dev_vendor_name_get") == 0) {
         return strdup("Returns char* to z-terminated vendor name string; do not free().");
+    } else if (strcmp(name, "rsmi_dev_xgmi_evt_get") == 0) {
+        const char *variant_str = NULL;
+        switch (variant) {
+            case ROCS_XGMI_VARIANT__MI50_0_NOP_TX:
+                variant_str = "NOP operations sent to neightbor 0.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_REQUEST_TX:
+                variant_str = "Outgoing requests to neighbor 0.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_RESPONSE_TX:
+                variant_str = "Outgoing responses sent to neighbor 0.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_0_BEATS_TX:
+                variant_str = "Data beats sent to neighbor 0.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_NOP_TX:
+                variant_str = "NOP operations sent to neightbor 1.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_REQUEST_TX:
+                variant_str = "Outgoing requests to neighbor 1.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_RESPONSE_TX:
+                variant_str = "Outgoing responses sent to neighbor 1.";
+                break;
+            case ROCS_XGMI_VARIANT__MI50_1_BEATS_TX:
+                variant_str = "Data beats sent to neighbor 1.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_0:
+                variant_str = "Data beats sent to neighbor 0.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_1:
+                variant_str = "Data beats sent to neighbor 1.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_2:
+                variant_str = "Data beats sent to neighbor 2.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_3:
+                variant_str = "Data beats sent to neighbor 3.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_4:
+                variant_str = "Data beats sent to neighbor 4.";
+                break;
+            case ROCS_XGMI_VARIANT__MI100_DATA_OUT_5:
+                variant_str = "Data beats sent to neighbor 5.";
+                break;
+            default:
+                return NULL;
+        }
+        sprintf(event_descr_str, "%s", variant_str);
+    } else if (strcmp(name, "rsmi_dev_xgmi_bw_get") == 0) {
+        switch (variant) {
+            case ROCS_XGMI_BW_VARIANT__MIN:
+                sprintf(event_descr_str, "%s.", "Minimum bandwidth between devices");
+                break;
+            case ROCS_XGMI_BW_VARIANT__MAX:
+                sprintf(event_descr_str, "%s.", "Maximum bandwidth between devices");
+                break;
+            default:
+                return NULL;
+        }
     } else {
         return NULL;
     }
@@ -2530,6 +2846,157 @@ start_simple(void *arg)
 int
 stop_simple(void *arg __attribute__((unused)))
 {
+    return PAPI_OK;
+}
+
+int
+open_xgmi_evt(void *arg)
+{
+    int papi_errno = PAPI_OK;
+    ntv_event_t *event = (ntv_event_t *) arg;
+    rsmi_status_t status;
+    rsmi_event_group_t grp;
+
+    switch (event->variant) {
+        case ROCS_XGMI_VARIANT__MI50_0_NOP_TX:
+        case ROCS_XGMI_VARIANT__MI50_0_REQUEST_TX:
+        case ROCS_XGMI_VARIANT__MI50_0_RESPONSE_TX:
+        case ROCS_XGMI_VARIANT__MI50_0_BEATS_TX:
+        case ROCS_XGMI_VARIANT__MI50_1_NOP_TX:
+        case ROCS_XGMI_VARIANT__MI50_1_REQUEST_TX:
+        case ROCS_XGMI_VARIANT__MI50_1_RESPONSE_TX:
+        case ROCS_XGMI_VARIANT__MI50_1_BEATS_TX:
+            grp = RSMI_EVNT_GRP_XGMI;
+            break;
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_0:
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_1:
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_2:
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_3:
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_4:
+        case ROCS_XGMI_VARIANT__MI100_DATA_OUT_5:
+            grp = RSMI_EVNT_GRP_XGMI_DATA_OUT;
+            break;
+        default:
+            papi_errno = PAPI_ENOSUPP;
+            goto fn_fail;
+    }
+
+    uint32_t counters;
+    status = rsmi_counter_available_counters_get_p(event->device, grp, &counters);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+        goto fn_fail;
+    }
+
+    if (counters < 1) {
+        papi_errno = PAPI_ECNFLCT;
+        goto fn_fail;
+    }
+
+    status = rsmi_dev_counter_create_p(event->device, event->variant, (rsmi_event_handle_t *) event->scratch);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+    }
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
+}
+
+int
+close_xgmi_evt(void *arg)
+{
+    int papi_errno = PAPI_OK;
+    ntv_event_t *event = (ntv_event_t *) arg;
+    rsmi_status_t status;
+
+    status = rsmi_dev_counter_destroy_p(*(rsmi_event_handle_t *) event->scratch);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+    }
+
+    return papi_errno;
+}
+
+int
+start_xgmi_evt(void *arg)
+{
+    int papi_errno = PAPI_OK;
+    ntv_event_t *event = (ntv_event_t *) arg;
+    rsmi_status_t status;
+
+    status = rsmi_counter_control_p(*(rsmi_event_handle_t *) event->scratch, RSMI_CNTR_CMD_START, NULL);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+    }
+
+    return papi_errno;
+}
+
+int
+stop_xgmi_evt(void *arg)
+{
+    int papi_errno = PAPI_OK;
+    ntv_event_t *event = (ntv_event_t *) arg;
+    rsmi_status_t status;
+
+    status = rsmi_counter_control_p(*(rsmi_event_handle_t *) event->scratch, RSMI_CNTR_CMD_STOP, NULL);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+    }
+
+    return papi_errno;
+}
+
+int
+access_xgmi_evt(rocs_access_mode_e mode, void *arg)
+{
+    int papi_errno = PAPI_OK;
+    ntv_event_t *event = (ntv_event_t *) arg;
+    rsmi_status_t status;
+    rsmi_counter_value_t value;
+
+    if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
+        return PAPI_ENOSUPP;
+    }
+
+    status = rsmi_counter_read_p(*(rsmi_event_handle_t *) event->scratch, &value);
+    if (status != RSMI_STATUS_SUCCESS) {
+        papi_errno = PAPI_EMISC;
+    }
+
+    event->value = (int64_t) value.value;
+    return papi_errno;
+}
+
+int
+access_xgmi_bw(rocs_access_mode_e mode, void *arg)
+{
+    ntv_event_t *event = (ntv_event_t *) arg;
+
+    if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
+        return PAPI_ENOSUPP;
+    }
+
+    rsmi_status_t status;
+    uint64_t min, max;
+    status = rsmi_minmax_bandwidth_get_p(event->device, (uint32_t) event->subvariant, &min, &max);
+    if (status != RSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+
+    switch (event->variant) {
+        case ROCS_XGMI_BW_VARIANT__MIN:
+            event->value = (int64_t) min;
+            break;
+        case ROCS_XGMI_BW_VARIANT__MAX:
+            event->value = (int64_t) max;
+            break;
+        default:
+            return PAPI_ENOSUPP;
+    }
+
     return PAPI_OK;
 }
 
