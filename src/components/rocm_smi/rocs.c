@@ -131,6 +131,10 @@ typedef enum {
     ROCS_PCI_BW_VARIANT__NUM,
 } rocs_pci_bw_variant_e;
 
+static int open_simple(void *);
+static int close_simple(void *);
+static int start_simple(void *);
+static int stop_simple(void *);
 static int access_rsmi_dev_count(rocs_access_mode_e, void *);
 static int access_rsmi_lib_version(rocs_access_mode_e, void *);
 static int access_rsmi_dev_driver_version_str(rocs_access_mode_e, void *);
@@ -172,59 +176,67 @@ static int access_rsmi_dev_subsystem_name(rocs_access_mode_e, void *);
 static int access_rsmi_dev_vbios_version(rocs_access_mode_e, void *);
 static int access_rsmi_dev_vendor_name(rocs_access_mode_e, void *);
 
+typedef int (*open_function_f)(void *arg);
+typedef int (*close_function_f)(void *arg);
+typedef int (*start_function_f)(void *arg);
+typedef int (*stop_function_f)(void *arg);
 typedef int (*access_function_f)(rocs_access_mode_e mode, void *arg);
 
 struct {
     const char *name;
+    open_function_f open_func_p;
+    close_function_f close_func_p;
+    start_function_f start_func_p;
+    stop_function_f stop_func_p;
     access_function_f access_func_p;
 } event_function_table[] = {
-    {"rsmi_dev_count", access_rsmi_dev_count},
-    {"rsmi_lib_version", access_rsmi_lib_version},
-    {"rsmi_dev_driver_version_str_get", access_rsmi_dev_driver_version_str},
-    {"rsmi_dev_id_get", access_rsmi_dev_id},
-    {"rsmi_dev_subsystem_vendor_id_get", access_rsmi_dev_subsystem_vendor_id},
-    {"rsmi_dev_vendor_id_get", access_rsmi_dev_vendor_id},
-    {"rsmi_dev_unique_id_get", access_rsmi_dev_unique_id},
-    {"rsmi_dev_subsystem_id_get", access_rsmi_dev_subsystem_id},
-    {"rsmi_dev_drm_render_minor_get", access_rsmi_dev_drm_render_minor},
-    {"rsmi_dev_overdrive_level_get", access_rsmi_dev_overdrive_level},
-    {"rsmi_dev_overdrive_level_set", access_rsmi_dev_overdrive_level},
-    {"rsmi_dev_perf_level_get", access_rsmi_dev_perf_level},
-    {"rsmi_dev_perf_level_set", access_rsmi_dev_perf_level},
-    {"rsmi_dev_memory_total_get", access_rsmi_dev_memory_total},
-    {"rsmi_dev_memory_usage_get", access_rsmi_dev_memory_usage},
-    {"rsmi_dev_memory_busy_percent_get", access_rsmi_dev_memory_busy_percent},
-    {"rsmi_dev_busy_percent_get", access_rsmi_dev_busy_percent},
-    {"rsmi_dev_pci_id_get", access_rsmi_dev_pci_id},
-    {"rsmi_dev_pci_replay_counter_get", access_rsmi_dev_pci_replay_counter},
-    {"rsmi_dev_pci_throughput_get", access_rsmi_dev_pci_throughput},
-    {"rsmi_dev_power_profile_presets_get", access_rsmi_dev_power_profile_presets},
-    {"rsmi_dev_power_profile_set", access_rsmi_dev_power_profile_set},
-    {"rsmi_dev_fan_reset", access_rsmi_dev_fan_reset},
-    {"rsmi_dev_fan_rpms_get", access_rsmi_dev_fan_rpms},
-    {"rsmi_dev_fan_speed_max_get", access_rsmi_dev_fan_speed_max},
-    {"rsmi_dev_fan_speed_get", access_rsmi_dev_fan_speed},
-    {"rsmi_dev_fan_speed_set", access_rsmi_dev_fan_speed},
-    {"rsmi_dev_power_ave_get", access_rsmi_dev_power_ave},
-    {"rsmi_dev_power_cap_get", access_rsmi_dev_power_cap},
-    {"rsmi_dev_power_cap_set", access_rsmi_dev_power_cap},
-    {"rsmi_dev_power_cap_range_get", access_rsmi_dev_power_cap_range},
-    {"rsmi_dev_temp_metric_get", access_rsmi_dev_temp_metric},
-    {"rsmi_dev_firmware_version_get", access_rsmi_dev_firmware_version},
-    {"rsmi_dev_ecc_count_get", access_rsmi_dev_ecc_count},
-    {"rsmi_dev_ecc_enabled_get", access_rsmi_dev_ecc_enabled},
-    {"rsmi_dev_ecc_status_get", access_rsmi_dev_ecc_status},
-    {"rsmi_dev_gpu_clk_freq_get", access_rsmi_dev_gpu_clk_freq},
-    {"rsmi_dev_gpu_clk_freq_set", access_rsmi_dev_gpu_clk_freq},
-    {"rsmi_dev_pci_bandwidth_get", access_rsmi_dev_pci_bandwidth},
-    {"rsmi_dev_pci_bandwidth_set", access_rsmi_dev_pci_bandwidth},
-    {"rsmi_dev_brand_get", access_rsmi_dev_brand},
-    {"rsmi_dev_name_get", access_rsmi_dev_name},
-    {"rsmi_dev_serial_number_get", access_rsmi_dev_serial_number},
-    {"rsmi_dev_subsystem_name_get", access_rsmi_dev_subsystem_name},
-    {"rsmi_dev_vbios_version_get", access_rsmi_dev_vbios_version},
-    {"rsmi_dev_vendor_name_get", access_rsmi_dev_vendor_name},
-    {NULL, NULL}
+    {"rsmi_dev_count", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_count},
+    {"rsmi_lib_version", open_simple, close_simple, start_simple, stop_simple, access_rsmi_lib_version},
+    {"rsmi_dev_driver_version_str_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_driver_version_str},
+    {"rsmi_dev_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_id},
+    {"rsmi_dev_subsystem_vendor_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_subsystem_vendor_id},
+    {"rsmi_dev_vendor_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_vendor_id},
+    {"rsmi_dev_unique_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_unique_id},
+    {"rsmi_dev_subsystem_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_subsystem_id},
+    {"rsmi_dev_drm_render_minor_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_drm_render_minor},
+    {"rsmi_dev_overdrive_level_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_overdrive_level},
+    {"rsmi_dev_overdrive_level_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_overdrive_level},
+    {"rsmi_dev_perf_level_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_perf_level},
+    {"rsmi_dev_perf_level_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_perf_level},
+    {"rsmi_dev_memory_total_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_memory_total},
+    {"rsmi_dev_memory_usage_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_memory_usage},
+    {"rsmi_dev_memory_busy_percent_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_memory_busy_percent},
+    {"rsmi_dev_busy_percent_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_busy_percent},
+    {"rsmi_dev_pci_id_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_pci_id},
+    {"rsmi_dev_pci_replay_counter_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_pci_replay_counter},
+    {"rsmi_dev_pci_throughput_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_pci_throughput},
+    {"rsmi_dev_power_profile_presets_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_profile_presets},
+    {"rsmi_dev_power_profile_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_profile_set},
+    {"rsmi_dev_fan_reset", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_fan_reset},
+    {"rsmi_dev_fan_rpms_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_fan_rpms},
+    {"rsmi_dev_fan_speed_max_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_fan_speed_max},
+    {"rsmi_dev_fan_speed_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_fan_speed},
+    {"rsmi_dev_fan_speed_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_fan_speed},
+    {"rsmi_dev_power_ave_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_ave},
+    {"rsmi_dev_power_cap_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap},
+    {"rsmi_dev_power_cap_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap},
+    {"rsmi_dev_power_cap_range_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap_range},
+    {"rsmi_dev_temp_metric_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_temp_metric},
+    {"rsmi_dev_firmware_version_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_firmware_version},
+    {"rsmi_dev_ecc_count_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_ecc_count},
+    {"rsmi_dev_ecc_enabled_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_ecc_enabled},
+    {"rsmi_dev_ecc_status_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_ecc_status},
+    {"rsmi_dev_gpu_clk_freq_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_gpu_clk_freq},
+    {"rsmi_dev_gpu_clk_freq_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_gpu_clk_freq},
+    {"rsmi_dev_pci_bandwidth_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_pci_bandwidth},
+    {"rsmi_dev_pci_bandwidth_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_pci_bandwidth},
+    {"rsmi_dev_brand_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_brand},
+    {"rsmi_dev_name_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_name},
+    {"rsmi_dev_serial_number_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_serial_number},
+    {"rsmi_dev_subsystem_name_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_subsystem_name},
+    {"rsmi_dev_vbios_version_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_vbios_version},
+    {"rsmi_dev_vendor_name_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_vendor_name},
+    {NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
 typedef struct {
@@ -237,6 +249,10 @@ typedef struct {
     int64_t value;
     char scratch[PAPI_MAX_STR_LEN];
     rocs_access_mode_e mode;
+    open_function_f open_func_p;
+    close_function_f close_func_p;
+    start_function_f start_func_p;
+    stop_function_f stop_func_p;
     access_function_f access_func_p;
 } ntv_event_t;
 
@@ -405,6 +421,7 @@ rocs_ctx_open(unsigned int *events_id, int num_events, rocs_ctx_t *rocs_ctx)
 {
     int papi_errno = PAPI_OK;
     int64_t *counters = NULL;
+    int i = 0, j;
 
     _papi_hwi_lock(_rocm_smi_lock);
 
@@ -426,6 +443,14 @@ rocs_ctx_open(unsigned int *events_id, int num_events, rocs_ctx_t *rocs_ctx)
         goto fn_fail;
     }
 
+    for (i = 0; i < num_events; ++i) {
+        int id = events_id[i];
+        papi_errno = ntv_table_p->events[id].open_func_p(&ntv_table_p->events[id]);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail;
+        }
+    }
+
     (*rocs_ctx)->state |= ROCS_EVENTS_OPENED;
     (*rocs_ctx)->events_id = events_id;
     (*rocs_ctx)->num_events = num_events;
@@ -436,6 +461,10 @@ rocs_ctx_open(unsigned int *events_id, int num_events, rocs_ctx_t *rocs_ctx)
     _papi_hwi_unlock(_rocm_smi_lock);
     return papi_errno;
   fn_fail:
+    for (j = 0; j < i; ++j) {
+        int id = events_id[j];
+        ntv_table_p->events[id].close_func_p(&ntv_table_p->events[id]);
+    }
     if (counters) {
         papi_free(counters);
     }
@@ -448,19 +477,35 @@ rocs_ctx_open(unsigned int *events_id, int num_events, rocs_ctx_t *rocs_ctx)
 int
 rocs_ctx_close(rocs_ctx_t rocs_ctx)
 {
+    int papi_errno = PAPI_OK;
+
     _papi_hwi_lock(_rocm_smi_lock);
+
+    int i;
+    for (i = 0; i < rocs_ctx->num_events; ++i) {
+        int id = rocs_ctx->events_id[i];
+        papi_errno = ntv_table_p->events[id].close_func_p(&ntv_table_p->events[id]);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail;
+        }
+    }
 
     release_devices(&rocs_ctx->device_mask);
     papi_free(rocs_ctx->counters);
     papi_free(rocs_ctx);
 
+  fn_exit:
     _papi_hwi_unlock(_rocm_smi_lock);
-    return PAPI_OK;
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
 rocs_ctx_start(rocs_ctx_t rocs_ctx)
 {
+    int papi_errno = PAPI_OK;
+
     if (!(rocs_ctx->state & ROCS_EVENTS_OPENED)) {
         return PAPI_ECMP;
     }
@@ -469,15 +514,25 @@ rocs_ctx_start(rocs_ctx_t rocs_ctx)
         return PAPI_ECMP;
     }
 
-    int i;
+    int i, j;
     for (i = 0; i < rocs_ctx->num_events; ++i) {
-        int id = ntv_table_p->events[rocs_ctx->events_id[i]].id;
-        ntv_table_p->events[id].value = 0;
+        int id = rocs_ctx->events_id[i];
+        papi_errno = ntv_table_p->events[id].start_func_p(&ntv_table_p->events[id]);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail;
+        }
     }
 
     rocs_ctx->state |= ROCS_EVENTS_RUNNING;
 
-    return PAPI_OK;
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    for (j = 0; j < i; ++j) {
+        int id = rocs_ctx->events_id[i];
+        ntv_table_p->events[id].stop_func_p(&ntv_table_p->events[id]);
+    }
+    goto fn_exit;
 }
 
 int
@@ -489,6 +544,15 @@ rocs_ctx_stop(rocs_ctx_t rocs_ctx)
 
     if (!(rocs_ctx->state & ROCS_EVENTS_RUNNING)) {
         return PAPI_ECMP;
+    }
+
+    int i;
+    for (i = 0; i < rocs_ctx->num_events; ++i) {
+        int id = rocs_ctx->events_id[i];
+        int papi_errno = ntv_table_p->events[id].stop_func_p(&ntv_table_p->events[id]);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
     }
 
     rocs_ctx->state &= ~ROCS_EVENTS_RUNNING;
@@ -1006,6 +1070,10 @@ get_ntv_events_count(void)
 
 static rocs_access_mode_e get_access_mode(const char *);
 static char *get_event_descr(const char *name, int64_t variant, int64_t subvariant);
+static open_function_f get_open_func(const char *name);
+static close_function_f get_close_func(const char *name);
+static start_function_f get_start_func(const char *name);
+static stop_function_f get_stop_func(const char *name);
 static access_function_f get_access_func(const char *name);
 static int handle_special_events(const char *name, int32_t dev, int64_t variant, int64_t subvariant, int *count, ntv_event_t *events);
 
@@ -1037,6 +1105,10 @@ get_ntv_events(ntv_event_t *events, int count)
         events[events_count].variant = -1;
         events[events_count].subvariant = -1;
         events[events_count].mode = ROCS_ACCESS_MODE__READ;
+        events[events_count].open_func_p = get_open_func(first_events[i]);
+        events[events_count].close_func_p = get_close_func(first_events[i]);
+        events[events_count].start_func_p = get_start_func(first_events[i]);
+        events[events_count].stop_func_p = get_stop_func(first_events[i]);
         events[events_count].access_func_p = get_access_func(first_events[i]);
         htable_insert(htable, events[events_count].name, &events[events_count]);
         ++events_count;
@@ -1060,6 +1132,10 @@ get_ntv_events(ntv_event_t *events, int count)
                         events[events_count].variant = -1;
                         events[events_count].subvariant = -1;
                         events[events_count].mode = get_access_mode(v_name.name);
+                        events[events_count].open_func_p = get_open_func(v_name.name);
+                        events[events_count].close_func_p = get_close_func(v_name.name);
+                        events[events_count].start_func_p = get_start_func(v_name.name);
+                        events[events_count].stop_func_p = get_stop_func(v_name.name);
                         events[events_count].access_func_p = get_access_func(v_name.name);
                         htable_insert(htable, events[events_count].name, &events[events_count]);
                         ++events_count;
@@ -1080,6 +1156,10 @@ get_ntv_events(ntv_event_t *events, int count)
                                 events[events_count].device = dev;
                                 events[events_count].variant = v_variant.id;
                                 events[events_count].subvariant = -1;
+                                events[events_count].open_func_p = get_open_func(v_name.name);
+                                events[events_count].close_func_p = get_close_func(v_name.name);
+                                events[events_count].start_func_p = get_start_func(v_name.name);
+                                events[events_count].stop_func_p = get_stop_func(v_name.name);
                                 events[events_count].mode = get_access_mode(v_name.name);
                                 events[events_count].access_func_p = get_access_func(v_name.name);
                                 htable_insert(htable, events[events_count].name, &events[events_count]);
@@ -1100,6 +1180,10 @@ get_ntv_events(ntv_event_t *events, int count)
                                     events[events_count].variant = v_variant.id;
                                     events[events_count].subvariant = v_subvariant.id;
                                     events[events_count].mode = get_access_mode(v_name.name);
+                                    events[events_count].open_func_p = get_open_func(v_name.name);
+                                    events[events_count].close_func_p = get_close_func(v_name.name);
+                                    events[events_count].start_func_p = get_start_func(v_name.name);
+                                    events[events_count].stop_func_p = get_stop_func(v_name.name);
                                     events[events_count].access_func_p = get_access_func(v_name.name);
                                     htable_insert(htable, events[events_count].name, &events[events_count]);
                                     ++events_count;
@@ -1247,6 +1331,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = i;
             events[*events_count].subvariant = -1;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1265,6 +1353,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = i;
             events[*events_count].subvariant = -1;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1283,6 +1375,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = i;
             events[*events_count].subvariant = v_subvariant;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1301,6 +1397,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = v_variant;
             events[*events_count].subvariant = i;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1323,6 +1423,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = i;
             events[*events_count].subvariant = -1;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1338,6 +1442,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
                events[*events_count].variant = i;
                events[*events_count].subvariant = j;
                events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+               events[*events_count].open_func_p = get_open_func(v_name);
+               events[*events_count].close_func_p = get_close_func(v_name);
+               events[*events_count].start_func_p = get_start_func(v_name);
+               events[*events_count].stop_func_p = get_stop_func(v_name);
                events[*events_count].access_func_p = get_access_func(v_name);
                htable_insert(htable, events[*events_count].name, &events[*events_count]);
                ++(*events_count);
@@ -1356,6 +1464,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = v_variant;
             events[*events_count].subvariant = v_subvariant;
             events[*events_count].mode = ROCS_ACCESS_MODE__WRITE;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1376,6 +1488,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
                 events[*events_count].variant = v_variant;
                 events[*events_count].subvariant = i;
                 events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+                events[*events_count].open_func_p = get_open_func(v_name);
+                events[*events_count].close_func_p = get_close_func(v_name);
+                events[*events_count].start_func_p = get_start_func(v_name);
+                events[*events_count].stop_func_p = get_stop_func(v_name);
                 events[*events_count].access_func_p = get_access_func(v_name);
                 htable_insert(htable, events[*events_count].name, &events[*events_count]);
                 ++(*events_count);
@@ -1391,6 +1507,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = v_variant;
             events[*events_count].subvariant = idx;
             events[*events_count].mode = ROCS_ACCESS_MODE__READ;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -1409,6 +1529,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[*events_count].variant = v_variant;
             events[*events_count].subvariant = -1;
             events[*events_count].mode = ROCS_ACCESS_MODE__WRITE;
+            events[*events_count].open_func_p = get_open_func(v_name);
+            events[*events_count].close_func_p = get_close_func(v_name);
+            events[*events_count].start_func_p = get_start_func(v_name);
+            events[*events_count].stop_func_p = get_stop_func(v_name);
             events[*events_count].access_func_p = get_access_func(v_name);
             htable_insert(htable, events[*events_count].name, &events[*events_count]);
             ++(*events_count);
@@ -2313,6 +2437,62 @@ get_access_mode(const char *name)
     return ROCS_ACCESS_MODE__READ;
 }
 
+open_function_f
+get_open_func(const char *name)
+{
+    int i = 0;
+    while (event_function_table[i].name != NULL) {
+        if (strcmp(name, event_function_table[i].name) == 0) {
+            return event_function_table[i].open_func_p;
+        }
+        ++i;
+    }
+
+    return NULL;
+}
+
+close_function_f
+get_close_func(const char *name)
+{
+    int i = 0;
+    while (event_function_table[i].name != NULL) {
+        if (strcmp(name, event_function_table[i].name) == 0) {
+            return event_function_table[i].close_func_p;
+        }
+        ++i;
+    }
+
+    return NULL;
+}
+
+start_function_f
+get_start_func(const char *name)
+{
+    int i = 0;
+    while (event_function_table[i].name != NULL) {
+        if (strcmp(name, event_function_table[i].name) == 0) {
+            return event_function_table[i].start_func_p;
+        }
+        ++i;
+    }
+
+    return NULL;
+}
+
+stop_function_f
+get_stop_func(const char *name)
+{
+    int i = 0;
+    while (event_function_table[i].name != NULL) {
+        if (strcmp(name, event_function_table[i].name) == 0) {
+            return event_function_table[i].stop_func_p;
+        }
+        ++i;
+    }
+
+    return NULL;
+}
+
 access_function_f
 get_access_func(const char *name)
 {
@@ -2325,6 +2505,32 @@ get_access_func(const char *name)
     }
 
     return NULL;
+}
+
+int
+open_simple(void *arg __attribute__((unused)))
+{
+    return PAPI_OK;
+}
+
+int
+close_simple(void *arg __attribute__((unused)))
+{
+    return PAPI_OK;
+}
+
+int
+start_simple(void *arg)
+{
+    ntv_event_t *event = (ntv_event_t *) arg;
+    event->value = 0;
+    return PAPI_OK;
+}
+
+int
+stop_simple(void *arg __attribute__((unused)))
+{
+    return PAPI_OK;
 }
 
 int
