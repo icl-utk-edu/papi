@@ -106,9 +106,16 @@ main( int argc, char **argv )
 
 	numcmp = PAPI_num_components(  );
 
+    int rocm_id = PAPI_get_component_index("rocm");
+
 	/* Loop through all components */
 	for( cid = 0; cid < numcmp; cid++ ) {
 
+        if (cid == rocm_id) {
+            /* skip rocm component due to a bug in rocprofiler that
+             * crashes PAPI if multiple GPUs are present */
+            continue;
+        }
 
 		cmpinfo = PAPI_get_component_info( cid );
 		if (cmpinfo  == NULL) {
