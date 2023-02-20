@@ -624,6 +624,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+NVPPC64LEFLAGS
 CC_COMMON_NAME
 BGPM_INSTALL_DIR
 HAVE_NO_OVERRIDE_INIT
@@ -4799,6 +4800,11 @@ else
 		      CPU="x86"
 
                    elif test "$family" = "ppc64" || test "$family" = "ppc64le"; then
+                     cuda_version=`grep -r '#define CUDA_VERSION [0-9]' $PAPI_CUDA_ROOT/include/cuda.h | awk '{print $3}'`
+                     if (test "$family" = "ppc64le" && test "$CC_COMMON_NAME" = "gcc" && test "$major" -ge 8 \
+                      && test "$major" -lt 9 && test "$cuda_version" -ge 10000 && test "$cuda_version" -lt 11000); then
+                        NVPPC64LEFLAGS="-Xcompiler -mno-float128"
+                     fi
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d' | tr -d ","`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
@@ -7163,6 +7169,7 @@ if test "x$PAPI_EVENTS_CSV" == "x"; then
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PAPI_EVENTS_CSV" >&5
 $as_echo "$PAPI_EVENTS_CSV" >&6; }
+
 
 
 

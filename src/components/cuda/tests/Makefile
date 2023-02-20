@@ -10,7 +10,7 @@ cuda_tests: $(TESTS)
 
 PAPI_CUDA_ROOT ?= $(CUDA_PATH)
 NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc 
-NVCFLAGS = -g -ccbin='$(CC)'
+NVCFLAGS = -g -ccbin='$(CC)' $(NVPPC64LEFLAGS)
 INCLUDE += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUPTI_ROOT)/include 
 CUDALIBS = -L$(CUDRV_DIR)/lib64 -L$(PAPI_CUDA_ROOT)/lib64 -L$(PAPI_CUDA_ROOT)/lib64/stubs -L$(PAPI_CUPTI_ROOT)/lib64 -lcudart -lcupti -lcuda 
 PAPILIB += -L../../../libpfm4/lib -lpfm
