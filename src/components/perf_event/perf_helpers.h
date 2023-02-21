@@ -409,6 +409,11 @@ static inline unsigned long long mmap_read_self(void *addr,
 	return (unsigned long long)(-1);
 }
 
+static inline unsigned long long mmap_read_reset_count(void *addr __attribute__((unused))) {
+
+	return (unsigned long long)(-1);
+}
+
 #endif
 
 /* These functions are based on builtin-record.c in the  */
