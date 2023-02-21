@@ -29,6 +29,74 @@ sys_perf_event_open( struct perf_event_attr *hw_event,
 	return ret;
 }
 
+
+/*
+ * We define u64 as uint64_t for every architecture
+ * so that we can print it with "%"PRIx64 without getting warnings.
+ *
+ * typedef __u64 u64;
+ * typedef __s64 s64;
+ */
+typedef uint64_t u64;
+typedef int64_t s64;
+
+typedef __u32 u32;
+typedef __s32 s32;
+
+typedef __u16 u16;
+typedef __s16 s16;
+
+typedef __u8  u8;
+typedef __s8  s8;
+
+
+#ifdef __SIZEOF_INT128__
+static inline u64 mul_u64_u32_shr(u64 a, u32 b, unsigned int shift)
+{
+	return (u64)(((unsigned __int128)a * b) >> shift);
+}
+
+#else
+
+#ifdef __i386__
+static inline u64 mul_u32_u32(u32 a, u32 b)
+{
+	u32 high, low;
+
+	asm ("mull %[b]" : "=a" (low), "=d" (high)
+			 : [a] "a" (a), [b] "rm" (b) );
+
+	return low | ((u64)high) << 32;
+}
+#else
+static inline u64 mul_u32_u32(u32 a, u32 b)
+{
+	return (u64)a * b;
+}
+#endif
+
+static inline u64 mul_u64_u32_shr(u64 a, u32 b, unsigned int shift)
+{
+	u32 ah, al;
+	u64 ret;
+
+	al = a;
+	ah = a >> 32;
+
+	ret = mul_u32_u32(al, b) >> shift;
+	if (ah)
+		ret += mul_u32_u32(ah, b) << (32 - shift);
+
+	return ret;
+}
+
+#endif	/* __SIZEOF_INT128__ */
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
+
+
 #if defined(__x86_64__) || defined(__i386__)
 
 
@@ -52,19 +120,140 @@ static inline unsigned long long rdpmc(unsigned int counter) {
 
 #define barrier() __asm__ volatile("" ::: "memory")
 
+
+#elif defined(__aarch64__)
+
+/* Indirect stringification.  Doing two levels allows the parameter to be a
+ * macro itself.  For example, compile with -DFOO=bar, __stringify(FOO)
+ * converts to "bar".
+ */
+
+#define __stringify_1(x...)     #x
+#define __stringify(x...)       __stringify_1(x)
+
+#define read_sysreg(r) ({						\
+	u64 __val;							\
+	asm volatile("mrs %0, " __stringify(r) : "=r" (__val));		\
+	__val;								\
+})
+
+static u64 read_pmccntr(void)
+{
+	return read_sysreg(pmccntr_el0);
+}
+
+#define PMEVCNTR_READ(idx)					\
+	static u64 read_pmevcntr_##idx(void) {			\
+		return read_sysreg(pmevcntr##idx##_el0);	\
+	}
+
+PMEVCNTR_READ(0);
+PMEVCNTR_READ(1);
+PMEVCNTR_READ(2);
+PMEVCNTR_READ(3);
+PMEVCNTR_READ(4);
+PMEVCNTR_READ(5);
+PMEVCNTR_READ(6);
+PMEVCNTR_READ(7);
+PMEVCNTR_READ(8);
+PMEVCNTR_READ(9);
+PMEVCNTR_READ(10);
+PMEVCNTR_READ(11);
+PMEVCNTR_READ(12);
+PMEVCNTR_READ(13);
+PMEVCNTR_READ(14);
+PMEVCNTR_READ(15);
+PMEVCNTR_READ(16);
+PMEVCNTR_READ(17);
+PMEVCNTR_READ(18);
+PMEVCNTR_READ(19);
+PMEVCNTR_READ(20);
+PMEVCNTR_READ(21);
+PMEVCNTR_READ(22);
+PMEVCNTR_READ(23);
+PMEVCNTR_READ(24);
+PMEVCNTR_READ(25);
+PMEVCNTR_READ(26);
+PMEVCNTR_READ(27);
+PMEVCNTR_READ(28);
+PMEVCNTR_READ(29);
+PMEVCNTR_READ(30);
+
+/*
+ * Read a value direct from PMEVCNTR<idx>
+ */
+static u64 rdpmc(unsigned int counter)
+{
+	static u64 (* const read_f[])(void) = {
+		read_pmevcntr_0,
+		read_pmevcntr_1,
+		read_pmevcntr_2,
+		read_pmevcntr_3,
+		read_pmevcntr_4,
+		read_pmevcntr_5,
+		read_pmevcntr_6,
+		read_pmevcntr_7,
+		read_pmevcntr_8,
+		read_pmevcntr_9,
+		read_pmevcntr_10,
+		read_pmevcntr_11,
+		read_pmevcntr_13,
+		read_pmevcntr_12,
+		read_pmevcntr_14,
+		read_pmevcntr_15,
+		read_pmevcntr_16,
+		read_pmevcntr_17,
+		read_pmevcntr_18,
+		read_pmevcntr_19,
+		read_pmevcntr_20,
+		read_pmevcntr_21,
+		read_pmevcntr_22,
+		read_pmevcntr_23,
+		read_pmevcntr_24,
+		read_pmevcntr_25,
+		read_pmevcntr_26,
+		read_pmevcntr_27,
+		read_pmevcntr_28,
+		read_pmevcntr_29,
+		read_pmevcntr_30,
+		read_pmccntr
+	};
+
+	if (counter < ARRAY_SIZE(read_f))
+		return (read_f[counter])();
+
+	return 0;
+}
+
+static u64 rdtsc(void) { return read_sysreg(cntvct_el0); }
+
+#define barrier()	asm volatile("dmb ish" : : : "memory")
+
+#endif
+
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
+
+static inline u64 adjust_cap_usr_time_short(u64 a, u64 b, u64 c)
+{
+	u64 ret;
+	ret = b + ((a - b) & c);
+	return ret;
+}
+
 /* based on the code in include/uapi/linux/perf_event.h */
 static inline unsigned long long mmap_read_self(void *addr,
+					 int user_reset_flag,
+					 unsigned long long reset,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
 
 	struct perf_event_mmap_page *pc = addr;
 
-	uint32_t seq, time_mult, time_shift, index, width;
+	uint32_t seq, time_mult = 0, time_shift = 0, index, width;
 	int64_t count;
 	uint64_t enabled, running;
-	uint64_t cyc, time_offset;
+	uint64_t cyc = 0, time_offset = 0, time_cycles = 0, time_mask = ~0ULL;
 	int64_t pmc = 0;
-	uint64_t quot, rem;
 	uint64_t delta = 0;
 
 
@@ -96,12 +285,11 @@ static inline unsigned long long mmap_read_self(void *addr,
 			time_mult = pc->time_mult;
 			time_shift = pc->time_shift;
 
-			quot=(cyc>>time_shift);
-			rem = cyc & (((uint64_t)1 << time_shift) - 1);
-			delta = time_offset + (quot * time_mult) +
-				((rem * time_mult) >> time_shift);
+			if (pc->cap_user_time_short) {
+				time_cycles = pc->time_cycles;
+				time_mask = pc->time_mask;
+			}
 		}
-		enabled+=delta;
 
 		/* actually do the measurement */
 
@@ -116,8 +304,9 @@ static inline unsigned long long mmap_read_self(void *addr,
 		/* numbers which break if an IOC_RESET is done */
 		width = pc->pmc_width;
 		count = pc->offset;
-		count<<=(64-width);
-		count>>=(64-width);
+		if (user_reset_flag == 1) {
+			count = 0;
+		}
 
 		/* Ugh, libpfm4 perf_event.h has cap_usr_rdpmc */
 		/* while actual perf_event.h has cap_user_rdpmc */
@@ -130,14 +319,14 @@ static inline unsigned long long mmap_read_self(void *addr,
 			pmc = rdpmc(index-1);
 
 			/* sign extend result */
+			if (user_reset_flag == 1) {
+				pmc-=reset;
+			}
 			pmc<<=(64-width);
 			pmc>>=(64-width);
 
 			/* add current count into the existing kernel count */
 			count+=pmc;
-
-			/* Only adjust if index is valid */
-			running+=delta;
 		} else {
 			/* Falling back because rdpmc not supported	*/
 			/* for this event.				*/
@@ -148,14 +337,66 @@ static inline unsigned long long mmap_read_self(void *addr,
 
 	} while (pc->lock != seq);
 
+	if (enabled != running) {
+
+		/* Adjust for cap_usr_time_short, a nop if not */
+		cyc = adjust_cap_usr_time_short(cyc, time_cycles, time_mask);
+
+		delta = time_offset + mul_u64_u32_shr(cyc, time_mult, time_shift);
+
+		enabled+=delta;
+		if (index)
+			/* Only adjust if index is valid */
+			running+=delta;
+	}
+
 	if (en) *en=enabled;
 	if (ru) *ru=running;
 
 	return count;
 }
 
+static inline unsigned long long mmap_read_reset_count(void *addr) {
+
+	struct perf_event_mmap_page *pc = addr;
+	uint32_t seq, index;
+	uint64_t count = 0;
+
+	if (pc == NULL)  {
+	return count;
+	}
+
+	do {
+		/* The barrier ensures we get the most up to date */
+		/* version of the pc->lock variable */
+
+		seq=pc->lock;
+		barrier();
+
+		/* actually do the measurement */
+
+		/* Ugh, libpfm4 perf_event.h has cap_usr_rdpmc */
+		/* while actual perf_event.h has cap_user_rdpmc */
+
+		/* Index of register to read */
+		/* 0 means stopped/not-active */
+		/* Need to subtract 1 to get actual index to rdpmc() */
+		index = pc->index;
+
+		if (pc->cap_usr_rdpmc && index) {
+			/* Read counter value */
+			count = rdpmc(index-1);
+		}
+		barrier();
+
+	} while (pc->lock != seq);
+
+	return count;
+}
+
 #else
 static inline unsigned long long mmap_read_self(void *addr,
+					 int user_reset_flag,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
 

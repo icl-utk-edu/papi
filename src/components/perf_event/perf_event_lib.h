@@ -36,6 +36,8 @@ typedef struct {
   pid_t tid;                      /* thread we are monitoring          */
   pe_event_info_t events[PERF_EVENT_MAX_MPX_COUNTERS];
   long long counts[PERF_EVENT_MAX_MPX_COUNTERS];
+  unsigned int reset_flag;
+  long long reset_counts[PERF_EVENT_MAX_MPX_COUNTERS];
 } pe_control_t;
 
 
