@@ -682,6 +682,12 @@ set_up_mmap( pe_control_t *ctl, int evt_idx)
 
 
 
+/* Request user access for arm64 */
+static inline void arm64_request_user_access(struct perf_event_attr *hw_event)
+{
+	hw_event->config1=0x2;        /* Request user access */
+}
+
 /* Open all events in the control state */
 static int
 open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
@@ -735,6 +741,11 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 		if (( i == 0 ) || (ctl->multiplexed)) {
 			ctl->events[i].attr.pinned = !ctl->multiplexed;
 			ctl->events[i].attr.disabled = 1;
+#if defined(__aarch64__)
+			if (_perf_event_vector.cmp_info.fast_counter_read) {
+				arm64_request_user_access(&ctl->events[i].attr);
+			}
+#endif
 			ctl->events[i].group_leader_fd=-1;
 			ctl->events[i].attr.read_format = get_read_format(
 							ctl->multiplexed,
@@ -743,6 +754,11 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
 		} else {
 			ctl->events[i].attr.pinned=0;
 			ctl->events[i].attr.disabled = 0;
+#if defined(__aarch64__)
+			if (_perf_event_vector.cmp_info.fast_counter_read) {
+				arm64_request_user_access(&ctl->events[i].attr);
+			}
+#endif
 			ctl->events[i].group_leader_fd=ctl->events[0].event_fd;
 			ctl->events[i].attr.read_format = get_read_format(
 							ctl->multiplexed,
@@ -1047,8 +1063,16 @@ _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 	/* We need to reset all of the events, not just the group leaders */
 	for( i = 0; i < pe_ctl->num_events; i++ ) {
-		ret = ioctl( pe_ctl->events[i].event_fd,
-				PERF_EVENT_IOC_RESET, NULL );
+		if (_perf_event_vector.cmp_info.fast_counter_read) {
+			ret = ioctl( pe_ctl->events[i].event_fd, 
+					PERF_EVENT_IOC_RESET, NULL );
+			pe_ctl->reset_counts[i] = mmap_read_reset_count(
+					pe_ctl->events[i].mmap_buf);
+			pe_ctl->reset_flag = 1;
+		} else {
+			ret = ioctl( pe_ctl->events[i].event_fd, 
+					PERF_EVENT_IOC_RESET, NULL );
+		}
 		if ( ret == -1 ) {
 			PAPIERROR("ioctl(%d, PERF_EVENT_IOC_RESET, NULL) "
 					"returned error, Linux says: %s",
@@ -1119,6 +1143,8 @@ _pe_rdpmc_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
 		count = mmap_read_self(pe_ctl->events[i].mmap_buf,
+						pe_ctl->reset_flag,
+						pe_ctl->reset_counts[i],
 						&enabled,&running);
 
 		if (count==0xffffffffffffffffULL) {
@@ -1438,6 +1464,10 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 				pe_ctl->events[i].event_fd);
 			ret=ioctl( pe_ctl->events[i].event_fd,
 				PERF_EVENT_IOC_ENABLE, NULL) ;
+			if (_perf_event_vector.cmp_info.fast_counter_read) {
+				pe_ctl->reset_counts[i] = 0LL;
+				pe_ctl->reset_flag = 0;
+			}
 
 			/* ioctls always return -1 on failure */
 			if (ret == -1) {
@@ -2297,6 +2327,29 @@ _pe_shutdown_component( void ) {
 }
 
 
+#if defined(__aarch64__)
+/* Check access PMU counter from User space for arm64 support */
+static int _pe_detect_arm64_access(void) {
+
+	FILE *fff;
+	int perf_user_access;
+	int retval;
+
+	fff=fopen("/proc/sys/kernel/perf_user_access","r");
+	if (fff==NULL) {
+		return 0;
+	}
+
+	/* 1 means you can access PMU counter from User space */
+	/* 0 means you can not access PMU counter from User space */
+	retval=fscanf(fff,"%d",&perf_user_access);
+	if (retval!=1) fprintf(stderr,"Error reading /proc/sys/kernel/perf_user_access\n");
+	fclose(fff);
+
+	return perf_user_access;
+}
+#endif
+
 /* Check the mmap page for rdpmc support */
 static int _pe_detect_rdpmc(void) {
 
@@ -2305,10 +2358,13 @@ static int _pe_detect_rdpmc(void) {
 	void *addr;
 	struct perf_event_mmap_page *our_mmap;
 	int page_size=getpagesize();
+#if defined(__aarch64__)
+	int retval;
+#endif
 
-#if defined(__i386__) || defined (__x86_64__)
+#if defined(__i386__) || defined (__x86_64__) || defined(__aarch64__)
 #else
-	/* We only support rdpmc on x86 for now */
+	/* We support rdpmc on x86 and arm64 for now */
         return 0;
 #endif
 
@@ -2318,12 +2374,23 @@ static int _pe_detect_rdpmc(void) {
 		return 0;
 	}
 
+#if defined(__aarch64__)
+	/* Detect if we can use PMU counter from User space for arm64 */
+	retval = _pe_detect_arm64_access();
+	if (retval == 0) {
+		return 0;
+	}
+#endif
+
 	/* Create a fake instructions event so we can read a mmap page */
 	memset(&pe,0,sizeof(struct perf_event_attr));
 
 	pe.type=PERF_TYPE_HARDWARE;
 	pe.size=sizeof(struct perf_event_attr);
 	pe.config=PERF_COUNT_HW_INSTRUCTIONS;
+#if defined(__aarch64__)
+	arm64_request_user_access(&pe);
+#endif
 	pe.exclude_kernel=1;
 	pe.disabled=1;
 
