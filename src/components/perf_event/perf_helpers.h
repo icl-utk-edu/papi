@@ -397,6 +397,7 @@ static inline unsigned long long mmap_read_reset_count(void *addr) {
 #else
 static inline unsigned long long mmap_read_self(void *addr,
 					 int user_reset_flag,
+					 unsigned long long reset,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
 
