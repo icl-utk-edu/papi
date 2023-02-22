@@ -7155,6 +7155,14 @@ for comp in $components; do
           CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
       fi
   fi
+  if test "x$comp" != "xrocm"; then
+      case "$PAPI_ROCM_PROF" in
+          ROCPROFILER)
+              CFLAGS="$CFLAGS -DROCM_PROF_ROCPROFILER";;
+          *)
+              CFLAGS="$CFLAGS -DROCM_PROF_ROCPROFILER";;
+      esac
+  fi
 done
 
 CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"

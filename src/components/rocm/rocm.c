@@ -16,8 +16,7 @@
 #include "common.h"
 #include "papi_vector.h"
 #include "extras.h"
-#include "rocp.h"
-#include "htable.h"
+#include "rocd.h"
 
 /* Init and finalize */
 static int rocm_init_component(int cid);
@@ -50,20 +49,12 @@ static int rocm_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
 
-static int insert_ntv_events_to_htable(void);
-
 extern unsigned rocm_prof_mode;
-
-/* table containing all ROCm events */
-ntv_event_table_t ntv_table;
-void *htable;
-
 
 typedef struct {
     int initialized;
     int state;
     int component_id;
-    ntv_event_table_t *ntv_table;
 } rocm_context_t;
 
 typedef struct {
@@ -74,8 +65,8 @@ typedef struct {
     unsigned int overflow_signal;
     unsigned int attached;
     int component_id;
-    int *events_id;
-    rocp_ctx_t rocp_ctx;
+    unsigned int *events_id;
+    rocd_ctx_t rocd_ctx;
 } rocm_control_t;
 
 papi_vector_t _rocm_vector = {
@@ -128,7 +119,7 @@ papi_vector_t _rocm_vector = {
     .ntv_code_to_descr = rocm_ntv_code_to_descr,
 };
 
-static void check_n_initialize(void);
+static int check_n_initialize(void);
 
 int
 rocm_init_component(int cid)
@@ -138,11 +129,12 @@ rocm_init_component(int cid)
     _rocm_vector.cmp_info.num_cntrs = -1;
     _rocm_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cid;
 
-    const char *err_string;
-    int papi_errno = rocp_init_environment(&err_string);
+    int papi_errno = rocd_init_environment();
     if (papi_errno != PAPI_OK) {
         _rocm_vector.cmp_info.initialized = 1;
         _rocm_vector.cmp_info.disabled = papi_errno;
+        const char *err_string;
+        rocd_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
         if (expect > PAPI_MAX_STR_LEN) {
@@ -150,8 +142,6 @@ rocm_init_component(int cid)
         }
         return papi_errno;
     }
-
-    htable_init(&htable);
 
     sprintf(_rocm_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
@@ -167,14 +157,27 @@ rocm_init_thread(hwd_context_t *ctx)
     memset(rocm_ctx, 0, sizeof(*rocm_ctx));
     rocm_ctx->initialized = 1;
     rocm_ctx->component_id = _rocm_vector.cmp_info.CmpIdx;
-    rocm_ctx->ntv_table = &ntv_table;
     return PAPI_OK;
 }
 
 int
 rocm_init_control_state(hwd_control_state_t *ctl __attribute__((unused)))
 {
-    check_n_initialize();
+    return check_n_initialize();
+}
+
+static int
+evt_get_count(int *count)
+{
+    unsigned int event_code = 0;
+
+    if (rocd_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
+        ++(*count);
+    }
+    while (rocd_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
+        ++(*count);
+    }
+
     return PAPI_OK;
 }
 
@@ -190,10 +193,11 @@ rocm_init_private(void)
         goto fn_exit;
     }
 
-    const char *err_string;
-    papi_errno = rocp_init(&ntv_table, &err_string);
+    papi_errno = rocd_init();
     if (papi_errno != PAPI_OK) {
         _rocm_vector.cmp_info.disabled = papi_errno;
+        const char *err_string;
+        rocd_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
         if (expect > PAPI_MAX_STR_LEN) {
@@ -203,10 +207,10 @@ rocm_init_private(void)
         goto fn_fail;
     }
 
-    insert_ntv_events_to_htable();
-
-    _rocm_vector.cmp_info.num_native_events = ntv_table.count;
-    _rocm_vector.cmp_info.num_cntrs = ntv_table.count;
+    int count = 0;
+    papi_errno = evt_get_count(&count);
+    _rocm_vector.cmp_info.num_native_events = count;
+    _rocm_vector.cmp_info.num_cntrs = count;
 
   fn_exit:
     _rocm_vector.cmp_info.initialized = 1;
@@ -228,12 +232,10 @@ rocm_shutdown_component(void)
         return PAPI_OK;
     }
 
-    int papi_errno = rocp_shutdown(&ntv_table);
+    int papi_errno = rocd_shutdown();
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-
-    htable_shutdown(htable);
 
   fn_exit:
     _rocm_vector.cmp_info.initialized = 0;
@@ -254,7 +256,7 @@ rocm_cleanup_eventset(hwd_control_state_t *ctl)
 {
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
 
-    if (rocm_ctl->rocp_ctx != NULL) {
+    if (rocm_ctl->rocd_ctx != NULL) {
         SUBDBG("Cannot cleanup an eventset that is running.");
         return PAPI_ECMP;
     }
@@ -299,7 +301,7 @@ rocm_dispatch_timer(int n __attribute__((unused)), hwd_siginfo_t *info, void *uc
     ESI = thread->running_eventset[cidx];
     rocm_control_t *rocm_ctl = (rocm_control_t *) ESI->ctl_state;
 
-    if (rocm_ctl->rocp_ctx == NULL) {
+    if (rocm_ctl->rocd_ctx == NULL) {
         SUBDBG("ESI == NULL in user_signal_handler!");
         goto fn_exit;
     }
@@ -317,27 +319,28 @@ rocm_dispatch_timer(int n __attribute__((unused)), hwd_siginfo_t *info, void *uc
     return;
 }
 
-static int update_native_events(rocm_control_t *, NativeInfo_t *, int,
-                                rocm_context_t *);
+static int update_native_events(rocm_control_t *, NativeInfo_t *, int);
 static int try_open_events(rocm_control_t *);
 
 int
 rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
-                          int ntv_count, hwd_context_t *ctx)
+                          int ntv_count,
+                          hwd_context_t *ctx __attribute__((unused)))
 {
-    check_n_initialize();
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
 
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
-    rocm_context_t *rocm_ctx = (rocm_context_t *) ctx;
 
-    if (rocm_ctl->rocp_ctx != NULL) {
+    if (rocm_ctl->rocd_ctx != NULL) {
         SUBDBG("Cannot update events in an eventset that has been already "
                "started.");
         return PAPI_ECMP;
     }
 
-    int papi_errno = update_native_events(rocm_ctl, ntv_info, ntv_count,
-                                          rocm_ctx);
+    papi_errno = update_native_events(rocm_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -345,62 +348,54 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
     return try_open_events(rocm_ctl);
 }
 
+struct event_map_item {
+    int event_id;
+    int frontend_idx;
+};
+
+static int
+compare(const void *a, const void *b)
+{
+    struct event_map_item *A = (struct event_map_item *) a;
+    struct event_map_item *B = (struct event_map_item *) b;
+    return  A->event_id - B->event_id;
+}
+
 int
 update_native_events(rocm_control_t *ctl, NativeInfo_t *ntv_info,
-                     int ntv_count, rocm_context_t *ctx)
+                     int ntv_count)
 {
     int papi_errno = PAPI_OK;
-    int i, j;
-    int *events_id = NULL;
-    int num_events = 0;
+    struct event_map_item sorted_events[PAPI_ROCM_MAX_COUNTERS];
+
+    if (ntv_count != ctl->num_events) {
+        ctl->events_id = papi_realloc(ctl->events_id,
+                                      ntv_count * sizeof(*ctl->events_id));
+        if (ctl->events_id == NULL) {
+            papi_errno = PAPI_ENOMEM;
+            goto fn_fail;
+        }
+
+        ctl->num_events = ntv_count;
+    }
+
+    int i;
+    for (i = 0; i < ntv_count; ++i) {
+        sorted_events[i].event_id = ntv_info[i].ni_event;
+        sorted_events[i].frontend_idx = i;
+    }
+
+    qsort(sorted_events, ntv_count, sizeof(struct event_map_item), compare);
 
     for (i = 0; i < ntv_count; ++i) {
-        unsigned ntv_id = (unsigned) ntv_info[i].ni_event;
-        const char *ntv_name = ctx->ntv_table->events[ntv_id].name;
-        unsigned ntv_dev = ctx->ntv_table->events[ntv_id].ntv_dev;
-
-        for (j = 0; j < num_events; ++j) {
-            int ctl_ntv_id = events_id[j];
-            char *ctl_ntv_name = ctx->ntv_table->events[ctl_ntv_id].name;
-            unsigned ctl_ntv_dev =
-                ctx->ntv_table->events[ctl_ntv_id].ntv_dev;
-
-            if (strcmp(ctl_ntv_name, ntv_name) == 0 &&
-                ctl_ntv_dev == ntv_dev) {
-                /* Do not add events that have the same name and
-                 * device as they refer to the same native rocm
-                 * event. */
-                SUBDBG("[ROCP] Event already in eventset.");
-                break;
-            }
-        }
-        if (j == num_events) {
-            ntv_info[i].ni_position = j;
-
-            events_id = papi_realloc(events_id, ++num_events * sizeof(int));
-            if (events_id == NULL) {
-                SUBDBG("Cannot allocate memory for control events.");
-                goto fn_fail;
-            }
-
-            events_id[j] = ntv_id;
-        }
+        ctl->events_id[i] = sorted_events[i].event_id;
+        ntv_info[sorted_events[i].frontend_idx].ni_position = i;
     }
-
-    if (ctl->events_id) {
-        papi_free(ctl->events_id);
-    }
-    ctl->events_id = events_id;
-    ctl->num_events = num_events;
 
   fn_exit:
     return papi_errno;
   fn_fail:
-    if (events_id) {
-        papi_free(events_id);
-    }
     ctl->num_events = 0;
-    papi_errno = PAPI_ENOMEM;
     goto fn_exit;
 }
 
@@ -408,7 +403,7 @@ int
 try_open_events(rocm_control_t *rocm_ctl)
 {
     int papi_errno = PAPI_OK;
-    rocp_ctx_t rocp_ctx;
+    rocd_ctx_t rocd_ctx;
 
     if (rocm_prof_mode != ROCM_PROFILE_SAMPLING_MODE) {
         /* Do not try open for intercept mode */
@@ -419,14 +414,14 @@ try_open_events(rocm_control_t *rocm_ctl)
         return PAPI_OK;
     }
 
-    papi_errno = rocp_ctx_open(&ntv_table, rocm_ctl->events_id,
-                               rocm_ctl->num_events, &rocp_ctx);
+    papi_errno = rocd_ctx_open(rocm_ctl->events_id, rocm_ctl->num_events,
+                               &rocd_ctx);
     if (papi_errno != PAPI_OK) {
         rocm_cleanup_eventset(rocm_ctl);
         return papi_errno;
     }
 
-    return rocp_ctx_close(rocp_ctx);
+    return rocd_ctx_close(rocd_ctx);
 }
 
 int
@@ -456,15 +451,15 @@ rocm_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
         return PAPI_ECNFLCT;
     }
 
-    papi_errno = rocp_ctx_open(&ntv_table, rocm_ctl->events_id,
-                               rocm_ctl->num_events, &rocm_ctl->rocp_ctx);
+    papi_errno = rocd_ctx_open(rocm_ctl->events_id, rocm_ctl->num_events,
+                               &rocm_ctl->rocd_ctx);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
     rocm_ctx->state = ROCM_EVENTS_OPENED;
 
-    papi_errno = rocp_ctx_start(rocm_ctl->rocp_ctx);
+    papi_errno = rocd_ctx_start(rocm_ctl->rocd_ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -474,7 +469,7 @@ rocm_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
   fn_exit:
     return papi_errno;
   fn_fail:
-    rocp_ctx_close(rocm_ctl->rocp_ctx);
+    rocd_ctx_close(rocm_ctl->rocd_ctx);
     rocm_ctx->state = 0;
     goto fn_exit;
 }
@@ -485,12 +480,12 @@ rocm_read(hwd_context_t *ctx __attribute__((unused)), hwd_control_state_t *ctl,
 {
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
 
-    if (rocm_ctl->rocp_ctx == NULL) {
+    if (rocm_ctl->rocd_ctx == NULL) {
         SUBDBG("Error! Cannot PAPI_read counters for an eventset that has not been PAPI_start'ed.");
         return PAPI_EMISC;
     }
 
-    return rocp_ctx_read(rocm_ctl->rocp_ctx, rocm_ctl->events_id, val);
+    return rocd_ctx_read(rocm_ctl->rocd_ctx, val);
 }
 
 int
@@ -505,17 +500,17 @@ rocm_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
         return PAPI_EMISC;
     }
 
-    papi_errno = rocp_ctx_stop(rocm_ctl->rocp_ctx);
+    papi_errno = rocd_ctx_stop(rocm_ctl->rocd_ctx);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
     rocm_ctx->state &= ~ROCM_EVENTS_RUNNING;
 
-    papi_errno = rocp_ctx_close(rocm_ctl->rocp_ctx);
+    papi_errno = rocd_ctx_close(rocm_ctl->rocd_ctx);
 
     rocm_ctx->state = 0;
-    rocm_ctl->rocp_ctx = NULL;
+    rocm_ctl->rocd_ctx = NULL;
 
     return papi_errno;
 }
@@ -525,135 +520,59 @@ rocm_reset(hwd_context_t *ctx __attribute__((unused)), hwd_control_state_t *ctl)
 {
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
 
-    if (rocm_ctl->rocp_ctx == NULL) {
+    if (rocm_ctl->rocd_ctx == NULL) {
         SUBDBG("Cannot reset counters for an eventset that has not been started.");
         return PAPI_EMISC;
     }
 
-    return rocp_ctx_reset(rocm_ctl->rocp_ctx);
+    return rocd_ctx_reset(rocm_ctl->rocd_ctx);
 }
 
 int
 rocm_ntv_enum_events(unsigned int *event_code, int modifier)
 {
-    int papi_errno = PAPI_OK;
-
-    check_n_initialize();
-
-    switch(modifier) {
-        case PAPI_ENUM_FIRST:
-            *event_code = 0;
-            break;
-        case PAPI_ENUM_EVENTS:
-            if (*event_code < ntv_table.count - 1) {
-                ++(*event_code);
-            } else {
-                papi_errno = PAPI_ENOEVNT;
-            }
-            break;
-        default:
-            papi_errno = PAPI_EINVAL;
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-
-    return papi_errno;
+    return rocd_evt_enum(event_code, modifier);
 }
-
-static void get_ntv_event_name(unsigned int event_code, char *name, int len);
 
 int
 rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 {
-    int papi_errno = PAPI_OK;
-
-    check_n_initialize();
-
-    if (event_code >= ntv_table.count) {
-        return PAPI_EINVAL;
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-
-    get_ntv_event_name(event_code, name, len);
-
-    return papi_errno;
+    return rocd_evt_code_to_name(event_code, name, len);
 }
 
 int
 rocm_ntv_name_to_code(const char *name, unsigned int *code)
 {
-    int papi_errno = PAPI_OK;
-    int htable_errno;
-
-    check_n_initialize();
-
-    ntv_event_t *event;
-    htable_errno = htable_find(htable, name, (void **) &event);
-    if (htable_errno != HTABLE_SUCCESS) {
-        papi_errno = (htable_errno == HTABLE_ENOVAL) ?
-            PAPI_ENOEVNT : PAPI_ECMP;
-        goto fn_exit;
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-    *code = event->ntv_id;
-
-  fn_exit:
-    return papi_errno;
+    return rocd_evt_name_to_code(name, code);
 }
 
 int
 rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
 {
-    int papi_errno = PAPI_OK;
-
-    check_n_initialize();
-
-    if (event_code >= ntv_table.count) {
-        return PAPI_EINVAL;
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-
-    strncpy(descr, ntv_table.events[event_code].descr, len);
-
-    return papi_errno;
-}
-
-void
-check_n_initialize(void)
-{
-    if (!_rocm_vector.cmp_info.initialized) {
-        rocm_init_private();
-    }
+    return rocd_evt_get_descr(event_code, descr, len);
 }
 
 int
-insert_ntv_events_to_htable(void)
+check_n_initialize(void)
 {
-    int papi_errno = PAPI_OK;
-    int htable_errno;
-    unsigned event_code;
-
-    for (event_code = 0; event_code < ntv_table.count; ++event_code) {
-        char key[PAPI_2MAX_STR_LEN] = { 0 };
-
-        get_ntv_event_name(event_code, key, PAPI_2MAX_STR_LEN);
-
-        htable_errno = htable_insert(htable, key, &ntv_table.events[event_code]);
-        if (htable_errno != HTABLE_SUCCESS) {
-            papi_errno = PAPI_ECMP;
-            break;
-        }
+    if (!_rocm_vector.cmp_info.initialized) {
+        return rocm_init_private();
     }
-
-    return papi_errno;
-}
-
-void
-get_ntv_event_name(unsigned int event_code, char *name, int len)
-{
-    if (ntv_table.events[event_code].instance >= 0) {
-        snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev,
-                 ntv_table.events[event_code].instance);
-    } else {
-        snprintf(name, (size_t) len, "%s:device=%u",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev);
-    }
+    return _rocm_vector.cmp_info.disabled;
 }
