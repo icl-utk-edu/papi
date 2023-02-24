@@ -21,8 +21,10 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  *
-
+ *
  * PMU: intel_icl (Intel Icelake)
+ * Based on Intel JSON event table version   : 1.19
+ * Based on Intel JSON event table pusblised : 02/16/2023
  */
 
 static const intel_x86_umask_t intel_icl_ocr[]={
@@ -843,7 +845,12 @@ static const intel_x86_umask_t intel_icl_sq_misc[]={
   { .uname   = "SQ_FULL",
     .udesc   = "Cycles the thread is active and superQ cannot take any more entries.",
     .ucode   = 0x0400ull,
-    .uflags  = INTEL_X86_DFL,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "BUS_LOCK",
+    .udesc   = "Counts bus locks, accounts for cache line split locks and UC locks.",
+    .ucode   = 0x1000ull,
+    .uflags  = INTEL_X86_NCOMBO,
   },
 };
 
@@ -1163,6 +1170,26 @@ static const intel_x86_umask_t intel_icl_fp_arith_inst_retired[]={
   { .uname   = "SCALAR_DOUBLE",
     .udesc   = "Counts number of SSE/AVX computational scalar double precision floating-point instructions retired; some instructions will count twice as noted below.  Each count represents 1 computational operation. Applies to SSE* and AVX* scalar double precision floating-point instructions: ADD SUB MUL DIV MIN MAX SQRT FM(N)ADD/SUB.  FM(N)ADD/SUB instructions count twice as they perform 2 calculations per element. The DAZ and FTZ flags in the MXCSR register need to be set when using this event.",
     .ucode   = 0x0100ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "SCALAR",
+    .udesc   = "Number of SSE/AVX computational scalar floating-point instructions retired; some instructions will count twice as noted below.  Applies to SSE* and AVX* scalar, double and single precision floating-point: ADD SUB MUL DIV MIN MAX RCP14 RSQRT14 SQRT DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB instructions count twice as they perform multiple calculations per element.",
+    .ucode   = 0x0300ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+   { .uname   = "4_FLOPS",
+    .udesc   = "Number of SSE/AVX computational 128-bit packed single and 256-bit packed double precision FP instructions retired; some instructions will count twice as noted below.  Each count represents 2 or/and 4 computation operations, 1 for each element.  Applies to SSE* and AVX* packed single precision and packed double precision FP instructions: ADD SUB HADD HSUB SUBADD MUL DIV MIN MAX RCP14 RSQRT14 SQRT DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB count twice as they perform 2 calculations per element.",
+    .ucode   = 0x1800ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+ { .uname   = "8_FLOPS",
+    .udesc   = "Number of SSE/AVX computational 256-bit packed single precision and 512-bit packed double precision  FP instructions retired; some instructions will count twice as noted below.  Each count represents 8 computation operations, 1 for each element.  Applies to SSE* and AVX* packed single precision and double precision FP instructions: ADD SUB HADD HSUB SUBADD MUL DIV MIN MAX SQRT RSQRT RSQRT14 RCP RCP14 DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB count twice as they perform 2 calculations per element.",
+    .ucode   = 0x6000ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "VECTOR",
+    .udesc   = "Number of any Vector retired FP arithmetic instructions",
+    .ucode   = 0xfc00ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
 };
@@ -2182,6 +2209,12 @@ static const intel_x86_umask_t intel_icl_int_misc[]={
     .ucode   = 0x0100ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "CLEARS_COUNT",
+    .udesc   = "Clears speculative count",
+    .ucode   = 0x0100ull | (0x1 << INTEL_X86_CMASK_BIT) | (0x1 << INTEL_X86_EDGE_BIT),
+    .uflags  = INTEL_X86_NCOMBO,
+    .modhw   = _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_E,
+  },
 };
 
 static const intel_x86_umask_t intel_icl_dtlb_load_misses[]={
@@ -2202,7 +2235,7 @@ static const intel_x86_umask_t intel_icl_dtlb_load_misses[]={
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "WALK_COMPLETED",
-    .udesc   = "Load miss in all TLB levels causes a page walk that completes. (All page sizes)",
+    .udesc   = "Load miss in all TLB levels causes a page walk that completes (All page sizes).",
     .ucode   = 0x0e00ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
