@@ -21,9 +21,24 @@
  * This file is part of libpfm, a performance monitoring support library for
  * applications on Linux.
  *
-
+ *
  * PMU: intel_spr (Intel SapphireRapid)
+ * Based on Intel JSON event table version   : 1.11
+ * Based on Intel JSON event table pusblised : 02/09/2023
  */
+
+static const intel_x86_umask_t spr_amx_ops_retired[]={
+  { .uname   = "BF16",
+    .udesc   = "AMX retired arithmetic BF16 operations.",
+    .ucode   = 0x0200ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "INT8",
+    .udesc   = "AMX retired arithmetic integer 8-bit operations.",
+    .ucode   = 0x0100ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+};
 
 static const intel_x86_umask_t intel_spr_ocr[]={
   { .uname   = "DEMAND_CODE_RD_ANY_RESPONSE",
@@ -617,19 +632,6 @@ static const intel_x86_umask_t intel_spr_fp_arith_inst_retired2[]={
   },
 };
 
-static const intel_x86_umask_t intel_spr_amx_ops_retired[]={
-  { .uname   = "BF16",
-    .udesc   = "TBD",
-    .ucode   = 0x0200ull,
-    .uflags  = INTEL_X86_NCOMBO,
-  },
-  { .uname   = "INT8",
-    .udesc   = "TBD",
-    .ucode   = 0x0100ull,
-    .uflags  = INTEL_X86_NCOMBO,
-  },
-};
-
 static const intel_x86_umask_t intel_spr_mem_trans_retired[]={
   { .uname  = "LOAD_LATENCY",
     .udesc  = "Memory load instructions retired above programmed clocks, minimum threshold value is 3 (Precise Event and ldlat required)",
@@ -710,6 +712,11 @@ static const intel_x86_umask_t intel_spr_fp_arith_inst_retired[]={
     .ucode   = 0x2000ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "4_FLOPS",
+    .udesc   = "Number of SSE/AVX computational 128-bit packed single and 256-bit packed double precision FP instructions retired; some instructions will count twice as noted below.  Each count represents 2 or/and 4 computation operations, 1 for each element.  Applies to SSE* and AVX* packed single precision and packed double precision FP instructions: ADD SUB HADD HSUB SUBADD MUL DIV MIN MAX RCP14 RSQRT14 SQRT DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB count twice as they perform 2 calculations per element.",
+    .ucode   = 0x1800ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
   { .uname   = "512B_PACKED_DOUBLE",
     .udesc   = "Counts number of SSE/AVX computational 512-bit packed double precision floating-point instructions retired; some instructions will count twice as noted below.  Each count represents 8 computation operations, one for each element.  Applies to SSE* and AVX* packed double precision floating-point instructions: ADD SUB MUL DIV MIN MAX SQRT RSQRT14 RCP14 FM(N)ADD/SUB. FM(N)ADD/SUB instructions count twice as they perform 2 calculations per element.",
     .ucode   = 0x4000ull,
@@ -720,6 +727,16 @@ static const intel_x86_umask_t intel_spr_fp_arith_inst_retired[]={
     .ucode   = 0x8000ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "8_FLOPS",
+    .udesc   = "Number of SSE/AVX computational 256-bit packed single precision and 512-bit packed double precision  FP instructions retired; some instructions will count twice as noted below.  Each count represents 8 computation operations, 1 for each element.  Applies to SSE* and AVX* packed single precision and double precision FP instructions: ADD SUB HADD HSUB SUBADD MUL DIV MIN MAX SQRT RSQRT RSQRT14 RCP RCP14 DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB count twice as they perform 2 calculations per element.",
+    .ucode   = 0x6000ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "SCALAR",
+    .udesc   = "Number of SSE/AVX computational scalar floating-point instructions retired; some instructions will count twice as noted below.  Applies to SSE* and AVX* scalar, double and single precision floating-point: ADD SUB MUL DIV MIN MAX RCP14 RSQRT14 RANGE SQRT DPP FM(N)ADD/SUB.  DPP and FM(N)ADD/SUB instructions count twice as they perform multiple calculations per element.",
+    .ucode   = 0x0300ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
   { .uname   = "SCALAR_DOUBLE",
     .udesc   = "Counts number of SSE/AVX computational scalar double precision floating-point instructions retired; some instructions will count twice as noted below.  Each count represents 1 computational operation. Applies to SSE* and AVX* scalar double precision floating-point instructions: ADD SUB MUL DIV MIN MAX SQRT FM(N)ADD/SUB.  FM(N)ADD/SUB instructions count twice as they perform 2 calculations per element.",
     .ucode   = 0x0100ull,
@@ -728,6 +745,11 @@ static const intel_x86_umask_t intel_spr_fp_arith_inst_retired[]={
   { .uname   = "SCALAR_SINGLE",
     .udesc   = "Counts number of SSE/AVX computational scalar single precision floating-point instructions retired; some instructions will count twice as noted below.  Each count represents 1 computational operation. Applies to SSE* and AVX* scalar single precision floating-point instructions: ADD SUB MUL DIV MIN MAX SQRT RSQRT RCP FM(N)ADD/SUB.  FM(N)ADD/SUB instructions count twice as they perform 2 calculations per element.",
     .ucode   = 0x0200ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "VECTOR",
+    .udesc   = "Number of any Vector retired FP arithmetic instructions",
+    .ucode   = 0xfc00ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
 };
@@ -1203,6 +1225,12 @@ static const intel_x86_umask_t intel_spr_uops_issued[]={
 };
 
 static const intel_x86_umask_t intel_spr_int_misc[]={
+  { .uname   = "CLEARS_COUNT",
+    .udesc   = "Clears speculative count",
+    .ucode   = 0x0100ull | (0x1 << INTEL_X86_CMASK_BIT) | (0x1 << INTEL_X86_EDGE_BIT),
+    .uflags  = INTEL_X86_NCOMBO,
+    .modhw   = _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_E,
+  },
   { .uname   = "CLEAR_RESTEER_CYCLES",
     .udesc   = "Counts cycles after recovery from a branch misprediction or machine clear till the first uop is issued from the resteered path.",
     .ucode   = 0x8000ull,
@@ -1593,6 +1621,14 @@ static const intel_x86_umask_t intel_spr_mem_load_completed[]={
   { .uname   = "L1_MISS_ANY",
     .udesc   = "Completed demand load uops that miss the L1 d-cache.",
     .ucode   = 0xfd00ull,
+    .uflags  = INTEL_X86_DFL,
+  },
+};
+
+static const intel_x86_umask_t spr_sq_misc[]={
+  { .uname   = "BUS_LOCK",
+    .udesc   = "Counts bus locks, accounts for cache line split locks and UC locks.",
+    .ucode   = 0x1000ull,
     .uflags  = INTEL_X86_DFL,
   },
 };
@@ -2052,7 +2088,7 @@ static const intel_x86_umask_t intel_spr_inst_retired[]={
     .modhw   = _INTEL_X86_ATTR_INTX | _INTEL_X86_ATTR_INTXCP | _INTEL_X86_ATTR_C | _INTEL_X86_ATTR_I,
 },
   { .uname   = "REP_ITERATION",
-    .udesc   = "TBD",
+    .udesc   = "Iterations of Repeat string retired instructions.",
     .ucode   = 0x0800ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
@@ -2084,6 +2120,16 @@ static const intel_x86_entry_t intel_spr_pe[]={
     .equiv = "INSTRUCTION_RETIRED",
     .cntmsk = 0x1000000ffull,
     .code = 0xc0,
+  },
+  { .name   = "AMX_OPS_RETIRED",
+    .desc   = "Advance Matrix Extension (AMX) operations retired",
+    .code   = 0x00ce,
+    .modmsk = INTEL_V5_ATTRS,
+    .cntmsk = 0x1ull,
+    .ngrp   = 1,
+    .flags  = 0,
+    .numasks= LIBPFM_ARRAY_SIZE(spr_amx_ops_retired),
+    .umasks = spr_amx_ops_retired,
   },
   { .name   = "INT_VEC_RETIRED",
     .desc   = "integer ADD, SUB, SAD 128-bit vector instructions.",
@@ -2175,16 +2221,6 @@ static const intel_x86_entry_t intel_spr_pe[]={
     .numasks= LIBPFM_ARRAY_SIZE(intel_spr_fp_arith_inst_retired2),
     .umasks = intel_spr_fp_arith_inst_retired2,
   },
-  { .name   = "AMX_OPS_RETIRED",
-    .desc   = "TBD",
-    .code   = 0x00ce,
-    .modmsk = INTEL_V5_ATTRS,
-    .cntmsk = 0x1ull,
-    .ngrp   = 1,
-    .flags  = 0,
-    .numasks= LIBPFM_ARRAY_SIZE(intel_spr_amx_ops_retired),
-    .umasks = intel_spr_amx_ops_retired,
-  },
   { .name   = "MEM_TRANS_RETIRED",
     .desc   = "Counts randomly selected loads when the latency from first dispatch to completion is greater than 128 cycles.",
     .code   = 0x01cd,
@@ -2214,6 +2250,16 @@ static const intel_x86_entry_t intel_spr_pe[]={
     .flags  = 0,
     .numasks= LIBPFM_ARRAY_SIZE(intel_spr_rtm_retired),
     .umasks = intel_spr_rtm_retired,
+  },
+  { .name   = "SQ_MISC",
+    .desc   = "Counts bus locks, accounts for cache line split locks and UC locks.",
+    .code   = 0x002c,
+    .modmsk = INTEL_V5_ATTRS,
+    .cntmsk = 0xfull,
+    .ngrp   = 1,
+    .flags  = INTEL_X86_SPEC,
+    .numasks= LIBPFM_ARRAY_SIZE(spr_sq_misc),
+    .umasks = spr_sq_misc,
   },
   { .name   = "FP_ARITH_INST_RETIRED",
     .desc   = "Counts number of SSE/AVX computational scalar double precision floating-point instructions retired; some instructions will count twice as noted below.  Each count represents 1 computational operation. Applies to SSE* and AVX* scalar double precision floating-point instructions: ADD SUB MUL DIV MIN MAX SQRT FM(N)ADD/SUB.  FM(N)ADD/SUB instructions count twice as they perform 2 calculations per element.",
