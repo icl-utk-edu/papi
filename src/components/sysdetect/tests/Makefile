@@ -13,6 +13,12 @@ ifneq ($(MPICC),)
     endif
 endif
 
+ifneq ($(F77),)
+    FTESTS = query_device_simple_f
+else
+    FTESTS =
+endif
+
 ifeq ($(notdir $(F77)),gfortran)
     FFLAGS +=-ffree-form -ffree-line-length-none
 else ifeq ($(notdir $(F77)),flang)
@@ -22,7 +28,7 @@ else
 endif
 
 TESTS = query_device_simple \
-        query_device_simple_f \
+        $(FTESTS)           \
         $(MPITESTS)
 
 sysdetect_tests: $(TESTS)
