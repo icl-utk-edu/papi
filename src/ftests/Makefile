@@ -28,4 +28,9 @@ all:
 
 install:
 	@echo "No Fortran tests to install."
+
+clean:
+
+distclean clobber:
+	rm -f Makefile.target
 endif
