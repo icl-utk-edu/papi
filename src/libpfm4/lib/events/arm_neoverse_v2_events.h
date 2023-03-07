@@ -1,29 +1,35 @@
 /*
- * Contributed by Stephane Eranian <eranian@gmail.com>
+ * Contributed by John Linford <jlinford@nvidia.com>
+ *                Stephane Eranian <eranian@gmail.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
+ * SPDX-FileCopyrightText: Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * ARM Neoverse N2
- * Based on ARM Neoverse N2 Technical Reference Manual rev 0
- * Section 18.1 Performance Monitors events
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * ARM Neoverse V2
+ * References:
+ *  - Arm Neoverse V2 Core TRM: https://developer.arm.com/documentation/102375/0002
+ *  - https://github.com/ARM-software/data/blob/master/pmu/neoverse-v2.json
  */
 
-static const arm_entry_t arm_n2_pe[]={
+static const arm_entry_t arm_v2_pe[]={
 	{.name = "SW_INCR",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x00,
@@ -104,7 +110,7 @@ static const arm_entry_t arm_n2_pe[]={
 	 .code = 0x15,
 	 .desc = "Level 1 data cache write-backs"
 	},
-	{.name = "L2D_CACHE_ACCESS",
+	{.name = "L2D_CACHE",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x16,
 	 .desc = "Level 2 data cache accesses"
@@ -122,12 +128,12 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "BUS_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x19,
-	 .desc = "Counts every beat of data transferred over the data channels between the core and the SCU"
+	 .desc = "Bus access This event counts for every beat of data transferred over the data channels between the core and the Snoop Control Unit (SCU). If both read and write data beats are transferred on a given cycle, this event is counted twice on that cycle. This event counts the sum of BUS_ACCESS_RD, BUS_ACCESS_WR, and any snoop data responses"
 	},
 	{.name = "MEMORY_ERROR",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x1a,
-	 .desc = "Local memory errors"
+	 .desc = "Local memory error This event counts any correctable or uncorrectable memory error (ECC or parity) in the protected core RAMs"
 	},
 	{.name = "INST_SPEC",
 	 .modmsk = ARMV9_ATTRS,
@@ -137,7 +143,7 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "TTBR_WRITE_RETIRED",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x1c,
-	 .desc = "Instructions architecturally executed (condition check pass, write to TTBR). Counts writes to TTBR0_EL1/TTBR1_EL1 in aarch64 mode"
+	 .desc = "Instruction architecturally executed, condition code check pass, write to TTBR This event only counts writes to TTBR0_EL1/TTBR1_EL1. Accesses to TTBR0_EL12/TTBR1_EL12 or TTBR0_EL2/TTBR1_EL2 are not counted"
 	},
 	{.name = "BUS_MASTER_CYCLE",
 	 .modmsk = ARMV9_ATTRS,
@@ -147,7 +153,7 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "COUNTER_OVERFLOW",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x1e,
-	 .desc = "For odd-numbered counters, this event increments the count by one for each overflow of the preceding even-numbered counter. There is no increment for even-numbered counters",
+	 .desc = "For odd-numbered counters, this event increments the count by one for each overflow of the preceding even-numbered counter. For even-numbered counters, there is no increment",
 	},
 	{.name = "L2D_CACHE_ALLOCATE",
 	 .modmsk = ARMV9_ATTRS,
@@ -187,33 +193,33 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "L3D_CACHE_ALLOCATE",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x29,
-	 .desc = "Attributable L3 data or unified cache allocations without a refill. Counts any full cache line write into the L3 cache which does not case a linefill, including write-backs from L2 to L3 and full line write which do not allocate into L2",
+	 .desc = "Attributable L3 cache allocation without refill This event counts any full cache line write into the L3 cache which does not cause a linefill, including Write-Backs from L2 to L3 and full-line writes which do not allocate into L2"
 	},
 	{.name = "L3D_CACHE_REFILL",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x2a,
-	 .desc = "Attributable L3 unified cache refills. Counts any cacheable read transaction returning data from the SCU for which the data source was outside the cluster",
+	 .desc = "Attributable L3 cache refill This event counts for any cacheable read transaction returning data from the SCU for which the data source was outside the cluster. Transactions such as ReadUnique are counted as read transactions, even though they can be generated by store instructions"
 	},
 	{.name = "L3D_CACHE",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x2b,
-	 .desc = "Attributable L3 unified cache accesses. Counts any cacheable read transaction returning data from the SCU, or any cacheable write to the SCU",
+	 .desc = "Attributable L3 cache access This event counts for any cacheable read transaction returning data from the SCU, or for any cacheable write to the SCU"
 	},
 	{.name = "L2D_TLB_REFILL",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x2d,
 	 .desc = "Attributable L2 data or unified TLB refills. Counts on any refill of the L2TLB caused by either an instruction or data access (MMU must be enabled)",
 	},
-	{.name = "L2D_TLB_REQ",
+	{.name = "L2_TLB_REQ",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x2f,
-	 .desc = "Attributable L2 TLB accesses. Counts on any access to the MMUTC (caused by a refill of any of the L1 TLBs). This event does not count if the MMU is disabled",
+	 .equiv = "L2D_TLB",
+	 .desc = "Attributable L2 TLB access This event counts on any access to the MMUTC (caused by a refill of any of the L1 TLBs). This event does not count if the MMU is disabled",
 	},
 	{.name = "L2D_TLB",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x2f,
-	 .equiv = "L2D_TLB_REQ",
-	 .desc = "Attributable L2 TLB accesses. Counts on any access to the MMUTC (caused by a refill of any of the L1 TLBs). This event does not count if the MMU is disabled",
+	 .desc = "Attributable L2 TLB access This event counts on any access to the MMUTC (caused by a refill of any of the L1 TLBs). This event does not count if the MMU is disabled",
 	},
 	{.name = "REMOTE_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
@@ -405,17 +411,28 @@ static const arm_entry_t arm_n2_pe[]={
 	 .code = 0x61,
 	 .desc = "Bus write accesses"
 	},
+	{.name = "MEM_ACCESS_RD",
+	 .modmsk = ARMV9_ATTRS,
+	 .code = 0x66,
+	 .desc = "Data memory read accesses (includes SVE)"
+	},
 	{.name = "MEM_READ_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
+	 .equiv = "MEM_ACCESS_RD",
 	 .code = 0x66,
 	 .desc = "Data memory read accesses"
 	},
+	{.name = "MEM_ACCESS_WR",
+	 .modmsk = ARMV9_ATTRS,
+	 .code = 0x67,
+	 .desc = "Data memory write accesses (includes SVE)"
+	},
 	{.name = "MEM_WRITE_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
+	 .equiv = "MEM_ACCESS_WR",
 	 .code = 0x67,
 	 .desc = "Data memory write accesses"
 	},
-
 	{.name = "UNALIGNED_LD_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x68,
@@ -426,12 +443,17 @@ static const arm_entry_t arm_n2_pe[]={
 	 .code = 0x69,
 	 .desc = "Unaligned write accesses"
 	},
+	{.name = "UNALIGNED_LDST_SPEC",
+	 .modmsk = ARMV9_ATTRS,
+	 .code = 0x6a,
+	 .desc = "Unaligned accesses (includes speculatively executed SVE load and store operations that access at least one unaligned element address)"
+	},
 	{.name = "UNALIGNED_LDST_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
+	 .equiv = "UNALIGNED_LDST_SPEC",
 	 .code = 0x6a,
 	 .desc = "Unaligned accesses"
 	},
-
 	{.name = "LDREX_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x6c,
@@ -493,6 +515,12 @@ static const arm_entry_t arm_n2_pe[]={
 	 .desc = "Immediate branches speculatively executed"
 	},
 	{.name = "BR_RET_SPEC",
+	 .modmsk = ARMV9_ATTRS,
+	 .equiv = "BR_RETURN_SPEC",
+	 .code = 0x79,
+	 .desc = "Return branches speculatively executed"
+	},
+	{.name = "BR_RETURN_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x79,
 	 .desc = "Return branches speculatively executed"
@@ -594,8 +622,8 @@ static const arm_entry_t arm_n2_pe[]={
 	},
 	{.name = "L3_CACHE_RD",
 	 .modmsk = ARMV9_ATTRS,
-	 .code = 0xa0,
-	 .desc = "L3 cache reads",
+	 .code = 0xA0,
+	 .desc = "L3 cache read",
 	},
 	{.name = "SAMPLE_POP",
 	 .modmsk = ARMV9_ATTRS,
@@ -637,85 +665,80 @@ static const arm_entry_t arm_n2_pe[]={
 	 .code = 0x4009,
 	 .desc = "Counts L2 cache long latency misses",
 	},
-	{.name = "L3D_CACHE_LMISS_RD",
-	 .modmsk = ARMV9_ATTRS,
-	 .code = 0x400b,
-	 .desc = "Counts L3 cache long latency misses",
-	},
 	{.name = "TRB_WRAP",
 	 .modmsk = ARMV9_ATTRS,
-	 .code = 0x400c,
-	 .desc = "Counts number of time the Trace buffer current write pointer wrapped",
+	 .code = 0x400C,
+	 .desc = "Trace buffer current write pointer wrapped",
 	},
 	{.name = "TRCEXTOUT0",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4010,
-	 .desc = "PE Trace unit extern output 0",
+	 .desc = "PE Trace Unit external output 0 This event is not exported to the trace unit",
 	},
 	{.name = "TRCEXTOUT1",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4011,
-	 .desc = "PE Trace unit extern output 1",
+	 .desc = "PE Trace Unit external output 1 This event is not exported to the trace unit",
 	},
 	{.name = "TRCEXTOUT2",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4012,
-	 .desc = "PE Trace unit extern output 2",
+	 .desc = "PE Trace Unit external output 2 This event is not exported to the trace unit",
 	},
 	{.name = "TRCEXTOUT3",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4013,
-	 .desc = "PE Trace unit extern output 3",
+	 .desc = "PE Trace Unit external output 3 This event is not exported to the trace unit",
 	},
 	{.name = "CTI_TRIGOUT4",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4018,
-	 .desc = "Cross-trigger interface output trigger 4",
+	 .desc = "Cross-trigger Interface output trigger 4",
 	},
 	{.name = "CTI_TRIGOUT5",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4019,
-	 .desc = "Cross-trigger interface output trigger 5",
+	 .desc = "Cross-trigger Interface output trigger 5",
 	},
 	{.name = "CTI_TRIGOUT6",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x401a,
-	 .desc = "Cross-trigger interface output trigger 6",
+	 .desc = "Cross-trigger Interface output trigger 6",
 	},
 	{.name = "CTI_TRIGOUT7",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x401b,
-	 .desc = "Cross-trigger interface output trigger r",
+	 .desc = "Cross-trigger Interface output trigger 7",
 	},
 	{.name = "LDST_ALIGN_LAT",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4020,
-	 .desc = "Accesses with additonal latency from aligment",
+	 .desc = "Access with additional latency from alignment",
 	},
 	{.name = "LD_ALIGN_LAT",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4021,
-	 .desc = "Loads with additonal latency from aligment",
+	 .desc = "Load with additional latency from alignment",
 	},
 	{.name = "ST_ALIGN_LAT",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4022,
-	 .desc = "Stores with additonal latency from aligment",
+	 .desc = "Store with additional latency from alignment",
 	},
 	{.name = "MEM_ACCESS_CHECKED",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4024,
-	 .desc = "Checked data memory acess",
+	 .desc = "Checked data memory access",
 	},
 	{.name = "MEM_ACCESS_RD_CHECKED",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4025,
-	 .desc = "Checked data memory read acess",
+	 .desc = "Checked data memory access, read",
 	},
 	{.name = "MEM_ACCESS_WR_CHECKED",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x4026,
-	 .desc = "Checked data memory write acess",
+	 .desc = "Checked data memory access, write",
 	},
 	{.name = "ASE_INST_SPEC",
 	 .modmsk = ARMV9_ATTRS,
@@ -730,17 +753,17 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "FP_HP_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x8014,
-	 .desc = "Half precision floating-point operations sepculatively executed",
+	 .desc = "Half-precision floating-point operation speculatively executed",
 	},
 	{.name = "FP_SP_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x8018,
-	 .desc = "Single precision floating-point operations sepculatively executed",
+	 .desc = "Single-precision floating-point operation speculatively executed",
 	},
 	{.name = "FP_DP_SPEC",
 	 .modmsk = ARMV9_ATTRS,
-	 .code = 0x801c,
-	 .desc = "Double precision floating-point operations sepculatively executed",
+	 .code = 0x801C,
+	 .desc = "Double-precision floating-point operation speculatively executed",
 	},
 	{.name = "SVE_PRED_SPEC",
 	 .modmsk = ARMV9_ATTRS,
@@ -765,7 +788,7 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "SVE_PRED_NOT_FULL_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x8079,
-	 .desc = "SVE predicated operations speculatively executed with a governing predicate in which at least one element is false",
+	 .desc = "SVE predicated operations speculatively executed with a Governing predicate in which at least one element is FALSE",
 	},
 	{.name = "SVE_LDFF_SPEC",
 	 .modmsk = ARMV9_ATTRS,
@@ -780,31 +803,31 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "FP_SCALE_OPS_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80c0,
-	 .desc = "Scalable floating-point element operations sepculatively executed",
+	 .desc = "Scalable floating-point element operations speculatively executed",
 	},
 	{.name = "FP_FIXED_OPS_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80c1,
-	 .desc = "Non-scalable floating-point element operations sepculatively executed",
+	 .desc = "Non-scalable floating-point element operations speculatively executed",
 	},
 	{.name = "ASE_SVE_INT8_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80e3,
-	 .desc = "Operations counted by ASE_SVE_INT_SPEC where the large type is a 8-bit integer",
+	 .desc = "Operation counted by ASE_SVE_INT_SPEC where the largest type is 8-bit integer",
 	},
 	{.name = "ASE_SVE_INT16_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80e7,
-	 .desc = "Operations counted by ASE_SVE_INT_SPEC where the large type is a 16-bit integer",
+	 .desc = "Operation counted by ASE_SVE_INT_SPEC where the largest type is 16-bit integer",
 	},
 	{.name = "ASE_SVE_INT32_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80eb,
-	 .desc = "Operations counted by ASE_SVE_INT_SPEC where the large type is a 32-bit integer",
+	 .desc = "Operation counted by ASE_SVE_INT_SPEC where the largest type is 32-bit integer",
 	},
 	{.name = "ASE_SVE_INT64_SPEC",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x80ef,
-	 .desc = "Operations counted by ASE_SVE_INT_SPEC where the large type is a 64-bit integer",
+	 .desc = "Operation counted by ASE_SVE_INT_SPEC where the largest type is 64-bit integer",
 	},
 };

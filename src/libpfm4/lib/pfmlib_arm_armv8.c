@@ -4,6 +4,9 @@
  * Copyright (c) 2014 Google Inc. All rights reserved
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
+ * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Contributed by John Linford <jlinford@nvidia.com>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -37,7 +40,7 @@
 #include "events/arm_marvell_tx2_unc_events.h" 	/* Marvell ThunderX2 PMU tables */
 #include "events/arm_fujitsu_a64fx_events.h"	/* Fujitsu A64FX PMU tables */
 #include "events/arm_neoverse_n1_events.h"	/* ARM Neoverse N1 table */
-#include "events/arm_neoverse_n2_events.h"	/* ARM Neoverse N2 table */
+#include "events/arm_neoverse_v1_events.h"	/* Arm Neoverse V1 table */
 #include "events/arm_hisilicon_kunpeng_events.h" /* HiSilicon Kunpeng PMU tables */
 #include "events/arm_hisilicon_kunpeng_unc_events.h" /* Hisilicon Kunpeng PMU uncore tables */
 
@@ -58,7 +61,7 @@ pfm_arm_detect_n1(void *this)
 }
 
 static int
-pfm_arm_detect_n2(void *this)
+pfm_arm_detect_v1(void *this)
 {
 	int ret;
 
@@ -67,7 +70,7 @@ pfm_arm_detect_n2(void *this)
 		return PFM_ERR_NOTSUPP;
 
 	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xd49)) { /* Neoverse N2 */
+		(pfm_arm_cfg.part == 0xd40)) { /* Neoverse V1 */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
@@ -571,16 +574,16 @@ pfmlib_pmu_t arm_n1_support={
 	.get_event_nattrs	= pfm_arm_get_event_nattrs,
 };
 
-pfmlib_pmu_t arm_n2_support={
-	.desc			= "ARM Neoverse N2",
-	.name			= "arm_n2",
-	.pmu			= PFM_PMU_ARM_N2,
-	.pme_count		= LIBPFM_ARRAY_SIZE(arm_n2_pe),
+pfmlib_pmu_t arm_v1_support={
+	.desc			= "Arm Neoverse V1",
+	.name			= "arm_v1",
+	.pmu			= PFM_PMU_ARM_V1,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_v1_pe),
 	.type			= PFM_PMU_TYPE_CORE,
-	.supported_plm          = ARMV8_PLM,
-	.pe			= arm_n2_pe,
+	.supported_plm  = ARMV8_PLM,
+	.pe             = arm_v1_pe,
 
-	.pmu_detect		= pfm_arm_detect_n2,
+	.pmu_detect		= pfm_arm_detect_v1,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
 

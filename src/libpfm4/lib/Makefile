@@ -2,6 +2,9 @@
 # Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
+# Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+# Contributed by John Linford <jlinford@nvidia.com>
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -184,7 +187,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv7_pmuv1.c pfmlib_arm_armv6.c pfmlib_arm_armv8.c pfmlib_arm_armv9.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM
 endif
 
@@ -195,7 +198,7 @@ SRCS += pfmlib_arm_perf_event.c
 endif
 
 INCARCH = $(INC_ARM64)
-SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
+SRCS   += pfmlib_arm.c pfmlib_arm_armv8.c pfmlib_arm_armv9.c pfmlib_tx2_unc_perf_event.c pfmlib_kunpeng_unc_perf_event.c
 CFLAGS += -DCONFIG_PFMLIB_ARCH_ARM64
 endif
 
@@ -376,6 +379,8 @@ INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_marvell_tx2_unc_events.h	\
 	events/arm_neoverse_n1_events.h		\
 	events/arm_neoverse_n2_events.h		\
+	events/arm_neoverse_v1_events.h		\
+	events/arm_neoverse_v2_events.h		\
 	events/arm_hisilicon_kunpeng_events.h \
 	events/arm_hisilicon_kunpeng_unc_events.h
 
@@ -388,6 +393,8 @@ INC_ARM64=pfmlib_arm_priv.h			\
 	events/arm_fujitsu_a64fx_events.h	\
 	events/arm_neoverse_n1_events.h		\
 	events/arm_neoverse_n2_events.h		\
+	events/arm_neoverse_v1_events.h		\
+	events/arm_neoverse_v2_events.h		\
 	events/arm_hisilicon_kunpeng_events.h \
 	events/arm_hisilicon_kunpeng_unc_events.h
 
