@@ -2,6 +2,9 @@
 # Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
+# Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+# Contributed by John Linford <jlinford@nvidia.com>
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
 # of this software and associated documentation files (the "Software"), to deal 
 # in the Software without restriction, including without limitation the rights 
@@ -129,7 +132,9 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_ac9.3 \
 	    libpfm_arm_qcom_krait.3 \
 	    libpfm_arm_neoverse_n1.3 \
-	    libpfm_arm_neoverse_n2.3
+	    libpfm_arm_neoverse_n2.3 \
+		libpfm_arm_neoverse_v1.3 \
+		libpfm_arm_neoverse_v2.3
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM64),y)
@@ -137,7 +142,10 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_ac57.3 \
 	    libpfm_arm_ac53.3 \
 	    libpfm_arm_a64fx.3 \
-	    libpfm_arm_neoverse_n2.3
+		libpfm_arm_neoverse_n1.3 \
+	    libpfm_arm_neoverse_n2.3 \
+		libpfm_arm_neoverse_v1.3 \
+		libpfm_arm_neoverse_v2.3
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)

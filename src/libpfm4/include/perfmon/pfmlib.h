@@ -2,6 +2,9 @@
  * Copyright (c) 2009 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
+ * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Contributed by John Linford <jlinford@nvidia.com>
+ *
  * Based on:
  * Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
@@ -561,7 +564,7 @@ typedef enum {
 	PFM_PMU_INTEL_ICL,		/* Intel IceLake */
 
 	PFM_PMU_ARM_A64FX,		/* Fujitsu A64FX processor */
-	PFM_PMU_ARM_N1,			/* ARM Neoverse N1 */
+	PFM_PMU_ARM_N1,			/* Arm Neoverse N1 */
 
 	PFM_PMU_AMD64_FAM19H_ZEN3,	/* AMD AMD64 Fam19h Zen3 */
 	PFM_PMU_AMD64_RAPL,		/* AMD64 RAPL */
@@ -569,7 +572,7 @@ typedef enum {
 
 	PFM_PMU_INTEL_ICX,		/* Intel IceLakeX */
 
-	PFM_PMU_ARM_N2,			/* ARM Neoverse N2 */
+	PFM_PMU_ARM_N2,			/* Arm Neoverse N2 */
 
 	PFM_PMU_ARM_KUNPENG,		/* HiSilicon Kunpeng processor */
 	PFM_PMU_ARM_KUNPENG_UNC_SCCL1_DDRC0, /* Hisilicon Kunpeng SCCL unit 1 DDRC 0 uncore */
@@ -633,6 +636,9 @@ typedef enum {
 
 	PFM_PMU_POWER10,		/* IBM POWER10 */
 	PFM_PMU_AMD64_FAM19H_ZEN4,	/* AMD AMD64 Fam19h Zen4 */
+	PFM_PMU_ARM_V1,			/* ARM Neoverse V1 */
+	PFM_PMU_ARM_V2,			/* Arm Neoverse V2 */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
