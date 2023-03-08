@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "sde_lib.h"
 
@@ -66,16 +67,16 @@ papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
 
 // This function allows the library to perform operations in order to compute the value of an SDE at run-time
 long long counter_accessor_function( void *param ){
-    long long *ll_ptr;
+    long long ll;
     double *dbl_ptr = (double *)param;
 
     // Scale the variable by a factor of two. Real libraries will do meaningful work here.
     double value = *dbl_ptr * 2.0;
 
-    // Pack the bits of the result in a long long int.
-    ll_ptr = (long long *)&value;
+    // Copy the bits of the result in a long long int.
+    (void)memcpy(&ll, &value, sizeof(double));
 
-    return *ll_ptr;
+    return ll;
 }
 
 // Perform some nonsense computation to emulate a possible library behavior.
