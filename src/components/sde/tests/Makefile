@@ -66,10 +66,10 @@ Simple2_NoPAPI_Test: $(prfx)/Simple2_NoPAPI_Driver.c libSimple2.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) -Llib -lSimple2 -L$(datadir) -lsde -lm -ldl
 
 libSimple2++.so: $(prfx)/Simple2_Lib++.cpp
-	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
+	$(CXX) -shared -Wall -fPIC $(CXXFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Simple2_Test++: $(prfx)/Simple2_Driver++.cpp libSimple2++.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple2++ $(LDFLAGS) -lm
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lSimple2++ $(LDFLAGS) -lm
 
 ################################################################################
 ## Recorder test
