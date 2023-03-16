@@ -1,16 +1,25 @@
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <papi.h>
-#include "flops_aux.h"
 #include "flops.h"
 
-#define INDEX1 100
-#define INDEX5 500
+#if defined(ARM)
+#include <arm_fp16.h>
+typedef __fp16 half;
+#endif
 
-#define MAX_WARN 10
-#define MAX_ERROR 80
-#define MAX_DIFF  14
+#define DOUBLE 2
+#define SINGLE 1
+#define HALF   0
+
+#define CHOLESKY  3
+#define NORMALIZE 1
+
+#define MAXDIM 51
 
 #if defined(mips)
 #define FMA 1
@@ -20,274 +29,610 @@
 #define FMA 0
 #endif
 
-static void resultline( int i, int j, int EventSet, FILE *fp)
-{
-    long long flpins = 0;
-    long long papi, theory;
+/* Function prototypes. */
+void print_header( FILE *fp, char *prec, char *kernel );
+void resultline( int i, int kernel, int EventSet, FILE *fp );
+void exec_flops( int precision, int EventSet, FILE *fp );
+
+double normalize_double( int n, double *xd );
+void cholesky_double( int n, double *ld, double *ad );
+void exec_double_norm( int EventSet, FILE *fp );
+void exec_double_cholesky( int EventSet, FILE *fp );
+void keep_double_norm_res( int n, double *xd );
+void keep_double_cholesky_res( int n, double *ld );
+
+float normalize_single( int n, float *xs );
+void cholesky_single( int n, float  *ls, float *as );
+void exec_single_norm( int EventSet, FILE *fp );
+void exec_single_cholesky( int EventSet, FILE *fp );
+void keep_single_norm_res( int n, float *xs );
+void keep_single_cholesky_res( int n, float *ls );
+
+#if defined(ARM)
+half normalize_half( int n, half *xh );
+void cholesky_half( int n, half *lh, half *ah );
+void exec_half_norm( int EventSet, FILE *fp );
+void exec_half_cholesky( int EventSet, FILE *fp );
+void keep_half_norm_res( int n, half *xh );
+void keep_half_cholesky_res( int n, half *lh );
+#endif
+
+void print_header( FILE *fp, char *prec, char *kernel ) {
+
+    fprintf(fp, "#%s %s\n", prec, kernel);
+    fprintf(fp, "#N RawEvtCnt NormdEvtCnt ExpectedAdd ExpectedSub ExpectedMul ExpectedDiv ExpectedSqrt ExpectedTotal\n");
+}
+
+void resultline( int i, int kernel, int EventSet, FILE *fp ) {
+
+    long long flpins = 0, denom;
+    long long papi, all, add, sub, mul, div, sqrt;
     int retval;
 
-    if ( (retval=PAPI_stop(EventSet, &flpins)) != PAPI_OK){
+    if ( (retval=PAPI_stop(EventSet, &flpins)) != PAPI_OK ) {
         return;
     }
 
-    i++;
-    theory = 2;
-    while ( j-- )
-        theory *= i;
+    switch(kernel) {
+      case NORMALIZE:
+          all  = 3*i+1;
+          denom = all;
+          add  = i;
+          sub  = 0;
+          mul  = i;
+          div  = i;
+          if ( 0 == i ) {
+              sqrt = 0;
+          } else {
+              sqrt = 1;
+          }
+          break;
+      case CHOLESKY:
+          all  = i*(2*i*i+9*i+1)/6.0;
+          if ( 0 == i ) {
+              denom = 1;
+          } else {
+              denom = all;
+          }
+          add  = i*(i-1)*(i+1)/6.0;
+          sub  = i*(i+1)/2.0;
+          mul  = i*(i-1)*(i+4)/6.0;
+          div  = i*(i-1)/2.0;
+          sqrt = i;
+          break;
+      default:
+          all   = -1;
+          denom = -1;
+          add   = -1;
+          sub   = -1;
+          mul   = -1;
+          div   = -1;
+          sqrt  = -1;
+    }
+
     papi = flpins << FMA;
 
-    fprintf(fp, "%lld\n", papi);
+    fprintf(fp, "%d %lld %.17g %lld %lld %lld %lld %lld %lld\n", i, papi, ((double)papi)/((double)denom), add, sub, mul, div, sqrt, all);
 }
 
-static float inner_single( int n, float *x, float *y )
-{
+#if defined(ARM)
+half normalize_half( int n, half *xh ) {
+
+    if ( 0 == n )
+        return 0.0;
+
+    half aa = 0.0;
+    half buff = 0.0;
+    int i;
+
+    for ( i = 0; i < n; i++ ) {
+        buff = xh[i] * xh[i];
+        aa += buff;
+    }
+
+    aa = vsqrth_f16(aa);
+    for ( i = 0; i < n; i++ )
+        xh[i] = xh[i]/aa;
+
+    return ( aa );
+}
+
+void cholesky_half( int n, half *lh, half *ah ) {
+
+    int i, j, k;
+    half sum = 0.0;
+    half buff = 0.0;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= i; j++) {
+            sum = 0.0;
+            for (k = 0; k < j; k++) {
+                buff = lh[i * n + k] * lh[j * n + k];
+                sum += buff;
+            }
+
+            if( i == j ) {
+                buff = ah[i * n + i] - sum;
+                lh[i * n + j] = vsqrth_f16(buff);
+            } else {
+                buff = ah[i * n + i] - sum;
+                sum = ((half)1.0);
+                sum = sum/lh[j * n + j];
+                lh[i * n + j] = sum * buff;
+            }
+        }
+    }
+}
+#endif
+
+float normalize_single( int n, float *xs ) {
+
+    if ( 0 == n )
+        return 0.0;
+
     float aa = 0.0;
     int i;
 
-    for ( i = 0; i <= n; i++ )
-        aa = aa + x[i] * y[i];
+    for ( i = 0; i < n; i++ )
+        aa = aa + xs[i] * xs[i];
+
+    aa = sqrtf(aa);
+    for ( i = 0; i < n; i++ )
+        xs[i] = xs[i]/aa;
+
     return ( aa );
 }
 
-static double inner_double( int n, double *x, double *y )
-{
+void cholesky_single( int n, float *ls, float *as ) {
+
+    int i, j, k;
+    float sum = 0.0;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= i; j++) {
+            sum = 0.0;
+            for (k = 0; k < j; k++) {
+                sum += ls[i * n + k] * ls[j * n + k];
+            }
+
+            if( i == j ) {
+                ls[i * n + j] = sqrtf(as[i * n + i] - sum);
+            } else {
+                ls[i * n + j] = ((float)1.0)/ls[j * n + j] * (as[i * n + j] - sum);
+            }
+        }
+    }
+}
+
+double normalize_double( int n, double *xd ) {
+
+    if ( 0 == n )
+        return 0.0;
+
     double aa = 0.0;
     int i;
 
-    for ( i = 0; i <= n; i++ )
-        aa = aa + x[i] * y[i];
+    for ( i = 0; i < n; i++ )
+        aa = aa + xd[i] * xd[i];
+
+    aa = sqrt(aa);
+    for ( i = 0; i < n; i++ )
+        xd[i] = xd[i]/aa;
+
     return ( aa );
 }
 
-static void vector_single( int n, float *a, float *x, float *y )
-{
-    int i, j;
+void cholesky_double( int n, double *ld, double *ad ) {
 
-    for ( i = 0; i <= n; i++ )
-        for ( j = 0; j <= n; j++ )
-            y[i] = y[i] + a[i * n + j] * x[i];
-}
-
-static void vector_double( int n, double *a, double *x, double *y )
-{
-    int i, j;
-
-    for ( i = 0; i <= n; i++ )
-        for ( j = 0; j <= n; j++ )
-            y[i] = y[i] + a[i * n + j] * x[i];
-}
-
-static void matrix_single( int n, float *c, float *a, float *b )
-{
     int i, j, k;
+    double sum = 0.0;
 
-    for ( i = 0; i <= n; i++ )
-        for ( j = 0; j <= n; j++ )
-            for ( k = 0; k <= n; k++ )
-                c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
-}
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= i; j++) {
+            sum = 0.0;
+            for (k = 0; k < j; k++) {
+                sum += ld[i * n + k] * ld[j * n + k];
+            }
 
-static void matrix_double( int n, double *c, double *a, double *b )
-{
-    int i, j, k;
-
-    for ( i = 0; i <= n; i++ )
-        for ( j = 0; j <= n; j++ )
-            for ( k = 0; k <= n; k++ )
-                c[i * n + j] = c[i * n + j] + a[i * n + k] * b[k * n + j];
-}
-
-void exec_flops(int double_precision, int EventSet, int retval, FILE *fp)
-{
-    extern void dummy( void * );
-
-    float aa, *a=NULL, *b=NULL, *c=NULL, *x=NULL, *y=NULL;
-    double aad, *ad=NULL, *bd=NULL, *cd=NULL, *xd=NULL, *yd=NULL;
-    int i, j, n;
-
-    /* Inner Product test */
-    /* Allocate the linear arrays */
-    if (double_precision) {
-        xd = malloc( INDEX5 * sizeof(double) );
-        yd = malloc( INDEX5 * sizeof(double) );
-    }
-    else {
-        x = malloc( INDEX5 * sizeof(float) );
-        y = malloc( INDEX5 * sizeof(float) );
-    }
-
-    if ( retval == PAPI_OK ) {
-
-        /* step through the different array sizes */
-        for ( n = 0; n < INDEX5; n++ ) {
-            if ( n < INDEX1 || ( ( n + 1 ) % 50 ) == 0 ) {
-
-                /* Initialize the needed arrays at this size */
-                if ( double_precision ) {
-                    for ( i = 0; i <= n; i++ ) {
-                        xd[i] = ( double ) rand(  ) * ( double ) 1.1;
-                        yd[i] = ( double ) rand(  ) * ( double ) 1.1;
-                    }
-                } else {
-                    for ( i = 0; i <= n; i++ ) {
-                        x[i] = ( float ) rand(  ) * ( float ) 1.1;
-                        y[i] = ( float ) rand(  ) * ( float ) 1.1;
-                    }
-                }
-
-                /* reset PAPI flops count */
-                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
-                    return;
-                }
-
-                /* do the multiplication */
-                if ( double_precision ) {
-                    aad = inner_double( n, xd, yd );
-                    dummy( ( void * ) &aad );
-                } else {
-                    aa = inner_single( n, x, y );
-                    dummy( ( void * ) &aa );
-                }
-                resultline( n, 1, EventSet, fp);
+            if( i == j ) {
+                ld[i * n + j] = sqrt(ad[i * n + i] - sum);
+            } else {
+                ld[i * n + j] = ((double)1.0)/ld[j * n + j] * (ad[i * n + j] - sum);
             }
         }
     }
-    if (double_precision) {
-        free( xd );
-        free( yd );
-    } else {
-        free( x );
-        free( y );
-    }
-
-    /* Matrix Vector test */
-    /* Allocate the needed arrays */
-    if (double_precision) {
-        ad = malloc( INDEX5 * INDEX5 * sizeof(double) );
-        xd = malloc( INDEX5 * sizeof(double) );
-        yd = malloc( INDEX5 * sizeof(double) );
-    } else {
-        a = malloc( INDEX5 * INDEX5 * sizeof(float) );
-        x = malloc( INDEX5 * sizeof(float) );
-        y = malloc( INDEX5 * sizeof(float) );
-    }
-
-    if ( retval == PAPI_OK ) {
-
-        /* step through the different array sizes */
-        for ( n = 0; n < INDEX5; n++ ) {
-            if ( n < INDEX1 || ( ( n + 1 ) % 50 ) == 0 ) {
-
-                /* Initialize the needed arrays at this size */
-                if ( double_precision ) {
-                    for ( i = 0; i <= n; i++ ) {
-                        yd[i] = 0.0;
-                        xd[i] = ( double ) rand(  ) * ( double ) 1.1;
-                        for ( j = 0; j <= n; j++ )
-                            ad[i * n + j] =
-                                ( double ) rand(  ) * ( double ) 1.1;
-                    }
-                } else {
-                    for ( i = 0; i <= n; i++ ) {
-                        y[i] = 0.0;
-                        x[i] = ( float ) rand(  ) * ( float ) 1.1;
-                        for ( j = 0; j <= n; j++ )
-                            a[i * n + j] =
-                                ( float ) rand(  ) * ( float ) 1.1;
-                    }
-                }
-
-                /* reset PAPI flops count */
-                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
-                    return;
-                }
-
-                /* compute the resultant vector */
-                if ( double_precision ) {
-                    vector_double( n, ad, xd, yd );
-                    dummy( ( void * ) yd );
-                } else {
-                    vector_single( n, a, x, y );
-                    dummy( ( void * ) y );
-                }
-                resultline( n, 2, EventSet, fp);
-            }
-        }
-    }
-    if (double_precision) {
-        free( ad );
-        free( xd );
-        free( yd );
-    } else {
-        free( a );
-        free( x );
-        free( y );
-    }
-
-    /* Matrix Multiply test */
-    /* Allocate the needed arrays */
-    if (double_precision) {
-        ad = malloc( INDEX5 * INDEX5 * sizeof(double) );
-        bd = malloc( INDEX5 * INDEX5 * sizeof(double) );
-        cd = malloc( INDEX5 * INDEX5 * sizeof(double) );
-    } else {
-        a = malloc( INDEX5 * INDEX5 * sizeof(float) );
-        b = malloc( INDEX5 * INDEX5 * sizeof(float) );
-        c = malloc( INDEX5 * INDEX5 * sizeof(float) );
-    }
-
-
-    if ( retval == PAPI_OK ) {
-        /* step through the different array sizes */
-        for ( n = 0; n < INDEX5; n++ ) {
-            if ( n < INDEX1 || ( ( n + 1 ) % 50 ) == 0 ) {
-
-                /* Initialize the needed arrays at this size */
-                if ( double_precision ) {
-                    for ( i = 0; i <= n * n + n; i++ ) {
-                        cd[i] = 0.0;
-                        ad[i] = ( double ) rand(  ) * ( double ) 1.1;
-                        bd[i] = ( double ) rand(  ) * ( double ) 1.1;
-                    }
-                } else {
-                    for ( i = 0; i <= n * n + n; i++ ) {
-                        c[i] = 0.0;
-                        a[i] = ( float ) rand(  ) * ( float ) 1.1;
-                        b[i] = ( float ) rand(  ) * ( float ) 1.1;
-                    }
-                }
-
-                /* reset PAPI flops count */
-                if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
-                    return;
-                }
-
-                /* compute the resultant matrix */
-                if ( double_precision ) {
-                    matrix_double( n, cd, ad, bd );
-                    dummy( ( void * ) cd );
-                } else {
-                    matrix_single( n, c, a, b );
-                    dummy( ( void * ) c );
-                }
-                resultline( n, 3, EventSet, fp);
-            }
-        }
-    }
-    if (double_precision) {
-        free( ad );
-        free( bd );
-        free( cd );
-    } else {
-        free( a );
-        free( b );
-        free( c );
-    }
-
 }
 
-void flops_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
-{
+void exec_double_norm( int EventSet, FILE *fp ) {
+
+    int i, n, retval;
+    double *xd=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Double-Precision", "Vector Normalization" );
+
+    /* Allocate the linear arrays. */
+    xd = malloc( MAXDIM * sizeof(double) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            xd[i] = ((double)rand())/((double)RAND_MAX) * (double)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        normalize_double( n, xd );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, NORMALIZE, EventSet, fp );
+
+        keep_double_norm_res( n, xd );
+    }
+
+    /* Free dynamically allocated memory. */
+    free( xd );
+}
+
+void exec_double_cholesky( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    double *ad=NULL, *ld=NULL;
+    double sumd = 0.0;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Double-Precision", "Cholesky Decomposition" );
+
+    /* Allocate the matrices. */
+    ad = malloc( MAXDIM * MAXDIM * sizeof(double) );
+    ld = malloc( MAXDIM * MAXDIM * sizeof(double) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < i; j++ ) {
+                ld[i * n + j] = 0.0;
+                ld[j * n + i] = 0.0;
+
+                ad[i * n + j] = ((double)rand())/((double)RAND_MAX) * (double)1.1;
+                ad[j * n + i] = ad[i * n + j];
+            }
+            ad[i * n + i] = 0.0;
+            ld[i * n + i] = 0.0;
+        }
+
+        /* Guarantee diagonal dominance for successful Cholesky. */
+        for ( i = 0; i < n; i++ ) {
+            sumd = 0.0;
+            for ( j = 0; j < n; j++ ) {
+                sumd += fabs(ad[i * n + j]);
+            }
+            ad[i * n + i] = sumd + (double)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        cholesky_double( n, ld, ad );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, CHOLESKY, EventSet, fp );
+
+        keep_double_cholesky_res( n, ld );
+    }
+
+    free( ad );
+    free( ld );
+}
+
+void keep_double_norm_res( int n, double *xd ) {
+
+    int i;
+    double sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        sum += xd[i];
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+
+void keep_double_cholesky_res( int n, double *ld ) {
+
+    int i, j;
+    double sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        for( j = 0; j < n; ++j ) {
+            sum += ld[i * n + j];
+        }
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+
+void exec_single_norm( int EventSet, FILE *fp ) {
+
+    int i, n, retval;
+    float *xs=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Single-Precision", "Vector Normalization" );
+
+    /* Allocate the linear arrays. */
+    xs = malloc( MAXDIM * sizeof(float) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            xs[i] = ((float)rand())/((float)RAND_MAX) * (float)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        normalize_single( n, xs );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, NORMALIZE, EventSet, fp );
+
+        keep_single_norm_res( n, xs );
+    }
+
+    /* Free dynamically allocated memory. */
+    free( xs );
+}
+
+void exec_single_cholesky( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    float *as=NULL, *ls=NULL;
+    float sums = 0.0;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Single-Precision", "Cholesky Decomposition" );
+
+    /* Allocate the matrices. */
+    as = malloc( MAXDIM * MAXDIM * sizeof(float) );
+    ls = malloc( MAXDIM * MAXDIM * sizeof(float) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < i; j++ ) {
+                ls[i * n + j] = 0.0;
+                ls[j * n + i] = 0.0;
+
+                as[i * n + j] = ((float)rand())/((float)RAND_MAX) * (float)1.1;
+                as[j * n + i] = as[i * n + j];
+            }
+            as[i * n + i] = 0.0;
+            ls[i * n + i] = 0.0;
+        }
+
+        /* Guarantee diagonal dominance for successful Cholesky. */
+        for ( i = 0; i < n; i++ ) {
+            sums = 0.0;
+            for ( j = 0; j < n; j++ ) {
+                sums += fabs(as[i * n + j]);
+            }
+            as[i * n + i] = sums + (float)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        cholesky_single( n, ls, as );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, CHOLESKY, EventSet, fp );
+
+        keep_single_cholesky_res( n, ls );
+    }
+
+    free( as );
+    free( ls );
+}
+
+void keep_single_norm_res( int n, float *xs ) {
+
+    int i;
+    float sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        sum += xs[i];
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+
+void keep_single_cholesky_res( int n, float *ls ) {
+
+    int i, j;
+    float sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        for( j = 0; j < n; ++j ) {
+            sum += ls[i * n + j];
+        }
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+
+#if defined(ARM)
+void exec_half_norm( int EventSet, FILE *fp ) {
+
+    int i, n, retval;
+    half *xh=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Half-Precision", "Vector Normalization" );
+
+    /* Allocate the linear arrays. */
+    xh = malloc( MAXDIM * sizeof(half) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            xh[i] = ((half)rand())/((half)RAND_MAX) * (half)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        normalize_half( n, xh );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, NORMALIZE, EventSet, fp );
+
+        keep_half_norm_res( n, xh );
+    }
+
+    /* Free dynamically allocated memory. */
+    free( xh );
+}
+
+void exec_half_cholesky( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    half *ah=NULL, *lh=NULL;
+    half sumh = 0.0;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Half-Precision", "Cholesky Decomposition" );
+
+    /* Allocate the matrices. */
+    ah = malloc( MAXDIM * MAXDIM * sizeof(half) );
+    lh = malloc( MAXDIM * MAXDIM * sizeof(half) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < i; j++ ) {
+                lh[i * n + j] = 0.0;
+                lh[j * n + i] = 0.0;
+
+                ah[i * n + j] = ((half)rand())/((half)RAND_MAX) * (half)1.1;
+                ah[j * n + i] = ah[i * n + j];
+            }
+            ah[i * n + i] = 0.0;
+            lh[i * n + i] = 0.0;
+        }
+
+        /* Guarantee diagonal dominance for successful Cholesky. */
+        for ( i = 0; i < n; i++ ) {
+            sumh = 0.0;
+            for ( j = 0; j < n; j++ ) {
+                sumh += fabs(ah[i * n + j]);
+            }
+            ah[i * n + i] = sumh + (half)1.1;
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        cholesky_half( n, lh, ah );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, CHOLESKY, EventSet, fp );
+
+        keep_half_cholesky_res( n, lh );
+    }
+
+    free( ah );
+    free( lh );
+}
+
+void keep_half_norm_res( int n, half *xh ) {
+
+    int i;
+    half sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        sum += xh[i];
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+
+void keep_half_cholesky_res( int n, half *lh ) {
+
+    int i, j;
+    half sum = 0.0;
+    for( i = 0; i < n; ++i ) {
+        for( j = 0; j < n; ++j ) {
+            sum += lh[i * n + j];
+        }
+    }
+    
+    if( 1.2345 == sum ) {
+        fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
+    }
+}
+#endif
+
+void exec_flops( int precision, int EventSet, FILE *fp ) {
+
+    /* Vector Normalization and Cholesky Decomposition tests. */
+    switch(precision) {
+      case DOUBLE:
+          exec_double_norm(EventSet, fp);
+          exec_double_cholesky(EventSet, fp);
+          break;
+      case SINGLE:
+          exec_single_norm(EventSet, fp);
+          exec_single_cholesky(EventSet, fp);
+          break;
+      case HALF:
+#if defined(ARM)
+          exec_half_norm(EventSet, fp);
+          exec_half_cholesky(EventSet, fp);
+#endif
+          break;
+      default:
+    }
+
+    return;
+}
+
+void flops_driver( char* papi_event_name, hw_desc_t *hw_desc, char* outdir ) {
     int retval = PAPI_OK;
     int EventSet = PAPI_NULL;
     FILE* ofp_papi;
@@ -318,10 +663,9 @@ void flops_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
         goto error1;
     }
 
-    retval = PAPI_OK;
-
-    exec_flops(0, EventSet, retval, ofp_papi);
-    exec_flops(1, EventSet, retval, ofp_papi);
+    exec_flops(HALF,   EventSet, ofp_papi);
+    exec_flops(SINGLE, EventSet, ofp_papi);
+    exec_flops(DOUBLE, EventSet, ofp_papi);
 
     retval = PAPI_cleanup_eventset( EventSet );
     if (retval != PAPI_OK ){
