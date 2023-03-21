@@ -20,6 +20,8 @@
 #define NAMEID_ARM_CORTEX_A57     0xd07
 #define NAMEID_ARM_NEOVERSE_N1    0xd0c
 #define NAMEID_ARM_NEOVERSE_N2    0xd49
+#define NAMEID_ARM_NEOVERSE_V1    0xd40
+#define NAMEID_ARM_NEOVERSE_V2    0xd4f
 #define NAMEID_BROADCOM_THUNDERX2 0x516
 #define NAMEID_CAVIUM_THUNDERX2   0x0af
 #define NAMEID_FUJITSU_A64FX      0x001
@@ -249,6 +251,12 @@ name_id_arm_cpu_get_name( int name_id, char *name )
             break;
         case NAMEID_ARM_NEOVERSE_N2:
             strcpy(name, "ARM Neoverse N2");
+            break;
+        case NAMEID_ARM_NEOVERSE_V1:
+            strcpy(name, "ARM Neoverse V1");
+            break;
+        case NAMEID_ARM_NEOVERSE_V2:
+            strcpy(name, "ARM Neoverse V2");
             break;
         default:
             papi_errno = PAPI_ENOSUPP;
