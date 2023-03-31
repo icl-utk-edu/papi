@@ -197,7 +197,12 @@ cuda_is_enabled( void )
 int
 load_cuda_sym( char *status )
 {
-    cuda_dlp = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+    char cuda_dl_path[PATH_MAX] = "libcuda.so";
+    char *cuda_root = getenv("PAPI_CUDA_ROOT");
+    if (cuda_root != NULL) {
+        sprintf(cuda_dl_path, "%s/libcuda.so", cuda_root);
+    }
+    cuda_dlp = dlopen(cuda_dl_path, RTLD_NOW | RTLD_GLOBAL);
     if (cuda_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
@@ -292,7 +297,12 @@ nvml_is_enabled( void )
 int
 load_nvml_sym( char *status )
 {
-    nvml_dlp = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+    char nvml_dl_path[PATH_MAX] = "libnvidia-ml.so";
+    char *nvml_root = getenv("PAPI_CUDA_ROOT");
+    if (nvml_root != NULL) {
+        sprintf(nvml_dl_path, "%s/libnvidia-ml.so", nvml_root);
+    }
+    nvml_dlp = dlopen(nvml_dl_path, RTLD_NOW | RTLD_GLOBAL);
     if (nvml_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
