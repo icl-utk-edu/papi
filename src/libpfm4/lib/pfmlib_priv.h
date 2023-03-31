@@ -127,10 +127,18 @@ typedef struct {
 #define modx(atdesc, a, z)	(atdesc[(a)].z)
 #define attr(e, k)		((e)->pattrs + (e)->attrs[k].id)
 
+typedef struct pfmlib_node {
+	struct pfmlib_node *next;
+	struct pfmlib_node *prev;
+} pfmlib_node_t;
+
 typedef struct pfmlib_pmu {
 	const char 	*desc;			/* PMU description */
 	const char 	*name;			/* pmu short name */
 	const char	*perf_name;		/* perf_event pmu name (optional) */
+	pfmlib_node_t   node;			/* active list node */
+	struct pfmlib_pmu *next_active;		/* active PMU link list */
+	struct pfmlib_pmu *prev_active;		/* active PMU link list */
 	pfm_pmu_t	pmu;			/* PMU model */
 	int		pme_count;		/* number of events */
 	int		max_encoding;		/* max number of uint64_t to encode an event */
@@ -298,6 +306,7 @@ extern pfmlib_pmu_t intel_clx_support;
 extern pfmlib_pmu_t intel_icl_support;
 extern pfmlib_pmu_t intel_icx_support;
 extern pfmlib_pmu_t intel_spr_support;
+extern pfmlib_pmu_t intel_emr_support;
 extern pfmlib_pmu_t intel_rapl_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb0_support;
 extern pfmlib_pmu_t intel_snbep_unc_cb1_support;

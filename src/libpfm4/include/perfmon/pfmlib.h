@@ -638,6 +638,7 @@ typedef enum {
 	PFM_PMU_AMD64_FAM19H_ZEN4,	/* AMD AMD64 Fam19h Zen4 */
 	PFM_PMU_ARM_V1,			/* ARM Neoverse V1 */
 	PFM_PMU_ARM_V2,			/* Arm Neoverse V2 */
+	PFM_PMU_INTEL_EMR,		/* Intel EmeraldRapid */
 
 	/* MUST ADD NEW PMU MODELS HERE */
 

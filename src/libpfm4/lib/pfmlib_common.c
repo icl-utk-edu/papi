@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdarg.h>
 #include <limits.h>
 
@@ -118,6 +119,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_icl_support,
 	&intel_icx_support,
 	&intel_spr_support,
+	&intel_emr_support,
 	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
@@ -673,6 +675,7 @@ static pfmlib_os_t *pfmlib_oses[]={
  * architecture or if the initialization failed.
  */
 static pfmlib_pmu_t *pfmlib_pmus_map[PFM_PMU_MAX];
+static pfmlib_node_t pfmlib_active_pmus_list;
 
 /*
  * A drop-in replacement for strsep(). strsep() is not part of the POSIX
@@ -711,10 +714,21 @@ static char* pfmlib_strsep(char **stringp, const char *delim)
 #define pfmlib_for_each_pmu(x) \
 	for((x)= 0 ; (x) < PFMLIB_NUM_PMUS; (x)++)
 
+#define pfmlib_for_each_node(list, n) \
+	for((n) = (list)->next; (list) != (n) ; (n) = (n)->next)
+
 #define pfmlib_for_each_os(x) \
 	for((x)= 0 ; (x) < PFMLIB_NUM_OSES; (x)++)
 
 pfmlib_config_t pfm_cfg;
+
+static inline pfmlib_pmu_t *
+pfmlib_node_to_pmu(pfmlib_node_t *n)
+{
+	void *p = (void *)n;
+	void *offs = (void *)offsetof(pfmlib_pmu_t, node);
+	return (pfmlib_pmu_t *)(p - offs);
+}
 
 void
 __pfm_dbprintf(const char *fmt, ...)
@@ -1010,8 +1024,8 @@ pfmlib_init_env(void)
 	pfm_cfg.forced_pmu = getenv("LIBPFM_FORCE_PMU");
 
 	str = getenv("LIBPFM_ENCODE_INACTIVE");
-	if (str)
-		pfm_cfg.inactive = 1;
+	if (str && isdigit((int)*str))
+		pfm_cfg.inactive = *str - '0';
 
 	str = getenv("LIBPFM_DISABLED_PMUS");
 	if (str)
@@ -1115,6 +1129,35 @@ done:
 	return ret;
 }
 
+static inline void
+pfmlib_node_init(pfmlib_node_t *n)
+{
+	n->next = n->prev = n;
+}
+
+static inline void
+pfmlib_node_add_tail(pfmlib_node_t *list, pfmlib_node_t *n)
+{
+	n->prev = list->prev;
+	n->next = list;
+
+	list->prev->next = n;
+	list->prev = n;
+}
+
+static inline void
+pfmlib_add_active_pmu(pfmlib_pmu_t *pmu)
+{
+	/*
+	 * We must append to tail of the list to respect the ordering
+	 * of the PMUs in the pfmlib_pmus[] array as the order matters.
+	 * For instance, on Intel x86 there is an architected PMU to
+	 * catch default events and it needs to be checked last to
+	 * give priority to model specific event encodings
+	 */
+	pfmlib_node_add_tail(&pfmlib_active_pmus_list, &pmu->node);
+}
+
 static int
 pfmlib_init_pmus(void)
 {
@@ -1158,8 +1201,16 @@ pfmlib_init_pmus(void)
 		 */
 		pfmlib_pmus_map[p->pmu] = p;
 
-		if (ret != PFM_SUCCESS)
+		if (ret != PFM_SUCCESS) {
+			/*
+			 * if LIBPFM_ENCODE_INACTIVE=1, we place all PMUs on the active list.
+			 * we lose the optimization but we do not have to special case the parsing
+			 * code. This is a debug option anyway.
+			 */
+			if (pfm_cfg.inactive)
+				pfmlib_add_active_pmu(p);
 			continue;
+		}
 
 		/*
 		 * check if exported by OS if needed
@@ -1167,14 +1218,22 @@ pfmlib_init_pmus(void)
 		if (p->os_detect[pfmlib_os->id]) {
 			ret = p->os_detect[pfmlib_os->id](p);
 			if (ret != PFM_SUCCESS) {
+				/*
+				 * must force on active list when
+				 * LIBPFM_ENCODE_INACTIVE=1
+				 */
+				if (pfm_cfg.inactive)
+					pfmlib_add_active_pmu(p);
 				DPRINT("%s PMU not exported by OS\n", p->name);
 				continue;
 			}
 		}
 
 		ret = pfmlib_pmu_activate(p);
-		if (ret == PFM_SUCCESS)
+		if (ret == PFM_SUCCESS) {
 			nsuccess++;
+			pfmlib_add_active_pmu(p);
+		}
 
 		if (pfm_cfg.forced_pmu) {
 			__pfm_vbprintf("PMU forced to %s (%s) : %s\n",
@@ -1223,6 +1282,8 @@ pfm_initialize(void)
 	if (pfm_cfg.initdone)
 		return pfm_cfg.initret;
 
+	pfmlib_node_init(&pfmlib_active_pmus_list);
+
 	/*
 	 * generic sanity checks
 	 */
@@ -1248,20 +1309,24 @@ pfm_initialize(void)
 void
 pfm_terminate(void)
 {
+	pfmlib_node_t *n;
 	pfmlib_pmu_t *pmu;
-	int i;
 
 	if (PFMLIB_INITIALIZED() == 0)
 		return;
 
-	pfmlib_for_each_pmu(i) {
-		pmu = pfmlib_pmus[i];
+	pfmlib_for_each_node(&pfmlib_active_pmus_list, n) {
+		pmu = pfmlib_node_to_pmu(n);
+
+		/* handle LIBPFM_ENCODE_INACTIVE=1 */
 		if (!pfmlib_pmu_active(pmu))
 			continue;
 		if (pmu->pmu_terminate)
 			pmu->pmu_terminate(pmu);
 	}
 	pfm_cfg.initdone = 0;
+
+	pfmlib_node_init(&pfmlib_active_pmus_list);
 }
 
 int
@@ -1618,12 +1683,13 @@ error:
 int
 pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 {
+	pfmlib_node_t *n;
 	pfm_event_info_t einfo;
 	char *str, *s, *p;
 	pfmlib_pmu_t *pmu;
 	int (*match)(void *this, pfmlib_event_desc_t *d, const char *e, const char *s);
 	const char *pname = NULL;
-	int i, j, ret;
+	int i, ret;
 
 	/*
 	 * support only one event at a time.
@@ -1654,15 +1720,16 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	/*
 	 * for each pmu
 	 */
-	pfmlib_for_each_pmu(j) {
-		pmu = pfmlib_pmus[j];
+	pfmlib_for_each_node(&pfmlib_active_pmus_list, n) {
+		pmu = pfmlib_node_to_pmu(n);
+
 		/*
-		 * if no explicit PMU name is given, then
-		 * only look for active PMU models
+		 * test against active still required in case of
+		 * pfm_cfg.inactive=1 because we put all PMUs on
+		 * the active list to avoid forking this loop
 		 */
 		if (!pname && !pfmlib_pmu_active(pmu))
 			continue;
-
 		/*
 		 * if the PMU name is not passed, then if
 		 * the pmu is deprecated, then skip it. It means
@@ -2297,14 +2364,13 @@ pfmlib_pmu_t *
 pfmlib_get_pmu_by_type(pfm_pmu_type_t t)
 {
 	pfmlib_pmu_t *pmu;
-	int i;
+	pfmlib_node_t *n;
 
-	pfmlib_for_each_pmu(i) {
-		pmu = pfmlib_pmus[i];
-
+	pfmlib_for_each_node(&pfmlib_active_pmus_list, n) {
+		pmu = pfmlib_node_to_pmu(n);
+		/* handle LIBPFM_ENCODE_INACTIVE=1 */
 		if (!pfmlib_pmu_active(pmu))
 			continue;
-
 		/* first match */
 		if (pmu->type != t)
 			continue;

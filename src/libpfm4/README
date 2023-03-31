@@ -58,6 +58,7 @@ The library supports many PMUs. The current version can handle:
 		Intel CascadeLake
 		Intel IceLake
 		Intel SapphireRapid
+		Intel EmeraldRapid
 		Intel Silvermont
 		Intel Airmont
 		Intel Goldmont

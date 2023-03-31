@@ -1,3 +1,26 @@
+libpfm4 (13.0) unstable; urgency=low
+  * update Intel SKL/SKX/CLX event table
+  * add ARM Neoverse V2 core PMU support
+  * move ARM Neoverse N2 to ARMv9 support
+  * add ARM v9  support basic infrastructure
+  * add Arm Neoverse V1 core PMU support
+  * Update Intel SapphireRapid event table
+  * update Intel Icelake event table
+  * Update AMD Zen4 event table
+  * remove useless combination in AMD Zen4 packed_int_ops_retired event
+  * Fix AMD Zen4 cpu_family used in detection code
+  * Add AMD Zen4 core PMU support
+  * Correctly detect all AMD Zen3 processors
+  * fix CPU_CLK_UNHALTED.REF_DISTRIBUTED on Intel Icelake
+  * add missing break in amd64_get_revision()
+  * update Intel Skylake event table
+  * Fix typos in Intel Icelake event table
+  * Update Intel SapphireRapid event table
+  * update perf_event.h to Linux 5.18
+  * fix amd_get_revision() to identify AMD Zen3 uniquely
+
+ -- Stephane Eranian <eranian@gmail.com>  Tue, 28 Mar  2023 08:00:01 +0200
+
 libpfm4 (12.1) unstable; urgency=low
   * fix debian changelog 12.0 entry order
   * fix debian rules to build again
