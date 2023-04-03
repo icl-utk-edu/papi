@@ -920,7 +920,7 @@ static int _cuda_linkCudaLibraries(void)
     cuptiEventGroupResetAllEventsPtr = DLSYM_AND_CHECK(dl3, "cuptiEventGroupResetAllEvents");
     cuptiGetResultStringPtr = DLSYM_AND_CHECK(dl3, "cuptiGetResultString");
     cuptiEnableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
-    cuptiDisableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiEnableKernelReplayMode");
+    cuptiDisableKernelReplayModePtr = DLSYM_AND_CHECK(dl3, "cuptiDisableKernelReplayMode");
 
 #if CUPTI_API_VERSION >= 13
     cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl3, "cuptiProfilerInitialize");
