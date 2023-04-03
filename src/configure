@@ -624,6 +624,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+FORT_WRAPPERS_OBJ
+FORT_WRAPPERS_SRC
 NVPPC64LEFLAGS
 CC_COMMON_NAME
 BGPM_INSTALL_DIR
@@ -802,6 +804,7 @@ enable_perfevent_rdpmc
 with_pe_incdir
 enable_perf_event_uncore
 with_components
+enable_fortran
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1428,6 +1431,7 @@ Optional Features:
                           default: yes
   --disable-perf-event-uncore
                           Disable perf_event uncore component
+  --disable-fortran       Whether to disable fortran bindings
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -7268,25 +7272,41 @@ $as_echo "$PAPI_EVENTS_CSV" >&6; }
 
 
 
-if test "$cross_compiling" = "yes" ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5
-$as_echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
-  $nativecc -I. genpapifdef.c -o genpapifdef
+# Check whether --enable-fortran was given.
+if test "${enable_fortran+set}" = set; then :
+  enableval=$enable_fortran;
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $CC" >&5
-$as_echo "$as_me: Compiling genpapifdef with $CC" >&6;}
-  $CC -I. genpapifdef.c -o genpapifdef
+  enable_fortran=yes
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Generating fpapi.h" >&5
+
+if test "x$F77" != "x" -a "x$enable_fortran" = "xyes" ; then
+    if test "$cross_compiling" = "yes" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $nativecc because cross compiling" >&5
+$as_echo "$as_me: Compiling genpapifdef with $nativecc because cross compiling" >&6;}
+      $nativecc -I. genpapifdef.c -o genpapifdef
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: Compiling genpapifdef with $CC" >&5
+$as_echo "$as_me: Compiling genpapifdef with $CC" >&6;}
+      $CC -I. genpapifdef.c -o genpapifdef
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Generating fpapi.h" >&5
 $as_echo "$as_me: Generating fpapi.h" >&6;}
-./genpapifdef -c > fpapi.h
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Generating f77papi.h" >&5
+    ./genpapifdef -c > fpapi.h
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Generating f77papi.h" >&5
 $as_echo "$as_me: Generating f77papi.h" >&6;}
-./genpapifdef -f77 > f77papi.h
-{ $as_echo "$as_me:${as_lineno-$LINENO}: Generating f90papi.h" >&5
+    ./genpapifdef -f77 > f77papi.h
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Generating f90papi.h" >&5
 $as_echo "$as_me: Generating f90papi.h" >&6;}
-./genpapifdef -f90 > f90papi.h
+    ./genpapifdef -f90 > f90papi.h
+
+    FORT_WRAPPERS_SRC="upper_PAPI_FWRAPPERS.c papi_fwrappers_.c papi_fwrappers__.c"
+    FORT_WRAPPERS_OBJ="upper_PAPI_FWRAPPERS.o papi_fwrappers_.o papi_fwrappers__.o"
+fi
+
+
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: $FILENAME will be included in the generated Makefile" >&5
 $as_echo "$as_me: $FILENAME will be included in the generated Makefile" >&6;}
