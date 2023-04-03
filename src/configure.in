@@ -2184,10 +2184,14 @@ if test "x$F77" != "x" -a "x$enable_fortran" = "xyes" ; then
 
     FORT_WRAPPERS_SRC="upper_PAPI_FWRAPPERS.c papi_fwrappers_.c papi_fwrappers__.c"
     FORT_WRAPPERS_OBJ="upper_PAPI_FWRAPPERS.o papi_fwrappers_.o papi_fwrappers__.o"
+    ENABLE_FORTRAN="$enable_fortran"
+    ENABLE_FORTRAN_TESTS="$enable_fortran"
 fi
 
 AC_SUBST([FORT_WRAPPERS_SRC])
 AC_SUBST([FORT_WRAPPERS_OBJ])
+AC_SUBST([ENABLE_FORTRAN])
+AC_SUBST([ENABLE_FORTRAN_TESTS])
 
 AC_MSG_NOTICE($FILENAME will be included in the generated Makefile)
 AC_CONFIG_FILES([Makefile papi.pc])
