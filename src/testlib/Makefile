@@ -7,7 +7,7 @@ INCLUDE = -I. -I..
 TESTLIBOBJS:= test_utils.o
 
 UTILOBJS:= do_loops.o test_utils.o clockcore.o
-ifneq ($(F77),)
+ifeq ($(ENABLE_FORTRAN),yes)
 UTILOBJS+= ftests_util.o
 TESTLIBOBJS+= ftests_util.o
 endif

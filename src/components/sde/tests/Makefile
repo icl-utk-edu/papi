@@ -23,10 +23,14 @@ endif
 SDE_F08_API=../sde_F.F90
 
 ifeq ($(LIBSDE),yes)
-	TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++ sde_test_f08
+	TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++
 endif
 ifeq ($(BUILD_LIBSDE_STATIC),yes)
 	TESTS += Overflow_Static_Test
+endif
+
+ifeq ($(ENABLE_FORTRAN_TESTS),yes)
+    TESTS += sde_test_f08
 endif
 
 
@@ -140,9 +144,8 @@ Counting_Set_MemLeak_Test: $(prfx)/MemoryLeak_CountingSet_Driver.c libCounting_S
 prfx=Advanced_C+FORTRAN
 rcrd_prfx=Recorder
 
-libXandria.so: $(prfx)/Xandria.F90 $(prfx)/sde_symbols.c
-	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -c -o $(prfx)/sde_symbols.o $(prfx)/sde_symbols.c
-	$(F77) -shared -Wall -fPIC $(FFLAGS) $(INCLUDE) -o lib/$@ $(SDE_F08_API) $(prfx)/sde_symbols.o $<
+libXandria.so: $(prfx)/Xandria.F90
+	$(F77) -shared -Wall -fPIC $(FFLAGS) $(INCLUDE) -o lib/$@ $(SDE_F08_API) $<
 
 libGamum.so: $(prfx)/Gamum.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
