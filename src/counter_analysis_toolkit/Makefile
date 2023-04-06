@@ -28,6 +28,7 @@ ifeq ($(ARCH),X86)
     VEC=-mavx -O0 -DX86
     VEC_FMA=-mfma4 -mfma -O0 -DX86
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
+	INSTR=-mavx512vl
 endif
 ifeq ($(ARCH),POWER)
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
@@ -42,7 +43,7 @@ ifeq ($(ARCH),ARM)
     VEC_ALL=$(VEC) -O0 -DARM
 endif
 
-all: branch.o d_cache eventstock.o flops i_cache vector
+all: branch.o d_cache eventstock.o flops i_cache instr vector
 	make cat_collect PAPIDIR=$(PAPIDIR)
 
 d_cache: timing_kernels.o prepareArray.o compar.o dcache.o
@@ -83,6 +84,9 @@ icache_seq_kernel_0.o: icache_seq.c icache_seq.h
 	$(CC) $(CFLAGS) $(OPT0) -shared -o icache_seq_kernel_0.so icache_seq_kernel_0.o
 	bash replicate.sh
 	rm icache_seq_kernel_0.o
+
+instr: instructions.c instr.h
+	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
 
 weak_symbols.o: weak_symbols.c vec.h
 	-$(CC) -c $(CFLAGS) weak_symbols.c
