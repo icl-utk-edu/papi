@@ -210,7 +210,7 @@ papi_sde_enable( papi_handle_t handle ){
   */
 int
 papi_sde_shutdown( papi_handle_t handle ){
-    papisde_library_desc_t *lib_handle;
+    papisde_library_desc_t *lib_handle, *tmp_lib, *next_lib, *prev_lib;
     papisde_list_entry_t *list_head, *curr;
     int i, ret_val=SDE_OK;
 
@@ -240,6 +240,26 @@ papi_sde_shutdown( papi_handle_t handle ){
             free(curr);
         }
     }
+
+    // Keep the `gctl` struct consistent
+    // 1. If the lib head is this one, just set to next (could be NULL)
+    // 2. Otherwise, find the prev_lib and set prev_lib->next = next_lib
+    next_lib = lib_handle->next;
+    if (gctl->lib_list_head == lib_handle) {
+        gctl->lib_list_head = next_lib;
+    } else {
+        prev_lib = NULL;
+        tmp_lib = gctl->lib_list_head;
+        while (tmp_lib != lib_handle && tmp_lib != NULL)
+        {
+            prev_lib = tmp_lib;
+            tmp_lib = tmp_lib->next;
+        }
+        if (prev_lib != NULL) {
+            prev_lib->next = next_lib;
+        }
+    }
+
     free(lib_handle->libraryName);
     free(lib_handle);
 
