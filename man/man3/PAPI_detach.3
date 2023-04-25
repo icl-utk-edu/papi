@@ -1,4 +1,4 @@
-.TH "PAPI_detach" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_detach" 3 "Wed Apr 19 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,9 +24,7 @@ int \fBPAPI_detach( int  EventSet, unsigned long  tid )\fP;
 .PP
 \fBParameters:\fP
 .RS 4
-\fIEventSet\fP An integer handle for a PAPI EventSet as created by \fBPAPI_create_eventset\fP\&. 
-.br
-\fItid\fP A thread id as obtained from, for example, \fBPAPI_list_threads\fP or \fBPAPI_thread_id\fP\&.
+\fIEventSet\fP An integer handle for a PAPI EventSet as created by \fBPAPI_create_eventset\fP\&.
 .RE
 .PP
 \fBReturn values:\fP
@@ -71,7 +69,7 @@ exit( 1 );
 .br
 \fBPAPI_thread_id\fP 
 .br
-\fBPAPI_thread_init\fP 
+\fBPAPI_thread_init\fP \fBPAPI_attach\fP 
 .RE
 .PP
 

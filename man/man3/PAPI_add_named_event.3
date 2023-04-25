@@ -1,4 +1,4 @@
-.TH "PAPI_add_named_event" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_add_named_event" 3 "Wed Apr 19 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,7 +28,7 @@ A hardware event can be either a PAPI preset or a native hardware event code\&. 
 .RS 4
 \fIEventSet\fP An integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset\fP\&. 
 .br
-\fIEventCode\fP A defined event such as PAPI_TOT_INS\&.
+\fIEventName\fP A string containing the event name as listed in PAPI_presets or discussed in PAPI_native\&.
 .RE
 .PP
 \fBReturn values:\fP

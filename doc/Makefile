@@ -13,7 +13,7 @@ man/man3: ../src/papi.h ../src/papi.c ../src/high-level/papi_hl.c ../src/papi_fw
 
 man/man1: ../src/utils/papi_avail.c ../src/utils/papi_clockres.c  ../src/utils/papi_command_line.c ../src/utils/papi_component_avail.c ../src/utils/papi_cost.c ../src/utils/papi_decode.c ../src/utils/papi_error_codes.c ../src/utils/papi_event_chooser.c ../src/utils/papi_xml_event_info.c ../src/utils/papi_mem_info.c ../src/utils/papi_multiplex_cost.c ../src/utils/papi_native_avail.c  ../src/utils/papi_version.c ../src/utils/papi_hardware_avail.c
 	doxygen Doxyfile-man1
- 
+
 clean:
 	rm -rf man html doxyerror
 

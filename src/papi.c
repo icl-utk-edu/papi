@@ -145,8 +145,8 @@ _internal_check_rate_state()
   *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
   *
   *	@par C Interface: 
-  *	\#include <papi.h> @n
-  *	int PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips );
+  *	`#include <papi.h>` @n
+  *	`int PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips );`
   *
   *   @param event
   *     one of the three presets PAPI_FP_INS, PAPI_VEC_SP or PAPI_VEC_DP 
@@ -209,8 +209,8 @@ PAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float
   *	@brief Simplified call to get Mflops/s (floating point operation rate), real and processor time. 
   *
   *	@par C Interface: 
-  *	\#include <papi.h> @n
-  *	int PAPI_flops_rate ( int event, float *rtime, float *ptime, long long *flpops, float *mflops );
+  *	`#include <papi.h>` @n
+  *	`int PAPI_flops_rate ( int event, float *rtime, float *ptime, long long *flpops, float *mflops );`
   *
   *   @param event
   *     one of the three presets PAPI_FP_OPS, PAPI_SP_OPS or PAPI_DP_OPS
@@ -274,8 +274,8 @@ PAPI_flops_rate( int event, float *rtime, float *ptime, long long *flpops, float
   *	@brief Simplified call to get instructions per cycle, real and processor time. 
   *
   *	@par C Interface: 
-  *	\#include <papi.h> @n
-  *	int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
+  *	`#include <papi.h>` @n
+  *	`int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );`
   *
   * @param *rtime
   *		realtime since the latest call
@@ -327,8 +327,8 @@ PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )
   *	@brief Simplified call to get arbitrary events per cycle, real and processor time. 
   *
   *	@par C Interface: 
-  *	\#include <papi.h> @n
-  *	int PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc );
+  *	`#include <papi.h>` @n
+  *	`int PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc );`
   *
   * @param event
   *		event code to be measured (0 defaults to PAPI_TOT_INS)
@@ -396,8 +396,8 @@ PAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core
   * @brief Stop a running event set of a rate function.
   *
   * @par C Interface: 
-  * \#include <papi.h> @n
-  * int PAPI_rate_stop();
+  * `#include <papi.h>` @n
+  * `int PAPI_rate_stop();`
   * 
   * @retval PAPI_ENOEVNT 
   * -- The EventSet is not started yet.
@@ -655,11 +655,16 @@ valid_ESI_component( EventSetInfo_t * ESI )
  *	which is pthread_self() on Linux platforms. 
  *
  *	@code
-if ( PAPI_thread_init(pthread_self) != PAPI_OK )
-	exit(1);
+ *  if ( PAPI_thread_init(pthread_self) != PAPI_OK )
+ *  	exit(1);
  *	@endcode
  *
- *	@see PAPI_register_thread PAPI_unregister_thread PAPI_get_thr_specific PAPI_set_thr_specific PAPI_thread_id PAPI_list_threads
+ *	@see PAPI_register_thread
+ *  @see PAPI_unregister_thread
+ *  @see PAPI_get_thr_specific
+ *  @see PAPI_set_thr_specific
+ *  @see PAPI_thread_id
+ *  @see PAPI_list_threads
  */
 int
 PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
@@ -691,12 +696,12 @@ PAPI_thread_init( unsigned long int ( *id_fn ) ( void ) )
  *	PAPI_thread_init().
  *
  *	@code
-unsigned long tid;
-
-if ((tid = PAPI_thread_id()) == (unsigned long int)-1 )
-	exit(1);
-
-printf("Initial thread id is: %lu\n", tid );
+ *  unsigned long tid;
+ *  
+ *  if ((tid = PAPI_thread_id()) == (unsigned long int)-1 )
+ *  	exit(1);
+ *  
+ *  printf("Initial thread id is: %lu\n", tid );
  *	@endcode
  *	@see PAPI_thread_init
  */
@@ -724,8 +729,8 @@ PAPI_thread_id( void )
  *  @brief Notify PAPI that a thread has 'appeared'.
  *
  *  @par C Interface:
- *  \#include <papi.h> @n
- *  int PAPI_register_thread (void);
+ *  `#include <papi.h>` @n
+ *  `int PAPI_register_thread (void);`
  *
  *  PAPI_register_thread() should be called when the user wants to force 
  *  PAPI to initialize a thread that PAPI has not seen before. 
@@ -802,8 +807,8 @@ PAPI_unregister_thread( void )
  *  This call assumes an initialized PAPI library. 
  *
  * @par C Interface
- * \#include <papi.h> @n
- * int PAPI_list_threads(PAPI_thread_id_t *tids, int * number );
+ * `#include <papi.h>` @n
+ * `int PAPI_list_threads(PAPI_thread_id_t *tids, int * number );`
  *
  * @param[in,out] *tids
  *		-- A pointer to a preallocated array. 
@@ -856,8 +861,8 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
  *  @brief Retrieve a pointer to a thread specific data structure.
  *
  *	@par Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_get_thr_specific( int tag, void **ptr );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_get_thr_specific( int tag, void **ptr );`
  *
  *	@param tag
  *		An identifier, the value of which is either PAPI_USR1_TLS or 
@@ -870,7 +875,7 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
  *	@retval PAPI_EINVAL 
  *		The @em tag argument is out of range. 
  *
- *	In C, PAPI_get_thr_specific PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag. 
+ *	In C, PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag.
  *	There are 2 user available locations and @em tag can be either 
  *	PAPI_USR1_TLS or PAPI_USR2_TLS. 
  *	The array mentioned above is managed by PAPI and allocated to each 
@@ -879,27 +884,30 @@ PAPI_list_threads( PAPI_thread_id_t *tids, int *number )
  *
  *	@par Example:
  *	@code
- int ret;
- RateInfo *state = NULL;
- ret = PAPI_thread_init(pthread_self);
- if (ret != PAPI_OK) handle_error(ret);
- 
- // Do we have the thread specific data setup yet?
-
-ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
-if (ret != PAPI_OK || state == NULL) {
-	state = (RateInfo *) malloc(sizeof(RateInfo));
-	if (state == NULL) return (PAPI_ESYS);
-	memset(state, 0, sizeof(RateInfo));
-	state->EventSet = PAPI_NULL;
-	ret = PAPI_create_eventset(&state->EventSet);
-	if (ret != PAPI_OK) return (PAPI_ESYS);
-	ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
-	if (ret != PAPI_OK) return (ret);
-}
-*	@endcode
-*	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id PAPI_set_thr_specific
-*/
+ * int ret;
+ * RateInfo *state = NULL;
+ * ret = PAPI_thread_init(pthread_self);
+ * if (ret != PAPI_OK) handle_error(ret);
+ * 
+ * // Do we have the thread specific data setup yet?
+ * 
+ * ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
+ * if (ret != PAPI_OK || state == NULL) {
+ *     state = (RateInfo *) malloc(sizeof(RateInfo));
+ *     if (state == NULL) return (PAPI_ESYS);
+ *     memset(state, 0, sizeof(RateInfo));
+ *     state->EventSet = PAPI_NULL;
+ *     ret = PAPI_create_eventset(&state->EventSet);
+ *     if (ret != PAPI_OK) return (PAPI_ESYS);
+ *     ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
+ *     if (ret != PAPI_OK) return (ret);
+ * }
+ *	@endcode
+ *	@see PAPI_register_thread
+ *   @see PAPI_thread_init
+ *   @see PAPI_thread_id
+ *   @see PAPI_set_thr_specific
+ */
 int
 PAPI_get_thr_specific( int tag, void **ptr )
 {
@@ -932,8 +940,8 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *  @brief Store a pointer to a thread specific data structure.
  *
  *	@par Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_thr_specific( int tag, void *ptr );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_thr_specific( int tag, void *ptr );`
  *
  *	@param tag
  *		An identifier, the value of which is either PAPI_USR1_TLS or 
@@ -955,26 +963,29 @@ PAPI_get_thr_specific( int tag, void **ptr )
  *
  *	@par Example:
  *	@code
-int ret;
-RateInfo *state = NULL;
-ret = PAPI_thread_init(pthread_self);
-if (ret != PAPI_OK) handle_error(ret);
- 
-// Do we have the thread specific data setup yet?
-
-ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
-if (ret != PAPI_OK || state == NULL) {
-	state = (RateInfo *) malloc(sizeof(RateInfo));
-	if (state == NULL) return (PAPI_ESYS);
-	memset(state, 0, sizeof(RateInfo));
-	state->EventSet = PAPI_NULL;
-	ret = PAPI_create_eventset(&state->EventSet);
-	if (ret != PAPI_OK) return (PAPI_ESYS);
-	ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
-	if (ret != PAPI_OK) return (ret);
-}
+ * int ret;
+ * RateInfo *state = NULL;
+ * ret = PAPI_thread_init(pthread_self);
+ * if (ret != PAPI_OK) handle_error(ret);
+ * 
+ * // Do we have the thread specific data setup yet?
+ * 
+ * ret = PAPI_get_thr_specific(PAPI_USR1_TLS, (void *) &state);
+ * if (ret != PAPI_OK || state == NULL) {
+ *     state = (RateInfo *) malloc(sizeof(RateInfo));
+ *     if (state == NULL) return (PAPI_ESYS);
+ *     memset(state, 0, sizeof(RateInfo));
+ *     state->EventSet = PAPI_NULL;
+ *     ret = PAPI_create_eventset(&state->EventSet);
+ *     if (ret != PAPI_OK) return (PAPI_ESYS);
+ *     ret = PAPI_set_thr_specific(PAPI_USR1_TLS, state);
+ *     if (ret != PAPI_OK) return (ret);
+ * }
  *	@endcode
- *	@see PAPI_register_thread PAPI_thread_init PAPI_thread_id PAPI_get_thr_specific
+ *	@see PAPI_register_thread @n 
+ *  PAPI_thread_init @n 
+ *  PAPI_thread_id @n 
+ *  PAPI_get_thr_specific
  */
 int
 PAPI_set_thr_specific( int tag, void *ptr )
@@ -1018,7 +1029,7 @@ PAPI_set_thr_specific( int tag, void *ptr )
  *		A system or C library call failed inside PAPI, see the errno variable. 
  *
  *	PAPI_library_init() initializes the PAPI library. 
- *	PAPI_is_initialized() check for initialization.
+ *	PAPI_is_initialized() checks for initialization.
  *	It must be called before any low level PAPI functions can be used. 
  *	If your application is making use of threads PAPI_thread_init must also be 
  *	called prior to making any calls to the library other than PAPI_library_init() . 
@@ -1197,8 +1208,8 @@ PAPI_library_init( int version )
  *  @brief Query if PAPI event exists.
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_query_event(int EventCode);
+ * `#include <papi.h>` @n
+ * `int PAPI_query_event(int EventCode);`
  *
  * PAPI_query_event() asks the PAPI library if the PAPI Preset event can be 
  * counted on this architecture. 
@@ -1272,8 +1283,8 @@ PAPI_query_event( int EventCode )
  *  @brief Query if a named PAPI event exists.
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_query_named_event(const char *EventName);
+ * `#include <papi.h>` @n
+ * `int PAPI_query_named_event(const char *EventName);`
  *
  * PAPI_query_named_event() asks the PAPI library if the PAPI named event can be 
  * counted on this architecture. 
@@ -1331,13 +1342,13 @@ PAPI_query_named_event( const char *EventName )
  *
  *	@par Examples:
  *	@code
- 		const PAPI_component_info_t *cmpinfo = NULL;
- 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
- 		exit(1);
- 		if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
- 		exit(1);
- 		printf("This component supports %d Preset Events and %d Native events.\n",
-		cmpinfo->num_preset_events, cmpinfo->num_native_events);
+ * 		const PAPI_component_info_t *cmpinfo = NULL;
+ * 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
+ * 		exit(1);
+ * 		if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
+ * 		exit(1);
+ * 		printf("This component supports %d Preset Events and %d Native events.\n",
+ *		cmpinfo->num_preset_events, cmpinfo->num_native_events);
  *	@endcode
  *
  *	@see PAPI_get_executable_info
@@ -1417,14 +1428,16 @@ PAPI_get_event_info( int EventCode, PAPI_event_info_t *info )
  *	@brief Convert a numeric hardware event code to a name.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_event_code_to_name( int  EventCode, char * EventName );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_event_code_to_name( int  EventCode, char * EventName );`
  *
  *	PAPI_event_code_to_name is used to translate a 32-bit integer PAPI event 
- *	code into an ASCII PAPI event name. 
+ *	code into an ASCII PAPI event name. @n 
  *	Either Preset event codes or Native event codes can be passed to this routine. 
  *	Native event codes and names differ from platform to platform.
  *
+ *  @note EventName must be preallocated with `PAPI_MAX_STR_LEN` characters.
+ * 
  *	@param EventCode 
  *		The numeric code for the event. 
  *	@param *EventName
@@ -1511,8 +1524,8 @@ PAPI_event_code_to_name( int EventCode, char *out )
  *	@brief Convert a name to a numeric hardware event code. 
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_event_name_to_code( const char * EventName, int * EventCode );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_event_name_to_code( const char * EventName, int * EventCode );`
  *
  *	PAPI_event_name_to_code is used to translate an ASCII PAPI event name 
  *	into an integer PAPI event code. 
@@ -1604,8 +1617,8 @@ PAPI_event_name_to_code( const char *in, int *out )
  *	@brief Enumerate PAPI preset or native events.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_enum_event( int * EventCode, int  modifer );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_enum_event( int * EventCode, int  modifer );`
  *
  *	Given a preset or native event code, PAPI_enum_event replaces the event 
  *	code with the next available event in either the preset or native table. 
@@ -1642,7 +1655,7 @@ PAPI_event_name_to_code( const char *in, int *out )
  *	} while ( PAPI_enum_event( &i, PAPI_ENUM_ALL ) == PAPI_OK );
  *	@endcode
  *
- *      @par Generic Modifiers
+ *  @par Generic Modifiers
  *	The following values are implemented for preset events
  *	<ul>
  *         <li> PAPI_ENUM_EVENTS -- Enumerate all (default)
@@ -1650,7 +1663,7 @@ PAPI_event_name_to_code( const char *in, int *out )
  *                preset/native chosen based on type of EventCode
  *	</ul>
  *
- *      @par Native Modifiers
+ *  @par Native Modifiers
  *	The following values are implemented for native events
  *	<ul>
  *         <li>PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through
@@ -1696,7 +1709,7 @@ PAPI_event_name_to_code( const char *in, int *out )
  *
  *	@see PAPI @n
  *	PAPIF @n
- *      PAPI_enum_cmp_event @n
+ *  PAPI_enum_cmp_event @n
  *	PAPI_get_event_info @n
  *	PAPI_event_name_to_code @n
  *	PAPI_preset @n
@@ -1807,8 +1820,8 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	@brief Enumerate PAPI preset or native events for a given component
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_enum_cmp_event( int *EventCode, int  modifer, int cidx );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_enum_cmp_event( int *EventCode, int  modifer, int cidx );`
  *
  *	Given an event code, PAPI_enum_event replaces the event 
  *	code with the next available event.
@@ -1847,7 +1860,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *	} while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
  *	@endcode
  *
- *      @par Generic Modifiers
+ *  @par Generic Modifiers
  *	The following values are implemented for preset events
  *	<ul>
  *         <li> PAPI_ENUM_EVENTS -- Enumerate all (default)
@@ -1855,7 +1868,7 @@ PAPI_enum_event( int *EventCode, int modifier )
  *                preset/native chosen based on type of EventCode
  *	</ul>
  *
- *      @par Native Modifiers
+ *  @par Native Modifiers
  *	The following values are implemented for native events
  *	<ul>
  *         <li>PAPI_NTV_ENUM_UMASKS -- Given an event, iterate through
@@ -1976,11 +1989,11 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
  *	@brief Create a new empty PAPI EventSet.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	PAPI_create_eventset( int * EventSet );
+ *	`#include <papi.h>` @n
+ *	`PAPI_create_eventset( int * EventSet );`
  *
  *	PAPI_create_eventset creates a new EventSet pointed to by EventSet, 
- *	which must be initialized to PAPI_NULL before calling this routine. 
+ *	which must be initialized to `PAPI_NULL` before calling this routine. 
  *	The user may then add hardware events to the event set by calling 
  *	PAPI_add_event or similar routines.
  *
@@ -2004,10 +2017,10 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
  *	@code
  *	int EventSet = PAPI_NULL;
  *	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK )
- *	handle_error( 1 );
+ *		handle_error( 1 );
  *	// Add Total Instructions Executed to our EventSet
  *	if ( PAPI_add_event( EventSet, PAPI_TOT_INS)  != PAPI_OK )
- *	handle_error( 1 ); 
+ *		handle_error( 1 ); 
  *	@endcode
  *
  *	@see PAPI_add_event @n
@@ -2036,8 +2049,8 @@ PAPI_create_eventset( int *EventSet )
  *	@brief Assign a component index to an existing but empty EventSet.
  *	
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	PAPI_assign_eventset_component( int  EventSet, int  cidx );
+ *	`#include <papi.h>` @n
+ *	`PAPI_assign_eventset_component( int  EventSet, int  cidx );`
  *
  *	@param EventSet 
  *		An integer identifier for an existing EventSet.
@@ -2113,12 +2126,13 @@ PAPI_assign_eventset_component( int EventSet, int cidx )
  *              EventSet for which we want to know the component index
  *	@par Examples:
  *	@code
- 		int cidx,eventcode;
- 		cidx = PAPI_get_eventset_component(eventset);
+ * 		int cidx,eventcode;
+ * 		cidx = PAPI_get_eventset_component(eventset);
  *	@endcode
  *	PAPI_get_eventset_component() returns the component an event
  *      belongs to.
  *	@see  PAPI_get_event_component
+ *  @see  PAPI_get_component_info
  */
 int
 PAPI_get_eventset_component( int EventSet)
@@ -2149,8 +2163,8 @@ PAPI_get_eventset_component( int EventSet)
  *	@brief add PAPI preset or native hardware event to an event set
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_add_event( int  EventSet, int  EventCode );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_add_event( int  EventSet, int  EventCode );`
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. @n
  *	A hardware event can be either a PAPI preset or a native hardware event code.
@@ -2203,10 +2217,6 @@ PAPI_get_eventset_component( int EventSet)
  *	handle_error( 1 );
  *	@endcode
  *
- *	@bug
- *	The vector function should take a pointer to a length argument so a proper 
- *	return value can be set upon partial success.
- *
  *	@see PAPI_cleanup_eventset @n
  *	PAPI_destroy_eventset @n
  *	PAPI_event_code_to_name @n
@@ -2255,8 +2265,8 @@ PAPI_add_event( int EventSet, int EventCode )
  *   the current platform, run papi_native_avail in the PAPI distribution. 
  *
  *   @par C Interface:
- *   \#include <papi.h> @n
- *   int PAPI_remove_event( int  EventSet, int  EventCode );
+ *   `#include <papi.h>` @n
+ *   `int PAPI_remove_event( int  EventSet, int  EventCode );`
  *
  *   @param[in] EventSet
  *	   -- an integer handle for a PAPI event set as created 
@@ -2370,8 +2380,8 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	@brief add PAPI preset or native hardware event by name to an EventSet
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_add_named_event( int EventSet, const char *EventName );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_add_named_event( int EventSet, const char *EventName );`
  *
  *	PAPI_add_named_event adds one event to a PAPI EventSet. @n
  *	A hardware event can be either a PAPI preset or a native hardware event code.
@@ -2383,8 +2393,8 @@ PAPI_remove_event( int EventSet, int EventCode )
  *
  *	@param EventSet
  *		An integer handle for a PAPI Event Set as created by PAPI_create_eventset.
- *	@param EventCode 
- *		A defined event such as PAPI_TOT_INS. 
+ *	@param EventName
+ *		A string containing the event name as listed in PAPI_presets or discussed in PAPI_native.
  *
  *	@retval Positive-Integer
  *		The number of consecutive elements that succeeded before the error. 
@@ -2423,10 +2433,6 @@ PAPI_remove_event( int EventSet, int EventCode )
  *	handle_error( 1 );
  *	@endcode
  *
- *	@bug
- *	The vector function should take a pointer to a length argument so a proper 
- *	return value can be set upon partial success.
- *
  *	@see PAPI_add_event @n
  *	PAPI_query_named_event @n
  *	PAPI_remove_named_event
@@ -2460,8 +2466,8 @@ PAPI_add_named_event( int EventSet, const char *EventName )
  *   the current platform, run papi_native_avail in the PAPI distribution. 
  *
  *   @par C Interface:
- *   \#include <papi.h> @n
- *   int PAPI_remove_named_event( int  EventSet, const char *EventName );
+ *   `#include <papi.h>` @n
+ *   `int PAPI_remove_named_event( int  EventSet, const char *EventName );`
  *
  *   @param[in] EventSet
  *	   -- an integer handle for a PAPI event set as created 
@@ -2487,7 +2493,7 @@ PAPI_add_named_event( int EventSet, const char *EventName )
  *
  *   @par Example:
  *   @code
- *   char EventName = "PAPI_TOT_INS";
+ *   char EventName[] = "PAPI_TOT_INS";
  *   int EventSet = PAPI_NULL;
  *   int ret;
  *
@@ -2532,8 +2538,8 @@ PAPI_remove_named_event( int EventSet, const char *EventName )
  *	@brief Empty and destroy an EventSet.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_destroy_eventset( int * EventSet );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_destroy_eventset( int * EventSet );`
  *
  * PAPI_destroy_eventset deallocates the memory associated with an empty PAPI EventSet.
  *
@@ -2602,8 +2608,8 @@ PAPI_destroy_eventset( int *EventSet )
  *	@brief Start counting hardware events in an event set.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_start( int  EventSet );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_start( int  EventSet );`
  *
  *	@param EventSet
  *		-- an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -2823,8 +2829,8 @@ PAPI_start( int EventSet )
  *	@brief Stop counting hardware events in an event set. 
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_stop( int  EventSet, long long * values );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_stop( int  EventSet, long long * values );`
  *
  *	@param EventSet
  *		-- an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -2867,7 +2873,8 @@ PAPI_start( int EventSet )
  *  printf("%lld\\n",values[0]);
  *  @endcode
  *
- *	@see  PAPI_create_eventset PAPI_start
+ *	@see  PAPI_create_eventset 
+ *  @see  PAPI_start
  */
 int
 PAPI_stop( int EventSet, long long *values )
@@ -2967,13 +2974,13 @@ PAPI_stop( int EventSet, long long *values )
 }
 
 /** @class PAPI_reset
- * @brief Reset the hardware event counts in an event set.
+ *  @brief Reset the hardware event counts in an event set.
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_reset( int EventSet );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_reset( int EventSet );`
  *
- *	@param EventSet
+ *	@param[in] EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset 
  *
  *	@retval PAPI_OK 
@@ -2987,29 +2994,29 @@ PAPI_stop( int EventSet, long long *values )
  *
  *	@par Example:
  *	@code
-int EventSet = PAPI_NULL;
-int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
-int ret;
- 
-// Create an empty EventSet
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Add two events to our EventSet
-ret = PAPI_add_events(EventSet, Events, 2);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Start counting
-ret = PAPI_start(EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Stop counting, ignore values
-ret = PAPI_stop(EventSet, NULL);
-if (ret != PAPI_OK) handle_error(ret);
-
-// reset the counters in this EventSet
-ret = PAPI_reset(EventSet);
-if (ret != PAPI_OK) handle_error(ret);
+ *  int EventSet = PAPI_NULL;
+ *  int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
+ *  int ret;
+ *   
+ *  // Create an empty EventSet
+ *  ret = PAPI_create_eventset(&EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Add two events to our EventSet
+ *  ret = PAPI_add_events(EventSet, Events, 2);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Start counting
+ *  ret = PAPI_start(EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Stop counting, ignore values
+ *  ret = PAPI_stop(EventSet, NULL);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // reset the counters in this EventSet
+ *  ret = PAPI_reset(EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
  *	@see PAPI_create_eventset
@@ -3064,8 +3071,8 @@ PAPI_reset( int EventSet )
  *  @brief Read hardware counters from an event set.
  *	
  *  @par C Interface:
- *  \#include <papi.h> @n
- *  int PAPI_read(int  EventSet, long_long * values );
+ *  `#include <papi.h>` @n
+ *  `int PAPI_read(int  EventSet, long_long * values );`
  *
  *  PAPI_read() copies the counters of the indicated event set into 
  *  the provided array. 
@@ -3165,8 +3172,8 @@ PAPI_read( int EventSet, long long *values )
  *  @brief Read hardware counters with a timestamp.
  *	
  *  @par C Interface:
- *  \#include <papi.h> @n
- *  int PAPI_read_ts(int EventSet, long long *values, long long *cycles );
+ *  `#include <papi.h>` @n
+ *  `int PAPI_read_ts(int EventSet, long long *values, long long *cycles );`
  *
  *  PAPI_read_ts() copies the counters of the indicated event set into 
  *  the provided array.  It also places a real-time cycle timestamp 
@@ -3256,8 +3263,8 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	@brief Accumulate and reset counters in an EventSet.
  *	
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_accum( int  EventSet, long_long * values );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_accum( int  EventSet, long_long * values );`
  *
  *	These calls assume an initialized PAPI library and a properly added event set. 
  *	PAPI_accum adds the counters of the indicated event set into the array values. 
@@ -3407,8 +3414,8 @@ PAPI_write( int EventSet, long long *values )
  *	@brief Empty and destroy an EventSet.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_cleanup_eventset( int  EventSet );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_cleanup_eventset( int  EventSet );`
  *
  * PAPI_cleanup_eventset removes all events from a PAPI event set and turns 
  * off profiling and overflow for all events in the EventSet.
@@ -3524,8 +3531,8 @@ PAPI_cleanup_eventset( int EventSet )
  *      this routine. 
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_multiplex_init (void);
+ * `#include <papi.h>` @n
+ * `int PAPI_multiplex_init (void);`
  *
  * @par Examples
  * @code
@@ -3552,11 +3559,11 @@ PAPI_multiplex_init( void )
  * @brief Return the counting state of an EventSet.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_state( int  EventSet, int * status );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_state( int  EventSet, int * status );`
  *
- *	@param EventSet -- an integer handle for a PAPI event set as created by PAPI_create_eventset
- *	@param status -- an integer containing a boolean combination of one or more of the 
+ *	@param[in] EventSet -- an integer handle for a PAPI event set as created by PAPI_create_eventset
+ *	@param[out] status -- an integer containing a boolean combination of one or more of the 
  *	following nonzero constants as defined in the PAPI header file papi.h:
  *	@arg PAPI_STOPPED	-- EventSet is stopped
  *	@arg PAPI_RUNNING	-- EventSet is running
@@ -3635,8 +3642,8 @@ PAPI_state( int EventSet, int *status )
  * @brief Set the current debug level for error output from PAPI.
  *
  * @par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_debug( int level );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_debug( int level );`
  *
  * @param level
  *		one of the constants shown in the table below and defined in the papi.h 
@@ -3651,9 +3658,10 @@ PAPI_state( int EventSet, int *status )
  *		The debug level is invalid.
  *  @n@n
  *
+ *  @par
  *	The current debug level is used by both the internal error and debug message 
  *	handler subroutines. @n
- *	The debug handler is only used if the library was compiled with -DDEBUG. @n
+ *	The debug handler is only used if the library was configured with `--with-debug=yes`. @n
  *	The debug handler is called when there is an error upon a call to the PAPI API.@n 
  *	The error handler is always active and its behavior cannot be modified except 
  *	for whether or not it prints anything.
@@ -3710,8 +3718,8 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@brief Attach PAPI event set to the specified thread id.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_attach( int EventSet, unsigned long tid );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_attach( int EventSet, unsigned long tid );`
  *
  *	PAPI_attach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
  *	monitor performance counts on a thread other than the one currently executing. 
@@ -3755,6 +3763,7 @@ _papi_set_attach( int option, int EventSet, unsigned long tid )
  *	@see PAPI_list_threads
  *	@see PAPI_thread_id
  *	@see PAPI_thread_init
+ *  @see PAPI_detach
  */
 int
 PAPI_attach( int EventSet, unsigned long tid )
@@ -3767,8 +3776,8 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	@brief Detach PAPI event set from previously specified thread id and restore to executing thread.
  *	
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_detach( int  EventSet, unsigned long  tid );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_detach( int  EventSet, unsigned long  tid );`
  *
  *	PAPI_detach is a wrapper function that calls PAPI_set_opt to allow PAPI to 
  *	monitor performance counts on a thread other than the one currently executing. 
@@ -3779,8 +3788,6 @@ PAPI_attach( int EventSet, unsigned long tid )
  *
  *	@param EventSet 
  *		An integer handle for a PAPI EventSet as created by PAPI_create_eventset.
- *	@param tid 
- *		A thread id as obtained from, for example, PAPI_list_threads or PAPI_thread_id.
  *
  *	@retval PAPI_ECMP
  *		This feature is unsupported on this component.
@@ -3811,7 +3818,8 @@ PAPI_attach( int EventSet, unsigned long tid )
  *	@see PAPI_set_opt @n
  *	PAPI_list_threads @n
  *	PAPI_thread_id @n
- *	PAPI_thread_init
+ *	PAPI_thread_init @n
+ *  PAPI_attach
  */
 int
 PAPI_detach( int EventSet )
@@ -3824,8 +3832,8 @@ PAPI_detach( int EventSet )
  *	@brief Convert a standard event set to a multiplexed event set. 
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_set_multiplex( int  EventSet );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_set_multiplex( int  EventSet );`
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -3924,8 +3932,8 @@ PAPI_set_multiplex( int EventSet )
  *	@brief Set PAPI library or event set options.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_set_opt(  int option, PAPI_option_t * ptr );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_set_opt(  int option, PAPI_option_t * ptr );`
  *
  *	@param[in]	option
  *		Defines the option to be set. 
@@ -3962,35 +3970,50 @@ PAPI_set_multiplex( int EventSet )
  *
  *	@par Possible values for the PAPI_set_opt option parameter
  *  @manonly
- * OPTION 			DEFINITION
- * PAPI_DEFDOM		Set default counting domain for newly created event sets. Requires a 
- *					component index.
- * PAPI_DEFGRN		Set default counting granularity. Requires a component index.
- * PAPI_DEBUG		Set the PAPI debug state and the debug handler. The debug state is 
- *					specified in ptr->debug.level. The debug handler is specified in 
- *					ptr->debug.handler. For further information regarding debug states and
- *					the behavior of the handler, see PAPI_set_debug.
- * PAPI_MULTIPLEX	Enable specified EventSet for multiplexing.
- * PAPI_DEF_ITIMER	Set the type of itimer used in software multiplexing, overflowing 
- *					and profiling.
- * PAPI_DEF_MPX_NS	Set the sampling time slice in nanoseconds for multiplexing and overflow.
- * PAPI_DEF_ITIMER_NS See PAPI_DEF_MPX_NS.
- * PAPI_ATTACH		Attach EventSet specified in ptr->attach.eventset to thread or process id
- *					specified in in ptr->attach.tid.
- * PAPI_CPU_ATTACH	Attach EventSet specified in ptr->cpu.eventset to cpu specified in in
- *					ptr->cpu.cpu_num.
- * PAPI_DETACH		Detach EventSet specified in ptr->attach.eventset from any thread
- *					or process id.
- * PAPI_DOMAIN		Set domain for EventSet specified in ptr->domain.eventset. 
- *					Will error if eventset is not bound to a component.
- * PAPI_GRANUL		Set granularity for EventSet specified in ptr->granularity.eventset. 
- *					Will error if eventset is not bound to a component.
+ * OPTION 				DEFINITION
+ * 
+ * PAPI_DEFDOM			Set default counting domain for newly created event sets. Requires a 
+ *						component index.
+ * 
+ * PAPI_DEFGRN			Set default counting granularity. Requires a component index.
+ * 
+ * PAPI_DEBUG			Set the PAPI debug state and the debug handler. The debug state is 
+ *						specified in ptr->debug.level. The debug handler is specified in 
+ *						ptr->debug.handler. For further information regarding debug states and
+ *						the behavior of the handler, see PAPI_set_debug.
+ * 
+ * PAPI_MULTIPLEX		Enable specified EventSet for multiplexing.
+ * 
+ * PAPI_DEF_ITIMER		Set the type of itimer used in software multiplexing, overflowing 
+ *						and profiling.
+ * 
+ * PAPI_DEF_MPX_NS		Set the sampling time slice in nanoseconds for multiplexing and overflow.
+ * 
+ * PAPI_DEF_ITIMER_NS 	See PAPI_DEF_MPX_NS.
+ * 
+ * PAPI_ATTACH			Attach EventSet specified in ptr->attach.eventset to thread or process id
+ *						specified in in ptr->attach.tid.
+ * 
+ * PAPI_CPU_ATTACH		Attach EventSet specified in ptr->cpu.eventset to cpu specified in in
+ *						ptr->cpu.cpu_num.
+ * 
+ * PAPI_DETACH			Detach EventSet specified in ptr->attach.eventset from any thread
+ *						or process id.
+ * 
+ * PAPI_DOMAIN			Set domain for EventSet specified in ptr->domain.eventset. 
+ *						Will error if eventset is not bound to a component.
+ * 
+ * PAPI_GRANUL			Set granularity for EventSet specified in ptr->granularity.eventset. 
+ *						Will error if eventset is not bound to a component.
+ * 
  * PAPI_INHERIT		Enable or disable inheritance for specified EventSet.
+ * 
  * PAPI_DATA_ADDRESS	Set data address range to restrict event counting for EventSet specified
- *					in ptr->addr.eventset. Starting and ending addresses are specified in
- *					ptr->addr.start and ptr->addr.end, respectively. If exact addresses
- *					cannot be instantiated, offsets are returned in ptr->addr.start_off and
- *					ptr->addr.end_off. Currently implemented on Itanium only.
+ *						in ptr->addr.eventset. Starting and ending addresses are specified in
+ *						ptr->addr.start and ptr->addr.end, respectively. If exact addresses
+ *						cannot be instantiated, offsets are returned in ptr->addr.start_off and
+ *						ptr->addr.end_off. Currently implemented on Itanium only.
+ * 
  * PAPI_INSTR_ADDRESS	Set instruction address range as described above. Itanium only.
  * @endmanonly
  * @htmlonly
@@ -4482,15 +4505,15 @@ PAPI_num_hwctrs( void )
  *  a theoretical maximum for estimation purposes only.  It might not
  *  be possible to easily create an EventSet that contains the full
  *  number of events.  This can be due to a variety of reasons:
- *  1).  Some CPUs (especially Intel and POWER) have the notion
+ *  1.  Some CPUs (especially Intel and POWER) have the notion
  *       of fixed counters that can only measure one thing, usually
  *       cycles.
- *  2).  Some CPUs have very explicit rules about which event can
+ *  2.  Some CPUs have very explicit rules about which event can
  *       run in which counter.  In this case it might not be possible
  *       to add a wanted event even if counters are free.
- *  3).  Some CPUs halve the number of counters available when
+ *  3.  Some CPUs halve the number of counters available when
  *       running with SMT (multiple CPU threads) enabled.
- *  4).  Some operating systems "steal" a counter to use for things
+ *  4.  Some operating systems "steal" a counter to use for things
  *       such as NMI Watchdog timers.
  *  The only sure way to see if events will fit is to attempt
  *  adding events to an EventSet, and doing something sensible
@@ -4500,8 +4523,8 @@ PAPI_num_hwctrs( void )
  *  anything greater than 0. 
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_num_cmp_hwctrs(int  cidx );
+ * `#include <papi.h>` @n
+ * `int PAPI_num_cmp_hwctrs(int  cidx );`
  *
  * @param[in] cidx
  *         -- An integer identifier for a component. 
@@ -4531,12 +4554,12 @@ PAPI_num_cmp_hwctrs( int cidx )
  *	@brief Get the multiplexing status of specified event set.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_get_multiplex( int  EventSet );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_get_multiplex( int  EventSet );`
  *
  * @par Fortran Interface:
- *     \#include fpapi.h @n
- *     PAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )
+ *     `#include "fpapi.h"` @n
+ *     `PAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )`
  *
  *	@param EventSet
  *	an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -4601,8 +4624,8 @@ PAPI_get_multiplex( int EventSet )
  *	@brief Get PAPI library or event set options.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     int PAPI_get_opt(  int option, PAPI_option_t * ptr );
+ *     `#include <papi.h>` @n
+ *     `int PAPI_get_opt(  int option, PAPI_option_t * ptr );`
  *
  *	@param[in]	option
  *		Defines the option to get. 
@@ -4637,30 +4660,53 @@ PAPI_get_multiplex( int EventSet )
  *
  *	@par Possible values for the PAPI_get_opt option parameter
  * @manonly
- * OPTION 			DEFINITION
- * PAPI_DEFDOM		Get default counting domain for newly created event sets. Requires a component index.
- * PAPI_DEFGRN		Get default counting granularity. Requires a component index.
- * PAPI_DEBUG		Get the PAPI debug state and the debug handler. The debug state is specified in ptr->debug.level. The debug handler is specified in ptr->debug.handler. 
- *					For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.
- * PAPI_MULTIPLEX	Get current multiplexing state for specified EventSet.
- * PAPI_DEF_ITIMER	Get the type of itimer used in software multiplexing, overflowing and profiling.
- * PAPI_DEF_MPX_NS	Get the sampling time slice in nanoseconds for multiplexing and overflow.
+ * OPTION 				DEFINITION
+ * 
+ * PAPI_DEFDOM			Get default counting domain for newly created event sets. Requires a component index.
+ * 
+ * PAPI_DEFGRN			Get default counting granularity. Requires a component index.
+ * 
+ * PAPI_DEBUG			Get the PAPI debug state and the debug handler. The debug state is specified in ptr->debug.level. The debug handler is specified in ptr->debug.handler. 
+ *						For further information regarding debug states and the behavior of the handler, see PAPI_set_debug.
+ * 
+ * PAPI_MULTIPLEX		Get current multiplexing state for specified EventSet.
+ * 
+ * PAPI_DEF_ITIMER		Get the type of itimer used in software multiplexing, overflowing and profiling.
+ * 
+ * PAPI_DEF_MPX_NS		Get the sampling time slice in nanoseconds for multiplexing and overflow.
+ * 
  * PAPI_DEF_ITIMER_NS	See PAPI_DEF_MPX_NS.
- * PAPI_ATTACH		Get thread or process id to which event set is attached. Returns TRUE if currently attached.
- * PAPI_CPU_ATTACH	Get ptr->cpu.cpu_num and Attach state for EventSet specified in ptr->cpu.eventset.
- * PAPI_DETACH		Get thread or process id to which event set is attached. Returns TRUE if currently attached.
- * PAPI_DOMAIN		Get domain for EventSet specified in ptr->domain.eventset. Will error if eventset is not bound to a component.
- * PAPI_GRANUL		Get granularity for EventSet specified in ptr->granularity.eventset. Will error if eventset is not bound to a component.
+ * 
+ * PAPI_ATTACH			Get thread or process id to which event set is attached. Returns TRUE if currently attached.
+ * 
+ * PAPI_CPU_ATTACH		Get ptr->cpu.cpu_num and Attach state for EventSet specified in ptr->cpu.eventset.
+ * 
+ * PAPI_DETACH			Get thread or process id to which event set is attached. Returns TRUE if currently attached.
+ * 
+ * PAPI_DOMAIN			Get domain for EventSet specified in ptr->domain.eventset. Will error if eventset is not bound to a component.
+ * 
+ * PAPI_GRANUL			Get granularity for EventSet specified in ptr->granularity.eventset. Will error if eventset is not bound to a component.
+ * 
  * PAPI_INHERIT		Get current inheritance state for specified EventSet.
+ * 
  * PAPI_PRELOAD		Get LD_PRELOAD environment equivalent.
- * PAPI_CLOCKRATE	Get clockrate in MHz.
- * PAPI_MAX_CPUS	Get number of CPUs.
+ * 
+ * PAPI_CLOCKRATE		Get clockrate in MHz.
+ * 
+ * PAPI_MAX_CPUS		Get number of CPUs.
+ * 
  * PAPI_EXEINFO		Get Executable addresses for text/data/bss.
- * PAPI_HWINFO		Get information about the hardware.
+ * 
+ * PAPI_HWINFO			Get information about the hardware.
+ * 
  * PAPI_LIB_VERSION	Get the full PAPI version of the library. This does not require PAPI to be initialized first.
- * PAPI_MAX_HWCTRS	Get number of counters. Requires a component index.
+ * 
+ * PAPI_MAX_HWCTRS		Get number of counters. Requires a component index.
+ * 
  * PAPI_MAX_MPX_CTRS	Get maximum number of multiplexing counters. Requires a component index.
- * PAPI_SHLIBINFO	Get shared library information used by the program.
+ * 
+ * PAPI_SHLIBINFO		Get shared library information used by the program.
+ * 
  * PAPI_COMPONENTINFO	Get the PAPI features the specified component supports. Requires a component index.
  * @endmanonly
  * @htmlonly
@@ -4888,7 +4934,10 @@ PAPI_get_opt( int option, PAPI_option_t * ptr )
  *	The reader is urged to see the example code in the PAPI distribution for usage of PAPI_get_opt. 
  *	The file papi.h contains definitions for the structures unioned in the PAPI_option_t structure. 
  *
- *	@see PAPI_set_debug PAPI_set_multiplex PAPI_set_domain PAPI_option_t
+ *	@see PAPI_set_debug
+ *  @see PAPI_set_multiplex
+ *  @see PAPI_set_domain
+ *  @see PAPI_option_t
  */
 
 int
@@ -4927,22 +4976,23 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 		ptr->cmp_info = &( _papi_hwd[cidx]->cmp_info );
 		return PAPI_OK;
 	default:
-	  papi_return( PAPI_EINVAL );
+		papi_return( PAPI_EINVAL );
 	}
 	return PAPI_OK;
 }
 
 /** @class PAPI_num_components
-  *	@brief Get the number of components available on the system.
-  *
-  * @return 
-  *		Number of components available on the system
-  *
-  *	@code
-// Query the library for a component count. 
-printf("%d components installed., PAPI_num_components() );
-  * @endcode
-  */
+ *	@brief Get the number of components available on the system.
+ *
+ * @return 
+ *		Number of components available on the system
+ * 
+ * @par Example:
+ * @code
+	// Query the library for a component count. 
+	printf("%d components installed", PAPI_num_components() );
+ * @endcode
+ */
 int
 PAPI_num_components( void )
 {
@@ -4958,8 +5008,8 @@ PAPI_num_components( void )
   * The event set should be created by @ref PAPI_create_eventset .
   *
   * @par C Interface:
-  * \#include <papi.h> @n
-  * int PAPI_num_events(int  EventSet );
+  * `#include <papi.h>` @n
+  * `int PAPI_num_events(int  EventSet );`
   *
   * @param[in] EventSet -- 
   *   an integer handle for a PAPI event set created by PAPI_create_eventset.
@@ -5006,8 +5056,8 @@ PAPI_num_events( int EventSet )
   *	@brief Finish using PAPI and free all related resources. 
   *
   *	@par C Prototype:
-  *		\#include <papi.h> @n
-  *		void PAPI_shutdown( void );
+  *		`#include <papi.h>` @n
+  *		`void PAPI_shutdown( void );`
   *
   * PAPI_shutdown() is an exit function used by the PAPI Library 
   * to free resources and shut down when certain error conditions arise. 
@@ -5115,8 +5165,8 @@ again:
  *	@brief Returns a string describing the PAPI error code. 
  *
  *  @par C Interface:
- *     \#include <papi.h> @n
- *     char * PAPI_strerror( int errorCode );
+ *     `#include <papi.h>` @n
+ *     `char * PAPI_strerror( int errorCode );`
  *
  *  @param[in] code  
  *      -- the error code to interpret 
@@ -5157,7 +5207,11 @@ again:
  *  if (ret != PAPI_OK) handle_error(ret);
  *  @endcode
  *
- *	@see  PAPI_perror PAPI_set_opt PAPI_get_opt PAPI_shutdown PAPI_set_debug
+ *	@see  PAPI_perror
+ *  @see  PAPI_set_opt
+ *  @see  PAPI_get_opt
+ *  @see  PAPI_shutdown
+ *  @see  PAPI_set_debug
  */
 char *
 PAPI_strerror( int errorCode )
@@ -5172,8 +5226,8 @@ PAPI_strerror( int errorCode )
  *  @brief Produces a string on standard error, describing the last library error.
  *
  * @par C Interface:
- *     \#include <papi.h> @n
- *     void PAPI_perror( const char *s );
+ *     `#include <papi.h>` @n
+ *     `void PAPI_perror( const char *s );`
  *
  *  @param[in] s
  *      -- Optional message to print before the string describing the last error message. 
@@ -5260,16 +5314,15 @@ PAPI_perror( const char *msg )
  * overflowing  event,  the  Program  Counter  address  when the interrupt
  * occurred, an overflow_vector that can be processed to  determined  which
  * event(s)  caused  the  overflow,  and a pointer to the machine context,
- * which can be used in a  platform-specific  manor  to  extract  register
+ * which can be used in a  platform-specific  manner  to  extract  register
  * information about what was happening when the overflow occurred.
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_overflow (int EventSet, int EventCode, int threshold, 
- * int flags, PAPI_overflow_handler_t handler ); @n@n
- * (*PAPI_overflow_handler_t) _papi_overflow_handler
- * (int  EventSet, void *address, long_long overflow_vector, 
- * void *context );
+ * `#include <papi.h>` @n
+ * `int PAPI_overflow (int EventSet, int EventCode, int threshold, `
+ * `int flags, PAPI_overflow_handler_t handler );` @n @n
+ * `(*PAPI_overflow_handler_t) _papi_overflow_handler(int  EventSet, void *address,`
+ * `long_long overflow_vector, void *context );`
  *
  * @par Fortran Interface:
  * Not implemented
@@ -5303,16 +5356,7 @@ PAPI_perror( const char *msg )
  *	@param[in] handler
  *	      -- pointer to the user supplied handler function to call upon 
  *            overflow 
- *      @param[in] address 
- *            -- the Program Counter address at the time of the overflow
- *      @param[in] overflow_vector  
- *            -- a long long word containing flag bits to indicate
- *               which hardware counter(s) caused the overflow
- *      @param[in] *context 
- *            -- pointer to a machine specific structure that defines the
- *               register context at the time of overflow. This parameter 
- *               is often unused and can be ignored in the user function.
- *
+ * 
  * @retval PAPI_OK On success, PAPI_overflow returns PAPI_OK.  
  * @retval PAPI_EINVAL One or more of the arguments is invalid.   
  *            Most likely a bad threshold value.
@@ -5325,6 +5369,19 @@ PAPI_perror( const char *msg )
  *             and by forced software at the same time.
  * @retval PAPI_ENOEVNT The PAPI event is not available on 
  *             the underlying hardware.
+ *
+ * @brief callback function parameters
+ * @li[in] EventSet
+ * 		-- an integer handle for a PAPI event set as created by PAPI_create_eventset
+ * @li[in] address 
+ * 		-- the Program Counter address at the time of the overflow
+ * @li[in] overflow_vector  
+ *      -- a long long word containing flag bits to indicate
+ *         which hardware counter(s) caused the overflow
+ * @li[in] *context 
+ *      -- pointer to a machine specific structure that defines the
+ *         register context at the time of overflow. This parameter 
+ *         is often unused and can be ignored in the user function.
  *
  * @par Example
  * @code
@@ -5342,6 +5399,7 @@ PAPI_perror( const char *msg )
  *
  *
  * @see PAPI_get_overflow_event_index
+ * @see PAPI_overflow_handler_t
  *
  */
 int
@@ -5508,8 +5566,8 @@ PAPI_overflow( int EventSet, int EventCode, int threshold, int flags,
  *	@brief Generate PC histogram data from multiple code regions where hardware counter overflow occurs.
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags );
+ * `#include <papi.h>` @n
+ * `int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags );`
  *
  *	@param *prof 
  *		pointer to an array of PAPI_sprofil_t structures. Each copy of the structure contains the following:
@@ -5821,9 +5879,9 @@ PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
  *  @brief Generate a histogram of hardware counter overflows vs. PC addresses.
  *
  * @par C Interface:
- * \#include <papi.h> @n
- * int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
- * unsigned scale, int EventSet, int EventCode, int threshold, int flags );
+ * `#include <papi.h>` @n
+ * `int PAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,`
+ * `unsigned scale, int EventSet, int EventCode, int threshold, int flags );`
  *
  * @par Fortran Interface
  * The profiling routines have no Fortran interface.
@@ -5912,13 +5970,21 @@ PAPI_sprofil( PAPI_sprofil_t *prof, int profcnt, int EventSet,
  *	@par Representative values for the scale variable
  *  @manonly
  * HEX      DECIMAL  DEFININTION  
+ * 
  * 0x20000  131072   Maps precisely one instruction address to a unique bucket in buf.  
+ * 
  * 0x10000   65536   Maps precisely two instruction addresses to a unique bucket in buf.  
+ * 
  * 0x0FFFF   65535   Maps approximately two instruction addresses to a unique bucket in buf.  
+ * 
  * 0x08000   32768   Maps every four instruction addresses to a bucket in buf.  
+ * 
  * 0x04000   16384   Maps every eight instruction addresses to a bucket in buf.  
+ * 
  * 0x00002       2   Maps all instruction addresses to the same bucket in buf.  
+ * 
  * 0x00001       1   Undefined.  
+ * 
  * 0x00000       0   Undefined.  
  * @endmanonly
  * @htmlonly
@@ -6067,10 +6133,11 @@ PAPI_profil( void *buf, unsigned bufsiz, vptr_t offset,
  *	@brief Set the default counting granularity for eventsets bound to the cpu component.
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_granularity( int granularity );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_granularity( int granularity );`
  *
- *	@param -- granularity one of the following constants as defined in the papi.h header file
+ *	@param granularity 
+ *      -- one of the following constants as defined in the papi.h header file
  *	@arg PAPI_GRN_THR	-- Count each individual thread
  *	@arg PAPI_GRN_PROC	-- Count each individual process
  *	@arg PAPI_GRN_PROCG	-- Count each individual process group
@@ -6094,24 +6161,27 @@ PAPI_profil( void *buf, unsigned bufsiz, vptr_t offset,
  *
  *	@par Example:
  *	@code
-int ret;
-
-// Initialize the library
-ret = PAPI_library_init(PAPI_VER_CURRENT);
-if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); 
-}
-if (ret < 0) handle_error(ret);
-
-// Set the default granularity for the cpu component
-ret = PAPI_set_granularity(PAPI_GRN_PROC);
-if (ret != PAPI_OK) handle_error(ret);
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
+ * int ret;
+ * 
+ * // Initialize the library
+ * ret = PAPI_library_init(PAPI_VER_CURRENT);
+ * if (ret > 0 && ret != PAPI_VER_CURRENT) {
+ *   fprintf(stderr,"PAPI library version mismatch!\n");
+ *   exit(1); 
+ * }
+ * if (ret < 0) handle_error(ret);
+ * 
+ * // Set the default granularity for the cpu component
+ * ret = PAPI_set_granularity(PAPI_GRN_PROC);
+ * if (ret != PAPI_OK) handle_error(ret);
+ * ret = PAPI_create_eventset(&EventSet);
+ * if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
- *	@see  PAPI_set_cmp_granularity PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ *	@see  PAPI_set_cmp_granularity @n 
+ *  PAPI_set_domain @n 
+ *  PAPI_set_opt @n 
+ *  PAPI_get_opt
  */
 int
 PAPI_set_granularity( int granularity )
@@ -6123,8 +6193,8 @@ PAPI_set_granularity( int granularity )
  *	@brief Set the default counting granularity for eventsets bound to the specified component.
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_cmp_granularity( int granularity, int cidx );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_cmp_granularity( int granularity, int cidx );`
  *
  *	@param granularity one of the following constants as defined in the papi.h header file
  *	@arg PAPI_GRN_THR	Count each individual thread
@@ -6159,24 +6229,26 @@ PAPI_set_granularity( int granularity )
  *
  *	@par Example:
  *	@code
-int ret;
-
-// Initialize the library
-ret = PAPI_library_init(PAPI_VER_CURRENT);
-if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); 
-}
-if (ret < 0) handle_error(ret);
-
-// Set the default granularity for the cpu component
-ret = PAPI_set_cmp_granularity(PAPI_GRN_PROC, 0);
-if (ret != PAPI_OK) handle_error(ret);
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
+ *  int ret;
+ *  
+ *  // Initialize the library
+ *  ret = PAPI_library_init(PAPI_VER_CURRENT);
+ *  if (ret > 0 && ret != PAPI_VER_CURRENT) {
+ *    fprintf(stderr,"PAPI library version mismatch!\n");
+ *    exit(1); 
+ *  }
+ *  if (ret < 0) handle_error(ret);
+ *  
+ *  // Set the default granularity for the cpu component
+ *  ret = PAPI_set_cmp_granularity(PAPI_GRN_PROC, 0);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  ret = PAPI_create_eventset(&EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
- *	@see  PAPI_set_granularity PAPI_set_domain PAPI_set_opt PAPI_get_opt
+ *	@see  PAPI_set_granularity
+ *  @see  PAPI_set_domain
+ *  @see  PAPI_set_opt PAPI_get_opt
  */
 int
 PAPI_set_cmp_granularity( int granularity, int cidx )
@@ -6198,8 +6270,8 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
  *	@brief Set the default counting domain for new event sets bound to the cpu component.
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_domain( int domain );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_domain( int domain );`
  *
  *	@param domain one of the following constants as defined in the papi.h header file
  *	@arg PAPI_DOM_USER User context counted
@@ -6225,24 +6297,27 @@ PAPI_set_cmp_granularity( int granularity, int cidx )
  *
  *	@par Example:
  *	@code
-int ret;
-
-// Initialize the library
-ret = PAPI_library_init(PAPI_VER_CURRENT);
-if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); 
-}
-if (ret < 0) handle_error(ret);
-
-// Set the default domain for the cpu component
-ret = PAPI_set_domain(PAPI_DOM_KERNEL);
-if (ret != PAPI_OK) handle_error(ret);
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
+ *  int ret;
+ *  
+ *  // Initialize the library
+ *  ret = PAPI_library_init(PAPI_VER_CURRENT);
+ *  if (ret > 0 && ret != PAPI_VER_CURRENT) {
+ *    fprintf(stderr,"PAPI library version mismatch!\n");
+ *    exit(1); 
+ *  }
+ *  if (ret < 0) handle_error(ret);
+ *  
+ *  // Set the default domain for the cpu component
+ *  ret = PAPI_set_domain(PAPI_DOM_KERNEL);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  ret = PAPI_create_eventset(&EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
- *	@see PAPI_set_cmp_domain PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ *	@see PAPI_set_cmp_domain
+ *  @see PAPI_set_granularity
+ *  @see PAPI_set_opt
+ *  @see PAPI_get_opt
  */
 int
 PAPI_set_domain( int domain )
@@ -6254,8 +6329,8 @@ PAPI_set_domain( int domain )
  *	@brief Set the default counting domain for new event sets bound to the specified component.
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_set_cmp_domain( int domain, int  cidx );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_set_cmp_domain( int domain, int  cidx );`
  *
  *	@param domain one of the following constants as defined in the papi.h header file
  *	@arg PAPI_DOM_USER User context counted
@@ -6295,24 +6370,27 @@ PAPI_set_domain( int domain )
  *
  *	@par Example:
  *	@code
-int ret;
-
-// Initialize the library
-ret = PAPI_library_init(PAPI_VER_CURRENT);
-if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
-  exit(1); 
-}
-if (ret < 0) handle_error(ret);
-
-// Set the default domain for the cpu component
-ret = PAPI_set_cmp_domain(PAPI_DOM_KERNEL,0);
-if (ret != PAPI_OK) handle_error(ret);
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
+ *  int ret;
+ *  
+ *  // Initialize the library
+ *  ret = PAPI_library_init(PAPI_VER_CURRENT);
+ *  if (ret > 0 && ret != PAPI_VER_CURRENT) {
+ *    fprintf(stderr,"PAPI library version mismatch!\n");
+ *    exit(1); 
+ *  }
+ *  if (ret < 0) handle_error(ret);
+ *  
+ *  // Set the default domain for the cpu component
+ *  ret = PAPI_set_cmp_domain(PAPI_DOM_KERNEL,0);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  ret = PAPI_create_eventset(&EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
- *	@see PAPI_set_domain PAPI_set_granularity PAPI_set_opt PAPI_get_opt
+ *	@see PAPI_set_domain
+ *  @see PAPI_set_granularity
+ *  @see PAPI_set_opt
+ *  @see PAPI_get_opt
  */
 int
 PAPI_set_cmp_domain( int domain, int cidx )
@@ -6329,8 +6407,8 @@ PAPI_set_cmp_domain( int domain, int cidx )
  *	@brief add multiple PAPI presets or native hardware events to an event set 
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	int PAPI_add_events( int  EventSet, int * EventCodes, int  number );
+ *	`#include <papi.h>` @n
+ *	`int PAPI_add_events( int  EventSet, int * EventCodes, int  number );`
  *
  *	PAPI_add_event adds one event to a PAPI Event Set. PAPI_add_events does 
  *	the same, but for an array of events. @n
@@ -6430,8 +6508,8 @@ PAPI_add_events( int EventSet, int *Events, int number )
  * It should be noted that PAPI_remove_events can partially succeed, exactly like PAPI_add_events. 
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_remove_events( int  EventSet, int * EventCode, int  number );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_remove_events( int  EventSet, int * EventCode, int  number );`
  *
  *	@param EventSet
  *		an integer handle for a PAPI event set as created by PAPI_create_eventset
@@ -6456,36 +6534,40 @@ PAPI_add_events( int EventSet, int *Events, int number )
  *
  *	@par Example:
  *	@code
-int EventSet = PAPI_NULL;
-int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
-int ret;
- 
- // Create an empty EventSet
-ret = PAPI_create_eventset(&EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Add two events to our EventSet
-ret = PAPI_add_events(EventSet, Events, 2);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Start counting
-ret = PAPI_start(EventSet);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Stop counting, ignore values
-ret = PAPI_stop(EventSet, NULL);
-if (ret != PAPI_OK) handle_error(ret);
-
-// Remove event
-ret = PAPI_remove_events(EventSet, Events, 2);
-if (ret != PAPI_OK) handle_error(ret);
+ *  int EventSet = PAPI_NULL;
+ *  int Events[] = {PAPI_TOT_INS, PAPI_FP_OPS};
+ *  int ret;
+ *  
+ *   // Create an empty EventSet
+ *  ret = PAPI_create_eventset(&EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Add two events to our EventSet
+ *  ret = PAPI_add_events(EventSet, Events, 2);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Start counting
+ *  ret = PAPI_start(EventSet);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Stop counting, ignore values
+ *  ret = PAPI_stop(EventSet, NULL);
+ *  if (ret != PAPI_OK) handle_error(ret);
+ *  
+ *  // Remove event
+ *  ret = PAPI_remove_events(EventSet, Events, 2);
+ *  if (ret != PAPI_OK) handle_error(ret);
  *	@endcode
  *
  *  @bug The last argument should be a pointer so the count can be returned on partial success in addition
  *  to a real error code.
  *
- *	@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
- *		PAPI_presets PAPI_add_event PAPI_add_events
+ *	@see PAPI_cleanup_eventset @n 
+ *  PAPI_destroy_eventset @n 
+ *  PAPI_event_name_to_code @n 
+ *	PAPI_presets @n 
+ *  PAPI_add_event @n 
+ *  PAPI_add_events
  */
 int
 PAPI_remove_events( int EventSet, int *Events, int number )
@@ -6516,9 +6598,9 @@ PAPI_remove_events( int EventSet, int *Events, int number )
  *	This call assumes an initialized PAPI library and a successfully created event set.
  *
  * @par C Interface
- * \#include <papi.h> @n
- * int PAPI_list_events(int *EventSet, int *Events, int *number );
-*
+ * `#include <papi.h>` @n
+ * `int PAPI_list_events(int *EventSet, int *Events, int *number );`
+ *
  *	@param[in] EventSet
  *		An integer handle for a PAPI event set as created by PAPI_create_eventset 
  *	@param[in,out] *Events 
@@ -6535,22 +6617,22 @@ PAPI_remove_events( int EventSet, int *Events, int number )
  *	
  *	@par Examples:
  *	@code
- 		if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
- 		exit(1);
- 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
- 		exit(1);
- 		Convert a second event name to an event code 
- 		if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
- 		exit(1);
- 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
- 		exit(1);
- 		number = 0;
- 		if(PAPI_list_events(EventSet, NULL, &number))
- 		exit(1);
- 		if(number != 2)
- 		exit(1);
- 		if(PAPI_list_events(EventSet, Events, &number))
- 		exit(1);
+ * 		if (PAPI_event_name_to_code("PAPI_TOT_INS",&EventCode) != PAPI_OK)
+ * 			exit(1);
+ * 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+ * 			exit(1);
+ * 		// Convert a second event name to an event code 
+ * 		if (PAPI_event_name_to_code("PAPI_L1_LDM",&EventCode) != PAPI_OK)
+ * 			exit(1);
+ * 		if (PAPI_add_event(EventSet, EventCode) != PAPI_OK)
+ * 			exit(1);
+ * 		number = 0;
+ * 		if(PAPI_list_events(EventSet, NULL, &number))
+ * 			exit(1);
+ * 		if(number != 2)
+ * 			exit(1);
+ * 		if(PAPI_list_events(EventSet, Events, &number))
+ * 			exit(1);
  *	@endcode
  *	@see PAPI_event_code_to_name 
  *	@see PAPI_event_name_to_code 
@@ -6598,8 +6680,8 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *	@brief Get information about the dynamic memory usage of the current program. 
  *
  *	@par C Prototype:
- *		\#include <papi.h> @n
- *		int PAPI_get_dmem_info( PAPI_dmem_info_t *dest );
+ *		`#include <papi.h>` @n
+ *		`int PAPI_get_dmem_info( PAPI_dmem_info_t *dest );`
  *
  *	@param dest
  *		structure to be filled in @ref PAPI_dmem_info_t
@@ -6617,7 +6699,10 @@ PAPI_list_events( int EventSet, int *Events, int *number )
  *	and returns with the structure fields filled in. 
  *	A value of PAPI_EINVAL in any field indicates an undefined parameter. 
  *
- *	@see PAPI_get_executable_info PAPI_get_hardware_info PAPI_get_opt PAPI_library_init
+ *	@see PAPI_get_executable_info @n 
+ *  PAPI_get_hardware_info @n 
+ *  PAPI_get_opt @n 
+ *  PAPI_library_init
  */
 int
 PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
@@ -6634,31 +6719,18 @@ PAPI_get_dmem_info( PAPI_dmem_info_t * dest )
  *	@brief Get the executable's address space info.
  *
  *	@par C Interface:
- *	\#include <papi.h> @n
- *	const PAPI_exe_info_t *PAPI_get_executable_info( void );
+ *	`#include <papi.h>` @n
+ *	`const PAPI_exe_info_t *PAPI_get_executable_info( void );`
  *
- *	This function returns a pointer to a structure containing information 
- *	about the current program.
- *
- *	@param fullname
- *		Fully qualified path + filename of the executable.
- *	@param name
- *		Filename of the executable with no path information.
- *	@param text_start, text_end
- *		Start and End addresses of program text segment.
- *	@param data_start, data_end
- *		Start and End addresses of program data segment.
- *	@param bss_start, bss_end
- *		Start and End addresses of program bss segment.
- *
- *	@retval PAPI_EINVAL 
- *		One or more of the arguments is invalid. 
+ *  @return
+ *		A pointer to a structure containing information about the current program. @n
+ *		If an error occurred while getting the information, returns NULL.
  *
  *	@par Examples:
  *	@code
  *	const PAPI_exe_info_t *prginfo = NULL;
  *	if ( ( prginfo = PAPI_get_executable_info( ) ) == NULL )
- *	exit( 1 );
+ *		exit( 1 );
  *	printf( "Path+Program: %s\n", exeinfo->fullname );
  *	printf( "Program: %s\n", exeinfo->address_info.name );
  *	printf( "Text start: %p, Text end: %p\n", exeinfo->address_info.text_start, exeinfo->address_info.text_end) ;
@@ -6730,12 +6802,12 @@ PAPI_get_shared_lib_info( void )
  *
  *	@par Examples:
  *	@code
- 		const PAPI_hw_info_t *hwinfo = NULL;
- 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)	
- 		exit(1);
- 		if ((hwinfo = PAPI_get_hardware_info()) == NULL)
- 		exit(1);
- 		printf("%d CPUs at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
+ * 		const PAPI_hw_info_t *hwinfo = NULL;
+ * 		if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)	
+ * 			exit(1);
+ * 		if ((hwinfo = PAPI_get_hardware_info()) == NULL)
+ * 			exit(1);
+ * 		printf("%d CPUs at %f Mhz.\en",hwinfo->totalcpus,hwinfo->mhz);
  *	@endcode	
  *
  *	@see PAPI_hw_info_t
@@ -6766,10 +6838,10 @@ PAPI_get_hardware_info( void )
  *		  
  *	@par Examples:
  *	@code
- 		s = PAPI_get_real_cyc();
- 		your_slow_code();
- 		e = PAPI_get_real_cyc();
- 		printf("Wallclock cycles: %lld\en",e-s);
+ * 		s = PAPI_get_real_cyc();
+ * 		your_slow_code();
+ * 		e = PAPI_get_real_cyc();
+ * 		printf("Wallclock cycles: %lld\en",e-s);
  *	@endcode	
  *	@see PAPIF  PAPI PAPI_get_virt_usec PAPI_get_virt_cyc PAPI_library_init
  */
@@ -6809,10 +6881,10 @@ PAPI_get_real_nsec( void )
  *	This call is equivalent to wall clock time.
  *	@par Examples:
  *	@code
-		s = PAPI_get_real_cyc();
-		your_slow_code();
-		e = PAPI_get_real_cyc();
-		printf("Wallclock cycles: %lld\en",e-s);
+ *		s = PAPI_get_real_usec();
+ *		your_slow_code();
+ *		e = PAPI_get_real_usec();
+ *		printf("Wallclock cycles: %lld\en",e-s);
  *	@endcode
  *	@see PAPIF
  *	@see PAPI
@@ -6850,10 +6922,10 @@ PAPI_get_real_usec( void )
  *	by the operating system.
  *	@par Examples:
  *	@code
- 		s = PAPI_get_virt_cyc();
- 		your_slow_code();
- 		e = PAPI_get_virt_cyc();
- 		printf("Process has run for cycles: %lld\en",e-s);
+ * 		s = PAPI_get_virt_cyc();
+ * 		your_slow_code();
+ * 		e = PAPI_get_virt_cyc();
+ * 		printf("Process has run for cycles: %lld\en",e-s);
  *	@endcode
  */
 long long
@@ -6916,17 +6988,16 @@ PAPI_get_virt_nsec( void )
  *	as bad as 1/Hz as defined by the operating system.
  *	@par Examples:
  *	@code
- 		s = PAPI_get_virt_cyc();
- 		your_slow_code();
- 		e = PAPI_get_virt_cyc();
- 		printf("Process has run for cycles: %lld\en",e-s);
+ *		s = PAPI_get_virt_usec();
+ *		your_slow_code();
+ *		e = PAPI_get_virt_usec();
+ *		printf("Process has run for cycles: %lld\en",e-s);
  *	@endcode
  *	@see PAPIF
  *	@see PAPI
  *	@see PAPI
  *	@see PAPI_get_real_cyc
  *	@see PAPI_get_virt_cyc
-
  */
 long long
 PAPI_get_virt_usec( void )
@@ -6943,8 +7014,8 @@ PAPI_get_virt_usec( void )
  *  to a (hopefully) efficiently implemented mutex.
  *
  *  @par C Interface:
- *  \#include <papi.h> @n
- *  void PAPI_lock(int lock);
+ *  `#include <papi.h>` @n
+ *  `void PAPI_lock(int lock);`
  *
  *  @param[in] lock
  *    -- an integer value specifying one of the two user locks: PAPI_USR1_LOCK or PAPI_USR2_LOCK 
@@ -6953,7 +7024,10 @@ PAPI_get_virt_usec( void )
  *      There is no return value for this call. 
  *      Upon return from  PAPI_lock the current thread has acquired 
  *      exclusive access to the specified PAPI mutex.
- *
+ * 
+ *  @bug
+ * 		Caller of this function may pass any lock number.
+ * 
  *  @see PAPI_unlock 
  *  @see PAPI_thread_init
  */
@@ -6976,6 +7050,7 @@ PAPI_lock( int lck )
  *	PAPI_unlock() unlocks the mutex acquired by a call to PAPI_lock .
  *
  *	@see PAPI_thread_init
+ *  @see PAPI_lock
  */
 int
 PAPI_unlock( int lck )
@@ -6998,20 +7073,20 @@ PAPI_unlock( int lck )
  *		Threads have been inited 
  *	
  *	@param version
-		 upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled. 
- *	This guards against portability problems when updating the PAPI shared libraries on your system.
+ *		upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled. 
+ *		This guards against portability problems when updating the PAPI shared libraries on your system.
  *	@par Examples:
  *	@code
- 		int retval;
- 		retval = PAPI_library_init(PAPI_VER_CURRENT);
- 		if (retval != PAPI_VER_CURRENT && retval > 0) {
- 		fprintf(stderr,"PAPI library version mismatch!\en");
- 		exit(1); }
- 		if (retval < 0)
- 		handle_error(retval);
- 		retval = PAPI_is_initialized();
- 		if (retval != PAPI_LOW_LEVEL_INITED)
- 		handle_error(retval);
+ * 		int retval;
+ * 		retval = PAPI_library_init(PAPI_VER_CURRENT);
+ * 		if (retval != PAPI_VER_CURRENT && retval > 0) {
+ * 			fprintf(stderr,"PAPI library version mismatch!\en");
+ * 			exit(1); }
+ * 		if (retval < 0)
+ * 			handle_error(retval);
+ * 		retval = PAPI_is_initialized();
+ * 		if (retval != PAPI_LOW_LEVEL_INITED)
+ * 			handle_error(retval);
  *	@endcode
  *	PAPI_is_initialized() returns the status of the PAPI library. 
  *	The PAPI library can be in one of four states, as described under RETURN VALUES. 
@@ -7055,17 +7130,17 @@ PAPI_is_initialized( void )
 		The EventSet specified does not exist.
  *	@par Examples
  *	@code
- 		void handler(int EventSet, void *address, long_long overflow_vector, void *context){
- 		int Events[4], number, i;
- 		int total = 0, retval;
- 		printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=%#llx\n",
- 		total, EventSet, address, overflow_vector);
- 		total++;
- 		number = 4;
- 		retval = PAPI_get_overflow_event_index(EventSet,
- 		overflow_vector, Events, &number);
- 		if(retval == PAPI_OK)
- 		for(i=0; i<number; i++) printf("Event index[%d] = %d", i, Events[i]);}
+ * 		void handler(int EventSet, void *address, long_long overflow_vector, void *context){
+ * 		int Events[4], number, i;
+ * 		int total = 0, retval;
+ * 		printf("Overflow #%d\n  Handler(%d) Overflow at %p! vector=%#llx\n",
+ * 		       total, EventSet, address, overflow_vector);
+ * 		total++;
+ * 		number = 4;
+ * 		retval = PAPI_get_overflow_event_index(EventSet, overflow_vector, Events, &number);
+ * 		if(retval == PAPI_OK)
+ * 			for(i=0; i<number; i++)
+ * 				printf("Event index[%d] = %d", i, Events[i]);}
  *	@endcode
  *	@bug This function may not return all overflowing events if used with software-driven overflow of multiple derived events.
  *	PAPI_get_overflow_event_index decomposes an overflow_vector into an event 
@@ -7131,12 +7206,10 @@ PAPI_get_overflow_event_index( int EventSet, long long overflow_vector,
  *              EventCode for which we want to know the component index
  *	@par Examples:
  *	@code
- 		int cidx,eventcode;
- 		cidx = PAPI_get_event_component(eventcode);
+ * 		int cidx,eventcode;
+ * 		cidx = PAPI_get_event_component(eventcode);
  *	@endcode
- *	PAPI_get_event_component() returns the component an event
- *      belongs to.
- *	@bug	Doesn't work for preset events
+ *	@bug  Doesn't work for preset events
  *	@see  PAPI_get_event_info
  */
 int
@@ -7155,11 +7228,11 @@ PAPI_get_event_component( int EventCode)
  *              name of component to find index for
  *	@par Examples:
  *	@code
- 		int cidx;
- 		cidx = PAPI_get_component_index("cuda");
-		if (cidx==PAPI_OK) {
-                   printf("The CUDA component is cidx %d\n",cidx);
-                }
+ * 		int cidx;
+ * 		cidx = PAPI_get_component_index("cuda");
+ *		if (cidx >= PAPI_OK) {
+ *  		printf("The CUDA component is cidx %d\n",cidx);
+ *  }
  *	@endcode
  *	PAPI_get_component_index() returns the component index of
  *      the named component.  This is useful for finding out if
@@ -7199,17 +7272,17 @@ int  PAPI_get_component_index(const char *name)
  *              component index of component to be disabled
  *	@par Examples:
  *	@code
-               int cidx, result;
-
-               cidx = PAPI_get_component_index("example");
-
-               if (cidx>=0) {
-                  result = PAPI_disable_component(cidx);
-                  if (result==PAPI_OK)
-                     printf("The example component is disabled\n");
-               }
-               // ... 
-               PAPI_library_init();
+ *               int cidx, result;
+ *
+ *               cidx = PAPI_get_component_index("example");
+ *
+ *               if (cidx>=0) {
+ *                  result = PAPI_disable_component(cidx);
+ *                  if (result==PAPI_OK)
+ *                     printf("The example component is disabled\n");
+ *               }
+ *               // ... 
+ *               PAPI_library_init();
  *	@endcode
  *      PAPI_disable_component() allows the user to disable components
  *      before PAPI_library_init() time.  This is useful if the user
@@ -7255,12 +7328,12 @@ PAPI_disable_component( int cidx )
  *		name of the component to disable.
  *	\par Example:
  *	\code
-	int result;
-	result = PAPI_disable_component_by_name("example");
-	if (result==PAPI_OK)
-		printf("component \"example\" has been disabled\n");
-	//...
-	PAPI_library_init(PAPI_VER_CURRENT);
+ *	int result;
+ *	result = PAPI_disable_component_by_name("example");
+ *	if (result==PAPI_OK)
+ *		printf("component \"example\" has been disabled\n");
+ *	//...
+ *	PAPI_library_init(PAPI_VER_CURRENT);
  *	\endcode
  *	PAPI_disable_component_by_name() allows the user to disable a component
  *	before PAPI_library_init() time. This is useful if the user knows they do
@@ -7302,21 +7375,21 @@ PAPI_disable_component_by_name(const char *name )
  *      device type modifier, used to filter out enumerated device types
  *  \par Example:
  *  \code
-    enum {
-        PAPI_DEV_TYPE_ENUM__FIRST,
-        PAPI_DEV_TYPE_ENUM__CPU,
-        PAPI_DEV_TYPE_ENUM__CUDA,
-        PAPI_DEV_TYPE_ENUM__ROCM,
-        PAPI_DEV_TYPE_ENUM__ALL
-    };
-
-    void *handle;
-    const char *vendor_name;
-    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
-    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
-        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
-        ...
-    }
+ *    enum {
+ *        PAPI_DEV_TYPE_ENUM__FIRST,
+ *        PAPI_DEV_TYPE_ENUM__CPU,
+ *        PAPI_DEV_TYPE_ENUM__CUDA,
+ *        PAPI_DEV_TYPE_ENUM__ROCM,
+ *        PAPI_DEV_TYPE_ENUM__ALL
+ *    };
+ *
+ *    void *handle;
+ *    const char *vendor_name;
+ *    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
+ *    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+ *        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
+ *        ...
+ *    }
  *  \endcode
  *  PAPI_enum_dev_type() allows the user to access all device types in the system.
  *  It takes an enumerator modifier that allows users to enumerate only devices of
@@ -7345,38 +7418,38 @@ PAPI_enum_dev_type(int enum_modifier, void **handle)
  *      value of the requested device type attribute
  *  \par Example:
  *  \code
-    typedef enum {
-        PAPI_DEV_TYPE_ATTR__INT_PAPI_ID,    // PAPI defined device type id
-        PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID,  // Vendor defined id
-        PAPI_DEV_TYPE_ATTR__CHAR_NAME,      // Vendor name
-        PAPI_DEV_TYPE_ATTR__INT_COUNT,      // Devices of that type and vendor
-        PAPI_DEV_TYPE_ATTR__CHAR_STATUS,    // Status string for the device type
-    } PAPI_dev_type_attr_e;
-
-    typedef enum {
-        PAPI_DEV_TYPE_ID__CPU,   // Device id for CPUs
-        PAPI_DEV_TYPE_ID__CUDA,  // Device id for Nvidia GPUs
-        PAPI_DEV_TYPE_ID__ROCM,  // Device id for AMD GPUs
-    } PAPI_dev_type_id_e;
-
-    void *handle;
-    int id;
-    int enum_modifier = PAPI_DEV_TYPE_ENUM__ALL;
-    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
-        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
-        switch (id) {
-            case PAPI_DEV_TYPE_ID__CPU:
-                // query cpu attributes
-                break;
-            case PAPI_DEV_TYPE_ID__CUDA:
-                // query nvidia gpu attributes
-                break;
-            case PAPI_DEV_TYPE_ID__ROCM:
-                // query amd gpu attributes
-                break;
-            default: ...
-        }
-    }
+ *    typedef enum {
+ *        PAPI_DEV_TYPE_ATTR__INT_PAPI_ID,    // PAPI defined device type id
+ *        PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID,  // Vendor defined id
+ *        PAPI_DEV_TYPE_ATTR__CHAR_NAME,      // Vendor name
+ *        PAPI_DEV_TYPE_ATTR__INT_COUNT,      // Devices of that type and vendor
+ *        PAPI_DEV_TYPE_ATTR__CHAR_STATUS,    // Status string for the device type
+ *    } PAPI_dev_type_attr_e;
+ *
+ *    typedef enum {
+ *        PAPI_DEV_TYPE_ID__CPU,   // Device id for CPUs
+ *        PAPI_DEV_TYPE_ID__CUDA,  // Device id for Nvidia GPUs
+ *        PAPI_DEV_TYPE_ID__ROCM,  // Device id for AMD GPUs
+ *    } PAPI_dev_type_id_e;
+ *
+ *    void *handle;
+ *    int id;
+ *    int enum_modifier = PAPI_DEV_TYPE_ENUM__ALL;
+ *    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+ *        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
+ *        switch (id) {
+ *            case PAPI_DEV_TYPE_ID__CPU:
+ *                // query cpu attributes
+ *                break;
+ *            case PAPI_DEV_TYPE_ID__CUDA:
+ *                // query nvidia gpu attributes
+ *                break;
+ *            case PAPI_DEV_TYPE_ID__ROCM:
+ *                // query amd gpu attributes
+ *                break;
+ *            default: ...
+ *        }
+ *    }
  *  \endcode
  *  PAPI_get_dev_type_attr() allows the user to query all device type attributes.
  *  It takes a device type handle, returned by PAPI_enum_dev_type, and an attribute
@@ -7406,91 +7479,91 @@ PAPI_get_dev_type_attr(void *handle, PAPI_dev_type_attr_e attr, void *val)
  *      value of the requested device attribute
  *  \par Example:
  *  \code
-    typedef enum {
-        PAPI_DEV_ATTR__CPU_CHAR_NAME,
-        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_ASSOC,
-        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_ASSOC,
-        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_ASSOC,
-        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_ASSOC,
-        PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT,
-        PAPI_DEV_ATTR__CPU_UINT_FAMILY,
-        PAPI_DEV_ATTR__CPU_UINT_MODEL,
-        PAPI_DEV_ATTR__CPU_UINT_STEPPING,
-        PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE,
-        PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY,
-        PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA,
-        PAPI_DEV_ATTR__CUDA_ULONG_UID,
-        PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME,
-        PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE,
-        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_BLK,
-        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_SM,
-        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_X,
-        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Y,
-        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Z,
-        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_X,
-        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Y,
-        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Z,
-        PAPI_DEV_ATTR__CUDA_UINT_THR_PER_BLK,
-        PAPI_DEV_ATTR__CUDA_UINT_SM_COUNT,
-        PAPI_DEV_ATTR__CUDA_UINT_MULTI_KERNEL,
-        PAPI_DEV_ATTR__CUDA_UINT_MAP_HOST_MEM,
-        PAPI_DEV_ATTR__CUDA_UINT_MEMCPY_OVERLAP,
-        PAPI_DEV_ATTR__CUDA_UINT_UNIFIED_ADDR,
-        PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM,
-        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR,
-        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR,
-        PAPI_DEV_ATTR__CUDA_UINT_BLK_PER_SM,
-        PAPI_DEV_ATTR__ROCM_ULONG_UID,
-        PAPI_DEV_ATTR__ROCM_CHAR_DEVICE_NAME,
-        PAPI_DEV_ATTR__ROCM_UINT_WAVEFRONT_SIZE,
-        PAPI_DEV_ATTR__ROCM_UINT_WORKGROUP_SIZE,
-        PAPI_DEV_ATTR__ROCM_UINT_WAVE_PER_CU,
-        PAPI_DEV_ATTR__ROCM_UINT_SHM_PER_WG,
-        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_X,
-        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Y,
-        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Z,
-        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_X,
-        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Y,
-        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Z,
-        PAPI_DEV_ATTR__ROCM_UINT_CU_COUNT,
-        PAPI_DEV_ATTR__ROCM_UINT_SIMD_PER_CU,
-        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MAJOR,
-        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MINOR,
-    } PAPI_dev_attr_e;
-
-    void *handle;
-    int id;
-    int count;
-    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
-    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
-        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
-        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &count);
-        if (PAPI_DEV_TYPE_ID__CUDA == id) {
-            for (int i = 0; i < count; ++i) {
-                unsigned int warp_size;
-                unsigned int cc_major, cc_minor;
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE, &warp_size);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR, &cc_major);
-                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR, &cc_minor);
-                ...
-            }
-        }
-    }
+ *    typedef enum {
+ *        PAPI_DEV_ATTR__CPU_CHAR_NAME,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_LINE_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_LINE_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_LINE_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_LINE_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1I_CACHE_ASSOC,
+ *        PAPI_DEV_ATTR__CPU_UINT_L1D_CACHE_ASSOC,
+ *        PAPI_DEV_ATTR__CPU_UINT_L2U_CACHE_ASSOC,
+ *        PAPI_DEV_ATTR__CPU_UINT_L3U_CACHE_ASSOC,
+ *        PAPI_DEV_ATTR__CPU_UINT_SOCKET_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_NUMA_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_CORE_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_THREAD_COUNT,
+ *        PAPI_DEV_ATTR__CPU_UINT_FAMILY,
+ *        PAPI_DEV_ATTR__CPU_UINT_MODEL,
+ *        PAPI_DEV_ATTR__CPU_UINT_STEPPING,
+ *        PAPI_DEV_ATTR__CPU_UINT_NUMA_MEM_SIZE,
+ *        PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY,
+ *        PAPI_DEV_ATTR__CPU_UINT_THR_PER_NUMA,
+ *        PAPI_DEV_ATTR__CUDA_ULONG_UID,
+ *        PAPI_DEV_ATTR__CUDA_CHAR_DEVICE_NAME,
+ *        PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE,
+ *        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_BLK,
+ *        PAPI_DEV_ATTR__CUDA_UINT_SHM_PER_SM,
+ *        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_X,
+ *        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Y,
+ *        PAPI_DEV_ATTR__CUDA_UINT_BLK_DIM_Z,
+ *        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_X,
+ *        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Y,
+ *        PAPI_DEV_ATTR__CUDA_UINT_GRD_DIM_Z,
+ *        PAPI_DEV_ATTR__CUDA_UINT_THR_PER_BLK,
+ *        PAPI_DEV_ATTR__CUDA_UINT_SM_COUNT,
+ *        PAPI_DEV_ATTR__CUDA_UINT_MULTI_KERNEL,
+ *        PAPI_DEV_ATTR__CUDA_UINT_MAP_HOST_MEM,
+ *        PAPI_DEV_ATTR__CUDA_UINT_MEMCPY_OVERLAP,
+ *        PAPI_DEV_ATTR__CUDA_UINT_UNIFIED_ADDR,
+ *        PAPI_DEV_ATTR__CUDA_UINT_MANAGED_MEM,
+ *        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR,
+ *        PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR,
+ *        PAPI_DEV_ATTR__CUDA_UINT_BLK_PER_SM,
+ *        PAPI_DEV_ATTR__ROCM_ULONG_UID,
+ *        PAPI_DEV_ATTR__ROCM_CHAR_DEVICE_NAME,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WAVEFRONT_SIZE,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WORKGROUP_SIZE,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WAVE_PER_CU,
+ *        PAPI_DEV_ATTR__ROCM_UINT_SHM_PER_WG,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_X,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Y,
+ *        PAPI_DEV_ATTR__ROCM_UINT_WG_DIM_Z,
+ *        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_X,
+ *        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Y,
+ *        PAPI_DEV_ATTR__ROCM_UINT_GRD_DIM_Z,
+ *        PAPI_DEV_ATTR__ROCM_UINT_CU_COUNT,
+ *        PAPI_DEV_ATTR__ROCM_UINT_SIMD_PER_CU,
+ *        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MAJOR,
+ *        PAPI_DEV_ATTR__ROCM_UINT_COMP_CAP_MINOR,
+ *    } PAPI_dev_attr_e;
+ *
+ *    void *handle;
+ *    int id;
+ *    int count;
+ *    int enum_modifier = PAPI_DEV_TYPE_ENUM__CPU | PAPI_DEV_TYPE_ENUM__CUDA;
+ *    while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
+ *        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_PAPI_ID, &id);
+ *        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &count);
+ *        if (PAPI_DEV_TYPE_ID__CUDA == id) {
+ *            for (int i = 0; i < count; ++i) {
+ *                unsigned int warp_size;
+ *                unsigned int cc_major, cc_minor;
+ *                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_WARP_SIZE, &warp_size);
+ *                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MAJOR, &cc_major);
+ *                PAPI_get_dev_attr(handle, i, PAPI_DEV_ATTR__CUDA_UINT_COMP_CAP_MINOR, &cc_minor);
+ *                ...
+ *            }
+ *        }
+ *    }
  *  \endcode
  *  PAPI_get_dev_type_attr() allows the user to query all device type attributes.
  *  It takes a device type handle, returned by PAPI_enum_dev_type, the device sequential id

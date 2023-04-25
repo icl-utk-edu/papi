@@ -1,4 +1,4 @@
-.TH "PAPI_overflow" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_overflow" 3 "Wed Apr 19 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -44,6 +44,8 @@ Not implemented
 \fIflags\fP -- bitmap that controls the overflow mode of operation\&. Set to PAPI_OVERFLOW_FORCE_SW to force software overflowing, even if hardware overflow support is available\&. If hardware overflow support is available on a given system, it will be the default mode of operation\&. There are situations where it is advantageous to use software overflow instead\&. Although software overflow is inherently less accurate, with more latency and processing overhead, it does allow for overflowing on derived events, and for the accurate recording of overflowing event counts\&. These two features are typically not available with hardware overflow\&. Only one type of overflow is allowed per event set, so setting one event to hardware overflow and another to forced software overflow will result in an error being returned\&. 
 .br
 \fIhandler\fP -- pointer to the user supplied handler function to call upon overflow 
+.br
+\fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
 \fIaddress\fP -- the Program Counter address at the time of the overflow 
 .br
