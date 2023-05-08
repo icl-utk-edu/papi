@@ -931,6 +931,21 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         if(params.show_progress) print_progress(100);
     }
 
+    /* Benchmark VII - Instructions*/
+    if( params.bench_type & BENCH_INSTR )
+    {
+        if(params.show_progress) printf("Instruction Benchmarks: ");
+
+        for(i = low; i < cap; ++i)
+        {
+            if(params.show_progress) print_progress((100*i)/cmbtotal);
+
+            if( allevts[i] != NULL )
+                instr_driver(allevts[i], hw_desc, params.outputdir);
+        }
+        if(params.show_progress) print_progress(100);
+    }
+
     return;
 }
 
@@ -1015,6 +1030,10 @@ int parseArgs(int argc, char **argv, cat_params_t *params){
         }
         if( !strcmp(argv[0],"-vec") ){
             params->bench_type |= BENCH_VEC;
+            continue;
+        }
+        if( !strcmp(argv[0],"-instr") ){
+            params->bench_type |= BENCH_INSTR;
             continue;
         }
 

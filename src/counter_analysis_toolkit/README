@@ -16,6 +16,7 @@ The following five flags specify the corresponding benchmarks:
   -flops   Floating point operations kernels.
   -ic      Instruction cache kernels.
   -vec     Vector FLOPs kernels.
+  -instr   Instrution kernels.
 
 Each line in the event-list file should contain ether the name of a base 
 event followed by the number of qualifiers to be appended, or a

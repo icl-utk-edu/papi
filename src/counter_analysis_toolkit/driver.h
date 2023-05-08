@@ -4,6 +4,7 @@
 #include "icache.h"
 #include "flops.h"
 #include "vec.h"
+#include "instr.h"
 #include "hw_desc.h"
 #include "params.h"
 
@@ -16,6 +17,7 @@
 #define BENCH_DCACHE_WRITE 0x08
 #define BENCH_ICACHE_READ  0x10
 #define BENCH_VEC          0x20
+#define BENCH_INSTR        0x40
 
 int parseArgs(int argc, char **argv, cat_params_t *params);
 int setup_evts(char* inputfile, char*** basenames, int** cards);

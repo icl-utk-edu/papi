@@ -13,7 +13,7 @@
 void i_cache_driver(char* papi_event_name, int junk, hw_desc_t *hw_desc, char* outdir, int show_progress)
 {
     // Open output file.
-    const char *sufx = ".instr";
+    const char *sufx = ".icache";
     char *papiFileName;
     FILE *ofp_papi;
 
