@@ -8,16 +8,24 @@
 #define _SIZE_SAMPLES_ 40
 extern char* eventname;
 
-int min_size, max_size;
+int min_size, max_size, is_core = 0;
 
 void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_desc, int latency_only, int mode)
 {
     int pattern = 3;
     int stride, f, cache_line;
-    int status, test_cnt = 0;
+    int status, evtCode, test_cnt = 0;
     float ppb = 16;
     FILE *ofp_papi;
     char *sufx, *papiFileName;
+
+    // Use component ID to check if event is a core event.
+    if( strcmp(papi_event_name, "cat::latencies") && PAPI_OK != (status = PAPI_event_name_to_code(papi_event_name, &evtCode)) ) {
+        error_handler(status, __LINE__);
+    } else {
+        if( 0 == PAPI_get_event_component(evtCode) )
+            is_core = 1;
+    }
 
     // Open file (pass handle to d_cache_test()).
     if(CACHE_READ_WRITE == mode){

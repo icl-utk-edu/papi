@@ -12,6 +12,7 @@
 volatile double x,y;
 
 extern int max_size;
+extern int is_core;
 char* eventname = NULL;
 
 run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
@@ -64,6 +65,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     {
         int idx = omp_get_thread_num();
         int thdStatus = 0;
+        double divisor = 1.0;
 
         // Initialize the result to a value indicating an error.
         // If no error occurs, it will be overwritten.
@@ -76,7 +78,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         p = &v[idx][0];
         count = countMax;
 
-        if ( !latency_only ) {
+        if ( !latency_only && (is_core || 0 == idx) ) {
             retval = PAPI_create_eventset( &_papi_eventset );
             if (retval != PAPI_OK ){
                 error_type = retval;
@@ -127,7 +129,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             }
         }
 
-        if ( !latency_only ) {
+        if ( !latency_only && (is_core || 0 == idx) ) {
             // Stop the counters.
             retval = PAPI_stop(_papi_eventset, &counter[idx]);
             if ( PAPI_OK != retval ) {
@@ -138,7 +140,12 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
             }
 
             // Get the average event count per access in pointer chase.
-            out.counter[idx] = (1.0*counter[idx])/(1.0*countMax);
+            // If it is not a core event, get average count per thread.
+            divisor = 1.0*countMax;
+            if( !is_core && 0 == idx )
+                divisor *= ONT;
+
+            out.counter[idx] = (1.0*counter[idx])/divisor;
 
 clean_up:
             retval = PAPI_cleanup_eventset(_papi_eventset);
