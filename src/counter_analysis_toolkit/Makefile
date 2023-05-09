@@ -37,6 +37,7 @@ ifeq ($(ARCH),POWER)
     VEC_ALL=$(VEC) -O0 -DPOWER
 endif
 ifeq ($(ARCH),ARM)
+    FLOP+=-march=armv8.2-a+fp16 -DARM
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
     VEC=-march=armv8.2-a+fp16 -O0 -DARM
     VEC_FMA=-march=armv8.2-a+fp16 -O0 -DARM
@@ -70,9 +71,8 @@ dcache.o: dcache.c dcache.h
 eventstock.o: eventstock.c eventstock.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c eventstock.c -o eventstock.o
 
-flops: flops_aux.c flops_aux.h flops.c flops.h
-	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops.c -o flops.o
-	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c flops_aux.c -o flops_aux.o
+flops: flops.c flops.h
+	$(CC) $(CFLAGS) $(FLOP) $(OPT1) $(INCFLAGS) -c flops.c -o flops.o
 
 icache.o: icache.c icache.h
 	bash gen_seq_dlopen.sh
