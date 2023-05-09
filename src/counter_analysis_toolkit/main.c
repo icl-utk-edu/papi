@@ -451,6 +451,22 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
             hw_desc->icache_size[2] = value;
         }else if( !strcmp(key, "L4_ICACHE_SIZE") || !strcmp(key, "L4_UCACHE_SIZE") ){
             hw_desc->icache_size[3] = value;
+        }else if( !strcmp(key, "L1_SPLIT") ){
+            hw_desc->split[0] = value;
+        }else if( !strcmp(key, "L2_SPLIT") ){
+            hw_desc->split[1] = value;
+        }else if( !strcmp(key, "L3_SPLIT") ){
+            hw_desc->split[2] = value;
+        }else if( !strcmp(key, "L4_SPLIT") ){
+            hw_desc->split[3] = value;
+        }else if( !strcmp(key, "PTS_PER_L1") ){
+            hw_desc->pts_per_reg[0] = value;
+        }else if( !strcmp(key, "PTS_PER_L2") ){
+            hw_desc->pts_per_reg[1] = value;
+        }else if( !strcmp(key, "PTS_PER_L3") ){
+            hw_desc->pts_per_reg[2] = value;
+        }else if( !strcmp(key, "PTS_PER_L4") || !strcmp(key, "PTS_PER_MM") ){
+            hw_desc->pts_per_reg[3] = value;
         }
 
         free(key);

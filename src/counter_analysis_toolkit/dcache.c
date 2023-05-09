@@ -5,7 +5,6 @@
 #include "params.h"
 #include <math.h>
 
-#define _SIZE_SAMPLES_ 40
 extern char* eventname;
 
 int min_size, max_size, is_core = 0;
@@ -128,7 +127,11 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
             guessCount += 4;
         }
     }else{
-        guessCount = _SIZE_SAMPLES_;
+        int numHier = hw_desc->cache_levels+1;
+        for(j=0; j<numHier; ++j) {
+            guessCount += hw_desc->pts_per_reg[j] + 1;
+        }
+        guessCount++; // To include endpoint.
     }
 
     // Get the number of threads.
@@ -301,24 +304,65 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
             values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
         }
     }else{
-        int llc;
-        double f, small_size, large_size, curr_size;
+        double f;
+        int numCaches = hw_desc->cache_levels;
+        int numHier   = numCaches+1;
+        int llc_idx   = numCaches-1;
+        int len = 0, ptsToNextCache, currCacheSize, nextCacheSize, tmpIdx = 0;
+        long *bufSizes;
 
-        // If we know the cache sizes, space the measurements between a buffer size equal to L1/8
-        // and a buffer size that all threads cumulatively will exceed the LLC by a factor of 8.
-        // The rationale is that the L1 is typically private, while the LLC is shared among all cores.
-        llc = hw_desc->dcache_size[hw_desc->cache_levels-1];
-        small_size = hw_desc->dcache_size[0]/8;
-        large_size = (double)llc;
-        large_size = 8*large_size/ONT;
-        // Choose a factor "f" to grow the buffer size by, such that we collect "_SIZE_SAMPLES_"
-        // number of samples between "small_size" and "large_size", evenly distributed
-        // in a geometric fashion (i.e., sizes will be equally spaced in a log graph).
-        f = pow(large_size/small_size, 1.0/(_SIZE_SAMPLES_-1));
-        curr_size = small_size;
+        // Calculate the length of the array of buffer sizes.
+        for(j=0; j<numHier; ++j) {
+            len += hw_desc->pts_per_reg[j] + 1;
+        }
+        len++; // To include endpoint.
+
+        // Allocate space for the array of buffer sizes.
+        if( NULL == (bufSizes = (long *)calloc(len, sizeof(long))) )
+            goto error;
+
+        // Define buffer sizes.
+        tmpIdx = 0;
+        for(j=0; j<numHier; ++j) {
+
+            ptsToNextCache = hw_desc->pts_per_reg[j]+1;
+
+            /* The lower bound of the first cache region is set to the size, L1/8, as a design decision.
+             * All other lower bounds are set to the size of the caches, as observed per core.
+             */
+            if( 0 == j ) {
+                bufSizes[tmpIdx] = hw_desc->dcache_size[0]/(8.0*hw_desc->split[0]);
+            } else {
+                bufSizes[tmpIdx] = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
+            }
+            currCacheSize = bufSizes[tmpIdx];
+
+            /* The upper bound of the final "cache" region (memory in this case) is set to 12 times the
+             * size of the LLC so that all threads cumulatively will exceed the LLC by a factor of 12.
+             * All other upper bounds are set to the capacity of the cache, as observed per core.
+             */
+            if( llc_idx+1 == j ) {
+                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->split[llc_idx];
+                bufSizes[tmpIdx+ptsToNextCache] = nextCacheSize;
+            } else {
+                nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
+            }
+
+            /* Choose a factor "f" to grow the buffer size by, such that we collect the user-specified
+             * number of samples between each cache size, evenly distributed in a geometric fashion
+             * (i.e., sizes will be equally spaced in a log graph).
+             */
+            for(k = 1; k < ptsToNextCache; ++k) {
+                f = pow(((double)nextCacheSize)/currCacheSize, ((double)k)/ptsToNextCache);
+                bufSizes[tmpIdx+k] = f*currCacheSize;
+            }
+
+            tmpIdx += ptsToNextCache;
+        }
+
         cnt=0;
-        for(j=0; j<_SIZE_SAMPLES_; j++){
-            active_buf_len = (long)(curr_size/sizeof(uintptr_t));
+        for(j=0; j<len; j++){
+            active_buf_len = ((long)bufSizes[j])/sizeof(uintptr_t);
             out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
@@ -326,9 +370,10 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
                 rslts[cnt][k] = out.dt[k];
                 counter[cnt][k] = out.counter[k];
             }
-            values[cnt++] = sizeof(uintptr_t)*active_buf_len;
-            curr_size *= f;
+            values[cnt++] = bufSizes[j];
         }
+
+        free(bufSizes);
     }
 
     // Free each thread's memory.
