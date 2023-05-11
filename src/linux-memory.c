@@ -1428,7 +1428,7 @@ get_size:
 
 		if (level>max_level) max_level=level;
 
-                if (level>=PAPI_MAX_MEM_HIERARCHY_LEVELS) {
+                if (level>PAPI_MAX_MEM_HIERARCHY_LEVELS) {
 			MEMDBG("Exceeded maximum cache level %d\n",
 				PAPI_MAX_MEM_HIERARCHY_LEVELS);
 			break;
