@@ -34,13 +34,6 @@
 #include <sys/param.h>
 #endif
 
-/*
- * looks like several distributions do not have
- * the latest libc with openat support, so disable
- * for now
- */
-#undef HAS_OPENAT
-
 #include "pfmlib_priv.h"
 #include "pfmlib_perf_event_priv.h"
 
@@ -361,13 +354,14 @@ gen_tracepoint_table(void)
 {
 	DIR *dir1, *dir2;
 	struct dirent *d1, *d2;
-	perf_event_t *p;
+	perf_event_t *p = NULL;
 	perf_umask_t *um;
-	char d2path[MAXPATHLEN];
+	char POTENTIALLY_UNUSED d2path[MAXPATHLEN];
 	char idpath[MAXPATHLEN];
 	char id_str[32];
 	uint64_t id;
 	int fd, err;
+	int POTENTIALLY_UNUSED dir1_fd;
 	int POTENTIALLY_UNUSED dir2_fd;
 	int reuse_event = 0;
 	int numasks;
@@ -381,9 +375,17 @@ gen_tracepoint_table(void)
 	strncat(debugfs_mnt, "/tracing/events", MAXPATHLEN-1);
 	debugfs_mnt[MAXPATHLEN-1]= '\0';
 
+#ifdef HAS_OPENAT
+	dir1_fd = open(debugfs_mnt, O_DIRECTORY);
+	if (dir1_fd < 0)
+		return;
+
+	dir1 = fdopendir(dir1_fd);
+#else
 	dir1 = opendir(debugfs_mnt);
 	if (!dir1)
 		return;
+#endif
 
 	err = 0;
 	while((d1 = readdir(dir1)) && err >= 0) {
@@ -394,6 +396,16 @@ gen_tracepoint_table(void)
 		if (!strcmp(d1->d_name, ".."))
 			continue;
 
+#ifdef HAS_OPENAT
+		/* fails if it cannot open */
+		dir2_fd = openat(dir1_fd, d1->d_name, O_DIRECTORY);
+		if (dir2_fd < 0)
+			continue;
+
+		dir2 = fdopendir(dir2_fd);
+		if (!dir2)
+			continue;
+#else
 		retlen = snprintf(d2path, MAXPATHLEN, "%s/%s", debugfs_mnt, d1->d_name);
 		/* ensure generated d2path string is valid */
 		if (retlen <= 0 || MAXPATHLEN <= retlen)
@@ -403,7 +415,7 @@ gen_tracepoint_table(void)
 		dir2 = opendir(d2path);
 		if (!dir2)
 			continue;
-
+#endif
 		dir2_fd = dirfd(dir2);
 
 		/*
@@ -447,14 +459,14 @@ gen_tracepoint_table(void)
 			retlen = snprintf(idpath, MAXPATHLEN, "%s/id", d2->d_name);
 			/* ensure generated d2path string is valid */
 			if (retlen <= 0 || MAXPATHLEN <= retlen)
-			continue;
+				continue;
 
                         fd = openat(dir2_fd, idpath, O_RDONLY);
 #else
                         retlen = snprintf(idpath, MAXPATHLEN, "%s/%s/id", d2path, d2->d_name);
 			/* ensure generated d2path string is valid */
 			if (retlen <= 0 || MAXPATHLEN <= retlen)
-			continue;
+				continue;
 
                         fd = open(idpath, O_RDONLY);
 #endif

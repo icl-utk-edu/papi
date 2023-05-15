@@ -33,6 +33,7 @@ include $(TOPDIR)/rules.mk
 SRCS=pfmlib_common.c
 
 ifeq ($(SYS),Linux)
+CFLAGS += -DHAS_OPENAT
 SRCS += pfmlib_perf_event_pmu.c pfmlib_perf_event.c pfmlib_perf_event_raw.c
 endif
 
