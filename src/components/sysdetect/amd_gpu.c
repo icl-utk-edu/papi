@@ -236,22 +236,10 @@ hsa_is_enabled( void )
 int
 load_hsa_sym( char *status )
 {
-    char pathname[PAPI_MAX_STR_LEN] = { 0 };
+    char pathname[PATH_MAX] = "libhsa-runtime64.so";
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
-    if (rocm_root == NULL) {
-        const char *message =
-            "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
-        int count = snprintf(status, strlen(message) + 1, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Status string truncated.");
-        }
-        return -1;
-    }
-
-    int expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/lib/libhsa-runtime64.so", rocm_root);
-    if (expect > PAPI_MAX_STR_LEN) {
-        SUBDBG("HSA pathname truncated.");
+    if (rocm_root != NULL) {
+        sprintf(pathname, "%s/lib/libhsa-runtime64.so", rocm_root);
     }
 
     rocm_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
@@ -330,22 +318,10 @@ rsmi_is_enabled( void )
 int
 load_rsmi_sym( char *status )
 {
-    char pathname[PAPI_MAX_STR_LEN] = { 0 };
-    char *rocm_root = getenv("PAPI_ROCM_ROOT");
-    if (rocm_root == NULL) {
-        const char *message =
-            "Can't load librocm_smi64.so, PAPI_ROCM_ROOT not set.";
-        int count = snprintf(status, strlen(message) + 1, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Status string truncated.");
-        }
-        return -1;
-    }
-
-    int expect = snprintf(pathname, PAPI_MAX_STR_LEN,
-                          "%s/rocm_smi/lib/librocm_smi64.so", rocm_root);
-    if (expect > PAPI_MAX_STR_LEN) {
-        SUBDBG("ROCM-SMI pathname truncated.");
+    char pathname[PATH_MAX] = "librocm_smi64.so";
+    char *rsmi_root = getenv("PAPI_ROCM_ROOT");
+    if (rsmi_root != NULL) {
+        sprintf(pathname, "%s/lib/librocm_smi64.so", rsmi_root);
     }
 
     rsmi_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
