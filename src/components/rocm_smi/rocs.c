@@ -899,7 +899,7 @@ unload_rsmi_sym(void)
     return PAPI_OK;
 }
 
-static int get_ntv_events_count(void);
+static int get_ntv_events_count(int *count);
 static int get_ntv_events(ntv_event_t *, int);
 
 int
@@ -907,8 +907,11 @@ init_event_table(void)
 {
     int papi_errno = PAPI_OK;
 
-    int ntv_events_count = get_ntv_events_count();
-    assert(ntv_events_count > 0);
+    int ntv_events_count;
+    papi_errno = get_ntv_events_count(&ntv_events_count);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
 
     ntv_event_t *ntv_events = papi_calloc(ntv_events_count, sizeof(*ntv_events));
     if (ntv_events == NULL) {
@@ -1065,8 +1068,9 @@ static int handle_xgmi_events_count(int32_t dev, int *count);
 static char *get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvariant);
 
 int
-get_ntv_events_count(void)
+get_ntv_events_count(int *count)
 {
+    int papi_errno = PAPI_OK;
     int events_count = ROCMSMI_NUM_INFO_EVENTS;
     rsmi_func_id_iter_handle_t iter;
     rsmi_func_id_iter_handle_t var_iter;
@@ -1079,8 +1083,14 @@ get_ntv_events_count(void)
     int32_t dev;
     for (dev = 0; dev < device_count; ++dev) {
         status = rsmi_dev_supported_func_iterator_open_p(dev, &iter);
+        if (status != RSMI_STATUS_SUCCESS) {
+            continue;
+        }
         while (1) {
             status = rsmi_func_iter_value_get_p(iter, &v_name);
+            if (status != RSMI_STATUS_SUCCESS) {
+                continue;
+            }
             status = rsmi_dev_supported_variant_iterator_open_p(iter, &var_iter);
             if (status == RSMI_STATUS_NO_DATA) {
                 if (handle_special_events_count(v_name.name, dev, -1, -1, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
@@ -1094,6 +1104,9 @@ get_ntv_events_count(void)
             } else {
                 while (status != RSMI_STATUS_NO_DATA) {
                     status = rsmi_func_iter_value_get_p(var_iter, &v_variant);
+                    if (status != RSMI_STATUS_SUCCESS) {
+                        continue;
+                    }
                     status = rsmi_dev_supported_variant_iterator_open_p(var_iter, &subvar_iter);
                     if (status == RSMI_STATUS_NO_DATA) {
                         if (handle_special_events_count(v_name.name, dev, v_variant.id, -1, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
@@ -1107,6 +1120,9 @@ get_ntv_events_count(void)
                     } else {
                         while (status != RSMI_STATUS_NO_DATA) {
                             status = rsmi_func_iter_value_get_p(subvar_iter, &v_subvariant);
+                            if (status != RSMI_STATUS_SUCCESS) {
+                                continue;
+                            }
                             if (handle_special_events_count(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
                                 char *name = get_event_name(v_name.name, dev, v_variant.id, v_subvariant.id);
                                 if (name) {
@@ -1118,10 +1134,18 @@ get_ntv_events_count(void)
                             status = rsmi_func_iter_next_p(subvar_iter);
                         }
                         status = rsmi_dev_supported_func_iterator_close_p(&subvar_iter);
+                        if (status != RSMI_STATUS_SUCCESS) {
+                            papi_errno = PAPI_EMISC;
+                            goto fn_fail;
+                        }
                     }
                     status = rsmi_func_iter_next_p(var_iter);
                 }
                 status = rsmi_dev_supported_func_iterator_close_p(&var_iter);
+                if (status != RSMI_STATUS_SUCCESS) {
+                    papi_errno = PAPI_EMISC;
+                    goto fn_fail;
+                }
             }
             status = rsmi_func_iter_next_p(iter);
             if (status == RSMI_STATUS_NO_DATA) {
@@ -1129,11 +1153,20 @@ get_ntv_events_count(void)
             }
         }
         status = rsmi_dev_supported_func_iterator_close_p(&iter);
+        if (status != RSMI_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
+            goto fn_fail;
+        }
 
         handle_xgmi_events_count(dev, &events_count);
     }
 
-    return events_count;
+    *count = events_count;
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 static rocs_access_mode_e get_access_mode(const char *);
@@ -1186,8 +1219,14 @@ get_ntv_events(ntv_event_t *events, int count)
     int32_t dev;
     for (dev = 0; dev < device_count; ++dev) {
         status = rsmi_dev_supported_func_iterator_open_p(dev, &iter);
+        if (status != RSMI_STATUS_SUCCESS) {
+            continue;
+        }
         while (1) {
             status = rsmi_func_iter_value_get_p(iter, &v_name);
+            if (status != RSMI_STATUS_SUCCESS) {
+                continue;
+            }
             status = rsmi_dev_supported_variant_iterator_open_p(iter, &var_iter);
             if (status == RSMI_STATUS_NO_DATA) {
                 if (handle_special_events(v_name.name, dev, -1, -1, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
@@ -1213,6 +1252,9 @@ get_ntv_events(ntv_event_t *events, int count)
             } else {
                 while (status != RSMI_STATUS_NO_DATA) {
                     status = rsmi_func_iter_value_get_p(var_iter, &v_variant);
+                    if (status != RSMI_STATUS_SUCCESS) {
+                        continue;
+                    }
                     status = rsmi_dev_supported_variant_iterator_open_p(var_iter, &subvar_iter);
                     if (status == RSMI_STATUS_NO_DATA) {
                         if (handle_special_events(v_name.name, dev, v_variant.id, -1, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
@@ -1238,6 +1280,9 @@ get_ntv_events(ntv_event_t *events, int count)
                     } else {
                         while (status != RSMI_STATUS_NO_DATA) {
                             status = rsmi_func_iter_value_get_p(subvar_iter, &v_subvariant);
+                            if (status != RSMI_STATUS_SUCCESS) {
+                                continue;
+                            }
                             if (handle_special_events(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
                                 char *name = get_event_name(v_name.name, dev, v_variant.id, v_subvariant.id);
                                 if (name) {
@@ -1261,10 +1306,18 @@ get_ntv_events(ntv_event_t *events, int count)
                             status = rsmi_func_iter_next_p(subvar_iter);
                         }
                         status = rsmi_dev_supported_func_iterator_close_p(&subvar_iter);
+                        if (status != RSMI_STATUS_SUCCESS) {
+                            papi_errno = PAPI_EMISC;
+                            goto fn_fail;
+                        }
                     }
                     status = rsmi_func_iter_next_p(var_iter);
                 }
                 status = rsmi_dev_supported_func_iterator_close_p(&var_iter);
+                if (status != RSMI_STATUS_SUCCESS) {
+                    papi_errno = PAPI_EMISC;
+                    goto fn_fail;
+                }
             }
             status = rsmi_func_iter_next_p(iter);
             if (status == RSMI_STATUS_NO_DATA) {
@@ -1272,12 +1325,20 @@ get_ntv_events(ntv_event_t *events, int count)
             }
         }
         status = rsmi_dev_supported_func_iterator_close_p(&iter);
+        if (status != RSMI_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
+            goto fn_fail;
+        }
 
         handle_xgmi_events(dev, &events_count, events);
     }
 
-    papi_errno = (events_count - count);
+    papi_errno = (events_count - count) ? PAPI_ECMP : PAPI_OK;
+
+  fn_exit:
     return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
