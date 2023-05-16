@@ -59,9 +59,9 @@ struct rocd_ctx {
 #endif
 
 typedef struct {
-    hsa_agent_t agents[PAPI_ROCM_MAX_DEV_COUNT]; /* array of hsa agents */
-    int count;                                   /* number of hsa agents in agent array */
-} hsa_agent_arr_t;
+    hsa_agent_t devices[PAPI_ROCM_MAX_DEV_COUNT]; /* array of hsa devices */
+    int count;                                    /* number of hsa devices in agent array */
+} device_table_t;
 
 unsigned int rocm_prof_mode;
 unsigned int _rocm_lock;                         /* internal rocm component lock (allocated at configure time) */
@@ -178,7 +178,7 @@ static int init_rocp_env(void);
 static int init_event_table(void);
 static int unload_hsa_sym(void);
 static int unload_rocp_sym(void);
-static int init_agent_array(void);
+static int init_device_table(void);
 static int sampling_ctx_open(unsigned int *, int, rocp_ctx_t *);
 static int intercept_ctx_open(unsigned int *, int, rocp_ctx_t *);
 static int sampling_ctx_close(rocp_ctx_t);
@@ -200,7 +200,8 @@ static void *hsa_dlp = NULL;
 static void *rocp_dlp = NULL;
 static const char *init_err_str_ptr;
 static char init_err_str[PAPI_MAX_STR_LEN];
-static hsa_agent_arr_t agent_arr;
+static device_table_t device_table;
+static device_table_t *device_table_p;
 static unsigned long (*thread_id_fn)(void);
 static ntv_event_table_t ntv_table;
 static ntv_event_table_t *ntv_table_p;
@@ -239,7 +240,7 @@ rocp_init(void)
         goto fn_fail;
     }
 
-    papi_errno = init_agent_array();
+    papi_errno = init_device_table();
     if (papi_errno != PAPI_OK) {
         (*hsa_shut_down_p)();
         goto fn_fail;
@@ -255,6 +256,7 @@ rocp_init(void)
 
     init_thread_id_fn();
     ntv_table_p = &ntv_table;
+    device_table_p = &device_table;
 
   fn_exit:
     return papi_errno;
@@ -604,34 +606,34 @@ unload_rocp_sym(void)
 static hsa_status_t get_agent_handle_cb(hsa_agent_t, void *);
 
 int
-init_agent_array(void)
+init_device_table(void)
 {
     int papi_errno = PAPI_OK;
 
-    ROCM_CALL((*hsa_iterate_agents_p)(get_agent_handle_cb, &agent_arr),
+    ROCM_CALL((*hsa_iterate_agents_p)(get_agent_handle_cb, &device_table),
               { ROCM_GET_ERR_STR(_status); goto fn_fail; });
 
   fn_exit:
     return papi_errno;
   fn_fail:
     papi_errno = PAPI_EMISC;
-    agent_arr.count = 0;
+    device_table.count = 0;
     goto fn_exit;
 }
 
 hsa_status_t
-get_agent_handle_cb(hsa_agent_t agent, void *agent_arr)
+get_agent_handle_cb(hsa_agent_t agent, void *device_table)
 {
     hsa_device_type_t type;
-    hsa_agent_arr_t *agent_arr_ = (hsa_agent_arr_t *) agent_arr;
+    device_table_t *device_table_ = (device_table_t *) device_table;
 
     ROCM_CALL((*hsa_agent_get_info_p)(agent, HSA_AGENT_INFO_DEVICE, &type),
               return _status);
 
     if (type == HSA_DEVICE_TYPE_GPU) {
-        assert(agent_arr_->count < PAPI_ROCM_MAX_DEV_COUNT);
-        agent_arr_->agents[agent_arr_->count] = agent;
-        ++agent_arr_->count;
+        assert(device_table_->count < PAPI_ROCM_MAX_DEV_COUNT);
+        device_table_->devices[device_table_->count] = agent;
+        ++device_table_->count;
     }
 
     return HSA_STATUS_SUCCESS;
@@ -734,8 +736,8 @@ init_event_table(void)
     int papi_errno = PAPI_OK;
     int i;
 
-    for (i = 0; i < agent_arr.count; ++i) {
-        ROCP_CALL((*rocp_iterate_info_p)(&agent_arr.agents[i],
+    for (i = 0; i < device_table.count; ++i) {
+        ROCP_CALL((*rocp_iterate_info_p)(&device_table.devices[i],
                                           ROCPROFILER_INFO_KIND_METRIC,
                                           &count_ntv_events_cb,
                                           &ntv_table.count),
@@ -748,9 +750,9 @@ init_event_table(void)
     struct ntv_arg arg;
     arg.count = 0;
 
-    for (i = 0; i < agent_arr.count; ++i) {
+    for (i = 0; i < device_table.count; ++i) {
         arg.dev_id = i;
-        ROCP_CALL((*rocp_iterate_info_p)(&agent_arr.agents[i],
+        ROCP_CALL((*rocp_iterate_info_p)(&device_table.devices[i],
                                           ROCPROFILER_INFO_KIND_METRIC,
                                           &get_ntv_events_cb,
                                           &arg),
@@ -1194,7 +1196,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
             ROCPROFILER_MODE_SINGLEGROUP :
             ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_SINGLEGROUP;
 
-        ROCP_CALL((*rocp_open_p)(agent_arr.agents[devs_id[i]], dev_features,
+        ROCP_CALL((*rocp_open_p)(device_table_p->devices[devs_id[i]], dev_features,
                                   dev_feature_count, &contexts[i], mode,
                                   &SAMPLING_CONTEXT_PROP),
                   { papi_errno = PAPI_ECOMBO; goto fn_fail; });
@@ -1857,8 +1859,8 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
      *        callback initialization mechanism.
      */
     int i;
-    for (i = 0; i < agent_arr.count; ++i) {
-        hsa_agent_t agent = agent_arr.agents[i];
+    for (i = 0; i < device_table_p->count; ++i) {
+        hsa_agent_t agent = device_table_p->devices[i];
 
         rocprofiler_pool_t *pool = NULL;
         ROCP_CALL((*rocp_pool_open_p)(agent, features, feature_count, &pool,
@@ -2210,8 +2212,8 @@ unsigned int
 get_dev_id(hsa_agent_t agent)
 {
     unsigned int dev_id;
-    for (dev_id = 0; dev_id < (unsigned int) agent_arr.count; ++dev_id) {
-        if (memcmp(&agent_arr.agents[dev_id], &agent, sizeof(agent)) == 0) {
+    for (dev_id = 0; dev_id < (unsigned int) device_table_p->count; ++dev_id) {
+        if (memcmp(&device_table_p->devices[dev_id], &agent, sizeof(agent)) == 0) {
             return dev_id;
         }
     }
