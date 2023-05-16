@@ -886,12 +886,12 @@ sampling_ctx_start(rocp_ctx_t rocp_ctx)
 {
     if (!(rocp_ctx->u.sampling.state & ROCM_EVENTS_OPENED)) {
         SUBDBG("[ROCP sampling mode] Cannot start eventset, not opened.");
-        return PAPI_ECMP;
+        return PAPI_EINVAL;
     }
 
     if (rocp_ctx->u.sampling.state & ROCM_EVENTS_RUNNING) {
         SUBDBG("[ROCP sampling mode] Cannot start eventset, already running.");
-        return PAPI_ECMP;
+        return PAPI_EINVAL;
     }
 
     int i;
@@ -911,12 +911,12 @@ sampling_ctx_stop(rocp_ctx_t rocp_ctx)
 {
     if (!(rocp_ctx->u.sampling.state & ROCM_EVENTS_OPENED)) {
         SUBDBG("[ROCP sampling mode] Cannot stop eventset, not opened.");
-        return PAPI_ECMP;
+        return PAPI_EINVAL;
     }
 
     if (!(rocp_ctx->u.sampling.state & ROCM_EVENTS_RUNNING)) {
         SUBDBG("[ROCP sampling mode] Cannot stop eventset, not running.");
-        return PAPI_ECMP;
+        return PAPI_EINVAL;
     }
 
     int i;
@@ -975,7 +975,7 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
                     counters[k++] = (long long) dev_features[j].data.result_double;
                     break;
                 default:
-                    return PAPI_EMISC;
+                    return PAPI_EINVAL;
             }
         }
         dev_feature_offset += dev_feature_count;
@@ -1178,7 +1178,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
                                               dev_feature_count, &contexts[i], mode,
                                               &SAMPLING_CONTEXT_PROP);
         if (rocp_errno != HSA_STATUS_SUCCESS) {
-            papi_errno = PAPI_ECOMBO;
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
 
@@ -1471,16 +1471,19 @@ intercept_ctx_start(rocp_ctx_t rocp_ctx)
 
     if (!(rocp_ctx->u.sampling.state & ROCM_EVENTS_OPENED)) {
         SUBDBG("[ROCP intercept mode] Cannot start eventset, not opened.");
+        papi_errno = PAPI_EINVAL;
         goto fn_fail;
     }
 
     if (rocp_ctx->u.intercept.state & ROCM_EVENTS_RUNNING) {
         SUBDBG("[ROCP intercept mode] Cannot start eventset, already running.");
+        papi_errno = PAPI_EINVAL;
         goto fn_fail;
     }
 
     if (INTERCEPT_KERNEL_COUNT++ == 0) {
         if (rocp_start_queue_cbs_p() != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
     }
@@ -1491,7 +1494,6 @@ intercept_ctx_start(rocp_ctx_t rocp_ctx)
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    papi_errno = PAPI_ECMP;
     goto fn_exit;
 }
 
@@ -1504,16 +1506,19 @@ intercept_ctx_stop(rocp_ctx_t rocp_ctx)
 
     if (!(rocp_ctx->u.sampling.state & ROCM_EVENTS_OPENED)) {
         SUBDBG("[ROCP intercept mode] Cannot stop eventset, not opened.");
+        papi_errno = PAPI_EINVAL;
         goto fn_fail;
     }
 
     if (!(rocp_ctx->u.intercept.state & ROCM_EVENTS_RUNNING)) {
         SUBDBG("[ROCP intercept mode] Cannot stop eventset, not running.");
+        papi_errno = PAPI_EINVAL;
         goto fn_fail;
     }
 
     if (--INTERCEPT_KERNEL_COUNT == 0) {
         if (rocp_stop_queue_cbs_p() != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
     }
@@ -1524,7 +1529,6 @@ intercept_ctx_stop(rocp_ctx_t rocp_ctx)
     _papi_hwi_unlock(_rocm_lock);
     return papi_errno;
   fn_fail:
-    papi_errno = PAPI_ECMP;
     goto fn_exit;
 }
 
@@ -1853,7 +1857,7 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
 
         rocprofiler_pool_t *pool = NULL;
         if (rocp_pool_open_p(agent, features, feature_count, &pool, 0, &properties) != HSA_STATUS_SUCCESS) {
-            papi_errno = PAPI_ECMP;
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
 
@@ -1864,7 +1868,7 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
     dispatch_ptrs.dispatch = dispatch_cb;
 
     if (rocp_set_queue_cbs_p(dispatch_ptrs, &cb_dispatch_arg) != HSA_STATUS_SUCCESS) {
-        papi_errno = PAPI_ECMP;
+        papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
 
@@ -1913,7 +1917,7 @@ unregister_dispatch_counter(unsigned long tid)
     int *counter_p;
     htable_errno = htable_find(htable, (const char *) key, (void **) &counter_p);
     if (htable_errno != HTABLE_SUCCESS) {
-        papi_errno = PAPI_EMISC;
+        papi_errno = PAPI_ECMP;
         goto fn_exit;
     }
 
