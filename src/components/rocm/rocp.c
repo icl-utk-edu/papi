@@ -123,52 +123,6 @@ static hsa_status_t (*rocp_start_queue_cbs_p)(void);
 static hsa_status_t (*rocp_stop_queue_cbs_p)(void);
 static hsa_status_t (*rocp_remove_queue_cbs_p)(void);
 
-#define ROCM_CALL(call, err_handle) do {                        \
-    hsa_status_t _status = (call);                              \
-    if (_status == HSA_STATUS_SUCCESS ||                        \
-        _status == HSA_STATUS_INFO_BREAK) {                     \
-        break;                                                  \
-    }                                                           \
-    err_handle;                                                 \
-} while(0)
-
-#define ROCM_GET_ERR_STR(status) do {                           \
-    (*hsa_status_string_p)(status, &init_err_str_ptr);         \
-    int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
-                        init_err_str_ptr);                      \
-    if (_exp >= PAPI_MAX_STR_LEN) {                             \
-        SUBDBG("Error string truncated");                       \
-    }                                                           \
-    init_err_str_ptr = init_err_str;                            \
-} while(0)
-
-#define ROCM_PUT_ERR_STR(err_str) do {                          \
-    err_str = init_err_str_ptr;                                 \
-} while(0)
-
-#define ROCP_CALL ROCM_CALL
-
-#define ROCP_GET_ERR_STR() do {                                 \
-    (*rocp_error_string_p)(&init_err_str_ptr);                 \
-    int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
-                        init_err_str_ptr);                      \
-    if (_exp >= PAPI_MAX_STR_LEN) {                             \
-        SUBDBG("Error string truncated");                       \
-    }                                                           \
-    init_err_str_ptr = init_err_str;                            \
-} while(0)
-
-#define ROCP_PUT_ERR_STR ROCM_PUT_ERR_STR
-
-#define ROCP_REC_ERR_STR(string) do {                           \
-    int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
-                        string);                                \
-    if (_exp >= PAPI_MAX_STR_LEN) {                             \
-        SUBDBG("Error string truncated");                       \
-    }                                                           \
-    init_err_str_ptr = init_err_str;                            \
-} while(0)
-
 /**
  * rocp_{init,shutdown} and rocp_ctx_{open,close,start,stop,read,reset} functions
  *
@@ -199,8 +153,8 @@ static int evt_code_to_name(unsigned int event_code, char *name, int len);
 
 static void *hsa_dlp = NULL;
 static void *rocp_dlp = NULL;
-static const char *init_err_str_ptr;
-static char init_err_str[PAPI_MAX_STR_LEN];
+static char error_string[PAPI_MAX_STR_LEN];
+static const char *error_string_p;
 static device_table_t device_table;
 static device_table_t *device_table_p;
 static unsigned long (*thread_id_fn)(void);
@@ -236,7 +190,6 @@ rocp_init(void)
      *       set (as done by init_rocp_env()). */
     hsa_status_t status = (*hsa_init_p)();
     if (status != HSA_STATUS_SUCCESS) {
-        ROCM_GET_ERR_STR(status);
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
@@ -340,7 +293,7 @@ rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
 int
 rocp_err_get_last(const char **err_string)
 {
-    ROCM_PUT_ERR_STR(*err_string);
+    *err_string = error_string_p;
     return PAPI_OK;
 }
 
@@ -433,7 +386,7 @@ load_hsa_sym(void)
     char pathname[PATH_MAX] = { 0 };
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        ROCP_REC_ERR_STR("Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.");
+        error_string_p = "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.";
         goto fn_fail;
     }
 
@@ -441,7 +394,8 @@ load_hsa_sym(void)
 
     hsa_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (hsa_dlp == NULL) {
-        ROCP_REC_ERR_STR(dlerror());
+        sprintf(error_string, "%s", dlerror());
+        error_string_p = error_string;
         goto fn_fail;
     }
 
@@ -463,7 +417,7 @@ load_hsa_sym(void)
 
     papi_errno = (hsa_not_initialized) ? PAPI_EMISC : PAPI_OK;
     if (papi_errno != PAPI_OK) {
-        ROCP_REC_ERR_STR("Error while loading hsa symbols.");
+        error_string_p = "Error while loading hsa symbols.";
     }
 
   fn_exit:
@@ -500,14 +454,14 @@ load_rocp_sym(void)
 
     char *pathname = getenv("HSA_TOOLS_LIB");
     if (pathname == NULL) {
-        ROCP_REC_ERR_STR("Can't load librocprofiler64.so, neither PAPI_ROCM_ROOT "
-                         " nor HSA_TOOLS_LIB are set.");
+        error_string_p = "Can't load librocprofiler64.so, neither PAPI_ROCM_ROOT nor HSA_TOOLS_LIB are set.";
         goto fn_fail;
     }
 
     rocp_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (rocp_dlp == NULL) {
-        ROCP_REC_ERR_STR(dlerror());
+        sprintf(error_string, "%s", dlerror());
+        error_string_p = error_string;
         goto fn_fail;
     }
 
@@ -559,7 +513,7 @@ load_rocp_sym(void)
 
     papi_errno = (rocp_not_initialized) ? PAPI_EMISC : PAPI_OK;
     if (papi_errno != PAPI_OK) {
-        ROCP_REC_ERR_STR("Error while loading rocprofiler symbols.");
+        error_string_p = "Error while loading rocprofiler symbols.";
     }
 
   fn_exit:
@@ -611,8 +565,11 @@ init_device_table(void)
 {
     int papi_errno = PAPI_OK;
 
-    ROCM_CALL((*hsa_iterate_agents_p)(get_agent_handle_cb, &device_table),
-              { ROCM_GET_ERR_STR(_status); goto fn_fail; });
+    hsa_status_t hsa_errno = hsa_iterate_agents_p(get_agent_handle_cb, &device_table);
+    if (hsa_errno != HSA_STATUS_SUCCESS) {
+        hsa_status_string_p(hsa_errno, &error_string_p);
+        goto fn_fail;
+    }
 
   fn_exit:
     return papi_errno;
@@ -628,8 +585,10 @@ get_agent_handle_cb(hsa_agent_t agent, void *device_table)
     hsa_device_type_t type;
     device_table_t *device_table_ = (device_table_t *) device_table;
 
-    ROCM_CALL((*hsa_agent_get_info_p)(agent, HSA_AGENT_INFO_DEVICE, &type),
-              return _status);
+    hsa_status_t hsa_errno = hsa_agent_get_info_p(agent, HSA_AGENT_INFO_DEVICE, &type);
+    if (hsa_errno != HSA_STATUS_SUCCESS) {
+        return hsa_errno;
+    }
 
     if (type == HSA_DEVICE_TYPE_GPU) {
         assert(device_table_->count < PAPI_ROCM_MAX_DEV_COUNT);
@@ -656,7 +615,7 @@ init_rocp_env(void)
     char pathname[PATH_MAX];
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        ROCP_REC_ERR_STR("Can't set HSA_TOOLS_LIB. PAPI_ROCM_ROOT not set.");
+        error_string_p = "Can't set HSA_TOOLS_LIB. PAPI_ROCM_ROOT not set.";
         return PAPI_EMISC;
     }
 
@@ -695,7 +654,7 @@ init_rocp_env(void)
             ++candidate;
         }
         if (!*candidate) {
-            ROCP_REC_ERR_STR("Rocprofiler librocprofiler64.so file not found.");
+            snprintf(error_string, PAPI_MAX_STR_LEN, "Rocprofiler librocprofiler64.so file not found.");
             return PAPI_EMISC;
         }
 
@@ -722,7 +681,7 @@ init_rocp_env(void)
 
             err = stat(pathname, &stat_info);
             if (err < 0) {
-                ROCP_REC_ERR_STR("Rocprofiler metrics.xml file not found.");
+                error_string_p = "Rocprofiler metrics.xml file not found.";
                 return PAPI_EMISC;
             }
         }
@@ -749,11 +708,14 @@ init_event_table(void)
     int i;
 
     for (i = 0; i < device_table.count; ++i) {
-        ROCP_CALL((*rocp_iterate_info_p)(&device_table.devices[i],
-                                          ROCPROFILER_INFO_KIND_METRIC,
-                                          &count_ntv_events_cb,
-                                          &ntv_table.count),
-                  { ROCP_GET_ERR_STR(); goto fn_fail; });
+        hsa_status_t rocp_errno = rocp_iterate_info_p(&device_table.devices[i],
+                                                      ROCPROFILER_INFO_KIND_METRIC,
+                                                      &count_ntv_events_cb,
+                                                      &ntv_table.count);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            hsa_status_string_p(rocp_errno, &error_string_p);
+            goto fn_fail;
+        }
     }
 
     ntv_table.events = papi_calloc(ntv_table.count, sizeof(ntv_event_t));
@@ -764,11 +726,14 @@ init_event_table(void)
 
     for (i = 0; i < device_table.count; ++i) {
         arg.dev_id = i;
-        ROCP_CALL((*rocp_iterate_info_p)(&device_table.devices[i],
-                                          ROCPROFILER_INFO_KIND_METRIC,
-                                          &get_ntv_events_cb,
-                                          &arg),
-                  { ROCP_GET_ERR_STR(); goto fn_fail; });
+        hsa_status_t rocp_errno = rocp_iterate_info_p(&device_table.devices[i],
+                                                      ROCPROFILER_INFO_KIND_METRIC,
+                                                      &get_ntv_events_cb,
+                                                      &arg);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            hsa_status_string_p(rocp_errno, &error_string_p);
+            goto fn_fail;
+        }
     }
 
   fn_exit:
@@ -828,7 +793,7 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
     int instance;
 
     if (*count + instances > capacity) {
-        ROCP_REC_ERR_STR("Number of events exceeds detected count.");
+        error_string_p = "Number of events exceeds detected count.";
         return HSA_STATUS_ERROR;
     }
 
@@ -951,8 +916,10 @@ sampling_ctx_start(rocp_ctx_t rocp_ctx)
 
     int i;
     for (i = 0; i < rocp_ctx->u.sampling.devs_count; ++i) {
-        ROCP_CALL((*rocp_start_p)(rocp_ctx->u.sampling.contexts[i], 0),
-                  return PAPI_EMISC);
+        hsa_status_t rocp_errno = rocp_start_p(rocp_ctx->u.sampling.contexts[i], 0);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
     }
 
     rocp_ctx->u.sampling.state |= ROCM_EVENTS_RUNNING;
@@ -974,8 +941,10 @@ sampling_ctx_stop(rocp_ctx_t rocp_ctx)
 
     int i;
     for (i = 0; i < rocp_ctx->u.sampling.devs_count; ++i) {
-        ROCP_CALL((*rocp_stop_p)(rocp_ctx->u.sampling.contexts[i], 0),
-                  return PAPI_EMISC);
+        hsa_status_t rocp_errno = rocp_stop_p(rocp_ctx->u.sampling.contexts[i], 0);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
     }
 
     rocp_ctx->u.sampling.state &= ~ROCM_EVENTS_RUNNING;
@@ -992,12 +961,20 @@ sampling_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
     rocprofiler_feature_t *features = rocp_ctx->u.sampling.features;
 
     for (i = 0; i < dev_count; ++i) {
-        ROCP_CALL((*rocp_read_p)(rocp_ctx->u.sampling.contexts[i], 0),
-                  return PAPI_EMISC);
-        ROCP_CALL((*rocp_get_data_p)(rocp_ctx->u.sampling.contexts[i], 0),
-                  return PAPI_EMISC);
-        ROCP_CALL((*rocp_get_metrics_p)(rocp_ctx->u.sampling.contexts[i]),
-                  return PAPI_EMISC);
+        hsa_status_t rocp_errno = rocp_read_p(rocp_ctx->u.sampling.contexts[i], 0);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
+
+        rocp_errno = rocp_get_data_p(rocp_ctx->u.sampling.contexts[i], 0);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
+
+        rocp_errno = rocp_get_metrics_p(rocp_ctx->u.sampling.contexts[i]);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
 
         int dev_feature_count = ctx_get_dev_feature_count(rocp_ctx, devs_id[i]);
         rocprofiler_feature_t *dev_features = features + dev_feature_offset;
@@ -1033,8 +1010,10 @@ sampling_ctx_reset(rocp_ctx_t rocp_ctx)
 {
     int i;
     for (i = 0; i < rocp_ctx->u.sampling.devs_count; ++i) {
-        ROCP_CALL((*rocp_reset_p)(rocp_ctx->u.sampling.contexts[i], 0),
-                  return PAPI_EMISC);
+        hsa_status_t rocp_errno = rocp_reset_p(rocp_ctx->u.sampling.contexts[i], 0);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
     }
     for (i = 0; i < rocp_ctx->u.sampling.feature_count; ++i) {
         rocp_ctx->u.sampling.counters[i] = 0;
@@ -1216,10 +1195,13 @@ ctx_open(rocp_ctx_t rocp_ctx)
             ROCPROFILER_MODE_SINGLEGROUP :
             ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_SINGLEGROUP;
 
-        ROCP_CALL((*rocp_open_p)(device_table_p->devices[devs_id[i]], dev_features,
-                                  dev_feature_count, &contexts[i], mode,
-                                  &SAMPLING_CONTEXT_PROP),
-                  { papi_errno = PAPI_ECOMBO; goto fn_fail; });
+        hsa_status_t rocp_errno = rocp_open_p(device_table_p->devices[devs_id[i]], dev_features,
+                                              dev_feature_count, &contexts[i], mode,
+                                              &SAMPLING_CONTEXT_PROP);
+        if (rocp_errno != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_ECOMBO;
+            goto fn_fail;
+        }
 
         SAMPLING_ACQUIRE_DEVICE(devs_id[i]);
         dev_feature_offset += dev_feature_count;
@@ -1229,7 +1211,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
     return papi_errno;
   fn_fail:
     for (j = 0; j < i; ++j) {
-        ROCP_CALL((*rocp_close_p)(contexts[i]),);
+        rocp_close_p(contexts[i]);
         SAMPLING_RELEASE_DEVICE(devs_id[j]);
         SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER();
     }
@@ -1243,12 +1225,16 @@ ctx_close(rocp_ctx_t rocp_ctx)
     int i;
 
     for (i = 0; i < rocp_ctx->u.sampling.devs_count; ++i) {
-        ROCP_CALL((*rocp_close_p)(rocp_ctx->u.sampling.contexts[i]), );
+        if (rocp_close_p(rocp_ctx->u.sampling.contexts[i]) != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
+        }
+
         SAMPLING_RELEASE_DEVICE(rocp_ctx->u.sampling.devs_id[i]);
 
         if (SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER() == 0) {
-            ROCM_CALL((*hsa_queue_destroy_p)(SAMPLING_CONTEXT_PROP_QUEUE),
-                      papi_errno = PAPI_EMISC);
+            if (hsa_queue_destroy_p(SAMPLING_CONTEXT_PROP_QUEUE) != HSA_STATUS_SUCCESS) {
+                papi_errno = PAPI_EMISC;
+            }
             SAMPLING_CONTEXT_PROP_QUEUE = NULL;
         }
     }
@@ -1514,7 +1500,9 @@ intercept_ctx_start(rocp_ctx_t rocp_ctx)
     }
 
     if (INTERCEPT_KERNEL_COUNT++ == 0) {
-        ROCP_CALL((*rocp_start_queue_cbs_p)(), goto fn_fail);
+        if (rocp_start_queue_cbs_p() != HSA_STATUS_SUCCESS) {
+            goto fn_fail;
+        }
     }
 
     rocp_ctx->u.intercept.state |= ROCM_EVENTS_RUNNING;
@@ -1545,7 +1533,9 @@ intercept_ctx_stop(rocp_ctx_t rocp_ctx)
     }
 
     if (--INTERCEPT_KERNEL_COUNT == 0) {
-        ROCP_CALL((*rocp_stop_queue_cbs_p)(), goto fn_fail);
+        if (rocp_stop_queue_cbs_p() != HSA_STATUS_SUCCESS) {
+            goto fn_fail;
+        }
     }
 
     rocp_ctx->u.intercept.state &= ~ROCM_EVENTS_RUNNING;
@@ -1882,9 +1872,10 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
         hsa_agent_t agent = device_table_p->devices[i];
 
         rocprofiler_pool_t *pool = NULL;
-        ROCP_CALL((*rocp_pool_open_p)(agent, features, feature_count, &pool,
-                                       0, &properties),
-                  { papi_errno = PAPI_ECMP; goto fn_fail; });
+        if (rocp_pool_open_p(agent, features, feature_count, &pool, 0, &properties) != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_ECMP;
+            goto fn_fail;
+        }
 
         cb_dispatch_arg.pools[i] = pool;
     }
@@ -1892,8 +1883,10 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
     rocprofiler_queue_callbacks_t dispatch_ptrs = { 0 };
     dispatch_ptrs.dispatch = dispatch_cb;
 
-    ROCP_CALL((*rocp_set_queue_cbs_p)(dispatch_ptrs, &cb_dispatch_arg),
-              { papi_errno = PAPI_ECMP; goto fn_fail; });
+    if (rocp_set_queue_cbs_p(dispatch_ptrs, &cb_dispatch_arg) != HSA_STATUS_SUCCESS) {
+        papi_errno = PAPI_ECMP;
+        goto fn_fail;
+    }
 
     callbacks_initialized = 1;
 
@@ -1982,14 +1975,20 @@ dispatch_cb(const rocprofiler_callback_data_t *callback_data, void *arg,
     cb_dispatch_arg_t *dispatch_arg = (cb_dispatch_arg_t *) arg;
     rocprofiler_pool_t *pool = dispatch_arg->pools[dev_id];
     rocprofiler_pool_entry_t pool_entry;
-    ROCP_CALL((*rocp_pool_fetch_p)(pool, &pool_entry),
-              { status = _status; goto fn_exit; });
+    hsa_status_t rocp_errno = rocp_pool_fetch_p(pool, &pool_entry);
+    if (rocp_errno != HSA_STATUS_SUCCESS) {
+        status = rocp_errno;
+        goto fn_exit;
+    }
 
     rocprofiler_t *context = pool_entry.context;
     cb_context_payload_t *payload = (cb_context_payload_t *) pool_entry.payload;
 
-    ROCP_CALL((*rocp_get_group_p)(context, 0, group),
-              { status = _status; goto fn_exit; });
+    rocp_errno = rocp_get_group_p(context, 0, group);
+    if (rocp_errno != HSA_STATUS_SUCCESS) {
+        status = rocp_errno;
+        goto fn_exit;
+    }
 
     unsigned long tid = (*thread_id_fn)();
     payload->tid = tid;
@@ -2032,8 +2031,13 @@ process_context_entry(cb_context_payload_t *payload,
         goto fn_exit;
     }
 
-    ROCP_CALL((*rocp_group_get_data_p)(&payload->group), goto fn_exit);
-    ROCP_CALL((*rocp_get_metrics_p)(payload->group.context), goto fn_exit);
+    if (rocp_group_get_data_p(&payload->group) != HSA_STATUS_SUCCESS) {
+        goto fn_exit;
+    }
+
+    if (rocp_get_metrics_p(payload->group.context)) {
+        goto fn_exit;
+    }
 
     if (increment_and_fetch_dispatch_counter(payload->tid) < 0) {
         /* thread not registered, ignore counters */
