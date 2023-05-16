@@ -626,6 +626,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 ENABLE_FORTRAN_TESTS
 ENABLE_FORTRAN
+FORT_HEADERS
 FORT_WRAPPERS_OBJ
 FORT_WRAPPERS_SRC
 NVPPC64LEFLAGS
@@ -7307,7 +7308,9 @@ $as_echo "$as_me: Generating f90papi.h" >&6;}
     FORT_WRAPPERS_OBJ="upper_PAPI_FWRAPPERS.o papi_fwrappers_.o papi_fwrappers__.o"
     ENABLE_FORTRAN="$enable_fortran"
     ENABLE_FORTRAN_TESTS="$enable_fortran"
+    FORT_HEADERS="fpapi.h f77papi.h f90papi.h"
 fi
+
 
 
 
