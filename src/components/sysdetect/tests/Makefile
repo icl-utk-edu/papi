@@ -13,10 +13,9 @@ ifneq ($(MPICC),)
     endif
 endif
 
-ifneq ($(F77),)
+FTESTS =
+ifeq ($(ENABLE_FORTRAN_TESTS),yes)
     FTESTS = query_device_simple_f
-else
-    FTESTS =
 endif
 
 ifeq ($(notdir $(F77)),gfortran)

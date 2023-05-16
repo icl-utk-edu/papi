@@ -8,7 +8,7 @@ testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
 DOLOOPS= $(testlibdir)/do_loops.o
 
-ifneq ($(F77),)
+ifeq ($(ENABLE_FORTRAN_TESTS),yes)
 include Makefile.recipies
 
 install: default

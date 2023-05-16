@@ -2,13 +2,13 @@ PAPI_SRCDIR = $(PWD)
 SOURCES	  = $(MISCSRCS) papi.c papi_internal.c \
     high-level/papi_hl.c \
     extras.c sw_multiplex.c \
-    papi_fwrappers.c papi_fwrappers_.c papi_fwrappers__.c upper_PAPI_FWRAPPERS.c \
+    $(FORT_WRAPPERS_SRC) \
     threads.c cpus.c $(OSFILESSRC) $(CPUCOMPONENT_C) papi_preset.c \
     papi_vector.c papi_memory.c $(COMPSRCS)
 OBJECTS = $(MISCOBJS) papi.o papi_internal.o \
     papi_hl.o \
     extras.o sw_multiplex.o \
-    papi_fwrappers.o papi_fwrappers_.o papi_fwrappers__.o upper_PAPI_FWRAPPERS.o \
+    $(FORT_WRAPPERS_OBJ) \
     threads.o cpus.o $(OSFILESOBJ) $(CPUCOMPONENT_OBJ) papi_preset.o \
     papi_vector.o papi_memory.o $(COMPOBJS)
 PAPI_EVENTS_TABLE = papi_events_table.h
