@@ -352,9 +352,9 @@ static void Compute(ze_device_handle_t device,
 
 int 
 main(int argc, char* argv[]) {
+    int retVal;
+    InParams param;
     ze_result_t status = ZE_RESULT_SUCCESS;
-    status = zeInit(ZE_INIT_FLAG_GPU_ONLY);
-    assert(status == ZE_RESULT_SUCCESS);
     int size = 1024;
 
     int i = 1;
@@ -378,19 +378,11 @@ main(int argc, char* argv[]) {
         }
 		i++;
     }
-    InParams  param;
-    int retVal = parseInputParam(argc, argv, &param);
+    retVal = parseInputParam(argc, argv, &param);
     if (retVal) {
 		printf("Invalid input parameters.\n");
 		printf("usage: %s [-m metric[:device=0][:tile=0]]\n", argv[0]);
 		return 1;
-    }
-    ze_device_handle_t device = nullptr;
-    ze_driver_handle_t driver = nullptr;
-    GetIntelDeviceAndDriver(ZE_DEVICE_TYPE_GPU, param.app_dev, param.app_tile, device, driver);
-    if (device == nullptr || driver == nullptr) {
-        cout << "Unable to find target device" << endl;
-        return 0;
     }
 
 #if defined(ENABLE_PAPI)
@@ -417,7 +409,18 @@ main(int argc, char* argv[]) {
          PAPI_shutdown();
          return 1;
     }
+#else
+    status = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    assert(status == ZE_RESULT_SUCCESS);
 #endif
+
+    ze_device_handle_t device = nullptr;
+    ze_driver_handle_t driver = nullptr;
+    GetIntelDeviceAndDriver(ZE_DEVICE_TYPE_GPU, param.app_dev, param.app_tile, device, driver);
+    if (device == nullptr || driver == nullptr) {
+        cout << "Unable to find target device" << endl;
+        return 0;
+    }
 
     cout << "Level Zero Matrix Multiplication (matrix size: " << size <<
       " x " << size << ", repeats " << repeat_count << " times)" << endl;
