@@ -1973,7 +1973,7 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 	pfmlib_event_attr_info_t ainfo;
 	char *buf;
 	size_t maxlen = 0, len;
-	int i, u, n = 0, um;
+	int i, u, um;
 	int ret, retval = PFM_SUCCESS;
 
 	pfmlib_for_each_pmu_event(pmu, i) {
@@ -2062,7 +2062,6 @@ pfmlib_pmu_validate_encoding(pfmlib_pmu_t *pmu, FILE *fp)
 				continue;
 			}
 		}
-		n++;
 	}
 	free(buf);
 
