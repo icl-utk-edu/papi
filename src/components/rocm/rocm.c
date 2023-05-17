@@ -13,7 +13,10 @@
  * License template.
  */
 
-#include "common.h"
+#include <string.h>
+#include "papi.h"
+#include "papi_internal.h"
+#include "papi_memory.h"
 #include "papi_vector.h"
 #include "extras.h"
 #include "rocd.h"
