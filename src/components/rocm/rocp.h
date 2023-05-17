@@ -7,6 +7,8 @@
 #ifndef __ROCP_H__
 #define __ROCP_H__
 
+#include "rocc.h"
+
 typedef struct rocd_ctx *rocp_ctx_t;
 
 /* init and shutdown interfaces */

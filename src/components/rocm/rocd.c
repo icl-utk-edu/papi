@@ -8,6 +8,7 @@
  */
 
 #include "rocd.h"
+#include "rocc.h"
 #include "rocp.h"
 
 int
@@ -19,13 +20,23 @@ rocd_init_environment(void)
 int
 rocd_init(void)
 {
-    return rocp_init();
+    int papi_errno = rocc_init();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+    papi_errno = rocp_init();
+    return papi_errno;
 }
 
 int
 rocd_shutdown(void)
 {
-    return rocp_shutdown();
+    int papi_errno = rocp_shutdown();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+    papi_errno = rocc_shutdown();
+    return papi_errno;
 }
 
 int
@@ -55,7 +66,7 @@ rocd_evt_code_to_name(unsigned int event_code, char *name, int len)
 int
 rocd_err_get_last(const char **error_str)
 {
-    return rocp_err_get_last(error_str);
+    return rocc_err_get_last(error_str);
 }
 
 int

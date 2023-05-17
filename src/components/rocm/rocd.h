@@ -10,7 +10,7 @@
 #ifndef __ROCD_H__
 #define __ROCD_H__
 
-#include "common.h"
+#include "rocp_config.h"
 
 typedef struct rocd_ctx *rocd_ctx_t;
 
