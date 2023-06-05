@@ -28,7 +28,7 @@ if [ "$COMPONENT" = "lmsensors" ]; then
 fi
 
 if [ "$COMPONENT" = "cuda" ] || [ "$COMPONENT" = "nvml" ]; then
-  module load cuda@11.4
+  module load cuda
   export PAPI_CUDA_ROOT=$ICL_CUDA_ROOT
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PAPI_CUDA_ROOT/extras/CUPTI/lib64
 fi
