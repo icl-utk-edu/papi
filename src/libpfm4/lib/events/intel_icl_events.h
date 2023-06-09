@@ -1347,7 +1347,7 @@ static const intel_x86_umask_t intel_icl_br_misp_retired[]={
   { .uname   = "ALL_BRANCHES",
     .udesc   = "All mispredicted branch instructions retired.",
     .ucode   = 0x0000ull,
-    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_DFL,
   },
 };
 
@@ -1395,7 +1395,7 @@ static const intel_x86_umask_t intel_icl_br_inst_retired[]={
   { .uname   = "ALL_BRANCHES",
     .udesc   = "All branch instructions retired.",
     .ucode   = 0x0000ull,
-    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
+    .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS | INTEL_X86_DFL,
   },
 };
 
