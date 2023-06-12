@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <papi.h>
 #include "vec.h"
-#include "vec_arch.h"
+#include "cat_arch.h"
 
 void vec_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
 {

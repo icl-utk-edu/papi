@@ -7,6 +7,7 @@ CFLAGS+=-g -Wall -Wextra
 OPT0=-O0
 OPT1=-O1
 OPT2=-O2
+OPT3=-O3
 CC=gcc
 
 ## Check to see if MPI is used.
@@ -17,6 +18,7 @@ endif
 
 ## Architecture determines vector instruction set.
 ifeq ($(ARCH),X86)
+    FLOP+=-mfma -DX86
     VECSRC=vec_fma_hp vec_fma_sp vec_fma_dp vec_nonfma_hp vec_nonfma_sp vec_nonfma_dp
     VEC_META=-DAVX128_AVAIL -DAVX256_AVAIL -DAVX512_AVAIL
     VEC128=-mavx -O0 -DX86 $(VEC_META) -DX86_VEC_WIDTH_128B
@@ -28,9 +30,10 @@ ifeq ($(ARCH),X86)
     VEC=-mavx -O0 -DX86
     VEC_FMA=-mfma4 -mfma -O0 -DX86
     VEC_ALL=$(VEC) $(VEC_FMA) -O0 -DX86
-	INSTR=-mavx512vl
+    INSTR=-mavx512vl
 endif
 ifeq ($(ARCH),POWER)
+    FLOP+=-maltivec -DPOWER
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
     VEC=-maltivec -O0 -DPOWER
     VEC_FMA=-maltivec -O0 -DPOWER
@@ -71,7 +74,7 @@ dcache.o: dcache.c dcache.h
 eventstock.o: eventstock.c eventstock.h
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c eventstock.c -o eventstock.o
 
-flops: flops.c flops.h
+flops: flops.c flops.h cat_arch.h
 	$(CC) $(CFLAGS) $(FLOP) $(OPT1) $(INCFLAGS) -c flops.c -o flops.o
 
 icache.o: icache.c icache.h
@@ -94,7 +97,7 @@ weak_symbols.o: weak_symbols.c vec.h
 vec.o: vec.c vec.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) -D$(ARCH) $(VEC_META) vec.c
 
-vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h vec_arch.h
+vec_scalar_verify.o: vec_scalar_verify.c vec_scalar_verify.h cat_arch.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC_ALL) vec_scalar_verify.c
 
 vec_fma_hp.o: vec_fma_hp.c vec_scalar_verify.h
