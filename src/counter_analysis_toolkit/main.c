@@ -312,6 +312,16 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     // Set at least the L1 cache size to a default value.
     hw_desc->dcache_line_size[0] = 64;
 
+    // Set other default values.
+    hw_desc->split[0] = 1;
+    hw_desc->split[1] = 1;
+    hw_desc->split[2] = 1;
+    hw_desc->split[3] = 1;
+    hw_desc->pts_per_reg[0] = 5;
+    hw_desc->pts_per_reg[1] = 5;
+    hw_desc->pts_per_reg[2] = 5;
+    hw_desc->pts_per_reg[3] = 5;
+
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
     if( NULL != meminfo ) {
