@@ -19,4 +19,4 @@ to the user, and whether they are disabled, and when they are disabled why.
 
 ## FAQ
 
-* [Software Defined Events](https://bitbucket.org/icl/papi/wiki/Software_Defined_Events.md)
+* [Software Defined Events](https://github.com/icl-utk-edu/papi/wiki/Software_Defined_Events.md)

@@ -42,7 +42,7 @@ performance counters in a system, including the new software-defined events.
 
 # Documentation
 
-* [PAPI Wiki](https://bitbucket.org/icl/papi/wiki/) is the main documentation for HOWTOs, Supported Architectures, PAPI Releases.
+* [PAPI Wiki](https://github.com/icl-utk-edu/papi/wiki/) is the main documentation for HOWTOs, Supported Architectures, PAPI Releases.
 * [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All)
 
 
@@ -64,7 +64,7 @@ performance counters in a system, including the new software-defined events.
 # Contributing
 
 The PAPI project welcomes contributions from new developers. Contributions can
-be offered through the standard Bitbucket pull request model. We strongly
+be offered through the standard GitHub pull request model. We strongly
 encourage you to coordinate large contributions with the PAPI development team
 early in the process.
 
