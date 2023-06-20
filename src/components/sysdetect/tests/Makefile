@@ -18,12 +18,17 @@ ifeq ($(ENABLE_FORTRAN_TESTS),yes)
     FTESTS = query_device_simple_f
 endif
 
+intel_compilers := ifort ifx
+cray_compilers := ftn crayftn
+
 ifeq ($(notdir $(F77)),gfortran)
     FFLAGS +=-ffree-form -ffree-line-length-none
 else ifeq ($(notdir $(F77)),flang)
     FFLAGS +=-ffree-form
-else
+else ifeq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
     FFLAGS +=-free
+else ifeq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
+    FFLAGS +=-ffree
 endif
 
 TESTS = query_device_simple \
