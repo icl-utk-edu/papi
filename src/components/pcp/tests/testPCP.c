@@ -65,10 +65,10 @@ int main(int argc, char **argv) {                                       // args 
 // }
    
    // Find our component, pcp; 
+   PAPI_component_info_t *aComponent;
    k = PAPI_num_components();                                           // get number of components.
    for (i=0; i<k && cid<0; i++) {                                       // while not found,
-      PAPI_component_info_t *aComponent = 
-            (PAPI_component_info_t*) PAPI_get_component_info(i);        // get the component info.     
+      aComponent = (PAPI_component_info_t*) PAPI_get_component_info(i); // get the component info.
       if (aComponent == NULL) {                                         // if we failed,
          sprintf(errMsg,  "PAPI_get_component_info(%i) failed, "
             "returned NULL. %i components reported.\n", i,k);
@@ -88,6 +88,13 @@ int main(int argc, char **argv) {                                       // args 
 	if (!quiet) {
 	  fprintf(stderr, "Found PCP Component at id %d\n",cid);
 	}
+
+   // If the component is disabled, skip the test.
+   if (aComponent->disabled) {
+       test_skip(__FILE__,__LINE__,"Component pcp is disabled", 0);
+       PAPI_shutdown();
+       return 0;
+   }
 
    // Library is initialized and pcp component is identified.
 
