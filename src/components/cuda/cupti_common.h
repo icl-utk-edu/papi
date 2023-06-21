@@ -4,8 +4,8 @@
  *          anustuv@icl.utk.edu
  */
 
-#ifndef __CUDA_UTILS_H__
-#define __CUDA_UTILS_H__
+#ifndef __CUPTI_COMMON_H__
+#define __CUPTI_COMMON_H__
 
 #include <stdio.h>
 #include <cuda.h>
@@ -82,15 +82,15 @@ extern CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
         }  \
     } while (0);
 
-void* load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[]);
-int util_unload_cuda_sym(void);
-int get_device_count(void);
-int cupti_common_init(const char **pdisabled_reason);
-int util_runtime_is_perfworks_api(void);
-int util_runtime_is_events_api(void);
+void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[]);
+int cuptic_shutdown(void);
+int cuptic_get_device_count(void);
+int cuptic_init(const char **pdisabled_reason);
+int cuptic_is_runtime_perfworks_api(void);
+int cuptic_is_runtime_events_api(void);
 
-int cucontext_array_create(void **pcuda_context);
-int cucontext_update_current(void *cuda_context);
-int cucontext_array_destroy(void **pcuda_context);
+int cuptic_ctxarr_create(void **pcuda_context);
+int cuptic_ctxarr_update_current(void *cuda_context);
+int cuptic_ctxarr_destroy(void **pcuda_context);
 
-#endif /* __CUDA_UTILS_H__ */
+#endif // __CUPTI_COMMON_H__

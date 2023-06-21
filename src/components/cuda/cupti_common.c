@@ -102,7 +102,7 @@ static int unload_cuda_sym(void)
     return PAPI_OK;
 }
 
-void* load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[])
+void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[])
 {
     void *dl = NULL;
     char lookup_path[PATH_MAX];
@@ -146,7 +146,7 @@ static int load_cudart_sym(void)
 
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_rt) {
-        dl_rt = load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
+        dl_rt = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
     }
 
     if (!dl_rt) {
@@ -210,7 +210,7 @@ static int load_cupti_common_sym(void)
 
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_cupti) {
-        dl_cupti = load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
+        dl_cupti = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
     }
 
     if (!dl_cupti) {
@@ -254,7 +254,7 @@ static int util_load_cuda_sym(void)
         return PAPI_OK;
 }
 
-int util_unload_cuda_sym(void)
+int cuptic_shutdown(void)
 {
     unload_cuda_sym();
     unload_cudart_sym();
@@ -276,11 +276,12 @@ static int util_dylib_cupti_version(void)
     return cuptiVersion;
 }
 
-int get_device_count(void)
+int cuptic_get_device_count(void)
 {
     static int numDevs = -1;
-    if (numDevs != -1)
+    if (numDevs != -1) {
         goto fn_exit;
+    }
     CUDART_CALL(cudaGetDeviceCountPtr(&numDevs), return PAPI_EMISC);
 fn_exit:
     return numDevs;
@@ -300,15 +301,16 @@ static int get_gpu_compute_capability(int dev_num)
     return cc;
 }
 
-enum gpu_collection_e {GPU_COLLECTION_UNKNOWN, GPU_COLLECTION_ALL_PERF, GPU_COLLECTION_MIXED, GPU_COLLECTION_ALL_EVENTS, GPU_COLLECTION_ALL_CC70};
+typedef enum {GPU_COLLECTION_UNKNOWN, GPU_COLLECTION_ALL_PERF, GPU_COLLECTION_MIXED, GPU_COLLECTION_ALL_EVENTS, GPU_COLLECTION_ALL_CC70} gpu_collection_e;
 
-static enum gpu_collection_e util_gpu_collection_kind(void)
+static gpu_collection_e util_gpu_collection_kind(void)
 {
-    static enum gpu_collection_e kind = GPU_COLLECTION_UNKNOWN;
-    if (kind != GPU_COLLECTION_UNKNOWN)
+    static gpu_collection_e kind = GPU_COLLECTION_UNKNOWN;
+    if (kind != GPU_COLLECTION_UNKNOWN) {
         goto fn_exit;
+    }
 
-    int total_gpus = get_device_count();
+    int total_gpus = cuptic_get_device_count();
     int i, cc;
     int count_perf = 0, count_evt = 0, count_cc70 = 0;
     for (i=0; i<total_gpus; i++) {
@@ -341,7 +343,7 @@ fn_exit:
     return kind;
 }
 
-int cupti_common_init(const char **pdisabled_reason)
+int cuptic_init(const char **pdisabled_reason)
 {
     int papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
@@ -358,14 +360,15 @@ fn_exit:
     return papi_errno;
 }
 
-int util_runtime_is_perfworks_api(void)
+int cuptic_is_runtime_perfworks_api(void)
 {
     static int is_perfworks_api = -1;
-    if (is_perfworks_api != -1)
+    if (is_perfworks_api != -1) {
         goto fn_exit;
+    }
     char *papi_cuda_110_cc70_perfworks_api = getenv("PAPI_CUDA_110_CC_70_PERFWORKS_API");
 
-    enum gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind = util_gpu_collection_kind();
     unsigned int cuptiVersion = util_dylib_cupti_version();
 
     if (gpus_kind == GPU_COLLECTION_ALL_CC70 && 
@@ -393,13 +396,14 @@ fn_exit:
     return is_perfworks_api;
 }
 
-int util_runtime_is_events_api(void)
+int cuptic_is_runtime_events_api(void)
 {
     static int is_events_api = -1;
-    if (is_events_api != -1)
+    if (is_events_api != -1) {
         goto fn_exit;
+    }
 
-    enum gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind = util_gpu_collection_kind();
 
     /*
      * See lcuda_config.h: When NVIDIA removes the events API add a check in the following condition
@@ -416,10 +420,10 @@ fn_exit:
     return is_events_api;
 }
 
-int cucontext_array_create(void **pcuda_context)
+int cuptic_ctxarr_create(void **pcuda_context)
 {
     COMPDBG("Entering.\n");
-    CUcontext *cuCtx = (CUcontext *) papi_calloc (get_device_count(), sizeof(CUcontext));
+    CUcontext *cuCtx = (CUcontext *) papi_calloc (cuptic_get_device_count(), sizeof(CUcontext));
     if (cuCtx == NULL) {
         return PAPI_ENOMEM;
     }
@@ -427,7 +431,7 @@ int cucontext_array_create(void **pcuda_context)
     return PAPI_OK;
 }
 
-int cucontext_update_current(void *cuda_context)
+int cuptic_ctxarr_update_current(void *cuda_context)
 {
     int papi_errno, gpu_id;
     CUcontext *cu_ctx = (CUcontext *) cuda_context;
@@ -457,7 +461,7 @@ int cucontext_update_current(void *cuda_context)
     return PAPI_OK;
 }
 
-int cucontext_array_destroy(void **pcuda_context)
+int cuptic_ctxarr_destroy(void **pcuda_context)
 {
     papi_free(*pcuda_context);
     *pcuda_context = NULL;

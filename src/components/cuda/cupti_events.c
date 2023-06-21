@@ -54,7 +54,7 @@ int cuptie_event_enum(ntv_event_table_t *all_evt_names)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_get_event_description(const char *evt_name, char *description)
+int cuptie_event_name_to_descr(const char *evt_name, char *description)
 {
     return PAPI_ENOIMPL;
 }

@@ -70,7 +70,7 @@ typedef struct cuda_ctl {
 
 papi_vector_t _cuda_vector = {
     .cmp_info = {
-        /* default component information (unspecified values are initialized to 0) */
+        // default component information (unspecified values are initialized to 0)
         .name = "cuda",
         .short_name = "cuda",
         .version = "0.1",
@@ -81,7 +81,7 @@ papi_vector_t _cuda_vector = {
         .default_granularity = PAPI_GRN_THR,
         .available_granularities = PAPI_GRN_THR,
         .hardware_intr_sig = PAPI_INT_SIGNAL,
-        /* component specific cmp_info initializations */
+        // component specific cmp_info initializations
         .fast_real_timer = 0,
         .fast_virtual_timer = 0,
         .attach = 0,
@@ -136,8 +136,9 @@ static int cuda_shutdown_component(void)
     free_event_name_list(&global_event_names);
 
     if (!_cuda_vector.cmp_info.initialized ||
-    _cuda_vector.cmp_info.disabled != PAPI_OK)
+    _cuda_vector.cmp_info.disabled != PAPI_OK) {
         return PAPI_OK;
+    }
 
     _cuda_vector.cmp_info.initialized = 0;
 
@@ -159,8 +160,7 @@ static int cuda_init_private(void)
     }
 
     papi_errno = cuptid_init(&disabled_reason);
-    if (papi_errno != PAPI_OK)
-    {
+    if (papi_errno != PAPI_OK) {
         sprintf(_cuda_vector.cmp_info.disabled_reason, disabled_reason);
         _cuda_vector.cmp_info.disabled = papi_errno;
         goto fn_exit;
@@ -190,16 +190,18 @@ static int check_n_initialize(void)
 static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
 {
     int papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
 
     _papi_hwi_lock(COMPONENT_LOCK);
     LOCKDBG("Locked COMPONENT_LOCK to enumerate all events.\n");
     papi_errno = cuptid_event_enum(global_event_names);
     _papi_hwi_unlock(COMPONENT_LOCK);
     LOCKDBG("Unlocked COMPONENT_LOCK.\n");
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
 
     _cuda_vector.cmp_info.num_native_events = global_event_names->count;
     switch (modifier) {
@@ -227,8 +229,9 @@ fn_exit:
 static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
 {
     int papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
     ntv_event_t *evt_rec;
     papi_errno = find_event_name(global_event_names, name, &evt_rec);
     if (papi_errno == PAPI_OK) {
@@ -247,8 +250,9 @@ fn_exit:
 static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len)
 {
     int papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         return papi_errno;
+    }
     if (event_code >= global_event_names->count) {
         return PAPI_ENOEVNT;
     }
@@ -262,19 +266,22 @@ static int cuda_ntv_code_to_descr(unsigned int event_code, char *descr, int __at
     char evt_name[PAPI_2MAX_STR_LEN];
     int papi_errno;
     papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
 
     _papi_hwi_lock(COMPONENT_LOCK);
     papi_errno = cuptid_event_enum(global_event_names);
     _papi_hwi_unlock(COMPONENT_LOCK);
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
 
     papi_errno = cuda_ntv_code_to_name(event_code, evt_name, PAPI_2MAX_STR_LEN);
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
-    papi_errno = cuptid_get_event_description(evt_name, descr);
+    }
+    papi_errno = cuptid_event_name_to_descr(evt_name, descr);
 fn_exit:
     return papi_errno;
 }
@@ -311,10 +318,12 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     COMPDBG("Entering with events_count %d.\n", ntv_count);
     int i, papi_errno;
     papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         return papi_errno;
-    if (ntv_count == 0)
+    }
+    if (ntv_count == 0) {
         return PAPI_OK;
+    }
 
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     LOCKDBG("Locking.\n");
@@ -322,8 +331,9 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     LOCKDBG("Locked.\n");
     if (control->thread_info == NULL) {
         papi_errno = cuptid_thread_info_create(&(control->thread_info));
-        if (papi_errno != PAPI_OK)
+        if (papi_errno != PAPI_OK) {
             goto fn_exit;
+        }
     }
     control->events_count = ntv_count;
 
@@ -364,12 +374,15 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
     COMPDBG("Entering.\n");
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     int papi_errno = PAPI_OK;
-    if (control->cupti_ctl)
+    if (control->cupti_ctl) {
         papi_errno += cuptid_control_destroy(&(control->cupti_ctl));
-    if (control->thread_info)
+    }
+    if (control->thread_info) {
         papi_errno += cuptid_thread_info_destroy(&(control->thread_info));
-    if (papi_errno != PAPI_OK)
+    }
+    if (papi_errno != PAPI_OK) {
         return PAPI_ECMP;
+    }
     return PAPI_OK;
 }
 
@@ -392,8 +405,9 @@ static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
         goto fn_exit;
     }
     papi_errno = cuptid_control_create(select_names, control->thread_info, &(control->cupti_ctl));
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
 
     papi_errno = cuptid_start( control->cupti_ctl, control->thread_info );
 
@@ -413,8 +427,9 @@ int cuda_stop(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *c
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     int papi_errno;
     papi_errno = cuptid_stop( control->cupti_ctl, control->thread_info );
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
     papi_errno = cuptid_control_destroy( &(control->cupti_ctl) );
 fn_exit:
     LOCKDBG("Unlocking.\n");
@@ -431,12 +446,14 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
     _papi_hwi_lock(_cuda_lock);
     LOCKDBG("Locked.\n");
     papi_errno = cuptid_stop( control->cupti_ctl, control->thread_info );
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
     // First collect the values from the lower layer for last session
     papi_errno = cuptid_control_read( control->cupti_ctl, (long long *) &(control->values) );
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
+    }
     // Then copy the values to the user array `val`
     *val = control->values;
 

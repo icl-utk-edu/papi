@@ -14,10 +14,12 @@ typedef struct event_record_s {
     char desc[PAPI_2MAX_STR_LEN];
     int gpu_id;
     unsigned int evt_code;
-    unsigned int evt_pos;  // index of added event
+    // index of added event
+    unsigned int evt_pos;
     int num_dep;
     double value;
-    void *info;  // API specific details
+    // API specific details
+    void *info;
 } ntv_event_t;
 
 typedef struct event_table_s {

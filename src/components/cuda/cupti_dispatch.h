@@ -4,8 +4,8 @@
  *          anustuv@icl.utk.edu
  */
 
-#ifndef __LCUDA_DISPATCH_H__
-#define __LCUDA_DISPATCH_H__
+#ifndef __CUPTI_DISPATCH_H__
+#define __CUPTI_DISPATCH_H__
 
 #include "lcuda_common.h"
 
@@ -20,5 +20,5 @@ int cuptid_stop(void *cupti_ctl, void *thread_info);
 int cuptid_control_read(void *cupti_ctl, long long *values);
 int cuptid_control_reset(void *cupti_ctl);
 int cuptid_event_enum(ntv_event_table_t *all_evt_names);
-int cuptid_get_event_description(char *evt_name, char *descr);
-#endif // __LCUDA_DISPATCH_H__
+int cuptid_event_name_to_descr(char *evt_name, char *descr);
+#endif // __CUPTI_DISPATCH_H__

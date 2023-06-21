@@ -4,8 +4,8 @@
  *          anustuv@icl.utk.edu
  */
 
-#ifndef __DEBUG_COMP_H__
-#define __DEBUG_COMP_H__
+#ifndef __LCUDA_DEBUG_H__
+#define __LCUDA_DEBUG_H__
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -17,22 +17,22 @@
 #   define EXIT_OR_NOT exit(-1)
 #endif
 
-/* Function calls */
+// Function calls
 #define COMPDBG(format, args...) SUBDBG("COMPDEBUG: " format, ## args);
 
-/* General log */
+// General log
 #define LOGDBG(format, args...) SUBDBG("LOG: " format, ## args);
 
-/* Lock and unlock calls */
+// Lock and unlock calls
 #define LOCKDBG(format, args...) SUBDBG("LOCK: " format, ## args);
 
-/* ERROR */
+// ERROR
 #define ERRDBG(format, args...) SUBDBG("ERROR: " format, ## args);
 
-/* Log cuda driver and runtime calls */
+// Log cuda driver and runtime calls
 #define LOGCUDACALL(format, args...) SUBDBG("CUDACALL: " format, ## args);
 
-/* Log cupti and perfworks calls */
+// Log cupti and perfworks calls
 #define LOGCUPTICALL(format, args...) SUBDBG("CUPTICALL: " format, ## args);
 
-#endif  // __DEBUG_COMP_H__
+#endif  // __LCUDA_DEBUG_H__
