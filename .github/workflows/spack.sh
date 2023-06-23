@@ -20,5 +20,6 @@ echo SPEC=$SPEC
 module load $COMPILER
 spack compiler find
 #spack uninstall -a -y papi || true
+spack install --fresh --only=dependencies $SPEC
 spack dev-build -i --fresh --test=root $SPEC
 spack test run papi
