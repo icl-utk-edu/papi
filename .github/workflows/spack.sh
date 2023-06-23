@@ -14,7 +14,7 @@ export HOME=`pwd`
 git clone https://github.com/spack/spack spack || true
 source spack/share/spack/setup-env.sh
 
-SPEC="papi@master +lmsensors +powercap +sde +infiniband +rapl +cuda cuda_arch=70 %$COMPILER"
+SPEC="papi@master +lmsensors +powercap +sde +infiniband +rapl +cuda %$COMPILER"
 echo SPEC=$SPEC
 
 module load $COMPILER
