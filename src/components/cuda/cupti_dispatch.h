@@ -7,18 +7,21 @@
 #ifndef __CUPTI_DISPATCH_H__
 #define __CUPTI_DISPATCH_H__
 
-#include "lcuda_common.h"
+#include "cupti_utils.h"
+
+typedef void *cuptid_ctl_t;
+typedef void *cuptid_thread_info_t;
 
 void cuptid_shutdown(void);
 int cuptid_init(const char **disabled_reason);
-int cuptid_thread_info_create(void **pthread_info);
-int cuptid_thread_info_destroy(void **pthread_info);
-int cuptid_control_create(ntv_event_table_t *event_names, void *thread_info, void **pcupti_ctl);
-int cuptid_control_destroy(void **pcupti_ctl);
-int cuptid_start(void *cupti_ctl, void *thread_info);
-int cuptid_stop(void *cupti_ctl, void *thread_info);
-int cuptid_control_read(void *cupti_ctl, long long *values);
-int cuptid_control_reset(void *cupti_ctl);
-int cuptid_event_enum(ntv_event_table_t *all_evt_names);
+int cuptid_thread_info_create(cuptid_thread_info_t *info);
+int cuptid_thread_info_destroy(cuptid_thread_info_t *info);
+int cuptid_control_create(cuptiu_event_table_t *event_names, void *thread_info, cuptid_ctl_t *pcupti_ctl);
+int cuptid_control_destroy(cuptid_ctl_t *ctl);
+int cuptid_control_start(cuptid_ctl_t ctl, void *thread_info);
+int cuptid_control_stop(cuptid_ctl_t ctl, void *thread_info);
+int cuptid_control_read(cuptid_ctl_t ctl, long long *values);
+int cuptid_control_reset(cuptid_ctl_t ctl);
+int cuptid_event_enum(cuptiu_event_table_t *all_evt_names);
 int cuptid_event_name_to_descr(char *evt_name, char *descr);
-#endif // __CUPTI_DISPATCH_H__
+#endif /* __CUPTI_DISPATCH_H__ */

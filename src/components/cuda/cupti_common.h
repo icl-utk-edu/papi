@@ -11,11 +11,12 @@
 #include <cuda.h>
 #include <cupti.h>
 
+#include "cupti_utils.h"
 #include "lcuda_debug.h"
 
 extern void *dl_cupti;
 
-// cuda driver function pointers
+/* cuda driver function pointers */
 extern CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 extern CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 extern CUresult ( *cuCtxDestroyPtr ) (CUcontext);
@@ -33,7 +34,7 @@ extern CUresult ( *cuCtxPushCurrentPtr ) (CUcontext pctx);
 extern CUresult ( *cuCtxSynchronizePtr ) ();
 extern CUresult ( *cuDeviceGetAttributePtr ) (int *, CUdevice_attribute, CUdevice);
 
-// cuda runtime function pointers
+/* cuda runtime function pointers */
 extern cudaError_t ( *cudaGetDeviceCountPtr ) (int *);
 extern cudaError_t ( *cudaGetDevicePtr ) (int *);
 extern cudaError_t ( *cudaSetDevicePtr ) (int);
@@ -93,4 +94,8 @@ int cuptic_ctxarr_create(void **pcuda_context);
 int cuptic_ctxarr_update_current(void *cuda_context);
 int cuptic_ctxarr_destroy(void **pcuda_context);
 
-#endif // __CUPTI_COMMON_H__
+/* Functions to track the occupancy of gpu counters in event sets */
+int cuptic_devmask_check_and_acquire(cuptiu_event_table_t *evt_table);
+int cuptic_devmask_release(cuptiu_event_table_t *evt_table);
+
+#endif /* __CUPTI_COMMON_H__ */

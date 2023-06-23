@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __LCUDA_HTABLE_H__
-#define __LCUDA_HTABLE_H__
+#ifndef __HTABLE_H__
+#define __HTABLE_H__
 
 #include <string.h>
 #include <inttypes.h>
@@ -414,4 +414,4 @@ find_table_entry(struct hash_table *table, const char *key,
   fn_exit:
     return htable_errno;
 }
-#endif // __LCUDA_HTABLE_H__
+#endif /* __HTABLE_H__ */

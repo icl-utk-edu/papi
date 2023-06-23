@@ -8,9 +8,8 @@
 #include <papi.h>
 #include "papi_memory.h"
 
-#include "lcuda_config.h"
+#include "cupti_config.h"
 #include "cupti_common.h"
-#include "lcuda_common.h"
 
 static void *dl_drv, *dl_rt;
 
@@ -106,7 +105,7 @@ void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, cons
 {
     void *dl = NULL;
     char lookup_path[PATH_MAX];
-    char *found_files[MAX_FILES];
+    char *found_files[CUPTIU_MAX_FILES];
     int i, count;
     for (i = 0; search_subpaths[i] != NULL; i++) {
         sprintf(lookup_path, search_subpaths[i], parent_path, dlname);
@@ -115,7 +114,7 @@ void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, cons
             return dl;
         }
     }
-    count = search_files_in_path(dlname, parent_path, found_files);
+    count = cuptiu_files_search_in_path(dlname, parent_path, found_files);
     for (i = 0; i < count; i++) {
         dl = dlopen(found_files[i], RTLD_NOW | RTLD_GLOBAL);
         if (dl) {
@@ -406,7 +405,7 @@ int cuptic_is_runtime_events_api(void)
     gpu_collection_e gpus_kind = util_gpu_collection_kind();
 
     /*
-     * See lcuda_config.h: When NVIDIA removes the events API add a check in the following condition
+     * See cupti_config.h: When NVIDIA removes the events API add a check in the following condition
      * to check the `util_dylib_cupti_version()` is also <= CUPTI_EVENTS_API_MAX_SUPPORTED_VERSION.
      */
     if ((gpus_kind == GPU_COLLECTION_ALL_EVENTS || gpus_kind == GPU_COLLECTION_ALL_CC70)) {
@@ -455,7 +454,8 @@ int cuptic_ctxarr_update_current(void *cuda_context)
             LOGDBG("Using primary device context %p for device %d.\n", cu_ctx[gpu_id], gpu_id);
         }
     }
-    else if (cu_ctx[gpu_id] != tempCtx) {  // If context has changed keep the first seen one but with warning
+    /* If context has changed keep the first seen one but with warning */
+    else if (cu_ctx[gpu_id] != tempCtx) {
         ERRDBG("Warning: cuda context for gpu %d has changed from %p to %p\n", gpu_id, cu_ctx[gpu_id], tempCtx);
     }
     return PAPI_OK;
@@ -465,5 +465,52 @@ int cuptic_ctxarr_destroy(void **pcuda_context)
 {
     papi_free(*pcuda_context);
     *pcuda_context = NULL;
+    return PAPI_OK;
+}
+
+/* Functions based on bitmasking to detect gpu exclusivity */
+typedef int64_t gpu_occupancy_t;
+static gpu_occupancy_t global_gpu_bitmask;
+
+static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
+{
+    int errno = PAPI_OK, gpu_id;
+    long i;
+    char nv_name[PAPI_2MAX_STR_LEN];
+    gpu_occupancy_t acq_mask = 0;
+    for (i = 0; i < evt_table->count; i++) {
+        errno = cuptiu_event_name_tokenize(evt_table->evts[0].name, nv_name, &gpu_id);
+        if (errno != PAPI_OK)
+            goto fn_exit;
+        acq_mask |= (1 << gpu_id);
+    }
+    *bitmask = acq_mask;
+fn_exit:
+    return errno;
+}
+
+int cuptic_devmask_check_and_acquire(cuptiu_event_table_t *evt_table)
+{
+    gpu_occupancy_t bitmask;
+    int errno = _devmask_events_get(evt_table, &bitmask);
+    if (errno != PAPI_OK)
+        return errno;
+    if (bitmask & global_gpu_bitmask) {
+        return PAPI_ECNFLCT;
+    }
+    global_gpu_bitmask |= bitmask;
+    return PAPI_OK;
+}
+
+int cuptic_devmask_release(cuptiu_event_table_t *evt_table)
+{
+    gpu_occupancy_t bitmask;
+    int errno = _devmask_events_get(evt_table, &bitmask);
+    if (errno != PAPI_OK)
+        return errno;
+    if ((bitmask & global_gpu_bitmask) != bitmask) {
+        return PAPI_EMISC;
+    }
+    global_gpu_bitmask ^= bitmask;
     return PAPI_OK;
 }

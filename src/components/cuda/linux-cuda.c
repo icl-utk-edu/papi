@@ -24,7 +24,6 @@
 
 #include <string.h>
 
-#include "lcuda_common.h"
 #include "cupti_dispatch.h"
 #include "lcuda_debug.h"
 
@@ -32,7 +31,7 @@ papi_vector_t _cuda_vector;
 
 unsigned _cuda_lock;
 
-ntv_event_table_t *global_event_names;
+cuptiu_event_table_t *global_event_names;
 
 static int cuda_init_component(int cidx);
 static int cuda_shutdown_component(void);
@@ -64,13 +63,15 @@ typedef struct cuda_ctl {
     int events_count;
     int events_id[PAPI_CUDA_MAX_COUNTERS];
     long long values[PAPI_CUDA_MAX_COUNTERS];
-    void *thread_info;  // thread specific info: all gpu user CUcontexts
-    void *cupti_ctl;  // pointer to all gpu cuda profiler state
+    /* thread specific info: all gpu user CUcontexts */
+    void *thread_info;
+    /* pointer to all gpu cuda profiler state */
+    cuptid_ctl_t cupti_ctl;
 } cuda_ctl_t;
 
 papi_vector_t _cuda_vector = {
     .cmp_info = {
-        // default component information (unspecified values are initialized to 0)
+        /* default component information (unspecified values are initialized to 0) */
         .name = "cuda",
         .short_name = "cuda",
         .version = "0.1",
@@ -81,7 +82,7 @@ papi_vector_t _cuda_vector = {
         .default_granularity = PAPI_GRN_THR,
         .available_granularities = PAPI_GRN_THR,
         .hardware_intr_sig = PAPI_INT_SIGNAL,
-        // component specific cmp_info initializations
+        /* component specific cmp_info initializations */
         .fast_real_timer = 0,
         .fast_virtual_timer = 0,
         .attach = 0,
@@ -133,7 +134,7 @@ static int cuda_init_component(int cidx)
 static int cuda_shutdown_component(void)
 {
     COMPDBG("Entering.\n");
-    free_event_name_list(&global_event_names);
+    cuptiu_event_table_destroy(&global_event_names);
 
     if (!_cuda_vector.cmp_info.initialized ||
     _cuda_vector.cmp_info.disabled != PAPI_OK) {
@@ -152,10 +153,9 @@ static int cuda_init_private(void)
     const char *disabled_reason;
     COMPDBG("Entering.\n");
 
-    // Initialize global_event_names array
-    global_event_names = initialize_dynamic_event_list();
-    if (global_event_names == NULL) {
-        papi_errno = PAPI_ENOMEM;
+    /* Initialize global_event_names array */
+    papi_errno = cuptiu_event_table_create(&global_event_names);
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
@@ -232,15 +232,15 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    ntv_event_t *evt_rec;
-    papi_errno = find_event_name(global_event_names, name, &evt_rec);
+    cuptiu_event_t *evt_rec;
+    papi_errno = cuptiu_event_table_find_name(global_event_names, name, &evt_rec);
     if (papi_errno == PAPI_OK) {
         *event_code = evt_rec->evt_code;
     }
     else {
         _papi_hwi_lock(COMPONENT_LOCK);
         *event_code = global_event_names->count;
-        papi_errno = insert_event_record(global_event_names, name, global_event_names->count, 0);
+        papi_errno = cuptiu_event_table_insert_record(global_event_names, name, global_event_names->count, 0);
         _papi_hwi_unlock(COMPONENT_LOCK);
     }
 fn_exit:
@@ -342,17 +342,19 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
         papi_errno = PAPI_ECMP;
         goto fn_exit;
     }
-    // Add all event names for each gpu in control state
+    /* Add all event names for each gpu in control state */
     for (i=0; i<ntv_count; i++) {
-        control->events_id[i] = ntv_info[i].ni_event;  // store the event code added
-        ntv_info[i].ni_position = i;  // store the mapping of added event index
+        /* store the event code added */
+        control->events_id[i] = ntv_info[i].ni_event;
+        /* store the mapping of added event index */
+        ntv_info[i].ni_position = i;
     }
 
-    // Validate the added names so far in a temporary context
+    /* Validate the added names so far in a temporary context */
     void *tmp_context;
-    ntv_event_table_t *select_names = select_by_idx(global_event_names, control->events_count, control->events_id);
-    if (select_names == NULL) {
-        papi_errno = PAPI_ENOMEM;
+    cuptiu_event_table_t *select_names;
+    papi_errno = cuptiu_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
     papi_errno = cuptid_control_create(select_names, control->thread_info, &tmp_context);
@@ -363,7 +365,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     papi_errno = cuptid_control_destroy(&tmp_context);
 
 fn_exit:
-    free_event_name_list(&select_names);
+    cuptiu_event_table_destroy(&select_names);
     LOCKDBG("Unlocking.\n");
     _papi_hwi_unlock(_cuda_lock);
     return papi_errno;
@@ -395,13 +397,13 @@ static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
     LOCKDBG("Locked.\n");
 
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    // Set initial counters to zero
+    /* Set initial counters to zero */
     for (i=0; i<control->events_count; i++) {
         control->values[i] = 0;
     }
-    ntv_event_table_t *select_names = select_by_idx(global_event_names, control->events_count, control->events_id);
-    if (select_names == NULL) {
-        papi_errno = PAPI_ENOMEM;
+    cuptiu_event_table_t *select_names;
+    papi_errno = cuptiu_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
     papi_errno = cuptid_control_create(select_names, control->thread_info, &(control->cupti_ctl));
@@ -409,10 +411,10 @@ static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
         goto fn_exit;
     }
 
-    papi_errno = cuptid_start( control->cupti_ctl, control->thread_info );
+    papi_errno = cuptid_control_start( control->cupti_ctl, control->thread_info );
 
 fn_exit:
-    free_event_name_list(&select_names);
+    cuptiu_event_table_destroy(&select_names);
     LOCKDBG("Unlocking.\n");
     _papi_hwi_unlock(_cuda_lock);
     return papi_errno;
@@ -426,7 +428,7 @@ int cuda_stop(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *c
     LOCKDBG("Locked.\n");
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     int papi_errno;
-    papi_errno = cuptid_stop( control->cupti_ctl, control->thread_info );
+    papi_errno = cuptid_control_stop( control->cupti_ctl, control->thread_info );
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -445,19 +447,19 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
     LOCKDBG("Locking.\n");
     _papi_hwi_lock(_cuda_lock);
     LOCKDBG("Locked.\n");
-    papi_errno = cuptid_stop( control->cupti_ctl, control->thread_info );
+    papi_errno = cuptid_control_stop( control->cupti_ctl, control->thread_info );
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    // First collect the values from the lower layer for last session
+    /* First collect the values from the lower layer for last session */
     papi_errno = cuptid_control_read( control->cupti_ctl, (long long *) &(control->values) );
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    // Then copy the values to the user array `val`
+    /* Then copy the values to the user array `val` */
     *val = control->values;
 
-    papi_errno = cuptid_start( control->cupti_ctl, control->thread_info );
+    papi_errno = cuptid_control_start( control->cupti_ctl, control->thread_info );
 
 fn_exit:
     LOCKDBG("Unlocking.\n");

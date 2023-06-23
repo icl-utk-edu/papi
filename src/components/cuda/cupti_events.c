@@ -5,13 +5,13 @@
  */
 
 #include <papi.h>
-#include "lcuda_common.h"
+#include "cupti_utils.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-// Functions needed by CUPTI Events API
-// ...
+/* Functions needed by CUPTI Events API */
+/* ... */
 
-// CUPTI Events component API functions
+/* CUPTI Events component API functions */
 
 int cuptie_init(char **pdisabled_reason)
 {
@@ -19,7 +19,7 @@ int cuptie_init(char **pdisabled_reason)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_create(ntv_event_table_t *event_names, void *thr_info, void **pctl)
+int cuptie_control_create(cuptiu_event_table_t *event_names, void *thr_info, void **pctl)
 {
     return PAPI_ENOIMPL;
 }
@@ -49,7 +49,7 @@ int cuptie_control_reset(void *ctl)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_enum(ntv_event_table_t *all_evt_names)
+int cuptie_event_enum(cuptiu_event_table_t *all_evt_names)
 {
     return PAPI_ENOIMPL;
 }

@@ -1,5 +1,5 @@
 /**
- * @file    lcuda_config.h
+ * @file    cupti_config.h
  * @author  Anustuv Pal
  *          anustuv@icl.utk.edu
  */
@@ -23,4 +23,4 @@
  */
 #define API_EVENTS 1
 
-#endif  // __LCUDA_CONFIG_H__
+#endif  /* __LCUDA_CONFIG_H__ */
