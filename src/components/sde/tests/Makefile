@@ -1,12 +1,18 @@
 NAME=sde
 include ../../Makefile_comp_tests.target
 INCLUDE += -I$(datadir)/sde_lib -I..
+
+intel_compilers := ifort ifx
+cray_compilers := ftn crayftn
+
 ifeq ($(notdir $(F77)),gfortran)
 	FFLAGS +=-ffree-form -ffree-line-length-none
 else ifeq ($(notdir $(F77)),flang)
 	FFLAGS +=-ffree-form
-else
-	FFLAGS +=-free
+else ifeq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
+    FFLAGS +=-free
+else ifeq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
+    FFLAGS +=-ffree
 endif
 FFLAGS +=-g
 CFLAGS +=-g
