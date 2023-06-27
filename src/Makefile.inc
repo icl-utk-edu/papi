@@ -24,7 +24,7 @@ FHEADERS = $(FORT_HEADERS)
 # pkgconfig directory
 LIBPC = $(LIBDIR)/pkgconfig
 
-all: $(SHOW_CONF) $(LIBS) libsde utils tests 
+all: $(SHOW_CONF) $(LIBS) libsde utils
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests validation_tests null
 
 include $(COMPONENT_RULES)
