@@ -697,7 +697,7 @@ cpuid_get_leaf4_mask( apic_subid_mask_t *mask )
     unsigned int core_plus_smt_max_cnt = (reg.ebx >> 16) & 0x000000ff;
 
     cpuid(&reg, 4);
-    unsigned int core_max_cnt = ((reg.eax >> 26) && 0x0000003f) + 1;
+    unsigned int core_max_cnt = ((reg.eax >> 26) & 0x0000003f) + 1;
 
     unsigned int core_width = bit_width(core_max_cnt);
     unsigned int smt_width = bit_width(core_plus_smt_max_cnt) - core_width;
