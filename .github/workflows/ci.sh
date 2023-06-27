@@ -57,5 +57,5 @@ utils/papi_component_avail | grep -A1000 'Active components' | grep -q "Name:   
 
 if [ "$COMPONENT" != "cuda" ]; then
    echo Testing
-   ./run_tests.sh
+   make fulltest
 fi
