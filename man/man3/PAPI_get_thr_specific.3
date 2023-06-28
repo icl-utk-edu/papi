@@ -1,4 +1,4 @@
-.TH "PAPI_get_thr_specific" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_thr_specific" 3 "Wed Apr 19 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -29,7 +29,7 @@ Retrieve a pointer to a thread specific data structure\&.
 @retval PAPI_EINVAL 
     The @em tag argument is out of range. 
 
-In C, PAPI_get_thr_specific PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag. 
+In C, PAPI_get_thr_specific will retrieve the pointer from the array with index @em tag.
 There are 2 user available locations and @em tag can be either 
 PAPI_USR1_TLS or PAPI_USR2_TLS. 
 The array mentioned above is managed by PAPI and allocated to each 
