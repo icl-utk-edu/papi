@@ -1309,7 +1309,10 @@ _pe_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 	/* FIXME: we fallback to slow reads if *any* event in eventset fails */
 	/*        in theory we could only fall back for the one event        */
 	/*        but that makes the code more complicated.                  */
-	if ((_perf_event_vector.cmp_info.fast_counter_read) && (!pe_ctl->inherit)) {
+	if ((_perf_event_vector.cmp_info.fast_counter_read) &&
+		(!pe_ctl->inherit) &&
+		(!pe_ctl->attached) &&
+		(pe_ctl->granularity==PAPI_GRN_THR)) {
 		result=_pe_rdpmc_read( ctx, ctl, events, flags);
 		/* if successful we are done, otherwise fall back to read */
 		if (result==PAPI_OK) return PAPI_OK;
