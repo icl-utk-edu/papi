@@ -519,7 +519,12 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
     }else{
         if( NULL == tmp_group->u.cntr_group.group_head ){
-            SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.", group_name);
+            if( CNTR_CLASS_PLACEHOLDER == tmp_group->cntr_class ){
+                tmp_group->cntr_class = CNTR_CLASS_GROUP;
+            }else{
+                SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.", group_name);
+            }
+
         }
 
         // make sure the caller is not trying to change the flags of the group after it has been created.
