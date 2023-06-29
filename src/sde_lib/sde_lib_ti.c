@@ -38,22 +38,29 @@ sde_ti_read_counter( uint32_t counter_id, long long int *rslt_ptr){
     int ret_val = SDE_OK;
     papisde_control_t *gctl;
 
+    sde_lock();
+
     gctl = _papisde_global_control;
     if( NULL == gctl ){
         SDE_ERROR("sde_ti_read_counter(): Attempt to read from unintialized SDE structures.\n");
-        return SDE_EINVAL;
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     if( counter_id >= gctl->num_reg_events ){
         SDE_ERROR("sde_ti_read_counter(): SDE with id %d does not correspond to a registered event.\n",counter_id);
-        return SDE_EINVAL;
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
 
     sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_id);
     if( NULL == counter ){
         SDE_ERROR("sde_ti_read_counter(): SDE with id %d is clobbered.\n",counter_id);
-        return SDE_EINVAL;
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
     }
+
+    SDEDBG("sde_ti_read_counter(): Reading counter: '%s'.\n",counter->name);
 
     switch( counter->cntr_class ){
         // If the counter represents a counter group then we need to read the values of all the counters in the group.
@@ -117,6 +124,8 @@ sde_ti_read_counter( uint32_t counter_id, long long int *rslt_ptr){
             break;
     }
 
+fn_exit:
+    sde_unlock();
     return ret_val;
 }
 
