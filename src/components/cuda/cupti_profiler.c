@@ -379,14 +379,19 @@ static int add_events_per_gpu(cuptiu_event_table_t *event_names, cuptip_control_
     COMPDBG("Entering.\n");
     int i, gpu_id, papi_errno = PAPI_OK;
     char nvName[PAPI_MAX_STR_LEN];
+    cuptiu_event_t *evt_rec;
     for (i=0; i < num_gpus; i++) {
-        papi_errno = cuptiu_event_table_create(&(state->gpu_ctl[i].event_names));
+        papi_errno = cuptiu_event_table_create(sizeof(cuptiu_event_t), &(state->gpu_ctl[i].event_names));
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
     }
     for (i = 0; i < (int) event_names->count; i++) {
-        papi_errno = cuptiu_event_name_tokenize(event_names->evts[i].name, (char*) &nvName, &gpu_id);
+        papi_errno = cuptiu_event_table_get_item(event_names, i, (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+        papi_errno = cuptiu_event_name_tokenize(evt_rec->name, (char*) &nvName, &gpu_id);
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
@@ -394,13 +399,8 @@ static int add_events_per_gpu(cuptiu_event_table_t *event_names, cuptip_control_
             papi_errno = PAPI_EINVAL;
             goto fn_exit;
         }
-        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names,
-                            event_names->evts[i].name,
-                            event_names->evts[i].evt_code,
-                            i);
-        LOGDBG("Adding event gpu %d name %s with code %d at pos %d\n",
-            gpu_id, event_names->evts[i].name,
-            event_names->evts[i].evt_code, i);
+        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i);
+        LOGDBG("Adding event gpu %d name %s with code %d at pos %d\n", gpu_id, evt_rec->name, evt_rec->evt_code, i);
     }
 fn_exit:
     return papi_errno;
@@ -473,11 +473,15 @@ static int get_event_names_rmr(NVPA_MetricsContext* pMetricsContext, cuptip_gpu_
     NVPA_RawMetricRequest *temp;
     char nv_name[PAPI_MAX_STR_LEN];
     int gpuid;
-
+    cuptiu_event_t *evt_rec;
     for (i=0; i < gpu_ctl->event_names->count; i++) {
-        papi_errno = cuptiu_event_name_tokenize(gpu_ctl->event_names->evts[i].name, (char *) &nv_name, &gpuid);
+        papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+        papi_errno = cuptiu_event_name_tokenize(evt_rec->name, (char *) &nv_name, &gpuid);
 
-        papi_errno = retrieve_metric_details(pMetricsContext, nv_name, gpu_ctl->event_names->evts[i].desc, &num_dep, &temp);
+        papi_errno = retrieve_metric_details(pMetricsContext, nv_name, evt_rec->desc, &num_dep, &temp);
         if (papi_errno != PAPI_OK) {
             papi_errno = PAPI_ENOEVNT;
             goto fn_exit;
@@ -1006,12 +1010,17 @@ static int eval_metric_values_per_gpu(NVPA_MetricsContext* pMetricsContext, cupt
         ERRDBG("calloc metricNames failed.\n");
         return PAPI_ENOMEM;
     }
+    cuptiu_event_t *evt_rec;
     for (i=0; i<numMetrics; i++) {
-        papi_errno = cuptiu_event_name_tokenize(gpu_ctl->event_names->evts[i].name, gpu_ctl->event_names->evts[i].desc, &dummy);
+        papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, (void**) &evt_rec);
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
-        metricNames[i] = (char *) &(gpu_ctl->event_names->evts[i].desc);
+        papi_errno = cuptiu_event_name_tokenize(evt_rec->name, evt_rec->desc, &dummy);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+        metricNames[i] = (char *) &(evt_rec->desc);
         LOGDBG("Setting metric name %s\n", metricNames[i]);
     }
 
@@ -1041,7 +1050,12 @@ static int eval_metric_values_per_gpu(NVPA_MetricsContext* pMetricsContext, cupt
     NVPW_CALL( NVPW_MetricsContext_EvaluateToGpuValuesPtr(&evalToGpuParams), goto fn_fail );
     papi_free(metricNames);
     for (i=0; i < (int) gpu_ctl->event_names->count; i++) {
-        gpu_ctl->event_names->evts[i].value = gpuValues[i];
+        papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
+            papi_free(gpuValues);
+            goto fn_exit;
+        }
+        evt_rec->value = gpuValues[i];
     }
     papi_free(gpuValues);
 fn_exit:
@@ -1053,7 +1067,7 @@ fn_fail:
 static int get_metric_values(cuptip_control_t *state)
 {
     COMPDBG("Entering.\n");
-    int gpu_id, papi_errno = PAPI_OK, i;
+    int gpu_id, papi_errno = PAPI_OK;
     char chip_name[32];
     cuptip_gpu_state_t *gpu_ctl;
     for (gpu_id=0; gpu_id<num_gpus; gpu_id++) {
@@ -1079,10 +1093,6 @@ static int get_metric_values(cuptip_control_t *state)
         }
 
         papi_errno = eval_metric_values_per_gpu(metricsContextCreateParams.pMetricsContext, gpu_ctl);
-        LOGDBG("Measured values from gpu %d\n", gpu_ctl->gpu_id);
-        for (i=0; i < (int) gpu_ctl->event_names->count; i++) {
-            LOGDBG("%s\t%lf\n", gpu_ctl->event_names->evts[i].name, gpu_ctl->event_names->evts[i].value);
-        }
 
         NVPW_MetricsContext_Destroy_Params metricsContextDestroyParams = {
             .structSize = NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE,
@@ -1170,7 +1180,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
         NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
         avail_events[gpu_id].num_metrics = getMetricNameBeginParams.numMetrics;
-        papi_errno = cuptiu_event_table_create_with_size(avail_events[gpu_id].num_metrics, &(avail_events[gpu_id].nv_metrics));
+        papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_id].num_metrics, sizeof(cuptiu_event_t), &(avail_events[gpu_id].nv_metrics));
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
@@ -1193,16 +1203,21 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
     }
     char evt_name[PAPI_2MAX_STR_LEN];
     cuptiu_event_t *find=NULL;
+    cuptiu_event_t *evt_rec;
     int len;
     for (gpu_id=0; gpu_id<num_gpus; gpu_id++) {
         for (i=0; i<avail_events[gpu_id].num_metrics; i++) {
-            len = snprintf(evt_name, PAPI_2MAX_STR_LEN, "%s:device=%d", avail_events[gpu_id].nv_metrics->evts[i].name, gpu_id);
+            papi_errno = cuptiu_event_table_get_item(avail_events[gpu_id].nv_metrics, i, (void**) &evt_rec);
+            if (papi_errno != PAPI_OK) {
+                goto fn_exit;
+            }
+            len = snprintf(evt_name, PAPI_2MAX_STR_LEN, "%s:device=%d", evt_rec->name, gpu_id);
             if (len > PAPI_2MAX_STR_LEN) {
                 ERRDBG("String formatting exceeded maximum length.\n");
                 papi_errno = PAPI_ENOMEM;
                 goto fn_exit;
             }
-            if (cuptiu_event_table_find_name(all_evt_names, evt_name, &find) == PAPI_ENOEVNT) {
+            if (cuptiu_event_table_find_name(all_evt_names, evt_name, (void**) &find) == PAPI_ENOEVNT) {
                 papi_errno = cuptiu_event_table_insert_record(all_evt_names, evt_name, i, 0);
                 if (papi_errno != PAPI_OK) {
                     goto fn_exit;
@@ -1227,7 +1242,7 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, nv_name, &evt_rec);
+    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, nv_name, (void**) &evt_rec);
     if (papi_errno != PAPI_OK) {
         ERRDBG("Event name not found in avail_events array.\n");
         goto fn_exit;
@@ -1528,6 +1543,7 @@ int cuptip_control_read(void *ctl, long long *values)
     cuptip_gpu_state_t *gpu_ctl;
     unsigned int evt_pos;
     long long val;
+    cuptiu_event_t *evt_rec;
     papi_errno = get_metric_values(state);
     for (gpu_id=0; gpu_id<num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
@@ -1535,14 +1551,18 @@ int cuptip_control_read(void *ctl, long long *values)
             continue;
         }
         for (i=0; i < (int) gpu_ctl->event_names->count; i++) {
-            evt_pos = gpu_ctl->event_names->evts[i].evt_pos;
-            val = (long long) gpu_ctl->event_names->evts[i].value;
+            papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, (void**) &evt_rec);
+            if (papi_errno != PAPI_OK) {
+                goto fn_exit;
+            }
+            evt_pos = evt_rec->evt_pos;
+            val = (long long) evt_rec->value;
 
             if (state->read_count == 0) {
                 values[evt_pos] = val;
             }
             else {
-                switch (get_event_collection_method(gpu_ctl->event_names->evts[i].name)) {
+                switch (get_event_collection_method(evt_rec->name)) {
                     case RunningSum:
                         values[evt_pos] += val;
                         break;
@@ -1561,6 +1581,7 @@ int cuptip_control_read(void *ctl, long long *values)
         reset_cupti_prof_config_images(gpu_ctl);
     }
     state->read_count++;
+fn_exit:
     return papi_errno;
 }
 

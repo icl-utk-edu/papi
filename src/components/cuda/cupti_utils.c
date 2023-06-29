@@ -13,15 +13,16 @@
 
 #define ADDED_EVENTS_INITIAL_CAPACITY 64
 
-int cuptiu_event_table_create_with_size(int size, cuptiu_event_table_t **pevt_table)
+int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table)
 {
     cuptiu_event_table_t *evt_table = (cuptiu_event_table_t *) papi_malloc(sizeof(cuptiu_event_table_t));
     if (evt_table == NULL) {
         goto fn_fail;
     }
-    evt_table->capacity = size;
+    evt_table->sizeof_rec = sizeof_rec;
+    evt_table->capacity = capacity;
     evt_table->count = 0;
-    evt_table->evts = (cuptiu_event_t *) papi_calloc (evt_table->capacity, sizeof(cuptiu_event_t));
+    evt_table->evts = papi_calloc (evt_table->capacity, evt_table->sizeof_rec);
     if (evt_table->evts == NULL) {
         cuptiu_event_table_destroy(&evt_table);
         ERRDBG("Error allocating memory for dynamic event table.\n");
@@ -38,50 +39,71 @@ fn_fail:
     return PAPI_ENOMEM;
 }
 
-int cuptiu_event_table_create(cuptiu_event_table_t **pevt_table)
+int cuptiu_event_table_create(int sizeof_rec, cuptiu_event_table_t **pevt_table)
 {
-    return cuptiu_event_table_create_with_size(ADDED_EVENTS_INITIAL_CAPACITY, pevt_table);
+    return cuptiu_event_table_create_init_capacity(ADDED_EVENTS_INITIAL_CAPACITY, sizeof_rec, pevt_table);
+}
+
+int cuptiu_event_table_get_item(cuptiu_event_table_t *evt_table, unsigned int evt_idx, void** record)
+{
+    if (evt_idx >= evt_table->count) {
+        *record = NULL;
+        return PAPI_EINVAL;
+    }
+    *record = evt_table->evts + evt_idx * evt_table->sizeof_rec;
+    return PAPI_OK;
 }
 
 static int reallocate_array(cuptiu_event_table_t *evt_table)
 {
+    int papi_errno = PAPI_OK;
     evt_table->capacity *= 2;
-    evt_table->evts = (cuptiu_event_t *) papi_realloc(evt_table->evts, evt_table->capacity * sizeof(cuptiu_event_t));
+    evt_table->evts = papi_realloc(evt_table->evts, evt_table->capacity * evt_table->sizeof_rec);
     if (evt_table == NULL) {
         ERRDBG("Failed to expand event_table array.\n");
-        return PAPI_ENOMEM;
+        papi_errno = PAPI_ENOMEM;
+        goto fn_exit;
     }
     /* Rehash all the table entries */
     unsigned int i;
+    cuptiu_event_t *evt_rec;
     for (i=0; i<evt_table->count; i++) {
-        if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_table->evts[i].name, &(evt_table->evts[i])))
-            return PAPI_ENOMEM;
+        papi_errno = cuptiu_event_table_get_item(evt_table, i, (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
+            papi_errno = PAPI_EINVAL;
+            goto fn_exit;
+        }
+        if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_rec->name, evt_rec)) {
+            papi_errno = PAPI_ENOMEM;
+            goto fn_exit;
+        }
     }
-    return PAPI_OK;
+fn_exit:
+    return papi_errno;
 }
 
 int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos)
 {
-    int errno = PAPI_OK;
+    int papi_errno = PAPI_OK;
 
     /* Allocate twice the space if running out */
     if (evt_table->count >= evt_table->capacity) {
-        errno = reallocate_array(evt_table);
-        if (errno != PAPI_OK)
+        papi_errno = reallocate_array(evt_table);
+        if (papi_errno != PAPI_OK)
             goto fn_exit;
     }
     /* Insert record in array */
-    strcpy(evt_table->evts[evt_table->count].name, evt_name);
-    evt_table->evts[evt_table->count].desc[0] = '\0';
-    evt_table->evts[evt_table->count].evt_code = evt_code;
-    evt_table->evts[evt_table->count].evt_pos = evt_pos;
+    cuptiu_event_t *evt_rec = evt_table->evts + evt_table->count * evt_table->sizeof_rec;
+    strcpy(evt_rec->name, evt_name);
+    evt_rec->evt_code = evt_code;
+    evt_rec->evt_pos = evt_pos;
     /* Insert entry in string hash table */
-    if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_name, &(evt_table->evts[evt_table->count]))) {
+    if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_name, evt_rec)) {
         return PAPI_ENOMEM;
     }
     evt_table->count ++;
 fn_exit:
-    return errno;
+    return papi_errno;
 }
 
 int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *idcs, cuptiu_event_table_t **pevt_names)
@@ -92,13 +114,20 @@ int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *
         goto fn_fail;
     }
     cuptiu_event_table_t *target;
-    papi_errno = cuptiu_event_table_create_with_size(count, &target);
+    papi_errno = cuptiu_event_table_create_init_capacity(count, src->sizeof_rec, &target);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
     int i;
+    cuptiu_event_t *evt_rec;
     for (i = 0; i < count; i++) {
-        if (cuptiu_event_table_insert_record(target, src->evts[idcs[i]].name, src->evts[idcs[i]].evt_code, src->evts[idcs[i]].evt_pos) != PAPI_OK) {
+        papi_errno = cuptiu_event_table_get_item(src, idcs[i], (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
+            cuptiu_event_table_destroy(&target);
+            goto fn_fail;
+        }
+        papi_errno = cuptiu_event_table_insert_record(target, evt_rec->name, evt_rec->evt_code, evt_rec->evt_pos);
+        if (papi_errno != PAPI_OK) {
             cuptiu_event_table_destroy(&target);
             goto fn_fail;
         }
@@ -111,13 +140,12 @@ fn_fail:
     goto fn_exit;
 }
 
-int cuptiu_event_table_find_name(cuptiu_event_table_t *evt_table, const char *evt_name, cuptiu_event_t **found_rec)
+int cuptiu_event_table_find_name(cuptiu_event_table_t *evt_table, const char *evt_name, void **found_rec)
 {
-    int errno;
-
+    int papi_errno;
     cuptiu_event_t *evt_rec = NULL;
-    errno = htable_find(evt_table->htable, evt_name, (void **) &evt_rec);
-    if (errno == HTABLE_SUCCESS) {
+    papi_errno = htable_find(evt_table->htable, evt_name, (void **) &evt_rec);
+    if (papi_errno == HTABLE_SUCCESS) {
         *found_rec = evt_rec;
         return PAPI_OK;
     }

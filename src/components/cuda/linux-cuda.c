@@ -154,7 +154,7 @@ static int cuda_init_private(void)
     COMPDBG("Entering.\n");
 
     /* Initialize global_event_names array */
-    papi_errno = cuptiu_event_table_create(&global_event_names);
+    papi_errno = cuptiu_event_table_create(sizeof(cuptiu_event_t), &global_event_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -233,7 +233,7 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
         goto fn_exit;
     }
     cuptiu_event_t *evt_rec;
-    papi_errno = cuptiu_event_table_find_name(global_event_names, name, &evt_rec);
+    papi_errno = cuptiu_event_table_find_name(global_event_names, name, (void**) &evt_rec);
     if (papi_errno == PAPI_OK) {
         *event_code = evt_rec->evt_code;
     }
@@ -253,11 +253,12 @@ static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len)
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    if (event_code >= global_event_names->count) {
+    cuptiu_event_t *evt_rec;
+    papi_errno = cuptiu_event_table_get_item(global_event_names, event_code, (void **) &evt_rec);
+    if (papi_errno != PAPI_OK) {
         return PAPI_ENOEVNT;
     }
-
-    strncpy(name, global_event_names->evts[event_code].name, len);
+    strncpy(name, evt_rec->name, len);
     return PAPI_OK;
 }
 

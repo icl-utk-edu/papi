@@ -474,27 +474,33 @@ static gpu_occupancy_t global_gpu_bitmask;
 
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
 {
-    int errno = PAPI_OK, gpu_id;
+    int papi_errno = PAPI_OK, gpu_id;
     long i;
     char nv_name[PAPI_2MAX_STR_LEN];
     gpu_occupancy_t acq_mask = 0;
+    cuptiu_event_t *evt_rec;
     for (i = 0; i < evt_table->count; i++) {
-        errno = cuptiu_event_name_tokenize(evt_table->evts[0].name, nv_name, &gpu_id);
-        if (errno != PAPI_OK)
+        papi_errno = cuptiu_event_table_get_item(evt_table, i, (void**) &evt_rec);
+        if (papi_errno != PAPI_OK) {
             goto fn_exit;
+        }
+        papi_errno = cuptiu_event_name_tokenize(evt_rec->name, nv_name, &gpu_id);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
         acq_mask |= (1 << gpu_id);
     }
     *bitmask = acq_mask;
 fn_exit:
-    return errno;
+    return papi_errno;
 }
 
 int cuptic_devmask_check_and_acquire(cuptiu_event_table_t *evt_table)
 {
     gpu_occupancy_t bitmask;
-    int errno = _devmask_events_get(evt_table, &bitmask);
-    if (errno != PAPI_OK)
-        return errno;
+    int papi_errno = _devmask_events_get(evt_table, &bitmask);
+    if (papi_errno != PAPI_OK)
+        return papi_errno;
     if (bitmask & global_gpu_bitmask) {
         return PAPI_ECNFLCT;
     }
@@ -505,9 +511,10 @@ int cuptic_devmask_check_and_acquire(cuptiu_event_table_t *evt_table)
 int cuptic_devmask_release(cuptiu_event_table_t *evt_table)
 {
     gpu_occupancy_t bitmask;
-    int errno = _devmask_events_get(evt_table, &bitmask);
-    if (errno != PAPI_OK)
-        return errno;
+    int papi_errno = _devmask_events_get(evt_table, &bitmask);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
     if ((bitmask & global_gpu_bitmask) != bitmask) {
         return PAPI_EMISC;
     }
