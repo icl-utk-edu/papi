@@ -342,16 +342,28 @@ fn_exit:
     return kind;
 }
 
-int cuptic_init(const char **pdisabled_reason)
+const char *cuptic_disabled_reason_g;
+
+void cuptic_disabled_reason_set(const char *msg)
+{
+    cuptic_disabled_reason_g = msg;
+}
+
+void cuptic_disabled_reason_get(const char **pmsg)
+{
+    *pmsg = cuptic_disabled_reason_g;
+}
+
+int cuptic_init(void)
 {
     int papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
-        *pdisabled_reason = "Unable to load CUDA library functions.";
+        cuptic_disabled_reason_set("Unable to load CUDA library functions.");
         goto fn_exit;
     }
 
     if (util_gpu_collection_kind() == GPU_COLLECTION_MIXED) {
-        *pdisabled_reason = "No support for systems with mixed compute capabilities, such as CC < 7.0 and CC > 7.0 GPUS.";
+        cuptic_disabled_reason_set("No support for systems with mixed compute capabilities, such as CC < 7.0 and CC > 7.0 GPUS.");
         papi_errno = PAPI_ECMP;
         goto fn_exit;
     }

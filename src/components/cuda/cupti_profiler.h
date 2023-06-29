@@ -9,7 +9,7 @@
 
 #include "cupti_utils.h"
 
-int cuptip_init(const char **pdisabled_reason);
+int cuptip_init(void);
 int cuptip_control_create(cuptiu_event_table_t *event_names, void *thr_info, void **pctl);
 int cuptip_control_destroy(void **pctl);
 int cuptip_control_start(void *ctl, void *thr_info);

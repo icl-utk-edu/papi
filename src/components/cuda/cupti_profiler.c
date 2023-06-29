@@ -1317,7 +1317,7 @@ static void free_all_enumerated_metrics(void)
 }
 
 /* CUPTI Profiler component API functions */
-int cuptip_init(const char **pdisabled_reason)
+int cuptip_init(void)
 {
     COMPDBG("Entering.\n");
     int papi_errno = PAPI_OK;
@@ -1325,19 +1325,19 @@ int cuptip_init(const char **pdisabled_reason)
     papi_errno = load_cupti_perf_sym();
     papi_errno += load_nvpw_sym();
     if (papi_errno != PAPI_OK) {
-        *pdisabled_reason = "Unable to load CUDA library functions.";
+        cuptic_disabled_reason_set("Unable to load CUDA library functions.");
         goto fn_fail;
     }
     num_gpus = cuptic_get_device_count();
     if (num_gpus <= 0) {
-        *pdisabled_reason = "No GPUs found on system.";
+        cuptic_disabled_reason_set("No GPUs found on system.");
         goto fn_fail;
     }
 
     papi_errno = initialize_cupti_profiler_api();
     papi_errno += initialize_perfworks_api();
     if (papi_errno != PAPI_OK) {
-        *pdisabled_reason = "Unable to initialize CUPTI profiler libraries.";
+        cuptic_disabled_reason_set("Unable to initialize CUPTI profiler libraries.");
         goto fn_fail;
     }
     papi_errno = init_all_metrics();
@@ -1346,7 +1346,7 @@ int cuptip_init(const char **pdisabled_reason)
     }
     papi_errno = cuInitPtr(0);
     if (papi_errno != CUDA_SUCCESS) {
-        *pdisabled_reason = "Failed to initialize CUDA driver API.";
+        cuptic_disabled_reason_set("Failed to initialize CUDA driver API.");
         goto fn_fail;
     }
     return PAPI_OK;

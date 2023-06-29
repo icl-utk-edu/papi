@@ -13,7 +13,8 @@ typedef void *cuptid_ctl_t;
 typedef void *cuptid_thread_info_t;
 
 void cuptid_shutdown(void);
-int cuptid_init(const char **disabled_reason);
+void cuptid_disabled_reason_get(const char **msg);
+int cuptid_init(void);
 int cuptid_thread_info_create(cuptid_thread_info_t *info);
 int cuptid_thread_info_destroy(cuptid_thread_info_t *info);
 int cuptid_control_create(cuptiu_event_table_t *event_names, void *thread_info, cuptid_ctl_t *pcupti_ctl);

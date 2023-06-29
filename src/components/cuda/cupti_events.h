@@ -9,7 +9,7 @@
 
 #include "cupti_utils.h"
 
-int cuptie_init(const char **pdisabled_reason);
+int cuptie_init(void);
 int cuptie_control_create(cuptiu_event_table_t *event_names, void *thr_info, void **pctl);
 int cuptie_control_destroy(void **pctl);
 int cuptie_control_start(void *ctl, void *thr_info);

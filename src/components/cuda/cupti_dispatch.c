@@ -36,10 +36,15 @@ void cuptid_shutdown(void)
     cuptic_shutdown();
 }
 
-int cuptid_init(const char **pdisabled_reason)
+void cuptid_disabled_reason_get(const char **msg)
+{
+    cuptic_disabled_reason_get(msg);
+}
+
+int cuptid_init(void)
 {
     int papi_errno;
-    papi_errno = cuptic_init(pdisabled_reason);
+    papi_errno = cuptic_init();
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -47,7 +52,7 @@ int cuptid_init(const char **pdisabled_reason)
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        papi_errno = cuptip_init(pdisabled_reason);
+        papi_errno = cuptip_init();
 #else
         *pdisabled_reason = "PAPI not built with NVIDIA profiler API support.";
         papi_errno = PAPI_ECMP;
@@ -57,14 +62,14 @@ int cuptid_init(const char **pdisabled_reason)
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        papi_errno = cuptie_init(pdisabled_reason);
+        papi_errno = cuptie_init();
 #else
-        *pdisabled_reason = "Unknown events API problem.";
+        cuptic_disabled_reason_set("Unknown events API problem.");
         papi_errno = PAPI_ECMP;
 #endif
 
     } else {
-        *pdisabled_reason = "CUDA configuration not supported.";
+        cuptic_disabled_reason_set("CUDA configuration not supported.");
         papi_errno = PAPI_ECMP;
     }
 fn_exit:

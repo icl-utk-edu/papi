@@ -5,7 +5,8 @@
  */
 
 #include <papi.h>
-#include "cupti_utils.h"
+#include "cupti_events.h"
+#include "cupti_common.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 /* Functions needed by CUPTI Events API */
@@ -13,9 +14,9 @@
 
 /* CUPTI Events component API functions */
 
-int cuptie_init(char **pdisabled_reason)
+int cuptie_init(void)
 {
-    *pdisabled_reason = "CUDA events API not implemented.";
+    cuptic_disabled_reason_set("CUDA events API not implemented.");
     return PAPI_ENOIMPL;
 }
 
