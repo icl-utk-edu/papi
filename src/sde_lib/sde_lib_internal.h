@@ -199,6 +199,7 @@ sde_counter_t *ht_lookup_by_id(papisde_list_entry_t *hash_table, uint32_t uniq_i
 sde_counter_t *ht_lookup_by_name(papisde_list_entry_t *hash_table, const char *name);
 sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, uint32_t uniq_id);
 void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_t *sde_counter);
+int ht_to_array(papisde_list_entry_t *hash_table, sde_counter_t **rslt_array);
 uint32_t ht_hash_name(const char *str);
 uint32_t ht_hash_id(uint32_t uniq_id);
 papi_handle_t do_sde_init(const char *name_of_library, papisde_control_t *gctl);

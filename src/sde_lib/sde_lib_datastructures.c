@@ -54,6 +54,63 @@ void ht_insert(papisde_list_entry_t *hash_table, int ht_key, sde_counter_t *sde_
     return;
 }
 
+// This function serializes the items contained in the hash-table. A pointer
+// to the resulting serialized array is put into the parameter "rslt_array".
+// The return value indicates the size of the array.
+// The array items are copies of the hash-table item into newly allocated
+// memory. They do not reference the original items in the hash table. However,
+// this is a shallow copy. If the items contain pointers, then the pointed
+// elements are _NOT_ copied.
+// The caller is responsible for freeing the resulting array memory.
+int ht_to_array(papisde_list_entry_t *hash_table, sde_counter_t **rslt_array)
+{
+    int i, item_cnt = 0, index=0;
+    papisde_list_entry_t *list_head, *curr;
+
+    // First pass counts how many items have been inserted in the hash table.
+
+    // Traverse all the elements of the hash-table.
+    for(i=0; i<PAPISDE_HT_SIZE; i++){
+        // For each element traverse the linked-list starting there (if any).
+        list_head = &(hash_table[i]);
+
+        if(NULL != list_head->item){
+            item_cnt++;
+        }
+        for(curr = list_head->next; NULL != curr; curr=curr->next){
+            if(NULL == curr->item){ // This can only legally happen for the head of the list.
+                SDE_ERROR("ht_to_array(): the hash table is clobbered.");
+            }else{
+                item_cnt++;
+            }
+        }
+    }
+
+    // Allocate a contiguous array to store the items.
+    sde_counter_t *array = (sde_counter_t *)malloc( item_cnt * sizeof(sde_counter_t));
+
+    // Traverse the hash-table again and copy all the items to the array we just allocated.
+    for(i=0; i<PAPISDE_HT_SIZE; i++){
+        list_head = &(hash_table[i]);
+
+        if(NULL != list_head->item){
+            memcpy( &array[index], list_head->item, sizeof(sde_counter_t) );
+            index++;
+        }
+        for(curr = list_head->next; NULL != curr; curr=curr->next){
+            if(NULL == curr->item){ // This can only legally happen for the head of the list.
+                SDE_ERROR("ht_to_array(): the hash table is clobbered.");
+            }else{
+                memcpy( &array[index], curr->item, sizeof(sde_counter_t) );
+                index++;
+            }
+        }
+    }
+    *rslt_array = array;
+
+    return item_cnt;
+}
+
 sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, uint32_t uniq_id)
 {
     papisde_list_entry_t *list_head, *curr, *prev;
