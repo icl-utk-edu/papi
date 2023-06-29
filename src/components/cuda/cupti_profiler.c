@@ -1274,6 +1274,11 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
             if (passes > 1) {
                 snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
             }
+
+            const char *token_sw_evt = "sass";
+            if (strstr(nv_name, token_sw_evt) != NULL) {
+                snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (SW event)");
+            }
         }
         papi_free(temp);
     }
