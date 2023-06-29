@@ -11,6 +11,8 @@
 
 typedef void *cuptid_ctl_t;
 typedef void *cuptid_thread_info_t;
+typedef cuptiu_event_table_t ntv_event_table_t;
+typedef cuptiu_event_t ntv_event_t;
 
 void cuptid_shutdown(void);
 void cuptid_disabled_reason_get(const char **msg);
@@ -25,4 +27,12 @@ int cuptid_control_read(cuptid_ctl_t ctl, long long *values);
 int cuptid_control_reset(cuptid_ctl_t ctl);
 int cuptid_event_enum(cuptiu_event_table_t *all_evt_names);
 int cuptid_event_name_to_descr(char *evt_name, char *descr);
+
+void cuptid_event_table_destroy(ntv_event_table_t **evt_table);
+int cuptid_event_table_create(ntv_event_table_t **evt_table);
+int cuptid_event_table_select_by_idx(ntv_event_table_t *src, int count, int *idcs, ntv_event_table_t **pevt_names);
+int cuptid_event_table_find_name(ntv_event_table_t *evt_table, const char *evt_name, void **found_rec);
+int cuptid_event_table_insert_record(ntv_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
+int cuptid_event_table_get_item(ntv_event_table_t *evt_table, unsigned int evt_idx, void **record);
+
 #endif /* __CUPTI_DISPATCH_H__ */

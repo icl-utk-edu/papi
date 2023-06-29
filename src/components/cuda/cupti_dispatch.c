@@ -229,3 +229,33 @@ int cuptid_event_name_to_descr(char *evt_name, char *descr)
     }
     return PAPI_ECMP;
 }
+
+void cuptid_event_table_destroy(ntv_event_table_t **evt_table)
+{
+    cuptiu_event_table_destroy(evt_table);
+}
+
+int cuptid_event_table_create(ntv_event_table_t **evt_table)
+{
+    return cuptiu_event_table_create(sizeof(cuptiu_event_t), evt_table);
+}
+
+int cuptid_event_table_select_by_idx(ntv_event_table_t *evt_table, int count, int *idcs, ntv_event_table_t **pevt_names)
+{
+    return cuptiu_event_table_select_by_idx(evt_table, count, idcs, pevt_names);
+}
+
+int cuptid_event_table_find_name(ntv_event_table_t *evt_table, const char *evt_name, void **found_rec)
+{
+    return cuptiu_event_table_find_name(evt_table, evt_name, found_rec);
+}
+
+int cuptid_event_table_insert_record(ntv_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos)
+{
+    return cuptiu_event_table_insert_record(evt_table, evt_name, evt_code, evt_pos);
+}
+
+int cuptid_event_table_get_item(ntv_event_table_t *evt_table, unsigned int evt_idx, void **record)
+{
+    return cuptiu_event_table_get_item(evt_table, evt_idx, record);
+}

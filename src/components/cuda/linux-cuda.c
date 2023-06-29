@@ -31,7 +31,7 @@ papi_vector_t _cuda_vector;
 
 unsigned _cuda_lock;
 
-cuptiu_event_table_t *global_event_names;
+ntv_event_table_t *global_event_names;
 
 static int cuda_init_component(int cidx);
 static int cuda_shutdown_component(void);
@@ -134,7 +134,7 @@ static int cuda_init_component(int cidx)
 static int cuda_shutdown_component(void)
 {
     COMPDBG("Entering.\n");
-    cuptiu_event_table_destroy(&global_event_names);
+    cuptid_event_table_destroy(&global_event_names);
 
     if (!_cuda_vector.cmp_info.initialized ||
     _cuda_vector.cmp_info.disabled != PAPI_OK) {
@@ -154,7 +154,7 @@ static int cuda_init_private(void)
     COMPDBG("Entering.\n");
 
     /* Initialize global_event_names array */
-    papi_errno = cuptiu_event_table_create(sizeof(cuptiu_event_t), &global_event_names);
+    papi_errno = cuptid_event_table_create(&global_event_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -233,15 +233,15 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    cuptiu_event_t *evt_rec;
-    papi_errno = cuptiu_event_table_find_name(global_event_names, name, (void**) &evt_rec);
+    ntv_event_t *evt_rec;
+    papi_errno = cuptid_event_table_find_name(global_event_names, name, (void**) &evt_rec);
     if (papi_errno == PAPI_OK) {
         *event_code = evt_rec->evt_code;
     }
     else {
         _papi_hwi_lock(COMPONENT_LOCK);
         *event_code = global_event_names->count;
-        papi_errno = cuptiu_event_table_insert_record(global_event_names, name, global_event_names->count, 0);
+        papi_errno = cuptid_event_table_insert_record(global_event_names, name, global_event_names->count, 0);
         _papi_hwi_unlock(COMPONENT_LOCK);
     }
 fn_exit:
@@ -254,8 +254,8 @@ static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len)
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    cuptiu_event_t *evt_rec;
-    papi_errno = cuptiu_event_table_get_item(global_event_names, event_code, (void **) &evt_rec);
+    ntv_event_t *evt_rec;
+    papi_errno = cuptid_event_table_get_item(global_event_names, event_code, (void **) &evt_rec);
     if (papi_errno != PAPI_OK) {
         return PAPI_ENOEVNT;
     }
@@ -354,8 +354,8 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
 
     /* Validate the added names so far in a temporary context */
     void *tmp_context;
-    cuptiu_event_table_t *select_names;
-    papi_errno = cuptiu_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
+    ntv_event_table_t *select_names;
+    papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -367,7 +367,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     papi_errno = cuptid_control_destroy(&tmp_context);
 
 fn_exit:
-    cuptiu_event_table_destroy(&select_names);
+    cuptid_event_table_destroy(&select_names);
     LOCKDBG("Unlocking.\n");
     _papi_hwi_unlock(_cuda_lock);
     return papi_errno;
@@ -403,8 +403,8 @@ static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
     for (i=0; i<control->events_count; i++) {
         control->values[i] = 0;
     }
-    cuptiu_event_table_t *select_names;
-    papi_errno = cuptiu_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
+    ntv_event_table_t *select_names;
+    papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -416,7 +416,7 @@ static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
     papi_errno = cuptid_control_start( control->cupti_ctl, control->thread_info );
 
 fn_exit:
-    cuptiu_event_table_destroy(&select_names);
+    cuptid_event_table_destroy(&select_names);
     LOCKDBG("Unlocking.\n");
     _papi_hwi_unlock(_cuda_lock);
     return papi_errno;
