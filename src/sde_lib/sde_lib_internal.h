@@ -139,6 +139,7 @@ struct sde_counter_s {
    int overflow;
    int cntr_type;
    int cntr_mode;
+   int ref_count;
    papisde_library_desc_t *which_lib;
 };
 
@@ -187,7 +188,7 @@ struct papisde_control_s {
 
 int sdei_setup_counter_internals( papi_handle_t handle, const char *event_name, int cntr_mode, int cntr_type, enum CNTR_CLASS cntr_class, cntr_class_specific_t cntr_union );
 int sdei_delete_counter(papisde_library_desc_t* lib_handle, const char *name);
-int sdei_free_counter(sde_counter_t *counter);
+int sdei_inc_ref_count(sde_counter_t *counter);
 int sdei_read_counter_group( sde_counter_t *counter, long long int *rslt_ptr );
 void sdei_counting_set_to_list( void *cset_handle, cset_list_object_t **list_head );
 int sdei_read_and_update_data_value( sde_counter_t *counter, long long int previous_value, long long int *rslt_ptr );

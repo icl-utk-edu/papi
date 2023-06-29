@@ -211,35 +211,29 @@ papi_sde_enable( papi_handle_t handle ){
 int
 papi_sde_shutdown( papi_handle_t handle ){
     papisde_library_desc_t *lib_handle, *tmp_lib, *next_lib, *prev_lib;
-    papisde_list_entry_t *list_head, *curr;
-    int i, ret_val=SDE_OK;
+    int i;
 
     lib_handle = (papisde_library_desc_t *) handle;
     papisde_control_t *gctl = _papisde_global_control;
     if( (NULL==lib_handle) || lib_handle->disabled || (NULL==gctl) || gctl->disabled)
         return SDE_OK;
 
+    SDEDBG("papi_sde_shutdown(): for library '%s'.\n", lib_handle->libraryName);
+
     sde_lock();
-    for(i=0; i<PAPISDE_HT_SIZE; i++){
-        list_head = &(lib_handle->lib_counters[i]);
-        if( NULL == list_head )
-            continue;
 
-        if(NULL != list_head->item){
-            sdei_free_counter(list_head->item);
-        }
+    sde_counter_t *all_lib_counters;
+    int item_cnt = ht_to_array(lib_handle->lib_counters, &all_lib_counters);
 
-        for(curr = list_head->next; NULL != curr; curr=list_head->next){
-            if(NULL == curr->item){ // This can only legally happen for the head of the list.
-                SDE_ERROR("papi_sde_shutdown(): the counter hash table is clobbered.");
-                ret_val = SDE_EINVAL;
-                goto fn_exit;
-            }
-            sdei_free_counter(curr->item);
-            list_head->next = curr->next;
-            free(curr);
-        }
+    for(i=0; i<item_cnt; i++){
+        char *cntr_name = all_lib_counters[i].name;
+        sdei_delete_counter(lib_handle, cntr_name);
     }
+
+    // We don't need the serialized array any more. Besides, the pointers inside
+    // its elements have _not_ been copied, so they are junk by now, since we
+    // deleted the counters.
+    free(all_lib_counters);
 
     // Keep the `gctl` struct consistent
     // 1. If the lib head is this one, just set to next (could be NULL)
@@ -263,9 +257,8 @@ papi_sde_shutdown( papi_handle_t handle ){
     free(lib_handle->libraryName);
     free(lib_handle);
 
-fn_exit:
     sde_unlock();
-    return ret_val;
+    return SDE_OK;
 }
 
 
@@ -353,7 +346,7 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
     char *full_event_name;
     int ret_val;
 
-    SDEDBG("Preparing to unregister counter\n");
+    SDEDBG("Preparing to unregister counter: '%s'.\n",event_name);
 
     lib_handle = (papisde_library_desc_t *) handle;
     papisde_control_t *gctl = _papisde_global_control;
@@ -525,7 +518,6 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
         (void)ht_insert(gctl->all_reg_counters, ht_hash_id(cntr_group_uniq_id), tmp_group);
 
     }else{
-        // should the following branch ever be true? Why do we already have a group registered if it's empty?
         if( NULL == tmp_group->u.cntr_group.group_head ){
             SDE_ERROR("papi_sde_add_counter_to_group(): Found an empty counter group: '%s'. This might indicate that a cleanup routine is not doing its job.", group_name);
         }
@@ -544,6 +536,9 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
     new_head->item = tmp_item;
     new_head->next = tmp_group->u.cntr_group.group_head;
     tmp_group->u.cntr_group.group_head = new_head;
+    if( SDE_OK != sdei_inc_ref_count(tmp_item) ){
+        SDE_ERROR("papi_sde_add_counter_to_group(): Error while adding counter '%s' to counter group: '%s'.", tmp_item->name, group_name);
+    }
 
     free(full_group_name);
     ret_val = SDE_OK;
