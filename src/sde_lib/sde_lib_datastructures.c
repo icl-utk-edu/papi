@@ -125,8 +125,11 @@ sde_counter_t *ht_delete(papisde_list_entry_t *hash_table, int ht_key, uint32_t 
     // If the head contains the element to be deleted, free the space of the counter and pull the list up.
     if( list_head->item->glb_uniq_id == uniq_id ){
         item = list_head->item;
-        if( NULL != list_head->next)
+        if( NULL != list_head->next){
             *list_head = *(list_head->next);
+        }else{
+            memset(list_head, 0, sizeof(papisde_list_entry_t));
+        }
         return item;
     }
 
