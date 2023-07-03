@@ -14,6 +14,7 @@
 
 static int aggregate_value_in_group(long long int *data, long long int *rslt, int cntr_type, int group_flags);
 static inline int cast_and_store(void *data, long long int previous_value, void *rslt_ptr, int cntr_type);
+static inline int free_counter_resources(sde_counter_t *counter);
 
 int _sde_be_verbose = 0;
 int _sde_debug = 0;
@@ -232,82 +233,153 @@ int sdei_setup_counter_internals( papi_handle_t handle, const char *event_name, 
     return ret_val;
 }
 
-int sdei_delete_counter(papisde_library_desc_t* lib_handle, const char* name) {
+int sdei_inc_ref_count(sde_counter_t *counter){
+    papisde_list_entry_t *curr;
+    if( NULL == counter )
+        return SDE_OK;
 
+    // If the counter is a group, recursivelly increment the ref_count of all its children.
+    if(CNTR_CLASS_GROUP == counter->cntr_class){
+        curr = counter->u.cntr_group.group_head;
+        do{
+            sde_counter_t *tmp_cntr = curr->item;
+            // recursively increment the ref_count of all the elements in the group.
+            int ret_val = sdei_inc_ref_count(tmp_cntr);
+            if( SDE_OK != ret_val )
+                return ret_val;
+            curr = curr->next;
+        }while(NULL != curr);
+    }
+
+    // Increment the ref_count of the counter itself, INCLUDING the case where the counter is a group.
+    (counter->ref_count)++;
+
+    return SDE_OK;
+}
+
+int sdei_delete_counter(papisde_library_desc_t* lib_handle, const char* name) {
     sde_counter_t *tmp_item;
     papisde_control_t *gctl;
     uint32_t item_uniq_id;
+    int ret_val = SDE_OK;
 
     gctl = sdei_get_global_struct();
 
     // Look for the counter entry in the hash-table of the library
     tmp_item = ht_lookup_by_name(lib_handle->lib_counters, name);
-    if( NULL == tmp_item )
-        return 1;
+    if( NULL == tmp_item ){
+        ret_val = SDE_EINVAL;
+        goto fn_exit;
+    }
+
+    if( CNTR_CLASS_GROUP == tmp_item->cntr_class ){
+        papisde_list_entry_t *curr, *prev;
+        // If we are dealing with a goup, then we need to recurse down all its children and
+        // delete them (this might mean free them, or just decrement their ref_count).
+        curr = tmp_item->u.cntr_group.group_head;
+        prev = curr;
+        while(NULL != curr){
+            int counter_is_dead = 0;
+            sde_counter_t *tmp_cntr = curr->item;
+            if( NULL == tmp_cntr ){
+                ret_val = SDE_EMISC;
+                goto fn_exit;
+            }
+
+            // If this counter is going to be freed, we need to remove it from this group.
+            if( 0 == tmp_cntr->ref_count )
+                counter_is_dead = 1;
+
+            // recursively delete all the elements of the group.
+            int ret_val = sdei_delete_counter(lib_handle, tmp_cntr->name);
+            if( SDE_OK != ret_val )
+                goto fn_exit;
+
+            if( counter_is_dead ){
+                if( curr == tmp_item->u.cntr_group.group_head ){
+                    // if we were removing with the head, change the head, we can't free() it.
+                    tmp_item->u.cntr_group.group_head = curr->next;
+                    prev = curr->next;
+                    curr = curr->next;
+                }else{
+                    // if we are removing an element, first bridge the previous to the next.
+                    prev->next = curr->next;
+                    free(curr);
+                    curr = prev->next;
+                }
+            }else{
+                // if we are not removing anything, just move the pointers.
+                prev = curr;
+                curr = curr->next;
+            }
+        }
+    }
 
     item_uniq_id = tmp_item->glb_uniq_id;
 
-    // Delete the entry from the library hash-table (which hashes by name)
-    tmp_item = ht_delete(lib_handle->lib_counters, ht_hash_name(name), item_uniq_id);
-    if( NULL == tmp_item ){
-        return 1;
+    // If the reference count is not zero, then we don't remove it from the hash tables
+    if( 0 == tmp_item->ref_count ){
+        // Delete the entry from the library hash-table (which hashes by name)
+        tmp_item = ht_delete(lib_handle->lib_counters, ht_hash_name(name), item_uniq_id);
+        if( NULL == tmp_item ){
+            ret_val = SDE_EMISC;
+            goto fn_exit;
+        }
+
+        // Delete the entry from the global hash-table (which hashes by id) and free the memory
+        // occupied by the counter (not the hash-table entry 'papisde_list_entry_t', the 'sde_counter_t')
+        tmp_item = ht_delete(gctl->all_reg_counters, ht_hash_id(item_uniq_id), item_uniq_id);
+        if( NULL == tmp_item ){
+            ret_val = SDE_EMISC;
+            goto fn_exit;
+        }
+
+        // We free the counter only once, although it is in two hash-tables,
+        // because it is the same structure that is pointed to by both hash-tables.
+        free_counter_resources(tmp_item);
+
+        // Decrement the number of live events.
+        (gctl->num_live_events)--;
+    }else{
+        (tmp_item->ref_count)--;
     }
 
-    // Delete the entry from the global hash-table (which hashes by id) and free the memory
-    // occupied by the counter (not the hash-table entry 'papisde_list_entry_t', the 'sde_counter_t')
-    tmp_item = ht_delete(gctl->all_reg_counters, ht_hash_id(item_uniq_id), item_uniq_id);
-    if( NULL == tmp_item ){
-        return 1;
-    }
-
-    // We free the counter only once, although it is in two hash-tables,
-    // because it is the same structure that is pointed to by both hash-tables.
-    sdei_free_counter(tmp_item);
-
-    // Decrement the number of live events.
-    gctl->num_live_events--;
-
-    return 0;
+fn_exit:
+    return ret_val;
 }
 
-int sdei_free_counter(sde_counter_t *counter){
+int free_counter_resources(sde_counter_t *counter){
     int i, ret_val = SDE_OK;
-    papisde_list_entry_t *curr;
 
     if( NULL == counter )
         return SDE_OK;
 
-    free(counter->name);
-    free(counter->description);
+    if( 0 == counter->ref_count ){
+        switch(counter->cntr_class){
+            case CNTR_CLASS_CREATED:
+                SDEDBG(" + Freeing Created Counter Data.\n");
+                free(counter->u.cntr_basic.data);
+                break;
+            case CNTR_CLASS_RECORDER:
+                SDEDBG(" + Freeing Recorder Data.\n");
+                free(counter->u.cntr_recorder.data->sorted_buffer);
+                for(i=0; i<EXP_CONTAINER_ENTRIES; i++){
+                    free(counter->u.cntr_recorder.data->ptr_array[i]);
+                }
+                free(counter->u.cntr_recorder.data);
+                break;
+            case CNTR_CLASS_CSET:
+                SDEDBG(" + Freeing CountingSet Data.\n");
+                ret_val = cset_delete(counter->u.cntr_cset.data);
+                break;
+        }
 
-    switch(counter->cntr_class){
-        case CNTR_CLASS_CREATED:
-            free(counter->u.cntr_basic.data);
-            break;
-        case CNTR_CLASS_RECORDER:
-            free(counter->u.cntr_recorder.data->sorted_buffer);
-            for(i=0; i<EXP_CONTAINER_ENTRIES; i++){
-                free(counter->u.cntr_recorder.data->ptr_array[i]);
-            }
-            free(counter->u.cntr_recorder.data);
-            break;
-        case CNTR_CLASS_CSET:
-            ret_val = cset_delete(counter->u.cntr_cset.data);
-            break;
-        case CNTR_CLASS_GROUP:
-            curr = counter->u.cntr_group.group_head;
-            do{
-                sde_counter_t *tmp_cntr = curr->item;
-                // recursively free all the elements of the group.
-                ret_val = sdei_free_counter(tmp_cntr);
-                if( SDE_OK != ret_val )
-                    return ret_val;
-                curr = curr->next;
-            }while(NULL != curr);
-            break;
+        SDEDBG(" -> Freeing Counter '%s'.\n",counter->name);
+        free(counter->name);
+        free(counter->description);
+        free(counter);
     }
 
-    free(counter);
     return ret_val;
 }
 

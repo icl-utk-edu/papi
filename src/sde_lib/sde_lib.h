@@ -41,6 +41,7 @@
 #define SDE_ENOMEM     -2     /**< Insufficient memory */
 #define SDE_ECMP       -4     /**< Not supported by component */
 #define SDE_ENOEVNT    -7     /**< Event does not exist */
+#define SDE_EMISC      -14    /**< Unknown error code */
 
 #define register_fp_counter register_counter_cb
 #define papi_sde_register_fp_counter papi_sde_register_counter_cb
