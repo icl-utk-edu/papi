@@ -1,2 +1,0 @@
-char* ld_prld="LD_PRELOAD=@CURR_DIR@/sampling/libactivity.so";
-

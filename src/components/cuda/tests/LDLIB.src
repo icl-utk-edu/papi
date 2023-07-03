@@ -1,6 +1,0 @@
-# Add cupti directory to LD_LIBRARY_PATH; necessary for code to run on PEAK.
-# NOTE on peak you also need 'module load cuda' to even get the cuda 
-# directories. That will set environment variable $CUDAPATH, you may need to
-# 'export CUDA_DIR=$CUDAPATH'.
-# version for PEAK, Saturn.
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_DIR/extras/CUPTI/lib64
