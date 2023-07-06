@@ -7,16 +7,12 @@
 #include <papi.h>
 #include "flops.h"
 
-#if defined(ARM)
-#include <arm_fp16.h>
-typedef __fp16 half;
-#endif
-
 #define DOUBLE 2
 #define SINGLE 1
 #define HALF   0
 
 #define CHOLESKY  3
+#define GEMM      2
 #define NORMALIZE 1
 
 #define MAXDIM 51
@@ -38,35 +34,38 @@ double normalize_double( int n, double *xd );
 void cholesky_double( int n, double *ld, double *ad );
 void exec_double_norm( int EventSet, FILE *fp );
 void exec_double_cholesky( int EventSet, FILE *fp );
-void keep_double_norm_res( int n, double *xd );
-void keep_double_cholesky_res( int n, double *ld );
+void exec_double_gemm( int EventSet, FILE *fp );
+void keep_double_vec_res( int n, double *xd );
+void keep_double_mat_res( int n, double *ld );
 
 float normalize_single( int n, float *xs );
 void cholesky_single( int n, float  *ls, float *as );
 void exec_single_norm( int EventSet, FILE *fp );
 void exec_single_cholesky( int EventSet, FILE *fp );
-void keep_single_norm_res( int n, float *xs );
-void keep_single_cholesky_res( int n, float *ls );
+void exec_single_gemm( int EventSet, FILE *fp );
+void keep_single_vec_res( int n, float *xs );
+void keep_single_mat_res( int n, float *ls );
 
 #if defined(ARM)
 half normalize_half( int n, half *xh );
 void cholesky_half( int n, half *lh, half *ah );
 void exec_half_norm( int EventSet, FILE *fp );
 void exec_half_cholesky( int EventSet, FILE *fp );
-void keep_half_norm_res( int n, half *xh );
-void keep_half_cholesky_res( int n, half *lh );
+void exec_half_gemm( int EventSet, FILE *fp );
+void keep_half_vec_res( int n, half *xh );
+void keep_half_mat_res( int n, half *lh );
 #endif
 
 void print_header( FILE *fp, char *prec, char *kernel ) {
 
     fprintf(fp, "#%s %s\n", prec, kernel);
-    fprintf(fp, "#N RawEvtCnt NormdEvtCnt ExpectedAdd ExpectedSub ExpectedMul ExpectedDiv ExpectedSqrt ExpectedTotal\n");
+    fprintf(fp, "#N RawEvtCnt NormdEvtCnt ExpectedAdd ExpectedSub ExpectedMul ExpectedDiv ExpectedSqrt ExpectedFMA ExpectedTotal\n");
 }
 
 void resultline( int i, int kernel, int EventSet, FILE *fp ) {
 
     long long flpins = 0, denom;
-    long long papi, all, add, sub, mul, div, sqrt;
+    long long papi, all, add, sub, mul, div, sqrt, fma;
     int retval;
 
     if ( (retval=PAPI_stop(EventSet, &flpins)) != PAPI_OK ) {
@@ -86,6 +85,21 @@ void resultline( int i, int kernel, int EventSet, FILE *fp ) {
           } else {
               sqrt = 1;
           }
+          fma  = 0;
+          break;
+      case GEMM:
+          all  = 2*i*i*i;
+          if ( 0 == i ) {
+              denom = 1;
+          } else {
+              denom = all;
+          }
+          add  = 0;
+          sub  = 0;
+          mul  = 0;
+          div  = 0;
+          sqrt = 0;
+          fma  = i*i*i; // Need to derive.
           break;
       case CHOLESKY:
           all  = i*(2*i*i+9*i+1)/6.0;
@@ -99,6 +113,7 @@ void resultline( int i, int kernel, int EventSet, FILE *fp ) {
           mul  = i*(i-1)*(i+4)/6.0;
           div  = i*(i-1)/2.0;
           sqrt = i;
+          fma  = 0;
           break;
       default:
           all   = -1;
@@ -108,14 +123,16 @@ void resultline( int i, int kernel, int EventSet, FILE *fp ) {
           mul   = -1;
           div   = -1;
           sqrt  = -1;
+          fma   = -1;
     }
 
     papi = flpins << FMA;
 
-    fprintf(fp, "%d %lld %.17g %lld %lld %lld %lld %lld %lld\n", i, papi, ((double)papi)/((double)denom), add, sub, mul, div, sqrt, all);
+    fprintf(fp, "%d %lld %.17g %lld %lld %lld %lld %lld %lld %lld\n", i, papi, ((double)papi)/((double)denom), add, sub, mul, div, sqrt, fma, all);
 }
 
 #if defined(ARM)
+
 half normalize_half( int n, half *xh ) {
 
     if ( 0 == n )
@@ -130,7 +147,7 @@ half normalize_half( int n, half *xh ) {
         aa += buff;
     }
 
-    aa = vsqrth_f16(aa);
+    aa = SQRT_VEC_SH(aa);
     for ( i = 0; i < n; i++ )
         xh[i] = xh[i]/aa;
 
@@ -153,13 +170,29 @@ void cholesky_half( int n, half *lh, half *ah ) {
 
             if( i == j ) {
                 buff = ah[i * n + i] - sum;
-                lh[i * n + j] = vsqrth_f16(buff);
+                lh[i * n + j] = SQRT_VEC_SH(buff);
             } else {
                 buff = ah[i * n + i] - sum;
                 sum = ((half)1.0);
                 sum = sum/lh[j * n + j];
                 lh[i * n + j] = sum * buff;
             }
+        }
+    }
+}
+
+void gemm_half( int n, half *ch, half *ah, half *bh ) {
+
+    int i, j, k;
+    half sum = 0.0;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            sum = 0.0;
+            for (k = 0; k < n; k++) {
+                FMA_VEC_SH(sum, ah[i * n + k], bh[k * n + j], sum);
+            }
+            ch[i * n + j] = sum;
         }
     }
 }
@@ -204,6 +237,24 @@ void cholesky_single( int n, float *ls, float *as ) {
     }
 }
 
+void gemm_single( int n, float *cs, float *as, float *bs ) {
+
+    int i, j, k;
+    SP_SCALAR_TYPE argI, argJ, argK;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            argK = SET_VEC_SS(0.0);
+            for (k = 0; k < n; k++) {
+                argI = SET_VEC_SS(as[i * n + k]);
+                argJ = SET_VEC_SS(bs[k * n + j]);
+                FMA_VEC_SS(argK, argI, argJ, argK);
+            }
+            cs[i * n + j] = ((float*)&argK)[0];
+        }
+    }
+}
+
 double normalize_double( int n, double *xd ) {
 
     if ( 0 == n )
@@ -243,6 +294,25 @@ void cholesky_double( int n, double *ld, double *ad ) {
     }
 }
 
+
+void gemm_double( int n, double *cd, double *ad, double *bd ) {
+
+    int i, j, k;
+    DP_SCALAR_TYPE argI, argJ, argK;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            argK = SET_VEC_SD(0.0);
+            for (k = 0; k < n; k++) {
+                argI = SET_VEC_SD(ad[i * n + k]);
+                argJ = SET_VEC_SD(bd[k * n + j]);
+                FMA_VEC_SD(argK, argI, argJ, argK);
+            }
+            cd[i * n + j] = ((double*)&argK)[0];
+        }
+    }
+}
+
 void exec_double_norm( int EventSet, FILE *fp ) {
 
     int i, n, retval;
@@ -258,7 +328,7 @@ void exec_double_norm( int EventSet, FILE *fp ) {
     for ( n = 0; n < MAXDIM; n++ ) {
         /* Initialize the needed arrays at this size. */
         for ( i = 0; i < n; i++ ) {
-            xd[i] = ((double)rand())/((double)RAND_MAX) * (double)1.1;
+            xd[i] = ((double)random())/((double)RAND_MAX) * (double)1.1;
         }
 
         /* Reset PAPI count. */
@@ -273,7 +343,7 @@ void exec_double_norm( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, NORMALIZE, EventSet, fp );
 
-        keep_double_norm_res( n, xd );
+        keep_double_vec_res( n, xd );
     }
 
     /* Free dynamically allocated memory. */
@@ -301,7 +371,7 @@ void exec_double_cholesky( int EventSet, FILE *fp ) {
                 ld[i * n + j] = 0.0;
                 ld[j * n + i] = 0.0;
 
-                ad[i * n + j] = ((double)rand())/((double)RAND_MAX) * (double)1.1;
+                ad[i * n + j] = ((double)random())/((double)RAND_MAX) * (double)1.1;
                 ad[j * n + i] = ad[i * n + j];
             }
             ad[i * n + i] = 0.0;
@@ -329,14 +399,58 @@ void exec_double_cholesky( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, CHOLESKY, EventSet, fp );
 
-        keep_double_cholesky_res( n, ld );
+        keep_double_mat_res( n, ld );
     }
 
     free( ad );
     free( ld );
 }
 
-void keep_double_norm_res( int n, double *xd ) {
+void exec_double_gemm( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    double *ad=NULL, *bd=NULL, *cd=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Double-Precision", "GEMM" );
+
+    /* Allocate the matrices. */
+    ad = malloc( MAXDIM * MAXDIM * sizeof(double) );
+    bd = malloc( MAXDIM * MAXDIM * sizeof(double) );
+    cd = malloc( MAXDIM * MAXDIM * sizeof(double) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < n; j++ ) {
+                cd[i * n + j] = 0.0;
+                ad[i * n + j] = ((double)random())/((double)RAND_MAX) * (double)1.1;
+                bd[i * n + j] = ((double)random())/((double)RAND_MAX) * (double)1.1;
+            }
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        gemm_double( n, cd, ad, bd );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, GEMM, EventSet, fp );
+
+        keep_double_mat_res( n, cd );
+    }
+
+    free( ad );
+    free( bd );
+    free( cd );
+}
+
+void keep_double_vec_res( int n, double *xd ) {
 
     int i;
     double sum = 0.0;
@@ -349,7 +463,7 @@ void keep_double_norm_res( int n, double *xd ) {
     }
 }
 
-void keep_double_cholesky_res( int n, double *ld ) {
+void keep_double_mat_res( int n, double *ld ) {
 
     int i, j;
     double sum = 0.0;
@@ -379,7 +493,7 @@ void exec_single_norm( int EventSet, FILE *fp ) {
     for ( n = 0; n < MAXDIM; n++ ) {
         /* Initialize the needed arrays at this size. */
         for ( i = 0; i < n; i++ ) {
-            xs[i] = ((float)rand())/((float)RAND_MAX) * (float)1.1;
+            xs[i] = ((float)random())/((float)RAND_MAX) * (float)1.1;
         }
 
         /* Reset PAPI count. */
@@ -394,7 +508,7 @@ void exec_single_norm( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, NORMALIZE, EventSet, fp );
 
-        keep_single_norm_res( n, xs );
+        keep_single_vec_res( n, xs );
     }
 
     /* Free dynamically allocated memory. */
@@ -422,7 +536,7 @@ void exec_single_cholesky( int EventSet, FILE *fp ) {
                 ls[i * n + j] = 0.0;
                 ls[j * n + i] = 0.0;
 
-                as[i * n + j] = ((float)rand())/((float)RAND_MAX) * (float)1.1;
+                as[i * n + j] = ((float)random())/((float)RAND_MAX) * (float)1.1;
                 as[j * n + i] = as[i * n + j];
             }
             as[i * n + i] = 0.0;
@@ -450,14 +564,58 @@ void exec_single_cholesky( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, CHOLESKY, EventSet, fp );
 
-        keep_single_cholesky_res( n, ls );
+        keep_single_mat_res( n, ls );
     }
 
     free( as );
     free( ls );
 }
 
-void keep_single_norm_res( int n, float *xs ) {
+void exec_single_gemm( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    float *as=NULL, *bs=NULL, *cs=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Single-Precision", "GEMM" );
+
+    /* Allocate the matrices. */
+    as = malloc( MAXDIM * MAXDIM * sizeof(float) );
+    bs = malloc( MAXDIM * MAXDIM * sizeof(float) );
+    cs = malloc( MAXDIM * MAXDIM * sizeof(float) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < n; j++ ) {
+                cs[i * n + j] = 0.0;
+                as[i * n + j] = ((float)random())/((float)RAND_MAX) * (float)1.1;
+                bs[i * n + j] = ((float)random())/((float)RAND_MAX) * (float)1.1;
+            }
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        gemm_single( n, cs, as, bs );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, GEMM, EventSet, fp );
+
+        keep_single_mat_res( n, cs );
+    }
+
+    free( as );
+    free( bs );
+    free( cs );
+}
+
+void keep_single_vec_res( int n, float *xs ) {
 
     int i;
     float sum = 0.0;
@@ -470,7 +628,7 @@ void keep_single_norm_res( int n, float *xs ) {
     }
 }
 
-void keep_single_cholesky_res( int n, float *ls ) {
+void keep_single_mat_res( int n, float *ls ) {
 
     int i, j;
     float sum = 0.0;
@@ -501,7 +659,7 @@ void exec_half_norm( int EventSet, FILE *fp ) {
     for ( n = 0; n < MAXDIM; n++ ) {
         /* Initialize the needed arrays at this size. */
         for ( i = 0; i < n; i++ ) {
-            xh[i] = ((half)rand())/((half)RAND_MAX) * (half)1.1;
+            xh[i] = ((half)random())/((half)RAND_MAX) * (half)1.1;
         }
 
         /* Reset PAPI count. */
@@ -516,7 +674,7 @@ void exec_half_norm( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, NORMALIZE, EventSet, fp );
 
-        keep_half_norm_res( n, xh );
+        keep_half_vec_res( n, xh );
     }
 
     /* Free dynamically allocated memory. */
@@ -544,7 +702,7 @@ void exec_half_cholesky( int EventSet, FILE *fp ) {
                 lh[i * n + j] = 0.0;
                 lh[j * n + i] = 0.0;
 
-                ah[i * n + j] = ((half)rand())/((half)RAND_MAX) * (half)1.1;
+                ah[i * n + j] = ((half)random())/((half)RAND_MAX) * (half)1.1;
                 ah[j * n + i] = ah[i * n + j];
             }
             ah[i * n + i] = 0.0;
@@ -572,14 +730,58 @@ void exec_half_cholesky( int EventSet, FILE *fp ) {
         /* Stop and print count. */
         resultline( n, CHOLESKY, EventSet, fp );
 
-        keep_half_cholesky_res( n, lh );
+        keep_half_mat_res( n, lh );
     }
 
     free( ah );
     free( lh );
 }
 
-void keep_half_norm_res( int n, half *xh ) {
+void exec_half_gemm( int EventSet, FILE *fp ) {
+
+    int i, j, n, retval;
+    half *ah=NULL, *bh=NULL, *ch=NULL;
+
+    /* Print info about the computational kernel. */
+    print_header( fp, "Half-Precision", "GEMM" );
+
+    /* Allocate the matrices. */
+    ah = malloc( MAXDIM * MAXDIM * sizeof(half) );
+    bh = malloc( MAXDIM * MAXDIM * sizeof(half) );
+    ch = malloc( MAXDIM * MAXDIM * sizeof(half) );
+
+    /* Step through the different array sizes. */
+    for ( n = 0; n < MAXDIM; n++ ) {
+        /* Initialize the needed arrays at this size. */
+        for ( i = 0; i < n; i++ ) {
+            for ( j = 0; j < n; j++ ) {
+                ch[i * n + j] = 0.0;
+                ah[i * n + j] = ((half)random())/((half)RAND_MAX) * (half)1.1;
+                bh[i * n + j] = ((half)random())/((half)RAND_MAX) * (half)1.1;
+            }
+        }
+
+        /* Reset PAPI count. */
+        if ( (retval = PAPI_start( EventSet )) != PAPI_OK ) {
+            return;
+        }
+
+        /* Run the kernel. */
+        gemm_half( n, ch, ah, bh );
+        usleep(1);
+
+        /* Stop and print count. */
+        resultline( n, GEMM, EventSet, fp );
+
+        keep_half_mat_res( n, ch );
+    }
+
+    free( ah );
+    free( bh );
+    free( ch );
+}
+
+void keep_half_vec_res( int n, half *xh ) {
 
     int i;
     half sum = 0.0;
@@ -592,7 +794,7 @@ void keep_half_norm_res( int n, half *xh ) {
     }
 }
 
-void keep_half_cholesky_res( int n, half *lh ) {
+void keep_half_mat_res( int n, half *lh ) {
 
     int i, j;
     half sum = 0.0;
@@ -615,15 +817,18 @@ void exec_flops( int precision, int EventSet, FILE *fp ) {
       case DOUBLE:
           exec_double_norm(EventSet, fp);
           exec_double_cholesky(EventSet, fp);
+          exec_double_gemm(EventSet, fp);
           break;
       case SINGLE:
           exec_single_norm(EventSet, fp);
           exec_single_cholesky(EventSet, fp);
+          exec_single_gemm(EventSet, fp);
           break;
       case HALF:
 #if defined(ARM)
           exec_half_norm(EventSet, fp);
           exec_half_cholesky(EventSet, fp);
+          exec_half_gemm(EventSet, fp);
 #endif
           break;
       default:
