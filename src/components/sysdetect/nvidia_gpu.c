@@ -203,7 +203,6 @@ load_cuda_sym( char *status )
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
-        status[PAPI_MAX_STR_LEN - 1] = 0;
         return -1;
     }
 
@@ -298,7 +297,6 @@ load_nvml_sym( char *status )
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
-        status[PAPI_MAX_STR_LEN - 1] = 0;
         return -1;
     }
 
