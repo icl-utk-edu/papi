@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: synopsys-sig/synopsys-action@v1.2.0
-      with:
-        email: ${{ secrets.COVERITY_SCAN_EMAIL }}
-        token: ${{ secrets.COVERITY_SCAN_TOKEN }}
+      #with:
+      #  email: ${{ secrets.COVERITY_SCAN_EMAIL }}
+      #  token: ${{ secrets.COVERITY_SCAN_TOKEN }}
