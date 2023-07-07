@@ -2,7 +2,7 @@ name: Coverity Scan
 
 on:
   push:
-    branches: [ gragghia_ci_coverity ]
+    branches: [ coverity_scan ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   
