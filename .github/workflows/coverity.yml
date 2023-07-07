@@ -17,5 +17,6 @@ jobs:
       with:
         email: ${{ secrets.COVERITY_SCAN_EMAIL }}
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
+        project: 'papi'
         
         
