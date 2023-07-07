@@ -14,8 +14,8 @@ jobs:
     - name: Configure
       run: cd src && ./configure
     - uses: vapier/coverity-scan-action@v1
-      working-directory: src
       with:
+        working-directory: src
         email: ${{ secrets.COVERITY_SCAN_EMAIL }}
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
         project: 'papi'
