@@ -13,10 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: vapier/coverity-scan-action@v1
+    - uses: synopsys-sig/synopsys-action@v1.2.0
       with:
         email: ${{ secrets.COVERITY_SCAN_EMAIL }}
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
-        project: 'papi'
-        command: 'cd src && make'
-        
