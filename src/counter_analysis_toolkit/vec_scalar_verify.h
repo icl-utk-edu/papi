@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <papi.h>
 #include <stdlib.h>
-#include "vec_arch.h"
+#include "cat_arch.h"
 
 void papi_stop_and_print_placeholder(long long theory, FILE *fp);
 void papi_stop_and_print(long long theory, int EventSet, FILE *fp);

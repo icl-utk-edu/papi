@@ -43,6 +43,22 @@ jobs:
       - uses: actions/checkout@v3
       - name: Test
         run: .github/workflows/ci.sh ${{matrix.component}}
-# powercap_ppc
-# sensors_ppc
-# infiniband
+  papi_spack:
+    runs-on: cpu
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build/Test/Install via Spack
+        run: .github/workflows/spack.sh
+  papi_clang_analysis:
+    runs-on: cpu
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run static analysis
+        run: .github/workflows/clang_analysis.sh clang-analysis-output
+      - name: Archive analysis results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: clang-analysis-output
+          path: src/clang-analysis-output
