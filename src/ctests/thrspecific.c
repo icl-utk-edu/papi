@@ -73,6 +73,8 @@ Thread( void *arg )
 				printf( "Entry %d, Thread %#lx, Data Pointer %p, Value %d\n",
 						i, data.id[i], data.data[i], *( int * ) data.data[i] );
 			}
+			free(data.id);
+			free(data.data);
 			processing = 0;
 		}
 	}
