@@ -26,29 +26,29 @@ typedef struct ntv_event_table {
 struct rocd_ctx {
     union {
         struct {
-            int state;                       /* state of kernel interception */
+            int state;
             unsigned int *events_id;
-            long long *counters;             /* thread's private counters */
-            int dispatch_count;              /* how many kernel dispatches this thread has done */
-            unsigned int *devs_id;           /* list of monitored devices */
-            int devs_count;                  /* number of monitored devices */
-            int feature_count;               /* number of features being monitored */
+            long long *counters;
+            int dispatch_count;
+            unsigned int *devs_id;
+            int devs_count;
+            int feature_count;
         } intercept;
         struct {
-            int state;                       /* state of sampling */
+            int state;
             unsigned int *events_id;
-            long long *counters;             /* thread's private counters */
-            rocprofiler_feature_t *features; /* rocprofiler features */
-            int feature_count;               /* number of features being monitored */
-            rocprofiler_t **contexts;        /* rocprofiler context array for multiple device monitoring */
-            unsigned int *devs_id;           /* list of monitored device ids */
-            int devs_count;                  /* number of monitored devices */
+            long long *counters;
+            rocprofiler_feature_t *features;
+            int feature_count;
+            rocprofiler_t **contexts;
+            unsigned int *devs_id;
+            int devs_count;
         } sampling;
     } u;
 };
 
 unsigned int rocm_prof_mode;
-unsigned int _rocm_lock;                         /* internal rocm component lock (allocated at configure time) */
+unsigned int _rocm_lock;
 
 /* rocprofiler function pointers */
 static hsa_status_t (*rocp_get_info_p)(const hsa_agent_t *,
@@ -1179,19 +1179,12 @@ typedef struct cb_context_node {
 } cb_context_node_t;
 
 static struct {
-    unsigned int *events_id;                      /* array containing ids of events
-                                                     monitored in intercept mode */
-    int events_count;                             /* number of event ids monitored
-                                                     in intercept mode */
-    rocprofiler_feature_t *features;              /* array containing rocprofiler
-                                                     features monitored in intercept
-                                                     mode */
-    int feature_count;                            /* number of rocm features monitored
-                                                     in intercept mode */
-    int active_thread_count;                      /* # threads that launched kernel
-                                                     evices in intercept mode */
-    int kernel_count;                             /* # number of kernels currently
-                                                     running */
+    unsigned int *events_id;
+    int events_count;
+    rocprofiler_feature_t *features;
+    int feature_count;
+    int active_thread_count;
+    int kernel_count;
 } intercept_global_state;
 
 #define INTERCEPT_EVENTS_ID          (intercept_global_state.events_id)
