@@ -1,5 +1,5 @@
 /**
- * @file    rocd.h
+ * @file    roc_dispatch.h
  * @author  Giuseppe Congiu
  *          gcongiu@icl.utk.edu
  *
@@ -7,8 +7,8 @@
  * to the appropriate backend interface (e.g. rocprofiler).
  */
 
-#ifndef __ROCD_H__
-#define __ROCD_H__
+#ifndef __ROC_DISPATCH_H__
+#define __ROC_DISPATCH_H__
 
 #include "rocp_config.h"
 
@@ -36,4 +36,4 @@ int rocd_ctx_stop(rocd_ctx_t ctx);
 int rocd_ctx_read(rocd_ctx_t ctx, long long **counters);
 int rocd_ctx_reset(rocd_ctx_t ctx);
 
-#endif /* End of __ROCD_H__ */
+#endif /* End of __ROC_DISPATCH_H__ */

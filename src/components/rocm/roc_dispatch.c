@@ -1,5 +1,5 @@
 /**
- * @file    rocd.c
+ * @file    roc_dispatch.c
  * @author  Giuseppe Congiu
  *          gcongiu@icl.utk.edu
  *
@@ -7,9 +7,9 @@
  * to the appropriate backend interface (e.g. rocprofiler).
  */
 
-#include "rocd.h"
-#include "rocc.h"
-#include "rocp.h"
+#include "roc_dispatch.h"
+#include "roc_common.h"
+#include "roc_profiler.h"
 
 int
 rocd_init_environment(void)

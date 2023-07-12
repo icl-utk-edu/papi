@@ -1,13 +1,13 @@
 /**
- * @file    rocp.c
+ * @file    roc_profiler.c
  * @author  Giuseppe Congiu
  *          gcongiu@icl.utk.edu
  *
  */
 
 #include <rocprofiler.h>
-#include "rocp.h"
-#include "rocc.h"
+#include "roc_profiler.h"
+#include "roc_common.h"
 #include "htable.h"
 
 typedef struct {

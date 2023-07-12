@@ -19,7 +19,7 @@
 #include "papi_memory.h"
 #include "papi_vector.h"
 #include "extras.h"
-#include "rocd.h"
+#include "roc_dispatch.h"
 
 /* Init and finalize */
 static int rocm_init_component(int cid);
