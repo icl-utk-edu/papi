@@ -52,8 +52,6 @@ static int rocm_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
 
-extern unsigned rocm_prof_mode;
-
 typedef struct {
     int initialized;
     int state;

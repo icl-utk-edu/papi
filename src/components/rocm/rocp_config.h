@@ -7,6 +7,7 @@
 #define ROCM_EVENTS_OPENED         (0x1)
 #define ROCM_EVENTS_RUNNING        (0x2)
 
-extern unsigned _rocm_lock;
+extern unsigned int _rocm_lock;
+extern unsigned int rocm_prof_mode;
 
 #endif /* End of __ROCP_CONFIG_H__ */
