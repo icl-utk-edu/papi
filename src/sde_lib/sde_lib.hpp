@@ -187,12 +187,12 @@ namespace papi_sde
         return X;
     }
     // Prefix increment ++x;
-    PapiSde::CreatedCounter &operator++(PapiSde::CreatedCounter &X){
+    inline PapiSde::CreatedCounter &operator++(PapiSde::CreatedCounter &X){
         X.increment(1LL);
         return X;
     }
     // Prefix decrement --x;
-    PapiSde::CreatedCounter &operator--(PapiSde::CreatedCounter &X){
+    inline PapiSde::CreatedCounter &operator--(PapiSde::CreatedCounter &X){
         X.increment(-1LL);
         return X;
     }
