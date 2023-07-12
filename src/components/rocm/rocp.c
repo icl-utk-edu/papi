@@ -5,7 +5,6 @@
  *
  */
 
-#ifdef ROCM_PROF_ROCPROFILER
 #include <sys/stat.h>
 #include <dlfcn.h>
 #include <hsa.h>
@@ -2258,4 +2257,3 @@ OnUnloadTool(void)
 {
     return;
 }
-#endif /* End of ROCM_PROF_ROCPROFILER */
