@@ -1,5 +1,5 @@
-#ifndef __ROCC_H__
-#define __ROCC_H__
+#ifndef __ROC_COMMON_H__
+#define __ROC_COMMON_H__
 
 #include <hsa.h>
 #include <dlfcn.h>
@@ -36,4 +36,4 @@ int rocc_init(void);
 int rocc_shutdown(void);
 int rocc_err_get_last(const char **error_string);
 
-#endif /* End of __ROCC_H__ */
+#endif /* End of __ROC_COMMON_H__ */

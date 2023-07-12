@@ -1,7 +1,7 @@
 #include <dlfcn.h>
 #include "papi.h"
 #include "papi_memory.h"
-#include "rocc.h"
+#include "roc_common.h"
 
 /* hsa function pointers */
 hsa_status_t (*hsa_init_p)(void);
