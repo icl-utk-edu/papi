@@ -135,7 +135,7 @@ static hsa_status_t (*rocp_remove_queue_cbsPtr)(void);
     (*hsa_status_stringPtr)(status, &init_err_str_ptr);         \
     int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
                         init_err_str_ptr);                      \
-    if (_exp > PAPI_MAX_STR_LEN) {                              \
+    if (_exp >= PAPI_MAX_STR_LEN) {                             \
         SUBDBG("Error string truncated");                       \
     }                                                           \
     init_err_str_ptr = init_err_str;                            \
@@ -151,7 +151,7 @@ static hsa_status_t (*rocp_remove_queue_cbsPtr)(void);
     (*rocp_error_stringPtr)(&init_err_str_ptr);                 \
     int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
                         init_err_str_ptr);                      \
-    if (_exp > PAPI_MAX_STR_LEN) {                              \
+    if (_exp >= PAPI_MAX_STR_LEN) {                             \
         SUBDBG("Error string truncated");                       \
     }                                                           \
     init_err_str_ptr = init_err_str;                            \
@@ -162,7 +162,7 @@ static hsa_status_t (*rocp_remove_queue_cbsPtr)(void);
 #define ROCP_REC_ERR_STR(string) do {                           \
     int _exp = snprintf(init_err_str, PAPI_MAX_STR_LEN, "%s",   \
                         string);                                \
-    if (_exp > PAPI_MAX_STR_LEN) {                              \
+    if (_exp >= PAPI_MAX_STR_LEN) {                             \
         SUBDBG("Error string truncated");                       \
     }                                                           \
     init_err_str_ptr = init_err_str;                            \
