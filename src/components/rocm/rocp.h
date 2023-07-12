@@ -4,7 +4,6 @@
  *          gcongiu@icl.utk.edu
  */
 
-#ifdef ROCM_PROF_ROCPROFILER
 #ifndef __ROCP_H__
 #define __ROCP_H__
 
@@ -33,4 +32,3 @@ int rocp_ctx_read(rocp_ctx_t ctx, long long **counts);
 int rocp_ctx_reset(rocp_ctx_t ctx);
 
 #endif /* End of __ROCP_H__ */
-#endif /* End of ROCM_PROF_ROCPROFILER */
