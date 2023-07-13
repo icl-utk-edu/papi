@@ -580,7 +580,6 @@ init_thread_id_fn(void)
 int
 evt_code_to_name(unsigned int event_code, char *name, int len)
 {
-    /* FIXME: make sure the copied string is not longer than len */
     if (ntv_table.events[event_code].instance >= 0) {
         snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
                  ntv_table.events[event_code].name,
