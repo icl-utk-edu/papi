@@ -193,8 +193,7 @@ rocp_evt_get_descr(unsigned int event_code, char *descr, int len)
     if (event_code >= (unsigned int) ntv_table_p->count) {
         return PAPI_EINVAL;
     }
-    /* FIXME: make sure descr is not longer than len */
-    strncpy(descr, ntv_table_p->events[event_code].descr, len);
+    snprintf(descr, (size_t) len, "%s", ntv_table_p->events[event_code].descr);
     return PAPI_OK;
 }
 
