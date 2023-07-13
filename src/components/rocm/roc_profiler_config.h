@@ -1,5 +1,5 @@
-#ifndef __ROCP_CONFIG_H__
-#define __ROCP_CONFIG_H__
+#ifndef __ROC_PROFILER_CONFIG_H__
+#define __ROC_PROFILER_CONFIG_H__
 
 #define PAPI_ROCM_MAX_COUNTERS (512)
 
@@ -10,4 +10,4 @@
 extern unsigned int _rocm_lock;
 extern unsigned int rocm_prof_mode;
 
-#endif /* End of __ROCP_CONFIG_H__ */
+#endif /* End of __ROC_PROFILER_CONFIG_H__ */

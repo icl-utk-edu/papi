@@ -10,7 +10,7 @@
 #ifndef __ROC_DISPATCH_H__
 #define __ROC_DISPATCH_H__
 
-#include "rocp_config.h"
+#include "roc_profiler_config.h"
 
 typedef struct rocd_ctx *rocd_ctx_t;
 
