@@ -10,7 +10,7 @@
 #include "papi.h"
 #include "papi_memory.h"
 #include "papi_internal.h"
-#include "rocp_config.h"
+#include "roc_profiler_config.h"
 
 #ifndef PAPI_ROCM_MAX_DEV_COUNT
 #define PAPI_ROCM_MAX_DEV_COUNT (32)
