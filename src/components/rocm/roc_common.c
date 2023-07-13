@@ -16,6 +16,7 @@ static void *hsa_dlp;
 char error_string[PAPI_MAX_STR_LEN];
 static device_table_t device_table;
 device_table_t *device_table_p;
+static rocc_bitmap_t global_device_map;
 
 static int load_hsa_sym(void);
 static int unload_hsa_sym(void);
@@ -62,6 +63,82 @@ int
 rocc_err_get_last(const char **err_string)
 {
     *err_string = error_string;
+    return PAPI_OK;
+}
+
+int
+rocc_dev_get_map(int (*query_dev_id)(unsigned int event_id, int *dev_id),
+                 unsigned int *events_id, int num_events, rocc_bitmap_t *bitmap)
+{
+    int i;
+    rocc_bitmap_t device_map_acq = 0;
+
+    for (i = 0; i < num_events; ++i) {
+        int dev_id;
+        if (query_dev_id(events_id[i], &dev_id)) {
+            return PAPI_EMISC;
+        }
+
+        device_map_acq |= (1 << dev_id);
+    }
+
+    *bitmap = device_map_acq;
+    return PAPI_OK;
+}
+
+int
+rocc_dev_acquire(rocc_bitmap_t bitmap)
+{
+    rocc_bitmap_t device_map_acq = bitmap;
+
+    if (device_map_acq & global_device_map) {
+        return PAPI_EINVAL;
+    }
+    global_device_map |= device_map_acq;
+
+    return PAPI_OK;
+}
+
+int
+rocc_dev_release(rocc_bitmap_t bitmap)
+{
+    rocc_bitmap_t device_map_rel = bitmap;
+
+    if ((device_map_rel & global_device_map) != device_map_rel) {
+        return PAPI_EINVAL;
+    }
+    global_device_map &= ~device_map_rel;
+
+    return PAPI_OK;
+}
+
+int
+rocc_dev_get_count(rocc_bitmap_t bitmap, int *num_devices)
+{
+    int i;
+
+    *num_devices = 0;
+    for (i = 0; i < (int) sizeof(bitmap) * 8; ++i) {
+        if ((bitmap >> i) & 0x1) {
+            ++(*num_devices);
+        }
+    }
+
+    return PAPI_OK;
+}
+
+int
+rocc_dev_get_id(rocc_bitmap_t bitmap, int dev_count, int *device_id)
+{
+    int i, count = 0;
+
+    for (i = 0; i < (int) sizeof(bitmap) * 8; ++i) {
+        if (((bitmap >> i) & 0x1) && (count++ == dev_count)) {
+            break;
+        }
+    }
+    *device_id = i;
+
     return PAPI_OK;
 }
 
