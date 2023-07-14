@@ -1915,6 +1915,8 @@ AC_ARG_WITH(components,
             [Specify which components to build])],
         	[components="$components $withval"]) 
 
+m4_include([components/rocm/subconfigure.m4])
+
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
 	if test "x$components" = "x"; then 

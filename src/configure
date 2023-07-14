@@ -699,6 +699,7 @@ PMINIT
 PMAPI
 MAKEVER
 arch
+WITH_ROCPROFILER_VER
 LIBSDEFLAGS
 BUILD_LIBSDE_STATIC
 BUILD_LIBSDE_SHARED
@@ -807,6 +808,7 @@ enable_perfevent_rdpmc
 with_pe_incdir
 enable_perf_event_uncore
 with_components
+with_rocprofiler_ver
 enable_fortran
 '
       ac_precious_vars='build_alias
@@ -1510,6 +1512,9 @@ Optional Packages:
   --with-pe-incdir=<path> Specify path to the correct perf header file
   --with-components=<"component1 component2">
                           Specify which components to build
+  --with-rocprofiler-ver[=ARG]
+                          Rocprofiler version to use in ROCm component
+                          (Default is 1)
 
 Some influential environment variables:
   CC          C compiler command
@@ -7027,6 +7032,28 @@ if test "${with_components+set}" = set; then :
 fi
 
 
+# start of components/rocm/subconfigure.m4
+
+
+# Check whether --with-rocprofiler-ver was given.
+if test "${with_rocprofiler_ver+set}" = set; then :
+  withval=$with_rocprofiler_ver; with_rocprofiler_ver=$withval
+else
+  with_rocprofiler_ver=1
+fi
+
+
+if test "$with_rocprofiler_ver" = "1" ; then
+    WITH_ROCPROFILER_VER=V1
+else
+    WITH_ROCPROFILER_VER=V2
+fi
+
+
+ac_config_files="$ac_config_files components/rocm/roc_profiler_config.h components/rocm/Rules.rocm"
+
+
+
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
 	if test "x$components" = "x"; then
@@ -7993,6 +8020,8 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "components/rocm/roc_profiler_config.h") CONFIG_FILES="$CONFIG_FILES components/rocm/roc_profiler_config.h" ;;
+    "components/rocm/Rules.rocm") CONFIG_FILES="$CONFIG_FILES components/rocm/Rules.rocm" ;;
     "genpapifdef") CONFIG_COMMANDS="$CONFIG_COMMANDS genpapifdef" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "papi.pc") CONFIG_FILES="$CONFIG_FILES papi.pc" ;;

@@ -10,4 +10,6 @@
 extern unsigned int _rocm_lock;
 extern unsigned int rocm_prof_mode;
 
+#define ROCPROFILER_@WITH_ROCPROFILER_VER@
+
 #endif /* End of __ROC_PROFILER_CONFIG_H__ */

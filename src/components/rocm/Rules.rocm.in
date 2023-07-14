@@ -1,11 +1,23 @@
 PAPI_ROCM_ROOT ?= /opt/rocm
 
-COMPSRCS += components/rocm/rocm.c \
-            components/rocm/roc_profiler.c \
-            components/rocm/roc_dispatch.c \
-            components/rocm/roc_common.c
+ifeq (@WITH_ROCPROFILER_VER@, V1)
+ROCPSRCS += components/rocm/roc_profiler.c
+else
+ROCPSRCS += components/rocm/roc_profiler_v2.c
+endif
 
-COMPOBJS += rocm.o roc_profiler.o roc_dispatch.o roc_common.o
+COMPSRCS += components/rocm/rocm.c \
+            components/rocm/roc_dispatch.c \
+            components/rocm/roc_common.c \
+            $(ROCPSRCS)
+
+ifeq (@WITH_ROCPROFILER_VER@, V1)
+ROCPOBJS += roc_profiler.o
+else
+ROCPOBJS += roc_profiler_v2.o
+endif
+
+COMPOBJS += rocm.o roc_dispatch.o roc_common.o $(ROCPOBJS)
 
 CFLAGS += -I$(PAPI_ROCM_ROOT)/include \
           -I$(PAPI_ROCM_ROOT)/include/hsa \
@@ -20,6 +32,9 @@ rocm.o: components/rocm/rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
 
 roc_profiler.o: components/rocm/roc_profiler.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
+
+roc_profiler_v2.o: components/rocm/roc_profiler_v2.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
 
 roc_dispatch.o: components/rocm/roc_dispatch.c $(HEADERS)
