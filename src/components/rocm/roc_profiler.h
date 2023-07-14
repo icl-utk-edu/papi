@@ -22,9 +22,6 @@ int rocp_evt_code_to_descr(unsigned int event_code, char *descr, int len);
 int rocp_evt_name_to_code(const char *name, unsigned int *event_code);
 int rocp_evt_code_to_name(unsigned int event_code, char *name, int len);
 
-/* error handling interfaces */
-int rocp_err_get_last(const char **err_string);
-
 /* profiling context handling interfaces */
 int rocp_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *ctx);
 int rocp_ctx_close(rocp_ctx_t ctx);
