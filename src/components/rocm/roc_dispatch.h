@@ -21,7 +21,7 @@ int rocd_shutdown(void);
 
 /* native event interfaces */
 int rocd_evt_enum(unsigned int *event_code, int modifier);
-int rocd_evt_get_descr(unsigned int event_code, char *descr, int len);
+int rocd_evt_code_to_descr(unsigned int event_code, char *descr, int len);
 int rocd_evt_name_to_code(const char *name, unsigned int *event_code);
 int rocd_evt_code_to_name(unsigned int event_code, char *name, int len);
 

@@ -170,9 +170,9 @@ rocp_evt_enum(unsigned int *event_code, int modifier)
     return papi_errno;
 }
 
-/* rocp_evt_get_descr - return descriptor string for event_code */
+/* rocp_evt_code_to_descr - return descriptor string for event_code */
 int
-rocp_evt_get_descr(unsigned int event_code, char *descr, int len)
+rocp_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 {
     if (event_code >= (unsigned int) ntv_table_p->count) {
         return PAPI_EINVAL;

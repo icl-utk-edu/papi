@@ -566,7 +566,7 @@ rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    return rocd_evt_get_descr(event_code, descr, len);
+    return rocd_evt_code_to_descr(event_code, descr, len);
 }
 
 int
