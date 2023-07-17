@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <string.h>
 #include "papi.h"
 #include "papi_memory.h"
 #include "roc_common.h"
