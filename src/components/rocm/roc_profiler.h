@@ -7,8 +7,6 @@
 #ifndef __ROC_PROFILER_H__
 #define __ROC_PROFILER_H__
 
-#include "roc_common.h"
-
 typedef struct rocd_ctx *rocp_ctx_t;
 
 /* init and shutdown interfaces */
