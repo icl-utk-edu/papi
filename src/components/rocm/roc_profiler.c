@@ -1696,7 +1696,6 @@ unregister_dispatch_counter(unsigned long tid)
  *
  */
 static void process_context_entry(cb_context_payload_t *, rocprofiler_feature_t *, int);
-static unsigned int get_dev_id(hsa_agent_t);
 
 /**
  * The context handler prepares a node for every
@@ -1715,7 +1714,8 @@ dispatch_cb(const rocprofiler_callback_data_t *callback_data, void *arg, rocprof
     hsa_agent_t agent = callback_data->agent;
     hsa_status_t status = HSA_STATUS_SUCCESS;
 
-    unsigned int dev_id = get_dev_id(agent);
+    unsigned int dev_id;
+    rocc_dev_get_agent_id(agent, &dev_id);
 
     cb_dispatch_arg_t *dispatch_arg = (cb_dispatch_arg_t *) arg;
     rocprofiler_pool_t *pool = dispatch_arg->pools[dev_id];
@@ -1793,9 +1793,12 @@ process_context_entry(cb_context_payload_t *payload, rocprofiler_feature_t *feat
         goto fn_exit;
     }
 
+    unsigned int dev_id;
+    rocc_dev_get_agent_id(payload->agent, &dev_id);
+
     n->tid = payload->tid;
     put_context_counters(features, feature_count, n);
-    put_context_node(get_dev_id(payload->agent), n);
+    put_context_node(dev_id, n);
 
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
@@ -1965,18 +1968,6 @@ free_context_node(cb_context_node_t *n)
 {
     papi_free(n->counters);
     papi_free(n);
-}
-
-unsigned int
-get_dev_id(hsa_agent_t agent)
-{
-    unsigned int dev_id;
-    for (dev_id = 0; dev_id < (unsigned int) device_table_p->count; ++dev_id) {
-        if (memcmp(&device_table_p->devices[dev_id], &agent, sizeof(agent)) == 0) {
-            return dev_id;
-        }
-    }
-    return -1;
 }
 
 void __attribute__((visibility("default")))

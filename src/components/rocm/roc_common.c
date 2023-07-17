@@ -143,6 +143,17 @@ rocc_dev_get_id(rocc_bitmap_t bitmap, int dev_count, int *device_id)
 }
 
 int
+rocc_dev_get_agent_id(hsa_agent_t agent, unsigned int *dev_id)
+{
+    for (*dev_id = 0; *dev_id < (unsigned int) device_table_p->count; ++(*dev_id)) {
+        if (memcmp(&device_table_p->devices[*dev_id], &agent, sizeof(agent)) == 0) {
+            break;
+        }
+    }
+    return PAPI_OK;
+}
+
+int
 load_hsa_sym(void)
 {
     int papi_errno = PAPI_OK;
