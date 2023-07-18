@@ -99,11 +99,9 @@ static int sampling_ctx_reset(rocp_ctx_t);
 static int intercept_ctx_reset(rocp_ctx_t);
 static int sampling_shutdown(void);
 static int intercept_shutdown(void);
-static void init_thread_id_fn(void);
 static int evt_code_to_name(unsigned int event_code, char *name, int len);
 
 static void *rocp_dlp = NULL;
-static unsigned long (*thread_id_fn)(void);
 static ntv_event_table_t ntv_table;
 static ntv_event_table_t *ntv_table_p;
 static void *htable;
@@ -134,7 +132,6 @@ rocp_init(void)
         goto fn_fail;
     }
 
-    init_thread_id_fn();
     ntv_table_p = &ntv_table;
 
   fn_exit:
@@ -549,17 +546,6 @@ init_event_table(void)
   fn_fail:
     papi_errno = PAPI_EMISC;
     goto fn_exit;
-}
-
-void
-init_thread_id_fn(void)
-{
-    if (thread_id_fn) {
-        return;
-    }
-
-    thread_id_fn = (_papi_hwi_thread_id_fn) ?
-        _papi_hwi_thread_id_fn : _papi_getpid;
 }
 
 int
@@ -1204,7 +1190,8 @@ intercept_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx
         goto fn_fail;
     }
 
-    unsigned long tid = (*thread_id_fn)();
+    unsigned long tid;
+    rocc_thread_get_id(&tid);
     papi_errno = register_dispatch_counter(tid, &(*rocp_ctx)->u.intercept.dispatch_count);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
@@ -1231,7 +1218,8 @@ intercept_ctx_close(rocp_ctx_t rocp_ctx)
         goto fn_exit;
     }
 
-    unsigned long tid = (*thread_id_fn)();
+    unsigned long tid;
+    rocc_thread_get_id(&tid);
     papi_errno = unregister_dispatch_counter(tid);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -1322,7 +1310,8 @@ intercept_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 
     _papi_hwi_lock(_rocm_lock);
 
-    unsigned long tid = (*thread_id_fn)();
+    unsigned long tid;
+    rocc_thread_get_id(&tid);
     int dispatch_count = fetch_dispatch_counter(tid);
     if (dispatch_count == 0) {
         *counts = rocp_ctx->u.intercept.counters;
@@ -1755,7 +1744,8 @@ dispatch_cb(const rocprofiler_callback_data_t *callback_data, void *arg, rocprof
         goto fn_exit;
     }
 
-    unsigned long tid = (*thread_id_fn)();
+    unsigned long tid;
+    rocc_thread_get_id(&tid);
     payload->tid = tid;
     payload->agent = agent;
     payload->group = *group;
@@ -1919,7 +1909,8 @@ get_context_node(int dev_id, cb_context_node_t **n)
     cb_context_node_t *flag_prev;
 
     while (curr) {
-        unsigned long tid = (*thread_id_fn)();
+        unsigned long tid;
+        rocc_thread_get_id(&tid);
         if (curr->tid == tid) {
             flag_prev = prev;
             flag = curr;

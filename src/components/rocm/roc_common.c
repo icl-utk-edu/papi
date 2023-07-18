@@ -22,6 +22,8 @@ static rocc_bitmap_t global_device_map;
 static int load_hsa_sym(void);
 static int unload_hsa_sym(void);
 static int init_device_table(void);
+static void init_thread_id_fn(void);
+static unsigned long (*thread_id_fn)(void);
 
 int
 rocc_init(void)
@@ -44,6 +46,7 @@ rocc_init(void)
     }
 
     device_table_p = &device_table;
+    init_thread_id_fn();
 
   fn_exit:
     return papi_errno;
@@ -151,6 +154,13 @@ rocc_dev_get_agent_id(hsa_agent_t agent, unsigned int *dev_id)
             break;
         }
     }
+    return PAPI_OK;
+}
+
+int
+rocc_thread_get_id(unsigned long *tid)
+{
+    *tid = thread_id_fn();
     return PAPI_OK;
 }
 
@@ -263,4 +273,15 @@ get_agent_handle_cb(hsa_agent_t agent, void *device_table)
     }
 
     return HSA_STATUS_SUCCESS;
+}
+
+void
+init_thread_id_fn(void)
+{
+    if (thread_id_fn) {
+        return;
+    }
+
+    thread_id_fn = (_papi_hwi_thread_id_fn) ?
+        _papi_hwi_thread_id_fn : _papi_getpid;
 }
