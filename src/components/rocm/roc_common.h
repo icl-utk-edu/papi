@@ -45,4 +45,6 @@ int rocc_dev_get_count(rocc_bitmap_t bitmap, int *num_devices);
 int rocc_dev_get_id(rocc_bitmap_t bitmap, int dev_count, int *device_id);
 int rocc_dev_get_agent_id(hsa_agent_t agent, unsigned int *dev_id);
 
+int rocc_thread_get_id(unsigned long *tid);
+
 #endif /* End of __ROC_COMMON_H__ */
