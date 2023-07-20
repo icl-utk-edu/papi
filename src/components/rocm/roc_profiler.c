@@ -862,7 +862,7 @@ shutdown_event_table(void)
  *
  */
 static int
-event_id_to_dev_id(unsigned int event_id, int *dev_id)
+event_id_to_dev_id_cb(unsigned int event_id, unsigned int *dev_id)
 {
     *dev_id = ntv_table_p->events[event_id].ntv_dev;
     return PAPI_OK;
@@ -879,7 +879,7 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     *rocp_ctx = NULL;
 
     rocc_bitmap_t bitmap;
-    papi_errno = rocc_dev_get_map(event_id_to_dev_id, events_id, num_events, &bitmap);
+    papi_errno = rocc_dev_get_map(event_id_to_dev_id_cb, events_id, num_events, &bitmap);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -1444,7 +1444,7 @@ intercept_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx
     *rocp_ctx = NULL;
 
     rocc_bitmap_t bitmap;
-    papi_errno = rocc_dev_get_map(event_id_to_dev_id, events_id, num_events, &bitmap);
+    papi_errno = rocc_dev_get_map(event_id_to_dev_id_cb, events_id, num_events, &bitmap);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
