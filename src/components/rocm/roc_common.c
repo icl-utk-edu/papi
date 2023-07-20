@@ -71,14 +71,13 @@ rocc_err_get_last(const char **err_string)
 }
 
 int
-rocc_dev_get_map(int (*query_dev_id)(unsigned int event_id, int *dev_id),
-                 unsigned int *events_id, int num_events, rocc_bitmap_t *bitmap)
+rocc_dev_get_map(rocc_dev_get_map_cb query_dev_id, unsigned int *events_id, int num_events, rocc_bitmap_t *bitmap)
 {
     int i;
     rocc_bitmap_t device_map_acq = 0;
 
     for (i = 0; i < num_events; ++i) {
-        int dev_id;
+        unsigned int dev_id;
         if (query_dev_id(events_id[i], &dev_id)) {
             return PAPI_EMISC;
         }
