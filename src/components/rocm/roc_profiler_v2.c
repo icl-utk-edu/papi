@@ -530,7 +530,7 @@ get_gpu_events_count(unsigned int *events_id, int num_events, unsigned int gpu_i
         ++j;
     }
 
-    *num_gpu_events = j - i + 1;
+    *num_gpu_events = j - i;
     return PAPI_OK;
 }
 
