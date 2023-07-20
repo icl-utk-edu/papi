@@ -115,16 +115,22 @@ rocc_dev_release(rocc_bitmap_t bitmap)
     return PAPI_OK;
 }
 
+static int dev_get_count(rocc_bitmap_t bitmap, int *num_devices);
+
 int
 rocc_dev_get_count(rocc_bitmap_t bitmap, int *num_devices)
 {
-    int i;
+    return dev_get_count(bitmap, num_devices);
+}
 
+int
+dev_get_count(rocc_bitmap_t bitmap, int *num_devices)
+{
     *num_devices = 0;
-    for (i = 0; i < (int) sizeof(bitmap) * 8; ++i) {
-        if ((bitmap >> i) & 0x1) {
-            ++(*num_devices);
-        }
+
+    while (bitmap) {
+        bitmap -= bitmap & (~bitmap + 1);
+        ++(*num_devices);
     }
 
     return PAPI_OK;
@@ -133,14 +139,26 @@ rocc_dev_get_count(rocc_bitmap_t bitmap, int *num_devices)
 int
 rocc_dev_get_id(rocc_bitmap_t bitmap, int dev_count, int *device_id)
 {
-    int i, count = 0;
+    int count;
+    dev_get_count(bitmap, &count);
+    if (dev_count >= count) {
+        return PAPI_EMISC;
+    }
 
-    for (i = 0; i < (int) sizeof(bitmap) * 8; ++i) {
-        if (((bitmap >> i) & 0x1) && (count++ == dev_count)) {
+    count = 0;
+    rocc_bitmap_t lsb = 0;
+    while (bitmap) {
+        lsb = bitmap & (~bitmap + 1);
+        bitmap -= lsb;
+        if (count++ == dev_count) {
             break;
         }
     }
-    *device_id = i;
+
+    *device_id = 0;
+    while ((lsb >>= 1)) {
+        ++(*device_id);
+    }
 
     return PAPI_OK;
 }
