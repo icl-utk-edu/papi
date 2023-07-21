@@ -465,6 +465,7 @@ _rapl_init_component( int cidx )
 		case 63:	/* Haswell-EP */
 		case 79:	/* Broadwell-EP */
 		case 85:	/* Skylake-X */
+		case 106:	/* Icelake-SP */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=0;
