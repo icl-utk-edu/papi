@@ -20,7 +20,7 @@ int main(int argc, char*argv[])
     int *cards = NULL, *indexmemo = NULL;
     char **allevts = NULL, **basenames = NULL;
     evstock *data = NULL;
-    cat_params_t params = {-1,0,1,0,0,0,NULL,NULL};
+    cat_params_t params = {-1,0,1,0,0,0,NULL,NULL,NULL};
     int nprocs = 1, myid = 0;
 
 #if defined(USE_MPI)
@@ -130,6 +130,9 @@ int main(int argc, char*argv[])
     trav_evts(data, params.subsetsize, cards, nevts, ct, params.mode, allevts, &track, indexmemo, basenames);
 
     char *conf_file_name = ".cat_cfg";
+    if( NULL != params.conf_file ) {
+        conf_file_name = params.conf_file;
+    }
     hw_desc_t *hw_desc = obtain_hardware_description(conf_file_name);
 
     /* Set the default number of threads to the OMP_NUM_THREADS environment
@@ -1012,6 +1015,12 @@ int parseArgs(int argc, char **argv, cat_params_t *params){
             ++argv;
             continue;
         }
+        if( argc > 1 && !strcmp(argv[0],"-conf") ){
+            params->conf_file = argv[1];
+            --argc;
+            ++argv;
+            continue;
+        }
         if( argc > 1 && !strcmp(argv[0],"-in") ){
             params->inputfile = argv[1];
             params->mode = READ_FROM_FILE;
@@ -1139,6 +1148,7 @@ void print_usage(char* name)
     fprintf(stdout, "  Parameters \"-k\" and \"-in\" are mutually exclusive.\n");
     
     fprintf(stdout, "\nOptional:\n");
+    fprintf(stdout, "  -conf    <path>   Configuration file location.\n");
     fprintf(stdout, "  -verbose          Show benchmark progress in the standard output.\n");
     fprintf(stdout, "  -n       <value>  Number of iterations for data cache kernels.\n");
     fprintf(stdout, "  -branch           Branch kernels.\n");

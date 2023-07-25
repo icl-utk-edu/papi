@@ -8,6 +8,7 @@ typedef struct cat_params_s{
     int bench_type;
     int show_progress;
     int quick;
+    char *conf_file;
     char *inputfile;
     char *outputdir;
 } cat_params_t;
