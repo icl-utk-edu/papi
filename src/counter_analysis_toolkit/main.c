@@ -1157,6 +1157,7 @@ void print_usage(char* name)
     fprintf(stdout, "  -flops            Floating point operations kernels.\n");
     fprintf(stdout, "  -ic               Instruction cache kernels.\n");
     fprintf(stdout, "  -vec              Vector FLOPs kernels.\n");
+    fprintf(stdout, "  -instr            Instructions kernels.\n");
 
     fprintf(stdout, "\n");
     fprintf(stdout, "EXAMPLE: %s -in event_list.txt -out OUTPUT_DIRECTORY -branch -dcw\n", name);
