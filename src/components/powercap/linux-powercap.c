@@ -194,8 +194,31 @@ static int _powercap_init_component( int cidx )
   num_events = 0;
   for(s = 0; s < num_sockets; s++) {
 
+    // Find the directory corresponding to the socket number.  There may be other top-level entries in there
+    // besides packages, such as "psys", that mess up the numbering, so we conduct an exhaustive search.
+    int s_dir, found = 0;
+    for(s_dir = 0; ; s_dir++) {
+      strErr=snprintf(event_path, sizeof(event_path), "/sys/class/powercap/intel-rapl:%d/%s", s_dir, pkg_sys_names[PKG_NAME]);
+      event_path[sizeof(event_path)-1]=0;
+      if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
+
+      int event_fd;
+      event_fd = open(event_path, pkg_sys_flags[PKG_NAME]);
+      if (event_fd == -1) { break; }
+
+      int sz = pread(event_fd, read_buff, PAPI_MAX_STR_LEN, 0);
+      read_buff[sz] = '\0';
+      close(event_fd);
+
+      if (strncmp(read_buff, "package-", strlen("package-")) == 0 && strtol(read_buff + strlen("package-"), NULL, 10) == s) {
+        found = 1;
+	break;
+      }
+    }
+    if (!found) { continue; }
+
     // compose string of a pkg directory path
-    strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d/", s);
+    strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d/", s_dir);
     events_dir[sizeof(events_dir)-1]=0;
     if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
 
@@ -248,7 +271,7 @@ static int _powercap_init_component( int cidx )
 
     // reset component count for each socket
     c = 0;
-    strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s, c);
+    strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s_dir, c);
     events_dir[sizeof(events_dir)-1]=0;
     if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
     while((events = opendir(events_dir)) != NULL) {
@@ -298,7 +321,7 @@ static int _powercap_init_component( int cidx )
       c++;
 
       // compose string of an pkg directory path
-      strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s, c);
+      strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s_dir, c);
       events_dir[sizeof(events_dir)-1]=0;
       if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
     }
