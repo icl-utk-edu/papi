@@ -238,7 +238,7 @@ static int _powercap_init_component( int cidx )
       if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
       // not a valid pkg event path so continue
 
-      if (access(event_path, F_OK) == -1) { continue; }
+      if (access(event_path, R_OK) == -1) { continue; }
 
       strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d", pkg_event_names[e], s);
       powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
@@ -286,7 +286,7 @@ static int _powercap_init_component( int cidx )
         if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
 
         // not a valid pkg event path so continue
-        if (access(event_path, F_OK) == -1) { continue; }
+        if (access(event_path, R_OK) == -1) { continue; }
 
         strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d_SUBZONE%d", component_event_names[e], s, c);
         powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
