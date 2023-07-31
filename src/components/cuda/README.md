@@ -11,8 +11,11 @@ The CUDA component exposes counters and controls for NVIDIA GPUs.
 
 To enable reading or writing of CUDA counters the user needs to link against a
 PAPI library that was configured with the CUDA component enabled. As an
-example the following command: `./configure --with-components="cuda"` is
-sufficient to enable the component.
+example the following command:
+
+    ./configure --with-components="cuda"
+    
+is sufficient to enable the component.
 
 Typically, the utility `papi_components_avail` (available in
 `papi/src/utils/papi_components_avail`) will display the components available
@@ -23,24 +26,26 @@ to the user, and whether they are disabled, and when they are disabled why.
 For CUDA, PAPI requires one environment variable: `PAPI_CUDA_ROOT`. This is
 required for both compiling and runtime. 
 
-Typically in Linux one would export this (examples are show below) variable but
+Typically in Linux one would export this (examples are shown below) variable but
 some systems have software to manage environment variables (such as `module` or
-`spack`), so consult with your sysadmin if you have such management software.
-An example (this works on the ICL Saturn system):
+`spack`), so consult with your sysadmin if you have such management software. Eg:
 
-    export PAPI_CUDA_ROOT=/usr/local/cuda-10.1
+    export PAPI_CUDA_ROOT=/path/to/installed/cuda
 
-Within PAPI_CUDA_ROOT, we expect the following standard directories:
+Within PAPI_CUDA_ROOT, we expect the following standard directories for building:
 
     PAPI_CUDA_ROOT/include
-    PAPI_CUDA_ROOT/lib64
     PAPI_CUDA_ROOT/extras/CUPTI/include
+
+and for runtime:
+
+    PAPI_CUDA_ROOT/lib64
     PAPI_CUDA_ROOT/extras/CUPTI/lib64
 
 As of this writing (07/2021) Nvidia has overhauled performance reporting;
 divided now into "Legacy CUpti" and "CUpti_11", the new approach. Legacy
 Cupti works on devices up to Compute Capability 7.0; while only CUpti_11
-works on devices with Compute Capability >=7.5. Both work on CC==7.0.
+works on devices with Compute Capability >=7.0. Both work on CC==7.0.
 
 This component automatically distinguishes between the two; but it cannot
 handle a "mix", one device that can only work with Legacy and another that
@@ -62,84 +67,62 @@ standard `PAPI_CUDA_ROOT` subdirectories, you must add the correct paths,
 e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`.
 This can be set using export; e.g. 
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PAPI_CUDA_ROOT/lib64
 
 ## Known Limitations
 * In CUpti\_11, the number of possible events is vastly expanded; e.g. from
   some hundreds of events per device to over 110,000 events per device. this can
-  make the utility papi/src/utils/papi\_native\_events run for several minutes;
-  as much as 2 to 4 minutes per GPU. If the output is redirected to a file, this 
+  make the utility `papi/src/utils/papi_native_events` run for several minutes;
+  as much as 2 minutes per GPU. If the output is redirected to a file, this 
   may appear to "hang up". Give it time.
 
-Note CUcontexts are device specific, a context can only apply to one GPU. So
-each GPU must have its own context.
-
-If PAPI events are being used, the CUcontexts to be used for each kernel+device must 
-already exist and must be the most recent Current CUcontext on that device before 
-PAPI\_add\_event() is invoked.
-
-An example is given in papi/src/components/cuda/tests/simpleMultiGPU.cu.
-
-First it executes cuCtxCreate() for each device and stores it in an array; e.g.
-cuCtxCreate(&sessionCtx[deviceNum], 0, deviceNum); 
-
-There are three main ways to change to a different context:
-cuCtxSetCurrent(), cuCtxPushCurrent(), and cuCtxPopCurrent(). 
-
-cuCtxPushCurrent() and cuCtxPopCurrent() are often used; these manage the
-Nvidia driver context stack (not the application's code stack). There is an
-example in simpleMultiGPU.cu when it sets up Nvidia Streams.
-
-The CUcontext at the top of the Nvidia driver context stack is the "current"
-context. So Push makes the context pushed the current context (and device if
-the context was created on a different device), and Pop makes the context 
-that WAS the top before the Push the new current context (and device, if that
-changes for the new context).
-
-However, we do not used Push and Pop right before PAPI_add_event. It is possible,
-but we use cuCtxSetCurrent() because it is more efficient. cuCtxSetCurrent()
-does NOT remember the previous context on the top of the stack, it just
-replaces it with the context being set. However, we can use cuCtxGetCurrent()
-to remember what context we are about to replace, and that is what we do, and
-then restore it later.
- 
-Note that "cudaSetDevice(deviceNum)" will change the device number and the
-context to that device's 'Primary' context ('Primary' is what Nvidia
-documentation calls it).  Initially if no context has been created for that
-device, a default context is created by cudaSetDevice(); but in our experience
-these default contexts do not allow all the Profiler functionality of a context
-explicitly created with cuCtxCreate().  Thus we recommend always using
-cuCtxCreate() for each device; and ensuring the context used to run a kernel is
-the most recent context active on that device when PAPI\_add\_event() is invoked.
-
-Code details are in simpleMultiGpu.cu just before the PAPI_add_event invocation.
+* Currently the CUDA component profiling only works with GPUs with compute capability > 7.0 using the NVIDIA Perfworks libraries.
 
 ***
 
 ## FAQ
 
 1. [Unusual installations](#markdown-header-unusual-installations)
+2. [CUDA contexts](#markdown-header-cuda-contexts)
+3. [CUDA toolkit versions](#markdown-header-cuda-toolkit-versions)
 
 ## Unusual installations
 Three libraries are required for the PAPI CUDA component. `libcuda.so`,
-`libcudart.so' (The CUDA run-time library), and `libcupti.so`. For CUpti_11,
+`libcudart.so` (The CUDA run-time library), and `libcupti.so`. For CUpti_11,
 `libnvperf_host.so` is also necessary. 
 
 For the CUDA component to be operational, it must find the dynamic libraries
-mentioned above. If they are not found in the standard `PAPI_CUDA_ROOT`
-subdirectories mentioned above, the component looks in the Linux default
-directories listed by `/etc/ld.so.conf`, usually `/usr/lib64`, `/lib64`,
-`/usr/lib` and `/lib`. 
+mentioned above. If they are not found anywhere in the standard `PAPI_CUDA_ROOT`
+subdirectories mentioned above, or `PAPI_CUDA_ROOT` does not exist at runtime, the component looks in the Linux default directories listed by `/etc/ld.so.conf`, 
+usually `/usr/lib64`, `/lib64`, `/usr/lib` and `/lib`. 
 
 The system will also search the directories listed in `LD_LIBRARY_PATH`,
 separated by colons `:`. This can be set using export; e.g. 
 
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
 
-Finally, for very problematic installations, the `Rules.cuda` is invoked as
-part of the `make` process and has an explanation of how to specify an explicit
-arbitrary path for each of these libraries, including an alternative library
-name. For example, if you wish to test a previous version of a library or a
-private version, to test for a bug. See:
+* If CUDA libraries are installed on your system, such that the OS can find `nvcc`, the header files, and the shared libraries, then `PAPI_CUDA_ROOT` and `LD_LIBRARY_PATH` may not be necessary.
 
-    papi/src/components/cuda/Rules.cuda
+## CUDA contexts
+The CUDA component can profile using contexts created by `cuCtxCreate` or primary device contexts activated by `cudaSetDevice`. Refer to test codes `HelloWorld`, `simpleMultiGPU`, `pthreads`, etc, that use created contexts. Refer to corresponding `*_noCuCtx` tests for profiling using primary device contexts.
+
+## CUDA toolkit versions
+Once your binaries are compiled, it is possible to swap the CUDA toolkit versions without needing to recompile the source. Simply update `PAPI_CUDA_ROOT` to point to the path where the cuda toolkit version can be found. You might need to update `LD_LIBRARY_PATH` as well.
+
+## Custom Library paths
+PAPI CUDA component loads the CUDA driver library from the system installed path. It loads the other libraries from `$PAPI_CUDA_ROOT`. If that is not set, then it tries to load them from system paths.
+
+However, it is possible to load each of these libraries from custom paths by setting each of the following environment variables to point to the desired files. These are,
+
+- `PAPI_CUDA_RUNTIME` to point to `libcudart.so`
+- `PAPI_CUDA_CUPTI` to point to `libcupti.so`
+- `PAPI_CUDA_PERFWORKS` to point to `libnvperf_host.so`
+
+## Compute capability 7.0 with CUDA toolkit version 11.0
+NVIDIA GPUs with compute capability 7.0 support profiling on both PerfWorks API and the older Events & Metrics API.
+
+If CUDA toolkit version > 11.0 is used, then PAPI uses the newer API, but using toolkit version 11.0, PAPI uses the events API by default.
+
+If the environment variable `PAPI_CUDA_110_CC_70_PERFWORKS_API` is set to any non-empty value, then compute capability 7.0 using toolkit version 11.0 will use the Perfworks API. Eg:
+
+    `export PAPI_CUDA_110_CC_70_PERFWORKS_API=1`
