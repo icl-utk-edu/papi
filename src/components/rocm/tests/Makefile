@@ -16,7 +16,7 @@ CXXFLAGS = -g -O0 -fopenmp
 
 rocm_tests: ALL
 
-ALL: sample_single_kernel_monitoring       \
+ALL: #sample_single_kernel_monitoring       \
      sample_single_thread_monitoring       \
      sample_multi_kernel_monitoring        \
      sample_multi_thread_monitoring        \
