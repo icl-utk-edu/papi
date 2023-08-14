@@ -75,7 +75,7 @@ pfm_amd64_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		return ret;
 
 	if (e->count > 1) {
-		DPRINT("%s: unsupported count=%d\n", e->count);
+		DPRINT("unsupported count=%d\n", e->count);
 		return PFM_ERR_NOTSUPP;
 	}
 

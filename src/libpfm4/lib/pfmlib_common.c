@@ -1191,7 +1191,7 @@ pfmlib_init_pmus(void)
 			continue;
 
 		if (pfmlib_is_blacklisted_pmu(p)) {
-			DPRINT("%d PMU blacklisted, skipping initialization\n");
+			DPRINT("%s PMU blacklisted, skipping initialization\n", p->name);
 			continue;
 		}
 		p->flags |= PFMLIB_PMU_FL_INIT;
@@ -1429,7 +1429,7 @@ pfmlib_parse_event_attr(char *str, pfmlib_event_desc_t *d)
 			ainfo->idx  = strtoull(s, &endptr, 0);
 			ainfo->equiv= NULL;
 			if (*endptr) {
-				DPRINT("raw umask (%s) is not a number\n");
+				DPRINT("raw umask (%s) is not a number\n", str);
 				return PFM_ERR_ATTR;
 			}
 
