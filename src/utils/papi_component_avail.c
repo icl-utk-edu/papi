@@ -141,8 +141,13 @@ main( int argc, char **argv )
 	  if (cmpinfo->disabled) continue;
 
 	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
-	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
-		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
+	  printf( "        %-23s Native: %d, Preset: %d, Counters: ", " ", cmpinfo->num_native_events);
+	  if (cmpinfo->num_cntrs == PAPI_ECMP) {
+		printf( "<%s>\n", cmpinfo->misc_info);
+	  }
+	  else {
+		printf( "%d\n", cmpinfo->num_cntrs);
+	  }
 
      int pmus=0;
      for (i=0; i<PAPI_PMU_MAX; i++) {                          // Count pmus to print.
