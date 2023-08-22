@@ -15,6 +15,7 @@
 
 static void *dl_drv, *dl_rt;
 
+const char *linked_cudart_path;
 void *dl_cupti;
 
 unsigned int _cuda_lock;
