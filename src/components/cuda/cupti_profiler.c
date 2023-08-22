@@ -206,6 +206,10 @@ static int load_nvpw_sym(void)
         NULL,
     };
 
+    if (linked_cudart_path && !dl_nvpw) {
+        dl_nvpw = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
+    }
+
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_nvpw) {
         dl_nvpw = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);

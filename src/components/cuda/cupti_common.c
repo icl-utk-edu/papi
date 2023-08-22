@@ -5,6 +5,8 @@
  */
 
 #include <dlfcn.h>
+#include <link.h>
+#include <libgen.h>
 #include <papi.h>
 #include "papi_memory.h"
 
@@ -145,6 +147,10 @@ static int load_cudart_sym(void)
         NULL,
     };
 
+    if (linked_cudart_path && !dl_rt) {
+        dl_rt = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
+    }
+
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_rt) {
         dl_rt = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
@@ -209,6 +215,10 @@ static int load_cupti_common_sym(void)
         NULL,
     };
 
+    if (linked_cudart_path && !dl_cupti) {
+        dl_cupti = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
+    }
+
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_cupti) {
         dl_cupti = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
@@ -255,11 +265,20 @@ static int util_load_cuda_sym(void)
         return PAPI_OK;
 }
 
+static void unload_linked_cudart_path(void)
+{
+    if (linked_cudart_path) {
+        papi_free((void*) linked_cudart_path);
+        linked_cudart_path = NULL;
+    }
+}
+
 int cuptic_shutdown(void)
 {
     unload_cuda_sym();
     unload_cudart_sym();
     unload_cupti_common_sym();
+    unload_linked_cudart_path();
     return PAPI_OK;
 }
 
@@ -356,9 +375,37 @@ void cuptic_disabled_reason_get(const char **pmsg)
     *pmsg = cuptic_disabled_reason_g;
 }
 
+static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused)) size_t size, __attribute__((unused)) void *data)
+{
+    const char *library_name = "libcudart.so";
+    const char *library_path = info->dlpi_name;
+
+    if (library_path != NULL && strstr(library_path, library_name) != NULL) {
+        linked_cudart_path = strdup(dirname(dirname((char *) library_path)));
+    }
+
+    return PAPI_OK;
+}
+
+static int get_user_cudart_path(void)
+{
+    dl_iterate_phdr(dl_iterate_phdr_cb, NULL);
+    if (NULL == linked_cudart_path) {
+        return PAPI_EMISC;
+    }
+    return PAPI_OK;
+}
+
 int cuptic_init(void)
 {
-    int papi_errno = util_load_cuda_sym();
+    int papi_errno = get_user_cudart_path();
+    if (papi_errno == PAPI_OK) {
+        LOGDBG("Linked cudart root: %s\n", linked_cudart_path);
+    }
+    else {
+        LOGDBG("Target application not linked with cuda runtime libraries.\n");
+    }
+    papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
         cuptic_disabled_reason_set("Unable to load CUDA library functions.");
         goto fn_exit;
