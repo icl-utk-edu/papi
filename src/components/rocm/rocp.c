@@ -671,18 +671,29 @@ init_rocp_env(void)
     if (override_hsa_tools_lib) {
         /* Account for change of librocprofiler64.so file location in rocm-5.2.0
          * directory structure */
-        sprintf(pathname, "%s/lib/librocprofiler64.so", rocm_root);
 
-        err = stat(pathname, &stat_info);
-        if (err < 0) {
-            sprintf(pathname, "%s/rocprofiler/lib/libprofiler64.so", rocm_root);
+        /* prefer .so.1 as .so might not be available in 5.7 anymore, in 5.6 it
+         * was a linker script. */
+        const char *candidates[] = {
+            "lib/librocprofiler64.so.1",
+            "lib/librocprofiler64.so",
+            "rocprofiler/lib/libprofiler64.so.1",
+            "rocprofiler/lib/libprofiler64.so",
+            NULL
+        };
+        const char **candidate = candidates;
+        while (*candidate) {
+            sprintf(pathname, "%s/%s", rocm_root, *candidate);
 
             err = stat(pathname, &stat_info);
-            if (err < 0) {
-                ROCP_REC_ERR_STR("Rocprofiler librocprofiler64.so file not "
-                                 "found.");
-                return PAPI_EMISC;
+            if (err == 0) {
+                break;
             }
+            ++candidate;
+        }
+        if (!*candidate) {
+            ROCP_REC_ERR_STR("Rocprofiler librocprofiler64.so file not found.");
+            return PAPI_EMISC;
         }
 
         setenv("HSA_TOOLS_LIB", pathname, 1);
