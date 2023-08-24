@@ -20,6 +20,7 @@
 typedef struct {
     char *name;
     char *descr;
+    char *feature;
     unsigned int ntv_dev;
     unsigned int ntv_id;
     int instance;
@@ -830,8 +831,15 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
     }
 
     for (instance = 0; instance < instances; ++instance) {
+        char feature[PAPI_MAX_STR_LEN] = { 0 };
+        if (instances > 1) {
+            sprintf(feature, "%s[%d]", info.metric.name, instance);
+        } else {
+            sprintf(feature, "%s", info.metric.name);
+        }
         events[*count].name = strdup(info.metric.name);
         events[*count].descr = strdup(info.metric.description);
+        events[*count].feature = strdup(feature);
         events[*count].ntv_dev = arg->dev_id;
         events[*count].ntv_id = *count;
         events[*count].instance = (instances > 1) ? (int) instance : -1;
@@ -1060,6 +1068,7 @@ shutdown_event_table(void)
     for (i = 0; i < ntv_table_p->count; ++i) {
         papi_free(ntv_table_p->events[i].name);
         papi_free(ntv_table_p->events[i].descr);
+        papi_free(ntv_table_p->events[i].feature);
     }
 
     ntv_table_p->count = 0;
@@ -1301,10 +1310,9 @@ init_features(unsigned int *events_id, int num_events,
 
     int i;
     for (i = 0; i < num_events; ++i) {
-        char *name = ntv_table_p->events[events_id[i]].name;
         features[i].kind =
             (rocprofiler_feature_kind_t) ROCPROFILER_INFO_KIND_METRIC;
-        features[i].name = (const char *) name;
+        features[i].name = (const char *) ntv_table_p->events[events_id[i]].feature;
     }
 
     return papi_errno;
