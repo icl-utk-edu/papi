@@ -72,7 +72,6 @@ papi_vector_t _cuda_vector = {
         .version = "0.1",
         .description = "CUDA profiling via NVIDIA CuPTI interfaces",
         .num_mpx_cntrs = PAPI_CUDA_MPX_COUNTERS,
-        .num_cntrs = PAPI_CUDA_MAX_COUNTERS,
         .default_domain = PAPI_DOM_USER,
         .default_granularity = PAPI_GRN_THR,
         .available_granularities = PAPI_GRN_THR,
@@ -123,6 +122,10 @@ static int cuda_init_component(int cidx)
     _cuda_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
     sprintf(_cuda_vector.cmp_info.disabled_reason,
         "Not initialized. Access component events to initialize it.");
+
+    _cuda_vector.cmp_info.num_cntrs = PAPI_ECMP;
+    sprintf(_cuda_vector.cmp_info.misc_info, "Not supported by vendor.");
+
     return PAPI_EDELAY_INIT;
 }
 
