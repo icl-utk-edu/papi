@@ -97,7 +97,7 @@ pfm_intel_x86_get_perf_encoding(void *this, pfmlib_event_desc_t *e)
 		return ret;
 
 	if (e->count > 2) {
-		DPRINT("%s: unsupported count=%d\n", e->count);
+		DPRINT("unsupported count=%d\n", e->count);
 		return PFM_ERR_NOTSUPP;
 	}
 	/* default PMU type */

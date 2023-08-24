@@ -57,8 +57,7 @@ display_cha(void *this, pfmlib_event_desc_t *e, void *val)
 
 	f.val = e->codes[1];
 
-	__pfm_vbprintf("[UNC_CHA_FILTER0=0x%"PRIx64" thread_id=%d source=0x%x state=0x%x"
-		       " state=0x%x]\n",
+	__pfm_vbprintf("[UNC_CHA_FILTER0=0x%"PRIx64" thread_id=%d source=0x%x state=0x%x]\n",
 			f.val,
 			f.skx_cha_filt0.tid,
 			f.skx_cha_filt0.sid,
