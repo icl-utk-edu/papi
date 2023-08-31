@@ -379,12 +379,13 @@ void cuptic_disabled_reason_get(const char **pmsg)
 static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused)) size_t size, __attribute__((unused)) void *data)
 {
     const char *library_name = "libcudart.so";
-    const char *library_path = info->dlpi_name;
+    char *library_path = strdup(info->dlpi_name);
 
     if (library_path != NULL && strstr(library_path, library_name) != NULL) {
         linked_cudart_path = strdup(dirname(dirname((char *) library_path)));
     }
 
+    free(library_path);
     return PAPI_OK;
 }
 
