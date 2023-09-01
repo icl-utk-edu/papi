@@ -5,9 +5,46 @@
  *
  */
 #include "common.h"
-#include <omp.h>
+#include <pthread.h>
 
 int quiet;
+
+static void *run(void *thread_num_arg)
+{
+    int papi_errno;
+
+    int thread_num = *(int *) thread_num_arg;
+    char region_name[64] = { 0 };
+    sprintf(region_name, "matmul_intercept-%d", thread_num);
+    papi_errno = PAPI_hl_region_begin(region_name);
+    if (papi_errno != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_hl_region_begin", papi_errno);
+    }
+
+    hipStream_t stream;
+    hipSetDevice(thread_num);
+    hipError_t hip_errno = hipStreamCreate(&stream);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipStreamCreate", hip_errno);
+    }
+
+    void *handle;
+    hip_do_matmul_init(&handle);
+    hip_do_matmul_work(handle, stream);
+    hip_errno = hipStreamSynchronize(stream);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipStreamSynchronize", hip_errno);
+    }
+    hip_do_matmul_cleanup(&handle);
+
+    papi_errno = PAPI_hl_region_end(region_name);
+    if (papi_errno != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_hl_region_end", papi_errno);
+    }
+    PAPI_hl_stop();
+
+    pthread_exit(NULL);
+}
 
 int main(int argc, char *argv[])
 {
@@ -31,8 +68,6 @@ int main(int argc, char *argv[])
         test_fail(__FILE__, __LINE__, "hipGetDeviceCount", hip_errno);
     }
 
-    omp_set_num_threads(dev_count);
-
 #define NUM_EVENTS (2)
     const char *events[NUM_EVENTS] = {
         "rocm:::SQ_INSTS_VALU",
@@ -54,38 +89,31 @@ int main(int argc, char *argv[])
     event_list[off - 1] = 0;
     setenv("PAPI_EVENTS", event_list, 1);
 
-#pragma omp parallel
-    {
-    int thread_num = omp_get_thread_num();
-    char region_name[64] = { 0 };
-    sprintf(region_name, "matmul_intercept-%d", thread_num);
-    papi_errno = PAPI_hl_region_begin(region_name);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_hl_region_begin", papi_errno);
+    pthread_t *thread = (pthread_t *) malloc(dev_count * sizeof(*thread));
+    if (NULL == thread) {
+        test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
     }
 
-    hipStream_t stream;
-    hipSetDevice(thread_num);
-    hip_errno = hipStreamCreate(&stream);
-    if (hip_errno != hipSuccess) {
-        hip_test_fail(__FILE__, __LINE__, "hipStreamCreate", hip_errno);
+    int *thread_num = (int *) malloc(dev_count * sizeof(*thread_num));
+    if (NULL == thread_num) {
+        test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
     }
 
-    void *handle;
-    hip_do_matmul_init(&handle);
-    hip_do_matmul_work(handle, stream);
-    hip_errno = hipStreamSynchronize(stream);
-    if (hip_errno != hipSuccess) {
-        hip_test_fail(__FILE__, __LINE__, "hipStreamSynchronize", hip_errno);
-    }
-    hip_do_matmul_cleanup(&handle);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-    papi_errno = PAPI_hl_region_end(region_name);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_hl_region_end", papi_errno);
+    for (i = 0; i < dev_count; ++i) {
+        thread_num[i] = i;
+        pthread_create(&thread[i], &attr, run, &thread_num[i]);
     }
-    PAPI_hl_stop();
+
+    for (i = 0; i < dev_count; ++i) {
+        pthread_join(thread[i], NULL);
     }
+
+    free(thread);
+    free(thread_num);
 
     test_hl_pass(__FILE__);
     return 0;
