@@ -26,8 +26,7 @@ Example:
 Within PAPI\_LMSENSORS\_ROOT, we expect the following standard directories:
 
     PAPI_LMSENSORS_ROOT/include or PAPI_LMSENSORS_ROOT/include/sensors
-    PAPI_LMSENSORS_ROOT/lib64
-
+    PAPI_LMSENSORS_ROOT/lib64   or PAPI_LMSENSROS_ROOT/lib
 ***
 ## FAQ
 

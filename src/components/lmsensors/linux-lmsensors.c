@@ -399,6 +399,12 @@ link_lmsensors_libraries ()
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
+   // Step 4: Try another explicit install default.
+   if (dl1 == NULL && lmsensors_root != NULL) {                          // if root given, try it.
+      snprintf(path_name, PATH_MAX, "%s/lib/libsensors.so", lmsensors_root);   // PAPI Root check.
+      dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
+   }
+
    // Check for failure.
    if (dl1 == NULL) {
       snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found.");
