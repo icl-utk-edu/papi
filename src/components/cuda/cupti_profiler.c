@@ -1245,13 +1245,13 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
                 goto fn_exit;
             }
             if (cuptiu_event_table_find_name(all_evt_names, evt_name, &find) == PAPI_ENOEVNT) {
-                papi_errno = cuptiu_event_table_insert_record(all_evt_names, evt_name, curr + i, 0);
+                papi_errno = cuptiu_event_table_insert_record(all_evt_names, evt_name, curr, 0);
                 if (papi_errno != PAPI_OK) {
                     goto fn_exit;
                 }
+                ++curr;
             }
         }
-        curr += i;
     }
 fn_exit:
     return papi_errno;
