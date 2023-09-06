@@ -910,7 +910,7 @@ init_event_table(void)
     int ntv_events_count;
     papi_errno = get_ntv_events_count(&ntv_events_count);
     if (papi_errno != PAPI_OK) {
-        goto fn_fail;
+        return papi_errno;
     }
 
     ntv_event_t *ntv_events = papi_calloc(ntv_events_count, sizeof(*ntv_events));
