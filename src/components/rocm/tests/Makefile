@@ -11,12 +11,12 @@ CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/include          \
            -I$(PAPI_ROCM_ROOT)/hip/include/hip  \
            -I$(PAPI_ROCM_ROOT)/hsa/include/hsa  \
            $(INCLUDE)
-LDFLAGS += $(PAPILIB) $(TESTLIB) -fopenmp
-CXXFLAGS = -g -O0 -fopenmp
+LDFLAGS += $(PAPILIB) $(TESTLIB) -pthread
+CXXFLAGS = -g -O0 -pthread
 
 rocm_tests: ALL
 
-ALL: #sample_single_kernel_monitoring       \
+ALL: sample_single_kernel_monitoring       \
      sample_single_thread_monitoring       \
      sample_multi_kernel_monitoring        \
      sample_multi_thread_monitoring        \

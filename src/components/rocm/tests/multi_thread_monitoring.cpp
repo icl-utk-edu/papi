@@ -12,45 +12,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <omp.h>
+#include <pthread.h>
 #include "common.h"
 
 int quiet;
 
-int multi_thread(int argc, char *argv[])
+static void *run(void *thread_num_arg)
 {
     int papi_errno;
     int pass_with_warning = 0;
     hipError_t hip_errno;
-    int retcode;
-    quiet = tests_quiet(argc, argv);
-
-    if (!quiet) {
-        fprintf(stdout, "%s : multi GPU activity monitoring program.\n",
-                argv[0]);
-    }
-
-    papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
-    if (papi_errno != PAPI_VER_CURRENT) {
-        test_fail(__FILE__, __LINE__, "PAPI_library_init", papi_errno);
-    }
-
-    papi_errno = PAPI_thread_init((unsigned long (*)(void)) omp_get_thread_num);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_thread_init", papi_errno);
-    }
-
-    int dev_count;
-    /* The first hip call causes the hsa runtime to be initialized
-     * too (by calling hsa_init()). If hsa is already initialized
-     * this will result in the increment of an internal reference
-     * counter and won't alter the current configuration. */
-    hip_errno = hipGetDeviceCount(&dev_count);
-    if (hip_errno != hipSuccess) {
-        hip_test_fail(__FILE__, __LINE__, "hipGetDeviceCount", hip_errno);
-    }
-
-    omp_set_num_threads(dev_count);
+    int j;
 
 #define NUM_EVENTS 4
     const char *events[NUM_EVENTS] = {
@@ -60,10 +32,8 @@ int multi_thread(int argc, char *argv[])
         "rocm:::SQ_WAVES_RESTORED",
     };
 
-#pragma omp parallel
-    {
     int eventset = PAPI_NULL;
-    int thread_num = omp_get_thread_num();
+    int thread_num = *(int *) thread_num_arg;
 
     papi_errno = PAPI_create_eventset(&eventset);
     if (papi_errno != PAPI_OK) {
@@ -122,8 +92,8 @@ int multi_thread(int argc, char *argv[])
 
     for (int i = 0; i < NUM_EVENTS; ++i) {
         if (!quiet) {
-            fprintf(stdout, "[tid:%d] %s:device=%d : %lld\n",
-                    omp_get_thread_num(), events[i], thread_num,
+            fprintf(stdout, "[tid:%lu] %s:device=%d : %lld\n",
+                    pthread_self(), events[i], thread_num,
                     counters[i]);
         }
     }
@@ -155,7 +125,67 @@ int multi_thread(int argc, char *argv[])
             test_fail(__FILE__, __LINE__, "match_expected_counter", -1);
         }
     }
+
+    pthread_exit(NULL);
+}
+
+int multi_thread(int argc, char *argv[])
+{
+    int papi_errno;
+    int retcode;
+    hipError_t hip_errno;
+    quiet = tests_quiet(argc, argv);
+
+    if (!quiet) {
+        fprintf(stdout, "%s : multi GPU activity monitoring program.\n",
+                argv[0]);
     }
+
+    papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
+    if (papi_errno != PAPI_VER_CURRENT) {
+        test_fail(__FILE__, __LINE__, "PAPI_library_init", papi_errno);
+    }
+
+    papi_errno = PAPI_thread_init((unsigned long (*)(void)) pthread_self);
+    if (papi_errno != PAPI_OK) {
+        test_fail(__FILE__, __LINE__, "PAPI_thread_init", papi_errno);
+    }
+
+    int dev_count;
+    /* The first hip call causes the hsa runtime to be initialized
+     * too (by calling hsa_init()). If hsa is already initialized
+     * this will result in the increment of an internal reference
+     * counter and won't alter the current configuration. */
+    hip_errno = hipGetDeviceCount(&dev_count);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipGetDeviceCount", hip_errno);
+    }
+
+    pthread_t *thread = (pthread_t *) malloc(dev_count * sizeof(*thread));
+    if (NULL == thread) {
+        test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
+    }
+
+    int *thread_num = (int *) malloc(dev_count * sizeof(*thread_num));
+    if (NULL == thread_num) {
+        test_fail(__FILE__, __LINE__, "malloc", PAPI_ENOMEM);
+    }
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    for (int i = 0; i < dev_count; ++i) {
+        thread_num[i] = i;
+        pthread_create(&thread[i], &attr, run, &thread_num[i]);
+    }
+
+    for (int i = 0; i < dev_count; ++i) {
+        pthread_join(thread[i], NULL);
+    }
+
+    free(thread);
+    free(thread_num);
 
     PAPI_shutdown();
 
