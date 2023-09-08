@@ -3,7 +3,7 @@
 COMPONENT=$1
 COMPILER=$2
 
-[ -z "$COMPILER" ] && COMPILER=gcc@10 
+[ -z "$COMPILER" ] && COMPILER=gcc@11
 
 source /etc/profile
 set +x
