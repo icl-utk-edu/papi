@@ -118,6 +118,7 @@ int
 rocp_init(void)
 {
     int papi_errno = PAPI_OK;
+    SUBDBG("ENTER\n");
 
     papi_errno = load_rocp_sym();
     if (papi_errno != PAPI_OK) {
@@ -135,6 +136,7 @@ rocp_init(void)
     ntv_table_p = &ntv_table;
 
   fn_exit:
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
   fn_fail:
     unload_rocp_sym();
@@ -146,6 +148,7 @@ int
 rocp_evt_enum(unsigned int *event_code, int modifier)
 {
     int papi_errno = PAPI_OK;
+    SUBDBG("ENTER: event_code: %u, modifier: %d\n", *event_code, modifier);
 
     switch(modifier) {
         case PAPI_ENUM_FIRST:
@@ -165,6 +168,7 @@ rocp_evt_enum(unsigned int *event_code, int modifier)
             papi_errno = PAPI_EINVAL;
     }
 
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
 }
 
@@ -185,6 +189,7 @@ rocp_evt_name_to_code(const char *name, unsigned int *event_code)
 {
     int papi_errno = PAPI_OK;
     int htable_errno;
+    SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
     ntv_event_t *event;
     htable_errno = htable_find(htable, name, (void **) &event);
@@ -196,6 +201,7 @@ rocp_evt_name_to_code(const char *name, unsigned int *event_code)
     *event_code = event->ntv_id;
 
   fn_exit:
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
 }
 
