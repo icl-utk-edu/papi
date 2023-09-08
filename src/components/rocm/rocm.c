@@ -141,14 +141,18 @@ rocm_init_component(int cid)
         if (expect > PAPI_MAX_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
-        return papi_errno;
+        goto fn_fail;
     }
 
     sprintf(_rocm_vector.cmp_info.disabled_reason,
             "Not initialized. Access component events to initialize it.");
-    _rocm_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
+    papi_errno = PAPI_EDELAY_INIT;
+    _rocm_vector.cmp_info.disabled = papi_errno;
 
-    return PAPI_EDELAY_INIT;
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -225,22 +229,28 @@ rocm_init_private(void)
 int
 rocm_shutdown_component(void)
 {
+    int papi_errno = PAPI_OK;
+    int orig_state = _rocm_vector.cmp_info.initialized;
+    _rocm_vector.cmp_info.initialized = 0;
+
     if (!_rocm_vector.cmp_info.initialized) {
-        return PAPI_OK;
-    }
-
-    if (_rocm_vector.cmp_info.disabled != PAPI_OK) {
-        return PAPI_OK;
-    }
-
-    int papi_errno = rocd_shutdown();
-    if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
+    if (_rocm_vector.cmp_info.disabled != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    papi_errno = rocd_shutdown();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
   fn_exit:
-    _rocm_vector.cmp_info.initialized = 0;
     return papi_errno;
+  fn_fail:
+    _rocm_vector.cmp_info.initialized = orig_state;
+    goto fn_exit;
 }
 
 int
@@ -330,7 +340,7 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
 
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
@@ -338,15 +348,21 @@ rocm_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
     if (rocm_ctl->rocd_ctx != NULL) {
         SUBDBG("Cannot update events in an eventset that has been already "
                "started.");
-        return PAPI_ECMP;
+        papi_errno = PAPI_ECMP;
+        goto fn_fail;
     }
 
     papi_errno = update_native_events(rocm_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
 
-    return try_open_events(rocm_ctl);
+    papi_errno = try_open_events(rocm_ctl);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 struct event_map_item {
@@ -449,13 +465,14 @@ rocm_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
     if (rocm_ctx->state & ROCM_EVENTS_OPENED) {
         SUBDBG("Error! Cannot PAPI_start more than one eventset at a time for every component.");
-        return PAPI_ECNFLCT;
+        papi_errno = PAPI_ECNFLCT;
+        goto fn_fail;
     }
 
     papi_errno = rocd_ctx_open(rocm_ctl->events_id, rocm_ctl->num_events,
                                &rocm_ctl->rocd_ctx);
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
 
     rocm_ctx->state = ROCM_EVENTS_OPENED;
@@ -470,7 +487,9 @@ rocm_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
   fn_exit:
     return papi_errno;
   fn_fail:
-    rocd_ctx_close(rocm_ctl->rocd_ctx);
+    if (rocm_ctx->state == ROCM_EVENTS_OPENED) {
+        rocd_ctx_close(rocm_ctl->rocd_ctx);
+    }
     rocm_ctx->state = 0;
     goto fn_exit;
 }
@@ -479,14 +498,21 @@ int
 rocm_read(hwd_context_t *ctx __attribute__((unused)), hwd_control_state_t *ctl,
           long long **val, int flags __attribute__((unused)))
 {
+    int papi_errno = PAPI_OK;
     rocm_control_t *rocm_ctl = (rocm_control_t *) ctl;
 
     if (rocm_ctl->rocd_ctx == NULL) {
         SUBDBG("Error! Cannot PAPI_read counters for an eventset that has not been PAPI_start'ed.");
-        return PAPI_EMISC;
+        papi_errno = PAPI_EMISC;
+        goto fn_fail;
     }
 
-    return rocd_ctx_read(rocm_ctl->rocd_ctx, val);
+    papi_errno = rocd_ctx_read(rocm_ctl->rocd_ctx, val);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -498,22 +524,29 @@ rocm_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
     if (!(rocm_ctx->state & ROCM_EVENTS_OPENED)) {
         SUBDBG("Error! Cannot PAPI_stop counters for an eventset that has not been PAPI_start'ed.");
-        return PAPI_EMISC;
+        papi_errno = PAPI_EMISC;
+        goto fn_fail;
     }
 
     papi_errno = rocd_ctx_stop(rocm_ctl->rocd_ctx);
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
 
     rocm_ctx->state &= ~ROCM_EVENTS_RUNNING;
 
     papi_errno = rocd_ctx_close(rocm_ctl->rocd_ctx);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
 
     rocm_ctx->state = 0;
     rocm_ctl->rocd_ctx = NULL;
 
+  fn_exit:
     return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -534,9 +567,15 @@ rocm_ntv_enum_events(unsigned int *event_code, int modifier)
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
-    return rocd_evt_enum(event_code, modifier);
+
+    papi_errno = rocd_evt_enum(event_code, modifier);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -544,9 +583,15 @@ rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
-    return rocd_evt_code_to_name(event_code, name, len);
+
+    papi_errno = rocd_evt_code_to_name(event_code, name, len);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -554,9 +599,15 @@ rocm_ntv_name_to_code(const char *name, unsigned int *code)
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
-    return rocd_evt_name_to_code(name, code);
+
+    papi_errno = rocd_evt_name_to_code(name, code);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
@@ -564,9 +615,15 @@ rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        return papi_errno;
+        goto fn_fail;
     }
-    return rocd_evt_code_to_descr(event_code, descr, len);
+
+    papi_errno = rocd_evt_code_to_descr(event_code, descr, len);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 int
