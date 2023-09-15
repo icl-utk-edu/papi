@@ -129,9 +129,12 @@ generateEventList(char *base_dir)
 	 /* Sometimes the files are in ./, sometimes in device/ */
 	 for(pathnum=0;pathnum<NUM_PATHS;pathnum++) {
 
-	    snprintf(path, PATH_MAX, "%s/%s/%s", 
+	    retlen = snprintf(path, PATH_MAX, "%s/%s/%s",
 		     base_dir, hwmonx->d_name,paths[pathnum]);
-
+        if (retlen <= 0 || PATH_MAX <= retlen) {
+            SUBDBG("Path length is too long.\n");
+            return PAPI_EINVAL;
+        }
 	    SUBDBG("Trying to open %s\n",path);
 	    d = opendir(path);
 	    if (d==NULL) {
@@ -140,7 +143,11 @@ generateEventList(char *base_dir)
 
 	    /* Get the name of the module */
 
-	    snprintf(filename, PAPI_MAX_STR_LEN, "%s/name",path);
+	    retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/name",path);
+        if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Module name too long.\n");
+            return PAPI_EINVAL;
+        }
 	    fff=fopen(filename,"r");
 	    if (fff==NULL) {
 	       snprintf(modulename, PAPI_MIN_STR_LEN, "Unknown");
@@ -165,8 +172,12 @@ generateEventList(char *base_dir)
 	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_label", 
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_label",
 		      path,i);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Failed to construct location label.\n");
+            return PAPI_EINVAL;
+         }
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) {
 	        strncpy(location,"?",PAPI_MIN_STR_LEN);
@@ -179,8 +190,12 @@ generateEventList(char *base_dir)
 	     }
 
 	     /* Look for input temperature */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_input", 
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/in%d_input",
 		      path,i);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Failed input temperature string.\n");
+            return PAPI_EINVAL;
+         }
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) continue;
 	     fclose(fff);
@@ -193,9 +208,13 @@ generateEventList(char *base_dir)
 	     }
 
 	     snprintf(units, PAPI_MIN_STR_LEN, "V");
-	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("snprintf failed.\n");
+            return PAPI_EINVAL;
+         }
 
 	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
 	        goto done_error;
@@ -212,8 +231,12 @@ generateEventList(char *base_dir)
 	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_label", 
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_label",
 		      path,i);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Location label string failed.\n");
+            return PAPI_EINVAL;
+         }
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) {
 	        strncpy(location,"?",PAPI_MIN_STR_LEN);
@@ -226,8 +249,12 @@ generateEventList(char *base_dir)
 	     }
 
 	     /* Look for input temperature */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_input", 
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/temp%d_input",
 		      path,i);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Input temperature string failed.\n");
+            return PAPI_EINVAL;
+         }
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) continue;
 	     fclose(fff);
@@ -241,9 +268,13 @@ generateEventList(char *base_dir)
 	     }
 
 	     snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
-	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("snprintf failed.\n");
+            return PAPI_EINVAL;
+         }
 
 	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
 	        goto done_error;
@@ -259,8 +290,12 @@ generateEventList(char *base_dir)
 	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
-	     snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_label", 
+	     retlen = snprintf(filename, PAPI_MAX_STR_LEN, "%s/fan%d_label",
 		      path,i);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("Failed to write fan label string.\n");
+            return PAPI_EINVAL;
+         }
 	     fff=fopen(filename,"r");
 	     if (fff==NULL) {
 	        strncpy(location,"?",PAPI_MIN_STR_LEN);
@@ -294,9 +329,13 @@ generateEventList(char *base_dir)
 	     }
 
 	     snprintf(units, PAPI_MIN_STR_LEN, "RPM");
-	     snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
+	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
+         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
+            SUBDBG("snprintf failed.\n");
+            return PAPI_EINVAL;
+         }
 
 	     if (insert_in_list(name,units,description,filename)!=PAPI_OK) {
 	        goto done_error;
