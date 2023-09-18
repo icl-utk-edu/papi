@@ -9,7 +9,7 @@ long long local_var;
 
 void mintest_init(void){
     local_var =0;
-    papi_handle_t *handle = papi_sde_init("Min Example Code");
+    papi_handle_t handle = papi_sde_init("Min Example Code");
     papi_sde_register_counter(handle, "Example Event", PAPI_SDE_RO|PAPI_SDE_DELTA, PAPI_SDE_long_long, &local_var);
 }
 
