@@ -3,9 +3,10 @@ EXECUTABLES = simple threads
 
 CC ?= gcc
 
-PAPIROOT ?= /path/to/papi/install/prefix
-CFLAGS ?= -O0 -pthread -I$(PAPIROOT)/include
-LIBS = -L$(PAPIROOT)/lib  -lm -ldl -lpapi -Wl,-rpath=$(PAPIROOT)/lib
+PAPI_ROOT := $(shell dirname $(shell dirname $(shell which papi_component_avail)))
+CFLAGS ?= -O0 -pthread -I$(PAPI_ROOT)/include
+CPPFLAGS = -I$(PAPI_ROOT)/include
+LIBS = -L$(PAPI_ROOT)/lib  -lm -ldl -lpapi -Wl,-rpath=$(PAPI_ROOT)/lib -pthread
 
 all: $(EXECUTABLES)
 
