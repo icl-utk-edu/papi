@@ -1,7 +1,7 @@
 CC ?= gcc
 SDE_INC = -I. -I..
 SDE_LD = -ldl -pthread
-CFLAGS = -Wextra -Wall -O2 -g
+CFLAGS = -Wextra -Wall -O2
 
 %_d.o: %.c
 		$(CC) -c -Bdynamic -fPIC -shared -fvisibility=hidden $(CFLAGS) $(SDE_INC) $< -o $@
@@ -14,7 +14,7 @@ SOBJS=$(patsubst %.c,%_s.o,$(wildcard *.c))
 all: dynamic static
 
 dynamic: $(DOBJS)
-	$(CC) -Bdynamic -fPIC -shared -Wl,-soname -Wl,libsde.so -fvisibility=hidden -Wextra -Wall -g -O2 $(DOBJS) -lrt -ldl -pthread -o libsde.so.1.0
+	$(CC) -Bdynamic -fPIC -shared -Wl,-soname -Wl,libsde.so -fvisibility=hidden $(CFLAGS) $(DOBJS) -lrt -ldl -pthread -o libsde.so.1.0
 	rm -f *_d.o
 
 static: $(SOBJS)
