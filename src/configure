@@ -5232,7 +5232,7 @@ else
                            #include <unistd.h>
                            extern __thread int i;
                            static int res1, res2;
-                           void thread_main (void *arg) {
+                           void *thread_main (void *arg) {
                              i = (int)arg;
                              sleep (1);
                              if ((int)arg == 1)
@@ -5425,7 +5425,7 @@ else
                                        int gettid() {
                                          return syscall( SYS_gettid );
                                        }
-                                       int doThreadOne( void * v ) {
+                                       void *doThreadOne( void * v ) {
                                          struct tms tm;
                                          int status;
                                          while (!done)
@@ -5435,7 +5435,7 @@ else
                                          threadone = tm.tms_utime;
                                          return 0;
                                        }
-                                       int doThreadTwo( void * v ) {
+                                       void *doThreadTwo( void * v ) {
                                          struct tms tm;
                                          long i, j = 0xdeadbeef;
                                          int status;
