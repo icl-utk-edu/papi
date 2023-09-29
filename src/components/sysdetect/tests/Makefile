@@ -25,9 +25,9 @@ ifeq ($(notdir $(F77)),gfortran)
     FFLAGS +=-ffree-form -ffree-line-length-none
 else ifeq ($(notdir $(F77)),flang)
     FFLAGS +=-ffree-form
-else ifeq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
+else ifneq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
     FFLAGS +=-free
-else ifeq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
+else ifneq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
     FFLAGS +=-ffree
 endif
 
