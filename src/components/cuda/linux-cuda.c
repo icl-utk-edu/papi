@@ -419,17 +419,12 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
     COMPDBG("Entering.\n");
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     int papi_errno;
-    papi_errno = cuptid_control_stop( control->cupti_ctl );
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
+
     papi_errno = cuptid_control_read( control->cupti_ctl, (long long *) &(control->values) );
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
     *val = control->values;
-
-    papi_errno = cuptid_control_start( control->cupti_ctl );
 
 fn_exit:
     return papi_errno;
