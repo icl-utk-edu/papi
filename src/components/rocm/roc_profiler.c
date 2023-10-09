@@ -1026,7 +1026,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
     return papi_errno;
   fn_fail:
     for (j = 0; j < i; ++j) {
-        rocp_close_p(contexts[i]);
+        rocp_close_p(contexts[j]);
         SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER();
     }
     goto fn_exit;
