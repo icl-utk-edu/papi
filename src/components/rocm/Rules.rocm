@@ -1,10 +1,11 @@
 PAPI_ROCM_ROOT ?= /opt/rocm
 
 COMPSRCS += components/rocm/rocm.c \
-            components/rocm/rocp.c \
-            components/rocm/rocd.c
+            components/rocm/roc_profiler.c \
+            components/rocm/roc_dispatch.c \
+            components/rocm/roc_common.c
 
-COMPOBJS += rocm.o rocp.o rocd.o
+COMPOBJS += rocm.o roc_profiler.o roc_dispatch.o roc_common.o
 
 CFLAGS += -I$(PAPI_ROCM_ROOT)/include \
           -I$(PAPI_ROCM_ROOT)/include/hsa \
@@ -18,8 +19,11 @@ LDFLAGS += $(LDL)
 rocm.o: components/rocm/rocm.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
 
-rocp.o: components/rocm/rocp.c $(HEADERS)
+roc_profiler.o: components/rocm/roc_profiler.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
 
-rocd.o: components/rocm/rocd.c $(HEADERS)
+roc_dispatch.o: components/rocm/roc_dispatch.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
+
+roc_common.o: components/rocm/roc_common.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
