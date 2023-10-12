@@ -42,6 +42,7 @@ struct rocd_ctx {
             int feature_count;
             rocprofiler_t **contexts;
             rocc_bitmap_t device_map;
+            rocprofiler_properties_t *ctx_prop;
         } sampling;
     } u;
 };
@@ -622,17 +623,6 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
  * rocp_ctx_{open,close,start,stop,read,reset} sampling mode utility functions
  *
  */
-static struct {
-    int device_state[PAPI_ROCM_MAX_DEV_COUNT];
-    int queue_ref_count;
-    rocprofiler_properties_t ctx_prop;
-} sampling_global_state = {{ 0 }, 0, { NULL, 128, NULL, NULL }};
-
-#define SAMPLING_CONTEXT_PROP                        (sampling_global_state.ctx_prop)
-#define SAMPLING_CONTEXT_PROP_QUEUE                  (SAMPLING_CONTEXT_PROP.queue)
-#define SAMPLING_FETCH_AND_INCREMENT_QUEUE_COUNTER() (sampling_global_state.queue_ref_count++)
-#define SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER() (--sampling_global_state.queue_ref_count)
-
 static int init_features(unsigned int *, int, rocprofiler_feature_t *);
 static int sampling_ctx_init(unsigned int *, int, rocp_ctx_t *);
 static int sampling_ctx_finalize(rocp_ctx_t *);
@@ -881,6 +871,7 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     int num_devs;
     rocprofiler_feature_t *features = NULL;
     rocprofiler_t **contexts = NULL;
+    rocprofiler_properties_t *ctx_prop = NULL;
     long long *counters = NULL;
     *rocp_ctx = NULL;
 
@@ -897,6 +888,12 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 
     contexts = papi_calloc(num_devs, sizeof(*contexts));
     if (contexts == NULL) {
+        papi_errno = PAPI_ENOMEM;
+        goto fn_fail;
+    }
+
+    ctx_prop = papi_calloc(num_devs, sizeof(*ctx_prop));
+    if (ctx_prop == NULL) {
         papi_errno = PAPI_ENOMEM;
         goto fn_fail;
     }
@@ -930,6 +927,7 @@ sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     (*rocp_ctx)->u.sampling.contexts = contexts;
     (*rocp_ctx)->u.sampling.counters = counters;
     (*rocp_ctx)->u.sampling.device_map = bitmap;
+    (*rocp_ctx)->u.sampling.ctx_prop = ctx_prop;
 
   fn_exit:
     return papi_errno;
@@ -965,6 +963,10 @@ sampling_ctx_finalize(rocp_ctx_t *rocp_ctx)
         papi_free((*rocp_ctx)->u.sampling.contexts);
     }
 
+    if ((*rocp_ctx)->u.sampling.ctx_prop) {
+        papi_free((*rocp_ctx)->u.sampling.ctx_prop);
+    }
+
     if ((*rocp_ctx)->u.sampling.counters) {
         papi_free((*rocp_ctx)->u.sampling.counters);
     }
@@ -984,6 +986,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
     int dev_feature_offset = 0;
     int dev_count;
     rocprofiler_t **contexts = rocp_ctx->u.sampling.contexts;
+    rocprofiler_properties_t *ctx_prop = rocp_ctx->u.sampling.ctx_prop;
 
     papi_errno = rocc_dev_get_count(rocp_ctx->u.sampling.device_map, &dev_count);
     if (papi_errno != PAPI_OK) {
@@ -1001,14 +1004,12 @@ ctx_open(rocp_ctx_t rocp_ctx)
         rocprofiler_feature_t *dev_features = features + dev_feature_offset;
 
         const uint32_t mode =
-            (SAMPLING_FETCH_AND_INCREMENT_QUEUE_COUNTER() == 0) ?
-            ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE |
-            ROCPROFILER_MODE_SINGLEGROUP :
-            ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_SINGLEGROUP;
+            ROCPROFILER_MODE_STANDALONE | ROCPROFILER_MODE_CREATEQUEUE | ROCPROFILER_MODE_SINGLEGROUP;
 
+        ctx_prop[i].queue_depth = 128;
         hsa_status_t rocp_errno = rocp_open_p(device_table_p->devices[dev_id], dev_features,
                                               dev_feature_count, &contexts[i], mode,
-                                              &SAMPLING_CONTEXT_PROP);
+                                              &ctx_prop[i]);
         if (rocp_errno != HSA_STATUS_SUCCESS) {
             papi_errno = PAPI_EMISC;
             goto fn_fail;
@@ -1027,7 +1028,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
   fn_fail:
     for (j = 0; j < i; ++j) {
         rocp_close_p(contexts[j]);
-        SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER();
+        hsa_queue_destroy_p(ctx_prop[j].queue);
     }
     goto fn_exit;
 }
@@ -1035,7 +1036,7 @@ ctx_open(rocp_ctx_t rocp_ctx)
 int
 ctx_close(rocp_ctx_t rocp_ctx)
 {
-    int papi_errno = PAPI_OK;
+    int papi_errno;
     int i, devs_count;
     rocc_dev_get_count(rocp_ctx->u.sampling.device_map, &devs_count);
 
@@ -1044,11 +1045,8 @@ ctx_close(rocp_ctx_t rocp_ctx)
             papi_errno = PAPI_EMISC;
         }
 
-        if (SAMPLING_DECREMENT_AND_FETCH_QUEUE_COUNTER() == 0) {
-            if (hsa_queue_destroy_p(SAMPLING_CONTEXT_PROP_QUEUE) != HSA_STATUS_SUCCESS) {
-                papi_errno = PAPI_EMISC;
-            }
-            SAMPLING_CONTEXT_PROP_QUEUE = NULL;
+        if (hsa_queue_destroy_p(rocp_ctx->u.sampling.ctx_prop[i].queue) != HSA_STATUS_SUCCESS) {
+            papi_errno = PAPI_EMISC;
         }
     }
 
