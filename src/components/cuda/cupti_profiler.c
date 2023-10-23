@@ -1438,11 +1438,11 @@ int cuptip_control_create(cuptiu_event_table_t *event_names, cuptic_info_t thr_i
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    papi_errno = add_events_per_gpu(state, event_names);
+    papi_errno = nvpw_cuda_metricscontext_create(state);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    papi_errno = nvpw_cuda_metricscontext_create(state);
+    papi_errno = add_events_per_gpu(state, event_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
