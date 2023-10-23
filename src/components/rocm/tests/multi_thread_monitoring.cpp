@@ -40,9 +40,14 @@ static void *run(void *thread_num_arg)
         test_fail(__FILE__, __LINE__, "PAPI_create_eventset", papi_errno);
     }
 
+    hip_errno = hipSetDevice(thread_num);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipSetDevice", hip_errno);
+    }
+
     for (int j = 0; j < NUM_EVENTS; ++j) {
         char named_event[PAPI_MAX_STR_LEN];
-        sprintf(named_event, "%s:device=%d", events[j], thread_num);
+        sprintf(named_event, "%s", events[j]);
         papi_errno = PAPI_add_named_event(eventset, (const char*) named_event);
         if (papi_errno != PAPI_OK && papi_errno != PAPI_ENOEVNT) {
             test_fail(__FILE__, __LINE__, "PAPI_add_named_event", papi_errno);
@@ -57,11 +62,6 @@ static void *run(void *thread_num_arg)
     }
 
     hipStream_t stream;
-    hip_errno = hipSetDevice(thread_num);
-    if (hip_errno != hipSuccess) {
-        hip_test_fail(__FILE__, __LINE__, "hipSetDevice", hip_errno);
-    }
-
     hip_errno = hipStreamCreate(&stream);
     if (hip_errno != hipSuccess) {
         hip_test_fail(__FILE__, __LINE__, "hipStreamCreate", hip_errno);

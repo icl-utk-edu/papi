@@ -1,7 +1,10 @@
 #ifndef __ROC_COMMON_H__
 #define __ROC_COMMON_H__
 
+#define __HIP_PLATFORM_AMD__
+
 #include <hsa.h>
+#include <hip/hip_runtime.h>
 #include <dlfcn.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -31,6 +34,7 @@ extern hsa_status_t (*hsa_system_get_info_p)(hsa_system_info_t, void *);
 extern hsa_status_t (*hsa_agent_get_info_p)(hsa_agent_t, hsa_agent_info_t, void *);
 extern hsa_status_t (*hsa_queue_destroy_p)(hsa_queue_t *);
 extern hsa_status_t (*hsa_status_string_p)(hsa_status_t, const char **);
+extern hipError_t   (*hipGetDevicePtr)(int *);
 
 extern char error_string[PAPI_MAX_STR_LEN];
 extern device_table_t *device_table_p;

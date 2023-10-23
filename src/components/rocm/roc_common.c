@@ -13,7 +13,11 @@ hsa_status_t (*hsa_agent_get_info_p)(hsa_agent_t, hsa_agent_info_t, void *);
 hsa_status_t (*hsa_queue_destroy_p)(hsa_queue_t *);
 hsa_status_t (*hsa_status_string_p)(hsa_status_t, const char **);
 
+/* hip function pointers */
+hipError_t (*hipGetDevicePtr)(int *);
+
 static void *hsa_dlp;
+static void *hip_dlp;
 char error_string[PAPI_MAX_STR_LEN];
 static device_table_t device_table;
 device_table_t *device_table_p;
@@ -21,6 +25,8 @@ static rocc_bitmap_t global_device_map;
 
 static int load_hsa_sym(void);
 static int unload_hsa_sym(void);
+static int load_hip_sym(void);
+static int unload_hip_sym(void);
 static int init_device_table(void);
 static void init_thread_id_fn(void);
 static unsigned long (*thread_id_fn)(void);
@@ -29,6 +35,11 @@ int
 rocc_init(void)
 {
     int papi_errno = load_hsa_sym();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    papi_errno = load_hip_sym();
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -59,6 +70,7 @@ int
 rocc_shutdown(void)
 {
     hsa_shut_down_p();
+    unload_hip_sym();
     unload_hsa_sym();
     return PAPI_OK;
 }
@@ -247,6 +259,54 @@ unload_hsa_sym(void)
     hsa_status_string_p   = NULL;
 
     dlclose(hsa_dlp);
+
+    return PAPI_OK;
+}
+
+int
+load_hip_sym(void)
+{
+    int papi_errno = PAPI_OK;
+
+    char pathname[PATH_MAX] = { 0 };
+    char *rocm_root = getenv("PAPI_ROCM_ROOT");
+    if (rocm_root == NULL) {
+        snprintf(error_string, PAPI_MAX_STR_LEN, "Can't load libamdhip64.so, PAPI_ROCM_ROOT not set.");
+        goto fn_fail;
+    }
+
+    sprintf(pathname, "%s/lib/libamdhip64.so", rocm_root);
+
+    hip_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    if (hip_dlp == NULL) {
+        snprintf(error_string, PAPI_MAX_STR_LEN, "%s", dlerror());
+        goto fn_fail;
+    }
+
+    hipGetDevicePtr = dlsym(hip_dlp, "hipGetDevice");
+
+    papi_errno = (hipGetDevicePtr == NULL) ? PAPI_EMISC : PAPI_OK;
+    if (papi_errno != PAPI_OK) {
+        snprintf(error_string, PAPI_MAX_STR_LEN, "Error while loading hip symbols.");
+    }
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    papi_errno = PAPI_ENOSUPP;
+    goto fn_exit;
+}
+
+int
+unload_hip_sym(void)
+{
+    if (hip_dlp == NULL) {
+        return PAPI_OK;
+    }
+
+    hipGetDevicePtr = NULL;
+
+    dlclose(hip_dlp);
 
     return PAPI_OK;
 }

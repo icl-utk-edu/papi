@@ -184,6 +184,35 @@ rocp_evt_code_to_descr(unsigned int event_code, char *descr, int len)
     return PAPI_OK;
 }
 
+static int
+resolve_event_name(const char *name, char *resolved)
+{
+    if (strstr(name, ":device=") != NULL) {
+        strcpy(resolved, name);
+        return PAPI_OK;
+    }
+
+    int device_id;
+    hipError_t hip_errno = hipGetDevicePtr(&device_id);
+    if (hip_errno != hipSuccess) {
+        return PAPI_EMISC;
+    }
+
+    const char *ptr = strstr(name, ":instance=");
+    if (ptr != NULL) {
+        char device_str[PAPI_MIN_STR_LEN] = { 0 };
+        sprintf(device_str, ":device=%d", device_id);
+        size_t name_len = (size_t)(ptr - name);
+        memcpy(resolved, name, name_len);
+        strcat(resolved, device_str);
+        strcat(resolved, ptr);
+    } else {
+        sprintf(resolved, "%s:device=%d", name, device_id);
+    }
+
+    return PAPI_OK;
+}
+
 /* rocp_evt_name_to_code - convert native event name to code */
 int
 rocp_evt_name_to_code(const char *name, unsigned int *event_code)
@@ -192,8 +221,14 @@ rocp_evt_name_to_code(const char *name, unsigned int *event_code)
     int htable_errno;
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
+    char resolved[PAPI_MAX_STR_LEN] = { 0 };
+    papi_errno = resolve_event_name(name, resolved);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     ntv_event_t *event;
-    htable_errno = htable_find(htable, name, (void **) &event);
+    htable_errno = htable_find(htable, resolved, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
         papi_errno = (htable_errno == HTABLE_ENOVAL) ?
             PAPI_ENOEVNT : PAPI_ECMP;
