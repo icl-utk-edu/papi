@@ -2512,12 +2512,14 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OSVER" >&5
 $as_echo "$OSVER" >&6; }
 
+CFLAGS=""
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perf_event workaround level" >&5
 $as_echo_n "checking for perf_event workaround level... " >&6; }
 
 # Check whether --with-assumed_kernel was given.
 if test "${with_assumed_kernel+set}" = set; then :
-  withval=$with_assumed_kernel; assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
+  withval=$with_assumed_kernel; assumed_kernel=$withval; CFLAGS="-DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
 else
   assumed_kernel="autodetect"
 
@@ -2568,8 +2570,6 @@ fi
 $as_echo "$NEC" >&6; }
 
 
-
-CFLAGS="$CFLAGS -g"
 #If not set, set FFLAGS to null to prevent AC_PROG_F77 from defaulting it to -g -O2
 if test "x$FFLAGS" = "x"; then
   FFLAGS=""
