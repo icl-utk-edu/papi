@@ -413,29 +413,36 @@ else
 fi
 AC_MSG_RESULT($debug)
 
-if test "$CC_COMMON_NAME" = "gcc"; then
-  gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
-  major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
-  minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-  if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
-    CFLAGS+=" -Wextra"
-  else
-    CFLAGS+=" -W"
-  fi
-# -Wextra => -Woverride-init on gcc >= 4.2
-# This issues a warning (error under -Werror) for some libpfm4 code. 
-	AC_MSG_CHECKING( for -Wno-override-init)
-		oldcflags="$CFLAGS"
-		CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
-		AC_COMPILE_IFELSE([AC_LANG_SOURCE( 
-						[ struct A { int x; int y; };
-						int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
-						])], 
-						[HAVE_NO_OVERRIDE_INIT=1],
-						[HAVE_NO_OVERRIDE_INIT=0] )
-		CFLAGS="$oldcflags"
-AC_MSG_RESULT($HAVE_NO_OVERRIDE_INIT)
+AC_ARG_ENABLE([warnings],
+              [AS_HELP_STRING([--enable-warnings],
+                              [Enable build with -Wextra (default: disabled)])],
+              [],
+              [enable_warnings=no])
 
+if test "$CC_COMMON_NAME" = "gcc"; then
+  if test "$enable_warnings" = "yes"; then
+    gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
+    major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+    minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
+    if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
+      CFLAGS+=" -Wextra"
+    else
+      CFLAGS+=" -W"
+    fi
+    # -Wextra => -Woverride-init on gcc >= 4.2
+    # This issues a warning (error under -Werror) for some libpfm4 code.
+  fi
+  oldcflags="$CFLAGS"
+  AC_MSG_CHECKING(for -Wno-override-init)
+  CFLAGS+=" -Wall -Werror -Wno-override-init"
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+                                    [ struct A { int x; int y; };
+                                      int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
+                                    ])],
+                    [HAVE_NO_OVERRIDE_INIT=1],
+                    [HAVE_NO_OVERRIDE_INIT=0])
+  CFLAGS="$oldcflags"
+  AC_MSG_RESULT($HAVE_NO_OVERRIDE_INIT)
 fi
 AC_MSG_CHECKING(for CPU type)
 AC_ARG_WITH(CPU,
@@ -1558,9 +1565,6 @@ fi
 OPTFLAGS="$OPTFLAGS"
 PAPICFLAGS+=" -D_REENTRANT -D_GNU_SOURCE $NOTLS"
 CFLAGS="$CFLAGS $BITFLAGS"
-if test "$CC_COMMON_NAME" = "gcc"; then
-	CFLAGS="$CFLAGS -Wall"
-fi
 FFLAGS="$CFLAGS $BITFLAGS $FFLAGS -Dlinux"
 
 # OS Support

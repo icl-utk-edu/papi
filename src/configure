@@ -777,6 +777,7 @@ with_bgpm_installdir
 with_nativecc
 with_tests
 with_debug
+enable_warnings
 with_CPU
 with_pthread_mutexes
 with_ffsll
@@ -1429,6 +1430,8 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-warnings       Enable build with -Wextra (default: disabled)
+>>>>>>> e8395c4a0 (fixup! configure: add --enable-warnings flag)
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
@@ -4726,25 +4729,35 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $debug" >&5
 $as_echo "$debug" >&6; }
 
+# Check whether --enable-warnings was given.
+if test "${enable_warnings+set}" = set; then :
+  enableval=$enable_warnings;
+else
+  enable_warnings=no
+fi
+
+
 if test "$CC_COMMON_NAME" = "gcc"; then
-  gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
-  major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
-  minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
-  if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
-    CFLAGS+=" -Wextra"
-  else
-    CFLAGS+=" -W"
+  if test "$enable_warnings" = "yes"; then
+    gcc_version=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}'`
+    major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
+    minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
+    if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
+      CFLAGS+=" -Wextra"
+    else
+      CFLAGS+=" -W"
+    fi
+    # -Wextra => -Woverride-init on gcc >= 4.2
+    # This issues a warning (error under -Werror) for some libpfm4 code.
   fi
-# -Wextra => -Woverride-init on gcc >= 4.2
-# This issues a warning (error under -Werror) for some libpfm4 code.
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -Wno-override-init" >&5
+  oldcflags="$CFLAGS"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -Wno-override-init" >&5
 $as_echo_n "checking for -Wno-override-init... " >&6; }
-		oldcflags="$CFLAGS"
-		CFLAGS+=" -Wall -Wextra -Werror -Wno-override-init"
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  CFLAGS+=" -Wall -Werror -Wno-override-init"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
  struct A { int x; int y; };
-						int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
+                                      int main(void) { struct A a = {.x = 0, .y = 0, .y = 5 }; return a.x; }
 
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
@@ -4753,10 +4766,9 @@ else
   HAVE_NO_OVERRIDE_INIT=0
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-		CFLAGS="$oldcflags"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_NO_OVERRIDE_INIT" >&5
+  CFLAGS="$oldcflags"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_NO_OVERRIDE_INIT" >&5
 $as_echo "$HAVE_NO_OVERRIDE_INIT" >&6; }
-
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CPU type" >&5
 $as_echo_n "checking for CPU type... " >&6; }
@@ -6626,9 +6638,6 @@ fi
 OPTFLAGS="$OPTFLAGS"
 PAPICFLAGS+=" -D_REENTRANT -D_GNU_SOURCE $NOTLS"
 CFLAGS="$CFLAGS $BITFLAGS"
-if test "$CC_COMMON_NAME" = "gcc"; then
-	CFLAGS="$CFLAGS -Wall"
-fi
 FFLAGS="$CFLAGS $BITFLAGS $FFLAGS -Dlinux"
 
 # OS Support
