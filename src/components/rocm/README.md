@@ -41,10 +41,17 @@ based on the PAPI\_ROCM\_ROOT variable. These are not needed by PAPI, but by the
 ROCPROFILER software we interface with.
 
 These added environment variables are typically set as follows, after
-PAPI\_ROCM\_ROOT has been exported. An example is provided below:
+PAPI\_ROCM\_ROOT has been exported. An example is provided below.
+
+For ROCM versions < 5.2.0:
 
     export ROCP_METRICS=$PAPI_ROCM_ROOT/rocprofiler/lib/metrics.xml
     export HSA_TOOLS_LIB=$PAPI_ROCM_ROOT/rocprofiler/lib/librocprofiler64.so
+
+For ROCM versions >= 5.2.0:
+
+    export ROCP_METRICS=${PAPI_ROCM_ROOT}/lib/rocprofiler/metrics.xml
+    export HSA_TOOLS_LIB=${PAPI_ROCM_ROOT}/lib/librocprofiler64.so
 
 The first of these, ROCP\_METRICS, must point at a file containing the
 descriptions of metrics. The second is the location of the rocprofiler library
