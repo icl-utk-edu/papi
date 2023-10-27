@@ -106,6 +106,7 @@ static void *rocp_dlp = NULL;
 static ntv_event_table_t ntv_table;
 static ntv_event_table_t *ntv_table_p;
 static void *htable;
+static void *htable_intercept;
 
 /* rocp_init_environment - initialize ROCm environment variables */
 int
@@ -127,6 +128,10 @@ rocp_init(void)
     }
 
     htable_init(&htable);
+
+    if (rocm_prof_mode != ROCM_PROFILE_SAMPLING_MODE) {
+        htable_init(&htable_intercept);
+    }
 
     papi_errno = init_event_table();
     if (papi_errno != PAPI_OK) {
@@ -1399,6 +1404,7 @@ intercept_shutdown(void)
 
     shutdown_event_table();
     htable_shutdown(htable);
+    htable_shutdown(htable_intercept);
 
     (*hsa_shut_down_p)();
 
@@ -1434,7 +1440,7 @@ verify_events(unsigned int *events_id, int num_events)
 
     for (i = 0; i < num_events; ++i) {
         void *out;
-        if (htable_find(htable, ntv_table_p->events[events_id[i]].name, &out)) {
+        if (htable_find(htable_intercept, ntv_table_p->events[events_id[i]].feature, &out)) {
             return PAPI_ECNFLCT;
         }
     }
@@ -1489,7 +1495,7 @@ intercept_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx
 
         int i;
         for (i = 0; i < num_events; ++i) {
-            htable_insert(htable, ntv_table_p->events[events_id[i]].name, NULL);
+            htable_insert(htable_intercept, ntv_table_p->events[events_id[i]].feature, NULL);
         }
     }
 
