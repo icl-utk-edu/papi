@@ -10,9 +10,40 @@
 #include "roc_common.h"
 #include "htable.h"
 
+/**
+ * Event identifier encoding format:
+ * +---------------------------------+-------+-------+--+------------+
+ * |         unused                  |  dev  | inst  |  |   nameid   |
+ * +---------------------------------+-------+-------+--+------------+
+ *
+ * unused    : 36 bits
+ * device    : 7  bits ([0 - 127] devices)
+ * instance  : 7  bits ([0 - 127] instances)
+ * qlmask    : 2  bits (qualifier mask)
+ * nameid    : 12 bits ([0 - 4095] event names)
+ */
+#define EVENTS_WIDTH (sizeof(uint64_t) * 8)
+#define DEVICE_WIDTH ( 7)
+#define INSTAN_WIDTH ( 7)
+#define QLMASK_WIDTH ( 2)
+#define NAMEID_WIDTH (12)
+#define UNUSED_WIDTH (EVENTS_WIDTH - DEVICE_WIDTH - INSTAN_WIDTH - QLMASK_WIDTH - NAMEID_WIDTH)
+#define DEVICE_SHIFT (EVENTS_WIDTH - UNUSED_WIDTH - DEVICE_WIDTH)
+#define INSTAN_SHIFT (DEVICE_SHIFT - INSTAN_WIDTH)
+#define QLMASK_SHIFT (INSTAN_SHIFT - QLMASK_WIDTH)
+#define NAMEID_SHIFT (QLMASK_SHIFT - NAMEID_WIDTH)
+#define DEVICE_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - DEVICE_WIDTH)) << DEVICE_SHIFT)
+#define INSTAN_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - INSTAN_WIDTH)) << INSTAN_SHIFT)
+#define QLMASK_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - QLMASK_WIDTH)) << QLMASK_SHIFT)
+#define NAMEID_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - NAMEID_WIDTH)) << NAMEID_SHIFT)
+#define DEVICE_FLAG  (0x2)
+#define INSTAN_FLAG  (0x1)
+
 typedef struct {
     char *name;
     char *descr;
+    int instances;
+    rocc_bitmap_t device_map;
     char *feature;
     unsigned int ntv_dev;
     uint64_t ntv_id;
@@ -46,6 +77,13 @@ struct rocd_ctx {
         } sampling;
     } u;
 };
+
+typedef struct {
+    int device;
+    int instance;
+    int flags;
+    int nameid;
+} event_info_t;
 
 unsigned int rocm_prof_mode;
 unsigned int _rocm_lock;
@@ -101,6 +139,8 @@ static int intercept_ctx_reset(rocp_ctx_t);
 static int sampling_shutdown(void);
 static int intercept_shutdown(void);
 static int evt_code_to_name(uint64_t event_code, char *name, int len);
+static int evt_id_create(event_info_t *info, uint64_t *event_id);
+static int evt_id_to_info(uint64_t event_id, event_info_t *info);
 
 static void *rocp_dlp = NULL;
 static ntv_event_table_t ntv_table;
@@ -577,6 +617,51 @@ evt_code_to_name(uint64_t event_code, char *name, int len)
                  ntv_table.events[event_code].name,
                  ntv_table.events[event_code].ntv_dev);
     }
+    return PAPI_OK;
+}
+
+int
+evt_id_create(event_info_t *info, uint64_t *event_id)
+{
+    *event_id  = (uint64_t)(info->device   << DEVICE_SHIFT);
+    *event_id |= (uint64_t)(info->instance << INSTAN_SHIFT);
+    *event_id |= (uint64_t)(info->flags    << QLMASK_SHIFT);
+    *event_id |= (uint64_t)(info->nameid   << NAMEID_SHIFT);
+    return PAPI_OK;
+}
+
+int
+evt_id_to_info(uint64_t event_id, event_info_t *info)
+{
+    info->device   = (int)((event_id & DEVICE_MASK) >> DEVICE_SHIFT);
+    info->instance = (int)((event_id & INSTAN_MASK) >> INSTAN_SHIFT);
+    info->flags    = (int)((event_id & QLMASK_MASK) >> QLMASK_SHIFT);
+    info->nameid   = (int)((event_id & NAMEID_MASK) >> NAMEID_SHIFT);
+
+    if (info->device >= device_table_p->count) {
+        return PAPI_ENOEVNT;
+    }
+
+    if (0 == (info->flags & DEVICE_FLAG) && info->device > 0) {
+        return PAPI_ENOEVNT;
+    }
+
+    if (rocc_dev_check(ntv_table_p->events[info->nameid].device_map, info->device) == 0) {
+        return PAPI_ENOEVNT;
+    }
+
+    if (info->nameid >= ntv_table_p->count) {
+        return PAPI_ENOEVNT;
+    }
+
+    if (ntv_table_p->events[info->nameid].instances > 1 && 0 == (info->flags & INSTAN_FLAG) && info->instance > 0) {
+        return PAPI_ENOEVNT;
+    }
+
+    if (info->instance >= ntv_table_p->events[info->nameid].instances) {
+        return PAPI_ENOEVNT;
+    }
+
     return PAPI_OK;
 }
 
