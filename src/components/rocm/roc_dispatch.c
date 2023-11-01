@@ -40,25 +40,25 @@ rocd_shutdown(void)
 }
 
 int
-rocd_evt_enum(unsigned int *event_code, int modifier)
+rocd_evt_enum(uint64_t *event_code, int modifier)
 {
     return rocp_evt_enum(event_code, modifier);
 }
 
 int
-rocd_evt_code_to_descr(unsigned int event_code, char *descr, int len)
+rocd_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
     return rocp_evt_code_to_descr(event_code, descr, len);
 }
 
 int
-rocd_evt_name_to_code(const char *name, unsigned int *event_code)
+rocd_evt_name_to_code(const char *name, uint64_t *event_code)
 {
     return rocp_evt_name_to_code(name, event_code);
 }
 
 int
-rocd_evt_code_to_name(unsigned int event_code, char *name, int len)
+rocd_evt_code_to_name(uint64_t event_code, char *name, int len)
 {
     return rocp_evt_code_to_name(event_code, name, len);
 }
@@ -70,7 +70,7 @@ rocd_err_get_last(const char **error_str)
 }
 
 int
-rocd_ctx_open(unsigned int *events_id, int num_events, rocd_ctx_t *ctx)
+rocd_ctx_open(uint64_t *events_id, int num_events, rocd_ctx_t *ctx)
 {
     return rocp_ctx_open(events_id, num_events, ctx);
 }

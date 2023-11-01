@@ -17,7 +17,7 @@
 #endif
 
 typedef int64_t rocc_bitmap_t;
-typedef int (*rocc_dev_get_map_cb)(unsigned int event_id, unsigned int *dev_id);
+typedef int (*rocc_dev_get_map_cb)(uint64_t event_id, unsigned int *dev_id);
 
 typedef struct {
     hsa_agent_t devices[PAPI_ROCM_MAX_DEV_COUNT];
@@ -38,7 +38,7 @@ extern device_table_t *device_table_p;
 int rocc_init(void);
 int rocc_shutdown(void);
 int rocc_err_get_last(const char **error_string);
-int rocc_dev_get_map(rocc_dev_get_map_cb cb, unsigned int *events_id, int num_events, rocc_bitmap_t *bitmap);
+int rocc_dev_get_map(rocc_dev_get_map_cb cb, uint64_t *events_id, int num_events, rocc_bitmap_t *bitmap);
 int rocc_dev_acquire(rocc_bitmap_t bitmap);
 int rocc_dev_release(rocc_bitmap_t bitmap);
 int rocc_dev_get_count(rocc_bitmap_t bitmap, int *num_devices);

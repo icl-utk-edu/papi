@@ -1,6 +1,8 @@
 #ifndef __ROC_PROFILER_CONFIG_H__
 #define __ROC_PROFILER_CONFIG_H__
 
+#include <stdint.h>
+
 #define PAPI_ROCM_MAX_COUNTERS (512)
 
 #define ROCM_PROFILE_SAMPLING_MODE (0x0)

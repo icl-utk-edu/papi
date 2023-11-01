@@ -178,10 +178,10 @@ evt_get_count(int *count)
 {
     unsigned int event_code = 0;
 
-    if (rocd_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
+    if (rocd_evt_enum((uint64_t *) &event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
         ++(*count);
     }
-    while (rocd_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
+    while (rocd_evt_enum((uint64_t *) &event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
         ++(*count);
     }
 
@@ -585,7 +585,7 @@ rocm_ntv_enum_events(unsigned int *event_code, int modifier)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_enum(event_code, modifier);
+    papi_errno = rocd_evt_enum((uint64_t *) event_code, modifier);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -603,7 +603,7 @@ rocm_ntv_code_to_name(unsigned int event_code, char *name, int len)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_code_to_name(event_code, name, len);
+    papi_errno = rocd_evt_code_to_name((uint64_t) event_code, name, len);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -621,7 +621,7 @@ rocm_ntv_name_to_code(const char *name, unsigned int *code)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_name_to_code(name, code);
+    papi_errno = rocd_evt_name_to_code(name, (uint64_t *) code);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -639,7 +639,7 @@ rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_code_to_descr(event_code, descr, len);
+    papi_errno = rocd_evt_code_to_descr((uint64_t) event_code, descr, len);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));

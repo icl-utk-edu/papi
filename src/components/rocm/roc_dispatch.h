@@ -20,16 +20,16 @@ int rocd_init(void);
 int rocd_shutdown(void);
 
 /* native event interfaces */
-int rocd_evt_enum(unsigned int *event_code, int modifier);
-int rocd_evt_code_to_descr(unsigned int event_code, char *descr, int len);
-int rocd_evt_name_to_code(const char *name, unsigned int *event_code);
-int rocd_evt_code_to_name(unsigned int event_code, char *name, int len);
+int rocd_evt_enum(uint64_t *event_code, int modifier);
+int rocd_evt_code_to_descr(uint64_t event_code, char *descr, int len);
+int rocd_evt_name_to_code(const char *name, uint64_t *event_code);
+int rocd_evt_code_to_name(uint64_t event_code, char *name, int len);
 
 /* error handling interfaces */
 int rocd_err_get_last(const char **error_str);
 
 /* profiling context handling interfaces */
-int rocd_ctx_open(unsigned int *event_id, int num_events, rocd_ctx_t *ctx);
+int rocd_ctx_open(uint64_t *event_id, int num_events, rocd_ctx_t *ctx);
 int rocd_ctx_close(rocd_ctx_t ctx);
 int rocd_ctx_start(rocd_ctx_t ctx);
 int rocd_ctx_stop(rocd_ctx_t ctx);

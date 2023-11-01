@@ -15,7 +15,7 @@ typedef struct {
     char *descr;
     char *feature;
     unsigned int ntv_dev;
-    unsigned int ntv_id;
+    uint64_t ntv_id;
     int instance;
 } ntv_event_t;
 
@@ -28,7 +28,7 @@ struct rocd_ctx {
     union {
         struct {
             int state;
-            unsigned int *events_id;
+            uint64_t *events_id;
             long long *counters;
             int dispatch_count;
             rocc_bitmap_t device_map;
@@ -36,7 +36,7 @@ struct rocd_ctx {
         } intercept;
         struct {
             int state;
-            unsigned int *events_id;
+            uint64_t *events_id;
             long long *counters;
             rocprofiler_feature_t *features;
             int feature_count;
@@ -86,8 +86,8 @@ static int load_rocp_sym(void);
 static int init_rocp_env(void);
 static int init_event_table(void);
 static int unload_rocp_sym(void);
-static int sampling_ctx_open(unsigned int *, int, rocp_ctx_t *);
-static int intercept_ctx_open(unsigned int *, int, rocp_ctx_t *);
+static int sampling_ctx_open(uint64_t *, int, rocp_ctx_t *);
+static int intercept_ctx_open(uint64_t *, int, rocp_ctx_t *);
 static int sampling_ctx_close(rocp_ctx_t);
 static int intercept_ctx_close(rocp_ctx_t);
 static int sampling_ctx_start(rocp_ctx_t);
@@ -100,7 +100,7 @@ static int sampling_ctx_reset(rocp_ctx_t);
 static int intercept_ctx_reset(rocp_ctx_t);
 static int sampling_shutdown(void);
 static int intercept_shutdown(void);
-static int evt_code_to_name(unsigned int event_code, char *name, int len);
+static int evt_code_to_name(uint64_t event_code, char *name, int len);
 
 static void *rocp_dlp = NULL;
 static ntv_event_table_t ntv_table;
@@ -151,10 +151,10 @@ rocp_init(void)
 
 /* rocp_evt_enum - enumerate native events */
 int
-rocp_evt_enum(unsigned int *event_code, int modifier)
+rocp_evt_enum(uint64_t *event_code, int modifier)
 {
     int papi_errno = PAPI_OK;
-    SUBDBG("ENTER: event_code: %u, modifier: %d\n", *event_code, modifier);
+    SUBDBG("ENTER: event_code: %lu, modifier: %d\n", *event_code, modifier);
 
     switch(modifier) {
         case PAPI_ENUM_FIRST:
@@ -164,7 +164,7 @@ rocp_evt_enum(unsigned int *event_code, int modifier)
             *event_code = 0;
             break;
         case PAPI_ENUM_EVENTS:
-            if (*event_code + 1 < (unsigned int) ntv_table_p->count) {
+            if (*event_code + 1 < (uint64_t) ntv_table_p->count) {
                 ++(*event_code);
             } else {
                 papi_errno = PAPI_END;
@@ -180,9 +180,9 @@ rocp_evt_enum(unsigned int *event_code, int modifier)
 
 /* rocp_evt_code_to_descr - return descriptor string for event_code */
 int
-rocp_evt_code_to_descr(unsigned int event_code, char *descr, int len)
+rocp_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
-    if (event_code >= (unsigned int) ntv_table_p->count) {
+    if (event_code >= (uint64_t) ntv_table_p->count) {
         return PAPI_EINVAL;
     }
     snprintf(descr, (size_t) len, "%s", ntv_table_p->events[event_code].descr);
@@ -191,7 +191,7 @@ rocp_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 
 /* rocp_evt_name_to_code - convert native event name to code */
 int
-rocp_evt_name_to_code(const char *name, unsigned int *event_code)
+rocp_evt_name_to_code(const char *name, uint64_t *event_code)
 {
     int papi_errno = PAPI_OK;
     int htable_errno;
@@ -213,9 +213,9 @@ rocp_evt_name_to_code(const char *name, unsigned int *event_code)
 
 /* rocp_evt_code_to_name - convert native event code to name */
 int
-rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
+rocp_evt_code_to_name(uint64_t event_code, char *name, int len)
 {
-    if (event_code >= (unsigned int) ntv_table_p->count) {
+    if (event_code >= (uint64_t) ntv_table_p->count) {
         return PAPI_EINVAL;
     }
     return evt_code_to_name(event_code, name, len);
@@ -223,7 +223,7 @@ rocp_evt_code_to_name(unsigned int event_code, char *name, int len)
 
 /* rocp_ctx_open - open a profiling context for the requested events */
 int
-rocp_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+rocp_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
         return sampling_ctx_open(events_id, num_events, rocp_ctx);
@@ -565,7 +565,7 @@ init_event_table(void)
 }
 
 int
-evt_code_to_name(unsigned int event_code, char *name, int len)
+evt_code_to_name(uint64_t event_code, char *name, int len)
 {
     if (ntv_table.events[event_code].instance >= 0) {
         snprintf(name, (size_t) len, "%s:device=%u:instance=%i",
@@ -620,7 +620,7 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
         events[*count].ntv_id = *count;
         events[*count].instance = (instances > 1) ? (int) instance : -1;
         char key[PAPI_MAX_STR_LEN + 1];
-        evt_code_to_name((unsigned int) *count, key, PAPI_MAX_STR_LEN);
+        evt_code_to_name((uint64_t) *count, key, PAPI_MAX_STR_LEN);
         htable_insert(htable, key, &events[*count]);
         ++(*count);
     }
@@ -632,17 +632,17 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
  * rocp_ctx_{open,close,start,stop,read,reset} sampling mode utility functions
  *
  */
-static int init_features(unsigned int *, int, rocprofiler_feature_t *);
-static int sampling_ctx_init(unsigned int *, int, rocp_ctx_t *);
+static int init_features(uint64_t *, int, rocprofiler_feature_t *);
+static int sampling_ctx_init(uint64_t *, int, rocp_ctx_t *);
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
 static int ctx_close(rocp_ctx_t);
-static int ctx_init(unsigned int *, int, rocp_ctx_t *);
+static int ctx_init(uint64_t *, int, rocp_ctx_t *);
 static int ctx_finalize(rocp_ctx_t *);
 static int ctx_get_dev_feature_count(rocp_ctx_t, unsigned int);
 
 int
-sampling_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+sampling_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
 
@@ -867,14 +867,14 @@ shutdown_event_table(void)
  *
  */
 static int
-event_id_to_dev_id_cb(unsigned int event_id, unsigned int *dev_id)
+event_id_to_dev_id_cb(uint64_t event_id, unsigned int *dev_id)
 {
     *dev_id = ntv_table_p->events[event_id].ntv_dev;
     return PAPI_OK;
 }
 
 int
-sampling_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+sampling_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
     int num_devs;
@@ -1065,7 +1065,7 @@ ctx_close(rocp_ctx_t rocp_ctx)
 }
 
 int
-init_features(unsigned int *events_id, int num_events, rocprofiler_feature_t *features)
+init_features(uint64_t *events_id, int num_events, rocprofiler_feature_t *features)
 {
     int papi_errno = PAPI_OK;
 
@@ -1097,7 +1097,7 @@ sampling_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, unsigned int i)
 {
     int start, stop, j = 0;
     int num_events = rocp_ctx->u.sampling.feature_count;
-    unsigned int *events_id = rocp_ctx->u.sampling.events_id;
+    uint64_t *events_id = rocp_ctx->u.sampling.events_id;
     ntv_event_t *ntv_events = ntv_table_p->events;
 
     while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
@@ -1120,7 +1120,7 @@ intercept_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, unsigned int i)
 {
     int start, stop, j = 0;
     int num_events = rocp_ctx->u.intercept.feature_count;
-    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
+    uint64_t *events_id = rocp_ctx->u.intercept.events_id;
     ntv_event_t *ntv_events = ntv_table_p->events;
 
     while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
@@ -1149,7 +1149,7 @@ typedef struct cb_context_node {
 } cb_context_node_t;
 
 static struct {
-    unsigned int *events_id;
+    uint64_t *events_id;
     int events_count;
     rocprofiler_feature_t *features;
     int feature_count;
@@ -1164,7 +1164,7 @@ static struct {
 #define INTERCEPT_ACTIVE_THR_COUNT   (intercept_global_state.active_thread_count)
 #define INTERCEPT_KERNEL_COUNT       (intercept_global_state.kernel_count)
 
-static int verify_events(unsigned int *, int);
+static int verify_events(uint64_t *, int);
 static int init_callbacks(rocprofiler_feature_t *, int);
 static int register_dispatch_counter(unsigned long, int *);
 static int increment_and_fetch_dispatch_counter(unsigned long);
@@ -1174,14 +1174,14 @@ static int fetch_dispatch_counter(unsigned long);
 static cb_context_node_t *alloc_context_node(int);
 static void free_context_node(cb_context_node_t *);
 static int get_context_node(int, cb_context_node_t **);
-static int get_context_counters(unsigned int, cb_context_node_t *, rocp_ctx_t);
+static int get_context_counters(uint64_t *, unsigned int, cb_context_node_t *, rocp_ctx_t);
 static void put_context_counters(rocprofiler_feature_t *, int, cb_context_node_t *);
 static void put_context_node(unsigned int, cb_context_node_t *);
-static int intercept_ctx_init(unsigned int *, int, rocp_ctx_t *);
+static int intercept_ctx_init(uint64_t *, int, rocp_ctx_t *);
 static int intercept_ctx_finalize(rocp_ctx_t *);
 
 int
-intercept_ctx_open(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+intercept_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
 
@@ -1426,7 +1426,7 @@ intercept_shutdown(void)
  *
  */
 int
-verify_events(unsigned int *events_id, int num_events)
+verify_events(uint64_t *events_id, int num_events)
 {
     int i;
 
@@ -1449,7 +1449,7 @@ verify_events(unsigned int *events_id, int num_events)
 }
 
 int
-intercept_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx)
+intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
     long long *counters = NULL;
@@ -1474,7 +1474,7 @@ intercept_ctx_init(unsigned int *events_id, int num_events, rocp_ctx_t *rocp_ctx
             goto fn_fail;
         }
 
-        memcpy(INTERCEPT_EVENTS_ID, events_id, num_events * sizeof(unsigned int));
+        memcpy(INTERCEPT_EVENTS_ID, events_id, num_events * sizeof(uint64_t));
 
         /* FIXME: assuming the same number of events per device might not be an
          *        always valid assumption */
@@ -1556,7 +1556,7 @@ intercept_ctx_finalize(rocp_ctx_t *rocp_ctx)
  *
  */
 int
-ctx_init(unsigned int *events_id, int num_events,
+ctx_init(uint64_t *events_id, int num_events,
          rocp_ctx_t *rocp_ctx)
 {
     if (rocm_prof_mode == ROCM_PROFILE_SAMPLING_MODE) {
@@ -1960,10 +1960,10 @@ decrement_and_fetch_dispatch_counter(unsigned long tid)
 }
 
 int
-get_context_counters(unsigned int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
+get_context_counters(uint64_t *events_id, unsigned int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
 {
     int papi_errno = PAPI_OK;
-    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
+    uint64_t *events_id = rocp_ctx->u.intercept.events_id;
 
     /* Here we get events_id ordered according to user's viewpoint and we want
      * to map these to events_id ordered according to callbacks' viewpoint. We
