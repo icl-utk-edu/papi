@@ -1575,6 +1575,11 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         for (i = 0; i < num_events; ++i) {
             htable_insert(htable_intercept, ntv_table_p->events[events_id[i]].feature, NULL);
         }
+
+        papi_errno = init_callbacks(intercept_global_state.features, intercept_global_state.feature_count);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail;
+        }
     }
 
     counters = papi_calloc(num_events, sizeof(*counters));
@@ -1593,11 +1598,6 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     (*rocp_ctx)->u.intercept.dispatch_count = 0;
     (*rocp_ctx)->u.intercept.device_map = bitmap;
     (*rocp_ctx)->u.intercept.feature_count = num_events;
-
-    papi_errno = init_callbacks(intercept_global_state.features, intercept_global_state.feature_count);
-    if (papi_errno != PAPI_OK) {
-        goto fn_fail;
-    }
 
   fn_exit:
     return papi_errno;
@@ -1684,12 +1684,6 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
 {
     int papi_errno = PAPI_OK;
 
-    static int callbacks_initialized;
-
-    if (callbacks_initialized) {
-        return PAPI_OK;
-    }
-
     cb_context_arg_t *context_arg = papi_calloc(1, sizeof(cb_context_arg_t));
     if (context_arg == NULL) {
         papi_errno = PAPI_ENOMEM;
@@ -1734,8 +1728,6 @@ init_callbacks(rocprofiler_feature_t *features, int feature_count)
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
-
-    callbacks_initialized = 1;
 
   fn_exit:
     return papi_errno;
