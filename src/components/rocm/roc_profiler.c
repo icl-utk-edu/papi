@@ -1512,10 +1512,6 @@ verify_events(uint64_t *events_id, int num_events)
         return PAPI_OK;
     }
 
-    if (intercept_global_state.events_count != num_events) {
-        return PAPI_ECNFLCT;
-    }
-
     for (i = 0; i < num_events; ++i) {
         void *out;
         if (htable_find(htable_intercept, ntv_table_p->events[events_id[i]].feature, &out)) {
