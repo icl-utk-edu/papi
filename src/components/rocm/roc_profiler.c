@@ -1242,13 +1242,6 @@ static struct {
     int kernel_count;
 } intercept_global_state;
 
-#define INTERCEPT_EVENTS_ID          (intercept_global_state.events_id)
-#define INTERCEPT_EVENTS_COUNT       (intercept_global_state.events_count)
-#define INTERCEPT_ROCP_FEATURES      (intercept_global_state.features)
-#define INTERCEPT_ROCP_FEATURE_COUNT (intercept_global_state.feature_count)
-#define INTERCEPT_ACTIVE_THR_COUNT   (intercept_global_state.active_thread_count)
-#define INTERCEPT_KERNEL_COUNT       (intercept_global_state.kernel_count)
-
 static int verify_events(uint64_t *, int);
 static int init_callbacks(rocprofiler_feature_t *, int);
 static int register_dispatch_counter(unsigned long, int *);
@@ -1312,7 +1305,7 @@ intercept_ctx_close(rocp_ctx_t rocp_ctx)
 
     _papi_hwi_lock(_rocm_lock);
 
-    if (INTERCEPT_ACTIVE_THR_COUNT == 0) {
+    if (intercept_global_state.active_thread_count == 0) {
         goto fn_exit;
     }
 
@@ -1349,7 +1342,7 @@ intercept_ctx_start(rocp_ctx_t rocp_ctx)
         goto fn_fail;
     }
 
-    if (INTERCEPT_KERNEL_COUNT++ == 0) {
+    if (intercept_global_state.kernel_count++ == 0) {
         if (rocp_start_queue_cbs_p() != HSA_STATUS_SUCCESS) {
             papi_errno = PAPI_EMISC;
             goto fn_fail;
@@ -1384,7 +1377,7 @@ intercept_ctx_stop(rocp_ctx_t rocp_ctx)
         goto fn_fail;
     }
 
-    if (--INTERCEPT_KERNEL_COUNT == 0) {
+    if (--intercept_global_state.kernel_count == 0) {
         if (rocp_stop_queue_cbs_p() != HSA_STATUS_SUCCESS) {
             papi_errno = PAPI_EMISC;
             goto fn_fail;
@@ -1495,12 +1488,12 @@ intercept_shutdown(void)
 
     unload_rocp_sym();
 
-    if (INTERCEPT_ROCP_FEATURES) {
-        papi_free(INTERCEPT_ROCP_FEATURES);
+    if (intercept_global_state.features) {
+        papi_free(intercept_global_state.features);
     }
 
-    if (INTERCEPT_EVENTS_ID) {
-        papi_free(INTERCEPT_EVENTS_ID);
+    if (intercept_global_state.events_id) {
+        papi_free(intercept_global_state.events_id);
     }
 
     return PAPI_OK;
@@ -1515,11 +1508,11 @@ verify_events(uint64_t *events_id, int num_events)
 {
     int i;
 
-    if (INTERCEPT_EVENTS_ID == NULL) {
+    if (intercept_global_state.events_id == NULL) {
         return PAPI_OK;
     }
 
-    if (INTERCEPT_EVENTS_COUNT != num_events) {
+    if (intercept_global_state.events_count != num_events) {
         return PAPI_ECNFLCT;
     }
 
@@ -1552,31 +1545,31 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         return papi_errno;
     }
 
-    if (INTERCEPT_EVENTS_ID == NULL) {
-        INTERCEPT_EVENTS_ID = papi_calloc(num_events, sizeof(int));
-        if (INTERCEPT_EVENTS_ID == NULL) {
+    if (intercept_global_state.events_id == NULL) {
+        intercept_global_state.events_id = papi_calloc(num_events, sizeof(int));
+        if (intercept_global_state.events_id == NULL) {
             papi_errno = PAPI_ENOMEM;
             goto fn_fail;
         }
 
-        memcpy(INTERCEPT_EVENTS_ID, events_id, num_events * sizeof(uint64_t));
+        memcpy(intercept_global_state.events_id, events_id, num_events * sizeof(uint64_t));
 
         /* FIXME: assuming the same number of events per device might not be an
          *        always valid assumption */
         int num_events_per_dev = num_events / num_devs;
-        INTERCEPT_ROCP_FEATURES = papi_calloc(num_events_per_dev, sizeof(*INTERCEPT_ROCP_FEATURES));
-        if (INTERCEPT_ROCP_FEATURES == NULL) {
+        intercept_global_state.features = papi_calloc(num_events_per_dev, sizeof(*intercept_global_state.features));
+        if (intercept_global_state.features == NULL) {
             papi_errno = PAPI_ENOMEM;
             goto fn_fail;
         }
 
-        papi_errno = init_features(INTERCEPT_EVENTS_ID, num_events_per_dev, INTERCEPT_ROCP_FEATURES);
+        papi_errno = init_features(intercept_global_state.events_id, num_events_per_dev, intercept_global_state.features);
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
 
-        INTERCEPT_EVENTS_COUNT = num_events;
-        INTERCEPT_ROCP_FEATURE_COUNT = num_events_per_dev;
+        intercept_global_state.events_count = num_events;
+        intercept_global_state.feature_count = num_events_per_dev;
 
         int i;
         for (i = 0; i < num_events; ++i) {
@@ -1601,7 +1594,7 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     (*rocp_ctx)->u.intercept.device_map = bitmap;
     (*rocp_ctx)->u.intercept.feature_count = num_events;
 
-    papi_errno = init_callbacks(INTERCEPT_ROCP_FEATURES, INTERCEPT_ROCP_FEATURE_COUNT);
+    papi_errno = init_callbacks(intercept_global_state.features, intercept_global_state.feature_count);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
@@ -1770,7 +1763,7 @@ register_dispatch_counter(unsigned long tid, int *counter)
     }
 
     htable_insert(htable, (const char *) key, counter);
-    ++INTERCEPT_ACTIVE_THR_COUNT;
+    ++intercept_global_state.active_thread_count;
 
   fn_exit:
     return papi_errno;
@@ -1792,7 +1785,7 @@ unregister_dispatch_counter(unsigned long tid)
     }
 
     htable_delete(htable, (const char *) key);
-    --INTERCEPT_ACTIVE_THR_COUNT;
+    --intercept_global_state.active_thread_count;
 
   fn_exit:
     return papi_errno;
@@ -2055,8 +2048,8 @@ get_context_counters(uint64_t *events_id, int dev_id, cb_context_node_t *n, rocp
      * compare events from the user and the callbacks using a brute force
      * approach as the number of events is typically small. */
     int i, j;
-    for (i = 0; i < INTERCEPT_ROCP_FEATURE_COUNT; ++i) {
-        const char *cb_name = INTERCEPT_ROCP_FEATURES[i].name;
+    for (i = 0; i < intercept_global_state.feature_count; ++i) {
+        const char *cb_name = intercept_global_state.features[i].name;
 
         for (j = 0; j < rocp_ctx->u.intercept.feature_count; ++j) {
             const char *usr_name = ntv_table_p->events[events_id[j]].name;
