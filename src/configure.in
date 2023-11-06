@@ -415,7 +415,7 @@ AC_MSG_RESULT($debug)
 
 AC_ARG_ENABLE([warnings],
               [AS_HELP_STRING([--enable-warnings],
-                              [Enable build with -Wextra (default: disabled)])],
+                              [Enable build with -Wall -Wextra (default: disabled)])],
               [],
               [enable_warnings=no])
 
@@ -425,7 +425,7 @@ if test "$CC_COMMON_NAME" = "gcc"; then
     major=`echo $gcc_version | sed 's/\([[^.]][[^.]]*\).*/\1/'`
     minor=`echo $gcc_version | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
     if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
-      CFLAGS+=" -Wextra"
+      CFLAGS+=" -Wall -Wextra"
     else
       CFLAGS+=" -W"
     fi

@@ -1430,8 +1430,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-warnings       Enable build with -Wextra (default: disabled)
->>>>>>> e8395c4a0 (fixup! configure: add --enable-warnings flag)
+  --enable-warnings       Enable build with -Wall -Wextra (default: disabled)
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
@@ -4743,7 +4742,7 @@ if test "$CC_COMMON_NAME" = "gcc"; then
     major=`echo $gcc_version | sed 's/\([^.][^.]*\).*/\1/'`
     minor=`echo $gcc_version | sed 's/[^.][^.]*.\([^.][^.]*\).*/\1/'`
     if (test "$major" -ge 4 || test "$major" = 3 -a "$minor" -ge 4); then
-      CFLAGS+=" -Wextra"
+      CFLAGS+=" -Wall -Wextra"
     else
       CFLAGS+=" -W"
     fi
