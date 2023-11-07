@@ -524,6 +524,7 @@ init_event_table(void)
             const char *error_string_p;
             hsa_status_string_p(rocp_errno, &error_string_p);
             snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
     }
@@ -544,6 +545,7 @@ init_event_table(void)
             const char *error_string_p;
             hsa_status_string_p(rocp_errno, &error_string_p);
             snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
     }
@@ -551,7 +553,6 @@ init_event_table(void)
   fn_exit:
     return papi_errno;
   fn_fail:
-    papi_errno = PAPI_EMISC;
     goto fn_exit;
 }
 
