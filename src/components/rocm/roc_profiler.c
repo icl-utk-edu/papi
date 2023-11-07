@@ -530,7 +530,10 @@ init_event_table(void)
     }
 
     ntv_table.events = papi_calloc(ntv_table.count, sizeof(ntv_event_t));
-    assert(ntv_table.events);
+    if (ntv_table.events == NULL) {
+        papi_errno = PAPI_ENOMEM;
+        goto fn_fail;
+    }
 
     struct ntv_arg arg;
     arg.count = 0;
@@ -1972,7 +1975,9 @@ get_context_counters(unsigned int *events_id, unsigned int dev_id, cb_context_no
                 break;
             }
         }
-        assert(j < rocp_ctx->u.intercept.feature_count);
+        if (j < rocp_ctx->u.intercept.feature_count) {
+            return PAPI_ECMP;
+        }
         rocp_ctx->u.intercept.counters[j] += n->counters[i];
     }
 
