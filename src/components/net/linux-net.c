@@ -51,6 +51,11 @@ papi_vector_t _net_vector;
 #define NET_INVALID_RESULT     -1
 
 
+// The following macro follows if a string function has an error. It should 
+// never happen; but it is necessary to prevent compiler warnings. We print 
+// something just in case there is programmer error in invoking the function.
+#define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
+
 static NET_native_event_entry_t * _net_native_events=NULL;
 
 static int num_events       = 0;
@@ -343,8 +348,11 @@ _net_init_component( int cidx  )
     _net_native_events = (NET_native_event_entry_t*)
         papi_malloc(sizeof(NET_native_event_entry_t) * num_events);
     do {
-        strncpy(_net_native_events[i].name, t->name, PAPI_MAX_STR_LEN);
-        strncpy(_net_native_events[i].description, t->description, PAPI_MAX_STR_LEN);
+        int retlen;
+        retlen = snprintf(_net_native_events[i].name, PAPI_MAX_STR_LEN, "%s", t->name);
+        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        retlen = snprintf(_net_native_events[i].description, PAPI_MAX_STR_LEN, "%s", t->description);
+        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         _net_native_events[i].resources.selector = i + 1;
         last    = t;
         t       = t->next;
