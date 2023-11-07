@@ -1169,7 +1169,7 @@ static int fetch_dispatch_counter(unsigned long);
 static cb_context_node_t *alloc_context_node(int);
 static void free_context_node(cb_context_node_t *);
 static int get_context_node(int, cb_context_node_t **);
-static int get_context_counters(unsigned int *, unsigned int, cb_context_node_t *, rocp_ctx_t);
+static int get_context_counters(unsigned int, cb_context_node_t *, rocp_ctx_t);
 static void put_context_counters(rocprofiler_feature_t *, int, cb_context_node_t *);
 static void put_context_node(unsigned int, cb_context_node_t *);
 static int intercept_ctx_init(unsigned int *, int, rocp_ctx_t *);
@@ -1314,7 +1314,6 @@ int
 intercept_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
 {
     int papi_errno = PAPI_OK;
-    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
 
     _papi_hwi_lock(_rocm_lock);
 
@@ -1348,7 +1347,7 @@ intercept_ctx_read(rocp_ctx_t rocp_ctx, long long **counts)
                 break;
             }
 
-            get_context_counters(events_id, dev_id, n, rocp_ctx);
+            get_context_counters(dev_id, n, rocp_ctx);
             dispatch_count = decrement_and_fetch_dispatch_counter(tid);
             free_context_node(n);
         }
@@ -1955,9 +1954,10 @@ decrement_and_fetch_dispatch_counter(unsigned long tid)
 }
 
 int
-get_context_counters(unsigned int *events_id, unsigned int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
+get_context_counters(unsigned int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
 {
     int papi_errno = PAPI_OK;
+    unsigned int *events_id = rocp_ctx->u.intercept.events_id;
 
     /* Here we get events_id ordered according to user's viewpoint and we want
      * to map these to events_id ordered according to callbacks' viewpoint. We
