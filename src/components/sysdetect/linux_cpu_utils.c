@@ -965,5 +965,6 @@ get_vendor_id( void )
         decode_vendor_string(vendor_string, &vendor_id);
     }
 
+    fclose(fp);
     return vendor_id;
 }
