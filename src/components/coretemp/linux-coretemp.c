@@ -455,18 +455,18 @@ _coretemp_init_component( int cidx )
      }
 
      do {
-        char *strCpy;
-        strCpy=strncpy(_coretemp_native_events[i].name,t->name,PAPI_MAX_STR_LEN);
-        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        int retlen;
+        retlen = snprintf(_coretemp_native_events[i].name, PAPI_MAX_STR_LEN, "%s", t->name);
+        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 
-        strCpy=strncpy(_coretemp_native_events[i].path,t->path,PATH_MAX);
-        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        retlen = snprintf(_coretemp_native_events[i].path, PATH_MAX, "%s", t->path);
+        if (retlen <= 0 || retlen >= PATH_MAX) HANDLE_STRING_ERROR;
 
-        strCpy=strncpy(_coretemp_native_events[i].units,t->units,PAPI_MIN_STR_LEN);
-        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        retlen = snprintf(_coretemp_native_events[i].units, PAPI_MIN_STR_LEN, "%s", t->units);
+        if (retlen <= 0 || retlen >= PAPI_MIN_STR_LEN) HANDLE_STRING_ERROR;
 
-        strCpy=strncpy(_coretemp_native_events[i].description,t->description,PAPI_MAX_STR_LEN);
-        if (strCpy == NULL) HANDLE_STRING_ERROR;
+        retlen = snprintf(_coretemp_native_events[i].description, PAPI_MAX_STR_LEN, "%s",t->description);
+        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
 
 	    _coretemp_native_events[i].stone = 0;
 	    _coretemp_native_events[i].resources.selector = i + 1;
