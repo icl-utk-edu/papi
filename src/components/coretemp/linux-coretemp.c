@@ -203,7 +203,8 @@ generateEventList(char *base_dir)
 	     retlen = snprintf(name, PAPI_MAX_STR_LEN, "%s:in%i_input", hwmonx->d_name, i);
 	     if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen) {
 	         SUBDBG("Unable to generate name %s:in%i_input\n", hwmonx->d_name, i);
-            closedir(d);
+		 closedir(dir);
+		 closedir(d);
 	         return ( PAPI_EINVAL );
 	     }
 
