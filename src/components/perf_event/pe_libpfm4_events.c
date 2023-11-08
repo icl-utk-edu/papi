@@ -191,6 +191,9 @@ static struct native_event_t *allocate_native_event(
 	perf_arg.attr=&ntv_evt->attr;
 	perf_arg.fstr=&event_string;
 
+	// set the size of the perf attr struct before getting pfm encoding
+	ntv_evt->attr.size = sizeof(struct perf_event_attr);
+
 	/* use user provided name of the event to get the */
 	/* perf_event encoding and a fully qualified event string */
 	ret = pfm_get_os_event_encoding(name,
