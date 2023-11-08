@@ -2512,14 +2512,14 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OSVER" >&5
 $as_echo "$OSVER" >&6; }
 
-CFLAGS=""
+CFLAGS="$CFLAGS"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perf_event workaround level" >&5
 $as_echo_n "checking for perf_event workaround level... " >&6; }
 
 # Check whether --with-assumed_kernel was given.
 if test "${with_assumed_kernel+set}" = set; then :
-  withval=$with_assumed_kernel; assumed_kernel=$withval; CFLAGS="-DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
+  withval=$with_assumed_kernel; assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""
 else
   assumed_kernel="autodetect"
 

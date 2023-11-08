@@ -69,13 +69,13 @@ AC_ARG_WITH(OSVER,
             fi ])
 AC_MSG_RESULT($OSVER)
 
-CFLAGS=""
+CFLAGS="$CFLAGS"
 
 AC_MSG_CHECKING(for perf_event workaround level)
 AC_ARG_WITH(assumed_kernel,
             [AS_HELP_STRING([--with-assumed-kernel=<ver>],
             [Assume kernel version is <ver> for purposes of workarounds])],
-		[assumed_kernel=$withval; CFLAGS="-DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
+		[assumed_kernel=$withval; CFLAGS="$CFLAGS -DASSUME_KERNEL=\\\"$with_assumed_kernel\\\""],
                 [assumed_kernel="autodetect"]
 		)		
 AC_MSG_RESULT($assumed_kernel)
