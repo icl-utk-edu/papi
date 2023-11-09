@@ -26,7 +26,7 @@ papi_command_line: papi_command_line.o $(PAPILIB) $(DOLOOPS)
 	$(CC) -o papi_command_line papi_command_line.o $(PAPILIB) $(DOLOOPS) $(LDFLAGS)
 
 papi_component_avail: papi_component_avail.o $(PAPILIB) print_header.o
-	$(CC) -o papi_component_avail papi_component_avail.o $(PAPILIB) print_header.o $(LDFLAGS)
+	$(CC) -o papi_component_avail papi_component_avail.o $(PAPILIB) print_header.o $(LDFLAGS) $(LIBSDEFLAGS)
 
 papi_cost: papi_cost.o $(PAPILIB) cost_utils.o
 	$(CC) -o papi_cost papi_cost.o cost_utils.o $(PAPILIB) -lm $(LDFLAGS)
