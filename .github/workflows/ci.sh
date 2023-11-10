@@ -43,9 +43,9 @@ if [ "$COMPONENT" = "infiniband_umad" ]; then
 fi
 
 if [ "$COMPONENT" = "perf_event" ]; then
-  ./configure --with-debug=yes
+  ./configure --with-debug=yes --enable-warnings
 else
-  ./configure --with-debug=yes --with-components=$COMPONENT
+  ./configure --with-debug=yes --enable-warnings --with-components=$COMPONENT
 fi
 
 make -j4
