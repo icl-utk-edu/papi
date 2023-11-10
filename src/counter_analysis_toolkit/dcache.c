@@ -5,6 +5,10 @@
 #include "params.h"
 #include <math.h>
 
+static void print_header(FILE *ofp_papi, hw_desc_t *hw_desc);
+static void print_cache_sizes(FILE *ofp_papi, hw_desc_t *hw_desc);
+static void print_core_affinities(FILE *ofp);
+
 extern char* eventname;
 
 int min_size, max_size, is_core = 0;
@@ -53,8 +57,8 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
     else
         cache_line = hw_desc->dcache_line_size[0];
 
-    // Print the core to which each thread is pinned.
-    print_core_affinities(ofp_papi);
+    // Print meta-data about this run in the first few lines of the output file.
+    print_header(ofp_papi, hw_desc);
 
     // Go through each parameter variant.
     for(pattern = 3; pattern <= 4; ++pattern)
@@ -402,6 +406,31 @@ int get_thread_count() {
     }
 
     return threadNum;
+}
+
+void print_header(FILE *ofp, hw_desc_t *hw_desc){
+    // Print the core to which each thread is pinned.
+    print_core_affinities(ofp);
+    // Print the size of each cache divided by the number of cores that share it.
+    print_cache_sizes(ofp, hw_desc);
+}
+
+void print_cache_sizes(FILE *ofp, hw_desc_t *hw_desc){
+    int i;
+
+    fprintf(ofp, "#");
+
+    if( NULL == hw_desc ) {
+        fprintf(ofp, "\n");
+        return;
+    }
+
+    for(i=0; i<hw_desc->cache_levels; ++i) {
+        int sz = hw_desc->dcache_size[i]/hw_desc->split[i];
+        fprintf(ofp, " L%d:%d", i+1, sz);
+    }
+    fprintf(ofp, "\n");
+
 }
 
 void print_core_affinities(FILE *ofp) {
