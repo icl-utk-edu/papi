@@ -177,6 +177,19 @@ rocc_dev_get_agent_id(hsa_agent_t agent, unsigned int *dev_id)
 }
 
 int
+rocc_dev_set(rocc_bitmap_t *bitmap, int i)
+{
+    *bitmap |= (1ULL << i);
+    return PAPI_OK;
+}
+
+int
+rocc_dev_check(rocc_bitmap_t bitmap, int i)
+{
+    return (bitmap & (1ULL << i));
+}
+
+int
 rocc_thread_get_id(unsigned long *tid)
 {
     *tid = thread_id_fn();
