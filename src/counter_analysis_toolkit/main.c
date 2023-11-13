@@ -1150,6 +1150,7 @@ void print_usage(char* name)
     fprintf(stdout, "\nOptional:\n");
     fprintf(stdout, "  -conf    <path>   Configuration file location.\n");
     fprintf(stdout, "  -verbose          Show benchmark progress in the standard output.\n");
+    fprintf(stdout, "  -quick            Skip latency tests.\n");
     fprintf(stdout, "  -n       <value>  Number of iterations for data cache kernels.\n");
     fprintf(stdout, "  -branch           Branch kernels.\n");
     fprintf(stdout, "  -dcr              Data cache reading kernels.\n");
