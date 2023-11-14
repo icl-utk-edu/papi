@@ -66,7 +66,7 @@ typedef struct {
     unsigned int overflow_signal;
     unsigned int attached;
     int component_id;
-    unsigned int *events_id;
+    uint64_t *events_id;
     rocd_ctx_t rocd_ctx;
 } rocm_control_t;
 
@@ -176,12 +176,12 @@ rocm_init_control_state(hwd_control_state_t *ctl __attribute__((unused)))
 static int
 evt_get_count(int *count)
 {
-    unsigned int event_code = 0;
+    uint64_t event_code = 0;
 
-    if (rocd_evt_enum((uint64_t *) &event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
+    if (rocd_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
         ++(*count);
     }
-    while (rocd_evt_enum((uint64_t *) &event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
+    while (rocd_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
         ++(*count);
     }
 
@@ -585,7 +585,9 @@ rocm_ntv_enum_events(unsigned int *event_code, int modifier)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_enum((uint64_t *) event_code, modifier);
+    uint64_t code = *(uint64_t *) event_code;
+    papi_errno = rocd_evt_enum(&code, modifier);
+    *event_code = (unsigned int) code;
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -621,7 +623,9 @@ rocm_ntv_name_to_code(const char *name, unsigned int *code)
         goto fn_fail;
     }
 
-    papi_errno = rocd_evt_name_to_code(name, (uint64_t *) code);
+    uint64_t event_code;
+    papi_errno = rocd_evt_name_to_code(name, &event_code);
+    *code = (unsigned int) event_code;
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));

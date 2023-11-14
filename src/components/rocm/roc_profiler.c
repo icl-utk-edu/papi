@@ -44,10 +44,6 @@ typedef struct {
     char *descr;
     int instances;
     rocc_bitmap_t device_map;
-    char *feature;
-    int ntv_dev;
-    uint64_t ntv_id;
-    int instance;
 } ntv_event_t;
 
 typedef struct ntv_event_table {
@@ -197,21 +193,59 @@ int
 rocp_evt_enum(uint64_t *event_code, int modifier)
 {
     int papi_errno = PAPI_OK;
+    event_info_t info;
     SUBDBG("ENTER: event_code: %lu, modifier: %d\n", *event_code, modifier);
+
 
     switch(modifier) {
         case PAPI_ENUM_FIRST:
             if (ntv_table_p->count == 0) {
                 papi_errno = PAPI_ENOEVNT;
+                break;
             }
-            *event_code = 0;
+            info.device = 0;
+            info.instance = 0;
+            info.flags = 0;
+            info.nameid = 0;
+            papi_errno = evt_id_create(&info, event_code);
             break;
         case PAPI_ENUM_EVENTS:
-            if (*event_code + 1 < (uint64_t) ntv_table_p->count) {
-                ++(*event_code);
-            } else {
-                papi_errno = PAPI_END;
+            papi_errno = evt_id_to_info(*event_code, &info);
+            if (papi_errno != PAPI_OK) {
+                break;
             }
+            if (ntv_table_p->count > info.nameid + 1) {
+                info.device = 0;
+                info.instance = 0;
+                info.flags = 0;
+                info.nameid++;
+                papi_errno = evt_id_create(&info, event_code);
+                break;
+            }
+            papi_errno = PAPI_END;
+            break;
+        case PAPI_NTV_ENUM_UMASKS:
+            papi_errno = evt_id_to_info(*event_code, &info);
+            if (papi_errno != PAPI_OK) {
+                break;
+            }
+            if (info.flags == 0) {
+                info.device = 0;
+                info.instance = 0;
+                info.flags = DEVICE_FLAG;
+                papi_errno = evt_id_create(&info, event_code);
+                break;
+            }
+            if (info.flags & DEVICE_FLAG) {
+                if (ntv_table_p->events[info.nameid].instances > 1) {
+                    info.device = 0;
+                    info.instance = 0;
+                    info.flags = INSTAN_FLAG;
+                    papi_errno = evt_id_create(&info, event_code);
+                    break;
+                }
+            }
+            papi_errno = PAPI_END;
             break;
         default:
             papi_errno = PAPI_EINVAL;
@@ -225,11 +259,16 @@ rocp_evt_enum(uint64_t *event_code, int modifier)
 int
 rocp_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
-    if (event_code >= (uint64_t) ntv_table_p->count) {
-        return PAPI_EINVAL;
+    int papi_errno;
+
+    event_info_t info;
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-    snprintf(descr, (size_t) len, "%s", ntv_table_p->events[event_code].descr);
-    return PAPI_OK;
+
+    snprintf(descr, (size_t) len, "%s", ntv_table_p->events[info.nameid].descr);
+    return papi_errno;
 }
 
 /* rocp_evt_name_to_code - convert native event name to code */
@@ -240,14 +279,40 @@ rocp_evt_name_to_code(const char *name, uint64_t *event_code)
     int htable_errno;
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
-    ntv_event_t *event;
-    htable_errno = htable_find(htable, name, (void **) &event);
-    if (htable_errno != HTABLE_SUCCESS) {
-        papi_errno = (htable_errno == HTABLE_ENOVAL) ?
-            PAPI_ENOEVNT : PAPI_ECMP;
+    int device;
+    papi_errno = evt_name_to_device(name, &device);
+    if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    *event_code = event->ntv_id;
+
+    int instance;
+    papi_errno = evt_name_to_instance(name, &instance);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    char base[PAPI_MAX_STR_LEN] = { 0 };
+    papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    ntv_event_t *event;
+    htable_errno = htable_find(htable, base, (void **) &event);
+    if (htable_errno != HTABLE_SUCCESS) {
+        papi_errno = (htable_errno == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
+        goto fn_exit;
+    }
+
+    int flags = (event->instances > 1) ? (DEVICE_FLAG | INSTAN_FLAG) : DEVICE_FLAG;
+    int nameid = (int) (event - ntv_table_p->events);
+    event_info_t info = { device, instance, flags, nameid };
+    papi_errno = evt_id_create(&info, event_code);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    papi_errno = evt_id_to_info(*event_code, &info);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -258,9 +323,6 @@ rocp_evt_name_to_code(const char *name, uint64_t *event_code)
 int
 rocp_evt_code_to_name(uint64_t event_code, char *name, int len)
 {
-    if (event_code >= (uint64_t) ntv_table_p->count) {
-        return PAPI_EINVAL;
-    }
     return evt_code_to_name(event_code, name, len);
 }
 
@@ -601,6 +663,13 @@ init_event_table(void)
         }
     }
 
+    ntv_table.events = papi_realloc(ntv_table.events, arg.count * sizeof(ntv_event_t));
+    if (ntv_table.events == NULL) {
+        papi_errno = PAPI_ENOMEM;
+    }
+
+    ntv_table.count = arg.count;
+
   fn_exit:
     return papi_errno;
   fn_fail:
@@ -610,17 +679,26 @@ init_event_table(void)
 int
 evt_code_to_name(uint64_t event_code, char *name, int len)
 {
-    if (ntv_table.events[event_code].instance >= 0) {
-        snprintf(name, (size_t) len, "%s:device=%i:instance=%i",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev,
-                 ntv_table.events[event_code].instance);
-    } else {
-        snprintf(name, (size_t) len, "%s:device=%i",
-                 ntv_table.events[event_code].name,
-                 ntv_table.events[event_code].ntv_dev);
+    int papi_errno;
+
+    event_info_t info;
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
-    return PAPI_OK;
+
+    switch (info.flags) {
+        case (DEVICE_FLAG | INSTAN_FLAG):
+            snprintf(name, len, "%s:device=%i:instance=%i", ntv_table_p->events[info.nameid].name, info.device, info.instance);
+            break;
+        case (DEVICE_FLAG):
+            snprintf(name, len, "%s:device=%i", ntv_table_p->events[info.nameid].name, info.device);
+            break;
+        default:
+            snprintf(name, len, "%s", ntv_table_p->events[info.nameid].name);
+    }
+
+    return papi_errno;
 }
 
 int
@@ -733,9 +811,9 @@ evt_name_to_basename(const char *name, char *base, int len)
  *
  */
 hsa_status_t
-count_ntv_events_cb(const rocprofiler_info_data_t info, void *count)
+count_ntv_events_cb(const rocprofiler_info_data_t info __attribute__((unused)), void *count)
 {
-    (*(int *) count) += info.metric.instances;
+    (*(int *) count) += 1;
     return HSA_STATUS_SUCCESS;
 }
 
@@ -743,35 +821,25 @@ hsa_status_t
 get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
 {
     struct ntv_arg *arg = (struct ntv_arg *) ntv_arg;
-    const int instances = info.metric.instances;
     int capacity = ntv_table.count;
     int *count = &arg->count;
     ntv_event_t *events = ntv_table.events;
-    int instance;
 
-    if (*count + instances > capacity) {
+    if (*count > capacity) {
         snprintf(error_string, PAPI_MAX_STR_LEN, "Number of events exceeds detected count.");
         return HSA_STATUS_ERROR;
     }
 
-    for (instance = 0; instance < instances; ++instance) {
-        char feature[PAPI_MAX_STR_LEN] = { 0 };
-        if (instances > 1) {
-            sprintf(feature, "%s[%d]", info.metric.name, instance);
-        } else {
-            sprintf(feature, "%s", info.metric.name);
-        }
-        events[*count].name = strdup(info.metric.name);
-        events[*count].descr = strdup(info.metric.description);
-        events[*count].feature = strdup(feature);
-        events[*count].ntv_dev = arg->dev_id;
-        events[*count].ntv_id = *count;
-        events[*count].instance = (instances > 1) ? (int) instance : -1;
-        char key[PAPI_MAX_STR_LEN + 1];
-        evt_code_to_name((uint64_t) *count, key, PAPI_MAX_STR_LEN);
-        htable_insert(htable, key, &events[*count]);
-        ++(*count);
+    ntv_event_t *event;
+    if (htable_find(htable, info.metric.name, (void **) &event) != HTABLE_SUCCESS) {
+        event = &events[(*count)++];
+        event->name = papi_strdup(info.metric.name);
+        event->descr = papi_strdup(info.metric.description);
+        event->instances = info.metric.instances;
+        htable_insert(htable, info.metric.name, event);
     }
+
+    rocc_dev_set(&event->device_map, arg->dev_id);
 
     return HSA_STATUS_SUCCESS;
 }
@@ -1001,7 +1069,6 @@ shutdown_event_table(void)
     for (i = 0; i < ntv_table_p->count; ++i) {
         papi_free(ntv_table_p->events[i].name);
         papi_free(ntv_table_p->events[i].descr);
-        papi_free(ntv_table_p->events[i].feature);
     }
 
     ntv_table_p->count = 0;
@@ -1016,10 +1083,12 @@ shutdown_event_table(void)
  *
  */
 static int
-event_id_to_dev_id_cb(uint64_t event_id, int *dev_id)
+event_id_to_dev_id_cb(uint64_t event_id, int *device)
 {
-    *dev_id = ntv_table_p->events[event_id].ntv_dev;
-    return PAPI_OK;
+    event_info_t info;
+    int papi_errno = evt_id_to_info(event_id, &info);
+    *device = info.device;
+    return papi_errno;
 }
 
 int
@@ -1114,6 +1183,7 @@ sampling_ctx_finalize(rocp_ctx_t *rocp_ctx)
     }
 
     if ((*rocp_ctx)->u.sampling.features) {
+        finalize_features((*rocp_ctx)->u.sampling.features, (*rocp_ctx)->u.sampling.feature_count);
         papi_free((*rocp_ctx)->u.sampling.features);
     }
 
@@ -1220,9 +1290,19 @@ init_features(uint64_t *events_id, int num_events, rocprofiler_feature_t *featur
 
     int i;
     for (i = 0; i < num_events; ++i) {
-        features[i].kind =
-            (rocprofiler_feature_kind_t) ROCPROFILER_INFO_KIND_METRIC;
-        features[i].name = (const char *) ntv_table_p->events[events_id[i]].feature;
+        char name[PAPI_MAX_STR_LEN] = { 0 };
+        event_info_t info;
+        papi_errno = evt_id_to_info(events_id[i], &info);
+        if (papi_errno != PAPI_OK) {
+            break;
+        }
+        if (ntv_table_p->events[info.nameid].instances > 1) {
+            sprintf(name, "%s[%i]", ntv_table_p->events[info.nameid].name, info.instance);
+        } else {
+            strcpy(name, ntv_table_p->events[info.nameid].name);
+        }
+        features[i].kind = (rocprofiler_feature_kind_t) ROCPROFILER_INFO_KIND_METRIC;
+        features[i].name = papi_strdup(name);
     }
 
     return papi_errno;
@@ -1257,15 +1337,14 @@ sampling_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, int i)
     int start, stop, j = 0;
     int num_events = rocp_ctx->u.sampling.feature_count;
     uint64_t *events_id = rocp_ctx->u.sampling.events_id;
-    ntv_event_t *ntv_events = ntv_table_p->events;
 
-    while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
+    while (j < num_events && (events_id[j] & DEVICE_MASK) >> DEVICE_SHIFT != (uint64_t) i) {
         ++j;
     }
 
     start = j;
 
-    while (j < num_events && ntv_events[events_id[j]].ntv_dev == i) {
+    while (j < num_events && (events_id[j] & DEVICE_MASK) >> DEVICE_SHIFT == (uint64_t) i) {
         ++j;
     }
 
@@ -1280,15 +1359,14 @@ intercept_ctx_get_dev_feature_count(rocp_ctx_t rocp_ctx, int i)
     int start, stop, j = 0;
     int num_events = rocp_ctx->u.intercept.feature_count;
     uint64_t *events_id = rocp_ctx->u.intercept.events_id;
-    ntv_event_t *ntv_events = ntv_table_p->events;
 
-    while (j < num_events && ntv_events[events_id[j]].ntv_dev != i) {
+    while (j < num_events && (events_id[j] & DEVICE_MASK) >> DEVICE_SHIFT != (uint64_t) i) {
         ++j;
     }
 
     start = j;
 
-    while (j < num_events && ntv_events[events_id[j]].ntv_dev == i) {
+    while (j < num_events && (events_id[j] & DEVICE_MASK) >> DEVICE_SHIFT == (uint64_t) i) {
         ++j;
     }
 
@@ -1309,7 +1387,6 @@ typedef struct cb_context_node {
 
 static struct {
     uint64_t *events_id;
-    int events_count;
     rocprofiler_feature_t *features;
     int feature_count;
     int active_thread_count;
@@ -1326,7 +1403,7 @@ static int fetch_dispatch_counter(unsigned long);
 static cb_context_node_t *alloc_context_node(int);
 static void free_context_node(cb_context_node_t *);
 static int get_context_node(int, cb_context_node_t **);
-static int get_context_counters(uint64_t *, int, cb_context_node_t *, rocp_ctx_t);
+static int get_context_counters(int, cb_context_node_t *, rocp_ctx_t);
 static void put_context_counters(rocprofiler_feature_t *, int, cb_context_node_t *);
 static void put_context_node(int, cb_context_node_t *);
 static int intercept_ctx_init(uint64_t *, int, rocp_ctx_t *);
@@ -1563,6 +1640,7 @@ intercept_shutdown(void)
     unload_rocp_sym();
 
     if (intercept_global_state.features) {
+        finalize_features(intercept_global_state.features, intercept_global_state.feature_count);
         papi_free(intercept_global_state.features);
     }
 
@@ -1580,20 +1658,33 @@ intercept_shutdown(void)
 int
 verify_events(uint64_t *events_id, int num_events)
 {
+    int papi_errno = PAPI_OK;
     int i;
+    char name[PAPI_MAX_STR_LEN] = { 0 };
 
     if (intercept_global_state.events_id == NULL) {
-        return PAPI_OK;
+        return papi_errno;
     }
 
     for (i = 0; i < num_events; ++i) {
-        void *out;
-        if (htable_find(htable_intercept, ntv_table_p->events[events_id[i]].feature, &out)) {
-            return PAPI_ECNFLCT;
+        event_info_t info;
+        papi_errno = evt_id_to_info(events_id[i], &info);
+        if (papi_errno != PAPI_OK) {
+            break;
+        }
+        if (ntv_table_p->events[info.nameid].instances > 1) {
+            sprintf(name, "%s[%i]", ntv_table_p->events[info.nameid].name, info.instance);
+        } else {
+            sprintf(name, "%s", ntv_table_p->events[info.nameid].name);
+        }
+        void *p;
+        if (htable_find(htable_intercept, name, &p) != HTABLE_SUCCESS) {
+            papi_errno = PAPI_ECNFLCT;
+            break;
         }
     }
 
-    return PAPI_OK;
+    return papi_errno;
 }
 
 static int count_unique_events(uint64_t *events_id, int num_events, int *num_unique);
@@ -1606,7 +1697,6 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
     int papi_errno = PAPI_OK;
     long long *counters = NULL;
-    int num_devs;
     *rocp_ctx = NULL;
 
     rocc_bitmap_t bitmap;
@@ -1615,40 +1705,32 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         return papi_errno;
     }
 
-    papi_errno = rocc_dev_get_count(bitmap, &num_devs);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-
     if (intercept_global_state.events_id == NULL) {
-        intercept_global_state.events_id = papi_calloc(num_events, sizeof(int));
+        int num_unique_events = 0;
+        count_unique_events(events_id, num_events, &num_unique_events);
+        intercept_global_state.events_id = papi_calloc(num_unique_events, sizeof(uint64_t));
         if (intercept_global_state.events_id == NULL) {
             papi_errno = PAPI_ENOMEM;
-            goto fn_fail;
+            goto fn_fail_undo;
         }
+        copy_unique_events(intercept_global_state.events_id, events_id, num_events);
 
-        memcpy(intercept_global_state.events_id, events_id, num_events * sizeof(uint64_t));
-
-        /* FIXME: assuming the same number of events per device might not be an
-         *        always valid assumption */
-        int num_events_per_dev = num_events / num_devs;
-        intercept_global_state.features = papi_calloc(num_events_per_dev, sizeof(*intercept_global_state.features));
+        intercept_global_state.features = papi_calloc(num_unique_events, sizeof(*intercept_global_state.features));
         if (intercept_global_state.features == NULL) {
             papi_errno = PAPI_ENOMEM;
-            goto fn_fail;
+            goto fn_fail_undo;
         }
 
-        papi_errno = init_features(intercept_global_state.events_id, num_events_per_dev, intercept_global_state.features);
+        papi_errno = init_features(intercept_global_state.events_id, num_unique_events, intercept_global_state.features);
         if (papi_errno != PAPI_OK) {
-            goto fn_fail;
+            goto fn_fail_undo;
         }
 
-        intercept_global_state.events_count = num_events;
-        intercept_global_state.feature_count = num_events_per_dev;
+        intercept_global_state.feature_count = num_unique_events;
 
-        int i;
-        for (i = 0; i < num_events; ++i) {
-            htable_insert(htable_intercept, ntv_table_p->events[events_id[i]].feature, NULL);
+        papi_errno = save_callback_features(intercept_global_state.features, intercept_global_state.feature_count);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail_undo;
         }
 
         papi_errno = init_callbacks(intercept_global_state.features, intercept_global_state.feature_count);
@@ -1684,6 +1766,15 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
         papi_free(*rocp_ctx);
     }
     *rocp_ctx = NULL;
+    goto fn_exit;
+  fn_fail_undo:
+    cleanup_callback_features(intercept_global_state.features, intercept_global_state.feature_count);
+    if (intercept_global_state.events_id) {
+        papi_free(intercept_global_state.events_id);
+    }
+    if (intercept_global_state.features) {
+        papi_free(intercept_global_state.features);
+    }
     goto fn_exit;
 }
 
@@ -2190,7 +2281,7 @@ decrement_and_fetch_dispatch_counter(unsigned long tid)
 }
 
 int
-get_context_counters(uint64_t *events_id, int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
+get_context_counters(int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_ctx)
 {
     int papi_errno = PAPI_OK;
     uint64_t *events_id = rocp_ctx->u.intercept.events_id;
@@ -2201,20 +2292,14 @@ get_context_counters(uint64_t *events_id, int dev_id, cb_context_node_t *n, rocp
      * approach as the number of events is typically small. */
     int i, j;
     for (i = 0; i < intercept_global_state.feature_count; ++i) {
-        const char *cb_name = intercept_global_state.features[i].name;
+        uint64_t event_id = intercept_global_state.events_id[i] | (dev_id << DEVICE_SHIFT);
 
         for (j = 0; j < rocp_ctx->u.intercept.feature_count; ++j) {
-            const char *usr_name = ntv_table_p->events[events_id[j]].name;
-            int usr_ntv_dev = ntv_table_p->events[events_id[j]].ntv_dev;
-
-            if (dev_id == usr_ntv_dev && strcmp(usr_name, cb_name) == 0) {
+            if (event_id == events_id[j]) {
+                rocp_ctx->u.intercept.counters[j] += n->counters[i];
                 break;
             }
         }
-        if (j >= rocp_ctx->u.intercept.feature_count) {
-            return PAPI_ECMP;
-        }
-        rocp_ctx->u.intercept.counters[j] += n->counters[i];
     }
 
     return papi_errno;
