@@ -550,8 +550,8 @@ static hsa_status_t count_ntv_events_cb(const rocprofiler_info_data_t, void *);
 static hsa_status_t get_ntv_events_cb(const rocprofiler_info_data_t, void *);
 
 struct ntv_arg {
-    int count;                    /* number of devices counted so far */
-    int dev_id;                   /* id of device */
+    int count;
+    int dev_id;
 };
 
 int
