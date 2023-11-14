@@ -781,6 +781,7 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
  *
  */
 static int init_features(uint64_t *, int, rocprofiler_feature_t *);
+static int finalize_features(rocprofiler_feature_t *, int);
 static int sampling_ctx_init(uint64_t *, int, rocp_ctx_t *);
 static int sampling_ctx_finalize(rocp_ctx_t *);
 static int ctx_open(rocp_ctx_t);
@@ -1225,6 +1226,16 @@ init_features(uint64_t *events_id, int num_events, rocprofiler_feature_t *featur
     }
 
     return papi_errno;
+}
+
+int
+finalize_features(rocprofiler_feature_t *features, int feature_count)
+{
+    int i;
+    for (i = 0; i < feature_count; ++i) {
+        papi_free((char *) features[i].name);
+    }
+    return PAPI_OK;
 }
 
 static int sampling_ctx_get_dev_feature_count(rocp_ctx_t, int);
