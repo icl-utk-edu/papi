@@ -1585,6 +1585,11 @@ verify_events(uint64_t *events_id, int num_events)
     return PAPI_OK;
 }
 
+static int count_unique_events(uint64_t *events_id, int num_events, int *num_unique);
+static int copy_unique_events(uint64_t *target, uint64_t *source, int source_len);
+static int save_callback_features(rocprofiler_feature_t *features, int feature_count);
+static int cleanup_callback_features(rocprofiler_feature_t *features, int feature_count);
+
 int
 intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
 {
@@ -1669,6 +1674,91 @@ intercept_ctx_init(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
     }
     *rocp_ctx = NULL;
     goto fn_exit;
+}
+
+int
+count_unique_events(uint64_t *events_id, int num_events, int *num_unique)
+{
+    int papi_errno = PAPI_OK;
+    char name[PAPI_MAX_STR_LEN] = { 0 };
+    int i;
+    int count = 0;
+    void *count_table, *p;
+
+    htable_init(&count_table);
+
+    for (i = 0; i < num_events; ++i) {
+        event_info_t info;
+        papi_errno = evt_id_to_info(events_id[i], &info);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
+        if (ntv_table_p->events[info.nameid].instances > 1) {
+            sprintf(name, "%s[%i]", ntv_table_p->events[info.nameid].name, info.instance);
+        } else {
+            sprintf(name, "%s", ntv_table_p->events[info.nameid].name);
+        }
+        if (htable_find(count_table, name, &p) != HTABLE_SUCCESS) {
+            htable_insert(count_table, name, NULL);
+            ++count;
+        }
+    }
+
+    *num_unique = count;
+
+    htable_shutdown(count_table);
+    return papi_errno;
+}
+
+int
+copy_unique_events(uint64_t *target, uint64_t *source, int source_len)
+{
+    int papi_errno = PAPI_OK;
+    char name[PAPI_MAX_STR_LEN] = { 0 };
+    int i, j;
+    void *count_table, *p;
+
+    htable_init(&count_table);
+
+    for (i = 0, j = 0; i < source_len; ++i) {
+        event_info_t info;
+        papi_errno = evt_id_to_info(source[i], &info);
+        if (papi_errno) {
+            return papi_errno;
+        }
+        if (ntv_table_p->events[info.nameid].instances > 1) {
+            sprintf(name, "%s[%i]", ntv_table_p->events[info.nameid].name, info.instance);
+        } else {
+            sprintf(name, "%s", ntv_table_p->events[info.nameid].name);
+        }
+        if (htable_find(count_table, name, &p) != HTABLE_SUCCESS) {
+            htable_insert(count_table, name, NULL);
+            target[j++] = source[i];
+        }
+    }
+
+    htable_shutdown(count_table);
+    return papi_errno;
+}
+
+int
+save_callback_features(rocprofiler_feature_t *features, int feature_count)
+{
+    int i;
+    for (i = 0; i < feature_count; ++i) {
+        htable_insert(htable_intercept, features[i].name, NULL);
+    }
+    return PAPI_OK;
+}
+
+int
+cleanup_callback_features(rocprofiler_feature_t *features, int feature_count)
+{
+    int i;
+    for (i = 0; i < feature_count; ++i) {
+        htable_delete(htable_intercept, features[i].name);
+    }
+    return PAPI_OK;
 }
 
 int
