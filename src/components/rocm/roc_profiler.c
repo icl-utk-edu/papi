@@ -141,6 +141,9 @@ static int intercept_shutdown(void);
 static int evt_code_to_name(uint64_t event_code, char *name, int len);
 static int evt_id_create(event_info_t *info, uint64_t *event_id);
 static int evt_id_to_info(uint64_t event_id, event_info_t *info);
+static int evt_name_to_device(const char *name, int *device);
+static int evt_name_to_instance(const char *name, int *instance);
+static int evt_name_to_basename(const char *name, char *base, int len);
 
 static void *rocp_dlp = NULL;
 static ntv_event_table_t ntv_table;
@@ -662,6 +665,66 @@ evt_id_to_info(uint64_t event_id, event_info_t *info)
         return PAPI_ENOEVNT;
     }
 
+    return PAPI_OK;
+}
+
+int
+evt_name_to_device(const char *name, int *device)
+{
+    char *p = strstr(name, ":device=");
+    if (!p) {
+        return PAPI_ENOEVNT;
+    }
+    *device = (int) strtol(p + strlen(":device="), NULL, 10);
+    return PAPI_OK;
+}
+
+int
+evt_name_to_instance(const char *name, int *instance)
+{
+    *instance = 0;
+
+    char basename[PAPI_MAX_STR_LEN] = { 0 };
+    int papi_errno = evt_name_to_basename(name, basename, PAPI_MAX_STR_LEN);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    ntv_event_t *event;
+    if (htable_find(htable, basename, (void **) &event) != HTABLE_SUCCESS) {
+        return PAPI_ENOEVNT;
+    }
+
+    char *p = strstr(name, ":instance=");
+    if (event->instances > 1) {
+        if (!p) {
+            return PAPI_ENOEVNT;
+        }
+        *instance = (int) strtol(p + strlen(":instance="), NULL, 10);
+    } else {
+        if (p) {
+            return PAPI_ENOEVNT;
+        }
+    }
+
+    return PAPI_OK;
+}
+
+int
+evt_name_to_basename(const char *name, char *base, int len)
+{
+    char *p = strstr(name, ":");
+    if (p) {
+        if (len < (int)(p - name)) {
+            return PAPI_EBUF;
+        }
+        strncpy(base, name, (size_t)(p - name));
+    } else {
+        if (len < (int) strlen(name)) {
+            return PAPI_EBUF;
+        }
+        strncpy(base, name, (size_t) len);
+    }
     return PAPI_OK;
 }
 
