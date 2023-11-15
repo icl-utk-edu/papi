@@ -18,6 +18,7 @@
 #define NAMEID_ARM_CORTEX_A15     0xc0f
 #define NAMEID_ARM_CORTEX_A53     0xd03
 #define NAMEID_ARM_CORTEX_A57     0xd07
+#define NAMEID_ARM_CORTEX_A76     0xd0b
 #define NAMEID_ARM_NEOVERSE_N1    0xd0c
 #define NAMEID_ARM_NEOVERSE_N2    0xd49
 #define NAMEID_ARM_NEOVERSE_V1    0xd40
@@ -245,6 +246,9 @@ name_id_arm_cpu_get_name( int name_id, char *name )
             break;
         case NAMEID_ARM_CORTEX_A57:
             strcpy(name, "ARM Cortex A57");
+            break;
+        case NAMEID_ARM_CORTEX_A76:
+            strcpy(name, "ARM Cortex A76");
             break;
         case NAMEID_ARM_NEOVERSE_N1:
             strcpy(name, "ARM Neoverse N1");
