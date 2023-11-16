@@ -51,6 +51,7 @@ static int rocm_ntv_code_to_name(unsigned int event_code, char *name, int len);
 static int rocm_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int rocm_ntv_code_to_descr(unsigned int event_code, char *descr,
                                   int len);
+static int rocm_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info);
 
 typedef struct {
     int initialized;
@@ -118,6 +119,7 @@ papi_vector_t _rocm_vector = {
     .ntv_code_to_name = rocm_ntv_code_to_name,
     .ntv_name_to_code = rocm_ntv_name_to_code,
     .ntv_code_to_descr = rocm_ntv_code_to_descr,
+    .ntv_code_to_info = rocm_ntv_code_to_info,
 };
 
 static int check_n_initialize(void);
@@ -644,6 +646,24 @@ rocm_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
     }
 
     papi_errno = rocd_evt_code_to_descr((uint64_t) event_code, descr, len);
+
+  fn_exit:
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
+}
+
+int
+rocm_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info)
+{
+    SUBDBG("ENTER: event_code: %u, info: %p\n", event_code, info);
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    papi_errno = rocd_evt_code_to_info((uint64_t) event_code, info);
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));

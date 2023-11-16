@@ -326,6 +326,54 @@ rocp_evt_code_to_name(uint64_t event_code, char *name, int len)
     return evt_code_to_name(event_code, name, len);
 }
 
+/* rocp_evt_code_to_info - get event info */
+int
+rocp_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
+{
+    int papi_errno;
+
+    event_info_t inf;
+    papi_errno = evt_id_to_info(event_code, &inf);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    switch (inf.flags) {
+        case 0:
+            sprintf(info->symbol, "%s", ntv_table_p->events[inf.nameid].name);
+            sprintf(info->long_descr, "%s", ntv_table_p->events[inf.nameid].descr);
+            break;
+        case (DEVICE_FLAG | INSTAN_FLAG):
+            sprintf(info->symbol, "%s:device=%i:instance=%i", ntv_table_p->events[inf.nameid].name, inf.device, inf.instance);
+            sprintf(info->long_descr, "%s", ntv_table_p->events[inf.nameid].descr);
+            break;
+        case DEVICE_FLAG:
+        {
+            int i;
+            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            for (i = 0; i < device_table_p->count; ++i) {
+                if (rocc_dev_check(ntv_table_p->events[inf.nameid].device_map, i)) {
+                    sprintf(devices + strlen(devices), "%i,", i);
+                }
+            }
+            *(devices + strlen(devices) - 1) = 0;
+            sprintf(info->symbol, "%s:device=%i", ntv_table_p->events[inf.nameid].name, inf.device);
+            sprintf(info->long_descr, "%s masks:Mandatory device qualifier [%s]",
+                    ntv_table_p->events[inf.nameid].descr, devices);
+            break;
+        }
+        case INSTAN_FLAG:
+            sprintf(info->symbol, "%s:instance=%i", ntv_table_p->events[inf.nameid].name, inf.instance);
+            sprintf(info->long_descr, "%s masks:Mandatory instance qualifier in range [0-%i]",
+                    ntv_table_p->events[inf.nameid].descr, ntv_table_p->events[inf.nameid].instances - 1);
+            break;
+        default:
+            papi_errno = PAPI_EINVAL;
+    }
+
+    return papi_errno;
+}
+
 /* rocp_ctx_open - open a profiling context for the requested events */
 int
 rocp_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)

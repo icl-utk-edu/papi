@@ -64,6 +64,12 @@ rocd_evt_code_to_name(uint64_t event_code, char *name, int len)
 }
 
 int
+rocd_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
+{
+    return rocp_evt_code_to_info(event_code, info);
+}
+
+int
 rocd_err_get_last(const char **error_str)
 {
     return rocc_err_get_last(error_str);

@@ -10,6 +10,7 @@
 #ifndef __ROC_DISPATCH_H__
 #define __ROC_DISPATCH_H__
 
+#include "papi.h"
 #include "roc_profiler_config.h"
 
 typedef struct rocd_ctx *rocd_ctx_t;
@@ -24,6 +25,7 @@ int rocd_evt_enum(uint64_t *event_code, int modifier);
 int rocd_evt_code_to_descr(uint64_t event_code, char *descr, int len);
 int rocd_evt_name_to_code(const char *name, uint64_t *event_code);
 int rocd_evt_code_to_name(uint64_t event_code, char *name, int len);
+int rocd_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 
 /* error handling interfaces */
 int rocd_err_get_last(const char **error_str);
