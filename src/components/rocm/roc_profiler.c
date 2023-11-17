@@ -1981,7 +1981,7 @@ get_context_counters(unsigned int dev_id, cb_context_node_t *n, rocp_ctx_t rocp_
                 break;
             }
         }
-        if (j < rocp_ctx->u.intercept.feature_count) {
+        if (j >= rocp_ctx->u.intercept.feature_count) {
             return PAPI_ECMP;
         }
         rocp_ctx->u.intercept.counters[j] += n->counters[i];
