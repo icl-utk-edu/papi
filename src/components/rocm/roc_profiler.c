@@ -1374,7 +1374,7 @@ intercept_ctx_reset(rocp_ctx_t rocp_ctx)
 {
     int i;
 
-    for (i = 0; i < INTERCEPT_ROCP_FEATURE_COUNT; ++i) {
+    for (i = 0; i < rocp_ctx->u.intercept.feature_count; ++i) {
         rocp_ctx->u.intercept.counters[i] = 0;
     }
 
