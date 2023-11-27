@@ -85,6 +85,23 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
 
     The binary image of a `double` is intact; but users must recast to `double` for display purposes.
 
+* Some of the ROCm events are known to cause an error when the rocm component is used in sampling mode
+
+    For example `TA_BUSY_avr`
+
+    ```console
+    $ papi_command_line TA_BUSY_avr
+
+    This utility lets you add events from the command line interface to see if they work.
+
+    Successfully added: rocm:::TA_BUSY_avr:device=0
+
+    Memory access fault by GPU node-4 (Agent handle: 0x46d6d10) on address 0x7ffed888c000. Reason: Unknown.
+    Aborted
+    ```
+
+    The error appears to happen when the ROCr runtime shuts down
+
 ***
 ## FAQ
 
