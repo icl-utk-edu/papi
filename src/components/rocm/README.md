@@ -109,3 +109,29 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
 
 ## Unusual installations
 For the ROCM component to be operational, it must find the dynamic libraries `libhsa-runtime64.so` and `librocprofiler64.so`. These are normally found in the above standard directories. If these libraries are not found (or are not functional) then the component will be listed as "disabled" with a reason explaining the problem. If libraries were not found, then they are not in the expected places.
+
+2. [Device isolation](#markdown-device-isolation)
+
+## Device isolation
+Compute clusters resource managers can isolate GPU devices, on compute nodes,
+into subgroups. This means that a job might only see part of the devices on the
+node. How many devices are visible depends on the value of a set of environment
+variables, configured by the resource manager (e.g. HIP\_VISIBLE\_DEVICES,
+ROCR\_VISIBLE\_DEVICES, etc).
+
+In order to detect available devices, the ROCm component relies on the HSA ROCm
+runtime functions (i.e. hsa\_iterate\_agents). The ROCR\_VISIBLE\_DEVICES
+environment variable establishes how many devices will be visible to the ROCm
+runtime. Therefore, by extension, the PAPI ROCm component will only see as many
+devices as allocated by the resource manager through the aforementioned
+environment variable. The component assigns them integer identifiers in the
+range [0, N-1], where N is the number of devices for the partition.
+
+Therefore, when using the component in a HIP context, the application would
+need to map the device index given by hipGetDevice to this index range and use
+the index in the event name, e.g., rocm:::GPUBusy:device=X. Preferably the UUID
+of the device should be used for this mapping (see hipDeviceGetUuid and
+HSA\_AMD\_AGENT\_INFO\_UUID).
+
+The AMD isolation mechanism is described in more details here:
+https://rocm.docs.amd.com/en/latest/understand/gpu_isolation.html
