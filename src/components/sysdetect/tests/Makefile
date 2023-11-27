@@ -21,6 +21,8 @@ endif
 intel_compilers := ifort ifx
 cray_compilers := ftn crayftn
 
+FFLAGS += -ffree-form
+
 ifeq ($(notdir $(F77)),gfortran)
     FFLAGS +=-ffree-form -ffree-line-length-none
 else ifeq ($(notdir $(F77)),flang)
