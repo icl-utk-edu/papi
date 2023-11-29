@@ -12,7 +12,7 @@ CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/include          \
            -I$(PAPI_ROCM_ROOT)/hsa/include/hsa  \
            $(INCLUDE)
 LDFLAGS += $(PAPILIB) $(TESTLIB) -pthread
-CXXFLAGS = -g -O0 -pthread
+CXXFLAGS = -g $(OPTFLAGS) -pthread
 
 rocm_tests: ALL
 
