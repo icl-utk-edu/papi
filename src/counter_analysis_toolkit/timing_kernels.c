@@ -21,7 +21,6 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     int error_line = -1, error_type = PAPI_OK;
     register uintptr_t *p = NULL;
     register uintptr_t p_prime;
-    double time1, time2, dt, factor;
     long count, pageSize, blockSize;
     long long int counter[ONT];
     run_output_t out;
@@ -61,11 +60,12 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     }
 
     // Start of threaded benchmark.
-    #pragma omp parallel private(p,count,dt,factor,time1,time2,retval) reduction(+:buffer) reduction(+:status) firstprivate(_papi_eventset) default(shared)
+    #pragma omp parallel private(p,count,retval) reduction(+:buffer) reduction(+:status) firstprivate(_papi_eventset) default(shared)
     {
         int idx = omp_get_thread_num();
         int thdStatus = 0;
         double divisor = 1.0;
+        double time1=0, time2=0, dt, factor;
 
         // Initialize the result to a value indicating an error.
         // If no error occurs, it will be overwritten.
