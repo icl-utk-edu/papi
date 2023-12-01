@@ -133,9 +133,8 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
     }else{
         int numHier = hw_desc->cache_levels+1;
         for(j=0; j<numHier; ++j) {
-            guessCount += hw_desc->pts_per_reg[j] + 1;
+            guessCount += hw_desc->pts_per_reg[j];
         }
-        guessCount++; // To include endpoint.
     }
 
     // Get the number of threads.
@@ -317,9 +316,8 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
 
         // Calculate the length of the array of buffer sizes.
         for(j=0; j<numHier; ++j) {
-            len += hw_desc->pts_per_reg[j] + 1;
+            len += hw_desc->pts_per_reg[j];
         }
-        len++; // To include endpoint.
 
         // Allocate space for the array of buffer sizes.
         if( NULL == (bufSizes = (long *)calloc(len, sizeof(long))) )
@@ -335,11 +333,10 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              * All other lower bounds are set to the size of the caches, as observed per core.
              */
             if( 0 == j ) {
-                bufSizes[tmpIdx] = hw_desc->dcache_size[0]/(8.0*hw_desc->split[0]);
+                currCacheSize = hw_desc->dcache_size[0]/(8.0*hw_desc->split[0]);
             } else {
-                bufSizes[tmpIdx] = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
+                currCacheSize = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
             }
-            currCacheSize = bufSizes[tmpIdx];
 
             /* The upper bound of the final "cache" region (memory in this case) is set to 12 times the
              * size of the LLC so that all threads cumulatively will exceed the LLC by a factor of 12.
@@ -347,7 +344,6 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              */
             if( llc_idx+1 == j ) {
                 nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->split[llc_idx];
-                bufSizes[tmpIdx+ptsToNextCache] = nextCacheSize;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
             }
@@ -358,10 +354,10 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              */
             for(k = 1; k < ptsToNextCache; ++k) {
                 f = pow(((double)nextCacheSize)/currCacheSize, ((double)k)/ptsToNextCache);
-                bufSizes[tmpIdx+k] = f*currCacheSize;
+                bufSizes[tmpIdx+k-1] = f*currCacheSize;
             }
 
-            tmpIdx += ptsToNextCache;
+            tmpIdx += hw_desc->pts_per_reg[j];
         }
 
         cnt=0;
