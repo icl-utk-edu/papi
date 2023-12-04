@@ -343,7 +343,7 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              * All other upper bounds are set to the capacity of the cache, as observed per core.
              */
             if( llc_idx+1 == j ) {
-                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->split[llc_idx];
+                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
             }
@@ -357,7 +357,11 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
                 bufSizes[tmpIdx+k-1] = f*currCacheSize;
             }
 
-            tmpIdx += hw_desc->pts_per_reg[j];
+            if( llc_idx+1 == j ) {
+                tmpIdx += hw_desc->pts_per_mm;
+            } else {
+                tmpIdx += hw_desc->pts_per_reg[j];
+            }
         }
 
         cnt=0;
