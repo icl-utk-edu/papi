@@ -38,9 +38,9 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     long countMax;
     unsigned long threshold = 128*1024;
     if( active_buf_len*sizeof(uintptr_t) > threshold )
-        countMax = 50*((long)active_buf_len)/line_size;
+        countMax = 64*((long)active_buf_len)/line_size;
     else
-        countMax = 50*threshold/line_size;
+        countMax = 64*threshold/line_size;
 
     // Get the size of a page of memory.
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);
