@@ -324,7 +324,7 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     hw_desc->pts_per_reg[1] = 3;
     hw_desc->pts_per_reg[2] = 3;
     hw_desc->pts_per_reg[3] = 3;
-    hw_desc->maxPPB = 64;
+    hw_desc->maxPPB = 512;
 
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
