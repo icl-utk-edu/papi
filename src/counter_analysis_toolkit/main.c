@@ -320,10 +320,10 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     hw_desc->split[1] = 1;
     hw_desc->split[2] = 1;
     hw_desc->split[3] = 1;
-    hw_desc->pts_per_reg[0] = 5;
-    hw_desc->pts_per_reg[1] = 5;
-    hw_desc->pts_per_reg[2] = 5;
-    hw_desc->pts_per_reg[3] = 5;
+    hw_desc->pts_per_reg[0] = 3;
+    hw_desc->pts_per_reg[1] = 3;
+    hw_desc->pts_per_reg[2] = 3;
+    hw_desc->pts_per_reg[3] = 3;
 
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
