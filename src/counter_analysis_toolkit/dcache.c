@@ -69,7 +69,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
             // PPB variation only makes sense if the pattern is not sequential.
             if(pattern != 4) 
             {
-                for(ppb = 64; ppb >= 16; ppb -= 48)
+                for(ppb = (float)hw_desc->maxPPB; ppb >= 16; ppb *= 16.0/(hw_desc->maxPPB))
                 {
                     if( params.show_progress )
                     {

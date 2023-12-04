@@ -6,6 +6,7 @@
 typedef struct _hw_desc{
   int numcpus;
   int cache_levels;
+  int maxPPB;
   int split[_MAX_SUPPORTED_CACHE_LEVELS];
   int pts_per_reg[_MAX_SUPPORTED_CACHE_LEVELS];
   int dcache_line_size[_MAX_SUPPORTED_CACHE_LEVELS];

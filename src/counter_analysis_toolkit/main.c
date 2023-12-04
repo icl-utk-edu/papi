@@ -324,6 +324,7 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     hw_desc->pts_per_reg[1] = 3;
     hw_desc->pts_per_reg[2] = 3;
     hw_desc->pts_per_reg[3] = 3;
+    hw_desc->maxPPB = 64;
 
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
@@ -480,6 +481,8 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
             hw_desc->pts_per_reg[2] = value;
         }else if( !strcmp(key, "PTS_PER_L4") || !strcmp(key, "PTS_PER_MM") ){
             hw_desc->pts_per_reg[3] = value;
+        }else if( !strcmp(key, "MAX_PPB") ){
+            hw_desc->maxPPB = value;
         }
 
         free(key);
