@@ -71,13 +71,13 @@ rocc_err_get_last(const char **err_string)
 }
 
 int
-rocc_dev_get_map(rocc_dev_get_map_cb query_dev_id, unsigned int *events_id, int num_events, rocc_bitmap_t *bitmap)
+rocc_dev_get_map(rocc_dev_get_map_cb query_dev_id, uint64_t *events_id, int num_events, rocc_bitmap_t *bitmap)
 {
     int i;
     rocc_bitmap_t device_map_acq = 0;
 
     for (i = 0; i < num_events; ++i) {
-        unsigned int dev_id;
+        int dev_id;
         if (query_dev_id(events_id[i], &dev_id)) {
             return PAPI_EMISC;
         }
@@ -166,14 +166,27 @@ rocc_dev_get_id(rocc_bitmap_t bitmap, int dev_count, int *device_id)
 }
 
 int
-rocc_dev_get_agent_id(hsa_agent_t agent, unsigned int *dev_id)
+rocc_dev_get_agent_id(hsa_agent_t agent, int *dev_id)
 {
-    for (*dev_id = 0; *dev_id < (unsigned int) device_table_p->count; ++(*dev_id)) {
+    for (*dev_id = 0; *dev_id < device_table_p->count; ++(*dev_id)) {
         if (memcmp(&device_table_p->devices[*dev_id], &agent, sizeof(agent)) == 0) {
             break;
         }
     }
     return PAPI_OK;
+}
+
+int
+rocc_dev_set(rocc_bitmap_t *bitmap, int i)
+{
+    *bitmap |= (1ULL << i);
+    return PAPI_OK;
+}
+
+int
+rocc_dev_check(rocc_bitmap_t bitmap, int i)
+{
+    return (bitmap & (1ULL << i));
 }
 
 int
