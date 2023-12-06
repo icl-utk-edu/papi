@@ -15,13 +15,13 @@ extern int max_size;
 extern int is_core;
 char* eventname = NULL;
 
-run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
+run_output_t probeBufferSize(long long active_buf_len, long long line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
     int _papi_eventset = PAPI_NULL;
     int retval, buffer = 0, status = 0;
     int error_line = -1, error_type = PAPI_OK;
     register uintptr_t *p = NULL;
     register uintptr_t p_prime;
-    long count, pageSize, blockSize;
+    long long count, pageSize, blockSize;
     long long int counter[ONT];
     run_output_t out;
     out.status = 0;
@@ -35,12 +35,12 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
         printf("WARNING: x=%lf y=%lf\n",x,y);
 
     // Make no fewer accesses than we would for a buffer of size 128KB.
-    long countMax;
-    unsigned long threshold = 128*1024;
+    long long countMax;
+    long long unsigned threshold = 128*1024;
     if( active_buf_len*sizeof(uintptr_t) > threshold )
-        countMax = 64*((long)active_buf_len)/line_size;
+        countMax = 64LL*((long long)(active_buf_len/line_size));
     else
-        countMax = 64*threshold/line_size;
+        countMax = 64LL*((long long)(threshold/line_size));
 
     // Get the size of a page of memory.
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);
@@ -51,7 +51,7 @@ run_output_t probeBufferSize(int active_buf_len, int line_size, float pageCountP
     }
 
     // Compute the size of a block in the pointer chain and create the pointer chain.
-    blockSize = (long)(pageCountPerBlock*(float)pageSize);
+    blockSize = (long long)(pageCountPerBlock*(float)pageSize);
     #pragma omp parallel reduction(+:status) default(shared)
     {
         int idx = omp_get_thread_num();
