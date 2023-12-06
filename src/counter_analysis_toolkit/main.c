@@ -181,6 +181,7 @@ int main(int argc, char*argv[])
     PAPI_shutdown();
 
 #if defined(USE_MPI)
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 #endif
 
