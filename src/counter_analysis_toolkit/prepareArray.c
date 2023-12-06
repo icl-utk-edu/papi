@@ -89,6 +89,8 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
     // close the circle by pointing the last element to the start
     next = &array[0];
     *p = next;
+
+    free(availableNumbers);
     
     return;
 }
