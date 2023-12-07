@@ -14,35 +14,38 @@ jobs:
     strategy:
       matrix:
         component: [perf_event, lmsensors, io, net, powercap, appio, coretemp, stealtime]
+        debug: [yes, no]
       fail-fast: false
     runs-on: cpu_intel
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_component_nvidia:
     strategy:
       matrix:
         component: [cuda, nvml]
+        debug: [yes, no]
       fail-fast: false
     runs-on: gpu_nvidia
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_component_amd:
     strategy:
       matrix:
         component: [rocm, rocm_smi]
+        debug: [yes, no]
       fail-fast: false
     runs-on: gpu_amd
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_spack:
     runs-on: cpu
     timeout-minutes: 60

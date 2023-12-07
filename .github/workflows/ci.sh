@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
 COMPONENT=$1
-COMPILER=$2
+DEBUG=$2
+COMPILER=$3
 
 [ -z "$COMPILER" ] && COMPILER=gcc@11
 
@@ -43,9 +44,9 @@ if [ "$COMPONENT" = "infiniband_umad" ]; then
 fi
 
 if [ "$COMPONENT" = "perf_event" ]; then
-  ./configure --with-debug=yes --enable-warnings
+  ./configure --with-debug=$DEBUG --enable-warnings
 else
-  ./configure --with-debug=yes --enable-warnings --with-components=$COMPONENT
+  ./configure --with-debug=$DEBUG --enable-warnings --with-components=$COMPONENT
 fi
 
 make -j4
