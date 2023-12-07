@@ -27,7 +27,7 @@
 #define CACHE_READ_ONLY  0x0
 #define CACHE_READ_WRITE 0x1
 
-run_output_t probeBufferSize(int l1_size, int line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int detect_size, int mode, int ONT);
+run_output_t probeBufferSize(long long active_buf_len, long long line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int detect_size, int mode, int ONT);
 void error_handler(int e, int line);
 
 #endif

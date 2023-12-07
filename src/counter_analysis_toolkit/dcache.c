@@ -11,12 +11,14 @@ static void print_core_affinities(FILE *ofp);
 
 extern char* eventname;
 
-int min_size, max_size, is_core = 0;
+long long min_size, max_size;
+int is_core = 0;
 
 void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_desc, int latency_only, int mode)
 {
     int pattern = 3;
-    int stride, f, cache_line;
+    long long stride;
+    int f, cache_line;
     int status, evtCode, test_cnt = 0;
     float ppb = 16;
     FILE *ofp_papi;
@@ -69,7 +71,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
             // PPB variation only makes sense if the pattern is not sequential.
             if(pattern != 4) 
             {
-                for(ppb = 64; ppb >= 16; ppb -= 48)
+                for(ppb = (float)hw_desc->maxPPB; ppb >= 16; ppb *= 16.0/(hw_desc->maxPPB))
                 {
                     if( params.show_progress )
                     {
@@ -113,9 +115,9 @@ error0:
     return;
 }
 
-int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
+int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
     int i,j,k;
-    int *values;
+    long long *values;
     double ***rslts, *sorted_rslts;
     double ***counter, *sorted_counter;
     int status=0, guessCount, ONT;
@@ -133,9 +135,8 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
     }else{
         int numHier = hw_desc->cache_levels+1;
         for(j=0; j<numHier; ++j) {
-            guessCount += hw_desc->pts_per_reg[j] + 1;
+            guessCount += hw_desc->pts_per_reg[j];
         }
-        guessCount++; // To include endpoint.
     }
 
     // Get the number of threads.
@@ -162,7 +163,7 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
     sorted_counter = (double *)malloc(max_iter*sizeof(double));
 
     // List of buffer sizes which are used in the benchmark.
-    values = (int *)malloc(guessCount*sizeof(int));
+    values = (long long *)malloc(guessCount*sizeof(long));
 
     // Set the name of the event to be monitored during the benchmark.
     eventname = papi_event_name;
@@ -174,12 +175,12 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
     }
 
     // Sort and print latency and counter results.
-    fprintf(ofp, "# PTRN=%d, STRIDE=%d, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
+    fprintf(ofp, "# PTRN=%d, STRIDE=%lld, PPB=%f, ThreadCount=%d\n", pattern, stride_in_bytes, pages_per_block, ONT);
 
     if(latency_only) {
 
         for(j=0; j<guessCount; ++j){
-            fprintf(ofp, "%d", values[j]);
+            fprintf(ofp, "%lld", values[j]);
             for(k=0; k<ONT; ++k){
                 for(i=0; i<max_iter; ++i){
                     sorted_rslts[i] = rslts[i][j][k];
@@ -193,7 +194,7 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, int stride_in_by
     } else {
 
         for(j=0; j<guessCount; ++j){
-            fprintf(ofp, "%d", values[j]);
+            fprintf(ofp, "%lld", values[j]);
             for(k=0; k<ONT; ++k){
                 for(i=0; i<max_iter; ++i){
                     sorted_counter[i] = counter[i][j][k];
@@ -224,13 +225,13 @@ cleanup:
 }
 
 
-int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw_desc, int stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
+int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
     int i, j, k, cnt;
-    long active_buf_len;
+    long long active_buf_len;
     int allocErr = 0;
     run_output_t out;
 
-    int stride = stride_in_bytes/sizeof(uintptr_t);
+    long long stride = stride_in_bytes/sizeof(uintptr_t);
 
     uintptr_t rslt=42, *v[ONT], *ptr[ONT];
 
@@ -280,49 +281,49 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
             }
             values[cnt++] = ONT*sizeof(uintptr_t)*active_buf_len;
 
-            out = probeBufferSize((int)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
                 rslts[cnt][k] = out.dt[k];
                 counter[cnt][k] = out.counter[k];
             }
-            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.25));
+            values[cnt++] = ONT*sizeof(uintptr_t)*((long long)((double)active_buf_len*1.25));
 
-            out = probeBufferSize((int)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
                 rslts[cnt][k] = out.dt[k];
                 counter[cnt][k] = out.counter[k];
             }
-            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.5));
+            values[cnt++] = ONT*sizeof(uintptr_t)*((long long)((double)active_buf_len*1.5));
 
-            out = probeBufferSize((int)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
                 rslts[cnt][k] = out.dt[k];
                 counter[cnt][k] = out.counter[k];
             }
-            values[cnt++] = ONT*sizeof(uintptr_t)*((int)((double)active_buf_len*1.75));
+            values[cnt++] = ONT*sizeof(uintptr_t)*((long long)((double)active_buf_len*1.75));
         }
     }else{
         double f;
         int numCaches = hw_desc->cache_levels;
         int numHier   = numCaches+1;
         int llc_idx   = numCaches-1;
-        int len = 0, ptsToNextCache, currCacheSize, nextCacheSize, tmpIdx = 0;
-        long *bufSizes;
+        int len = 0, ptsToNextCache, tmpIdx = 0;
+        long long currCacheSize, nextCacheSize;
+        long long *bufSizes;
 
         // Calculate the length of the array of buffer sizes.
         for(j=0; j<numHier; ++j) {
-            len += hw_desc->pts_per_reg[j] + 1;
+            len += hw_desc->pts_per_reg[j];
         }
-        len++; // To include endpoint.
 
         // Allocate space for the array of buffer sizes.
-        if( NULL == (bufSizes = (long *)calloc(len, sizeof(long))) )
+        if( NULL == (bufSizes = (long long *)calloc(len, sizeof(long long))) )
             goto error;
 
         // Define buffer sizes.
@@ -335,19 +336,17 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              * All other lower bounds are set to the size of the caches, as observed per core.
              */
             if( 0 == j ) {
-                bufSizes[tmpIdx] = hw_desc->dcache_size[0]/(8.0*hw_desc->split[0]);
+                currCacheSize = hw_desc->dcache_size[0]/(8.0*hw_desc->split[0]);
             } else {
-                bufSizes[tmpIdx] = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
+                currCacheSize = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
             }
-            currCacheSize = bufSizes[tmpIdx];
 
             /* The upper bound of the final "cache" region (memory in this case) is set to 12 times the
              * size of the LLC so that all threads cumulatively will exceed the LLC by a factor of 12.
              * All other upper bounds are set to the capacity of the cache, as observed per core.
              */
             if( llc_idx+1 == j ) {
-                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->split[llc_idx];
-                bufSizes[tmpIdx+ptsToNextCache] = nextCacheSize;
+                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
             }
@@ -358,15 +357,19 @@ int varyBufferSizes(int *values, double **rslts, double **counter, hw_desc_t *hw
              */
             for(k = 1; k < ptsToNextCache; ++k) {
                 f = pow(((double)nextCacheSize)/currCacheSize, ((double)k)/ptsToNextCache);
-                bufSizes[tmpIdx+k] = f*currCacheSize;
+                bufSizes[tmpIdx+k-1] = f*currCacheSize;
             }
 
-            tmpIdx += ptsToNextCache;
+            if( llc_idx+1 == j ) {
+                tmpIdx += hw_desc->pts_per_mm;
+            } else {
+                tmpIdx += hw_desc->pts_per_reg[j];
+            }
         }
 
         cnt=0;
         for(j=0; j<len; j++){
-            active_buf_len = ((long)bufSizes[j])/sizeof(uintptr_t);
+            active_buf_len = ((long long)bufSizes[j])/sizeof(uintptr_t);
             out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;

@@ -316,14 +316,13 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
     hw_desc->dcache_line_size[0] = 64;
 
     // Set other default values.
-    hw_desc->split[0] = 1;
-    hw_desc->split[1] = 1;
-    hw_desc->split[2] = 1;
-    hw_desc->split[3] = 1;
-    hw_desc->pts_per_reg[0] = 5;
-    hw_desc->pts_per_reg[1] = 5;
-    hw_desc->pts_per_reg[2] = 5;
-    hw_desc->pts_per_reg[3] = 5;
+    for( i=0; i<_MAX_SUPPORTED_CACHE_LEVELS; ++i ) {
+        hw_desc->split[i] = 1;
+        hw_desc->pts_per_reg[i] = 3;
+    }
+    hw_desc->mmsplit = 1;
+    hw_desc->pts_per_mm = 3;
+    hw_desc->maxPPB = 512;
 
     // Obtain hardware values through PAPI_get_hardware_info().
     meminfo = PAPI_get_hardware_info();
@@ -472,14 +471,20 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
             hw_desc->split[2] = value;
         }else if( !strcmp(key, "L4_SPLIT") ){
             hw_desc->split[3] = value;
+        }else if( !strcmp(key, "MM_SPLIT") ){
+            hw_desc->mmsplit = value;
         }else if( !strcmp(key, "PTS_PER_L1") ){
             hw_desc->pts_per_reg[0] = value;
         }else if( !strcmp(key, "PTS_PER_L2") ){
             hw_desc->pts_per_reg[1] = value;
         }else if( !strcmp(key, "PTS_PER_L3") ){
             hw_desc->pts_per_reg[2] = value;
-        }else if( !strcmp(key, "PTS_PER_L4") || !strcmp(key, "PTS_PER_MM") ){
+        }else if( !strcmp(key, "PTS_PER_L4") ){
             hw_desc->pts_per_reg[3] = value;
+        }else if( !strcmp(key, "PTS_PER_MM") ){
+            hw_desc->pts_per_mm = value;
+        }else if( !strcmp(key, "MAX_PPB") ){
+            hw_desc->maxPPB = value;
         }
 
         free(key);
