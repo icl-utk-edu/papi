@@ -181,6 +181,7 @@ int main(int argc, char*argv[])
     PAPI_shutdown();
 
 #if defined(USE_MPI)
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 #endif
 
@@ -870,7 +871,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark II - Data Cache Reads*/
     if( params.bench_type & BENCH_DCACHE_READ )
     {
-        if ( !params.quick )
+        if ( !params.quick && 0 == myid )
         {
             if(params.show_progress)
             {
