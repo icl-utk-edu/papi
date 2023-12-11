@@ -52,6 +52,6 @@ Use "test/gpu_metrc_list" or "papi_native_avail" to find metrics name for Intel 
 
        intel_gpu:::<group_name>.<metric_name>:device=<n>:tile=<m>
        n: device id, start from 0.
-	   m: subdeice id, start from 0.
+	   m: subdevice id, start from 0.
 
 See test/readme.txt for how to use it.
