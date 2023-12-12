@@ -137,6 +137,11 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride
         for(j=0; j<numHier; ++j) {
             guessCount += hw_desc->pts_per_reg[j];
         }
+
+        int llc_idx = hw_desc->cache_levels-1;
+        int num_pts = hw_desc->pts_per_mm+1;
+        double factor = pow(12.0, ((double)(num_pts-1))/((double)num_pts));
+        max_size = factor*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
     }
 
     // Get the number of threads.
