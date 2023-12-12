@@ -163,7 +163,7 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride
     sorted_counter = (double *)malloc(max_iter*sizeof(double));
 
     // List of buffer sizes which are used in the benchmark.
-    values = (long long *)malloc(guessCount*sizeof(long));
+    values = (long long *)malloc(guessCount*sizeof(long long));
 
     // Set the name of the event to be monitored during the benchmark.
     eventname = papi_event_name;
