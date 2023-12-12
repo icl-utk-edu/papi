@@ -417,6 +417,7 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
 
         int ret_val = parse_line(input, &key, &value);
         if( ret_val < 0 ){
+            free(key);
             break;
         }else if( ret_val > 0 ){
             continue;
