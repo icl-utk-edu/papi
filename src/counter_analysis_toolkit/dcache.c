@@ -375,7 +375,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
 
         cnt=0;
         for(j=0; j<len; j++){
-            active_buf_len = ((long long)bufSizes[j])/sizeof(uintptr_t);
+            active_buf_len = bufSizes[j]/sizeof(uintptr_t);
             out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
