@@ -140,7 +140,7 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride
 
         int llc_idx = hw_desc->cache_levels-1;
         int num_pts = hw_desc->pts_per_mm+1;
-        double factor = pow(12.0, ((double)(num_pts-1))/((double)num_pts));
+        double factor = pow((double)FACTOR, ((double)(num_pts-1))/((double)num_pts));
         max_size = factor*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
     }
 
@@ -347,12 +347,12 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
                 currCacheSize = hw_desc->dcache_size[j-1]/hw_desc->split[j-1];
             }
 
-            /* The upper bound of the final "cache" region (memory in this case) is set to 12 times the
-             * size of the LLC so that all threads cumulatively will exceed the LLC by a factor of 12.
+            /* The upper bound of the final "cache" region (memory in this case) is set to FACTOR times the
+             * size of the LLC so that all threads cumulatively will exceed the LLC by a factor of FACTOR.
              * All other upper bounds are set to the capacity of the cache, as observed per core.
              */
             if( llc_idx+1 == j ) {
-                nextCacheSize = 12LL*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
+                nextCacheSize = FACTOR*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
             }
