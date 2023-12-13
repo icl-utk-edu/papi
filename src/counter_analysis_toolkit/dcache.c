@@ -435,8 +435,8 @@ void print_cache_sizes(FILE *ofp, hw_desc_t *hw_desc){
     }
 
     for(i=0; i<hw_desc->cache_levels; ++i) {
-        int sz = hw_desc->dcache_size[i]/hw_desc->split[i];
-        fprintf(ofp, " L%d:%d", i+1, sz);
+        long long sz = hw_desc->dcache_size[i]/hw_desc->split[i];
+        fprintf(ofp, " L%d:%lld", i+1, sz);
     }
     fprintf(ofp, "\n");
 

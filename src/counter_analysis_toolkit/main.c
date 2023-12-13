@@ -356,7 +356,7 @@ static hw_desc_t *obtain_hardware_description(char *conf_file_name){
 
 
 
-static int parse_line(FILE *input, char **key, int *value){
+static int parse_line(FILE *input, char **key, long long *value){
     int status;
     size_t linelen=0, len;
     char *line=NULL;
@@ -384,7 +384,7 @@ static int parse_line(FILE *input, char **key, int *value){
     strncpy(*key, line, len);
 
     // Scan the line to make sure it has the form "key = value"
-    status = sscanf(pos, "= %d", value);
+    status = sscanf(pos, "= %lld", value);
     if(1 != status){
         fprintf(stderr,"Malformed line in conf file: '%s'\n", line);
         goto handle_error;
@@ -412,7 +412,7 @@ static void read_conf_file(char *conf_file_name, hw_desc_t *hw_desc){
     }
 
     while(1){
-        int value;
+        long long value;
         char *key=NULL;
 
         int ret_val = parse_line(input, &key, &value);
