@@ -231,7 +231,8 @@ cleanup:
 
 
 int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
-    int i, j, k, cnt;
+    long long i;
+    int j, k, cnt;
     long long active_buf_len;
     int allocErr = 0;
     run_output_t out;
@@ -245,7 +246,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
     {
         int idx = omp_get_thread_num();
 
-        ptr[idx] = (uintptr_t *)malloc( (2*max_size+stride)*sizeof(uintptr_t) );
+        ptr[idx] = (uintptr_t *)malloc( (2LL*max_size+stride)*sizeof(uintptr_t) );
         if( !ptr[idx] ){
             fprintf(stderr, "Error: cannot allocate space for experiment.\n");
             #pragma omp critical
@@ -257,7 +258,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
             v[idx] = (uintptr_t *)(stride_in_bytes*(((uintptr_t)ptr[idx]+stride_in_bytes)/stride_in_bytes));
 
             // touch every page at least a few times
-            for(i=0; i<2*max_size; i+=512){
+            for(i=0; i<2LL*max_size; i+=512LL){
                 rslt += v[idx][i];
             }
         }
@@ -268,7 +269,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
     }
 
     // Make a cold run
-    out = probeBufferSize(16*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+    out = probeBufferSize(16LL*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
     if(out.status != 0)
         goto error;
 
