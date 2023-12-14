@@ -1,10 +1,8 @@
-.TH "PAPI_hl_read" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_read" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_hl_read \- 
-.PP
-Read performance events inside of a region and store the difference to the corresponding beginning of the region\&.  
+PAPI_hl_read \- Read performance events inside of a region and store the difference to the corresponding beginning of the region\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,12 +18,12 @@ Read performance events inside of a region and store the difference to the corre
 int \fBPAPI_hl_read( const char* region )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIregion\fP -- a unique region name corresponding to \fBPAPI_hl_region_begin\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -69,7 +67,7 @@ if ( retval != PAPI_OK )
 .fi
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_hl_region_begin\fP 
 .PP

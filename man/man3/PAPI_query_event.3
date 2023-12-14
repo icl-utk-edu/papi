@@ -1,10 +1,8 @@
-.TH "PAPI_query_event" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_query_event" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_query_event \- 
-.PP
-Query if PAPI event exists\&.  
+PAPI_query_event \- Query if PAPI event exists\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,12 +20,12 @@ int \fBPAPI_query_event(int EventCode)\fP;
 .PP
 \fBPAPI_query_event()\fP asks the PAPI library if the PAPI Preset event can be counted on this architecture\&. If the event CAN be counted, the function returns PAPI_OK\&. If the event CANNOT be counted, the function returns an error code\&. This function also can be used to check the syntax of native and user events\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventCode\fP -- a defined event such as PAPI_TOT_INS\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
@@ -43,11 +41,11 @@ int retval;
 // Initialize the library
 retval = PAPI_library_init(PAPI_VER_CURRENT);
 if (retval != PAPI_VER_CURRENT) {
-  fprintf(stderr,\"PAPI library init error!\\n\");
+  fprintf(stderr,\\"PAPI library init error!\\\\n\\");
   exit(1); 
 }
 if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
-  fprintf(stderr,\"No instruction counter? How lame\&.\\n\");
+  fprintf(stderr,\\"No instruction counter? How lame\&.\\\\n\\");
   exit(1);
 }
 
@@ -55,7 +53,7 @@ if (PAPI_query_event(PAPI_TOT_INS) != PAPI_OK) {
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_remove_event\fP 
 .PP

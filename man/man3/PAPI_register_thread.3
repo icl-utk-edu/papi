@@ -1,10 +1,8 @@
-.TH "PAPI_register_thread" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_register_thread" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_register_thread \- 
-.PP
-Notify PAPI that a thread has 'appeared'\&.  
+PAPI_register_thread \- Notify PAPI that a thread has 'appeared'\&.  
 
 .SH SYNOPSIS
 .br
@@ -24,7 +22,7 @@ int \fBPAPI_register_thread\fP (void);
 .PP
 Usually this is not necessary as PAPI implicitly detects the thread when an eventset is created or other thread local PAPI functions are called\&. However, it can be useful for debugging and performance enhancements in the run-time systems of performance tools\&.
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_ENOMEM\fP Space could not be allocated to store the new thread information\&. 
 .br
@@ -33,7 +31,7 @@ Usually this is not necessary as PAPI implicitly detects the thread when an even
 \fIPAPI_ECMP\fP Hardware counters for this thread could not be initialized\&.
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_unregister_thread\fP 
 .PP

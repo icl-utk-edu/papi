@@ -1,8 +1,8 @@
-.TH "PAPI_event_info_t" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_event_info_t" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_event_info_t \- 
+PAPI_event_info_t
 .SH SYNOPSIS
 .br
 .PP
@@ -106,22 +106,17 @@ location event applies to
 .SS "char PAPI_event_info_t::long_descr[1024]"
 a longer description: typically a sentence for presets, possibly a paragraph from vendor docs for native events 
 .SS "char PAPI_event_info_t::name[12][256]"
-< names of code terms: - presets: native event names,
+< names of code terms:
 .IP "\(bu" 2
+presets: native event names,
+.IP "  \(bu" 4
 native: descriptive strings for each register value(?) 
 .PP
 
+.PP
+
 .SS "char PAPI_event_info_t::note[1024]"
-
-.PP
-.nf
-  an optional developer note 
-                    supplied with a preset event
-                    to delineate platform specific 
-
-.fi
-.PP
- anomalies or restrictions 
+an optional developer note supplied with a preset event to delineate platform specific anomalies or restrictions 
 .SS "char PAPI_event_info_t::postfix[256]"
 string containing postfix operations; only defined for preset events of derived type DERIVED_POSTFIX 
 .SS "char PAPI_event_info_t::short_descr[64]"

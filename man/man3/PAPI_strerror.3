@@ -1,10 +1,8 @@
-.TH "PAPI_strerror" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_strerror" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_strerror \- 
-.PP
-Returns a string describing the PAPI error code\&.  
+PAPI_strerror \- Returns a string describing the PAPI error code\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,12 +18,14 @@ Returns a string describing the PAPI error code\&.
  char * \fBPAPI_strerror( int errorCode )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
-\fIcode\fP -- the error code to interpret
+\fIcode\fP 
+.br
+ -- the error code to interpret
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fI*error\fP -- a pointer to the error string\&. 
 .br
@@ -47,7 +47,7 @@ char error_str[PAPI_MAX_STR_LEN];
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK)
 {
-   fprintf(stderr, "PAPI error %d: %s\n", ret, PAPI_strerror(retval));
+   fprintf(stderr, "PAPI error %d: %s\\n", ret, PAPI_strerror(retval));
    exit(1);
 }
 // Add Total Instructions Executed to our EventSet
@@ -55,7 +55,7 @@ ret = PAPI_add_event(EventSet, PAPI_TOT_INS);
 if (ret != PAPI_OK)
 {
    PAPI_perror( "PAPI_add_event");
-   fprintf(stderr,"PAPI_error %d: %s\n", ret, error_str);
+   fprintf(stderr,"PAPI_error %d: %s\\n", ret, error_str);
    exit(1);
 }
 // Start counting
@@ -66,7 +66,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_perror\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP \fBPAPI_shutdown\fP \fBPAPI_set_debug\fP 
 .RE

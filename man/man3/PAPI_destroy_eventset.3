@@ -1,10 +1,8 @@
-.TH "PAPI_destroy_eventset" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_destroy_eventset" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_destroy_eventset \- 
-.PP
-Empty and destroy an EventSet\&.  
+PAPI_destroy_eventset \- Empty and destroy an EventSet\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,12 +20,12 @@ Empty and destroy an EventSet\&.
 .PP
 \fBPAPI_destroy_eventset\fP deallocates the memory associated with an empty PAPI EventSet\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*EventSet\fP A pointer to the integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP\&. The value pointed to by EventSet is then set to PAPI_NULL on success\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. Attempting to destroy a non-empty event set or passing in a null pointer to be destroyed\&. 
 .br
@@ -52,7 +50,7 @@ handle_error( 1 );
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_profil\fP 
 .br

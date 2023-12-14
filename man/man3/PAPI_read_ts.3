@@ -1,10 +1,8 @@
-.TH "PAPI_read_ts" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_read_ts" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_read_ts \- 
-.PP
-Read hardware counters with a timestamp\&.  
+PAPI_read_ts \- Read hardware counters with a timestamp\&.  
 
 .SH SYNOPSIS
 .br
@@ -26,7 +24,7 @@ The counters continue counting after the read\&.
 .PP
 \fBPAPI_read_ts()\fP assumes an initialized PAPI library and a properly added event set\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset()\fP 
 .br
@@ -35,7 +33,7 @@ The counters continue counting after the read\&.
 \fI*cycles\fP -- an array to hold the timestamp values
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
@@ -54,7 +52,7 @@ The counters continue counting after the read\&.
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_read\fP 
 .PP

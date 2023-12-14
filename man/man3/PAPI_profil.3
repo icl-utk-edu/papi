@@ -1,10 +1,8 @@
-.TH "PAPI_profil" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_profil" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_profil \- 
-.PP
-Generate a histogram of hardware counter overflows vs\&. PC addresses\&.  
+PAPI_profil \- Generate a histogram of hardware counter overflows vs\&. PC addresses\&.  
 
 .SH SYNOPSIS
 .br
@@ -17,7 +15,8 @@ Generate a histogram of hardware counter overflows vs\&. PC addresses\&.
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_profil\fP(void *buf, unsigned bufsiz, unsigned long offset, unsigned scale, int EventSet, int EventCode, int threshold, int flags );
+int \fBPAPI_profil(void *buf, unsigned bufsiz, unsigned long offset,
+unsigned scale, int EventSet, int EventCode, int threshold, int flags )\fP;
 .RE
 .PP
 \fBFortran Interface\fP
@@ -25,7 +24,7 @@ int \fBPAPI_profil\fP(void *buf, unsigned bufsiz, unsigned long offset, unsigned
 The profiling routines have no Fortran interface\&.
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*buf\fP -- pointer to a buffer of bufsiz bytes in which the histogram counts are stored in an array of unsigned short, unsigned int, or unsigned long long values, or 'buckets'\&. The size of the buckets is determined by values in the flags argument\&. 
 .br
@@ -44,7 +43,7 @@ The profiling routines have no Fortran interface\&.
 \fIflags\fP -- bit pattern to control profiling behavior\&. Defined values are shown in the table above\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -153,7 +152,7 @@ unsigned short *profbuf;
 if ((prginfo = PAPI_get_executable_info()) == NULL)
    handle_error(1);
 
-length = (unsigned long)(prginfo->text_end - prginfo->text_start);
+length = (unsigned long)(prginfo\->text_end \- prginfo\->text_start);
 
 profbuf = (unsigned short *)malloc(length);
 if (profbuf == NULL)
@@ -170,7 +169,7 @@ if ((retval = PAPI_profil(profbuf, length, start, 65536, EventSet,
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_overflow\fP 
 .PP

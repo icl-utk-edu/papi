@@ -1,10 +1,8 @@
-.TH "PAPI_attach" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_attach" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_attach \- 
-.PP
-Attach PAPI event set to the specified thread id\&.  
+PAPI_attach \- Attach PAPI event set to the specified thread id\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,14 +20,14 @@ int \fBPAPI_attach( int EventSet, unsigned long tid )\fP;
 .PP
 \fBPAPI_attach\fP is a wrapper function that calls \fBPAPI_set_opt\fP to allow PAPI to monitor performance counts on a thread other than the one currently executing\&. This is sometimes referred to as third party monitoring\&. \fBPAPI_attach\fP connects the specified EventSet to the specified thread; \fBPAPI_detach\fP breaks that connection and restores the EventSet to the original executing thread\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP An integer handle for a PAPI EventSet as created by \fBPAPI_create_eventset\fP\&. 
 .br
 \fItid\fP A thread id as obtained from, for example, \fBPAPI_list_threads\fP or \fBPAPI_thread_id\fP\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_ECMP\fP This feature is unsupported on this component\&. 
 .br
@@ -63,7 +61,7 @@ exit( 1 );
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_set_opt\fP 
 .PP
