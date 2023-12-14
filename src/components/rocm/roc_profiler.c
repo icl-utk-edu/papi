@@ -358,13 +358,13 @@ rocp_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
             }
             *(devices + strlen(devices) - 1) = 0;
             sprintf(info->symbol, "%s:device=%i", ntv_table_p->events[inf.nameid].name, inf.device);
-            sprintf(info->long_descr, "%s masks:Mandatory device qualifier [%s]",
+            sprintf(info->long_descr, "%s, masks:Mandatory device qualifier [%s]",
                     ntv_table_p->events[inf.nameid].descr, devices);
             break;
         }
         case INSTAN_FLAG:
             sprintf(info->symbol, "%s:instance=%i", ntv_table_p->events[inf.nameid].name, inf.instance);
-            sprintf(info->long_descr, "%s masks:Mandatory instance qualifier in range [0-%i]",
+            sprintf(info->long_descr, "%s, masks:Mandatory instance qualifier in range [0-%i]",
                     ntv_table_p->events[inf.nameid].descr, ntv_table_p->events[inf.nameid].instances - 1);
             break;
         default:
