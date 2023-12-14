@@ -133,10 +133,11 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride
             guessCount += 4;
         }
     }else{
-        int numHier = hw_desc->cache_levels+1;
-        for(j=0; j<numHier; ++j) {
+        int numCaches = hw_desc->cache_levels;
+        for(j=0; j<numCaches; ++j) {
             guessCount += hw_desc->pts_per_reg[j];
         }
+        guessCount += hw_desc->pts_per_mm;
 
         int llc_idx = hw_desc->cache_levels-1;
         int num_pts = hw_desc->pts_per_mm+1;
@@ -324,9 +325,10 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
         long long *bufSizes;
 
         // Calculate the length of the array of buffer sizes.
-        for(j=0; j<numHier; ++j) {
+        for(j=0; j<numCaches; ++j) {
             len += hw_desc->pts_per_reg[j];
         }
+        len += hw_desc->pts_per_mm;
 
         // Allocate space for the array of buffer sizes.
         if( NULL == (bufSizes = (long long *)calloc(len, sizeof(long long))) )
@@ -335,8 +337,6 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
         // Define buffer sizes.
         tmpIdx = 0;
         for(j=0; j<numHier; ++j) {
-
-            ptsToNextCache = hw_desc->pts_per_reg[j]+1;
 
             /* The lower bound of the first cache region is set to the size, L1/8, as a design decision.
              * All other lower bounds are set to the size of the caches, as observed per core.
@@ -352,9 +352,11 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
              * All other upper bounds are set to the capacity of the cache, as observed per core.
              */
             if( llc_idx+1 == j ) {
-                nextCacheSize = FACTOR*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
+                nextCacheSize = 16LL*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
+                ptsToNextCache = hw_desc->pts_per_mm+1;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
+                ptsToNextCache = hw_desc->pts_per_reg[j]+1;
             }
 
             /* Choose a factor "f" to grow the buffer size by, such that we collect the user-specified
