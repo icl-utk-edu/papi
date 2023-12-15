@@ -11,7 +11,6 @@
 // For do_work macro in the header file
 volatile double x,y;
 
-extern int max_size;
 extern int is_core;
 char* eventname = NULL;
 

@@ -255,7 +255,7 @@ void seq_driver(FILE* ofp_papi, char* papi_event_name, int init, int show_progre
     side_effect = init;
 EOF
 
-    for copy_type in "NO_COPY" "DO_COPY"; do
+    for copy_type in "NO_COPY"; do
         for ((prm=1; prm<=$#; prm++)); do
             basic_block_copies=${!prm}
             dl_reps=1;
@@ -281,7 +281,7 @@ EOF
         done
     done
 
-    for copy_type in "NO_COPY" "DO_COPY"; do
+    for copy_type in "NO_COPY"; do
         for ((prm=1; prm<=$#; prm++)); do
             basic_block_copies=${!prm}
             dl_reps=1;

@@ -54,9 +54,10 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
     maxElemCnt = currSecSize/stride;
     availableNumbers = (long long *)calloc(maxElemCnt, sizeof(long long));
 
-    // For every section of the array
+    // Loop through every section in the array.
     for(sec=0; sec<secCnt; ++sec){
-        // if we are at the last section, trim the size"
+
+        // If we are at the last section, trim the size in order to link back to the first section.
         if( sec == secCnt-1 )
             currSecSize = (len%secSize);
 
@@ -66,27 +67,30 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
         currElemCnt = currSecSize/stride;
 
         taken = 0;
-        if( 0==sec ) // For the first section we have already picked "0", so we must pick one less element.
+
+        // For the first section, we have already picked "0", so we must pick one less element.
+        if( 0==sec )
             taken = 1;
         long long remainingElemCnt = currElemCnt;
 
         for(elemCnt=0; elemCnt<currElemCnt-taken; ++elemCnt){
-            long long index = taken + random() % (remainingElemCnt-taken); // skip the first "taken" elements
-            // For the first section we skip zero as a choice (we already selected that before the loop.)
+            // Skip the first "taken" elements.
+            long long index = taken + random() % (remainingElemCnt-taken);
+            // For the first section, skip zero as a choice (we already selected it before the loop).
             uniqIndex = sec*secSize + stride*availableNumbers[index];
-            // replace the chosen number with the last element.
+            // Replace the chosen number with the last element.
             availableNumbers[index] = availableNumbers[remainingElemCnt-1];
-            // shrink the effective array size so the last element "drops off".
+            // Shrink the effective array size so the last element "drops off."
             remainingElemCnt--;
 
-            // conneect the link
+            // Connect the link.
             next = &array[uniqIndex];
             *p = next;
             p = (uintptr_t **)next;
         }
     }
 
-    // close the circle by pointing the last element to the start
+    // Close the circle by pointing the last element to the start.
     next = &array[0];
     *p = next;
 
@@ -99,20 +103,20 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
  * "stride" is in "uintptr_t" elements, NOT in bytes
  * Note: It is wise to provide an "array" that is aligned to the cache line size.
  */
-
 static void _prepareArray_sequential(uintptr_t *array, long long len, long long stride){
     long long curr;
     uintptr_t **p, *next;
 
     p = (uintptr_t **)&array[0];
 
-    // As many times as there are elements that should be filled up in the array 
+    // Point each element to the next in the array.
     for(curr=0; curr<len; curr+=stride){
         next = &array[curr];
         *p = next;
         p = (uintptr_t **)next;
     }
-    // close the circle by pointing the last element to the start
+
+    // Close the circle by pointing the last element to the start.
     next = &array[0];
     *p = next;
     
