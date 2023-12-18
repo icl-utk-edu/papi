@@ -5250,6 +5250,7 @@ else
 		                       res1 = (i == (int)arg);
                              else
 		                       res2 = (i == (int)arg);
+		             return NULL;
                            }
 	                       __thread int i;
                            int main () {
@@ -5378,7 +5379,7 @@ else
                                exit(1);
                              }
                              done = 1;
-	                         return j;
+			     return (void *) j;
                            }
 
                            int main( int argc, char ** argv ) {
