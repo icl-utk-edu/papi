@@ -39,6 +39,7 @@ CUresult ( *cuDeviceGetAttributePtr ) (int *, CUdevice_attribute, CUdevice);
 
 cudaError_t ( *cudaGetDeviceCountPtr ) (int *);
 cudaError_t ( *cudaGetDevicePtr ) (int *);
+const char *( *cudaGetErrorStringPtr ) (cudaError_t);
 cudaError_t ( *cudaSetDevicePtr ) (int);
 cudaError_t ( *cudaGetDevicePropertiesPtr ) (struct cudaDeviceProp* prop, int  device);
 cudaError_t ( *cudaDeviceGetAttributePtr ) (int *value, enum cudaDeviceAttr attr, int device);
@@ -168,6 +169,7 @@ static int load_cudart_sym(void)
     cudaGetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaGetDevice");
     cudaGetDeviceCountPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceCount");
     cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceProperties");
+    cudaGetErrorStringPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetErrorString");
     cudaDeviceGetAttributePtr  = DLSYM_AND_CHECK(dl_rt, "cudaDeviceGetAttribute");
     cudaSetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaSetDevice");
     cudaFreePtr                = DLSYM_AND_CHECK(dl_rt, "cudaFree");
@@ -191,6 +193,7 @@ static int unload_cudart_sym(void)
     cudaGetDevicePtr           = NULL;
     cudaGetDeviceCountPtr      = NULL;
     cudaGetDevicePropertiesPtr = NULL;
+    cudaGetErrorStringPtr      = NULL;
     cudaDeviceGetAttributePtr  = NULL;
     cudaSetDevicePtr           = NULL;
     cudaFreePtr                = NULL;
@@ -301,6 +304,7 @@ int cuptic_device_get_count(int *num_gpus)
 {
     cudaError_t cuda_errno = cudaGetDeviceCountPtr(num_gpus);
     if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
         return PAPI_EMISC;
     }
     return PAPI_OK;
@@ -312,10 +316,12 @@ static int get_gpu_compute_capability(int dev_num, int *cc)
     cudaError_t cuda_errno;
     cuda_errno = cudaDeviceGetAttributePtr(&cc_major, cudaDevAttrComputeCapabilityMajor, dev_num);
     if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
         return PAPI_EMISC;
     }
     cuda_errno = cudaDeviceGetAttributePtr(&cc_minor, cudaDevAttrComputeCapabilityMinor, dev_num);
     if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
         return PAPI_EMISC;
     }
     *cc = cc_major * 10 + cc_minor;
