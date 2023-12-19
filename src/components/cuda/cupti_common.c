@@ -306,18 +306,20 @@ int cuptic_device_get_count(int *num_gpus)
     return PAPI_OK;
 }
 
-static int get_gpu_compute_capability(int dev_num)
+static int get_gpu_compute_capability(int dev_num, int *cc)
 {
     int cc_major, cc_minor;
-    int cc;
-    CUDART_CALL(cudaDeviceGetAttributePtr(&cc_major,
-        cudaDevAttrComputeCapabilityMajor, dev_num),
-            return PAPI_EMISC );
-    CUDART_CALL(cudaDeviceGetAttributePtr(&cc_minor,
-        cudaDevAttrComputeCapabilityMinor, dev_num),
-            return PAPI_EMISC );
-    cc = cc_major * 10 + cc_minor;
-    return cc;
+    cudaError_t cuda_errno;
+    cuda_errno = cudaDeviceGetAttributePtr(&cc_major, cudaDevAttrComputeCapabilityMajor, dev_num);
+    if (cuda_errno != cudaSuccess) {
+        return PAPI_EMISC;
+    }
+    cuda_errno = cudaDeviceGetAttributePtr(&cc_minor, cudaDevAttrComputeCapabilityMinor, dev_num);
+    if (cuda_errno != cudaSuccess) {
+        return PAPI_EMISC;
+    }
+    *cc = cc_major * 10 + cc_minor;
+    return PAPI_OK;
 }
 
 typedef enum {GPU_COLLECTION_UNKNOWN, GPU_COLLECTION_ALL_PERF, GPU_COLLECTION_MIXED, GPU_COLLECTION_ALL_EVENTS, GPU_COLLECTION_ALL_CC70} gpu_collection_e;
@@ -339,7 +341,10 @@ static int util_gpu_collection_kind(gpu_collection_e *coll_kind)
     int i, cc;
     int count_perf = 0, count_evt = 0, count_cc70 = 0;
     for (i=0; i<total_gpus; i++) {
-        cc = get_gpu_compute_capability(i);
+        papi_errno = get_gpu_compute_capability(i, &cc);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
         if (cc == 70) {
             ++count_cc70;
         }
