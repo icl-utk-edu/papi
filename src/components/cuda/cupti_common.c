@@ -297,15 +297,13 @@ static int util_dylib_cupti_version(void)
     return cuptiVersion;
 }
 
-int cuptic_device_get_count(void)
+int cuptic_device_get_count(int *num_gpus)
 {
-    static int numDevs = -1;
-    if (numDevs != -1) {
-        goto fn_exit;
+    cudaError_t cuda_errno = cudaGetDeviceCountPtr(num_gpus);
+    if (cuda_errno != cudaSuccess) {
+        return PAPI_EMISC;
     }
-    CUDART_CALL(cudaGetDeviceCountPtr(&numDevs), return PAPI_EMISC);
-fn_exit:
-    return numDevs;
+    return PAPI_OK;
 }
 
 static int get_gpu_compute_capability(int dev_num)
@@ -331,7 +329,12 @@ static gpu_collection_e util_gpu_collection_kind(void)
         goto fn_exit;
     }
 
-    int total_gpus = cuptic_device_get_count();
+    int total_gpus;
+    int papi_errno = cuptic_device_get_count(&total_gpus);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     int i, cc;
     int count_perf = 0, count_evt = 0, count_cc70 = 0;
     for (i=0; i<total_gpus; i++) {
@@ -489,7 +492,12 @@ struct cuptic_info {
 int cuptic_ctxarr_create(cuptic_info_t *pinfo)
 {
     COMPDBG("Entering.\n");
-    cuptic_info_t cuCtx = (cuptic_info_t) papi_calloc (cuptic_device_get_count(), sizeof(*pinfo));
+    int total_gpus;
+    int papi_errno = cuptic_device_get_count(&total_gpus);
+    if (papi_errno != PAPI_OK) {
+        return PAPI_EMISC;
+    }
+    cuptic_info_t cuCtx = (cuptic_info_t) papi_calloc (total_gpus, sizeof(*pinfo));
     if (cuCtx == NULL) {
         return PAPI_ENOMEM;
     }
