@@ -322,15 +322,16 @@ static int get_gpu_compute_capability(int dev_num)
 
 typedef enum {GPU_COLLECTION_UNKNOWN, GPU_COLLECTION_ALL_PERF, GPU_COLLECTION_MIXED, GPU_COLLECTION_ALL_EVENTS, GPU_COLLECTION_ALL_CC70} gpu_collection_e;
 
-static gpu_collection_e util_gpu_collection_kind(void)
+static int util_gpu_collection_kind(gpu_collection_e *coll_kind)
 {
+    int papi_errno = PAPI_OK;
     static gpu_collection_e kind = GPU_COLLECTION_UNKNOWN;
     if (kind != GPU_COLLECTION_UNKNOWN) {
         goto fn_exit;
     }
 
     int total_gpus;
-    int papi_errno = cuptic_device_get_count(&total_gpus);
+    papi_errno = cuptic_device_get_count(&total_gpus);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -364,7 +365,8 @@ static gpu_collection_e util_gpu_collection_kind(void)
     kind = GPU_COLLECTION_MIXED;
 
 fn_exit:
-    return kind;
+    *coll_kind = kind;
+    return papi_errno;
 }
 
 const char *cuptic_disabled_reason_g;
@@ -416,7 +418,13 @@ int cuptic_init(void)
         goto fn_exit;
     }
 
-    if (util_gpu_collection_kind() == GPU_COLLECTION_MIXED) {
+    gpu_collection_e kind;
+    papi_errno = util_gpu_collection_kind(&kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+ 
+    if (kind == GPU_COLLECTION_MIXED) {
         cuptic_disabled_reason_set("No support for systems with mixed compute capabilities, such as CC < 7.0 and CC > 7.0 GPUS.");
         papi_errno = PAPI_ECMP;
         goto fn_exit;
@@ -433,7 +441,12 @@ int cuptic_is_runtime_perfworks_api(void)
     }
     char *papi_cuda_110_cc70_perfworks_api = getenv("PAPI_CUDA_110_CC_70_PERFWORKS_API");
 
-    gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind;
+    int papi_errno = util_gpu_collection_kind(&gpus_kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     unsigned int cuptiVersion = util_dylib_cupti_version();
 
     if (gpus_kind == GPU_COLLECTION_ALL_CC70 && 
@@ -468,7 +481,11 @@ int cuptic_is_runtime_events_api(void)
         goto fn_exit;
     }
 
-    gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind;
+    int papi_errno = util_gpu_collection_kind(&gpus_kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
 
     /*
      * See cupti_config.h: When NVIDIA removes the events API add a check in the following condition
