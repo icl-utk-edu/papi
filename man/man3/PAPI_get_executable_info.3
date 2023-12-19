@@ -1,4 +1,4 @@
-.TH "PAPI_get_executable_info" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_executable_info" 3 "Wed Apr 19 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -37,7 +37,9 @@ This function returns a pointer to a structure containing information about the 
 .PP
 \fBReturn values:\fP
 .RS 4
-\fIPAPI_EINVAL\fP One or more of the arguments is invalid\&.
+\fI*exe_info\fP -- a pointer to a sctructure containing fullname and address_info\&. 
+.br
+\fINULL\fP -- an error occurred while getting info\&.
 .RE
 .PP
 \fBExamples:\fP
