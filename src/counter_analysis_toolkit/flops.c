@@ -832,6 +832,7 @@ void exec_flops( int precision, int EventSet, FILE *fp ) {
 #endif
           break;
       default:
+          ;
     }
 
     return;
