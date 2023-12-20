@@ -13,8 +13,12 @@ static void *run(void *thread_num_arg)
 {
     int thread_num = *(int *) thread_num_arg;
     hipStream_t stream;
-    hipSetDevice(thread_num);
-    hipError_t hip_errno = hipStreamCreate(&stream);
+    hipError_t hip_errno = hipSetDevice(thread_num);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipSetDevice", hip_errno);
+    }
+
+    hip_errno = hipStreamCreate(&stream);
     if (hip_errno != hipSuccess) {
         hip_test_fail(__FILE__, __LINE__, "hipStreamCreate", hip_errno);
     }

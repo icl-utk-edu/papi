@@ -23,7 +23,11 @@ int main(int argc, char *argv[])
     }
 
     hipStream_t stream;
-    hipSetDevice(0);
+    hip_errno = hipSetDevice(0);
+    if (hip_errno != hipSuccess) {
+        hip_test_fail(__FILE__, __LINE__, "hipSetDevice", hip_errno);
+    }
+
     hip_errno = hipStreamCreate(&stream);
     if (hip_errno != hipSuccess) {
         hip_test_fail(__FILE__, __LINE__, "hipStreamCreate", hip_errno);

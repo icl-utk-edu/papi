@@ -1,10 +1,10 @@
 NAME = rocm
 include ../../Makefile_comp_tests.target
 PAPI_ROCM_ROOT ?= /opt/rocm
-HIP_PATH ?= $(PAPI_ROCM_ROOT)/hip
 
-CC       = $(HIP_PATH)/bin/hipcc
-CXX      = $(HIP_PATH)/bin/hipcc
+HIPCC    = $(shell find $(PAPI_ROCM_ROOT) -iname hipcc | grep bin | head -n 1)
+CC       = $(HIPCC)
+CXX      = $(HIPCC)
 CPPFLAGS+= -I$(PAPI_ROCM_ROOT)/include          \
            -I$(PAPI_ROCM_ROOT)/include/hip      \
            -I$(PAPI_ROCM_ROOT)/include/hsa      \

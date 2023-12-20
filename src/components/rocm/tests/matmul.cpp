@@ -130,12 +130,12 @@ void
 hip_do_matmul_cleanup(void **handle)
 {
     struct memory *handle_p = (struct memory *) (*handle);
-    hipFree(handle_p->h_A);
-    hipFree(handle_p->h_B);
-    hipFree(handle_p->h_C);
-    hipFree(handle_p->d_A);
-    hipFree(handle_p->d_B);
-    hipFree(handle_p->d_C);
+    (void)hipFree(handle_p->h_A);
+    (void)hipFree(handle_p->h_B);
+    (void)hipFree(handle_p->h_C);
+    (void)hipFree(handle_p->d_A);
+    (void)hipFree(handle_p->d_B);
+    (void)hipFree(handle_p->d_C);
     free(handle_p);
     *handle = NULL;
 }

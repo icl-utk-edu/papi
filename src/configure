@@ -7167,7 +7167,7 @@ for comp in $components; do
           CFLAGS="$CFLAGS -DHAVE_ROCM"
       fi
 
-      if test "x`find $PAPI_ROCM_ROOT -name "rocm_smi.h"`" != "x" ; then
+      if test "x`find $PAPI_ROCMSMI_ROOT -name "rocm_smi.h"`" != "x" ; then
           CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
       fi
   fi
