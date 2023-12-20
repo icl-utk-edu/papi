@@ -39,6 +39,7 @@ CUresult ( *cuDeviceGetAttributePtr ) (int *, CUdevice_attribute, CUdevice);
 
 cudaError_t ( *cudaGetDeviceCountPtr ) (int *);
 cudaError_t ( *cudaGetDevicePtr ) (int *);
+const char *( *cudaGetErrorStringPtr ) (cudaError_t);
 cudaError_t ( *cudaSetDevicePtr ) (int);
 cudaError_t ( *cudaGetDevicePropertiesPtr ) (struct cudaDeviceProp* prop, int  device);
 cudaError_t ( *cudaDeviceGetAttributePtr ) (int *value, enum cudaDeviceAttr attr, int device);
@@ -168,6 +169,7 @@ static int load_cudart_sym(void)
     cudaGetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaGetDevice");
     cudaGetDeviceCountPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceCount");
     cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceProperties");
+    cudaGetErrorStringPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetErrorString");
     cudaDeviceGetAttributePtr  = DLSYM_AND_CHECK(dl_rt, "cudaDeviceGetAttribute");
     cudaSetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaSetDevice");
     cudaFreePtr                = DLSYM_AND_CHECK(dl_rt, "cudaFree");
@@ -191,6 +193,7 @@ static int unload_cudart_sym(void)
     cudaGetDevicePtr           = NULL;
     cudaGetDeviceCountPtr      = NULL;
     cudaGetDevicePropertiesPtr = NULL;
+    cudaGetErrorStringPtr      = NULL;
     cudaDeviceGetAttributePtr  = NULL;
     cudaSetDevicePtr           = NULL;
     cudaFreePtr                = NULL;
@@ -297,45 +300,57 @@ static int util_dylib_cupti_version(void)
     return cuptiVersion;
 }
 
-int cuptic_device_get_count(void)
+int cuptic_device_get_count(int *num_gpus)
 {
-    static int numDevs = -1;
-    if (numDevs != -1) {
-        goto fn_exit;
+    cudaError_t cuda_errno = cudaGetDeviceCountPtr(num_gpus);
+    if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
+        return PAPI_EMISC;
     }
-    CUDART_CALL(cudaGetDeviceCountPtr(&numDevs), return PAPI_EMISC);
-fn_exit:
-    return numDevs;
+    return PAPI_OK;
 }
 
-static int get_gpu_compute_capability(int dev_num)
+static int get_gpu_compute_capability(int dev_num, int *cc)
 {
     int cc_major, cc_minor;
-    int cc;
-    CUDART_CALL(cudaDeviceGetAttributePtr(&cc_major,
-        cudaDevAttrComputeCapabilityMajor, dev_num),
-            return PAPI_EMISC );
-    CUDART_CALL(cudaDeviceGetAttributePtr(&cc_minor,
-        cudaDevAttrComputeCapabilityMinor, dev_num),
-            return PAPI_EMISC );
-    cc = cc_major * 10 + cc_minor;
-    return cc;
+    cudaError_t cuda_errno;
+    cuda_errno = cudaDeviceGetAttributePtr(&cc_major, cudaDevAttrComputeCapabilityMajor, dev_num);
+    if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
+        return PAPI_EMISC;
+    }
+    cuda_errno = cudaDeviceGetAttributePtr(&cc_minor, cudaDevAttrComputeCapabilityMinor, dev_num);
+    if (cuda_errno != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
+        return PAPI_EMISC;
+    }
+    *cc = cc_major * 10 + cc_minor;
+    return PAPI_OK;
 }
 
 typedef enum {GPU_COLLECTION_UNKNOWN, GPU_COLLECTION_ALL_PERF, GPU_COLLECTION_MIXED, GPU_COLLECTION_ALL_EVENTS, GPU_COLLECTION_ALL_CC70} gpu_collection_e;
 
-static gpu_collection_e util_gpu_collection_kind(void)
+static int util_gpu_collection_kind(gpu_collection_e *coll_kind)
 {
+    int papi_errno = PAPI_OK;
     static gpu_collection_e kind = GPU_COLLECTION_UNKNOWN;
     if (kind != GPU_COLLECTION_UNKNOWN) {
         goto fn_exit;
     }
 
-    int total_gpus = cuptic_device_get_count();
+    int total_gpus;
+    papi_errno = cuptic_device_get_count(&total_gpus);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     int i, cc;
     int count_perf = 0, count_evt = 0, count_cc70 = 0;
     for (i=0; i<total_gpus; i++) {
-        cc = get_gpu_compute_capability(i);
+        papi_errno = get_gpu_compute_capability(i, &cc);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
         if (cc == 70) {
             ++count_cc70;
         }
@@ -361,7 +376,8 @@ static gpu_collection_e util_gpu_collection_kind(void)
     kind = GPU_COLLECTION_MIXED;
 
 fn_exit:
-    return kind;
+    *coll_kind = kind;
+    return papi_errno;
 }
 
 const char *cuptic_disabled_reason_g;
@@ -413,7 +429,13 @@ int cuptic_init(void)
         goto fn_exit;
     }
 
-    if (util_gpu_collection_kind() == GPU_COLLECTION_MIXED) {
+    gpu_collection_e kind;
+    papi_errno = util_gpu_collection_kind(&kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+ 
+    if (kind == GPU_COLLECTION_MIXED) {
         cuptic_disabled_reason_set("No support for systems with mixed compute capabilities, such as CC < 7.0 and CC > 7.0 GPUS.");
         papi_errno = PAPI_ECMP;
         goto fn_exit;
@@ -430,7 +452,12 @@ int cuptic_is_runtime_perfworks_api(void)
     }
     char *papi_cuda_110_cc70_perfworks_api = getenv("PAPI_CUDA_110_CC_70_PERFWORKS_API");
 
-    gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind;
+    int papi_errno = util_gpu_collection_kind(&gpus_kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     unsigned int cuptiVersion = util_dylib_cupti_version();
 
     if (gpus_kind == GPU_COLLECTION_ALL_CC70 && 
@@ -465,7 +492,11 @@ int cuptic_is_runtime_events_api(void)
         goto fn_exit;
     }
 
-    gpu_collection_e gpus_kind = util_gpu_collection_kind();
+    gpu_collection_e gpus_kind;
+    int papi_errno = util_gpu_collection_kind(&gpus_kind);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
 
     /*
      * See cupti_config.h: When NVIDIA removes the events API add a check in the following condition
@@ -489,7 +520,12 @@ struct cuptic_info {
 int cuptic_ctxarr_create(cuptic_info_t *pinfo)
 {
     COMPDBG("Entering.\n");
-    cuptic_info_t cuCtx = (cuptic_info_t) papi_calloc (cuptic_device_get_count(), sizeof(*pinfo));
+    int total_gpus;
+    int papi_errno = cuptic_device_get_count(&total_gpus);
+    if (papi_errno != PAPI_OK) {
+        return PAPI_EMISC;
+    }
+    cuptic_info_t cuCtx = (cuptic_info_t) papi_calloc (total_gpus, sizeof(*pinfo));
     if (cuCtx == NULL) {
         return PAPI_ENOMEM;
     }

@@ -1391,7 +1391,12 @@ int cuptip_init(void)
         cuptic_disabled_reason_set("Unable to load CUDA library functions.");
         goto fn_fail;
     }
-    num_gpus = cuptic_device_get_count();
+
+    papi_errno = cuptic_device_get_count(&num_gpus);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
     if (num_gpus <= 0) {
         cuptic_disabled_reason_set("No GPUs found on system.");
         goto fn_fail;
