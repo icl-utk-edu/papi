@@ -1,10 +1,8 @@
-.TH "PAPI_set_multiplex" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_multiplex" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_set_multiplex \- 
-.PP
-Convert a standard event set to a multiplexed event set\&.  
+PAPI_set_multiplex \- Convert a standard event set to a multiplexed event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,12 +18,12 @@ Convert a standard event set to a multiplexed event set\&.
  int \fBPAPI_set_multiplex( int  EventSet )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -44,7 +42,7 @@ Convert a standard event set to a multiplexed event set\&.
 .PP
 Events can be added to an event set either before or after converting it into a multiplexed set, but the conversion must be done prior to using it as a multiplexed set\&.
 .PP
-\fBNote:\fP
+\fBNote\fP
 .RS 4
 Multiplexing can't be enabled until PAPI knows which component is targeted\&. Due to the late binding nature of PAPI event sets, this only happens after adding an event to an event set or explicitly binding the component with a call to \fBPAPI_assign_eventset_component\fP\&.
 .RE
@@ -67,21 +65,21 @@ if (ret != PAPI_OK) handle_error(ret);
 
 // Check  current multiplex status
 ret = PAPI_get_multiplex(EventSet);
-if (ret == TRUE) printf("This event set is ready for multiplexing\n\&.")
-if (ret == FALSE) printf("This event set is not enabled for multiplexing\n\&.")
+if (ret == TRUE) printf("This event set is ready for multiplexing\\n\&.")
+if (ret == FALSE) printf("This event set is not enabled for multiplexing\\n\&.")
 if (ret < 0) handle_error(ret);
 
 // Turn on multiplexing
 ret = PAPI_set_multiplex(EventSet);
 if ((ret == PAPI_EINVAL) && (PAPI_get_multiplex(EventSet) == TRUE))
-  printf("This event set already has multiplexing enabled\n");
+  printf("This event set already has multiplexing enabled\\n");
 else if (ret != PAPI_OK) handle_error(ret);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_multiplex_init\fP 
 .PP

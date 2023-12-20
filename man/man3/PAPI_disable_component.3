@@ -1,10 +1,8 @@
-.TH "PAPI_disable_component" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_disable_component" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_disable_component \- 
-.PP
-disables the specified component  
+PAPI_disable_component \- disables the specified component  
 
 .SH SYNOPSIS
 .br
@@ -13,14 +11,14 @@ disables the specified component
 .PP 
 
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIENOCMP\fP component does not exist 
 .br
 \fIENOINIT\fP cannot disable as PAPI has already been initialized
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcidx\fP component index of component to be disabled 
 .RE
@@ -37,7 +35,7 @@ cidx = PAPI_get_component_index("example");
 if (cidx>=0) {
    result = PAPI_disable_component(cidx);
    if (result==PAPI_OK)
-      printf("The example component is disabled\n");
+      printf("The example component is disabled\\n");
 }
 // \&.\&.\&. 
 PAPI_library_init();
@@ -49,7 +47,7 @@ PAPI_library_init();
 .PP
 \fBPAPI_disable_component()\fP must be called before \fBPAPI_library_init()\fP\&.
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_get_event_component\fP 
 .PP

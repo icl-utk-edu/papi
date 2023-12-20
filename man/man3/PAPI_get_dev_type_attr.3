@@ -1,10 +1,8 @@
-.TH "PAPI_get_dev_type_attr" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_dev_type_attr" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_dev_type_attr \- 
-.PP
-returns device type attributes  
+PAPI_get_dev_type_attr \- returns device type attributes  
 
 .SH SYNOPSIS
 .br
@@ -13,12 +11,12 @@ returns device type attributes
 .PP 
 
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIENOSUPP\fP invalid attribute 
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIhandle\fP opaque handle for device, obtained through \fBPAPI_enum_dev_type\fP 
 .br
@@ -70,7 +68,7 @@ while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
  \fBPAPI_get_dev_type_attr()\fP allows the user to query all device type attributes\&. It takes a device type handle, returned by \fBPAPI_enum_dev_type\fP, and an attribute to be queried for the device type and returns the attribute value\&.
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_enum_dev_type\fP 
 .PP

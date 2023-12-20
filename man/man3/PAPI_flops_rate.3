@@ -1,10 +1,8 @@
-.TH "PAPI_flops_rate" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_flops_rate" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_flops_rate \- 
-.PP
-Simplified call to get Mflops/s (floating point operation rate), real and processor time\&.  
+PAPI_flops_rate \- Simplified call to get Mflops/s (floating point operation rate), real and processor time\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Simplified call to get Mflops/s (floating point operation rate), real and proces
 int \fBPAPI_flops_rate\fP ( int event, float *rtime, float *ptime, long long *flpops, float *mflops );
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIevent\fP one of the three presets PAPI_FP_OPS, PAPI_SP_OPS or PAPI_DP_OPS 
 .br
@@ -33,7 +31,7 @@ int \fBPAPI_flops_rate\fP ( int event, float *rtime, float *ptime, long long *fl
 \fI*mflops\fP incremental (Mega) floating point operations per seconds since the latest call
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_flops_rate()\fP\&. 
 .br
@@ -48,7 +46,7 @@ Subsequent calls will read the counters and return real time, process time, floa
 .PP
 \fBPAPI_flops_rate()\fP returns information related to theoretical floating point operations rather than simple instructions\&. It uses the floating point operations event which attempts to 'correctly' account for, e\&.g\&., FMA undercounts and FP Store overcounts\&. Note that \fBPAPI_flops_rate()\fP is thread-safe and can therefore be called by multiple threads\&.
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_flips_rate()\fP 
 .PP

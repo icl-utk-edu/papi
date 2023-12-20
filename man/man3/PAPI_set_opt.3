@@ -1,10 +1,8 @@
-.TH "PAPI_set_opt" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_opt" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_set_opt \- 
-.PP
-Set PAPI library or event set options\&.  
+PAPI_set_opt \- Set PAPI library or event set options\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,14 +18,14 @@ Set PAPI library or event set options\&.
  int \fBPAPI_set_opt(  int option, PAPI_option_t * ptr )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIoption\fP Defines the option to be set\&. Possible values are briefly described in the table below\&.
 .br
 \fIptr\fP Pointer to a structure determined by the selected option\&. See \fBPAPI_option_t\fP for a description of possible structures\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -48,7 +46,7 @@ Set PAPI library or event set options\&.
 .PP
 Ptr is a pointer to the \fBPAPI_option_t\fP structure, which is actually a union of different structures for different options\&. Not all options require or return information in these structures\&. Each requires different values to be set\&. Some options require a component index to be provided\&. These options are handled implicitly through the option structures\&.
 .PP
-\fBNote:\fP
+\fBNote\fP
 .RS 4
 Some options, such as PAPI_DOMAIN and PAPI_MULTIPLEX are also available as separate entry points in both C and Fortran\&.
 .RE
@@ -91,7 +89,7 @@ PAPI_INSTR_ADDRESS  Set instruction address range as described above. Itanium on
  
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_set_debug\fP 
 .PP

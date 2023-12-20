@@ -1,10 +1,8 @@
-.TH "PAPI_enum_cmp_event" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_enum_cmp_event" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_enum_cmp_event \- 
-.PP
-Enumerate PAPI preset or native events for a given component\&.  
+PAPI_enum_cmp_event \- Enumerate PAPI preset or native events for a given component\&.  
 
 .SH SYNOPSIS
 .br
@@ -26,7 +24,7 @@ The modifier argument affects which events are returned\&. For all platforms and
 .br
  For native events, the effect of the modifier argument may be different on each platform\&. See the discussion below for platform-specific definitions\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*EventCode\fP A defined preset or native event such as PAPI_TOT_INS\&. 
 .br
@@ -35,7 +33,7 @@ The modifier argument affects which events are returned\&. For all platforms and
 \fIcidx\fP Specifies the component to search in
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_ENOEVNT\fP The next requested PAPI preset or native event is not available on the underlying hardware\&.
 .RE
@@ -46,11 +44,11 @@ The modifier argument affects which events are returned\&. For all platforms and
 .PP
 .nf
 // Scan for all supported native events on the first component
-printf( "Name\t\t\t       Code\t   Description\n" );
+printf( "Name\\t\\t\\t       Code\\t   Description\\n" );
 do {
     retval = PAPI_get_event_info( i, &info );
     if ( retval == PAPI_OK ) {
-    printf( "%-30s %#-10x\n%s\n", info\&.symbol, info\&.event_code, info\&.long_descr );
+    printf( "%\-30s %#\-10x\\n%s\\n", info\&.symbol, info\&.event_code, info\&.long_descr );
     }
 } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_ALL, 0 ) == PAPI_OK );
 
@@ -148,7 +146,7 @@ PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 PAPI 
 .br

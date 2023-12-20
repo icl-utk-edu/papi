@@ -1,10 +1,8 @@
-.TH "PAPI_create_eventset" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_create_eventset" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_create_eventset \- 
-.PP
-Create a new empty PAPI EventSet\&.  
+PAPI_create_eventset \- Create a new empty PAPI EventSet\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,17 +20,17 @@ Create a new empty PAPI EventSet\&.
 .PP
 \fBPAPI_create_eventset\fP creates a new EventSet pointed to by EventSet, which must be initialized to PAPI_NULL before calling this routine\&. The user may then add hardware events to the event set by calling \fBPAPI_add_event\fP or similar routines\&.
 .PP
-\fBNote:\fP
+\fBNote\fP
 .RS 4
 PAPI-C uses a late binding model to bind EventSets to components\&. When an EventSet is first created it is not bound to a component\&. This will cause some API calls that modify EventSet options to fail\&. An EventSet can be bound to a component explicitly by calling \fBPAPI_assign_eventset_component\fP or implicitly by calling \fBPAPI_add_event\fP or similar routines\&.
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*EventSet\fP Address of an integer location to store the new EventSet handle\&.
 .RE
 .PP
-\fBExceptions:\fP
+\fBExceptions\fP
 .RS 4
 \fIPAPI_EINVAL\fP The argument handle has not been initialized to PAPI_NULL or the argument is a NULL pointer\&.
 .br
@@ -55,7 +53,7 @@ handle_error( 1 );
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_add_event\fP 
 .br

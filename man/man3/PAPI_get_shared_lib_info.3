@@ -1,10 +1,8 @@
-.TH "PAPI_get_shared_lib_info" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_shared_lib_info" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_shared_lib_info \- 
-.PP
-Get address info about the shared libraries used by the process\&.  
+PAPI_get_shared_lib_info \- Get address info about the shared libraries used by the process\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,13 +11,13 @@ Get address info about the shared libraries used by the process\&.
 .PP 
 In C, this function returns a pointer to a structure containing information about the shared library used by the program\&. There is no Fortran equivalent call\&. 
 .PP
-\fBNote:\fP
+\fBNote\fP
 .RS 4
 This data will be incorporated into the \fBPAPI_get_executable_info\fP call in the future\&. \fBPAPI_get_shared_lib_info\fP will be deprecated and should be used with caution\&.
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_shlib_info_t\fP 
 .PP

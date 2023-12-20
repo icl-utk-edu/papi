@@ -1,10 +1,8 @@
-.TH "PAPI_library_init" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_library_init" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_library_init \- 
-.PP
-initialize the PAPI library\&.  
+PAPI_library_init \- initialize the PAPI library\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,12 +11,12 @@ initialize the PAPI library\&.
 .PP 
 
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIversion\fP upon initialization, PAPI checks the argument against the internal value of PAPI_VER_CURRENT when the library was compiled\&. This guards against portability problems when updating the PAPI shared libraries on your system\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP \fBpapi\&.h\fP is different from the version used to compile the PAPI library\&. 
 .br
@@ -39,7 +37,7 @@ initialize the PAPI library\&.
 int retval;
 retval = PAPI_library_init(PAPI_VER_CURRENT);
 if (retval != PAPI_VER_CURRENT && retval > 0) {
-    fprintf(stderr,"PAPI library version mismatch!\en");
+    fprintf(stderr,"PAPI library version mismatch!\\en");
     exit(1); }
 if (retval < 0)
     handle_error(retval);
@@ -52,7 +50,7 @@ if (retval != PAPI_LOW_LEVEL_INITED)
  
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_thread_init\fP PAPI 
 .RE

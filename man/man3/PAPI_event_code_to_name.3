@@ -1,10 +1,8 @@
-.TH "PAPI_event_code_to_name" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_event_code_to_name" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_event_code_to_name \- 
-.PP
-Convert a numeric hardware event code to a name\&.  
+PAPI_event_code_to_name \- Convert a numeric hardware event code to a name\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,14 +20,14 @@ int \fBPAPI_event_code_to_name( int  EventCode, char * EventName )\fP;
 .PP
 \fBPAPI_event_code_to_name\fP is used to translate a 32-bit integer PAPI event code into an ASCII PAPI event name\&. Either Preset event codes or Native event codes can be passed to this routine\&. Native event codes and names differ from platform to platform\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventCode\fP The numeric code for the event\&. 
 .br
 \fI*EventName\fP A string containing the event name as listed in PAPI_presets or discussed in PAPI_native\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP One or more of the arguments is invalid\&. 
 .br
@@ -58,13 +56,13 @@ handle_error(1);
 // Convert integer code to name string
 if ( PAPI_event_code_to_name( Event, EventCodeStr ) != PAPI_OK )
 handle_error( 1 );
-printf( "Event Name: %s\n", EventCodeStr );
+printf( "Event Name: %s\\n", EventCodeStr );
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_event_name_to_code\fP 
 .PP

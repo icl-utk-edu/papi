@@ -1,10 +1,8 @@
-.TH "PAPI_add_events" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_add_events" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_add_events \- 
-.PP
-add multiple PAPI presets or native hardware events to an event set  
+PAPI_add_events \- add multiple PAPI presets or native hardware events to an event set  
 
 .SH SYNOPSIS
 .br
@@ -24,7 +22,7 @@ int \fBPAPI_add_events( int  EventSet, int * EventCodes, int  number )\fP;
 .br
 A hardware event can be either a PAPI preset or a native hardware event code\&. For a list of PAPI preset events, see PAPI_presets or run the avail test case in the PAPI distribution\&. PAPI presets can be passed to \fBPAPI_query_event\fP to see if they exist on the underlying architecture\&. For a list of native events available on current platform, run native_avail test case in the PAPI distribution\&. For the encoding of native events, see \fBPAPI_event_name_to_code\fP to learn how to generate native code for the supported native event on the underlying architecture\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP An integer handle for a PAPI Event Set as created by \fBPAPI_create_eventset\fP\&. 
 .br
@@ -33,7 +31,7 @@ A hardware event can be either a PAPI preset or a native hardware event code\&. 
 \fInumber\fP An integer indicating the number of events in the array *EventCode\&. It should be noted that \fBPAPI_add_events\fP can partially succeed, exactly like \fBPAPI_remove_events\fP\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPositive-Integer\fP The number of consecutive elements that succeeded before the error\&. 
 .br
@@ -75,7 +73,7 @@ handle_error( 1 );
 .RE
 .PP
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_cleanup_eventset\fP 
 .br

@@ -6,6 +6,27 @@ in this directory.
 
 
 ===============================================================================
+PAPI 7.1.0 RELEASE NOTES                                            18 Dec 2023
+===============================================================================
+
+PAPI 7.1.0 is now available. This release includes support for Intel Sapphire
+Rapids and AMD Zen4 preset events. The release also includes general
+improvements to the PAPI code in terms of design and functionality. Furthermore,
+the Counter Analysis Toolkit (CAT) and the Software-Defined Events (SDE) library
+have also been updated.
+
+Major Changes:
+
+* Support for Intel Sapphire Rapids native and preset events
+* Support for AMD Zen4 native and preset events
+* Support for event qualifiers in the ROCm component
+* New 'template' compomenent
+* Integration into Spack package manager
+* Integration into the Extreme-Scale Scientific Software Stack (E4S)
+* Refactored cuda component with multi-thread and multi-gpu support
+* Support for ARM Neoverse V1 and V2
+
+===============================================================================
 PAPI 7.0.1 RELEASE NOTES                                            22 Feb 2023
 ===============================================================================
 

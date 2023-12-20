@@ -1,10 +1,8 @@
-.TH "PAPI_list_threads" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_list_threads" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_list_threads \- 
-.PP
-List the registered thread ids\&.  
+PAPI_list_threads \- List the registered thread ids\&.  
 
 .SH SYNOPSIS
 .br
@@ -22,21 +20,23 @@ This call assumes an initialized PAPI library\&.
 int \fBPAPI_list_threads(PAPI_thread_id_t *tids, int * number )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*tids\fP -- A pointer to a preallocated array\&. This may be NULL to only return a count of threads\&. No more than *number codes will be stored in the array\&. 
 .br
-\fI*number\fP -- An input and output parameter\&. Input specifies the number of allocated elements in *tids (if non-NULL) and output specifies the number of threads\&.
+\fI*number\fP -- An input and output parameter\&. 
+.br
+ Input specifies the number of allocated elements in *tids (if non-NULL) and output specifies the number of threads\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP The call returned successfully\&. 
 .br
 \fIPAPI_EINVAL\fP *number has an improper value
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_get_thr_specific\fP 
 .PP

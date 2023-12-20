@@ -1,10 +1,8 @@
-.TH "PAPI_set_cmp_domain" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_cmp_domain" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_set_cmp_domain \- 
-.PP
-Set the default counting domain for new event sets bound to the specified component\&.  
+PAPI_set_cmp_domain \- Set the default counting domain for new event sets bound to the specified component\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,32 +11,41 @@ Set the default counting domain for new event sets bound to the specified compon
 .PP 
 
 .PP
-.nf
-@par C Prototype:
-    \#include <papi.h> @n
-    int PAPI_set_cmp_domain( int domain, int  cidx );
-
-@param domain one of the following constants as defined in the papi.h header file
-@arg PAPI_DOM_USER User context counted
-@arg PAPI_DOM_KERNEL  Kernel/OS context counted
-@arg PAPI_DOM_OTHER Exception/transient mode counted
-@arg PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted
-@arg PAPI_DOM_ALL All above contexts counted
-@arg PAPI_DOM_MIN The smallest available context
-@arg PAPI_DOM_MAX The largest available context 
-@arg PAPI_DOM_HWSPEC Something other than CPU like stuff. Individual components can decode
-low order bits for more meaning
-
-@param cidx
-    An integer identifier for a component. 
-    By convention, component 0 is always the cpu component. 
-
-.fi
+\fBC Prototype:\fP
+.RS 4
+#include <\fBpapi\&.h\fP> 
+.br
+ int \fBPAPI_set_cmp_domain( int domain, int  cidx )\fP;
+.RE
 .PP
-  
+\fBParameters\fP
+.RS 4
+\fIdomain\fP one of the following constants as defined in the \fBpapi\&.h\fP header file 
+.PD 0
+
+.IP "\(bu" 2
+PAPI_DOM_USER User context counted 
+.IP "\(bu" 2
+PAPI_DOM_KERNEL Kernel/OS context counted 
+.IP "\(bu" 2
+PAPI_DOM_OTHER Exception/transient mode counted 
+.IP "\(bu" 2
+PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted 
+.IP "\(bu" 2
+PAPI_DOM_ALL All above contexts counted 
+.IP "\(bu" 2
+PAPI_DOM_MIN The smallest available context 
+.IP "\(bu" 2
+PAPI_DOM_MAX The largest available context 
+.IP "\(bu" 2
+PAPI_DOM_HWSPEC Something other than CPU like stuff\&. Individual components can decode low order bits for more meaning
+.PP
+.br
+\fIcidx\fP An integer identifier for a component\&. By convention, component 0 is always the cpu component\&.  
     
+.RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -60,7 +67,7 @@ int ret;
 // Initialize the library
 ret = PAPI_library_init(PAPI_VER_CURRENT);
 if (ret > 0 && ret != PAPI_VER_CURRENT) {
-  fprintf(stderr,"PAPI library version mismatch!\n");
+  fprintf(stderr,"PAPI library version mismatch!\\n");
   exit(1); 
 }
 if (ret < 0) handle_error(ret);
@@ -75,7 +82,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_set_domain\fP \fBPAPI_set_granularity\fP \fBPAPI_set_opt\fP \fBPAPI_get_opt\fP 
 .RE

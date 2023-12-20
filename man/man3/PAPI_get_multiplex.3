@@ -1,10 +1,8 @@
-.TH "PAPI_get_multiplex" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_multiplex" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_multiplex \- 
-.PP
-Get the multiplexing status of specified event set\&.  
+PAPI_get_multiplex \- Get the multiplexing status of specified event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -27,12 +25,12 @@ Get the multiplexing status of specified event set\&.
  \fBPAPIF_get_multiplex( C_INT  EventSet,  C_INT  check )\fP
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -46,6 +44,8 @@ Get the multiplexing status of specified event set\&.
 .RE
 .PP
 \fBPAPI_get_multiplex\fP tests the state of the PAPI_MULTIPLEXING flag in the specified event set, returning \fITRUE\fP if a PAPI event set is multiplexed, or FALSE if not\&. 
+.br
+ 
 .PP
 \fBExample:\fP
 .RS 4
@@ -65,14 +65,14 @@ if (ret != PAPI_OK) handle_error(ret);
 
 // Check  current multiplex status
 ret = PAPI_get_multiplex(EventSet);
-if (ret == TRUE) printf("This event set is ready for multiplexing\n\&.")
-if (ret == FALSE) printf("This event set is not enabled for multiplexing\n\&.")
+if (ret == TRUE) printf("This event set is ready for multiplexing\\n\&.")
+if (ret == FALSE) printf("This event set is not enabled for multiplexing\\n\&.")
 if (ret < 0) handle_error(ret);
 
 // Turn on multiplexing
 ret = PAPI_set_multiplex(EventSet);
 if ((ret == PAPI_EINVAL) && (PAPI_get_multiplex(EventSet) == TRUE))
-  printf("This event set already has multiplexing enabled\n");
+  printf("This event set already has multiplexing enabled\\n");
 else if (ret != PAPI_OK) handle_error(ret);
 
 .fi
@@ -80,7 +80,7 @@ else if (ret != PAPI_OK) handle_error(ret);
  
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_multiplex_init\fP 
 .PP

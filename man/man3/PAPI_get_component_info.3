@@ -1,10 +1,8 @@
-.TH "PAPI_get_component_info" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_component_info" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_component_info \- 
-.PP
-get information about a specific software component  
+PAPI_get_component_info \- get information about a specific software component  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +11,7 @@ get information about a specific software component
 .PP 
 
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcidx\fP Component index
 .RE
@@ -30,14 +28,14 @@ if (PAPI_library_init(PAPI_VER_CURRENT) != PAPI_VER_CURRENT)
 exit(1);
 if ((cmpinfo = PAPI_get_component_info(0)) == NULL)
 exit(1);
-printf("This component supports %d Preset Events and %d Native events\&.\n",
-cmpinfo->num_preset_events, cmpinfo->num_native_events);
+printf("This component supports %d Preset Events and %d Native events\&.\\n",
+cmpinfo\->num_preset_events, cmpinfo\->num_native_events);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_get_executable_info\fP 
 .PP

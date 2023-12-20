@@ -1,10 +1,8 @@
-.TH "PAPI_sprofil" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_sprofil" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_sprofil \- 
-.PP
-Generate PC histogram data from multiple code regions where hardware counter overflow occurs\&.  
+PAPI_sprofil \- Generate PC histogram data from multiple code regions where hardware counter overflow occurs\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Generate PC histogram data from multiple code regions where hardware counter ove
 int \fBPAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*prof\fP pointer to an array of \fBPAPI_sprofil_t\fP structures\&. Each copy of the structure contains the following: 
 .PD 0
@@ -48,7 +46,7 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
  
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIReturn\fP values for \fBPAPI_sprofil()\fP are identical to those for \fBPAPI_profil\fP\&. Please refer to that page for further details\&.  
 
@@ -72,7 +70,7 @@ PAPI_sprofil_t sprof[3];
 
 prginfo = PAPI_get_executable_info();
 if (prginfo == NULL) handle_error( NULL );
-length = (unsigned long)(prginfo->text_end - prginfo->text_start);
+length = (unsigned long)(prginfo\->text_end \- prginfo\->text_start);
 // Allocate 2 buffers of equal length
 profbuf1 = (unsigned short *)malloc(length);
 profbuf2 = (unsigned short *)malloc(length);
@@ -103,7 +101,7 @@ if ( retval != PAPI_OK ) handle_error( retval );
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_overflow\fP 
 .PP

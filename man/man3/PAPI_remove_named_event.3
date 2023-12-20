@@ -1,10 +1,8 @@
-.TH "PAPI_remove_named_event" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_remove_named_event" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_remove_named_event \- 
-.PP
-removes a named hardware event from a PAPI event set\&.  
+PAPI_remove_named_event \- removes a named hardware event from a PAPI event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,14 +18,14 @@ A hardware event can be either a PAPI Preset or a native hardware event code\&. 
  int \fBPAPI_remove_named_event( int  EventSet, const char *EventName )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
 \fIEventName\fP -- a defined event such as PAPI_TOT_INS or a native event\&.
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP Everything worked\&. 
 .br
@@ -77,7 +75,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_remove_event\fP 
 .br

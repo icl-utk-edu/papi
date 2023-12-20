@@ -1,10 +1,8 @@
-.TH "PAPI_ipc" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_ipc" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_ipc \- 
-.PP
-Simplified call to get instructions per cycle, real and processor time\&.  
+PAPI_ipc \- Simplified call to get instructions per cycle, real and processor time\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Simplified call to get instructions per cycle, real and processor time\&.
 int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fI*rtime\fP realtime since the latest call 
 .br
@@ -31,7 +29,7 @@ int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
 \fI*ipc\fP incremental instructions per cycle since the latest call
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_ipc()\fP\&. 
 .br
@@ -46,7 +44,7 @@ Subsequent calls will read the counters and return real time, process time, inst
 .PP
 \fBPAPI_ipc()\fP should return a ratio greater than 1\&.0, indicating instruction level parallelism within the chip\&. The larger this ratio the more effeciently the program is running\&. Note that \fBPAPI_ipc()\fP is thread-safe and can therefore be called by multiple threads\&.
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_flips_rate()\fP 
 .PP

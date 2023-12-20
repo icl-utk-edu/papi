@@ -1,10 +1,8 @@
-.TH "PAPI_perror" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_perror" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_perror \- 
-.PP
-Produces a string on standard error, describing the last library error\&.  
+PAPI_perror \- Produces a string on standard error, describing the last library error\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Produces a string on standard error, describing the last library error\&.
  void \fBPAPI_perror( const char *s )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIs\fP -- Optional message to print before the string describing the last error message\&.
 .RE
@@ -39,7 +37,7 @@ int native = 0x0;
 ret = PAPI_create_eventset(&EventSet);
 if (ret != PAPI_OK)
 {
-   fprintf(stderr, \"PAPI error %d: %s\\n\", ret, PAPI_strerror(retval));
+   fprintf(stderr, \\"PAPI error %d: %s\\\\n\\", ret, PAPI_strerror(retval));
    exit(1);
 }
 // Add Total Instructions Executed to our EventSet
@@ -57,7 +55,7 @@ if (ret != PAPI_OK) handle_error(ret);
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_strerror\fP 
 .RE

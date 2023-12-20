@@ -1,10 +1,8 @@
-.TH "PAPI_remove_events" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_remove_events" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_remove_events \- 
-.PP
-Remove an array of hardware event codes from a PAPI event set\&.  
+PAPI_remove_events \- Remove an array of hardware event codes from a PAPI event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ A hardware event can be either a PAPI Preset or a native hardware event code\&. 
  int \fBPAPI_remove_events( int  EventSet, int * EventCode, int  number )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
@@ -29,7 +27,7 @@ A hardware event can be either a PAPI Preset or a native hardware event code\&. 
 \fInumber\fP an integer indicating the number of events in the array *EventCode
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPositive\fP integer The number of consecutive elements that succeeded before the error\&. 
 .br
@@ -78,11 +76,12 @@ if (ret != PAPI_OK) handle_error(ret);
 .RE
 .PP
 .PP
-.nf
-@see PAPI_cleanup_eventset PAPI_destroy_eventset PAPI_event_name_to_code 
-    PAPI_presets PAPI_add_event PAPI_add_events.fi
+\fBSee also\fP
+.RS 4
+\fBPAPI_cleanup_eventset\fP \fBPAPI_destroy_eventset\fP \fBPAPI_event_name_to_code\fP PAPI_presets \fBPAPI_add_event\fP \fBPAPI_add_events\fP 
+.RE
 .PP
- 
+
 
 .SH "Author"
 .PP 

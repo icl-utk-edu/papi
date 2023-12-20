@@ -1,10 +1,8 @@
-.TH "PAPI_flips_rate" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_flips_rate" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_flips_rate \- 
-.PP
-Simplified call to get Mflips/s (floating point instruction rate), real and processor time\&.  
+PAPI_flips_rate \- Simplified call to get Mflips/s (floating point instruction rate), real and processor time\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Simplified call to get Mflips/s (floating point instruction rate), real and proc
 int \fBPAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins, float *mflips )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIevent\fP one of the three presets PAPI_FP_INS, PAPI_VEC_SP or PAPI_VEC_DP 
 .br
@@ -33,7 +31,7 @@ int \fBPAPI_flips_rate( int event, float *rtime, float *ptime, long long *flpins
 \fI*mflips\fP incremental (Mega) floating point instructions per seconds since the latest call
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_flips_rate()\fP\&. 
 .br
@@ -48,7 +46,7 @@ Subsequent calls will read the counters and return real time, process time, floa
 .PP
 \fBPAPI_flips_rate()\fP returns information related to floating point instructions using the floating point instructions event\&. This is intended to measure instruction rate through the floating point pipe with no massaging\&. Note that \fBPAPI_flips_rate()\fP is thread-safe and can therefore be called by multiple threads\&.
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_flops_rate()\fP 
 .PP

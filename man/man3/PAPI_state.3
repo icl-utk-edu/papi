@@ -1,10 +1,8 @@
-.TH "PAPI_state" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_state" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_state \- 
-.PP
-Return the counting state of an EventSet\&.  
+PAPI_state \- Return the counting state of an EventSet\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Return the counting state of an EventSet\&.
  int \fBPAPI_state( int  EventSet, int * status )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set as created by \fBPAPI_create_eventset\fP 
 .br
@@ -49,7 +47,7 @@ PAPI_HWPROFILING -- reserved for future use
 .PP
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_OK\fP 
 .br
@@ -81,18 +79,18 @@ if (ret != PAPI_OK) handle_error(ret);
 // Start counting
 ret = PAPI_state(EventSet, &status);
 if (ret != PAPI_OK) handle_error(ret);
-printf("State is now %d\n",status);
+printf("State is now %d\\n",status);
 ret = PAPI_start(EventSet);
 if (ret != PAPI_OK) handle_error(ret);
 ret = PAPI_state(EventSet, &status);
 if (ret != PAPI_OK) handle_error(ret);
-printf("State is now %d\n",status);
+printf("State is now %d\\n",status);
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_stop\fP \fBPAPI_start\fP 
 .RE

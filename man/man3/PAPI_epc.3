@@ -1,10 +1,8 @@
-.TH "PAPI_epc" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_epc" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_epc \- 
-.PP
-Simplified call to get arbitrary events per cycle, real and processor time\&.  
+PAPI_epc \- Simplified call to get arbitrary events per cycle, real and processor time\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,7 +18,7 @@ Simplified call to get arbitrary events per cycle, real and processor time\&.
 int \fBPAPI_epc( int event, float *rtime, float *ptime, long long *ref, long long *core, long long *evt, float *epc )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIevent\fP event code to be measured (0 defaults to PAPI_TOT_INS) 
 .br
@@ -37,7 +35,7 @@ int \fBPAPI_epc( int event, float *rtime, float *ptime, long long *ref, long lon
 \fI*epc\fP incremental events per cycle since the latest call
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_epc()\fP\&. 
 .br
@@ -52,7 +50,7 @@ Subsequent calls will read the counters and return real time, process time, even
 .PP
 \fBPAPI_epc()\fP can provide a more detailed look at algorithm efficiency in light of clock variability in modern cpus\&. MFLOPS is no longer an adequate description of peak performance if clock rates can arbitrarily speed up or slow down\&. By allowing a user specified event and reporting reference cycles, core cycles and real time, \fBPAPI_epc\fP provides the information to compute an accurate effective clock rate, and an accurate measure of computational throughput\&. Note that \fBPAPI_epc()\fP is thread-safe and can therefore be called by multiple threads\&.
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_flips_rate()\fP 
 .PP

@@ -1,10 +1,8 @@
-.TH "PAPI_num_events" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_num_events" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_num_events \- 
-.PP
-Return the number of events in an event set\&.  
+PAPI_num_events \- Return the number of events in an event set\&.  
 
 .SH SYNOPSIS
 .br
@@ -20,14 +18,14 @@ Return the number of events in an event set\&.
 int \fBPAPI_num_events(int  EventSet )\fP;
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIEventSet\fP -- an integer handle for a PAPI event set created by \fBPAPI_create_eventset\fP\&. 
 .br
 \fI*count\fP -- (Fortran only) On output the variable contains the number of events in the event set
 .RE
 .PP
-\fBReturn values:\fP
+\fBReturn values\fP
 .RS 4
 \fIOn\fP success, this function returns the positive number of events in the event set\&. 
 .br
@@ -42,13 +40,13 @@ int \fBPAPI_num_events(int  EventSet )\fP;
 .PP
 .nf
 // Count the events in our EventSet 
-printf(\"%d events found in EventSet\&.\\n\", PAPI_num_events(EventSet));
+printf(\\"%d events found in EventSet\&.\\\\n\\", PAPI_num_events(EventSet));
 
 .fi
 .PP
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 \fBPAPI_add_event\fP 
 .PP

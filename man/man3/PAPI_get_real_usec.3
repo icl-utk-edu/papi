@@ -1,10 +1,8 @@
-.TH "PAPI_get_real_usec" 3 "Fri Mar 10 2023" "Version 7.0.1.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_real_usec" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-PAPI_get_real_usec \- 
-.PP
-get real time counter value in microseconds  
+PAPI_get_real_usec \- get real time counter value in microseconds  
 
 .SH SYNOPSIS
 .br
@@ -21,14 +19,14 @@ This function returns the total real time passed since some arbitrary starting p
 s = PAPI_get_real_cyc();
 your_slow_code();
 e = PAPI_get_real_cyc();
-printf("Wallclock cycles: %lld\en",e-s);
+printf("Wallclock cycles: %lld\\en",e\-s);
 
 .fi
 .PP
  
 .RE
 .PP
-\fBSee Also:\fP
+\fBSee also\fP
 .RS 4
 PAPIF 
 .PP
