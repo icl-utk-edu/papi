@@ -21,11 +21,9 @@ endif
 intel_compilers := ifort ifx
 cray_compilers := ftn crayftn
 
-FFLAGS += -ffree-form
-
 ifeq ($(notdir $(F77)),gfortran)
     FFLAGS +=-ffree-form -ffree-line-length-none
-else ifeq ($(notdir $(F77)),flang)
+else ifeq ($(patsubst %flang,,$(notdir $(F77))),)  # compiler name ends with flang
     FFLAGS +=-ffree-form
 else ifneq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
     FFLAGS +=-free
