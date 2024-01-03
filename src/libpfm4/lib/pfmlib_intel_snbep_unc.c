@@ -54,6 +54,9 @@ const pfmlib_attr_desc_t snbep_unc_mods[]={
 	PFM_ATTR_B("rmem", "remote memory cacheable"),	 /* not_nm filter1 (skx) */
 	PFM_ATTR_I("dnid", "destination node id [0-15]"), /* SKX:UPI */
 	PFM_ATTR_I("rcsnid", "destination RCS Node id [0-15]"), /* SKX:UPI */
+	PFM_ATTR_I("t", "threshold in range [0-63]"),	/* threshold */
+	PFM_ATTR_B("occ_i", "occupancy event invert"),	/* invert occupancy event */
+	PFM_ATTR_B("occ_e", "occupancy event edge "),	/* edge occupancy event */
 	PFM_ATTR_NULL
 };
 
@@ -197,6 +200,27 @@ pfm_intel_skx_unc_detect(void *this)
        }
        return PFM_SUCCESS;
 }
+
+int
+pfm_intel_icx_unc_detect(void *this)
+{
+       int ret;
+
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 106: /* Icelake X */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
+}
+
 
 
 static void
@@ -541,6 +565,13 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					reg.pcu.unc_thres = ival;
 					umodmsk |= _SNBEP_UNC_ATTR_T5;
 					break;
+				case SNBEP_UNC_ATTR_T6: /* counter-mask */
+					/* already forced, cannot overwrite */
+					if (ival > 63)
+						return PFM_ERR_ATTR_VAL;
+					reg.com.unc_thres = ival;
+					umodmsk |= _SNBEP_UNC_ATTR_T6;
+					break;
 				case SNBEP_UNC_ATTR_TF: /* thread id */
 					if (ival > 1) {
 						DPRINT("invalid thread id, must be < 1");
@@ -648,6 +679,14 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 					}
 					filters[0].skx_upi_filt.rcsnid = ival;
 					filters[0].skx_upi_filt.en_rcsnid = 1;
+					break;
+				case SNBEP_UNC_ATTR_OCC_I: /* occ_i */
+					reg.icx_pcu.unc_occ_inv = !!ival;
+					umodmsk |= _SNBEP_UNC_ATTR_OCC_I;
+					break;
+				case SNBEP_UNC_ATTR_OCC_E: /* occ_e */
+					reg.icx_pcu.unc_occ_edge = !!ival;
+					umodmsk |= _SNBEP_UNC_ATTR_OCC_E;
 					break;
 				default:
 					DPRINT("event %s invalid attribute %d\n", pe[e->event].name, a->idx);
@@ -842,6 +881,15 @@ pfm_intel_snbep_unc_get_encoding(void *this, pfmlib_event_desc_t *e)
 			break;
 		case SNBEP_UNC_ATTR_RCSNID:
 			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, filters[0].skx_upi_filt.rcsnid);
+			break;
+		case SNBEP_UNC_ATTR_T6:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.icx_pcu.unc_thres);
+			break;
+		case SNBEP_UNC_ATTR_OCC_I:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.icx_pcu.unc_occ_inv);
+			break;
+		case SNBEP_UNC_ATTR_OCC_E:
+			evt_strcat(e->fstr, ":%s=%lu", snbep_unc_mods[idx].name, reg.icx_pcu.unc_occ_edge);
 			break;
 		default:
 			DPRINT("unknown attribute %d for event %s\n", idx, pe[e->event].name);
