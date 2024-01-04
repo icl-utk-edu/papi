@@ -309,7 +309,9 @@ static inline int
 intel_x86_uflag(void *this, int idx, int attr, int flag)
 {
 	const intel_x86_entry_t *pe = this_pe(this);
-	return !!(pe[idx].umasks[attr].uflags & flag);
+	if (pe[idx].numasks)
+		return !!(pe[idx].umasks[attr].uflags & flag);
+	return 0;
 }
 
 static inline unsigned int

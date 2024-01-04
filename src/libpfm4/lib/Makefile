@@ -116,6 +116,16 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_skx_unc_pcu.c \
 	  pfmlib_intel_skx_unc_ubo.c \
 	  pfmlib_intel_skx_unc_upi.c \
+	  pfmlib_intel_icx_unc_cha.c \
+	  pfmlib_intel_icx_unc_imc.c \
+	  pfmlib_intel_icx_unc_m2m.c \
+	  pfmlib_intel_icx_unc_iio.c \
+	  pfmlib_intel_icx_unc_irp.c \
+	  pfmlib_intel_icx_unc_pcu.c \
+	  pfmlib_intel_icx_unc_upi.c \
+	  pfmlib_intel_icx_unc_m3upi.c \
+	  pfmlib_intel_icx_unc_ubox.c \
+	  pfmlib_intel_icx_unc_m2pcie.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
 	  pfmlib_intel_tmt.c \
@@ -338,6 +348,15 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_knl_unc_edc_events.h \
 	events/intel_knl_unc_cha_events.h \
 	events/intel_knl_unc_m2pcie_events.h \
+	events/intel_icx_unc_cha_events.h \
+	events/intel_icx_unc_imc_events.h \
+	events/intel_icx_unc_m2m_events.h \
+	events/intel_icx_unc_irp_events.h \
+	events/intel_icx_unc_pcu_events.h \
+	events/intel_icx_unc_upi_events.h \
+	events/intel_icx_unc_m3upi_events.h \
+	events/intel_icx_unc_ubox_events.h \
+	events/intel_icx_unc_m2pcie_events.h \
 	events/intel_slm_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h
