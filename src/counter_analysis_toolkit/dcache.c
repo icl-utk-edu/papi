@@ -270,7 +270,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
     }
 
     // Make a cold run
-    out = probeBufferSize(16LL*stride, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+    out = probeBufferSize(16LL*stride, stride, pages_per_block, pattern, max_size, v, &rslt, latency_only, mode, ONT);
     if(out.status != 0)
         goto error;
 
@@ -279,7 +279,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
         cnt = 0;
         // If we don't know the cache sizes, space the measurements between two default values.
         for(active_buf_len=min_size; active_buf_len<max_size; active_buf_len*=2){
-            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, max_size, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
@@ -288,7 +288,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
             }
             values[cnt++] = ONT*sizeof(uintptr_t)*active_buf_len;
 
-            out = probeBufferSize((long long)((double)active_buf_len*1.25), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.25), stride, pages_per_block, pattern, max_size, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
@@ -297,7 +297,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
             }
             values[cnt++] = ONT*sizeof(uintptr_t)*((long long)((double)active_buf_len*1.25));
 
-            out = probeBufferSize((long long)((double)active_buf_len*1.5), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.5), stride, pages_per_block, pattern, max_size, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
@@ -306,7 +306,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
             }
             values[cnt++] = ONT*sizeof(uintptr_t)*((long long)((double)active_buf_len*1.5));
 
-            out = probeBufferSize((long long)((double)active_buf_len*1.75), stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            out = probeBufferSize((long long)((double)active_buf_len*1.75), stride, pages_per_block, pattern, max_size, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
@@ -378,7 +378,9 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
         cnt=0;
         for(j=0; j<len; j++){
             active_buf_len = bufSizes[j]/sizeof(uintptr_t);
-            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, v, &rslt, latency_only, mode, ONT);
+            long long llc_size = hw_desc->dcache_size[llc_idx]/hw_desc->split[llc_idx];
+            llc_size /= sizeof(uintptr_t);
+            out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, llc_size, v, &rslt, latency_only, mode, ONT);
             if(out.status != 0)
                 goto error;
             for(k = 0; k < ONT; ++k) {
