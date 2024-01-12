@@ -78,7 +78,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
                         printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                         fflush(stdout);
                     }
-                    status = d_cache_test(pattern, params.max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                    status = d_cache_test(pattern, params, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
                     if( status < 0 )
                         goto error2;
                 }
@@ -90,7 +90,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
                     printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
                     fflush(stdout);
                 }
-                status = d_cache_test(pattern, params.max_iter, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
+                status = d_cache_test(pattern, params, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
                 if( status < 0 )
                     goto error2;
             }
@@ -115,12 +115,13 @@ error0:
     return;
 }
 
-int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
+int d_cache_test(int pattern, cat_params_t params, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, char* papi_event_name, int latency_only, int mode, FILE* ofp){
     int i,j,k;
     long long *values;
     double ***rslts, *sorted_rslts;
     double ***counter, *sorted_counter;
     int status=0, guessCount, ONT;
+    int max_iter = params.max_iter;
 
     min_size = 2*1024/sizeof(uintptr_t);        // 2KB
     max_size = 1024*1024*1024/sizeof(uintptr_t);// 1GB
@@ -175,7 +176,7 @@ int d_cache_test(int pattern, int max_iter, hw_desc_t *hw_desc, long long stride
     eventname = papi_event_name;
 
     for(i=0; i<max_iter; ++i){
-        status = varyBufferSizes(values, rslts[i], counter[i], hw_desc, stride_in_bytes, pages_per_block, pattern, latency_only, mode, ONT);
+        status = varyBufferSizes(values, rslts[i], counter[i], params, hw_desc, stride_in_bytes, pages_per_block, pattern, latency_only, mode, ONT);
         if( status < 0 )
             goto cleanup;
     }
@@ -231,7 +232,7 @@ cleanup:
 }
 
 
-int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
+int varyBufferSizes(long long *values, double **rslts, double **counter, cat_params_t params, hw_desc_t *hw_desc, long long stride_in_bytes, float pages_per_block, int pattern, int latency_only, int mode, int ONT){
     long long i;
     int j, k, cnt;
     long long active_buf_len;
@@ -377,7 +378,12 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
 
         cnt=0;
         for(j=0; j<len; j++){
+            char symbol[4] = "|/-\\";
             active_buf_len = bufSizes[j]/sizeof(uintptr_t);
+            if( params.show_progress ){
+                printf("%c\b",symbol[j%4]);
+                fflush(stdout);
+            }
             long long llc_size = hw_desc->dcache_size[llc_idx]/hw_desc->split[llc_idx];
             llc_size /= sizeof(uintptr_t);
             out = probeBufferSize(active_buf_len, stride, pages_per_block, pattern, llc_size, v, &rslt, latency_only, mode, ONT);
@@ -388,6 +394,10 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, hw_desc
                 counter[cnt][k] = out.counter[k];
             }
             values[cnt++] = bufSizes[j];
+        }
+        if( params.show_progress ){
+            printf(" \b");
+            fflush(stdout);
         }
 
         free(bufSizes);
