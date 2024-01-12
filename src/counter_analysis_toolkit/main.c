@@ -880,7 +880,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
                 fflush(stdout);
             }
             d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
-            if(params.show_progress) printf("100%%\n");
+            if(params.show_progress) printf("\n");
         }
 
         if(params.show_progress) printf("D-Cache Read Benchmarks: ");
@@ -907,7 +907,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
                 fflush(stdout);
             }
             d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
-            if(params.show_progress) printf("100%%\n");
+            if(params.show_progress) printf("\n");
         }
 
         if(params.show_progress) printf("D-Cache Write Benchmarks: ");

@@ -14,13 +14,13 @@ volatile double x,y;
 extern int is_core;
 char* eventname = NULL;
 
-run_output_t probeBufferSize(long long active_buf_len, long long line_size, float pageCountPerBlock, int pattern, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
+run_output_t probeBufferSize(long long active_buf_len, long long line_size, float pageCountPerBlock, int pattern, long long llc_size, uintptr_t **v, uintptr_t *rslt, int latency_only, int mode, int ONT){
     int _papi_eventset = PAPI_NULL;
     int retval, buffer = 0, status = 0;
     int error_line = -1, error_type = PAPI_OK;
     register uintptr_t *p = NULL;
     register uintptr_t p_prime;
-    long long count, pageSize, blockSize;
+    long long pageSize, blockSize;
     long long int counter[ONT];
     run_output_t out;
     out.status = 0;
@@ -33,13 +33,15 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
     if( x > 0 || y > 0 )
         printf("WARNING: x=%lf y=%lf\n",x,y);
 
-    // Make no fewer accesses than we would for a buffer of size 128KB.
+    long long countSingle = active_buf_len/line_size;
+    long long threshold = 1024LL*1024LL/64LL;
+    long long len = (active_buf_len > threshold) ? active_buf_len : threshold;
     long long countMax;
-    long long unsigned threshold = 128*1024;
-    if( active_buf_len*sizeof(uintptr_t) > threshold )
-        countMax = 64LL*((long long)(active_buf_len/line_size));
-    else
-        countMax = 64LL*((long long)(threshold/line_size));
+    if( len > llc_size ){
+        countMax = 4LL*(len/line_size);
+    }else{
+        countMax = 64LL*(len/line_size);
+    }
 
     // Get the size of a page of memory.
     pageSize = sysconf(_SC_PAGESIZE)/sizeof(uintptr_t);
@@ -51,20 +53,15 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
 
     // Compute the size of a block in the pointer chain and create the pointer chain.
     blockSize = (long long)(pageCountPerBlock*(float)pageSize);
-    #pragma omp parallel reduction(+:status) default(shared)
-    {
-        int idx = omp_get_thread_num();
-
-        status += prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
-    }
 
     // Start of threaded benchmark.
-    #pragma omp parallel private(p,count,retval) reduction(+:buffer) reduction(+:status) firstprivate(_papi_eventset) default(shared)
+    #pragma omp parallel private(p,retval) reduction(+:buffer) reduction(+:status) firstprivate(_papi_eventset) default(shared)
     {
         int idx = omp_get_thread_num();
         int thdStatus = 0;
         double divisor = 1.0;
         double time1=0, time2=0, dt, factor;
+        long long count;
 
         // Initialize the result to a value indicating an error.
         // If no error occurs, it will be overwritten.
@@ -72,10 +69,11 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
             out.counter[idx] = -1;
         }
 
+        status += prepareArray(v[idx], active_buf_len, line_size, blockSize, pattern);
+
         // We will use "p" even after the epilogue, so let's set
         // it here in case an error occurs.
         p = &v[idx][0];
-        count = countMax;
 
         if ( !latency_only && (is_core || 0 == idx) ) {
             retval = PAPI_create_eventset( &_papi_eventset );
@@ -95,8 +93,20 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
                 // If we can't measure events, no need to run the kernel.
                 goto clean_up;
             }
+        }
 
-            // Start the counters.
+        // Make sure all threads start at about the same time so that we get high pressure on the memory subsystem.
+        #pragma omp barrier
+
+        count = countSingle;
+        // Make a warm-up pass to fetch the data into the cache, if it fits in any cache.
+        while(count > 0){
+            N_128;
+            count -= 128;
+        }
+
+        // Start the counters.
+        if ( !latency_only && (is_core || 0 == idx) ) {
             retval = PAPI_start(_papi_eventset);
             if ( PAPI_OK != retval ) {
                 error_type = retval;
@@ -108,7 +118,7 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
         }
 
         // Start the actual test.
-
+        count = countMax;
         // Micro-kernel for memory reading.
         if( CACHE_READ_ONLY == mode || latency_only )
         {
