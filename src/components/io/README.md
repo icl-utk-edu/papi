@@ -2,8 +2,8 @@
 
 The IO component enables PAPI to access the io statistics exported by the Linux kernel through the /proc pseudo-file system (file /proc/self/io).
 
-* [Enabling the IO Component](#markdown-header-enabling-the-io-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the IO Component](#enabling-the-io-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the IO Component

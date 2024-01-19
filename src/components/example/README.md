@@ -2,7 +2,7 @@
 
 The EXAMPLE component demos the component interface and implements three example counters.
 
-* [Enabling the EXAMPLE Component](#markdown-header-enabling-the-example-component)
+* [Enabling the EXAMPLE Component](#enabling-the-example-component)
 
 ***
 ## Enabling the EXAMPLE Component

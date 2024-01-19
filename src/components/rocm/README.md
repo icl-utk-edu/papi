@@ -4,10 +4,10 @@ The ROCM component exposes numerous performance events on AMD GPUs.
 The component is an adapter to the ROCm profiling library (ROC-profiler) which is included in a standard ROCM release.
 
 
-* [Enabling the ROCM Component](#markdown-header-enabling-the-rocm-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the ROCM Component](#enabling-the-rocm-component)
+* [Environment Variables](#environment-variables)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 ***
 ## Enabling the ROCM Component
 
@@ -105,12 +105,12 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
 ***
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
+1. [Unusual installations](#unusual-installations)
 
 ## Unusual installations
 For the ROCM component to be operational, it must find the dynamic libraries `libhsa-runtime64.so` and `librocprofiler64.so`. These are normally found in the above standard directories. If these libraries are not found (or are not functional) then the component will be listed as "disabled" with a reason explaining the problem. If libraries were not found, then they are not in the expected places.
 
-2. [Device isolation](#markdown-device-isolation)
+2. [Device isolation](#device-isolation)
 
 ## Device isolation
 Compute clusters resource managers can isolate GPU devices, on compute nodes,

@@ -2,7 +2,7 @@
 
 The CORETEMP_FREEBSD component is intended to access CPU On-Die Thermal Sensors in the Intel Core architecture in a FreeBSD machine using the coretemp.ko kernel module. The returned values represent Kelvin degrees.
 
-* [Enabling the CORETEMP_FREEBSD Component](#markdown-header-enabling-the-coretemp_freebsd-component)
+* [Enabling the CORETEMP_FREEBSD Component](#enabling-the-coretemp_freebsd-component)
 
 ***
 ## Enabling the CORETEMP_FREEBSD Component

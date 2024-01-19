@@ -7,7 +7,7 @@ similarly to other components, which means that hardware information for
 a specific device might not be available at runtime if, e.g., the device
 runtime software is not installed.
 
-* [Enabling the SYSDETECT Component](#markdown-header-enabling-the-sysdetect-component)
+* [Enabling the SYSDETECT Component](#enabling-the-sysdetect-component)
 
 ## Enabling the SYSDETECT Component
 

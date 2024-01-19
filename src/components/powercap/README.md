@@ -2,9 +2,9 @@
 
 The POWERCAP component supports measuring and capping power usage on recent Intel architectures (Sandybridge or later) using the powercap interface exposed through the Linux kernel.
 
-* [Enabling the POWERCAP Component](#markdown-header-enabling-the-powercap-component)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the POWERCAP Component](#enabling-the-powercap-component)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 
 ***
 ## Enabling the POWERCAP Component
@@ -29,7 +29,7 @@ Use chmod to set site-appropriate access permissions (e.g. 766) for /sys/class/p
 
 ## FAQ
 
-1. [Measuring and Capping Power](#markdown-header-measuring-and-capping-power)
+1. [Measuring and Capping Power](#measuring-and-capping-power)
 
 ## Measuring and Capping Power
 

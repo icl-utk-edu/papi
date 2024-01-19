@@ -2,9 +2,9 @@
 
 The SENSORS\_PPC component supports reading system metrics on recent IBM PowerPC architectures (Power9 and later) using the OCC memory exposed through the Linux kernel.
 
-* [Enabling the SENSORS\_PPC Component](#markdown-header-enabling-the-sensors-ppc-component)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the SENSORS\_PPC Component](#enabling-the-sensors_ppc-component)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 
 ***
 ## Enabling the SENSORS\_PPC Component
@@ -31,7 +31,7 @@ And finally, have your user added to said group, granting you read access.
 
 ## FAQ
 
-1. [Measuring System](#markdown-header-measuring-system)
+1. [Measuring System](#measuring-system)
 
 ## Measuring System
 

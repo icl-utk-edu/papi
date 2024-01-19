@@ -2,7 +2,7 @@
 
 The PERF\_EVENT component enables PAPI to access perf\_event CPU counters.
 
-* [Enabling the PERF\_EVENT Component](#markdown-header-enabling-the-perf-event-component)
+* [Enabling the PERF\_EVENT Component](#enabling-the-perf_event-component)
 
 ***
 ## Enabling the PERF\_EVENT Component

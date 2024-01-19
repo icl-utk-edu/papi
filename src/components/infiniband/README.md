@@ -3,8 +3,8 @@
 The INFINIBAND component uses the sysfs interface to access infiniband
 performance counters from user space.
 
-* [Enabling the INFINIBAND Component](#markdown-header-enabling-the-infiniband-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the INFINIBAND Component](#enabling-the-infiniband-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the INFINIBAND Component

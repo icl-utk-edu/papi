@@ -2,8 +2,8 @@
 
 The MICPOWER component enables PAPI to access power readings reported on Intel MIC cards.
 
-* [Enabling the MICPOWER Component](#markdown-header-enabling-the-micpower-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the MICPOWER Component](#enabling-the-micpower-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the MICPOWER Component

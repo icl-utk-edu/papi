@@ -2,9 +2,9 @@
 
 The LIBMSR component supports measuring and capping power usage on recent Intel architectures using the RAPL interface exposed through MSRs (model-specific registers).
 
-* [Enabling the LIBMSR Component](#markdown-header-enabling-the-libmsr-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [FAQ](#markdown-header-faq)
+* [Enabling the LIBMSR Component](#enabling-the-libmsr-component)
+* [Environment Variables](#environment-variables)
+* [FAQ](#faq)
 
 ***
 ## Enabling the LIBMSR Component
@@ -31,12 +31,12 @@ Within PAPI\_LIBMSR\_ROOT, we expect the following standard directories:
 ***
 ## FAQ
 
-1. [Background](#markdown-header-background)
-2. [Enable Access to the MSRs](#markdown-header-enable-access-to-the-msrs)
-3. [Compile the LIBMSR Library to Access the MSRs](#markdown-header-compile-the-libmsr-library-to-access-the-msrs)
-4. [Testing PAPI with LIBMSR Enabled](#markdown-header-testing-papi-with-libmsr-enabled)
-5. [List LIBMSR Supported Events](#markdown-header-list-libmsr-supported-events)
-6. [Use the PAPI LIBMSR Component](#markdown-header-use-the-papi-libmsr-component)
+1. [Background](#background)
+2. [Enable Access to the MSRs](#enable-access-to-the-msrs-model-specific-registers)
+3. [Compile the LIBMSR Library to Access the MSRs](#compile-the-libmsr-library-to-access-the-msrs)
+4. [Testing PAPI with LIBMSR Enabled](#testing-papi-with-libmsr-enabled)
+5. [List LIBMSR Supported Events](#list-libmsr-supported-events)
+6. [Use the PAPI LIBMSR Component](#use-the-papi-libmsr-component)
 
 ## Background
 This libmsr component is an initial version, and has been tested

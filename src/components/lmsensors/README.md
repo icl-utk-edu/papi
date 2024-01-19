@@ -2,9 +2,9 @@
 
 The LMSENSORS Component enables PAPI to access hardware monitoring sensors through the libsensors library. This component requires lmsensors version >= 3.0.0.
 
-* [Enabling the LMSENSORS Component](#markdown-header-enabling-the-lmsensors-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [FAQ](#markdown-header-faq)
+* [Enabling the LMSENSORS Component](#enabling-the-lmsensors-component)
+* [Environment Variables](#environment-variables)
+* [FAQ](#faq)
 
 ***
 ## Enabling the LMSENSORS Component
@@ -30,8 +30,8 @@ Within PAPI\_LMSENSORS\_ROOT, we expect the following standard directories:
 ***
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
-2. [List LMSENSORS Supported Events](#markdown-header-list-lmsensors-supported-events)
+1. [Unusual installations](#unusual-installations)
+2. [List LMSENSORS Supported Events](#list-lmsensors-supported-events)
 
 ## Unusual installations
 

@@ -2,7 +2,7 @@
 
 The MX component enables PAPI to access counters provided by Myricom MX (Myrinet Express).
 
-* [Enabling the MX Component](#markdown-header-enabling-the-mx-component)
+* [Enabling the MX Component](#enabling-the-mx-component)
 
 ***
 ## Enabling the MX Component

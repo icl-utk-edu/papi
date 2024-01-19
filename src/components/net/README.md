@@ -2,8 +2,8 @@
 
 The NET component enables PAPI to access the network statistics exported by the Linux kernel through the /proc pseudo-file system (file /proc/net/dev).
 
-* [Enabling the NET Component](#markdown-header-enabling-the-net-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the NET Component](#enabling-the-net-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the NET Component
