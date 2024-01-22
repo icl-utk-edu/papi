@@ -134,4 +134,4 @@ of the device should be used for this mapping (see hipDeviceGetUuid and
 HSA\_AMD\_AGENT\_INFO\_UUID).
 
 The AMD isolation mechanism is described in more details here:
-https://rocm.docs.amd.com/en/latest/understand/gpu_isolation.html
+https://rocmdocs.amd.com/en/latest/conceptual/gpu-isolation.html
