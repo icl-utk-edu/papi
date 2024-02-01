@@ -11,17 +11,17 @@
 //------- Library example that exports SDEs
 
 class MinTest{
-    private:
-        long long local_var;
+public:
+    MinTest();
+    void dowork();
 
-	public:
-        MinTest();
-        void dowork();
+private:
+    long long local_var;
 };
 
 MinTest::MinTest(){
-    papi_sde::PapiSde sde("Min Example Code in C++");
     local_var = 0;
+    papi_sde::PapiSde sde("Min Example Code in C++");
     sde.register_counter("Example Event", PAPI_SDE_RO|PAPI_SDE_DELTA, local_var);
 }
 
