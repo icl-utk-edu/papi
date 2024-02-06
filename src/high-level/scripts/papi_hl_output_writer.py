@@ -78,7 +78,7 @@ def merge_json_files(source):
   return json_object
 
 def parse_source_file(source_file):
-    """Take JSON file (source_file) and convert it to a python dictionary.
+    """Take a JSON file (source_file) and convert it to a python dictionary.
     Additionally add extra metadata such as mpi rank.
 
     Arguments:
