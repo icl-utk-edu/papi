@@ -546,8 +546,10 @@ def parse_args():
   if (parser.parse_args().source != None and
       parser.parse_args().source_file != None):
       # executes if both conditions are true
-      raise ValueError("Cannot pass values to both source and source_file."
-                       " Value must be passed to either source or source_file.")
+      print("Cannot pass values to both source and source_file."
+            " Value must be passed to either source or source_file.")
+      parser.print_help()
+      parser.exit()
 
   # check to see if file exists
   if parser.parse_args().source_file != None:
@@ -564,8 +566,11 @@ def parse_args():
           parser.print_help()
           parser.exit()
   else:
-    raise ValueError("Provide a path to either a JSON file or a" 
-                     " dictionary which contains a JSON file.")
+    print("Path to either a JSON file or a" 
+          " dictionary which contains a JSON file is required.")
+    parser.print_help()
+    parser.exit()
+    
 
   # check format
   output_format = str(parser.parse_args().format)
