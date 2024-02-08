@@ -4,6 +4,7 @@
 #include <string.h>
 #include "papi.h"
 #include "papi_test.h"
+#include "simple2.hpp"
 
 long long int low_mark[10]  = { 0LL,  2LL,  2LL,  7LL, 21LL,  29LL,  29LL,  29LL,  29LL,  34LL};
 long long int high_mark[10] = { 1LL,  1LL,  2LL,  3LL,  4LL,   8LL,   9LL,   9LL,   9LL,  13LL};
@@ -20,11 +21,10 @@ int main(int argc, char **argv){
     int be_verbose = 0;
     long long counter_values[5];
     double *dbl_ptr;
+    Simple simp_obj;
 
     if( (argc > 1) && !strcmp(argv[1], "-verbose") )
         be_verbose = 1;
-
-    simple_init();
 
     setup_PAPI(&event_set);
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv){
     for(i=0; i<10; i++){
         double sum;
 
-        sum = simple_compute(0.87*i);
+        sum = simp_obj.simple_compute(0.87*i);
         if( be_verbose ) printf("sum=%lf\n",sum);
 
         // --- read the event counters

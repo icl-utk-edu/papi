@@ -6,27 +6,39 @@
 #include "sde_lib.h"
 #include "sde_lib.hpp"
 
-long long local_var;
 
-void mintest_init(void){
+////////////////////////////////////////////////////////////////////////////////
+//------- Library example that exports SDEs
+
+class MinTest{
+public:
+    MinTest();
+    void dowork();
+
+private:
+    long long local_var;
+};
+
+MinTest::MinTest(){
+    local_var = 0;
     papi_sde::PapiSde sde("Min Example Code in C++");
-
-    local_var=0;
     sde.register_counter("Example Event", PAPI_SDE_RO|PAPI_SDE_DELTA, local_var);
 }
 
-void mintest_dowork(void){
+void MinTest::dowork(){
     local_var += 7;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//------- Driver example that uses library and reads the SDEs
 
 int main(int argc, char **argv){
     int ret, Eventset = PAPI_NULL;
     long long counter_values[1];
+    MinTest test_obj;
 
     (void)argc;
     (void)argv;
-
-    mintest_init();
 
     // --- Setup PAPI
     if((ret=PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT){
@@ -50,7 +62,7 @@ int main(int argc, char **argv){
         exit(-1);
     }
 
-    mintest_dowork();
+    test_obj.dowork();
 
     // --- Stop PAPI
     if((ret=PAPI_stop(Eventset, counter_values)) != PAPI_OK){
