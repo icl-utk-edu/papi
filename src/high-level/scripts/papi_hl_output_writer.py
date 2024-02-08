@@ -31,12 +31,12 @@ event_rate_names = OrderedDict([
       ('PAPI_DP_OPS','Double precision MFLOPS/s')
     ])
 
-def merge_json_files(source):
+def merge_json_files(source_dir):
   json_object = {}
   events_stored = False
 
   #get measurement files
-  file_list = os.listdir(source)
+  file_list = os.listdir(source_dir)
   file_list.sort()
   rank_cnt = 0
   json_rank = OrderedDict()
@@ -51,7 +51,7 @@ def merge_json_files(source):
       rank = rank_cnt
 
     #open measurement file
-    file_name = str(source) + "/" + str(item)
+    file_name = str(source_dir) + "/" + str(item)
 
     try:
       with open(file_name) as json_file:
@@ -78,14 +78,6 @@ def merge_json_files(source):
   return json_object
 
 def parse_source_file(source_file):
-    """Take a JSON file (source_file) and convert it to a python dictionary.
-    Additionally add extra metadata such as mpi rank.
-
-    Arguments:
-        source_file -- JSON file generated from PAPI high level API functions.
-    Returns:
-        Python dictionary.
-    """
     json_data = {}
     json_rank = OrderedDict()
     events_stored = False
@@ -506,10 +498,10 @@ def write_json_file(data, file_name):
     outfile.write(to_unicode(str_))
     print (str_)
 
-def main(format, type, notation, source = None, source_file = None):
+def main(format, type, notation, source_dir = None, source_file = None):
     if (format == "json"):
-        if source != None:
-            json = merge_json_files(source)
+        if source_dir != None:
+            json = merge_json_files(source_dir)
         else:
             json = parse_source_file(source_file)
 
@@ -531,7 +523,7 @@ def main(format, type, notation, source = None, source_file = None):
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source', type=str, required=False,
+  parser.add_argument('--source_dir', type=str, required=False,
                       help='Measurement directory of raw data.')
   parser.add_argument('--source_file', type=str, required=False,
                       help='Individual file containing measurements of raw data.')
@@ -543,11 +535,11 @@ def parse_args():
                       help='Output notation: raw or derived.')
   
   # check to make sure a value has not been passed for both filename and source
-  if (parser.parse_args().source != None and
+  if (parser.parse_args().source_dir != None and
       parser.parse_args().source_file != None):
       # executes if both conditions are true
-      print("Cannot pass values to both source and source_file."
-            " Value must be passed to either source or source_file.")
+      print("Cannot pass values to both source_dir and source_file."
+            " Value must be passed to either source_dir or source_file.")
       parser.print_help()
       parser.exit()
 
@@ -559,19 +551,19 @@ def parse_args():
           parser.print_help()
           parser.exit()
   # check if papi directory exists
-  elif parser.parse_args().source != None:
-      source = str(parser.parse_args().source)
-      if os.path.isdir(source) == False:
-          print("Measurement directory '{}' does not exist!\n".format(source))
+  elif parser.parse_args().source_dir != None:
+      source_dir = str(parser.parse_args().source_dir)
+      if os.path.isdir(source_dir) == False:
+          print("Measurement directory '{}' does not exist!\n".format(source_dir))
           parser.print_help()
           parser.exit()
+  # output if neither source_file or source_dir are supplied
   else:
-    print("Path to either a JSON file or a" 
-          " dictionary which contains a JSON file is required.")
+    print("Path to either a JSON file (--source_file) or a" 
+          " dictionary (--source_dir) which contains a JSON file is required.")
     parser.print_help()
     parser.exit()
     
-
   # check format
   output_format = str(parser.parse_args().format)
   if output_format != "json":
@@ -600,7 +592,7 @@ def parse_args():
 if __name__ == '__main__':
   args = parse_args()
   main(format=args.format,
-       source=args.source,
+       source_dir=args.source_dir,
        source_file=args.source_file,
        type=args.type,
        notation=args.notation)
