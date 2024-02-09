@@ -1348,16 +1348,16 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
  *	
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *	PAPIF_epc( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )
+ *	PAPIF_epc( C_INT EventCode, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )
  *
  * @see PAPI_epc
  */
 PAPI_FCALL( papif_epc, PAPIF_EPC,
-			( int event, float *rtime, float *ptime, 
+			( int *EventCode, float *rtime, float *ptime, 
 			  long long *ref, long long *core, long long *evt, float *epc,
 			  int *check) )
 {
-	*check = PAPI_epc( event, rtime, ptime, ref, core, evt, epc );
+	*check = PAPI_epc( *EventCode, rtime, ptime, ref, core, evt, epc );
 }
 
 /** @class PAPIF_flips_rate
@@ -1366,15 +1366,15 @@ PAPI_FCALL( papif_epc, PAPIF_EPC,
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *	PAPIF_flips_rate ( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
+ *	PAPIF_flips_rate ( C_INT EventCode, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpins, C_FLOAT mflips, C_INT check )
  *
  * @see PAPI_flips_rate
  */
 PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
-			( int event, float *real_time, float *proc_time, long long *flpins,
+			( int *EventCode, float *real_time, float *proc_time, long long *flpins,
 			  float *mflips, int *check ) )
 {
-	*check = PAPI_flips_rate( event, real_time, proc_time, flpins, mflips );
+	*check = PAPI_flips_rate( *EventCode, real_time, proc_time, flpins, mflips );
 }
 
 /** @class PAPIF_flops_rate
@@ -1383,15 +1383,15 @@ PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
- *  PAPIF_flops_rate( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
+ *  PAPIF_flops_rate( C_INT EventCode, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG flpops, C_FLOAT mflops, C_INT check )
  *
  * @see PAPI_flops_rate
  */
 PAPI_FCALL( papif_flops_rate, PAPIF_FLOPS_RATE,
-			( int event, float *real_time, float *proc_time, long long *flpops,
+			( int *EventCode, float *real_time, float *proc_time, long long *flpops,
 			  float *mflops, int *check ) )
 {
-	*check = PAPI_flops_rate( event, real_time, proc_time, flpops, mflops );
+	*check = PAPI_flops_rate( *EventCode, real_time, proc_time, flpops, mflops );
 }
 
 /** @class PAPIF_rate_stop
