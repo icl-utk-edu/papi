@@ -2,10 +2,10 @@
 
 The CUDA component exposes counters and controls for NVIDIA GPUs.
 
-* [Enabling the CUDA Component](#markdown-header-enabling-the-cuda-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the CUDA Component](#enabling-the-cuda-component)
+* [Environment Variables](#environment-variables)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 ***
 ## Enabling the CUDA Component
 
@@ -82,9 +82,11 @@ This can be set using export; e.g.
 
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
-2. [CUDA contexts](#markdown-header-cuda-contexts)
-3. [CUDA toolkit versions](#markdown-header-cuda-toolkit-versions)
+1. [Unusual installations](#unusual-installations)
+2. [CUDA contexts](#cuda-contexts)
+3. [CUDA toolkit versions](#cuda-toolkit-versions)
+4. [Custom library paths](#custom-library-paths)
+5. [Compute capability 7.0 with CUDA toolkit version 11.0](#compute-capability-70-with-cuda-toolkit-version-110)
 
 ## Unusual installations
 Three libraries are required for the PAPI CUDA component. `libcuda.so`,
@@ -109,7 +111,7 @@ The CUDA component can profile using contexts created by `cuCtxCreate` or primar
 ## CUDA toolkit versions
 Once your binaries are compiled, it is possible to swap the CUDA toolkit versions without needing to recompile the source. Simply update `PAPI_CUDA_ROOT` to point to the path where the cuda toolkit version can be found. You might need to update `LD_LIBRARY_PATH` as well.
 
-## Custom Library paths
+## Custom library paths
 PAPI CUDA component loads the CUDA driver library from the system installed path. It loads the other libraries from `$PAPI_CUDA_ROOT`. If that is not set, then it tries to load them from system paths.
 
 However, it is possible to load each of these libraries from custom paths by setting each of the following environment variables to point to the desired files. These are,

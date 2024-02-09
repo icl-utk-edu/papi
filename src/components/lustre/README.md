@@ -2,7 +2,7 @@
 
 The LUSTRE component enables PAPI to access IO statistics provided by the Lustre filesystem.
 
-* [Enabling the LUSTRE Component](#markdown-header-enabling-the-lustre-component)
+* [Enabling the LUSTRE Component](#enabling-the-lustre-component)
 
 ***
 ## Enabling the LUSTRE Component

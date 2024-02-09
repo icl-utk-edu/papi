@@ -2,9 +2,8 @@
 
 The SDE component enables PAPI to read Software Defined Events (SDEs) exported by third party libraries.
 
-* [Enabling the SDE Component](#markdown-header-enabling-the-sde-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [FAQ](#markdown-header-faq)
+* [Enabling the SDE Component](#enabling-the-sde-component)
+* [FAQ](#faq)
 
 ## Enabling the SDE Component
 

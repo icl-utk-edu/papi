@@ -2,8 +2,8 @@
 
 The RAPL component enables PAPI to access Linux RAPL energy measurements.
 
-* [Enabling the RAPL Component](#markdown-header-enabling-the-rapl-component)
-* [Known Limitations](#markdown-header-known-limitations)
+* [Enabling the RAPL Component](#enabling-the-rapl-component)
+* [Known Limitations](#known-limitations)
 
 ***
 ## Enabling the RAPL Component
