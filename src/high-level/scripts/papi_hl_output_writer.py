@@ -31,12 +31,12 @@ event_rate_names = OrderedDict([
       ('PAPI_DP_OPS','Double precision MFLOPS/s')
     ])
 
-def merge_json_files(source):
+def merge_json_files(source_dir):
   json_object = {}
   events_stored = False
 
   #get measurement files
-  file_list = os.listdir(source)
+  file_list = os.listdir(source_dir)
   file_list.sort()
   rank_cnt = 0
   json_rank = OrderedDict()
@@ -51,7 +51,7 @@ def merge_json_files(source):
       rank = rank_cnt
 
     #open measurement file
-    file_name = str(source) + "/" + str(item)
+    file_name = str(source_dir) + "/" + str(item)
 
     try:
       with open(file_name) as json_file:
@@ -75,9 +75,36 @@ def merge_json_files(source):
   
   json_object['ranks'] = json_rank
 
-  # print json.dumps(json_object,indent=2, sort_keys=False,
-  #                  separators=(',', ': '), ensure_ascii=False)
   return json_object
+
+def parse_source_file(source_file):
+    json_data = {}
+    json_rank = OrderedDict()
+    events_stored = False
+
+    # determine mpi rank based on file name (rank_#)
+    rank = source_file.split('_', 1)[1]
+    rank = source_file.rsplit('.', 1)[0]
+
+    # open json file provided by user
+    f = open(source_file)
+
+    # return ordered dictionary
+    data = json.load(f, object_pairs_hook = OrderedDict)
+
+    #store global data
+    if events_stored == False:
+      global event_definitions
+      event_definitions = data['event_definitions']
+      events_stored = True
+
+    # get all threads
+    json_rank[str(rank)] = OrderedDict()
+    json_rank[str(rank)]['threads'] = data['threads']
+
+    json_data['ranks'] = json_rank 
+
+    return json_data
 
 class Sum_Counter(object):
   def __init__(self):
@@ -471,46 +498,72 @@ def write_json_file(data, file_name):
     outfile.write(to_unicode(str_))
     print (str_)
 
+def main(format, type, notation, source_dir = None, source_file = None):
+    if (format == "json"):
+        if source_dir != None:
+            json = merge_json_files(source_dir)
+        else:
+            json = parse_source_file(source_file)
 
-def main(source, format, type, notation):
-  if (format == "json"):
-    json = merge_json_files(source)
+        if type == 'detail':
+            if notation == 'derived':
+                write_json_file(derive_json_object(json), 'papi.json')
+            else:
+                write_json_file(json, 'papi.json')
 
-    if type == 'detail':
-      if notation == 'derived':
-        write_json_file(derive_json_object(json), 'papi.json')
-      else:
-        write_json_file(json, 'papi.json')
-
-    #summarize data over regions with the same name, threads and ranks
-    if type == 'summary':
-      if notation == 'derived':
-        write_json_file(sum_json_object(json, True), 'papi_sum.json')
-      else:
-        write_json_file(sum_json_object(json), 'papi_sum.json')
-
-  else:
-    print("Format not supported!")
+        #summarize data over regions with the same name, threads and ranks
+        if type == 'summary':
+            if notation == 'derived':
+                write_json_file(sum_json_object(json, True), 'papi_sum.json')
+            else:
+                write_json_file(sum_json_object(json), 'papi_sum.json')
+    else:
+        print("Format not supported!")
 
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--source', type=str, required=False, default="papi_hl_output",
+  parser.add_argument('--source_dir', type=str, required=False,
                       help='Measurement directory of raw data.')
+  parser.add_argument('--source_file', type=str, required=False,
+                      help='Individual file containing measurements of raw data.')
   parser.add_argument('--format', type=str, required=False, default='json', 
                       help='Output format, e.g. json.')
   parser.add_argument('--type', type=str, required=False, default='summary', 
                       help='Output type: detail or summary.')
   parser.add_argument('--notation', type=str, required=False, default='derived', 
                       help='Output notation: raw or derived.')
+  
+  # check to make sure a value has not been passed for both filename and source
+  if (parser.parse_args().source_dir != None and
+      parser.parse_args().source_file != None):
+      # executes if both conditions are true
+      print("Cannot pass values to both source_dir and source_file."
+            " Value must be passed to either source_dir or source_file.")
+      parser.print_help()
+      parser.exit()
 
+  # check to see if file exists
+  if parser.parse_args().source_file != None:
+      source_file = str(parser.parse_args().source_file)
+      if not os.path.isfile(source_file):
+          print("The file named '{}' does not exist!\n".format(source_file))
+          parser.print_help()
+          parser.exit()
   # check if papi directory exists
-  source = str(parser.parse_args().source)
-  if os.path.isdir(source) == False:
-    print("Measurement directory '{}' does not exist!\n".format(source))
+  elif parser.parse_args().source_dir != None:
+      source_dir = str(parser.parse_args().source_dir)
+      if os.path.isdir(source_dir) == False:
+          print("Measurement directory '{}' does not exist!\n".format(source_dir))
+          parser.print_help()
+          parser.exit()
+  # output if neither source_file or source_dir are supplied
+  else:
+    print("Path to either a JSON file (--source_file) or a" 
+          " dictionary (--source_dir) which contains a JSON file is required.")
     parser.print_help()
     parser.exit()
-
+    
   # check format
   output_format = str(parser.parse_args().format)
   if output_format != "json":
@@ -539,6 +592,7 @@ def parse_args():
 if __name__ == '__main__':
   args = parse_args()
   main(format=args.format,
-       source=args.source,
+       source_dir=args.source_dir,
+       source_file=args.source_file,
        type=args.type,
        notation=args.notation)
