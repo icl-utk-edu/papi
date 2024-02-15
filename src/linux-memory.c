@@ -1253,13 +1253,13 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
             MEMDBG("Could not read cache type\n");
             goto unrecoverable_error;
         }
-        if (!strcmp(type_string,"Data")) {
+        if (!strcmp(type_string,"Data") || !strcmp(type_string,"Data\n")) {
             type=PAPI_MH_TYPE_DATA;
         }
-        if (!strcmp(type_string,"Instruction")) {
+        if (!strcmp(type_string,"Instruction") || !strcmp(type_string,"Instruction\n")) {
             type=PAPI_MH_TYPE_INST;
         }
-        if (!strcmp(type_string,"Unified")) {
+        if (!strcmp(type_string,"Unified") || !strcmp(type_string,"Unified\n")) {
             type=PAPI_MH_TYPE_UNIFIED;
         }
 
