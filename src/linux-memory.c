@@ -1084,11 +1084,50 @@ PAPI_mh_info_t sys_mem_info[] = {
        }
       ,
       }
-     }                         // Fujitsu A64FX end
+     },                        // Fujitsu A64FX end
+    {3,                        // ARM Neoverse V2 begin
+     {
+      [0] = { // level 1 begins
+            .tlb = {
+            [0] = { .type = PAPI_MH_TYPE_INST | PAPI_MH_TYPE_FIFO,
+                            .num_entries = 48, .page_size = -1,
+                            .associativity = SHRT_MAX }
+            ,
+            [1] = { .type = PAPI_MH_TYPE_DATA | PAPI_MH_TYPE_FIFO,
+                            .num_entries = 48, .page_size = -1,
+                            .associativity = SHRT_MAX }
+            }
+       }
+      ,
+      [1] = { // level 2 begins
+            .tlb = {
+            [0] = { .type = PAPI_MH_TYPE_UNIFIED, .num_entries = 2048,
+                        .page_size = -1, .associativity = 8 }
+            ,
+            [1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+                            .page_size = -1, .associativity = -1 }
+            }
+       }
+      ,
+      [2] = { // level 3 begins
+            .tlb = {
+            [0] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+                            .page_size = -1, .associativity = -1 }
+            ,
+            [1] = { .type = PAPI_MH_TYPE_EMPTY, .num_entries = -1,
+                            .page_size = -1, .associativity = -1 }
+            }
+       }
+      ,
+      }
+     }                         // ARM Neoverse V2 end
 };
 
 #define IMPLEMENTER_FUJITSU 0x46
 #define PARTNUM_FUJITSU_A64FX 0x001
+
+#define IMPLEMENTER_ARM 0x41
+#define PARTNUM_ARM_NEOVERSE_V2 0xd4f
 
 int
 aarch64_get_memory_info( PAPI_hw_info_t * hw_info )
@@ -1104,6 +1143,17 @@ aarch64_get_memory_info( PAPI_hw_info_t * hw_info )
         switch ( partnum ) {
         case PARTNUM_FUJITSU_A64FX: /* Fujitsu A64FX */
             index = 0;
+            break;
+        default:
+            generic_get_memory_info (hw_info);
+            return 0;
+        }
+        break;
+    case IMPLEMENTER_ARM:
+        switch ( partnum ) {
+        case PARTNUM_ARM_NEOVERSE_V2: /* ARM Neoverse V2 */
+            index = 1;
+            generic_get_memory_info (hw_info);
             break;
         default:
             generic_get_memory_info (hw_info);
