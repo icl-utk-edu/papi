@@ -1,5 +1,5 @@
 ARCH?=X86
-PAPIDIR?=${HOME}/usr
+PAPIDIR?=${PAPI_DIR}
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
 INCFLAGS=-I$(PAPIDIR)/include
