@@ -2,7 +2,7 @@
 
 The CORETEMP component enables PAPI-C to access hardware monitoring sensors through the coretemp sysfs interface. This component will dynamically create a native events table for all the sensors that can be found under /sys/class/hwmon/hwmon[0-9]+.
 
-* [Enabling the CORETEMP Component](#markdown-header-enabling-the-coretemp-component)
+* [Enabling the CORETEMP Component](#enabling-the-coretemp-component)
 
 ***
 ## Enabling the CORETEMP Component

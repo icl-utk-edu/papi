@@ -2,9 +2,9 @@
 
 The APPIO component enables PAPI to access application level file and socket I/O information. 
 
-* [Enabling the APPIO Component](#markdown-header-enabling-the-appio-component)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the APPIO Component](#enabling-the-appio-component)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 
 ***
 ## Enabling the APPIO Component
@@ -35,7 +35,7 @@ Threads are handled using thread-specific structures in the backend. However, no
 ***
 ## FAQ
 
-1. [Testing](#markdown-header-testing)
+1. [Testing](#testing)
 
 ## Testing
 Tests lie in the tests/ sub-directory. All test take no argument.

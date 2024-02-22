@@ -2,7 +2,7 @@
 
 The VMWARE component supports reading vmguest and pseudo counters.
 
-* [Enabling the VMWARE Component] (#markdown-header-enabling-the-vmware-component)
+* [Enabling the VMWARE Component](#enabling-the-vmware-component)
 
 ***
 ## Enabling the VMWARE Component

@@ -4,9 +4,9 @@ The POWERCAP\_PPC component supports measuring and capping power usage
 on recent IBM PowerPC architectures (Power9 and later) using the powercap
 interface exposed through the Linux kernel.
 
-* [Enabling the POWERCAP\_PPC Component](#markdown-header-enabling-the-powercap-ppc-component)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the POWERCAP\_PPC Component](#enabling-the-powercap_ppc-component)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 
 ***
 ## Enabling the POWERCAP\_PPC Component
@@ -31,7 +31,7 @@ Use chmod to set site-appropriate access permissions (e.g. 664) for /sys/firmwar
 
 ## FAQ
 
-1. [Measuring and Capping Power](#markdown-header-measuring-and-capping-power)
+1. [Measuring and Capping Power](#measuring-and-capping-power)
 
 ## Measuring and Capping Power
 

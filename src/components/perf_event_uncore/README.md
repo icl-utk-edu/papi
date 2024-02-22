@@ -2,8 +2,8 @@
 
 The PERF\_EVENT_UNCORE component enables PAPI to access perf\_event CPU uncore and northbridge.
 
-* [Enabling the PERF\_EVENT\_UNCORE Component](#markdown-header-enabling-the-perf-event-uncore-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the PERF\_EVENT\_UNCORE Component](#enabling-the-perf_event_uncore-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the PERF\_EVENT\_UNCORE Component
@@ -16,7 +16,7 @@ to the user, and whether they are disabled, and when they are disabled why.
 
 ## FAQ
 
-1. [Measuring Uncore Events](#markdown-header-measuring-uncore-events)
+1. [Measuring Uncore Events](#measuring-uncore-events)
 
 ## Measuring Uncore Events
 

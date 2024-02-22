@@ -2,7 +2,7 @@
 
 The STEALTIME component enables PAPI to access stealtime filesystem statistics.
 
-* [Enabling the STEALTIME Component](#markdown-header-enabling-the-stealtime-component)
+* [Enabling the STEALTIME Component](#enabling-the-stealtime-component)
 
 ***
 ## Enabling the STEALTIME Component

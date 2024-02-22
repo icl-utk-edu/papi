@@ -4,12 +4,12 @@ The ROCM_SMI (System Management Interface) component exposes hardware management
 counters and controls for AMD GPUs, such as power consumption, fan speed and
 temperature readings; it also allows capping of power consumption.
 
-* [Enabling the ROCM_SMI Component](#markdown-header-enabling-the-rocm_smi-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the ROCM_SMI Component](#enabling-the-rocm_smi-component)
+* [Environment Variables](#environment-variables)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 ***
-## Enabling the ROCM Component
+## Enabling the ROCM_SMI Component
 
 To enable reading or writing of ROCM_SMI counters the user needs to link
 against a PAPI library that was configured with the ROCM_SMI component enabled.
@@ -44,7 +44,7 @@ Within PAPI_ROCMSMI_ROOT, we expect the following standard directories:
 ***
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
+1. [Unusual installations](#unusual-installations)
 
 ## Unusual installations
 For the ROCM_SMI component to be operational, it must find the dynamic

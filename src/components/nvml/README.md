@@ -4,10 +4,10 @@ The NVML (NVIDIA Management Library) component exposes hardware management
 counters and controls for NVIDIA GPUs, such as power consumption, fan speed and
 temperature readings; it also allows capping of power consumption.
 
-* [Enabling the NVML Component](#markdown-header-enabling-the-nvml-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the NVML Component](#enabling-the-nvml-component)
+* [Environment Variables](#environment-variables)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 ***
 ## Enabling the NVML Component
 
@@ -51,7 +51,7 @@ power limits; such permissions are typically granted by your sysadmin.
 
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
+1. [Unusual installations](#unusual-installations)
 
 ## Unusual installations
 One library is required for the PAPI NVML component: `libnvidia-ml.so`.  

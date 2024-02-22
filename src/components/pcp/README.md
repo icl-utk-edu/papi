@@ -5,10 +5,10 @@ Performance Metrics Domain Agent (PMDA) perfevent. This allows monitoring
 of IBM Power 9 'nest' events via PCP without elevated privileges. This 
 component was developed and tested using PCP version 3.12.2. 
 
-* [Enabling the PCP Component](#markdown-header-enabling-the-pcp-component)
-* [Environment Variables](#markdown-header-environment-variables)
-* [Known Limitations](#markdown-header-known-limitations)
-* [FAQ](#markdown-header-faq)
+* [Enabling the PCP Component](#enabling-the-pcp-component)
+* [Environment Variables](#environment-variables)
+* [Known Limitations](#known-limitations)
+* [FAQ](#faq)
 ***
 ## Enabling the PCP Component
 
@@ -102,7 +102,7 @@ PCP_EVENT_NAME:cpu63.
 ***
 ## FAQ
 
-1. [Unusual installations](#markdown-header-unusual-installations)
+1. [Unusual installations](#unusual-installations)
 
 ## Unusual installations
 For the PCP component to be operational, it must find the dynamic library

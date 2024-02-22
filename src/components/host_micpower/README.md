@@ -5,8 +5,8 @@ The component makes use of the MicAccessAPI distributed with the Intel Manycore 
 (http://software.intel.com/en-us/articles/intel-manycore-platform-software-stack-mpss)
 Specifically in the intel-mic-sysmgmt package.
 
-* [Enabling the HOST\_MICPOWER Component](#markdown-header-enabling-the-host_micpower-component)
-* [FAQ](#markdown-header-faq)
+* [Enabling the HOST\_MICPOWER Component](#enabling-the-host_micpower-component)
+* [FAQ](#faq)
 
 ***
 ## Enabling the HOST\_MICPOWER Component

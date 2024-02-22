@@ -3,28 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "sde_lib.h"
-#include "sde_lib.hpp"
+#include "simple2.hpp"
 
-// API functions
-void simple_init(void);
-double simple_compute(double x);
-
-// The following counters are hidden to programs linking with
-// this library, so they can not be accessed directly.
-static double comp_value;
-static long long int total_iter_cnt, low_wtrmrk, high_wtrmrk;
-
-static const char *ev_names[4] = {
-    "COMPUTED_VALUE",
-    "TOTAL_ITERATIONS",
-    "LOW_WATERMARK_REACHED",
-    "HIGH_WATERMARK_REACHED"
-};
-
-long long int counter_accessor_function( double *param );
-
-void simple_init(void){
+Simple::Simple(){
     papi_sde::PapiSde sde("Simple2_CPP");
 
     // Initialize library specific variables
@@ -44,30 +25,8 @@ void simple_init(void){
     return;
 }
 
-// The following function will _NOT_ be called by other libray functions or normal
-// applications. It is a hook for the utility 'papi_native_avail' to be able to
-// discover the SDEs that are exported by this library.
-papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
-    papi_handle_t handle = fptr_struct->init("Simple2_CPP");
-    handle = fptr_struct->init("Simple2_CPP");
-    fptr_struct->register_fp_counter(handle, ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, NULL, NULL);
-    fptr_struct->register_counter(handle, ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &total_iter_cnt);
-    fptr_struct->register_counter(handle, ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &low_wtrmrk);
-    fptr_struct->register_counter(handle, ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, &high_wtrmrk);
-    fptr_struct->add_counter_to_group(handle, ev_names[2], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
-    fptr_struct->add_counter_to_group(handle, ev_names[3], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
-
-    fptr_struct->describe_counter(handle, ev_names[0], "Sum of values that are within the watermarks.");
-    fptr_struct->describe_counter(handle, ev_names[1], "Total iterations executed by the library.");
-    fptr_struct->describe_counter(handle, ev_names[2], "Number of times a value was below the low watermark.");
-    fptr_struct->describe_counter(handle, ev_names[3], "Number of times a value was above the high watermark.");
-    fptr_struct->describe_counter(handle, "ANY_WATERMARK_REACHED",  "Number of times a value was not between the two watermarks.");
-
-    return handle;
-}
-
 // This function allows the library to perform operations in order to compute the value of an SDE at run-time
-long long counter_accessor_function( double *param ){
+long long Simple::counter_accessor_function( double *param ){
     long long ll;
     double *dbl_ptr = param;
 
@@ -82,7 +41,7 @@ long long counter_accessor_function( double *param ){
 
 // Perform some nonsense computation to emulate a possible library behavior.
 // Notice that no SDE routines need to be called in the critical path of the library.
-double simple_compute(double x){
+double Simple::simple_compute(double x){
     double sum = 0.0;
     int lcl_iter = 0;
 
@@ -131,4 +90,26 @@ double simple_compute(double x){
     total_iter_cnt += lcl_iter;
 
     return sum;
+}
+
+// The following function will _NOT_ be called by other libray functions or normal
+// applications. It is a hook for the utility 'papi_native_avail' to be able to
+// discover the SDEs that are exported by this library.
+extern "C" papi_handle_t papi_sde_hook_list_events( papi_sde_fptr_struct_t *fptr_struct){
+    papi_handle_t handle = fptr_struct->init("Simple2_CPP");
+    handle = fptr_struct->init("Simple2_CPP");
+    fptr_struct->register_fp_counter(handle, Simple::ev_names[0], PAPI_SDE_RO|PAPI_SDE_INSTANT, PAPI_SDE_double, NULL, NULL);
+    fptr_struct->register_counter(handle, Simple::ev_names[1], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, NULL);
+    fptr_struct->register_counter(handle, Simple::ev_names[2], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, NULL);
+    fptr_struct->register_counter(handle, Simple::ev_names[3], PAPI_SDE_RO|PAPI_SDE_DELTA,   PAPI_SDE_long_long, NULL);
+    fptr_struct->add_counter_to_group(handle, Simple::ev_names[2], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
+    fptr_struct->add_counter_to_group(handle, Simple::ev_names[3], "ANY_WATERMARK_REACHED", PAPI_SDE_SUM);
+
+    fptr_struct->describe_counter(handle, Simple::ev_names[0], "Sum of values that are within the watermarks.");
+    fptr_struct->describe_counter(handle, Simple::ev_names[1], "Total iterations executed by the library.");
+    fptr_struct->describe_counter(handle, Simple::ev_names[2], "Number of times a value was below the low watermark.");
+    fptr_struct->describe_counter(handle, Simple::ev_names[3], "Number of times a value was above the high watermark.");
+    fptr_struct->describe_counter(handle, "ANY_WATERMARK_REACHED",  "Number of times a value was not between the two watermarks.");
+
+    return handle;
 }
