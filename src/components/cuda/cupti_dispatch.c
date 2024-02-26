@@ -257,9 +257,9 @@ int cuptid_event_table_find_name(ntv_event_table_t evt_table, const char *evt_na
     return cuptiu_event_table_find_name(evt_table, evt_name, found_rec);
 }
 
-int cuptid_event_table_insert_record(ntv_event_table_t evt_table, const char *evt_name, unsigned int evt_code, int evt_pos)
+int cuptid_event_table_insert_record(ntv_event_table_t evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices)
 {
-    return cuptiu_event_table_insert_record(evt_table, evt_name, evt_code, evt_pos);
+    return cuptiu_event_table_insert_record(evt_table, evt_name, evt_code, evt_pos, num_devices);
 }
 
 int cuptid_event_table_get_item(ntv_event_table_t evt_table, unsigned int evt_idx, ntv_event_t *record)

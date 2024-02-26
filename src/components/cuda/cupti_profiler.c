@@ -443,7 +443,7 @@ static int add_events_per_gpu(cuptip_control_t state, cuptiu_event_table_t *even
             papi_errno = PAPI_EINVAL;
             goto fn_exit;
         }
-        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i);
+        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i, NULL);
         LOGDBG("Adding event gpu %d name %s with code %d at pos %d\n", gpu_id, evt_rec->name, evt_rec->evt_code, i);
     }
 fn_exit:
@@ -1205,11 +1205,25 @@ fn_fail:
 
 int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
 {
-    int gpu_id, i, found, listsubmetrics = 1, papi_errno = PAPI_OK;
+    int gpu_id, i, length = 0, found, listsubmetrics = 1, papi_errno = PAPI_OK;
+    char num_devices[num_gpus], formatted_devices[num_gpus];
+    char evt_name_quals[PAPI_MAX_STR_LEN] = { 0 };
     if (avail_events[0].nv_metrics != NULL) {
         /* Already eumerated for 1st device? Then exit... */
         goto fn_exit;
     }
+
+    /* Get total number of devices available and format output */
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
+        if (gpu_id != num_gpus - 1) {
+            length += sprintf(num_devices + length, "%c,", gpu_id + '0');       
+        }
+        else {
+            length += sprintf(num_devices + length, "%c", gpu_id + '0');
+        } 
+    }
+    sprintf(formatted_devices,"<%s>", num_devices);
+
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         LOGDBG("Getting metric names for gpu %d\n", gpu_id);
         found = find_same_chipname(gpu_id);
@@ -1237,9 +1251,14 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             goto fn_exit;
         }
         for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
-            papi_errno = cuptiu_event_table_insert_record(avail_events[gpu_id].nv_metrics,
-                                      getMetricNameBeginParams.ppMetricNames[i],
-                                      i, 0);
+            papi_errno = cuptiu_get_basename( getMetricNameBeginParams.ppMetricNames[i],
+                                              evt_name_quals, PAPI_MAX_STR_LEN );
+            if (papi_errno != PAPI_OK) {
+                goto fn_exit;
+            }
+            papi_errno = cuptiu_event_table_insert_record( avail_events[gpu_id].nv_metrics,
+                                                           evt_name_quals, i, 0,
+                                                           formatted_devices );
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
@@ -1264,14 +1283,15 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
-            len = snprintf(evt_name, PAPI_2MAX_STR_LEN, "%s:device=%d", evt_rec->name, gpu_id);
+            len = snprintf( evt_name, PAPI_2MAX_STR_LEN, evt_rec->name );
             if (len > PAPI_2MAX_STR_LEN) {
                 ERRDBG("String formatting exceeded maximum length.\n");
                 papi_errno = PAPI_ENOMEM;
                 goto fn_exit;
             }
             if (cuptiu_event_table_find_name(all_evt_names, evt_name, &find) == PAPI_ENOEVNT) {
-                papi_errno = cuptiu_event_table_insert_record(all_evt_names, evt_name, curr, 0);
+                papi_errno = cuptiu_event_table_insert_record( all_evt_names, evt_name,
+                                                               curr, 0, formatted_devices );
                 if (papi_errno != PAPI_OK) {
                     goto fn_exit;
                 }
@@ -1288,19 +1308,23 @@ fn_fail:
 
 int cuptip_event_name_to_descr(const char *evt_name, char *description)
 {
-    int papi_errno, numdep, gpu_id, passes;
+    int papi_errno, numdep, passes;
+    const int gpu_id = 0;
     char nv_name[PAPI_MAX_STR_LEN];
     cuptiu_event_t *evt_rec = NULL;
     NVPA_RawMetricRequest *temp;
+    /* As stands this is not needed
     papi_errno = event_name_tokenize(evt_name, nv_name, &gpu_id);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, nv_name, &evt_rec);
+    */
+    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, evt_name, &evt_rec);
     if (papi_errno != PAPI_OK) {
         ERRDBG("Event name not found in avail_events array.\n");
         goto fn_exit;
     }
+    reconstruct_name( evt_name, nv_name, PAPI_MAX_STR_LEN );
     char *desc = evt_rec->desc;
     if (desc[0] == '\0') {
         papi_errno = retrieve_metric_details(avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
@@ -1324,7 +1348,7 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
             };
             NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), goto fn_fail );
 
-            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d", passes);
+            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d:Device#:%s", passes, evt_rec->devices);
             if (passes > 1) {
                 snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
             }
@@ -1718,5 +1742,84 @@ int cuptip_shutdown(void)
     finalize_cupti_profiler_api();
     unload_nvpw_sym();
     unload_cupti_perf_sym();
+    return PAPI_OK;
+}
+
+int cuptiu_get_basename(const char *evt_name, char *base, int len) {
+
+    char *p;
+    char *flavor;
+
+    /* check to see if max_rate, pct, or ratio are within event name */
+    if ( (strstr(evt_name, ".max_rate")) ||
+         (strstr(evt_name, ".pct") &&  !strstr(evt_name, ".pct_")) ||
+         (strstr(evt_name, ".ratio")) ) {
+
+        strcpy(base, evt_name);
+        strcat(base, ":<Device#>");
+    }
+    else if (p = strstr(evt_name, ".")) {
+        if (len < (int)(p - evt_name)) {
+            return PAPI_EINVAL;
+        }
+        strncpy(base, evt_name, (size_t)(p-evt_name));
+        base[(p-evt_name)] = '\0';
+        if (strstr(p, "pct")) {
+            flavor = strstr(p, "pct");
+            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        }
+        else if (strstr(p, "per")) {
+            flavor = strstr(p, "per");
+            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        }
+        else if (strstr(p, "peak")) {
+            flavor = strstr(p, "peak");
+            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        }
+        else {
+            snprintf(base + strlen(base), len - strlen(base), ".%s:%s", "<Qualifier1>", "<Device#>");    
+        }
+    }
+    else {
+        if (len < (int) strlen(evt_name)) {
+            return -1;
+        }
+        strncpy(base, evt_name, (size_t) len);
+        base[(p-evt_name)] = '\0';
+    }
+
+    return PAPI_OK;
+}
+
+int reconstruct_name(const char *name, char *base, int len) {
+    char *remove_qualifiers;
+    char flavor[PAPI_MAX_STR_LEN] = { 0 };
+    char *p;
+
+    remove_qualifiers = strstr(name, ".");
+    snprintf(base, (size_t)(remove_qualifiers - name) + 1, "%s", name);
+
+    if (strstr(remove_qualifiers, ".per_")){
+        p = strstr(remove_qualifiers, ".per_");
+        strncpy(flavor, p, (size_t)(strlen(p) - 10));
+
+        snprintf(base + strlen(base), len - strlen(base), ".%s%s", "min", flavor);
+    }
+    else if (strstr(remove_qualifiers, ".pct_")) {
+        p = strstr(remove_qualifiers, ".pct_");
+        strncpy(flavor, p, (size_t)(strlen(p) - 10));
+
+        snprintf(base + strlen(base), len - strlen(base), ".%s%s", "min", flavor);
+    }
+    else if (strstr(remove_qualifiers, ".peak_")) {
+        p = strstr(remove_qualifiers, ".peak_");
+        strncpy(flavor, p, (size_t)(strlen(p) - 10));
+
+        snprintf(base + strlen(base), len - strlen(base), ".%s%s", "min", flavor);
+    }
+    else {
+        snprintf(base +strlen(base), len - strlen(base), ".%s", "min");  
+    }
+
     return PAPI_OK;
 }

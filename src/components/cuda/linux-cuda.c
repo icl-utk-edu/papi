@@ -234,7 +234,7 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     else {
         _papi_hwi_lock(COMPONENT_LOCK);
         *event_code = global_event_names->count;
-        papi_errno = cuptid_event_table_insert_record(global_event_names, name, global_event_names->count, 0);
+        papi_errno = cuptid_event_table_insert_record(global_event_names, name, global_event_names->count, 0, NULL);
         _papi_hwi_unlock(COMPONENT_LOCK);
     }
 fn_exit:
