@@ -1251,8 +1251,8 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             goto fn_exit;
         }
         for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
-            papi_errno = cuptiu_get_basename( getMetricNameBeginParams.ppMetricNames[i],
-                                              evt_name_quals, PAPI_MAX_STR_LEN );
+            papi_errno = cuptiu_get_qualifier_name( getMetricNameBeginParams.ppMetricNames[i],
+                                                    evt_name_quals, PAPI_MAX_STR_LEN );
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
@@ -1745,47 +1745,48 @@ int cuptip_shutdown(void)
     return PAPI_OK;
 }
 
-int cuptiu_get_basename(const char *evt_name, char *base, int len) {
+int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int len) {
 
     char *p;
     char *flavor;
 
-    /* check to see if max_rate, pct, or ratio are within event name */
+    /* Check to see if max_rate, pct, or ratio are within event name */
     if ( (strstr(evt_name, ".max_rate")) ||
          (strstr(evt_name, ".pct") &&  !strstr(evt_name, ".pct_")) ||
          (strstr(evt_name, ".ratio")) ) {
-
-        strcpy(base, evt_name);
-        strcat(base, ":<Device#>");
+        
+        snprintf(qualifier_name, len, "%s:%s", evt_name, "<Device#>");
     }
     else if (p = strstr(evt_name, ".")) {
         if (len < (int)(p - evt_name)) {
+            printf("Provided string length is not large enough.");
             return PAPI_EINVAL;
         }
-        strncpy(base, evt_name, (size_t)(p-evt_name));
-        base[(p-evt_name)] = '\0';
-        if (strstr(p, "pct")) {
-            flavor = strstr(p, "pct");
-            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        /* +1 is needed to account for null terminating character */
+        snprintf(qualifier_name, ( p - evt_name ) + 1, "%s", evt_name);
+        if (flavor = strstr(p, "pct")) {
+            snprintf( qualifier_name + strlen(qualifier_name), len - strlen(qualifier_name),
+                      ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>" );
         }
-        else if (strstr(p, "per")) {
-            flavor = strstr(p, "per");
-            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        else if (flavor = strstr(p, "per")) {
+            snprintf( qualifier_name + strlen(qualifier_name), len - strlen(qualifier_name),
+                      ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>" );
         }
-        else if (strstr(p, "peak")) {
-            flavor = strstr(p, "peak");
-            snprintf(base + strlen(base), len - strlen(base), ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>");
+        else if (flavor = strstr(p, "peak")) {
+            snprintf( qualifier_name + strlen(qualifier_name), len - strlen(qualifier_name),
+                      ".%s.%s:%s", "<Qualifier1>", flavor, "<Device#>" );
         }
         else {
-            snprintf(base + strlen(base), len - strlen(base), ".%s:%s", "<Qualifier1>", "<Device#>");    
+            snprintf( qualifier_name + strlen(qualifier_name), len - strlen(qualifier_name),
+                      ".%s:%s", "<Qualifier1>", "<Device#>" );    
         }
     }
     else {
         if (len < (int) strlen(evt_name)) {
-            return -1;
+            printf("Provided string length is not large enough.");
+            return PAPI_EINVAL;
         }
-        strncpy(base, evt_name, (size_t) len);
-        base[(p-evt_name)] = '\0';
+        snprintf( qualifier_name, len, "%s", evt_name );
     }
 
     return PAPI_OK;
