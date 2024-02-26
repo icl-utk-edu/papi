@@ -34,7 +34,7 @@ void cuptid_event_table_destroy(ntv_event_table_t *evt_table);
 int cuptid_event_table_create(ntv_event_table_t *evt_table);
 int cuptid_event_table_select_by_idx(ntv_event_table_t src, int count, int *idcs, ntv_event_table_t *pevt_names);
 int cuptid_event_table_find_name(ntv_event_table_t evt_table, const char *evt_name, ntv_event_t *found_rec);
-int cuptid_event_table_insert_record(ntv_event_table_t evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
+int cuptid_event_table_insert_record(ntv_event_table_t evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices);
 int cuptid_event_table_get_item(ntv_event_table_t evt_table, unsigned int evt_idx, ntv_event_t *record);
 
 #endif /* __CUPTI_DISPATCH_H__ */

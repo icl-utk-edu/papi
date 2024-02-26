@@ -85,7 +85,7 @@ fn_exit:
     return papi_errno;
 }
 
-int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos)
+int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices)
 {
     int papi_errno = PAPI_OK;
 
@@ -101,6 +101,9 @@ int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char
     strcpy(evt_rec->name, evt_name);
     evt_rec->evt_code = evt_code;
     evt_rec->evt_pos = evt_pos;
+    if (num_devices != NULL)
+        strcpy(evt_rec->devices, num_devices);
+
     /* Insert entry in string hash table */
     if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_name, evt_rec)) {
         return PAPI_ENOMEM;
@@ -130,7 +133,7 @@ int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *
             cuptiu_event_table_destroy(&target);
             goto fn_fail;
         }
-        papi_errno = cuptiu_event_table_insert_record(target, evt_rec->name, evt_rec->evt_code, evt_rec->evt_pos);
+        papi_errno = cuptiu_event_table_insert_record(target, evt_rec->name, evt_rec->evt_code, evt_rec->evt_pos, NULL);
         if (papi_errno != PAPI_OK) {
             cuptiu_event_table_destroy(&target);
             goto fn_fail;
