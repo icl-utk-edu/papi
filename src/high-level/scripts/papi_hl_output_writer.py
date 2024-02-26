@@ -13,14 +13,22 @@ import os
 import json
 # Make it work for Python 2+3 and with Unicode
 import io
+##\cond
 try:
   to_unicode = unicode
 except NameError:
   to_unicode = str
+##\endcond
 
+## @var event_definitions
+# Holds event and associated metadata for an event. 
 event_definitions = {}
+## @var process_num
+# Holds the number of regions. E.g. computation. 
 process_num = {}
 
+## @var derived_metric_names
+# Dictionary containing presets that are derived from underlying hardware metrics.
 derived_metric_names = {
   'region_count':'Region count',
   'cycles':'Total elapsed cycles',
@@ -28,6 +36,8 @@ derived_metric_names = {
   'perf::TASK-CLOCK':'CPU time in s'
 }
 
+## @var event_rate_names 
+# Ordered dictionary containing rate events.
 event_rate_names = OrderedDict([
       ('PAPI_FP_INS','MFLIPS/s'),
       ('PAPI_VEC_SP','Single precision vector/SIMD instructions rate in M/s'),
@@ -604,12 +614,6 @@ def main(format, type, notation, source_dir = None, source_file = None):
         print("Format not supported!")
 
 ## Defines and parses command line arguments.
-# @param --source_dir Measurement directory of raw data.
-# @param --source_file Individual .json file containing measurements of raw data.
-# @param --format Output format, e.g. json.
-# @param --type Output type: detail or summary.
-# @param --notation Output notation: raw or derived.
-# @returns Determined command line arguments.
 def parse_args():
   parser = argparse.ArgumentParser()
   parser.add_argument('--source_dir', type=str, required=False,
@@ -677,12 +681,12 @@ def parse_args():
 
   return parser.parse_args()
 
-## Check to make sure that the file is run as the
-## main program/script. 
 if __name__ == '__main__':
+  ##\cond
   args = parse_args()
   main(format=args.format,
        source_dir=args.source_dir,
        source_file=args.source_file,
        type=args.type,
        notation=args.notation)
+  ##\endcond
