@@ -1214,15 +1214,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
     }
 
     /* Get total number of devices available and format output */
-    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
-        if (gpu_id != num_gpus - 1) {
-            length += sprintf(num_devices + length, "%c,", gpu_id + '0');       
-        }
-        else {
-            length += sprintf(num_devices + length, "%c", gpu_id + '0');
-        } 
-    }
-    sprintf(formatted_devices,"<%s>", num_devices);
+    cuptiu_get_num_devices(num_gpus, formatted_devices);
 
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         LOGDBG("Getting metric names for gpu %d\n", gpu_id);
@@ -1788,6 +1780,24 @@ int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int le
         }
         snprintf( qualifier_name, len, "%s", evt_name );
     }
+
+    return PAPI_OK;
+}
+
+
+int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices) {
+    int gpu_id, length = 0;
+    char num_devices[number_of_gpus];
+
+    for (gpu_id = 0; gpu_id < number_of_gpus; gpu_id++) {
+        if (gpu_id != num_gpus - 1) {
+            length += sprintf( num_devices + length, "%c,", gpu_id + '0' );       
+        }
+        else {
+            length += sprintf( num_devices + length, "%c", gpu_id + '0' );
+        } 
+    }
+    sprintf( formatted_devices,"<%s>", num_devices );
 
     return PAPI_OK;
 }

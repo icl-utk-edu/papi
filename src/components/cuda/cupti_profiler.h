@@ -21,6 +21,7 @@ int cuptip_control_reset(cuptip_control_t state);
 int cuptip_event_enum(cuptiu_event_table_t *all_evt_names);
 int cuptip_event_name_to_descr(const char *evt_name, char *description);
 int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int len);
+int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices);
 int reconstruct_name(const char *name, char *base, int len);
 int cuptip_shutdown(void);
 #endif  /* __CUPTI_PROFILER_H__ */
