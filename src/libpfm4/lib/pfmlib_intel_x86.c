@@ -923,7 +923,7 @@ pfm_intel_x86_validate_table(void *this, FILE *fp)
 		}
 
 		for (j=i+1; j < (int)pmu->pme_count; j++) {
-			if (pe[i].code == pe[j].code && pe[i].model == pe[j].model && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk) {
+			if (pe[i].code == pe[j].code && pe[i].model == pe[j].model && !intel_x86_eflag(pmu, i, INTEL_X86_DEPRECATED) && !(pe[j].equiv || pe[i].equiv) && pe[j].cntmsk == pe[i].cntmsk && !intel_x86_eflag(pmu, i, INTEL_X86_CODE_DUP) && !!intel_x86_eflag(pmu, j, INTEL_X86_CODE_DUP))  {
 				fprintf(fp, "pmu: %s events %s and %s have the same code 0x%x\n", pmu->name, pe[i].name, pe[j].name, pe[i].code);
 				error++;
 				}
