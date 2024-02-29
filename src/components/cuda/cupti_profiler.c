@@ -443,7 +443,7 @@ static int add_events_per_gpu(cuptip_control_t state, cuptiu_event_table_t *even
             papi_errno = PAPI_EINVAL;
             goto fn_exit;
         }
-        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i, NULL);
+        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i, NULL, NULL);
         LOGDBG("Adding event gpu %d name %s with code %d at pos %d\n", gpu_id, evt_rec->name, evt_rec->evt_code, i);
     }
 fn_exit:
@@ -1205,9 +1205,10 @@ fn_fail:
 
 int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
 {
-    int gpu_id, i, length = 0, found, listsubmetrics = 1, papi_errno = PAPI_OK;
-    char num_devices[num_gpus], formatted_devices[num_gpus];
-    char evt_name_quals[PAPI_MAX_STR_LEN] = { 0 };
+    int gpu_id, i, quals_idx = 0, found, listsubmetrics = 1, papi_errno = PAPI_OK;
+    char formatted_devices[num_gpus], prev_base[PAPI_MAX_STR_LEN], curr_base[PAPI_MAX_STR_LEN];
+    char formatted_evt_names[PAPI_MAX_STR_LEN] = { 0 };
+    char *array_of_quals[3500];
     if (avail_events[0].nv_metrics != NULL) {
         /* Already eumerated for 1st device? Then exit... */
         goto fn_exit;
@@ -1215,7 +1216,9 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
 
     /* Get total number of devices available and format output */
     cuptiu_get_num_devices(num_gpus, formatted_devices);
-
+    /* Collect qualifiers */
+    //cuptiu_collect_qualifiers(avail_events[0].num_metrics, avail_events[0].nv_metrics);
+    /* I think you have to loop through to check each gpu, because you could have a combination I suppose*/
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         LOGDBG("Getting metric names for gpu %d\n", gpu_id);
         found = find_same_chipname(gpu_id);
@@ -1224,8 +1227,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             avail_events[gpu_id].nv_metrics = avail_events[found].nv_metrics;
             continue;
         }
-        /* If same chip_name not found, get all the details for this gpu */
-
+        /* If same chip_name not found, get all the details for this gpu */     
         NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
             .pPriv = NULL,
@@ -1237,25 +1239,37 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
         NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
         avail_events[gpu_id].num_metrics = getMetricNameBeginParams.numMetrics;
-
+        /* Collect qualifiers, should occur for first gpu */
+        if (gpu_id == 0) {
+           cuptiu_collect_qualifiers(avail_events[gpu_id].num_metrics, getMetricNameBeginParams.ppMetricNames, array_of_quals);
+        }
         papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_id].num_metrics, sizeof(cuptiu_event_t), &(avail_events[gpu_id].nv_metrics));
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
+        
+        snprintf( prev_base, (strstr(getMetricNameBeginParams.ppMetricNames[0], ".") - getMetricNameBeginParams.ppMetricNames[0]) + 1,
+                  "%s", getMetricNameBeginParams.ppMetricNames[0] );
         for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
+            /* Reformat Cuda event name to include <Qualifier#> and Device# */
             papi_errno = cuptiu_get_qualifier_name( getMetricNameBeginParams.ppMetricNames[i],
-                                                    evt_name_quals, PAPI_MAX_STR_LEN );
+                                                    formatted_evt_names, PAPI_MAX_STR_LEN );
+            
+            snprintf(curr_base, ( strstr(formatted_evt_names, ".") - formatted_evt_names ) + 1, "%s", formatted_evt_names);
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
+            if (strcmp(prev_base, curr_base) != 0) {
+                quals_idx ++;
+                strcpy(prev_base, curr_base);
+            }
             papi_errno = cuptiu_event_table_insert_record( avail_events[gpu_id].nv_metrics,
-                                                           evt_name_quals, i, 0,
-                                                           formatted_devices );
+                                                           formatted_evt_names, i, 0,
+                                                           formatted_devices, array_of_quals[quals_idx] );
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
         }
-
         NVPW_MetricsContext_GetMetricNames_End_Params getMetricNameEndParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE,
             .pPriv = NULL,
@@ -1283,7 +1297,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             }
             if (cuptiu_event_table_find_name(all_evt_names, evt_name, &find) == PAPI_ENOEVNT) {
                 papi_errno = cuptiu_event_table_insert_record( all_evt_names, evt_name,
-                                                               curr, 0, formatted_devices );
+                                                               curr, 0, formatted_devices, array_of_quals[0] );
                 if (papi_errno != PAPI_OK) {
                     goto fn_exit;
                 }
@@ -1340,7 +1354,7 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
             };
             NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), goto fn_fail );
 
-            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d:Device#:%s", passes, evt_rec->devices);
+            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), "Numpass=%d", passes);
             if (passes > 1) {
                 snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
             }
@@ -1352,7 +1366,70 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
         }
         papi_free(temp);
     }
+    //sprintf(info->symbol, ":<Qualifier1>=%s:Device#=%s", evt_rec->quals, evt_rec->devices);
     strcpy(description, desc);
+fn_exit:
+    return papi_errno;
+fn_fail:
+    papi_errno = PAPI_EMISC;
+    goto fn_exit;
+}
+
+int cuptip_evt_name_to_info(const char *evt_name, PAPI_event_info_t *info) {
+    int papi_errno, numdep, passes;
+    const int gpu_id = 0;
+    char nv_name[PAPI_MAX_STR_LEN];
+    cuptiu_event_t *evt_rec = NULL;
+    NVPA_RawMetricRequest *temp;
+    /* As stands this is not needed
+    papi_errno = event_name_tokenize(evt_name, nv_name, &gpu_id);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+    */
+    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, evt_name, &evt_rec);
+    if (papi_errno != PAPI_OK) {
+        ERRDBG("Event name not found in avail_events array.\n");
+        goto fn_exit;
+    }
+    reconstruct_name( evt_name, nv_name, PAPI_MAX_STR_LEN );
+    char *desc = evt_rec->desc;
+    if (desc[0] == '\0') {
+        papi_errno = retrieve_metric_details(avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+                                             nv_name, desc, &numdep, &temp);
+        if (papi_errno == PAPI_OK) {
+            NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams = {
+                .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
+                .pPriv = NULL,
+                .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
+                .pChipName = avail_events[gpu_id].chip_name,
+            };
+            NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), goto fn_fail );
+
+            papi_errno = check_num_passes(nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+                                   numdep, temp, &passes);
+
+            NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
+                .structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE,
+                .pPriv = NULL,
+                .pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+            };
+            NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), goto fn_fail );
+
+            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), "Numpass=%d.", passes);
+            if (passes > 1) {
+                snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
+            }
+
+            const char *token_sw_evt = "sass";
+            if (strstr(nv_name, token_sw_evt) != NULL) {
+                snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (SW event)");
+            }
+        }
+        papi_free(temp);
+    }
+    sprintf(info->symbol, "%s:qualifier1=%i", "TEST_NAME_OUTPUT", 0);
+    sprintf(info->long_descr, "%s masks:Mandatory device qualifier [%s]", "Test Description.", evt_rec->quals);
 fn_exit:
     return papi_errno;
 fn_fail:
@@ -1737,6 +1814,21 @@ int cuptip_shutdown(void)
     return PAPI_OK;
 }
 
+/** @class cuptiu_get_qualifier_name
+  * @brief Format event name to include <Qualifier#> and <Device#>.
+  *
+  * @param *evt_name
+  *     Cuda event name.
+  * @param *qualifier_name
+        holds newly formatted event name.
+  * @param len 
+  *     number of characters.
+  *
+  * @retval PAPI_EINVAL
+  *     formatted_devices is not a large enough size.
+  * @retval PAPI_OK
+        everything ran successfully.
+ */
 int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int len) {
 
     char *p;
@@ -1784,7 +1876,19 @@ int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int le
     return PAPI_OK;
 }
 
-
+/** @class cuptiu_get_num_devices
+  * @brief Collect the number and format the number of devices.
+  *
+  * @param number_of_gpus 
+  *     total number of gpus.
+  * @param *formatted_devices
+        holds formatted gpu output.
+  *
+  * @retval PAPI_EINVAL
+  *     formatted_devices is not a large enough size.
+  * @retval PAPI_OK
+        everything ran successfully.
+ */ 
 int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices) {
     int gpu_id, length = 0;
     char num_devices[number_of_gpus];
@@ -1797,8 +1901,75 @@ int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices) {
             length += sprintf( num_devices + length, "%c", gpu_id + '0' );
         } 
     }
-    sprintf( formatted_devices,"<%s>", num_devices );
+    if (sizeof(num_devices) > sizeof(formatted_devices)) {
+        printf("Size of formatted devices is not large enough.");
+        return PAPI_EINVAL;
+    }
 
+    sprintf( formatted_devices,"<%s>", num_devices );
+    return PAPI_OK;
+}
+
+/** @class cuptiu_collect_qualifiers
+  * @brief Collect qualifiers for each basename in a Cuda event.
+  *
+  * @param num_of_events
+  *     total number of events
+  * @param *all_event_names
+  *     all Cuda event names.
+  * @param **array_of_quals
+  *     stores qualifiers per basename in a Cuda event.
+  * 
+  * @retval PAPI_EINVAL
+  *     formatted_devices is not a large enough size.
+  * @retval PAPI_OK
+        everything ran successfully.
+ */ 
+int cuptiu_collect_qualifiers(int num_of_events,  const char * const*all_event_names, char **array_of_quals) {
+    int i, count_iter = 0, length = 0;
+    char base_name[128] = { 0 }, check_name[128] = { 0 }, str_of_qualifiers[128], q[128];
+    char *p;
+
+    /* obtain initial comparison cuda event base name */
+    p = strstr( all_event_names[0], "." );
+    snprintf( base_name, ( p - all_event_names[0] ) + 1, "%s", all_event_names[0] );
+
+    for (i = 0; i < num_of_events; i++) {
+        p = strstr( all_event_names[i], "." );
+        snprintf( check_name, ( p - all_event_names[i] ) + 1, "%s", all_event_names[i] );
+
+        /* check to make sure base name has not changed */
+        if (strcmp(base_name, check_name) != 0) {
+            /* remove excess commas and spaces */
+            str_of_qualifiers[strlen(str_of_qualifiers) - 2] = '\0';
+            /* store current values into array */
+            array_of_quals[count_iter] = malloc(strlen(str_of_qualifiers) + 1);
+            strcpy(array_of_quals[count_iter], str_of_qualifiers);
+            /* store new base_name to check against */
+            sprintf( base_name, "%s", check_name );
+            /* reset and update values */
+            length = 0;
+            memset(str_of_qualifiers, 0, sizeof(str_of_qualifiers));
+            count_iter += 1;
+        }
+        /* collect qualifiers */
+        if (p[0] == '.') {
+            snprintf( q, ( strstr(p + 1, ".") - p ), "%s", p + 1 );
+            if (strstr(str_of_qualifiers, q) == NULL) {
+                length += sprintf(str_of_qualifiers + length, "%s, ", q);
+            }
+            //check to see if we are on the last iteration, if so store contents
+            if (i == num_of_events - 1) {
+                //store final values into array
+                array_of_quals[count_iter] = malloc(strlen(str_of_qualifiers) + 1);
+                strcpy(array_of_quals[count_iter], str_of_qualifiers);
+            }
+        }
+        else {
+            printf("p[0] is not a period.\n");
+            return PAPI_EINVAL;
+        }
+    }
     return PAPI_OK;
 }
 
