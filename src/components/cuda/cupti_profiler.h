@@ -24,6 +24,5 @@ int cuptip_evt_name_to_info(const char *evt_name, PAPI_event_info_t *info);
 int cuptiu_get_qualifier_name(const char *evt_name, char *qualifier_name, int len);
 int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices);
 int cuptiu_collect_qualifiers(int num_of_events,  const char * const*all_event_names, char **array_of_quals);
-int reconstruct_name(const char *name, char *base, int len);
 int cuptip_shutdown(void);
 #endif  /* __CUPTI_PROFILER_H__ */
