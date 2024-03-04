@@ -199,6 +199,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_icx_unc_m2pcie2_support,
 	&intel_spr_support,
 	&intel_emr_support,
+	&intel_adl_glc_support,
+	&intel_adl_grt_support,
 	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
