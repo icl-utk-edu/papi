@@ -1828,43 +1828,49 @@ int cuptip_shutdown(void)
   * @retval PAPI_OK
         everything ran successfully.
  */
-int cuptiu_get_parsed_evt_name(const char *evt_name, char *qualifier_name, int len) {
+int cuptiu_get_parsed_evt_name(const char *evt_name, char *evt_name_complete, int len) {
     char *p;
+    char evt_name_start[128], evt_name_end[128], qualifier[128];
 
-    /* check to see if event name does not contain qualifiers */
-    if (strstr(evt_name, ".") == NULL) {
-        /* check to see if string length is not large enough */
-        if (len < (int) strlen(evt_name)) {
-            printf("Provided string length is not large enough.");
-            return PAPI_EINVAL;
-        }
-        /* store */
-        snprintf( qualifier_name, len, "%s", evt_name );   
-    }
     /* check to see if max_rate, pct, or ratio are within event name,
-       these will not be denoted as qualifiers as stands */
-    else if ( (strstr(evt_name, ".max_rate")) ||
-              (strstr(evt_name, ".pct") &&  !strstr(evt_name, ".pct_")) ||
-              (strstr(evt_name, ".ratio")) ) {
-        /* check to see if string length is not large enough */
+       these will not be denoted as qualifiers and without this check
+       these events would be skipped */
+    if ( (strstr(evt_name, ".max_rate")) ||
+         (strstr(evt_name, ".pct") &&  !strstr(evt_name, ".pct_")) ||
+         (strstr(evt_name, ".ratio")) ) {
         if (len < (int) strlen(evt_name)) {
             printf("Provided string length is not large enough.");
             return PAPI_EINVAL;
         }
-        snprintf(qualifier_name, len, "%s",evt_name );
+        snprintf( evt_name_complete, len, "%s",evt_name );
     }
-    /* collect base event name if qualifiers exist */
+    else if ( (p = strstr(evt_name, "avg")) ||
+         (p = strstr(evt_name, "max")) ||
+         (p = strstr(evt_name, "min")) ||
+         (p = strstr(evt_name, "sum")) ) {
+        
+        /* collect event name if only .avg, .min, .max, and .sum appear */
+        if (strstr(p, ".") == NULL) {
+            snprintf( evt_name_complete, ( p - evt_name ), "%s", evt_name );
+        }
+        else {
+            /* collect the start of the event name */
+            snprintf( evt_name_start, ( p - evt_name ), "%s", evt_name);
+            /* collect the end of the event name */
+            sprintf( evt_name_end, "%s", strstr(p, "."));
+            /* collect qualifier */
+            snprintf( qualifier, ( strstr(p, ".") - p ) + 1, "%s", p); 
+            /* created complete event name*/
+            sprintf( evt_name_complete, "%s%s", evt_name_start, evt_name_end);
+        }
+    }
     else {
-        p = strstr(evt_name, ".");
-        /* check to see if string length is not large enough */
-        if (len < (int)(p - evt_name)) {
+        if (len < (int) strlen(evt_name)) {
             printf("Provided string length is not large enough.");
             return PAPI_EINVAL;
         }
-        /* +1 is needed to account for null terminiating character */
-        snprintf(qualifier_name, ( p - evt_name ) + 1, "%s", evt_name ); 
+        snprintf( evt_name_complete, len, "%s", evt_name );   
     }
-
     return PAPI_OK;
 }
 

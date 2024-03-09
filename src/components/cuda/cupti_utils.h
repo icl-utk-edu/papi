@@ -11,7 +11,7 @@
 
 typedef struct event_record_s {
     char name[PAPI_2MAX_STR_LEN];
-    char cuda_event_names[PAPI_2MAX_STR_LEN];
+    char cuda_evt_name[PAPI_2MAX_STR_LEN];
     char devices[PAPI_2MAX_STR_LEN];
     char quals[PAPI_2MAX_STR_LEN];
     unsigned int evt_code;
@@ -19,6 +19,18 @@ typedef struct event_record_s {
     double value;
     char desc[PAPI_2MAX_STR_LEN];
 } cuptiu_event_t;
+
+typedef struct node {
+    char cuda_evt_name[PAPI_MAX_STR_LEN];
+    char name[PAPI_2MAX_STR_LEN];
+    char formatted_name[PAPI_MAX_STR_LEN];
+    char devices[PAPI_MAX_STR_LEN];
+    char list_of_qualifiers[PAPI_2MAX_STR_LEN];
+    unsigned int evt_code;
+    unsigned int evt_pos;
+    char desc[PAPI_2MAX_STR_LEN];
+    struct node * next;
+} cuptiu_event_info_t;
 
 typedef struct event_table_s {
     unsigned int sizeof_rec;
@@ -32,7 +44,7 @@ typedef struct event_table_s {
 int cuptiu_event_table_create(int sizeof_rec, cuptiu_event_table_t **pevt_table);
 int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
 void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
-int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices, char *qualifiers);
+int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices, char *qualifiers, const char *cuda_name);
 int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *idcs, cuptiu_event_table_t **pevt_names);
 int cuptiu_event_table_find_name(cuptiu_event_table_t *evt_table, const char *evt_name, cuptiu_event_t **found_rec);
 int cuptiu_event_table_get_item(cuptiu_event_table_t *evt_table, int evt_idx, cuptiu_event_t **record);
