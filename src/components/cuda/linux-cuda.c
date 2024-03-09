@@ -236,7 +236,7 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     else {
         _papi_hwi_lock(COMPONENT_LOCK);
         *event_code = global_event_names->count;
-        papi_errno = cuptid_event_table_insert_record(global_event_names, name, global_event_names->count, 0, NULL, NULL);
+        papi_errno = cuptid_event_table_insert_record(global_event_names, name, global_event_names->count, 0, NULL, NULL, NULL);
         _papi_hwi_unlock(COMPONENT_LOCK);
     }
 fn_exit:
@@ -304,10 +304,6 @@ static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
         goto fn_exit;
     }
     papi_errno = cuptid_evt_name_to_info(evt_name, info);
-    if (papi_errno != PAPI_OK) {
-        printf("There is an issue with evt_name_to_info.");
-        goto fn_exit;
-    }
 fn_exit:
     return papi_errno;
 }

@@ -85,7 +85,7 @@ fn_exit:
     return papi_errno;
 }
 
-int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices, char *qualifiers)
+int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, char *num_devices, char *qualifiers, const char *cuda_name)
 {
     int papi_errno = PAPI_OK;
 
@@ -98,6 +98,18 @@ int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char
     }
     /* Insert record in array */
     cuptiu_event_t *evt_rec = evt_table->evts + evt_table->count * evt_table->sizeof_rec;
+    /* loop through linked list and insert records */
+    /*
+    if (head != NULL) {
+        temp = head;
+        while (temp != NULL) {
+            evt_rec->evt_code = evt_code;
+            evt_rec->
+
+        }
+    }
+    */
+    /* Add metadata for event  */
     strcpy(evt_rec->name, evt_name);
     evt_rec->evt_code = evt_code;
     evt_rec->evt_pos = evt_pos;
@@ -105,6 +117,8 @@ int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char
         strcpy(evt_rec->devices, num_devices);
     if (qualifiers != NULL)
         strcpy(evt_rec->quals, qualifiers);
+    if (cuda_name != NULL)
+        strcpy(evt_rec->cuda_evt_name, cuda_name);
 
     /* Insert entry in string hash table */
     if (HTABLE_SUCCESS != htable_insert(evt_table->htable, evt_name, evt_rec)) {
@@ -135,7 +149,7 @@ int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *
             cuptiu_event_table_destroy(&target);
             goto fn_fail;
         }
-        papi_errno = cuptiu_event_table_insert_record(target, evt_rec->name, evt_rec->evt_code, evt_rec->evt_pos, NULL, NULL);
+        papi_errno = cuptiu_event_table_insert_record(target, evt_rec->name, evt_rec->evt_code, evt_rec->evt_pos, NULL, NULL, NULL);
         if (papi_errno != PAPI_OK) {
             cuptiu_event_table_destroy(&target);
             goto fn_fail;
