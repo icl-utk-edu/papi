@@ -19,7 +19,7 @@ jobs:
     runs-on: slurm:cpu_intel
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
         run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_component_nvidia:
@@ -31,7 +31,7 @@ jobs:
     runs-on: slurm:gpu_nvidia
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
         run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_component_amd:
@@ -43,20 +43,20 @@ jobs:
     runs-on: slurm:gpu_amd
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
         run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
   papi_spack:
     runs-on: slurm:cpu
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build/Test/Install via Spack
         run: .github/workflows/spack.sh
   papi_clang_analysis:
     runs-on: slurm:cpu
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run static analysis
         run: .github/workflows/clang_analysis.sh clang-analysis-output
       - name: Archive analysis results
