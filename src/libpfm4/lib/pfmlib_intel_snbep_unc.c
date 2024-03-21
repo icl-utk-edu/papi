@@ -221,6 +221,29 @@ pfm_intel_icx_unc_detect(void *this)
        return PFM_SUCCESS;
 }
 
+int
+pfm_intel_spr_unc_detect(void *this)
+{
+       int ret;
+
+       ret = pfm_intel_x86_detect();
+       if (ret != PFM_SUCCESS)
+
+       if (pfm_intel_x86_cfg.family != 6)
+               return PFM_ERR_NOTSUPP;
+
+       switch(pfm_intel_x86_cfg.model) {
+               case 143: /* SapphireRapids */
+                         break;
+               case 207: /* EmeraldRapids */
+                         break;
+               default:
+                       return PFM_ERR_NOTSUPP;
+       }
+       return PFM_SUCCESS;
+}
+
+
 
 
 static void

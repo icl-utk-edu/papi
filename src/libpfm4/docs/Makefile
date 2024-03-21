@@ -126,7 +126,10 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_icx_unc_m3upi.3 \
 	 libpfm_intel_icx_unc_ubox.3 \
 	 libpfm_intel_icx_unc_m2pcie.3 \
-	 libpfm_intel_icx_unc_irp.3
+	 libpfm_intel_icx_unc_irp.3 \
+	 libpfm_intel_spr_unc_imc.3 \
+	 libpfm_intel_spr_unc_upi.3 \
+	 libpfm_intel_spr_unc_cha.3
 
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)
