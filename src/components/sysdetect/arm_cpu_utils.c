@@ -47,6 +47,30 @@ _sysdetect_cache_level_info_t fujitsu_a64fx_cache_info[] = {
     },
 };
 
+_sysdetect_cache_level_info_t arm_neoverse_v2_cache_info[] = {
+    { // level 1 begins
+        2,
+        {
+            {PAPI_MH_TYPE_INST, 65536, 64, 256, 4},
+            {PAPI_MH_TYPE_DATA, 65536, 64, 256, 4}
+        }
+    },
+    { // level 2 begins
+        1,
+        {
+            {PAPI_MH_TYPE_UNIFIED, 1048576, 64, 2048, 8},
+            {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+    },
+    { // level 3 begins
+        1,
+        {
+            {PAPI_MH_TYPE_UNIFIED, 119537664, 64, 155648, 12},
+            {PAPI_MH_TYPE_EMPTY, -1, -1, -1, -1}
+        }
+    },
+};
+
 static int get_cache_info( CPU_attr_e attr, int level, int *value );
 static int name_id_arm_cpu_get_name( int name_id, char *name );
 static int name_id_broadcom_cpu_get_name( int name_id, char *name );
@@ -389,6 +413,13 @@ get_cache_info( CPU_attr_e attr, int level, int *value )
         case VENDOR_ARM_FUJITSU:
             if ( NAMEID_FUJITSU_A64FX == partnum ) { /* Fujitsu A64FX */
                 clevel_ptr = fujitsu_a64fx_cache_info;
+            } else {
+                return CPU_ERROR;
+            }
+            break;
+        case VENDOR_ARM_ARM:
+            if ( NAMEID_ARM_NEOVERSE_V2 == partnum ) { /* ARM Neoverse V2 */
+                clevel_ptr = arm_neoverse_v2_cache_info;
             } else {
                 return CPU_ERROR;
             }
