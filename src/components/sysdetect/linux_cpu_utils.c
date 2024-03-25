@@ -557,6 +557,7 @@ get_cache_type( const char *dirname, int *value )
 {
     char filename[BUFSIZ];
     char type_string[BUFSIZ];
+    char buffer[BUFSIZ];
     int type;
 
     sprintf(filename, "/sys/devices/system/cpu/cpu0/cache/%s/type",
@@ -568,12 +569,14 @@ get_cache_type( const char *dirname, int *value )
         return CPU_ERROR;
     }
 
-    char *result = fgets(type_string, BUFSIZ, fff);
+    char *result = fgets(buffer, BUFSIZ, fff);
     fclose(fff);
     if (result == NULL) {
         MEMDBG("Could not read cache type\n");
         return CPU_ERROR;
     }
+
+    sscanf(buffer,"%s",type_string);
 
     if (!strcmp(type_string, "Data")) {
         type = PAPI_MH_TYPE_DATA;
