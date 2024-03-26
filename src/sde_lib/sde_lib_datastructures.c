@@ -284,8 +284,8 @@ int exp_container_insert_element(recorder_data_t *exp_container, size_t typesize
 
 int cset_insert_elem(cset_hash_table_t *hash_ptr, size_t element_size, size_t hashable_size, const void *element, uint32_t type_id){
     cset_hash_bucket_t *bucket_ptr;
-    int element_found = 0;
-    uint32_t i, occupied;
+    int element_in_bucket = 0;
+    uint32_t vacant_idx, i, occupied;
     int ret_val;
 
     if( NULL == hash_ptr ){
@@ -315,24 +315,26 @@ int cset_insert_elem(cset_hash_table_t *hash_ptr, size_t element_size, size_t ha
             // then we update the count for this entry and we are done.
             if( SDE_HASH_IS_FUZZY || !memcmp(element, obj_ptr[i].ptr, hashable_size) ){
                 obj_ptr[i].count += 1;
-                element_found = 1;
+                element_in_bucket = 1;
                 break;
             }
         }
     }
+    // After the loop "i" will contain the index of the first element that is not occupied.
+    vacant_idx = i;
 
     // If we didn't find the element in the appropriate bucket, then we need to add it (or look in the overflow list).
-    if( !element_found ){
+    if( !element_in_bucket ){
         // If the overflow list is empty, then we are certainly dealing with a new element.
         if( NULL == hash_ptr->overflow_list ){
             // Check if we still have room in the bucket, and if so, add the new element to the bucket.
-            if( i < _SDE_HASH_BUCKET_WIDTH_ ){
-                key_ptr[i] = key;
-                obj_ptr[i].count = 1;
-                obj_ptr[i].type_id = type_id;
-                obj_ptr[i].type_size = element_size;
-                obj_ptr[i].ptr = malloc(element_size);
-                (void)memcpy(obj_ptr[i].ptr, element, element_size);
+            if( vacant_idx < _SDE_HASH_BUCKET_WIDTH_ ){
+                key_ptr[vacant_idx] = key;
+                obj_ptr[vacant_idx].count = 1;
+                obj_ptr[vacant_idx].type_id = type_id;
+                obj_ptr[vacant_idx].type_size = element_size;
+                obj_ptr[vacant_idx].ptr = malloc(element_size);
+                (void)memcpy(obj_ptr[vacant_idx].ptr, element, element_size);
                 // Let the bucket know that it now has one more element.
                 bucket_ptr[bucket_idx].occupied += 1;
             }else{
@@ -349,6 +351,7 @@ int cset_insert_elem(cset_hash_table_t *hash_ptr, size_t element_size, size_t ha
                 hash_ptr->overflow_list = new_list_element;
             }
         }else{
+            int element_in_list = 0;
             // Since there are elements in the overflow list, we need to search there for the one we are looking for.
             cset_list_object_t *list_runner;
             for( list_runner = hash_ptr->overflow_list; list_runner != NULL; list_runner = list_runner->next){
@@ -357,21 +360,35 @@ int cset_insert_elem(cset_hash_table_t *hash_ptr, size_t element_size, size_t ha
                 // don't have matching hashes to indicate that the two elements are close; we are traversing the whole list.
                 if( (hashable_size <= list_runner->type_size) && (type_id == list_runner->type_id) && !memcmp(element, list_runner->ptr, hashable_size) ){
                     list_runner->count += 1;
+                    element_in_list = 1;
                     break;
                 }
             }
-            // If we traversed the entire list and didn't find our element, insert it before the current head of the list.
-            if( NULL == list_runner ){
-                cset_list_object_t *new_list_element = (cset_list_object_t *)malloc(sizeof(cset_list_object_t));
-                // Make the new element's "next" pointer be the current head of the list.
-                new_list_element->next = hash_ptr->overflow_list;
-                new_list_element->count = 1;
-                new_list_element->type_id = type_id;
-                new_list_element->type_size = element_size;
-                new_list_element->ptr = malloc(element_size);
-                (void)memcpy(new_list_element->ptr, element, element_size);
-                // Update the head of the list to point to the new element.
-                hash_ptr->overflow_list = new_list_element;
+            // If we traversed the entire list and still haven't found our element, we need to insert it into the cset.
+            if( !element_in_list ){
+                // Check if there is still room in the bucket. If there is, we should add the new element to the bucket instead of the overflow list.
+                if( vacant_idx < _SDE_HASH_BUCKET_WIDTH_ ){
+                    key_ptr[vacant_idx] = key;
+                    obj_ptr[vacant_idx].count = 1;
+                    obj_ptr[vacant_idx].type_id = type_id;
+                    obj_ptr[vacant_idx].type_size = element_size;
+                    obj_ptr[vacant_idx].ptr = malloc(element_size);
+                    (void)memcpy(obj_ptr[vacant_idx].ptr, element, element_size);
+                    // Let the bucket know that it now has one more element.
+                    bucket_ptr[bucket_idx].occupied += 1;
+                }else{
+                    // If there is no room in the bucket, add the new element before the current head of the overflow list.
+                    cset_list_object_t *new_list_element = (cset_list_object_t *)malloc(sizeof(cset_list_object_t));
+                    // Make the new element's "next" pointer be the current head of the list.
+                    new_list_element->next = hash_ptr->overflow_list;
+                    new_list_element->count = 1;
+                    new_list_element->type_id = type_id;
+                    new_list_element->type_size = element_size;
+                    new_list_element->ptr = malloc(element_size);
+                    (void)memcpy(new_list_element->ptr, element, element_size);
+                    // Update the head of the list to point to the new element.
+                    hash_ptr->overflow_list = new_list_element;
+                }
             }
         }
     }
