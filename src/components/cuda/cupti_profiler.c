@@ -17,6 +17,7 @@
 #include "cupti_common.h"
 #include "cupti_profiler.h"
 #include "lcuda_debug.h"
+#include "time.h"
 
 typedef struct byte_array_s         byte_array_t;
 typedef struct cuptip_gpu_state_s   cuptip_gpu_state_t;
@@ -443,7 +444,7 @@ static int add_events_per_gpu(cuptip_control_t state, cuptiu_event_table_t *even
             papi_errno = PAPI_EINVAL;
             goto fn_exit;
         }
-        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i);
+        cuptiu_event_table_insert_record(state->gpu_ctl[gpu_id].event_names, evt_rec->name, evt_rec->evt_code, i, NULL, NULL, NULL);
         LOGDBG("Adding event gpu %d name %s with code %d at pos %d\n", gpu_id, evt_rec->name, evt_rec->evt_code, i);
     }
 fn_exit:
@@ -1206,10 +1207,20 @@ fn_fail:
 int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
 {
     int gpu_id, i, found, listsubmetrics = 1, papi_errno = PAPI_OK;
+    char formatted_devices[num_gpus];
+    char formatted_evt_name[PAPI_MAX_STR_LEN] = { 0 };
+    cuptiu_event_info_t *head_qualifier = NULL, *current;
+    char str_of_qualifiers[PAPI_MAX_STR_LEN] = { 0 }, dummy[128] = { 0 };
+    time_t for_start, for_stop;
     if (avail_events[0].nv_metrics != NULL) {
         /* Already eumerated for 1st device? Then exit... */
         goto fn_exit;
     }
+
+    /* collect total number of devices available and format output */
+    cuptiu_get_num_devices(num_gpus, formatted_devices);
+
+    /* collect event names for GPUs available */
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         LOGDBG("Getting metric names for gpu %d\n", gpu_id);
         found = find_same_chipname(gpu_id);
@@ -1218,8 +1229,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             avail_events[gpu_id].nv_metrics = avail_events[found].nv_metrics;
             continue;
         }
-        /* If same chip_name not found, get all the details for this gpu */
-
+        /* If same chip_name not found, get all the details for this gpu */     
         NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
             .pPriv = NULL,
@@ -1231,15 +1241,30 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
         NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
         avail_events[gpu_id].num_metrics = getMetricNameBeginParams.numMetrics;
+        /* collect qualifiers (min, max, sum, etc.) for Cuda events */
+        head_qualifier = (cuptiu_event_info_t *) malloc(sizeof(cuptiu_event_info_t));
+        papi_errno = cuptiu_collect_qualifiers( avail_events[gpu_id].num_metrics, getMetricNameBeginParams.ppMetricNames, head_qualifier, PAPI_MAX_STR_LEN);
+        if (papi_errno != PAPI_OK) {
+            printf("We errored out\n");
+            goto fn_exit;
+        }
 
         papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_id].num_metrics, sizeof(cuptiu_event_t), &(avail_events[gpu_id].nv_metrics));
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
+
         for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
-            papi_errno = cuptiu_event_table_insert_record(avail_events[gpu_id].nv_metrics,
-                                      getMetricNameBeginParams.ppMetricNames[i],
-                                      i, 0);
+            /* Reformat the Cuda event name. */
+            papi_errno = cuptiu_format_evt_name( getMetricNameBeginParams.ppMetricNames[i],
+                                                 formatted_evt_name, dummy, PAPI_MAX_STR_LEN );
+            if (papi_errno != PAPI_OK) {
+                goto fn_exit;
+            }
+    
+            papi_errno = cuptiu_event_table_insert_record( avail_events[gpu_id].nv_metrics,
+                                                           formatted_evt_name, i, 0,
+                                                           formatted_devices, NULL, getMetricNameBeginParams.ppMetricNames[i] );                                            
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
@@ -1253,25 +1278,39 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
         NVPW_CALL( NVPW_MetricsContext_GetMetricNames_EndPtr((NVPW_MetricsContext_GetMetricNames_End_Params *) &getMetricNameEndParams), goto fn_fail );
 
     }
+
     char evt_name[PAPI_2MAX_STR_LEN];
     cuptiu_event_t *find = NULL;
     cuptiu_event_t *evt_rec = NULL;
     int len;
     unsigned int curr = all_evt_names->count;
+    for_start = time(NULL);
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
             papi_errno = cuptiu_event_table_get_item(avail_events[gpu_id].nv_metrics, i, &evt_rec);
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
-            len = snprintf(evt_name, PAPI_2MAX_STR_LEN, "%s:device=%d", evt_rec->name, gpu_id);
+            len = snprintf( evt_name, PAPI_2MAX_STR_LEN, evt_rec->name );
+
             if (len > PAPI_2MAX_STR_LEN) {
                 ERRDBG("String formatting exceeded maximum length.\n");
                 papi_errno = PAPI_ENOMEM;
                 goto fn_exit;
             }
+
             if (cuptiu_event_table_find_name(all_evt_names, evt_name, &find) == PAPI_ENOEVNT) {
-                papi_errno = cuptiu_event_table_insert_record(all_evt_names, evt_name, curr, 0);
+                /* Find matching formatted evt name. */
+                current = head_qualifier;
+                while(current != NULL) {
+                    if (strcmp(current->formatted_evt_name, formatted_evt_name) == 0) {
+                        sprintf(str_of_qualifiers + strlen(str_of_qualifiers), "%s, ", current->qualifier);
+                    }
+                    current = current->next;
+                }
+                memset(str_of_qualifiers, 0, strlen(str_of_qualifiers));
+                papi_errno = cuptiu_event_table_insert_record( all_evt_names, evt_name,
+                                                               curr, 0, formatted_devices, NULL, evt_rec->cuda_evt_name );
                 if (papi_errno != PAPI_OK) {
                     goto fn_exit;
                 }
@@ -1279,6 +1318,7 @@ int cuptip_event_enum(cuptiu_event_table_t *all_evt_names)
             }
         }
     }
+
 fn_exit:
     return papi_errno;
 fn_fail:
@@ -1288,19 +1328,23 @@ fn_fail:
 
 int cuptip_event_name_to_descr(const char *evt_name, char *description)
 {
-    int papi_errno, numdep, gpu_id, passes;
+    int papi_errno, numdep, passes;
+    const int gpu_id = 0;
     char nv_name[PAPI_MAX_STR_LEN];
     cuptiu_event_t *evt_rec = NULL;
     NVPA_RawMetricRequest *temp;
+    /*
     papi_errno = event_name_tokenize(evt_name, nv_name, &gpu_id);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, nv_name, &evt_rec);
+    */
+    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, evt_name, &evt_rec);
     if (papi_errno != PAPI_OK) {
         ERRDBG("Event name not found in avail_events array.\n");
         goto fn_exit;
     }
+
     char *desc = evt_rec->desc;
     if (desc[0] == '\0') {
         papi_errno = retrieve_metric_details(avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
@@ -1324,7 +1368,7 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
             };
             NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), goto fn_fail );
 
-            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d", passes);
+            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), "Numpass=%d", passes);
             if (passes > 1) {
                 snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
             }
@@ -1337,6 +1381,65 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description)
         papi_free(temp);
     }
     strcpy(description, desc);
+fn_exit:
+    return papi_errno;
+fn_fail:
+    papi_errno = PAPI_EMISC;
+    goto fn_exit;
+}
+
+int cuptip_evt_name_to_info(const char *evt_name, PAPI_event_info_t *info) {
+    int papi_errno, numdep, passes;
+    const int gpu_id = 0;
+    char nv_name[PAPI_MAX_STR_LEN];
+    cuptiu_event_t *evt_rec = NULL;
+    NVPA_RawMetricRequest *temp;
+
+    /* collect event name metadata from hash table */
+    papi_errno = cuptiu_event_table_find_name(avail_events[gpu_id].nv_metrics, evt_name, &evt_rec);
+    if (papi_errno != PAPI_OK) {
+        ERRDBG("Event name not found in avail_events array.\n");
+        goto fn_exit;
+    }
+
+    char *desc = evt_rec->desc;
+    if (desc[0] == '\0') {
+        /* collect event name description */
+        papi_errno = retrieve_metric_details(avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+                                             evt_rec->cuda_evt_name, desc, &numdep, &temp);
+        if (papi_errno == PAPI_OK) {
+            NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams = {
+                .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
+                .pPriv = NULL,
+                .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
+                .pChipName = avail_events[gpu_id].chip_name,
+            };
+            NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), goto fn_fail );
+
+            papi_errno = check_num_passes(nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+                                   numdep, temp, &passes);
+
+            NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
+                .structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE,
+                .pPriv = NULL,
+                .pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+            };
+            NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), goto fn_fail );
+
+            snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d.", passes);
+            if (passes > 1) {
+                snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
+            }
+
+            const char *token_sw_evt = "sass";
+            if (strstr(nv_name, token_sw_evt) != NULL) {
+                snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (SW event)");
+            }
+        }
+        papi_free(temp);
+    }
+    sprintf(info->symbol, "%s", evt_name);
+    sprintf(info->long_descr, "%s", desc);
 fn_exit:
     return papi_errno;
 fn_fail:
@@ -1718,5 +1821,155 @@ int cuptip_shutdown(void)
     finalize_cupti_profiler_api();
     unload_nvpw_sym();
     unload_cupti_perf_sym();
+    return PAPI_OK;
+}
+
+/** @class cuptiu_get_qualifier_name
+  * @brief Format event name to include <Qualifier#> and <Device#>.
+  *
+  * @param *evt_name
+  *     The Cuda event name.
+  * @param *qualifier_name
+        Stores newly formatted Cuda event name.
+  * @param len 
+  *     Number of characters.
+  *
+  * @retval PAPI_EINVAL
+  *     Provided len is not large enough.
+  * @retval PAPI_OK
+        Successfully collected formatted Cuda event name.
+ */
+int cuptiu_format_evt_name(const char *evt_name, char *formatted_evt_name, char *qualifier, int len) {
+    char *p;
+    char evt_name_start[128], evt_name_end[128];
+
+    /* Check to see if max_rate, pct, or ratio are within event name,
+       these will not be denoted as qualifiers and without this check
+       these events would be not be handles properly. */
+    if ( (strstr(evt_name, ".max_rate")) ||
+         (strstr(evt_name, ".pct") &&  !strstr(evt_name, ".pct_")) ||
+         (strstr(evt_name, ".ratio")) ) {
+        if (len < (int) strlen(evt_name)) {
+            printf("Provided string length is not large enough.");
+            return PAPI_EINVAL;
+        }
+        snprintf( formatted_evt_name, len, "%s",evt_name );
+        sprintf( qualifier, "%s", " "); 
+    }
+    /* Check to see if the event name contains the statistics: avg, max, min,
+       and sum. These will be denoted as qualifiers along with device #. */
+    else if ( (p = strstr(evt_name, "avg")) || (p = strstr(evt_name, "max")) ||
+              (p = strstr(evt_name, "min")) || (p = strstr(evt_name, "sum")) ) {
+        /* collect event name if only .avg, .min, .max, and .sum appear */
+        if (strstr(p, ".") == NULL) {
+            snprintf( formatted_evt_name, ( p - evt_name ), "%s", evt_name );
+            /* collect qualifier */
+            sprintf( qualifier, "%s", p); 
+        }
+        else {
+            /* collect the start of the event name */
+            snprintf( evt_name_start, ( p - evt_name ), "%s", evt_name);
+            /* collect the end of the event name */
+            sprintf( evt_name_end, "%s", strstr(p, "."));
+            /* collect qualifier */
+            snprintf( qualifier, ( strstr(p, ".") - p ) + 1, "%s", p); 
+            /* created complete event name*/
+            sprintf( formatted_evt_name, "%s%s", evt_name_start, evt_name_end);
+        }
+    }
+    /* Case for an occurrence of no statistic and no max_rate, pct, and ratio
+       appearing in the event name. E.g. just dram__bytes. */
+    else {
+        if (len < (int) strlen(evt_name)) {
+            printf("Provided string length is not large enough.");
+            return PAPI_EINVAL;
+        }
+        snprintf( formatted_evt_name, len, "%s", evt_name ); 
+        sprintf( qualifier, "%s", " ");   
+    }
+
+    return PAPI_OK;
+}
+
+/** @class cuptiu_get_num_devices
+  * @brief Collect and format the total number of devices. 
+  *
+  * @param number_of_gpus 
+  *     total number of gpus.
+  * @param *formatted_devices
+        holds formatted gpu output.
+  *
+  * @retval PAPI_EINVAL
+  *     formatted_devices is not a large enough size.
+  * @retval PAPI_OK
+        everything ran successfully.
+ */ 
+int cuptiu_get_num_devices(int number_of_gpus, char *formatted_devices) {
+    int gpu_id, length = 0;
+    char num_devices[number_of_gpus];
+
+    for (gpu_id = 0; gpu_id < number_of_gpus; gpu_id++) {
+        if (gpu_id != num_gpus - 1) {
+            length += sprintf( num_devices + length, "%c,", gpu_id + '0' );       
+        }
+        else {
+            length += sprintf( num_devices + length, "%c", gpu_id + '0' );
+        } 
+    }
+    if (sizeof(num_devices) > sizeof(formatted_devices)) {
+        printf("Size of formatted devices is not large enough.");
+        return PAPI_EINVAL;
+    }
+
+    sprintf( formatted_devices,"<%s>", num_devices );
+    return PAPI_OK;
+}
+
+/** @class cuptiu_collect_qualifiers
+  * @brief If present collect avg, max, min, and sum as these are currently 
+  *        denoted as qualifiers.
+  *
+  * @param num_of_events
+  *     Total number of events.
+  * @param *event_names
+  *     All Cuda event names for a gpu.
+  * @param *head
+  *     Linked list to store the updated evt name and associated qualifiers.
+  * 
+  * @retval PAPI_EINVAL
+  *     Head of linked list is not set to null.
+  * @retval PAPI_OK
+        Successfully collected qualifiers if present and handled cases which no
+  *     qualifiers were present.
+ */ 
+int cuptiu_collect_qualifiers( int num_of_evts, const char * const*evt_names, cuptiu_event_info_t *qual_ll, int len) {
+    int i;
+    char formatted_evt_name[PAPI_MAX_STR_LEN] = { 0 }, qualifier[PAPI_MIN_STR_LEN] = { 0 };
+
+    if (qual_ll == NULL) {
+        printf("Head must be set equal to NULL.");
+        return PAPI_EINVAL;
+    }
+
+    cuptiu_event_info_t *temp;
+    temp = qual_ll; 
+
+    for (i = 0; i < num_of_evts; i++) {
+        cuptiu_format_evt_name(evt_names[i], formatted_evt_name, qualifier, len);
+        /* Store formatted evt name */
+        strcpy(temp->formatted_evt_name, formatted_evt_name);
+        /* Store qualifier */
+        strcpy(temp->qualifier, qualifier);
+
+        /* Iterate Linked List */
+        if (i != num_of_evts - 1) {
+            temp->next = (cuptiu_event_info_t *) malloc(sizeof(cuptiu_event_info_t));
+            temp = temp->next;
+        }
+        else {
+            temp->next = NULL;
+        }
+    }
+
     return PAPI_OK;
 }
