@@ -182,7 +182,7 @@ sde_ti_reset_counter( uint32_t counter_id ){
     }
 
     sde_counter_t *counter = ht_lookup_by_id(gctl->all_reg_counters, counter_id);
-    if( (NULL == counter) || (!IS_CNTR_BASIC(counter) && !IS_CNTR_CALLBACK(counter)) ){
+    if( (NULL == counter) || (!IS_CNTR_BASIC(counter) && !IS_CNTR_CALLBACK(counter) && !IS_CNTR_CSET(counter)) ){
         SDEDBG("sde_ti_reset_counter(): SDE with id %d is clobbered, or a type which does not support resetting.\n",counter_id);
         // We allow tools to call this function even if the counter type does not support
         // reseting, so we do not return an error if this is the case.
