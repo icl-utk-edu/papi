@@ -600,6 +600,46 @@ fnct_exit:
     return ret_val;
 }
 
+/** Takes a native event code and passes back the event info
+ * @param EventCode is the native event code
+ * @param info is a pointer to a PAPI_event_info_t structure where the event information will be stored.
+ */
+static int
+_sde_ntv_code_to_info( unsigned int EventCode, PAPI_event_info_t *info)
+{
+    int ret_val = PAPI_OK;
+    unsigned int code = EventCode & PAPI_NATIVE_AND_MASK;
+
+    SUBDBG("_sde_ntv_code_to_info %u\n", code);
+
+	info->event_code = EventCode;
+	info->component_index = _sde_vector.cmp_info.CmpIdx;
+
+    _papi_hwi_lock(_sde_component_lock);
+
+    char *ev_name = sde_ti_get_event_name_ptr((uint32_t)code);
+    char *ev_descr = sde_ti_get_event_description_ptr((uint32_t)code);
+    if( (NULL == ev_descr) || (NULL == ev_name) ){
+        ret_val = PAPI_ENOEVNT;
+        goto fnct_exit;
+    }
+    SUBDBG("Event (code = %d) name: %s \n", code, ev_name);
+    SUBDBG("Event (code = %d) description: %s\n", code, ev_descr);
+
+    (void)strncpy( info->symbol, ev_name, PAPI_HUGE_STR_LEN-1 );
+    info->symbol[PAPI_HUGE_STR_LEN-1] = '\0';
+
+    (void)strncpy( info->long_descr, ev_descr, PAPI_HUGE_STR_LEN-1 );
+    info->long_descr[PAPI_HUGE_STR_LEN-1] = '\0';
+
+    (void)strncpy( info->short_descr, ev_descr, PAPI_MIN_STR_LEN-1 );
+    info->long_descr[PAPI_MIN_STR_LEN-1] = '\0';
+
+fnct_exit:
+    _papi_hwi_unlock(_sde_component_lock);
+    return ret_val;
+}
+
 /** Takes a native event name and passes back the code
  * @param event_name -- a pointer for the name to be copied to
  * @param event_code -- the native event code
@@ -1090,6 +1130,7 @@ papi_vector_t _sde_vector = {
     .ntv_enum_events =   _sde_ntv_enum_events,
     .ntv_code_to_name =  _sde_ntv_code_to_name,
     .ntv_code_to_descr = _sde_ntv_code_to_descr,
+    .ntv_code_to_info =  _sde_ntv_code_to_info,
     /* if .ntv_name_to_code not available, PAPI emulates  */
     /* it by enumerating all events and looking manually  */
     .ntv_name_to_code  = _sde_ntv_name_to_code,
