@@ -25,17 +25,17 @@
  * |         unused                  |  dev  | inst  |  |   nameid   |
  * +---------------------------------+-------+-------+--+------------+
  *
- * unused    : 36 bits
+ * unused    : 29 bits
  * device    : 7  bits ([0 - 127] devices)
  * instance  : 7  bits ([0 - 127] instances)
  * qlmask    : 2  bits (qualifier mask)
- * nameid    : 12 bits ([0 - 4095] event names)
+ * nameid    : 19: bits ([0 - 263,231] event names)
  */
 #define EVENTS_WIDTH (sizeof(uint64_t) * 8)
 #define DEVICE_WIDTH ( 7)
 #define INSTAN_WIDTH ( 7)
-#define QLMASK_WIDTH ( 2)
-#define NAMEID_WIDTH (18)
+#define QLMASK_WIDTH ( 2) 
+#define NAMEID_WIDTH (19)
 #define UNUSED_WIDTH (EVENTS_WIDTH - DEVICE_WIDTH - INSTAN_WIDTH - QLMASK_WIDTH - NAMEID_WIDTH)
 #define DEVICE_SHIFT (EVENTS_WIDTH - UNUSED_WIDTH - DEVICE_WIDTH)
 #define INSTAN_SHIFT (DEVICE_SHIFT - INSTAN_WIDTH)
@@ -69,6 +69,7 @@ static list_metrics_t *avail_events;
 static cuptiu_event_table_t cuptiu_table;
 static cuptiu_event_table_t *cuptiu_table_p;
 
+static int shutdown_event_table(void);
 static int load_cupti_perf_sym(void);
 static int unload_cupti_perf_sym(void);
 static int load_nvpw_sym(void);
@@ -1271,7 +1272,6 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
             if (papi_errno != PAPI_OK) {
                 break;
             }
-            printf("Name ID: %d\n", info.nameid);
             if (cuptiu_table_p->count > info.nameid + 1) {
                 info.device = 0;
                 info.flags = 0;
@@ -1920,7 +1920,8 @@ int cuptip_control_reset(cuptip_control_t state)
 int cuptip_shutdown(void)
 {
     COMPDBG("Entering.\n");
-    free_all_enumerated_metrics();
+    shutdown_event_table();
+    free_all_enumerated_metrics(); /* Calls htable_shutdown */
     finalize_cupti_profiler_api();
     unload_nvpw_sym();
     unload_cupti_perf_sym();
@@ -2054,13 +2055,11 @@ int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsign
     cuptiu_event_t *events = cuptiu_table.events;
     char description[PAPI_2MAX_STR_LEN] = { 0 };
     
-    /*
     papi_errno = retrieve_metric_details( avail_events[0].pmetricsContextCreateParams->pMetricsContext, evt_name, description, &numdep, &temp );
     if (papi_errno != PAPI_OK) {
         printf("Did not retrieve description\n");
         exit(1);
     }
-    */
 
     if (evt_table->count >= evt_table->capacity) {
         printf("Number of events exceeds detected count.");
@@ -2073,8 +2072,8 @@ int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsign
         (*count)++;
 
         strcpy(event->name, evt_name);
-       // strcpy(event->desc, description);
-        strcpy(event->desc, "Testing");
+        strcpy(event->desc, description);
+        //strcpy(event->desc, "Testing");
 
         event->evt_code = evt_code;
         event->evt_pos = evt_pos;
@@ -2087,4 +2086,22 @@ int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsign
 
 fn_exit:
     return papi_errno;
+}
+
+int shutdown_event_table(void)
+{
+
+    int i;
+
+    for (i = 0; i < cuptiu_table_p->count; i++) {
+         papi_free(cuptiu_table_p->events[i].name);
+         papi_free(cuptiu_table_p->events[i].desc);   
+    }
+
+    cuptiu_table_p->count = 0;
+
+    papi_free(cuptiu_table_p->events);
+
+    return PAPI_OK;
+
 }
