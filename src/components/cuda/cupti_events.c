@@ -50,7 +50,7 @@ int cuptie_control_reset(cuptie_control_t ctl)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_enum(cuptiu_event_table_t *all_evt_names)
+int cuptie_evt_enum(uint64_t *event_code, int modifier)
 {
     return PAPI_ENOIMPL;
 }
