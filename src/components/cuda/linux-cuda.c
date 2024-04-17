@@ -56,6 +56,7 @@ static int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl);
 static int cuda_read(hwd_context_t *ctx, hwd_control_state_t *ctl, long long **val, int flags);
 static int cuda_reset(hwd_context_t *ctx, hwd_control_state_t *ctl);
 static int cuda_init_private(void);
+static int cuda_get_evt_count(int *count);
 
 #define PAPI_CUDA_MPX_COUNTERS 512
 #define PAPI_CUDA_MAX_COUNTERS  30
@@ -147,7 +148,7 @@ static int cuda_shutdown_component(void)
 
 static int cuda_init_private(void)
 {
-    int papi_errno = PAPI_OK;
+    int papi_errno = PAPI_OK, count = 0;
     const char *disabled_reason;
     COMPDBG("Entering.\n");
 
@@ -166,6 +167,9 @@ static int cuda_init_private(void)
 
     _cuda_vector.cmp_info.disabled = PAPI_OK;
     strcpy(_cuda_vector.cmp_info.disabled_reason, "");
+
+    papi_errno = cuda_get_evt_count(&count);
+    _cuda_vector.cmp_info.num_native_events = count;
 
 fn_exit:
     return papi_errno;
@@ -431,4 +435,18 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
         control->values[i] = 0;
     }
     return cuptid_control_reset( control->cupti_ctl );
+}
+
+static int cuda_get_evt_count(int *count)
+{
+    uint64_t event_code = 0;
+
+    if (cuptid_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
+        ++(*count);
+    }
+    while (cuptid_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
+        ++(*count);
+    }
+
+    return PAPI_OK;
 }
