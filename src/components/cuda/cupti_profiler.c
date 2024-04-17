@@ -84,9 +84,9 @@ static int find_same_chipname(int gpu_id);
 static void free_all_enumerated_metrics(void);
 static int event_name_tokenize(const char *name, char *nv_name, int *gpuid);
 static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
-static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *nv_name,
+static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
                          int *numDep, NVPA_RawMetricRequest **pRMR );
-static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *nv_name,
+static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
                                    char *description );
 static int check_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig, int rmr_count,
                             NVPA_RawMetricRequest *rmr, int *num_pass);
@@ -1724,7 +1724,6 @@ int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
     int papi_errno;
     event_info_t info;
-    long long start_t = 0, end_t = 0, total_time = 0;
     papi_errno = evt_id_to_info(event_code, &info);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
@@ -1795,22 +1794,33 @@ int init_event_table(void) {
 
 }
 
+/** @class get_ntv_events
+  * @brief Add the event name, event code, and event position to the hash table.
+  *
+  * @param *evt_table
+  *   Structure containing member variables such as name, evt_code, evt_pos,
+      and htable.
+  * @param *evt_name
+  *   Cuda native event name.
+  * @param evt_code
+  *   Event code which corresponds to the Cuda native event name.
+  * @param evt_pos
+  *   Position within the hash table. 
+*/
 static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos) 
 {
-    int papi_errno = PAPI_OK;
-    NVPA_Status nvpa_err;
-    long long start_t = 0, end_t = 0, total_time = 0;
     int *count = &evt_table->count;
     cuptiu_event_t *events = cuptiu_table.events;
-    char description[PAPI_2MAX_STR_LEN] = { 0 };
     
-    if (evt_name == NULL || description == NULL) {
+    /* check to see if evt_name argument has been provided */
+    if (evt_name == NULL) {
         return PAPI_EINVAL;
     }
 
+    /* check to see if capacity has been correctly allocated */
     if (evt_table->count >= evt_table->capacity) {
-        printf("Number of events exceeds detected count.");
-        exit(1);
+        printf("Table count is larger than allocated capacity.\n");
+        return PAPI_ENOMEM;
     }
 
     cuptiu_event_t *event;
@@ -1827,15 +1837,16 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
 
         /* insert event info into htable */
         if ( htable_insert(evt_table->htable, evt_name, event) != HTABLE_SUCCESS ) {
-            printf("Failure inserting record");
-            exit(1);
+            return PAPI_ESYS;
         }
     }
-
-fn_exit:
-    return papi_errno;
+    return PAPI_OK;
 }
 
+/** @class shutdown_event_table
+  * @brief Shutdown created table that holds the cuda native event names
+           and the corresponding description.
+*/
 static int shutdown_event_table(void)
 {
     int i;
@@ -1852,27 +1863,40 @@ static int shutdown_event_table(void)
     return PAPI_OK;
 }
 
-static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *nv_name, char *description ) 
+/** @class retrieve_metric_descr
+  * @brief Collect the description for the provided evt_name.
+  *
+  * @param *pMetricsContext
+  *   Structure providing context for evt_name. 
+  * @param *evt_name
+  *   Cuda native event name.
+  * @param *description
+  *   Corresponding description for provided Cuda native event name.
+*/
+static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description ) 
 {
     COMPDBG("Entering.\n");
     int num_dep, i, len, passes, papi_errno;
     char desc[PAPI_2MAX_STR_LEN];
-    NVPA_RawMetricRequest *temp;
+    NVPA_RawMetricRequest *rmr;
     NVPA_Status nvpa_err;
 
-    if (nv_name == NULL || description == NULL) {
+    /* check to make sure an argument has been passed for evt_name and description */
+    if (evt_name == NULL || description == NULL) {
         return PAPI_EINVAL;
     }
 
+    /* instantiate a new metric properties structure with the provided evt_name */
     NVPW_MetricsContext_GetMetricProperties_Begin_Params getMetricPropertiesBeginParams = {
         .structSize = NVPW_MetricsContext_GetMetricProperties_Begin_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pMetricsContext = pMetricsContext,
-        .pMetricName = nv_name,
+        .pMetricName = evt_name,
     };
 
+    /* collect metric properties such as dependencies and description for the 
+       structure created by the passed evt_name */
     nvpa_err = NVPW_MetricsContext_GetMetricProperties_BeginPtr(&getMetricPropertiesBeginParams);
-
     if (nvpa_err != NVPA_STATUS_SUCCESS || getMetricPropertiesBeginParams.ppRawMetricDependencies == NULL) {
         strcpy(description, "Could not get description.");
         return PAPI_EINVAL;
@@ -1880,7 +1904,7 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
 
     for (num_dep = 0; getMetricPropertiesBeginParams.ppRawMetricDependencies[num_dep] != NULL; num_dep++) {;}
 
-    NVPA_RawMetricRequest *rmr = (NVPA_RawMetricRequest *) papi_calloc(num_dep, sizeof(NVPA_RawMetricRequest));
+    rmr = (NVPA_RawMetricRequest *) papi_calloc(num_dep, sizeof(NVPA_RawMetricRequest));
     if (rmr == NULL) {
         return PAPI_ENOMEM;
     }
@@ -1891,84 +1915,118 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
         rmr[i].keepInstances = 1;
         rmr[i].structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE;
     }
-     
+    
+    /* collect the corresponding description for the provided evt_name */
     len = snprintf( desc, PAPI_2MAX_STR_LEN, "%s. Units=(%s)",
                     getMetricPropertiesBeginParams.pDescription,
                     getMetricPropertiesBeginParams.pDimUnits);
+    /* check to make sure that description length is not greater than 
+       PAPI_2MAX_STR_LEN, which holds */
     if (len > PAPI_2MAX_STR_LEN) {
         ERRDBG("String formatting exceeded max string length.\n");
         return PAPI_ENOMEM;
     }
 
+    /* ending/deleting instantiated struct created by passed evt_name */
     NVPW_MetricsContext_GetMetricProperties_End_Params getMetricPropertiesEndParams = {
         .structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pMetricsContext = pMetricsContext,
     };
+
+    /* ending pointer created by passed evt_name */
     NVPW_CALL( NVPW_MetricsContext_GetMetricProperties_EndPtr(&getMetricPropertiesEndParams), return PAPI_EMISC );
 
+    /* instantiate a new create params structure with the provided evt_name */
     NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams = {
         .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
         .pChipName = avail_events[0].chip_name,
     };
-    NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), return PAPI_EMISC );
-    /* Go back and add checks where necessary */
-    check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-                      num_dep, rmr, &passes );
 
+    /* create pointer for the instantiated create params structure */
+    NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), return PAPI_EMISC );
+
+    /* collect numpass values */
+    papi_errno = check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+                                   num_dep, rmr, &passes );
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    /* destory create params instantiated structure */
     NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
         .structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig,
     };
 
+    /* destroy created pointer for instantiated create params structure */
     NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), return PAPI_EMISC );
 
+    /* add extra metadata to description*/
     snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d", passes);
     if (passes > 1) {
         snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
     }
 
     const char *token_sw_evt = "sass";
-    if (strstr(nv_name, token_sw_evt) != NULL) {
+    if (strstr(evt_name, token_sw_evt) != NULL) {
         snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (SW event)");
     }
-  
-    papi_free(temp);
+    
+    /* free memory, copy description, and return successful error code */
+    papi_free(rmr);
 
     strcpy(description, desc);
 
     return PAPI_OK;
 }
 
-static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *nv_name,
-                         int *numDep, NVPA_RawMetricRequest **pRMR )
+/** @class retrieve_metric_rmr
+  * @brief Collect the raw metric request for the provided evt_name.
+  *
+  * @param *pMetricsContext
+  *   Structure providing context for evt_name. 
+  * @param *evt_name
+  *   Cuda native event name.
+  * @param *numDep
+  *   Number of dependencies for a cuda native event.
+  * @param **pRMR
+  *  Raw metric requests for a cuda native event.
+*/
+static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
+                                int *numDep, NVPA_RawMetricRequest **pRMR )
 {
     COMPDBG("Entering.\n");
-    int num_dep, i, len;
+    int num_dep, i;
     NVPA_Status nvpa_err;
+    NVPA_RawMetricRequest *rmr;
 
-    if ( nv_name == NULL ) {
+    /* check to make sure an argument has been passed for evt_name */
+    if ( evt_name == NULL ) {
         return PAPI_EINVAL;
     }
 
+    /* instantiate a new metric properties structure with the provided evt_name */
     NVPW_MetricsContext_GetMetricProperties_Begin_Params getMetricPropertiesBeginParams = {
         .structSize = NVPW_MetricsContext_GetMetricProperties_Begin_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pMetricsContext = pMetricsContext,
-        .pMetricName = nv_name,
+        .pMetricName = evt_name,
     };
-    nvpa_err = NVPW_MetricsContext_GetMetricProperties_BeginPtr(&getMetricPropertiesBeginParams);
 
+    /* collect metric properties such as dependencies and description for the 
+       structure created by the passed evt_name */
+    nvpa_err = NVPW_MetricsContext_GetMetricProperties_BeginPtr(&getMetricPropertiesBeginParams);
     if (nvpa_err != NVPA_STATUS_SUCCESS || getMetricPropertiesBeginParams.ppRawMetricDependencies == NULL) {
         return PAPI_EINVAL;
     }
 
     for (num_dep = 0; getMetricPropertiesBeginParams.ppRawMetricDependencies[num_dep] != NULL; num_dep++) {;}
 
-    NVPA_RawMetricRequest *rmr = (NVPA_RawMetricRequest *) papi_calloc(num_dep, sizeof(NVPA_RawMetricRequest));
+    rmr = (NVPA_RawMetricRequest *) papi_calloc(num_dep, sizeof(NVPA_RawMetricRequest));
     if (rmr == NULL) {
         return PAPI_ENOMEM;
     }
@@ -1980,20 +2038,19 @@ static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char
         rmr[i].structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE;
     }
 
-    if (len > PAPI_2MAX_STR_LEN) {
-        ERRDBG("String formatting exceeded max string length.\n");
-        return PAPI_ENOMEM;
-    }
-
+    /* store number of dependencies and raw metric requests */
     *numDep = num_dep;
     *pRMR = rmr;
-
+    
+    /* ending/deleting instantiated struct created by passed evt_name */
     NVPW_MetricsContext_GetMetricProperties_End_Params getMetricPropertiesEndParams = {
         .structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pMetricsContext = pMetricsContext,
     };
 
+    /* ending pointer created by passed evt_name */
     NVPW_CALL( NVPW_MetricsContext_GetMetricProperties_EndPtr(&getMetricPropertiesEndParams), return PAPI_EMISC );
+
     return PAPI_OK;
 }
