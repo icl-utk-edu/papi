@@ -1,6 +1,7 @@
 /**
  * @file    linux-cuda.c
  *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in Spring of 2024, redesigned to add qualifier support.)
  * @author  Anustuv Pal   anustuv@icl.utk.edu (updated in 2023, redesigned with multi-threading support.)
  * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 08/2019, to make counters accumulate.)
  * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 2018, to use batch reads and support nvlink metrics.
@@ -40,7 +41,6 @@ static int cuda_shutdown_thread(hwd_context_t *ctx);
 static int cuda_ntv_enum_events(unsigned int *event_code, int modifier);
 static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len);
 static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code);
-
 static int cuda_ntv_code_to_descr(unsigned int event_code, char *descr, int len);
 static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info);
 
@@ -185,7 +185,7 @@ static int check_n_initialize(void)
     return papi_errno;
 }
 
-int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
+static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
 {
     SUBDBG("ENTER: event_code: %u, modifier: %d\n", *event_code, modifier);
     int papi_errno = check_n_initialize();
@@ -204,58 +204,7 @@ fn_fail:
     goto fn_exit;
 }
 
-/*
-static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
-{
-    int device;
-    int papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
-    _papi_hwi_lock(COMPONENT_LOCK);
-    LOCKDBG("Locked COMPONENT_LOCK to enumerate all events.\n");
-    papi_errno = cuptid_event_enum(global_event_names);
-    _papi_hwi_unlock(COMPONENT_LOCK);
-    LOCKDBG("Unlocked COMPONENT_LOCK.\n");
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
-    _cuda_vector.cmp_info.num_native_events = global_event_names->count;
-    switch (modifier) {
-        case PAPI_ENUM_FIRST:
-            *event_code = 0;
-            papi_errno = PAPI_OK;
-            break;
-        case PAPI_ENUM_EVENTS:
-            if (global_event_names->count == 0) {
-                papi_errno = PAPI_ENOEVNT;
-            } else if (*event_code < global_event_names->count - 1) {
-                *event_code = *event_code + 1;
-                papi_errno = PAPI_OK;
-            } else {
-                papi_errno = PAPI_ENOEVNT;
-            }
-            break;
-        case PAPI_NTV_ENUM_UMASKS:
-            if (global_event_names->count == 0) {
-                papi_errno = PAPI_ENOEVNT;
-            } else if (*event_code < global_event_names->count - 1) {
-                *event_code = *event_code + 1;
-                papi_errno = PAPI_OK;
-            } else {
-                papi_errno = PAPI_ENOEVNT;
-            }
-            break;
-        default:
-            papi_errno = PAPI_EINVAL;
-    }
-fn_exit:
-    return papi_errno;
-}
-*/
-int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
+static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
 {
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
@@ -308,33 +257,6 @@ fn_fail:
     goto fn_exit;
 }
 
-/*
-static int cuda_ntv_code_to_descr(unsigned int event_code, char *descr, int __attribute__((unused)) len)
-{
-    char evt_name[PAPI_2MAX_STR_LEN];
-    int papi_errno;
-    papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
-    _papi_hwi_lock(COMPONENT_LOCK);
-    papi_errno = cuptid_event_enum(global_event_names);
-    _papi_hwi_unlock(COMPONENT_LOCK);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
-    papi_errno = cuda_ntv_code_to_name(event_code, evt_name, PAPI_2MAX_STR_LEN);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-    papi_errno = cuptid_event_name_to_descr(evt_name, descr);
-fn_exit:
-    return papi_errno;
-}
-*/
-
 static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info)
 {
     SUBDBG("ENTER: event_code: %u, info: %p\n", event_code, info);
@@ -351,33 +273,6 @@ fn_exit:
 fn_fail:
     goto fn_exit;
 }
-
-/*
-static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info)
-{
-    char evt_name[PAPI_2MAX_STR_LEN];
-    int papi_errno;
-    papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
-    _papi_hwi_lock(COMPONENT_LOCK);
-    papi_errno = cuptid_event_enum(global_event_names);
-    _papi_hwi_unlock(COMPONENT_LOCK);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-    papi_errno = cuda_ntv_code_to_name(event_code, evt_name, PAPI_2MAX_STR_LEN);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-    papi_errno = cuptid_evt_name_to_info(evt_name, info);
-fn_exit:
-    return papi_errno;
-}
-*/
-
 
 static int cuda_init_thread(hwd_context_t __attribute__((unused)) *ctx)
 {

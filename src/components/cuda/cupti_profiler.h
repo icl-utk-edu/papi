@@ -20,7 +20,6 @@ int cuptip_control_read(cuptip_control_t state, long long *values);
 int cuptip_control_reset(cuptip_control_t state);
 int cuptip_event_name_to_descr(const char *evt_name, char *description);
 int cuptip_evt_enum(uint64_t *event_code, int modifier);
-int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len);
 int init_event_table(void);

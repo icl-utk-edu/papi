@@ -21,7 +21,7 @@ int cuptie_control_stop(cuptie_control_t ctl);
 int cuptie_control_read(cuptie_control_t ctl, long long *values);
 int cuptie_control_reset(cuptie_control_t ctl);
 int cuptie_evt_enum(uint64_t *event_code, int modifier);
-int cuptie_event_name_to_descr(const char *evt_name, char *description);
+int cuptie_event_code_to_descr(uint64_t event_code, char *descr, int len);
 int cuptie_shutdown(void);
 
 #endif  /* __CUPTI_EVENTS_H__ */
