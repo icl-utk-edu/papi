@@ -357,7 +357,7 @@ main( int argc, char **argv )
       else if ( strstr( argv[args], "--l3" ) )
 	 filter |= PAPI_PRESET_BIT_L3;
       else if ( strstr( argv[args], "--mem" ) )
-	 filter |= PAPI_PRESET_BIT_BR;
+	 filter |= PAPI_PRESET_BIT_MEM;
       else if ( strstr( argv[args], "--msc" ) )
 	 filter |= PAPI_PRESET_BIT_MSC;
       else if ( strstr( argv[args], "--tlb" ) )
