@@ -239,6 +239,16 @@ int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     return cuptip_evt_code_to_info(event_code, info);
 }
 
+int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    return cuptip_evt_code_to_name(event_code, name, len);
+}
+
+int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
+{
+    return cuptip_evt_name_to_code(name, event_code);
+}
+
 void cuptid_event_table_destroy(ntv_event_table_t *evt_table)
 {
     cuptiu_event_table_destroy(evt_table);
