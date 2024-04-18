@@ -22,6 +22,8 @@ int cuptip_event_name_to_descr(const char *evt_name, char *description);
 int cuptip_evt_enum(uint64_t *event_code, int modifier);
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len);
+int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len);
+int cuptip_evt_name_to_code(const char *name, uint64_t *event_code);
 int init_event_table(void);
 int cuptip_shutdown(void);
 #endif  /* __CUPTI_PROFILER_H__ */

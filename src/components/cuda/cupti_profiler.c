@@ -31,7 +31,6 @@
  * qlmask    : 2  bits (qualifier mask)
  * nameid    : 21: bits ([0 - 263,231] event names)
  */
-
 #define EVENTS_WIDTH (sizeof(uint64_t) * 8)
 #define DEVICE_WIDTH ( 7)
 #define INSTAN_WIDTH ( 7)
@@ -85,9 +84,10 @@ static void free_all_enumerated_metrics(void);
 static int event_name_tokenize(const char *name, char *nv_name, int *gpuid);
 static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
 static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
-                         int *numDep, NVPA_RawMetricRequest **pRMR );
+                                int *numDep, NVPA_RawMetricRequest **pRMR );
 static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
-                                   char *description );
+                                  char *description, char *units );
+static int evt_code_to_name(uint64_t event_code, char *name, int len);
 static int check_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig, int rmr_count,
                             NVPA_RawMetricRequest *rmr, int *num_pass);
 static enum collection_method_e get_event_collection_method(const char *evt_name);
@@ -99,6 +99,8 @@ static int control_state_validate(cuptip_control_t state);
 
 static int evt_id_to_info(uint64_t event_id, event_info_t *info);
 static int evt_id_create(event_info_t *info, uint64_t *event_id);
+static int evt_name_to_basename(const char *name, char *base, int len);
+static int evt_name_to_device(const char *name, int *device);
 static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl);
@@ -1247,9 +1249,9 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
 
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
-    int papi_errno;
+    int papi_errno, len;
     event_info_t inf;
-    char description[PAPI_2MAX_STR_LEN];
+    char description[PAPI_2MAX_STR_LEN], units[PAPI_MIN_STR_LEN];
     papi_errno = evt_id_to_info(event_code, &inf);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
@@ -1257,7 +1259,7 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     
     /* collect description */
     papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext, 
-                                        cuptiu_table_p->events[inf.nameid].name, description );
+                                        cuptiu_table_p->events[inf.nameid].name, description, units );
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -1266,10 +1268,28 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     switch (inf.flags) {
         case 0:
             /* cuda native event name */
-            sprintf( info->symbol, "%s", cuptiu_table_p->events[inf.nameid].name );
+            len = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            /* units for cuda native event name */
+            len = snprintf( info->units, PAPI_MIN_STR_LEN, "%s", units );
+            if (len > PAPI_MIN_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
             /* cuda native event description */
-            snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-            snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            len = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            len = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
             break;
         case DEVICE_FLAG:
         {
@@ -1873,7 +1893,7 @@ static int shutdown_event_table(void)
   * @param *description
   *   Corresponding description for provided Cuda native event name.
 */
-static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description ) 
+static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description, char *units) 
 {
     COMPDBG("Entering.\n");
     int num_dep, i, len, passes, papi_errno;
@@ -1923,6 +1943,12 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     /* check to make sure that description length is not greater than 
        PAPI_2MAX_STR_LEN, which holds */
     if (len > PAPI_2MAX_STR_LEN) {
+        ERRDBG("String formatting exceeded max string length.\n");
+        return PAPI_ENOMEM;
+    }
+    /* collect the corresponding units for the provided evt_name */
+    len = snprintf(units, PAPI_MIN_STR_LEN, "%s", getMetricPropertiesBeginParams.pDimUnits);
+    if (len > PAPI_MIN_STR_LEN) {
         ERRDBG("String formatting exceeded max string length.\n");
         return PAPI_ENOMEM;
     }
@@ -2053,4 +2079,111 @@ static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char
     NVPW_CALL( NVPW_MetricsContext_GetMetricProperties_EndPtr(&getMetricPropertiesEndParams), return PAPI_EMISC );
 
     return PAPI_OK;
+}
+
+int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
+{
+
+    int htable_errno, device, flags, nameid, papi_errno = PAPI_OK;
+    event_info_t info;
+    cuptiu_event_t *event;
+    char base[PAPI_MAX_STR_LEN] = { 0 };
+    SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
+
+    papi_errno = evt_name_to_device(name, &device);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    htable_errno = htable_find(avail_events[0].nv_metrics->htable, base, (void **) &event);
+    if (htable_errno != HTABLE_SUCCESS) {
+        papi_errno = (htable_errno == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
+        goto fn_exit;
+    }
+
+    flags = (device >= 0) ? 0:1;
+    if (flags != 0) {
+        papi_errno = PAPI_EINVAL;
+        goto fn_exit;
+    }
+
+    nameid = (int) (event - cuptiu_table_p->events);
+    info = { device, flags, nameid };
+    papi_errno = evt_id_create(&info, event_code);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    papi_errno = evt_id_to_info(*event_code, &info);
+
+    fn_exit:
+        SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+        return papi_errno;
+}
+
+static int evt_name_to_basename(const char *name, char *base, int len)
+{
+    char *p = strstr(name, ":");
+    if (p) {
+        if (len < (int)(p - name)) {
+            return PAPI_EBUF;
+        }
+        strncpy(base, name, (size_t)(p - name));
+    } else {
+        if (len < (int) strlen(name)) {
+            return PAPI_EBUF;
+        }
+        strncpy(base, name, (size_t) len);
+    }
+    return PAPI_OK;
+}
+
+static int evt_name_to_device(const char *name, int *device)
+{
+    char *p = strstr(name, ":device=");
+    if (!p) {
+        return PAPI_ENOEVNT;
+    }
+    *device = (int) strtol(p + strlen(":device="), NULL, 10);
+    return PAPI_OK;
+}
+
+int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len) 
+{
+    return evt_code_to_name(event_code, name, len);
+}
+
+static int evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    int papi_errno, str_len;
+
+    event_info_t info;
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    switch (info.flags) {
+        case (DEVICE_FLAG):
+            str_len = snprintf(name, len, "%s:device=%i", cuptiu_table_p->events[info.nameid].name, info.device);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+        default:
+            str_len = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+    }
+
+    return papi_errno;
 }
