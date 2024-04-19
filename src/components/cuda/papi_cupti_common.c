@@ -656,3 +656,32 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table)
     _papi_hwi_unlock(_cuda_lock);
     return PAPI_OK;
 }
+
+int cuptiu_dev_get_map(cuptiu_dev_get_map_cb query_dev_id, uint64_t *events_id, int num_events, cuptiu_bitmap_t *bitmap)
+{
+    int i;
+    cuptiu_bitmap_t device_map_acq = 0;
+
+    for (i = 0; i < num_events; ++i) {
+        int dev_id;
+        if (query_dev_id(events_id[i], &dev_id)) {
+            return PAPI_EMISC;
+        }
+
+        device_map_acq |= (1 << dev_id);
+    }
+
+    *bitmap = device_map_acq;
+    return PAPI_OK;
+}
+
+int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i)
+{
+    *bitmap |= (1ULL << i);
+    return PAPI_OK;
+}
+
+int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i)
+{
+    return (bitmap & (1ULL << i));
+}

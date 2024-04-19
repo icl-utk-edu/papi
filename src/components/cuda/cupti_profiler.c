@@ -82,11 +82,11 @@ static int init_all_metrics(void);
 static int find_same_chipname(int gpu_id);
 static void free_all_enumerated_metrics(void);
 static int event_name_tokenize(const char *name, char *nv_name, int *gpuid);
-static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
+static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, int gpu_id);
 static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
                                 int *numDep, NVPA_RawMetricRequest **pRMR );
 static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
-                                  char *description, char *units );
+                                  char *description );
 static int evt_code_to_name(uint64_t event_code, char *name, int len);
 static int check_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig, int rmr_count,
                             NVPA_RawMetricRequest *rmr, int *num_pass);
@@ -1251,7 +1251,7 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
     int papi_errno, len;
     event_info_t inf;
-    char description[PAPI_2MAX_STR_LEN], units[PAPI_MIN_STR_LEN];
+    char description[PAPI_2MAX_STR_LEN];
     papi_errno = evt_id_to_info(event_code, &inf);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
@@ -1259,7 +1259,7 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     
     /* collect description */
     papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext, 
-                                        cuptiu_table_p->events[inf.nameid].name, description, units );
+                                        cuptiu_table_p->events[inf.nameid].name, description );
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -1270,12 +1270,6 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
             /* cuda native event name */
             len = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
             if (len > PAPI_HUGE_STR_LEN) {
-                ERRDBG("String formatting exceeded max string length.\n");
-                return PAPI_ENOMEM;
-            }
-            /* units for cuda native event name */
-            len = snprintf( info->units, PAPI_MIN_STR_LEN, "%s", units );
-            if (len > PAPI_MIN_STR_LEN) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_ENOMEM;
             }
@@ -1293,19 +1287,17 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
             break;
         case DEVICE_FLAG:
         {
-            /*
             int i;
             char devices[PAPI_MAX_STR_LEN] = { 0 };
-            for (i = 0; i < device_table_p->count; ++i) {
-                if (rocc_dev_check(ntv_table_p->events[inf.nameid].device_map, i)) {
+            for (i = 0; i < num_gpus; ++i) {
+                if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
                     sprintf(devices + strlen(devices), "%i,", i);
                 }
             }
             *(devices + strlen(devices) - 1) = 0;
-            */
             sprintf( info->symbol, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
             sprintf( info->long_descr, "%s masks:Mandatory device qualifier [%s]",
-                     cuptiu_table_p->events[inf.nameid].desc, "0,1" );
+                     cuptiu_table_p->events[inf.nameid].desc, devices );
             break;
         }
         default:
@@ -1759,54 +1751,44 @@ int init_event_table(void) {
         //Already eumerated for 1st device? Then exit...
         goto fn_exit;
     }
-    for (gpu_id = 0; gpu_id < 1; gpu_id++) {
-        LOGDBG("Getting metric names for gpu %d\n", gpu_id);
-        found = find_same_chipname(gpu_id);
-        if (found > -1) {
-            avail_events[gpu_id].num_metrics = avail_events[found].num_metrics;
-            avail_events[gpu_id].nv_metrics = avail_events[found].nv_metrics;
-            continue;
-        }
-        // If same chip_name not found, get all the details for this gpu
-        NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
+    NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
             .pPriv = NULL,
-            .pMetricsContext = avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+            .pMetricsContext = avail_events[0].pmetricsContextCreateParams->pMetricsContext,
             .hidePeakSubMetrics = !listsubmetrics,
             .hidePerCycleSubMetrics = !listsubmetrics,
             .hidePctOfPeakSubMetrics = !listsubmetrics,
-        };
+    };
+    NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
-        NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
-
-        avail_events[gpu_id].num_metrics = getMetricNameBeginParams.numMetrics;
-        cuptiu_table.events = papi_calloc(avail_events[gpu_id].num_metrics, sizeof(cuptiu_event_t));
+    avail_events[0].num_metrics = getMetricNameBeginParams.numMetrics;
+    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics * 8, sizeof(cuptiu_event_t));
         
-        papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_id].num_metrics, sizeof(cuptiu_event_t), &(avail_events[gpu_id].nv_metrics));
-        if (papi_errno != PAPI_OK) {
-            printf("We fail here at init capacity\n");
-            goto fn_exit;
-        }
-
-        for (i = 0; i < avail_events[gpu_id].num_metrics; i++) {
-            papi_errno = get_ntv_events( avail_events[gpu_id].nv_metrics,
+    papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * 8, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
+    if (papi_errno != PAPI_OK) {
+        printf("We fail here at init capacity\n");
+        goto fn_exit;
+    }
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
+        for (i = 0; i < avail_events[0].num_metrics; i++) {
+            papi_errno = get_ntv_events( avail_events[0].nv_metrics,
                                          getMetricNameBeginParams.ppMetricNames[i],
-                                         i, 0 );
+                                         i, 0, gpu_id );
             if (papi_errno != PAPI_OK) {
                 goto fn_exit;
             }
         }
-        cuptiu_table.count = avail_events[gpu_id].nv_metrics->count;
-        cuptiu_table.events = papi_realloc(cuptiu_table.events, cuptiu_table.count * sizeof(cuptiu_event_t));
-
-        NVPW_MetricsContext_GetMetricNames_End_Params getMetricNameEndParams = {
-            .structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE,
-            .pPriv = NULL,
-            .pMetricsContext = avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
-        };
-        NVPW_CALL( NVPW_MetricsContext_GetMetricNames_EndPtr((NVPW_MetricsContext_GetMetricNames_End_Params *) &getMetricNameEndParams), goto fn_fail );
-
     }
+    cuptiu_table.events = papi_realloc(cuptiu_table.events, avail_events[0].nv_metrics->count * sizeof(cuptiu_event_t));
+    cuptiu_table.count = avail_events[0].nv_metrics->count;
+
+    NVPW_MetricsContext_GetMetricNames_End_Params getMetricNameEndParams = {
+        .structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE,
+        .pPriv = NULL,
+        .pMetricsContext = avail_events[0].pmetricsContextCreateParams->pMetricsContext,
+    };
+    NVPW_CALL( NVPW_MetricsContext_GetMetricNames_EndPtr((NVPW_MetricsContext_GetMetricNames_End_Params *) &getMetricNameEndParams), goto fn_fail );
+
   fn_exit:
     return papi_errno;
   fn_fail:
@@ -1827,7 +1809,7 @@ int init_event_table(void) {
   * @param evt_pos
   *   Position within the hash table. 
 */
-static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos) 
+static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, int gpu_id) 
 {
     int *count = &evt_table->count;
     cuptiu_event_t *events = cuptiu_table.events;
@@ -1860,6 +1842,9 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
             return PAPI_ESYS;
         }
     }
+
+    cuptiu_dev_set(&event->device_map, gpu_id);
+
     return PAPI_OK;
 }
 
@@ -1893,7 +1878,7 @@ static int shutdown_event_table(void)
   * @param *description
   *   Corresponding description for provided Cuda native event name.
 */
-static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description, char *units) 
+static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description) 
 {
     COMPDBG("Entering.\n");
     int num_dep, i, len, passes, papi_errno;
@@ -1943,12 +1928,6 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     /* check to make sure that description length is not greater than 
        PAPI_2MAX_STR_LEN, which holds */
     if (len > PAPI_2MAX_STR_LEN) {
-        ERRDBG("String formatting exceeded max string length.\n");
-        return PAPI_ENOMEM;
-    }
-    /* collect the corresponding units for the provided evt_name */
-    len = snprintf(units, PAPI_MIN_STR_LEN, "%s", getMetricPropertiesBeginParams.pDimUnits);
-    if (len > PAPI_MIN_STR_LEN) {
         ERRDBG("String formatting exceeded max string length.\n");
         return PAPI_ENOMEM;
     }
@@ -2085,7 +2064,6 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
 {
 
     int htable_errno, device, flags, nameid, papi_errno = PAPI_OK;
-    event_info_t info;
     cuptiu_event_t *event;
     char base[PAPI_MAX_STR_LEN] = { 0 };
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
@@ -2113,7 +2091,7 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
     }
 
     nameid = (int) (event - cuptiu_table_p->events);
-    info = { device, flags, nameid };
+    event_info_t info = { device, flags, nameid };
     papi_errno = evt_id_create(&info, event_code);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;

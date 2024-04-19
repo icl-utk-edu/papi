@@ -107,4 +107,8 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
 int cuptic_device_release(cuptiu_event_table_t *evt_table);
 
-#endif /* __PAPI_CUPTI_COMMON_H__ */
+int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
+int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
+int cuptiu_dev_get_map(cuptiu_dev_get_map_cb query_dev_id, uint64_t *events_id, int num_events, cuptiu_bitmap_t *bitmap);
+
+#endif /* __CUPTI_COMMON_H__ */
