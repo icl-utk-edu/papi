@@ -8,6 +8,11 @@
 #define __CUPTI_UTILS_H__
 
 #include <papi.h>
+#include <stdint.h>
+
+typedef int64_t cuptiu_bitmap_t;
+typedef int (*cuptiu_dev_get_map_cb)(uint64_t event_id, int *dev_id);
+
 
 typedef struct event_record_s {
     char name[PAPI_2MAX_STR_LEN];
@@ -15,6 +20,7 @@ typedef struct event_record_s {
     unsigned int evt_pos;
     double value;
     char desc[PAPI_2MAX_STR_LEN];
+    cuptiu_bitmap_t device_map;
 } cuptiu_event_t;
 
 typedef struct event_table_s {
