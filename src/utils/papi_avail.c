@@ -326,7 +326,7 @@ main( int argc, char **argv )
 	 }
 	 name = argv[args + 1];
       }
-      else if ( strstr( argv[args], "-c" ) || strstr (argv[args], "--check") )
+      else if ( ( !strstr( argv[args], "--") && strstr( argv[args], "-c" ) ) || strstr(argv[args], "--check") )
       {
 	 print_avail_only = PAPI_PRESET_ENUM_AVAIL;
          check_counter = 1;
