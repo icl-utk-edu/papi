@@ -25,24 +25,20 @@
  * |         unused                  |  dev  | inst  |  |   nameid   |
  * +---------------------------------+-------+-------+--+------------+
  *
- * unused    : 27 bits 
+ * unused    : 34 bits 
  * device    : 7  bits ([0 - 127] devices)
- * instance  : 7  bits ([0 - 127] instances)
  * qlmask    : 2  bits (qualifier mask)
  * nameid    : 21: bits ([0 - 263,231] event names)
  */
 #define EVENTS_WIDTH (sizeof(uint64_t) * 8)
 #define DEVICE_WIDTH ( 7)
-#define INSTAN_WIDTH ( 7)
 #define QLMASK_WIDTH ( 2) 
 #define NAMEID_WIDTH (21)
-#define UNUSED_WIDTH (EVENTS_WIDTH - DEVICE_WIDTH - INSTAN_WIDTH - QLMASK_WIDTH - NAMEID_WIDTH)
+#define UNUSED_WIDTH (EVENTS_WIDTH - DEVICE_WIDTH - QLMASK_WIDTH - NAMEID_WIDTH)
 #define DEVICE_SHIFT (EVENTS_WIDTH - UNUSED_WIDTH - DEVICE_WIDTH)
-#define INSTAN_SHIFT (DEVICE_SHIFT - INSTAN_WIDTH)
-#define QLMASK_SHIFT (INSTAN_SHIFT - QLMASK_WIDTH)
+#define QLMASK_SHIFT (DEVICE_SHIFT - QLMASK_WIDTH)
 #define NAMEID_SHIFT (QLMASK_SHIFT - NAMEID_WIDTH)
 #define DEVICE_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - DEVICE_WIDTH)) << DEVICE_SHIFT)
-#define INSTAN_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - INSTAN_WIDTH)) << INSTAN_SHIFT)
 #define QLMASK_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - QLMASK_WIDTH)) << QLMASK_SHIFT)
 #define NAMEID_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - NAMEID_WIDTH)) << NAMEID_SHIFT)
 #define DEVICE_FLAG  (0x2)
@@ -1230,6 +1226,7 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
         case PAPI_NTV_ENUM_UMASKS:
             papi_errno = evt_id_to_info(*event_code, &info);
             if (papi_errno != PAPI_OK) {
+                printf("%d\n", papi_errno);
                 break;
             }
             if (info.flags == 0){
@@ -1249,6 +1246,7 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
 
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
+
     int papi_errno, len;
     event_info_t inf;
     char description[PAPI_2MAX_STR_LEN];
@@ -1708,24 +1706,20 @@ evt_id_to_info(uint64_t event_id, event_info_t *info)
     info->device   = (int)((event_id & DEVICE_MASK) >> DEVICE_SHIFT);
     info->flags    = (int)((event_id & QLMASK_MASK) >> QLMASK_SHIFT);
     info->nameid   = (int)((event_id & NAMEID_MASK) >> NAMEID_SHIFT);
-    /*
-    if (info->device >= device_table_p->count) {
+
+    if (info->device >= num_gpus) {
         return PAPI_ENOEVNT;
     }
-    */
-    /*
+
     if (0 == (info->flags & DEVICE_FLAG) && info->device > 0) {
         return PAPI_ENOEVNT;
     }
-    */
-    /* device map not implemented yet
-    if (rocc_dev_check(ntv_table_p->events[info->nameid].device_map, info->device) == 0) {
+
+    if (cuptiu_dev_check(cuptiu_table_p->events[info->nameid].device_map, info->device) == 0) {
         return PAPI_ENOEVNT;
     }
-    */
 
     if (info->nameid >= cuptiu_table_p->count) {
-        printf("We fail on nameid check\n");
         return PAPI_ENOEVNT;
     }
 
@@ -1751,6 +1745,7 @@ int init_event_table(void) {
         //Already eumerated for 1st device? Then exit...
         goto fn_exit;
     }
+
     NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
             .pPriv = NULL,
@@ -1762,9 +1757,9 @@ int init_event_table(void) {
     NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
     avail_events[0].num_metrics = getMetricNameBeginParams.numMetrics;
-    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics * 8, sizeof(cuptiu_event_t));
+    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics, sizeof(cuptiu_event_t));
         
-    papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * 8, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
+    papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
     if (papi_errno != PAPI_OK) {
         printf("We fail here at init capacity\n");
         goto fn_exit;
@@ -1834,8 +1829,6 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
 
         /* store event info */
         strcpy(event->name, evt_name);
-        event->evt_code = evt_code;
-        event->evt_pos = evt_pos;
 
         /* insert event info into htable */
         if ( htable_insert(evt_table->htable, evt_name, event) != HTABLE_SUCCESS ) {
