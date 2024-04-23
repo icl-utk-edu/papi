@@ -1192,6 +1192,15 @@ fn_fail:
     goto fn_exit;
 }
 
+/** @class cuptip_evt_enum
+  * @brief Enumerate Cuda native events.
+  * 
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param modifier
+  *   Modifies the search logic. Three modifiers are used PAPI_ENUM_FIRST,
+  *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_UMASKS.
+*/
 int cuptip_evt_enum(uint64_t *event_code, int modifier)
 {
     int papi_errno = PAPI_OK;
@@ -1244,6 +1253,15 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
     return papi_errno;
 }
 
+/** @class cuptip_evt_code_to_info
+  * @brief Takes a Cuda native event code and collects info such as Cuda native 
+  *        event name, Cuda native event description, and number of devices. 
+  * @param event_code
+  *   Cuda native event code. 
+  * @param *info
+  *   Structure for member variables such as symbol, short description, and 
+  *   long desctiption. 
+*/
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
 
@@ -1271,13 +1289,13 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_ENOMEM;
             }
-            /* cuda native event description */
-            len = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            len = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
             if (len > PAPI_HUGE_STR_LEN) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_ENOMEM;
             }
-            len = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            /* cuda native event description */
+            len = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
             if (len > PAPI_HUGE_STR_LEN) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_ENOMEM;
@@ -1687,10 +1705,15 @@ int cuptip_shutdown(void)
     return PAPI_OK;
 }
 
-/* Create event ID.
-   Function is needed for cuptip_event_enum. */
-int
-evt_id_create(event_info_t *info, uint64_t *event_id)
+/** @class evt_id_to_info
+  * @brief Create event ID. Function is needed for cuptip_event_enum.
+  *
+  * @param *info
+  *   Structure which contains member variables of device, flags, and nameid.
+  * @param *event_id
+  *   Created event id.
+*/
+int evt_id_create(event_info_t *info, uint64_t *event_id)
 {
     *event_id  = (uint64_t)(info->device   << DEVICE_SHIFT);
     *event_id |= (uint64_t)(info->flags    << QLMASK_SHIFT);
@@ -1698,10 +1721,15 @@ evt_id_create(event_info_t *info, uint64_t *event_id)
     return PAPI_OK;
 }
 
-/* Convert event id to info.
-   Function is needed for cuptip_event_enum. */
-int
-evt_id_to_info(uint64_t event_id, event_info_t *info)
+/** @class evt_id_to_info
+  * @brief Convert event id to info. Function is needed for cuptip_event_enum.
+  *
+  * @param event_id
+  *   An event id.
+  * @param *info
+  *   Structure which contains member variables of device, flags, and nameid.
+*/
+int evt_id_to_info(uint64_t event_id, event_info_t *info)
 {
     info->device   = (int)((event_id & DEVICE_MASK) >> DEVICE_SHIFT);
     info->flags    = (int)((event_id & QLMASK_MASK) >> QLMASK_SHIFT);
@@ -1726,19 +1754,37 @@ evt_id_to_info(uint64_t event_id, event_info_t *info)
     return PAPI_OK;
 }
 
+/** @class cuptip_evt_code_to_descr
+  * @brief Take a Cuda native event code and retrieve a corresponding description.
+  *
+  * @param event_code
+  *   Cuda native event code. 
+  * @param *descr
+  *   Corresponding description for provided Cuda native event code.
+  * @param len
+  *   Maximum alloted characters for Cuda native event description. 
+*/
 int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
-    int papi_errno;
+    int papi_errno, str_len;
     event_info_t info;
     papi_errno = evt_id_to_info(event_code, &info);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
-    snprintf(descr, (size_t) len, "%s", cuptiu_table_p->events[event_code].desc);
+    str_len = snprintf(descr, (size_t) len, "%s", cuptiu_table_p->events[event_code].desc);
+    if (str_len > len) {
+        ERRDBG("String formatting exceeded max string length.\n");
+        return PAPI_ENOMEM;  
+    }
+    
     return papi_errno;
 }
 
+/** @class init_event_table
+  * @brief Initialize hash table and cuptiu_event_table_t structure.
+*/
 int init_event_table(void) {
     int gpu_id, i, found, listsubmetrics = 1, papi_errno = PAPI_OK;
     if (avail_events[0].nv_metrics != NULL) {
@@ -1842,8 +1888,8 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
 }
 
 /** @class shutdown_event_table
-  * @brief Shutdown created table that holds the cuda native event names
-           and the corresponding description.
+  * @brief Shutdown cuptiu_event_table_t structure that holds the cuda native 
+  *        event name and the corresponding description.
 */
 static int shutdown_event_table(void)
 {
@@ -2053,6 +2099,14 @@ static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char
     return PAPI_OK;
 }
 
+/** @class cuptip_evt_name_to_code
+  * @brief Take a Cuda native event name and collect the corresponding event code.
+  *
+  * @param *name
+  *   Cuda native event name.
+  * @param *event_code
+  *   Corresponding Cuda native event code for provided Cuda native event name.
+*/
 int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
 {
 
@@ -2097,6 +2151,16 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
         return papi_errno;
 }
 
+/** @class evt_name_to_basename
+  * @brief Convert a Cuda native event name with a device qualifer appended to 
+  *        it, back to the base Cuda native event name provided by NVIDIA.
+  * @param *name
+  *   Cuda native event name with a device qualifier appended.
+  * @param *base
+  *   Base Cuda native event name (excludes device qualifier).
+  * @param len
+  *   Maximum alloted characters for base Cuda native event name. 
+*/
 static int evt_name_to_basename(const char *name, char *base, int len)
 {
     char *p = strstr(name, ":");
@@ -2114,6 +2178,14 @@ static int evt_name_to_basename(const char *name, char *base, int len)
     return PAPI_OK;
 }
 
+/** @class evt_name_to_device
+  * @brief Take a Cuda native event name with a device qualifer appended to 
+  *        it and collect the device number.
+  * @param *name
+  *   Cuda native event name with a device qualifier appended.
+  * @param *device
+  *   Device number.
+*/
 static int evt_name_to_device(const char *name, int *device)
 {
     char *p = strstr(name, ":device=");
@@ -2124,11 +2196,31 @@ static int evt_name_to_device(const char *name, int *device)
     return PAPI_OK;
 }
 
+/** @class cuptip_evt_code_to_name
+  * @brief Returns Cuda native event name for a Cuda native event code. See 
+  *        evt_code_to_name( ... ) for more details.
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param *name
+  *   Cuda native event name.
+  * @param len
+  *   Maximum alloted characters for base Cuda native event name. 
+*/
 int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len) 
 {
     return evt_code_to_name(event_code, name, len);
 }
 
+/** @class evt_code_to_name
+  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
+  *        code and collects the corresponding Cuda native event name. 
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param *name
+  *   Cuda native event name.
+  * @param len
+  *   Maximum alloted characters for base Cuda native event name. 
+*/
 static int evt_code_to_name(uint64_t event_code, char *name, int len)
 {
     int papi_errno, str_len;

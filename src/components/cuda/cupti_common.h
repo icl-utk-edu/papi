@@ -109,6 +109,5 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table);
 
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
-int cuptiu_dev_get_map(cuptiu_dev_get_map_cb query_dev_id, uint64_t *events_id, int num_events, cuptiu_bitmap_t *bitmap);
 
 #endif /* __CUPTI_COMMON_H__ */
