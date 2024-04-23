@@ -18,7 +18,7 @@ int cuptip_control_start(cuptip_control_t state);
 int cuptip_control_stop(cuptip_control_t state);
 int cuptip_control_read(cuptip_control_t state, long long *values);
 int cuptip_control_reset(cuptip_control_t state);
-int cuptip_event_name_to_descr(const char *evt_name, char *description);
+
 int cuptip_evt_enum(uint64_t *event_code, int modifier);
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len);

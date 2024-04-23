@@ -60,6 +60,7 @@ enum collection_method_e {SpotValue, RunningMin, RunningMax, RunningSum};
 
 static void *dl_nvpw;
 static int num_gpus;
+static int num_unique_gpus;
 static list_metrics_t *avail_events;
 
 static cuptiu_event_table_t cuptiu_table;
@@ -97,7 +98,7 @@ static int evt_id_to_info(uint64_t event_id, event_info_t *info);
 static int evt_id_create(event_info_t *info, uint64_t *event_id);
 static int evt_name_to_basename(const char *name, char *base, int len);
 static int evt_name_to_device(const char *name, int *device);
-static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl);
+//static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl);
 static int metric_get_counter_data_prefix_image(cuptip_gpu_state_t *gpu_ctl);
@@ -494,6 +495,17 @@ fn_exit:
     return papi_errno;
 }
 
+
+/** @class get_event_names_rmr
+  * @brief For a Cuda native event name collect raw metrics and count
+  *        of raw metrics for collection. Raw Metrics are one layer of the Metric API
+  *        and contains the list of raw counters and generates configuration file
+  *        images. Must be done before creating a ConfigImage or 
+  *        CounterDataPrefix.
+  * @param *gpu_ctl
+  *   Structure of type cuptip_gpu_state_t which has member variables such as 
+  *   gpu_id, rmr, rmr_count, and more.
+*/
 static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
@@ -727,6 +739,15 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
     return PAPI_OK;
 }
 
+
+/** @class metric_get_config_image
+  * @brief Retrieves binary ConfigImage for the Cuda native event metrics listed 
+  *        for collection. The function get_event_names_rmr( ... ) must be 
+  *        called before this step is possible. 
+  * @param *gpu_ctl
+  *   Structure of type cuptip_gpu_state_t which has member variables such as 
+  *   gpu_id, rmr, rmr_count, and more.
+*/
 static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
@@ -811,6 +832,14 @@ fn_fail:
     return PAPI_EMISC;
 }
 
+/** @class metric_get_counter_data_prefix_image
+  * @brief Retrieves binary CounterDataPrefix for the Cuda native event metrics 
+  *        listed for collection. The function get_event_names_rmr( ... ) 
+  *        must be called before this step is possible. 
+  * @param *gpu_ctl
+  *   Structure of type cuptip_gpu_state_t which has member variables such as 
+  *   gpu_id, rmr, rmr_count, and more.
+*/
 static int metric_get_counter_data_prefix_image(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
@@ -1140,7 +1169,12 @@ fn_fail:
     return PAPI_EMISC;
 }
 
-/* List metrics API */
+/** @class find_same_chipname
+  * @brief Check to see if chipnames are identical.
+  * 
+  * @param gpu_id
+  *   A gpu id number, e.g 0, 1, 2, etc.
+*/
 static int find_same_chipname(int gpu_id)
 {
     int i;
@@ -1152,6 +1186,11 @@ static int find_same_chipname(int gpu_id)
     return -1;
 }
 
+
+/** @class init_all_metrics
+  * @brief Initialize metrics for a specific GPU.
+  *        
+*/
 static int init_all_metrics(void)
 {
     int gpu_id, papi_errno = PAPI_OK;
@@ -1235,7 +1274,6 @@ int cuptip_evt_enum(uint64_t *event_code, int modifier)
         case PAPI_NTV_ENUM_UMASKS:
             papi_errno = evt_id_to_info(*event_code, &info);
             if (papi_errno != PAPI_OK) {
-                printf("%d\n", papi_errno);
                 break;
             }
             if (info.flags == 0){
@@ -1323,6 +1361,10 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     return papi_errno;
 }
 
+
+/** @class free_all_enumerated_metrics
+  * @brief Free's all enumerated metrics for each gpu on the system.  
+*/
 static void free_all_enumerated_metrics(void)
 {
     COMPDBG("Entering.\n");
@@ -1371,22 +1413,26 @@ int cuptip_init(void)
         goto fn_fail;
     }
 
+    /* collect number of gpu's on the system */
     papi_errno = cuptic_device_get_count(&num_gpus);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
-
+   
+    /* if no gpu's are found exit */
     if (num_gpus <= 0) {
         cuptic_disabled_reason_set("No GPUs found on system.");
         goto fn_fail;
     }
-
+    
+    /* initialize cupti profiler and perfworks api */
     papi_errno = initialize_cupti_profiler_api();
     papi_errno += initialize_perfworks_api();
     if (papi_errno != PAPI_OK) {
         cuptic_disabled_reason_set("Unable to initialize CUPTI profiler libraries.");
         goto fn_fail;
     }
+
     papi_errno = init_all_metrics();
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
@@ -1396,6 +1442,7 @@ int cuptip_init(void)
         cuptic_disabled_reason_set("Failed to initialize CUDA driver API.");
         goto fn_fail;
     }
+
     /* initialize hash table with cuda native events */
     init_event_table();
     cuptiu_table_p = &cuptiu_table;
@@ -1694,6 +1741,9 @@ int cuptip_control_reset(cuptip_control_t state)
     return PAPI_OK;
 }
 
+/** @class cuptip_shutdown
+  * @brief Shutdown CUPTI. This includes, the event tabble and enumerated metrics. 
+*/
 int cuptip_shutdown(void)
 {
     COMPDBG("Entering.\n");
@@ -1778,19 +1828,16 @@ int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len)
         ERRDBG("String formatting exceeded max string length.\n");
         return PAPI_ENOMEM;  
     }
-    
+
     return papi_errno;
 }
 
 /** @class init_event_table
   * @brief Initialize hash table and cuptiu_event_table_t structure.
 */
-int init_event_table(void) {
-    int gpu_id, i, found, listsubmetrics = 1, papi_errno = PAPI_OK;
-    if (avail_events[0].nv_metrics != NULL) {
-        //Already eumerated for 1st device? Then exit...
-        goto fn_exit;
-    }
+int init_event_table(void) 
+{
+    int gpu_id, i, listsubmetrics = 1, papi_errno = PAPI_OK;
 
     NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
@@ -1807,7 +1854,6 @@ int init_event_table(void) {
         
     papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
     if (papi_errno != PAPI_OK) {
-        printf("We fail here at init capacity\n");
         goto fn_exit;
     }
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
@@ -1954,6 +2000,7 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     }
  
     for (i = 0; i < num_dep; i++) {
+        /* list of */
         rmr[i].pMetricName = strdup(getMetricPropertiesBeginParams.ppRawMetricDependencies[i]);
         rmr[i].isolated = 1;
         rmr[i].keepInstances = 1;

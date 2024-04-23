@@ -107,6 +107,7 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
 int cuptic_device_release(cuptiu_event_table_t *evt_table);
 
+/* functions to handle device qualifiers */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 

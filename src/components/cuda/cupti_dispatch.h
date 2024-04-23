@@ -33,7 +33,6 @@ int cuptid_evt_code_to_descr(uint64_t event_code, char *descr, int len);
 int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len);
 int cuptid_evt_name_to_code(const char *name, uint64_t *event_code);
-int cuptid_event_name_to_descr(char *evt_name, char *descr);
 
 void cuptid_event_table_destroy(ntv_event_table_t *evt_table);
 int cuptid_event_table_create(ntv_event_table_t *evt_table);
