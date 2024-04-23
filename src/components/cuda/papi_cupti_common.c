@@ -657,12 +657,28 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table)
     return PAPI_OK;
 }
 
+/** @class cuptiu_dev_set
+  * @brief For a Cuda native event, set the device ID.
+  *
+  * @param *bitmap
+  *   Device map.
+  * @param i
+  *   Device ID.
+*/
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i)
 {
     *bitmap |= (1ULL << i);
     return PAPI_OK;
 }
 
+/** @class cuptiu_dev_check
+  * @brief For a Cuda native event, check for a valid device ID.
+  *
+  * @param *bitmap
+  *   Device map.
+  * @param i
+  *   Device ID.
+*/
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i)
 {
     return (bitmap & (1ULL << i));

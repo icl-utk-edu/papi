@@ -13,7 +13,6 @@
 typedef int64_t cuptiu_bitmap_t;
 typedef int (*cuptiu_dev_get_map_cb)(uint64_t event_id, int *dev_id);
 
-
 typedef struct event_record_s {
     char name[PAPI_2MAX_STR_LEN];
     unsigned int evt_code;
