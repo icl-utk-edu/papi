@@ -60,7 +60,7 @@ enum collection_method_e {SpotValue, RunningMin, RunningMax, RunningSum};
 
 static void *dl_nvpw;
 static int num_gpus;
-static int num_unique_gpus;
+static int num_unique_gpus = 1;
 static list_metrics_t *avail_events;
 
 static cuptiu_event_table_t cuptiu_table;
@@ -1305,15 +1305,14 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 
     int papi_errno, len;
     event_info_t inf;
-    char description[PAPI_2MAX_STR_LEN];
+    char description[PAPI_HUGE_STR_LEN];
     papi_errno = evt_id_to_info(event_code, &inf);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
     
-    /* collect description */
     papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext, 
-                                        cuptiu_table_p->events[inf.nameid].name, description );
+                                        cuptiu_table_p->events[inf.nameid].name, description );                               
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -1850,7 +1849,7 @@ int init_event_table(void)
     NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
     avail_events[0].num_metrics = getMetricNameBeginParams.numMetrics;
-    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics, sizeof(cuptiu_event_t));
+    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t));
         
     papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
     if (papi_errno != PAPI_OK) {
@@ -2040,11 +2039,8 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), return PAPI_EMISC );
 
     /* collect numpass values */
-    papi_errno = check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-                                   num_dep, rmr, &passes );
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
+    check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+                      num_dep, rmr, &passes );
 
     /* destory create params instantiated structure */
     NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
