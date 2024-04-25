@@ -690,6 +690,9 @@ static int control_state_validate(cuptip_control_t state)
 
         papi_errno = check_num_passes(nvpw_metricsConfigCreateParams.pRawMetricsConfig,
                                gpu_ctl->rmr_count, gpu_ctl->rmr, &passes);
+        if ( papi_errno == PAPI_EMULPASS ) {
+        /* at this point we just want the number of passes (stored in passes) */
+        }
 
         NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
             .structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE,
@@ -1849,7 +1852,7 @@ int init_event_table(void)
     NVPW_CALL( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
 
     avail_events[0].num_metrics = getMetricNameBeginParams.numMetrics;
-    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t));
+    cuptiu_table.events = papi_calloc(avail_events[0].num_metrics, sizeof(cuptiu_event_t));
         
     papi_errno = cuptiu_event_table_create_init_capacity(avail_events[0].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[0].nv_metrics));
     if (papi_errno != PAPI_OK) {
@@ -1939,11 +1942,6 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
 static int shutdown_event_table(void)
 {
     int i;
-
-    for (i = 0; i < cuptiu_table_p->count; i++) {
-         papi_free(cuptiu_table_p->events[i].name);
-         papi_free(cuptiu_table_p->events[i].desc);   
-    }
 
     cuptiu_table_p->count = 0;
 
@@ -2039,8 +2037,11 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), return PAPI_EMISC );
 
     /* collect numpass values */
-    check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-                      num_dep, rmr, &passes );
+    papi_errno = check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
+                                  num_dep, rmr, &passes );
+    if ( papi_errno == PAPI_EMULPASS ) {
+        /* at this point we just want the number of passes (stored in passes) */
+    }
 
     /* destory create params instantiated structure */
     NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
