@@ -21,14 +21,14 @@
 
 /**
  * Event identifier encoding format:
- * +---------------------------------+-------+-------+--+------------+
- * |         unused                  |  dev  | inst  |  |   nameid   |
- * +---------------------------------+-------+-------+--+------------+
+ * +---------------------------------+-------+----+------------+
+ * |         unused                  |  dev  | ql |   nameid   |
+ * +---------------------------------+-------+----+------------+
  *
  * unused    : 34 bits 
  * device    : 7  bits ([0 - 127] devices)
  * qlmask    : 2  bits (qualifier mask)
- * nameid    : 21: bits ([0 - 263,231] event names)
+ * nameid    : 21: bits (roughly > 2 million event names)
  */
 #define EVENTS_WIDTH (sizeof(uint64_t) * 8)
 #define DEVICE_WIDTH ( 7)
@@ -42,7 +42,6 @@
 #define QLMASK_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - QLMASK_WIDTH)) << QLMASK_SHIFT)
 #define NAMEID_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - NAMEID_WIDTH)) << NAMEID_SHIFT)
 #define DEVICE_FLAG  (0x2)
-#define INSTAN_FLAG  (0x1)
 
 typedef struct {
     int device;
