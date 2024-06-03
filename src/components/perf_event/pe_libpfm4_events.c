@@ -1270,15 +1270,30 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 
 			if (pmu_type & PMU_TYPE_CORE) {
 
-				/* On x86 chips don't make the generic ix86arch PMU */
-				/* the default. */
-				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
-					strcmp(pinfo.name,"ix86arch")) {
+				if (!strcmp(pinfo.name,"ix86arch")) {
 
-						memcpy(&(event_table->default_pmu),
-							&pinfo,sizeof(pfm_pmu_info_t));
-						found_default++;
+					/* On x86 chips don't make the generic ix86arch PMU */
+					/* the default. */
+
+				} else if (strstr(pinfo.desc,"E-Core")) {
+
+					/* For heterogeneous systems with both E-cores and P-cores */
+					/* we use P-core as default.  Currently there isn't a way */
+					/* to do this with libpfm4 except or this hack.           */
+					/* FIXME: find better way to get this info from libpfm4   */
 				}
+				else if (pinfo.type!=PFM_PMU_TYPE_CORE) {
+					/* skip the "perf" and "perf_raw" PMUs */
+				}
+				else {
+					/* Actually set the PMU as the default one */
+
+					memcpy(&(event_table->default_pmu),
+						&pinfo,sizeof(pfm_pmu_info_t));
+					found_default++;
+				}
+
+
 
 				/* For ARM processors override the hw_info model_string */
 				/* (gathered from /proc/cpuinfo) with the more complete */
