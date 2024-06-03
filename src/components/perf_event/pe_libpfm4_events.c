@@ -1134,8 +1134,12 @@ _pe_libpfm4_shutdown(papi_vector_t *my_vector,
  *
  *  @param[in] component
  *        -- pointer to component structure
+ *  @param[in] cidx
+ *        -- component index
  *  @param[in] event_table
  *        -- native event table structure
+ *  @param[in] pmu_type
+ *        -- type of PMU to init.  Should only be PMU_TYPE_CORE
  *
  *  @retval PAPI_OK       We initialized correctly
  *  @retval PAPI_ECMP     There was an error initializing the component
@@ -1208,6 +1212,9 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
     } 
 
 	SUBDBG("Detected pmus:\n");
+
+	/* Create the list of available PMUs */
+
 	i=0;
 	while(1) {
 		memset(&pinfo,0,sizeof(pfm_pmu_info_t));
@@ -1225,11 +1232,21 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 		if ((retval==PFM_SUCCESS) && (pinfo.name != NULL) &&
 			(pmu_is_present_and_right_type(&pinfo,pmu_type))) {
 
-            /* skip if it is amd64_fam17h and zen1 is also present. */
-            if (strcmp(pinfo.name,"amd64_fam17h") == 0 && amd64_fam17h_zen1_present) {
-                i++;
-                continue;
-            }
+			/* Check for PMUs that should not be included even */
+			/* though they are valid */
+
+			/* for backwards compatability reasons               */
+			/* adm64_fam17h and zen1 are aliases to the same PMU */
+			/* so we should only include one of them.            */
+
+			if ( (strcmp(pinfo.name,"amd64_fam17h") == 0) &&
+				amd64_fam17h_zen1_present) {
+
+				i++;
+				continue;
+			}
+
+			/* if we arrive here the PMU is valid and we want to add it */
 
 			SUBDBG("\t%d %s %s %d\n",i,
 				pinfo.name,pinfo.desc,pinfo.type);
@@ -1237,22 +1254,36 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 			detected_pmus++;
 			ncnt+=pinfo.nevents;
 
+			/* FIXME: why do we use 'j' and not base this on detected_pmus? */
+
 			if (j < PAPI_PMU_MAX) {
 				component->cmp_info.pmu_names[j++] =
 							strdup(pinfo.name);
 			}
 
+			/* For backwards compatability reasons PAPI has the */
+			/* idea of the "default" PMU that events can be */
+			/* assigned to without having to specify the PMU */
+			/* explicitly.  We use libpfm4's PMU_TYPE_CORE */
+			/* to determine this, but it can cause issues when */
+			/* an architecture has multiple CORE PMUs */
+
 			if (pmu_type & PMU_TYPE_CORE) {
 
-				/* Hack to have "default core" PMU */
+				/* On x86 chips don't make the generic ix86arch PMU */
+				/* the default. */
 				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
 					strcmp(pinfo.name,"ix86arch")) {
-					    memcpy(&(event_table->default_pmu),
-						    &pinfo,sizeof(pfm_pmu_info_t));
-                        found_default++;
+
+						memcpy(&(event_table->default_pmu),
+							&pinfo,sizeof(pfm_pmu_info_t));
+						found_default++;
 				}
 
-				/* For ARM processors, */
+				/* For ARM processors override the hw_info model_string */
+				/* (gathered from /proc/cpuinfo) with the more complete */
+				/* model info provided by libpfm4.                      */
+				/* FIXME: is this the proper place to do this? */
 				if ( (pinfo.type==PFM_PMU_TYPE_CORE) &&
 					( _papi_hwi_system_info.hw_info.vendor >= PAPI_VENDOR_ARM_ARM)) {
 					if (strlen(_papi_hwi_system_info.hw_info.model_string) == 0) {
@@ -1262,6 +1293,9 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 				}
 			}
 
+			/* FIXME: this is a remnant from when CORE and UNCORE PMU init  */
+			/*        shared the same init code.  It should not be possible */
+			/*        to hit this code path anymore.                        */
 			if (pmu_type==PMU_TYPE_UNCORE) {
 				/* To avoid confusion, no "default" CPU for uncore */
 				found_default=1;
@@ -1276,10 +1310,13 @@ _pe_libpfm4_init(papi_vector_t *component, int cidx,
 		return PAPI_ENOSUPP;
 	}
 
+	/* Error if we couldn't pick a default PMU */
 	if (!found_default) {
 		return PAPI_ECMP;
 	}
 
+	/* Error if we found more than one default PMU */
+	/* FIXME: this breaks on heterogeneous CPU systems */
 	if (found_default>1) {
 		return PAPI_ECOUNT;
 	}
