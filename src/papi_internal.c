@@ -2299,34 +2299,58 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
       // since we are setting the whole structure to zero the strncpy calls below will 
       // be leaving NULL terminates strings as long as they copy 1 less byte than the 
       // buffer size of the field.
+
+	   INTDBG("ENTER: Configuring: %s\n", _papi_hwi_presets[i].symbol);
+
 	   memset( info, 0, sizeof ( PAPI_event_info_t ) );
 
+		/* set up eventcode and name */
 	   info->event_code = ( unsigned int ) EventCode;
 	   strncpy( info->symbol, _papi_hwi_presets[i].symbol,
-	    sizeof(info->symbol)-1);
+	            sizeof(info->symbol)-1);
 
-	   if ( _papi_hwi_presets[i].short_descr != NULL )
+		/* set up short description, if available */
+	   if ( _papi_hwi_presets[i].short_descr != NULL ) {
 	      strncpy( info->short_descr, _papi_hwi_presets[i].short_descr,
 		          sizeof ( info->short_descr )-1 );
+	   }
 
-	   if ( _papi_hwi_presets[i].long_descr != NULL )
+		/* set up long description, if available */
+	   if ( _papi_hwi_presets[i].long_descr != NULL ) {
 	      strncpy( info->long_descr,  _papi_hwi_presets[i].long_descr,
 		          sizeof ( info->long_descr )-1 );
+	   }
 
 	   info->event_type = _papi_hwi_presets[i].event_type;
 	   info->count = _papi_hwi_presets[i].count;
 
+
+		/* set up if derived event */
 	   _papi_hwi_derived_string( _papi_hwi_presets[i].derived_int,
 				     info->derived,  sizeof ( info->derived )-1 );
 
-	   if ( _papi_hwi_presets[i].postfix != NULL )
+	   if ( _papi_hwi_presets[i].postfix != NULL ) {
 	      strncpy( info->postfix, _papi_hwi_presets[i].postfix,
 		          sizeof ( info->postfix )-1 );
+	   }
 
 	   for(j=0;j < info->count; j++) {
-	      info->code[j]=_papi_hwi_presets[i].code[j];
-	      strncpy(info->name[j], _papi_hwi_presets[i].name[j],
-	      sizeof(info->name[j])-1);
+
+		/* make sure the name exists before trying to copy it */
+		/* that can happen if an event is in the definition in */
+		/* papi_events.csv but the event is unsupported on the cpu */
+		/* ideally that should never happen, but also ideally */
+		/* we wouldn't segfault if it does */
+
+	      if (_papi_hwi_presets[i].name[j]==NULL) {
+		INTDBG("ERROR in event definition of %s\n", _papi_hwi_presets[i].symbol);
+			   return PAPI_ENOEVNT;
+		}
+		else {
+			info->code[j]=_papi_hwi_presets[i].code[j];
+			strncpy(info->name[j], _papi_hwi_presets[i].name[j],
+				sizeof(info->name[j])-1);
+		}
 	   }
 
 	   if ( _papi_hwi_presets[i].note != NULL ) {
