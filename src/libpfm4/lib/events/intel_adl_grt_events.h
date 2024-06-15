@@ -876,7 +876,7 @@ static const intel_x86_entry_t intel_adl_grt_pe[]={
   },
   { .name   = "INST_RETIRED",
     .desc   = "Counts the total number of instructions retired. (Fixed event)",
-    .code   = 0x0000,
+    .code   = 0x00c0,
     .modmsk = INTEL_V2_ATTRS,
     .cntmsk = 0x1ull,
     .ngrp   = 1,
