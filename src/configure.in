@@ -289,7 +289,7 @@ elif test "$OS" = "bgp"; then
   CC=powerpc-bgp-linux-gcc 
   F77=powerpc-bgp-linux-gfortran
   walltimer=cycle
-  virtualtimer=perfctr
+  virtualtimer=proc
   tls=no
   ffsll=yes
   cross_compiling=yes
@@ -765,7 +765,7 @@ fi
 AC_MSG_RESULT($tls)
 
 AC_ARG_WITH(virtualtimer,
-              [AS_HELP_STRING([--with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage,perfctr>],
+              [AS_HELP_STRING([--with-virtualtimer=<clock_thread_cputime_id,times,proc,getrusage>],
               [Specify per-thread virtual timer])],
               [virtualtimer=$withval],
               [if test "$cross_compiling" = "yes" ; then
@@ -905,9 +905,8 @@ case "$virtualtimer" in
     AC_DEFINE(HAVE_PER_THREAD_GETRUSAGE, 1, [Working per thread getrusage]) ;;
   clock_thread_cputime_id)
     AC_DEFINE(HAVE_CLOCK_GETTIME_THREAD, CLOCK_THREAD_CPUTIME_ID, [POSIX 1b per-thread clock]) ;;
-  proc|default|perfctr)
+  proc|default)
     AC_DEFINE(USE_PROC_PTTIMER, 1, [Use /proc for per-thread times])
-    AC_DEFINE(USE_PERFCTR_PTTIMER, 1, [Use the perfctr virtual TSC for per-thread times]) ;;
 esac
 AC_MSG_RESULT($virtualtimer)
 
@@ -1056,104 +1055,6 @@ fi
 AC_SUBST(BUILD_LIBSDE_SHARED)
 AC_SUBST(BUILD_LIBSDE_STATIC)
 AC_SUBST(LIBSDEFLAGS)
-
-##################################################
-#          perfctr
-##################################################
-perfctr=0
-force_perfctr=no
-
-AC_ARG_WITH(perfctr,
-            [AS_HELP_STRING([--with-perfctr],
-            [Specify perfctr as the performance interface])],
-	    force_perfctr=yes
-            [user_specified_interface=perfctr
-	     if test "$arch" != "ppc64"; then
-	     perfctr=6
-	     else
-	     perfctr=7
-	     fi],
-            [perfctr=0])
-
-if test "$cross_compiling" = "no" ; then
-  AC_CHECK_FILE(/sys/class/perfctr,[perfctr=7],[AC_CHECK_FILE(/dev/perfctr,[perfctr=6])])
-fi 
-
-if test "$perfctr" != 0; then 
-  pfm_incdir="libpfm-3.y/include/"
-  AC_MSG_CHECKING(for perfctr version)
-  if test "$perfctr" = 7 -a "$arch" != "ppc64"; then
-    AC_MSG_ERROR([Perfctr 2.7.x only works on PPC64 machines. Patch kernel with 2.6.x.])
-  fi
-  AC_MSG_RESULT(2.$perfctr)
-fi
-
-AC_ARG_WITH(perfctr_root,
-            [AS_HELP_STRING([--with-perfctr-root=<path>],
-            [Specify path to source tree (for use by developers only)])],
-            [perfctr_root=$withval
-             user_specified_interface=perfctr])
-AC_ARG_WITH(perfctr_prefix,
-            [AS_HELP_STRING([--with-perfctr-prefix=<path>],
-            [Specify prefix to installed perfctr distribution])],
-            [perfctr_prefix=$withval
-             user_specified_interface=perfctr])
-AC_ARG_WITH(perfctr_incdir,
-            [AS_HELP_STRING([--with-perfctr-incdir=<path>],
-            [Specify directory of perfctr header files in non-standard location])],
-           [perfctr_incdir=$withval
-            user_specified_interface=perfctr])
-AC_ARG_WITH(perfctr_libdir,
-            [AS_HELP_STRING([--with-perfctr-libdir=<path>],
-            [Specify directory of perfctr library in non-standard location])],
-           [perfctr_libdir=$withval
-            user_specified_interface=perfctr])
-
-if test "$perfctr" != 0; then
-
-  dotest=0
-  if test "x$perfctr_root" != "x"; then
-    LIBS="-L$perfctr_root/usr.lib -lperfctr"
-    CPPFLAGS="$CPPFLAGS -I$perfctr_root/usr.lib -I$perfctr_root/linux/include"
-    dotest=1
-  elif test "x$perfctr_prefix" != "x"; then
-    LIBS="-L$perfctr_prefix/lib -lperfctr"
-    CPPFLAGS="$CPPFLAGS -I$perfctr_prefix/include"
-    perfctr_libdir="$perfctr_prefix/lib"
-    perfctr_incdir="$perfctr_prefix/include"
-    dotest=1
-  else
-    if test "x$perfctr_libdir" != "x"; then
-      LIBS="-L$perfctr_libdir -lperfctr"
-      dotest=1
-    fi
-    if test "x$perfctr_incdir" != "x"; then
-      CPPFLAGS="-I$perfctr_incdir"
-      dotest=1
-    fi
-  fi
-
-  if test "$dotest" = 1; then
-    AC_CHECK_LIB([perfctr], [vperfctr_open], 
-                 [AC_CHECK_HEADERS([libperfctr.h], 
-                                   [oCFLAGS=$CFLAGS
-	                                CFLAGS="$CFLAGS -static"
-	                                AC_TRY_RUN([#include <stdlib.h>
-	                                            #include "libperfctr.h"
-	                                            int main() {
-		                                          if ((PERFCTR_ABI_VERSION >> 24) != 5) 
-                                                    exit(1); 
-                                                  exit(0);
-	                                            } ],
-                                                [perfctr=6],
-                                                [perfctr=7])
-	                                CFLAGS=$oCFLAGS], 
-                                    [AC_MSG_ERROR([libperfctr.h not found, rerun configure with different flags])])],
-                 [AC_MSG_ERROR([libperfctr.a not found, rerun configure with different flags]) ])
-  else
-    AC_DEFINE(HAVE_LIBPERFCTR_H,1,[perfctr header file])
-  fi
-fi
 
 user_specified_interface=no
 ##################################################
@@ -1334,36 +1235,27 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
 # MESSING WITH CFLAGS IS STUPID!
 #
 if test "$user_specified_interface" != "no"; then
-   if test "$user_specified_interface" = "perfctr"; then
-      perfmon=0
-      perf_events="no"
-      perfnec=0
-   else
 	if test "$user_specified_interface" = "perfmon"; then
-	   perfctr=0
 	   perf_events="no"
 	   PAPICFLAGS+=" $PFMCFLAGS"
 	   perfnec=0
 	else
 		if test "$user_specified_interface" = "pe"; then
-			   perfctr=0
 			   perfmon=0
 			   PAPICFLAGS+=" $PECFLAGS"
 			   perfnec=0
 		else
 			if test "$user_specified_interface" = "perfnec"; then
-				perfctr=0
 				perfmon=0
 				perf_events=0
 				PAPICFLAGS+=" -DPERFNEC"
 				AC_MSG_NOTICE([XXXXX user_specified_interface perfnec])
 
 			else
-				AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfctr=$perfctr perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events perfnec=$perfnec")
+				AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events perfnec=$perfnec")
 			fi
 		fi								 
 	fi
-   fi
 else
 	if test "$perfmon" != 0; then
 	   PAPICFLAGS+=" $PFMCFLAGS"
@@ -1490,39 +1382,12 @@ case "$OS" in
       MAKEVER="$OS"-pe
     elif test "$force_perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
-    elif test "$force_perfctr" = "yes" ; then
-      MAKEVER="$OS"-perfctr-x86
-      case "$CPU" in
-        itanium2|montecito)
-          if test "$bitmode" = "32"; then
-            AC_MSG_ERROR([The bitmode you specified is not supported])
-          fi
-	  MAKEVER="$OS"-pfm-"$CPU"
-	  ;;
-        POWER5|POWER5+|POWER6|POWER7|PPC970)
-          MAKEVER="$OS"-perfctr-"$CPU" ;;
-     esac
     elif test "$perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
     elif test "$perfmon2" = "yes" ; then
       MAKEVER="$OS"-perfmon2
     elif test "$old_pfmv2" = "y" ; then
       MAKEVER="$OS"-pfm-"$CPU"
-    elif test "$perfctr" != 0 ; then
-      case "$CPU" in
-        itanium2|montecito)
-          if test "$bitmode" = "32"; then
-            AC_MSG_ERROR([The bitmode you specified is not supported])
-          fi
-	  MAKEVER="$OS"-pfm-"$CPU"
-	  ;;
-        x86)
-	        MAKEVER="$OS"-perfctr-x86 ;;
-        POWER5|POWER5+|POWER6|POWER7|PPC970)
-          MAKEVER="$OS"-perfctr-"$CPU" ;;
-        *)
-          MAKEVER="$OS"-generic ;;
-     esac
     else
       MAKEVER="$OS"-generic
     fi ;;	   
@@ -1633,11 +1498,11 @@ if (test "$MAKEVER" = "aix-power5" || test "$MAKEVER" = "aix-power6" || test "$M
   CPUCOMPONENT_OBJ=aix.o
   VECTOR=_aix_vector
   PAPI_EVENTS_CSV="papi_events.csv"
-  MISCHDRS="aix.h components/perfctr_ppc/ppc64_events.h papi_events_table.h"
+  MISCHDRS="aix.h papi_events_table.h"
   MISCSRCS="aix.c"
-  CFLAGS+='-qenum=4 -Icomponents/perfctr_ppc -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
+  CFLAGS+='-qenum=4 -DNO_VARARG_MACRO -D_AIX -D_$(CPU_MODEL) -DNEED_FFSLL -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors -DSTATIC_PAPI_EVENTS_TABLE'
   FFLAGS+='-WF,-D_$(CPU_MODEL) -WF,-DARCH_EVTS=\"$(ARCH_EVENTS).h\"'
-  CFLAGS+='-I$(PMAPI)/include -Icomponents/perfctr_ppc -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
+  CFLAGS+='-I$(PMAPI)/include -qmaxmem=-1 -qarch=$(cpu_option) -qtune=$(cpu_option) -qlanglvl=extended $(BITFLAGS)'
   if test $debug != "yes"; then
 	OPTFLAGS='-O3 -qstrict $(PMINIT)'
   else
@@ -1756,42 +1621,6 @@ elif test "$MAKEVER" = "linux-pe"; then
     if test "$disable_uncore" = "no"; then
        components="$components perf_event_uncore"
     fi
-
-elif test "$MAKEVER" = "linux-perfctr-x86"; then
-    FILENAME=Rules.perfctr-pfm
-    CPUCOMPONENT_NAME=perfctr-x86
-    VERSION=2.6.x  
-    components="perfctr"
-
-elif (test "$MAKEVER" = "linux-perfctr-POWER5" || test "$MAKEVER" = "linux-perfctr-POWER5+" || test "$MAKEVER" = "linux-perfctr-POWER6" || test "$MAKEVER" = "linux-perfctr-POWER7" || test "$MAKEVER" = "linux-perfctr-PPC970"); then
-    FILENAME=Rules.perfctr
-    CPUCOMPONENT_NAME=perfctr-ppc
-    VERSION=2.7.x
-    components="perfctr_ppc"
-    CPU=ppc64
-    if test "$MAKEVER" = "linux-perfctr-POWER5"; then
-      CPU_MODEL=POWER5
-      ARCH_EVENTS=power5_events
-      ARCH_SPEC_EVTS=power5_events_map.c
-    elif test "$MAKEVER" = "linux-perfctr-POWER5+"; then
-      CPU_MODEL=POWER5p
-      ARCH_EVENTS=power5+_events
-      ARCH_SPEC_EVTS=power5+_events_map.c
-    elif test "$MAKEVER" = "linux-perfctr-POWER6"; then
-      CPU_MODEL=POWER6
-      ARCH_EVENTS=power6_events
-      ARCH_SPEC_EVTS=power6_events_map.c
-    elif test "$MAKEVER" = "linux-perfctr-POWER7"; then
-      CPU_MODEL=POWER7
-      ARCH_EVENTS=power7_events
-      ARCH_SPEC_EVTS=power7_events_map.c
-    elif test "$MAKEVER" = "linux-perfctr-PPC970"; then
-      CPU_MODEL=PPC970
-      ARCH_EVENTS=ppc970_events
-      ARCH_SPEC_EVTS=ppc970_events_map.c
-    fi
-    CFLAGS="$CFLAGS -DPPC64 -D_$(CPU_MODEL) -D__perfctr__ -DARCH_EVTS=\"$(ARCH_EVENTS).h\" -DCOMP_VECTOR=_ppc64_vectors"
-    FFLAGS='-D_$(CPU_MODEL)'
 
 elif test "$MAKEVER" = "nec-nec"; then
     FILENAME=Rules.perfnec
@@ -2090,10 +1919,6 @@ AC_SUBST(STATIC)
 AC_SUBST(NO_MPI_TESTS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(altix)
-AC_SUBST(perfctr_root)
-AC_SUBST(perfctr_prefix)
-AC_SUBST(perfctr_incdir)
-AC_SUBST(perfctr_libdir)
 AC_SUBST(pfm_root)
 AC_SUBST(old_pfmv2)
 AC_SUBST(pfm_prefix)
