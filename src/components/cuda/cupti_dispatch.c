@@ -201,40 +201,52 @@ int cuptid_control_reset(cuptid_ctl_t cupti_ctl)
     return PAPI_ECMP;
 }
 
-int cuptid_event_enum(cuptiu_event_table_t *all_evt_names)
+int cuptid_evt_enum(uint64_t *event_code, int modifier)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_event_enum(all_evt_names);
+        return cuptip_evt_enum(event_code, modifier);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        return cuptie_event_enum(all_evt_names);
+        return cuptie_evt_enum(event_code, modifier);
 #endif
 
     }
     return PAPI_ECMP;
 }
 
-int cuptid_event_name_to_descr(char *evt_name, char *descr)
+int cuptid_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 {
     if (cuptic_is_runtime_perfworks_api()) {
-
 #if defined(API_PERFWORKS)
-        return cuptip_event_name_to_descr(evt_name, descr);
+        return cuptip_evt_code_to_descr(event_code, descr, len);
 #endif
-
-    } else if (cuptic_is_runtime_events_api()) {
-
+    } 
+    else if (cuptic_is_runtime_events_api()) {
 #if defined(API_EVENTS)
-        return cuptie_event_name_to_descr(evt_name, descr);
+        return cuptie_event_code_to_descr(event_code, descr, len);
 #endif
-
     }
     return PAPI_ECMP;
+}
+
+int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
+{
+    return cuptip_evt_code_to_info(event_code, info);
+}
+
+int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    return cuptip_evt_code_to_name(event_code, name, len);
+}
+
+int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
+{
+    return cuptip_evt_name_to_code(name, event_code);
 }
 
 void cuptid_event_table_destroy(ntv_event_table_t *evt_table)

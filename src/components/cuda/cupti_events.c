@@ -50,13 +50,12 @@ int cuptie_control_reset(cuptie_control_t ctl)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_enum(cuptiu_event_table_t *all_evt_names)
+int cuptie_evt_enum(uint64_t *event_code, int modifier)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_name_to_descr(const char *evt_name, char *description)
-{
+int cuptie_event_code_to_descr(uint64_t event_code, char *descr, int len) {
     return PAPI_ENOIMPL;
 }
 
