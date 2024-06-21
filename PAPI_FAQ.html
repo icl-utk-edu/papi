@@ -16,12 +16,19 @@
 <p><a href="mailto:ptools-perfapi@icl.utk.edu">ptools-perfapi@icl.utk.edu</a></p>
 <p>Please note, this is a moderated group and if you are not subscribed to it, there may be a delay till the moderators get to your message and approve it.</p><strong>How do I install the PAPI library?</strong>
 <p>Please see INSTALL.txt in the papi root directory.</p><strong>Where do I go for help?</strong>
-<p>First, read this document thoroughly. Then consult the PAPI Home Page at <a href="../">http://icl.utk.edu/papi</a>. If that doesn't help, then search the archives as mentioned below. If that fails, then send mail to one of the two mailing lists, the users group at <a href="mailto:ptools-perfapi@icl.utk.edu">ptools-perfapi@icl.utk.edu</a>&nbsp;or the PAPI-developers group <a href="mailto:perfapi-devel@icl.utk.edu">perfapi-devel@icl.utk.edu</a>. The former is a group for general announcements, questions and miscellaneous topics. The latter is is a discussion group for the developers of PAPI and it receives all CVS update messages. (which can be a significant amount of mail!)</p><strong>What are the mailing lists and how do I subscribe?</strong>
+<p>First, read this document and the <a href="https://github.com/icl-utk-edu/papi/wiki">PAPI Documentation</a> thoroughly. Then consult the PAPI Home Page at <a href="http://icl.utk.edu/papi">http://icl.utk.edu/papi</a>. If that doesn't help, then search the archives as mentioned below. If that fails, then send mail to one of the two mailing lists, the users group at <a href="mailto:ptools-perfapi@icl.utk.edu">ptools-perfapi@icl.utk.edu</a>&nbsp;or the PAPI-developers group <a href="mailto:perfapi-devel@icl.utk.edu">perfapi-devel@icl.utk.edu</a>. The former is a group for general announcements, questions and miscellaneous topics. The latter is is a discussion group for the developers of PAPI and it receives all CVS update messages. (which can be a significant amount of mail!)</p><strong>What are the mailing lists and how do I subscribe?</strong>
 <p>There are currently two mailing lists, ptools-perfapi, which is a group for general announcements, questions and miscellaneous topics and perfapi-devel, which is a discussion group for the developers of PAPI and it receives all CVS update messages (which can be a significant amount of mail!)</p>
 <p>To subscribe to or maintain your subscription to either of the above groups, go to:<br /><a href="https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi/join">https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi</a>&nbsp; or <a href="https://groups.google.com/a/icl.utk.edu/forum/#!forum/perfapi-devel/join">https://groups.google.com/a/icl.utk.edu/forum/#!forum/perfapi-devel</a></p><strong>Where are the archives for the mailing lists?</strong>
 <p>The archives for the general PAPI mailing list are located at <a href="https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi">https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi</a>. The archives for the developers list are located at <a href="https://groups.google.com/a/icl.utk.edu/forum/#!forum/perfapi-devel">https://groups.google.com/a/icl.utk.edu/forum/#!forum/perfapi-devel</a>.</p><strong>What is needed to use PAPI?</strong>
-<p>See the Platform section at <a href="../custom/index.html?lid=62&amp;slid=96">http://icl.utk.edu/papi/custom/index.html?lid=62&amp;slid=96.</a>.</p><strong>What tools are available for PAPI?</strong>
-<p>Some of the more popular tools using PAPI can be found under the Tools link on the PAPI web page at <a href="../">http://icl.utk.edu/papi/</a>. You can also see the latest list of third party tools and related software at <a href="../links/index.html">http://icl.utk.edu/papi/links/index.html</a>. If you have a tool to be posted, send it to the mailing list.</p><strong>Is PAPI compatible with MacOS?</strong>
+<p>See the Supported Architectures at <a href="https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures">https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures</a>.</p><strong>What tools are available for PAPI?</strong>
+<p>Some of the more popular tools using PAPI are <a href="http://icl.utk.edu/parsec/">PaRSEC</a>,
+ <a href="http://github.com/LLNL/caliper-compiler">Caliper</a>, 
+ <a href="https://github.com/kokkos">Kokkos</a>, 
+ <a href="http://tau.uoregon.edu/">TAU</a>, 
+ <a href="http://hpctoolkit.org">HPCToolkit </a>, 
+ <a href="http://score-p.org">Score-P</a>, 
+ <a href="http://www.vampir.eu/">Vampir</a>, and 
+ <a href="http://scalasca.org/">Scalasca</a>. If you have a tool to be posted, send it to the mailing list.</p><strong>Is PAPI compatible with MacOS?</strong>
 <p>No. There is no PAPI version with MacOS support for CPU hardware counter monitoring. In addition to not supporting timer_create() and other POSIX realtime timers, MacOS does not export hardware counters that PAPI can read.</p><br />
 <h2>The PAPI Library</h2>
 <font color="#666"><p></p></font>
@@ -30,7 +37,7 @@
 <p>The warning message here is benign, but since it occurs on the last file to be compiled, it often looks like the build has been aborted.
 The reason the message occurs is that the compiler thinks it is trying to stuff too many bits into an integer value. You can fix it by rearranging the code a little bit. Or just download the latest copy of fmultiplex2.F from the cvs tree.</p><strong>How do I convert my code from PAPI 2 to PAPI 3?</strong>
 <p>PAPI 3 represents a major upgrade to the PAPI library.
-Because of this, there have been a number of interface changes. The process to upgrade from PAPI 2 to PAPI 3 is straightforward, and documented in the <a href ="http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_Conversion_Cookbook.htm">PAPI Conversion Cookbook</a>. You can read it online, or<a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=49&slid=79"> download </a>it in a number of different formats.</p><strong>How do I compile PAPI with debugging support?</strong>
+Because of this, there have been a number of interface changes. The process to upgrade from PAPI 2 to PAPI 3 is straightforward, and documented in the <a href ="http://icl.cs.utk.edu/projects/papi/files/documentation/PAPI_Conversion_Cookbook.htm">PAPI Conversion Cookbook</a>.</p><strong>How do I compile PAPI with debugging support?</strong>
 <p>To compile with debugging, define CFLAGS to include -DDEBUG in the corresponding Makefile or Rules.<platform> file.</p><strong>How do I use the debugging features of the PAPI library?</strong>
 <p>To enable debugging messages at run time, set the PAPI_DEBUG environment variable to one or more of the following with any character as a separator.</p><p>SUBSTRATE<br>
 API<br>
@@ -69,16 +76,16 @@ __thread implementation, please report it to us.</p><br />
 <h2>The PAPI GIT Source Repository</h2>
 
 <strong>Can I browse the source repository on the web?</strong>
-<p>Yes. The latest copy of the PAPI source tree is viewable through a web based source browser accessible from the GitHub repository at:<br /><a href="../../trac/papi/browser">https://github.com/icl-utk-edu/papi</a></p>
+<p>Yes. The latest copy of the PAPI source tree is viewable through a web based source browser accessible from the GitHub repository at:<br /><a href="https://github.com/icl-utk-edu/papi">https://github.com/icl-utk-edu/papi</a></p>
 <p>&nbsp;</p><strong>How do I download a copy of the current PAPI source tree?</strong>
-<p>Make sure git is installed on your machine. You can download a copy <a href="http://git-scm.com/">here</a>.</p>
+<p>Make sure git is installed on your machine. You can download a copy of git <a href="https://git-scm.com/downloads">here</a>.</p>
 <p>Download the PAPI repository the first time with the following command:</p>
 <p>&gt; git clone https://github.com/icl-utk-edu/papi.git</p>
 <p>This creates a complete copy of the papi git repository on your computer in a folder called 'papi'.</p>
 <p>To make sure your copy is up to date with the repository:</p>
 <p>&gt; cd papi<br />&gt; git pull&nbsp;</p><strong>Can I commit changes to the PAPI repository?</strong>
 <p>You can always commit changes to your local copy of the PAPI respository using the "git commit" command and its variations. You cannot push those changes to the master copy of the repository without obtaining credentials from the PAPI team.</p><strong>Where can I learn more about GIT?</strong>
-<p>The web has a variety of resources targetted at teaching you how to use GIT. A good place to start is the official <a href="http://git-scm.com/">GIT</a> site.<br />History and background of GIT can be found on <a href="http://en.wikipedia.org/wiki/Git_%28software%29">Wikipedia</a>.<br /><a href="http://rogerdudler.github.com/git-guide/">This</a> user-friendly introduction might help "git" you started.</p><br />
+<p>The web has a variety of resources targetted at teaching you how to use GIT. A good place to start is the official <a href="http://git-scm.com/">GIT</a> site.<br />History and background of GIT can be found on <a href="http://en.wikipedia.org/wiki/Git_%28software%29">Wikipedia</a>.<br /><a href="http://rogerdudler.github.io/git-guide/">This</a> user-friendly introduction might help "git" you started.</p><br />
 <h2>PAPI on AIX POWER Processors</h2>
 <font color="#666"><p></p></font>
 
@@ -360,4 +367,4 @@ Makefile.linux-perfctr-p4 or<br>
 <p>1) Ultra I/II/III/III+ are currently supported;</p><p>2) Some of the cache events have documented bugs, see the Sun UltraSparc hardware reference manual.</p><p>3) WARNING FOR PEOPLE USING MULTITHREADED LIBRARIES ON SOLARIS 2.8:
  
 There is a bug that prevents setitimer() from being called after the process has called pthread() create at any point in time. Therefore if you suspect your communication library is multithreaded, you had better start the instrumentation before initializing it. See multiplex3_pthreads for details.</p><strong>My Sun box doesn't have libcpc.h. What should I do?</strong>
-<p>You didn&#039;t check the <a href="http://icl.cs.utk.edu/papi/custom/index.html?lid=62&slid=96">PAPI Supported Platform Matrix</a>. The hardware counters on SunOS withUltraSparc are only available on Sun OS 5.8 and above. That&#039;s Solaris 2.8 for you SVR4 people.</p><hr>
+<p>You didn&#039;t check the <a href="https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures">PAPI Supported Architectures</a>. The hardware counters on SunOS withUltraSparc are only available on Sun OS 5.8 and above. That&#039;s Solaris 2.8 for you SVR4 people.</p><hr>
