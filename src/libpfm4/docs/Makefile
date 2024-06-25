@@ -66,6 +66,7 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_icx.3	\
 	 libpfm_intel_spr.3	\
 	 libpfm_intel_emr.3	\
+	 libpfm_intel_gnr.3	\
 	 libpfm_intel_glm.3	\
 	 libpfm_intel_adl_glc.3	\
 	 libpfm_intel_adl_grt.3	\

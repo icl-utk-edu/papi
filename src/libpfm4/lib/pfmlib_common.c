@@ -275,6 +275,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_spr_unc_cha58_support,
 	&intel_spr_unc_cha59_support,
 	&intel_emr_support,
+	&intel_gnr_support,
 	&intel_adl_glc_support,
 	&intel_adl_grt_support,
 	&intel_rapl_support,

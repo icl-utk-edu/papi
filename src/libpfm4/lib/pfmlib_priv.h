@@ -464,6 +464,7 @@ extern pfmlib_pmu_t intel_spr_unc_cha57_support;
 extern pfmlib_pmu_t intel_spr_unc_cha58_support;
 extern pfmlib_pmu_t intel_spr_unc_cha59_support;
 extern pfmlib_pmu_t intel_emr_support;
+extern pfmlib_pmu_t intel_gnr_support;
 extern pfmlib_pmu_t intel_adl_glc_support;
 extern pfmlib_pmu_t intel_adl_grt_support;
 extern pfmlib_pmu_t intel_rapl_support;

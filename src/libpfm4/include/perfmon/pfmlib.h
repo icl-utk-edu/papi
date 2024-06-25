@@ -810,6 +810,8 @@ typedef enum {
 	PFM_PMU_INTEL_SPR_UNC_CHA58,	/* Intel SapphireRapids CHA core 58 uncore */
 	PFM_PMU_INTEL_SPR_UNC_CHA59,	/* Intel SapphireRapids CHA core 59 uncore */
 
+	PFM_PMU_INTEL_GNR,		/* Intel GraniteRapids core PMU */
+
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
