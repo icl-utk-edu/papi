@@ -512,29 +512,6 @@ used for anything else than the multiplexing mode, which needs the cycle
 count in order to work. Therefore multiplexing and the preset PAPI_TOT_CYC
 should be only used with caution. BEWARE OF WRONG COUNTER RESULTS!
 
-Windows XP/2000/Server 2003 - Intel Pentium III or AMD Athlon / Opteron
-*****************************************************************************
-Please use PAPI 3.7 (http://icl.cs.utk.edu/projects/papi/downloads/papi-3.7.2.tar.gz)
-
-The Windows source tree comes with Microsoft Visual Studio Version 8 projects
-to build a graphical shell application, the PAPI library as a DLL, a kernel 
-driver to provide access to the counters, and a collection of C test programs.
-
-The WinPMC driver must be installed with administrator privileges. See the 
-winpmc.html file in the papi/win2k/winpmc directory for details on building 
-and installing this driver.
-
-The general installation instructions are irrelevant for Windows.
-
-Other Platforms
-*****************************************************************************
-PAPI can be compiled and installed on most platforms that have GNU compilers 
-regardless of operating system or hardware. This includes, for example, 
-Macintosh systems running recent versions of OSX. However, PAPI can only 
-provide access to the CPU hardware counters on platforms that are directly 
-supported. Unsupported platforms will run, buttony provide basic timing 
-functions, and potential access to some non-cpu components.
-
 
 *****************************************************************************
 CREATING AND RUNNING COMPONENTS
