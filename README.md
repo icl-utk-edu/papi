@@ -51,7 +51,7 @@ performance counters in a system, including the new software-defined events.
 
 # Getting Help
 
-* Visit our FAQ at: <http://icl.utk.edu/papi/faq/> 
+* Visit our FAQ at: <https://icl-utk-edu.github.io/papi/PAPI_FAQ.html> 
   or read a snapshot of the FAQ in papi/PAPI_FAQ.html
 * For assistance with PAPI, email ptools-perfapi@icl.utk.edu.
 * You can also join the PAPI User Google group by going to
