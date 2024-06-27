@@ -216,8 +216,8 @@ static int pfm_cpumcf_init(void *this)
 		break;
 	}
 
-	cpumcf_pe = calloc(sizeof(*cpumcf_pe),
-			   cfvn_set_count + csvn_set_count + ext_set_count);
+	cpumcf_pe = calloc(cfvn_set_count + csvn_set_count + ext_set_count,
+			   sizeof(*cpumcf_pe));
 	if (cpumcf_pe == NULL)
 		return PFM_ERR_NOMEM;
 
