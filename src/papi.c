@@ -3056,8 +3056,8 @@ PAPI_reset( int EventSet )
  *  The counters continue counting after the read. 
  *
  *  Note the differences between PAPI_read() and PAPI_accum(). Specifically,
- *  PAPI_accum() adds the counter values to the values stored
- *  in the array (the second parameter in PAPI_accum()) and then resets the counters
+ *  PAPI_accum() adds the values of the counters to the values stored in the 
+ *  array (the second parameter in PAPI_accum()) and then resets the counters
  *  to zero.
  *
  *  PAPI_read() assumes an initialized PAPI library and a properly added 
@@ -3248,8 +3248,8 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	PAPI_accum adds the counters of the indicated event set into the array values. 
  *	The counters are zeroed and continue counting after the operation.
  *	Note the differences between PAPI_read() and PAPI_accum(). Specifically,
- *	PAPI_accum() adds the counter values to the values stored in the array
- *	(the second parameter in PAPI_accum()) and then resets the counters
+ *	PAPI_accum() adds the values of the counters to the values stored in the
+ *	array (the second parameter in PAPI_accum()) and then resets the counters
  *	to zero.
  *
  *	Note: The provided array (second parameter in PAPI_accum) must be initialized for PAPI_accum
