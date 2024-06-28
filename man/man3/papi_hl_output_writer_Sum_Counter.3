@@ -1,0 +1,103 @@
+.TH "papi_hl_output_writer.Sum_Counter" 3 "Mon Feb 26 2024" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+papi_hl_output_writer.Sum_Counter \- Calculates the min, max, median and sum for a recorded events measurements\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+Inherits object\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "def \fB__init__\fP (self)"
+.br
+.RI "Sum Counter class initializer\&. "
+.ti -1c
+.RI "def \fBadd_event\fP (self, value)"
+.br
+.RI "Add a recorded event and measurement to summary output\&. "
+.ti -1c
+.RI "def \fBget_min\fP (self)"
+.br
+.RI "Calculates the minimum for a set of measurments for a recorded event\&. "
+.ti -1c
+.RI "def \fBget_median\fP (self)"
+.br
+.RI "Calculates the median for a set of measurements for a recorded event\&. "
+.ti -1c
+.RI "def \fBget_sum\fP (self)"
+.br
+.RI "Calculates the sum for measurements for a recorded event\&. "
+.ti -1c
+.RI "def \fBget_max\fP (self)"
+.br
+.RI "Calculates the maximum for a set of measurements for a recorded event\&. "
+.in -1c
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBmin\fP"
+.br
+.ti -1c
+.RI "\fBall_values\fP"
+.br
+.ti -1c
+.RI "\fBmax\fP"
+.br
+.in -1c
+.SH "Member Function Documentation"
+.PP 
+.SS "def papi_hl_output_writer\&.Sum_Counter\&.add_event ( self,  value)"
+
+.PP
+\fBParameters\fP
+.RS 4
+\fIvalue\fP Measurement from a recorded event\&. E\&.g\&. PAPI_TOT_INS\&. 
+.RE
+.PP
+
+.SS "def papi_hl_output_writer\&.Sum_Counter\&.get_max ( self)"
+
+.PP
+\fBReturns\fP
+.RS 4
+The maximum for a set of measurment values for a recorded event\&. E\&.g\&. PAPI_TOT_INS\&. 
+.RE
+.PP
+
+.SS "def papi_hl_output_writer\&.Sum_Counter\&.get_median ( self)"
+
+.PP
+\fBReturns\fP
+.RS 4
+The median for a set of measurement values for a recorded event\&. E\&.g\&. PAPI_TOT_INS\&. 
+.RE
+.PP
+
+.SS "def papi_hl_output_writer\&.Sum_Counter\&.get_min ( self)"
+
+.PP
+\fBReturns\fP
+.RS 4
+The minimum for a set of measurement values for a recorded event\&. E\&.g\&. PAPI_TOT_INS\&. 
+.RE
+.PP
+
+.SS "def papi_hl_output_writer\&.Sum_Counter\&.get_sum ( self)"
+
+.PP
+\fBReturns\fP
+.RS 4
+The sum of measurment values for a recorded event\&. E\&.g\&. PAPI_TOT_INS\&. 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for PAPI from the source code\&.

@@ -20,9 +20,9 @@
 # with spaces.
 
 INPUT					= ../src/papi.h  ../src/papi.c ../src/high-level/papi_hl.c \
-							../src/papi_fwrappers.c
+					  ../src/papi_fwrappers.c ../src/high-level/scripts/papi_hl_output_writer.py
 
-FILE_PATTERNS          = *.c *.h
+FILE_PATTERNS          = *.c *.h *.py
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
