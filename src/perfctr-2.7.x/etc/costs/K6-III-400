@@ -1,9 +1,0 @@
-[data from a 400MHz K6-III]
-
-PERFCTR INIT: vendor 2, family 5, model 9, stepping 1, clock 399815 kHz
-PERFCTR INIT: NITER == 64
-PERFCTR INIT: loop overhead is 64 cycles
-PERFCTR INIT: rdtsc cost is 15.4 cycles (1055 total)
-PERFCTR INIT: read cr4 cost is 24.4 cycles (1629 total)
-PERFCTR INIT: write cr4 cost is 36.3 cycles (2393 total)
-perfctr: driver 2.3.3, cpu type Generic x86 with TSC at 399815 kHz
