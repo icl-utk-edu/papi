@@ -1,9 +1,0 @@
-
-COMPSRCS += components/perfctr/perfctr.c components/perfctr_ppc/perfctr-ppc64.c
-COMPOBJS += perfctr.o perfctr-ppc64.o
-
-perfctr.o: components/perfctr/perfctr.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/perfctr/perfctr.c -o perfctr.o 
-
-perfctr-ppc64.o: components/perfctr_ppc/perfctr-ppc64.c components/perfctr_ppc/perfctr-ppc64.h
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/perfctr-ppc/perfct_-ppc64.c -o perfctr-ppc64.o 
