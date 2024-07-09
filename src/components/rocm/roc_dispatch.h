@@ -26,6 +26,7 @@ int rocd_evt_code_to_descr(uint64_t event_code, char *descr, int len);
 int rocd_evt_name_to_code(const char *name, uint64_t *event_code);
 int rocd_evt_code_to_name(uint64_t event_code, char *name, int len);
 int rocd_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
+int rocd_get_num_qualified_evts(int *count, uint64_t event_code);
 
 /* error handling interfaces */
 int rocd_err_get_last(const char **error_str);

@@ -70,6 +70,12 @@ rocd_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 }
 
 int
+rocd_get_num_qualified_evts(int *count, uint64_t event_code)
+{
+    return rocp_get_num_qualified_evts(count, event_code);
+}
+
+int
 rocd_err_get_last(const char **error_str)
 {
     return rocc_err_get_last(error_str);
