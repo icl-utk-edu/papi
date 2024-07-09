@@ -47,6 +47,8 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_amd64_fam19h_zen3.3 \
 	 libpfm_amd64_fam19h_zen4.3 \
 	 libpfm_amd64_fam19h_zen3_l3.3 \
+	 libpfm_amd64_fam1ah_zen5.3  \
+	 libpfm_amd64_fam1ah_zen5_l3.3 \
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
 	 libpfm_intel_nhm_unc.3 \
