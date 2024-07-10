@@ -47,6 +47,8 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_amd64_fam19h_zen3.3 \
 	 libpfm_amd64_fam19h_zen4.3 \
 	 libpfm_amd64_fam19h_zen3_l3.3 \
+	 libpfm_amd64_fam1ah_zen5.3  \
+	 libpfm_amd64_fam1ah_zen5_l3.3 \
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
 	 libpfm_intel_nhm_unc.3 \
@@ -66,7 +68,10 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_icx.3	\
 	 libpfm_intel_spr.3	\
 	 libpfm_intel_emr.3	\
+	 libpfm_intel_gnr.3	\
 	 libpfm_intel_glm.3	\
+	 libpfm_intel_adl_glc.3	\
+	 libpfm_intel_adl_grt.3	\
 	 libpfm_intel_knl.3	\
 	 libpfm_intel_knm.3	\
 	 libpfm_intel_snbep_unc_cbo.3 \
@@ -124,7 +129,10 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_intel_icx_unc_m3upi.3 \
 	 libpfm_intel_icx_unc_ubox.3 \
 	 libpfm_intel_icx_unc_m2pcie.3 \
-	 libpfm_intel_icx_unc_irp.3
+	 libpfm_intel_icx_unc_irp.3 \
+	 libpfm_intel_spr_unc_imc.3 \
+	 libpfm_intel_spr_unc_upi.3 \
+	 libpfm_intel_spr_unc_cha.3
 
 
 ifeq ($(CONFIG_PFMLIB_ARCH_I386),y)

@@ -1664,34 +1664,6 @@ PAPI_event_name_to_code( const char *in, int *out )
  *	The following values are implemented for preset events
  *	<ul>
  *         <li> PAPI_PRESET_ENUM_AVAIL -- enumerate only available presets
- *         <li> PAPI_PRESET_ENUM_MSC   -- Miscellaneous preset events
- *         <li> PAPI_PRESET_ENUM_INS   -- Instruction related preset events
- *         <li> PAPI_PRESET_ENUM_IDL   -- Stalled or Idle preset events
- *         <li> PAPI_PRESET_ENUM_BR    -- Branch related preset events
- *         <li> PAPI_PRESET_ENUM_CND   -- Conditional preset events
- *         <li> PAPI_PRESET_ENUM_MEM   -- Memory related preset events
- *         <li> PAPI_PRESET_ENUM_CACH  -- Cache related preset events
- *         <li> PAPI_PRESET_ENUM_L1    -- L1 cache related preset events
- *         <li> PAPI_PRESET_ENUM_L2    -- L2 cache related preset events
- *         <li> PAPI_PRESET_ENUM_L3    -- L3 cache related preset events
- *         <li> PAPI_PRESET_ENUM_TLB   -- Translation Lookaside Buffer events
- *         <li> PAPI_PRESET_ENUM_FP    -- Floating Point related preset events
- *	</ul>
- *
- *	@par ITANIUM Modifiers
- *	The following values are implemented for modifier on Itanium: 
- *	<ul>
- *	   <li> PAPI_NTV_ENUM_IARR - Enumerate IAR (instruction address ranging) events 
- *	   <li> PAPI_NTV_ENUM_DARR - Enumerate DAR (data address ranging) events 
- *	   <li> PAPI_NTV_ENUM_OPCM - Enumerate OPC (opcode matching) events 
- *	   <li> PAPI_NTV_ENUM_IEAR - Enumerate IEAR (instr event address register) events 
- *	   <li> PAPI_NTV_ENUM_DEAR - Enumerate DEAR (data event address register) events
- *	</ul>
- *
- *	@par POWER Modifiers
- *	The following values are implemented for POWER
- *	<ul>
- *	   <li> PAPI_NTV_ENUM_GROUPS - Enumerate groups to which an event belongs
  *	</ul>
  *
  *	@see PAPI @n
@@ -1717,6 +1689,17 @@ PAPI_enum_event( int *EventCode, int modifier )
 
 	/* Do we handle presets in componets other than CPU? */
 	/* if (( IS_PRESET(i) ) && cidx > 0 )) return PAPI_ENOCMP; */
+
+    /* check to see if a valid modifier is provided */
+    if (modifier != PAPI_ENUM_EVENTS &&
+        modifier != PAPI_ENUM_FIRST &&
+        modifier != PAPI_ENUM_ALL &&
+        modifier != PAPI_PRESET_ENUM_AVAIL && 
+        modifier != PAPI_NTV_ENUM_UMASKS && 
+        modifier != PAPI_NTV_ENUM_UMASK_COMBOS)
+        {
+            return PAPI_EINVAL;
+        }
 		
 	if ( IS_PRESET(i) ) {
 		if ( modifier == PAPI_ENUM_FIRST ) {
@@ -3072,8 +3055,10 @@ PAPI_reset( int EventSet )
  *
  *  The counters continue counting after the read. 
  *
- *  Note the differences between PAPI_read() and PAPI_accum(), specifically
- *  that PAPI_accum() resets the values array to zero.
+ *  Note the differences between PAPI_read() and PAPI_accum(). Specifically,
+ *  PAPI_accum() adds the values of the counters to the values stored in the 
+ *  array (the second parameter in PAPI_accum()) and then resets the counters
+ *  to zero.
  *
  *  PAPI_read() assumes an initialized PAPI library and a properly added 
  *  event set. 
@@ -3262,8 +3247,13 @@ PAPI_read_ts( int EventSet, long long *values, long long *cycles )
  *	These calls assume an initialized PAPI library and a properly added event set. 
  *	PAPI_accum adds the counters of the indicated event set into the array values. 
  *	The counters are zeroed and continue counting after the operation.
- *	Note the differences between PAPI_read and PAPI_accum, specifically 
- *	that PAPI_accum resets the values array to zero. 
+ *	Note the differences between PAPI_read() and PAPI_accum(). Specifically,
+ *	PAPI_accum() adds the values of the counters to the values stored in the
+ *	array (the second parameter in PAPI_accum()) and then resets the counters
+ *	to zero.
+ *
+ *	Note: The provided array (second parameter in PAPI_accum) must be initialized for PAPI_accum
+ *	because its values are read inside the function.
  *
  *	@param EventSet
  *		an integer handle for a PAPI Event Set 

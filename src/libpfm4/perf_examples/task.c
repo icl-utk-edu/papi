@@ -180,7 +180,7 @@ int
 parent(char **arg)
 {
 	perf_event_desc_t *fds = NULL;
-	int status, ret, i, num_fds = 0, grp, group_fd;
+	int status, ret, i, num_fds = 0, grp, group_fd = -1;
 	int ready[2], go[2];
 	char buf;
 	pid_t pid;
@@ -250,12 +250,15 @@ parent(char **arg)
 
 	for(i=0; i < num_fds; i++) {
 		int is_group_leader; /* boolean */
+		uint32_t group_pmu = -1;
 
+		/* we can only group events if the belong to the same PMU */
 		is_group_leader = perf_is_group_leader(fds, i);
 		if (is_group_leader) {
 			/* this is the group leader */
 			group_fd = -1;
-		} else {
+			group_pmu = fds[i].hw.type;
+		} else if (fds[i].hw.type == group_pmu) { /* same PMU */
 			group_fd = fds[fds[i].group_leader].fd;
 		}
 

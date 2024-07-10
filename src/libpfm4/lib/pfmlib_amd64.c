@@ -104,91 +104,101 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
 {
 	pfm_pmu_t rev = PFM_PMU_NONE;
 
-        if (cfg->family == 6) {
-                cfg->revision = PFM_PMU_AMD64_K7;
+	if (cfg->family == 6) {
+		cfg->revision = PFM_PMU_AMD64_K7;
 		return;
 	}
 
-        if (cfg->family == 15) {
-                switch (cfg->model >> 4) {
-                case 0:
-                        if (cfg->model == 5 && cfg->stepping < 2) {
-                                rev = PFM_PMU_AMD64_K8_REVB;
+	if (cfg->family == 15) { /* family fh */
+		switch (cfg->model >> 4) {
+		case 0:
+			if (cfg->model == 5 && cfg->stepping < 2) {
+				rev = PFM_PMU_AMD64_K8_REVB;
 				break;
-                        }
-                        if (cfg->model == 4 && cfg->stepping == 0) {
-                                rev = PFM_PMU_AMD64_K8_REVB;
+			}
+
+			if (cfg->model == 4 && cfg->stepping == 0) {
+				rev = PFM_PMU_AMD64_K8_REVB;
 				break;
-                        }
-                        rev = PFM_PMU_AMD64_K8_REVC;
+			}
+			rev = PFM_PMU_AMD64_K8_REVC;
 			break;
-                case 1:
-                        rev = PFM_PMU_AMD64_K8_REVD;
+
+		case 1:
+			rev = PFM_PMU_AMD64_K8_REVD;
 			break;
-                case 2:
-                case 3:
-                        rev = PFM_PMU_AMD64_K8_REVE;
+
+		case 2:
+		case 3:
+			rev = PFM_PMU_AMD64_K8_REVE;
 			break;
-                case 4:
-                case 5:
-                case 0xc:
-                        rev = PFM_PMU_AMD64_K8_REVF;
+
+		case 4:
+		case 5:
+		case 0xc:
+			rev = PFM_PMU_AMD64_K8_REVF;
 			break;
-                case 6:
-                case 7:
-                case 8:
-                        rev = PFM_PMU_AMD64_K8_REVG;
+
+		case 6:
+		case 7:
+		case 8:
+			rev = PFM_PMU_AMD64_K8_REVG;
 			break;
-                default:
-                        rev = PFM_PMU_AMD64_K8_REVB;
-                }
-        } else if (cfg->family == 16) { /* family 10h */
-                switch (cfg->model) {
-                case 4:
-                case 5:
-                case 6:
-                        rev = PFM_PMU_AMD64_FAM10H_SHANGHAI;
-			break;
-                case 8:
-                case 9:
-                        rev = PFM_PMU_AMD64_FAM10H_ISTANBUL;
-			break;
-                default:
-                        rev = PFM_PMU_AMD64_FAM10H_BARCELONA;
-                }
-        } else if (cfg->family == 17) { /* family 11h */
-                switch (cfg->model) {
+
 		default:
-		        rev = PFM_PMU_AMD64_FAM11H_TURION;
+			rev = PFM_PMU_AMD64_K8_REVB;
 		}
-        } else if (cfg->family == 18) { /* family 12h */
-                switch (cfg->model) {
+	} else if (cfg->family == 16) { /* family 10h */
+		switch (cfg->model) {
+		case 4:
+		case 5:
+		case 6:
+			rev = PFM_PMU_AMD64_FAM10H_SHANGHAI;
+			break;
+
+		case 8:
+		case 9:
+			rev = PFM_PMU_AMD64_FAM10H_ISTANBUL;
+			break;
+
 		default:
-		        rev = PFM_PMU_AMD64_FAM12H_LLANO;
+			rev = PFM_PMU_AMD64_FAM10H_BARCELONA;
 		}
-        } else if (cfg->family == 20) { /* family 14h */
-                switch (cfg->model) {
-                default:
-                        rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
-                }
+	} else if (cfg->family == 17) { /* family 11h */
+		switch (cfg->model) {
+			default:
+				rev = PFM_PMU_AMD64_FAM11H_TURION;
+		}
+	} else if (cfg->family == 18) { /* family 12h */
+		switch (cfg->model) {
+			default:
+				rev = PFM_PMU_AMD64_FAM12H_LLANO;
+		}
+	} else if (cfg->family == 20) { /* family 14h */
+		switch (cfg->model) {
+			default:
+				rev = PFM_PMU_AMD64_FAM14H_BOBCAT;
+		}
 	} else if (cfg->family == 21) { /* family 15h */
 		rev = PFM_PMU_AMD64_FAM15H_INTERLAGOS;
-	} else if (cfg->family == 23) { /* family 17h */
-                if (cfg->model >= 48)
-			rev = PFM_PMU_AMD64_FAM17H_ZEN2;
-		else
-                        rev = PFM_PMU_AMD64_FAM17H_ZEN1;
 	} else if (cfg->family == 22) { /* family 16h */
 		rev = PFM_PMU_AMD64_FAM16H;
+	} else if (cfg->family == 23) { /* family 17h */
+		if (cfg->model >= 48)
+			rev = PFM_PMU_AMD64_FAM17H_ZEN2;
+		else
+			rev = PFM_PMU_AMD64_FAM17H_ZEN1;
 	} else if (cfg->family == 25) { /* family 19h */
-                if (cfg->model >= 0x60 || (cfg->model >= 0x10 && cfg->model <= 0x1f)) {
+		if (cfg->model >= 0x60 || (cfg->model >= 0x10 && cfg->model <= 0x1f)) {
 			rev = PFM_PMU_AMD64_FAM19H_ZEN4;
 		} else {
 			rev = PFM_PMU_AMD64_FAM19H_ZEN3;
-                }
-        }
+		}
+	} else if (cfg->family == 26) { /* family 1ah */
+		rev = PFM_PMU_AMD64_FAM1AH_ZEN5;
+	}
 
-        cfg->revision = rev;
+	cfg->revision = rev;
 }
 
 static inline void

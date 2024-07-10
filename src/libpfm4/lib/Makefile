@@ -68,6 +68,7 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_skl.c \
 	  pfmlib_intel_icl.c \
 	  pfmlib_intel_spr.c \
+	  pfmlib_intel_gnr.c \
 	  pfmlib_intel_rapl.c \
 	  pfmlib_intel_snbep_unc.c \
 	  pfmlib_intel_snbep_unc_cbo.c \
@@ -126,10 +127,14 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_icx_unc_m3upi.c \
 	  pfmlib_intel_icx_unc_ubox.c \
 	  pfmlib_intel_icx_unc_m2pcie.c \
+	  pfmlib_intel_spr_unc_imc.c \
+	  pfmlib_intel_spr_unc_upi.c \
+	  pfmlib_intel_spr_unc_cha.c \
 	  pfmlib_intel_knc.c \
 	  pfmlib_intel_slm.c \
 	  pfmlib_intel_tmt.c \
 	  pfmlib_intel_knl.c \
+	  pfmlib_intel_adl.c \
 	  pfmlib_intel_knl_unc_imc.c \
 	  pfmlib_intel_knl_unc_edc.c \
 	  pfmlib_intel_knl_unc_cha.c \
@@ -141,7 +146,8 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_amd64_fam14h.c pfmlib_amd64_fam15h.c \
 	  pfmlib_amd64_fam17h.c pfmlib_amd64_fam16h.c \
 	  pfmlib_amd64_fam19h.c pfmlib_amd64_rapl.c \
-	  pfmlib_amd64_fam19h_l3.c
+	  pfmlib_amd64_fam19h_l3.c \
+	  pfmlib_amd64_fam1ah.c pfmlib_amd64_fam1ah_l3.c
 
 CFLAGS += -DCONFIG_PFMLIB_ARCH_X86
 
@@ -275,6 +281,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam19h_zen4.h \
 	events/amd64_events_fam19h_zen3_l3.h \
 	events/amd64_events_fam16h.h	\
+	events/amd64_events_fam1ah_zen5.h    \
+	events/amd64_events_fam1ah_zen5_l3.h \
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
 	events//intel_x86_arch_events.h \
@@ -294,6 +302,9 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_glm_events.h	\
 	events/intel_icl_events.h	\
 	events/intel_spr_events.h	\
+	events/intel_gnr_events.h	\
+	events/intel_adl_glc_events.h	\
+	events/intel_adl_grt_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
 	events/intel_snbep_unc_cbo_events.h \
 	events/intel_snbep_unc_ha_events.h \
@@ -357,6 +368,9 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_icx_unc_m3upi_events.h \
 	events/intel_icx_unc_ubox_events.h \
 	events/intel_icx_unc_m2pcie_events.h \
+	events/intel_spr_unc_imc_events.h \
+	events/intel_spr_unc_upi_events.h \
+	events/intel_spr_unc_cha_events.h \
 	events/intel_slm_events.h
 
 INC_MIPS=events/mips_74k_events.h events/mips_74k_events.h

@@ -43,6 +43,7 @@ The library supports many PMUs. The current version can handle:
 		AMD64 Fam17h (Zen2)
 		AMD64 Fam19h (Zen3) (core and L3)
 		AMD64 Fam19h (Zen4)
+		AMD64 Fam1Ah (Zen5) (core and L3)
 
 	- For Intel X86: 
 		Intel P6 (Pentium II, Pentium Pro, Pentium III, Pentium M)
@@ -59,6 +60,10 @@ The library supports many PMUs. The current version can handle:
 		Intel IceLake
 		Intel SapphireRapid
 		Intel EmeraldRapid
+		Intel GraniteRapids
+		Intel Alderlake (P-core)
+		Intel Alderlake (E-core)
+		Intel Raptorlake (P-core, E-core)
 		Intel Silvermont
 		Intel Airmont
 		Intel Goldmont

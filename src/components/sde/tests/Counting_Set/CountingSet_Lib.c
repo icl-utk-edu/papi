@@ -28,6 +28,10 @@ void libCSet_do_simple_work(void){
 
     for(i=0; i<22390; i++){ 
         int j = i%5222;
+        long r = random();
+        if ( r%23 == 0 ){
+            j = r%2287;
+        }
         element.id = j;
         element.x = (float)j*1.037/((float)j+32.1);
         element.y = (double)(element.x)+145.67/((double)j+0.01);

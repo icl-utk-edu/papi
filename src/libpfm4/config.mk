@@ -90,11 +90,13 @@ endif
 # CONFIG_PFMLIB_SHARED: y=compile static and shared versions, n=static only
 # CONFIG_PFMLIB_DEBUG: enable debugging output support
 # CONFIG_PFMLIB_NOPYTHON: do not generate the python support, incompatible
+# CONFIG_PFMLIB_NOTRACEPOINT: no tracepoint support in perf PMU (eliminate startup overhead)
 # with PFMLIB_SHARED=n
 #
 CONFIG_PFMLIB_SHARED?=y
 CONFIG_PFMLIB_DEBUG?=y
 CONFIG_PFMLIB_NOPYTHON?=y
+CONFIG_PFMLIB_NOTRACEPOINT?=y
 
 #
 # Cell Broadband Engine is reported as PPC but needs special handling.
@@ -250,4 +252,8 @@ endif
 
 ifeq ($(SYS),WINDOWS)
 CFLAGS +=-DPFMLIB_WINDOWS
+endif
+
+ifeq ($(CONFIG_PFMLIB_NOTRACEPOINT),y)
+CFLAGS += -DCONFIG_PFMLIB_NOTRACEPOINT
 endif

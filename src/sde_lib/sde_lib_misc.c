@@ -501,6 +501,14 @@ sdei_read_and_update_data_value( sde_counter_t *counter, long long int previous_
         SDEDBG("Reading %s by calling registered function pointer.\n", event_name);
         tmp_int = counter->u.cntr_cb.callback(counter->u.cntr_cb.param);
         tmp_data = &tmp_int;
+    }else if( IS_CNTR_CSET(counter) ){
+        if( 0 == previous_value ){
+            SDEDBG("Resetting CountingSet %s by freeing all the elements it contains.\n", event_name);
+            return cset_delete(counter->u.cntr_cset.data);
+        }else{
+            SDEDBG("sdei_read_and_update_data_value(): Event %s is a CountingSet, so it may only be reset by this function.\n", event_name);
+            return -1;
+        }
     }else{
         SDEDBG("sdei_read_and_update_data_value(): Event %s has neither a variable nor a function pointer associated with it.\n", event_name);
         return -1;

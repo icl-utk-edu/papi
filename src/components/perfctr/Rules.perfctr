@@ -1,9 +1,0 @@
-
-COMPSRCS += components/perfctr/perfctr.c components/perfctr/perfctr-x86.c
-COMPOBJS += perfctr.o perfctr-x86.o
-
-perfctr.o: components/perfctr/perfctr.c components/perfctr/perfctr-x86.h
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/perfctr/perfctr.c -o perfctr.o 
-
-perfctr-x86.o: components/perfctr/perfctr-x86.c components/perfctr/perfctr-x86.h
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/perfctr/perfctr-x86.c -o perfctr-x86.o 
