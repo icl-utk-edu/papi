@@ -14,7 +14,7 @@
 #include <nvperf_cuda_host.h>
 #include <nvperf_target.h>
 
-#include "cupti_common.h"
+#include "papi_cupti_common.h"
 #include "cupti_profiler.h"
 #include "lcuda_debug.h"
 

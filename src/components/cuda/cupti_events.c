@@ -6,7 +6,7 @@
 
 #include <papi.h>
 #include "cupti_events.h"
-#include "cupti_common.h"
+#include "papi_cupti_common.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 /* Functions needed by CUPTI Events API */
