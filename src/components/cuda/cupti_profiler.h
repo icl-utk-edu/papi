@@ -26,4 +26,6 @@ int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len);
 int cuptip_evt_name_to_code(const char *name, uint64_t *event_code);
 int init_event_table(void);
 int cuptip_shutdown(void);
+
+int cuptip_get_num_qualified_evts(int *count, uint64_t event_code);
 #endif  /* __CUPTI_PROFILER_H__ */

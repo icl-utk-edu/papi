@@ -249,6 +249,11 @@ int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
     return cuptip_evt_name_to_code(name, event_code);
 }
 
+int cuptid_get_num_qualified_evts(int *count, uint64_t event_code)
+{
+    return cuptip_get_num_qualified_evts(count, event_code);
+}
+
 void cuptid_event_table_destroy(ntv_event_table_t *evt_table)
 {
     cuptiu_event_table_destroy(evt_table);
