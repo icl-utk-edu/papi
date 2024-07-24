@@ -1,11 +1,11 @@
 /**
- * @file    cupti_common.h
+ * @file    papi_cupti_common.h
  * @author  Anustuv Pal
  *          anustuv@icl.utk.edu
  */
 
-#ifndef __CUPTI_COMMON_H__
-#define __CUPTI_COMMON_H__
+#ifndef __PAPI_CUPTI_COMMON_H__
+#define __PAPI_CUPTI_COMMON_H__
 
 #include <stdio.h>
 #include <cuda.h>
@@ -107,4 +107,4 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
 int cuptic_device_release(cuptiu_event_table_t *evt_table);
 
-#endif /* __CUPTI_COMMON_H__ */
+#endif /* __PAPI_CUPTI_COMMON_H__ */

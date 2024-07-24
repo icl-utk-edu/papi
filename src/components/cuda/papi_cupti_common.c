@@ -1,5 +1,5 @@
 /**
- * @file    cupti_common.c
+ * @file    papi_cupti_common.c
  * @author  Anustuv Pal
  *          anustuv@icl.utk.edu
  */
@@ -11,7 +11,7 @@
 #include "papi_memory.h"
 
 #include "cupti_config.h"
-#include "cupti_common.h"
+#include "papi_cupti_common.h"
 
 static void *dl_drv, *dl_rt;
 

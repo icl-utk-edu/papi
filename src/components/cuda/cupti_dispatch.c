@@ -5,7 +5,7 @@
  */
 
 #include "cupti_config.h"
-#include "cupti_common.h"
+#include "papi_cupti_common.h"
 #include "cupti_dispatch.h"
 #include "lcuda_debug.h"
 
