@@ -26,12 +26,13 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "papi_memory.h"
 #include "cupti_dispatch.h"
 #include "lcuda_debug.h"
 
 papi_vector_t _cuda_vector;
 
-ntv_event_table_t global_event_names;
+extern cuptiu_event_table_t *global_event_names;
 
 static int cuda_init_component(int cidx);
 static int cuda_shutdown_component(void);
@@ -61,9 +62,15 @@ static int cuda_get_evt_count(int *count);
 #define PAPI_CUDA_MPX_COUNTERS 512
 #define PAPI_CUDA_MAX_COUNTERS  30
 
+typedef struct {
+    int initialized;
+    int state;
+    int component_id;
+} cuda_context_t;
+
 typedef struct cuda_ctl {
-    int           events_count;
-    int           events_id[PAPI_CUDA_MAX_COUNTERS];
+    int           events_count; //num_events
+    uint64_t      *events_id;
     long long     values[PAPI_CUDA_MAX_COUNTERS];
     cuptid_info_t info;
     cuptid_ctl_t  cupti_ctl;
@@ -134,7 +141,7 @@ static int cuda_init_component(int cidx)
 static int cuda_shutdown_component(void)
 {
     COMPDBG("Entering.\n");
-    cuptid_event_table_destroy(&global_event_names);
+    //cuptid_event_table_destroy(&global_event_names);
 
     if (!_cuda_vector.cmp_info.initialized ||
     _cuda_vector.cmp_info.disabled != PAPI_OK) {
@@ -152,7 +159,7 @@ static int cuda_init_private(void)
     const char *disabled_reason;
     COMPDBG("Entering.\n");
 
-    papi_errno = cuptid_event_table_create(&global_event_names);
+    //papi_errno = cuptid_event_table_create(&global_event_names);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -224,8 +231,6 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
         return papi_errno;
     fn_fail:
         goto fn_exit;
-
-
 }
 
 static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len)
@@ -303,6 +308,33 @@ static int cuda_set_domain(hwd_control_state_t __attribute__((unused)) *ctrl, in
         return (PAPI_EINVAL);
 }
 
+static int update_native_events(cuda_ctl_t *, NativeInfo_t *, int);
+
+
+int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
+                              int ntv_count,
+                              hwd_context_t *ctx __attribute__((unused)))
+{    SUBDBG("ENTER: ctl: %p, ntv_info: %p, ntv_count: %d, ctx: %p\n", ctl, ntv_info, ntv_count, ctx);
+    int papi_errno = check_n_initialize();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+    cuda_ctl_t *cuda_ctl = (cuda_ctl_t *) ctl;
+
+    papi_errno = update_native_events(cuda_ctl, ntv_info, ntv_count);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
+  fn_exit:
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    return papi_errno;
+  fn_fail:
+    goto fn_exit;
+}
+
+/*
 static int cuda_update_control_state(hwd_control_state_t *ctl,
                                      NativeInfo_t *ntv_info,
                                      int ntv_count, __attribute__((unused)) hwd_context_t *ctx
@@ -311,6 +343,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     int i, papi_errno;
     papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
+        printf("initialized failed: %d\n", papi_errno);
         return papi_errno;
     }
     if (ntv_count == 0) {
@@ -318,12 +351,12 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     }
 
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    if (control->info == NULL) {
-        papi_errno = cuptid_thread_info_create(&(control->info));
-        if (papi_errno != PAPI_OK) {
-            goto fn_exit;
-        }
+    papi_errno = cuptid_thread_info_create(&(control->info));
+    if (papi_errno != PAPI_OK) {
+        printf("cuptid_thread_info_create: %d\n", papi_errno);
+        goto fn_exit;
     }
+
     control->events_count = ntv_count;
 
     if (ntv_count > PAPI_CUDA_MAX_COUNTERS) {
@@ -331,6 +364,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
         papi_errno = PAPI_ECMP;
         goto fn_exit;
     }
+
     for (i=0; i<ntv_count; i++) {
         control->events_id[i] = ntv_info[i].ni_event;
         ntv_info[i].ni_position = i;
@@ -340,11 +374,13 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
     ntv_event_table_t select_names;
     papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
     if (papi_errno != PAPI_OK) {
+        printf("cuptid_event_table_select: %d\n", papi_errno);
         goto fn_exit;
     }
     papi_errno = cuptid_control_create(select_names, control->info, &tmp_context);
     if (papi_errno != PAPI_OK) {
         cuptid_control_destroy(&tmp_context);
+         printf("cuptid_control_create: %d\n", papi_errno);
         goto fn_exit;
     }
     papi_errno = cuptid_control_destroy(&tmp_context);
@@ -352,6 +388,58 @@ static int cuda_update_control_state(hwd_control_state_t *ctl,
 fn_exit:
     cuptid_event_table_destroy(&select_names);
     return papi_errno;
+}
+*/
+
+struct event_map_item {
+    int event_id;
+    int frontend_idx;
+};
+
+static int
+compare(const void *a, const void *b)
+{
+    struct event_map_item *A = (struct event_map_item *) a;
+    struct event_map_item *B = (struct event_map_item *) b;
+    return  A->event_id - B->event_id;
+}
+
+int
+update_native_events(cuda_ctl_t *ctl, NativeInfo_t *ntv_info,
+                     int ntv_count)
+{
+    int papi_errno = PAPI_OK;
+    struct event_map_item sorted_events[PAPI_CUDA_MAX_COUNTERS];
+
+    if (ntv_count != ctl->events_count) {
+        ctl->events_id = papi_realloc(ctl->events_id,
+                                      ntv_count * sizeof(*ctl->events_id));
+        if (ctl->events_id == NULL) {
+            papi_errno = PAPI_ENOMEM;
+            goto fn_fail;
+        }
+
+        ctl->events_count = ntv_count;
+    }
+
+    int i;
+    for (i = 0; i < ntv_count; ++i) {
+        sorted_events[i].event_id = ntv_info[i].ni_event;
+        sorted_events[i].frontend_idx = i;
+    }
+
+    qsort(sorted_events, ntv_count, sizeof(struct event_map_item), compare);
+
+    for (i = 0; i < ntv_count; ++i) {
+        ctl->events_id[i] = sorted_events[i].event_id;
+        ntv_info[sorted_events[i].frontend_idx].ni_position = i;
+    }
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    ctl->events_count = 0;
+    goto fn_exit;
 }
 
 static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
@@ -371,29 +459,38 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
     return PAPI_OK;
 }
 
-static int cuda_start(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
+static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
     int papi_errno, i;
 
+    //cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
+    //cuda_ctl_t *cuda_ctl = (cuda_ctl_t *) ctl;
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     for (i = 0; i < control->events_count; i++) {
         control->values[i] = 0;
     }
-    ntv_event_table_t select_names;
-    papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-    papi_errno = cuptid_control_create(select_names, control->info, &(control->cupti_ctl));
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
+    //ntv_event_table_t select_names;
+    //papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
+    //if (papi_errno != PAPI_OK) {
+    //    goto fn_exit;
+    //}
 
-    papi_errno = cuptid_control_start( control->cupti_ctl );
+    //papi_errno = cupti_control_create(cuda_ctl->events_id, cuda_ctl->events_count, &cuda_ctl->cuda_ctx)
+
+    //papi_errno = cuptid_control_create(select_names, control->info, &(control->cupti_ctl));
+    //if (papi_errno != PAPI_OK) {
+    //    printf("failed to create\n");
+    //    goto fn_exit;
+    //}
+    
+    //papi_errno = cuptid_control_start( control->cupti_ctl );
+    //printf("papi_errno is: %d\n", papi_errno);
+
+    //cuda_ctx->state |= 0x02;
 
 fn_exit:
-    cuptid_event_table_destroy(&select_names);
+    //cuptid_event_table_destroy(&select_names);
     return papi_errno;
 }
 
@@ -440,12 +537,18 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
 static int cuda_get_evt_count(int *count)
 {
     uint64_t event_code = 0;
+    int papi_errno;
 
     if (cuptid_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
-        ++(*count);
+        papi_errno = cuptid_get_num_qualified_evts(count, event_code);
+        if (papi_errno != PAPI_OK)
+            return papi_errno;
+         
     }
     while (cuptid_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
-        ++(*count);
+        papi_errno = cuptid_get_num_qualified_evts(count, event_code);
+        if (papi_errno != PAPI_OK)
+            return papi_errno;
     }
 
     return PAPI_OK;

@@ -41,7 +41,7 @@
 #define DEVICE_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - DEVICE_WIDTH)) << DEVICE_SHIFT)
 #define QLMASK_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - QLMASK_WIDTH)) << QLMASK_SHIFT)
 #define NAMEID_MASK  ((0xFFFFFFFFFFFFFFFF >> (EVENTS_WIDTH - NAMEID_WIDTH)) << NAMEID_SHIFT)
-#define DEVICE_FLAG  (0x2)
+#define DEVICE_FLAG  (0x1)
 
 typedef struct {
     int device;
@@ -62,6 +62,7 @@ static int num_gpus;
 static int num_unique_gpus = 1;
 static list_metrics_t *avail_events;
 
+cuptiu_event_table_t *global_event_names;
 static cuptiu_event_table_t cuptiu_table;
 static cuptiu_event_table_t *cuptiu_table_p;
 
@@ -556,37 +557,64 @@ fn_exit:
 static int check_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig, int rmr_count, NVPA_RawMetricRequest *rmr, int *num_pass)
 {
     COMPDBG("Entering.\n");
+    NVPA_Status nvpa_err;
+
+    /* instantiate a new struct to be passed to NVPW_RawMetricsConfig_BeginPassGroup_Params */
     NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams = {
+        // [in]
         .structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
         .maxPassCount = 1,
     };
-    NVPW_CALL( NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams), goto fn_fail );
+    nvpa_err = NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        goto fn_fail;
+    }
 
+    /* instantiate struct to be passed to NVPW_RawMetricsConfig_AddMetrics */
     NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams = {
+        // [in]
         .structSize = NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
         .pRawMetricRequests = rmr,
         .numMetricRequests = rmr_count,
     };
-    NVPW_CALL( NVPW_RawMetricsConfig_AddMetricsPtr(&addMetricsParams), goto fn_fail );
+    /* call is necessary to get correct numpass value below*/
+    nvpa_err = NVPW_RawMetricsConfig_AddMetricsPtr(&addMetricsParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        goto fn_fail;
+    }
 
+    /* instantiate a new struct to be passed to NVPW_RawMetricsConfig_EndPassGroup */
     NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams = {
+        // [in]
         .structSize = NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
     };
-    NVPW_CALL( NVPW_RawMetricsConfig_EndPassGroupPtr(&endPassGroupParams), goto fn_fail );
+    /* clean and free memory */
+    nvpa_err = NVPW_RawMetricsConfig_EndPassGroupPtr(&endPassGroupParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        goto fn_fail;
+    }
 
+    /* instantiate a new struct to be passed to  NVPW_RawMetricsConfig_GetNumPasses_Params*/
     NVPW_RawMetricsConfig_GetNumPasses_Params rawMetricsConfigGetNumPassesParams = {
+        // [in]
         .structSize = NVPW_RawMetricsConfig_GetNumPasses_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
     };
-    NVPW_CALL( NVPW_RawMetricsConfig_GetNumPassesPtr(&rawMetricsConfigGetNumPassesParams), goto fn_fail );
 
+    /* obtain numPipelinedPasses and numIsolatedPasses to calculate numpass */
+    nvpa_err = NVPW_RawMetricsConfig_GetNumPassesPtr(&rawMetricsConfigGetNumPassesParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        goto fn_fail;
+    }
+
+    /* calculate numpass */
     int numNestingLevels = 1, numIsolatedPasses, numPipelinedPasses;
     numIsolatedPasses  = rawMetricsConfigGetNumPassesParams.numIsolatedPasses;
     numPipelinedPasses = rawMetricsConfigGetNumPassesParams.numPipelinedPasses;
@@ -1313,53 +1341,51 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
         return papi_errno;
     }
     
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
 
-        papi_errno = retrieve_metric_descr( avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext, 
-                                            cuptiu_table_p->events[inf.nameid].name, description, gpu_id );                               
-        if (papi_errno != PAPI_OK) {
-            return papi_errno;
-        }
-        strcpy(cuptiu_table_p->events[inf.nameid].desc, description);
+    papi_errno = retrieve_metric_descr( avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+                                        cuptiu_table_p->events[inf.nameid].name, description, gpu_id ); 
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+    strcpy(cuptiu_table_p->events[inf.nameid].desc, description);
 
-        switch (inf.flags) {
-            case 0:
-                /* cuda native event name */
-                len = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
-                if (len > PAPI_HUGE_STR_LEN) {
-                    ERRDBG("String formatting exceeded max string length.\n");
-                    return PAPI_ENOMEM;
-                }
-                len = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-                if (len > PAPI_HUGE_STR_LEN) {
-                    ERRDBG("String formatting exceeded max string length.\n");
-                    return PAPI_ENOMEM;
-                }
-                /* cuda native event description */
-                len = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-                if (len > PAPI_HUGE_STR_LEN) {
-                    ERRDBG("String formatting exceeded max string length.\n");
-                    return PAPI_ENOMEM;
-                }
-                break;
-            case DEVICE_FLAG:
-            {
-                int i;
-                char devices[PAPI_MAX_STR_LEN] = { 0 };
-                for (i = 0; i < num_gpus; ++i) {
-                    if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
-                        sprintf(devices + strlen(devices), "%i,", i);
-                    }
-                }
-                *(devices + strlen(devices) - 1) = 0;
-                sprintf( info->symbol, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
-                sprintf( info->long_descr, "%s masks:Mandatory device qualifier [%s]",
-                         cuptiu_table_p->events[inf.nameid].desc, devices );
-                break;
+    switch (inf.flags) {
+        case 0:
+            /* cuda native event name */
+            len = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
             }
-            default:
-                papi_errno = PAPI_EINVAL;
+            len = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            /* cuda native event description */
+            len = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            if (len > PAPI_HUGE_STR_LEN) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+        case DEVICE_FLAG:
+        {
+            int i;
+            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            for (i = 0; i < num_gpus; ++i) {
+                if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
+                    sprintf(devices + strlen(devices), "%i,", i);
+                }
+            }
+            *(devices + strlen(devices) - 1) = 0;
+            sprintf( info->symbol, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
+            sprintf( info->long_descr, "%s masks:Mandatory device qualifier [%s]",
+                     cuptiu_table_p->events[inf.nameid].desc, devices );
+            break;
         }
+        default:
+            papi_errno = PAPI_EINVAL;
     }
 
     return papi_errno;
@@ -1450,6 +1476,7 @@ int cuptip_init(void)
     /* initialize hash table with cuda native events */
     init_event_table();
     cuptiu_table_p = &cuptiu_table;
+    global_event_names = cuptiu_table_p;
 
     return PAPI_OK;
 fn_fail:
@@ -1568,6 +1595,7 @@ fn_fail_misc:
     papi_errno = PAPI_EMISC;
     goto fn_exit;
 }
+
 
 int cuptip_control_stop(cuptip_control_t state)
 {
@@ -1759,7 +1787,7 @@ int cuptip_shutdown(void)
     return PAPI_OK;
 }
 
-/** @class evt_id_to_info
+/** @class evt_id_create
   * @brief Create event ID. Function is needed for cuptip_event_enum.
   *
   * @param *info
@@ -1977,16 +2005,17 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
         return PAPI_EINVAL;
     }
 
-    /* instantiate a new metric properties structure with the provided evt_name */
+    /* instantiate a new struct with provided event name to be passed to
+       NVPW_MetricsContext_GetMetricsProperties_Begin */
     NVPW_MetricsContext_GetMetricProperties_Begin_Params getMetricPropertiesBeginParams = {
+        // [in]
         .structSize = NVPW_MetricsContext_GetMetricProperties_Begin_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pMetricsContext = pMetricsContext,
         .pMetricName = evt_name,
     };
 
-    /* collect metric properties such as dependencies and description for the 
-       structure created by the passed evt_name */
+    /* fills out member variables such as description, metric name, and units */
     nvpa_err = NVPW_MetricsContext_GetMetricProperties_BeginPtr(&getMetricPropertiesBeginParams);
     if (nvpa_err != NVPA_STATUS_SUCCESS || getMetricPropertiesBeginParams.ppRawMetricDependencies == NULL) {
         strcpy(description, "Could not get description.");
@@ -2019,45 +2048,59 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
         return PAPI_ENOMEM;
     }
 
-    /* ending/deleting instantiated struct created by passed evt_name */
+    /* instantiate a new struct to be passsed to NVPW_MetricsContext_GetMetricProperties_End */
     NVPW_MetricsContext_GetMetricProperties_End_Params getMetricPropertiesEndParams = {
+        // [in]
         .structSize = NVPW_MetricsContext_GetMetricProperties_End_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, //assign to NULL
         .pMetricsContext = pMetricsContext,
     };
 
-    /* ending pointer created by passed evt_name */
-    NVPW_CALL( NVPW_MetricsContext_GetMetricProperties_EndPtr(&getMetricPropertiesEndParams), return PAPI_EMISC );
+    /* clean up memory internally allocated by the the function
+       NVPW_MetricsContext_GetMetricProperties_Begin */
+    nvpa_err = NVPW_MetricsContext_GetMetricProperties_EndPtr(&getMetricPropertiesEndParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
 
-    /* instantiate a new create params structure with the provided evt_name */
+    /* instantiate a new stuct to be passed to NVPW_CUDA_RawMetricsConfig_Create */
     NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams = {
+        // [in]
         .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
         .pChipName = avail_events[gpu_id].chip_name,
     };
 
-    /* create pointer for the instantiated create params structure */
-    NVPW_CALL( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), return PAPI_EMISC );
+    /* create a new NVPA_RawMetricsConfig  */
+    nvpa_err = NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
 
-    /* collect numpass values */
+    /* collects the total number of passes
+       num_passes = numPipelinedPasses + numIsolatedPasses * numNestingLevels */
     papi_errno = check_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-                                  num_dep, rmr, &passes );
+                                   num_dep, rmr, &passes );
     if ( papi_errno == PAPI_EMULPASS ) {
         /* at this point we just want the number of passes (stored in passes) */
     }
 
-    /* destory create params instantiated structure */
+    /* instantiate a new struct to be passed to NVPW_RawMetricsConfig_Destroy  */
     NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {
+        // [in]
         .structSize = NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE,
-        .pPriv = NULL,
+        .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig,
     };
 
-    /* destroy created pointer for instantiated create params structure */
-    NVPW_CALL( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams), return PAPI_EMISC );
+    /* clean up memory and destroy NVPA_RawMetricsConfig*/
+    nvpa_err = NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *) &rawMetricsConfigDestroyParams);
+    if (nvpa_err != NVPA_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
 
-    /* add extra metadata to description*/
+    /* add extra metadata to description */
     snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " Numpass=%d", passes);
     if (passes > 1) {
         snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (multi-pass not supported)");
@@ -2067,7 +2110,7 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
     if (strstr(evt_name, token_sw_evt) != NULL) {
         snprintf(desc + strlen(desc), PAPI_2MAX_STR_LEN - strlen(desc), " (SW event)");
     }
-    
+
     /* free memory, copy description, and return successful error code */
     papi_free(rmr);
 
@@ -2173,14 +2216,17 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
         goto fn_exit;
     }
 
-    htable_errno = htable_find(avail_events[num_unique_gpus].nv_metrics->htable, base, (void **) &event);
+    htable_errno = htable_find(avail_events[0].nv_metrics->htable, base, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
         papi_errno = (htable_errno == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
+        printf("HTABLE WAS NOT SUCCESSFUL\n");
         goto fn_exit;
     }
 
-    flags = (device >= 0) ? 0:1;
-    if (flags != 0) {
+    /* flags = DEVICE_FLAG will need to be updated if more qualifiers are added,
+       see implemtation in rocm (roc_profiler.c) */
+    flags = (device >= 0) ? DEVICE_FLAG:0;
+    if (flags == 0){
         papi_errno = PAPI_EINVAL;
         goto fn_exit;
     }
@@ -2297,4 +2343,39 @@ static int evt_code_to_name(uint64_t event_code, char *name, int len)
     }
 
     return papi_errno;
+}
+
+/** @class cuptip_get_num_qualified_evts
+  * @brief Function to get the total qualified events for all devices.
+  *
+  * @param *count
+  *   Total number of events
+  * @param *event_code
+  *   Cuda native event code
+  *
+  * @note Device qualifier only accounted for as of now. If more qualifiers
+  *       are added make sure they are accounted for correctly.
+  * @todo Modified to work with multiple GPUS.
+*/
+
+int cuptip_get_num_qualified_evts(int *count, uint64_t event_code) {
+
+    int papi_errno, device, gpu_id = 0;
+    event_info_t info;
+
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK)
+        return papi_errno;
+
+    device = (cuptiu_table_p->events[info.nameid].device_map & (1ULL << gpu_id));
+    /* if device present increase event count*/
+    if (device > 0) {
+        *count += num_gpus;
+    }
+    else {
+        papi_errno = PAPI_EINVAL;
+    }
+
+    return papi_errno;
+
 }

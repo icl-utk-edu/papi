@@ -41,4 +41,5 @@ int cuptid_event_table_find_name(ntv_event_table_t evt_table, const char *evt_na
 int cuptid_event_table_insert_record(ntv_event_table_t evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
 int cuptid_event_table_get_item(ntv_event_table_t evt_table, unsigned int evt_idx, ntv_event_t *record);
 
+int cuptid_get_num_qualified_evts(int *count, uint64_t event_code);
 #endif /* __CUPTI_DISPATCH_H__ */
