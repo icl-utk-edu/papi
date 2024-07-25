@@ -155,7 +155,7 @@ static int cuda_init_private(void)
     papi_errno = cuptid_init();
     if (papi_errno != PAPI_OK) {
         cuptid_disabled_reason_get(&disabled_reason);
-        sprintf(_cuda_vector.cmp_info.disabled_reason, disabled_reason);
+        sprintf(_cuda_vector.cmp_info.disabled_reason, "%s", disabled_reason);
         _cuda_vector.cmp_info.disabled = papi_errno;
         goto fn_exit;
     }
