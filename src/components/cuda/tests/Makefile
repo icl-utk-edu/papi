@@ -13,12 +13,6 @@ TESTS_NOCTX = concurrent_profiling_noCuCtx pthreads_noCuCtx \
 			  simpleMultiGPU_noCuCtx
 
 NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
-NVCC_VERSION := $(shell $(NVCC) --version | grep -oP '(?<=release )\d+\.\d+')
-ifeq ($(shell echo "$(NVCC_VERSION) >= 11.6" | bc), 1)
-    NVCFLAGS := -arch=native
-else
-    NVCFLAGS :=
-endif
 
 PAPI_FLAG = -DPAPI    # Comment this line for tests to run without PAPI profiling
 NVCFLAGS += -g -ccbin='$(CC)' $(PAPI_FLAG)
