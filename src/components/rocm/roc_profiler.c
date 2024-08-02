@@ -385,35 +385,6 @@ rocp_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
     return papi_errno;
 }
 
-/* rocp_get_num_qualified_evts - get number of events with a common basename */
-int
-rocp_get_num_qualified_evts(int *count, uint64_t event_code) {
-
-    int papi_errno;
-    int insts;
-    int subcount = 0;
-
-    event_info_t inf;
-    papi_errno = evt_id_to_info(event_code, &inf);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-
-    /* If there are no instances, only count the basename.
-     * Otherwise, count each instance. */
-    insts = ntv_table_p->events[inf.nameid].instances;
-    if( insts < 1 ) {
-        ++subcount;
-    } else {
-        subcount += ntv_table_p->events[inf.nameid].instances;
-    }
-
-    /* Account for all devices. */
-    *count += subcount * (device_table_p->count);
-
-    return PAPI_OK;
-}
-
 /* rocp_ctx_open - open a profiling context for the requested events */
 int
 rocp_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *rocp_ctx)
