@@ -1,5 +1,6 @@
 ALL = fp_validation_hl \
 	cycles_validation flops_validation \
+	topdown_validation \
 	papi_br_cn papi_br_ins papi_br_msp \
 	papi_br_ntk papi_br_prc papi_br_tkn papi_br_ucn \
 	papi_dp_ops papi_fp_ops papi_sp_ops papi_hw_int \
@@ -47,6 +48,8 @@ cycles_validation: cycles_validation.o $(TESTLIB) $(PAPILIB) display_error.o ins
 flops_validation: flops_validation.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o flops_testcode.o
 	$(CC) -o flops_validation flops_validation.o $(TESTLIB) display_error.o branches_testcode.o flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
+topdown_validation: topdown_validation.o $(TESTLIB) $(PAPILIB) instructions_testcode.o
+	$(CC) -o topdown_validation topdown_validation.o $(TESTLIB) instructions_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB)
 
 memleak_check: memleak_check.o $(TESTLIB) $(PAPILIB) display_error.o branches_testcode.o
 	$(CC) -o memleak_check memleak_check.o $(TESTLIB) display_error.o branches_testcode.o $(PAPILIB) $(LDFLAGS) $(LDFLAGS) $(EXTRALIB)
