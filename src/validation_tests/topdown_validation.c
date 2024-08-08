@@ -13,29 +13,36 @@
 #define NUM_LOOPS 100
 
 /*
+ * When the counter is read with rdpmc, each td event is embedded in the value.
  * Applies bitshifts to the metric counter value to extract a topdown metric,
  * and scales the result into a percentage
  */
-float get_metric(u_int64_t m, int i)
+float rdpmc_get_metric(u_int64_t m, int i)
 {
     return (float)(((m) >> (i * 8)) & 0xff) / 0xff * 100.0;
 }
 
-/* print metric percentages */
-void print_metrics(u_int64_t m)
+/* print metric percentages for topdown rdpmc reads */
+void rdpmc_print_metrics(u_int64_t m)
 {
     printf("Metrics:\n\tretiring:\t%02f\n\tbadspec:\t%02f\n\tfrontend bound:\t%02f\n\tbackend bound:\t%02f\n",
-           get_metric(m, 0), get_metric(m, 1), get_metric(m, 2), get_metric(m, 3));
+           rdpmc_get_metric(m, 0), rdpmc_get_metric(m, 1), rdpmc_get_metric(m, 2), rdpmc_get_metric(m, 3));
 }
 
-/* ensure a metric is internally consistent */
-void assert_metrics_percentages(u_int64_t m)
+/* ensure a metric is internally consistent for topdown rdpmc reads */
+void rdpmc_assert_metrics_percentages(u_int64_t m)
 {
-    double sum = get_metric(m, 0) + get_metric(m, 1) + get_metric(m, 2) + get_metric(m, 3);
+    double sum = rdpmc_get_metric(m, 0) + rdpmc_get_metric(m, 1) + rdpmc_get_metric(m, 2) + rdpmc_get_metric(m, 3);
     if (!approx_equals(sum, 100))
     {
         test_fail(__FILE__, __LINE__, "Metrics percentages do not sum to 100", 1);
     }
+}
+
+/* get precentages for non-rdpmc */
+void non_rdpmc_assert_percentages(u_int64_t slots, u_int64_t re, u_int64_t be, u_int64_t bs)
+{
+    printf("%02f %02f %02f\n", (float)re / slots * 100.0, (float)be / slots * 100.0, (float)bs / slots * 100.0);
 }
 
 int main(int argc, char **argv)
@@ -156,14 +163,17 @@ int main(int argc, char **argv)
     }
 
     printf("Slots: %d\n", values[0]);
-    printf("\t%#0x\n\t%#0x\n\t%#0x\n\t#0x\n", values[1], values[2], values[3]);
+    printf("\tRETIRING_SLOTS:\t%#0x\n\tBACKEND_BOUND_SLOTS:\t%#0x\n\tBAD_SPEC_SLOTS:\t%#0x\n\tsum:\t%#0x\n",
+           values[1], values[2], values[3], values[1] + values[2] + values[3]);
 
-    print_metrics(values[1]);
-    assert_metrics_percentages(values[1]);
+    non_rdpmc_assert_percentages(values[0], values[1], values[2], values[3]);
 
-    print_metrics(values[2]);
-    assert_metrics_percentages(values[2]);
+    rdpmc_print_metrics(values[1]);
+    rdpmc_assert_metrics_percentages(values[1]);
 
-    print_metrics(values[3]);
-    assert_metrics_percentages(values[3]);
+    rdpmc_print_metrics(values[2]);
+    rdpmc_assert_metrics_percentages(values[2]);
+
+    rdpmc_print_metrics(values[3]);
+    rdpmc_assert_metrics_percentages(values[3]);
 }
