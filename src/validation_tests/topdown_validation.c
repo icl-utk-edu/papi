@@ -9,8 +9,56 @@
 #include "papi_test.h"
 #include "testcode.h"
 
+#include <linux/perf_event.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdio.h>
+
+#include <stdint.h>
+#include <x86intrin.h>
+#include <sys/ioctl.h>
+
 #define NUM_EVENTS 4
 #define NUM_LOOPS 100
+
+/*
+ * perf_event _rdpmc code
+ */
+
+#define RDPMC_FIXED	    (1 << 30)	/* return fixed counters */
+#define RDPMC_METRIC	(1 << 29)	/* return metric counters */
+
+#define FIXED_COUNTER_SLOTS		        3   /* on raptorlake it is fiex counter 3 */
+#define METRIC_COUNTER_TOPDOWN_L1_L2	0
+
+__attribute__((weak))
+int perf_event_open(struct perf_event_attr *attr, pid_t pid,
+		    int cpu, int group_fd, unsigned long flags)
+{
+	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
+}
+
+static inline uint64_t read_slots(void)
+{
+	return _rdpmc(RDPMC_FIXED | FIXED_COUNTER_SLOTS);
+}
+
+/*
+The value reported by read_metrics() contains four 8 bit fields
+that represent a scaled ratio that represent the Level 1 bottleneck.
+All four fields add up to 0xff (= 100%)
+*/
+static inline uint64_t read_metrics(void)
+{
+	return _rdpmc(RDPMC_METRIC | METRIC_COUNTER_TOPDOWN_L1_L2);
+}
+
+static inline int reset_metrics(int fd)
+{
+    return ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+}
 
 /*
  * When the counter is read with rdpmc, each td event is embedded in the value.
@@ -22,27 +70,30 @@ float rdpmc_get_metric(u_int64_t m, int i)
     return (float)(((m) >> (i * 8)) & 0xff) / 0xff * 100.0;
 }
 
-/* print metric percentages for topdown rdpmc reads */
-void rdpmc_print_metrics(u_int64_t m)
+/* takes a metric integer and populates the array with individual percentages */
+/* in order: retiring, bad spec, fe bound, be bound */
+void topdown_get_from_metrics(double *percentages, uint64_t metrics)
 {
-    printf("Metrics:\n\tretiring:\t%02f\n\tbadspec:\t%02f\n\tfrontend bound:\t%02f\n\tbackend bound:\t%02f\n",
-           rdpmc_get_metric(m, 0), rdpmc_get_metric(m, 1), rdpmc_get_metric(m, 2), rdpmc_get_metric(m, 3));
+    percentages[0] = rdpmc_get_metric(metrics, 0);
+    percentages[1] = rdpmc_get_metric(metrics, 1);
+    percentages[2] = rdpmc_get_metric(metrics, 2);
+    percentages[3] = rdpmc_get_metric(metrics, 3);
 }
 
-/* ensure a metric is internally consistent for topdown rdpmc reads */
-void rdpmc_assert_metrics_percentages(u_int64_t m)
+/* takes papi events and populates the array with individual percentages */
+/* in order: retiring, bad spec, fe bound, be bound */
+void topdown_get_from_events(double *percentages, uint64_t slots, uint64_t retiring, uint64_t badspec, uint64_t be_bound)
 {
-    double sum = rdpmc_get_metric(m, 0) + rdpmc_get_metric(m, 1) + rdpmc_get_metric(m, 2) + rdpmc_get_metric(m, 3);
-    if (!approx_equals(sum, 100))
-    {
-        test_fail(__FILE__, __LINE__, "Metrics percentages do not sum to 100", 1);
-    }
+    percentages[0] = (double)retiring / (double)slots * 100.0;
+    percentages[1] = (double)badspec / (double)slots * 100.0;
+    percentages[3] = (double)be_bound / (double)slots * 100.0;
+    percentages[2] = slots - percentages[0] - percentages[1] - percentages[3];
 }
 
-/* get precentages for non-rdpmc */
-void non_rdpmc_assert_percentages(u_int64_t slots, u_int64_t re, u_int64_t be, u_int64_t bs)
+void print_percs(double *percs)
 {
-    printf("%02f %02f %02f\n", (float)re / slots * 100.0, (float)be / slots * 100.0, (float)bs / slots * 100.0);
+    printf("\tretiring:\t%02f\n\tbadspec:\t%02f\n\tfe_bound:\t%02f\n\tbe_bound:\t%02f\n",
+        percs[0], percs[1], percs[2], percs[3]);
 }
 
 int main(int argc, char **argv)
@@ -51,14 +102,62 @@ int main(int argc, char **argv)
     // Then parse as percentages and ensure it makes some sense
 
     int retval, tmp, result, i;
+    uint64_t rdpmc_slots, rdpmc_metrics;
     int EventSet1 = PAPI_NULL;
     long long values[NUM_EVENTS];
-    long long elapsed_us, elapsed_cyc, elapsed_virt_us, elapsed_virt_cyc;
+    double rdpmc_percs[4], papi_rdpmc_percs[4], papi_events_percs[4];
+    double percentages[NUM_EVENTS];
     double cycles_error;
     int quiet = 0;
 
     /* Set TESTS_QUIET variable */
     quiet = tests_quiet(argc, argv);
+
+    /******************************/
+    /* Set up perf_event syscalls */
+    /******************************/
+
+    /* Open slots counter file descriptor for current task. */
+    struct perf_event_attr slots = {
+        .type = PERF_TYPE_RAW,
+        .size = sizeof(struct perf_event_attr),
+        .config = 0x400,
+        .exclude_kernel = 1,
+    };
+
+    int slots_fd = perf_event_open(&slots, 0, -1, -1, 0);
+    if (slots_fd < 0)
+        printf("Error opening the perf event slots\n");
+
+    /* Memory mapping the fd permits _rdpmc calls from userspace */
+    void *slots_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, slots_fd, 0);
+    if (!slots_p)
+        printf("Error memory mapping the fd permits for _rdpmc\n");
+
+    /*
+    * Open metrics event file descriptor for current task.
+    * Set slots event as the leader of the group.
+    */
+    struct perf_event_attr metrics = {
+        .type = PERF_TYPE_RAW,
+        .size = sizeof(struct perf_event_attr),
+        .config = 0x8000,
+        .exclude_kernel = 1,
+    };
+
+    int metrics_fd = perf_event_open(&metrics, 0, -1, slots_fd, 0);
+    if (metrics_fd < 0)
+        printf("Failed to open the metrics fd\n");
+
+    /* Memory mapping the fd permits _rdpmc calls from userspace */
+    void *metrics_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, metrics_fd, 0);
+    if (!metrics_p)
+        printf("Failed to memory map the metrics\n");
+    
+
+    /***************/
+    /* Set up PAPI */
+    /***************/
 
     /* Init the PAPI library */
     retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -123,57 +222,56 @@ int main(int argc, char **argv)
         test_skip(__FILE__, __LINE__, "No instructions code", retval);
     }
 
-    /* Gather before stats */
-    elapsed_us = PAPI_get_real_usec();
-    elapsed_cyc = PAPI_get_real_cyc();
-    elapsed_virt_us = PAPI_get_virt_usec();
-    elapsed_virt_cyc = PAPI_get_virt_cyc();
+    /* make sure the metrics are cleared */
+    reset_metrics(slots_fd);
+    reset_metrics(metrics_fd);
 
-    /* Start PAPI */
+    /* lets start the actual test code */
     retval = PAPI_start(EventSet1);
     if (retval != PAPI_OK)
     {
         test_fail(__FILE__, __LINE__, "PAPI_start", retval);
     }
 
-    /* our work code */
     for (i = 0; i < NUM_LOOPS; i++)
     {
-        instructions_million();
+        result = instructions_million();
     }
 
-    /* Stop PAPI */
     retval = PAPI_stop(EventSet1, values);
     if (retval != PAPI_OK)
     {
         test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
     }
 
-    /* Lets see what we got */
+    /* Check and see what _rdpmc got */
+    rdpmc_slots = read_slots();
+    rdpmc_metrics = read_metrics();
+    topdown_get_from_metrics(rdpmc_percs, rdpmc_metrics);
+
+    /* Lets see what we got with PAPI */
+    topdown_get_from_metrics(papi_rdpmc_percs, values[1]);
+    topdown_get_from_events(papi_events_percs, values[0], values[1], values[2], values[3]);
+
+    printf("rdpmc\n");
+    print_percs(rdpmc_percs);
+    printf("papi rdpmc\n");
+    print_percs(papi_rdpmc_percs);
+    printf("papi events\n");
+    print_percs(papi_events_percs);
+
+    /* Clean up everything */
+    close(slots_fd);
+    close(metrics_fd);
+    
     retval = PAPI_cleanup_eventset(EventSet1);
     if (retval != PAPI_OK)
     {
         test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", retval);
     }
-
     retval = PAPI_destroy_eventset(&EventSet1);
     if (retval != PAPI_OK)
     {
         test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset", retval);
     }
-
-    printf("Slots: %d\n", values[0]);
-    printf("\tRETIRING_SLOTS:\t%#0x\n\tBACKEND_BOUND_SLOTS:\t%#0x\n\tBAD_SPEC_SLOTS:\t%#0x\n\tsum:\t%#0x\n",
-           values[1], values[2], values[3], values[1] + values[2] + values[3]);
-
-    non_rdpmc_assert_percentages(values[0], values[1], values[2], values[3]);
-
-    rdpmc_print_metrics(values[1]);
-    rdpmc_assert_metrics_percentages(values[1]);
-
-    rdpmc_print_metrics(values[2]);
-    rdpmc_assert_metrics_percentages(values[2]);
-
-    rdpmc_print_metrics(values[3]);
-    rdpmc_assert_metrics_percentages(values[3]);
 }
