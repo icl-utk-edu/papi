@@ -247,9 +247,8 @@ int main(int argc, char **argv)
 
     /* now lets run our tests */
     failures = 0;
-    for (i = 0; i < NUM_TESTS; i++)
+    for (j = 0; j < NUM_TESTS; j++)
     {
-
         /* make sure the metrics are cleared */
         reset_metrics(slots_fd);
         reset_metrics(metrics_fd);
