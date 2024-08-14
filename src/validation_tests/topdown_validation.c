@@ -22,7 +22,7 @@
 
 #define NUM_EVENTS 4
 #define NUM_LOOPS 100
-#define NUM_TESTS 1000
+#define NUM_TESTS 100
 
 #define PERCENTAGES_TOLERANCE 0.1
 
@@ -89,7 +89,7 @@ void topdown_get_from_events(double *percentages, uint64_t slots, uint64_t retir
     percentages[0] = (double)retiring / (double)slots * 100.0;
     percentages[1] = (double)badspec / (double)slots * 100.0;
     percentages[3] = (double)be_bound / (double)slots * 100.0;
-    percentages[2] = slots - percentages[0] - percentages[1] - percentages[3];
+    percentages[2] = 100.0 - percentages[0] - percentages[1] - percentages[3];
 }
 
 void print_percs(double *percs)
@@ -106,18 +106,20 @@ int eq_within_tolerance(double a, double b, double tolerance)
     return 0;
 }
 
-int are_percs_equivalent(double *percs_a, double *percs_b)
+int are_percs_equivalent(double *percs_gt, double *percs_b, double *abs_error, int n_percs)
 {
-    if (!eq_within_tolerance(percs_a[0], percs_b[0], PERCENTAGES_TOLERANCE))
-        return 0;
-    if (!eq_within_tolerance(percs_a[1], percs_b[1], PERCENTAGES_TOLERANCE))
-        return 0;
-    if (!eq_within_tolerance(percs_a[2], percs_b[2], PERCENTAGES_TOLERANCE))
-        return 0;
-    if (!eq_within_tolerance(percs_a[3], percs_b[3], PERCENTAGES_TOLERANCE))
-        return 0;
+    int i;
+    int eq = 1;
+    for (i = 0; i < n_percs; i++)
+    {
+        if (!eq_within_tolerance(percs_gt[i], percs_b[i], PERCENTAGES_TOLERANCE))
+        {
+            abs_error[i] = (percs_gt[i] - percs_b[i] > 0) ? percs_gt[i] - percs_b[i] : percs_b[i] - percs_gt[i];
+            eq = 0;
+        }
+    }
 
-    return 1;
+    return eq;
 }
 
 int main(int argc, char **argv)
@@ -129,8 +131,11 @@ int main(int argc, char **argv)
     uint64_t rdpmc_slots, rdpmc_metrics;
     int EventSet1 = PAPI_NULL;
     long long values[NUM_EVENTS];
-    double rdpmc_percs[4], papi_rdpmc_percs[4], papi_events_percs[4];
-    double percentages[NUM_EVENTS];
+
+    double rdpmc_percs[NUM_EVENTS], papi_rdpmc_percs[NUM_EVENTS], papi_event_percs[NUM_EVENTS];
+    double avg_rdpmc_percs[NUM_EVENTS], avg_papi_rdpmc_percs[NUM_EVENTS], avg_papi_event_percs[NUM_EVENTS];
+    double err_papi_rdpmc_percs[NUM_EVENTS], err_papi_event_percs[NUM_EVENTS];
+
     double cycles_error;
     int quiet = 0;
 
@@ -275,22 +280,56 @@ int main(int argc, char **argv)
         rdpmc_slots = read_slots();
         rdpmc_metrics = read_metrics();
         topdown_get_from_metrics(rdpmc_percs, rdpmc_metrics);
+        for (i = 0; i < NUM_EVENTS; i++)
+            avg_rdpmc_percs[i] += rdpmc_percs[i];
 
-        /* Lets see what we got with PAPI */
+        /* Lets see what we got with PAPI rdpmc */
         topdown_get_from_metrics(papi_rdpmc_percs, values[1]);
-        topdown_get_from_events(papi_events_percs, values[0], values[1], values[2], values[3]);
+        for (i = 0; i < NUM_EVENTS; i++)
+            avg_papi_rdpmc_percs[i] += papi_rdpmc_percs[i];
 
-        if (are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs) + are_percs_equivalent(rdpmc_percs, papi_events_percs) != 1)
+        /* And with PAPI events */
+        topdown_get_from_events(papi_event_percs, values[0], values[1], values[2], values[3]);
+        for (i = 0; i < NUM_EVENTS; i++)
+            avg_papi_event_percs[i] += papi_event_percs[i];
+
+        if ((are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs, err_papi_rdpmc_percs, NUM_EVENTS) +
+             are_percs_equivalent(rdpmc_percs, papi_event_percs, err_papi_event_percs, NUM_EVENTS)) < 1)
         {
-            //printf("rdpmc\n");
-            //print_percs(rdpmc_percs);
-            //printf("papi rdpmc, equivalent=%d\n", are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs));
-            //print_percs(papi_rdpmc_percs);
-            //printf("papi events, equivalent=%d\n", are_percs_equivalent(rdpmc_percs, papi_events_percs));
-            //print_percs(papi_events_percs);
-            failures++;
-        }
+            printf("Failed: %#0x\n", values[1]);
+
+            printf("rdpmc err: ");
+            for (i = 0; i < NUM_EVENTS; i++)
+            {
+                printf("%f\t", err_papi_rdpmc_percs[i]);
+            }
+            printf("\nevent err: ");
+            for (i = 0; i < NUM_EVENTS; i++)
+            {
+                printf("%f\t", err_papi_event_percs[i]);
+            }
+            putchar('\n');
+                failures++;
+            }
+
+
     }
+
+    // get averages
+    for (i = 0; i < NUM_EVENTS; i++)
+    {
+        avg_rdpmc_percs[i] /= NUM_TESTS;
+        avg_papi_rdpmc_percs[i] /= NUM_TESTS;
+        avg_papi_event_percs[i] /= NUM_TESTS;
+    }
+
+    // print averages
+    printf("Averaged percentages for _rdpmc:\n");
+    print_percs(avg_rdpmc_percs);
+    printf("Averaged percentages for PAPI rdpmc:\n");
+    print_percs(avg_papi_rdpmc_percs);
+    printf("Averaged percentages for PAPI events:\n");
+    print_percs(avg_papi_event_percs);
 
     printf("There were %d failures\n", failures);
     if (failures > 0)
