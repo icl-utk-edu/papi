@@ -1469,7 +1469,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 				PERF_EVENT_IOC_ENABLE, NULL) ;
 			if (_perf_event_vector.cmp_info.fast_counter_read) {
 				pe_ctl->reset_counts[i] = 0LL;
-				pe_ctl->reset_flag = 0;
+				//pe_ctl->reset_flag = 0;
 			}
 
 			/* ioctls always return -1 on failure */

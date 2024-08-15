@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     // Set up and call the topdown events
     // Then parse as percentages and ensure it makes some sense
 
-    int retval, tmp, result, i, j, failures;
+    int retval, tmp, result, i, j, failures, mismatches;
     uint64_t rdpmc_slots, rdpmc_metrics;
     int EventSet1 = PAPI_NULL;
     long long values[NUM_EVENTS];
@@ -252,8 +252,11 @@ int main(int argc, char **argv)
 
     /* now lets run our tests */
     failures = 0;
+    mismatches = 0;
     for (j = 0; j < NUM_TESTS; j++)
     {
+        printf("Loop #%d:\n", j);
+
         /* make sure the metrics are cleared */
         reset_metrics(slots_fd);
         reset_metrics(metrics_fd);
@@ -293,6 +296,15 @@ int main(int argc, char **argv)
         for (i = 0; i < NUM_EVENTS; i++)
             avg_papi_event_percs[i] += papi_event_percs[i];
 
+        /* check if the values are identical (for rdpmc enabled, they should be) */
+        if (!(values[1] == values[2] && values[2] == values[3]))
+        {
+            printf("Values mismatch!\n");
+            mismatches++;
+        }
+            
+
+        /* check that the percentages match _rdpmc syscall */
         if ((are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs, err_papi_rdpmc_percs, NUM_EVENTS) +
              are_percs_equivalent(rdpmc_percs, papi_event_percs, err_papi_event_percs, NUM_EVENTS)) < 1)
         {
@@ -331,6 +343,7 @@ int main(int argc, char **argv)
     printf("Averaged percentages for PAPI events:\n");
     print_percs(avg_papi_event_percs);
 
+    printf("There were %d mismatches\n", mismatches);
     printf("There were %d failures\n", failures);
     if (failures > 0)
     {
