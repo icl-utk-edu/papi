@@ -72,7 +72,7 @@ This can be set using export; e.g.
 ## Known Limitations
 * In CUpti\_11, the number of possible events is vastly expanded; e.g. from
   some hundreds of events per device to over 110,000 events per device. this can
-  make the utility `papi/src/utils/papi_native_events` run for several minutes;
+  make the utility `papi/src/utils/papi_native_avail` run for several minutes;
   as much as 2 minutes per GPU. If the output is redirected to a file, this 
   may appear to "hang up". Give it time.
 
