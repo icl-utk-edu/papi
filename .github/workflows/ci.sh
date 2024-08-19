@@ -2,7 +2,9 @@
 
 COMPONENT=$1
 DEBUG=$2
-COMPILER=$3
+SHLIB=$3
+COMPILER=$4
+
 
 [ -z "$COMPILER" ] && COMPILER=gcc@11
 
@@ -44,9 +46,9 @@ if [ "$COMPONENT" = "infiniband_umad" ]; then
 fi
 
 if [ "$COMPONENT" = "perf_event" ]; then
-  ./configure --with-debug=$DEBUG --enable-warnings
+  ./configure --with-debug=$DEBUG --enable-warnings --$SHLIB-shlib-tools
 else
-  ./configure --with-debug=$DEBUG --enable-warnings --with-components=$COMPONENT
+  ./configure --with-debug=$DEBUG --enable-warnings --$SHLIB-shlib-tools --with-components=$COMPONENT
 fi
 
 make -j4
