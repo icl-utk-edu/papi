@@ -22,7 +22,6 @@ int rocp_evt_code_to_descr(uint64_t event_code, char *descr, int len);
 int rocp_evt_name_to_code(const char *name, uint64_t *event_code);
 int rocp_evt_code_to_name(uint64_t event_code, char *name, int len);
 int rocp_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
-int rocp_get_num_qualified_evts(int *count, uint64_t event_code);
 
 /* profiling context handling interfaces */
 int rocp_ctx_open(uint64_t *events_id, int num_events, rocp_ctx_t *ctx);
