@@ -300,11 +300,21 @@ static int util_dylib_cupti_version(void)
     return cuptiVersion;
 }
 
+
+/** @class cuptic_device_get_count
+  * @brief Get total number of gpus on the machine that are compute
+  *        capable..
+  * @param *num_gpus 
+  *    Collect the total number of gpus.
+*/
 int cuptic_device_get_count(int *num_gpus)
 {
-    cudaError_t cuda_errno = cudaGetDeviceCountPtr(num_gpus);
-    if (cuda_errno != cudaSuccess) {
-        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_errno));
+    cudaError_t cuda_err;
+
+    /* find the total number of compute-capable devices */
+    cuda_err = cudaGetDeviceCountPtr(num_gpus);
+    if (cuda_err != cudaSuccess) {
+        cuptic_disabled_reason_set(cudaGetErrorStringPtr(cuda_err));
         return PAPI_EMISC;
     }
     return PAPI_OK;
@@ -382,6 +392,11 @@ fn_exit:
 
 const char *cuptic_disabled_reason_g;
 
+/** @class cuptic_disabled_reason_set
+  * @brief Updating the current Cuda context.
+  * @param *msg
+  *    Cuda error message.
+*/
 void cuptic_disabled_reason_set(const char *msg)
 {
     cuptic_disabled_reason_g = msg;
@@ -517,49 +532,82 @@ struct cuptic_info {
     CUcontext ctx;
 };
 
+
+/** @class cuptic_ctxarr_create
+  * @brief Allocate memory for pinfo.
+  * @param *pinfo
+  *    Instance of a struct that holds read count, running, cuptic_t
+  *    and cuptip_gpu_state_t.
+*/
 int cuptic_ctxarr_create(cuptic_info_t *pinfo)
 {
     COMPDBG("Entering.\n");
-    int total_gpus;
-    int papi_errno = cuptic_device_get_count(&total_gpus);
+    int total_gpus, papi_errno;
+
+    /* retrieve total number of compute-capable devices */
+    papi_errno = cuptic_device_get_count(&total_gpus);
     if (papi_errno != PAPI_OK) {
         return PAPI_EMISC;
     }
-    cuptic_info_t cuCtx = (cuptic_info_t) papi_calloc (total_gpus, sizeof(*pinfo));
-    if (cuCtx == NULL) {
+  
+    /* allocate memory */ 
+    *pinfo = (cuptic_info_t) papi_calloc (total_gpus, sizeof(*pinfo));
+    if (*pinfo == NULL) {
         return PAPI_ENOMEM;
     }
-    *pinfo = cuCtx;
+
     return PAPI_OK;
 }
 
+
+/** @class cuptic_ctxarr_update_current
+  * @brief Updating the current Cuda context.
+  * @param info
+  *    Struct that contains a Cuda context, that can be indexed into based
+  *    on device id.
+*/
 int cuptic_ctxarr_update_current(cuptic_info_t info)
 {
-    int papi_errno, gpu_id;
-    CUcontext tempCtx;
-    papi_errno = cudaGetDevicePtr(&gpu_id);
-    if (papi_errno != cudaSuccess) {
+    int gpu_id;
+    CUcontext pctx;
+    CUresult cuda_err;
+
+    /* get device currently being used */
+    cuda_err = cudaGetDevicePtr(&gpu_id);
+    if (cuda_err != cudaSuccess) {
         return PAPI_EMISC;
     }
-    papi_errno = cuCtxGetCurrentPtr(&tempCtx);
-    if (papi_errno != CUDA_SUCCESS) {
+
+    /* return cuda context bound to the calling CPU thread */
+    cuda_err = cuCtxGetCurrentPtr(&pctx);
+    if (cuda_err != cudaSuccess) {
         return PAPI_EMISC;
     }
+    /* check to see if Cuda context exists for device  */
     if (info[gpu_id].ctx == NULL) {
-        if (tempCtx != NULL) {
-            LOGDBG("Registering device = %d with ctx = %p.\n", gpu_id, tempCtx);
-            CUDA_CALL(cuCtxGetCurrentPtr(&info[gpu_id].ctx), return PAPI_EMISC);
+        /* cuda context found for the calling CPU thread */
+        if (pctx != NULL) {
+            LOGDBG("Registering device = %d with ctx = %p.\n", gpu_id, pctx);
+            /* store current context into struct */
+            cuda_err = cuCtxGetCurrentPtr(&info[gpu_id].ctx);
+            if (cuda_err != cudaSuccess)
+                return PAPI_EMISC;
         }
+        /* cuda context not found for calling CPU thread */
         else {
+	    /* if we are creating a Cuda context, shouldn't it be that we set the device and then call cudaFree(0)?*/
             CUDART_CALL(cudaFreePtr(NULL), return PAPI_EMISC);
             CUDA_CALL(cuCtxGetCurrentPtr(&info[gpu_id].ctx), return PAPI_EMISC);
             LOGDBG("Using primary device context %p for device %d.\n", info[gpu_id].ctx, gpu_id);
         }
     }
-    /* If context has changed keep the first seen one but with warning */
-    else if (info[gpu_id].ctx != tempCtx) {
-        ERRDBG("Warning: cuda context for gpu %d has changed from %p to %p\n", gpu_id, info[gpu_id].ctx, tempCtx);
+
+    /* if conext exists then see if it has changed; if it has then keep the first
+       seen one, but show warning */
+    else if (info[gpu_id].ctx != pctx) {
+        ERRDBG("Warning: cuda context for gpu %d has changed from %p to %p\n", gpu_id, info[gpu_id].ctx, pctx);
     }
+
     return PAPI_OK;
 }
 
@@ -630,8 +678,10 @@ int cuptic_device_acquire(cuptiu_event_table_t *evt_table)
 {
     gpu_occupancy_t bitmask;
     int papi_errno = _devmask_events_get(evt_table, &bitmask);
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
+        printf("errno is: %s\n", PAPI_strerror(papi_errno));
         return papi_errno;
+    }
     if (bitmask & global_gpu_bitmask) {
         return PAPI_ECNFLCT;
     }

@@ -18,7 +18,7 @@ typedef struct event_record_s {
     unsigned int evt_code;
     unsigned int evt_pos;
     double value;
-    char desc[PAPI_2MAX_STR_LEN];
+    char desc[PAPI_HUGE_STR_LEN];
     cuptiu_bitmap_t device_map;
 } cuptiu_event_t;
 

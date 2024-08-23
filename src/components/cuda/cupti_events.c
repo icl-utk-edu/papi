@@ -20,7 +20,7 @@ int cuptie_init(void)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_create(cuptiu_event_table_t *event_names, void *thr_info, cuptie_control_t *pctl)
+int cuptie_control_create(void *thr_info, cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }

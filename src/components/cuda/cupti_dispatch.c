@@ -93,18 +93,18 @@ int cuptid_thread_info_destroy(cuptid_info_t *info)
     return cuptic_ctxarr_destroy((cuptic_info_t *) info);
 }
 
-int cuptid_control_create(ntv_event_table_t event_names, cuptid_info_t info, cuptid_ctl_t *pcupti_ctl)
+int cuptid_control_create(cuptid_info_t info, cuptid_ctl_t *pcupti_ctl, uint64_t *events_id, int num_events)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_create(event_names, (cuptic_info_t) info, (cuptip_control_t *) pcupti_ctl);
+        return cuptip_control_create((cuptic_info_t) info, (cuptip_control_t *) pcupti_ctl, events_id, num_events);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined (API_EVENTS)
-        return cuptie_control_create(event_names, (cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
+        return cuptie_control_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
 #endif
 
     }
@@ -234,6 +234,11 @@ int cuptid_evt_code_to_descr(uint64_t event_code, char *descr, int len)
     return PAPI_ECMP;
 }
 
+int cuptid_ctx_reset(long long *values) 
+{
+    return cuptip_ctx_reset(values);
+}
+
 int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
     return cuptip_evt_code_to_info(event_code, info);
@@ -247,11 +252,6 @@ int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
 int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
 {
     return cuptip_evt_name_to_code(name, event_code);
-}
-
-int cuptid_get_num_qualified_evts(int *count, uint64_t event_code)
-{
-    return cuptip_get_num_qualified_evts(count, event_code);
 }
 
 void cuptid_event_table_destroy(ntv_event_table_t *evt_table)

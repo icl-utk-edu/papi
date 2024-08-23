@@ -28,11 +28,10 @@
 
 #include "papi_memory.h"
 #include "cupti_dispatch.h"
+#include "cupti_config.h"
 #include "lcuda_debug.h"
 
 papi_vector_t _cuda_vector;
-
-extern cuptiu_event_table_t *global_event_names;
 
 static int cuda_init_component(int cidx);
 static int cuda_shutdown_component(void);
@@ -68,13 +67,28 @@ typedef struct {
     int component_id;
 } cuda_context_t;
 
-typedef struct cuda_ctl {
-    int           events_count; //num_events
-    uint64_t      *events_id;
-    long long     values[PAPI_CUDA_MAX_COUNTERS];
+typedef struct {
+    long long values[PAPI_CUDA_MAX_COUNTERS];
+    int num_events;
+    unsigned int domain;
+    unsigned int granularity;
+    unsigned int overflow;
+    unsigned int overflow_signal;
+    unsigned int attached;
+    int component_id;
+    uint64_t *events_id;
     cuptid_info_t info;
-    cuptid_ctl_t  cupti_ctl;
-} cuda_ctl_t;
+    /* this should get me the gpu_ctl, read_count, running, etc .*/
+    cuptip_control_t cuptid_ctx;
+} cuda_control_t;
+
+//typedef struct cuda_ctl {
+//    int           events_count; //num_events
+//    uint64_t      *events_id;
+//    long long     values[PAPI_CUDA_MAX_COUNTERS];
+//    cuptid_info_t info;
+//    cuptid_ctl_t  cupti_ctl;
+//} cuda_ctl_t;
 
 papi_vector_t _cuda_vector = {
     .cmp_info = {
@@ -97,8 +111,10 @@ papi_vector_t _cuda_vector = {
         .initialized = 0,
     },
     .size = {
-        .context = 0,
-        .control_state = sizeof(cuda_ctl_t),
+        .context = sizeof(cuda_context_t),
+        .control_state = sizeof(cuda_control_t),
+        .reg_value = 1,
+        .reg_alloc = 1,
     },
     .init_component = cuda_init_component,
     .shutdown_component = cuda_shutdown_component,
@@ -141,7 +157,6 @@ static int cuda_init_component(int cidx)
 static int cuda_shutdown_component(void)
 {
     COMPDBG("Entering.\n");
-    //cuptid_event_table_destroy(&global_event_names);
 
     if (!_cuda_vector.cmp_info.initialized ||
     _cuda_vector.cmp_info.disabled != PAPI_OK) {
@@ -158,11 +173,6 @@ static int cuda_init_private(void)
     int papi_errno = PAPI_OK, count = 0;
     const char *disabled_reason;
     COMPDBG("Entering.\n");
-
-    //papi_errno = cuptid_event_table_create(&global_event_names);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
 
     papi_errno = cuptid_init();
     if (papi_errno != PAPI_OK) {
@@ -283,7 +293,7 @@ fn_fail:
     goto fn_exit;
 }
 
-static int cuda_init_thread(hwd_context_t __attribute__((unused)) *ctx)
+static int cuda_init_thread(hwd_context_t *ctx)
 {
     return PAPI_OK;
 }
@@ -308,24 +318,44 @@ static int cuda_set_domain(hwd_control_state_t __attribute__((unused)) *ctrl, in
         return (PAPI_EINVAL);
 }
 
-static int update_native_events(cuda_ctl_t *, NativeInfo_t *, int);
+static int update_native_events(cuda_control_t *, NativeInfo_t *, int);
 
 
 int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
                               int ntv_count,
                               hwd_context_t *ctx __attribute__((unused)))
-{    SUBDBG("ENTER: ctl: %p, ntv_info: %p, ntv_count: %d, ctx: %p\n", ctl, ntv_info, ntv_count, ctx);
+{   
+    SUBDBG("ENTER: ctl: %p, ntv_info: %p, ntv_count: %d, ctx: %p\n", ctl, ntv_info, ntv_count, ctx);
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
 
-    cuda_ctl_t *cuda_ctl = (cuda_ctl_t *) ctl;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+
+    /* allocating memoory for total number of devices */
+    if (cuda_ctl->info == NULL) {
+        papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
+        if (papi_errno != PAPI_OK) {
+            printf("We fail to create.\n");
+            goto fn_exit;
+        }   
+    }
+ 
+    if (cuda_ctl->cuptid_ctx != NULL) {
+        printf("We fail to update control state.\n");
+        SUBDBG("Cannot update events in an eventset that has been already "
+               "started.");
+        papi_errno = PAPI_ECMP;
+        goto fn_fail;
+    } 
 
     papi_errno = update_native_events(cuda_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
+
+   /* Do I need to add a try_open_events()? */
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -334,84 +364,25 @@ int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
     goto fn_exit;
 }
 
-/*
-static int cuda_update_control_state(hwd_control_state_t *ctl,
-                                     NativeInfo_t *ntv_info,
-                                     int ntv_count, __attribute__((unused)) hwd_context_t *ctx
-) {
-    COMPDBG("Entering with events_count %d.\n", ntv_count);
-    int i, papi_errno;
-    papi_errno = check_n_initialize();
-    if (papi_errno != PAPI_OK) {
-        printf("initialized failed: %d\n", papi_errno);
-        return papi_errno;
-    }
-    if (ntv_count == 0) {
-        return PAPI_OK;
-    }
-
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    papi_errno = cuptid_thread_info_create(&(control->info));
-    if (papi_errno != PAPI_OK) {
-        printf("cuptid_thread_info_create: %d\n", papi_errno);
-        goto fn_exit;
-    }
-
-    control->events_count = ntv_count;
-
-    if (ntv_count > PAPI_CUDA_MAX_COUNTERS) {
-        ERRDBG("Too many events added.\n");
-        papi_errno = PAPI_ECMP;
-        goto fn_exit;
-    }
-
-    for (i=0; i<ntv_count; i++) {
-        control->events_id[i] = ntv_info[i].ni_event;
-        ntv_info[i].ni_position = i;
-    }
-
-    void *tmp_context = NULL;
-    ntv_event_table_t select_names;
-    papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
-    if (papi_errno != PAPI_OK) {
-        printf("cuptid_event_table_select: %d\n", papi_errno);
-        goto fn_exit;
-    }
-    papi_errno = cuptid_control_create(select_names, control->info, &tmp_context);
-    if (papi_errno != PAPI_OK) {
-        cuptid_control_destroy(&tmp_context);
-         printf("cuptid_control_create: %d\n", papi_errno);
-        goto fn_exit;
-    }
-    papi_errno = cuptid_control_destroy(&tmp_context);
-
-fn_exit:
-    cuptid_event_table_destroy(&select_names);
-    return papi_errno;
-}
-*/
-
 struct event_map_item {
     int event_id;
     int frontend_idx;
 };
 
-static int
-compare(const void *a, const void *b)
+static int compare(const void *a, const void *b)
 {
     struct event_map_item *A = (struct event_map_item *) a;
     struct event_map_item *B = (struct event_map_item *) b;
     return  A->event_id - B->event_id;
 }
 
-int
-update_native_events(cuda_ctl_t *ctl, NativeInfo_t *ntv_info,
-                     int ntv_count)
+int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
+                         int ntv_count)
 {
     int papi_errno = PAPI_OK;
     struct event_map_item sorted_events[PAPI_CUDA_MAX_COUNTERS];
 
-    if (ntv_count != ctl->events_count) {
+    if (ntv_count != ctl->num_events) {
         ctl->events_id = papi_realloc(ctl->events_id,
                                       ntv_count * sizeof(*ctl->events_id));
         if (ctl->events_id == NULL) {
@@ -419,7 +390,7 @@ update_native_events(cuda_ctl_t *ctl, NativeInfo_t *ntv_info,
             goto fn_fail;
         }
 
-        ctl->events_count = ntv_count;
+        ctl->num_events = ntv_count;
     }
 
     int i;
@@ -438,45 +409,53 @@ update_native_events(cuda_ctl_t *ctl, NativeInfo_t *ntv_info,
   fn_exit:
     return papi_errno;
   fn_fail:
-    ctl->events_count = 0;
+    ctl->num_events = 0;
     goto fn_exit;
 }
 
-static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
-{
-    COMPDBG("Entering.\n");
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    int papi_errno = PAPI_OK;
-    if (control->cupti_ctl) {
-        papi_errno += cuptid_control_destroy(&(control->cupti_ctl));
-    }
-    if (control->info) {
-        papi_errno += cuptid_thread_info_destroy(&(control->info));
-    }
-    if (papi_errno != PAPI_OK) {
-        return PAPI_ECMP;
-    }
-    return PAPI_OK;
-}
-
+/** @class cuda_start
+  * @brief Start counting the PAPI EventSet..
+  *
+  * @param *ctx
+  * @param *ctl
+  *   Structure with member variables that store values for each counter,
+  *   name of each counter, etc.
+*/
 static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
     int papi_errno, i;
+    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+   
+    /* will need to flesh this out more and decide if I want to keep this, may not need it 
+    if (cuda_ctx->state & CUDA_EVENTS_OPENED) {
+        SUBDBG("Error! Cannot PAPI_start more than one eventset at a time for every component.");
+        papi_errno = PAPI_ECNFLCT;
+        goto fn_fail;
+    }
+    */
+
+    /* will need a create */
+    /* pass uint64_t and num_events */
+    cuptid_control_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+
+    /* start profiling */
+    papi_errno = cuptid_control_start( (void *) cuda_ctl->cuptid_ctx);
+    if (papi_errno != PAPI_OK)
+        goto fn_fail;   
+
+    cuda_ctx->state |= CUDA_EVENTS_RUNNING;
+
 
     //cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     //cuda_ctl_t *cuda_ctl = (cuda_ctl_t *) ctl;
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    for (i = 0; i < control->events_count; i++) {
-        control->values[i] = 0;
-    }
-    //ntv_event_table_t select_names;
-    //papi_errno = cuptid_event_table_select_by_idx(global_event_names, control->events_count, control->events_id, &select_names);
-    //if (papi_errno != PAPI_OK) {
-    //    goto fn_exit;
-    //}
+    //cuda_ctl_t *control = (cuda_ctl_t *) ctl;
+    //for (i = 0; i < control->events_count; i++) {
+    //    control->values[i] = 0;
+   // }
 
-    //papi_errno = cupti_control_create(cuda_ctl->events_id, cuda_ctl->events_count, &cuda_ctl->cuda_ctx)
+    //papi_errno = cuptid_control_create(cuda_ctl->events_id, cuda_ctl->num_events, &cuda_ctl->cuptid_ctx);
 
     //papi_errno = cuptid_control_create(select_names, control->info, &(control->cupti_ctl));
     //if (papi_errno != PAPI_OK) {
@@ -485,18 +464,81 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     //}
     
     //papi_errno = cuptid_control_start( control->cupti_ctl );
-    //printf("papi_errno is: %d\n", papi_errno);
 
-    //cuda_ctx->state |= 0x02;
+   fn_exit:
+       SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+       return papi_errno;
+   fn_fail:
+       /* same as above may need to flesh this out more. */
+       cuda_ctx->state = 0;
+       goto fn_exit;
+}
+
+static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl, long long **val, int __attribute__((unused)) flags)
+{
+    COMPDBG("Entering.\n");
+    int papi_errno;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+    SUBDBG("ENTER: ctx: %p, ctl: %p, val: %p, flags: %d\n", ctx, ctl, val, flags);
+
+    papi_errno = cuptid_control_read( cuda_ctl->cuptid_ctx, (long long *) &(cuda_ctl->values) );
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+    
+    *val = cuda_ctl->values;
 
 fn_exit:
-    //cuptid_event_table_destroy(&select_names);
     return papi_errno;
 }
 
-int cuda_stop(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
+/** @class cuda_reset
+  * @brief Reset the native event count for all entries.
+  *
+  * @param *ctl
+  *   Structure with member variables that store values for each counter,
+  *   name of each counter, etc..
+*/
+static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
+{
+    int papi_errno;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+    /*
+    if (cuda_ctl->cuptid_ctx == NULL) {
+        SUBDBG("Cannot reset counters for an eventset that has not been started.");
+          return PAPI_EMISC;
+    }
+    */
+   
+
+    papi_errno = cuptid_ctx_reset( (long long *) &(cuda_ctl->values) );
+     
+    /* Reset Cuda counter values in EventSet to 0 */
+    //for (i = 0; i < cuda_ctl->num_events; i++) {
+    //    cuda_ctl->values[i] = 1;
+    //} //this is how rocm does it, but they store it in roc_profiler.c, will need to see how it development goes
+
+    // not sure I event need this.
+    //return cuptid_control_reset( cuda_ctl->cuptid_ctx );
+    return PAPI_OK;
+}
+
+/** @class cuda_stop
+  * @brief Reset the native event count for all entries.
+  *
+  * @param *ctl
+  *   Structure with member variables that store values for each counter,
+  *   name of each counter, etc..
+*/
+int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
+    int papi_errno = PAPI_OK;
+    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+
+    //papi_errno = cuptid_control_stop(cuda_ctl->cupti_ctl);
+    /*  
     cuda_ctl_t *control = (cuda_ctl_t *) ctl;
     int papi_errno;
     papi_errno = cuptid_control_stop( control->cupti_ctl );
@@ -504,51 +546,57 @@ int cuda_stop(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *c
         goto fn_exit;
     }
     papi_errno = cuptid_control_destroy( &(control->cupti_ctl) );
-fn_exit:
-    return papi_errno;
+    */
+    /* may need to change this depending on how the workflow goes  */
+    cuda_ctx->state = CUDA_EVENTS_STOPPED;
+    //cuda_ctl->cuptid_ctx = NULL;
+
+   fn_exit:
+     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+     return papi_errno;
 }
 
-static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl, long long **val, int __attribute__((unused)) flags)
+/** @class cuda_cleanup_eventset
+  * @brief Cleanup a PAPI EventSet containing Cuda events. 
+  *
+  * @param *ctl
+  *   Structure with member variables that store values for each counter,
+  *   name of each counter, etc.
+*/
+static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    int papi_errno;
+    cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
-    papi_errno = cuptid_control_read( control->cupti_ctl, (long long *) &(control->values) );
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
+    if (cuda_ctl->cuptid_ctx != NULL) {
+        SUBDBG("Cannot cleanup an eventset that is running.");
+        return PAPI_ECMP;
     }
-    *val = control->values;
 
-fn_exit:
-    return papi_errno;
+    /* free int array of event id's and reset number of events */
+    papi_free(cuda_ctl->events_id);
+    cuda_ctl->events_id = NULL;
+    cuda_ctl->num_events = 0;
+
+    return PAPI_OK;
 }
 
-static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
-{
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    int i;
-    for (i = 0; i < control->events_count; i++) {
-        control->values[i] = 0;
-    }
-    return cuptid_control_reset( control->cupti_ctl );
-}
-
+/** @class cuda_get_evt_count
+  * @brief Count the number of Cuda base event names. Used for papi_component_avail.c
+  *
+  * @param *count
+  *   Total number of events counted for the Cuda component.
+*/
 static int cuda_get_evt_count(int *count)
 {
     uint64_t event_code = 0;
-    int papi_errno;
 
     if (cuptid_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
-        papi_errno = cuptid_get_num_qualified_evts(count, event_code);
-        if (papi_errno != PAPI_OK)
-            return papi_errno;
+        ++(*count);
          
     }
     while (cuptid_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
-        papi_errno = cuptid_get_num_qualified_evts(count, event_code);
-        if (papi_errno != PAPI_OK)
-            return papi_errno;
+        ++(*count);
     }
 
     return PAPI_OK;

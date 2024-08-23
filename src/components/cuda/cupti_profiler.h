@@ -12,12 +12,13 @@
 typedef struct cuptip_control_s     *cuptip_control_t;
 
 int cuptip_init(void);
-int cuptip_control_create(cuptiu_event_table_t *event_names, cuptic_info_t thr_info, cuptip_control_t *pstate);
+int cuptip_control_create(cuptic_info_t thr_info, cuptip_control_t *pstate,  uint64_t *events_id, int num_events);
 int cuptip_control_destroy(cuptip_control_t *pstate);
 int cuptip_control_start(cuptip_control_t state);
 int cuptip_control_stop(cuptip_control_t state);
 int cuptip_control_read(cuptip_control_t state, long long *values);
 int cuptip_control_reset(cuptip_control_t state);
+int cuptip_ctx_reset(long long *values);
 
 int cuptip_evt_enum(uint64_t *event_code, int modifier);
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
@@ -27,5 +28,4 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code);
 int init_event_table(void);
 int cuptip_shutdown(void);
 
-int cuptip_get_num_qualified_evts(int *count, uint64_t event_code);
 #endif  /* __CUPTI_PROFILER_H__ */

@@ -14,7 +14,7 @@
 typedef void *cuptie_control_t;
 
 int cuptie_init(void);
-int cuptie_control_create(cuptiu_event_table_t *event_names, void *thr_info, cuptie_control_t *pctl);
+int cuptie_control_create(void *thr_info, cuptie_control_t *pctl);
 int cuptie_control_destroy(cuptie_control_t *pctl);
 int cuptie_control_start(cuptie_control_t ctl);
 int cuptie_control_stop(cuptie_control_t ctl);
