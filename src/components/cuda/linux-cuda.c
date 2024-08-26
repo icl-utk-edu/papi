@@ -1,7 +1,7 @@
 /**
  * @file    linux-cuda.c
  *
- * @author  Treece Burgess tburgess@icl.utk.edu (updated in Spring of 2024, redesigned to add qualifier support.)
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
  * @author  Anustuv Pal   anustuv@icl.utk.edu (updated in 2023, redesigned with multi-threading support.)
  * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 08/2019, to make counters accumulate.)
  * @author  Tony Castaldo tonycastaldo@icl.utk.edu (updated in 2018, to use batch reads and support nvlink metrics.
@@ -414,12 +414,16 @@ int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
 }
 
 /** @class cuda_start
-  * @brief Start counting the PAPI EventSet..
+  * @brief Start counting Cuda hardware events.
   *
   * @param *ctx
+  *   Vestigial pointer are to structures defined in the components.
+  *   They are opaque to the framework and defined as void.
+  *   They are remapped to real data in the component rountines that use them.
+  *   In this case Cuda.
   * @param *ctl
-  *   Structure with member variables that store values for each counter,
-  *   name of each counter, etc.
+  *   Contains the encoding's necessary for the hardware to set the counters
+  *   to the appropriate conditions.
 */
 static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
@@ -438,10 +442,10 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
     /* will need a create */
     /* pass uint64_t and num_events */
-    cuptid_control_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+    cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
 
     /* start profiling */
-    papi_errno = cuptid_control_start( (void *) cuda_ctl->cuptid_ctx);
+    papi_errno = cuptid_ctx_start( (void *) cuda_ctl->cuptid_ctx);
     if (papi_errno != PAPI_OK)
         goto fn_fail;   
 
@@ -474,30 +478,44 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
        goto fn_exit;
 }
 
+/** @class cuda_read
+  * @brief Read the Cuda hardware counters.
+  *
+  * @param *ctl
+  *   Contains the encoding's necessary for the hardware to set the counters
+  *   to the appropriate conditions.
+  * @param **val
+  *   Holds the counter values for each added Cuda native event.
+*/
 static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl, long long **val, int __attribute__((unused)) flags)
 {
     COMPDBG("Entering.\n");
-    int papi_errno;
+    int papi_errno = PAPI_OK;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
     SUBDBG("ENTER: ctx: %p, ctl: %p, val: %p, flags: %d\n", ctx, ctl, val, flags);
 
-    papi_errno = cuptid_control_read( cuda_ctl->cuptid_ctx, (long long *) &(cuda_ctl->values) );
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
+    if (cuda_ctl->cuptid_ctx == NULL) {
+        SUBDBG("Error! Cannot PAPI_read counters for an eventset that has not been PAPI_start'ed.");
+        papi_errno = PAPI_EMISC;
+        goto fn_fail;
     }
-    
-    *val = cuda_ctl->values;
 
-fn_exit:
-    return papi_errno;
+    papi_errno = cuptid_ctx_read( cuda_ctl->cuptid_ctx, val );
+  
+  
+  fn_exit:
+      SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+      return papi_errno;
+  fn_fail:
+      goto fn_exit;
 }
 
 /** @class cuda_reset
-  * @brief Reset the native event count for all entries.
+  * @brief Reset the Cuda hardware event counts.
   *
   * @param *ctl
-  *   Structure with member variables that store values for each counter,
-  *   name of each counter, etc..
+  *   Contains the encoding's necessary for the hardware to set the counters 
+  *   to the appropriate conditions.
 */
 static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
 {
@@ -524,11 +542,16 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
 }
 
 /** @class cuda_stop
-  * @brief Reset the native event count for all entries.
+  * @brief Stop counting Cuda hardware events.
   *
+  * @param *ctx
+  *   Vestigial pointer are to structures defined in the components.
+  *   They are opaque to the framework and defined as void.
+  *   They are remapped to real data in the component rountines that use them.
+  *   In this case Cuda.
   * @param *ctl
-  *   Structure with member variables that store values for each counter,
-  *   name of each counter, etc..
+  *   Contains the encoding's necessary for the hardware to set the counters
+  *   to the appropriate conditions. E.g. Stopped or running.
 */
 int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
@@ -557,11 +580,11 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 }
 
 /** @class cuda_cleanup_eventset
-  * @brief Cleanup a PAPI EventSet containing Cuda events. 
+  * @brief Remove all Cuda hardware events from a PAPI event set.
   *
   * @param *ctl
-  *   Structure with member variables that store values for each counter,
-  *   name of each counter, etc.
+  *   Contains the encoding's necessary for the hardware to set the counters
+  *   to the appropriate conditions.
 */
 static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 {
@@ -582,10 +605,11 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 }
 
 /** @class cuda_get_evt_count
-  * @brief Count the number of Cuda base event names. Used for papi_component_avail.c
+  * @brief Helper function to count the number of Cuda base event names. 
+  *        This count is shown in the util papi_component_avail.
   *
   * @param *count
-  *   Total number of events counted for the Cuda component.
+  *   Count of Cuda base hardware event names.
 */
 static int cuda_get_evt_count(int *count)
 {

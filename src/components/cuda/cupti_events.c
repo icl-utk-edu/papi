@@ -20,32 +20,32 @@ int cuptie_init(void)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_create(void *thr_info, cuptie_control_t *pctl)
+int cuptie_ctx_create(void *thr_info, cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_destroy(cuptie_control_t *pctl)
+int cuptie_ctx_destroy(cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_start(cuptie_control_t ctl)
+int cuptie_ctx_start(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_stop(cuptie_control_t ctl)
+int cuptie_ctx_stop(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_read(cuptie_control_t ctl, long long *values)
+int cuptie_ctx_read(cuptie_control_t ctl, long long **values)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_reset(cuptie_control_t ctl)
+int cuptie_ctx_reset(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }

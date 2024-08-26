@@ -75,6 +75,7 @@ static int finalize_cupti_profiler_api(void);
 static int initialize_perfworks_api(void);
 static int get_chip_name(int dev_num, char* chipName);
 static int init_all_metrics(void);
+static int init_event_table(void);
 static int find_same_chipname(int gpu_id);
 static void free_all_enumerated_metrics(void);
 static int event_name_tokenize(const char *name, char *nv_name, int *gpuid);
@@ -426,6 +427,7 @@ struct cuptip_gpu_state_s {
 
 struct cuptip_control_s {
     cuptip_gpu_state_t *gpu_ctl;
+    long long           *counters;
     int                 read_count;
     int                 running;
     cuptic_info_t       info;
@@ -1515,21 +1517,24 @@ fn_fail:
 }
 
 
-/** @class cuptip_control_create
-  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
-  *        code and collects the corresponding Cuda native event name. 
-  * @param *event_code
-  *   Cuda native event code. 
-  * @param *name
-  *   Cuda native event name.
-  * @param len
-  *   Maximum alloted characters for base Cuda native event name. 
+/** @class cuptip_ctx_create
+  * @brief Create a profiling context for the requested Cuda events.
+  * @param thr_info
+  *   
+  * @param *pstate
+  *   Struct that holds read count, running, cuptip_info_t, and 
+  *   cuptip_gpu_state_t. 
+  * @param *events_id
+  *   Cuda native event id's.
+  * @param num_events
+  *   Number of Cuda native events a user is wanting to count.
 */
-int cuptip_control_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t *events_id, int num_events)
+int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t *events_id, int num_events)
 {
     COMPDBG("Entering.\n");
     int papi_errno = PAPI_OK, gpu_id, i;
     char name[PAPI_MAX_STR_LEN] = { 0 };
+    long long *counters = NULL;
     cuptiu_event_table_t *targeted_event_names;
     cuptiu_event_table_create_init_capacity(num_events * num_gpus, sizeof(cuptiu_event_t), &targeted_event_names);
 
@@ -1562,6 +1567,8 @@ int cuptip_control_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint
         printf("Failed to allocated memory for gpu_ctl.\n");
         return PAPI_ENOMEM;
     }
+
+    counters = papi_malloc(num_events * sizeof(*counters));
 
     /* for each unique gpu store the gpu id for that gpu index */
     for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
@@ -1597,51 +1604,20 @@ int cuptip_control_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint
         goto fn_exit;
     }
     state->info = thr_info;
+    state->counters = counters;
 
 fn_exit:
     *pstate = state;
     return papi_errno;
 }
 
-
-/** @class cuptip_control_destroy
-  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
-  *        code and collects the corresponding Cuda native event name. 
-  * @param *event_code
-  *   Cuda native event code. 
-  * @param *name
-  *   Cuda native event name.
-  * @param len
-  *   Maximum alloted characters for base Cuda native event name. 
-*/
-int cuptip_control_destroy(cuptip_control_t *pstate)
-{
-    COMPDBG("Entering.\n");
-    cuptip_control_t state = *pstate;
-    int i, j;
-    int papi_errno = nvpw_cuda_metricscontext_destroy(state);
-    for (i = 0; i < num_unique_gpus; i++) {
-        reset_cupti_prof_config_images( &(state->gpu_ctl[i]) );
-        cuptiu_event_table_destroy( &(state->gpu_ctl[i].event_names) );
-        for (j = 0; j < state->gpu_ctl[i].rmr_count; j++) {
-            papi_free((void *) state->gpu_ctl[i].rmr[j].pMetricName);
-        }
-        papi_free(state->gpu_ctl[i].rmr);
-    }
-    papi_free(state->gpu_ctl);
-    papi_free(state);
-    *pstate = NULL;
-    return papi_errno;
-}
-
-
-/** @class cuptip_control_start
-  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
-  *        code and collects the corresponding Cuda native event name.
+/** @class cuptip_ctx_start
+  * @brief Code to start counting Cuda hardware events in an event set.
   * @param state
-  *     Struct that holds read count, running, cuptip_info_t, and cuptip_gpu_state_t. 
+  *   Struct that holds read count, running, cuptip_info_t, and 
+  *   cuptip_gpu_state_t. 
 */
-int cuptip_control_start(cuptip_control_t state)
+int cuptip_ctx_start(cuptip_control_t state)
 {
 
     COMPDBG("Entering.\n");
@@ -1650,8 +1626,8 @@ int cuptip_control_start(cuptip_control_t state)
     cuptip_gpu_state_t *gpu_ctl;
     /* create a context handle */
     CUcontext userCtx, ctx;
-   
-    /* return the Cuda context bound to the calling CPU thread */ 
+
+    /* return the Cuda context bound to the calling CPU thread */
     CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     /* if no context is found, create a context */
     if (userCtx == NULL) {
@@ -1671,12 +1647,12 @@ int cuptip_control_start(cuptip_control_t state)
         //    ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
         //    return papi_errno;
         //}
-        /* get the cuda context for the unique gpu */ 
+        /* get the cuda context for the unique gpu */
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
         /* bind the specified CUDA context to the calling CPU thread */
         CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
-       
-        /* not really sure as of now */ 
+
+        /* not really sure as of now */
         papi_errno = get_counter_availability(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             ERRDBG("Error getting counter availability image.\n");
@@ -1710,80 +1686,16 @@ fn_fail_misc:
     goto fn_exit;
 }
 
-
-int cuptip_control_stop(cuptip_control_t state)
-{
-    COMPDBG("Entering.\n");
-    cuptip_gpu_state_t *gpu_ctl;
-    CUcontext userCtx = NULL, ctx = NULL;
-    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    if (userCtx == NULL) {
-        CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
-        CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    }
-    int gpu_id;
-    int papi_errno = PAPI_OK;
-    if (state->running == CUDA_EVENTS_STOPPED) {
-        ERRDBG("Profiler is already stopped.\n");
-        papi_errno = PAPI_EINVAL;
-        goto fn_fail;
-    }
-    for (gpu_id=0; gpu_id<num_unique_gpus; gpu_id++) {
-        gpu_ctl = &(state->gpu_ctl[gpu_id]);
-        if (gpu_ctl->event_names->count == 0) {
-            continue;
-        }
-        papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
-        CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
-        papi_errno = end_profiling(gpu_ctl);
-        if (papi_errno != PAPI_OK) {
-            ERRDBG("Failed to stop profiling on gpu %d\n", gpu_id);
-            goto fn_fail;
-        }
-        papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].event_names);
-        if (papi_errno != PAPI_OK) {
-            goto fn_fail;
-        }
-    }
-
-fn_exit:
-    CUDA_CALL( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
-    return papi_errno;
-fn_fail:
-    goto fn_exit;
-fn_fail_misc:
-    papi_errno = PAPI_EMISC;
-    goto fn_exit;
-}
-
-int cuptip_ctx_reset(long long *values) 
-{
-    int i;
-
-    for (i = 0; i < 1; i++) {
-        values[i] = 1;
-    }
-
-    return PAPI_OK;
-}
-
-static enum collection_method_e get_event_collection_method(const char *evt_name)
-{
-    if (strstr(evt_name, ".sum") != NULL) {
-        return RunningSum;
-    }
-    else if (strstr(evt_name, ".min") != NULL) {
-        return RunningMin;
-    }
-    else if (strstr(evt_name, ".max") != NULL) {
-        return RunningMax;
-    }
-    else {
-        return SpotValue;
-    }
-}
-
-int cuptip_control_read(cuptip_control_t state, long long *values)
+/** @class cuptip_ctx_read
+  * @brief Code to read Cuda hardware counters from an event set.
+  * @param state
+  *   Struct that holds read count, running, cuptip_info_t, and 
+  *   cuptip_gpu_state_t.
+  * @param **counters
+  *   Array that holds the counter values for the specificed Cuda native events 
+  *   added by a user.  
+*/
+int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 {
     COMPDBG("Entering.\n");
     int papi_errno, gpu_id, i;
@@ -1840,27 +1752,29 @@ int cuptip_control_read(cuptip_control_t state, long long *values)
             }
             evt_pos = evt_rec->evt_pos;
             val = (long long) evt_rec->value;
+            long long *counter_vals = state->counters;
 
             if (state->read_count == 0) {
-                values[evt_pos] = val;
+                counter_vals[evt_pos] = val;
             }
             else {
                 switch (get_event_collection_method(evt_rec->name)) {
                     case RunningSum:
-                        values[evt_pos] += val;
+                        counter_vals[evt_pos] += val;
                         break;
                     case RunningMin:
-                        values[evt_pos] = values[evt_pos] < val ? values[evt_pos] : val;
+                        counter_vals[evt_pos] = counter_vals[evt_pos] < val ? counter_vals[evt_pos] : val;
                         break;
                     case RunningMax:
-                        values[evt_pos] = values[evt_pos] > val ? values[evt_pos] : val;
+                        counter_vals[evt_pos] = counter_vals[evt_pos] > val ? counter_vals[evt_pos] : val;
                         break;
                     default:
-                        values[evt_pos] = val;
+                        counter_vals[evt_pos] = val;
                         break;
                 }
             }
         }
+        *counters = state->counters;
 
         CUPTI_CALL( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail_misc );
         CUPTI_CALL( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail_misc );
@@ -1893,11 +1807,117 @@ fn_fail_misc:
     goto fn_exit;
 }
 
-int cuptip_control_reset(cuptip_control_t state)
+/** @class cuptip_ctx_reset
+  * @brief Code to reset Cuda hardware counter values.
+  * @param *counters
+  *   Array that holds the counter values for the specificed Cuda native events
+  *   added by a user. 
+*/
+int cuptip_ctx_reset(long long *counters)
+{
+    /* MAY HAVE TO RESET: state->read_count = 0  */
+    COMPDBG("Entering.\n");
+    int i;
+
+    for (i = 0; i < 1; i++) {
+        counters[i] = 1;
+    }
+
+    return PAPI_OK;
+}
+
+/** @class cuptip_ctx_stop
+  * @brief Code to stop counting PAPI eventset containing Cuda hardware events.
+  * @param state
+  *   Struct that holds read count, running, cuptip_info_t, and
+  *   cuptip_gpu_state_t.
+*/
+int cuptip_ctx_stop(cuptip_control_t state)
 {
     COMPDBG("Entering.\n");
-    state->read_count = 0;
-    return PAPI_OK;
+    cuptip_gpu_state_t *gpu_ctl;
+    CUcontext userCtx = NULL, ctx = NULL;
+    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+    if (userCtx == NULL) {
+        CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
+        CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+    }
+    int gpu_id;
+    int papi_errno = PAPI_OK;
+    if (state->running == CUDA_EVENTS_STOPPED) {
+        ERRDBG("Profiler is already stopped.\n");
+        papi_errno = PAPI_EINVAL;
+        goto fn_fail;
+    }
+    for (gpu_id=0; gpu_id<num_unique_gpus; gpu_id++) {
+        gpu_ctl = &(state->gpu_ctl[gpu_id]);
+        if (gpu_ctl->event_names->count == 0) {
+            continue;
+        }
+        papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
+        CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
+        papi_errno = end_profiling(gpu_ctl);
+        if (papi_errno != PAPI_OK) {
+            ERRDBG("Failed to stop profiling on gpu %d\n", gpu_id);
+            goto fn_fail;
+        }
+        papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].event_names);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail;
+        }
+    }
+
+fn_exit:
+    CUDA_CALL( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
+    return papi_errno;
+fn_fail:
+    goto fn_exit;
+fn_fail_misc:
+    papi_errno = PAPI_EMISC;
+    goto fn_exit;
+}
+
+
+/** @class cuptip_ctx_destroy
+  * @brief Destroy created profiling context.
+  * @param *pstate
+  *   Struct that holds read count, running, cuptip_info_t, and 
+  *   cuptip_gpu_state_t.
+*/
+int cuptip_ctx_destroy(cuptip_control_t *pstate)
+{
+    COMPDBG("Entering.\n");
+    cuptip_control_t state = *pstate;
+    int i, j;
+    int papi_errno = nvpw_cuda_metricscontext_destroy(state);
+    for (i = 0; i < num_unique_gpus; i++) {
+        reset_cupti_prof_config_images( &(state->gpu_ctl[i]) );
+        cuptiu_event_table_destroy( &(state->gpu_ctl[i].event_names) );
+        for (j = 0; j < state->gpu_ctl[i].rmr_count; j++) {
+            papi_free((void *) state->gpu_ctl[i].rmr[j].pMetricName);
+        }
+        papi_free(state->gpu_ctl[i].rmr);
+    }
+    papi_free(state->gpu_ctl);
+    papi_free(state);
+    *pstate = NULL;
+    return papi_errno;
+}
+
+static enum collection_method_e get_event_collection_method(const char *evt_name)
+{
+    if (strstr(evt_name, ".sum") != NULL) {
+        return RunningSum;
+    }
+    else if (strstr(evt_name, ".min") != NULL) {
+        return RunningMin;
+    }
+    else if (strstr(evt_name, ".max") != NULL) {
+        return RunningMax;
+    }
+    else {
+        return SpotValue;
+    }
 }
 
 /** @class cuptip_shutdown

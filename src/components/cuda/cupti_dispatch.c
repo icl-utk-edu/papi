@@ -93,108 +93,90 @@ int cuptid_thread_info_destroy(cuptid_info_t *info)
     return cuptic_ctxarr_destroy((cuptic_info_t *) info);
 }
 
-int cuptid_control_create(cuptid_info_t info, cuptid_ctl_t *pcupti_ctl, uint64_t *events_id, int num_events)
+int cuptid_ctx_create(cuptid_info_t info, cuptid_ctl_t *pcupti_ctl, uint64_t *events_id, int num_events)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_create((cuptic_info_t) info, (cuptip_control_t *) pcupti_ctl, events_id, num_events);
+        return cuptip_ctx_create((cuptic_info_t) info, (cuptip_control_t *) pcupti_ctl, events_id, num_events);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined (API_EVENTS)
-        return cuptie_control_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
+        return cuptie_ctx_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
 #endif
 
     }
     return PAPI_ECMP;
 }
 
-int cuptid_control_destroy(cuptid_ctl_t *pcupti_ctl)
+int cuptid_ctx_destroy(cuptid_ctl_t *pcupti_ctl)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_destroy((cuptip_control_t *) pcupti_ctl);
+        return cuptip_ctx_destroy((cuptip_control_t *) pcupti_ctl);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        return cuptie_control_destroy((cuptie_control_t *) pcupti_ctl);
+        return cuptie_ctx_destroy((cuptie_control_t *) pcupti_ctl);
 #endif
 
     }
     return PAPI_ECMP;
 }
 
-int cuptid_control_start(cuptid_ctl_t cupti_ctl)
+int cuptid_ctx_start(cuptid_ctl_t cupti_ctl)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_start((cuptip_control_t) cupti_ctl);
+        return cuptip_ctx_start((cuptip_control_t) cupti_ctl);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        return cuptie_control_start((cuptie_control_t) cupti_ctl);
+        return cuptie_ctx_start((cuptie_control_t) cupti_ctl);
 #endif
 
     }
     return PAPI_ECMP;
 }
 
-int cuptid_control_stop(cuptid_ctl_t cupti_ctl)
+int cuptid_ctx_stop(cuptid_ctl_t cupti_ctl)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_stop((cuptip_control_t) cupti_ctl);
+        return cuptip_ctx_stop((cuptip_control_t) cupti_ctl);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        return cuptie_control_stop((cuptie_control_t) cupti_ctl);
+        return cuptie_ctx_stop((cuptie_control_t) cupti_ctl);
 #endif
 
     }
     return PAPI_ECMP;
 }
 
-int cuptid_control_read(cuptid_ctl_t cupti_ctl, long long *values)
+int cuptid_ctx_read(cuptid_ctl_t cupti_ctl, long long **counters)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
 #if defined(API_PERFWORKS)
-        return cuptip_control_read((cuptip_control_t) cupti_ctl, values);
+        return cuptip_ctx_read((cuptip_control_t) cupti_ctl, counters);
 #endif
 
     } else if (cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
-        return cuptie_control_read((cuptie_control_t) cupti_ctl, values);
-#endif
-
-    }
-    return PAPI_ECMP;
-}
-
-int cuptid_control_reset(cuptid_ctl_t cupti_ctl)
-{
-    if (cuptic_is_runtime_perfworks_api()) {
-
-#if defined(API_PERFWORKS)
-        return cuptip_control_reset((cuptip_control_t) cupti_ctl);
-#endif
-
-    } else if (cuptic_is_runtime_events_api()) {
-
-#if defined(API_EVENTS)
-        return cuptie_control_reset((cuptie_control_t) cupti_ctl);
+        return cuptie_ctx_read((cuptie_control_t) cupti_ctl, counters);
 #endif
 
     }
