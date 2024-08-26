@@ -42,10 +42,21 @@ VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
 CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
 FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
-COMPTESTS=`find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" -o -name "*.so" \)`;
-#EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
-EXCLUDE=`grep -v -e '^#\|^$' run_tests_exclude.txt`
 
+
+
+# List of active components
+ACTIVE_COMPONENTS_PATTERN=$(utils/papi_component_avail | awk '/Active components:/{flag=1; next} flag' | grep "Name:" | sed 's/Name: //' | awk '{print $1}' | paste -sd'|' -)
+
+# Find the test files, filtering for only the active components
+COMPTESTS=$(find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" -o -name "*.so" \) | grep -E "components/($ACTIVE_COMPONENTS_PATTERN)/")
+
+# Find the test files, filtering for inactive components
+INACTIVE_COMPTESTS=$(find components/*/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" -o -name "*.so" \) | grep -vE "components/($ACTIVE_COMPONENTS_PATTERN)/")
+
+#EXCLUDE=`grep --regexp=^# --invert-match run_tests_exclude.txt`
+EXCLUDE_TXT=`grep -v -e '^#\|^$' run_tests_exclude.txt`
+EXCLUDE="$EXCLUDE_TXT $INACTIVE_COMPTESTS";
 
 ALLTESTS="$VTESTS $CTESTS $FTESTS $COMPTESTS";
 
