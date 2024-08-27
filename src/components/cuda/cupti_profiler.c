@@ -526,6 +526,7 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
                      );
         /* why is PAPI_ENOEVNT hard coded? */
         if (papi_errno != PAPI_OK) {
+            printf("we fail to retrieve_metric_rmr.\n");
             papi_errno = PAPI_ENOEVNT;
             goto fn_exit;
         }
@@ -678,7 +679,7 @@ static int nvpw_cuda_metricscontext_destroy(cuptip_control_t state)
     int gpu_id, found, papi_errno = PAPI_OK;
     cuptip_gpu_state_t *gpu_ctl;
 
-    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         found = find_same_chipname(gpu_id);
         if (found > -1) {
@@ -1813,15 +1814,16 @@ fn_fail_misc:
   *   Array that holds the counter values for the specificed Cuda native events
   *   added by a user. 
 */
-int cuptip_ctx_reset(long long *counters)
+int cuptip_ctx_reset(cuptip_control_t state)
 {
-    /* MAY HAVE TO RESET: state->read_count = 0  */
     COMPDBG("Entering.\n");
     int i;
 
-    for (i = 0; i < 1; i++) {
-        counters[i] = 1;
+    for (i = 0; i < state->read_count; i++) {
+        state->counters[i] = 1;
     }
+
+    state->read_count = 0;
 
     return PAPI_OK;
 }
@@ -1835,20 +1837,19 @@ int cuptip_ctx_reset(long long *counters)
 int cuptip_ctx_stop(cuptip_control_t state)
 {
     COMPDBG("Entering.\n");
+    int gpu_id;
+    int papi_errno = PAPI_OK;
     cuptip_gpu_state_t *gpu_ctl;
     CUcontext userCtx = NULL, ctx = NULL;
+
+    
+
     CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     if (userCtx == NULL) {
         CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
         CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
-    int gpu_id;
-    int papi_errno = PAPI_OK;
-    if (state->running == CUDA_EVENTS_STOPPED) {
-        ERRDBG("Profiler is already stopped.\n");
-        papi_errno = PAPI_EINVAL;
-        goto fn_fail;
-    }
+
     for (gpu_id=0; gpu_id<num_unique_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->event_names->count == 0) {
@@ -1858,13 +1859,16 @@ int cuptip_ctx_stop(cuptip_control_t state)
         CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
         papi_errno = end_profiling(gpu_ctl);
         if (papi_errno != PAPI_OK) {
-            ERRDBG("Failed to stop profiling on gpu %d\n", gpu_id);
             goto fn_fail;
         }
+        
+        /*
         papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].event_names);
         if (papi_errno != PAPI_OK) {
+            printf("Failed to cuptic_device_release.\n");
             goto fn_fail;
         }
+        */
     }
 
 fn_exit:

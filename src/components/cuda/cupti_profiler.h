@@ -28,6 +28,6 @@ int cuptip_ctx_destroy(cuptip_control_t *pstate);
 int cuptip_ctx_start(cuptip_control_t state);
 int cuptip_ctx_stop(cuptip_control_t state);
 int cuptip_ctx_read(cuptip_control_t state, long long **counters);
-int cuptip_ctx_reset(long long *counters);
+int cuptip_ctx_reset(cuptip_control_t state);
 
 #endif  /* __CUPTI_PROFILER_H__ */

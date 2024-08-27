@@ -61,6 +61,7 @@ static int cuda_get_evt_count(int *count);
 #define PAPI_CUDA_MPX_COUNTERS 512
 #define PAPI_CUDA_MAX_COUNTERS  30
 
+/* track metadata, such as the EventSet state */
 typedef struct {
     int initialized;
     int state;
@@ -68,7 +69,6 @@ typedef struct {
 } cuda_context_t;
 
 typedef struct {
-    long long values[PAPI_CUDA_MAX_COUNTERS];
     int num_events;
     unsigned int domain;
     unsigned int granularity;
@@ -78,17 +78,9 @@ typedef struct {
     int component_id;
     uint64_t *events_id;
     cuptid_info_t info;
-    /* this should get me the gpu_ctl, read_count, running, etc .*/
+    /* struct holding read count, gpu_ctl, etc. */
     cuptip_control_t cuptid_ctx;
 } cuda_control_t;
-
-//typedef struct cuda_ctl {
-//    int           events_count; //num_events
-//    uint64_t      *events_id;
-//    long long     values[PAPI_CUDA_MAX_COUNTERS];
-//    cuptid_info_t info;
-//    cuptid_ctl_t  cupti_ctl;
-//} cuda_ctl_t;
 
 papi_vector_t _cuda_vector = {
     .cmp_info = {
@@ -320,7 +312,6 @@ static int cuda_set_domain(hwd_control_state_t __attribute__((unused)) *ctrl, in
 
 static int update_native_events(cuda_control_t *, NativeInfo_t *, int);
 
-
 int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
                               int ntv_count,
                               hwd_context_t *ctx __attribute__((unused)))
@@ -440,41 +431,24 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     }
     */
 
-    /* will need a create */
-    /* pass uint64_t and num_events */
-    cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+    papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+    if (papi_errno != PAPI_OK)
+        goto fn_fail;
 
     /* start profiling */
     papi_errno = cuptid_ctx_start( (void *) cuda_ctl->cuptid_ctx);
     if (papi_errno != PAPI_OK)
         goto fn_fail;   
 
-    cuda_ctx->state |= CUDA_EVENTS_RUNNING;
-
-
-    //cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
-    //cuda_ctl_t *cuda_ctl = (cuda_ctl_t *) ctl;
-    //cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    //for (i = 0; i < control->events_count; i++) {
-    //    control->values[i] = 0;
-   // }
-
-    //papi_errno = cuptid_control_create(cuda_ctl->events_id, cuda_ctl->num_events, &cuda_ctl->cuptid_ctx);
-
-    //papi_errno = cuptid_control_create(select_names, control->info, &(control->cupti_ctl));
-    //if (papi_errno != PAPI_OK) {
-    //    printf("failed to create\n");
-    //    goto fn_exit;
-    //}
-    
-    //papi_errno = cuptid_control_start( control->cupti_ctl );
+    /* update the EventSet state to running */
+    cuda_ctx->state = CUDA_EVENTS_RUNNING;
 
    fn_exit:
        SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
        return papi_errno;
    fn_fail:
        /* same as above may need to flesh this out more. */
-       cuda_ctx->state = 0;
+       cuda_ctx->state = CUDA_EVENTS_STOPPED;
        goto fn_exit;
 }
 
@@ -502,7 +476,6 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
 
     papi_errno = cuptid_ctx_read( cuda_ctl->cuptid_ctx, val );
   
-  
   fn_exit:
       SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
       return papi_errno;
@@ -521,24 +494,16 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
 {
     int papi_errno;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
-    /*
+
     if (cuda_ctl->cuptid_ctx == NULL) {
         SUBDBG("Cannot reset counters for an eventset that has not been started.");
-          return PAPI_EMISC;
+        return PAPI_EMISC;
     }
-    */
-   
 
-    papi_errno = cuptid_ctx_reset( (long long *) &(cuda_ctl->values) );
+    /* To-do: Understand how this connects to values, memory addresses are not the same. */
+    papi_errno = cuptid_ctx_reset(cuda_ctl->cuptid_ctx);
      
-    /* Reset Cuda counter values in EventSet to 0 */
-    //for (i = 0; i < cuda_ctl->num_events; i++) {
-    //    cuda_ctl->values[i] = 1;
-    //} //this is how rocm does it, but they store it in roc_profiler.c, will need to see how it development goes
-
-    // not sure I event need this.
-    //return cuptid_control_reset( cuda_ctl->cuptid_ctx );
-    return PAPI_OK;
+    return papi_errno;
 }
 
 /** @class cuda_stop
@@ -560,23 +525,34 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
-    //papi_errno = cuptid_control_stop(cuda_ctl->cupti_ctl);
-    /*  
-    cuda_ctl_t *control = (cuda_ctl_t *) ctl;
-    int papi_errno;
-    papi_errno = cuptid_control_stop( control->cupti_ctl );
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
+    if (cuda_ctx->state == CUDA_EVENTS_STOPPED) {
+        SUBDBG("Error! Cannot PAPI_stop counters for an eventset that has not been PAPI_start'ed.");
+        papi_errno = PAPI_EMISC;
+        goto fn_fail;
     }
-    papi_errno = cuptid_control_destroy( &(control->cupti_ctl) );
-    */
-    /* may need to change this depending on how the workflow goes  */
+
+    /* stop counting */
+    papi_errno = cuptid_ctx_stop(cuda_ctl->cuptid_ctx);
+    if (papi_errno != PAPI_OK) {
+        printf("papi_errno is: %s\n", PAPI_strerror(papi_errno));
+        goto fn_fail;
+    }
+
+    /* free memory that was used */
+    papi_errno = cuptid_ctx_destroy( &(cuda_ctl->cuptid_ctx) );
+    if (papi_errno != PAPI_OK) {
+        printf("papi errno is: %s\n", PAPI_strerror(papi_errno));
+    } 
+
+    /* update EventSet state to stopped  */
     cuda_ctx->state = CUDA_EVENTS_STOPPED;
-    //cuda_ctl->cuptid_ctx = NULL;
+    cuda_ctl->cuptid_ctx = NULL;
 
    fn_exit:
      SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
      return papi_errno;
+   fn_fail:
+     goto fn_exit;
 }
 
 /** @class cuda_cleanup_eventset

@@ -13,7 +13,7 @@
 extern unsigned int _cuda_lock;
 
 typedef struct cuptip_control_s *cuptip_control_t;
-typedef void *cuptid_ctl_t;
+//typedef void *cuptid_ctl_t;
 typedef void *cuptid_info_t;
 typedef cuptiu_event_table_t *ntv_event_table_t;
 typedef cuptiu_event_t *ntv_event_t;
@@ -30,12 +30,12 @@ int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len);
 int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 
 /* profiling context handling interfaces */
-int cuptid_ctx_create(cuptid_info_t thread_info, cuptid_ctl_t *pcupti_ctl, uint64_t *events_id, int num_events);
-int cuptid_ctx_destroy(cuptid_ctl_t *ctl);
-int cuptid_ctx_start(cuptid_ctl_t ctl);
-int cuptid_ctx_stop(cuptid_ctl_t ctl);
-int cuptid_ctx_read(cuptid_ctl_t ctl, long long **counters);
-int cuptid_ctx_reset(long long *values);
+int cuptid_ctx_create(cuptid_info_t thread_info, cuptip_control_t *pcupti_ctl, uint64_t *events_id, int num_events);
+int cuptid_ctx_start(cuptip_control_t ctl);
+int cuptid_ctx_read(cuptip_control_t ctl, long long **counters);
+int cuptid_ctx_reset(cuptip_control_t state);
+int cuptid_ctx_stop(cuptip_control_t ctl);
+int cuptid_ctx_destroy(cuptip_control_t *ctl);
 
 /* thread interfaces */
 int cuptid_thread_info_create(cuptid_info_t *info);
