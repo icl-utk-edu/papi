@@ -89,7 +89,7 @@ you will need to do the following:
   information about PAPI.
 * Visit the [ECP website](https://www.exascaleproject.org/) to find out more
   about the DOE Exascale Computing Initiative.
-* [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All)
+* Visit the [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All) to find out more about PAPI papers and presentations.
 
 ***
 
