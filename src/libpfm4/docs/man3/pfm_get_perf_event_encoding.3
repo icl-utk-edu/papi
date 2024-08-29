@@ -29,7 +29,7 @@ The following examples illustrates the transition:
 
    ret = pfm_get_perf_event_encoding("RETIRED_INSTRUCTIONS", PFM_PLM3, &attrs, NULL, NULL);
    if (ret != PFM_SUCCESS)
-      err(1", cannot get encoding %s", pfm_strerror(ret));
+      err(1, "cannot get encoding %s", pfm_strerror(ret));
 
 .fi
 
@@ -46,7 +46,7 @@ is equivalent to:
 
    ret = pfm_get_os_event_encoding("RETIRED_INSTRUCTIONS", PFM_PLM3, PFM_OS_PERF, &arg);
    if (ret != PFM_SUCCESS)
-      err(1", cannot get encoding %s", pfm_strerror(ret));
+      err(1, "cannot get encoding %s", pfm_strerror(ret));
 
 .nf
 

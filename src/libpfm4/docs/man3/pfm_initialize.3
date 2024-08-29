@@ -16,6 +16,8 @@ Multiple distinct PMU tables may be activated at the same time.
 The function must be called only once. If the function is called
 more than once, it does not execute the initialization multiple times,
 it simply returns the same value as for the first call.
+This is \fBnot a reentrant function\fR. Only one thread at a time can call
+the function
 
 .SH RETURN
 The function returns whether or not it was successful, i.e., at least

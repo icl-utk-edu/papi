@@ -107,6 +107,12 @@ static const arm_entry_t arm_n2_pe[]={
 	{.name = "L2D_CACHE_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x16,
+	 .equiv = "L2D_CACHE",
+	 .desc = "Level 2 data cache accesses (alias to L2D_CACHE)"
+	},
+	{.name = "L2D_CACHE",
+	 .modmsk = ARMV9_ATTRS,
+	 .code = 0x16,
 	 .desc = "Level 2 data cache accesses"
 	},
 	{.name = "L2D_CACHE_REFILL",
