@@ -55,7 +55,6 @@ typedef struct cuptip_gpu_state_s   cuptip_gpu_state_t;
 typedef struct list_metrics_s       list_metrics_t;
 typedef struct NVPA_MetricsContext  NVPA_MetricsContext;
 typedef NVPW_CUDA_MetricsContext_Create_Params MCCP_t;
-enum collection_method_e {SpotValue, RunningMin, RunningMax, RunningSum};
 
 static void *dl_nvpw;
 static int num_gpus;
@@ -87,13 +86,14 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
 static int evt_code_to_name(uint64_t event_code, char *name, int len);
 static int check_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig, int rmr_count,
                             NVPA_RawMetricRequest *rmr, int *num_pass);
-static enum collection_method_e get_event_collection_method(const char *evt_name);
+static int get_event_collection_method(const char *evt_name);
 
 static int nvpw_cuda_metricscontext_create(cuptip_control_t state);
 static int nvpw_cuda_metricscontext_destroy(cuptip_control_t state);
 static int add_events_per_gpu(cuptip_control_t state, cuptiu_event_table_t *event_names);
 static int check_multipass(cuptip_control_t state);
 
+static int verify_events(uint64_t *events_id, int num_events, cuptiu_event_table_t **targeted_event_names);
 static int evt_id_to_info(uint64_t event_id, event_info_t *info);
 static int evt_id_create(event_info_t *info, uint64_t *event_id);
 static int evt_name_to_basename(const char *name, char *base, int len);
@@ -106,7 +106,7 @@ static int create_counter_data_image(cuptip_gpu_state_t *gpu_ctl);
 static int reset_cupti_prof_config_images(cuptip_gpu_state_t *gpu_ctl);
 static int begin_profiling(cuptip_gpu_state_t *gpu_ctl);
 static int end_profiling(cuptip_gpu_state_t *gpu_ctl);
-static int get_measured_values(cuptip_gpu_state_t *gpu_ctl);
+static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts);
 
 NVPA_Status ( *NVPW_GetSupportedChipNamesPtr ) (NVPW_GetSupportedChipNames_Params* params);
 NVPA_Status ( *NVPW_CUDA_MetricsContext_CreatePtr ) (NVPW_CUDA_MetricsContext_Create_Params* params);
@@ -521,7 +521,7 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
         /* Not using the correct global event names now.*/
         papi_errno = retrieve_metric_rmr(
                          gpu_ctl->pmetricsContextCreateParams->pMetricsContext,
-                         "dram__bytes.avg", &num_dep, 
+                         gpu_ctl->event_names->evt_names[i], &num_dep, 
                          &collect_rmr
                      );
         /* why is PAPI_ENOEVNT hard coded? */
@@ -1164,43 +1164,46 @@ fn_fail:
     return PAPI_EMISC;
 }
 
-static int get_measured_values(cuptip_gpu_state_t *gpu_ctl)
+
+/** @class get_measured_values
+  * @brief Get the counter values for the Cuda native events
+  *        added by the user.
+  * @param *gpu_ctl
+  *   Struct that holds member variables such as gpu id, rmr, etc.
+  * @param *counts
+  *   Array to hold the counter values for the associated Cuda native
+  *   events. 
+*/
+static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts)
 {
     COMPDBG("eval_metric_values. dev = %d\n", gpu_ctl->gpu_id);
+    int i, papi_errno = PAPI_OK;
+    int numMetrics = gpu_ctl->event_names->count;
+    double *gpuValues;
+    char **metricNames;
+
     if (!gpu_ctl->counterDataImage.size) {
         ERRDBG("Counter Data Image is empty!\n");
         return PAPI_EINVAL;
     }
-    int i, papi_errno = PAPI_OK;
-    int numMetrics = gpu_ctl->event_names->count;
 
-    int dummy;
-    char **metricNames = (char**) papi_calloc(numMetrics, sizeof(char *));
-    if (metricNames == NULL) {
-        ERRDBG("calloc metricNames failed.\n");
-        return PAPI_ENOMEM;
-    }
-    cuptiu_event_t *evt_rec;
-    for (i = 0; i < numMetrics; i++) {
-        papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, &evt_rec);
-        if (papi_errno != PAPI_OK) {
-            printf("We fail to get item: %d\n", papi_errno);
-            goto fn_exit;
-        }
-        //printf("evt_rec->name: %s\n", evt_rec->name);
-        //papi_errno = event_name_tokenize(evt_rec->name, evt_rec->desc, &dummy);
-        //if (papi_errno != PAPI_OK) {
-        //    printf("We fail to event name tokenize: %d\n", papi_errno);
-        //    goto fn_exit;
-        //}
-        metricNames[i] = "dram__bytes.avg";
-        LOGDBG("Setting metric name %s\n", metricNames[i]);
-    }
-
-    double *gpuValues = (double*) papi_malloc(numMetrics * sizeof(double));
+    /* allocate memory */
+    gpuValues = (double*) papi_malloc(numMetrics * sizeof(double));
     if (gpuValues == NULL) {
         ERRDBG("malloc gpuValues failed.\n");
         return PAPI_ENOMEM;
+    }   
+
+    /* allocate memory */
+    metricNames = (char**) papi_calloc(numMetrics, sizeof(char *)); 
+    if (metricNames == NULL) {
+        ERRDBG("Failed to allocate memory for metricNames.\n");
+        return PAPI_ENOMEM;
+    }    
+
+    for (i = 0; i < numMetrics; i++) {
+        metricNames[i] = gpu_ctl->event_names->evt_names[i];
+        LOGDBG("Setting metric name %s\n", metricNames[i]);
     }
 
     NVPW_MetricsContext_SetCounterData_Params setCounterDataParams = {
@@ -1211,7 +1214,9 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl)
         .rangeIndex = 0,
         .isolated = 1,
     };
+
     NVPW_CALL( NVPW_MetricsContext_SetCounterDataPtr(&setCounterDataParams), goto fn_fail );
+
     NVPW_MetricsContext_EvaluateToGpuValues_Params evalToGpuParams = {
         .structSize = NVPW_MetricsContext_EvaluateToGpuValues_Params_STRUCT_SIZE,
         .pPriv = NULL,
@@ -1220,17 +1225,18 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl)
         .ppMetricNames = (const char* const*) metricNames,
         .pMetricValues = gpuValues,
     };
+
     NVPW_CALL( NVPW_MetricsContext_EvaluateToGpuValuesPtr(&evalToGpuParams), goto fn_fail );
-    papi_free(metricNames);
+
+    /* store the gpu values */
     for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
-        papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, &evt_rec);
-        if (papi_errno != PAPI_OK) {
-            papi_free(gpuValues);
-            goto fn_exit;
-        }
-        evt_rec->value = gpuValues[i];
+        counts[i] = gpuValues[i];
     }
+
+    /* free memory allocations */
+    papi_free(metricNames);
     papi_free(gpuValues);
+
 fn_exit:
     return papi_errno;
 fn_fail:
@@ -1517,6 +1523,49 @@ fn_fail:
     return PAPI_EMISC;
 }
 
+/** @class verify_events
+  * @brief Verify user added events and create a subset table to be used for 
+  *        start, stop, etc.
+  * @param *events_id
+  *   Cuda native event id's.
+  * @param num_events
+  *   Number of Cuda native events a user is wanting to count.
+  * @param **targeted_event_names
+  *   Event table to hold subset of user added events.
+*/
+int verify_events(uint64_t *events_id, int num_events, 
+                  cuptiu_event_table_t **targeted_event_names) 
+{
+    int papi_errno = PAPI_OK, i;
+    char name[PAPI_MAX_STR_LEN] = { 0 };
+     
+    papi_errno = cuptiu_event_table_create_init_capacity(
+                     num_events * num_gpus,
+                     sizeof(cuptiu_event_t), targeted_event_names
+                 );
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    for (i = 0; i < num_events; i++) {
+        event_info_t info;
+        papi_errno = evt_id_to_info(events_id[i], &info);
+        if (papi_errno != PAPI_OK) {
+            printf("Entering break\n");
+            break;
+        }    
+        sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
+        strcpy((*targeted_event_names)->evt_names[i], name);
+        void *p;
+        if (htable_find(cuptiu_table_p->htable, name, (void **) &p) != HTABLE_SUCCESS) {
+            htable_insert((*targeted_event_names)->htable, name, (void **) &p );
+        }
+        (*targeted_event_names)->count++;
+    }
+
+  fn_exit:                                                                            
+    return papi_errno;  
+}
 
 /** @class cuptip_ctx_create
   * @brief Create a profiling context for the requested Cuda events.
@@ -1534,25 +1583,13 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
 {
     COMPDBG("Entering.\n");
     int papi_errno = PAPI_OK, gpu_id, i;
-    char name[PAPI_MAX_STR_LEN] = { 0 };
     long long *counters = NULL;
+    char name[PAPI_2MAX_STR_LEN] = { 0 };
     cuptiu_event_table_t *targeted_event_names;
-    cuptiu_event_table_create_init_capacity(num_events * num_gpus, sizeof(cuptiu_event_t), &targeted_event_names);
 
-
-    for (i = 0; i < num_events; i++) {
-        event_info_t info;
-        papi_errno = evt_id_to_info(events_id[i], &info);
-        if (papi_errno != PAPI_OK) {
-            break;
-        }
-
-        sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
-        void *p;
-        if (htable_find(cuptiu_table_p->htable, name, (void **) &p) != HTABLE_SUCCESS) {
-            htable_insert(targeted_event_names->htable, name, (void **) &p );
-        }
-        targeted_event_names->count++;
+    papi_errno = verify_events(events_id, num_events, &targeted_event_names);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
 
     /* create a cuptip_control_t struct which contains read_count, running, cupti_info_t and cuptip_gpu_state_t */
@@ -1699,17 +1736,18 @@ fn_fail_misc:
 int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 {
     COMPDBG("Entering.\n");
-    int papi_errno, gpu_id, i;
+    int papi_errno, gpu_id, i, j = 0, method;
+    long long counts[30];
     cuptip_gpu_state_t *gpu_ctl = NULL;
     CUcontext userCtx = NULL, ctx = NULL;
-    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc);
+
+
+    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     if (userCtx == NULL) {
         CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
         CUDART_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
-    unsigned int evt_pos;
-    long long val;
-    cuptiu_event_t *evt_rec = NULL;
+
     for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->event_names->count == 0) {
@@ -1717,6 +1755,11 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         }
 
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
+        if (papi_errno != PAPI_OK) {
+            goto fn_fail_misc;
+
+        }
+
         CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
 
         CUpti_Profiler_PopRange_Params popRangeParams = {
@@ -1738,39 +1781,43 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
             .pPriv = NULL,
             .ctx = NULL,
         };
+       
         CUPTI_CALL( cuptiProfilerFlushCounterDataPtr(&flushCounterDataParams), goto fn_fail_misc );
 
-        papi_errno = get_measured_values(gpu_ctl);
+        papi_errno = get_measured_values(gpu_ctl, counts);
         if (papi_errno != PAPI_OK) {
             printf("PAPI_errno is: %d\n", papi_errno);
             goto fn_exit;
         }
         for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
-            papi_errno = cuptiu_event_table_get_item(gpu_ctl->event_names, i, &evt_rec);
-            if (papi_errno != PAPI_OK) {
-                printf("We fail to get item.\n");
-                goto fn_exit;
-            }
-            evt_pos = evt_rec->evt_pos;
-            val = (long long) evt_rec->value;
             long long *counter_vals = state->counters;
-
             if (state->read_count == 0) {
-                counter_vals[evt_pos] = val;
+                counter_vals[i] = counts[i];
+                printf("iter: %d and counter_vals: %d\n", i, counter_vals[i]);
             }
             else {
-                switch (get_event_collection_method(evt_rec->name)) {
-                    case RunningSum:
-                        counter_vals[evt_pos] += val;
+                /* determine collection method such as max, min, sum, and avg for an added Cuda native event */
+                method = get_event_collection_method(gpu_ctl->event_names->evt_names[i]);
+                switch (method) {
+                    case CUDA_SUM:
+                        counter_vals[i] += counts[i];
                         break;
-                    case RunningMin:
-                        counter_vals[evt_pos] = counter_vals[evt_pos] < val ? counter_vals[evt_pos] : val;
+                    case CUDA_MIN:
+                        counter_vals[i] = counter_vals[i] < counts[i] ? counter_vals[i] : counts[i];
                         break;
-                    case RunningMax:
-                        counter_vals[evt_pos] = counter_vals[evt_pos] > val ? counter_vals[evt_pos] : val;
+                    case CUDA_MAX:
+                        counter_vals[i] = counter_vals[i] > counts[i] ? counter_vals[i] : counts[i];
                         break;
+                    case CUDA_AVG:
+                         /* (size * average + value) / (size + 1) 
+                            size - current number of values in the average
+                            average - current average
+                            value - number to add to the average
+                         */
+                         counter_vals[i] = (state->read_count * counter_vals[j++] + counts[i]) / (state->read_count + 1);
+                         break;
                     default:
-                        counter_vals[evt_pos] = val;
+                        counter_vals[i] = counts[i];
                         break;
                 }
             }
@@ -1908,6 +1955,39 @@ int cuptip_ctx_destroy(cuptip_control_t *pstate)
     return papi_errno;
 }
 
+
+/** @class get_event_collection_method 
+  * @brief Determine the collection method of the event. Can be avg, max, min, or sum..
+  * @param *evt_name
+  *   Cuda native event name. E.g. dram__bytes.avg 
+*/
+int get_event_collection_method(const char *evt_name)
+{
+
+    if (strstr(evt_name, ".avg") != NULL) {
+        return CUDA_AVG;
+    }
+    else if (strstr(evt_name, ".max") != NULL) {
+        return CUDA_MAX;
+    }
+    else if (strstr(evt_name, ".min") != NULL) {
+        return CUDA_MIN;
+    }
+    else if (strstr(evt_name, ".sum") != NULL) {
+        return CUDA_SUM;
+    }
+    else {
+        return CUDA_DEFAULT;
+    } 
+}
+
+
+/** @class get_event_collection_method 
+  * @brief Determine the collection method of the event. Can be avg, max, min, or sum..
+  * @param *evt_name
+  *   Cuda native event name. E.g. dram__bytes.avg 
+*/
+/* 
 static enum collection_method_e get_event_collection_method(const char *evt_name)
 {
     if (strstr(evt_name, ".sum") != NULL) {
@@ -1923,7 +2003,7 @@ static enum collection_method_e get_event_collection_method(const char *evt_name
         return SpotValue;
     }
 }
-
+*/
 /** @class cuptip_shutdown
   * @brief Shutdown CUPTI. This includes, the event tabble and enumerated metrics. 
 */

@@ -33,7 +33,7 @@ int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu
         goto fn_fail;
     }
     *pevt_table = evt_table;
-    return PAPI_OK;
+    return 0;
 fn_fail:
     *pevt_table = NULL;
     return PAPI_ENOMEM;

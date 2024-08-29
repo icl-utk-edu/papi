@@ -11,6 +11,13 @@
 
 typedef struct cuptip_control_s     *cuptip_control_t;
 
+#define CUDA_AVG 0x1
+#define CUDA_MAX 0x2
+#define CUDA_MIN 0x3
+#define CUDA_SUM 0x4
+#define CUDA_DEFAULT 0x5
+
+
 /* init and shutdown interfaces */
 int cuptip_init(void);
 int cuptip_shutdown(void);
