@@ -49,43 +49,6 @@ extern cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 
 extern CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
-#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
-    if (dlerror() != NULL) {  \
-        ERRDBG("A CUDA required function '%s' was not found in lib '%s'.\n", name, #dllib);  \
-        return PAPI_EMISC;  \
-    }
-
-#define CUDA_CALL( call, handleerror )  \
-    do {  \
-        CUresult _status = (call);  \
-        LOGCUDACALL("\t" #call "\n");  \
-        if (_status != CUDA_SUCCESS) {  \
-            ERRDBG("CUDA Error %d: Error in call to " #call "\n", _status);  \
-            EXIT_OR_NOT; \
-            handleerror;  \
-        }  \
-    } while (0);
-#define CUDART_CALL( call, handleerror )  \
-    do {  \
-        cudaError_t _status = (call);  \
-        LOGCUDACALL("\t" #call "\n");  \
-        if (_status != cudaSuccess) {  \
-            ERRDBG("CUDART Error %d: Error in call to " #call "\n", _status);  \
-            EXIT_OR_NOT; \
-            handleerror;  \
-        }  \
-    } while (0);
-#define CUPTI_CALL( call, handleerror ) \
-    do {  \
-        CUptiResult _status = (call);  \
-        LOGCUPTICALL("\t" #call "\n");  \
-        if (_status != CUPTI_SUCCESS) {  \
-            ERRDBG("CUPTI Error %d: Error in call to " #call "\n", _status);  \
-            EXIT_OR_NOT; \
-            handleerror;  \
-        }  \
-    } while (0);
-
 void cuptic_disabled_reason_set(const char *msg);
 void cuptic_disabled_reason_get(const char **pmsg);
 
@@ -110,5 +73,46 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table);
 /* functions to handle device qualifiers */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
+
+#define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
+    if (dlerror() != NULL) {  \
+        ERRDBG("A CUDA required function '%s' was not found in lib '%s'.\n", name, #dllib);  \
+        return PAPI_EMISC;  \
+    }
+
+/* error handling defines for Cuda related function calls */
+#define cudaCheckErrors( call, handleerror )  \
+    do {  \
+        CUresult _status = (call);  \
+        LOGCUDACALL("\t" #call "\n");  \
+        if (_status != CUDA_SUCCESS) {  \
+            ERRDBG("CUDA Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
+#define cudaArtCheckErrors( call, handleerror )  \
+    do {  \
+        cudaError_t _status = (call);  \
+        LOGCUDACALL("\t" #call "\n");  \
+        if (_status != cudaSuccess) {  \
+            ERRDBG("CUDART Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
+#define cuptiCheckErrors( call, handleerror ) \
+    do {  \
+        CUptiResult _status = (call);  \
+        LOGCUPTICALL("\t" #call "\n");  \
+        if (_status != CUPTI_SUCCESS) {  \
+            ERRDBG("CUPTI Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
 
 #endif /* __CUPTI_COMMON_H__ */

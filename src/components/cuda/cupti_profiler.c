@@ -975,7 +975,7 @@ static int create_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
         .sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE,
         .pOptions = &gpu_ctl->counterDataImageOptions,
     };
-    CUPTI_CALL( cuptiProfilerCounterDataImageCalculateSizePtr(&calculateSizeParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateSizePtr(&calculateSizeParams), goto fn_fail );
 
     gpu_ctl->initializeParams = (CUpti_Profiler_CounterDataImage_Initialize_Params) {
         .structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE,
@@ -993,7 +993,7 @@ static int create_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
     }
 
     gpu_ctl->initializeParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
-    CUPTI_CALL( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail );
 
     CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params scratchBufferSizeParams = {
         .structSize = CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE,
@@ -1001,7 +1001,7 @@ static int create_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
         .counterDataImageSize = calculateSizeParams.counterDataImageSize,
         .pCounterDataImage = gpu_ctl->initializeParams.pCounterDataImage,
     };
-    CUPTI_CALL( cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr(&scratchBufferSizeParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr(&scratchBufferSizeParams), goto fn_fail );
 
     gpu_ctl->counterDataScratchBuffer.size = scratchBufferSizeParams.counterDataScratchBufferSize;
     gpu_ctl->counterDataScratchBuffer.data = (uint8_t *) papi_calloc(gpu_ctl->counterDataScratchBuffer.size, sizeof(uint8_t));
@@ -1018,7 +1018,7 @@ static int create_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
         .counterDataScratchBufferSize = gpu_ctl->counterDataScratchBuffer.size,
         .pCounterDataScratchBuffer = gpu_ctl->counterDataScratchBuffer.data,
     };
-    CUPTI_CALL( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail );
 
     return PAPI_OK;
 fn_fail:
@@ -1066,7 +1066,7 @@ static int begin_profiling(cuptip_gpu_state_t *gpu_ctl)
         .maxRangesPerPass = 1,
         .maxLaunchesPerPass = 1,
     };
-    CUPTI_CALL( cuptiProfilerBeginSessionPtr(&beginSessionParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerBeginSessionPtr(&beginSessionParams), goto fn_fail );
 
     CUpti_Profiler_SetConfig_Params setConfigParams = {
         .structSize = CUpti_Profiler_SetConfig_Params_STRUCT_SIZE,
@@ -1079,21 +1079,21 @@ static int begin_profiling(cuptip_gpu_state_t *gpu_ctl)
         .passIndex = 0,
         .targetNestingLevel = 1,
     };
-    CUPTI_CALL( cuptiProfilerSetConfigPtr(&setConfigParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerSetConfigPtr(&setConfigParams), goto fn_fail );
 
     CUpti_Profiler_BeginPass_Params beginPassParams = {
         .structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerBeginPassPtr(&beginPassParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerBeginPassPtr(&beginPassParams), goto fn_fail );
 
     CUpti_Profiler_EnableProfiling_Params enableProfilingParams = {
         .structSize = CUpti_Profiler_EnableProfiling_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerEnableProfilingPtr(&enableProfilingParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerEnableProfilingPtr(&enableProfilingParams), goto fn_fail );
 
     char rangeName[64];
     sprintf(rangeName, "PAPI_Range_%d", gpu_ctl->gpu_id);
@@ -1104,7 +1104,7 @@ static int begin_profiling(cuptip_gpu_state_t *gpu_ctl)
         .pRangeName = (const char*) &rangeName,
         .rangeNameLength = 100,
     };
-    CUPTI_CALL( cuptiProfilerPushRangePtr(&pushRangeParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerPushRangePtr(&pushRangeParams), goto fn_fail );
 
     return PAPI_OK;
 fn_fail:
@@ -1122,42 +1122,42 @@ static int end_profiling(cuptip_gpu_state_t *gpu_ctl)
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerDisableProfilingPtr(&disableProfilingParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerDisableProfilingPtr(&disableProfilingParams), goto fn_fail );
 
     CUpti_Profiler_PopRange_Params popRangeParams = {
         .structSize = CUpti_Profiler_PopRange_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerPopRangePtr(&popRangeParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerPopRangePtr(&popRangeParams), goto fn_fail );
 
     CUpti_Profiler_EndPass_Params endPassParams = {
         .structSize = CUpti_Profiler_EndPass_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerEndPassPtr(&endPassParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerEndPassPtr(&endPassParams), goto fn_fail );
 
     CUpti_Profiler_FlushCounterData_Params flushCounterDataParams = {
         .structSize = CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerFlushCounterDataPtr(&flushCounterDataParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerFlushCounterDataPtr(&flushCounterDataParams), goto fn_fail );
 
     CUpti_Profiler_UnsetConfig_Params unsetConfigParams = {
         .structSize = CUpti_Profiler_UnsetConfig_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerUnsetConfigPtr(&unsetConfigParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerUnsetConfigPtr(&unsetConfigParams), goto fn_fail );
 
     CUpti_Profiler_EndSession_Params endSessionParams = {
         .structSize = CUpti_Profiler_EndSession_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .ctx = NULL,
     };
-    CUPTI_CALL( cuptiProfilerEndSessionPtr(&endSessionParams), goto fn_fail );
+    cuptiCheckErrors( cuptiProfilerEndSessionPtr(&endSessionParams), goto fn_fail );
 
     return PAPI_OK;
 fn_fail:
@@ -1666,11 +1666,11 @@ int cuptip_ctx_start(cuptip_control_t state)
     CUcontext userCtx, ctx;
 
     /* return the Cuda context bound to the calling CPU thread */
-    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+    cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     /* if no context is found, create a context */
     if (userCtx == NULL) {
-        CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
-        CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
+        cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
 
     /* enumerate through all of the unique gpus */
@@ -1688,7 +1688,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         /* get the cuda context for the unique gpu */
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
         /* bind the specified CUDA context to the calling CPU thread */
-        CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
+        cudaCheckErrors( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
 
         /* not really sure as of now */
         papi_errno = get_counter_availability(gpu_ctl);
@@ -1714,7 +1714,7 @@ int cuptip_ctx_start(cuptip_control_t state)
     }
 
 fn_exit:
-    CUDA_CALL( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
+    cudaCheckErrors( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
     return papi_errno;
 fn_fail:
     papi_errno = PAPI_ECMP;
@@ -1742,10 +1742,10 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
     CUcontext userCtx = NULL, ctx = NULL;
 
 
-    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+    cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     if (userCtx == NULL) {
-        CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
-        CUDART_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
+        cudaArtCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
 
     for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
@@ -1760,21 +1760,21 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 
         }
 
-        CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
+        cudaCheckErrors( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
 
         CUpti_Profiler_PopRange_Params popRangeParams = {
             .structSize = CUpti_Profiler_PopRange_Params_STRUCT_SIZE,
             .pPriv = NULL,
             .ctx = NULL,
         };
-        CUPTI_CALL( cuptiProfilerPopRangePtr(&popRangeParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerPopRangePtr(&popRangeParams), goto fn_fail_misc );
 
         CUpti_Profiler_EndPass_Params endPassParams = {
             .structSize = CUpti_Profiler_EndPass_Params_STRUCT_SIZE,
             .pPriv = NULL,
             .ctx = NULL,
         };
-        CUPTI_CALL( cuptiProfilerEndPassPtr(&endPassParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerEndPassPtr(&endPassParams), goto fn_fail_misc );
 
         CUpti_Profiler_FlushCounterData_Params flushCounterDataParams = {
             .structSize = CUpti_Profiler_FlushCounterData_Params_STRUCT_SIZE,
@@ -1782,7 +1782,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
             .ctx = NULL,
         };
        
-        CUPTI_CALL( cuptiProfilerFlushCounterDataPtr(&flushCounterDataParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerFlushCounterDataPtr(&flushCounterDataParams), goto fn_fail_misc );
 
         papi_errno = get_measured_values(gpu_ctl, counts);
         if (papi_errno != PAPI_OK) {
@@ -1824,15 +1824,15 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         }
         *counters = state->counters;
 
-        CUPTI_CALL( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail_misc );
-        CUPTI_CALL( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail_misc );
 
         CUpti_Profiler_BeginPass_Params beginPassParams = {
             .structSize = CUpti_Profiler_BeginPass_Params_STRUCT_SIZE,
             .pPriv = NULL,
             .ctx = NULL,
         };
-        CUPTI_CALL( cuptiProfilerBeginPassPtr(&beginPassParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerBeginPassPtr(&beginPassParams), goto fn_fail_misc );
 
         char rangeName[64];
         sprintf(rangeName, "PAPI_Range_%d", gpu_ctl->gpu_id);
@@ -1843,12 +1843,12 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
             .pRangeName = (const char*) &rangeName,
             .rangeNameLength = 100,
         };
-        CUPTI_CALL( cuptiProfilerPushRangePtr(&pushRangeParams), goto fn_fail_misc );
+        cuptiCheckErrors( cuptiProfilerPushRangePtr(&pushRangeParams), goto fn_fail_misc );
 
     }
     state->read_count++;
 fn_exit:
-    CUDA_CALL( cuCtxSetCurrentPtr(userCtx), );
+    cudaCheckErrors( cuCtxSetCurrentPtr(userCtx), );
     return papi_errno;
 fn_fail_misc:
     papi_errno = PAPI_EMISC;
@@ -1891,10 +1891,10 @@ int cuptip_ctx_stop(cuptip_control_t state)
 
     
 
-    CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+    cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     if (userCtx == NULL) {
-        CUDART_CALL( cudaFreePtr(NULL), goto fn_fail_misc );
-        CUDA_CALL( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
+        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
+        cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
 
     for (gpu_id=0; gpu_id<num_unique_gpus; gpu_id++) {
@@ -1903,7 +1903,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
             continue;
         }
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
-        CUDA_CALL( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
+        cudaCheckErrors( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
         papi_errno = end_profiling(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
@@ -1919,7 +1919,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
     }
 
 fn_exit:
-    CUDA_CALL( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
+    cudaCheckErrors( cuCtxSetCurrentPtr(userCtx), goto fn_fail_misc );
     return papi_errno;
 fn_fail:
     goto fn_exit;
