@@ -1737,7 +1737,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 {
     COMPDBG("Entering.\n");
     int papi_errno, gpu_id, i, j = 0, method;
-    long long counts[30];
+    long long counts[30], *counter_vals = state->counters;
     cuptip_gpu_state_t *gpu_ctl = NULL;
     CUcontext userCtx = NULL, ctx = NULL;
 
@@ -1790,10 +1790,8 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
             goto fn_exit;
         }
         for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
-            long long *counter_vals = state->counters;
             if (state->read_count == 0) {
                 counter_vals[i] = counts[i];
-                printf("iter: %d and counter_vals: %d\n", i, counter_vals[i]);
             }
             else {
                 /* determine collection method such as max, min, sum, and avg for an added Cuda native event */

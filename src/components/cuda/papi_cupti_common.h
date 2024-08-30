@@ -114,5 +114,4 @@ int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
         }  \
     } while (0);
 
-
 #endif /* __CUPTI_COMMON_H__ */

@@ -602,7 +602,7 @@ int cuptic_ctxarr_update_current(cuptic_info_t info)
         }
     }
 
-    /* if conext exists then see if it has changed; if it has then keep the first
+    /* if context exists then see if it has changed; if it has then keep the first
        seen one, but show warning */
     else if (info[gpu_id].ctx != pctx) {
         ERRDBG("Warning: cuda context for gpu %d has changed from %p to %p\n", gpu_id, info[gpu_id].ctx, pctx);
