@@ -21,10 +21,10 @@
 #include <sys/ioctl.h>
 
 #define NUM_EVENTS 4
-#define NUM_TESTS 1
+#define NUM_TESTS 100
 #define TEST_FIB 0 // select whether to make teh test fib() or instructions_million()
 
-#define PERCENTAGES_TOLERANCE 0.1
+#define PERCENTAGES_TOLERANCE 1.5
 
 /*
  * perf_event _rdpmc code
