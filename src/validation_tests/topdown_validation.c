@@ -22,6 +22,7 @@
 
 #define NUM_EVENTS 4
 #define NUM_TESTS 1
+#define TEST_FIB 0 // select whether to make teh test fib() or instructions_million()
 
 #define PERCENTAGES_TOLERANCE 0.1
 
@@ -233,15 +234,6 @@ int main(int argc, char **argv)
         test_skip(__FILE__, __LINE__, "adding TOPDOWN:RETIRING_SLOTS", retval);
     }
 
-    /* Add TOPDOWN:BACKEND_BOUND_SLOTS */
-    retval = PAPI_add_named_event(EventSet1, "TOPDOWN:BACKEND_BOUND_SLOTS");
-    if (retval != PAPI_OK)
-    {
-        if (!quiet)
-            printf("Trouble adding TOPDOWN:BACKEND_BOUND_SLOTS\n");
-        test_skip(__FILE__, __LINE__, "adding TOPDOWN:BACKEND_BOUND_SLOTS", retval);
-    }
-
     /* Add TOPDOWN:BAD_SPEC_SLOTS */
     retval = PAPI_add_named_event(EventSet1, "TOPDOWN:BAD_SPEC_SLOTS");
     if (retval != PAPI_OK)
@@ -249,6 +241,15 @@ int main(int argc, char **argv)
         if (!quiet)
             printf("Trouble adding TOPDOWN:BAD_SPEC_SLOTS\n");
         test_skip(__FILE__, __LINE__, "adding TOPDOWN:BAD_SPEC_SLOTS", retval);
+    }
+
+    /* Add TOPDOWN:BACKEND_BOUND_SLOTS */
+    retval = PAPI_add_named_event(EventSet1, "TOPDOWN:BACKEND_BOUND_SLOTS");
+    if (retval != PAPI_OK)
+    {
+        if (!quiet)
+            printf("Trouble adding TOPDOWN:BACKEND_BOUND_SLOTS\n");
+        test_skip(__FILE__, __LINE__, "adding TOPDOWN:BACKEND_BOUND_SLOTS", retval);
     }
 
     /* warm up the processor to pull it out of idle state */
@@ -275,12 +276,22 @@ int main(int argc, char **argv)
         reset_metrics(slots_fd);
         reset_metrics(metrics_fd);
 
+#if TEST_FIB
         printf("fib: %d\n", fib(6000000));
-        
+#else  
+        for (i = 0; i < 100; i++)
+        {
+            result = instructions_million();
+        }
+#endif
+
         /* Check and see what _rdpmc got */
         rdpmc_slots = read_slots();
         rdpmc_metrics = read_metrics();
         topdown_get_from_metrics(rdpmc_percs, rdpmc_metrics);
+        
+        for (i = 0; i < NUM_EVENTS; i++)
+            avg_rdpmc_percs[i] += rdpmc_percs[i];
         
         /* Stat the test with PAPI */
         retval = PAPI_start(EventSet1);
@@ -288,16 +299,20 @@ int main(int argc, char **argv)
         {
             test_fail(__FILE__, __LINE__, "PAPI_start", retval);
         }
-
+#if TEST_FIB
         printf("fib: %d\n", fib(6000000));
-        
+#else  
+        for (i = 0; i < 100; i++)
+        {
+            result = instructions_million();
+        }
+#endif
+
         retval = PAPI_stop(EventSet1, values);
         if (retval != PAPI_OK)
         {
             test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
         }
-        for (i = 0; i < NUM_EVENTS; i++)
-            avg_rdpmc_percs[i] += rdpmc_percs[i];
 
         /* Lets see what we got with PAPI rdpmc */
         topdown_get_from_metrics(papi_rdpmc_percs, values[1]);
