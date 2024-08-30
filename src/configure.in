@@ -1862,8 +1862,8 @@ for comp in $components; do
     fi
   fi
 
-  # check for intel_gpu component to determine if we need -lstdc++ in LDFLAGS
-  if test "x$comp" = "xintel_gpu" ; then
+  # check for intel_gpu or rocpsdk component to determine if we need -lstdc++ in LDFLAGS
+  if (test "x$comp" = "xintel_gpu" || test "x$comp" = "xrocpsdk"); then
     LDFLAGS="$LDFLAGS -lstdc++"
   fi
 
