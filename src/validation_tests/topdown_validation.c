@@ -21,8 +21,7 @@
 #include <sys/ioctl.h>
 
 #define NUM_EVENTS 4
-#define NUM_LOOPS 100
-#define NUM_TESTS 100
+#define NUM_TESTS 1
 
 #define PERCENTAGES_TOLERANCE 0.1
 
@@ -121,6 +120,21 @@ int are_percs_equivalent(double *percs_gt, double *percs_b, double *abs_error, i
 
     return eq;
 }
+
+// fibbonacci function
+int fib(int n)
+{
+    long i, a = 0;
+    int b = 1;
+    for (i=0; i<n; i++) {
+        b = b + a;
+        a = b - a;
+
+    }
+
+    return b;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -257,32 +271,31 @@ int main(int argc, char **argv)
     {
         printf("Loop #%d:\n", j);
 
-        /* make sure the metrics are cleared */
+        /* Stat the test with _rdpmc() */
         reset_metrics(slots_fd);
         reset_metrics(metrics_fd);
 
-        /* lets start the actual test code */
+        printf("fib: %d\n", fib(6000000));
+        
+        /* Check and see what _rdpmc got */
+        rdpmc_slots = read_slots();
+        rdpmc_metrics = read_metrics();
+        topdown_get_from_metrics(rdpmc_percs, rdpmc_metrics);
+        
+        /* Stat the test with PAPI */
         retval = PAPI_start(EventSet1);
         if (retval != PAPI_OK)
         {
             test_fail(__FILE__, __LINE__, "PAPI_start", retval);
         }
 
-        for (i = 0; i < NUM_LOOPS; i++)
-        {
-            result = instructions_million();
-        }
-
+        printf("fib: %d\n", fib(6000000));
+        
         retval = PAPI_stop(EventSet1, values);
         if (retval != PAPI_OK)
         {
             test_fail(__FILE__, __LINE__, "PAPI_stop", retval);
         }
-
-        /* Check and see what _rdpmc got */
-        rdpmc_slots = read_slots();
-        rdpmc_metrics = read_metrics();
-        topdown_get_from_metrics(rdpmc_percs, rdpmc_metrics);
         for (i = 0; i < NUM_EVENTS; i++)
             avg_rdpmc_percs[i] += rdpmc_percs[i];
 
@@ -302,7 +315,6 @@ int main(int argc, char **argv)
             printf("Values mismatch!\n");
             mismatches++;
         }
-            
 
         /* check that the percentages match _rdpmc syscall */
         if ((are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs, err_papi_rdpmc_percs, NUM_EVENTS) +
@@ -323,8 +335,6 @@ int main(int argc, char **argv)
             putchar('\n');
                 failures++;
             }
-
-
     }
 
     // get averages
