@@ -1,4 +1,4 @@
-.TH "PAPI_set_cmp_granularity" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_cmp_granularity" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,27 +15,26 @@ PAPI_set_cmp_granularity \- Set the default counting granularity for eventsets b
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_set_cmp_granularity( int granularity, int cidx )\fP;
+ int PAPI_set_cmp_granularity( int granularity, int cidx );
 .RE
 .PP
 \fBParameters\fP
 .RS 4
 \fIgranularity\fP one of the following constants as defined in the \fBpapi\&.h\fP header file 
 .PD 0
-
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_THR Count each individual thread 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_PROC Count each individual process 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_PROCG Count each individual process group 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_SYS Count the current CPU 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_SYS_CPU Count all CPUs individually 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_MIN The finest available granularity 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_GRN_MAX The coarsest available granularity
 .PP
 .br

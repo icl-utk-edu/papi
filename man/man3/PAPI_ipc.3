@@ -1,4 +1,4 @@
-.TH "PAPI_ipc" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_ipc" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ PAPI_ipc \- Simplified call to get instructions per cycle, real and processor ti
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
+int PAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc );
 .RE
 .PP
 \fBParameters\fP
@@ -31,28 +31,28 @@ int \fBPAPI_ipc( float *rtime, float *ptime, long long *ins, float *ipc )\fP;
 .PP
 \fBReturn values\fP
 .RS 4
-\fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_ipc()\fP\&. 
+\fIPAPI_EINVAL\fP The counters were already started by something other than PAPI_ipc()\&. 
 .br
 \fIPAPI_ENOEVNT\fP The events PAPI_TOT_INS and PAPI_TOT_CYC are not supported\&. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation\&.
 .RE
 .PP
-The first call to \fBPAPI_ipc()\fP will initialize the PAPI interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters\&.
+The first call to PAPI_ipc() will initialize the PAPI interface, set up the counters to monitor PAPI_TOT_INS and PAPI_TOT_CYC events and start the counters\&.
 .PP
-Subsequent calls will read the counters and return real time, process time, instructions and the IPC rate since the latest call to \fBPAPI_ipc()\fP\&.
+Subsequent calls will read the counters and return real time, process time, instructions and the IPC rate since the latest call to PAPI_ipc()\&.
 .PP
-\fBPAPI_ipc()\fP should return a ratio greater than 1\&.0, indicating instruction level parallelism within the chip\&. The larger this ratio the more effeciently the program is running\&. Note that \fBPAPI_ipc()\fP is thread-safe and can therefore be called by multiple threads\&.
+PAPI_ipc() should return a ratio greater than 1\&.0, indicating instruction level parallelism within the chip\&. The larger this ratio the more effeciently the program is running\&. Note that PAPI_ipc() is thread-safe and can therefore be called by multiple threads\&.
 .PP
 \fBSee also\fP
 .RS 4
-\fBPAPI_flips_rate()\fP 
+PAPI_flips_rate() 
 .PP
-\fBPAPI_flops_rate()\fP 
+PAPI_flops_rate() 
 .PP
-\fBPAPI_epc()\fP 
+PAPI_epc() 
 .PP
-\fBPAPI_rate_stop()\fP 
+PAPI_rate_stop() 
 .RE
 .PP
 

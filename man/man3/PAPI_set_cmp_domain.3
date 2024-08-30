@@ -1,4 +1,4 @@
-.TH "PAPI_set_cmp_domain" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_set_cmp_domain" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,29 +15,28 @@ PAPI_set_cmp_domain \- Set the default counting domain for new event sets bound 
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_set_cmp_domain( int domain, int  cidx )\fP;
+ int PAPI_set_cmp_domain( int domain, int  cidx );
 .RE
 .PP
 \fBParameters\fP
 .RS 4
 \fIdomain\fP one of the following constants as defined in the \fBpapi\&.h\fP header file 
 .PD 0
-
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_USER User context counted 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_KERNEL Kernel/OS context counted 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_OTHER Exception/transient mode counted 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_SUPERVISOR Supervisor/hypervisor context counted 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_ALL All above contexts counted 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_MIN The smallest available context 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_MAX The largest available context 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_DOM_HWSPEC Something other than CPU like stuff\&. Individual components can decode low order bits for more meaning
 .PP
 .br

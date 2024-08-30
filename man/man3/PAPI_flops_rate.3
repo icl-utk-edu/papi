@@ -1,4 +1,4 @@
-.TH "PAPI_flops_rate" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_flops_rate" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -33,28 +33,28 @@ int \fBPAPI_flops_rate\fP ( int event, float *rtime, float *ptime, long long *fl
 .PP
 \fBReturn values\fP
 .RS 4
-\fIPAPI_EINVAL\fP The counters were already started by something other than \fBPAPI_flops_rate()\fP\&. 
+\fIPAPI_EINVAL\fP The counters were already started by something other than PAPI_flops_rate()\&. 
 .br
 \fIPAPI_ENOEVNT\fP The floating point operations event does not exist\&. 
 .br
 \fIPAPI_ENOMEM\fP Insufficient memory to complete the operation\&.
 .RE
 .PP
-The first call to \fBPAPI_flops_rate()\fP will initialize the PAPI interface, set up the counters to monitor the floating point operations event and start the counters\&.
+The first call to PAPI_flops_rate() will initialize the PAPI interface, set up the counters to monitor the floating point operations event and start the counters\&.
 .PP
-Subsequent calls will read the counters and return real time, process time, floating point operations and the Mflop/s rate since the latest call to \fBPAPI_flops_rate()\fP\&.
+Subsequent calls will read the counters and return real time, process time, floating point operations and the Mflop/s rate since the latest call to PAPI_flops_rate()\&.
 .PP
-\fBPAPI_flops_rate()\fP returns information related to theoretical floating point operations rather than simple instructions\&. It uses the floating point operations event which attempts to 'correctly' account for, e\&.g\&., FMA undercounts and FP Store overcounts\&. Note that \fBPAPI_flops_rate()\fP is thread-safe and can therefore be called by multiple threads\&.
+PAPI_flops_rate() returns information related to theoretical floating point operations rather than simple instructions\&. It uses the floating point operations event which attempts to 'correctly' account for, e\&.g\&., FMA undercounts and FP Store overcounts\&. Note that PAPI_flops_rate() is thread-safe and can therefore be called by multiple threads\&.
 .PP
 \fBSee also\fP
 .RS 4
-\fBPAPI_flips_rate()\fP 
+PAPI_flips_rate() 
 .PP
-\fBPAPI_ipc()\fP 
+PAPI_ipc() 
 .PP
-\fBPAPI_epc()\fP 
+PAPI_epc() 
 .PP
-\fBPAPI_rate_stop()\fP 
+PAPI_rate_stop() 
 .RE
 .PP
 

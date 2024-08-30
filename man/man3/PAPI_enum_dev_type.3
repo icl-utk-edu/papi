@@ -1,4 +1,4 @@
-.TH "PAPI_enum_dev_type" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_enum_dev_type" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -46,7 +46,7 @@ while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
 
 .fi
 .PP
- \fBPAPI_enum_dev_type()\fP allows the user to access all device types in the system\&. It takes an enumerator modifier that allows users to enumerate only devices of a predefined type and it returns an opaque handler that users can pass to other functions in order to query device type attributes\&.
+ PAPI_enum_dev_type() allows the user to access all device types in the system\&. It takes an enumerator modifier that allows users to enumerate only devices of a predefined type and it returns an opaque handler that users can pass to other functions in order to query device type attributes\&.
 .RE
 .PP
 \fBSee also\fP
