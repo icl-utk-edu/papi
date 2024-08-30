@@ -1,4 +1,4 @@
-.TH "PAPI_sprofil" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_sprofil" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,27 +15,26 @@ PAPI_sprofil \- Generate PC histogram data from multiple code regions where hard
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags )\fP;
+int PAPI_sprofil( PAPI_sprofil_t * prof, int profcnt, int EventSet, int EventCode, int threshold, int flags );
 .RE
 .PP
 \fBParameters\fP
 .RS 4
 \fI*prof\fP pointer to an array of \fBPAPI_sprofil_t\fP structures\&. Each copy of the structure contains the following: 
 .PD 0
-
-.IP "\(bu" 2
+.IP "\(bu" 1
 buf -- pointer to a buffer of bufsiz bytes in which the histogram counts are stored in an array of unsigned short, unsigned int, or unsigned long long values, or 'buckets'\&. The size of the buckets is determined by values in the flags argument\&. 
-.IP "\(bu" 2
+.IP "\(bu" 1
 bufsiz -- the size of the histogram buffer in bytes\&. It is computed from the length of the code region to be profiled, the size of the buckets, and the scale factor as discussed below\&. 
-.IP "\(bu" 2
+.IP "\(bu" 1
 offset -- the start address of the region to be profiled\&. 
-.IP "\(bu" 2
+.IP "\(bu" 1
 scale -- broadly and historically speaking, a contraction factor that indicates how much smaller the histogram buffer is than the region to be profiled\&. More precisely, scale is interpreted as an unsigned 16-bit fixed-point fraction with the decimal point implied on the left\&. Its value is the reciprocal of the number of addresses in a subdivision, per counter of histogram buffer\&.
 .PP
 .br
 \fIprofcnt\fP number of structures in the prof array for hardware profiling\&. 
 .br
-\fIEventSet\fP The PAPI EventSet to profile\&. This EventSet is marked as profiling-ready, but profiling doesn't actually start until a \fBPAPI_start()\fP call is issued\&. 
+\fIEventSet\fP The PAPI EventSet to profile\&. This EventSet is marked as profiling-ready, but profiling doesn't actually start until a PAPI_start() call is issued\&. 
 .br
 \fIEventCode\fP Code of the Event in the EventSet to profile\&. This event must already be a member of the EventSet\&. 
 .br
@@ -48,12 +47,12 @@ scale -- broadly and historically speaking, a contraction factor that indicates 
 .PP
 \fBReturn values\fP
 .RS 4
-\fIReturn\fP values for \fBPAPI_sprofil()\fP are identical to those for \fBPAPI_profil\fP\&. Please refer to that page for further details\&.  
+\fIReturn\fP values for PAPI_sprofil() are identical to those for \fBPAPI_profil\fP\&. Please refer to that page for further details\&.  
 
  
 .RE
 .PP
-\fBPAPI_sprofil()\fP is a structure driven profiler that profiles one or more disjoint regions of code in a single call\&. It accepts a pointer to a preinitialized array of sprofil structures, and initiates profiling based on the values contained in the array\&. Each structure in the array defines the profiling parameters that are normally passed to \fBPAPI_profil()\fP\&. For more information on profiling, \fBPAPI_profil\fP  
+PAPI_sprofil() is a structure driven profiler that profiles one or more disjoint regions of code in a single call\&. It accepts a pointer to a preinitialized array of sprofil structures, and initiates profiling based on the values contained in the array\&. Each structure in the array defines the profiling parameters that are normally passed to PAPI_profil()\&. For more information on profiling, \fBPAPI_profil\fP  
 
  
 .PP

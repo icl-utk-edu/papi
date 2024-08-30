@@ -1,4 +1,4 @@
-.TH "PAPI_shutdown" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_shutdown" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,10 +15,10 @@ PAPI_shutdown \- Finish using PAPI and free all related resources\&.
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- void \fBPAPI_shutdown( void )\fP;
+ void PAPI_shutdown( void );
 .RE
 .PP
-\fBPAPI_shutdown()\fP is an exit function used by the PAPI Library to free resources and shut down when certain error conditions arise\&. It is not necessary for the user to call this function, but doing so allows the user to have the capability to free memory and resources used by the PAPI Library\&.
+PAPI_shutdown() is an exit function used by the PAPI Library to free resources and shut down when certain error conditions arise\&. It is not necessary for the user to call this function, but doing so allows the user to have the capability to free memory and resources used by the PAPI Library\&.
 .PP
 \fBSee also\fP
 .RS 4

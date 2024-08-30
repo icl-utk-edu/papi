@@ -1,4 +1,4 @@
-.TH "PAPI_get_dev_attr" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_get_dev_attr" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -120,7 +120,7 @@ while (PAPI_OK == PAPI_enum_dev_type(enum_modifier, &handle)) {
 
 .fi
 .PP
- \fBPAPI_get_dev_type_attr()\fP allows the user to query all device type attributes\&. It takes a device type handle, returned by \fBPAPI_enum_dev_type\fP, the device sequential id and an attribute to be queried for the device and returns the attribute value\&.
+ PAPI_get_dev_type_attr() allows the user to query all device type attributes\&. It takes a device type handle, returned by \fBPAPI_enum_dev_type\fP, the device sequential id and an attribute to be queried for the device and returns the attribute value\&.
 .RE
 .PP
 \fBSee also\fP

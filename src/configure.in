@@ -6,7 +6,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 7.1.0.0, ptools-perfapi@icl.utk.edu)
+AC_INIT(PAPI, 7.2.0.0b1, ptools-perfapi@icl.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -1862,8 +1862,8 @@ for comp in $components; do
     fi
   fi
 
-  # check for intel_gpu or rocpsdk component to determine if we need -lstdc++ in LDFLAGS
-  if (test "x$comp" = "xintel_gpu" || test "x$comp" = "xrocpsdk"); then
+  # check for intel_gpu or rocp_sdk component to determine if we need -lstdc++ in LDFLAGS
+  if (test "x$comp" = "xintel_gpu" || test "x$comp" = "xrocp_sdk"); then
     LDFLAGS="$LDFLAGS -lstdc++"
   fi
 

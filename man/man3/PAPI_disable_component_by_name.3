@@ -1,4 +1,4 @@
-.TH "PAPI_disable_component_by_name" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_disable_component_by_name" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -37,10 +37,10 @@ PAPI_library_init(PAPI_VER_CURRENT);
 
 .fi
 .PP
- \fBPAPI_disable_component_by_name()\fP allows the user to disable a component before \fBPAPI_library_init()\fP time\&. This is useful if the user knows they do not with to use events from that component and want to reduce the PAPI library overhead\&.
+ PAPI_disable_component_by_name() allows the user to disable a component before PAPI_library_init() time\&. This is useful if the user knows they do not with to use events from that component and want to reduce the PAPI library overhead\&.
 .RE
 .PP
-\fBPAPI_disable_component_by_name()\fP must be called before \fBPAPI_library_init()\fP\&.
+PAPI_disable_component_by_name() must be called before PAPI_library_init()\&.
 .PP
 \fBSee also\fP
 .RS 4

@@ -4,6 +4,49 @@ order.
 For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
+===============================================================================
+PAPI 7.2.0b1 RELEASE NOTES                                          30 Aug 2024
+===============================================================================
+
+PAPI 7.2.0b1 is now available as a beta release. This release introduces a new
+component, rocp_sdk, which supports AMD GPUs/APUs through the ROCprofiler-SDK
+interface, currently still under development and testing. The release also
+includes general improvements to the PAPI code, enhancing both design and
+functionality, as well as various bug fixes.
+
+Additional Major Changes are:
+* Preliminary support for AMD ROCprofiler-SDK events
+* AMD Zen5 L3 PMU support
+* AMD Zen5 core PMU support
+* Preset support for Zen5
+* Preset support for Ice Lake ICL
+* Basic support for the RISC-V architecture (no events yet)
+* Initial heterogenous CPU support: Alderlake and Raptorlake can now enumerate events for both Power and Efficiency cores on heterogeneous systems
+* Intel AlderLake Gracemont (E-Core) core PMU support
+* Intel AlderLake Goldencove (P-Core) core PMU support
+* Intel Raptorlake PMU support: Enables support for Raptorlake, Raptorlake P, Raptorlake S
+* Intel GraniteRapids core PMU support
+* Intel SapphireRapids uncore PMU support for:
+   +++ Coherence and Home Agent (CHA)
+   +++ Ultra Path Interconnect PMU (UPI)
+   +++ memory controller PMU (IMC)
+* Intel IcelakeX uncore PMU support for:
+   +++ Mesh to IIO PMU (M2PCIE)
+   +++ UBOX PMU (UBOX)
+   +++ Mesh to UPI PMU (M3UPI)
+   +++ Ultra Path Interconnect PMU (UPI)
+   +++ Power Control unit PMU (PCU)
+   +++ Mesh to Memory PMU (M2M)
+   +++ PCIe IIO Ring Port PMU (IRP)
+   +++ PCIe I/O controller PMU (IIO)
+   +++ memory controller PMU (IMC)
+   +++ Coherency and Home Agent (CHA)
+* Sysdetect: support for ARM Neoverse V2
+* SDE: support for ntv_code_to_info functionality
+* Removed the obsolete bundled perfctr and libpfm-3.y code
+
+Acknowledgements:
+This release is the result of efforts from many people. The PAPI team would like to express special Thanks to Vince Weaver, Stephane Eranian (for libpfm4), William Cohen, Steve Kaufmann, Peinan Zhang, Rashawn Knapp and Phil Mucci.
 
 ===============================================================================
 PAPI 7.1.0 RELEASE NOTES                                            18 Dec 2023

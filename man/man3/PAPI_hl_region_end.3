@@ -1,4 +1,4 @@
-.TH "PAPI_hl_region_end" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_hl_region_end" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ PAPI_hl_region_end \- Read performance events at the end of a region and store t
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_hl_region_end( const char* region )\fP;
+int PAPI_hl_region_end( const char* region );
 .RE
 .PP
 \fBParameters\fP
@@ -40,7 +40,7 @@ int \fBPAPI_hl_region_end( const char* region )\fP;
 .PP
 Assumes that \fBPAPI_hl_region_begin\fP was called before\&.
 .PP
-Note that \fBPAPI_hl_region_end\fP does not stop counting the performance events\&. Counting continues until the application terminates\&. Therefore, the programmer can also create nested regions if required\&. To stop a running high-level event set, the programmer must call \fBPAPI_hl_stop()\fP\&. It should also be noted, that a marked region is thread-local and therefore has to be in the same thread\&.
+Note that \fBPAPI_hl_region_end\fP does not stop counting the performance events\&. Counting continues until the application terminates\&. Therefore, the programmer can also create nested regions if required\&. To stop a running high-level event set, the programmer must call PAPI_hl_stop()\&. It should also be noted, that a marked region is thread-local and therefore has to be in the same thread\&.
 .PP
 An output of the measured events is created automatically after the application exits\&. In the case of a serial, or a thread-parallel application there is only one output file\&. MPI applications would be saved in multiple files, one per MPI rank\&. The output is generated in the current directory by default\&. However, it is recommended to specify an output directory for larger measurements, especially for MPI applications via the environment variable PAPI_OUTPUT_DIRECTORY\&. In the case where measurements are performed, while there are old measurements in the same directory, PAPI will not overwrite or delete the old measurement directories\&. Instead, timestamps are added to the old directories\&.
 .PP
