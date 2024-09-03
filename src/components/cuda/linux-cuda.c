@@ -157,6 +157,8 @@ static int cuda_shutdown_component(void)
 
     _cuda_vector.cmp_info.initialized = 0;
 
+    printf("We call shutdown.\n");
+
     return cuptid_shutdown();
 }
 
@@ -312,47 +314,49 @@ static int cuda_set_domain(hwd_control_state_t __attribute__((unused)) *ctrl, in
 
 static int update_native_events(cuda_control_t *, NativeInfo_t *, int);
 
-int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
+static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
                               int ntv_count,
                               hwd_context_t *ctx __attribute__((unused)))
-{   
+{  
     SUBDBG("ENTER: ctl: %p, ntv_info: %p, ntv_count: %d, ctx: %p\n", ctl, ntv_info, ntv_count, ctx);
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
-        goto fn_fail;
+        goto fn_exit;
     }
 
+    /* needed to make sure multipass works properly (PAPI_EMULPASS)*/
+    if (ntv_count == 0) {
+        return PAPI_OK;
+    }
+
+    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
     /* allocating memoory for total number of devices */
     if (cuda_ctl->info == NULL) {
         papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
         if (papi_errno != PAPI_OK) {
-            printf("We fail to create.\n");
             goto fn_exit;
         }   
     }
- 
+
     if (cuda_ctl->cuptid_ctx != NULL) {
-        printf("We fail to update control state.\n");
         SUBDBG("Cannot update events in an eventset that has been already "
                "started.");
         papi_errno = PAPI_ECMP;
-        goto fn_fail;
+        goto fn_exit;
     } 
-
+   
     papi_errno = update_native_events(cuda_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
-        goto fn_fail;
+        goto fn_exit;
     }
 
-   /* Do I need to add a try_open_events()? */
+    papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
 
-  fn_exit:
+fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
-  fn_fail:
-    goto fn_exit;
 }
 
 struct event_map_item {

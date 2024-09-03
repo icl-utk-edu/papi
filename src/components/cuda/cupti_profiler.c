@@ -1637,8 +1637,6 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     /* multipass is not supporter; therefore, we must check the Cuda native event */
     papi_errno = check_multipass(state);
     if (papi_errno != PAPI_OK) {
-        printf("We fail on check_multipass.\n");
-        printf("%s\n", PAPI_strerror(papi_errno));
         goto fn_exit;
     }
     state->info = thr_info;
