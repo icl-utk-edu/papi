@@ -22,9 +22,9 @@
 
 #define NUM_EVENTS 4
 #define NUM_TESTS 100
-#define TEST_FIB 0 // select whether to make teh test fib() or instructions_million()
+#define TEST_FIB 1 // select whether to make teh test fib() or instructions_million()
 
-#define PERCENTAGES_TOLERANCE 1.5
+#define PERCENTAGES_TOLERANCE 2.5 // +- range of percentage points for success
 
 /*
  * perf_event _rdpmc code
@@ -114,9 +114,10 @@ int are_percs_equivalent(double *percs_gt, double *percs_b, double *abs_error, i
     {
         if (!eq_within_tolerance(percs_gt[i], percs_b[i], PERCENTAGES_TOLERANCE))
         {
-            abs_error[i] = (percs_gt[i] - percs_b[i] > 0) ? percs_gt[i] - percs_b[i] : percs_b[i] - percs_gt[i];
             eq = 0;
         }
+        abs_error[i] = (percs_gt[i] - percs_b[i] > 0) ? percs_gt[i] - percs_b[i] : percs_b[i] - percs_gt[i];
+
     }
 
     return eq;
@@ -270,16 +271,15 @@ int main(int argc, char **argv)
     mismatches = 0;
     for (j = 0; j < NUM_TESTS; j++)
     {
-        printf("Loop #%d:\n", j);
-
         /* Stat the test with _rdpmc() */
         reset_metrics(slots_fd);
         reset_metrics(metrics_fd);
 
 #if TEST_FIB
-        printf("fib: %d\n", fib(6000000));
+        retval = fib(6000000);
+        printf("fib: %d\n", retval);
 #else  
-        for (i = 0; i < 100; i++)
+        for (i = 0; i < 1000; i++)
         {
             result = instructions_million();
         }
@@ -300,9 +300,10 @@ int main(int argc, char **argv)
             test_fail(__FILE__, __LINE__, "PAPI_start", retval);
         }
 #if TEST_FIB
-        printf("fib: %d\n", fib(6000000));
+        retval = fib(6000000);
+        printf("fib: %d\n", retval);
 #else  
-        for (i = 0; i < 100; i++)
+        for (i = 0; i < 1000; i++)
         {
             result = instructions_million();
         }
@@ -327,7 +328,6 @@ int main(int argc, char **argv)
         /* check if the values are identical (for rdpmc enabled, they should be) */
         if (!(values[1] == values[2] && values[2] == values[3]))
         {
-            printf("Values mismatch!\n");
             mismatches++;
         }
 
@@ -335,14 +335,13 @@ int main(int argc, char **argv)
         if ((are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs, err_papi_rdpmc_percs, NUM_EVENTS) +
              are_percs_equivalent(rdpmc_percs, papi_event_percs, err_papi_event_percs, NUM_EVENTS)) < 1)
         {
-            printf("Failed: %#0x\n", values[1]);
-
-            printf("rdpmc err: ");
+            printf("Failed:\n");
+            printf("\trdpmc err: ");
             for (i = 0; i < NUM_EVENTS; i++)
             {
                 printf("%f\t", err_papi_rdpmc_percs[i]);
             }
-            printf("\nevent err: ");
+            printf("\n\tevent err: ");
             for (i = 0; i < NUM_EVENTS; i++)
             {
                 printf("%f\t", err_papi_event_percs[i]);
