@@ -139,7 +139,7 @@ static int cuda_init_component(int cidx)
     _cuda_vector.cmp_info.num_native_events = -1;
     _cuda_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-    _cuda_vector.cmp_info.initialized = 1;
+    //_cuda_vector.cmp_info.initialized = 1;
     _cuda_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
     sprintf(_cuda_vector.cmp_info.disabled_reason,
         "Not initialized. Access component events to initialize it.");
@@ -164,40 +164,46 @@ static int cuda_shutdown_component(void)
 
 static int cuda_init_private(void)
 {
-    int papi_errno = PAPI_OK, count = 0;
+    int papi_errno = PAPI_OK, len, count = 0;
     const char *disabled_reason;
-    COMPDBG("Entering.\n");
+
+    _papi_hwi_lock(COMPONENT_LOCK);
+    SUBDBG("ENTER\n");
 
     papi_errno = cuptid_init();
     if (papi_errno != PAPI_OK) {
+        /* get and assign the string literal for the disabled reason */
         cuptid_disabled_reason_get(&disabled_reason);
-        sprintf(_cuda_vector.cmp_info.disabled_reason, "%s", disabled_reason);
-        _cuda_vector.cmp_info.disabled = papi_errno;
-        goto fn_exit;
+        len = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", disabled_reason);
+        if (len > PAPI_MAX_STR_LEN) {
+            SUBDBG("The disabled reason has been truncated.\n");
+        }
+        goto fn_fail;
     }
 
-    _cuda_vector.cmp_info.disabled = PAPI_OK;
     strcpy(_cuda_vector.cmp_info.disabled_reason, "");
 
+    /* get the number of native events count */
     papi_errno = cuda_get_evt_count(&count);
     _cuda_vector.cmp_info.num_native_events = count;
 
-fn_exit:
+  fn_exit:
+    _cuda_vector.cmp_info.initialized = 1;
+    _cuda_vector.cmp_info.disabled = papi_errno;
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    _papi_hwi_unlock(COMPONENT_LOCK);
     return papi_errno;
+  fn_fail:
+    goto fn_exit;
 }
 
 static int check_n_initialize(void)
 {
-    _papi_hwi_lock(COMPONENT_LOCK);
-    int papi_errno = PAPI_OK;
-    if (_cuda_vector.cmp_info.initialized
-        && _cuda_vector.cmp_info.disabled == PAPI_EDELAY_INIT
-    ) {
-        papi_errno = cuda_init_private();
+    if (!_cuda_vector.cmp_info.initialized) {
+        return cuda_init_private();
     }
 
-    _papi_hwi_unlock(COMPONENT_LOCK);
-    return papi_errno;
+    return _cuda_vector.cmp_info.disabled;
 }
 
 static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
@@ -289,6 +295,11 @@ fn_fail:
 
 static int cuda_init_thread(hwd_context_t *ctx)
 {
+    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
+    memset(cuda_ctx, 0, sizeof(*cuda_ctx));
+    cuda_ctx->initialized = 1;
+    cuda_ctx->component_id = _cuda_vector.cmp_info.CmpIdx;
+
     return PAPI_OK;
 }
 
@@ -329,8 +340,15 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
         return PAPI_OK;
     }
 
-    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+
+   if (cuda_ctl->cuptid_ctx != NULL) {
+       printf("We enter the following if statement.\n");
+       SUBDBG("Cannot update events in an eventset that has been already "
+              "started.");
+       papi_errno = PAPI_ECMP;
+       goto fn_exit;
+   } 
 
     /* allocating memoory for total number of devices */
     if (cuda_ctl->info == NULL) {
@@ -339,20 +357,14 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
             goto fn_exit;
         }   
     }
-
-    if (cuda_ctl->cuptid_ctx != NULL) {
-        SUBDBG("Cannot update events in an eventset that has been already "
-               "started.");
-        papi_errno = PAPI_ECMP;
-        goto fn_exit;
-    } 
    
     papi_errno = update_native_events(cuda_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-
-    papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+    
+    /* do you need this here?*/
+    //papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
