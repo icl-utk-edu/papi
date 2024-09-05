@@ -284,11 +284,27 @@ intel_gpu_update_control_state( hwd_control_state_t *ctl,
 	(void)ctl;
 
 	// use local maintained context,
-	if (!count ||!native)  {
+	MetricContext *mContext = (MetricContext *)ctx;
+
+    /* This check accounts for calls to PAPI_destroy_eventset(). */
+	if ( !count )  {
+	    for (uint32_t i=0; i<mContext->num_devices; i++) {
+		    uint32_t dev_idx = mContext->active_devices[i];
+		    if (dev_idx >= num_active_devices) {
+			    return PAPI_ENOMEM;
+		    }
+		    DeviceContext *dev = &active_devices[dev_idx];
+		    DEVICE_HANDLE handle = dev->handle;
+            if( !handle ) {
+		        GPUFreeDevice(handle);
+            }
+	    }
 		return PAPI_OK;
 	}
 
-	MetricContext *mContext = (MetricContext *)ctx;
+	if ( !native ) {
+		return PAPI_OK;
+	}
 
 #if defined(_DEBUG)
 	for (int i=0; i<count; i++) {

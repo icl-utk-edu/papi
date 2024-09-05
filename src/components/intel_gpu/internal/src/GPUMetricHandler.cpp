@@ -1230,18 +1230,6 @@ int GPUMetricHandler::EnableTimeBasedStream(uint32_t timePeriod, uint32_t numRep
 	} else {
 		DebugPrintError("EnableTimeBasedStream: failed on device [%p], status 0x%x\n", 
 						m_device, status);
-		if (m_metricStreamer) {
-			status = zetMetricStreamerCloseFunc(m_metricStreamer);
-			m_metricStreamer = nullptr;
-		}
-		if (m_event) {
-			status = zeEventDestroyFunc(m_event);
-			m_event = nullptr;
-		}
-		if (m_eventPool) {
-			status = zeEventPoolDestroyFunc(m_eventPool);
-			m_eventPool = nullptr;
-		}
 		status = zetContextActivateMetricGroupsFunc(m_context, m_device, 0, nullptr);
 		m_status = COLLECTION_INIT;
 		ret = 1;
@@ -1331,22 +1319,6 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		ret  = 0;
 	} else {
 		DebugPrintError("EnableEventBasedQuery: failed with status 0x%x, abort.\n", status);
-		if (m_tracer) {
-			status = zetTracerExpDestroyFunc(m_tracer);
-			m_tracer = nullptr;
-		}
-		if (m_event) {
-			status = zeEventDestroyFunc(m_event);
-			m_event = nullptr;
-		}
-		if (m_eventPool) {
-			status = zeEventPoolDestroyFunc(m_eventPool);
-			m_eventPool = nullptr;
-		}
-		if (m_queryPool) {
-			status = zetMetricQueryPoolDestroyFunc(m_queryPool);
-			m_queryPool = nullptr;
-		}
 		status = zetContextActivateMetricGroupsFunc(m_context, m_device, 0, nullptr);
 		m_status = COLLECTION_INIT;
 		ret  = retError;
@@ -1374,31 +1346,6 @@ GPUMetricHandler::DisableMetricGroup()
 	   return;
 	}
 	m_status = COLLECTION_DISABLED;
-
-	if (m_groupType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
-		if (m_metricStreamer) {
-			zetMetricStreamerCloseFunc(m_metricStreamer);
-			m_metricStreamer = nullptr;
-		}
-	}
-	if (m_groupType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED) {
-		if (m_tracer) {
-			zetTracerExpDestroyFunc(m_tracer);
-			m_tracer = nullptr;
-		}
-		if (m_queryPool) {
-			zetMetricQueryPoolDestroyFunc(m_queryPool);
-			m_queryPool = nullptr;
-		}
-	}
-	if (m_event) {
-		zeEventDestroyFunc(m_event);
-		m_event = nullptr;
-	}
-	if (m_eventPool) {
-		zeEventPoolDestroyFunc(m_eventPool);
-		m_eventPool = nullptr;
-	}
 	zetContextActivateMetricGroupsFunc(m_context,  m_device, 0, nullptr);
 	m_lock.unlock();
 	return;
