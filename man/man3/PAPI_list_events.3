@@ -1,4 +1,4 @@
-.TH "PAPI_list_events" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_list_events" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -11,7 +11,7 @@ PAPI_list_events \- list the events in an event set
 .PP 
 List the events in an event set\&.
 .PP
-\fBPAPI_list_events()\fP returns an array of events and a count of the total number of events in an event set\&. This call assumes an initialized PAPI library and a successfully created event set\&.
+PAPI_list_events() returns an array of events and a count of the total number of events in an event set\&. This call assumes an initialized PAPI library and a successfully created event set\&.
 .PP
 \fBC Interface\fP
 .RS 4
@@ -73,7 +73,6 @@ exit(1);
 .PP
 \fBPAPI_create_eventset\fP
 .RE
-.PP
 .PP
 \fBFortran Interface:\fP
 .RS 4

@@ -1,4 +1,4 @@
-.TH "PAPI_overflow" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_overflow" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,7 +9,7 @@ PAPI_overflow \- Set up an event set to begin registering overflows\&.
 .PP
 .SH "Detailed Description"
 .PP 
-\fBPAPI_overflow()\fP marks a specific EventCode in an EventSet to generate an overflow signal after every threshold events are counted\&. More than one event in an event set can be used to trigger overflows\&. In such cases, the user must call this function once for each overflowing event\&. To turn off overflow on a specified event, call this function with a threshold value of 0\&.
+PAPI_overflow() marks a specific EventCode in an EventSet to generate an overflow signal after every threshold events are counted\&. More than one event in an event set can be used to trigger overflows\&. In such cases, the user must call this function once for each overflowing event\&. To turn off overflow on a specified event, call this function with a threshold value of 0\&.
 .PP
 Overflows can be implemented in either software or hardware, but the scope is the entire event set\&. PAPI defaults to hardware overflow if it is available\&. In the case of software overflow, a periodic timer interrupt causes PAPI to compare the event counts against the threshold values and call the overflow handler if one or more events have exceeded their threshold\&. In the case of hardware overflow, the counters are typically set to the negative of the threshold value and count up to 0\&. This zero-crossing triggers a hardware interrupt that calls the overflow handler\&. Because of this counter interrupt, the counter values for overflowing counters may be very small or even negative numbers, and cannot be relied upon as accurate\&. In such cases the overflow handler can approximate the counts by supplying the threshold value whenever an overflow occurs\&.
 .PP

@@ -1,4 +1,4 @@
-.TH "PAPI_state" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_state" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ PAPI_state \- Return the counting state of an EventSet\&.
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
- int \fBPAPI_state( int  EventSet, int * status )\fP;
+ int PAPI_state( int  EventSet, int * status );
 .RE
 .PP
 \fBParameters\fP
@@ -24,24 +24,23 @@ PAPI_state \- Return the counting state of an EventSet\&.
 .br
 \fIstatus\fP -- an integer containing a boolean combination of one or more of the following nonzero constants as defined in the PAPI header file \fBpapi\&.h\fP: 
 .PD 0
-
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_STOPPED -- EventSet is stopped 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_RUNNING -- EventSet is running 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_PAUSED -- EventSet temporarily disabled by the library 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_NOT_INIT -- EventSet defined, but not initialized 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_OVERFLOWING -- EventSet has overflowing enabled 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_PROFILING -- EventSet has profiling enabled 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_MULTIPLEXING -- EventSet has multiplexing enabled 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_ACCUMULATING -- reserved for future use 
-.IP "\(bu" 2
+.IP "\(bu" 1
 PAPI_HWPROFILING -- reserved for future use  
  
 .PP
@@ -57,7 +56,7 @@ PAPI_HWPROFILING -- reserved for future use
  
 .RE
 .PP
-\fBPAPI_state()\fP returns the counting state of the specified event set\&.  
+PAPI_state() returns the counting state of the specified event set\&.  
  
 .PP
 \fBExample:\fP
