@@ -21,9 +21,9 @@
 #include <sys/ioctl.h>
 
 #define NUM_EVENTS 5
-#define NUM_TESTS 1
+#define NUM_TESTS 100
 
-#define PERCENTAGES_TOLERANCE 2.5 // +- range of percentage points for success
+#define PERCENTAGES_TOLERANCE 1.5 // +- range of percentage points for success
 
 /*
  * perf_event _rdpmc code
@@ -114,6 +114,8 @@ int main(int argc, char **argv)
     double percs_perf_rdpmc[4] = {0, 0, 0, 0};
     double percs_papi_event[4] = {0, 0, 0, 0};
     double percs_papi_rdpmc[4] = {0, 0, 0, 0};
+    double papi_event_error[4] = {0, 0, 0, 0};
+    double papi_rdpmc_error[4] = {0, 0, 0, 0};
 
     long long values[NUM_EVENTS];
 
@@ -317,7 +319,9 @@ int main(int argc, char **argv)
     /* Run some test code    */
     /*************************/
 
+    failures = 0;
     // test Level 1 topdown events
+    printf("Testing L1 Topdown Events\n");
     for (i = 0; i < NUM_TESTS; i++)
     {
         // first get the ground truth (perf_event rdpmc)
@@ -334,33 +338,39 @@ int main(int argc, char **argv)
         PAPI_stop(EventSetL1, values);
 
         // get percentages from perf_event rdpmc
-        printf("perf_event: ");
         for (j = 0; j < 4; j++)
         {
             percs_perf_rdpmc[j] = rdpmc_get_metric(metrics_val, j);
         }
-        print_percs(percs_perf_rdpmc);
 
         // get percentages from papi_event (assuming rdpmc)
-        printf("papi_rdpmc: ");
-        for (j = 1; j < NUM_EVENTS; j++)
+        for (j = 0; j < NUM_EVENTS-1; j++)
         {
-            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j], j);
+            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j+1], j);
         }  
-        print_percs(percs_papi_rdpmc);
    
         // get percentages from papi_event (assuming non-rdpmc)
-        printf("papi_event: ");
-        for (j = 1; j < NUM_EVENTS; j++)
+        for (j = 0; j < NUM_EVENTS-1; j++)
         {
-            //printf("%llu\t", values[j]);
-            percs_papi_event[j-1] = (double)values[j] / (double)values[0] * 100.0;
+            percs_papi_event[j] = (double)values[j+1] / (double)values[0] * 100.0;
         }  
-        print_percs(percs_papi_event);
+
+        // if neither result matches perf_event rdpmc, we fail
+        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) + 
+            are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1) {
+                failures++;
+                printf("rdpmc error - "); 
+                print_percs(papi_rdpmc_error);
+                printf("event error - ");
+                print_percs(papi_event_error);
+        }
     }
 
-    return 0;
+    printf("\tPassed %d/%d tests\n", NUM_TESTS-failures, NUM_TESTS);
+
+    failures = 0;
     // test Level 2 topdown events
+    printf("Testing L2 Topdown Events\n");
     for (i = 0; i < NUM_TESTS; i++)
     {
         // first get the ground truth (perf_event rdpmc)
@@ -373,9 +383,40 @@ int main(int argc, char **argv)
         metrics_val = read_metrics();
 
         // then try out papi
-        PAPI_start(EventSetL1);
+        PAPI_start(EventSetL2);
         for (j = 0; j < 100; j++)
             ret = instructions_million();
-        PAPI_stop(EventSetL1, values);
+        PAPI_stop(EventSetL2, values);
+
+        // get percentages from perf_event rdpmc
+        for (j = 0; j < 4; j++)
+        {
+            percs_perf_rdpmc[j] = rdpmc_get_metric(metrics_val, j+4);
+        }
+
+        // get percentages from papi_event (assuming rdpmc)
+        for (j = 0; j < NUM_EVENTS-1; j++)
+        {
+            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j+1], j+4);
+        }  
+   
+        // get percentages from papi_event (assuming non-rdpmc)
+        for (j = 0; j < NUM_EVENTS-1; j++)
+        {
+            percs_papi_event[j] = (double)values[j+1] / (double)values[0] * 100.0;
+        }  
+
+        // if neither result matches perf_event rdpmc, we fail
+        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) + 
+            are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1) {
+                failures++;
+                printf("rdpmc error - "); 
+                print_percs(papi_rdpmc_error);
+                printf("event error - ");
+                print_percs(papi_event_error);
+        }
     }
+
+    printf("\tPassed %d/%d tests\n", NUM_TESTS-failures, NUM_TESTS);
+
 }
