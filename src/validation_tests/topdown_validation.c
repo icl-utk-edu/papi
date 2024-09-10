@@ -20,9 +20,9 @@
 #include <x86intrin.h>
 #include <sys/ioctl.h>
 
-#define NUM_EVENTS 4
+#define NUM_EVENTS 5
 #define NUM_TESTS 100
-#define TEST_FIB 1 // select whether to make teh test fib() or instructions_million()
+#define TEST_FIB 1 // select whether to make the test fib() or instructions_million()
 
 #define PERCENTAGES_TOLERANCE 2.5 // +- range of percentage points for success
 
@@ -33,7 +33,7 @@
 #define RDPMC_FIXED (1 << 30)  /* return fixed counters */
 #define RDPMC_METRIC (1 << 29) /* return metric counters */
 
-#define FIXED_COUNTER_SLOTS 3 /* on raptorlake it is fiex counter 3 */
+#define FIXED_COUNTER_SLOTS 3 /* on raptorlake it is fixed counter 3 */
 #define METRIC_COUNTER_TOPDOWN_L1_L2 0
 
 __attribute__((weak)) int perf_event_open(struct perf_event_attr *attr, pid_t pid,
@@ -72,7 +72,7 @@ float rdpmc_get_metric(u_int64_t m, int i)
     return (float)(((m) >> (i * 8)) & 0xff) / 0xff * 100.0;
 }
 
-/* takes a metric integer and populates the array with individual percentages */
+/* takes a metric value and populates the array with individual percentages */
 /* in order: retiring, bad spec, fe bound, be bound */
 void topdown_get_from_metrics(double *percentages, uint64_t metrics)
 {
@@ -89,7 +89,9 @@ void topdown_get_from_events(double *percentages, uint64_t slots, uint64_t retir
     percentages[0] = (double)retiring / (double)slots * 100.0;
     percentages[1] = (double)badspec / (double)slots * 100.0;
     percentages[3] = (double)be_bound / (double)slots * 100.0;
-    percentages[2] = 100.0 - percentages[0] - percentages[1] - percentages[3];
+
+    // TODO: Once libpfm4 adds the frontend_bound event, use that instead
+    percentages[2] = 100.0 - percentages[0] - percentages[1] - percentages[3];  
 }
 
 void print_percs(double *percs)
@@ -143,7 +145,7 @@ int main(int argc, char **argv)
     // Set up and call the topdown events
     // Then parse as percentages and ensure it makes some sense
 
-    int retval, tmp, result, i, j, failures, mismatches;
+    int retval, tmp, result, i, j, failures;
     uint64_t rdpmc_slots, rdpmc_metrics;
     int EventSet1 = PAPI_NULL;
     long long values[NUM_EVENTS];
@@ -244,6 +246,15 @@ int main(int argc, char **argv)
         test_skip(__FILE__, __LINE__, "adding TOPDOWN:BAD_SPEC_SLOTS", retval);
     }
 
+    /* Add TOPDOWN:FRONTEND_BOUND_SLOTS */
+    retval = PAPI_add_named_event(EventSet1, "TOPDOWN:FRONTEND_BOUND_SLOTS");
+    if (retval != PAPI_OK)
+    {
+        if (!quiet)
+            printf("Trouble adding TOPDOWN:FRONTEND_BOUND_SLOTS\n");
+        test_skip(__FILE__, __LINE__, "adding TOPDOWN:FRONTEND_BOUND_SLOTS", retval);
+    }
+
     /* Add TOPDOWN:BACKEND_BOUND_SLOTS */
     retval = PAPI_add_named_event(EventSet1, "TOPDOWN:BACKEND_BOUND_SLOTS");
     if (retval != PAPI_OK)
@@ -325,12 +336,6 @@ int main(int argc, char **argv)
         for (i = 0; i < NUM_EVENTS; i++)
             avg_papi_event_percs[i] += papi_event_percs[i];
 
-        /* check if the values are identical (for rdpmc enabled, they should be) */
-        if (!(values[1] == values[2] && values[2] == values[3]))
-        {
-            mismatches++;
-        }
-
         /* check that the percentages match _rdpmc syscall */
         if ((are_percs_equivalent(rdpmc_percs, papi_rdpmc_percs, err_papi_rdpmc_percs, NUM_EVENTS) +
              are_percs_equivalent(rdpmc_percs, papi_event_percs, err_papi_event_percs, NUM_EVENTS)) < 1)
@@ -367,7 +372,6 @@ int main(int argc, char **argv)
     printf("Averaged percentages for PAPI events:\n");
     print_percs(avg_papi_event_percs);
 
-    printf("There were %d mismatches\n", mismatches);
     printf("There were %d failures\n", failures);
     if (failures > 0)
     {
