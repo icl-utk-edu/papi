@@ -1468,7 +1468,7 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 			ret=ioctl( pe_ctl->events[i].event_fd,
 				PERF_EVENT_IOC_ENABLE, NULL) ;
 			if (_perf_event_vector.cmp_info.fast_counter_read) {
-				pe_ctl->reset_counts[i] = 0LL;
+				//pe_ctl->reset_counts[i] = 0LL;
 				//pe_ctl->reset_flag = 0;
 			}
 

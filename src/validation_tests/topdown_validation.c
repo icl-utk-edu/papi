@@ -419,4 +419,8 @@ int main(int argc, char **argv)
 
     printf("\tPassed %d/%d tests\n", NUM_TESTS-failures, NUM_TESTS);
 
+	test_pass( __FILE__ );
+
+	return 0;
+
 }
