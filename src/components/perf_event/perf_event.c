@@ -1467,9 +1467,9 @@ _pe_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 				pe_ctl->events[i].event_fd);
 			ret=ioctl( pe_ctl->events[i].event_fd,
 				PERF_EVENT_IOC_ENABLE, NULL) ;
-			if (_perf_event_vector.cmp_info.fast_counter_read) {
-				//pe_ctl->reset_counts[i] = 0LL;
-				//pe_ctl->reset_flag = 0;
+			if (_perf_event_vector.cmp_info.fast_counter_read && !pe_ctl->events[i].metric) {
+				pe_ctl->reset_counts[i] = 0LL;
+				pe_ctl->reset_flag = 0;
 			}
 
 			/* ioctls always return -1 on failure */
@@ -1622,6 +1622,13 @@ _pe_update_control_state( hwd_control_state_t *ctl,
 //				pe_ctl->events[i].attr.exclude_hv = !(pe_ctl->domain & PAPI_DOM_SUPERVISOR);
 //			}
 
+			/* Intel's topdown events need to be handled differently than normal events  */
+			/* They are instantaneous values and should not be accumulated. In case more */
+			/* types of events like this are discovered, the 'metric' flag is set to     */
+			/* handle this behavior. */
+			if (strcmp(ntv_evt->base_name, "TOPDOWN") == 0) {
+				pe_ctl->events[i].metric = 1;
+			}
 
 			// set the cpu number provided with an event mask if there was one (will be -1 if mask not provided)
 			pe_ctl->events[i].cpu = ntv_evt->cpu;

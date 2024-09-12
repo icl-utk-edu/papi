@@ -344,29 +344,31 @@ int main(int argc, char **argv)
         }
 
         // get percentages from papi_event (assuming rdpmc)
-        for (j = 0; j < NUM_EVENTS-1; j++)
+        for (j = 0; j < NUM_EVENTS - 1; j++)
         {
-            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j+1], j);
-        }  
-   
+            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j + 1], j);
+        }
+
         // get percentages from papi_event (assuming non-rdpmc)
-        for (j = 0; j < NUM_EVENTS-1; j++)
+        for (j = 0; j < NUM_EVENTS - 1; j++)
         {
-            percs_papi_event[j] = (double)values[j+1] / (double)values[0] * 100.0;
-        }  
+            percs_papi_event[j] = (double)values[j + 1] / (double)values[0] * 100.0;
+        }
 
         // if neither result matches perf_event rdpmc, we fail
-        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) + 
-            are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1) {
-                failures++;
-                printf("rdpmc error - "); 
-                print_percs(papi_rdpmc_error);
-                printf("event error - ");
-                print_percs(papi_event_error);
+        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) +
+                are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) <
+            1)
+        {
+            failures++;
+            printf("rdpmc error - ");
+            print_percs(papi_rdpmc_error);
+            printf("event error - ");
+            print_percs(papi_event_error);
         }
     }
 
-    printf("\tPassed %d/%d tests\n", NUM_TESTS-failures, NUM_TESTS);
+    printf("\tPassed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
 
     failures = 0;
     // test Level 2 topdown events
@@ -391,36 +393,36 @@ int main(int argc, char **argv)
         // get percentages from perf_event rdpmc
         for (j = 0; j < 4; j++)
         {
-            percs_perf_rdpmc[j] = rdpmc_get_metric(metrics_val, j+4);
+            percs_perf_rdpmc[j] = rdpmc_get_metric(metrics_val, j + 4);
         }
 
         // get percentages from papi_event (assuming rdpmc)
-        for (j = 0; j < NUM_EVENTS-1; j++)
+        for (j = 0; j < NUM_EVENTS - 1; j++)
         {
-            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j+1], j+4);
-        }  
-   
+            percs_papi_rdpmc[j] = rdpmc_get_metric(values[j + 1], j + 4);
+        }
+
         // get percentages from papi_event (assuming non-rdpmc)
-        for (j = 0; j < NUM_EVENTS-1; j++)
+        for (j = 0; j < NUM_EVENTS - 1; j++)
         {
-            percs_papi_event[j] = (double)values[j+1] / (double)values[0] * 100.0;
-        }  
+            percs_papi_event[j] = (double)values[j + 1] / (double)values[0] * 100.0;
+        }
 
         // if neither result matches perf_event rdpmc, we fail
-        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) + 
-            are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1) {
-                failures++;
-                printf("rdpmc error - "); 
-                print_percs(papi_rdpmc_error);
-                printf("event error - ");
-                print_percs(papi_event_error);
+        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) +
+                are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1)
+        {
+            failures++;
+            printf("rdpmc error - ");
+            print_percs(papi_rdpmc_error);
+            printf("event error - ");
+            print_percs(papi_event_error);
         }
     }
 
-    printf("\tPassed %d/%d tests\n", NUM_TESTS-failures, NUM_TESTS);
+    printf("\tPassed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
 
-	test_pass( __FILE__ );
+    test_pass(__FILE__);
 
-	return 0;
-
+    return 0;
 }

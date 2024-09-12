@@ -8,17 +8,18 @@
 
 typedef struct
 {
-  int group_leader_fd;            /* fd of group leader                   */
-  int event_fd;                   /* fd of event                          */
-  int event_opened;               /* event successfully opened            */
-  int profiling;                  /* event is profiling                   */
-  int sampling;			  /* event is a sampling event            */
-  uint32_t nr_mmap_pages;         /* number pages in the mmap buffer      */
-  void *mmap_buf;                 /* used for control/profiling           */
-  uint64_t tail;                  /* current read location in mmap buffer */
-  uint64_t mask;                  /* mask used for wrapping the pages     */
-  int cpu;                        /* cpu associated with this event       */
-  struct perf_event_attr attr;    /* perf_event config structure          */
+  int group_leader_fd;            /* fd of group leader                    */
+  int event_fd;                   /* fd of event                           */
+  int event_opened;               /* event successfully opened             */
+  int profiling;                  /* event is profiling                    */
+  int sampling;			              /* event is a sampling event             */
+  int metric;                     /* event is a metric event (e.g topdown) */
+  uint32_t nr_mmap_pages;         /* number pages in the mmap buffer       */
+  void *mmap_buf;                 /* used for control/profiling            */
+  uint64_t tail;                  /* current read location in mmap buffer  */
+  uint64_t mask;                  /* mask used for wrapping the pages      */
+  int cpu;                        /* cpu associated with this event        */
+  struct perf_event_attr attr;    /* perf_event config structure           */
 } pe_event_info_t;
 
 
