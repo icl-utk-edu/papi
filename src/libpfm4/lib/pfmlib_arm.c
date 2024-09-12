@@ -161,25 +161,22 @@ pfm_arm_detect(void *this)
 		ret = pfmlib_getcpuinfo_attr("CPU implementer", buffer, sizeof(buffer));
 		if (ret == -1)
 			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.implementer = strtol(buffer, NULL, 16);
 	}
-
-        pfm_arm_cfg.implementer = strtol(buffer, NULL, 16);
    
 	if (pfm_arm_cfg.part == -1) {
 		ret = pfmlib_getcpuinfo_attr("CPU part", buffer, sizeof(buffer));
 		if (ret == -1)
 			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.part = strtol(buffer, NULL, 16);
 	}
-
-	pfm_arm_cfg.part = strtol(buffer, NULL, 16);
 
 	if (pfm_arm_cfg.architecture == -1) {
 		ret = pfmlib_getcpuinfo_attr("CPU architecture", buffer, sizeof(buffer));
 		if (ret == -1)
 			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.architecture = strtol(buffer, NULL, 16);
 	}
-
-	pfm_arm_cfg.architecture = strtol(buffer, NULL, 16);
    
 	return PFM_SUCCESS;
 }

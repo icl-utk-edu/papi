@@ -814,6 +814,8 @@ typedef enum {
 
 	PFM_PMU_AMD64_FAM1AH_ZEN5,      /* AMD64 Fam1Ah Zen5 */
 	PFM_PMU_AMD64_FAM1AH_ZEN5_L3,	/* AMD64 Fam1Ah Zen5 L3 */
+
+	PFM_PMU_ARM_CORTEX_A72,		/* ARM Cortex A72 (ARMv8) */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
