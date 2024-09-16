@@ -1,6 +1,15 @@
 /* topdown_validation.c */
 
-/* TODO: Explain */
+/*
+ * This file tests Intel's TOPDOWN level 1 and level 2 events
+ * by making sure that PAPI's values agree with results obtained
+ * by directly calling rdpmc, and ensuring that the percentages
+ * obtained correctly add to 100. 
+ * 
+ * Additionally, this validation test can serve as an example of
+ * how to use topdown events with PAPI, as they have some 
+ * differences and quirks that make them difficult to work with.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,13 +30,13 @@
 #include <sys/ioctl.h>
 
 #define NUM_EVENTS 5
-#define NUM_TESTS 100
+#define NUM_TESTS 100   /* test many times as fails can occur at a low rate */
 
 #define PERCENTAGES_TOLERANCE 1.5 // +- range of percentage points for success
 
-/*
- * perf_event _rdpmc code
- */
+/**********************/
+/* rdpmc related code */
+/**********************/
 
 #define SLOTS 0x0400ull
 #define METRICS 0x8000ull
@@ -54,7 +63,6 @@ static inline uint64_t read_metrics(void)
     return _rdpmc(RDPMC_METRIC | METRIC_COUNTER_TOPDOWN_L1_L2);
 }
 
-// clears event metrics
 static inline int reset_metrics(int fd)
 {
     return ioctl(fd, PERF_EVENT_IOC_RESET, 0);
@@ -70,11 +78,29 @@ float rdpmc_get_metric(u_int64_t m, int i)
     return (float)(((m) >> (i * 8)) & 0xff) / 0xff * 100.0;
 }
 
-void print_percs(double *percs)
+/*********************/
+/* general functions */
+/*********************/
+
+// prints the 4 level 1 topdown event percentages
+void print_L1_percs(double *percs_l1)
 {
     printf("retiring: %.02f\tbadspec: %.02f fe_bound: %.02f\tbe_bound: %.02f\n",
-           percs[0], percs[1], percs[2], percs[3]);
+           percs_l1[0], percs_l1[1], percs_l1[2], percs_l1[3]);
 }
+
+// prints the 8 level 2 topdown event percentages as derived from L1 and L2 events
+void print_L2_percs(double *percs_l1, double *percs_l2)
+{
+    double light_ops = percs_l1[0] - percs_l2[0]; // retiring - heavy_ops
+    double machine_clears = percs_l1[1] - percs_l2[1]; // bad_spec - branch_mispredicts
+    double fetch_bandwidth = percs_l1[2] - percs_l2[2]; // frontend_bound - fetch_latency
+    double core_bound = percs_l1[3] - percs_l2[3]; // backend_bound - memory_bound
+
+    printf("heavy ops: %.02f\tlight ops: %.02f\tbranch mispred: %.02f\tmachine clears: %.02f\tfetch lat: %.02f\tfetch band: %.02f\tmem bound: %.02f\tcore bound: %.02f\n",
+            percs_l2[0], light_ops, percs_l2[1], machine_clears, percs_l2[2], fetch_bandwidth, percs_l2[3], core_bound);
+}
+
 
 // returns one if a and b are within the tolerance of each other
 int eq_within_tolerance(double a, double b, double tolerance)
@@ -100,6 +126,18 @@ int are_percs_equivalent(double *percs_gt, double *percs_b, double *abs_error, i
     }
 
     return eq;
+}
+
+// returns 1 if the values in the array sum to the target value
+int sum_equiv_target(double target, double *percs, int n_percs)
+{
+    double sum = 0;
+    int i;
+
+    for (i=0; i<n_percs; i++) {
+        sum += percs[i];
+    }
+    return eq_within_tolerance(target, sum, PERCENTAGES_TOLERANCE);
 }
 
 int main(int argc, char **argv)
@@ -131,9 +169,9 @@ int main(int argc, char **argv)
         test_fail(__FILE__, __LINE__, "PAPI_library_init", ret);
     }
 
-    /**************************/
-    /* Setup perf_event rdpmc */
-    /**************************/
+    /*****************************************************/
+    /* Setup perf_event rdpmc to act as the ground truth */
+    /*****************************************************/
 
     /* Open slots counter file descriptor for current task. */
     struct perf_event_attr slots = {
@@ -146,14 +184,12 @@ int main(int argc, char **argv)
     int slots_fd = perf_event_open(&slots, 0, -1, -1, 0);
     if (slots_fd < 0)
     {
-        printf("Error opening the perf event slots\n");
-        exit(1);
+        test_fail(__FILE__, __LINE__, "Error opening the perf event slots", slots_fd);
     }
     void *slots_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, slots_fd, 0);
     if (!slots_p)
     {
-        printf("Error memory mapping the fd permits for _rdpmc\n");
-        exit(1);
+        test_fail(__FILE__, __LINE__, "Error memory mapping the fd permits for _rdpmc", ret);
     }
 
     /*
@@ -170,15 +206,13 @@ int main(int argc, char **argv)
     int metrics_fd = perf_event_open(&metrics, 0, -1, slots_fd, 0);
     if (metrics_fd < 0)
     {
-        printf("Failed to open the metrics fd\n");
-        exit(1);
+        test_fail(__FILE__, __LINE__, "Failed to open the metrics fd", metrics_fd);
     }
     void *metrics_p = mmap(0, getpagesize(),
                            PROT_READ, MAP_SHARED, metrics_fd, 0);
     if (!metrics_p)
     {
-        printf("Failed to memory map the metrics\n");
-        exit(1);
+        test_fail(__FILE__, __LINE__, "Failed to memory map the metrics", ret);
     }
 
     /**********************************************/
@@ -315,9 +349,9 @@ int main(int argc, char **argv)
         test_skip(__FILE__, __LINE__, "No instructions code", ret);
     }
 
-    /*************************/
-    /* Run some test code    */
-    /*************************/
+    /**********************/
+    /* Run some test code */
+    /**********************/
 
     failures = 0;
     // test Level 1 topdown events
@@ -355,24 +389,56 @@ int main(int argc, char **argv)
             percs_papi_event[j] = (double)values[j + 1] / (double)values[0] * 100.0;
         }
 
-        // if neither result matches perf_event rdpmc, we fail
-        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) +
-                are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) <
-            1)
+        // if neither result adds to 100, we fail
+        if (sum_equiv_target(100.0, percs_papi_event, 4) + 
+            sum_equiv_target(100.0, percs_papi_rdpmc, 4) < 1)
         {
             failures++;
-            printf("rdpmc error - ");
-            print_percs(papi_rdpmc_error);
-            printf("event error - ");
-            print_percs(papi_event_error);
+            if (!quiet) {
+                printf("neither interpretation method yeilded valid percentages\n");
+            }
+
+            continue;
+        }
+
+        // if neither result matches perf_event rdpmc, we fail
+        if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) +
+                are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1)
+        {
+            failures++;
+            if (!quiet) {
+                printf("Failed test %d:\n", i);
+                printf("\tground truth -\n\t");
+                print_L1_percs(percs_perf_rdpmc);
+                printf("\tassuming rdpmc enabled -\n\t");
+                print_L1_percs(percs_papi_rdpmc);
+                printf("\tassuming rdpmc disabled -\n\t");
+                print_L1_percs(percs_papi_event);
+
+                printf("\trdpmc error - ");
+                for(j = 0; j < NUM_EVENTS - 1; j++)
+                    printf("%.02f\t", papi_rdpmc_error[j]);
+                printf("\n\tevent error - ");
+                for(j = 0; j < NUM_EVENTS - 1; j++)
+                    printf("%.02f\t", papi_event_error[j]);
+                putchar('\n');
+            }
         }
     }
 
-    printf("\tPassed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
+    if (!quiet)
+        printf("Passed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
+
+    if (failures > 0) {
+        test_fail(__FILE__, __LINE__, "Topdown level 1 tests failed: ", failures);
+    }
 
     failures = 0;
+
     // test Level 2 topdown events
-    printf("Testing L2 Topdown Events\n");
+    if (!quiet)
+        printf("Testing L2 Topdown Events\n");
+    
     for (i = 0; i < NUM_TESTS; i++)
     {
         // first get the ground truth (perf_event rdpmc)
@@ -396,31 +462,47 @@ int main(int argc, char **argv)
             percs_perf_rdpmc[j] = rdpmc_get_metric(metrics_val, j + 4);
         }
 
-        // get percentages from papi_event (assuming rdpmc)
+        // get percentages from papi_event (assuming rdpmc was enabled)
         for (j = 0; j < NUM_EVENTS - 1; j++)
         {
             percs_papi_rdpmc[j] = rdpmc_get_metric(values[j + 1], j + 4);
         }
 
-        // get percentages from papi_event (assuming non-rdpmc)
+        // get percentages from papi_event (assuming rdpmc was disabled)
         for (j = 0; j < NUM_EVENTS - 1; j++)
         {
             percs_papi_event[j] = (double)values[j + 1] / (double)values[0] * 100.0;
         }
+
+        // as the 8 level 2 events are derived from the 4 available level 2
+        // events, they will never add to 100%. Therefore there is no point
+        // therefore there is no point in checking if they do 
+        // (see linux kernel tools/perf/Documentation/topdown.txt)
 
         // if neither result matches perf_event rdpmc, we fail
         if (are_percs_equivalent(percs_perf_rdpmc, percs_papi_rdpmc, papi_rdpmc_error, 4) +
                 are_percs_equivalent(percs_perf_rdpmc, percs_papi_event, papi_event_error, 4) < 1)
         {
             failures++;
-            printf("rdpmc error - ");
-            print_percs(papi_rdpmc_error);
-            printf("event error - ");
-            print_percs(papi_event_error);
+            if (!quiet) {
+                printf("\trdpmc error - ");
+                for(j = 0; j < NUM_EVENTS - 1; j++)
+                    printf("%.02f\t", papi_rdpmc_error[j]);
+                printf("\n\tevent error - ");
+                for(j = 0; j < NUM_EVENTS - 1; j++)
+                    printf("%.02f\t", papi_event_error[j]);
+                putchar('\n');
+            }
+
+            continue;
         }
     }
 
-    printf("\tPassed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
+    printf("Passed %d/%d tests\n", NUM_TESTS - failures, NUM_TESTS);
+
+    if (failures > 0) {
+        test_fail(__FILE__, __LINE__, "Topdown level 2 tests failed.", ret);
+    }
 
     test_pass(__FILE__);
 
