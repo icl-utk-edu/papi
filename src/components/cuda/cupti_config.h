@@ -1,7 +1,8 @@
 /**
  * @file    cupti_config.h
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __LCUDA_CONFIG_H__
@@ -9,8 +10,8 @@
 
 #include <cupti.h>
 
+/* used to assign the EventSet state  */
 #define CUDA_EVENTS_STOPPED (0x0)
-#define CUDA_EVENTS_OPENED (0x1)
 #define CUDA_EVENTS_RUNNING (0x2)
 
 #define CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION  (13)

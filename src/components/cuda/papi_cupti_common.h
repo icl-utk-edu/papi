@@ -1,7 +1,8 @@
 /**
  * @file    papi_cupti_common.h
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __PAPI_CUPTI_COMMON_H__
@@ -13,6 +14,8 @@
 
 #include "cupti_utils.h"
 #include "lcuda_debug.h"
+
+typedef struct cuptic_info *cuptic_info_t;
 
 extern const char *linked_cudart_path;
 extern void *dl_cupti;
@@ -47,6 +50,7 @@ extern cudaError_t ( *cudaFreePtr ) (void *);
 extern cudaError_t ( *cudaDriverGetVersionPtr ) (int *);
 extern cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 
+/* cupti function pointer */
 extern CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
 void cuptic_disabled_reason_set(const char *msg);
@@ -59,18 +63,17 @@ int cuptic_init(void);
 int cuptic_is_runtime_perfworks_api(void);
 int cuptic_is_runtime_events_api(void);
 
-typedef struct cuptic_info *cuptic_info_t;
-
+/* context management interfaces */
 int cuptic_ctxarr_create(cuptic_info_t *pinfo);
 int cuptic_ctxarr_update_current(cuptic_info_t info);
 int cuptic_ctxarr_get_ctx(cuptic_info_t info, int gpu_idx, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 
-/* Functions to track the occupancy of gpu counters in event sets */
+/* functions to track the occupancy of gpu counters in event sets */
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
 int cuptic_device_release(cuptiu_event_table_t *evt_table);
 
-/* functions to handle device qualifiers */
+/* device qualifier interfaces */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 
@@ -109,6 +112,17 @@ int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
         LOGCUPTICALL("\t" #call "\n");  \
         if (_status != CUPTI_SUCCESS) {  \
             ERRDBG("CUPTI Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
+#define nvpwCheckErrors( call, handleerror ) \
+    do {  \
+        NVPA_Status _status = (call);  \
+        LOGCUPTICALL("\t" #call "\n");  \
+        if (_status != NVPA_STATUS_SUCCESS) {  \
+            ERRDBG("NVPA Error %d: Error in call to " #call "\n", _status);  \
             EXIT_OR_NOT; \
             handleerror;  \
         }  \

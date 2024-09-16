@@ -6870,12 +6870,28 @@ for comp in $components; do
           CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
       fi
   fi
+
 done
 
 CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5
 $as_echo "$components" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda version" >&5
+$as_echo_n "checking cuda version... " >&6; }
+# determine cuda version, and if cuda version >= 12.6 error build
+for comp in $components; do
+    if test "x$comp" = "xcuda" ; then
+        cuda_version=$(nvcc --version | grep -oP '(?<=release )\d+\.\d+')
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $cuda_version" >&5
+$as_echo "$cuda_version" >&6; }
+        if awk "BEGIN {exit !($cuda_version >= 12.6)}"; then
+           echo Cuda version >= 12.6 detected. In Cuda version 12.6, the MetricsContext API was replaced with the MetricsEvaluator API. Due to this, the Cuda component is currrently being refactored to support Cuda versions 12.6. Please use a Cuda version less than 12.6.
+           exit 1
+        fi
+    fi
+done
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PAPI event CSV filename to use" >&5
 $as_echo_n "checking for PAPI event CSV filename to use... " >&6; }

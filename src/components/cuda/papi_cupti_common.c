@@ -1,7 +1,8 @@
 /**
  * @file    papi_cupti_common.c
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #include <dlfcn.h>
@@ -20,6 +21,7 @@ void *dl_cupti;
 
 unsigned int _cuda_lock;
 
+/* cuda driver function pointers */
 CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 CUresult ( *cuCtxDestroyPtr ) (CUcontext);
@@ -37,6 +39,7 @@ CUresult ( *cuCtxPushCurrentPtr ) (CUcontext pctx);
 CUresult ( *cuCtxSynchronizePtr ) ();
 CUresult ( *cuDeviceGetAttributePtr ) (int *, CUdevice_attribute, CUdevice);
 
+/* cuda runtime function pointers */
 cudaError_t ( *cudaGetDeviceCountPtr ) (int *);
 cudaError_t ( *cudaGetDevicePtr ) (int *);
 const char *( *cudaGetErrorStringPtr ) (cudaError_t);
@@ -47,6 +50,7 @@ cudaError_t ( *cudaFreePtr ) (void *);
 cudaError_t ( *cudaDriverGetVersionPtr ) (int *);
 cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 
+/* cupti function pointer */
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
 static int load_cuda_sym(void)

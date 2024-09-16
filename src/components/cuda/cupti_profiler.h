@@ -1,7 +1,8 @@
 /**
  * @file    cupti_profiler.h
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.) 
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __CUPTI_PROFILER_H__
@@ -11,12 +12,12 @@
 
 typedef struct cuptip_control_s     *cuptip_control_t;
 
+/* used to determine collection method in cupti_profiler.c, see cuptip_ctx_read */
 #define CUDA_AVG 0x1
 #define CUDA_MAX 0x2
 #define CUDA_MIN 0x3
 #define CUDA_SUM 0x4
 #define CUDA_DEFAULT 0x5
-
 
 /* init and shutdown interfaces */
 int cuptip_init(void);

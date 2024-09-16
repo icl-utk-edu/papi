@@ -335,20 +335,12 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
         goto fn_exit;
     }
 
-    /* needed to make sure multipass works properly (PAPI_EMULPASS)*/
+    /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     if (ntv_count == 0) {
         return PAPI_OK;
     }
 
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
-
-   if (cuda_ctl->cuptid_ctx != NULL) {
-       printf("We enter the following if statement.\n");
-       SUBDBG("Cannot update events in an eventset that has been already "
-              "started.");
-       papi_errno = PAPI_ECMP;
-       goto fn_exit;
-   } 
 
     /* allocating memoory for total number of devices */
     if (cuda_ctl->info == NULL) {
@@ -362,9 +354,9 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
-    /* do you need this here?*/
-    //papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+   
+    /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
+    papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -582,11 +574,6 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
-
-    if (cuda_ctl->cuptid_ctx != NULL) {
-        SUBDBG("Cannot cleanup an eventset that is running.");
-        return PAPI_ECMP;
-    }
 
     /* free int array of event id's and reset number of events */
     papi_free(cuda_ctl->events_id);

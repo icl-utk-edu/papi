@@ -1,7 +1,8 @@
 /**
  * @file    cupti_dispatch.h
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __CUPTI_DISPATCH_H__
@@ -13,7 +14,6 @@
 extern unsigned int _cuda_lock;
 
 typedef struct cuptip_control_s *cuptip_control_t;
-//typedef void *cuptid_ctl_t;
 typedef void *cuptid_info_t;
 typedef cuptiu_event_table_t *ntv_event_table_t;
 typedef cuptiu_event_t *ntv_event_t;
