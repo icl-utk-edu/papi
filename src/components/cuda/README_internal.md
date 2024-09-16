@@ -33,4 +33,4 @@ As of 09/16/24, there are a total of 34 unused bits. These bits can be used to c
 | DEVICE_FLAG  | `DEVICE_FLAG  (0x1)`   |
 
 
-**NOTE**: If adding a new qualifier, you must add it to the above [Calculations for Bit Masks and Shifts](#calculations-for-bit-masks-and-shifts) section and account for this addition within `cupti_profiler.c`.
+**NOTE**: If adding a new qualifier, you must add it to the table found in the section titled [Calculations for Bit Masks and Shifts](#calculations-for-bit-masks-and-shifts) and account for this addition within `cupti_profiler.c`.
