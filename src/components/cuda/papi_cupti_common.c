@@ -599,7 +599,6 @@ int cuptic_ctxarr_update_current(cuptic_info_t info)
         }
         /* cuda context not found for calling CPU thread */
         else {
-	    /* if we are creating a Cuda context, shouldn't it be that we set the device and then call cudaFree(0)?*/
             cudaArtCheckErrors(cudaFreePtr(NULL), return PAPI_EMISC);
             cudaCheckErrors(cuCtxGetCurrentPtr(&info[gpu_id].ctx), return PAPI_EMISC);
             LOGDBG("Using primary device context %p for device %d.\n", info[gpu_id].ctx, gpu_id);

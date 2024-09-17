@@ -1891,16 +1891,16 @@ CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
 
 AC_MSG_RESULT($components)
 
-AC_MSG_CHECKING(cuda version)
-# determine cuda version, and if cuda version >= 12.6 error build
+# determine cuda version, and if cuda version >= 12.6 then error build
 for comp in $components; do
     if test "x$comp" = "xcuda" ; then 
+        AC_MSG_CHECKING(cuda version)
         cuda_version=$(nvcc --version | grep -oP '(?<=release )\d+\.\d+')
         AC_MSG_RESULT($cuda_version)
         if awk "BEGIN {exit !($cuda_version >= 12.6)}"; then 
-           echo Cuda version >= 12.6 detected. In Cuda version 12.6, the MetricsContext API was replaced with the MetricsEvaluator API. Due to this, the Cuda component is currrently being refactored to support Cuda versions 12.6. Please use a Cuda version less than 12.6. 
+           echo "Cuda version >= 12.6 detected. In Cuda version 12.6, the MetricsContext API was replaced with the MetricsEvaluator API. Due to this, the Cuda component is currrently being refactored to support Cuda versions 12.6. Please use a Cuda version less than 12.6."
            exit 1
-        fi   
+        fi
     fi   
 done
 

@@ -1,7 +1,8 @@
 /**
  * @file    cupti_utils.h
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __CUPTI_UTILS_H__
@@ -26,19 +27,15 @@ typedef struct event_table_s {
     unsigned int sizeof_rec;
     unsigned int count;
     unsigned int capacity;
-    char evt_names[30][PAPI_2MAX_STR_LEN];
+    char added_cuda_evts[30][PAPI_2MAX_STR_LEN];
     cuptiu_event_t *events;
     void *evts;
     void *htable;
 } cuptiu_event_table_t;
 
 /* These functions form a simple API to handle dynamic list of strings */
-int cuptiu_event_table_create(int sizeof_rec, cuptiu_event_table_t **pevt_table);
 int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
 void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
-int cuptiu_event_table_insert_record(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos);
-int cuptiu_event_table_select_by_idx(cuptiu_event_table_t *src, int count, int *idcs, cuptiu_event_table_t **pevt_names);
-int cuptiu_event_table_find_name(cuptiu_event_table_t *evt_table, const char *evt_name, cuptiu_event_t **found_rec);
 int cuptiu_event_table_get_item(cuptiu_event_table_t *evt_table, int evt_idx, cuptiu_event_t **record);
 
 /* Utility to locate a file in a given path */

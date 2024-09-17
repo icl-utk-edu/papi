@@ -26,17 +26,7 @@ int cuptie_ctx_create(void *thr_info, cuptie_control_t *pctl)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_ctx_destroy(cuptie_control_t *pctl)
-{
-    return PAPI_ENOIMPL;
-}
-
 int cuptie_ctx_start(cuptie_control_t ctl)
-{
-    return PAPI_ENOIMPL;
-}
-
-int cuptie_ctx_stop(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
@@ -46,7 +36,17 @@ int cuptie_ctx_read(cuptie_control_t ctl, long long **values)
     return PAPI_ENOIMPL;
 }
 
+int cuptie_ctx_stop(cuptie_control_t ctl)
+{
+    return PAPI_ENOIMPL;
+}
+
 int cuptie_ctx_reset(cuptie_control_t ctl)
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_ctx_destroy(cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }
@@ -56,7 +56,23 @@ int cuptie_evt_enum(uint64_t *event_code, int modifier)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_code_to_descr(uint64_t event_code, char *descr, int len) {
+int cuptie_evt_code_to_descr(uint64_t event_code, char *descr, int len) 
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_name_to_code(const char *name, uint64_t *event_code)
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info) 
+{
     return PAPI_ENOIMPL;
 }
 

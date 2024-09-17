@@ -53,15 +53,15 @@ extern cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 /* cupti function pointer */
 extern CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
-void cuptic_disabled_reason_set(const char *msg);
-void cuptic_disabled_reason_get(const char **pmsg);
-
-void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[]);
-int cuptic_shutdown(void);
-int cuptic_device_get_count(int *num_gpus);
+/* utility functions to check runtime api, disabled reason, etc. */
 int cuptic_init(void);
 int cuptic_is_runtime_perfworks_api(void);
 int cuptic_is_runtime_events_api(void);
+int cuptic_device_get_count(int *num_gpus);
+void cuptic_disabled_reason_set(const char *msg);
+void cuptic_disabled_reason_get(const char **pmsg);
+void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[]);
+int cuptic_shutdown(void);
 
 /* context management interfaces */
 int cuptic_ctxarr_create(cuptic_info_t *pinfo);

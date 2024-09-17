@@ -20,7 +20,10 @@ int cuptie_shutdown(void);
 
 /* native event interfaces */
 int cuptie_evt_enum(uint64_t *event_code, int modifier); 
-int cuptie_event_code_to_descr(uint64_t event_code, char *descr, int len);
+int cuptie_evt_code_to_descr(uint64_t event_code, char *descr, int len);
+int cuptie_evt_name_to_code(const char *name, uint64_t *event_code);
+int cuptie_evt_code_to_name(uint64_t event_code, char *name, int len);
+int cuptie_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info);
 
 /* profiling context handling interfaces */
 int cuptie_ctx_create(void *thr_info, cuptie_control_t *pctl);

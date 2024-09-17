@@ -31,35 +31,39 @@
 #include "cupti_config.h"
 #include "lcuda_debug.h"
 
+#define PAPI_CUDA_MPX_COUNTERS 512
+#define PAPI_CUDA_MAX_COUNTERS  30
+
 papi_vector_t _cuda_vector;
 
+/* init and shutdown functions */
 static int cuda_init_component(int cidx);
-static int cuda_shutdown_component(void);
 static int cuda_init_thread(hwd_context_t *ctx);
+static int cuda_init_control_state(hwd_control_state_t *ctl);
 static int cuda_shutdown_thread(hwd_context_t *ctx);
+static int cuda_shutdown_component(void);
 
+/* set and update component state */
+static int cuda_update_control_state(hwd_control_state_t *ctl,
+                                     NativeInfo_t *ntv_info,
+                                     int ntv_count, hwd_context_t *ctx);
+static int cuda_set_domain(hwd_control_state_t * ctrl, int domain);
+
+/* functions to monitor hardware counters */
+static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl);
+static int cuda_read(hwd_context_t *ctx, hwd_control_state_t *ctl, long long **val, int flags);
+static int cuda_reset(hwd_context_t *ctx, hwd_control_state_t *ctl);
+static int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl);
+static int cuda_cleanup_eventset(hwd_control_state_t *ctl);
+static int cuda_init_private(void);
+static int cuda_get_evt_count(int *count);
+
+/* cuda native event conversion utility functions */
 static int cuda_ntv_enum_events(unsigned int *event_code, int modifier);
 static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len);
 static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code);
 static int cuda_ntv_code_to_descr(unsigned int event_code, char *descr, int len);
 static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info);
-
-static int cuda_init_control_state(hwd_control_state_t *ctl);
-static int cuda_set_domain(hwd_control_state_t * ctrl, int domain);
-static int cuda_update_control_state(hwd_control_state_t *ctl,
-                                     NativeInfo_t *ntv_info,
-                                     int ntv_count, hwd_context_t *ctx);
-
-static int cuda_cleanup_eventset(hwd_control_state_t *ctl);
-static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl);
-static int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl);
-static int cuda_read(hwd_context_t *ctx, hwd_control_state_t *ctl, long long **val, int flags);
-static int cuda_reset(hwd_context_t *ctx, hwd_control_state_t *ctl);
-static int cuda_init_private(void);
-static int cuda_get_evt_count(int *count);
-
-#define PAPI_CUDA_MPX_COUNTERS 512
-#define PAPI_CUDA_MAX_COUNTERS  30
 
 /* track metadata, such as the EventSet state */
 typedef struct {
@@ -303,8 +307,12 @@ static int cuda_init_thread(hwd_context_t *ctx)
     return PAPI_OK;
 }
 
-static int cuda_shutdown_thread(hwd_context_t __attribute__((unused)) *ctx)
+static int cuda_shutdown_thread(hwd_context_t *ctx)
 {
+    cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
+    cuda_ctx->initialized = 0;
+    cuda_ctx->state = 0; 
+
     return PAPI_OK;
 }
 
@@ -573,7 +581,14 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 {
     COMPDBG("Entering.\n");
+    int papi_errno;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
+
+    if (cuda_ctl->info) {
+        papi_errno = cuptid_thread_info_destroy(&(cuda_ctl->info));
+        if (papi_errno != PAPI_OK)
+            return papi_errno;
+    }
 
     /* free int array of event id's and reset number of events */
     papi_free(cuda_ctl->events_id);

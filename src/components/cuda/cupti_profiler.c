@@ -495,7 +495,7 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
         /* Not using the correct global event names now.*/
         papi_errno = retrieve_metric_rmr(
                          gpu_ctl->pmetricsContextCreateParams->pMetricsContext,
-                         gpu_ctl->event_names->evt_names[i], &num_dep, 
+                         gpu_ctl->event_names->added_cuda_evts[i], &num_dep, 
                          &collect_rmr
                      );
         /* why is PAPI_ENOEVNT hard coded? */
@@ -1216,7 +1216,7 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts)
     }    
 
     for (i = 0; i < numMetrics; i++) {
-        metricNames[i] = gpu_ctl->event_names->evt_names[i];
+        metricNames[i] = gpu_ctl->event_names->added_cuda_evts[i];
         LOGDBG("Setting metric name %s\n", metricNames[i]);
     }
 
@@ -1318,134 +1318,6 @@ fn_fail:
     papi_errno = PAPI_EMISC;
     goto fn_exit;
 }
-
-/** @class cuptip_evt_enum
-  * @brief Enumerate Cuda native events.
-  * 
-  * @param *event_code
-  *   Cuda native event code. 
-  * @param modifier
-  *   Modifies the search logic. Three modifiers are used PAPI_ENUM_FIRST,
-  *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_UMASKS.
-*/
-int cuptip_evt_enum(uint64_t *event_code, int modifier)
-{
-    int papi_errno = PAPI_OK;
-    event_info_t info;
-    SUBDBG("ENTER: event_code: %lu, modifier: %d\n", *event_code, modifier);
-
-    switch(modifier) {
-        case PAPI_ENUM_FIRST:
-            if(cuptiu_table_p->count == 0) {
-                papi_errno = PAPI_ENOEVNT;
-                break;
-            }
-            info.device = 0;
-            info.flags = 0;
-            info.nameid = 0;
-            papi_errno = evt_id_create(&info, event_code);
-            break;
-        case PAPI_ENUM_EVENTS:
-            papi_errno = evt_id_to_info(*event_code, &info);
-            if (papi_errno != PAPI_OK) {
-                break;
-            }
-            if (cuptiu_table_p->count > info.nameid + 1) {
-                info.device = 0;
-                info.flags = 0;
-                info.nameid++;
-                papi_errno = evt_id_create(&info, event_code);
-                break;
-            }
-            papi_errno = PAPI_END;
-            break;
-        case PAPI_NTV_ENUM_UMASKS:
-            papi_errno = evt_id_to_info(*event_code, &info);
-            if (papi_errno != PAPI_OK) {
-                break;
-            }
-            if (info.flags == 0){
-                info.device = 0;
-                info.flags = DEVICE_FLAG;
-                papi_errno = evt_id_create(&info, event_code);
-                break;
-            }
-            papi_errno = PAPI_END;
-            break;
-        default:
-            papi_errno = PAPI_EINVAL;
-    }
-    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
-    return papi_errno;
-}
-
-/** @class cuptip_evt_code_to_info
-  * @brief Takes a Cuda native event code and collects info such as Cuda native 
-  *        event name, Cuda native event description, and number of devices. 
-  * @param event_code
-  *   Cuda native event code. 
-  * @param *info
-  *   Structure for member variables such as symbol, short description, and 
-  *   long desctiption. 
-*/
-int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
-{
-
-    int papi_errno, len, gpu_id;
-    event_info_t inf;
-    char description[PAPI_HUGE_STR_LEN];
-    papi_errno = evt_id_to_info(event_code, &inf);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-    
-    /* collect the description and calculated numpass for a specific nameid */ 
-    if (cuptiu_table_p->events[inf.nameid].desc[0] == 0) {
-        papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext,
-                                            cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].desc, 0 ); 
-        if (papi_errno != PAPI_OK) {
-            printf("Failed to get event description.\n");
-            return papi_errno;
-        }    
-    } 
-
-    switch (inf.flags) {
-        case (0):
-            /* cuda native event name */
-            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
-            /* cuda native event short description */
-            snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-            /* cuda native event long description */
-            snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-            break;
-        case DEVICE_FLAG:
-        {
-            int i;
-            char devices[PAPI_MAX_STR_LEN] = { 0 };
-            for (i = 0; i < num_gpus; ++i) {
-                if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
-                    sprintf(devices + strlen(devices), "%i,", i);
-                }
-            }
-            *(devices + strlen(devices) - 1) = 0;
-
-            /* cuda native event name */
-            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
-            /* cuda native event short description */
-            snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
-                     cuptiu_table_p->events[inf.nameid].desc, devices );
-            /* cuda native event long description */
-            snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
-                      cuptiu_table_p->events[inf.nameid].desc, devices );
-            break;
-        }
-        default:
-            papi_errno = PAPI_EINVAL;
-    }
-
-    return papi_errno;
-}
-
 
 /** @class free_all_enumerated_metrics
   * @brief Free's all enumerated metrics for each gpu on the system.  
@@ -1571,7 +1443,7 @@ int verify_events(uint64_t *events_id, int num_events,
             break;
         }    
         sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
-        strcpy((*targeted_event_names)->evt_names[i], name);
+        strcpy((*targeted_event_names)->added_cuda_evts[i], name);
         void *p;
         if (htable_find(cuptiu_table_p->htable, name, (void **) &p) != HTABLE_SUCCESS) {
             htable_insert((*targeted_event_names)->htable, name, (void **) &p );
@@ -1697,7 +1569,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         /* bind the specified CUDA context to the calling CPU thread */
         cudaCheckErrors( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
 
-        /* not really sure as of now */
+        /*  query/filter cuda native events available on host */
         papi_errno = get_counter_availability(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             ERRDBG("Error getting counter availability image.\n");
@@ -1747,9 +1619,6 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
     long long counts[30], *counter_vals = state->counters;
     cuptip_gpu_state_t *gpu_ctl = NULL;
     CUcontext userCtx = NULL, ctx = NULL;
-
-
-    printf("WE ARE READING.\n");
 
     cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     if (userCtx == NULL) {
@@ -1804,18 +1673,15 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
             }
             else {
                 /* determine collection method such as max, min, sum, and avg for an added Cuda native event */
-                method = get_event_collection_method(gpu_ctl->event_names->evt_names[i]);
+                method = get_event_collection_method(gpu_ctl->event_names->added_cuda_evts[i]);
                 switch (method) {
                     case CUDA_SUM:
-                        printf("WE ARE IN SUM.\n");
                         counter_vals[i] += counts[i];
                         break;
                     case CUDA_MIN:
-                        printf("WE ARE IN MIN.\n");
                         counter_vals[i] = counter_vals[i] < counts[i] ? counter_vals[i] : counts[i];
                         break;
                     case CUDA_MAX:
-                        printf("WE ARE IN MAX.\n");
                         counter_vals[i] = counter_vals[i] > counts[i] ? counter_vals[i] : counts[i];
                         break;
                     case CUDA_AVG:
@@ -1824,7 +1690,6 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
                             average - current average
                             value - number to add to the average
                          */
-                         printf("counts:%d\n", counts[i]);
                          counter_vals[i] = (state->read_count * counter_vals[j++] + counts[i]) / (state->read_count + 1);
                          break;
                     default:
@@ -2052,34 +1917,6 @@ int evt_id_to_info(uint64_t event_id, event_info_t *info)
     }
 
     return PAPI_OK;
-}
-
-/** @class cuptip_evt_code_to_descr
-  * @brief Take a Cuda native event code and retrieve a corresponding description.
-  *
-  * @param event_code
-  *   Cuda native event code. 
-  * @param *descr
-  *   Corresponding description for provided Cuda native event code.
-  * @param len
-  *   Maximum alloted characters for Cuda native event description. 
-*/
-int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len)
-{
-    int papi_errno, str_len;
-    event_info_t info;
-    papi_errno = evt_id_to_info(event_code, &info);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-
-    str_len = snprintf(descr, (size_t) len, "%s", cuptiu_table_p->events[event_code].desc);
-    if (str_len > len) {
-        ERRDBG("String formatting exceeded max string length.\n");
-        return PAPI_ENOMEM;  
-    }
-
-    return papi_errno;
 }
 
 /** @class init_event_table
@@ -2401,6 +2238,94 @@ static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char
     return PAPI_OK;
 }
 
+/** @class cuptip_evt_enum
+  * @brief Enumerate Cuda native events.
+  * 
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param modifier
+  *   Modifies the search logic. Three modifiers are used PAPI_ENUM_FIRST,
+  *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_UMASKS.
+*/
+int cuptip_evt_enum(uint64_t *event_code, int modifier)
+{
+    int papi_errno = PAPI_OK;
+    event_info_t info;
+    SUBDBG("ENTER: event_code: %lu, modifier: %d\n", *event_code, modifier);
+
+    switch(modifier) {
+        case PAPI_ENUM_FIRST:
+            if(cuptiu_table_p->count == 0) {
+                papi_errno = PAPI_ENOEVNT;
+                break;
+            }
+            info.device = 0;
+            info.flags = 0;
+            info.nameid = 0;
+            papi_errno = evt_id_create(&info, event_code);
+            break;
+        case PAPI_ENUM_EVENTS:
+            papi_errno = evt_id_to_info(*event_code, &info);
+            if (papi_errno != PAPI_OK) {
+                break;
+            }
+            if (cuptiu_table_p->count > info.nameid + 1) {
+                info.device = 0;
+                info.flags = 0;
+                info.nameid++;
+                papi_errno = evt_id_create(&info, event_code);
+                break;
+            }
+            papi_errno = PAPI_END;
+            break;
+        case PAPI_NTV_ENUM_UMASKS:
+            papi_errno = evt_id_to_info(*event_code, &info);
+            if (papi_errno != PAPI_OK) {
+                break;
+            }
+            if (info.flags == 0){
+                info.device = 0;
+                info.flags = DEVICE_FLAG;
+                papi_errno = evt_id_create(&info, event_code);
+                break;
+            }
+            papi_errno = PAPI_END;
+            break;
+        default:
+            papi_errno = PAPI_EINVAL;
+    }
+    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    return papi_errno;
+}
+
+/** @class cuptip_evt_code_to_descr
+  * @brief Take a Cuda native event code and retrieve a corresponding description.
+  *
+  * @param event_code
+  *   Cuda native event code. 
+  * @param *descr
+  *   Corresponding description for provided Cuda native event code.
+  * @param len
+  *   Maximum alloted characters for Cuda native event description. 
+*/
+int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len) 
+{
+    int papi_errno, str_len;
+    event_info_t info;
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }    
+
+    str_len = snprintf(descr, (size_t) len, "%s", cuptiu_table_p->events[event_code].desc);
+    if (str_len > len) {
+        ERRDBG("String formatting exceeded max string length.\n");
+        return PAPI_ENOMEM;  
+    }    
+
+    return papi_errno;
+}
+
 /** @class cuptip_evt_name_to_code
   * @brief Take a Cuda native event name and collect the corresponding event code.
   *
@@ -2456,6 +2381,128 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
         return papi_errno;
 }
 
+/** @class cuptip_evt_code_to_name
+  * @brief Returns Cuda native event name for a Cuda native event code. See 
+  *        evt_code_to_name( ... ) for more details.
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param *name
+  *   Cuda native event name.
+  * @param len
+  *   Maximum alloted characters for base Cuda native event name. 
+*/
+int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len)
+{   
+    return evt_code_to_name(event_code, name, len);
+}
+
+/** @class evt_code_to_name
+  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
+  *        code and collects the corresponding Cuda native event name. 
+  * @param *event_code
+  *   Cuda native event code. 
+  * @param *name
+  *   Cuda native event name.
+  * @param len
+  *   Maximum alloted characters for base Cuda native event name. 
+*/
+static int evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    int papi_errno, str_len;
+
+    event_info_t info;
+    papi_errno = evt_id_to_info(event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    switch (info.flags) {
+        case (DEVICE_FLAG):
+            str_len = snprintf(name, len, "%s:device=%i", cuptiu_table_p->events[info.nameid].name, info.device);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+        default:
+            str_len = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+    }
+
+    return papi_errno;
+}
+
+/** @class cuptip_evt_code_to_info
+  * @brief Takes a Cuda native event code and collects info such as Cuda native 
+  *        event name, Cuda native event description, and number of devices. 
+  * @param event_code
+  *   Cuda native event code. 
+  * @param *info
+  *   Structure for member variables such as symbol, short description, and 
+  *   long desctiption. 
+*/
+int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
+{
+
+    int papi_errno, len, gpu_id;
+    event_info_t inf;
+    char description[PAPI_HUGE_STR_LEN];
+    papi_errno = evt_id_to_info(event_code, &inf);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    /* collect the description and calculated numpass for a specific nameid */
+    if (cuptiu_table_p->events[inf.nameid].desc[0] == 0) {
+        papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext,
+                                            cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].desc, 0 );
+        if (papi_errno != PAPI_OK) {
+            printf("Failed to get event description.\n");
+            return papi_errno;
+        }
+    }
+
+    switch (inf.flags) {
+        case (0):
+            /* cuda native event name */
+            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
+            /* cuda native event short description */
+            snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            /* cuda native event long description */
+            snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
+            break;
+        case DEVICE_FLAG:
+        {
+            int i;
+            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            for (i = 0; i < num_gpus; ++i) {
+                if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
+                    sprintf(devices + strlen(devices), "%i,", i);
+                }
+            }
+            *(devices + strlen(devices) - 1) = 0;
+
+            /* cuda native event name */
+            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
+            /* cuda native event short description */
+            snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
+                     cuptiu_table_p->events[inf.nameid].desc, devices );
+            /* cuda native event long description */
+            snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
+                      cuptiu_table_p->events[inf.nameid].desc, devices );
+            break;
+        }
+        default:
+            papi_errno = PAPI_EINVAL;
+    }
+
+    return papi_errno;
+}
+
 /** @class evt_name_to_basename
   * @brief Convert a Cuda native event name with a device qualifer appended to 
   *        it, back to the base Cuda native event name provided by NVIDIA.
@@ -2499,59 +2546,4 @@ static int evt_name_to_device(const char *name, int *device)
     }
     *device = (int) strtol(p + strlen(":device="), NULL, 10);
     return PAPI_OK;
-}
-
-/** @class cuptip_evt_code_to_name
-  * @brief Returns Cuda native event name for a Cuda native event code. See 
-  *        evt_code_to_name( ... ) for more details.
-  * @param *event_code
-  *   Cuda native event code. 
-  * @param *name
-  *   Cuda native event name.
-  * @param len
-  *   Maximum alloted characters for base Cuda native event name. 
-*/
-int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len) 
-{
-    return evt_code_to_name(event_code, name, len);
-}
-
-/** @class evt_code_to_name
-  * @brief Helper function for cuptip_evt_code_to_name. Takes a Cuda native event
-  *        code and collects the corresponding Cuda native event name. 
-  * @param *event_code
-  *   Cuda native event code. 
-  * @param *name
-  *   Cuda native event name.
-  * @param len
-  *   Maximum alloted characters for base Cuda native event name. 
-*/
-static int evt_code_to_name(uint64_t event_code, char *name, int len)
-{
-    int papi_errno, str_len;
-
-    event_info_t info;
-    papi_errno = evt_id_to_info(event_code, &info);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-
-    switch (info.flags) {
-        case (DEVICE_FLAG):
-            str_len = snprintf(name, len, "%s:device=%i", cuptiu_table_p->events[info.nameid].name, info.device);
-            if (str_len > len) {
-                ERRDBG("String formatting exceeded max string length.\n");
-                return PAPI_ENOMEM;
-            }
-            break;
-        default:
-            str_len = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name);
-            if (str_len > len) {
-                ERRDBG("String formatting exceeded max string length.\n");
-                return PAPI_ENOMEM;
-            }
-            break;
-    }
-
-    return papi_errno;
 }
