@@ -709,7 +709,7 @@ static const intel_x86_umask_t intel_gnr_frontend_retired[]={
   },
   { .uname   = "LATE_SWPF",
     .udesc   = "I-Cache miss too close to Code Prefetch Instruction",
-    .ucode   = 0x0900ull,
+    .ucode   = 0x0a00ull,
     .uflags  = INTEL_X86_NCOMBO | INTEL_X86_PEBS,
   },
   { .uname   = "MISP_ANT",
