@@ -161,8 +161,6 @@ static int cuda_shutdown_component(void)
 
     _cuda_vector.cmp_info.initialized = 0;
 
-    printf("We call shutdown.\n");
-
     return cuptid_shutdown();
 }
 
@@ -343,7 +341,6 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
         goto fn_exit;
     }
 
-    printf("ntv_count in cuda_update_control: %d\n", ntv_count);
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     if (ntv_count == 0) {
         return PAPI_OK;
@@ -366,10 +363,8 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
    
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
-    printf("papi errno for cuptid_ctx_create is: %d\n", papi_errno);
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
-    printf("ERRNO in fn_exit is: %d\n", papi_errno);
     return papi_errno;
 }
 
@@ -552,14 +547,12 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     /* stop counting */
     papi_errno = cuptid_ctx_stop(cuda_ctl->cuptid_ctx);
     if (papi_errno != PAPI_OK) {
-        printf("papi_errno is: %s\n", PAPI_strerror(papi_errno));
         goto fn_fail;
     }
 
     /* free memory that was used */
     papi_errno = cuptid_ctx_destroy( &(cuda_ctl->cuptid_ctx) );
     if (papi_errno != PAPI_OK) {
-        printf("papi errno is: %s\n", PAPI_strerror(papi_errno));
     } 
 
     /* update EventSet state to stopped  */

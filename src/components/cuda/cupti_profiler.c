@@ -500,7 +500,6 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
                      );
         /* why is PAPI_ENOEVNT hard coded? */
         if (papi_errno != PAPI_OK) {
-            printf("we fail to retrieve_metric_rmr.\n");
             papi_errno = PAPI_ENOEVNT;
             goto fn_exit;
         }
@@ -708,7 +707,6 @@ static int check_multipass(cuptip_control_t state)
 
         papi_errno = get_event_names_rmr(gpu_ctl);
         if (papi_errno != PAPI_OK) {
-            printf("We failed get_event_names_rmr.\n");
             goto fn_exit;
         }
 
@@ -723,7 +721,6 @@ static int check_multipass(cuptip_control_t state)
                        &nvpw_metricsConfigCreateParams
                    );
         if (nvpa_err != NVPA_STATUS_SUCCESS) {
-            printf("We failed createptr.\n");
             goto fn_exit;
         }
 
@@ -731,8 +728,6 @@ static int check_multipass(cuptip_control_t state)
         papi_errno = calculate_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
                                            gpu_ctl->rmr_count, gpu_ctl->rmr, &passes);
         if ( papi_errno == PAPI_EMULPASS ) {
-            printf("Total number of passes is: %d\n", passes);
-            printf("State name is: %s\n", gpu_ctl->event_names->added_cuda_evts[4]);
         /* at this point we just want the number of passes (stored in passes) */
         }
 
@@ -747,7 +742,6 @@ static int check_multipass(cuptip_control_t state)
                        &rawMetricsConfigDestroyParams
                    );
         if (nvpa_err != NVPA_STATUS_SUCCESS) {
-            printf("DestroyPtr failed.\n");
             goto fn_fail;
         }
     }
@@ -1441,7 +1435,6 @@ int verify_events(uint64_t *events_id, int num_events,
         event_info_t info;
         papi_errno = evt_id_to_info(events_id[i], &info);
         if (papi_errno != PAPI_OK) {
-            printf("Entering break\n");
             break;
         }
         sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
@@ -1481,7 +1474,6 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    printf("Number of events is: %d\n", num_events);
 
     /* create a cuptip_control_t struct which contains read_count, running, cupti_info_t and cuptip_gpu_state_t */
     cuptip_control_t state = (cuptip_control_t) papi_calloc (1, sizeof(struct cuptip_control_s));
@@ -1493,7 +1485,6 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
        with the device qualifier refactor we only want to count the total number of unique gpus */
     state->gpu_ctl = (cuptip_gpu_state_t *) papi_calloc(num_unique_gpus, sizeof(cuptip_gpu_state_t));
     if (state->gpu_ctl == NULL) {
-        printf("Failed to allocated memory for gpu_ctl.\n");
         return PAPI_ENOMEM;
     }
 
@@ -1508,21 +1499,18 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     /* register the user created cuda context for the current gpu if not already known */
     papi_errno = cuptic_ctxarr_update_current(thr_info);
     if (papi_errno != PAPI_OK) {
-        printf("cuptic_ctxarr_update_current failed.\n");
         goto fn_exit;
     }
 
     /* creates a pMetricsContext */
     papi_errno = nvpw_cuda_metricscontext_create(state);
     if (papi_errno != PAPI_OK) {
-        printf("nvpw_cuda_metricscontext_create failed.\n");
         goto fn_exit;
     }
 
     /* multipass is not supporter; therefore, we must check the Cuda native event */
     papi_errno = check_multipass(state);
     if (papi_errno != PAPI_OK) {
-        printf("we enter check_multipass failure.\n");
         goto fn_exit;
     }
     state->info = thr_info;
@@ -1669,7 +1657,6 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 
         papi_errno = get_measured_values(gpu_ctl, counts);
         if (papi_errno != PAPI_OK) {
-            printf("PAPI_errno is: %d\n", papi_errno);
             goto fn_exit;
         }
         for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
@@ -1940,6 +1927,10 @@ int init_event_table(void)
 
         avail_events[gpu_idx].num_metrics = getMetricNameBeginParams.numMetrics;
         cuptiu_table.events = papi_calloc(avail_events[gpu_idx].num_metrics, sizeof(cuptiu_event_t));
+        if (cuptiu_table.events == NULL) {
+            papi_errno = PAPI_ENOMEM;
+            goto fn_fail;
+        }
         
         papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_idx].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[gpu_idx].nv_metrics));
         if (papi_errno != PAPI_OK) {
@@ -2356,7 +2347,6 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
     htable_errno = htable_find(avail_events[0].nv_metrics->htable, base, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
         papi_errno = (htable_errno == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
-        printf("HTABLE WAS NOT SUCCESSFUL\n");
         goto fn_exit;
     }
 
@@ -2462,7 +2452,6 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
         papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext,
                                             cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].desc, 0 );
         if (papi_errno != PAPI_OK) {
-            printf("Failed to get event description.\n");
             return papi_errno;
         }
     }

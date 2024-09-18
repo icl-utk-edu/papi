@@ -20,15 +20,9 @@ int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu
     if (evt_table == NULL) {
         goto fn_fail;
     }
-    evt_table->sizeof_rec = sizeof_rec;
+
     evt_table->capacity = capacity;
     evt_table->count = 0;
-    evt_table->evts = papi_calloc (evt_table->capacity, evt_table->sizeof_rec);
-    if (evt_table->evts == NULL) {
-        cuptiu_event_table_destroy(&evt_table);
-        ERRDBG("Error allocating memory for dynamic event table.\n");
-        goto fn_fail;
-    }
     if (htable_init(&(evt_table->htable)) != HTABLE_SUCCESS) {
         cuptiu_event_table_destroy(&evt_table);
         goto fn_fail;
@@ -40,28 +34,12 @@ fn_fail:
     return PAPI_ENOMEM;
 }
 
-int cuptiu_event_table_get_item(cuptiu_event_table_t *evt_table, int evt_idx, cuptiu_event_t **record)
-{
-    if (evt_idx >= (int) evt_table->count) {
-        *record = NULL;
-        return PAPI_EINVAL;
-    }
-    if (evt_idx == -1) {
-        evt_idx = evt_table->count - 1;
-    }
-    *record = evt_table->evts + evt_idx * evt_table->sizeof_rec;
-    return PAPI_OK;
-}
-
 void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table)
 {
     cuptiu_event_table_t *evt_table = *pevt_table;
     if (evt_table == NULL)
         return;
-    if (evt_table->evts) {
-        papi_free(evt_table->evts);
-        evt_table->evts = NULL;
-    }
+
     if (evt_table->htable) {
         htable_shutdown(evt_table->htable);
         evt_table->htable = NULL;
