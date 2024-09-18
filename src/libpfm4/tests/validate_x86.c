@@ -9562,7 +9562,7 @@ static const test_event_t x86_test_events[]={
 	  .ret  = PFM_SUCCESS,
 	  .count = 2,
 	  .codes[0] = 0x5303c6,
-	  .codes[1] = 0x9,
+	  .codes[1] = 0xa,
 	  .fstr = "gnr::FRONTEND_RETIRED:LATE_SWPF:k=1:u=1:e=0:i=0:c=0:intx=0:intxcp=0:fe_thres=0",
 	},
 	{ SRC_LINE,

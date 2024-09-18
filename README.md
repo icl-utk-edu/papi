@@ -2,6 +2,8 @@
 
 **[Innovative Computing Laboratory (ICL)](http://www.icl.utk.edu/)**
 
+**[PAPI Wiki - Documentation](https://github.com/icl-utk-edu/papi/wiki/)**
+
 **University of Tennessee, Knoxville (UTK)**
 
 
@@ -36,14 +38,6 @@ events---hardware- and software-related events---in a uniform way, through one
 consistent PAPI interface. Third-party tools and application developers will
 have to handle only a single hook to PAPI in order to access all hardware
 performance counters in a system, including the new software-defined events.
-
-***
-
-
-# Documentation
-
-* [PAPI Wiki](https://github.com/icl-utk-edu/papi/wiki/) is the main documentation for HOWTOs, Supported Architectures, PAPI Releases.
-* [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All)
 
 
 ***
@@ -95,6 +89,7 @@ you will need to do the following:
   information about PAPI.
 * Visit the [ECP website](https://www.exascaleproject.org/) to find out more
   about the DOE Exascale Computing Initiative.
+* Visit the [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All) to find out more about PAPI papers and presentations.
 
 ***
 

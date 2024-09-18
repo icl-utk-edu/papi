@@ -18,7 +18,7 @@ hip_test_fail(const char *file __attribute__((unused)), int line,
 {
     const char *string;
 
-    fprintf(stdout, "FAILER!!!");
+    fprintf(stdout, "FAILED!!!");
     fprintf(stdout, "\nLine # %d ", line);
 
     string = hipGetErrorString(retval);

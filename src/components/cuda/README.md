@@ -67,12 +67,12 @@ standard `PAPI_CUDA_ROOT` subdirectories, you must add the correct paths,
 e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`.
 This can be set using export; e.g. 
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PAPI_CUDA_ROOT/lib64
+    export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$LD_LIBRARY_PATH
 
 ## Known Limitations
 * In CUpti\_11, the number of possible events is vastly expanded; e.g. from
   some hundreds of events per device to over 110,000 events per device. this can
-  make the utility `papi/src/utils/papi_native_events` run for several minutes;
+  make the utility `papi/src/utils/papi_native_avail` run for several minutes;
   as much as 2 minutes per GPU. If the output is redirected to a file, this 
   may appear to "hang up". Give it time.
 
@@ -101,7 +101,7 @@ usually `/usr/lib64`, `/lib64`, `/usr/lib` and `/lib`.
 The system will also search the directories listed in `LD_LIBRARY_PATH`,
 separated by colons `:`. This can be set using export; e.g. 
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereLib1CanBeFound:/WhereLib2CanBeFound
+    export LD_LIBRARY_PATH=/WhereLib1CanBeFound:/WhereLib2CanBeFound:$LD_LIBRARY_PATH
 
 * If CUDA libraries are installed on your system, such that the OS can find `nvcc`, the header files, and the shared libraries, then `PAPI_CUDA_ROOT` and `LD_LIBRARY_PATH` may not be necessary.
 

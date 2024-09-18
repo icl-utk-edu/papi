@@ -1,4 +1,4 @@
-.TH "PAPIF_epc" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPIF_epc" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ PAPIF_epc \- Get named events per cycle, real and processor time, reference and 
 .RS 4
 #include 'fpapi\&.h' 
 .br
- \fBPAPIF_epc( C_STRING EventName, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )\fP
+ \fBPAPIF_epc( C_INT EventCode, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )\fP
 .RE
 .PP
 \fBSee also\fP

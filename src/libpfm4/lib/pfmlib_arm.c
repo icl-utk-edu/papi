@@ -40,7 +40,11 @@ const pfmlib_attr_desc_t arm_mods[]={
 	PFM_ATTR_NULL /* end-marker to avoid exporting number of entries */
 };
 
-pfm_arm_config_t pfm_arm_cfg;
+pfm_arm_config_t pfm_arm_cfg = {
+	.implementer  = -1,
+	.architecture = -1,
+	.part	      = -1,
+};
 
 #ifdef CONFIG_PFMLIB_OS_LINUX
 /*
@@ -153,24 +157,26 @@ pfm_arm_detect(void *this)
 	int ret;
 	char buffer[128];
 
-	ret = pfmlib_getcpuinfo_attr("CPU implementer", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
-
-        pfm_arm_cfg.implementer = strtol(buffer, NULL, 16);
+	if (pfm_arm_cfg.implementer == -1) {
+		ret = pfmlib_getcpuinfo_attr("CPU implementer", buffer, sizeof(buffer));
+		if (ret == -1)
+			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.implementer = strtol(buffer, NULL, 16);
+	}
    
-   
-	ret = pfmlib_getcpuinfo_attr("CPU part", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
+	if (pfm_arm_cfg.part == -1) {
+		ret = pfmlib_getcpuinfo_attr("CPU part", buffer, sizeof(buffer));
+		if (ret == -1)
+			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.part = strtol(buffer, NULL, 16);
+	}
 
-	pfm_arm_cfg.part = strtol(buffer, NULL, 16);
-
-	ret = pfmlib_getcpuinfo_attr("CPU architecture", buffer, sizeof(buffer));
-	if (ret == -1)
-		return PFM_ERR_NOTSUPP;
-
-	pfm_arm_cfg.architecture = strtol(buffer, NULL, 16);
+	if (pfm_arm_cfg.architecture == -1) {
+		ret = pfmlib_getcpuinfo_attr("CPU architecture", buffer, sizeof(buffer));
+		if (ret == -1)
+			return PFM_ERR_NOTSUPP;
+		pfm_arm_cfg.architecture = strtol(buffer, NULL, 16);
+	}
    
 	return PFM_SUCCESS;
 }

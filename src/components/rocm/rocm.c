@@ -179,19 +179,12 @@ static int
 evt_get_count(int *count)
 {
     uint64_t event_code = 0;
-    int papi_errno;
 
     if (rocd_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
-        papi_errno = rocd_get_num_qualified_evts(count, event_code);
-        if (papi_errno != PAPI_OK) {
-            return papi_errno;
-        }
+        ++(*count);
     }
     while (rocd_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
-        papi_errno = rocd_get_num_qualified_evts(count, event_code);
-        if (papi_errno != PAPI_OK) {
-            return papi_errno;
-        }
+        ++(*count);
     }
 
     return PAPI_OK;

@@ -1,4 +1,4 @@
-.TH "PAPI_attach" 3 "Thu Dec 14 2023" "Version 7.1.0.0" "PAPI" \" -*- nroff -*-
+.TH "PAPI_attach" 3 "Fri Aug 30 2024 19:06:49" "Version 7.2.0.0b1" "PAPI" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ PAPI_attach \- Attach PAPI event set to the specified thread id\&.
 .RS 4
 #include <\fBpapi\&.h\fP> 
 .br
-int \fBPAPI_attach( int EventSet, unsigned long tid )\fP;
+int PAPI_attach( int EventSet, unsigned long tid );
 .RE
 .PP
 \fBPAPI_attach\fP is a wrapper function that calls \fBPAPI_set_opt\fP to allow PAPI to monitor performance counts on a thread other than the one currently executing\&. This is sometimes referred to as third party monitoring\&. \fBPAPI_attach\fP connects the specified EventSet to the specified thread; \fBPAPI_detach\fP breaks that connection and restores the EventSet to the original executing thread\&.
