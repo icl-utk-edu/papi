@@ -28,6 +28,7 @@ typedef struct event_table_s {
     unsigned int count;
     unsigned int capacity;
     char added_cuda_evts[30][PAPI_2MAX_STR_LEN];
+    int added_cuda_dev[30];
     cuptiu_event_t *events;
     void *evts;
     void *htable;

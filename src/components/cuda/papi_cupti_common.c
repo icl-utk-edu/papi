@@ -662,15 +662,7 @@ static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t 
     gpu_occupancy_t acq_mask = 0;
     cuptiu_event_t *evt_rec;
     for (i = 0; i < evt_table->count; i++) {
-        papi_errno = cuptiu_event_table_get_item(evt_table, i, (cuptiu_event_t **) &evt_rec);
-        if (papi_errno != PAPI_OK) {
-            goto fn_exit;
-        }
-        papi_errno = event_name_get_gpuid(evt_rec->name, &gpu_id);
-        if (papi_errno != PAPI_OK) {
-            goto fn_exit;
-        }
-        acq_mask |= (1 << gpu_id);
+        acq_mask |= (1 << evt_table->added_cuda_dev[i]);
     }
     *bitmask = acq_mask;
 fn_exit:
@@ -682,7 +674,6 @@ int cuptic_device_acquire(cuptiu_event_table_t *evt_table)
     gpu_occupancy_t bitmask;
     int papi_errno = _devmask_events_get(evt_table, &bitmask);
     if (papi_errno != PAPI_OK) {
-        printf("errno is: %s\n", PAPI_strerror(papi_errno));
         return papi_errno;
     }
     if (bitmask & global_gpu_bitmask) {

@@ -729,8 +729,10 @@ static int check_multipass(cuptip_control_t state)
 
         /* for an event, collect the number of passes to see if supported */
         papi_errno = calculate_num_passes( nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-                                       gpu_ctl->rmr_count, gpu_ctl->rmr, &passes);
+                                           gpu_ctl->rmr_count, gpu_ctl->rmr, &passes);
         if ( papi_errno == PAPI_EMULPASS ) {
+            printf("Total number of passes is: %d\n", passes);
+            printf("State name is: %s\n", gpu_ctl->event_names->added_cuda_evts[4]);
         /* at this point we just want the number of passes (stored in passes) */
         }
 
@@ -1441,9 +1443,10 @@ int verify_events(uint64_t *events_id, int num_events,
         if (papi_errno != PAPI_OK) {
             printf("Entering break\n");
             break;
-        }    
+        }
         sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
         strcpy((*targeted_event_names)->added_cuda_evts[i], name);
+        (*targeted_event_names)->added_cuda_dev[i] = info.device;
         void *p;
         if (htable_find(cuptiu_table_p->htable, name, (void **) &p) != HTABLE_SUCCESS) {
             htable_insert((*targeted_event_names)->htable, name, (void **) &p );
@@ -1478,6 +1481,7 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
+    printf("Number of events is: %d\n", num_events);
 
     /* create a cuptip_control_t struct which contains read_count, running, cupti_info_t and cuptip_gpu_state_t */
     cuptip_control_t state = (cuptip_control_t) papi_calloc (1, sizeof(struct cuptip_control_s));
@@ -1518,6 +1522,7 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     /* multipass is not supporter; therefore, we must check the Cuda native event */
     papi_errno = check_multipass(state);
     if (papi_errno != PAPI_OK) {
+        printf("we enter check_multipass failure.\n");
         goto fn_exit;
     }
     state->info = thr_info;
@@ -1559,11 +1564,11 @@ int cuptip_ctx_start(cuptip_control_t state)
             continue;
         }
         LOGDBG("Device num %d: event_count %d, rmr count %d\n", gpu_id, gpu_ctl->event_names->count, gpu_ctl->rmr_count);
-        //papi_errno = cuptic_device_acquire(state->gpu_ctl[gpu_id].event_names);
-        //if (papi_errno != PAPI_OK) {
-        //    ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
-        //    return papi_errno;
-        //}
+        papi_errno = cuptic_device_acquire(state->gpu_ctl[gpu_id].event_names);
+        if (papi_errno != PAPI_OK) {
+            ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
+            return papi_errno;
+        }
         /* get the cuda context for the unique gpu */
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
         /* bind the specified CUDA context to the calling CPU thread */
@@ -1784,14 +1789,10 @@ int cuptip_ctx_stop(cuptip_control_t state)
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
-        
-        /*
         papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].event_names);
         if (papi_errno != PAPI_OK) {
-            printf("Failed to cuptic_device_release.\n");
             goto fn_fail;
         }
-        */
     }
 
 fn_exit:

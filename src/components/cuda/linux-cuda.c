@@ -343,6 +343,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
         goto fn_exit;
     }
 
+    printf("ntv_count in cuda_update_control: %d\n", ntv_count);
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     if (ntv_count == 0) {
         return PAPI_OK;
@@ -365,9 +366,10 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
    
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
-
+    printf("papi errno for cuptid_ctx_create is: %d\n", papi_errno);
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    printf("ERRNO in fn_exit is: %d\n", papi_errno);
     return papi_errno;
 }
 
