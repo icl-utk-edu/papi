@@ -1194,10 +1194,8 @@ pfmlib_init_env(void)
 		pfm_cfg.blacklist_pmus = str;
 
 	str = getenv("LIBPFM_PROC_CPUINFO");
-	if (str) {
-		printf("FOUND CPUINFO %s\n", str);
+	if (str)
 		pfm_cfg.proc_cpuinfo = str;
-	}
 }
 
 static int
