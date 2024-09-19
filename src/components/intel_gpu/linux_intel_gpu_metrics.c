@@ -150,6 +150,22 @@ addMetricToDevice(uint32_t code, int rootDev) {
 	return i;
 }
 
+/*!
+ * @brief  Reset metric counts to zero.
+ */
+void
+metricReset( MetricContext *mContext )
+{
+    for (uint32_t i=0; i<num_avail_devices; i++) {
+        uint32_t dev_idx = mContext->active_devices[i];
+        if  (dev_idx < num_active_devices) {
+            DeviceContext *dev = &active_devices[dev_idx];
+            GPUSetMetricControl(dev->handle, METRIC_RESET);
+        }
+    }
+}
+
+
 
 /************************* PAPI Functions **********************************/
 
@@ -277,11 +293,39 @@ intel_gpu_update_control_state( hwd_control_state_t *ctl,
 	(void)ctl;
 
 	// use local maintained context,
-	if (!count ||!native)  {
-		return PAPI_OK;
+	MetricContext *mContext = (MetricContext *)ctx;
+
+    /* This check accounts for calls to PAPI_cleanup_eventset(). */
+	if ( !count )  {
+	    metricReset(mContext);
+        /* Free devices. */
+        for (uint32_t i=0; i<mContext->num_devices; i++) {
+            uint32_t dev_idx = mContext->active_devices[i];
+            if (dev_idx >= num_active_devices) {
+                return PAPI_ENOMEM;
+            }
+            DeviceContext *dev = &active_devices[dev_idx];
+            DEVICE_HANDLE handle = dev->handle;
+            if( !handle ) {
+                GPUFreeDevice(handle);
+            }
+            mContext->active_devices[i] = 0;
+        }
+        mContext->num_devices = 0;
+        /* Free metric slots. */
+        for (uint32_t midx=0; midx<mContext->num_metrics; midx++) {
+            mContext->metric_idx[midx] = 0;
+            mContext->metric_values[midx] = 0;
+            mContext->dev_ctx_idx[midx] = 0;
+            mContext->subdev_idx[midx] = 0;
+        }
+        mContext->num_metrics = 0;
+        return PAPI_OK;
 	}
 
-	MetricContext *mContext = (MetricContext *)ctx;
+	if ( !native ) {
+		return PAPI_OK;
+	}
 
 #if defined(_DEBUG)
 	for (int i=0; i<count; i++) {
@@ -354,6 +398,9 @@ intel_gpu_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	MetricContext *mContext = (MetricContext *)ctx;
 
 	int	 ret	= PAPI_OK;
+
+    metricReset(mContext);
+
 	if (mContext->num_metrics == 0) {
 		GPUDEBUG("intel_gpu_start : No metric selected, abort.\n");
 		return PAPI_EINVAL;
@@ -521,13 +568,8 @@ intel_gpu_reset( hwd_context_t *ctx, hwd_control_state_t *ctl)
 	GPUDEBUG("Entering intel_gpu_reset\n");
 	MetricContext *mContext = (MetricContext *)ctx;
 
-	for (uint32_t i=0; i<num_avail_devices; i++) {
-		uint32_t dev_idx = mContext->active_devices[i];
-		if  (dev_idx < num_active_devices) {
-			DeviceContext *dev = &active_devices[dev_idx];
-			GPUSetMetricControl(dev->handle, METRIC_RESET);
-		}
-	}
+	metricReset(mContext);
+
 	return PAPI_OK;
 }
 
