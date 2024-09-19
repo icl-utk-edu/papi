@@ -121,13 +121,6 @@ addMetricToDevice(uint32_t code, int rootDev) {
 	uint32_t i=0;
 	for (i=0; i<num_active_devices; i++)  {
 		if  (active_devices[i].device_code == devcode) {
-			if (active_devices[i].mgroup_code != group) {
-				// conflict with existing metric group
-				GPUDEBUG("intel_gpu: metrics from more than one group cannot be collected "
-						" in the same device at the same time. "
-						" Failed with return code 0x%x \n", PAPI_ENOSUPP);
-		   		return -1;
-			}
 			break;
 		}
 	}
