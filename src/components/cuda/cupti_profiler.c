@@ -698,7 +698,6 @@ static int check_multipass(cuptip_control_t state)
     NVPA_Status nvpa_err;
     cuptip_gpu_state_t *gpu_ctl;
 
-    // so we are passing a cuptip_control_t struct state, which has gpu_ctl
     for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->event_names->count == 0) {
@@ -1765,7 +1764,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
         cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     }
 
-    for (gpu_id=0; gpu_id<num_unique_gpus; gpu_id++) {
+    for (gpu_id=0; gpu_id < num_unique_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->event_names->count == 0) {
             continue;
@@ -1948,6 +1947,7 @@ int init_event_table(void)
         }
         cuptiu_table.events = papi_realloc(cuptiu_table.events, avail_events[gpu_idx].nv_metrics->count * sizeof(cuptiu_event_t));
         cuptiu_table.count = avail_events[gpu_idx].nv_metrics->count;
+        cuptiu_table.htable = avail_events[gpu_idx].nv_metrics->htable;
 
         NVPW_MetricsContext_GetMetricNames_End_Params getMetricNameEndParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE,
@@ -2344,7 +2344,7 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
         goto fn_exit;
     }
 
-    htable_errno = htable_find(avail_events[0].nv_metrics->htable, base, (void **) &event);
+    htable_errno = htable_find(cuptiu_table_p->htable, base, (void **) &event);
     if (htable_errno != HTABLE_SUCCESS) {
         papi_errno = (htable_errno == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
         goto fn_exit;
