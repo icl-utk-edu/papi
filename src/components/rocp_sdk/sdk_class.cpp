@@ -29,17 +29,18 @@ struct event_instance_info_t{
 
 std::atomic<unsigned int> _global_papi_event_count{0};
 std::atomic<unsigned int> _base_event_count{0};
+static std::shared_mutex profile_cache_mutex = {};
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
-
 
 agent_map_t gpu_agents = agent_map_t{};
 
 std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
 
-std::vector<unsigned> active_event_list = {};
-std::set<int>         active_device_set = {};
+std::set<int> active_device_set = {};
+vendorp_ctx_t active_event_set_ctx;
 
+std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> dispatch_profile_cache = {};
 std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
 std::unordered_map<std::string, unsigned int> event_instance_name_to_papi_id = {};
 
@@ -196,7 +197,7 @@ counter_dimensions(rocprofiler_counter_id_t counter)
 /* ** */
 #if !defined(ROCPROF_SDK_BUG_WORKAROUND)
 bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims ){
-    // Traverse all the dimensions in the event instance (i.e. base_event+qualifiers) of an event in the active_event_list
+    // Traverse all the dimensions in the event instance (i.e. base_event+qualifiers) of an event in the active_event_set_ctx
     for(const auto &ev_inst_dim : dim_instances ){
         bool found_dim_id = false;
         // Traverse all the dimensions of the event in the record_callback() data
@@ -228,18 +229,15 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
                 rocprofiler_user_data_t,
                 void*                                        callback_data_args)
 {
-    std::stringstream ss;
-
-    if( NULL == _counter_values ){
-        SUBDBG("Received a recording before calling PAPI_start().");
+    if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         return;
     }
-                         
+
     _papi_hwi_lock(_rocp_sdk_lock);
 
     int idx = 0;
-    for( const auto &papi_event_id : active_event_list ){
-        auto e_inst = papi_id_to_event_instance.find(papi_event_id);
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
         if( papi_id_to_event_instance.end() == e_inst ){
             continue;
         }
@@ -308,8 +306,8 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
         }
 
         // Look through the active events to see if the one we just recorded is one of them.
-        for( const auto &papi_event_id : active_event_list ){
-            auto e_inst = papi_id_to_event_instance.find(papi_event_id);
+        for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+            auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
             if( papi_id_to_event_instance.end() == e_inst ){
                 continue;
             }
@@ -325,68 +323,26 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
 #endif
 }
 
+
 /* ** */
 void
 dispatch_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
-                  rocprofiler_profile_config_id_t*             config,
-                  rocprofiler_user_data_t*,
-                  void* )
+                  rocprofiler_profile_config_id_t             *config,
+                  rocprofiler_user_data_t *,
+                  void * )
 {
-    /**
-     * We store the profile in a cache to prevent constructing many identical profile counter
-     * sets. We first check the cache to see if we have already constructed a counter
-     * set for the agent. If we have, return it. Otherwise, construct a new profile counter
-     * set.
-     */
-    static std::shared_mutex                                             m_mutex       = {};
-    static std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> profile_cache = {};
 
-    auto search_cache = [&]() {
-        auto pos = profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
-        if( profile_cache.end() != pos ){
-            *config = pos->second;
-            return true;
-        }
-        return false;
-    };
-
-    {
-        auto rlock = std::shared_lock{m_mutex};
-        if(search_cache()) return;
+    // All threads get a shared lock because if they are only reading the
+    // existing config from the cache they can all do this at the same
+    // time. If there is nothing in the cache, they will exit this scope
+    // and the lock will be automatically released.
+    auto rlock = std::shared_lock{profile_cache_mutex};
+    auto pos = dispatch_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
+    if( dispatch_profile_cache.end() != pos ){
+        *config = pos->second;
     }
+    return;
 
-    auto wlock = std::unique_lock{m_mutex};
-    if(search_cache()) return;
-
-    // Create a collection profile for the counters
-    rocprofiler_profile_config_id_t profile;
-
-    std::vector<rocprofiler_counter_id_t> event_vid_list = {};
-    std::set<uint64_t> id_set = {};
-    for( const auto &e_id : active_event_list ){
-        // If the event does not exist in the papi_id_to_event_instance map, ignore it (maybe print a debug warning?).
-        auto e_inst = papi_id_to_event_instance.find(e_id);
-        if( papi_id_to_event_instance.end() == e_inst ){
-            continue;
-        }
-        rocprofiler_counter_id_t vid = e_inst->second.counter_info.id;
-        // If the vid of the event (base event) is not already in the event_vid_list, then add it.
-        if( id_set.find(vid.handle) == id_set.end() ){
-            event_vid_list.emplace_back( vid );
-            id_set.emplace( vid.handle );
-        }
-    }
-
-    //TODO Error handling: right now we can't tell which event caused the problem, if a problem occurs.
-    ROCPROFILER_CALL(rocprofiler_create_profile_config_FPTR(dispatch_data.dispatch_info.agent_id,
-                                                       event_vid_list.data(),
-                                                       event_vid_list.size(),
-                                                       &profile),
-                     "Could not construct profile cfg");
-
-    profile_cache.emplace(dispatch_data.dispatch_info.agent_id.handle, profile);
-    // Return the profile to collect those counters for this dispatch
-    *config = profile;
 }
 
 /* ** */
@@ -410,12 +366,11 @@ get_GPU_agent_info() {
     };
 
     auto _agents = agent_map_t{};
-    ROCPROFILER_CALL(
-        rocprofiler_query_available_agents_FPTR(ROCPROFILER_AGENT_INFO_VERSION_0,
+    ROCPROFILER_CALL( rocprofiler_query_available_agents_FPTR(ROCPROFILER_AGENT_INFO_VERSION_0,
                                            iterate_cb,
                                            sizeof(rocprofiler_agent_t),
                                            static_cast<void*>(&_agents)),
-        "query available agents");
+                      "query available agents");
 
     return _agents;
 }
@@ -452,9 +407,9 @@ set_profile(rocprofiler_context_id_t                 context_id,
 
     std::vector<rocprofiler_counter_id_t> event_vid_list = {};
     std::set<uint64_t> id_set = {};
-    for( const auto &e_id : active_event_list ){
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
         // If the event does not exist in the papi_id_to_event_instance map, ignore it.
-        auto e_inst = papi_id_to_event_instance.find(e_id);
         if( papi_id_to_event_instance.end() == e_inst ){
             continue;
         }
@@ -483,10 +438,10 @@ void
 accum_values(rocprofiler_record_counter_t **record_data, int record_count)
 {
     int idx = 0;
-    for( const auto &papi_event_id : active_event_list ){
-        auto e_inst = papi_id_to_event_instance.find(papi_event_id);
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
+
         if( papi_id_to_event_instance.end() == e_inst ){
-            //std::cerr << __FUNCTION__ << " strangely the event id: " << papi_event_id << " is in the active_event_list but not in papi_id_to_event_instance." << std::endl;
             continue;
         }
 
@@ -548,8 +503,8 @@ buffered_callback(rocprofiler_context_id_t,
     std::cout << "[" << __FUNCTION__ << "]:\n" << ss.str() << "--------------------------------" << std::endl;
 
     accum_values(record_data.data(), record_data.size());
-    for(int i=0; i<active_event_list.size(); ++i){
-        std::cout << _counter_values[i] << "\n";
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        std::cout << _counter_values[ei] << "\n";
     }
     std::cout << "------------------------" << std::endl;
 
@@ -866,7 +821,7 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
 /* ** */
 int
 evt_enum(unsigned int *event_code, int modifier){
-    int papi_errno, tmp_code;
+    int papi_errno=PAPI_OK, tmp_code;
     base_event_info_t event_info;
     std::string full_name;
     event_instance_info_t ev_inst;
@@ -946,24 +901,60 @@ evt_enum(unsigned int *event_code, int modifier){
 /* ** */
 void
 empty_active_event_set(void){
-    active_event_list.clear();
+    active_event_set_ctx = NULL;
     active_device_set.clear();
     return;
 }
 
 /* ** */
 int
-add_event_to_active_event_set(int papi_event_id){
-    populate_event_list();
+set_dispatch_profiles(vendorp_ctx_t ctx){
+    std::map<uint64_t, std::vector<event_instance_info_t> > active_events_per_device;
 
-    // make sure the event exists.
-    auto it = papi_id_to_event_instance.find( papi_event_id );
-    if( papi_id_to_event_instance.end() == it ){
-        return PAPI_ENOEVNT;
+    // Acquire a unique lock so that no other thread can try to read
+    // the profile cache while we are modifying it.
+    auto wlock = std::unique_lock{profile_cache_mutex};
+
+    dispatch_profile_cache.clear();
+
+    for( int i=0; i < ctx->num_events; ++i) {
+        // make sure the event exists.
+        auto it = papi_id_to_event_instance.find( ctx->event_ids[i] );
+        if( papi_id_to_event_instance.end() == it ){
+            return PAPI_ENOEVNT;
+        }
+
+        active_device_set.insert(it->second.device);
+        active_events_per_device[it->second.device].emplace_back(it->second);
     }
 
-    active_event_list.push_back(papi_event_id);
-    active_device_set.insert(it->second.device);
+    for(const auto &a_it : gpu_agents ){
+        rocprofiler_profile_config_id_t profile;
+
+        auto agent = a_it.second;
+
+        std::vector<rocprofiler_counter_id_t> event_vid_list = {};
+        std::set<uint64_t> id_set = {};
+
+        for( const auto e_inst : active_events_per_device[agent->logical_node_type_id] ){
+
+            rocprofiler_counter_id_t vid = e_inst.counter_info.id;
+            // If the vid of the event (base event) is not already in the event_vid_list, then add it.
+            if( id_set.find(vid.handle) == id_set.end() ){
+                event_vid_list.emplace_back( vid );
+                id_set.emplace( vid.handle );
+            }
+        }
+
+        //TODO Error handling: right now we can't tell which event caused the problem, if a problem occurs.
+        ROCPROFILER_CALL(rocprofiler_create_profile_config_FPTR(agent->id,
+                                                           event_vid_list.data(),
+                                                           event_vid_list.size(),
+                                                           &profile),
+                         "Could not construct profile cfg");
+
+        dispatch_profile_cache.emplace(agent->id.handle, profile);
+    }
 
     return PAPI_OK;
 }
@@ -972,7 +963,6 @@ add_event_to_active_event_set(int papi_event_id){
 void tool_fini(void* tool_data) {
     stop_counting();
     empty_active_event_set();
-
     return;
 }
 
@@ -1040,7 +1030,7 @@ rocprofiler_sdk_init_pre(void)
 extern "C" int
 rocprofiler_sdk_init(void)
 {
-    int papi_errno;
+    int papi_errno=PAPI_OK;
 
     if( papi_rocpsdk::setup() ){
         papi_errno = PAPI_ECMP;
@@ -1069,11 +1059,13 @@ extern "C" int
 rocprofiler_sdk_stop(vendorp_ctx_t ctx)
 {
     if( ctx ){
-        free(ctx->counters);
+        ctx->state = RPSDK_AES_STOPPED;
     }
-    free(ctx);
 
+    finalize_ctx(ctx);
     papi_rocpsdk::stop_counting();
+    papi_rocpsdk::empty_active_event_set();
+    papi_rocpsdk::delete_event_list();
     return PAPI_OK;
 }
 
@@ -1082,7 +1074,7 @@ rocprofiler_sdk_start(vendorp_ctx_t ctx)
 {
     papi_rocpsdk::start_counting(ctx);
 
-//    ctx->state |= RPSDK_CTX_RUNNING;
+    ctx->state |= RPSDK_AES_RUNNING;
 
     return PAPI_OK;
 }
@@ -1106,7 +1098,7 @@ rocprofiler_sdk_ctx_reset(vendorp_ctx_t ctx)
 extern "C" int
 rocprofiler_sdk_ctx_open(int *event_ids, int num_events, vendorp_ctx_t *ctx)
 {
-    int papi_errno;
+    int papi_errno=PAPI_OK;
 
     *ctx = (vendorp_ctx_t)papi_calloc(1, sizeof(struct vendord_ctx));
     if (NULL == *ctx) {
@@ -1116,17 +1108,14 @@ rocprofiler_sdk_ctx_open(int *event_ids, int num_events, vendorp_ctx_t *ctx)
     _papi_hwi_lock(_rocp_sdk_lock);
 
     papi_rocpsdk::empty_active_event_set();
-
     papi_errno = init_ctx(event_ids, num_events, *ctx);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
+    papi_rocpsdk::active_event_set_ctx = *ctx;
+    papi_rocpsdk::set_dispatch_profiles(*ctx);
 
-    for (int i = 0; i < num_events; ++i) {
-        int err = papi_rocpsdk::add_event_to_active_event_set(event_ids[i]);
-        if( PAPI_OK != err )
-            return err;
-    }
+    (*ctx)->state = RPSDK_AES_OPEN;
 
   fn_exit:
     _papi_hwi_unlock(_rocp_sdk_lock);
@@ -1161,7 +1150,7 @@ rocprofiler_sdk_evt_enum(unsigned int *event_code, int modifier)
 extern "C" int
 rocprofiler_sdk_evt_code_to_name(unsigned int event_code, char *name, int len)
 {
-    int papi_errno;
+    int papi_errno = PAPI_OK;
     const char *tmp_name;
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
@@ -1175,7 +1164,7 @@ rocprofiler_sdk_evt_code_to_name(unsigned int event_code, char *name, int len)
 extern "C" int
 rocprofiler_sdk_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 {
-    int papi_errno;
+    int papi_errno = PAPI_OK;
     const char *tmp_descr;
 
     papi_errno = papi_rocpsdk::evt_id_to_descr(event_code, &tmp_descr);
@@ -1189,7 +1178,7 @@ rocprofiler_sdk_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 extern "C" int
 rocprofiler_sdk_evt_code_to_info(unsigned int event_code, PAPI_event_info_t *info)
 {
-    int papi_errno;
+    int papi_errno = PAPI_OK;
     const char *tmp_name, *tmp_descr;
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
@@ -1209,7 +1198,7 @@ rocprofiler_sdk_evt_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
 extern "C" int
 rocprofiler_sdk_evt_name_to_code(const char *event_name, unsigned int *event_code)
 {
-    int papi_errno;
+    int papi_errno = PAPI_OK;
     papi_errno = papi_rocpsdk::evt_name_to_id(event_name, event_code);
 
     return papi_errno;
@@ -1236,13 +1225,16 @@ init_ctx(int *event_ids, int num_events, vendorp_ctx_t ctx)
 int
 finalize_ctx(vendorp_ctx_t ctx)
 {
-    ctx->event_ids = NULL;
-    ctx->num_events = 0;
-    papi_free(ctx->counters);
+    if( ctx ){
+        ctx->event_ids = NULL;
+        ctx->num_events = 0;
+        free(ctx->counters);
+    }
+    free(ctx);
     return PAPI_OK;
 }
 
-rocprofiler_tool_configure_result_t*
+rocprofiler_tool_configure_result_t *
 rocprofiler_configure(uint32_t                 version,
                       const char*              runtime_version,
                       uint32_t                 priority,
