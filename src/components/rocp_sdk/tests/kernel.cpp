@@ -49,5 +49,5 @@ void launch_kernel(int device_id) {
 
     HIP_CALL(hipDeviceSynchronize());
 
-    std::cerr << " =====> Run completed\n";
+//    std::cerr << " =====> Run completed\n";
 }
