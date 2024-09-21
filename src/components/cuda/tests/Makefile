@@ -30,7 +30,7 @@ cuda_tests: $(TESTS) $(TESTS_NOCTX)
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) -E -c -o $@ $<
 
 test_multi_read_and_reset: test_multi_read_and_reset.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o test_multi_read_and_reset test_multi_read_and_reset.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o test_multi_read_and_reset test_multi_read_and_reset.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 concurrent_profiling: concurrent_profiling.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o concurrent_profiling concurrent_profiling.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
@@ -39,34 +39,34 @@ concurrent_profiling_noCuCtx: concurrent_profiling_noCuCtx.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o concurrent_profiling_noCuCtx concurrent_profiling_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 pthreads: pthreads.o
-	$(CC) $(CFLAGS) -o pthreads pthreads.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o pthreads pthreads.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 pthreads_noCuCtx: pthreads_noCuCtx.o
-	$(CC) $(CFLAGS) -o pthreads_noCuCtx pthreads_noCuCtx.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o pthreads_noCuCtx pthreads_noCuCtx.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 cudaOpenMP: cudaOpenMP.o
-	$(CC) $(CFLAGS) -o cudaOpenMP cudaOpenMP.o -lgomp -fopenmp $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o cudaOpenMP cudaOpenMP.o -lgomp -fopenmp $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 cudaOpenMP_noCuCtx: cudaOpenMP_noCuCtx.o
-	$(CC) $(CFLAGS) -o cudaOpenMP_noCuCtx cudaOpenMP_noCuCtx.o -lgomp -fopenmp $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o cudaOpenMP_noCuCtx cudaOpenMP_noCuCtx.o -lgomp -fopenmp $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 test_multipass_event_fail: test_multipass_event_fail.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o test_multipass_event_fail test_multipass_event_fail.o $(INCLUDE) $(UTILOBJS) $(PAPILIB) $(LDFLAGS) $(CUDALIBS)
+	$(CXX) $(CFLAGS) -o test_multipass_event_fail test_multipass_event_fail.o $(INCLUDE) $(UTILOBJS) $(PAPILIB) $(LDFLAGS) $(CUDALIBS)
 
 test_2thr_1gpu_not_allowed: test_2thr_1gpu_not_allowed.o
-	$(CC) $(CFLAGS) -o test_2thr_1gpu_not_allowed test_2thr_1gpu_not_allowed.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o test_2thr_1gpu_not_allowed test_2thr_1gpu_not_allowed.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 HelloWorld_noCuCtx: HelloWorld_noCuCtx.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o HelloWorld_noCuCtx HelloWorld_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o HelloWorld_noCuCtx HelloWorld_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU: simpleMultiGPU.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o simpleMultiGPU simpleMultiGPU.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o simpleMultiGPU simpleMultiGPU.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 simpleMultiGPU_noCuCtx: simpleMultiGPU_noCuCtx.o $(UTILOBJS)
-	$(CC) $(CFLAGS) -o simpleMultiGPU_noCuCtx simpleMultiGPU_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o simpleMultiGPU_noCuCtx simpleMultiGPU_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) $(TESTS_NOCTX)
