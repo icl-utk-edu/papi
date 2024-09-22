@@ -212,6 +212,7 @@ typedef struct {
 	int	inactive;
 	char	*forced_pmu;
 	char	*blacklist_pmus;
+	char	*proc_cpuinfo; /* override /proc/cpuinfo with this file */
 	FILE 	*fp;	/* verbose and debug file descriptor, default stderr or PFMLIB_DEBUG_STDOUT */
 } pfmlib_config_t;	
 

@@ -1192,6 +1192,10 @@ pfmlib_init_env(void)
 	str = getenv("LIBPFM_DISABLED_PMUS");
 	if (str)
 		pfm_cfg.blacklist_pmus = str;
+
+	str = getenv("LIBPFM_PROC_CPUINFO");
+	if (str)
+		pfm_cfg.proc_cpuinfo = str;
 }
 
 static int
