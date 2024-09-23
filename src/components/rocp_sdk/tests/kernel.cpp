@@ -17,9 +17,8 @@ extern "C" void launch_kernel(int device_id);
 __global__ void
 kernelA(int x, int y)
 {
-    int i;
-    for(i=0; i<10000; i++){
-        int t;
+    volatile int i, t;
+    for(i=0; i<1000000; i++){
         t = 173/x;
         x = t + y;
     }

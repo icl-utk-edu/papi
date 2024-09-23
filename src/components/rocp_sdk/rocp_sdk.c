@@ -57,7 +57,7 @@ papi_vector_t _rocp_sdk_vector = {
         .name = "rocp_sdk",
         .short_name = "rocp_sdk",
         .version = "1.0",
-        .description = "GPU events and metrics via AMD ROCprofiler-SDK API",
+        .description = "GPU events and metrics via AMD ROCprofiler-SDK",
         .initialized = 0,
         .num_mpx_cntrs = ROCPROF_SDK_MAX_COUNTERS,
     },

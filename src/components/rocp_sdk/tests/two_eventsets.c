@@ -13,9 +13,9 @@ int main(int argc, char *argv[])
     long long counters2[NUM_EVENTS] = { 0 };
     int eventset1 = PAPI_NULL;
     int eventset2 = PAPI_NULL;
-    int exp1[NUM_EVENTS] = {1, 120000, 900, 500000, 1};
-    int exp2[NUM_EVENTS] = {120000, 1, 900, 1, 500000};
-    int exp3[NUM_EVENTS] = {1, 120000, 1, 1, 1};
+    double exp1[NUM_EVENTS] = {1, 11000000000, 1200000000, 45000000000, 1};
+    double exp2[NUM_EVENTS] = {11000000000, 1, 1200000000, 1, 45000000000};
+    double exp3[NUM_EVENTS] = {1, 11000000000, 1, 1, 1};
 
     const char *events1[NUM_EVENTS] = {
                   "rocp_sdk:::SQ_CYCLES:device=0",
