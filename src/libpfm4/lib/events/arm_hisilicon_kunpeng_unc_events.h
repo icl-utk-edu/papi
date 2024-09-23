@@ -189,9 +189,3 @@ static const arm_entry_t arm_kunpeng_unc_l3c_pe[ ] = {
 		.desc = "Count of the number of prefetch drops from this L3C."
 	}
 };
-
-//Uncore accessor functions
-int
-pfm_kunpeng_unc_get_event_encoding(void *this, pfmlib_event_desc_t *e);
-int
-pfm_kunpeng_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);

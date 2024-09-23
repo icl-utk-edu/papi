@@ -125,8 +125,3 @@ static const arm_entry_t arm_thunderx2_unc_llc_pe[]={
 };
 
 #define ARM_TX2_CORE_LLC_COUNT	(sizeof(arm_thunderx2_unc_llc_pe)/sizeof(arm_entry_t))
-//Uncore accessor functions
-int
-pfm_tx2_unc_get_event_encoding(void *this, pfmlib_event_desc_t *e);
-int
-pfm_tx2_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
