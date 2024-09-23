@@ -1,6 +1,7 @@
 #include "sdk_class.hpp"
 #include <stdio.h>
 
+#define AGENT_PROFILE_MODE
 #define ROCPROF_SDK_BUG_WORKAROUND
 
 namespace papi_rocpsdk
@@ -30,8 +31,12 @@ struct event_instance_info_t{
 std::atomic<unsigned int> _global_papi_event_count{0};
 std::atomic<unsigned int> _base_event_count{0};
 static std::shared_mutex profile_cache_mutex = {};
+static std::mutex agent_mutex = {};
+static std::condition_variable agent_cond_var = {};
+static bool data_is_ready = false;
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
+static int rpsdk_profiling_mode = RPSDK_MODE_CALLBACK_DISPATCH;
 
 agent_map_t gpu_agents = agent_map_t{};
 
@@ -40,11 +45,13 @@ std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
 std::set<int> active_device_set = {};
 vendorp_ctx_t active_event_set_ctx;
 
-std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> dispatch_profile_cache = {};
+std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> rpsdk_profile_cache = {};
 std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
 std::unordered_map<std::string, unsigned int> event_instance_name_to_papi_id = {};
 
 /* *** */
+
+typedef rocprofiler_status_t (* rocprofiler_flush_buffer_t) (rocprofiler_buffer_id_t buffer_id);
 
 typedef rocprofiler_status_t (* rocprofiler_sample_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags);
 
@@ -88,6 +95,7 @@ typedef rocprofiler_status_t (* rocprofiler_query_record_counter_id_t) (rocprofi
 
 typedef rocprofiler_status_t (* rocprofiler_query_record_dimension_position_t) (rocprofiler_counter_instance_id_t id, rocprofiler_counter_dimension_id_t dim, unsigned long *pos);
 
+rocprofiler_flush_buffer_t rocprofiler_flush_buffer_FPTR;
 rocprofiler_sample_agent_profile_counting_service_t rocprofiler_sample_agent_profile_counting_service_FPTR;
 rocprofiler_configure_callback_dispatch_profile_counting_service_t rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR;
 rocprofiler_configure_agent_profile_counting_service_t rocprofiler_configure_agent_profile_counting_service_FPTR;
@@ -132,14 +140,9 @@ get_error_string()
 }
 
 int
-get_profiling_mode(){
-#if defined(AGENT_PROFILE_MODE)
-    // Warning: RPSDK_MODE_AGENT_PROFILE mode does not work properly yet, due to rocprofiler-sdk bugs.
-    static int profiling_mode = RPSDK_MODE_AGENT_PROFILE;
-#else
-    static int profiling_mode = RPSDK_MODE_CALLBACK_DISPATCH;
-#endif
-    return profiling_mode;
+get_profiling_mode(void)
+{
+    return rpsdk_profiling_mode;
 }
 
 /* ** */
@@ -147,6 +150,7 @@ static char *
 obtain_function_pointers(void *dllHandle)
 {
 
+    DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
     DLL_SYM_CHECK(rocprofiler_sample_agent_profile_counting_service, rocprofiler_sample_agent_profile_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_profile_counting_service, rocprofiler_configure_callback_dispatch_profile_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_configure_agent_profile_counting_service, rocprofiler_configure_agent_profile_counting_service_t);
@@ -337,8 +341,8 @@ dispatch_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
     // time. If there is nothing in the cache, they will exit this scope
     // and the lock will be automatically released.
     auto rlock = std::shared_lock{profile_cache_mutex};
-    auto pos = dispatch_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
-    if( dispatch_profile_cache.end() != pos ){
+    auto pos = rpsdk_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
+    if( rpsdk_profile_cache.end() != pos ){
         *config = pos->second;
     }
     return;
@@ -382,55 +386,12 @@ set_profile(rocprofiler_context_id_t                 context_id,
             rocprofiler_agent_set_profile_callback_t set_config,
             void*)
 {
-    static std::shared_mutex                                             m_mutex       = {};
-    static std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> profile_cache = {};
-
-    auto search_cache = [&]() {
-        auto pos = profile_cache.find(agent.handle);
-        if( profile_cache.end() != pos ){
-            set_config(context_id, pos->second);
-            return true;
-        }
-        return false;
-    };
-
-    {
-        auto rlock = std::shared_lock{m_mutex};
-        if(search_cache()) return;
+    auto rlock = std::shared_lock{profile_cache_mutex};
+    auto pos = rpsdk_profile_cache.find(agent.handle);
+    if( rpsdk_profile_cache.end() != pos ){
+        set_config(context_id, pos->second);
     }
-
-    auto wlock = std::unique_lock{m_mutex};
-    if(search_cache()) return;
-
-    // Create a collection profile for the counters
-    rocprofiler_profile_config_id_t profile;
-
-    std::vector<rocprofiler_counter_id_t> event_vid_list = {};
-    std::set<uint64_t> id_set = {};
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
-        // If the event does not exist in the papi_id_to_event_instance map, ignore it.
-        if( papi_id_to_event_instance.end() == e_inst ){
-            continue;
-        }
-        rocprofiler_counter_id_t vid = e_inst->second.counter_info.id;
-        // If the vid of the event (base event) is not already in the event_vid_list, then add it.
-        if( id_set.find(vid.handle) == id_set.end() ){
-            event_vid_list.emplace_back( vid );
-            id_set.emplace( vid.handle );
-        }
-    }
-
-    //Note: Right now, if a problem occurs, we can't tell which event caused the problem.
-    ROCPROFILER_CALL(rocprofiler_create_profile_config_FPTR(agent,
-                                                       event_vid_list.data(),
-                                                       event_vid_list.size(),
-                                                       &profile),
-                     "Could not construct profile cfg");
-
-    profile_cache.emplace(agent.handle, profile);
-    // Return the profile to collect those counters for this dispatch
-    set_config(context_id, profile);
+    return;
 }
 
 
@@ -496,18 +457,18 @@ buffered_callback(rocprofiler_context_id_t,
             // Print the returned counter data.
             auto *record = static_cast<rocprofiler_record_counter_t*>(header->payload);
             record_data.emplace_back(record);
-            ss << "  (Id: " << record->id << " Value [D]: " << record->counter_value << ","
-               << " user_data: " << record->user_data.value << ")\n";
         }
     }
-    std::cout << "[" << __FUNCTION__ << "]:\n" << ss.str() << "--------------------------------" << std::endl;
 
-    accum_values(record_data.data(), record_data.size());
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        std::cout << _counter_values[ei] << "\n";
+    {
+        std::lock_guard<std::mutex> lock(agent_mutex);
+        accum_values(record_data.data(), record_data.size());
+        data_is_ready = true;
     }
-    std::cout << "------------------------" << std::endl;
 
+    // Notify read_sample() that the counter values have been accumulated into
+    // the global array _counter_values[]
+    agent_cond_var.notify_all();
 }
 #endif // defined(AGENT_PROFILE_MODE)
 
@@ -524,8 +485,8 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
     if( RPSDK_MODE_AGENT_PROFILE == get_profiling_mode() ){
 #if defined(AGENT_PROFILE_MODE)
         ROCPROFILER_CALL(rocprofiler_create_buffer_FPTR(get_client_ctx(),
-                                               1024,
-                                               0,
+                                               32*1024,
+                                               16*1024,
                                                ROCPROFILER_BUFFER_POLICY_LOSSLESS,
                                                buffered_callback,
                                                tool_data,
@@ -640,6 +601,11 @@ void stop_counting(void){
 void
 start_counting(vendorp_ctx_t ctx){
 
+    // Store a pointer to the counter value array in a global variable so that
+    // our functions that are called from the ROCprofiler-SDK (instead of our
+    // API) can still find the array.
+    _counter_values = ctx->counters;
+
 #if defined(AGENT_PROFILE_MODE)
     if( RPSDK_MODE_AGENT_PROFILE == get_profiling_mode() ){
         for(auto act_dev_it=active_device_set.begin(); act_dev_it!=active_device_set.end(); ++act_dev_it){
@@ -655,7 +621,6 @@ start_counting(vendorp_ctx_t ctx){
     }
 #endif
 
-    _counter_values = ctx->counters;
     ROCPROFILER_CALL(rocprofiler_start_context_FPTR(get_client_ctx()), "start context");
 }
 
@@ -663,13 +628,17 @@ start_counting(vendorp_ctx_t ctx){
 int
 read_sample(){
     int papi_errno = PAPI_OK;
-    static uint64_t count=0;
 
     int ret_val = rocprofiler_sample_agent_profile_counting_service_FPTR(
-                get_client_ctx(), {.value = count}, ROCPROFILER_COUNTER_FLAG_NONE);
+                get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE);
 
     if( ret_val == ROCPROFILER_STATUS_SUCCESS ){
-        ++count;
+        data_is_ready = false;
+        ROCPROFILER_CALL(rocprofiler_flush_buffer_FPTR(get_buffer()), "buffer flush");
+	// rocprofiler_flush_buffer() will call buffered_callback() which will
+	// wake us up using this condition_variable.
+        std::unique_lock<std::mutex> lock(agent_mutex);
+        agent_cond_var.wait(lock, []{ return data_is_ready; });
     }else{
         goto fn_fail;
     }
@@ -908,14 +877,14 @@ empty_active_event_set(void){
 
 /* ** */
 int
-set_dispatch_profiles(vendorp_ctx_t ctx){
+set_profile_cache(vendorp_ctx_t ctx){
     std::map<uint64_t, std::vector<event_instance_info_t> > active_events_per_device;
 
     // Acquire a unique lock so that no other thread can try to read
     // the profile cache while we are modifying it.
     auto wlock = std::unique_lock{profile_cache_mutex};
 
-    dispatch_profile_cache.clear();
+    rpsdk_profile_cache.clear();
 
     for( int i=0; i < ctx->num_events; ++i) {
         // make sure the event exists.
@@ -953,7 +922,7 @@ set_dispatch_profiles(vendorp_ctx_t ctx){
                                                            &profile),
                          "Could not construct profile cfg");
 
-        dispatch_profile_cache.emplace(agent->id.handle, profile);
+        rpsdk_profile_cache.emplace(agent->id.handle, profile);
     }
 
     return PAPI_OK;
@@ -972,6 +941,12 @@ int setup() {
     char *pathname = getenv("ROCP_SDK_LIB");
     char *error_msg = NULL;
     int status = 0;
+
+    rpsdk_profiling_mode = RPSDK_MODE_CALLBACK_DISPATCH;
+    if( NULL != getenv("RPSDK_MODE_AGENT_PROFILE") ){
+        // Warning: RPSDK_MODE_AGENT_PROFILE mode does not work properly yet, due to rocprofiler-sdk bugs.
+        rpsdk_profiling_mode = RPSDK_MODE_AGENT_PROFILE;
+    }
 
     if ( NULL != pathname && strlen(pathname) <= PATH_MAX ) {
         dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
@@ -1113,7 +1088,7 @@ rocprofiler_sdk_ctx_open(int *event_ids, int num_events, vendorp_ctx_t *ctx)
         goto fn_fail;
     }
     papi_rocpsdk::active_event_set_ctx = *ctx;
-    papi_rocpsdk::set_dispatch_profiles(*ctx);
+    papi_rocpsdk::set_profile_cache(*ctx);
 
     (*ctx)->state = RPSDK_AES_OPEN;
 
@@ -1129,7 +1104,6 @@ extern "C" int
 rocprofiler_sdk_ctx_read(vendorp_ctx_t ctx, long long **counters)
 {
     int papi_errno = PAPI_OK;
-    static int count;
 
 #if defined(AGENT_PROFILE_MODE)
     if( RPSDK_MODE_AGENT_PROFILE == papi_rocpsdk::get_profiling_mode() ){
