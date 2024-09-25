@@ -658,7 +658,9 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_qcom_krait_support,
 	&arm_cortex_a57_support,
 	&arm_cortex_a53_support,
+	&arm_cortex_a55_support,
 	&arm_cortex_a72_support,
+	&arm_cortex_a76_support,
 	&arm_xgene_support,
 	&arm_thunderx2_support,
 	&arm_thunderx2_dmc0_support,
@@ -671,6 +673,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_n2_support,
 	&arm_v1_support,
 	&arm_v2_support,
+	&arm_v3_support,
 	&arm_hisilicon_kunpeng_support,
 	&arm_hisilicon_kunpeng_sccl1_ddrc0_support,
 	&arm_hisilicon_kunpeng_sccl1_ddrc1_support,
@@ -732,7 +735,9 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 #ifdef CONFIG_PFMLIB_ARCH_ARM64
 	&arm_cortex_a57_support,
 	&arm_cortex_a53_support,
+	&arm_cortex_a55_support,
 	&arm_cortex_a72_support,
+	&arm_cortex_a76_support,
 	&arm_xgene_support,
 	&arm_thunderx2_support,
 	&arm_thunderx2_dmc0_support,
@@ -802,6 +807,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_n2_support,
 	&arm_v1_support,
 	&arm_v2_support,
+	&arm_v3_support,
 	&arm_hisilicon_kunpeng_support,
 #endif
 

@@ -32,47 +32,7 @@
 #include "pfmlib_priv.h"
 #include "pfmlib_perf_event_priv.h"
 #include "pfmlib_arm_priv.h"
-
-typedef struct {
-	uint64_t val;
-} kunpeng_unc_data_t;
-
-static void
-display_com(void *this, pfmlib_event_desc_t *e, void *val)
-{
-	const arm_entry_t *pe = this_pe(this);
-	kunpeng_unc_data_t *reg = val;
-
-	__pfm_vbprintf("[UNC=0x%"PRIx64"] %s\n",
-			reg->val,
-			pe[e->event].name);
-}
-
-static void
-display_reg(void *this, pfmlib_event_desc_t *e, kunpeng_unc_data_t reg)
-{
-	pfmlib_pmu_t *pmu = this;
-	if (pmu->display_reg)
-		pmu->display_reg(this, e, &reg);
-	else
-		display_com(this, e, &reg);
-}
-
-int
-pfm_kunpeng_unc_get_event_encoding(void *this, pfmlib_event_desc_t *e)
-{
-	//from pe field in for the uncore, get the array with all the event defs
-	const arm_entry_t *event_list = this_pe(this);
-	kunpeng_unc_data_t reg;
-	//get code for the event from the table
-	reg.val = event_list[e->event].code;
-	//pass the data back to the caller
-	e->codes[0] = reg.val;
-	e->count = 1;
-	evt_strcat(e->fstr, "%s", event_list[e->event].name);
-	display_reg(this, e, reg);
-	return PFM_SUCCESS;
-}
+#include "pfmlib_arm_armv8_unc_priv.h"
 
 static int
 find_pmu_type_by_name(const char *name)
