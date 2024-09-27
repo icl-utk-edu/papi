@@ -10,57 +10,73 @@ on:
   workflow_dispatch:
 
 jobs:
-  papi_component:
+  papi_component_cpu:
     strategy:
       matrix:
-        component: [perf_event, lmsensors, io, net, powercap, appio, coretemp, stealtime]
+        component: [perf_event, lmsensors, io, net, appio, coretemp, stealtime]
         debug: [yes, no]
+        shlib: [with, without]
+      fail-fast: false
+    runs-on: cpu
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
+  papi_component_cpu_intel:
+    strategy:
+      matrix:
+        component: [powercap]
+        debug: [yes, no]
+        shlib: [with, without]
       fail-fast: false
     runs-on: cpu_intel
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
   papi_component_nvidia:
     strategy:
       matrix:
         component: [cuda, nvml]
         debug: [yes, no]
+        shlib: [with, without]
       fail-fast: false
     runs-on: gpu_nvidia
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
   papi_component_amd:
     strategy:
       matrix:
         component: [rocm, rocm_smi]
         debug: [yes, no]
+        shlib: [with, without]
       fail-fast: false
     runs-on: gpu_amd
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
-        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}}
+        run: .github/workflows/ci.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
   papi_spack:
     runs-on: cpu
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build/Test/Install via Spack
         run: .github/workflows/spack.sh
   papi_clang_analysis:
     runs-on: cpu
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run static analysis
         run: .github/workflows/clang_analysis.sh clang-analysis-output
       - name: Archive analysis results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: clang-analysis-output
