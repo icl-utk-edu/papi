@@ -225,6 +225,7 @@ rocm_init_private(void)
   fn_exit:
     _rocm_vector.cmp_info.initialized = 1;
     _rocm_vector.cmp_info.disabled = papi_errno;
+    strcpy(_rocm_vector.cmp_info.disabled_reason, "");
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     _papi_hwi_unlock(COMPONENT_LOCK);
     return papi_errno;
