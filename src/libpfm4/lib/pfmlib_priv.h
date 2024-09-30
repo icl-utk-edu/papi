@@ -212,6 +212,7 @@ typedef struct {
 	int	inactive;
 	char	*forced_pmu;
 	char	*blacklist_pmus;
+	char	*proc_cpuinfo; /* override /proc/cpuinfo with this file */
 	FILE 	*fp;	/* verbose and debug file descriptor, default stderr or PFMLIB_DEBUG_STDOUT */
 } pfmlib_config_t;	
 
@@ -833,12 +834,15 @@ extern pfmlib_pmu_t arm_1176_support;
 extern pfmlib_pmu_t arm_qcom_krait_support;
 extern pfmlib_pmu_t arm_cortex_a57_support;
 extern pfmlib_pmu_t arm_cortex_a53_support;
+extern pfmlib_pmu_t arm_cortex_a55_support;
 extern pfmlib_pmu_t arm_cortex_a72_support;
+extern pfmlib_pmu_t arm_cortex_a76_support;
 extern pfmlib_pmu_t arm_xgene_support;
 extern pfmlib_pmu_t arm_n1_support;
 extern pfmlib_pmu_t arm_n2_support;
 extern pfmlib_pmu_t arm_v1_support;
 extern pfmlib_pmu_t arm_v2_support;
+extern pfmlib_pmu_t arm_v3_support;
 
 extern pfmlib_pmu_t arm_thunderx2_support;
 extern pfmlib_pmu_t arm_thunderx2_dmc0_support;

@@ -68,6 +68,10 @@ do {                                             \
 #define RPSDK_MODE_CALLBACK_DISPATCH (0)
 #define RPSDK_MODE_AGENT_PROFILE     (1)
 
+#define RPSDK_AES_STOPPED (0x0)
+#define RPSDK_AES_OPEN    (0x1)
+#define RPSDK_AES_RUNNING (0x2)
+
 typedef struct {
     char name[PAPI_MAX_STR_LEN];
     char descr[PAPI_2MAX_STR_LEN];
@@ -79,7 +83,7 @@ typedef struct {
 } ntv_event_table_t;
 
 struct vendord_ctx {
-//    int state;
+    int state;
     int *event_ids;
     long long *counters;
     int num_events;
