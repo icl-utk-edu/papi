@@ -698,6 +698,7 @@ arch
 LIBSDEFLAGS
 BUILD_LIBSDE_STATIC
 BUILD_LIBSDE_SHARED
+BUILD_SHARED_LIB
 LDL
 LRT
 EGREP
@@ -5666,9 +5667,12 @@ if test "$shared_lib" = "no" -a "$static_lib" = "no"; then
   as_fn_error $? "Both shared and static libs are disabled" "$LINENO" 5
 fi
 
+BUILD_SHARED_LIB="no"
 if test "$shared_lib" = "yes"; then
+  BUILD_SHARED_LIB="yes"
   papiLIBS="shared"
 fi
+
 if test "$static_lib" = "yes"; then
   papiLIBS="$papiLIBS static"
 fi
