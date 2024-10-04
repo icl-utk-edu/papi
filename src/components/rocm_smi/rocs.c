@@ -1059,11 +1059,11 @@ shutdown_device_table(void)
 #define ROCMSMI_NUM_INFO_EVENTS (3)
 
 typedef enum {
-    ROCS_EVENT_TYPE__NORMAL = 0,
-    ROCS_EVENT_TYPE__SPECIAL,
+    ROCS_EVENT_TYPE__NATIVE = 0,
+    ROCS_EVENT_TYPE__DERIVED,
 } rocs_event_type_e;
 
-static int handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *count);
+static int handle_derived_events_count(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *count);
 static int handle_xgmi_events_count(int32_t dev, int *count);
 static char *get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvariant);
 
@@ -1093,7 +1093,7 @@ get_ntv_events_count(int *count)
             }
             status = rsmi_dev_supported_variant_iterator_open_p(iter, &var_iter);
             if (status == RSMI_STATUS_NO_DATA) {
-                if (handle_special_events_count(v_name.name, dev, -1, -1, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
+                if (handle_derived_events_count(v_name.name, dev, -1, -1, &events_count) == ROCS_EVENT_TYPE__NATIVE) {
                     char *name = get_event_name(v_name.name, dev, -1, -1);
                     if (name) {
                         /* count known events */
@@ -1109,7 +1109,7 @@ get_ntv_events_count(int *count)
                     }
                     status = rsmi_dev_supported_variant_iterator_open_p(var_iter, &subvar_iter);
                     if (status == RSMI_STATUS_NO_DATA) {
-                        if (handle_special_events_count(v_name.name, dev, v_variant.id, -1, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
+                        if (handle_derived_events_count(v_name.name, dev, v_variant.id, -1, &events_count) == ROCS_EVENT_TYPE__NATIVE) {
                             char *name = get_event_name(v_name.name, dev, v_variant.id, -1);
                             if (name) {
                                 /* count known events */
@@ -1123,7 +1123,7 @@ get_ntv_events_count(int *count)
                             if (status != RSMI_STATUS_SUCCESS) {
                                 continue;
                             }
-                            if (handle_special_events_count(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count) == ROCS_EVENT_TYPE__NORMAL) {
+                            if (handle_derived_events_count(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count) == ROCS_EVENT_TYPE__NATIVE) {
                                 char *name = get_event_name(v_name.name, dev, v_variant.id, v_subvariant.id);
                                 if (name) {
                                     /* count known events */
@@ -1176,7 +1176,7 @@ static close_function_f get_close_func(const char *name);
 static start_function_f get_start_func(const char *name);
 static stop_function_f get_stop_func(const char *name);
 static access_function_f get_access_func(const char *name);
-static int handle_special_events(const char *name, int32_t dev, int64_t variant, int64_t subvariant, int *count, ntv_event_t *events);
+static int handle_derived_events(const char *name, int32_t dev, int64_t variant, int64_t subvariant, int *count, ntv_event_t *events);
 static int handle_xgmi_events(int32_t dev, int *count, ntv_event_t *events);
 
 int
@@ -1229,7 +1229,7 @@ get_ntv_events(ntv_event_t *events, int count)
             }
             status = rsmi_dev_supported_variant_iterator_open_p(iter, &var_iter);
             if (status == RSMI_STATUS_NO_DATA) {
-                if (handle_special_events(v_name.name, dev, -1, -1, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
+                if (handle_derived_events(v_name.name, dev, -1, -1, &events_count, events) == ROCS_EVENT_TYPE__NATIVE) {
                     char *name = get_event_name(v_name.name, dev, -1, -1);
                     if (name) {
                         /* add known events */
@@ -1257,7 +1257,7 @@ get_ntv_events(ntv_event_t *events, int count)
                     }
                     status = rsmi_dev_supported_variant_iterator_open_p(var_iter, &subvar_iter);
                     if (status == RSMI_STATUS_NO_DATA) {
-                        if (handle_special_events(v_name.name, dev, v_variant.id, -1, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
+                        if (handle_derived_events(v_name.name, dev, v_variant.id, -1, &events_count, events) == ROCS_EVENT_TYPE__NATIVE) {
                             char *name = get_event_name(v_name.name, dev, v_variant.id, -1);
                             if (name) {
                                 /* add known events */
@@ -1283,7 +1283,7 @@ get_ntv_events(ntv_event_t *events, int count)
                             if (status != RSMI_STATUS_SUCCESS) {
                                 continue;
                             }
-                            if (handle_special_events(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count, events) == ROCS_EVENT_TYPE__NORMAL) {
+                            if (handle_derived_events(v_name.name, dev, v_variant.id, v_subvariant.id, &events_count, events) == ROCS_EVENT_TYPE__NATIVE) {
                                 char *name = get_event_name(v_name.name, dev, v_variant.id, v_subvariant.id);
                                 if (name) {
                                     /* add known events */
@@ -1342,9 +1342,9 @@ get_ntv_events(ntv_event_t *events, int count)
 }
 
 int
-handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *events_count)
+handle_derived_events_count(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *events_count)
 {
-    /* NOTE: special cases are two:
+    /* NOTE: derived events are of two types:
      * (a) one rsmi event contains aggregated pieces of data and is thus
      *     split into separate events in the rocm smi component;
      * (b) two rsmi events are merged into a single one in the rocm smi
@@ -1354,22 +1354,22 @@ handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
 
     if (strcmp(v_name, "rsmi_dev_pci_throughput_get") == 0) {
         (*events_count) += ROCS_PCI_THROUGHPUT_VARIANT__NUM;
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_power_profile_presets_get") == 0) {
         (*events_count) += ROCS_POWER_PRESETS_VARIANT__NUM;
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_power_cap_range_get") == 0) {
         (*events_count) += ROCS_POWER_CAP_RANGE_VARIANT__NUM;
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_ecc_count_get") == 0) {
         (*events_count) += ROCS_ECC_COUNT_SUBVARIANT__NUM;
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_pci_bandwidth_get") == 0) {
@@ -1381,14 +1381,14 @@ handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
             (*events_count) += pcie_table[dev].transfer_rate.num_supported;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_pci_bandwidth_set") == 0) {
         if (pcie_table[dev].transfer_rate.num_supported) {
             ++(*events_count);
         }
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_gpu_clk_freq_get") == 0) {
@@ -1397,7 +1397,7 @@ handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
         if (freq_table[table_id].num_supported) {
             (*events_count) += ROCS_GPU_CLK_FREQ_SUBVARIANT__NUM;
         }
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_gpu_clk_freq_set") == 0) {
@@ -1405,41 +1405,41 @@ handle_special_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
         if (freq_table[table_id].num_supported) {
             ++(*events_count);
         }
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_fan_speed_count[PAPI_ROCMSMI_MAX_DEV_COUNT];
     if (strcmp(v_name, "rsmi_dev_fan_speed_get") == 0 || strcmp(v_name, "rsmi_dev_fan_speed_set") == 0) {
         if (rsmi_dev_fan_speed_count[dev] == 0) {
             rsmi_dev_fan_speed_count[dev] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_power_cap_count[PAPI_ROCMSMI_MAX_DEV_COUNT][PAPI_ROCMSMI_MAX_SUBVAR];
     if (strcmp(v_name, "rsmi_dev_power_cap_get") == 0 || strcmp(v_name, "rsmi_dev_power_cap_set") == 0) {
         if (rsmi_dev_power_cap_count[dev][v_subvariant] == 0) {
             rsmi_dev_power_cap_count[dev][v_subvariant] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_perf_level_count[PAPI_ROCMSMI_MAX_DEV_COUNT];
     if (strncmp(v_name, "rsmi_dev_perf_level", strlen("rsmi_dev_perf_level")) == 0) {
         if (rsmi_dev_perf_level_count[dev] == 0) {
             rsmi_dev_perf_level_count[dev] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
 
-    return ROCS_EVENT_TYPE__NORMAL;
+    return ROCS_EVENT_TYPE__NATIVE;
 }
 
 int
@@ -1482,9 +1482,9 @@ handle_xgmi_events_count(int32_t dev, int *events_count)
 }
 
 int
-handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *events_count, ntv_event_t *events)
+handle_derived_events(const char *v_name, int32_t dev, int64_t v_variant, int64_t v_subvariant, int *events_count, ntv_event_t *events)
 {
-    /* NOTE: special cases are two:
+    /* NOTE: derived events are of two types:
      * (a) one rsmi event contains aggregated pieces of data and is thus
      *     split into separate events in the rocm smicomponent;
      * (b) two rsmi events are merged into a single one in the rocm smi
@@ -1511,7 +1511,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_power_profile_presets_get") == 0) {
@@ -1533,7 +1533,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_power_cap_range_get") == 0) {
@@ -1555,7 +1555,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_ecc_count_get") == 0) {
@@ -1577,12 +1577,12 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_pci_bandwidth_get") == 0) {
         if (pcie_table[dev].transfer_rate.num_supported == 0) {
-            return ROCS_EVENT_TYPE__SPECIAL;
+            return ROCS_EVENT_TYPE__DERIVED;
         }
 
         int64_t i;
@@ -1623,7 +1623,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
            }
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_pci_bandwidth_set") == 0) {
@@ -1644,7 +1644,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_gpu_clk_freq_get") == 0) {
@@ -1687,7 +1687,7 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     if (strcmp(v_name, "rsmi_dev_gpu_clk_freq_set") == 0) {
@@ -1709,14 +1709,14 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             ++(*events_count);
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_fan_speed_count[PAPI_ROCMSMI_MAX_DEV_COUNT];
     if (strcmp(v_name, "rsmi_dev_fan_speed_get") == 0 || strcmp(v_name, "rsmi_dev_fan_speed_set") == 0) {
         if (rsmi_dev_fan_speed_count[dev] == 0) {
             rsmi_dev_fan_speed_count[dev] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
         if (strcmp(v_name, "rsmi_dev_fan_speed_set") == 0) {
@@ -1726,14 +1726,14 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[rsmi_dev_fan_speed_count[dev]].mode = ROCS_ACCESS_MODE__RDWR;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_power_cap_count[PAPI_ROCMSMI_MAX_DEV_COUNT][PAPI_ROCMSMI_MAX_SUBVAR];
     if (strcmp(v_name, "rsmi_dev_power_cap_get") == 0 || strcmp(v_name, "rsmi_dev_power_cap_set") == 0) {
         if (rsmi_dev_power_cap_count[dev][v_subvariant] == 0) {
             rsmi_dev_power_cap_count[dev][v_subvariant] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
         if (strcmp(v_name, "rsmi_dev_power_cap_set") == 0) {
@@ -1743,14 +1743,14 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[rsmi_dev_power_cap_count[dev][v_subvariant]].mode = ROCS_ACCESS_MODE__RDWR;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
     static int rsmi_dev_perf_level_count[PAPI_ROCMSMI_MAX_DEV_COUNT];
     if (strncmp(v_name, "rsmi_dev_perf_level", strlen("rsmi_dev_perf_level")) == 0) {
         if (rsmi_dev_perf_level_count[dev] == 0) {
             rsmi_dev_perf_level_count[dev] = *events_count;
-            return ROCS_EVENT_TYPE__NORMAL;
+            return ROCS_EVENT_TYPE__NATIVE;
         }
 
         if (strcmp(v_name, "rsmi_dev_perf_level_set") == 0) {
@@ -1760,10 +1760,10 @@ handle_special_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             events[rsmi_dev_perf_level_count[dev]].mode = ROCS_ACCESS_MODE__RDWR;
         }
 
-        return ROCS_EVENT_TYPE__SPECIAL;
+        return ROCS_EVENT_TYPE__DERIVED;
     }
 
-    return ROCS_EVENT_TYPE__NORMAL;
+    return ROCS_EVENT_TYPE__NATIVE;
 }
 
 int

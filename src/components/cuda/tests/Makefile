@@ -16,6 +16,9 @@ NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
 
 PAPI_FLAG = -DPAPI    # Comment this line for tests to run without PAPI profiling
 NVCFLAGS = -g -ccbin='$(CC)' $(PAPI_FLAG)
+ifeq ($(BUILD_SHARED_LIB),yes)
+	NVCFLAGS += -Xcompiler -fpic
+endif
 CFLAGS += -g $(PAPI_FLAG)
 INCLUDE += -I$(PAPI_CUDA_ROOT)/include
 CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -lcuda
