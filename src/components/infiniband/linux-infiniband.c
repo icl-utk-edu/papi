@@ -335,6 +335,9 @@ add_ib_counter(const char* name, const char* file_name, int extended, ib_device_
     if (new_cnt->ev_name==0 || new_cnt->ev_file_name==0)
     {
         PAPIERROR("cannot allocate memory for counter internal fields");
+        /* free(NULL) is allowed and means no operation is performed */
+        papi_free(new_cnt->ev_name);
+        papi_free(new_cnt->ev_file_name);
         papi_free(new_cnt);
         return (0);
     }
