@@ -130,6 +130,7 @@ allocate_thread( int tid )
 		if ( thread->context[i] == NULL ) {
 			for ( i--; i >= 0; i-- )
 				papi_free( thread->context[i] );
+			papi_free( thread->running_eventset );
 			papi_free( thread->context );
 			papi_free( thread );
 			return ( NULL );
