@@ -2366,8 +2366,8 @@ PAPI_remove_event( int EventSet, int EventCode )
  *
  *	@param EventSet
  *		An integer handle for a PAPI Event Set as created by PAPI_create_eventset.
- *	@param EventCode 
- *		A defined event such as PAPI_TOT_INS. 
+ *	@param EventName
+ *		A string containing the event name as listed in papi_avail or papi_native_avail.
  *
  *	@retval Positive-Integer
  *		The number of consecutive elements that succeeded before the error. 
