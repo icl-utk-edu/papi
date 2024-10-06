@@ -628,7 +628,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.for *.vhd *.vhdl
 
-FILE_PATTERNS          = *.c *.h
+FILE_PATTERNS          = *.c *.h *.py
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -1719,3 +1719,9 @@ GENERATE_LEGEND        = NO
 # the various graphs.
 
 DOT_CLEANUP            = YES
+
+# By default Python docstrings are displayed as preformmated text 
+# and Doxygen's special commands cannot be used. By setting PYTHON_DOCSTRING
+# to NO the Doxygen's special commands can be used and the contents of the
+# docstring documentation blocks is shown as Doxygen documentation.
+PYTHON_DOCSTRING       = NO
