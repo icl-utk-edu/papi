@@ -403,6 +403,7 @@ _rapl_init_component( int cidx )
 
 		/* Desktop / Laptops */
 
+      case 183:   /* RaptorLake */
 		case 42:	/* SandyBridge */
 		case 58:	/* IvyBridge */
 			package_avail=1;
