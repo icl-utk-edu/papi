@@ -135,7 +135,7 @@ typedef struct MetricNode_S {
  * metric code:  group(8) + metrics(8)
  */
 #define METRIC_BITS		  8
-#define METRIC_GROUP_MASK	0xff00
+#define METRIC_GROUP_MASK	0xfff00
 #define METRIC_MASK		  0x00ff
 
 #define CreateGroupCode(mGroupId)		 (((mGroupId+1)<<METRIC_BITS) & METRIC_GROUP_MASK)
