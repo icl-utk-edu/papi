@@ -232,7 +232,7 @@ else
                         AC_MSG_RESULT([found])
                         LRT="-lrt -lpthread"
                 else
-			AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
+			AC_MSG_RESULT([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
 		fi
 	fi
 fi
@@ -1176,8 +1176,37 @@ if test "x$mic" = "xno"; then
        perf_events=no
 fi
 
+perf_events=yes
 force_perf_events=no
-disable_uncore=yes
+perf_events_uncore=yes
+
+AC_ARG_ENABLE(cpu,
+              [AS_HELP_STRING([--disable-cpu],
+              [Disable cpu component])])
+
+AS_IF([test "x$enable_cpu" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+  perf_events_uncore=no
+])
+
+AC_ARG_ENABLE(perf_event,
+              [AS_HELP_STRING([--disable-perf-event],
+              [Disable perf_event component])])
+
+AS_IF([test "x$enable_perf_event" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+])
+
+AC_ARG_ENABLE(perf_event_uncore,
+              [AS_HELP_STRING([--disable-perf-event-uncore],
+              [Disable perf_event_uncore component])])
+
+AS_IF([test "x$enable_perf_event_uncore" = "xno"],[
+	perf_events_uncore=no
+])
+
 
 AC_ARG_WITH(perf_events,
             [AS_HELP_STRING([--with-perf-events],
@@ -1210,14 +1239,6 @@ AC_ARG_WITH(pe_incdir,
               user_specified_interface=pe],
             [pe_incdir=$pfm_incdir/perfmon])
 
-AC_ARG_ENABLE(perf_event_uncore,
-              [AS_HELP_STRING([--disable-perf-event-uncore],
-              [Disable perf_event uncore component])])
-
-AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
-	disable_uncore=no
-])
-
 # Check for perf_event.h
   if test "$force_perf_events" = "yes"; then
 	perf_events="yes"
@@ -1225,7 +1246,11 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
   if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
 	  have_paranoid=yes
-	  AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")
+    AC_CHECK_FILE([$pe_incdir/perf_event.h], [
+      if test "$perf_events" != "no"; then
+        perf_events="yes"
+      fi
+      ])
     ])
   fi
   if test "$perf_events" = "yes"; then
@@ -1620,8 +1645,15 @@ elif test "$MAKEVER" = "linux-generic"; then
 elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event 
-    components="perf_event"
-    if test "$disable_uncore" = "no"; then
+    if test "$perf_events" = "no"; then
+        components="$components"
+    else
+        components="$components perf_event"
+    fi
+    
+    if test "$perf_events_uncore" = "no"; then
+       components="$components"
+    else
        components="$components perf_event_uncore"
     fi
 

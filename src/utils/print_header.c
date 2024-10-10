@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/utsname.h>
+#include <string.h>
 
 #include "papi.h"
 
@@ -71,8 +72,19 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	}
 	cnt = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
 	mpx = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
+  
+  int numcmp = PAPI_num_components(  );
+  int perf_event = 0;
+	for (int cid = 0; cid < numcmp; cid++ ) {
+	  const PAPI_component_info_t* cmpinfo = PAPI_get_component_info( cid );
+	  if (cmpinfo->disabled) continue;
+    if (strcmp(cmpinfo->name, "perf_event")== 0) perf_event = 1;
+	}
+  
 	if ( cnt >= 0 ) {
-		printf( "Number Hardware Counters : %d\n",cnt );
+		printf( "Number Hardware Counters : %d\n", cnt );
+	} else if ( perf_event == 0 ) {
+		printf( "Number Hardware Counters : NA\n" );
 	} else {
 		printf( "Number Hardware Counters : PAPI error %d: %s\n", cnt, PAPI_strerror(cnt));
 	}

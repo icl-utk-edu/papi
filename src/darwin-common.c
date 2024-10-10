@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/utsname.h>
+#include <sys/sysctl.h>
 
 #include <time.h>
 #include <sys/time.h>
