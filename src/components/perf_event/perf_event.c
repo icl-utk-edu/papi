@@ -285,6 +285,7 @@ check_exclude_guest( void )
 	/* First check that we can open a plain instructions event */
 	memset(&attr, 0 , sizeof(attr));
 	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+	attr.exclude_kernel=1;
 
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
@@ -296,6 +297,7 @@ check_exclude_guest( void )
 	/* Now try again with excude_guest */
 	memset(&attr, 0 , sizeof(attr));
 	attr.config = PERF_COUNT_HW_INSTRUCTIONS;
+	attr.exclude_kernel=1;
 	attr.exclude_guest=1;
 
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
