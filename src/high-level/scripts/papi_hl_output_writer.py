@@ -1,10 +1,10 @@
+#!/usr/bin/env python3
 ## 
 # @file papi_hl_output_writer.py
 # @brief Converts HL output to be more comprehensible. 
 # Output is enhanced by creating derived metrics like IPC,
 # MFlop/s, and MFlips/s. As well as real and processor time.
 
-#!/usr/bin/python
 from __future__ import division
 from collections import OrderedDict
 
