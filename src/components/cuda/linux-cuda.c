@@ -443,15 +443,17 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
         goto fn_fail;
     }
     */
-
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
         goto fn_fail;
+    }
+
 
     /* start profiling */
     papi_errno = cuptid_ctx_start( (void *) cuda_ctl->cuptid_ctx);
-    if (papi_errno != PAPI_OK)
-        goto fn_fail;   
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
 
     /* update the EventSet state to running */
     cuda_ctx->state = CUDA_EVENTS_RUNNING;

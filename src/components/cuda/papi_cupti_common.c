@@ -660,7 +660,6 @@ static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t 
     int papi_errno = PAPI_OK, gpu_id;
     long i;
     gpu_occupancy_t acq_mask = 0;
-    cuptiu_event_t *evt_rec;
     for (i = 0; i < evt_table->count; i++) {
         acq_mask |= (1 << evt_table->added_cuda_dev[i]);
     }
