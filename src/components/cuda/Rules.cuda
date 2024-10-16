@@ -2,6 +2,15 @@
 # If not set find nvcc installed on system and set it.
 PAPI_CUDA_ROOT ?= $(shell dirname $(shell dirname $(shell which nvcc)))
 
+# obtain user Cuda version to check if Cuda component currently supports it
+NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
+NVCC_VERSION := $(shell $(NVCC) --version | grep -oP '(?<=release )\d+\.\d+')
+ifneq ($(MAKECMDGOALS), clean)
+    ifeq ($(shell echo $(NVCC_VERSION) | awk '{print $$1 >= 12.6}'), 1)
+        $(error In Cuda 12.6, the MetricsContext API was replaced with the MetricsEvaluator API. Due to this, the Cuda component is currrently being refactored to support Cuda versions >= 12.6)
+    endif
+endif
+
 CUDA_MACS = -DPAPI_CUDA_MAIN=$(PAPI_CUDA_MAIN) -DPAPI_CUDA_RUNTIME=$(PAPI_CUDA_RUNTIME)
 CUDA_MACS+= -DPAPI_CUDA_CUPTI=$(PAPI_CUDA_CUPTI) -DPAPI_CUDA_PERFWORKS=$(PAPI_CUDA_PERFWORKS)
 
