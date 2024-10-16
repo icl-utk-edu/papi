@@ -1,7 +1,8 @@
 /**
  * @file    cupti_events.c
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
+ *
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
+ * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #include <papi.h>
@@ -20,42 +21,57 @@ int cuptie_init(void)
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_create(cuptiu_event_table_t *event_names, void *thr_info, cuptie_control_t *pctl)
+int cuptie_ctx_create(void *thr_info, cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_destroy(cuptie_control_t *pctl)
+int cuptie_ctx_start(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_start(cuptie_control_t ctl)
+int cuptie_ctx_read(cuptie_control_t ctl, long long **values)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_stop(cuptie_control_t ctl)
+int cuptie_ctx_stop(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_read(cuptie_control_t ctl, long long *values)
+int cuptie_ctx_reset(cuptie_control_t ctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_control_reset(cuptie_control_t ctl)
+int cuptie_ctx_destroy(cuptie_control_t *pctl)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_enum(cuptiu_event_table_t *all_evt_names)
+int cuptie_evt_enum(uint64_t *event_code, int modifier)
 {
     return PAPI_ENOIMPL;
 }
 
-int cuptie_event_name_to_descr(const char *evt_name, char *description)
+int cuptie_evt_code_to_descr(uint64_t event_code, char *descr, int len) 
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_name_to_code(const char *name, uint64_t *event_code)
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_code_to_name(uint64_t event_code, char *name, int len)
+{
+    return PAPI_ENOIMPL;
+}
+
+int cuptie_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info) 
 {
     return PAPI_ENOIMPL;
 }
