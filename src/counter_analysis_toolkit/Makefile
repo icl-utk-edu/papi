@@ -1,4 +1,3 @@
-ARCH?=X86
 PAPIDIR?=${PAPI_DIR}
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
@@ -14,6 +13,21 @@ CC=gcc
 ifeq ($(USEMPI),true)
     CC=mpicc
     CFLAGS+=-DUSE_MPI
+endif
+
+## Try to auto-detect architecture if it is not set.
+ifndef ARCH
+    UNAME_M:=$(shell uname -m)
+
+    ARCH=POWER
+    ifeq ($(UNAME_M),x86_64)
+        ARCH=X86
+    endif
+    ifeq ($(UNAME_M),aarch64)
+        ARCH=ARM
+    endif
+
+    $(info    Detected ARCH=$(ARCH))
 endif
 
 ## Architecture determines vector instruction set.
