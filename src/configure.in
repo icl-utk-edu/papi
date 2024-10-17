@@ -232,7 +232,7 @@ else
                         AC_MSG_RESULT([found])
                         LRT="-lrt -lpthread"
                 else
-			AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
+			AC_MSG_RESULT([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
 		fi
 	fi
 fi
@@ -1172,12 +1172,87 @@ fi
 #          Linux perf_event/perf_counter
 ##################################################
 
+perf_events=yes
+force_perf_events=no
+perf_events_uncore=yes
+
 if test "x$mic" = "xno"; then
        perf_events=no
 fi
 
-force_perf_events=no
-disable_uncore=yes
+AC_CONFIG_COMMANDS([modify_makefile_inc], [
+  # If Makefile.inc commented out these lines to disable ctest ftest vtest for perf_events, reverse
+  awk '
+  /^# validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { sub(/^# /, "", $0); print; next }
+  /^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { sub(/^# /, "", $0); print; next }
+  # ctests lines
+  /^# ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { sub(/^# /, "", $0); print; next }
+  /^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { sub(/^# /, "", $0); print; next }
+  # ftests lines
+  /^# ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { sub(/^# /, "", $0); print; next }
+  /^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { sub(/^# /, "", $0); print; next }
+  { print }
+  '  Makefile.inc > t_Makefile.inc
+  mv t_Makefile.inc Makefile.inc
+])
+
+AC_ARG_ENABLE(cpu,
+              [AS_HELP_STRING([--disable-cpu],
+              [Disable cpu component])])
+
+AS_IF([test "x$enable_cpu" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+  perf_events_uncore=no
+
+  FILE_PATH="Makefile.inc"
+  TEMP_FILE="temp_$FILE_PATH"
+   
+  # Comment out these lines to disable ctest ftest vtest
+  awk '
+    /^validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next } 
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { print "# " $0; next }
+    /^ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { print "# " $0; next }
+    { print }
+    '  "$FILE_PATH" > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$FILE_PATH" 
+])
+
+AC_ARG_ENABLE(perf_event,
+              [AS_HELP_STRING([--disable-perf-event],
+              [Disable perf_event component])])
+
+AS_IF([test "x$enable_perf_event" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+
+  FILE_PATH="Makefile.inc"
+  TEMP_FILE="temp_$FILE_PATH"
+   
+  # Comment out these lines to disable ctest ftest vtest
+  awk '
+    /^validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next } 
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { print "# " $0; next }
+    /^ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { print "# " $0; next }
+    { print }
+    '  "$FILE_PATH" > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$FILE_PATH" 
+])
+
+AC_ARG_ENABLE(perf_event_uncore,
+              [AS_HELP_STRING([--disable-perf-event-uncore],
+              [Disable perf_event_uncore component])])
+
+AS_IF([test "x$enable_perf_event_uncore" = "xno"],[
+	perf_events_uncore=no
+])
+
 
 AC_ARG_WITH(perf_events,
             [AS_HELP_STRING([--with-perf-events],
@@ -1210,14 +1285,6 @@ AC_ARG_WITH(pe_incdir,
               user_specified_interface=pe],
             [pe_incdir=$pfm_incdir/perfmon])
 
-AC_ARG_ENABLE(perf_event_uncore,
-              [AS_HELP_STRING([--disable-perf-event-uncore],
-              [Disable perf_event uncore component])])
-
-AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
-	disable_uncore=no
-])
-
 # Check for perf_event.h
   if test "$force_perf_events" = "yes"; then
 	perf_events="yes"
@@ -1225,7 +1292,11 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
   if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
 	  have_paranoid=yes
-	  AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")
+    AC_CHECK_FILE([$pe_incdir/perf_event.h], [
+      if test "$perf_events" != "no"; then
+        perf_events="yes"
+      fi
+      ])
     ])
   fi
   if test "$perf_events" = "yes"; then
@@ -1620,8 +1691,15 @@ elif test "$MAKEVER" = "linux-generic"; then
 elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event 
-    components="perf_event"
-    if test "$disable_uncore" = "no"; then
+    if test "$perf_events" = "no"; then
+        components="$components"
+    else
+        components="$components perf_event"
+    fi
+    
+    if test "$perf_events_uncore" = "no"; then
+       components="$components"
+    else
        components="$components perf_event_uncore"
     fi
 
@@ -1806,8 +1884,9 @@ elif test "x$VECTOR" != "x"; then
 fi
     
 
-# always enable sysdetect
-components="$components sysdetect"
+if test "$perf_events" != "no"; then
+  components="$components sysdetect"
+fi
 
 
 PAPI_NUM_COMP=0
