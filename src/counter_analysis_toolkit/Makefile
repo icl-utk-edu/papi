@@ -16,7 +16,7 @@ ifeq ($(USEMPI),true)
 endif
 
 ## Try to auto-detect architecture if it is not set.
-ifeq ($(origin ARCH), undefined)
+ifndef ARCH
     UNAME_M:=$(shell uname -m)
 
     ARCH=POWER
