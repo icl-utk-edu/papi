@@ -2531,9 +2531,11 @@ static int evt_name_to_basename(const char *name, char *base, int len)
 static int evt_name_to_device(const char *name, int *device)
 {
     char *p = strstr(name, ":device=");
-    if (!p) {
-        return PAPI_ENOEVNT;
+    if (p) {
+        *device = (int) strtol(p + strlen(":device="), NULL, 10);
     }
-    *device = (int) strtol(p + strlen(":device="), NULL, 10);
+    else {
+        *device = 0;
+    }
     return PAPI_OK;
 }
