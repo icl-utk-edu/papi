@@ -247,6 +247,9 @@ static inline unsigned long long mmap_read_self(void *addr,
 					 unsigned long long *en,
 					 unsigned long long *ru) {
 
+	SUBDBG("ENTER: addr: %p, user_reset_flag: %d, reset: %llu, en: %llu, ru: %llu\n",
+		addr, user_reset_flag, reset, *en, *ru);
+
 	struct perf_event_mmap_page *pc = addr;
 
 	uint32_t seq, time_mult = 0, time_shift = 0, index, width;
