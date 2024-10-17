@@ -36,16 +36,16 @@ test_multi_read_and_reset: test_multi_read_and_reset.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o test_multi_read_and_reset test_multi_read_and_reset.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 concurrent_profiling: concurrent_profiling.o $(UTILOBJS)
-	$(CXX) $(CFLAGS) -o concurrent_profiling concurrent_profiling.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -pthread -o concurrent_profiling concurrent_profiling.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 concurrent_profiling_noCuCtx: concurrent_profiling_noCuCtx.o $(UTILOBJS)
-	$(CXX) $(CFLAGS) -o concurrent_profiling_noCuCtx concurrent_profiling_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -pthread -o concurrent_profiling_noCuCtx concurrent_profiling_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 pthreads: pthreads.o
-	$(CXX) $(CFLAGS) -o pthreads pthreads.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -pthread -o pthreads pthreads.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 pthreads_noCuCtx: pthreads_noCuCtx.o
-	$(CXX) $(CFLAGS) -o pthreads_noCuCtx pthreads_noCuCtx.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -pthread -o pthreads_noCuCtx pthreads_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 cudaOpenMP: cudaOpenMP.o
 	$(CXX) $(CFLAGS) -o cudaOpenMP cudaOpenMP.o -lgomp -fopenmp $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
@@ -57,7 +57,7 @@ test_multipass_event_fail: test_multipass_event_fail.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o test_multipass_event_fail test_multipass_event_fail.o $(INCLUDE) $(UTILOBJS) $(PAPILIB) $(LDFLAGS) $(CUDALIBS)
 
 test_2thr_1gpu_not_allowed: test_2thr_1gpu_not_allowed.o
-	$(CXX) $(CFLAGS) -o test_2thr_1gpu_not_allowed test_2thr_1gpu_not_allowed.o -lpthread $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -pthread -o test_2thr_1gpu_not_allowed test_2thr_1gpu_not_allowed.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 HelloWorld: HelloWorld.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
