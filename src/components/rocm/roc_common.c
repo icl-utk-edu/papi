@@ -35,6 +35,7 @@ rocc_init(void)
 
     hsa_status_t status = hsa_init_p();
     if (status != HSA_STATUS_SUCCESS) {
+        snprintf(error_string, PAPI_MAX_STR_LEN, "Call to hsa_init() failed.");
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
