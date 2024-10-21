@@ -112,15 +112,15 @@ echo "Running Tests";
 echo ""
 
 if [ "$LD_LIBRARY_PATH" = "" ]; then
-  LD_LIBRARY_PATH=.:./libpfm-3.y/lib
+  LD_LIBRARY_PATH=.:./libpfm4/lib
 else
-  LD_LIBRARY_PATH=.:./libpfm-3.y/lib:"$LD_LIBRARY_PATH"
+  LD_LIBRARY_PATH=.:./libpfm4/lib:"$LD_LIBRARY_PATH"
 fi
 export LD_LIBRARY_PATH
 if [ "$LIBPATH" = "" ]; then
-  LIBPATH=.:./libpfm-3.y/lib
+  LIBPATH=.:./libpfm4/lib
 else
-  LIBPATH=.:./libpfm-3.y/lib:"$LIBPATH"
+  LIBPATH=.:./libpfm4/lib:"$LIBPATH"
 fi
 export LIBPATH
 
