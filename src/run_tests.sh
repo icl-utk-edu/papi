@@ -130,7 +130,7 @@ fi
 export LIBPATH
 
 
-if [ "$PERF_EVENT_ACTIVE" == "perf_event" ]; then
+if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
   
   echo ""
   echo "Running Event Validation Tests";
