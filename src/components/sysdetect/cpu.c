@@ -119,8 +119,10 @@ fill_cpu_info( _sysdetect_cpu_info_t *info )
     }
 
     for (a = 0; a < info->threads * info->cores * info->sockets; ++a) {
-        CPU_CALL(cpu_get_attribute_at(CPU_ATTR__HWTHREAD_NUMA_AFFINITY, a, &info->numa_affinity[a]),
-                 info->numa_affinity[a] = 0);
+        int status = cpu_get_attribute_at(CPU_ATTR__HWTHREAD_NUMA_AFFINITY, a, &info->numa_affinity[a]);
+        if( CPU_SUCCESS != status ){
+            SUBDBG("Warning: core ids might not be contiguous.\n");
+        }
     }
 
     info->cache_levels = level;
