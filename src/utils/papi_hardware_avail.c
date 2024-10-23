@@ -202,7 +202,8 @@ main( int argc, char **argv )
                 unsigned int numa_threads[MAX_NUMA_NODES][MAX_CPU_THREADS];
                 for (j = 0; j < threads; ++j) {
                     PAPI_get_dev_attr(handle, j, PAPI_DEV_ATTR__CPU_UINT_THR_NUMA_AFFINITY, &affinity[j]);
-                    numa_threads[affinity[j]][numa_threads_count[affinity[j]]++] = j;
+                    if( affinity[j] >= 0 )
+                        numa_threads[affinity[j]][numa_threads_count[affinity[j]]++] = j;
                 }
 
                 for ( j = 0; j < numas; ++j ) {

@@ -454,7 +454,11 @@ get_num_threads_per_numa( _sysdetect_cpu_info_t *cpu_info )
 
     int threads = cpu_info->threads * cpu_info->cores * cpu_info->sockets;
     for (k = 0; k < threads; ++k) {
-        cpu_info->num_threads_per_numa[cpu_info->numa_affinity[k]]++;
+        int tmp = cpu_info->numa_affinity[k];
+        // If gaps exist in the core numbering, the numa_affinity entries
+        // for the skipped core ids will be negative.
+        if( tmp >= 0 )
+            cpu_info->num_threads_per_numa[cpu_info->numa_affinity[k]]++;
     }
 
     initialized = 1;
