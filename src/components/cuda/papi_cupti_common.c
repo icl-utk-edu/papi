@@ -53,6 +53,9 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 /* cupti function pointer */
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
+/**@class load_cuda_sym
+ * @brief Search for libcuda.so.
+ */
 static int load_cuda_sym(void)
 {
     dl_drv = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
@@ -137,11 +140,25 @@ void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, cons
     return dl;
 }
 
+/**@class load_cudart_sym
+ * @brief Search for libcudart.so. Order of search is outlined below.
+ *
+ * 1. If a user sets PAPI_CUDA_RUNTIME, this will take precedent over
+ *    the options listed below to be searched.
+ * 2. If we fail to collect libcudart.so from PAPI_CUDA_RUNTIME or it is not set,
+ *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
+ * 3. If we fail to collect libcudart.so from steps 1 and 2, then we will search the linux
+ *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
+ *    advised for this option.
+ * 4. We use dlopen to search for libcudart.so.
+ *    If this fails, then we failed to find libcudart.so
+ */
 static int load_cudart_sym(void)
 {
     char dlname[] = "libcudart.so";
     char lookup_path[PATH_MAX];
 
+    /* search PAPI_CUDA_RUNTIME for libcudart.so (takes precedent over PAPI_CUDA_ROOT) */
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
     if (papi_cuda_runtime) {
         sprintf(lookup_path, "%s/%s", papi_cuda_runtime, dlname);
@@ -153,15 +170,18 @@ static int load_cudart_sym(void)
         NULL,
     };
 
-    if (linked_cudart_path && !dl_rt) {
-        dl_rt = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
-    }
-
+    /* search PAPI_CUDA_ROOT for libcudart.so */
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_rt) {
         dl_rt = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
     }
 
+    /* search linux default directories for libcudart.so */
+    if (linked_cudart_path && !dl_rt) {
+        dl_rt = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
+    }
+
+    /* last ditch effort to find libcudart.so */
     if (!dl_rt) {
         dl_rt = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
         if (!dl_rt) {
@@ -206,11 +226,25 @@ static int unload_cudart_sym(void)
     return PAPI_OK;
 }
 
+/**@class load_cupti_common_sym
+ * @brief Search for libcupti.so. Order of search is outlined below.
+ *
+ * 1. If a user sets PAPI_CUDA_CUPTI, this will take precedent over
+ *    the options listed below to be searched.
+ * 2. If we fail to collect libcupti.so from PAPI_CUDA_CUPTI or it is not set,
+ *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
+ * 3. If we fail to collect libcupti.so from steps 1 and 2, then we will search the linux
+ *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
+ *    advised for this option.
+ * 4. We use dlopen to search for libcupti.so.
+ *    If this fails, then we failed to find libcupti.so
+ */
 static int load_cupti_common_sym(void)
 {
     char dlname[] = "libcupti.so";
     char lookup_path[PATH_MAX];
 
+    /* search PAPI_CUDA_CUPTI for libcupti.so (takes precedent over PAPI_CUDA_ROOT) */
     char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
     if (papi_cuda_cupti) {
         sprintf(lookup_path, "%s/%s", papi_cuda_cupti, dlname);
@@ -223,15 +257,18 @@ static int load_cupti_common_sym(void)
         NULL,
     };
 
-    if (linked_cudart_path && !dl_cupti) {
-        dl_cupti = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
-    }
-
+    /* search PAPI_CUDA_ROOT for libcupti.so */
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_cupti) {
         dl_cupti = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
     }
 
+    /* search linux default directories for libcupti.so */
+    if (linked_cudart_path && !dl_cupti) {
+        dl_cupti = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
+    }
+
+    /* last ditch effort to find libcupti.so */
     if (!dl_cupti) {
         dl_cupti = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
         if (!dl_cupti) {
