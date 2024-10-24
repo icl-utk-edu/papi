@@ -36,7 +36,7 @@ instructions_testcode.o:	instructions_testcode.c testcode.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c instructions_testcode.c
 
 matrix_multiply.o:	matrix_multiply.c matrix_multiply.h
-	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -c matrix_multiply.c
+	$(CC) $(INCLUDE) $(CFLAGS) $(OPTFLAGS) -O1 -c matrix_multiply.c
 
 fp_validation_hl: fp_validation_hl.o $(TESTLIB) $(PAPILIB) flops_testcode.o
 	$(CC) -o fp_validation_hl fp_validation_hl.o $(TESTLIB) flops_testcode.o $(PAPILIB) $(LDFLAGS) $(EXTRALIB) -lpthread
