@@ -375,7 +375,7 @@ link_lmsensors_libraries ()
       return PAPI_ENOSUPP;
    }
 
-   char path_name[1024];
+   char path_name[PATH_MAX];
    char *lmsensors_root = getenv("PAPI_LMSENSORS_ROOT"); 
    
    dl1 = NULL;

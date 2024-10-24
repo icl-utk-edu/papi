@@ -558,7 +558,7 @@ get_cache_type( const char *dirname, int *value )
     char filename[BUFSIZ];
     char type_string[BUFSIZ];
     char buffer[BUFSIZ];
-    int type;
+    int type = PAPI_MH_TYPE_EMPTY;
 
     sprintf(filename, "/sys/devices/system/cpu/cpu0/cache/%s/type",
             dirname);
