@@ -800,6 +800,7 @@ with_perf_events
 enable_perfevent_rdpmc
 with_pe_incdir
 enable_perf_event_uncore
+with_sysdetect
 with_components
 enable_fortran
 '
@@ -1502,6 +1503,8 @@ Optional Packages:
   --with-perf-events      Specify use of Linux Performance Event (requires
                           kernel 2.6.32 or greater)
   --with-pe-incdir=<path> Specify path to the correct perf header file
+  --with-sysdetect=<yes,no>
+                          Build the sysdetect component (default: yes)
   --with-components=<"component1 component2">
                           Specify which components to build
 
@@ -6724,6 +6727,26 @@ if test "$CC_COMMON_NAME" = "icc"; then
     OMPCFLGS=-qopenmp
 fi
 
+## By default we want the sysdetect component built, so if the user does not
+## give an option we will add it to the list.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building sysdetect" >&5
+$as_echo_n "checking for building sysdetect... " >&6; }
+
+# Check whether --with-sysdetect was given.
+if test "${with_sysdetect+set}" = set; then :
+  withval=$with_sysdetect;
+else
+  with_sysdetect=yes
+fi
+
+if test "$with_sysdetect" = "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for components to build" >&5
 $as_echo_n "checking for components to build... " >&6; }
 COMPONENT_RULES=components/Rules.components
@@ -6792,10 +6815,10 @@ elif test "x$VECTOR" != "x"; then
    echo "extern papi_vector_t ${VECTOR};" >> components_config.h
 fi
 
-
-# always enable sysdetect
-components="$components sysdetect"
-
+# Enable sysdetect unless the user has explicitly told us not to.
+if test "$with_sysdetect" = "yes"; then
+  components="$components sysdetect"
+fi
 
 PAPI_NUM_COMP=0
 for comp in $components; do
