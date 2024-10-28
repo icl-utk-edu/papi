@@ -127,7 +127,6 @@ static int begin_profiling(cuptip_gpu_state_t *gpu_ctl);
 static int end_profiling(cuptip_gpu_state_t *gpu_ctl);
 
 /* NVIDIA chip functions */
-static int get_chip_name(int dev_num, char* chipName);
 static int find_same_chipname(int gpu_id);
 
 /* functions to check if a cuda native event requires multiple passes */
@@ -185,7 +184,6 @@ NVPA_Status ( *NVPW_MetricsContext_GetCounterNames_BeginPtr ) (NVPW_MetricsConte
 NVPA_Status ( *NVPW_MetricsContext_GetCounterNames_EndPtr ) (NVPW_MetricsContext_GetCounterNames_End_Params* pParams);
 
 /* cupti function pointers */
-CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
 CUptiResult ( *cuptiProfilerInitializePtr ) (CUpti_Profiler_Initialize_Params* params);
 CUptiResult ( *cuptiProfilerDeInitializePtr ) (CUpti_Profiler_DeInitialize_Params* params);
 CUptiResult ( *cuptiProfilerCounterDataImageCalculateSizePtr ) (CUpti_Profiler_CounterDataImage_CalculateSize_Params* params);
@@ -219,7 +217,6 @@ static int load_cupti_perf_sym(void)
         goto fn_fail;
     }
 
-    cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
     cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
     cuptiProfilerDeInitializePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerDeInitialize");
     cuptiProfilerCounterDataImageCalculateSizePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerCounterDataImageCalculateSize");
@@ -256,7 +253,6 @@ static int unload_cupti_perf_sym(void)
         dlclose(dl_cupti);
         dl_cupti = NULL;
     }
-    cuptiDeviceGetChipNamePtr                                  = NULL;
     cuptiProfilerInitializePtr                                 = NULL;
     cuptiProfilerDeInitializePtr                               = NULL;
     cuptiProfilerCounterDataImageCalculateSizePtr              = NULL;
@@ -458,23 +454,6 @@ static int initialize_perfworks_api(void)
     return PAPI_OK;
 }
 
-static int get_chip_name(int dev_num, char* chipName)
-{
-    int papi_errno;
-    CUpti_Device_GetChipName_Params getChipName = {
-        .structSize = CUpti_Device_GetChipName_Params_STRUCT_SIZE,
-        .pPriv = NULL,
-        .deviceIndex = 0
-    };
-    getChipName.deviceIndex = dev_num;
-    papi_errno = cuptiDeviceGetChipNamePtr(&getChipName);
-    if (papi_errno != CUPTI_SUCCESS) {
-        ERRDBG("CUPTI error %d: Failed to get chip name for device %d\n", papi_errno, dev_num);
-        return PAPI_EMISC;
-    }
-    strcpy(chipName, getChipName.pChipName);
-    return PAPI_OK;
-}
 
 /** @class get_added_events_rmr
   * @brief For a Cuda native event name collect raw metrics and count
