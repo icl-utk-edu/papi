@@ -2379,6 +2379,17 @@ PRESET,PAPI_HW_INT,DERIVED_ADD,EXC_IRQ,EXC_FIQ
 PRESET,PAPI_SYC_INS,DERIVED_ADD,ISB_SPEC,DSB_SPEC,DMB_SPEC
 PRESET,PAPI_TLB_DM,NOT_DERIVED,L2D_TLB_REFILL
 
+cuda,GH100
+cuda,GA100
+#
+PRESET,PAPI_CUDA_FP16_FMA,NOT_DERIVED,cuda:::sm__sass_thread_inst_executed_op_hfma_pred_on:stat=sum
+PRESET,PAPI_CUDA_BF16_FMA,NOT_DERIVED,cuda:::sm__sass_thread_inst_executed_op_hfma_pred_on:stat=sum
+PRESET,PAPI_CUDA_FP32_FMA,NOT_DERIVED,cuda:::sm__sass_thread_inst_executed_op_ffma_pred_on:stat=sum
+PRESET,PAPI_CUDA_FP64_FMA,NOT_DERIVED,cuda:::sm__sass_thread_inst_executed_op_dfma_pred_on:stat=sum
+PRESET,PAPI_CUDA_FP_FMA,DERIVED_POSTFIX,N0|N1|+|N2|+|,cuda:::sm__sass_thread_inst_executed_op_hfma_pred_on:stat=sum,cuda:::sm__sass_thread_inst_executed_op_ffma_pred_on:stat=sum,cuda:::sm__sass_thread_inst_executed_op_dfma_pred_on:stat=sum
+cuda,GH100
+PRESET,PAPI_CUDA_FP8_OPS,NOT_DERIVED,cuda:::sm__ops_path_tensor_src_fp8:stat=sum
+
 #########################
 # ARM Neoverse V2       #
 #########################
