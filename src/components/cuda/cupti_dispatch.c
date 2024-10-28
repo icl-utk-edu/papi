@@ -50,6 +50,16 @@ int cuptid_err_get_last(const char **error_str)
     return cuptic_err_get_last(error_str);
 }
 
+int cuptid_get_chip_name(int dev_num, char *name)
+{
+    return get_chip_name(dev_num, name);
+}
+
+int cuptid_device_get_count(int *num_gpus)
+{
+    return cuptic_device_get_count(num_gpus);
+}
+
 int cuptid_init(void)
 {
     int init_errno = cuptic_init();

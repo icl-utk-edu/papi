@@ -42,6 +42,7 @@ static int cuda_init_thread(hwd_context_t *ctx);
 static int cuda_init_control_state(hwd_control_state_t *ctl);
 static int cuda_shutdown_thread(hwd_context_t *ctx);
 static int cuda_shutdown_component(void);
+static int cuda_init_comp_presets(void);
 
 /* set and update component state */
 static int cuda_update_control_state(hwd_control_state_t *ctl,
@@ -117,6 +118,7 @@ papi_vector_t _cuda_vector = {
 
     .init_thread = cuda_init_thread,
     .shutdown_thread = cuda_shutdown_thread,
+    .init_comp_presets = cuda_init_comp_presets,
 
     .ntv_enum_events = cuda_ntv_enum_events,
     .ntv_code_to_name = cuda_ntv_code_to_name,
@@ -339,6 +341,43 @@ static int cuda_shutdown_thread(hwd_context_t *ctx)
     cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_ctx->initialized = 0;
     cuda_ctx->state = 0; 
+
+    return PAPI_OK;
+}
+
+static int cuda_init_comp_presets(void)
+{
+    SUBDBG("ENTER: Init CUDA component presets.\n");
+    int cidx = _cuda_vector.cmp_info.CmpIdx;
+    char *cname = _cuda_vector.cmp_info.name;
+
+    /* Setup presets. */
+    char arch_name[PAPI_2MAX_STR_LEN];
+    int devIdx = -1;
+    int numDevices = 0;
+
+    int retval = cuptid_device_get_count(&numDevices);
+    if ( retval != PAPI_OK ) {
+        return PAPI_EMISC;
+    }
+
+    /* Load preset table for every device type available on the system.
+     * As long as one of the cards has presets defined, then they should
+     * be available. */
+    for( devIdx = 0; devIdx < numDevices; ++devIdx ) {
+        retval = cuptid_get_chip_name(devIdx, arch_name);
+        if ( retval == PAPI_OK ) {
+            break;
+        }
+    }
+
+    if ( devIdx > -1  && devIdx < numDevices ) {
+        retval = _papi_load_preset_table_component( cname, arch_name, cidx );
+        if ( retval != PAPI_OK ) {
+            SUBDBG("EXIT: Failed to init CUDA component presets.\n");
+            return retval;
+        }
+    }
 
     return PAPI_OK;
 }

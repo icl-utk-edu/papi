@@ -43,5 +43,7 @@ int cuptid_thread_info_destroy(cuptid_info_t *info);
 
 /* misc. */
 int cuptid_err_get_last(const char **error_str);
+int cuptid_get_chip_name(int dev_num, char *name);
+int cuptid_device_get_count(int *num_gpus);
 
 #endif /* __CUPTI_DISPATCH_H__ */

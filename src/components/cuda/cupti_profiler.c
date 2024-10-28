@@ -91,7 +91,6 @@ static int numDevicesOnMachine;
 static cuptiu_event_table_t *cuptiu_table_p;
 
 // Cupti Profiler API function pointers //
-CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
 CUptiResult ( *cuptiProfilerInitializePtr ) (CUpti_Profiler_Initialize_Params* params);
 CUptiResult ( *cuptiProfilerDeInitializePtr ) (CUpti_Profiler_DeInitialize_Params* params);
 CUptiResult ( *cuptiProfilerCounterDataImageCalculateSizePtr ) (CUpti_Profiler_CounterDataImage_CalculateSize_Params* params);
@@ -238,7 +237,6 @@ static int load_cupti_perf_sym(void)
         return PAPI_EMISC;
     }
 
-    cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
     cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
     cuptiProfilerDeInitializePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerDeInitialize");
     cuptiProfilerCounterDataImageCalculateSizePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerCounterDataImageCalculateSize");
@@ -271,7 +269,6 @@ static int unload_cupti_perf_sym(void)
         dlclose(dl_cupti);
         dl_cupti = NULL;
     }
-    cuptiDeviceGetChipNamePtr                                  = NULL;
     cuptiProfilerInitializePtr                                 = NULL;
     cuptiProfilerDeInitializePtr                               = NULL;
     cuptiProfilerCounterDataImageCalculateSizePtr              = NULL;
@@ -2225,14 +2222,15 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
 
 static int assign_chipnames_for_a_device_index(void)
 {
+    char chipName[PAPI_MIN_STR_LEN];
     int dev_id;
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
-        CUpti_Device_GetChipName_Params getChipNameParams = {CUpti_Device_GetChipName_Params_STRUCT_SIZE};
-        getChipNameParams.deviceIndex = dev_id;
-        getChipNameParams.pPriv = NULL;
-        cuptiCheckErrors( cuptiDeviceGetChipNamePtr(&getChipNameParams), return PAPI_EMISC );
+        int retval = get_chip_name(dev_id, chipName);
+        if (PAPI_OK != retval ) {
+            return PAPI_EMISC;
+        }
 
-        int strLen = snprintf(cuptiu_table_p->avail_gpu_info[dev_id].chipName, PAPI_MIN_STR_LEN, "%s", getChipNameParams.pChipName);
+        int strLen = snprintf(cuptiu_table_p->avail_gpu_info[dev_id].chipName, PAPI_MIN_STR_LEN, "%s", chipName);
         if (strLen < 0 || strLen >= PAPI_MIN_STR_LEN) {
             SUBDBG("Failed to fully write chip name.\n");
             return PAPI_EBUF;
