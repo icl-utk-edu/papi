@@ -77,6 +77,9 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table);
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 
+/* misc. */
+int get_chip_name(int dev_num, char* chipName);
+
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
     if (dlerror() != NULL) {  \
         ERRDBG("A CUDA required function '%s' was not found in lib '%s'.\n", name, #dllib);  \
