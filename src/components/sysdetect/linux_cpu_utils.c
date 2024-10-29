@@ -765,6 +765,11 @@ get_thread_affinity( int thread, int *val )
         return CPU_SUCCESS;
     }
 
+    if (!path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d", thread)) {
+        *val = 0;
+        return CPU_SUCCESS;
+    }
+
     int i = 0;
     while (!path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d/node%d", thread, i)) {
         ++i;
