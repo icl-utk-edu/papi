@@ -98,7 +98,7 @@ cpu_get_cache_info( CPU_attr_e attr, int level, _sysdetect_cache_level_info_t *c
 
     *value = 0;
 
-    if (level >= PAPI_MAX_MEM_HIERARCHY_LEVELS)
+    if (level > PAPI_MAX_MEM_HIERARCHY_LEVELS)
         return CPU_ERROR;
 
     switch(attr) {
