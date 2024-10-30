@@ -765,6 +765,14 @@ get_thread_affinity( int thread, int *val )
         return CPU_SUCCESS;
     }
 
+    // If gaps exist in the core numbering, the caller of this
+    // fucntion will likely inquire about cpu-ids that do not
+    // exist in the system (i.e., the gaps).
+    if( !path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d", thread) ){
+        *val = -1;
+        return CPU_ERROR;
+    }
+
     int i = 0;
     while (!path_exist(_PATH_SYS_SYSTEM "/cpu/cpu%d/node%d", thread, i)) {
         ++i;
