@@ -103,7 +103,7 @@ icache_seq_kernel_0.o: icache_seq.c icache_seq.h
 	rm icache_seq_kernel_0.o
 
 instr: instructions.c instr.h
-	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
+	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(FLOP) $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
 
 weak_symbols.o: weak_symbols.c vec.h
 	-$(CC) -c $(CFLAGS) weak_symbols.c

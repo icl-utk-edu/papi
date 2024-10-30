@@ -115,6 +115,234 @@ clean_up:
 }
 
 
+void test_int_add_max(int p, int M, int N, int EventSet, FILE *fp){
+    int ret;
+    long long int ev_values[2];
+    int i32_00, i32_01, i32_02, i32_03, i32_04, i32_05, i32_06, i32_07;
+    int i32_08, i32_09, i32_10, i32_11;
+    int i32_100, i32_101, i32_102;
+
+    /* Initialize the variables with values that the compiler cannot guess. */
+    i32_00 =  2*p;
+    i32_01 = -p/3;
+    i32_02 =  p/4;
+    i32_03 = -p/5;
+    i32_04 =  p/6;
+    i32_05 = -p/7;
+    i32_06 =  p/8;
+    i32_07 = -p/9;
+    i32_08 =  1+p/2;
+    i32_09 =  1-p/2;
+    i32_10 =  1+p/3;
+    i32_11 =  1-p/3;
+
+    i32_100 =  17;
+    i32_101 = -18;
+    i32_102 =  12;
+
+    // Start the counters.
+    ret = PAPI_start(EventSet);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_start() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to run the kernel.
+        goto clean_up;
+    }
+
+    if( p == 12345678 ){
+        p /= 2;
+        i32_100 *= 13;
+        i32_101 *= 12;
+        i32_102 *= 11;
+    }else{
+        // Almost certainly this is what will execute and all variables will
+        // end up with the value zero, but the compiler doesn't know that.
+        i32_100 /= i32_00+16;
+        i32_101 /= i32_00+17;
+        i32_102 /= i32_00+11;
+    }
+
+#define I32_ADDS(_X) {i32_00 += _X; i32_01 += _X; i32_02 += _X; i32_03 += _X; i32_04 += _X; i32_05 += _X; i32_06 += _X; i32_07 += _X; i32_08 += _X; i32_09 += _X; i32_10 += _X; i32_11 += _X;}
+
+    for(int i=0; i<M; i++){
+        for(int j=0; j<N; j++){
+            I32_ADDS(i32_100);
+            I32_ADDS(i32_101);
+            I32_ADDS(i32_102);
+            if( i32_100 > 100 ){
+                I32_ADDS(i32_07);
+            }
+        }
+    }
+
+    ret = PAPI_stop(EventSet, ev_values);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_stop() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to print anything.
+        goto clean_up;
+    }
+    fprintf(fp, "%d %lld # INT_ADD_count_ILP12: %lld (%.3lf)\n", N, ev_values[0], 12LL*3LL*N*M, (double)ev_values[0]/(12.0*3.0*N*M));
+
+    sum_i32 += i32_00 + i32_01 + i32_02 + i32_03 + i32_04 + i32_05 + i32_06 + i32_07;
+    sum_i32 += i32_08 + i32_09 + i32_10 + i32_11;
+
+clean_up:
+
+    return;
+}
+
+
+void test_int_mul_max(int p, int M, int N, int EventSet, FILE *fp){
+    int ret;
+    long long int ev_values[2];
+    int i32_00, i32_01, i32_02, i32_03, i32_04, i32_05, i32_06, i32_07;
+    int i32_08, i32_09, i32_10, i32_11;
+    int i32_100, i32_101, i32_102;
+
+    /* Initialize the variables with values that the compiler cannot guess. */
+    i32_00 =  2*p;
+    i32_01 = -p/3;
+    i32_02 =  p/4;
+    i32_03 = -p/5;
+    i32_04 =  p/6;
+    i32_05 = -p/7;
+    i32_06 =  p/8;
+    i32_07 =  1/p;
+    i32_08 =  1+p/2;
+    i32_09 =  1-p/2;
+    i32_10 =  1+p/3;
+    i32_11 =  1-p/3;
+
+    i32_100 =  17;
+    i32_101 = -18;
+    i32_102 =  12;
+
+    // Start the counters.
+    ret = PAPI_start(EventSet);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_start() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to run the kernel.
+        goto clean_up;
+    }
+
+    if( p == 12345678 ){
+        p /= 2;
+        i32_100 *= 13;
+        i32_101 *= 12;
+        i32_102 *= 11;
+    }else{
+        // Almost certainly this is what will execute and all variables will
+        // end up with the value one, but the compiler doesn't know that.
+        i32_100 = 1 + i32_100 / (i32_00+16);
+        i32_101 = 1 + i32_101 / (i32_00+17);
+        i32_102 = 1 + i32_102 / (i32_00+11);
+    }
+
+#define I32_MULS(_X) {i32_00 *= _X; i32_01 *= _X; i32_02 *= _X; i32_03 *= _X; i32_04 *= _X; i32_05 *= _X; i32_06 *= _X; i32_07 *= _X; i32_08 *= _X; i32_09 *= _X; i32_10 *= _X; i32_11 *= _X;}
+
+    for(int i=0; i<M; i++){
+        for(int j=0; j<N; j++){
+            I32_MULS(i32_100);
+            I32_MULS(i32_101);
+            I32_MULS(i32_102);
+            if( i32_100 > 100 ){
+                I32_MULS(i32_07);
+            }
+        }
+    }
+
+    ret = PAPI_stop(EventSet, ev_values);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_stop() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to print anything.
+        goto clean_up;
+    }
+    fprintf(fp, "%d %lld # INT_MUL_count_ILP12: %lld (%.3lf)\n", N, ev_values[0], 12LL*3LL*N*M, (double)ev_values[0]/(12.0*3.0*N*M));
+
+    sum_i32 += i32_00 + i32_01 + i32_02 + i32_03 + i32_04 + i32_05 + i32_06 + i32_07;
+    sum_i32 += i32_08 + i32_09 + i32_10 + i32_11;
+
+clean_up:
+
+    return;
+}
+
+
+void test_int_div_max(int p, int M, int N, int EventSet, FILE *fp){
+    int ret;
+    long long int ev_values[2];
+    int i32_00, i32_01, i32_02, i32_03, i32_04, i32_05, i32_06, i32_07;
+    int i32_08, i32_09, i32_10, i32_11;
+    int i32_100, i32_101, i32_102;
+
+    /* Initialize the variables with values that the compiler cannot guess. */
+    i32_00 =  2*p;
+    i32_01 = -p/3;
+    i32_02 =  p/4;
+    i32_03 = -p/5;
+    i32_04 =  p/6;
+    i32_05 = -p/7;
+    i32_06 =  p/8;
+    i32_07 =  1+1/p;
+    i32_08 =  1+p/2;
+    i32_09 =  1-p/2;
+    i32_10 =  1+p/3;
+    i32_11 =  1-p/3;
+
+    i32_100 =  17;
+    i32_101 = -18;
+    i32_102 =  12;
+
+    // Start the counters.
+    ret = PAPI_start(EventSet);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_start() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to run the kernel.
+        goto clean_up;
+    }
+
+    if( p == 12345678 ){
+        p /= 2;
+        i32_100 *= 13;
+        i32_101 *= 12;
+        i32_102 *= 11;
+    }else{
+        // Almost certainly this is what will execute and all variables will
+        // end up with the value one, but the compiler doesn't know that.
+        i32_100 = 1 + i32_100 / (i32_00+16);
+        i32_101 = 1 + i32_101 / (i32_00+17);
+        i32_102 = 1 + i32_102 / (i32_00+11);
+    }
+
+#define I32_DIVS(_X) {i32_00 /= _X; i32_01 /= _X; i32_02 /= _X; i32_03 /= _X; i32_04 /= _X; i32_05 /= _X; i32_06 /= _X; i32_07 /= _X; i32_08 /= _X; i32_09 /= _X; i32_10 /= _X; i32_11 /= _X;}
+
+    for(int i=0; i<M; i++){
+        for(int j=0; j<N; j++){
+            I32_DIVS(i32_100);
+            I32_DIVS(i32_101);
+            I32_DIVS(i32_102);
+            if( i32_100 > 100 ){
+                I32_DIVS(i32_07);
+            }
+        }
+    }
+
+    ret = PAPI_stop(EventSet, ev_values);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_stop() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to print anything.
+        goto clean_up;
+    }
+    fprintf(fp, "%d %lld # INT_DIV_count_ILP12: %lld (%.3lf)\n", N, ev_values[0], 12LL*3LL*N*M, (double)ev_values[0]/(12.0*3.0*N*M));
+
+    sum_i32 += i32_00 + i32_01 + i32_02 + i32_03 + i32_04 + i32_05 + i32_06 + i32_07;
+    sum_i32 += i32_08 + i32_09 + i32_10 + i32_11;
+
+clean_up:
+
+    return;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // f64 ADDITION
 
@@ -889,6 +1117,77 @@ clean_up:
     return;
 }
 
+
+void test_f64_fma_max(int p, int M, int N, int EventSet, FILE *fp){
+    int ret;
+    long long int ev_values[2];
+    double f64_00, f64_01, f64_02, f64_03, f64_04, f64_05, f64_06, f64_07;
+    double f64_08, f64_09, f64_10, f64_11;
+    double f64_100, f64_101, f64_102;
+    double f64_B;
+
+    /* Initialize the variables with values that the compiler cannot guess. */
+    f64_00 =  p/431.2;
+    f64_01 = -p/431.3;
+    f64_02 =  p/431.4;
+    f64_03 = -p/431.5;
+    f64_04 =  p/431.6;
+    f64_05 = -p/431.7;
+    f64_06 =  p/431.8;
+    f64_07 = -p/431.9;
+    f64_08 =  p/432.0;
+    f64_09 = -p/432.1;
+    f64_10 =  p/432.2;
+    f64_11 = -p/432.3;
+
+    f64_100 =  1.00001;
+    f64_101 = -1.00002;
+    f64_102 =  1.00003;
+
+    // Start the counters.
+    ret = PAPI_start(EventSet);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_start() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to run the kernel.
+        goto clean_up;
+    }
+
+    if( p != 12345678 ){
+        f64_100 /= 1.000045;
+        f64_101 /= 1.000054;
+        f64_102 /= 1.000067;
+    }
+    f64_B = f64_100/34567.8;
+
+#define F64_FMAS(_A,_B) {f64_00 = _A*f64_00+_B; f64_01 = _A*f64_01+_B; f64_02 = _A*f64_02+_B; f64_03 = _A*f64_03+_B; f64_04 = _A*f64_04+_B; f64_05 = _A*f64_05+_B; f64_06 = _A*f64_06+_B; f64_07 = _A*f64_07+_B; f64_08 = _A*f64_08+_B; f64_09 = _A*f64_09+_B; f64_10 = _A*f64_10+_B; f64_11 = _A*f64_11+_B;}
+
+    for(int i=0; i<M; i++){
+        for(int j=0; j<N; j++){
+            F64_FMAS(f64_100, f64_B);
+            F64_FMAS(f64_101, f64_B);
+            F64_FMAS(f64_102, f64_B);
+            if( p < 2 ){
+                F64_FMAS(f64_00, f64_B);
+            }
+        }
+    }
+
+    ret = PAPI_stop(EventSet, ev_values);
+    if ( PAPI_OK != ret ) {
+        fprintf(stderr, "PAPI_stop() error: %s\n", PAPI_strerror(ret));
+        // If we can't measure events, no need to print anything.
+        goto clean_up;
+    }
+    fprintf(fp, "%d %lld # FP_FMA_count_ILP12: %lld (%.3lf)\n", N, ev_values[0], 12LL*3LL*N*M, (double)ev_values[0]/(12.0*3.0*N*M));
+
+    sum_f64 += f64_00 + f64_01 + f64_02 + f64_03 + f64_04 + f64_05 + f64_06 + f64_07;
+    sum_f64 += f64_08 + f64_09 + f64_10 + f64_11;
+
+clean_up:
+
+    return;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // MEM ops
 
@@ -1145,6 +1444,39 @@ void instr_test(int EventSet, FILE *fp) {
     fprintf(fp, "\n");
 
     ////////////////////////////////////////
+    fprintf(fp, "# (((12.0*3+5)*N)+3)*M\n");
+    for(i=16; i<50; i*=2){
+        for(j=0; j<4; j++){
+            M = (int)(i*f[j]*minM);
+            N = (int)(i*f[j]*minN);
+            test_int_add_max(p, M, N, EventSet, fp);
+        }
+    }
+    fprintf(fp, "\n");
+
+    ////////////////////////////////////////
+    fprintf(fp, "# (((12.0*3+5)*N)+3)*M\n");
+    for(i=16; i<50; i*=2){
+        for(j=0; j<4; j++){
+            M = (int)(i*f[j]*minM);
+            N = (int)(i*f[j]*minN);
+            test_int_mul_max(p, M, N, EventSet, fp);
+        }
+    }
+    fprintf(fp, "\n");
+
+    ////////////////////////////////////////
+    fprintf(fp, "# (((12.0*3+5)*N)+3)*M\n");
+    for(i=16; i<50; i*=2){
+        for(j=0; j<4; j++){
+            M = (int)(i*f[j]*minM);
+            N = (int)(i*f[j]*minN);
+            test_int_div_max(p, M, N, EventSet, fp);
+        }
+    }
+    fprintf(fp, "\n");
+
+    ////////////////////////////////////////
     fprintf(fp, "# (((40+3)*N)+3)*M\n");
     for(i=16; i<50; i*=2){
         for(j=0; j<4; j++){
@@ -1228,6 +1560,17 @@ void instr_test(int EventSet, FILE *fp) {
             M = (int)(i*f[j]*minM/4);
             N = (int)(i*f[j]*minN/4);
             test_f64_div_max(p, M, N, EventSet, fp);
+        }
+    }
+    fprintf(fp, "\n");
+
+    ////////////////////////////////////////
+    fprintf(fp, "# (((12.0*3+5)*N)+3)*M\n");
+    for(i=16; i<50; i*=2){
+        for(j=0; j<4; j++){
+            M = (int)(i*f[j]*minM/4);
+            N = (int)(i*f[j]*minN/4);
+            test_f64_fma_max(p, M, N, EventSet, fp);
         }
     }
     fprintf(fp, "\n");
