@@ -12,6 +12,8 @@ platform's documentation carefully.
 #ifndef _PAPISTDEVENTDEFS
 #define _PAPISTDEVENTDEFS
 
+#include "papi_components_config_event_defs.h"
+
 /*
    Masks to indicate the event is a preset- the presets will have 
    the high bit set to one, as the vendors probably won't use the 

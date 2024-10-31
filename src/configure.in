@@ -1865,6 +1865,14 @@ AC_ARG_WITH([components],
     ]
 )
 
+# Enable sysdetect unless the user has explicitly told us not to.
+if test "$with_sysdetect" = "yes"; then
+  if test "$perf_events" != "no"; then
+    components="$components sysdetect"
+    fi
+fi
+
+AC_MSG_RESULT($components)
 
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
@@ -1919,12 +1927,111 @@ elif test "x$VECTOR" != "x"; then
    echo "extern papi_vector_t ${VECTOR};" >> components_config.h
 fi
 
-# Enable sysdetect unless the user has explicitly told us not to.
-if test "$with_sysdetect" = "yes"; then
-  if test "$perf_events" != "no"; then
-    components="$components sysdetect"
+
+# construct papi_components_config_event_defs.h
+echo "#ifndef _PAPICOMPCFGEVENTDEFS"  > papi_components_config_event_defs.h
+echo "#define _PAPICOMPCFGEVENTDEFS" >> papi_components_config_event_defs.h
+echo "" >> papi_components_config_event_defs.h
+numLine=`grep "#define PAPI_MAX_PRESET_EVENTS" papiStdEventDefs.h`
+sumNum=`echo ${numLine} | awk '{print $3}'`
+for comp in $components; do
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
+  if test "$idx" = 0; then
+    subcomp=$comp
+  else
+    subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
+  fi
+  if test "${subcomp}" != "perf_event"; then
+    subcomp_defs_inc=components/${subcomp}/papi_${subcomp}_std_event_defs.h
+    if test -f ${subcomp_defs_inc}; then
+        `cp ${subcomp_defs_inc} ./`
+        `echo "#define PAPI_${subcomp}_PRESET_OFFSET ${sumNum}" >> papi_components_config_event_defs.h`
+        numLine=`grep "#define PAPI_MAX_${subcomp}_PRESETS" ${subcomp_defs_inc}`
+        singleNum=`echo ${numLine} | awk '{print $3}'`
+        sumNum=$(( ${sumNum} + ${singleNum} ))
     fi
-fi
+  fi
+done
+echo "" >> papi_components_config_event_defs.h
+for comp in $components; do
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
+  if test "$idx" = 0; then
+    subcomp=$comp
+  else
+    subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
+  fi
+  if test "${subcomp}" != "perf_event"; then
+    subcomp_defs_inc=components/${subcomp}/papi_${subcomp}_std_event_defs.h
+    if test -f ${subcomp_defs_inc}; then
+        `echo "#include \"papi_${subcomp}_std_event_defs.h\"" >> papi_components_config_event_defs.h`
+    fi
+  fi
+done
+echo "" >> papi_components_config_event_defs.h
+echo "#endif" >> papi_components_config_event_defs.h
+
+# includes for preset headers
+for comp in $components; do
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
+  if test "$idx" = 0; then
+    subcomp=$comp
+  else
+    subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
+  fi
+  if test "${subcomp}" != "perf_event"; then
+    subcomp_preset_inc=components/${subcomp}/papi_${subcomp}_presets.h
+    AC_CHECK_FILE(${subcomp_preset_inc}, [`echo "#include \"${subcomp_preset_inc}\"" >> components_config.h`])
+  fi
+done
+echo "" >> components_config.h
+
+# array tracking max number of presets per component
+echo "int _papi_hwi_max_presets[[]] = {" >> components_config.h
+for comp in $components; do
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
+  if test "$idx" = 0; then
+    subcomp=$comp
+  else
+    subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
+  fi
+  if test "${subcomp}" != "perf_event"; then
+    subcomp_preset_inc=components/${subcomp}/papi_${subcomp}_presets.h
+    if test -f ${subcomp_preset_inc}; then
+        `echo "   PAPI_MAX_${subcomp}_PRESETS," >> components_config.h`
+    else
+        `echo "   0," >> components_config.h`
+    fi
+  else
+      `echo "   PAPI_MAX_PRESET_EVENTS," >> components_config.h`
+  fi
+done
+echo "   0" >> components_config.h
+echo "};" >> components_config.h
+echo "" >> components_config.h
+
+# preset arrays
+echo "hwi_presets_t *_papi_hwi_comp_presets[[]] = {" >> components_config.h
+for comp in $components; do
+  idx=`echo "$comp" | sed -n "s/\/.*//p" | wc -c`
+  if test "$idx" = 0; then
+    subcomp=$comp
+  else
+    subcomp=`echo $comp | sed -E "s/^.{${idx}}//"`
+  fi
+  if test "${subcomp}" != "perf_event"; then
+    subcomp_preset_inc=components/${subcomp}/papi_${subcomp}_presets.h
+    if test -f ${subcomp_preset_inc}; then
+        `echo "   _${subcomp}_presets," >> components_config.h`
+    else
+        `echo "   NULL," >> components_config.h`
+    fi
+  else
+      `echo "   _papi_hwi_presets," >> components_config.h`
+  fi
+done
+echo "   NULL" >> components_config.h
+echo "};" >> components_config.h
+echo "" >> components_config.h
 
 PAPI_NUM_COMP=0
 for comp in $components; do
@@ -2005,8 +2112,6 @@ for comp in $components; do
 done
 
 CFLAGS="$CFLAGS -DPAPI_NUM_COMP=$PAPI_NUM_COMP"
-
-AC_MSG_RESULT($components)
 
 AC_MSG_CHECKING(for PAPI event CSV filename to use)
 if test "x$PAPI_EVENTS_CSV" == "x"; then
