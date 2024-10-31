@@ -489,6 +489,7 @@ All of the functions in the PerfAPI should use the following set of constants.
 enum {
    PAPI_ENUM_EVENTS = 0,		/**< Always enumerate all events */
    PAPI_ENUM_FIRST,				/**< Enumerate first event (preset or native) */
+   PAPI_PRESET_ENUM_FIRST_COMP,	/**< Enumerate first component preset event */
    PAPI_PRESET_ENUM_AVAIL, 		/**< Enumerate events that exist here */
 
    /* PAPI PRESET section */
@@ -504,6 +505,8 @@ enum {
    PAPI_PRESET_ENUM_L3,			/**< L3 cache related preset events */
    PAPI_PRESET_ENUM_TLB,		/**< Translation Lookaside Buffer events */
    PAPI_PRESET_ENUM_FP,			/**< Floating Point related preset events */
+   PAPI_PRESET_ENUM_CPU,		/**< CPU preset events */
+   PAPI_PRESET_ENUM_CPU_AVAIL,	/**< Available CPU preset events */
 
    /* PAPI native event related section */
    PAPI_NTV_ENUM_UMASKS,		/**< all individual bits for given group */
@@ -898,6 +901,7 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPIF_DMEM_MAXVAL     12
 
 #define PAPI_MAX_INFO_TERMS  12		   /* should match PAPI_EVENTS_IN_DERIVED_EVENT defined in papi_internal.h */
+#define PAPI_MAX_COMP_QUALS  8
 
 
 /** @ingroup papi_data_structures 
@@ -1013,6 +1017,9 @@ enum {
                                                 to delineate platform specific 
 						anomalies or restrictions */
 
+     int  num_quals;                                       /**< number of qualifiers */
+     char quals[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];   /**< qualifiers */
+     char quals_descrs[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];  /**< qualifier descriptions */
    } PAPI_event_info_t;
 
 
