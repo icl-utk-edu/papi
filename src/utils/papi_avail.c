@@ -303,7 +303,7 @@ main( int argc, char **argv )
    unsigned int filter = 0;
    int print_event_info = 0;
    char *name = NULL;
-   int print_avail_only = PAPI_ENUM_EVENTS;
+   int print_avail_only = PAPI_PRESET_ENUM_CPU;
    int print_tabular = 1;
    PAPI_event_info_t info;
    const PAPI_hw_info_t *hwinfo = NULL;
@@ -332,7 +332,7 @@ main( int argc, char **argv )
          check_counter = 1;
       }
       else if ( strstr( argv[args], "-a" ))
-     print_avail_only = PAPI_PRESET_ENUM_AVAIL;
+     print_avail_only = PAPI_PRESET_ENUM_CPU_AVAIL;
       else if ( strstr( argv[args], "-d" ) )
      print_tabular = 0;
       else if ( strstr( argv[args], "-h" ) ) {
@@ -498,7 +498,7 @@ main( int argc, char **argv )
 
      if ( print_tabular ) {
         printf( "    Name        Code    " );
-        if ( !print_avail_only ) {
+        if ( print_avail_only == PAPI_PRESET_ENUM_CPU ) {
            printf( "Avail " );
         }
         printf( "Deriv Description (Note)\n" );
@@ -513,7 +513,7 @@ main( int argc, char **argv )
            if ( print_tabular ) {
           // if this is a user defined event or its a preset and matches the preset event filters, display its information
           if ( (i==1) || (filter & info.event_type)) {
-             if ( print_avail_only ) {
+             if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL ) {
                 if ( info.count ) {
                    if ( (check_counter && checkCounter (event_code)) || !check_counter)
                    {
@@ -548,8 +548,8 @@ main( int argc, char **argv )
              }
           }
            } else {
-          if ( ( print_avail_only && info.count ) ||
-               ( print_avail_only == 0 ) )
+          if ( ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL && info.count ) ||
+               ( print_avail_only == PAPI_PRESET_ENUM_CPU ) )
           {
              if ((check_counter && checkCounter (event_code)) || !check_counter)
              {
@@ -581,7 +581,7 @@ main( int argc, char **argv )
     printf( "--------------------------------------------------------------------------------\n" );
 
     if ( !print_event_info ) {
-        if ( print_avail_only ) {
+        if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL ) {
             printf( "Of %d available events, %d ", avail_count, deriv_count );
         } else {
             printf( "Of %d possible events, %d are available, of which %d ",
