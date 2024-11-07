@@ -260,6 +260,29 @@ checkCounter (int eventcode)
     return 1;
 }
 
+static int
+get_max_symbol_length ( int initModifier, int iterModifier ) {
+
+    int ecode = 0 | PAPI_PRESET_MASK;
+    int len, maxLen = 0;
+    PAPI_event_info_t info;
+
+    /* In case of error, return the legacy value. */
+    if ( PAPI_enum_event( &ecode, initModifier ) != PAPI_OK ) {
+        return 13;
+    }
+
+    do {
+        if ( PAPI_get_event_info( ecode, &info ) == PAPI_OK ) {
+            len = strlen(info.symbol);
+            if ( len > maxLen ) {
+                maxLen = len;
+            }
+        }
+    } while ( PAPI_enum_event(&ecode, iterModifier) == PAPI_OK );
+
+    return maxLen+1;
+}
 
 /*
   Checks whether a preset event is available. If it is available,
@@ -277,18 +300,30 @@ int is_preset_event_available(char *name) {
     exit(1);
   }
 
+  /* Since some component presets require qualifiers, such as ":device=0", but
+   * the base preset names do not contain qualifiers, then the qualifier must
+   * first be stripped in order to find a match. */
+  char *localname = strdup(name);
+  char *basename  = strtok(localname, ":");
+  if( NULL == basename ) {
+    basename = name;
+  }
+
   /* Iterate over all the available preset events and compare them by names. */
   do {
     if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
       
       if ( info.count ) {
     if ( (check_counter && checkCounter (event_code)) || !check_counter) {
-      if (strcmp(info.symbol, name) == 0)
+      if (strcmp(info.symbol, basename) == 0)
         return 1;
     }
       }
     }
   } while (PAPI_enum_event( &event_code, PAPI_PRESET_ENUM_AVAIL ) == PAPI_OK);
+
+  /* Free the temporary, dynamically allocated buffer. */
+  free(localname);
 
   return 0;
 }
@@ -484,6 +519,11 @@ main( int argc, char **argv )
          continue;
     }
 
+    /* Get the length of the longest preset symbol. */
+    int maxSymLen = get_max_symbol_length(PAPI_ENUM_FIRST, PAPI_PRESET_ENUM_CPU);
+    int frontPad = (maxSymLen-4)/2; /* 4 == strlen("Name") */
+    int backPad  = maxSymLen-4-frontPad;
+
     // print heading to show which kind of events follow
     if (i== 0) {
         printf( "================================================================================\n" );
@@ -497,16 +537,24 @@ main( int argc, char **argv )
     }
 
      if ( print_tabular ) {
-        printf( "    Name        Code    " );
+        int spaceCnt = 0;
+        for( spaceCnt = 0; spaceCnt < frontPad; ++spaceCnt ) {
+            printf(" ");
+        }
+        printf( "Name");
+        for( spaceCnt = 0; spaceCnt < backPad; ++spaceCnt ) {
+            printf(" ");
+        }
+        printf( "   Code    " );
         if ( print_avail_only == PAPI_PRESET_ENUM_CPU ) {
            printf( "Avail " );
         }
         printf( "Deriv Description (Note)\n" );
      } else {
-        printf( "%-13s%-11s%-8s%-16s\n |Long Description|\n"
+        printf( "%-*s%-11s%-8s%-16s\n |Long Description|\n"
                     " |Developer's Notes|\n |Derived|\n |PostFix|\n"
                     " Native Code[n]: <hex> |name|\n",
-            "Symbol", "Event Code", "Count", "|Short Description|" );
+            "Symbol", "Event Code", "Count", "|Short Description|", maxSymLen );
      }
      do {
         if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
@@ -517,7 +565,7 @@ main( int argc, char **argv )
                 if ( info.count ) {
                    if ( (check_counter && checkCounter (event_code)) || !check_counter)
                    {
-                      printf( "%-13s%#x  %-5s%s",
+                      printf( "%-*s%#x  %-5s%s", maxSymLen,
                          info.symbol,
                          info.event_code,
                          is_derived( &info ), info.long_descr );
@@ -528,7 +576,7 @@ main( int argc, char **argv )
             }
             printf( "\n" );
              } else {
-            printf( "%-13s%#x  %-6s%-4s %s",
+            printf( "%-*s%#x  %-6s%-4s %s", maxSymLen,
                 info.symbol,
                 info.event_code,
                 ( info.count ? "Yes" : "No" ),
@@ -575,13 +623,164 @@ main( int argc, char **argv )
            }
         }
      } while (PAPI_enum_event( &event_code, print_avail_only ) == PAPI_OK);
+
+    /* Repeat the logic for component presets. For consistency, always ASK FOR the first event,
+     * if there is not one then nothing to process */
+    if (PAPI_enum_event( &event_code, PAPI_PRESET_ENUM_FIRST_COMP ) != PAPI_OK) {
+         continue;
+    }
+
+    /* Print heading for component presets. */
+    if (i== 0) {
+
+        if( print_avail_only == PAPI_PRESET_ENUM_CPU ) {
+            print_avail_only = PAPI_ENUM_EVENTS;
+        } else if( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL ) {
+            print_avail_only = PAPI_PRESET_ENUM_AVAIL;
+        }
+
+        /* Get the length of the longest component preset symbol. */
+        int maxCompSymLen = get_max_symbol_length(PAPI_PRESET_ENUM_FIRST_COMP, PAPI_ENUM_EVENTS);
+        int frontPad = (maxCompSymLen-4)/2; /* 4 == strlen("Name") */
+        int backPad  = maxCompSymLen-4-frontPad;
+
+        printf( "================================================================================\n" );
+        printf( "  PAPI Component Presets\n" );
+        printf( "================================================================================\n" );
+
+          if ( print_tabular ) {
+            int spaceCnt = 0;
+            for( spaceCnt = 0; spaceCnt < frontPad; ++spaceCnt ) {
+                printf(" ");
+            }
+            printf( "Name");
+            for( spaceCnt = 0; spaceCnt < backPad; ++spaceCnt ) {
+                printf(" ");
+            }
+            printf( "   Code    " );
+            if ( print_avail_only == PAPI_ENUM_EVENTS ) {
+                printf( "Avail " );
+            }
+            printf( "Deriv Description (Note)\n" );
+          } else {
+            printf( "%-*s%-11s%-8s%-16s\n |Long Description|\n"
+                    " |Developer's Notes|\n |Derived|\n |PostFix|\n"
+                    " Native Code[n]: <hex> |name|\n",
+                    "Symbol", "Event Code", "Count", "|Short Description|", maxCompSymLen );
+          }
+
+          int first_flag = 1;
+          do {
+            if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
+              if ( print_tabular ) {
+                // if this is a user defined event or its a preset and matches the preset event filters, display its information
+                if ( filter & info.event_type ) {
+                  if ( print_avail_only == PAPI_PRESET_ENUM_AVAIL ) {
+                    if ( info.count ) {
+                      if ( (check_counter && checkCounter (event_code)) || !check_counter) {
+                          printf( "%-*s%#x  %-5s%s\n", maxCompSymLen,
+                                  info.symbol,
+                                  info.event_code,
+                                  is_derived( &info ), info.long_descr );
+
+                          /* Add event to tally. */
+                          avail_count++;
+                          if ( !strcmp( is_derived( &info ), "Yes" ) ) {
+                            deriv_count++;
+                          }
+
+                          /* List the qualifiers. */
+                          int k;
+                          for( k = 0; k < info.num_quals; ++k ) {
+                              printf("    %s\n        %s",  info.quals[k], info.quals_descrs[k]);
+                          }
+                      }
+                    }
+                    if ( info.note[0] ) {
+                        printf( " (%s)", info.note );
+                    }
+                    printf( "\n" );
+                  } else {
+
+                    int cid, numcmp = PAPI_num_components();
+                    for ( cid = 0; cid < numcmp; cid++ ) {
+                      const PAPI_component_info_t *component;
+                      component=PAPI_get_component_info(cid);
+
+                      /* Skip disabled components */
+                      if (component->disabled && component->disabled != PAPI_EDELAY_INIT) continue;
+
+                      if ( info.count && info.component_index == cid ) {
+                        if( !first_flag ) {
+                            printf( "--------------------------------------------------------------------------------\n" );
+                        }
+                        first_flag = 0;
+                        printf( "%-*s%#x  %-6s%-4s %s", maxCompSymLen,
+                                info.symbol,
+                                info.event_code,
+                                ( info.count ? "Yes" : "No" ),
+                                is_derived( &info ), info.long_descr );
+                        if ( info.note[0] ) {
+                            printf( " (%s)", info.note );
+                        }
+                        printf("\n");
+
+                        /* List the qualifiers. */
+                        int k;
+                        for( k = 0; k < info.num_quals; ++k ) {
+                            printf("    %s\n        %s\n",  info.quals[k], info.quals_descrs[k]);
+                        }
+
+                        tot_count++;
+                        if ( info.count ) {
+                            if ((check_counter && checkCounter (event_code)) || !check_counter )
+                                avail_count++;
+                        }
+                        if ( !strcmp( is_derived( &info ), "Yes" ) ) {
+                            deriv_count++;
+                        }
+                      }
+                    } // end of loop for number of components
+                  }
+                }
+              } else {
+                if ( ( print_avail_only == PAPI_PRESET_ENUM_AVAIL && info.count ) ||
+                     ( print_avail_only == PAPI_ENUM_EVENTS ) )
+                {
+                  if ((check_counter && checkCounter (event_code)) || !check_counter) {
+                    printf( "%s\t%#x\t%d\t|%s|\n |%s|\n"
+                            " |%s|\n |%s|\n |%s|\n",
+                            info.symbol, info.event_code, info.count,
+                            info.short_descr, info.long_descr, info.note,
+                            info.derived, info.postfix );
+                    for ( j = 0; j < ( int ) info.count; j++ ) {
+                        printf( " Native Code[%d]: %#x |%s|\n", j,
+                                info.code[j], info.name[j] );
+                    }
+                  }
+                }
+                tot_count++;
+                if ( info.count ) {
+                  if ((check_counter && checkCounter (event_code)) || !check_counter )
+                      avail_count++;
+                }
+                if ( !strcmp( is_derived( &info ), "Yes" ) ) {
+                    deriv_count++;
+                }
+              }
+            }
+          } while (PAPI_enum_event( &event_code, PAPI_ENUM_EVENTS ) == PAPI_OK);
+    }
+
+
+
   }
       }
 
-    printf( "--------------------------------------------------------------------------------\n" );
+    printf( "================================================================================\n" );
 
     if ( !print_event_info ) {
-        if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL ) {
+        if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL || print_avail_only == PAPI_PRESET_ENUM_AVAIL ) {
             printf( "Of %d available events, %d ", avail_count, deriv_count );
         } else {
             printf( "Of %d possible events, %d are available, of which %d ",
