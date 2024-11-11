@@ -103,7 +103,7 @@ icache_seq_kernel_0.o: icache_seq.c icache_seq.h
 	rm icache_seq_kernel_0.o
 
 instr: instructions.c instr.h
-	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
+	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(FLOP) $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
 
 weak_symbols.o: weak_symbols.c vec.h
 	-$(CC) -c $(CFLAGS) weak_symbols.c
@@ -162,7 +162,7 @@ vec_nonfma_dp: vec_nonfma_dp.c vec_scalar_verify.h
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC256) vec_nonfma_dp.c -o vec_nonfma_dp-256B.o
 	-$(CC) -c $(CFLAGS) $(INCFLAGS) $(VEC512) vec_nonfma_dp.c -o vec_nonfma_dp-512B.o
 
-cat_collect: main.c
+cat_collect:
 	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c $(wildcard *.o) -o cat_collect $(LDFLAGS)
 
 clean:
