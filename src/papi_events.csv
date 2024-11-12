@@ -1844,7 +1844,10 @@ PRESET,PAPI_FMA_INS,NOT_DERIVED,PM_FMA_CMPL
 PRESET,PAPI_TOT_IIS,NOT_DERIVED,PM_INST_DISP
 PRESET,PAPI_TOT_INS,NOT_DERIVED,PM_INST_CMPL
 PRESET,PAPI_INT_INS,NOT_DERIVED,PM_FXU_FIN
-PRESET,PAPI_FP_OPS,NOT_DERIVED,PM_FLOP_CMPL
+# Note: PAPI_FP_OPS is not available on this architecture. The following combination is
+# equivalent to all FLOPs; however, these events cannot be added to the same event set.
+# If a user chooses, they can utilize the multiplexing feature with these events.
+# 8 * PM_8FLOP_CMPL + 4 * PM_4FLOP_CMPL + 2 * PM_2FLOP_CMPL + 1 * PM_1FLOP_CMPL
 PRESET,PAPI_FP_INS,NOT_DERIVED,PM_FLOP_CMPL
 PRESET,PAPI_DP_OPS,NOT_DERIVED,PM_DP_QP_FLOP_CMPL
 PRESET,PAPI_SP_OPS,NOT_DERIVED,PM_SP_FLOP_CMPL
@@ -1892,7 +1895,10 @@ PRESET,PAPI_FMA_INS,NOT_DERIVED,PM_FMA_CMPL
 PRESET,PAPI_TOT_IIS,NOT_DERIVED,PM_INST_DISP
 PRESET,PAPI_TOT_INS,NOT_DERIVED,PM_INST_CMPL
 PRESET,PAPI_INT_INS,NOT_DERIVED,PM_FXU_ISSUE
-PRESET,PAPI_FP_OPS,NOT_DERIVED,PM_FLOP_CMPL
+# Note: PAPI_FP_OPS is not available on this architecture. The following combination is
+# equivalent to all FLOPs; however, these events cannot be added to the same event set.
+# If a user chooses, they can utilize the multiplexing feature with these events.
+# 8 * PM_8FLOP_CMPL + 4 * PM_4FLOP_CMPL + 2 * PM_2FLOP_CMPL + 1 * PM_1FLOP_CMPL
 PRESET,PAPI_FP_INS,NOT_DERIVED,PM_FLOP_CMPL
 PRESET,PAPI_DP_OPS,NOT_DERIVED,PM_DPP_FLOP_CMPL
 PRESET,PAPI_SP_OPS,NOT_DERIVED,PM_SP_FLOP_CMPL
