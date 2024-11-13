@@ -73,8 +73,7 @@ int build_stock(evstock* stock)
 
     ret=PAPI_enum_cmp_event(&event_i,PAPI_ENUM_FIRST,cid);
     if(ret!=PAPI_OK){
-        fprintf(stderr,"ERROR: CPU component does not contain any events. Exiting.\n");
-        goto gracious_error;
+        return 0;
     }
 
     do{
