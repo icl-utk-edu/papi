@@ -75,7 +75,8 @@ typedef struct {
 		unsigned int    is_precise:1;	 /* Intel X86: supports PEBS */
 		unsigned int	is_speculative:2;/* count correct and wrong path occurrences */
 		unsigned int	support_hw_smpl:1;/* can be recorded by hw buffer (Intel X86=EXTPEBS) */
-		unsigned int	reserved_bits:27;
+		unsigned int	support_no_mods:1;/* attribute does not support modifiers (umask only) */
+		unsigned int	reserved_bits:26;
 	};
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */
@@ -840,6 +841,7 @@ extern pfmlib_pmu_t arm_cortex_a76_support;
 extern pfmlib_pmu_t arm_xgene_support;
 extern pfmlib_pmu_t arm_n1_support;
 extern pfmlib_pmu_t arm_n2_support;
+extern pfmlib_pmu_t arm_n3_support;
 extern pfmlib_pmu_t arm_v1_support;
 extern pfmlib_pmu_t arm_v2_support;
 extern pfmlib_pmu_t arm_v3_support;

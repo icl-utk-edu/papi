@@ -46,7 +46,9 @@ typedef struct {
                 int             is_dfl:1;
                 int             is_precise:1;
                 int             is_speculative:2;
-                int             reserved:28;
+		int		support_hw_smpl:1;
+		int		support_no_mods:1;
+                int             reserved:26;
         };
         union {
                 uint64_t        dfl_val64;
@@ -135,6 +137,16 @@ multiple bits. A value of \fBPFM_EVENT_INFO_SPEC_NA\fR indicates that speculatio
 information is not available. A value of \fBPFM_EVENT_INFO_SPEC_TRUE\fR indicates
 that the attribute counts during speculative execution. A value of \fBPFM_EVENT_INFO_SPEC_FALSE\fR
 indicates that the attribute does not count during speculative execution.
+.TP
+.B support_hw_smpl
+This boolean field indicates that the attribute (in this case a umask) supports hardware sampling.
+That means the hardware can sample this event+umasks without involving the kernel at each sample.
+.TP
+.B support_no_mods
+This boolean field indicates that the attribute (in this case a umask) does not support any hardware
+or software modifiers, such as privilege level filters, sampling, precise sampling, and such. This
+is necessary when select umasks of an event have more restrictions than others, e.g., the event and
+most umasks support modifiers except a few umasks.
 .TP
 .B dfl_val64, dfl_str, dfl_bool, dfl_int
 This union contains the value of an attribute. For PFM_ATTR_UMASK, the is

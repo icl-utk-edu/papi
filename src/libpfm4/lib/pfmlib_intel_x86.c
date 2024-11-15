@@ -375,7 +375,7 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 	unsigned int modhw = 0;
 	unsigned int plmmsk = 0;
 	int umodmsk = 0, modmsk_r = 0;
-	int k, ret, id;
+	int k, ret, id, no_mods = 0;
 	int max_req_grpid = -1;
 	unsigned short grpid;
 	unsigned short max_grpid = INTEL_X86_MAX_GRPID;
@@ -472,6 +472,8 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 
 			if (intel_x86_uflag(this, e->event, a->idx, INTEL_X86_FETHR))
 				fe_thr_um = 1;
+
+			no_mods |= intel_x86_uflag(this, e->event, a->idx, INTEL_X86_NO_MODS);
 
 			/*
 			 * if more than one umask in this group but one is marked
@@ -753,6 +755,12 @@ pfm_intel_x86_encode_gen(void *this, pfmlib_event_desc_t *e)
 		return PFM_ERR_ATTR;
 	}
 
+	/*
+	 * no modifier to encode in fstr if umasks or event
+	 * does not support any
+	 */
+	if (no_mods)
+		return PFM_SUCCESS;
 	/*
 	 * decode ALL modifiers
 	 */
@@ -1057,6 +1065,7 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 	numasks = intel_x86_num_umasks(this, pidx);
 	if (attr_idx < numasks) {
 		int has_extpebs = pmu->flags & INTEL_X86_PMU_FL_EXTPEBS;
+		int no_mods;
 
 		idx = intel_x86_attr2umask(this, pidx, attr_idx);
 		info->name = pe[pidx].umasks[idx].uname;
@@ -1067,14 +1076,17 @@ pfm_intel_x86_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_eve
 		if (!intel_x86_uflag(this, pidx, idx, INTEL_X86_CODE_OVERRIDE))
 			info->code >>= 8;
 
+		no_mods = intel_x86_uflag(this, pidx, idx, INTEL_X86_NO_MODS);
 		info->type = PFM_ATTR_UMASK;
+		info->support_no_mods = no_mods;
 		info->is_dfl = intel_x86_uflag(this, pidx, idx, INTEL_X86_DFL);
-		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS);
+
+		info->is_precise = intel_x86_uflag(this, pidx, idx, INTEL_X86_PEBS) && !no_mods;
 		/*
 		 * if PEBS is supported, then hw buffer sampling is also supported
 		 * because PEBS is a hw buffer
 		 */
-		info->support_hw_smpl = (info->is_precise || has_extpebs);
+		info->support_hw_smpl = (info->is_precise || has_extpebs) && !no_mods;
 		/*
 		 * On Intel X86, either all or none of the umasks are speculative
 		 * for a speculative event, so propagate speculation info to all
