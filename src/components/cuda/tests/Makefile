@@ -22,7 +22,6 @@ endif
 CFLAGS += -g $(PAPI_FLAG)
 INCLUDE += -I$(PAPI_CUDA_ROOT)/include
 CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -lcuda
-PAPILIB += -L../../../libpfm4/lib -lpfm
 
 cuda_tests: $(TESTS) $(TESTS_NOCTX)
 
