@@ -76,6 +76,42 @@ static const pfmlib_attr_desc_t perf_event_ext_mods[]={
 };
 
 static int
+pfmlib_check_no_mods(pfmlib_event_desc_t *e)
+{
+	pfmlib_event_attr_info_t *a;
+	int numasks = 0, no_mods = 0;
+	int i;
+
+	/*
+	 * scan umasks used with the event
+	 * for support_no_attr values
+	 */
+	for (i = 0; i < e->nattrs; i++) {
+		a = attr(e, i);
+
+		if (a->ctrl != PFM_ATTR_CTRL_PMU)
+			continue;
+
+		if (a->type != PFM_ATTR_UMASK)
+			continue;
+
+		numasks++;
+
+		if (a->support_no_mods)
+			no_mods++;
+	}
+
+	/*
+	 * handle the case where some umasks have no_attr
+	 * and not others. In that case no_attr has priority
+	 */
+	if (no_mods && numasks != no_mods) {
+		DPRINT("event %s with umasks with and without no_mods (%d) attribute, forcing no_mods\n", e->fstr, no_mods);
+	}
+
+	return no_mods;
+}
+static int
 pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 {
 	pfm_perf_encode_arg_t arg;
@@ -90,6 +126,7 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 	int has_plm = 0, has_vmx_plm = 0;
 	int i, plm = 0, ret, vmx_plm = 0;
 	int cpu = -1, pinned = 0;
+	int no_mods;
 
 	sz = pfmlib_check_struct(uarg, uarg->size, PFM_PERF_ENCODE_ABI0, sz);
 	if (!sz)
@@ -153,6 +190,8 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
         if (ret != PFM_SUCCESS)
 		goto done;
 
+	no_mods = pfmlib_check_no_mods(&e);
+
 	/*
 	 * process perf_event attributes
 	 */
@@ -164,6 +203,15 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 			continue;
 
 		ival = e.attrs[i].ival;
+
+		/*
+		 * if event or umasks do not support any modifiers,
+		 * then reject
+		 */
+		if (no_mods && ival && a->idx != PERF_ATTR_PIN) {
+			ret = PFM_ERR_ATTR_VAL;
+			goto done;
+		}
 
 		switch(a->idx) {
 		case PERF_ATTR_U:
@@ -289,9 +337,10 @@ pfmlib_perf_event_encode(void *this, const char *str, int dfl_plm, void *data)
 
 	/*
 	 * fstr not requested, stop here
+	 * or no_mods set
 	 */
 	ret = PFM_SUCCESS;
-	if (!arg.fstr) {
+	if (!arg.fstr || no_mods) {
 		memcpy(uarg, &arg, sz);
 		goto done;
 	}

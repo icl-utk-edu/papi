@@ -155,6 +155,7 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_qcom_krait.3 \
 	    libpfm_arm_neoverse_n1.3 \
 	    libpfm_arm_neoverse_n2.3 \
+	    libpfm_arm_neoverse_n3.3 \
 	    libpfm_arm_neoverse_v1.3 \
 	    libpfm_arm_neoverse_v2.3 \
 	    libpfm_arm_neoverse_v3.3
@@ -170,6 +171,7 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_a64fx.3 \
 	    libpfm_arm_neoverse_n1.3 \
 	    libpfm_arm_neoverse_n2.3 \
+	    libpfm_arm_neoverse_n3.3 \
 	    libpfm_arm_neoverse_v1.3 \
 	    libpfm_arm_neoverse_v2.3 \
 	    libpfm_arm_neoverse_v3.3

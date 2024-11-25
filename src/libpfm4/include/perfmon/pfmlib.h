@@ -819,6 +819,7 @@ typedef enum {
 	PFM_PMU_ARM_V3,			/* Arm Neoverse V3 (ARMv9) */
 	PFM_PMU_ARM_CORTEX_A55,		/* ARM Cortex A55 (ARMv8) */
 	PFM_PMU_ARM_CORTEX_A76,		/* ARM Cortex A76 (ARMv8) */
+	PFM_PMU_ARM_N3,			/* Arm Neoverse N3 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
@@ -961,7 +962,8 @@ typedef struct {
 		unsigned int    is_precise:1;	  /* Intel X86: supports PEBS */
 		unsigned int	is_speculative:2; /* count correct and wrong path occurrences */
 		unsigned int	support_hw_smpl:1;/* can be recorded by hw buffer (Intel X86=EXTPEBS) */
-		unsigned int	reserved_bits:27;
+		unsigned int	support_no_mods:1;/* attribute does not support modifiers (umask only) */
+		unsigned int	reserved_bits:26;
 	} SWIG_NAME(flags);
 	union {
 		uint64_t	dfl_val64;	/* default 64-bit value */

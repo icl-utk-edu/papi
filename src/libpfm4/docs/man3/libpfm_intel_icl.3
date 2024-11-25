@@ -77,6 +77,10 @@ On Intel IceLake unlike older processors, the event is treated as a regular even
 It is not possible to combine the various requests, supplier, snoop bits anymore. Therefore the
 library offers the list of validated combinations as per Intel's official event list.
 
+.SH Topdown via PERF_METRICS
+
+Intel Icelake supports the PERF_METRICS MSR which provides support for Topdown Level 1 via a single PMU counter. This special counter provides percentages of slots for each metric. This feature must be used in conjunction with fixed counter 3 which counts SLOTS in order to work properly. The Linux kernel exposes PERF_METRICS metrics as individual pseudo events counting in slots unit however to operate correctly all events must be programmed together. The Linux kernel requires all PERF_METRICS events to be programmed as a single event group with the first event as SLOTS required. Example: '{slots,topdown-retiring,topdown-bad-spec,topdown-fe-bound,topdown-be-bound,topdown-heavy-ops,topdown-br-mispredict,topdown-fetch-lat,topdown-mem-bound}'. Libpfm4 provides acces to the PERF_METRICS pseudo events via a dedicated event called \fBTOPDOWN_M\fR. This event uses the pseudo encodings assigned by the Linux kernel to PERF_METRICS pseudo events. Using these encodings ensures the kernel detects them as targeting the PERF_METRICS MSR. Note that libpfm4 only provides the encodings and that it is up the user on Linux to group them and order them properly for the perf_events interface. There exists generic counter encodings for most of the Topdown metrics and libpfm4 provides support for those via the \fBTOPDOWN\fR event. Note that all subevents of \fBTOPDOWN_M\fR use fixed counters which have, by definition, no actual event codes. The library uses the Linux pseudo event codes for them, even when compiled on non Linux operating systems.The same holds true for any fixed counters pseudo event exported by libpfm4.
+
 .SH AUTHORS
 .nf
 Stephane Eranian <eranian@gmail.com>

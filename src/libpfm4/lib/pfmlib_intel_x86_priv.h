@@ -102,6 +102,7 @@ typedef struct {
 #define INTEL_X86_SPEC			0x40000 /* Event includes speculative execution */
 #define INTEL_X86_DEPRECATED		0x80000 /* Event is deprecated, ignore duplicate event code */
 #define INTEL_X86_CODE_DUP		0x100000 /* Event code duplication is handled */
+#define INTEL_X86_NO_MODS		0x200000 /* umask does not support modifier */
 
 typedef union pfm_intel_x86_reg {
 	unsigned long long val;			/* complete register value */

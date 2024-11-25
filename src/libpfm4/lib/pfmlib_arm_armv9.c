@@ -34,6 +34,7 @@
 #include "pfmlib_arm_priv.h"
 
 #include "events/arm_neoverse_n2_events.h"	/* Arm Neoverse N2 table */
+#include "events/arm_neoverse_n3_events.h"	/* Arm Neoverse N3 table */
 #include "events/arm_neoverse_v2_events.h"	/* Arm Neoverse V2 table */
 #include "events/arm_neoverse_v3_events.h"	/* Arm Neoverse V3 table */
 
@@ -48,6 +49,22 @@ pfm_arm_detect_n2(void *this)
 
 	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
 		(pfm_arm_cfg.part == 0xd49)) { /* Neoverse N2 */
+			return PFM_SUCCESS;
+	}
+	return PFM_ERR_NOTSUPP;
+}
+
+static int
+pfm_arm_detect_n3(void *this)
+{
+	int ret;
+
+	ret = pfm_arm_detect(this);
+	if (ret != PFM_SUCCESS)
+		return PFM_ERR_NOTSUPP;
+
+	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
+		(pfm_arm_cfg.part == 0xd8e)) { /* Neoverse N3 */
 			return PFM_SUCCESS;
 	}
 	return PFM_ERR_NOTSUPP;
@@ -97,6 +114,31 @@ pfmlib_pmu_t arm_n2_support={
 	.pmu_detect		= pfm_arm_detect_n2,
 	.max_encoding		= 1,
 	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first	= pfm_arm_get_event_first,
+	.get_event_next		= pfm_arm_get_event_next,
+	.event_is_valid		= pfm_arm_event_is_valid,
+	.validate_table		= pfm_arm_validate_table,
+	.get_event_info		= pfm_arm_get_event_info,
+	.get_event_attr_info	= pfm_arm_get_event_attr_info,
+	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+pfmlib_pmu_t arm_n3_support={
+	.desc			= "Arm Neoverse N3",
+	.name			= "arm_n3",
+	.pmu			= PFM_PMU_ARM_N3,
+	.pme_count		= LIBPFM_ARRAY_SIZE(arm_n3_pe),
+	.type			= PFM_PMU_TYPE_CORE,
+	.supported_plm          = ARMV9_PLM,
+	.pe			= arm_n3_pe,
+
+	.pmu_detect		= pfm_arm_detect_n3,
+	.max_encoding		= 1,
+	.num_cntrs		= 6, /* or 20 */
 
 	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
 	 PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),

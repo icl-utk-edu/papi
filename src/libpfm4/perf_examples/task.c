@@ -182,6 +182,7 @@ parent(char **arg)
 	perf_event_desc_t *fds = NULL;
 	int status, ret, i, num_fds = 0, grp, group_fd = -1;
 	int ready[2], go[2];
+	uint32_t group_pmu = -1;
 	char buf;
 	pid_t pid;
 
@@ -250,7 +251,6 @@ parent(char **arg)
 
 	for(i=0; i < num_fds; i++) {
 		int is_group_leader; /* boolean */
-		uint32_t group_pmu = -1;
 
 		/* we can only group events if the belong to the same PMU */
 		is_group_leader = perf_is_group_leader(fds, i);

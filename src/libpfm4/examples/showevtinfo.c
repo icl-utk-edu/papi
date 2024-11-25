@@ -403,6 +403,11 @@ print_attr_flags(pfm_event_attr_info_t *info)
 	int n = 0;
 	int spec = info->is_speculative;
 
+	if (info->support_no_mods) {
+		printf("[no modifier supported] ");
+		n++;
+	}
+
 	if (info->is_dfl) {
 		printf("[default] ");
 		n++;
