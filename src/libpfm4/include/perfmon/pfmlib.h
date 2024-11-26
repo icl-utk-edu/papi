@@ -820,6 +820,8 @@ typedef enum {
 	PFM_PMU_ARM_CORTEX_A55,		/* ARM Cortex A55 (ARMv8) */
 	PFM_PMU_ARM_CORTEX_A76,		/* ARM Cortex A76 (ARMv8) */
 	PFM_PMU_ARM_N3,			/* Arm Neoverse N3 */
+
+	PFM_PMU_ARM_MONAKA,		/* Fujitsu FUJITSU-MONAKA processor */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */
