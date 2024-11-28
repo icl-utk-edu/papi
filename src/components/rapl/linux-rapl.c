@@ -406,8 +406,8 @@ _rapl_init_component( int cidx )
 		case 42:	/* SandyBridge */
 		case 58:	/* IvyBridge */
 		case 183:	/* RaptorLake-S/HX */
-      case 186:	/* RaptorLake */
-      case 191:	/* RaptorLake */
+		case 186:	/* RaptorLake */
+		case 191:	/* RaptorLake */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=1;
