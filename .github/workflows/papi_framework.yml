@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Test
+      - name: comprehensive component tests 
         run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}}
   # build PAPI only with the amd components, as they will not be active in the above comprehensive job
   papi_components_amd:
@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Test
+      - name: rocm and rocm_smi component tests
         run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}}
   # build PAPI only with the infiniband component, as it will not be active in the above comprehensive job
   papi_component_infiniband:
@@ -55,7 +55,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Test
+      - name: infiniband component tests
         run: .github/workflows/ci_papi_framework.sh ${{matrix.components}} ${{matrix.debug}} ${{matrix.shlib}} 
   papi_spack:
     runs-on: cpu
