@@ -53,6 +53,11 @@ make -j4
 # run PAPI utilities
 utils/papi_component_avail
 
+# active component check
+EXPECTED_ACTIVE_COMPONENTS=$(echo "perf_event perf_event_uncore sysdetect" | sed "s/perf_event_uncore/& $COMPONENT/") 
+CURRENT_ACTIVE_COMPONENTS=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
+[ "$EXPECTED_ACTIVE_COMPONENTS" = "$CURRENT_ACTIVE_COMPONENTS" ]
+
 # without '--with-shlib-tools' in ./configure
 if [ "$SHLIB" = "without" ]; then
    echo "Running full test suite for active components"

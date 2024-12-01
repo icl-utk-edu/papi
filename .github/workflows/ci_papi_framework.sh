@@ -62,15 +62,14 @@ utils/papi_component_avail
 # active component check
 CURRENT_ACTIVE_COMPONENTS=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
 if [ "$COMPONENTS" = "cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc infiniband net appio io lustre stealtime coretemp lmsensors mx sde" ]; then 
-    echo Comp
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore cuda nvml powercap net appio io stealtime coretemp lmsensors sde sysdetect" ]
 elif [ "$COMPONENTS" = "rocm rocm_smi" ]; then
-    echo rocm
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore rocm rocm_smi sysdetect" ]
 elif [ "$COMPONENTS" = "infiniband" ]; then
-    echo infini
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore infiniband sysdetect" ]
 else
+    # if the component from the .yml is not accounted for in the above
+    # elif's
     exit 1
 fi
 
