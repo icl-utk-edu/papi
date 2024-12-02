@@ -51,7 +51,7 @@ jobs:
         debug: [yes, no] 
         shlib: [with, without]
       fail-fast: false
-    runs-on: [self-hosted, infiniband]
+    runs-on: [self-hosted, guyot]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
