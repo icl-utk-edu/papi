@@ -29,6 +29,7 @@
 #include <list>
 #include <mutex>
 #include <shared_mutex>
+#include <condition_variable>
 #include <regex>
 #include <string>
 #include <string_view>
