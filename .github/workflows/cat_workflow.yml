@@ -6,7 +6,7 @@ on:
     paths:
       - 'src/counter_analysis_toolkit/**'
 jobs:
-  component_tests:
+  cat:
     strategy:
       matrix:
         debug: [yes, no] 
