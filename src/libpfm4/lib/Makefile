@@ -438,6 +438,7 @@ INC_ARM64=pfmlib_arm_priv.h			\
 	events/arm_cavium_tx2_events.h		\
 	events/arm_marvell_tx2_unc_events.h	\
 	events/arm_fujitsu_a64fx_events.h	\
+	events/arm_fujitsu_monaka_events.h	\
 	events/arm_neoverse_n1_events.h		\
 	events/arm_neoverse_n2_events.h		\
 	events/arm_neoverse_v1_events.h		\

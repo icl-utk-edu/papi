@@ -82,6 +82,7 @@ The library supports many PMUs. The current version can handle:
 		Applied Micro X-Gene
 		Qualcomm Krait
 		Fujitsu A64FX
+		Fujitsu FUJITSU-MONAKA
 		Arm Neoverse V1, V2, V3
 		Arm Neoverse N1, N2, N3
 		Huawei HiSilicon Kunpeng 920

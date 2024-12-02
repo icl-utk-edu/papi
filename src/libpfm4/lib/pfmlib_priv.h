@@ -855,6 +855,7 @@ extern pfmlib_pmu_t arm_thunderx2_ccpi0_support;
 extern pfmlib_pmu_t arm_thunderx2_ccpi1_support;
 
 extern pfmlib_pmu_t arm_fujitsu_a64fx_support;
+extern pfmlib_pmu_t arm_fujitsu_monaka_support;
 
 extern pfmlib_pmu_t arm_hisilicon_kunpeng_support;
 extern pfmlib_pmu_t arm_hisilicon_kunpeng_sccl1_ddrc0_support;
