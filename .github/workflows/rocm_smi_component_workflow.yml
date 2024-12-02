@@ -3,8 +3,8 @@ name: rocm_smi
 on:
   pull_request:
     # run CI only if rocm_smi directory or rocm_smi sub-directories receive updates
-    paths:
-      - 'src/components/rocm_smi/**'
+#    paths:
+#      - 'src/components/rocm_smi/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 

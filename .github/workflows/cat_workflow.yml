@@ -3,8 +3,8 @@ name: counter analysis toolkit
 on:
   pull_request:
     # run CI for updates to counter analysis toolkit
-    paths:
-      - 'src/counter_analysis_toolkit/**'
+#    paths:
+#      - 'src/counter_analysis_toolkit/**'
 jobs:
   cat:
     strategy:

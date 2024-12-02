@@ -50,6 +50,7 @@ esac
 # test linking with or without --with-shlib-tools 
 if [ "$SHLIB" = "without" ]; then
     ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS"
+    ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS" --with-shlib-tools
 else
     ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS" --with-shlib-tools
 fi

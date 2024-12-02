@@ -3,8 +3,8 @@ name: net
 on:
   pull_request:
     # run CI only if net directory or net sub-directories receive updates
-    paths:
-      - 'src/components/net/**'
+#    paths:
+#      - 'src/components/net/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 

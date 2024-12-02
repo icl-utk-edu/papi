@@ -3,8 +3,8 @@ name: powercap
 on:
   pull_request:
     # run CI only if powercap directory or powercap sub-directories receive updates
-    paths:
-      - 'src/components/powercap/**'
+#    paths:
+#      - 'src/components/powercap/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
