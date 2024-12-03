@@ -10,9 +10,9 @@ using agent_map_t = std::map<uint64_t, const rocprofiler_agent_v0_t*>;
 using dim_t = std::pair<uint64_t, unsigned long>;
 using dim_vector_t = std::vector< dim_t >;
 
-#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
+//#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
 static inline bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims );
-#endif
+//#endif
 
 struct base_event_info_t{
     rocprofiler_counter_info_v0_t counter_info;
@@ -50,14 +50,16 @@ std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instanc
 std::unordered_map<std::string, unsigned int> event_instance_name_to_papi_id = {};
 
 /* *** */
-
 typedef rocprofiler_status_t (* rocprofiler_flush_buffer_t) (rocprofiler_buffer_id_t buffer_id);
 
-typedef rocprofiler_status_t (* rocprofiler_sample_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags);
+//typedef rocprofiler_status_t (* rocprofiler_sample_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags);
+typedef rocprofiler_status_t (* rocprofiler_sample_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags, rocprofiler_record_counter_t* output_records, size_t* rec_count);
 
-typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_profile_counting_dispatch_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
+//typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_profile_counting_dispatch_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
+typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
 
-typedef rocprofiler_status_t (* rocprofiler_configure_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_agent_profile_callback_t cb, void *user_data);
+//typedef rocprofiler_status_t (* rocprofiler_configure_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_agent_profile_callback_t cb, void *user_data);
+typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_agent_profile_callback_t cb, void *user_data);
 
 typedef rocprofiler_status_t (* rocprofiler_create_buffer_t) (rocprofiler_context_id_t context, unsigned long size, unsigned long watermark, rocprofiler_buffer_policy_t policy, rocprofiler_buffer_tracing_cb_t callback, void *callback_data, rocprofiler_buffer_id_t *buffer_id);
 
@@ -96,9 +98,12 @@ typedef rocprofiler_status_t (* rocprofiler_query_record_counter_id_t) (rocprofi
 typedef rocprofiler_status_t (* rocprofiler_query_record_dimension_position_t) (rocprofiler_counter_instance_id_t id, rocprofiler_counter_dimension_id_t dim, unsigned long *pos);
 
 rocprofiler_flush_buffer_t rocprofiler_flush_buffer_FPTR;
-rocprofiler_sample_agent_profile_counting_service_t rocprofiler_sample_agent_profile_counting_service_FPTR;
-rocprofiler_configure_callback_dispatch_profile_counting_service_t rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR;
-rocprofiler_configure_agent_profile_counting_service_t rocprofiler_configure_agent_profile_counting_service_FPTR;
+//rocprofiler_sample_agent_profile_counting_service_t rocprofiler_sample_agent_profile_counting_service_FPTR;
+rocprofiler_sample_device_counting_service_t rocprofiler_sample_device_counting_service_FPTR;
+//rocprofiler_configure_callback_dispatch_profile_counting_service_t rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR;
+rocprofiler_configure_callback_dispatch_counting_service_t rocprofiler_configure_callback_dispatch_counting_service_FPTR;
+//rocprofiler_configure_agent_profile_counting_service_t rocprofiler_configure_agent_profile_counting_service_FPTR;
+rocprofiler_configure_device_counting_service_t rocprofiler_configure_device_counting_service_FPTR;
 rocprofiler_create_buffer_t rocprofiler_create_buffer_FPTR;
 rocprofiler_create_context_t rocprofiler_create_context_FPTR;
 rocprofiler_start_context_t rocprofiler_start_context_FPTR;
@@ -151,9 +156,12 @@ obtain_function_pointers(void *dllHandle)
 {
 
     DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
-    DLL_SYM_CHECK(rocprofiler_sample_agent_profile_counting_service, rocprofiler_sample_agent_profile_counting_service_t);
-    DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_profile_counting_service, rocprofiler_configure_callback_dispatch_profile_counting_service_t);
-    DLL_SYM_CHECK(rocprofiler_configure_agent_profile_counting_service, rocprofiler_configure_agent_profile_counting_service_t);
+//    DLL_SYM_CHECK(rocprofiler_sample_agent_profile_counting_service, rocprofiler_sample_agent_profile_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_sample_device_counting_service, rocprofiler_sample_device_counting_service_t);
+//    DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_profile_counting_service, rocprofiler_configure_callback_dispatch_profile_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_counting_service, rocprofiler_configure_callback_dispatch_counting_service_t);
+//    DLL_SYM_CHECK(rocprofiler_configure_agent_profile_counting_service, rocprofiler_configure_agent_profile_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_configure_device_counting_service, rocprofiler_configure_device_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_create_context, rocprofiler_create_context_t);
     DLL_SYM_CHECK(rocprofiler_create_buffer, rocprofiler_create_buffer_t);
     DLL_SYM_CHECK(rocprofiler_start_context, rocprofiler_start_context_t);
@@ -199,7 +207,7 @@ counter_dimensions(rocprofiler_counter_id_t counter)
 }
 
 /* ** */
-#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
+//#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
 bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims ){
     // Traverse all the dimensions in the event instance (i.e. base_event+qualifiers) of an event in the active_event_set_ctx
     for(const auto &ev_inst_dim : dim_instances ){
@@ -223,11 +231,11 @@ bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims ){
     }
     return true;
 }
-#endif
+//#endif
 
 /* ** */
 void
-record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
+record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 rocprofiler_record_counter_t*                record_data,
                 size_t                                       record_count,
                 rocprofiler_user_data_t,
@@ -268,13 +276,14 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
                     counter_value_sum += record_data[i].counter_value;
                 }
             }
-        }
-        _counter_values[idx] += (long long)counter_value_sum;
+        }	   
+        _counter_values[idx] = (long long)counter_value_sum;
         ++idx;
     }
 
     _papi_hwi_unlock(_rocp_sdk_lock);
 
+#define DEBUG_OUTPUT_OF_RECORDED_VALUES
 #if defined(DEBUG_OUTPUT_OF_RECORDED_VALUES)
     for(size_t i = 0; i < record_count; ++i){
         rocprofiler_counter_id_t counter_id;
@@ -330,7 +339,7 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
 
 /* ** */
 void
-dispatch_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
+dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                   rocprofiler_profile_config_id_t             *config,
                   rocprofiler_user_data_t *,
                   void * )
@@ -356,6 +365,9 @@ get_GPU_agent_info() {
                          const void**                agents_arr,
                          size_t                      num_agents,
                          void*                       user_data) {
+printf(">> get_GPU_agent_info(): We are looking at num_agents=%lu\n",num_agents);
+fflush(stdout);
+
         if(agents_ver != ROCPROFILER_AGENT_INFO_VERSION_0)
             throw std::runtime_error{"unexpected rocprofiler agent version"};
 
@@ -364,6 +376,8 @@ get_GPU_agent_info() {
             const auto* itr = static_cast<const rocprofiler_agent_v0_t*>(agents_arr[i]);
             if( ROCPROFILER_AGENT_TYPE_GPU == itr->type ){
                 agents_v->emplace(itr->id.handle, itr);
+printf("Found agent with id: %lu\n",itr->id.handle);
+fflush(stdout);
             }
         }
         return ROCPROFILER_STATUS_SUCCESS;
@@ -431,7 +445,7 @@ accum_values(rocprofiler_record_counter_t **record_data, int record_count)
                 }
             }
 //        }
-        _counter_values[idx] += (long long)counter_value_sum;
+        _counter_values[idx] = (long long)counter_value_sum;
         ++idx;
     }
 }
@@ -447,6 +461,9 @@ buffered_callback(rocprofiler_context_id_t,
     std::stringstream ss;
     std::vector<rocprofiler_record_counter_t *> record_data;
 
+printf("\n##### buffered_callback() was called.\n\n");
+fflush(stdout);
+/*
     // Iterate through the returned records
     for(size_t i = 0; i < num_headers; ++i)
     {
@@ -459,16 +476,19 @@ buffered_callback(rocprofiler_context_id_t,
             record_data.emplace_back(record);
         }
     }
+*/
 
+    /*
     {
         std::lock_guard<std::mutex> lock(agent_mutex);
         accum_values(record_data.data(), record_data.size());
         data_is_ready = true;
     }
+    */
 
     // Notify read_sample() that the counter values have been accumulated into
     // the global array _counter_values[]
-    agent_cond_var.notify_all();
+//    agent_cond_var.notify_all();
 }
 #endif // defined(AGENT_PROFILE_MODE)
 
@@ -488,13 +508,15 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
                                                32*1024,
                                                16*1024,
                                                ROCPROFILER_BUFFER_POLICY_LOSSLESS,
+//                                               ROCPROFILER_BUFFER_POLICY_DISCARD,
                                                buffered_callback,
                                                tool_data,
                                                &get_buffer()),
                          "buffer creation failed");
 #endif
     }else{
-        ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR(
+//        ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR(
+        ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_counting_service_FPTR(
                              get_client_ctx(), dispatch_callback, tool_data, record_callback, tool_data),
                          "Could not setup callback dispatch");
     }
@@ -612,9 +634,10 @@ start_counting(vendorp_ctx_t ctx){
             for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
                 int agent_logical_gpu_id = g_it->second->logical_node_type_id;
                 if( *act_dev_it == agent_logical_gpu_id ){
-                    ROCPROFILER_CALL(rocprofiler_configure_agent_profile_counting_service_FPTR(
+//                    ROCPROFILER_CALL(rocprofiler_configure_agent_profile_counting_service_FPTR(
+                    ROCPROFILER_CALL(rocprofiler_configure_device_counting_service_FPTR(
                                          get_client_ctx(), get_buffer(), g_it->second->id, set_profile, nullptr),
-                                     "Could not setup agent profiling");
+                                     "Could not setup sampling");
                 }
             }
         }
@@ -628,22 +651,61 @@ start_counting(vendorp_ctx_t ctx){
 int
 read_sample(){
     int papi_errno = PAPI_OK;
+    int ret_val, idx = 0;
+    size_t rec_count = 1024;
 
-    int ret_val = rocprofiler_sample_agent_profile_counting_service_FPTR(
-                get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE);
-
-    if( ret_val == ROCPROFILER_STATUS_SUCCESS ){
-        data_is_ready = false;
-        ROCPROFILER_CALL(rocprofiler_flush_buffer_FPTR(get_buffer()), "buffer flush");
-	// rocprofiler_flush_buffer() will call buffered_callback() which will
-	// wake us up using this condition_variable.
-        std::unique_lock<std::mutex> lock(agent_mutex);
-        agent_cond_var.wait(lock, []{ return data_is_ready; });
-    }else{
+    rocprofiler_record_counter_t* output_records;
+    if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         goto fn_fail;
     }
 
+    output_records = new rocprofiler_record_counter_t[1024];
+
+    ret_val = rocprofiler_sample_device_counting_service_FPTR(
+                get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE,
+                output_records, &rec_count);
+
+    if( ret_val != ROCPROFILER_STATUS_SUCCESS ){
+        goto fn_fail;
+    }
+
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+
+        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
+        if( papi_id_to_event_instance.end() == e_inst ){
+            continue;
+        }
+
+//printf("\n>>##>> Looking for event %s\n",e_inst->second.event_inst_name.c_str());
+//fflush(stdout);
+    
+        double counter_value_sum = 0.0;
+
+        for(int i=0; i<rec_count; ++i){
+            rocprofiler_counter_id_t counter_id;
+            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
+
+            if( e_inst->second.counter_info.id.handle == counter_id.handle ){
+                counter_value_sum += output_records[i].counter_value;
+            }
+        }
+	// NOTE: If the counter that corresponds to this idx was not in the
+	// output_records (somehow?) then we will be setting it to zero.
+	_counter_values[idx] = (long long)counter_value_sum; ++idx;
+     }
+
+/* DEBUG START */
+    printf("\n>>##>> After sample_device_counting_service() rec_count = %lu\n\n",rec_count);
+    fflush(stdout);
+    for(int i=0; i<rec_count; ++i){
+        rocprofiler_counter_id_t counter_id;
+        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
+        std::cerr << " ## output_records[" << i << "].id: " << output_records[i].id << " -> counter_id: " << counter_id.handle << " Value= " << output_records[i].counter_value << std::endl;
+    }
+/* DEBUG END */
+
   fn_exit:
+    delete[] output_records;
     return papi_errno;
   fn_fail:
     papi_errno = PAPI_ECMP;
@@ -942,6 +1004,9 @@ int setup() {
     char *error_msg = NULL;
     int status = 0;
 
+printf(">> setup()\n");
+fflush(stdout);
+
     rpsdk_profiling_mode = RPSDK_MODE_CALLBACK_DISPATCH;
     if( NULL != getenv("RPSDK_MODE_AGENT_PROFILE") ){
         // Warning: RPSDK_MODE_AGENT_PROFILE mode does not work properly yet, due to rocprofiler-sdk bugs.
@@ -966,7 +1031,8 @@ int setup() {
 
         dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
         if (dllHandle == NULL) {
-            _rocp_sdk_error_string = std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or HSA_TOOLS_LIB.");
+            _rocp_sdk_error_string = std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or HSA_TOOLS_LIB. Error: ")+dlerror();
+printf("looked at: %s\n",path2.c_str());
             goto fn_fail;
         }    
     }
