@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     printf("---------------------  launch_kernel(0)\n");
     launch_kernel(0);
 
-    usleep(1000);
+    usleep(100000);
 
     papi_errno = PAPI_read(eventset, counters);
     if (papi_errno != PAPI_OK) {
