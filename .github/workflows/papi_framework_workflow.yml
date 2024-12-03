@@ -5,8 +5,8 @@ on:
     # run CI if framework receives an update excluding individual 
     # components and counter analysis toolkit
     paths:
-      - '!src/**'
-      - '!src/components/*'
+      - 'src/**'
+      - 'src/components/*'
       - '!src/components/*/**'
       - '!src/counter_analysis_toolkit/**'
   # allows you to run this workflow manually from the Actions tab

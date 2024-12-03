@@ -3,8 +3,8 @@ name: coretemp
 on:
   pull_request:
     # run CI only if coretemp directory or coretemp sub-directories receive updates
-#    paths:
-#      - 'src/components/coretemp/**'
+    paths:
+      - 'src/components/coretemp/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 

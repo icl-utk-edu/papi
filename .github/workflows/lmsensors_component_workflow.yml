@@ -3,8 +3,8 @@ name: lmsensors
 on:
   pull_request:
     # run CI only if lmsensors directory or lmsensors sub-directories receive updates
-#    paths:
-#      - 'src/components/lmsensors/**'
+    paths:
+      - 'src/components/lmsensors/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 

@@ -3,8 +3,8 @@ name: io
 on:
   pull_request:
     # run CI only if io directory or io sub-directories receive updates
-#    paths:
-#      - 'src/components/io/**'
+    paths:
+      - 'src/components/io/**'
   # allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
