@@ -155,16 +155,39 @@ _topdown_init_component(int cidx)
 		/* The model id can be found in Table 2-1 of the */
 		/* IA-32 Architectures Software Developer’s Manual */
 
-		/* homogeneous machines */
-		// TODO
+		/* homogeneous machines that do not support l2 TMA */
+		case 0x6a:	/* IceLake 3rd gen Xeon */
+		case 0x6c:	/* IceLake 3rd gen Xeon */
+		case 0x7d:	/* IceLake 10th gen Core */
+		case 0x7e:	/* IceLake 10th gen Core */
+		case 0x8c:	/* TigerLake 11th gen Core */
+		case 0x8d:	/* TigerLake 11th gen Core */
+		case 0xa7:	/* RocketLake 11th gen Core */
+			supports_l2 = 0;
+			break;
 
-		/* hybrid machines */
-		case 0xb7:	/* RaptorLake-S/HX */
-		case 0xba:	/* RaptorLake */
-		case 0xbf:	/* RaptorLake */
+		/* homogeneous machines that support l2 TMA */
+		case 0x8f:	/* SapphireRapids 4th gen Xeon */
+		case 0xad:	/* GraniteRapids 6th gen Xeon P-core */
+		case 0xae:	/* GraniteRapids 6th gen Xeon P-core */
+		case 0xcf:	/* EmeraldRapids 5th gen Xeon */
+			supports_l2 = 1;
+			break;
+
+		/* hybrid machines that support l2 TMA and are locked to the P-core */
+		case 0xaa:	/* MeteorLake Core Ultra 7 hybrid */
+		case 0xbd:	/* LunarLake Series 2 Core Ultra hybrid */
+		case 0x97:	/* AlderLake 12th gen Core hybrid */
+		case 0x9a:	/* AlderLake 12th gen Core hybrid */
+		case 0xb7:	/* RaptorLake-S/HX 13th gen Core hybrid */
+		case 0xba:	/* RaptorLake 13th gen Core hybrid */
+		case 0xbf:	/* RaptorLake 13th gen Core hybrid */
 			supports_l2 = 1;
 
-			/* make sure that for RaptorLake we are running on a P core */
+			/* ensure we are running on a P core */
+			/* should we instead detect this before each PAPI_start() */
+			/* in order to stop programs from crashing when they are moved */
+			/* from core to core? */
 			if (!active_core_type_is(INTEL_CORE_TYPE_PERFORMANCE)) {
 				strCpy = strncpy(_topdown_vector.cmp_info.disabled_reason,
 							 "Topdown metrics are not supported on RaptorLake efficiency cores. Ensure this program is run on a performance core.", PAPI_MAX_STR_LEN);
