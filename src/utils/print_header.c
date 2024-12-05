@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/utsname.h>
+#include <string.h>
 
 #include "papi.h"
 
@@ -14,7 +15,8 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	int cnt, mpx;
 	struct utsname uname_info;
 	PAPI_option_t options;
-
+  memset(&options,0,sizeof(PAPI_option_t));
+  
 	if ( ( *hwinfo = PAPI_get_hardware_info(  ) ) == NULL ) {
    		return PAPI_ESYS;
 	}
@@ -71,8 +73,19 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	}
 	cnt = PAPI_get_opt( PAPI_MAX_HWCTRS, NULL );
 	mpx = PAPI_get_opt( PAPI_MAX_MPX_CTRS, NULL );
+  
+  int numcmp = PAPI_num_components(  );
+  int perf_event = 0;
+	for (int cid = 0; cid < numcmp; cid++ ) {
+	  const PAPI_component_info_t* cmpinfo = PAPI_get_component_info( cid );
+	  if (cmpinfo->disabled) continue;
+    if (strcmp(cmpinfo->name, "perf_event")== 0) perf_event = 1;
+	}
+  
 	if ( cnt >= 0 ) {
-		printf( "Number Hardware Counters : %d\n",cnt );
+		printf( "Number Hardware Counters : %d\n", cnt );
+	} else if ( perf_event == 0 ) {
+		printf( "Number Hardware Counters : NA\n" );
 	} else {
 		printf( "Number Hardware Counters : PAPI error %d: %s\n", cnt, PAPI_strerror(cnt));
 	}
@@ -81,8 +94,10 @@ papi_print_header( char *prompt, const PAPI_hw_info_t ** hwinfo )
 	} else {
 		printf( "Max Multiplex Counters   : PAPI error %d: %s\n", mpx, PAPI_strerror(mpx));
 	}
-	printf("Fast counter read (rdpmc): %s\n",
-		options.cmp_info->fast_counter_read?"yes":"no");
+  if (options.cmp_info != NULL) {
+    printf("Fast counter read (rdpmc): %s\n", 
+        options.cmp_info->fast_counter_read ? "yes" : "no");
+  }
 	printf( "--------------------------------------------------------------------------------\n" );
 	printf( "\n" );
 	return PAPI_OK;

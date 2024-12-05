@@ -38,12 +38,17 @@ if [ "x$VALGRIND" != "x" ]; then
   VALGRIND="valgrind --leak-check=full";
 fi
 
-VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
-#CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
-CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
-FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
+# Check for active 'perf_event' component
+PERF_EVENT_ACTIVE=$(utils/papi_component_avail | awk '/Active components:/{flag=1; next} flag' | grep -q "perf_event" && echo "true" || echo "false")
 
-
+if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
+    VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
+    CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
+    #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
+    FTESTS=`find ftests -perm -u+x -type f ! -name "*.[c|h|F]"`;
+else
+  EXCLUDE="$EXCLUDE $VTESTS $CTESTS $FTESTS";
+fi
 
 # List of active components
 ACTIVE_COMPONENTS_PATTERN=$(utils/papi_component_avail | awk '/Active components:/{flag=1; next} flag' | grep "Name:" | sed 's/Name: //' | awk '{print $1}' | paste -sd'|' -)
@@ -124,92 +129,96 @@ else
 fi
 export LIBPATH
 
-echo ""
-echo "Running Event Validation Tests";
-echo ""
 
-for i in $VTESTS;
-do
-  for xtest in $EXCLUDE;
+if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
+  
+  echo ""
+  echo "Running Event Validation Tests";
+  echo ""
+  
+  for i in $VTESTS;
   do
-    if [ "$i" = "$xtest" ]; then
-      MATCH=1
-      break
+    for xtest in $EXCLUDE;
+    do
+      if [ "$i" = "$xtest" ]; then
+        MATCH=1
+        break
+      fi;
+    done
+    if [ $MATCH -ne 1 ]; then
+      if [ -x $i ]; then
+        RAN="$i $RAN"
+        printf "Running %-50s %s" $i:
+        $VALGRIND ./$i $TESTS_QUIET
+        
+        #delete output folder for high-level tests
+        case "$i" in
+          *"_hl"*) rm -r papi_hl_output ;;
+        esac
+  
+      fi;
     fi;
+    MATCH=0
   done
-  if [ $MATCH -ne 1 ]; then
-    if [ -x $i ]; then
-      RAN="$i $RAN"
-      printf "Running %-50s %s" $i:
-      $VALGRIND ./$i $TESTS_QUIET
-      
-      #delete output folder for high-level tests
-      case "$i" in
-        *"_hl"*) rm -r papi_hl_output ;;
-      esac
-
-    fi;
-  fi;
-  MATCH=0
-done
-
-echo ""
-echo "Running C Tests";
-echo ""
-
-for i in $CTESTS;
-do
-  for xtest in $EXCLUDE;
+  
+  echo ""
+  echo "Running C Tests";
+  echo ""
+  
+  for i in $CTESTS;
   do
-    if [ "$i" = "$xtest" ]; then
-      MATCH=1
-      break
+    for xtest in $EXCLUDE;
+    do
+      if [ "$i" = "$xtest" ]; then
+        MATCH=1
+        break
+      fi;
+    done
+    if [ $MATCH -ne 1 ]; then
+      if [ -x $i ]; then
+        RAN="$i $RAN"
+        printf "Running %-50s %s" $i:
+        $VALGRIND ./$i $TESTS_QUIET
+  
+        #delete output folder for high-level tests
+        case "$i" in
+          *"_hl"*) rm -r papi_hl_output ;;
+        esac
+  
+      fi;
     fi;
+    MATCH=0
   done
-  if [ $MATCH -ne 1 ]; then
-    if [ -x $i ]; then
-      RAN="$i $RAN"
-      printf "Running %-50s %s" $i:
-      $VALGRIND ./$i $TESTS_QUIET
-
-      #delete output folder for high-level tests
-      case "$i" in
-        *"_hl"*) rm -r papi_hl_output ;;
-      esac
-
-    fi;
-  fi;
-  MATCH=0
-done
-
-echo ""
-echo "Running Fortran Tests";
-echo ""
-
-for i in $FTESTS;
-do
-  for xtest in $EXCLUDE;
+  
+  echo ""
+  echo "Running Fortran Tests";
+  echo ""
+  
+  for i in $FTESTS;
   do
-    if [ "$i" = "$xtest" ]; then
-      MATCH=1
-      break
+    for xtest in $EXCLUDE;
+    do
+      if [ "$i" = "$xtest" ]; then
+        MATCH=1
+        break
+      fi;
+    done
+    if [ $MATCH -ne 1 ]; then
+      if [ -x $i ]; then
+        RAN="$i $RAN"
+        printf "Running $i:\n"
+        $VALGRIND ./$i $TESTS_QUIET
+  
+        #delete output folder for high-level tests
+        case "$i" in
+          *"_hl"*) rm -r papi_hl_output ;;
+        esac
+  
+      fi;
     fi;
+    MATCH=0
   done
-  if [ $MATCH -ne 1 ]; then
-    if [ -x $i ]; then
-      RAN="$i $RAN"
-      printf "Running $i:\n"
-      $VALGRIND ./$i $TESTS_QUIET
-
-      #delete output folder for high-level tests
-      case "$i" in
-        *"_hl"*) rm -r papi_hl_output ;;
-      esac
-
-    fi;
-  fi;
-  MATCH=0
-done
+fi
 
 echo "";
 echo "Running Component Tests";

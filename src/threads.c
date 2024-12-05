@@ -602,7 +602,15 @@ _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where )
 
 }
 
-#if defined(__NR_gettid) && !defined(HAVE_GETTID)
+#if defined(__APPLE__)
+  #include <pthread.h>
+  unsigned long _papi_gettid(void)
+  {
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);  // macOS-specific thread ID function
+    return (unsigned long)tid;
+  }
+#elif defined(__NR_gettid) && !defined(HAVE_GETTID)
   #include <syscall.h>
   #include <unistd.h>
   unsigned long _papi_gettid(void)

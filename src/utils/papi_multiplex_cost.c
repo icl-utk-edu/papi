@@ -251,13 +251,15 @@ main( int argc, char **argv )
 	}
 
 	info = PAPI_get_component_info(0);
+ 
+  if (info != NULL ) {
 	options.kernel_mpx &= info->kernel_multiplex;
-
-	if ( options.kernel_mpx && !info->kernel_multiplex ) {
-		fprintf(stderr,"Error! Kernel multiplexing is "
-				"not supported on this platform, bailing!\n");
-		exit(1);
-	}
+  	if ( options.kernel_mpx && !info->kernel_multiplex ) {
+  		fprintf(stderr,"Error! Kernel multiplexing is "
+  				"not supported on this platform, bailing!\n");
+  		exit(1);
+  	}
+  }
 
 	retval = PAPI_create_eventset( &SoftwareMPX );
 	if (retval != PAPI_OK) {
@@ -273,7 +275,7 @@ main( int argc, char **argv )
 
 	retval = PAPI_assign_eventset_component( KernelMPX, 0 );
 	if (retval != PAPI_OK ) {
-		fprintf(stderr,"PAPI_assign_eventset_component");
+		fprintf(stderr,"PAPI_assign_eventset_component\n");
 		exit(retval);
 	}
 
@@ -285,7 +287,7 @@ main( int argc, char **argv )
 
 	retval = PAPI_assign_eventset_component( SoftwareMPX, 0 );
 	if (retval != PAPI_OK ) {
-		fprintf(stderr,"PAPI_assign_eventset_component");
+		fprintf(stderr,"PAPI_assign_eventset_component\n");
 		exit(retval);
 	}
 

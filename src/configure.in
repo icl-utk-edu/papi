@@ -232,7 +232,7 @@ else
                         AC_MSG_RESULT([found])
                         LRT="-lrt -lpthread"
                 else
-			AC_MSG_ERROR([cannot find timer_create and timer_*ettime symbols neither in the base system libraries nor in -lrt, nor in -lrt -lpthread])
+			AC_MSG_RESULT([not found])
 		fi
 	fi
 fi
@@ -1172,12 +1172,84 @@ fi
 #          Linux perf_event/perf_counter
 ##################################################
 
+perf_events=yes
+force_perf_events=no
+perf_events_uncore=yes
+
 if test "x$mic" = "xno"; then
        perf_events=no
 fi
 
-force_perf_events=no
-disable_uncore=yes
+awk '
+/^# validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { sub(/^# /, ""); print; next }
+/^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { sub(/^# /, ""); print; next }
+# ctests lines
+/^# ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { sub(/^# /, ""); print; next }
+/^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { sub(/^# /, ""); print; next }
+# ftests lines
+/^# ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { sub(/^# /, ""); print; next }
+/^# \t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { sub(/^# /, ""); print; next }
+{ print }
+' "Makefile.inc" > "t_Makefile.inc"
+mv "t_Makefile.inc" "Makefile.inc"
+
+AC_ARG_ENABLE(cpu,
+              [AS_HELP_STRING([--disable-cpu],
+              [Disable cpu component])])
+
+AS_IF([test "x$enable_cpu" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+  perf_events_uncore=no
+
+  FILE_PATH="Makefile.inc"
+  TEMP_FILE="temp_$FILE_PATH"
+   
+  # Comment out lines to disable ctest ftest vtest
+  awk '
+    /^validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next } 
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { print "# " $0; next }
+    /^ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { print "# " $0; next }
+    { print }
+    '  "$FILE_PATH" > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$FILE_PATH" 
+])
+
+AC_ARG_ENABLE(perf_event,
+              [AS_HELP_STRING([--disable-perf-event],
+              [Disable perf_event component])])
+
+AS_IF([test "x$enable_perf_event" = "xno"],[
+	perf_events=no
+  force_perf_events=no
+
+  FILE_PATH="Makefile.inc"
+  TEMP_FILE="temp_$FILE_PATH"
+   
+  awk '
+    /^validation_tests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next } 
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^ctests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib[[:space:]]+validation_tests$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ctests$/ { print "# " $0; next }
+    /^ftests:[[:space:]]+\$\(LIBS\)[[:space:]]+testlib$/ { print "# " $0; next }
+    /^\t\$\(SETPATH\)[[:space:]]+\$\(MAKE\)[[:space:]]+-C[[:space:]]+ftests$/ { print "# " $0; next }
+    { print }
+    '  "$FILE_PATH" > "$TEMP_FILE"
+  mv "$TEMP_FILE" "$FILE_PATH" 
+])
+
+AC_ARG_ENABLE(perf_event_uncore,
+              [AS_HELP_STRING([--disable-perf-event-uncore],
+              [Disable perf_event_uncore component])])
+
+AS_IF([test "x$enable_perf_event_uncore" = "xno"],[
+	perf_events_uncore=no
+
+])
+
 
 AC_ARG_WITH(perf_events,
             [AS_HELP_STRING([--with-perf-events],
@@ -1210,14 +1282,6 @@ AC_ARG_WITH(pe_incdir,
               user_specified_interface=pe],
             [pe_incdir=$pfm_incdir/perfmon])
 
-AC_ARG_ENABLE(perf_event_uncore,
-              [AS_HELP_STRING([--disable-perf-event-uncore],
-              [Disable perf_event uncore component])])
-
-AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
-	disable_uncore=no
-])
-
 # Check for perf_event.h
   if test "$force_perf_events" = "yes"; then
 	perf_events="yes"
@@ -1225,7 +1289,11 @@ AS_IF([test "x$enable_perf_event_uncore" != "xno"],[
   if test "$cross_compiling" = "no"; then 
 	AC_CHECK_FILE(/proc/sys/kernel/perf_event_paranoid,[
 	  have_paranoid=yes
-	  AC_CHECK_FILE($pe_incdir/perf_event.h,perf_events="yes")
+    AC_CHECK_FILE([$pe_incdir/perf_event.h], [
+      if test "$perf_events" != "no"; then
+        perf_events="yes"
+      fi
+      ])
     ])
   fi
   if test "$perf_events" = "yes"; then
@@ -1620,8 +1688,15 @@ elif test "$MAKEVER" = "linux-generic"; then
 elif test "$MAKEVER" = "linux-pe"; then
     FILENAME=Rules.pfm4_pe
     CPUCOMPONENT_NAME=perf_event 
-    components="perf_event"
-    if test "$disable_uncore" = "no"; then
+    if test "$perf_events" = "no"; then
+        components="$components"
+    else
+        components="$components perf_event"
+    fi
+    
+    if test "$perf_events_uncore" = "no"; then
+       components="$components"
+    else
        components="$components perf_event_uncore"
     fi
 
@@ -1748,6 +1823,7 @@ AC_ARG_WITH(sysdetect,
                             [Build the sysdetect component (default: yes)])],
             [],
             [with_sysdetect=yes])
+# Enable sysdetect unless the user has explicitly told us not to.
 if test "$with_sysdetect" = "yes"; then
   AC_MSG_RESULT(yes)
 else
@@ -1761,10 +1837,16 @@ echo "#ifndef COMPONENTS_CONFIG_H" >> components_config.h
 echo "#define COMPONENTS_CONFIG_H" >> components_config.h
 echo "" >> components_config.h
 
-AC_ARG_WITH(components,
-        	  [AS_HELP_STRING([--with-components=<"component1 component2">],
-            [Specify which components to build])],
-        	[components="$components $withval"]) 
+AC_ARG_WITH([components],
+    [AS_HELP_STRING([--with-components=<"component1 component2">],
+    [Specify which components to build])],
+    [
+        if test -n "m4_quote(${with_components//[[[:space:]]]/})"; then
+            components="$components $withval"
+        fi
+    ]
+)
+
 
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
@@ -1780,7 +1862,7 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
 		.num_native_events = 0, 
 		.num_preset_events = 0, 
 		.num_cntrs = 0,
-		.name = \"Your system is unsupported! \",
+		.name = \"No Components Configured. \",
 		.short_name = \"UNSUPPORTED!\" 
 	},
 	.dispatch_timer = NULL,
@@ -1818,10 +1900,12 @@ if test "$VECTOR" = "_papi_dummy_vector"; then
 elif test "x$VECTOR" != "x"; then
    echo "extern papi_vector_t ${VECTOR};" >> components_config.h
 fi
-    
+
 # Enable sysdetect unless the user has explicitly told us not to.
 if test "$with_sysdetect" = "yes"; then
-  components="$components sysdetect"
+  if test "$perf_events" != "no"; then
+    components="$components sysdetect"
+    fi
 fi
 
 PAPI_NUM_COMP=0
