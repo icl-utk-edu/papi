@@ -505,8 +505,8 @@ _rapl_init_component( int cidx )
 		msr_pkg_energy_status=MSR_AMD_PKG_ENERGY_STATUS;
 		msr_pp0_energy_status=MSR_AMD_PP0_ENERGY_STATUS;
 
-		if (hw_info->cpuid_family!=0x17) {
-			/* Not a family 17h machine */
+		if ((hw_info->cpuid_family!=0x17) && (hw_info->cpuid_family!=0x19)) {
+			/* Not a family 17h or 19h machine */
 			strCpy=strncpy(_rapl_vector.cmp_info.disabled_reason,
 				"CPU family not supported",PAPI_MAX_STR_LEN);
 			_rapl_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
