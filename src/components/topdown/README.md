@@ -31,5 +31,14 @@ to do so follows:
 ## Adding More Architectures
 
 To contribute more supported architectures to the component, add the cpuid model
-of the architecture to the case statement in `_topdown_init_component` of 
-[topdown.c](./topdown.c) and set the relevant options (`supports_l2`, etc.)
+of the architecture to the switch statement in `_topdown_init_component` of 
+[topdown.c](./topdown.c) and set the relevant options (`supports_l2`, 
+`required_core_type`, etc.)
+
+## Warning on Heterogeneous CPU Affinity
+
+As of 2024-12-11, all Intel's hybrid CPU architectures only support the 
+PERF_METRICS MSR on their 'performance' cores (p-cores). This means that to 
+measure topdown events on a heterogeneous processor, one must limit the process
+affinity only to p-cores using a program like `taskset` or `numactl`. Otherwise,
+PAPI will exit to avoid encountering a segmentation fault.  
