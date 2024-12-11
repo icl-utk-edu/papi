@@ -4,7 +4,7 @@ CFLAGS += -DDEBUG  -I../../../testlib
 
 INTEL_L0_HEADERS ?=/usr/include
 INTEL_L0_LIB64 ?=/usr/lib
-CPPLDFLAGS+=-lstdc++ -ldl
+CPPLDFLAGS+=-ldl
 GPULIB=-L$(INTEL_L0_LIB64) -lze_loader
 
 %.o:%.c
