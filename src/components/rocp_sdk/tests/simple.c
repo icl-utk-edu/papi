@@ -8,14 +8,17 @@ extern void launch_kernel(int device_id);
 int main(int argc, char *argv[])
 {
     int papi_errno;
+#define NUM_EVENTS (7)
+    long long counters[NUM_EVENTS] = { 0 };
 
-#define NUM_EVENTS (5)
     const char *events[NUM_EVENTS] = {
-                  "rocp_sdk:::SQ_CYCLES:device=0",
-                  "rocp_sdk:::SQ_BUSY_CYCLES:device=0",
-                  "rocp_sdk:::SQ_WAVES:device=0",
-                  "rocp_sdk:::TCC_READ:device=0",
-                  "rocp_sdk:::TCC_CYCLE:device=0"
+        "rocp_sdk:::SQ_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=3",
+        "rocp_sdk:::TCC_CYCLE:device=0:DIMENSION_INSTANCE=2",
+        "rocp_sdk:::SQ_INSTS:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2",
+        "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=0",
+        "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=1",
+        "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2",
+        "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0"
     };
 
     papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
@@ -36,7 +39,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    long long counters[NUM_EVENTS] = { 0 };
     papi_errno = PAPI_start(eventset);
     if (papi_errno != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_start", papi_errno);

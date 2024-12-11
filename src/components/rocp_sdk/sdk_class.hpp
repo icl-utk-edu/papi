@@ -2,6 +2,7 @@
 #define __VENDOR_PROFILER_V1_H__
 
 #include <stdint.h>
+#include <string.h>
 #include <rocprofiler-sdk/buffer.h>
 #include <rocprofiler-sdk/registration.h>
 //#include <rocprofiler-sdk/dispatch_profile.h>
