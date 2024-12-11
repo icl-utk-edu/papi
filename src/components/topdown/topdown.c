@@ -2,11 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <x86intrin.h> /* msr? */
+#include <x86intrin.h>
 #include <linux/perf_event.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <sys/sysinfo.h>
+#include <unistd.h>
 #include <errno.h>
+
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+#include <sched.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -54,7 +61,7 @@ static inline unsigned long long read_slots(void)
 /* read PERF_METRICS */
 static inline unsigned long long read_metrics(void)
 {
-	return _rdpmc(TOPDOWN_PERF_METRICS | TOPDOWN_METRIC_COUNTER_TOPDOWN_L1_L2); // TODO: Make this platform aware
+	return _rdpmc(TOPDOWN_PERF_METRICS | TOPDOWN_METRIC_COUNTER_TOPDOWN_L1_L2);
 }
 
 /* extract the metric defined by event i from the value */
@@ -83,8 +90,10 @@ void cpuid2( cpuid_reg_t *reg, unsigned int func, unsigned int subfunc )
 
 #define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
 #define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
+#define INTEL_CORE_TYPE_HOMOGENEOUS	-1		/* not an issue */
 
 /* ensure the core this process is running on is of the correct type */
+static int required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
 int active_core_type_is(int core_type)
 {
 	cpuid_reg_t reg;
@@ -96,6 +105,45 @@ int active_core_type_is(int core_type)
 	if (reg.eax == 0) return PAPI_ENOSUPP;
 
 	return ((reg.eax >> 24) & 0xff) == core_type;
+}
+
+/* helper to allow printing core type in errors */
+void core_type_to_name(int core_type, char *out)
+{
+	int err;
+
+	switch (core_type) {
+		case INTEL_CORE_TYPE_EFFICIENT:
+			err = snprintf(out, PAPI_MIN_STR_LEN, "e-core (Atom)");
+			if (err > PAPI_MAX_STR_LEN)
+				HANDLE_STRING_ERROR;
+			break;
+
+		case INTEL_CORE_TYPE_PERFORMANCE:
+			err = snprintf(out, PAPI_MIN_STR_LEN, "p-core (Core)");
+			if (err > PAPI_MAX_STR_LEN)
+				HANDLE_STRING_ERROR;
+			break;
+
+		default:
+			err = snprintf(out, PAPI_MIN_STR_LEN, "not applicable (N/A)");
+			if (err > PAPI_MAX_STR_LEN)
+				HANDLE_STRING_ERROR;
+			break;
+	}
+}
+
+/* exit if the core affinity is disallowed in order to avoid segfaulting */
+void handle_affinity_error(int allowed_type)
+{
+	char allowed_name[PAPI_MIN_STR_LEN];
+
+	core_type_to_name(allowed_type, allowed_name);
+	fprintf(stderr, 
+		"Error: Process was moved to an unsupported core type. To use the PAPI topdown component, process affinity must be limited to cores of type '%s' on this architecture.\n", 
+		allowed_name);
+
+	exit(127);
 }
 
 /***********************************************/
@@ -111,6 +159,8 @@ _topdown_init_component(int cidx)
 	int supports_l2;
 
 	char *strCpy;
+	char typeStr[PAPI_MIN_STR_LEN];
+
 	const PAPI_hw_info_t *hw_info;
 
 	/* Check for processor support */
@@ -163,40 +213,29 @@ _topdown_init_component(int cidx)
 		case 0x8c:	/* TigerLake 11th gen Core */
 		case 0x8d:	/* TigerLake 11th gen Core */
 		case 0xa7:	/* RocketLake 11th gen Core */
+			required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
 			supports_l2 = 0;
 			break;
 
 		/* homogeneous machines that support l2 TMA */
 		case 0x8f:	/* SapphireRapids 4th gen Xeon */
-		case 0xad:	/* GraniteRapids 6th gen Xeon P-core */
-		case 0xae:	/* GraniteRapids 6th gen Xeon P-core */
 		case 0xcf:	/* EmeraldRapids 5th gen Xeon */
+			required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
 			supports_l2 = 1;
 			break;
 
 		/* hybrid machines that support l2 TMA and are locked to the P-core */
 		case 0xaa:	/* MeteorLake Core Ultra 7 hybrid */
-		case 0xbd:	/* LunarLake Series 2 Core Ultra hybrid */
+		case 0xad:	/* GraniteRapids 6th gen Xeon P-core */
+		case 0xae:	/* GraniteRapids 6th gen Xeon P-core */
 		case 0x97:	/* AlderLake 12th gen Core hybrid */
 		case 0x9a:	/* AlderLake 12th gen Core hybrid */
 		case 0xb7:	/* RaptorLake-S/HX 13th gen Core hybrid */
 		case 0xba:	/* RaptorLake 13th gen Core hybrid */
+		case 0xbd:	/* LunarLake Series 2 Core Ultra hybrid */
 		case 0xbf:	/* RaptorLake 13th gen Core hybrid */
+			required_core_type = INTEL_CORE_TYPE_PERFORMANCE;
 			supports_l2 = 1;
-
-			/* ensure we are running on a P core */
-			/* should we instead detect this before each PAPI_start() */
-			/* in order to stop programs from crashing when they are moved */
-			/* from core to core? */
-			if (!active_core_type_is(INTEL_CORE_TYPE_PERFORMANCE)) {
-				strCpy = strncpy(_topdown_vector.cmp_info.disabled_reason,
-							 "Topdown metrics are not supported on RaptorLake efficiency cores. Ensure this program is run on a performance core.", PAPI_MAX_STR_LEN);
-				_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
-				if (strCpy == NULL)
-				HANDLE_STRING_ERROR;
-					retval = PAPI_ECMP;
-				goto fn_fail;
-			}
 			break;
 
 		default: /* not a supported model */
@@ -208,6 +247,18 @@ _topdown_init_component(int cidx)
 			retval = PAPI_ENOIMPL;
 			goto fn_fail;
 		}
+	}
+
+	/* if there is a core type requirement for this platform, check it */
+	if (!active_core_type_is(required_core_type) && required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
+		core_type_to_name(required_core_type, typeStr);
+		err = snprintf(_topdown_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+			"The PERF_EVENT MSR does not exist on this core. Limit process affinity to cores of type '%s' only.", typeStr);
+		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
+		if (err > PAPI_MAX_STR_LEN)
+			HANDLE_STRING_ERROR;
+		retval = PAPI_ECMP;
+		goto fn_fail;
 	}
 
 	/* allocate the events table */
@@ -386,7 +437,7 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 
 	/* memory mapping the fd to permit _rdpmc calls from userspace */
 	slots_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, slots_fd, 0);
-	if (!slots_p)
+	if (slots_p == (void *) -1L)
 	{
 		retval = PAPI_ENOMEM;
 		goto fn_fail;
@@ -409,7 +460,7 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 
 	/* memory mapping the fd to permit _rdpmc calls from userspace */
 	metrics_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, metrics_fd, 0);
-	if (!metrics_p)
+	if (metrics_p == (void *) -1L)
 	{
 		retval = PAPI_ENOMEM;
 		goto fn_fail;
@@ -469,6 +520,13 @@ _topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	(void) ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 
+	if (required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
+		/* ensure the process is still on a valid core to avoid segfaulting */
+		if (!active_core_type_is(required_core_type)) {
+			handle_affinity_error(required_core_type);
+		}
+	}
+
 	/* reset the PERF_METRICS counter and slots to maintain precision */
 	/* as per the recommendation section 21.3.9.3 of the IA-32 Architectures */
 	/* Software Developer’s Manual */
@@ -489,8 +547,17 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 	unsigned long long slots_after, slots_delta, metrics_after;
 
-	int i;
+	int i, retval;
 	double ma, mb, perc, tmp;
+
+	retval = PAPI_OK;
+
+	if (required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
+		/* ensure the process is still on a valid core to avoid segfaulting */
+		if (!active_core_type_is(required_core_type)) {
+			handle_affinity_error(required_core_type);
+		}
+	}
 
 	slots_after = read_slots();
 	metrics_after = read_metrics();
@@ -545,6 +612,7 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 		}
 	}
 
+fn_exit:
 	/* free & close everything in the control state */
 	munmap(control->slots_p, getpagesize());
 	control->slots_p = NULL;
@@ -555,7 +623,7 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	close(control->metrics_fd);
 	control->metrics_fd = -1;
 	
-	return PAPI_OK;
+	return retval;
 }
 
 static int
