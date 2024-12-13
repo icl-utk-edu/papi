@@ -748,6 +748,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_thunderx2_ccpi0_support,
 	&arm_thunderx2_ccpi1_support,
 	&arm_fujitsu_a64fx_support,
+	&arm_fujitsu_monaka_support,
 	&arm_hisilicon_kunpeng_sccl1_ddrc0_support,
 	&arm_hisilicon_kunpeng_sccl1_ddrc1_support,
 	&arm_hisilicon_kunpeng_sccl1_ddrc2_support,

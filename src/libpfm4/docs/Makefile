@@ -169,6 +169,7 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_ac72.3 \
 	    libpfm_arm_ac76.3 \
 	    libpfm_arm_a64fx.3 \
+	    libpfm_arm_monaka.3 \
 	    libpfm_arm_neoverse_n1.3 \
 	    libpfm_arm_neoverse_n2.3 \
 	    libpfm_arm_neoverse_n3.3 \
