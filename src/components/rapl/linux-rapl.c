@@ -445,6 +445,7 @@ _rapl_init_component( int cidx )
 		case 94:	/* Skylake Desktop (H/S) */
 		case 142:	/* Kabylake Mobile */
 		case 158:	/* Kabylake Desktop */
+		case 165:	/* Comet Lake S/H */
 			package_avail=1;
 			pp0_avail=1;
 			pp1_avail=0;
