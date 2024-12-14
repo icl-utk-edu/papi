@@ -150,7 +150,8 @@ enum perf_event_sample_format {
 	PERF_SAMPLE_WEIGHT_STRUCT	= 1U << 24,
 	PERF_SAMPLE_MAX			= 1U << 25,
 };
-enum {
+
+enum perf_txn_qualifier {
 	PERF_TXN_ELISION        = (1 << 0),
 	PERF_TXN_TRANSACTION    = (1 << 1),
 	PERF_TXN_SYNC           = (1 << 2),
@@ -186,6 +187,8 @@ enum perf_branch_sample_type_shift {
 	PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT	= 15,
 	PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT	= 16,
 	PERF_SAMPLE_BRANCH_HW_INDEX_SHIFT	= 17,
+	PERF_SAMPLE_BRANCH_PRIV_SAVE_SHIFT	= 18,
+	PERF_SAMPLE_BRANCH_COUNTERS_SHIFT	= 19,
 
 	PERF_SAMPLE_BRANCH_MAX_SHIFT		/* non-ABI */
 };
@@ -211,9 +214,59 @@ enum perf_branch_sample_type {
 	PERF_SAMPLE_BRANCH_NO_CYCLES	= 1U << PERF_SAMPLE_BRANCH_NO_CYCLES_SHIFT,
 	PERF_SAMPLE_BRANCH_TYPE_SAVE	= 1U << PERF_SAMPLE_BRANCH_TYPE_SAVE_SHIFT,
 	PERF_SAMPLE_BRANCH_HW_INDEX	= 1U << PERF_SAMPLE_BRANCH_HW_INDEX_SHIFT,
+	PERF_SAMPLE_BRANCH_PRIV_SAVE	= 1U << PERF_SAMPLE_BRANCH_PRIV_SAVE_SHIFT,
+	PERF_SAMPLE_BRANCH_COUNTERS	= 1U << PERF_SAMPLE_BRANCH_COUNTERS_SHIFT,
 
 	PERF_SAMPLE_BRANCH_MAX		= 1U << PERF_SAMPLE_BRANCH_MAX_SHIFT,
 };
+
+enum perf_branch_type {
+	PERF_BR_UNKNOWN		= 0,
+	PERF_BR_COND		= 1,
+	PERF_BR_UNCOND		= 2,
+	PERF_BR_IND		= 3,
+	PERF_BR_CALL		= 4,
+	PERF_BR_IND_CALL	= 5,
+	PERF_BR_RET		= 6,
+	PERF_BR_SYSCALL		= 7,
+	PERF_BR_SYSRET		= 8,
+	PERF_BR_COND_CALL	= 9,
+	PERF_BR_COND_RET	= 10,
+	PERF_BR_ERET		= 11,
+	PERF_BR_IRQ		= 12,
+	PERF_BR_SERROR		= 13,
+	PERF_BR_NO_TX		= 14,
+	PERF_BR_EXTEND_ABI	= 15,
+	PERF_BR_MAX,
+};
+
+enum perf_branch_spec {
+	PERF_BR_SPEC_NA			= 0,
+	PERF_BR_SPEC_WRONG_PATH		= 1,
+	PERF_BR_NON_SPEC_CORRECT_PATH	= 2,
+	PERF_BR_SPEC_CORRECT_PATH	= 3,
+	PERF_BR_SPEC_MAX,
+};
+
+enum perf_branch_fault {
+	PERF_BR_NEW_FAULT_ALGN	= 0,
+	PERF_BR_NEW_FAULT_DATA	= 1,
+	PERF_BR_NEW_FAULT_INST	= 2,
+	PERF_BR_NEW_ARCH_1	= 3,
+	PERF_BR_NEW_ARCH_2	= 4,
+	PERF_BR_NEW_ARCH_3	= 5,
+	PERF_BR_NEW_ARCH_4	= 6,
+	PERF_BR_NEW_ARCH_5	= 7,
+	PERF_BR_NEW_MAX,
+};
+
+enum perf_branch_priv {
+	PERF_BR_PRIV_UNKNOWN	= 0,
+	PERF_BR_PRIV_USER	= 1,
+	PERF_BR_PRIV_KERNEL	= 2,
+	PERF_BR_PRIV_HV		= 3,
+};
+
 
 enum perf_sample_regs_abi {
 	PERF_SAMPLE_REGS_ABI_NONE	= 0,
@@ -229,7 +282,8 @@ enum perf_event_read_format {
 	PERF_FORMAT_TOTAL_TIME_RUNNING	= 1U << 1,
 	PERF_FORMAT_ID			= 1U << 2,
 	PERF_FORMAT_GROUP		= 1U << 3,
-	PERF_FORMAT_MAX			= 1U << 4,
+	PERF_FORMAT_LOST		= 1U << 4,
+	PERF_FORMAT_MAX			= 1U << 5,
 };
 
 #define PERF_ATTR_SIZE_VER0	64	/* sizeof first published struct */
@@ -241,6 +295,7 @@ enum perf_event_read_format {
 #define PERF_ATTR_SIZE_VER5	112	/* add: aux_watermark */
 #define PERF_ATTR_SIZE_VER6	120	/* add: aux_sample_size */
 #define PERF_ATTR_SIZE_VER7	128	/* add: sig_data */
+#define PERF_ATTR_SIZE_VER8	136	/* add: config3 */
 
 
 /*
@@ -317,10 +372,14 @@ typedef struct perf_event_attr {
 	uint32_t        bp_type;
 	union {
 		uint64_t        bp_addr;
+		uint64_t        kprobe_func;
+		uint64_t        uprobe_path;
 		uint64_t	config1; /* extend config */
 	} SWIG_NAME(bpa);
 	union {
 		uint64_t        bp_len;
+		uint64_t        kprobe_addr;
+		uint64_t        probe_offset;
 		uint64_t	config2; /* extend config1 */
 	} SWIG_NAME(bpb);
 	uint64_t branch_sample_type;
@@ -334,6 +393,7 @@ typedef struct perf_event_attr {
 	uint32_t aux_sample_size;
 	uint32_t __reserved_3;
 	uint64_t sig_data;
+	uint64_t config3;
 } perf_event_attr_t;
 
 struct perf_branch_entry {
@@ -345,7 +405,10 @@ struct perf_branch_entry {
 			abort:1,    /* transaction abort */
 			cycles:16,  /* cycle count to last branch */
 			type:4,     /* branch type */
-			reserved:40;
+			spec:2,     /* branch speculation info */
+			new_type:4, /* additional branch type */
+			priv:3,     /* privilege level */
+			reserved:31;
 };
 
 /*
@@ -371,6 +434,25 @@ struct perf_event_query_bpf {
 	uint32_t	ids_len;
 	uint32_t	prog_cnt;
 	uint32_t	ids[0];
+};
+
+union perf_sample_weight {
+	uint64_t full;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	struct {
+		uint32_t var1_dw;
+		uint16_t var2_w;
+		uint16_t var3_w;
+	};
+#elif __BYTE_ORDER == __BIG_ENDIAN
+	struct {
+		uint16_t var3_w;
+		uint16_t var2_w;
+		uint32_t var1_dw;
+	};
+#else
+#error "Unsupported endianness"
+#endif
 };
 
 /*
@@ -465,8 +547,12 @@ struct perf_event_header {
 #define PERF_RECORD_MISC_PROC_MAP_PARSE_TIMEOUT	(1 << 12)
 #define PERF_RECORD_MISC_MMAP_DATA		(1 << 13)
 #define PERF_RECORD_MISC_COMM_EXEC		(1 << 13)
+#define PERF_RECORD_MISC_FORK_EXEC		(1 << 13)
+#define PERF_RECORD_MISC_SWITCH_OUT		(1 << 13)
 #define PERF_RECORD_MISC_EXACT			(1 << 14)
 #define PERF_RECORD_MISC_EXACT_IP               (1 << 14)
+#define PERF_RECORD_MISC_SWITCH_OUT_PREEMPT	(1 << 14)
+#define PERF_RECORD_MISC_MMAP_BUILD_ID		(1 << 14)
 #define PERF_RECORD_MISC_EXT_RESERVED		(1 << 15)
 
 /*
@@ -495,6 +581,22 @@ enum perf_event_type {
 	PERF_RECORD_TEXT_POKE		= 20,
 	PERF_RECORD_AUX_OUTPUT_HW_ID	= 21,
 	PERF_RECORD_MAX
+};
+
+struct perf_ns_link_info {
+	uint64_t dev;
+	uint64_t ino;
+};
+
+enum perf_ns_type {
+	NET_NS_INDEX	= 0,
+	UTS_NS_INDEX	= 1,
+	IPC_NS_INDEX	= 2,
+	PID_NS_INDEX	= 3,
+	USER_NS_INDEX	= 4,
+	MNT_NS_INDEX	= 5,
+	CGROUP_NS_INDEX	= 6,
+	NR_NAMESPACES
 };
 
 enum perf_record_ksymbol_type {
