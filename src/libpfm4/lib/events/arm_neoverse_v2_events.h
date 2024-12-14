@@ -102,6 +102,12 @@ static const arm_entry_t arm_v2_pe[]={
 	},
 	{.name = "L1I_CACHE_ACCESS",
 	 .modmsk = ARMV9_ATTRS,
+	 .equiv = "L1I_CACHE",
+	 .code = 0x14,
+	 .desc = "Level 1 instruction cache accesses (deprecated)"
+	},
+	{.name = "L1I_CACHE",
+	 .modmsk = ARMV9_ATTRS,
 	 .code = 0x14,
 	 .desc = "Level 1 instruction cache accesses"
 	},
