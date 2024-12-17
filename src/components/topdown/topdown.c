@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <x86intrin.h>
 #include <linux/perf_event.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
@@ -37,42 +36,19 @@ papi_vector_t _topdown_vector;
 static _topdown_native_event_entry_t *topdown_native_events = NULL;
 static int num_events = 0;
 
-/********************************/
-/* Internal component functions */
-/********************************/
+/**************************/
+/* x86 specific functions */
+/**************************/
 
-/* In case headers aren't new enough to have __NR_perf_event_open */
-#ifndef __NR_perf_event_open
-#define __NR_perf_event_open 298 /* __x86_64__ is the only arch we support */
-#endif
+static inline unsigned long long _rdpmc(unsigned int counter) {
 
-__attribute__((weak)) int perf_event_open(struct perf_event_attr *attr, pid_t pid,
-										  int cpu, int group_fd, unsigned long flags)
-{
-	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
+	unsigned int low, high;
+
+	__asm__ volatile("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
+
+	return (unsigned long long)low | ((unsigned long long)high) <<32;
 }
 
-/* read SLOTS */
-static inline unsigned long long read_slots(void)
-{
-	return _rdpmc(TOPDOWN_PERF_FIXED | TOPDOWN_FIXED_COUNTER_SLOTS);
-}
-
-/* read PERF_METRICS */
-static inline unsigned long long read_metrics(void)
-{
-	return _rdpmc(TOPDOWN_PERF_METRICS | TOPDOWN_METRIC_COUNTER_TOPDOWN_L1_L2);
-}
-
-/* extract the metric defined by event i from the value */
-float extract_metric(int i, unsigned long long val)
-{
-	return (double)(((val) >> (i * 8)) & 0xff) / 0xff;
-}
-
-/**************************************/
-/* Hybrid processor support functions */
-/**************************************/
 
 typedef struct {
 	unsigned int eax;
@@ -91,6 +67,10 @@ void cpuid2( cpuid_reg_t *reg, unsigned int func, unsigned int subfunc )
 #define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
 #define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
 #define INTEL_CORE_TYPE_HOMOGENEOUS	-1		/* not an issue */
+
+/**************************************/
+/* Hybrid processor support functions */
+/**************************************/
 
 /* ensure the core this process is running on is of the correct type */
 static int required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
@@ -144,6 +124,39 @@ void handle_affinity_error(int allowed_type)
 		allowed_name);
 
 	exit(127);
+}
+
+/********************************/
+/* Internal component functions */
+/********************************/
+
+/* In case headers aren't new enough to have __NR_perf_event_open */
+#ifndef __NR_perf_event_open
+#define __NR_perf_event_open 298 /* __x86_64__ is the only arch we support */
+#endif
+
+__attribute__((weak)) int perf_event_open(struct perf_event_attr *attr, pid_t pid,
+										  int cpu, int group_fd, unsigned long flags)
+{
+	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
+}
+
+/* read SLOTS */
+static inline unsigned long long read_slots(void)
+{
+	return _rdpmc(TOPDOWN_PERF_FIXED | TOPDOWN_FIXED_COUNTER_SLOTS);
+}
+
+/* read PERF_METRICS */
+static inline unsigned long long read_metrics(void)
+{
+	return _rdpmc(TOPDOWN_PERF_METRICS | TOPDOWN_METRIC_COUNTER_TOPDOWN_L1_L2);
+}
+
+/* extract the metric defined by event i from the value */
+float extract_metric(int i, unsigned long long val)
+{
+	return (double)(((val) >> (i * 8)) & 0xff) / 0xff;
 }
 
 /***********************************************/
