@@ -15,7 +15,7 @@ GPUOBJS = GPUMetricInterface.o GPUMetricHandler.o linux_intel_gpu_metrics.o
 COMPOBJS += $(GPUOBJS)
 
 CFLAGS += $(LDL) -g -DDEBUG  -I$(GPU_INTERNAL) -I$(GPU_INTERNAL)/inc -D_GLIBCXX_USE_CXX11_ABI=1
-LDFLAGS += -g -lstdc++ -ldl
+LDFLAGS += -ldl
 
 GPUMetricInterface.o:  $(GPU_INTERNAL)/src/GPUMetricInterface.cpp $(GPUHEADER)
 	$(CXX) -g -fpic $(CFLAGS) $(CPPFLAGS) -I$(GPU_INTERNAL)/inc -I$(INTEL_L0_HEADERS) -o GPUMetricInterface.o -c $(GPU_INTERNAL)/src/GPUMetricInterface.cpp
@@ -24,6 +24,6 @@ GPUMetricHandler.o:  $(GPU_INTERNAL)/src/GPUMetricHandler.cpp $(GPUHEADER) $(GPU
 	$(CXX) -g -fpic $(CFLAGS) $(CPPFLAGS) -I$(GPU_INTERNAL)/inc -I$(INTEL_L0_HEADERS) -o GPUMetricHandler.o -c $(GPU_INTERNAL)/src/GPUMetricHandler.cpp
 
 linux_intel_gpu_metrics.o: $(GPUCOMP)/linux_intel_gpu_metrics.c $(GPUHEADER)
-	$(CC) $(LIBCFLAGS) $(CFLAGS) $(CPPFLAGS) $(OPTFLAGS) -g -o linux_intel_gpu_metrics.o -c $(GPUCOMP)/linux_intel_gpu_metrics.c $(LDFLAG)
+	$(CC) $(LIBCFLAGS) $(CFLAGS) $(CPPFLAGS) $(OPTFLAGS) -g -o linux_intel_gpu_metrics.o -c $(GPUCOMP)/linux_intel_gpu_metrics.c $(LDFLAGS)
 
 ##clean:
