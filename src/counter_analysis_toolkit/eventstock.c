@@ -65,7 +65,7 @@ int build_stock(evstock* stock)
     }
 
     if( 0 == tmp_event_count ){
-        fprintf(stderr,"ERROR: CPU component (%s) not found. Exiting.",_PAPI_CPU_COMPONENT_NAME);
+        fprintf(stderr,"ERROR: CPU component (%s) not found. Exiting.\n",_PAPI_CPU_COMPONENT_NAME);
         goto gracious_error;
     }
 
@@ -73,8 +73,7 @@ int build_stock(evstock* stock)
 
     ret=PAPI_enum_cmp_event(&event_i,PAPI_ENUM_FIRST,cid);
     if(ret!=PAPI_OK){
-        fprintf(stderr,"ERROR: CPU component does not contain any events. Exiting");
-        goto gracious_error;
+        return 0;
     }
 
     do{

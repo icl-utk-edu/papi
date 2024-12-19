@@ -82,7 +82,6 @@ int main(int argc, char*argv[])
     if(status)
     {
         free(params.outputdir);
-        remove_stock(data);
         if(READ_FROM_FILE == params.mode)
         {
             for(i = 0; i < ct; ++i)
