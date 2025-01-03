@@ -8,19 +8,25 @@ using dim_vector_t = std::vector< dim_t >;
 
 static inline bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims );
 
-struct base_event_info_t{
+typedef struct {
     rocprofiler_counter_info_v0_t counter_info;
     std::vector<rocprofiler_record_dimension_info_t> dim_info;
-};
+} base_event_info_t;
 
-struct event_instance_info_t{
+typedef struct {
     uint64_t qualifiers_present;
     std::string event_inst_name;
     rocprofiler_counter_info_v0_t counter_info;
     std::vector<rocprofiler_record_dimension_info_t> dim_info;
     dim_vector_t dim_instances;
     int device;
-};
+} event_instance_info_t;
+
+typedef struct {
+    rocprofiler_counter_id_t counter_id;
+    uint64_t device;
+    dim_vector_t recorded_dims;
+} rec_info_t;
 
 std::atomic<unsigned int> _global_papi_event_count{0};
 std::atomic<unsigned int> _base_event_count{0};
@@ -227,55 +233,65 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 rocprofiler_user_data_t,
                 void*                                        callback_data_args)
 {
+    rec_info_t *tmp_rec_info;
+    uint64_t device;
+
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         return;
     }
 
     _papi_hwi_lock(_rocp_sdk_lock);
 
+    tmp_rec_info = new rec_info_t[record_count];
+
+    // Find the logical GPU id of this dispatch.
+    auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
+    if( gpu_agents.end() != agent ){
+        device = agent->second->logical_node_type_id;
+    }else{
+        device = -1;
+        SUBDBG("agent_id in dispatch_data does not correspond to a known gpu agent.\n");
+    }
+
+    // Traverse all the recorded entries and cache some information about them
+    // that we will need further down when doing the matching.
+    for(int i=0; i<record_count; ++i){
+        rocprofiler_counter_id_t counter_id;
+        rec_info_t &rec_info = tmp_rec_info[i];
+
+        rec_info.device = device;
+
+        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
+        rec_info.counter_id = counter_id;
+
+        std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
+        for(auto& dim : dimensions ){
+            unsigned long pos=0;
+            ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
+            rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+        }
+    }
+
+    // Traverse all events in the active event set and find which recorded entry matches each one of them.
     for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
         double counter_value_sum = 0.0;
         auto e_tmp = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
         if( papi_id_to_event_instance.end() == e_tmp ){
             continue;
         }
-        struct event_instance_info_t e_inst = e_tmp->second;
+        event_instance_info_t e_inst = e_tmp->second;
 
-        int current_gpu_id = -1;
-        auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
-        if( gpu_agents.end() != agent ){
-            current_gpu_id = agent->second->logical_node_type_id;
-        }
-
-        // We only populate a value for an event if the "device" qualifier set by the user
-        // matches the device of this record. Otherwise the value is zero.
-        if( e_inst.device != current_gpu_id ){
-		continue;
-	}
-
-        for(size_t i = 0; i < record_count; ++i){
-            rocprofiler_counter_id_t counter_id;
-
-            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
-            // If the counter_ids are matching, we should check if the dimensions (qualifiers) match.
-            if( e_inst.counter_info.id.handle == counter_id.handle ){
-                dim_vector_t recorded_dims;
-
-                std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
-                for(auto& dim : dimensions ){
-                    unsigned long pos=0;
-                    ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
-                    recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
-                }
-
-                // Check if the dimensions (qualifiers) match.
-                if( dimensions_match(e_inst.dim_instances, recorded_dims) ){
-                    // All counters in the sample whose dimemsions match the qualifers of the event instance
-                    // will be added. This means that if a qualifier is missing, we will return the sum of
-		    // across the corresponding dimension.
-                    counter_value_sum += record_data[i].counter_value;
-                }
+        for(int i=0; i<record_count; ++i){
+            rec_info_t &rec_info = tmp_rec_info[i];
+            if( ( e_inst.device != rec_info.device ) ||
+                ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
+              ){
+                continue;
             }
+            // All counters in the sample whose dimemsions match the qualifers of the event instance
+            // will be added. This means that if a qualifier is missing, we will get the sum.
+            counter_value_sum += record_data[i].counter_value;
         }
 	_counter_values[ei] = counter_value_sum;
     }
@@ -289,6 +305,8 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         std::cerr << " ## record_data[" << i << "].id: " << record_data[i].id << " -> counter_id: " << counter_id.handle << " Value= " << record_data[i].counter_value << std::endl;
     }
 #endif
+    delete[] tmp_rec_info;
+    return;
 }
 
 
@@ -507,12 +525,6 @@ start_counting(vendorp_ctx_t ctx){
     ROCPROFILER_CALL(rocprofiler_start_context_FPTR(get_client_ctx()), "start context");
 }
 
-typedef struct {
-    rocprofiler_counter_id_t counter_id;
-    uint64_t device;
-    dim_vector_t recorded_dims;
-} rec_info_t;
-
 /* ** */
 int
 read_sample(){
@@ -543,7 +555,6 @@ read_sample(){
         rec_info_t &rec_info = tmp_rec_info[i];
 
         auto agent = gpu_agents.find( output_records[i].agent_id.handle );
-        int current_gpu_id = -1;
         if( gpu_agents.end() != agent ){
             rec_info.device = agent->second->logical_node_type_id;
         }else{
@@ -559,9 +570,9 @@ read_sample(){
             ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
             rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
         }
-     }
+    }
 
-    // For each event in the event-set
+    // Traverse all events in the active event set and find which entry in the sample matches each one of them.
     for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
         double counter_value_sum = 0.0;
 
@@ -571,7 +582,7 @@ read_sample(){
             SUBDBG("EventSet contains an event id that is unknown to the rocp_sdk component.\n");
             continue;
         }
-        struct event_instance_info_t e_inst = tmp->second;
+        event_instance_info_t e_inst = tmp->second;
 
         for(int i=0; i<rec_count; ++i){
             rec_info_t &rec_info = tmp_rec_info[i];
