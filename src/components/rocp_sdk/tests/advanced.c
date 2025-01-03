@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_read()\n");
 
         for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
+            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
         }
     }
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_stop()\n");
 
     for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
+            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
     }
 
     printf("======================================================\n");
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_read()\n");
 
         for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
+            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
         }
 
         papi_errno = PAPI_stop(eventset, counters);
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_stop()\n");
 
         for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
+            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
         }
     }
 

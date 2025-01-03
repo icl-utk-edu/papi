@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     const char *events[NUM_EVENTS] = {
         "rocp_sdk:::SQ_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=3",
         "rocp_sdk:::TCC_CYCLE:device=0:DIMENSION_INSTANCE=2",
-        "rocp_sdk:::SQ_INSTS:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2",
+        "rocp_sdk:::SQ_INSTS:device=0:DIMENSION_INSTANCE=0",
         "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=0",
         "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=1",
         "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2",
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     printf("---------------------  launch_kernel(0)\n");
     launch_kernel(0);
 
-    usleep(100000);
+    usleep(10000);
 
     papi_errno = PAPI_read(eventset, counters);
     if (papi_errno != PAPI_OK) {
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_read()\n");
 
     for (int i = 0; i < NUM_EVENTS; ++i) {
-        printf("%s: %lli\n", events[i], counters[i]);
+        printf("%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
     }
 
     papi_errno = PAPI_stop(eventset, counters);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_stop()\n");
 
     for (int i = 0; i < NUM_EVENTS; ++i) {
-        printf("%s: %lli\n", events[i], counters[i]);
+        printf("%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
     }
     
     papi_errno = PAPI_cleanup_eventset(eventset);

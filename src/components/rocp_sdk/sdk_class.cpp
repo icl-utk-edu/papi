@@ -1,5 +1,4 @@
 #include "sdk_class.hpp"
-#include <stdio.h>
 
 namespace papi_rocpsdk
 {
@@ -228,9 +227,6 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 rocprofiler_user_data_t,
                 void*                                        callback_data_args)
 {
-#if defined(DEFAULT_QUALIFIER_IS_ZERO)
-    int idx = 0;
-#endif
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         return;
     }
@@ -274,25 +270,14 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
                 // Check if the dimensions (qualifiers) match.
                 if( dimensions_match(e_inst.dim_instances, recorded_dims) ){
-#if defined(DEFAULT_QUALIFIER_IS_ZERO)
-                    _counter_values[idx] = record_data[i].counter_value;
-                    ++idx;
-                    // Since we found a recorded event with dimensions matching the user's qualifiers,
-                    // we don't need to look at the rest. This implies that any unset qualifiers will
-                    // default to the lowest possible value (usually zero).
-                    break;
-#else
                     // All counters in the sample whose dimemsions match the qualifers of the event instance
                     // will be added. This means that if a qualifier is missing, we will return the sum of
 		    // across the corresponding dimension.
                     counter_value_sum += record_data[i].counter_value;
-#endif
                 }
             }
         }
-#if !defined(DEFAULT_QUALIFIER_IS_ZERO)
 	_counter_values[ei] = counter_value_sum;
-#endif
     }
 
     _papi_hwi_unlock(_rocp_sdk_lock);
@@ -522,22 +507,24 @@ start_counting(vendorp_ctx_t ctx){
     ROCPROFILER_CALL(rocprofiler_start_context_FPTR(get_client_ctx()), "start context");
 }
 
+typedef struct {
+    rocprofiler_counter_id_t counter_id;
+    uint64_t device;
+    dim_vector_t recorded_dims;
+} rec_info_t;
+
 /* ** */
 int
 read_sample(){
     int papi_errno = PAPI_OK;
     int ret_val;
-#if defined(DEFAULT_QUALIFIER_IS_ZERO)
-    int idx=0;
-#endif
     size_t rec_count = 1024;
+    rocprofiler_record_counter_t output_records[1024];
+    rec_info_t *tmp_rec_info;
 
-    rocprofiler_record_counter_t* output_records;
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         goto fn_fail;
     }
-
-    output_records = new rocprofiler_record_counter_t[1024];
 
     ret_val = rocprofiler_sample_device_counting_service_FPTR(
                 get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE,
@@ -547,6 +534,32 @@ read_sample(){
         goto fn_fail;
     }
 
+    tmp_rec_info = new rec_info_t[rec_count];
+
+    // Traverse all the recorded entries and cache some information about them
+    // that we will need further down when doing the matching.
+    for(int i=0; i<rec_count; ++i){
+        rocprofiler_counter_id_t counter_id;
+        rec_info_t &rec_info = tmp_rec_info[i];
+
+        auto agent = gpu_agents.find( output_records[i].agent_id.handle );
+        int current_gpu_id = -1;
+        if( gpu_agents.end() != agent ){
+            rec_info.device = agent->second->logical_node_type_id;
+        }else{
+            SUBDBG("agent_id of recorded sample %d does not correspond to a known gpu agent.\n", i);
+        }
+
+        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
+        rec_info.counter_id = counter_id;
+
+        std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
+        for(auto& dim : dimensions ){
+            unsigned long pos=0;
+            ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
+            rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+        }
+     }
 
     // For each event in the event-set
     for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
@@ -561,49 +574,18 @@ read_sample(){
         struct event_instance_info_t e_inst = tmp->second;
 
         for(int i=0; i<rec_count; ++i){
-            rocprofiler_counter_id_t counter_id;
-
-            int current_gpu_id = -1;
-            auto agent = gpu_agents.find( output_records[i].agent_id.handle );
-            if( gpu_agents.end() != agent ){
-                current_gpu_id = agent->second->logical_node_type_id;
-            }
-
-            if( e_inst.device != current_gpu_id ){
+            rec_info_t &rec_info = tmp_rec_info[i];
+            if( ( e_inst.device != rec_info.device ) ||
+                ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
+              ){
                 continue;
             }
-
-            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
-
-            // Check if the counter ids match.
-            if( e_inst.counter_info.id.handle == counter_id.handle ){
-                dim_vector_t recorded_dims;
-                std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
-                for(auto& dim : dimensions ){
-                    unsigned long pos=0;
-                    ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
-                    recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
-                }
-
-                // Check if the dimensions (qualifiers) match.
-                if( dimensions_match(e_inst.dim_instances, recorded_dims) ){
-#if defined(DEFAULT_QUALIFIER_IS_ZERO)
-                    _counter_values[idx] = output_records[i].counter_value;
-                    ++idx;
-		    // Since we found the recorded event with dimensions matching the user's qualifiers,
-                    // we don't need to look at the rest.
-                    break;
-#else
-		    // All counters in the sample whose dimemsions match the qualifers of the event instance
-		    // will be added. This means that if a qualifier is missing, we will get the sum.
-                    counter_value_sum += output_records[i].counter_value;
-#endif
-                }
-             }
-         }
-#if !defined(DEFAULT_QUALIFIER_IS_ZERO)
-         _counter_values[ei] = counter_value_sum;
-#endif
+            // All counters in the sample whose dimemsions match the qualifers of the event instance
+            // will be added. This means that if a qualifier is missing, we will get the sum.
+            counter_value_sum += output_records[i].counter_value;
+        }
+        _counter_values[ei] = counter_value_sum;
      }
 
 #if DEBUG_OUTPUT
@@ -617,7 +599,7 @@ read_sample(){
 #endif // DEBUG_OUTPUT
 
   fn_exit:
-    delete[] output_records;
+    delete[] tmp_rec_info;
     return papi_errno;
   fn_fail:
     papi_errno = PAPI_ECMP;
