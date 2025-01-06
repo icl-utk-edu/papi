@@ -7,8 +7,10 @@
 #          london@cs.utk.edu
 #          Philip Mucci
 #          mucci@cs.utk.edu
+#          Treece Burgess
+#          tburgess@icl.utk.edu
 
-# if make sure that the tests are built
+# Make sure that the tests are built, if not build them
 if [ "x$BUILD" != "x" ]; then
     cd testlib; make; cd ..
     cd validation_tests; make; cd ..
@@ -22,11 +24,18 @@ fi
 AIXTHREAD_SCOPE=S
 export AIXTHREAD_SCOPE
 if [ "X$1" = "X-v" ]; then
-  shift ; TESTS_QUIET=""
+  TESTS_QUIET=""
 else
 # This should never have been an argument, but an environment variable!
   TESTS_QUIET="TESTS_QUIET"
   export TESTS_QUIET
+fi
+
+# Determine if cuda events are enabled or disabled
+DISABLE_CUDA_EVENTS=""
+if [ "$2" ]; then
+    # Can either be --disable-cuda-events=<yes,no>
+    DISABLE_CUDA_EVENTS=$2
 fi
 
 # Disable high-level output
@@ -178,7 +187,14 @@ if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
       if [ -x $i ]; then
         RAN="$i $RAN"
         printf "Running %-50s %s" $i:
-        $VALGRIND ./$i $TESTS_QUIET
+        # For all_native_events an optional flag of --disable-cuda-events=<yes,no>
+        # can be provided; however, passing this to ctests/calibrate.c will result
+        # in the help message being displayed instead of running
+        if [ "$i" = "ctests/all_native_events" ] || [ "$i" = "ctests/get_event_component" ]; then
+          $VALGRIND ./$i $TESTS_QUIET $DISABLE_CUDA_EVENTS
+        else
+          $VALGRIND ./$i $TESTS_QUIET
+        fi
   
         #delete output folder for high-level tests
         case "$i" in
