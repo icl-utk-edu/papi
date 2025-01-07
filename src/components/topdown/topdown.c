@@ -36,14 +36,25 @@ papi_vector_t _topdown_vector;
 static _topdown_native_event_entry_t *topdown_native_events = NULL;
 static int num_events = 0;
 
+
+#define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
+#define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
+#define INTEL_CORE_TYPE_HOMOGENEOUS	-1		/* core type is non-issue */
+static int required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
+
 /**************************/
 /* x86 specific functions */
 /**************************/
 
+/* forward declaration of assert_affinity so _rdpmc() can call it */
+void assert_affinity(int core_type);
+
+/* rdpmc instruction wrapper */
 static inline unsigned long long _rdpmc(unsigned int counter) {
 
 	unsigned int low, high;
 
+	assert_affinity(required_core_type);
 	__asm__ volatile("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
 
 	return (unsigned long long)low | ((unsigned long long)high) <<32;
@@ -64,16 +75,11 @@ void cpuid2( cpuid_reg_t *reg, unsigned int func, unsigned int subfunc )
 			 : "a"  (func), "c" (subfunc));
 }
 
-#define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
-#define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
-#define INTEL_CORE_TYPE_HOMOGENEOUS	-1		/* not an issue */
-
 /**************************************/
 /* Hybrid processor support functions */
 /**************************************/
 
 /* ensure the core this process is running on is of the correct type */
-static int required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
 int active_core_type_is(int core_type)
 {
 	cpuid_reg_t reg;
@@ -124,6 +130,16 @@ void handle_affinity_error(int allowed_type)
 		allowed_name);
 
 	exit(127);
+}
+
+/* assert that the current process affinity is to an allowed core type */
+void assert_affinity(int core_type) {
+	if (core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
+		/* ensure the process is still on a valid core to avoid segfaulting */
+		if (!active_core_type_is(core_type)) {
+			handle_affinity_error(core_type);
+		}
+	}
 }
 
 /********************************/
@@ -533,16 +549,11 @@ _topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	(void) ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 
-	if (required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
-		/* ensure the process is still on a valid core to avoid segfaulting */
-		if (!active_core_type_is(required_core_type)) {
-			handle_affinity_error(required_core_type);
-		}
-	}
-
 	/* reset the PERF_METRICS counter and slots to maintain precision */
 	/* as per the recommendation section 21.3.9.3 of the IA-32 Architectures */
 	/* Software Developer’s Manual */
+
+	/* these ioctl calls do not need to be protected by assert_affinity() */
 	ioctl(control->slots_fd, PERF_EVENT_IOC_RESET, 0);
 	ioctl(control->metrics_fd, PERF_EVENT_IOC_RESET, 0);
 
@@ -564,13 +575,6 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	double ma, mb, perc, tmp;
 
 	retval = PAPI_OK;
-
-	if (required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
-		/* ensure the process is still on a valid core to avoid segfaulting */
-		if (!active_core_type_is(required_core_type)) {
-			handle_affinity_error(required_core_type);
-		}
-	}
 
 	slots_after = read_slots();
 	metrics_after = read_metrics();
