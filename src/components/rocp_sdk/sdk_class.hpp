@@ -8,7 +8,7 @@
 //#include <rocprofiler-sdk/dispatch_profile.h>
 //#include <rocprofiler-sdk/agent_profile.h>
 #include <rocprofiler-sdk/device_counting_service.h>
-#include <rocprofiler-sdk/agent_profile.h>
+//#include <rocprofiler-sdk/agent_profile.h>
 #include <rocprofiler-sdk/rocprofiler.h>
 
 #include "papi.h"
@@ -33,7 +33,9 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#if (__cplusplus >= 201402L) // c++14
 #include <shared_mutex>
+#endif
 #include <condition_variable>
 #include <regex>
 #include <string>

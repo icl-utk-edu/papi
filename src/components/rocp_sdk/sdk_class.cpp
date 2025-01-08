@@ -30,7 +30,21 @@ typedef struct {
 
 std::atomic<unsigned int> _global_papi_event_count{0};
 std::atomic<unsigned int> _base_event_count{0};
+#if (__cplusplus >= 201703L) // c++17
 static std::shared_mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::shared_lock
+#define UNIQUE_LOCK std::unique_lock
+#elif (__cplusplus >= 201402L) // c++14
+static std::shared_timed_mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::shared_lock<std::shared_timed_mutex>
+#define UNIQUE_LOCK std::unique_lock<std::shared_timed_mutex>
+#elif (__cplusplus >= 201103L) // c++11
+static std::mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::lock_guard<std::mutex>
+#define UNIQUE_LOCK std::lock_guard<std::mutex>
+#else
+#error "c++11 or higher is required"
+#endif
 static std::mutex agent_mutex = {};
 static std::condition_variable agent_cond_var = {};
 static bool data_is_ready = false;
@@ -56,7 +70,9 @@ typedef rocprofiler_status_t (* rocprofiler_sample_device_counting_service_t) (r
 
 typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
 
-typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_agent_profile_callback_t cb, void *user_data);
+typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_device_counting_service_callback_t cb, void *user_data);
+
+
 
 typedef rocprofiler_status_t (* rocprofiler_create_buffer_t) (rocprofiler_context_id_t context, unsigned long size, unsigned long watermark, rocprofiler_buffer_policy_t policy, rocprofiler_buffer_tracing_cb_t callback, void *callback_data, rocprofiler_buffer_id_t *buffer_id);
 
@@ -322,7 +338,8 @@ dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
     // existing config from the cache they can all do this at the same
     // time. If there is nothing in the cache, they will exit this scope
     // and the lock will be automatically released.
-    auto rlock = std::shared_lock{profile_cache_mutex};
+    const SHARED_LOCK rlock(profile_cache_mutex);
+
     auto pos = rpsdk_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
     if( rpsdk_profile_cache.end() != pos ){
         *config = pos->second;
@@ -369,7 +386,8 @@ set_profile(rocprofiler_context_id_t                 context_id,
             rocprofiler_agent_set_profile_callback_t set_config,
             void*)
 {
-    auto rlock = std::shared_lock{profile_cache_mutex};
+    const SHARED_LOCK rlock(profile_cache_mutex);
+
     auto pos = rpsdk_profile_cache.find(agent.handle);
     if( rpsdk_profile_cache.end() != pos ){
         set_config(context_id, pos->second);
@@ -853,7 +871,7 @@ set_profile_cache(vendorp_ctx_t ctx){
 
     // Acquire a unique lock so that no other thread can try to read
     // the profile cache while we are modifying it.
-    auto wlock = std::unique_lock{profile_cache_mutex};
+    const UNIQUE_LOCK wlock(profile_cache_mutex);
 
     rpsdk_profile_cache.clear();
 

@@ -13,7 +13,7 @@ template_tests: $(TESTS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(OPTFLAGS) -c -o $@ $<
 
 kernel.o: kernel.cpp
-	$(PAPI_ROCP_SDK_ROOT)/bin/amdclang++ -D__HIP_ROCclr__=1 -O2 -g -DNDEBUG -std=gnu++17 --offload-arch=gfx90a --offload-arch=gfx90a -W -Wall -Wextra -Wshadow -o kernel.o -x hip -c kernel.cpp
+	$(PAPI_ROCP_SDK_ROOT)/bin/amdclang++ -D__HIP_ROCclr__=1 -O2 -g -DNDEBUG --offload-arch=gfx90a --offload-arch=gfx90a -W -Wall -Wextra -Wshadow -o kernel.o -x hip -c kernel.cpp
 
 simple: simple.o kernel.o
 	$(PAPI_ROCP_SDK_ROOT)/bin/amdclang++ -O2 -g -DNDEBUG --offload-arch=gfx90a --offload-arch=gfx90a --hip-link --rtlib=compiler-rt -unwindlib=libgcc simple.o kernel.o -o simple $(PAPI_ROCP_SDK_ROOT)/lib/libamdhip64.so.6 $(LDFLAGS)
