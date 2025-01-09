@@ -557,7 +557,6 @@ static int calculate_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig,
         .structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE,
         .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
-        .maxPassCount = 1,
     };
     nvpa_err = NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams);
     if (nvpa_err != NVPA_STATUS_SUCCESS) {
