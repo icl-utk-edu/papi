@@ -2547,7 +2547,12 @@ static int evt_name_to_device(const char *name, int *device)
 {
     char *p = strstr(name, ":device=");
     if (p) {
-        *device = (int) strtol(p + strlen(":device="), NULL, 10);
+        char *endPtr;
+        *device = (int) strtol(p + strlen(":device="), &endPtr, 10);
+        /* check to make sure no excess characters have been appeneded */
+        if (*endPtr != '\0') {
+            return PAPI_ENOEVNT;
+        }
     }
     else {
         *device = 0;
