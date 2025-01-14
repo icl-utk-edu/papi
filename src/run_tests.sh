@@ -50,7 +50,7 @@ fi
 # Check for active 'perf_event' component
 PERF_EVENT_ACTIVE=$(utils/papi_component_avail | awk '/Active components:/{flag=1; next} flag' | grep -q "perf_event" && echo "true" || echo "false")
 
-if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
+if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
     VTESTS=`find validation_tests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
     CTESTS=`find ctests/* -prune -perm -u+x -type f ! -name "*.[c|h]"`;
     #CTESTS=`find ctests -maxdepth 1 -perm -u+x -type f`;
@@ -139,7 +139,7 @@ fi
 export LIBPATH
 
 
-if [ "$PERF_EVENT_ACTIVE" == "true" ]; then
+if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
   
   echo ""
   echo "Running Event Validation Tests";
@@ -255,7 +255,7 @@ do
         printf "Running $i:\n";
         printf "%-59s" ""
         cmp=`echo $i | sed 's:components/::' | sed 's:/.*$::'`;
-        if [ x$cmp == xsde ]; then
+        if [ x$cmp = xsde ]; then
             LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/components/sde/sde_lib:${PWD}/components/sde/tests/lib $VALGRIND ./$i $TESTS_QUIET
         else
             $VALGRIND ./$i $TESTS_QUIET
