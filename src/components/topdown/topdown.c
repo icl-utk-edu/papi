@@ -550,16 +550,16 @@ _topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 
 	/* reset the PERF_METRICS counter and slots to maintain precision */
-	/* as per the recommendation section 21.3.9.3 of the IA-32 Architectures */
-	/* Software Developer’s Manual */
+	/* as per the recommendation of section 21.3.9.3 of the IA-32
+	/* Architectures Software Developer’s Manual. Resetting means we do not */
+	/* need to record 'before' metrics/slots values, as they are always */
+	/* effectively 0. Despite the reset meaning we don't need to record */
+	/* the slots value at all, the SDM states that SLOTS and the PERF_METRICS */
+	/* MSR should be reset together, so we do that here. */
 
 	/* these ioctl calls do not need to be protected by assert_affinity() */
 	ioctl(control->slots_fd, PERF_EVENT_IOC_RESET, 0);
 	ioctl(control->metrics_fd, PERF_EVENT_IOC_RESET, 0);
-
-	/* record the before values */
-	control->slots_before = read_slots();
-	control->metrics_before = read_metrics();
 
 	return PAPI_OK;
 }
@@ -569,17 +569,14 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
 	_topdown_context_t *context = (_topdown_context_t *)ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
-	unsigned long long slots_after, slots_delta, metrics_after;
+	unsigned long long metrics_after;
 
 	int i, retval;
-	double ma, mb, perc, tmp;
+	double ma, mb, perc;
 
 	retval = PAPI_OK;
 
-	slots_after = read_slots();
 	metrics_after = read_metrics();
-
-	slots_delta = slots_after - control->slots_before;
 
 	/* extract the values */
 	for (i = 0; i < TOPDOWN_MAX_COUNTERS; i++)
@@ -589,33 +586,18 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 			/* handle case where the metric is not derived */
 			if (topdown_native_events[i].metric_idx >= 0)
 			{
-				/* get the before and after metric	 as a fraction between */
-				/* 0.0 and 1.0, and scale by slots */
-				ma = extract_metric(topdown_native_events[i].metric_idx,
-					control->metrics_before) * control->slots_before;
-				mb = extract_metric(topdown_native_events[i].metric_idx,
-					metrics_after) * slots_after;
-
-				/* calculate the percentage of slots it was measured in */
-				perc = (mb - ma) / slots_delta * 100.0;
+				perc = extract_metric(topdown_native_events[i].metric_idx,
+					metrics_after) * 100.0;
 			}
-			else
-			{ /* handle case where the metric is derived */
-				/* get the percentage measured for the parent metric */
-				ma = extract_metric(topdown_native_events[i].derived_parent_idx,
-					control->metrics_before) * control->slots_before;
-				mb = extract_metric(topdown_native_events[i].derived_parent_idx,
-					metrics_after) * slots_after;
-				tmp = (mb - ma) / slots_delta * 100.0;
-
-				/* get the percentage measured for the sibling metric */
-				ma = extract_metric(topdown_native_events[i].derived_sibling_idx,
-					control->metrics_before) * control->slots_before;
-				mb = extract_metric(topdown_native_events[i].derived_sibling_idx,
-					metrics_after) * slots_after;
-
+			else /* handle case where the metric is derived */
+			{
 				/* metric perc = parent perc - sibling perc */
-				perc = tmp - ((mb - ma) / slots_delta * 100.0);
+				perc = extract_metric(
+					topdown_native_events[i].derived_parent_idx,
+					metrics_after) * 100.0
+					- extract_metric(
+					topdown_native_events[i].derived_sibling_idx,
+					metrics_after) * 100.0;
 			}
 
 			/* sometimes the percentage will be a very small negative value */ 
