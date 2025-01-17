@@ -491,11 +491,24 @@ AC_ARG_WITH(CPU,
 		      CPU="x86"
 
                    elif test "$family" = "ppc64" || test "$family" = "ppc64le"; then
-                     cuda_version=`grep -r '#define CUDA_VERSION [0-9]' $PAPI_CUDA_ROOT/include/cuda.h | awk '{print $3}'`
-                     if (test "$family" = "ppc64le" && test "$CC_COMMON_NAME" = "gcc" && test "$major" -ge 8 \
-                      && test "$major" -lt 9 && test "$cuda_version" -ge 10000 && test "$cuda_version" -lt 11000); then
-                        NVPPC64LEFLAGS="-Xcompiler -mno-float128"
-                     fi
+
+                     if (test "$family" = "ppc64le" && test "$CC_COMMON_NAME" = "gcc"); then 
+                       # set cuda_version to be 0, such that we avoid "integer expression expected"
+                       cuda_version=0
+                       if (test ! -z "$PAPI_CUDA_ROOT"); then 
+                           update_cuda_version=`grep -r '#define CUDA_VERSION [0-9]' $PAPI_CUDA_ROOT/include/cuda.h 2>/dev/null | awk '{print $3}'`
+                           # update cuda_version, this will stay 0 unless PAPI_CUDA_ROOT was properly set to a Cuda install
+                           cuda_version=`echo "$cuda_version $update_cuda_version" | awk '{print $1 + $2}'`
+                       fi   
+                       # get gcc major number
+                       gcc_major=`gcc -v 2>&1 | tail -n 1 | awk '{printf $3}' | sed 's/\([[^.]][[^.]]*\).*/\1/'`
+                       # set variable if the gcc and cuda versions match conditions 
+                       if (test "$cuda_version" -ge 10000 && test "$cuda_version" -lt 11000 \
+                           && test "$gcc_major" -ge 8 && test "$gcc_major" -lt 9); then 
+                           NVPPC64LEFLAGS="-Xcompiler -mno-float128"
+                       fi   
+                     fi  
+
                      CPU_info="`cat /proc/cpuinfo | grep cpu | cut -d: -f2 | cut -d' ' -f2 | sed '2,$d' | tr -d ","`"
                      case "$CPU_info" in
                        PPC970*) CPU="PPC970";;
