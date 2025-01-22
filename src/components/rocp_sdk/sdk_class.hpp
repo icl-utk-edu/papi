@@ -92,6 +92,7 @@ struct vendord_ctx {
     int *event_ids;
     long long *counters;
     int num_events;
+    int has_mapping;
 };
 
 typedef struct vendord_ctx *vendorp_ctx_t;

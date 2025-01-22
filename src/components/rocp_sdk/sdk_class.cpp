@@ -58,6 +58,7 @@ std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
 
 std::set<int> active_device_set = {};
 vendorp_ctx_t active_event_set_ctx;
+rec_info_t *event_set_to_rec_mapping;
 
 std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> rpsdk_profile_cache = {};
 std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
@@ -550,7 +551,6 @@ read_sample(){
     int ret_val;
     size_t rec_count = 1024;
     rocprofiler_record_counter_t output_records[1024];
-    rec_info_t *tmp_rec_info;
 
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         goto fn_fail;
@@ -564,34 +564,38 @@ read_sample(){
         goto fn_fail;
     }
 
-    tmp_rec_info = new rec_info_t[rec_count];
+    if( !active_event_set_ctx->has_mapping ){
 
-    // Traverse all the recorded entries and cache some information about them
-    // that we will need further down when doing the matching.
-    for(int i=0; i<rec_count; ++i){
-        rocprofiler_counter_id_t counter_id;
-        rec_info_t &rec_info = tmp_rec_info[i];
+        active_event_set_ctx->has_mapping = 1;
+        event_set_to_rec_mapping = new rec_info_t[rec_count];
 
-        auto agent = gpu_agents.find( output_records[i].agent_id.handle );
-        if( gpu_agents.end() != agent ){
-            rec_info.device = agent->second->logical_node_type_id;
-        }else{
-            SUBDBG("agent_id of recorded sample %d does not correspond to a known gpu agent.\n", i);
-        }
+        // Traverse all the recorded entries and cache some information about them
+        // that we will need further down when doing the matching.
+        for(int i=0; i<rec_count; ++i){
+            rocprofiler_counter_id_t counter_id;
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
 
-        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
-        rec_info.counter_id = counter_id;
+            auto agent = gpu_agents.find( output_records[i].agent_id.handle );
+            if( gpu_agents.end() != agent ){
+                rec_info.device = agent->second->logical_node_type_id;
+            }else{
+                SUBDBG("agent_id of recorded sample %d does not correspond to a known gpu agent.\n", i);
+            }
+
+            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
+            rec_info.counter_id = counter_id;
 
 #if defined(DEBUG_OUTPUT)
-        printf(" ## output_records[%d].id: %lu -> counter_id: %lu Value= %lf\n", i, output_records[i].id, counter_id.handle, output_records[i].counter_value);
-	fflush(stdout);
+            printf(" ## output_records[%d].id: %lu -> counter_id: %lu Value= %lf\n", i, output_records[i].id, counter_id.handle, output_records[i].counter_value);
+	    fflush(stdout);
 #endif // DEBUG_OUTPUT
 
-        std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
-        for(auto& dim : dimensions ){
-            unsigned long pos=0;
-            ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
-            rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+            std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
+            for(auto& dim : dimensions ){
+                unsigned long pos=0;
+                ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
+                rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+            }
         }
     }
 
@@ -608,7 +612,7 @@ read_sample(){
         event_instance_info_t e_inst = tmp->second;
 
         for(int i=0; i<rec_count; ++i){
-            rec_info_t &rec_info = tmp_rec_info[i];
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
             if( ( e_inst.device != rec_info.device ) ||
                 ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
                 !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
@@ -624,7 +628,6 @@ read_sample(){
 
 
   fn_exit:
-    delete[] tmp_rec_info;
     return papi_errno;
   fn_fail:
     papi_errno = PAPI_ECMP;
@@ -856,6 +859,10 @@ evt_enum(unsigned int *event_code, int modifier){
 void
 empty_active_event_set(void){
     active_event_set_ctx = NULL;
+
+    delete[] event_set_to_rec_mapping;
+    event_set_to_rec_mapping = nullptr;
+
     active_device_set.clear();
     return;
 }
@@ -1179,6 +1186,7 @@ init_ctx(int *event_ids, int num_events, vendorp_ctx_t ctx)
 {
     ctx->event_ids = event_ids;
     ctx->num_events = num_events;
+    ctx->has_mapping = 0;
     ctx->counters = (long long *)papi_calloc(num_events, sizeof(long long));
     if (NULL == ctx->counters) {
         return PAPI_ENOMEM;
@@ -1193,6 +1201,7 @@ finalize_ctx(vendorp_ctx_t ctx)
         ctx->event_ids = NULL;
         ctx->num_events = 0;
         free(ctx->counters);
+        ctx->counters = NULL;
     }
     free(ctx);
     return PAPI_OK;
