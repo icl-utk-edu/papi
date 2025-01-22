@@ -5,10 +5,7 @@
 #include <string.h>
 #include <rocprofiler-sdk/buffer.h>
 #include <rocprofiler-sdk/registration.h>
-//#include <rocprofiler-sdk/dispatch_profile.h>
-//#include <rocprofiler-sdk/agent_profile.h>
 #include <rocprofiler-sdk/device_counting_service.h>
-//#include <rocprofiler-sdk/agent_profile.h>
 #include <rocprofiler-sdk/rocprofiler.h>
 
 #include "papi.h"

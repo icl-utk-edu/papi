@@ -582,6 +582,11 @@ read_sample(){
         ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
         rec_info.counter_id = counter_id;
 
+#if defined(DEBUG_OUTPUT)
+        printf(" ## output_records[%d].id: %lu -> counter_id: %lu Value= %lf\n", i, output_records[i].id, counter_id.handle, output_records[i].counter_value);
+	fflush(stdout);
+#endif // DEBUG_OUTPUT
+
         std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
         for(auto& dim : dimensions ){
             unsigned long pos=0;
@@ -617,15 +622,6 @@ read_sample(){
         _counter_values[ei] = counter_value_sum;
      }
 
-#if DEBUG_OUTPUT
-    printf("\n>>##>> After sample_device_counting_service() rec_count = %lu\n\n",rec_count);
-    fflush(stdout);
-    for(int i=0; i<rec_count; ++i){
-        rocprofiler_counter_id_t counter_id;
-        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
-        std::cerr << " ## output_records[" << i << "].id: " << output_records[i].id << " -> counter_id: " << counter_id.handle << " Value= " << output_records[i].counter_value << std::endl;
-    }
-#endif // DEBUG_OUTPUT
 
   fn_exit:
     delete[] tmp_rec_info;
