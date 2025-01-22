@@ -167,7 +167,7 @@ static int _internal_hl_checkCounter ( char* counter );
 static int _internal_hl_determine_rank();
 static char *_internal_hl_remove_spaces( char *str, int mode );
 static int _internal_hl_determine_default_events();
-static int _internal_hl_read_user_events();
+static int _internal_hl_read_user_events(const char *user_events);
 static int _internal_hl_new_component(int component_id, components_t *component);
 static int _internal_hl_add_event_to_component(char *event_name, int event,
                                         short event_type, components_t *component);
