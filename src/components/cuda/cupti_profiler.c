@@ -836,7 +836,6 @@ static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl)
         .structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .pRawMetricsConfig = nvpw_metricsConfigCreateParams.pRawMetricsConfig,
-        .maxPassCount = 1,
     };
     nvpwCheckErrors( NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams), goto fn_fail );
 
