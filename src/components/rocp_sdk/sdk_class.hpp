@@ -2,8 +2,10 @@
 #define __VENDOR_PROFILER_V1_H__
 
 #include <stdint.h>
+#include <string.h>
 #include <rocprofiler-sdk/buffer.h>
 #include <rocprofiler-sdk/registration.h>
+#include <rocprofiler-sdk/device_counting_service.h>
 #include <rocprofiler-sdk/rocprofiler.h>
 
 #include "papi.h"
@@ -28,7 +30,10 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#if (__cplusplus >= 201402L) // c++14
 #include <shared_mutex>
+#endif
+#include <condition_variable>
 #include <regex>
 #include <string>
 #include <string_view>
