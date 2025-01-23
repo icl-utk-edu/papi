@@ -259,8 +259,6 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
     _papi_hwi_lock(_rocp_sdk_lock);
 
-    tmp_rec_info = new rec_info_t[record_count];
-
     // Find the logical GPU id of this dispatch.
     auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
     if( gpu_agents.end() != agent ){
@@ -270,22 +268,27 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         SUBDBG("agent_id in dispatch_data does not correspond to a known gpu agent.\n");
     }
 
-    // Traverse all the recorded entries and cache some information about them
-    // that we will need further down when doing the matching.
-    for(int i=0; i<record_count; ++i){
-        rocprofiler_counter_id_t counter_id;
-        rec_info_t &rec_info = tmp_rec_info[i];
+    if( nullptr == event_set_to_rec_mapping ){
 
-        rec_info.device = device;
+        event_set_to_rec_mapping = new rec_info_t[record_count];
 
-        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
-        rec_info.counter_id = counter_id;
+        // Traverse all the recorded entries and cache some information about them
+        // that we will need further down when doing the matching.
+        for(int i=0; i<record_count; ++i){
+            rocprofiler_counter_id_t counter_id;
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
 
-        std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
-        for(auto& dim : dimensions ){
-            unsigned long pos=0;
-            ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
-            rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+            rec_info.device = device;
+
+            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
+            rec_info.counter_id = counter_id;
+
+            std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
+            for(auto& dim : dimensions ){
+                unsigned long pos=0;
+                ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
+                rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+            }
         }
     }
 
@@ -299,7 +302,7 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         event_instance_info_t e_inst = e_tmp->second;
 
         for(int i=0; i<record_count; ++i){
-            rec_info_t &rec_info = tmp_rec_info[i];
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
             if( ( e_inst.device != rec_info.device ) ||
                 ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
                 !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
@@ -322,7 +325,6 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         std::cerr << " ## record_data[" << i << "].id: " << record_data[i].id << " -> counter_id: " << counter_id.handle << " Value= " << record_data[i].counter_value << std::endl;
     }
 #endif
-    delete[] tmp_rec_info;
     return;
 }
 
@@ -568,7 +570,7 @@ read_sample(){
 
         event_set_to_rec_mapping = new rec_info_t[rec_count];
 
-        // Traverse all the recorded entries and cache some information about them
+        // Traverse all the sampled entries and cache some information about them
         // that we will need further down when doing the matching.
         for(int i=0; i<rec_count; ++i){
             rocprofiler_counter_id_t counter_id;
