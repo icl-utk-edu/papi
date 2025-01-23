@@ -58,7 +58,7 @@ std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
 
 std::set<int> active_device_set = {};
 vendorp_ctx_t active_event_set_ctx;
-rec_info_t *event_set_to_rec_mapping;
+rec_info_t *event_set_to_rec_mapping = nullptr;
 
 std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> rpsdk_profile_cache = {};
 std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
@@ -564,9 +564,8 @@ read_sample(){
         goto fn_fail;
     }
 
-    if( !active_event_set_ctx->has_mapping ){
+    if( nullptr == event_set_to_rec_mapping ){
 
-        active_event_set_ctx->has_mapping = 1;
         event_set_to_rec_mapping = new rec_info_t[rec_count];
 
         // Traverse all the recorded entries and cache some information about them
@@ -1186,7 +1185,6 @@ init_ctx(int *event_ids, int num_events, vendorp_ctx_t ctx)
 {
     ctx->event_ids = event_ids;
     ctx->num_events = num_events;
-    ctx->has_mapping = 0;
     ctx->counters = (long long *)papi_calloc(num_events, sizeof(long long));
     if (NULL == ctx->counters) {
         return PAPI_ENOMEM;
