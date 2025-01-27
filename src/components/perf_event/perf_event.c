@@ -289,7 +289,8 @@ check_exclude_guest( void )
 
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
-		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test");
+		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test. " 
+			      "Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root.");
 		return;
 	}
 	close(ev_fd);
@@ -306,7 +307,8 @@ check_exclude_guest( void )
 			exclude_guest_unsupported=1;
 		}
 		else {
-		  PAPIERROR("Couldn't open hw_instructions in exclude_guest=1 test");
+		  PAPIERROR("Couldn't open hw_instructions in exclude_guest=1 test. "
+			        "Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root.");
 		}
 	} else {
 		exclude_guest_unsupported=0;
