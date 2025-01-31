@@ -71,7 +71,7 @@ jobs:
       - name: Run static analysis
         run: .github/workflows/clang_analysis.sh clang-analysis-output
       - name: Archive analysis results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: clang-analysis-output
