@@ -8,7 +8,7 @@ extern void launch_kernel(int device_id);
 int main(int argc, char *argv[])
 {
     int papi_errno;
-#define NUM_EVENTS (13)
+#define NUM_EVENTS (14)
     long long counters[NUM_EVENTS] = { 0 };
 
     const char *events[NUM_EVENTS] = {
@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
                   "rocp_sdk:::SQ_BUSY_CYCLES:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2:device=0",
                   "rocp_sdk:::SQ_BUSY_CYCLES:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=3:device=0",
                   "rocp_sdk:::SQ_BUSY_CYCLES:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=4:device=0",
-                  "rocp_sdk:::SQ_BUSY_CYCLES:DIMENSION_INSTANCE=0:device=0",
+                  "rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=5",
+                  "rocp_sdk:::SQ_BUSY_CYCLES:DIMENSION_INSTANCE=0",
                   "rocp_sdk:::SQ_WAVE_CYCLES:DIMENSION_SHADER_ENGINE=0:device=0",
                   "rocp_sdk:::SQ_WAVE_CYCLES:DIMENSION_SHADER_ENGINE=1:device=0",
                   "rocp_sdk:::SQ_WAVE_CYCLES:DIMENSION_SHADER_ENGINE=2:device=0",

@@ -862,7 +862,7 @@ evt_enum(unsigned int *event_code, int modifier){
                 }else if( qual_i == ev_inst.dim_info.size() ){
                     full_name = ev_inst.counter_info.name + std::string(":device=0");
                     qual_ub = std::to_string(gpu_agents.size()-1);
-                    tmp_desc = "masks: Mandatory qualifier. Range: [0-" + qual_ub + "]";
+                    tmp_desc = "masks: Range: [0-" + qual_ub + "], default=0.";
                 }else{
                     full_name = ev_inst.counter_info.name + std::string(":device=0");
                     rocprofiler_record_dimension_info_t dim = ev_inst.dim_info[qual_i];
@@ -1211,9 +1211,21 @@ rocprofiler_sdk_evt_name_to_code(const char *event_name, unsigned int *event_cod
 {
     int papi_errno = PAPI_OK;
 
-    // Qualifier "device" is mandatory.
+    // If "device" qualifier is not provived by the user, make it zero.
     if( NULL == strstr(event_name, "device=") ){
-        papi_errno = PAPI_ENOEVNT;
+        char *amended_event_name;
+        size_t len = strlen(event_name)+strlen(":device=0")+1; // +1 for '\0'
+        if( len > 1024 ){
+            return PAPI_EMISC;
+        }
+        amended_event_name = (char *)calloc(len, sizeof(char));
+        int ret = snprintf(amended_event_name, len, "%s:device=0", event_name);
+        if( ret >= len ){
+            free(amended_event_name);
+            return PAPI_EMISC;
+        }
+
+        papi_errno = papi_rocpsdk::evt_name_to_id(amended_event_name, event_code);
     }else{
         papi_errno = papi_rocpsdk::evt_name_to_id(event_name, event_code);
     }

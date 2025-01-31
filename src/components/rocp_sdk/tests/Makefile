@@ -5,7 +5,7 @@ CFLAGS    = $(OPTFLAGS)
 CPPFLAGS += $(INCLUDE)
 LDFLAGS  += $(PAPILIB) $(TESTLIB) $(UTILOBJS)
 
-#GPUARCH = $(shell rocm_agent_enumerator 2>/dev/null | head -1)
+GPUARCH = $(shell rocm_agent_enumerator 2>/dev/null | head -1)
 ifeq ($(GPUARCH),)
     GPUARCH = native
 endif
