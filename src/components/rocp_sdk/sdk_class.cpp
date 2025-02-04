@@ -1,3 +1,10 @@
+/**
+ * @file    sdk_class.cpp
+ * @author  Anthony Danalis
+ *          adanalis@icl.utk.edu
+ *
+ */
+
 #include "sdk_class.hpp"
 
 namespace papi_rocpsdk
