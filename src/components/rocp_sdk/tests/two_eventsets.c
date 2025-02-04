@@ -13,24 +13,25 @@ int main(int argc, char *argv[])
     long long counters2[NUM_EVENTS] = { 0 };
     int eventset1 = PAPI_NULL;
     int eventset2 = PAPI_NULL;
-    double exp1[NUM_EVENTS] = {1, 11000000000, 1200000000, 45000000000, 1};
-    double exp2[NUM_EVENTS] = {11000000000, 1, 1200000000, 1, 45000000000};
-    double exp3[NUM_EVENTS] = {1, 11000000000, 1, 1, 1};
+    double exp1[NUM_EVENTS] = {1, 1300000000, 55000000000, 1, 1};
+    double exp2[NUM_EVENTS] = {45000000000, 1, 40000000, 1, 1300000000};
+    double exp3[NUM_EVENTS] = {28000000000, 40000000, 1, 1300000000, 1};
+
 
     const char *events1[NUM_EVENTS] = {
-                  "rocp_sdk:::SQ_CYCLES:device=0",
-                  "rocp_sdk:::SQ_CYCLES:device=1",
+                  "rocp_sdk:::SQ_BUSY_CYCLES:device=0",
                   "rocp_sdk:::SQ_BUSY_CYCLES:device=1",
                   "rocp_sdk:::TCC_CYCLE:device=1",
+                  "rocp_sdk:::SQ_WAVES:device=0",
                   "rocp_sdk:::SQ_WAVES:device=1"
     };
 
     const char *events2[NUM_EVENTS] = {
-                  "rocp_sdk:::SQ_CYCLES:device=1",
-                  "rocp_sdk:::SQ_CYCLES:device=0",
-                  "rocp_sdk:::SQ_BUSY_CYCLES:device=1",
-                  "rocp_sdk:::SQ_WAVES:device=0",
-                  "rocp_sdk:::TCC_CYCLE:device=1"
+                  "rocp_sdk:::TCC_CYCLE:device=1",
+                  "rocp_sdk:::SQ_INSTS:device=0",
+                  "rocp_sdk:::SQ_INSTS:device=1",
+                  "rocp_sdk:::SQ_BUSY_CYCLES:device=0",
+                  "rocp_sdk:::SQ_BUSY_CYCLES:device=1"
     };
 
     papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
