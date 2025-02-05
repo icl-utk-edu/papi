@@ -14,6 +14,9 @@ To enable reading ROCP\_SDK events the user needs to link against a PAPI library
 
 Typically, the utility `papi_component_avail` (available in `papi/src/utils/papi_component_avail`) will display the components available to the user, and whether they are disabled, and when they are disabled why.
 
+## Library Version Limitations
+AMD ROCprofiler-SDK released before rocm-6.3.2 has known bugs.
+
 ## Environment Variables
 
 PAPI requires the location of the ROCM install directory. This can be
