@@ -1,4 +1,4 @@
-COMPSRCS += components/rocp_sdk/rocp_sdk.c
+COMPSRCS += components/rocp_sdk/rocp_sdk.c components/rocp_sdk/sdk_class.cpp
 
 COMPOBJS += rocp_sdk.o sdk_class.o
 
