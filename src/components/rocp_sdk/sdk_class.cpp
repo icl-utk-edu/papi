@@ -184,7 +184,7 @@ obtain_function_pointers()
     if( !first_time )
         return NULL;
 
-    const char* pathname = std::getenv("ROCP_SDK_LIB");
+    const char* pathname = std::getenv("PAPI_ROCP_SDK_LIB");
 
     // If the user gave us an explicit path to librocprofiler-sdk.so, use it.
     if ( nullptr != pathname && strlen(pathname) <= PATH_MAX ) {
@@ -1014,9 +1014,9 @@ int setup() {
     int status = 0;
 
     // Set sampling as the default mode and allow the users to change this
-    // behavior by setting the environment variable PAPI_RPSDK_DISPATCH_MODE
+    // behavior by setting the environment variable PAPI_ROCP_SDK_DISPATCH_MODE
     rpsdk_profiling_mode = RPSDK_MODE_DEVICE_SAMPLING;
-    if( NULL != getenv("PAPI_RPSDK_DISPATCH_MODE") ){
+    if( NULL != getenv("PAPI_ROCP_SDK_DISPATCH_MODE") ){
         rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
     }
 

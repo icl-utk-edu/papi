@@ -1,5 +1,5 @@
-#ifndef __VENDOR_PROFILER_V1_H__
-#define __VENDOR_PROFILER_V1_H__
+#ifndef __PAPI_ROCPSDK_INTERNAL_H__
+#define __PAPI_ROCPSDK_INTERNAL_H__
 
 #include <stdint.h>
 #include <string.h>

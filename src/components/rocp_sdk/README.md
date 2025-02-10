@@ -35,13 +35,21 @@ Within PAPI\_ROCP\_SDK\_ROOT, we expect the following standard directories:
     PAPI_ROCP_SDK_ROOT/include/rocprofiler-sdk
     PAPI_ROCP_SDK_ROOT/lib
 
-### Unusual installations
+### Counter Collection Modes
 
-For the ROCP\_SDK component to be operational, it must find the dynamic library `librocprofiler-sdk.so` at runtime. This is normally found in the standard directory structure mentioned above. For unusual installations that do not follow this structure, the user may provide the full path to the library using the environment variable: **ROCP\_SDK\_LIB**.
+The default mode is device sampling, which allows counter collection during the execution of a kernel. If a PAPI user wants to use dispatch mode, they must set the environment variable: **PAPI\_ROCP\_SDK\_DISPATCH\_MODE** before initializing PAPI.
 
 Example:
 
-    export PAPI_SDK_LIB=/opt/rocm-6.3.2/lib/librocprofiler-sdk.so.0
+    export PAPI_ROCP_SDK_DISPATCH_MODE=1
+
+### Unusual Installations
+
+For the ROCP\_SDK component to be operational, it must find the dynamic library `librocprofiler-sdk.so` at runtime. This is normally found in the standard directory structure mentioned above. For unusual installations that do not follow this structure, the user may provide the full path to the library using the environment variable: **PAPI\_ROCP\_SDK\_LIB**.
+
+Example:
+
+    export PAPI_ROCP_SDK_LIB=/opt/rocm-6.3.2/lib/librocprofiler-sdk.so.0
 
 Note that this variable takes precedence over PAPI\_ROCP\_SDK\_ROOT.
 
