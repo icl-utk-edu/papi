@@ -1,7 +1,11 @@
-#include "sdk_class.hpp"
-#include <stdio.h>
+/**
+ * @file    sdk_class.cpp
+ * @author  Anthony Danalis
+ *          adanalis@icl.utk.edu
+ *
+ */
 
-#define ROCPROF_SDK_BUG_WORKAROUND
+#include "sdk_class.hpp"
 
 namespace papi_rocpsdk
 {
@@ -9,55 +13,81 @@ using agent_map_t = std::map<uint64_t, const rocprofiler_agent_v0_t*>;
 using dim_t = std::pair<uint64_t, unsigned long>;
 using dim_vector_t = std::vector< dim_t >;
 
-#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
 static inline bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims );
-#endif
 
-struct base_event_info_t{
+typedef struct {
     rocprofiler_counter_info_v0_t counter_info;
     std::vector<rocprofiler_record_dimension_info_t> dim_info;
-};
+} base_event_info_t;
 
-struct event_instance_info_t{
+typedef struct {
     uint64_t qualifiers_present;
     std::string event_inst_name;
     rocprofiler_counter_info_v0_t counter_info;
     std::vector<rocprofiler_record_dimension_info_t> dim_info;
     dim_vector_t dim_instances;
     int device;
-};
+} event_instance_info_t;
+
+typedef struct {
+    rocprofiler_counter_id_t counter_id;
+    uint64_t device;
+    dim_vector_t recorded_dims;
+} rec_info_t;
 
 std::atomic<unsigned int> _global_papi_event_count{0};
 std::atomic<unsigned int> _base_event_count{0};
+#if (__cplusplus >= 201703L) // c++17
 static std::shared_mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::shared_lock
+#define UNIQUE_LOCK std::unique_lock
+#elif (__cplusplus >= 201402L) // c++14
+static std::shared_timed_mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::shared_lock<std::shared_timed_mutex>
+#define UNIQUE_LOCK std::unique_lock<std::shared_timed_mutex>
+#elif (__cplusplus >= 201103L) // c++11
+static std::mutex profile_cache_mutex = {};
+#define SHARED_LOCK std::lock_guard<std::mutex>
+#define UNIQUE_LOCK std::lock_guard<std::mutex>
+#else
+#error "c++11 or higher is required"
+#endif
+static std::mutex agent_mutex = {};
+static std::condition_variable agent_cond_var = {};
+static bool data_is_ready = false;
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
+static int rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
 
-agent_map_t gpu_agents = agent_map_t{};
+static agent_map_t gpu_agents = agent_map_t{};
 
-std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
+static std::unordered_map<std::string, base_event_info_t>  base_events_by_name = {};
 
-std::set<int> active_device_set = {};
-vendorp_ctx_t active_event_set_ctx;
+static std::set<int> active_device_set = {};
+static vendorp_ctx_t active_event_set_ctx = NULL;
+static std::vector<bool> index_mapping;
 
-std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> dispatch_profile_cache = {};
-std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
-std::unordered_map<std::string, unsigned int> event_instance_name_to_papi_id = {};
+static std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> rpsdk_profile_cache = {};
+static std::unordered_map<unsigned int, event_instance_info_t> papi_id_to_event_instance = {};
+static std::unordered_map<std::string, unsigned int> event_instance_name_to_papi_id = {};
 
 /* *** */
+typedef rocprofiler_status_t (* rocprofiler_flush_buffer_t) (rocprofiler_buffer_id_t buffer_id);
 
-typedef rocprofiler_status_t (* rocprofiler_sample_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags);
+typedef rocprofiler_status_t (* rocprofiler_sample_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags, rocprofiler_record_counter_t* output_records, size_t* rec_count);
 
-typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_profile_counting_dispatch_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
+typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
 
-typedef rocprofiler_status_t (* rocprofiler_configure_agent_profile_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_agent_profile_callback_t cb, void *user_data);
+typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_device_counting_service_callback_t cb, void *user_data);
+
+
 
 typedef rocprofiler_status_t (* rocprofiler_create_buffer_t) (rocprofiler_context_id_t context, unsigned long size, unsigned long watermark, rocprofiler_buffer_policy_t policy, rocprofiler_buffer_tracing_cb_t callback, void *callback_data, rocprofiler_buffer_id_t *buffer_id);
 
 typedef rocprofiler_status_t (* rocprofiler_create_context_t) (rocprofiler_context_id_t *context_id);
 
 typedef rocprofiler_status_t (* rocprofiler_start_context_t) (rocprofiler_context_id_t context_id);
- 
+
 typedef rocprofiler_status_t (* rocprofiler_stop_context_t) (rocprofiler_context_id_t context_id);
 
 typedef rocprofiler_status_t (* rocprofiler_create_profile_config_t) (rocprofiler_agent_id_t agent_id, rocprofiler_counter_id_t *counters_list, unsigned long counters_count, rocprofiler_profile_config_id_t *config_id);
@@ -88,9 +118,10 @@ typedef rocprofiler_status_t (* rocprofiler_query_record_counter_id_t) (rocprofi
 
 typedef rocprofiler_status_t (* rocprofiler_query_record_dimension_position_t) (rocprofiler_counter_instance_id_t id, rocprofiler_counter_dimension_id_t dim, unsigned long *pos);
 
-rocprofiler_sample_agent_profile_counting_service_t rocprofiler_sample_agent_profile_counting_service_FPTR;
-rocprofiler_configure_callback_dispatch_profile_counting_service_t rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR;
-rocprofiler_configure_agent_profile_counting_service_t rocprofiler_configure_agent_profile_counting_service_FPTR;
+rocprofiler_flush_buffer_t rocprofiler_flush_buffer_FPTR;
+rocprofiler_sample_device_counting_service_t rocprofiler_sample_device_counting_service_FPTR;
+rocprofiler_configure_callback_dispatch_counting_service_t rocprofiler_configure_callback_dispatch_counting_service_FPTR;
+rocprofiler_configure_device_counting_service_t rocprofiler_configure_device_counting_service_FPTR;
 rocprofiler_create_buffer_t rocprofiler_create_buffer_FPTR;
 rocprofiler_create_context_t rocprofiler_create_context_FPTR;
 rocprofiler_start_context_t rocprofiler_start_context_FPTR;
@@ -131,25 +162,59 @@ get_error_string()
     return _rocp_sdk_error_string;
 }
 
+void
+set_error_string(std::string str)
+{
+    _rocp_sdk_error_string = str;
+}
+
 int
-get_profiling_mode(){
-#if defined(AGENT_PROFILE_MODE)
-    // Warning: RPSDK_MODE_AGENT_PROFILE mode does not work properly yet, due to rocprofiler-sdk bugs.
-    static int profiling_mode = RPSDK_MODE_AGENT_PROFILE;
-#else
-    static int profiling_mode = RPSDK_MODE_CALLBACK_DISPATCH;
-#endif
-    return profiling_mode;
+get_profiling_mode(void)
+{
+    return rpsdk_profiling_mode;
 }
 
 /* ** */
 static char *
-obtain_function_pointers(void *dllHandle)
+obtain_function_pointers()
 {
+    static bool first_time = true;
+    void *dllHandle = nullptr;
 
-    DLL_SYM_CHECK(rocprofiler_sample_agent_profile_counting_service, rocprofiler_sample_agent_profile_counting_service_t);
-    DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_profile_counting_service, rocprofiler_configure_callback_dispatch_profile_counting_service_t);
-    DLL_SYM_CHECK(rocprofiler_configure_agent_profile_counting_service, rocprofiler_configure_agent_profile_counting_service_t);
+    if( !first_time )
+        return NULL;
+
+    const char* pathname = std::getenv("PAPI_ROCP_SDK_LIB");
+
+    // If the user gave us an explicit path to librocprofiler-sdk.so, use it.
+    if ( nullptr != pathname && strlen(pathname) <= PATH_MAX ) {
+        dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    }
+
+    // If we were not given an explicit path, or the path didn't work, try elsewhere.
+    if ( NULL == pathname || nullptr == dllHandle ) {
+        std::string path2;
+        const char *rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
+        if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
+            set_error_string("Did not find path for librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB.");
+            return NULL;
+        }
+        path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
+
+        // Clear previous errors.
+        (void)dlerror();
+
+        dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        if (dllHandle == NULL) {
+            set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB. Error: ")+dlerror());
+            return NULL;
+        }
+    }
+
+    DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
+    DLL_SYM_CHECK(rocprofiler_sample_device_counting_service, rocprofiler_sample_device_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_counting_service, rocprofiler_configure_callback_dispatch_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_configure_device_counting_service, rocprofiler_configure_device_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_create_context, rocprofiler_create_context_t);
     DLL_SYM_CHECK(rocprofiler_create_buffer, rocprofiler_create_buffer_t);
     DLL_SYM_CHECK(rocprofiler_start_context, rocprofiler_start_context_t);
@@ -167,6 +232,10 @@ obtain_function_pointers(void *dllHandle)
     DLL_SYM_CHECK(rocprofiler_query_counter_instance_count, rocprofiler_query_counter_instance_count_t);
     DLL_SYM_CHECK(rocprofiler_query_record_counter_id, rocprofiler_query_record_counter_id_t);
     DLL_SYM_CHECK(rocprofiler_query_record_dimension_position, rocprofiler_query_record_dimension_position_t);
+
+    // Make sure we don't run this code multiple times.
+    first_time = false;
+
     return NULL;
 }
 
@@ -177,26 +246,28 @@ std::vector<rocprofiler_record_dimension_info_t>
 counter_dimensions(rocprofiler_counter_id_t counter)
 {
     std::vector<rocprofiler_record_dimension_info_t> dims;
+    rocprofiler_available_dimensions_cb_t cb;
 
-    rocprofiler_available_dimensions_cb_t            cb =
-        [](rocprofiler_counter_id_t,
-           const rocprofiler_record_dimension_info_t* dim_info,
-           size_t                                     num_dims,
-           void*                                      user_data) {
-               std::vector<rocprofiler_record_dimension_info_t>* vec = static_cast<std::vector<rocprofiler_record_dimension_info_t>*>(user_data);
-               for(size_t i = 0; i < num_dims; i++){
-                   vec->push_back(dim_info[i]);
-               }
-               return ROCPROFILER_STATUS_SUCCESS;
-        };
+    cb = [](rocprofiler_counter_id_t, const rocprofiler_record_dimension_info_t* dim_info, size_t num_dims, void *user_data) {
+             std::vector<rocprofiler_record_dimension_info_t>* vec;
+
+             vec = static_cast<std::vector<rocprofiler_record_dimension_info_t>*>(user_data);
+             for(size_t i = 0; i < num_dims; i++){
+                 vec->push_back(dim_info[i]);
+             }
+             return ROCPROFILER_STATUS_SUCCESS;
+         };
+
+    // Use the callback defined above to populate the vector "dims" with the dimension info of counter "counter".
     ROCPROFILER_CALL(rocprofiler_iterate_counter_dimensions_FPTR(counter, cb, &dims),
                      "Could not iterate counter dimensions");
     return dims;
 }
 
 /* ** */
-#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
-bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims ){
+bool
+dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims )
+{
     // Traverse all the dimensions in the event instance (i.e. base_event+qualifiers) of an event in the active_event_set_ctx
     for(const auto &ev_inst_dim : dim_instances ){
         bool found_dim_id = false;
@@ -219,54 +290,98 @@ bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims ){
     }
     return true;
 }
-#endif
 
 /* ** */
 void
-record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
+record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 rocprofiler_record_counter_t*                record_data,
                 size_t                                       record_count,
                 rocprofiler_user_data_t,
                 void*                                        callback_data_args)
 {
+    rec_info_t *tmp_rec_info;
+    uint64_t device;
+
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
         return;
     }
 
     _papi_hwi_lock(_rocp_sdk_lock);
 
-    int idx = 0;
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
-        if( papi_id_to_event_instance.end() == e_inst ){
-            continue;
-        }
+    // Find the logical GPU id of this dispatch.
+    auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
+    if( gpu_agents.end() != agent ){
+        device = agent->second->logical_node_type_id;
+    }else{
+        device = -1;
+        SUBDBG("agent_id in dispatch_data does not correspond to a known gpu agent.\n");
+    }
 
-        double counter_value_sum = 0.0;
+    // Create the mapping from events in the eventset (passed by the user) to entries in the "record_data" array.
+    // The order of the entries in "record_data" will remain the same for a given profile, so we only need to do this once.
+    if( index_mapping.empty() ){
+        rec_info_t event_set_to_rec_mapping[record_count];
 
-        int current_gpu_id = -1;
-        auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
-        if( gpu_agents.end() != agent ){
-            current_gpu_id = agent->second->logical_node_type_id;
-        }
-        // We only populate a value for an event if the "device" qualifier set by the user
-        // matches the device of this record. Otherwise the value is zero.
-        if( e_inst->second.device == current_gpu_id ){
-            for(size_t i = 0; i < record_count; ++i){
-                rocprofiler_counter_id_t counter_id;
+        index_mapping.resize( record_count*(active_event_set_ctx->num_events), false );
 
-                ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
-                // If the counter_ids are matching, we should check if the dimensions (qualifiers) match.
-                // However, as of Aug 2024 there is a bug in rocprofiler-sdk 6.2 that causs all "id"s that map
-                // to the same counter_id to be the same, so we can't differentiate between different dimensions.
-                // For this reason we sum all dimensions into one aggregate value.
-                if( e_inst->second.counter_info.id.handle == counter_id.handle ){
-                    counter_value_sum += record_data[i].counter_value;
-                }
+        // Traverse all the recorded entries and cache some information about them
+        // that we will need further down when doing the matching.
+        for(int i=0; i<record_count; ++i){
+            rocprofiler_counter_id_t counter_id;
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
+
+            rec_info.device = device;
+
+            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
+            rec_info.counter_id = counter_id;
+
+            std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id);
+            for(auto& dim : dimensions ){
+                unsigned long pos=0;
+                ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
+                rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
             }
         }
-        _counter_values[idx] += (long long)counter_value_sum;
-        ++idx;
+
+        // Traverse all events in the active event set and find which recorded entry matches each one of them.
+        for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+            double counter_value_sum = 0.0;
+            auto e_tmp = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
+            if( papi_id_to_event_instance.end() == e_tmp ){
+                continue;
+            }
+            event_instance_info_t e_inst = e_tmp->second;
+
+            for(int i=0; i<record_count; ++i){
+                rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                if( ( e_inst.device != rec_info.device ) ||
+                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
+                  ){
+                    continue;
+                }
+                index_mapping[ei*record_count+i] = true;
+            }
+        }
+    }
+
+    // Traverse all events in the active event set and find which recorded entry matches each one of them.
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        double counter_value_sum = 0.0;
+
+        for(int i=0; i<record_count; ++i){
+            // All counters in the sample whose dimemsions match the qualifers of the event instance
+            // will be added. This means that if a qualifier is missing, we will get the sum.
+            if( true == index_mapping[ei*record_count+i] ){
+                counter_value_sum += record_data[i].counter_value;
+            }
+        }
+        // Rocprofiler-SDK default behavior in dispatch mode is to only report
+        // the value of the counters since the dispatch of the kernel. However,
+        // PAPI semantics dictate that counter values are only reset by
+        // PAPI_reset(), etc, not by kernel invocations. Therefore, we must
+        // accumulate the counter values (+=), not overwrite the previous one.
+	_counter_values[ei] += counter_value_sum;
     }
 
     _papi_hwi_unlock(_rocp_sdk_lock);
@@ -278,55 +393,13 @@ record_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
         std::cerr << " ## record_data[" << i << "].id: " << record_data[i].id << " -> counter_id: " << counter_id.handle << " Value= " << record_data[i].counter_value << std::endl;
     }
 #endif
-
-
-#if !defined(ROCPROF_SDK_BUG_WORKAROUND)
-    std::set<uint64_t> bug_workaround = {};
-    int value_idx = 0;
-    for(size_t i = 0; i < record_count; ++i){
-        rocprofiler_counter_id_t counter_id;
-        dim_vector_t recorded_dims;
-
-        /* Since in rocm6.2 all ids are the same, make sure we've only used one. */
-        if( bug_workaround.find(record_data[i].id) != bug_workaround.end() ){
-            continue;
-        }
-        bug_workaround.emplace( record_data[i].id );
-
-        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
-
-        //std::cerr << " ## record_data[" << i << "].id: " << record_data[i].id << " -> counter_id: " << counter_id.handle << std::endl;
-
-        std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id); 
-        for(auto& dim : dimensions ){
-            unsigned long pos=0;
-            ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(record_data[i].id, dim.id, &pos), "Count not retrieve dimension");
-            //std::cerr << "     {" << dim.id << ": " << dim.name << ": " << pos << "/" << dim.instance_size << "}" << std::endl;
-            recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
-        }
-
-        // Look through the active events to see if the one we just recorded is one of them.
-        for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-            auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
-            if( papi_id_to_event_instance.end() == e_inst ){
-                continue;
-            }
-            // If the counter_ids are matching, we should check if the dimensions (qualifiers) match.
-            if( e_inst->second.counter_info.id.handle == counter_id.handle ){
-                if( dimensions_match(e_inst->second.dim_instances, recorded_dims) ){
-                    //_counter_values.push_back( record_data[i].counter_value );
-                    _counter_values[value_idx++] = record_data[i].counter_value;
-                }
-            }
-        }
-    }
-#endif
+    return;
 }
 
 
 /* ** */
 void
-dispatch_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
+dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                   rocprofiler_profile_config_id_t             *config,
                   rocprofiler_user_data_t *,
                   void * )
@@ -336,9 +409,10 @@ dispatch_callback(rocprofiler_profile_counting_dispatch_data_t dispatch_data,
     // existing config from the cache they can all do this at the same
     // time. If there is nothing in the cache, they will exit this scope
     // and the lock will be automatically released.
-    auto rlock = std::shared_lock{profile_cache_mutex};
-    auto pos = dispatch_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
-    if( dispatch_profile_cache.end() != pos ){
+    const SHARED_LOCK rlock(profile_cache_mutex);
+
+    auto pos = rpsdk_profile_cache.find(dispatch_data.dispatch_info.agent_id.handle);
+    if( rpsdk_profile_cache.end() != pos ){
         *config = pos->second;
     }
     return;
@@ -352,6 +426,7 @@ get_GPU_agent_info() {
                          const void**                agents_arr,
                          size_t                      num_agents,
                          void*                       user_data) {
+
         if(agents_ver != ROCPROFILER_AGENT_INFO_VERSION_0)
             throw std::runtime_error{"unexpected rocprofiler agent version"};
 
@@ -375,106 +450,23 @@ get_GPU_agent_info() {
     return _agents;
 }
 
-#if defined(AGENT_PROFILE_MODE)
+/* ** */
 void
 set_profile(rocprofiler_context_id_t                 context_id,
             rocprofiler_agent_id_t                   agent,
             rocprofiler_agent_set_profile_callback_t set_config,
             void*)
 {
-    static std::shared_mutex                                             m_mutex       = {};
-    static std::unordered_map<uint64_t, rocprofiler_profile_config_id_t> profile_cache = {};
+    const SHARED_LOCK rlock(profile_cache_mutex);
 
-    auto search_cache = [&]() {
-        auto pos = profile_cache.find(agent.handle);
-        if( profile_cache.end() != pos ){
-            set_config(context_id, pos->second);
-            return true;
-        }
-        return false;
-    };
-
-    {
-        auto rlock = std::shared_lock{m_mutex};
-        if(search_cache()) return;
+    auto pos = rpsdk_profile_cache.find(agent.handle);
+    if( rpsdk_profile_cache.end() != pos ){
+        set_config(context_id, pos->second);
     }
-
-    auto wlock = std::unique_lock{m_mutex};
-    if(search_cache()) return;
-
-    // Create a collection profile for the counters
-    rocprofiler_profile_config_id_t profile;
-
-    std::vector<rocprofiler_counter_id_t> event_vid_list = {};
-    std::set<uint64_t> id_set = {};
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
-        // If the event does not exist in the papi_id_to_event_instance map, ignore it.
-        if( papi_id_to_event_instance.end() == e_inst ){
-            continue;
-        }
-        rocprofiler_counter_id_t vid = e_inst->second.counter_info.id;
-        // If the vid of the event (base event) is not already in the event_vid_list, then add it.
-        if( id_set.find(vid.handle) == id_set.end() ){
-            event_vid_list.emplace_back( vid );
-            id_set.emplace( vid.handle );
-        }
-    }
-
-    //Note: Right now, if a problem occurs, we can't tell which event caused the problem.
-    ROCPROFILER_CALL(rocprofiler_create_profile_config_FPTR(agent,
-                                                       event_vid_list.data(),
-                                                       event_vid_list.size(),
-                                                       &profile),
-                     "Could not construct profile cfg");
-
-    profile_cache.emplace(agent.handle, profile);
-    // Return the profile to collect those counters for this dispatch
-    set_config(context_id, profile);
+    return;
 }
 
-
-void
-accum_values(rocprofiler_record_counter_t **record_data, int record_count)
-{
-    int idx = 0;
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        auto e_inst = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
-
-        if( papi_id_to_event_instance.end() == e_inst ){
-            continue;
-        }
-
-        double counter_value_sum = 0.0;
-
-//FIXME: right now there is no way to get the id of the agent that collected this data, so accept the data disregarding the user specified "device" qualifier.
-
-//        int current_gpu_id = -1;
-//        auto agent = gpu_agents.find( dispatch_data.dispatch_info.agent_id.handle );
-//        if( gpu_agents.end() != agent ){
-//            current_gpu_id = agent->logical_node_type_id;
-//        }
-//        // We only populate a value for an event if the "device" qualifier set by the user
-//        // matches the device of this record. Otherwise the value is zero.
-//        if( e_inst->second.device == current_gpu_id ){
-            for(size_t i = 0; i < record_count; ++i){
-                rocprofiler_counter_id_t counter_id;
-
-                ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i]->id, &counter_id), "Could not retrieve counter_id");
-                // If the counter_ids are matching, we should check if the dimensions (qualifiers) match.
-                // However, as of Aug 2024 there is a bug in rocprofiler-sdk 6.2 that causs all "id"s that map
-                // to the same counter_id to be the same, so we can't differentiate between different dimensions.
-                // For this reason we sum all dimensions into one aggregate value.
-                if( e_inst->second.counter_info.id.handle == counter_id.handle ){
-                    counter_value_sum += record_data[i]->counter_value;
-                }
-            }
-//        }
-        _counter_values[idx] += (long long)counter_value_sum;
-        ++idx;
-    }
-}
-
+/* ** */
 void
 buffered_callback(rocprofiler_context_id_t,
                   rocprofiler_buffer_id_t,
@@ -483,33 +475,8 @@ buffered_callback(rocprofiler_context_id_t,
                   void*                         user_data,
                   uint64_t)
 {
-    std::stringstream ss;
-    std::vector<rocprofiler_record_counter_t *> record_data;
-
-    // Iterate through the returned records
-    for(size_t i = 0; i < num_headers; ++i)
-    {
-        auto* header = headers[i];
-        if(header->category == ROCPROFILER_BUFFER_CATEGORY_COUNTERS &&
-           header->kind == ROCPROFILER_COUNTER_RECORD_VALUE)
-        {
-            // Print the returned counter data.
-            auto *record = static_cast<rocprofiler_record_counter_t*>(header->payload);
-            record_data.emplace_back(record);
-            ss << "  (Id: " << record->id << " Value [D]: " << record->counter_value << ","
-               << " user_data: " << record->user_data.value << ")\n";
-        }
-    }
-    std::cout << "[" << __FUNCTION__ << "]:\n" << ss.str() << "--------------------------------" << std::endl;
-
-    accum_values(record_data.data(), record_data.size());
-    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        std::cout << _counter_values[ei] << "\n";
-    }
-    std::cout << "------------------------" << std::endl;
-
+	return;
 }
-#endif // defined(AGENT_PROFILE_MODE)
 
 /* ** */
 int
@@ -521,19 +488,17 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
 
     ROCPROFILER_CALL(rocprofiler_create_context_FPTR(&get_client_ctx()), "context creation");
 
-    if( RPSDK_MODE_AGENT_PROFILE == get_profiling_mode() ){
-#if defined(AGENT_PROFILE_MODE)
+    if( RPSDK_MODE_DEVICE_SAMPLING == get_profiling_mode() ){
         ROCPROFILER_CALL(rocprofiler_create_buffer_FPTR(get_client_ctx(),
-                                               1024,
-                                               0,
+                                               32*1024,
+                                               16*1024,
                                                ROCPROFILER_BUFFER_POLICY_LOSSLESS,
                                                buffered_callback,
                                                tool_data,
                                                &get_buffer()),
                          "buffer creation failed");
-#endif
     }else{
-        ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_profile_counting_service_FPTR(
+        ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_counting_service_FPTR(
                              get_client_ctx(), dispatch_callback, tool_data, record_callback, tool_data),
                          "Could not setup callback dispatch");
     }
@@ -550,19 +515,13 @@ delete_event_list(void){
 
 /* ** */
 static int
-find_or_assign_id_to_event(std::string event_name, event_instance_info_t ev_inst_info){
+assign_id_to_event(std::string event_name, event_instance_info_t ev_inst_info){
     int papi_event_id = -1;
 
-    // Check if the event is already known.
-    auto it1 = event_instance_name_to_papi_id.find( event_name );
-    if( event_instance_name_to_papi_id.end() != it1 ){
-        papi_event_id = it1->second;
-    }else{
-        // Note: _global_papi_event_count is std::atomic, so the followign line is thread safe.
-        papi_event_id = _global_papi_event_count++;
-        papi_id_to_event_instance[ papi_event_id ] = ev_inst_info;
-        event_instance_name_to_papi_id[ event_name ] = papi_event_id;
-    }
+    // Note: _global_papi_event_count is std::atomic, so the followign line is thread safe.
+    papi_event_id = _global_papi_event_count++;
+    papi_id_to_event_instance[ papi_event_id ] = ev_inst_info;
+    event_instance_name_to_papi_id[ event_name ] = papi_event_id;
 
     return papi_event_id;
 }
@@ -601,13 +560,9 @@ populate_event_list(void){
         ROCPROFILER_CALL(
              rocprofiler_query_counter_info_FPTR(counter, ROCPROFILER_COUNTER_INFO_VERSION_0, static_cast<void*>(&counter_info)),
             "Could not query info");
-             
+
         std::vector<rocprofiler_record_dimension_info_t> dim_info;
-#if defined(ROCPROF_SDK_BUG_WORKAROUND)
-        dim_info = {};
-#else
         dim_info = counter_dimensions(counter_info.id);
-#endif
 
         base_events_by_name[counter_info.name].counter_info = counter_info;
         base_events_by_name[counter_info.name].dim_info = dim_info;
@@ -623,7 +578,7 @@ populate_event_list(void){
         ev_inst_info.dim_info = dim_info;
         ev_inst_info.dim_instances = {};
         ev_inst_info.device = -1;
-        (void)find_or_assign_id_to_event(counter_info.name, ev_inst_info);
+        (void)assign_id_to_event(counter_info.name, ev_inst_info);
     }
 
     return;
@@ -639,23 +594,23 @@ void stop_counting(void){
 /* ** */
 void
 start_counting(vendorp_ctx_t ctx){
+    static bool is_device_counting_configured = false;
 
-#if defined(AGENT_PROFILE_MODE)
-    if( RPSDK_MODE_AGENT_PROFILE == get_profiling_mode() ){
-        for(auto act_dev_it=active_device_set.begin(); act_dev_it!=active_device_set.end(); ++act_dev_it){
-            for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
-                int agent_logical_gpu_id = g_it->second->logical_node_type_id;
-                if( *act_dev_it == agent_logical_gpu_id ){
-                    ROCPROFILER_CALL(rocprofiler_configure_agent_profile_counting_service_FPTR(
-                                         get_client_ctx(), get_buffer(), g_it->second->id, set_profile, nullptr),
-                                     "Could not setup agent profiling");
-                }
-            }
+    // Store a pointer to the counter value array in a global variable so that
+    // our functions that are called from the ROCprofiler-SDK (instead of our
+    // API) can still find the array.
+    _counter_values = ctx->counters;
+
+    if( (RPSDK_MODE_DEVICE_SAMPLING == get_profiling_mode()) && !is_device_counting_configured ){
+        is_device_counting_configured = true;
+        // Configure device_counting_service for all devices.
+        for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
+            ROCPROFILER_CALL(rocprofiler_configure_device_counting_service_FPTR(
+                                 get_client_ctx(), get_buffer(), g_it->second->id, set_profile, nullptr),
+                             "Could not setup sampling");
         }
     }
-#endif
 
-    _counter_values = ctx->counters;
     ROCPROFILER_CALL(rocprofiler_start_context_FPTR(get_client_ctx()), "start context");
 }
 
@@ -663,21 +618,103 @@ start_counting(vendorp_ctx_t ctx){
 int
 read_sample(){
     int papi_errno = PAPI_OK;
-    static uint64_t count=0;
+    int ret_val;
+    size_t rec_count = 1024;
+    rocprofiler_record_counter_t output_records[1024];
 
-    int ret_val = rocprofiler_sample_agent_profile_counting_service_FPTR(
-                get_client_ctx(), {.value = count}, ROCPROFILER_COUNTER_FLAG_NONE);
-
-    if( ret_val == ROCPROFILER_STATUS_SUCCESS ){
-        ++count;
-    }else{
+    if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
+        papi_errno = PAPI_ENOTRUN;
         goto fn_fail;
+    }
+
+    ret_val = rocprofiler_sample_device_counting_service_FPTR(
+                get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE,
+                output_records, &rec_count);
+
+    if( ret_val != ROCPROFILER_STATUS_SUCCESS ){
+        papi_errno = PAPI_ECMP;
+        goto fn_fail;
+    }
+
+    // Create the mapping from events in the eventset (passed by the user) to entries (samples) in the "output_records" array.
+    // The order of the entries in "output_records" will remain the same for a given profile, so we only need to do this once.
+    if( index_mapping.empty() ){
+        rec_info_t event_set_to_rec_mapping[rec_count];
+
+        index_mapping.resize( rec_count*(active_event_set_ctx->num_events), false );
+
+        // Traverse all the sampled entries and cache some information about them
+        // that we will need further down when doing the matching.
+        for(int i=0; i<rec_count; ++i){
+            rocprofiler_counter_id_t counter_id;
+            rec_info_t &rec_info = event_set_to_rec_mapping[i];
+
+            auto agent = gpu_agents.find( output_records[i].agent_id.handle );
+            if( gpu_agents.end() != agent ){
+                rec_info.device = agent->second->logical_node_type_id;
+            }else{
+                SUBDBG("agent_id of recorded sample %d does not correspond to a known gpu agent.\n", i);
+            }
+
+            ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
+            rec_info.counter_id = counter_id;
+
+#if defined(DEBUG_OUTPUT)
+            printf(" ## output_records[%d].id: %lu -> counter_id: %lu Value= %lf\n", i, output_records[i].id, counter_id.handle, output_records[i].counter_value);
+	    fflush(stdout);
+#endif // DEBUG_OUTPUT
+
+            std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id);
+            for(auto& dim : dimensions ){
+                unsigned long pos=0;
+                ROCPROFILER_CALL(rocprofiler_query_record_dimension_position_FPTR(output_records[i].id, dim.id, &pos), "Count not retrieve dimension");
+                rec_info.recorded_dims.emplace_back( std::make_pair(dim.id, pos) );
+            }
+        }
+
+        // Traverse all events in the active event set and find which entries in the set of samples matches each one of them.
+        for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+            double counter_value_sum = 0.0;
+
+            // Find the internal event instance.
+            auto tmp = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
+            if( papi_id_to_event_instance.end() == tmp ){
+                SUBDBG("EventSet contains an event id that is unknown to the rocp_sdk component.\n");
+                continue;
+            }
+            event_instance_info_t e_inst = tmp->second;
+
+            for(int i=0; i<rec_count; ++i){
+                rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                if( ( e_inst.device != rec_info.device ) ||
+                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
+                  ){
+                    continue;
+                }
+
+                index_mapping[ei*rec_count+i] = true;
+            }
+        }
+    }
+
+    // Traverse all events in the active event set and find which entry in the sample matches each one of them.
+    for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
+        double counter_value_sum = 0.0;
+
+        for(int i=0; i<rec_count; ++i){
+            // All counters in the sample whose dimemsions match the qualifers of the event instance
+            // will be added. This means that if a qualifier is missing, we will get the sum.
+            if( true == index_mapping[ei*rec_count+i] ){
+                counter_value_sum += output_records[i].counter_value;
+            }
+        }
+        _counter_values[ei] = counter_value_sum;
     }
 
   fn_exit:
     return papi_errno;
   fn_fail:
-    papi_errno = PAPI_ECMP;
     goto fn_exit;
 }
 
@@ -709,8 +746,8 @@ evt_id_to_name(int papi_event_id, const char **name){
 
 
 /* ** */
-int
-evt_name_to_id(std::string event_name, unsigned int *event_id){
+static int
+build_event_info_from_name(std::string event_name, event_instance_info_t *ev_inst_info){
     int pos=0, ppos=0;
     std::vector<std::string> qualifiers = {};
     dim_vector_t dim_instances = {};
@@ -724,22 +761,9 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
     }else{
         base_event_name = event_name.substr(0, pos-0);
         ppos = pos+1;
+        // Tokenize the event name and keep the qualifiers in a vector.
         while( (pos=event_name.find(':', ppos)) != event_name.npos){
             std::string qual_tuple = event_name.substr(ppos,pos-ppos);
-
-#if defined(ROCPROF_SDK_BUG_WORKAROUND)
-            pos=qual_tuple.find('=');
-            if( pos != qual_tuple.npos){
-                SUBDBG("All qualifiers must have the form \"qual_name=qual_value\".");
-                return PAPI_EINVAL;
-            }
-            std::string qual_name = qual_tuple.substr(0, pos-0);
-            if( 0 != qual_name.compare("device") ){
-                SUBDBG("Currently, only qualifer \"device\" is supported due to a bug in rocprofiler-sdk.");
-                return PAPI_EINVAL;
-            }
-#endif
-
             qualifiers.emplace_back( qual_tuple );
             ppos = pos+1;
         }
@@ -766,6 +790,7 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
         // The "device" qualifier does not appear as a rocprofiler-sdk dimension.
         // It comes from us (the PAPI component), so it needs special treatment.
         if( qual_name.compare("device") == 0 ){
+            // We use the most significant bit to designate the presence of the "device" qualifier.
             qualifiers_present |= (1 << base_event_info.dim_info.size());
             device_qualifier_value = qual_val;
         }else{
@@ -778,11 +803,13 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
                         return PAPI_EINVAL;
                     }
                     dim_instances.emplace_back( std::make_pair(dim.id, qual_val) );
-                    // Mark which qualifiers we have found based on the order in which they appear in 
+                    // Mark which qualifiers we have found based on the order in which they appear in
                     // base_event_info.dim_info, NOT based on the order the user provided them.
                     // This will work up to 64 possible qualifiers.
                     if( qual_i < 64 ){
                         qualifiers_present |= (1 << qual_i);
+                    }else{
+                        SUBDBG("More than 64 qualifiers detected in event name: %s\n",event_name.c_str());
                     }
                 }
                 ++qual_i;
@@ -791,28 +818,40 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
 
     }
 
-    // Qualifer "device" is mandatory.
-    if( 0 == (qualifiers_present & (1 << base_event_info.dim_info.size())) ){
-        SUBDBG("Qualifier \"device\" is mandatory.");
-        return PAPI_ENOEVNT;
-    }
-
     // Sort the qualifiers (dimension instances) based on dimension id. This allows the user to give us the
     // qualifiers in any order.
     std::sort(dim_instances.begin(), dim_instances.end(),
               [](const dim_t &a, const dim_t &b) { return (a.first < b.first); }
              );
 
+    ev_inst_info->qualifiers_present = qualifiers_present;
+    ev_inst_info->event_inst_name = event_name;
+    ev_inst_info->counter_info = base_event_info.counter_info;
+    ev_inst_info->dim_info = base_event_info.dim_info;
+    ev_inst_info->dim_instances = dim_instances;
+    ev_inst_info->device = device_qualifier_value;
 
+    return PAPI_OK;
+}
+
+int
+evt_name_to_id(std::string event_name, unsigned int *event_id){
+    int ret_val = PAPI_OK;
     event_instance_info_t ev_inst_info;
-    ev_inst_info.qualifiers_present = qualifiers_present;
-    ev_inst_info.event_inst_name = event_name;
-    ev_inst_info.counter_info = base_event_info.counter_info;
-    ev_inst_info.dim_info = base_event_info.dim_info;
-    ev_inst_info.dim_instances = dim_instances;
-    ev_inst_info.device = device_qualifier_value;
+    unsigned int papi_event_id;
 
-    unsigned int papi_event_id = find_or_assign_id_to_event(event_name, ev_inst_info);
+    // If the event already exists in our metadata, return its id.
+    auto it1 = event_instance_name_to_papi_id.find( event_name );
+    if( event_instance_name_to_papi_id.end() != it1 ){
+        papi_event_id = it1->second;
+    }else{
+        // If we've never seen this event before, insert the info into our metadata.
+        ret_val = build_event_info_from_name(event_name, &ev_inst_info);
+        if( PAPI_OK != ret_val ){
+            return ret_val;
+        }
+        papi_event_id = assign_id_to_event(event_name, ev_inst_info);
+    }
 
     *event_id = papi_event_id;
     return PAPI_OK;
@@ -855,7 +894,7 @@ evt_enum(unsigned int *event_code, int modifier){
                 }
                 ev_inst = it->second;
                 int qual_i=-1;
-                // Find the last qualifier present so that we can create an event instance using the next qualifier in the list. 
+                // Find the last qualifier present so that we can create an event instance using the next qualifier in the list.
                 for(int i=0; i<64; ++i){
                     if( ( ev_inst.qualifiers_present >> i) & 0x1 ){
                         qual_i = i;
@@ -872,7 +911,7 @@ evt_enum(unsigned int *event_code, int modifier){
                 }else if( qual_i == ev_inst.dim_info.size() ){
                     full_name = ev_inst.counter_info.name + std::string(":device=0");
                     qual_ub = std::to_string(gpu_agents.size()-1);
-                    tmp_desc = "masks: Mandatory qualifier. Range: [0-" + qual_ub + "]";
+                    tmp_desc = "masks: Range: [0-" + qual_ub + "], default=0.";
                 }else{
                     full_name = ev_inst.counter_info.name + std::string(":device=0");
                     rocprofiler_record_dimension_info_t dim = ev_inst.dim_info[qual_i];
@@ -902,20 +941,23 @@ evt_enum(unsigned int *event_code, int modifier){
 void
 empty_active_event_set(void){
     active_event_set_ctx = NULL;
+
+    index_mapping.clear();
+
     active_device_set.clear();
     return;
 }
 
 /* ** */
 int
-set_dispatch_profiles(vendorp_ctx_t ctx){
+set_profile_cache(vendorp_ctx_t ctx){
     std::map<uint64_t, std::vector<event_instance_info_t> > active_events_per_device;
 
     // Acquire a unique lock so that no other thread can try to read
     // the profile cache while we are modifying it.
-    auto wlock = std::unique_lock{profile_cache_mutex};
+    const UNIQUE_LOCK wlock(profile_cache_mutex);
 
-    dispatch_profile_cache.clear();
+    rpsdk_profile_cache.clear();
 
     for( int i=0; i < ctx->num_events; ++i) {
         // make sure the event exists.
@@ -953,7 +995,7 @@ set_dispatch_profiles(vendorp_ctx_t ctx){
                                                            &profile),
                          "Could not construct profile cfg");
 
-        dispatch_profile_cache.emplace(agent->id.handle, profile);
+        rpsdk_profile_cache.emplace(agent->id.handle, profile);
     }
 
     return PAPI_OK;
@@ -968,44 +1010,26 @@ void tool_fini(void* tool_data) {
 
 /* ** */
 int setup() {
-    void *dllHandle = nullptr;
-    char *pathname = getenv("ROCP_SDK_LIB");
     char *error_msg = NULL;
     int status = 0;
 
-    if ( NULL != pathname && strlen(pathname) <= PATH_MAX ) {
-        dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    // Set sampling as the default mode and allow the users to change this
+    // behavior by setting the environment variable PAPI_ROCP_SDK_DISPATCH_MODE
+    rpsdk_profiling_mode = RPSDK_MODE_DEVICE_SAMPLING;
+    if( NULL != getenv("PAPI_ROCP_SDK_DISPATCH_MODE") ){
+        rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
     }
 
-    if ( NULL == pathname || nullptr == dllHandle ) {
-        std::string path2;
-        char *rocm_root = getenv("PAPI_ROCP_SDK_ROOT");
-        if( NULL == rocm_root || strlen(rocm_root) > PATH_MAX ){
-            _rocp_sdk_error_string = std::string("Did not find path for librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or HSA_TOOLS_LIB.");
-            goto fn_fail;
-        }
-        path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
- 
-        // Clear previous errors.
-        (void)dlerror();
-
-        dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        if (dllHandle == NULL) {
-            _rocp_sdk_error_string = std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or HSA_TOOLS_LIB.");
-            goto fn_fail;
-        }    
-    }
-
-    error_msg = obtain_function_pointers(dllHandle);
-    if( NULL !=  error_msg ){
-        _rocp_sdk_error_string = std::string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
+    error_msg = obtain_function_pointers();
+    if( NULL != error_msg ){
+        set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
         SUBDBG("dlsym(): %s\n", error_msg);
         goto fn_fail;
     }
 
     // Obtain the list of available (GPU) agents.
     gpu_agents = get_GPU_agent_info();
-    
+
     if( (ROCPROFILER_STATUS_SUCCESS == rocprofiler_is_initialized_FPTR(&status)) && (0 == status) ){
         ROCPROFILER_CALL(rocprofiler_force_configure_FPTR(&rocprofiler_configure), "force configuration");
     }
@@ -1072,6 +1096,10 @@ rocprofiler_sdk_stop(vendorp_ctx_t ctx)
 extern "C" int
 rocprofiler_sdk_start(vendorp_ctx_t ctx)
 {
+    int i;
+    for(i=0; i<ctx->num_events; i++){
+        ctx->counters[i] = 0;
+    }
     papi_rocpsdk::start_counting(ctx);
 
     ctx->state |= RPSDK_AES_RUNNING;
@@ -1089,7 +1117,7 @@ rocprofiler_sdk_ctx_reset(vendorp_ctx_t ctx)
     }
 
     for(i=0; i<ctx->num_events; i++){
-        ctx->counters[i] = 0; 
+        ctx->counters[i] = 0;
     }
 
     return PAPI_OK;
@@ -1113,7 +1141,7 @@ rocprofiler_sdk_ctx_open(int *event_ids, int num_events, vendorp_ctx_t *ctx)
         goto fn_fail;
     }
     papi_rocpsdk::active_event_set_ctx = *ctx;
-    papi_rocpsdk::set_dispatch_profiles(*ctx);
+    papi_rocpsdk::set_profile_cache(*ctx);
 
     (*ctx)->state = RPSDK_AES_OPEN;
 
@@ -1129,13 +1157,19 @@ extern "C" int
 rocprofiler_sdk_ctx_read(vendorp_ctx_t ctx, long long **counters)
 {
     int papi_errno = PAPI_OK;
-    static int count;
 
-#if defined(AGENT_PROFILE_MODE)
-    if( RPSDK_MODE_AGENT_PROFILE == papi_rocpsdk::get_profiling_mode() ){
+    // If the collection mode is DEVICE_SAMPLING get an explicit sample.
+    if( RPSDK_MODE_DEVICE_SAMPLING == papi_rocpsdk::get_profiling_mode() ){
         papi_errno = papi_rocpsdk::read_sample();
     }
-#endif
+
+    // If the mode is not sampling the counter data should already be in
+    // "ctx->counters", because record_callback() should have placed it there
+    // asynchronously.
+    // However, we don't use any synchronization mechanisms to guarantee that
+    // record_callback() has indeed completed before this function returns.
+    // Therefore, we recomend that the user code adds a small delay between
+    // the completion of a GPU kernel and the call of PAPI_read().
 
     *counters = ctx->counters;
     return papi_errno;
@@ -1199,7 +1233,25 @@ extern "C" int
 rocprofiler_sdk_evt_name_to_code(const char *event_name, unsigned int *event_code)
 {
     int papi_errno = PAPI_OK;
-    papi_errno = papi_rocpsdk::evt_name_to_id(event_name, event_code);
+
+    // If "device" qualifier is not provived by the user, make it zero.
+    if( NULL == strstr(event_name, "device=") ){
+        char *amended_event_name;
+        size_t len = strlen(event_name)+strlen(":device=0")+1; // +1 for '\0'
+        if( len > 1024 ){
+            return PAPI_EMISC;
+        }
+        amended_event_name = (char *)calloc(len, sizeof(char));
+        int ret = snprintf(amended_event_name, len, "%s:device=0", event_name);
+        if( ret >= len ){
+            free(amended_event_name);
+            return PAPI_EMISC;
+        }
+
+        papi_errno = papi_rocpsdk::evt_name_to_id(amended_event_name, event_code);
+    }else{
+        papi_errno = papi_rocpsdk::evt_name_to_id(event_name, event_code);
+    }
 
     return papi_errno;
 }
@@ -1210,7 +1262,7 @@ rocprofiler_sdk_err_get_last(const char **err){
     return PAPI_OK;
 }
 
-int
+static int
 init_ctx(int *event_ids, int num_events, vendorp_ctx_t ctx)
 {
     ctx->event_ids = event_ids;
@@ -1222,13 +1274,14 @@ init_ctx(int *event_ids, int num_events, vendorp_ctx_t ctx)
     return PAPI_OK;
 }
 
-int
+static int
 finalize_ctx(vendorp_ctx_t ctx)
 {
     if( ctx ){
         ctx->event_ids = NULL;
         ctx->num_events = 0;
         free(ctx->counters);
+        ctx->counters = NULL;
     }
     free(ctx);
     return PAPI_OK;
@@ -1240,8 +1293,13 @@ rocprofiler_configure(uint32_t                 version,
                       uint32_t                 priority,
                       rocprofiler_client_id_t* id)
 {
-    // only activate if main tool
-    if(priority > 0) return nullptr;
+    char *error_msg = papi_rocpsdk::obtain_function_pointers();
+
+    if( NULL != error_msg ){
+        papi_rocpsdk::set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
+        SUBDBG("dlsym(): %s\n", error_msg);
+        return NULL;
+    }
 
     // set the client name
     id->name = "PAPI_ROCP_SDK_COMPONENT";

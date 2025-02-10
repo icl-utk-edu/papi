@@ -1,9 +1,11 @@
-#ifndef __VENDOR_PROFILER_V1_H__
-#define __VENDOR_PROFILER_V1_H__
+#ifndef __PAPI_ROCPSDK_INTERNAL_H__
+#define __PAPI_ROCPSDK_INTERNAL_H__
 
 #include <stdint.h>
+#include <string.h>
 #include <rocprofiler-sdk/buffer.h>
 #include <rocprofiler-sdk/registration.h>
+#include <rocprofiler-sdk/device_counting_service.h>
 #include <rocprofiler-sdk/rocprofiler.h>
 
 #include "papi.h"
@@ -28,7 +30,10 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
+#if (__cplusplus >= 201402L) // c++14
 #include <shared_mutex>
+#endif
+#include <condition_variable>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -65,8 +70,8 @@ do {                                             \
 #define ROCPROFILER_CALL(result, msg) {(void)result;}
 #endif
 
-#define RPSDK_MODE_CALLBACK_DISPATCH (0)
-#define RPSDK_MODE_AGENT_PROFILE     (1)
+#define RPSDK_MODE_DISPATCH        (0)
+#define RPSDK_MODE_DEVICE_SAMPLING (1)
 
 #define RPSDK_AES_STOPPED (0x0)
 #define RPSDK_AES_OPEN    (0x1)

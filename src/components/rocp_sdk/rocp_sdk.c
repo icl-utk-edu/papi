@@ -1,3 +1,18 @@
+/**
+ * @file    rocp_sdk.c
+ * @author  Anthony Danalis
+ *          adanalis@icl.utk.edu
+ *
+ * @ingroup papi_components
+ *
+ * @brief This implements a PAPI component that accesses hardware
+ *  monitoring counters for AMD GPU and APU devices through the
+ *  ROCprofiler-SDK library.
+ *
+ * The open source software license for PAPI conforms to the BSD
+ * License template.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include "papi.h"
@@ -57,7 +72,7 @@ papi_vector_t _rocp_sdk_vector = {
         .name = "rocp_sdk",
         .short_name = "rocp_sdk",
         .version = "1.0",
-        .description = "GPU events and metrics via AMD ROCprofiler-SDK API",
+        .description = "GPU events and metrics via AMD ROCprofiler-SDK",
         .initialized = 0,
         .num_mpx_cntrs = ROCPROF_SDK_MAX_COUNTERS,
     },
