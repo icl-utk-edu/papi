@@ -22,8 +22,8 @@
  * applications on Linux.
  *
  * PMU: gnr (GraniteRapids)
- * Based on Intel JSON event table version   : 1.03
- * Based on Intel JSON event table published : 08/19/2024
+ * Based on Intel JSON event table version   : 1.06
+ * Based on Intel JSON event table published : 01/17/2025
  */
 
 static const intel_x86_umask_t intel_gnr_arith[]={
@@ -56,6 +56,11 @@ static const intel_x86_umask_t intel_gnr_assists[]={
   { .uname   = "FP",
     .udesc   = "Counts all microcode FP assists.",
     .ucode   = 0x0200ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "HARDWARE",
+    .udesc   = "Count all other hardware assists or traps that are not necessarily architecturally exposed (through a software handler) beyond FP; SSE-AVX mix and A/D assists who are counted by dedicated sub-events. The event also counts for Machine Ordering count.",
+    .ucode   = 0x0400ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "PAGE_FAULT",
@@ -1613,6 +1618,11 @@ static const intel_x86_umask_t intel_gnr_ocr[]={
     .ucode   = 0x3fbfc0000100ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "DEMAND_DATA_RD_LOCAL_DRAM",
+    .udesc   = "Counts demand data reads that were supplied by DRAM attached to this socket, unless in Sub NUMA Cluster(SNC) Mode.  In SNC Mode counts only those DRAM accesses that are controlled by the close SNC Cluster.",
+    .ucode   = 0x10400000100ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
   { .uname   = "DEMAND_DATA_RD_REMOTE_CACHE_SNOOP_HITM",
     .udesc   = "Counts demand data reads that were supplied by a cache on a remote socket where a snoop hit a modified line in another core's caches which forwarded the data.",
     .ucode   = 0x103000000100ull,
@@ -1623,6 +1633,11 @@ static const intel_x86_umask_t intel_gnr_ocr[]={
     .ucode   = 0x83000000100ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
+  { .uname   = "DEMAND_DATA_RD_REMOTE_DRAM",
+    .udesc   = "Counts demand data reads that were supplied by DRAM attached to another socket.",
+    .ucode   = 0x73000000100ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
   { .uname   = "DEMAND_RFO_ANY_RESPONSE",
     .udesc   = "Counts demand reads for ownership (RFO) requests and software prefetches for exclusive ownership (PREFETCHW) that have any type of response.",
     .ucode   = 0x3f3ffc000200ull,
@@ -1631,6 +1646,21 @@ static const intel_x86_umask_t intel_gnr_ocr[]={
   { .uname   = "DEMAND_RFO_DRAM",
     .udesc   = "Counts demand reads for ownership (RFO) requests and software prefetches for exclusive ownership (PREFETCHW) that were supplied by DRAM.",
     .ucode   = 0x73c00000200ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "READS_TO_CORE_SNC_CACHE_HITM",
+    .udesc   = "Counts all (cacheable) data read, code read and RFO requests including demands and prefetches to the core caches (L1 or L2) that hit a modified line in a distant L3 Cache or were snooped from a distant core's L1/L2 caches on this socket when the system is in SNC (sub-NUMA cluster) mode.",
+    .ucode   = 0x100800447700ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "READS_TO_CORE_SNC_CACHE_HIT_WITH_FWD",
+    .udesc   = "Counts all (cacheable) data read, code read and RFO requests including demands and prefetches to the core caches (L1 or L2) that either hit a non-modified line in a distant L3 Cache or were snooped from a distant core's L1/L2 caches on this socket when the system is in SNC (sub-NUMA cluster) mode.",
+    .ucode   = 0x80800447700ull,
+    .uflags  = INTEL_X86_NCOMBO,
+  },
+  { .uname   = "READS_TO_CORE_SNC_DRAM",
+    .udesc   = "Counts all (cacheable) data read, code read and RFO requests including demands and prefetches to the core caches (L1 or L2) that were supplied by DRAM on a distant memory controller of this socket when the system is in SNC (sub-NUMA cluster) mode.",
+    .ucode   = 0x70800447700ull,
     .uflags  = INTEL_X86_NCOMBO,
   },
   { .uname   = "DEMAND_RFO_L3_HIT",
@@ -1737,7 +1767,8 @@ static const intel_x86_umask_t intel_gnr_ocr[]={
     .udesc   = "Counts demand reads for ownership (RFO), hardware prefetch RFOs (which bring data to L2), and software prefetches for exclusive ownership (PREFETCHW) that hit to a (M)odified cacheline in the L3 or snoop filter.",
     .ucode   = 0x1f8004002200ull,
     .uflags  = INTEL_X86_NCOMBO,
-  },  { .uname   = "STREAMING_WR_ANY_RESPONSE",
+  },
+  { .uname   = "STREAMING_WR_ANY_RESPONSE",
     .udesc   = "Counts streaming stores that have any type of response.",
     .ucode   = 0x1080000ull,
     .uflags  = INTEL_X86_NCOMBO,

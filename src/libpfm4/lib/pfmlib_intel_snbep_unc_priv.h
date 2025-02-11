@@ -256,6 +256,8 @@
 
 #define ICX_UNC_IMC_ATTRS SKX_UNC_IMC_ATTRS
 #define SPR_UNC_IMC_ATTRS SKX_UNC_IMC_ATTRS
+#define GNR_UNC_IMC_ATTRS SKX_UNC_IMC_ATTRS
+
 #define ICX_UNC_M2PCIE_ATTRS SKX_UNC_IMC_ATTRS
 
 #define SKX_UNC_IRP_ATTRS     \
@@ -575,6 +577,7 @@ extern int  pfm_intel_bdx_unc_detect(void *this);
 extern int  pfm_intel_skx_unc_detect(void *this);
 extern int  pfm_intel_icx_unc_detect(void *this);
 extern int  pfm_intel_spr_unc_detect(void *this);
+extern int  pfm_intel_gnr_unc_detect(void *this);
 extern int  pfm_intel_snbep_unc_get_perf_encoding(void *this, pfmlib_event_desc_t *e);
 extern int  pfm_intel_snbep_unc_can_auto_encode(void *this, int pidx, int uidx);
 extern int pfm_intel_snbep_unc_get_event_attr_info(void *this, int pidx, int attr_idx, pfmlib_event_attr_info_t *info);
