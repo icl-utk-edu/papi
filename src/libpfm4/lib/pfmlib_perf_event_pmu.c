@@ -143,11 +143,6 @@ pfm_perf_pmu_supported_plm(void *this)
 	return pmu->supported_plm;
 }
 
-static inline unsigned long
-perf_get_ovfl_umask_idx(perf_umask_t *um)
-{
-	return um - perf_um;
-}
 
 static inline perf_umask_t *
 perf_get_ovfl_umask(int pidx)
@@ -255,6 +250,13 @@ retry:
 #ifndef CONFIG_PFMLIB_NOTRACEPOINT
 static int perf_um_count;
 static char debugfs_mnt[MAXPATHLEN];
+
+static inline unsigned long
+perf_get_ovfl_umask_idx(perf_umask_t *um)
+{
+	return um - perf_um;
+}
+
 /*
  * figure out the mount point of the debugfs filesystem
  *

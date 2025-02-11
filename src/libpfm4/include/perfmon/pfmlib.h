@@ -822,6 +822,19 @@ typedef enum {
 	PFM_PMU_ARM_N3,			/* Arm Neoverse N3 */
 
 	PFM_PMU_ARM_MONAKA,		/* Fujitsu FUJITSU-MONAKA processor */
+
+	PFM_PMU_INTEL_GNR_UNC_IMC0,	/* Intel GraniteRapids IMC channel 0 */
+	PFM_PMU_INTEL_GNR_UNC_IMC1,	/* Intel GraniteRapids IMC channel 1 */
+	PFM_PMU_INTEL_GNR_UNC_IMC2,	/* Intel GraniteRapids IMC channel 2 */
+	PFM_PMU_INTEL_GNR_UNC_IMC3,	/* Intel GraniteRapids IMC channel 3 */
+	PFM_PMU_INTEL_GNR_UNC_IMC4,	/* Intel GraniteRapids IMC channel 4 */
+	PFM_PMU_INTEL_GNR_UNC_IMC5,	/* Intel GraniteRapids IMC channel 5 */
+	PFM_PMU_INTEL_GNR_UNC_IMC6,	/* Intel GraniteRapids IMC channel 6 */
+	PFM_PMU_INTEL_GNR_UNC_IMC7,	/* Intel GraniteRapids IMC channel 7 */
+	PFM_PMU_INTEL_GNR_UNC_IMC8,	/* Intel GraniteRapids IMC channel 8 */
+	PFM_PMU_INTEL_GNR_UNC_IMC9,	/* Intel GraniteRapids IMC channel 9 */
+	PFM_PMU_INTEL_GNR_UNC_IMC10,	/* Intel GraniteRapids IMC channel 10 */
+	PFM_PMU_INTEL_GNR_UNC_IMC11,	/* Intel GraniteRapids IMC channel 10 */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

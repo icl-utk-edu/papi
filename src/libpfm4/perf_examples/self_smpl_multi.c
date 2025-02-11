@@ -141,7 +141,7 @@ void
 do_cycles(void)
 {
 	struct timeval start, last, now;
-	unsigned long x, sum;
+	unsigned long x;
 
 	gettimeofday(&start, NULL);
 	last = start;
@@ -151,14 +151,12 @@ do_cycles(void)
 
 	do {
 
-		sum = 1;
 		for (x = 1; x < 250000; x++) {
 			/* signal pending to private queue because of
 			 * pthread_kill(), i.e., tkill()
 			 */
 			if ((x % 5000) == 0)
 				pthread_kill(pthread_self(), SIGUSR1);
-			sum += x;
 		}
 		iter[myid]++;
 
