@@ -1377,7 +1377,7 @@ handle_derived_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
             (*events_count) += ROCS_PCI_BW_VARIANT__CURRENT + 1;
         }
         int i;
-        for (i = 0; i < ROCS_PCI_BW_VARIANT__LANE_IDX - ROCS_PCI_BW_VARIANT__CURRENT + 1; ++i) {
+        for (i = 0; i < ROCS_PCI_BW_VARIANT__LANE_IDX - ROCS_PCI_BW_VARIANT__CURRENT; ++i) {
             (*events_count) += pcie_table[dev].transfer_rate.num_supported;
         }
 
@@ -1585,8 +1585,7 @@ handle_derived_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
             return ROCS_EVENT_TYPE__DERIVED;
         }
 
-        int64_t i;
-        for (i = 0; i <= ROCS_PCI_BW_VARIANT__CURRENT; ++i) {
+        for (int64_t i = 0; i <= ROCS_PCI_BW_VARIANT__CURRENT; ++i) {
             events[*events_count].id = *events_count;
             events[*events_count].name = get_event_name(v_name, dev, i, -1);
             events[*events_count].descr = get_event_descr(v_name, i, -1);
@@ -1604,7 +1603,7 @@ handle_derived_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
         }
 
         int64_t j;
-        for (; i <= ROCS_PCI_BW_VARIANT__LANE_IDX; ++i) {
+        for (int64_t i = ROCS_PCI_BW_VARIANT__CURRENT + 1; i <= ROCS_PCI_BW_VARIANT__LANE_IDX; ++i) {
            for (j = 0; j < pcie_table[dev].transfer_rate.num_supported; ++j) {
                events[*events_count].id = *events_count;
                events[*events_count].name = get_event_name(v_name, dev, i, j);
