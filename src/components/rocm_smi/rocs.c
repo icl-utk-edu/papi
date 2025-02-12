@@ -1025,7 +1025,7 @@ init_device_table(void)
         //if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED) {
         //    papi_errno = PAPI_EMISC;
         //    goto fn_fail;
-        }
+        //}
     }
 
   fn_exit:
