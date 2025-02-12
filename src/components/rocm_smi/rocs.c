@@ -1022,9 +1022,9 @@ init_device_table(void)
 
     for (i = 0; i < device_count; ++i) {
         status = rsmi_dev_pci_bandwidth_get_p(i, &pcie_table[i]);
-        if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED) {
-            papi_errno = PAPI_EMISC;
-            goto fn_fail;
+        //if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED) {
+        //    papi_errno = PAPI_EMISC;
+        //    goto fn_fail;
         }
     }
 
