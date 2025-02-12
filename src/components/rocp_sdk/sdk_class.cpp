@@ -175,7 +175,7 @@ get_profiling_mode(void)
 }
 
 /* ** */
-static char *
+static const char *
 obtain_function_pointers()
 {
     static bool first_time = true;
@@ -197,7 +197,7 @@ obtain_function_pointers()
         const char *rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
         if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
             set_error_string("Did not find path for librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB.");
-            return NULL;
+            return get_error_string().c_str();
         }
         path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
 
@@ -207,7 +207,7 @@ obtain_function_pointers()
         dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
         if (dllHandle == NULL) {
             set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB. Error: ")+dlerror());
-            return NULL;
+            return dlerror();
         }
     }
 
@@ -1010,7 +1010,6 @@ void tool_fini(void* tool_data) {
 
 /* ** */
 int setup() {
-    char *error_msg = NULL;
     int status = 0;
 
     // Set sampling as the default mode and allow the users to change this
@@ -1020,7 +1019,7 @@ int setup() {
         rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
     }
 
-    error_msg = obtain_function_pointers();
+    const char *error_msg = obtain_function_pointers();
     if( NULL != error_msg ){
         set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
         SUBDBG("dlsym(): %s\n", error_msg);
@@ -1293,7 +1292,7 @@ rocprofiler_configure(uint32_t                 version,
                       uint32_t                 priority,
                       rocprofiler_client_id_t* id)
 {
-    char *error_msg = papi_rocpsdk::obtain_function_pointers();
+    const char *error_msg = papi_rocpsdk::obtain_function_pointers();
 
     if( NULL != error_msg ){
         papi_rocpsdk::set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
