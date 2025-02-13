@@ -551,13 +551,14 @@ static int calculate_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig,
     int numNestingLevels = 1, numIsolatedPasses, numPipelinedPasses;
     NVPA_Status nvpa_err;
 
+    /* NOTE: maxPassCount is not set here as we want to properly show the number of passes for
+             metrics that require multiple passes in papi_native_avail. */
     /* instantiate a new struct to be passed to NVPW_RawMetricsConfig_BeginPassGroup_Params */
     NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams = {
         // [in]
         .structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE,
         .pPriv = NULL, // assign to NULL
         .pRawMetricsConfig = pRawMetricsConfig,
-        .maxPassCount = 1,
     };
     nvpa_err = NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams);
     if (nvpa_err != NVPA_STATUS_SUCCESS) {
@@ -833,6 +834,10 @@ static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl)
         nvpwCheckErrors( NVPW_RawMetricsConfig_SetCounterAvailabilityPtr(&setCounterAvailabilityParams), goto fn_fail );
     };
 
+    /* NOTE: maxPassCount is being set to 1 as a final safety net to limit metric collection to a single pass.
+             Metrics that require multiple passes would fail further down at AddMetrics due to this.
+             This failure should never occur as we filter for metrics with multiple passes at check_multipass,
+             which occurs before the metric_get_config_image call. */
     NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams = {
         .structSize = NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE,
         .pPriv = NULL,
