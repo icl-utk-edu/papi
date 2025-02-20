@@ -90,6 +90,10 @@ typedef rocprofiler_status_t (* rocprofiler_start_context_t) (rocprofiler_contex
 
 typedef rocprofiler_status_t (* rocprofiler_stop_context_t) (rocprofiler_context_id_t context_id);
 
+typedef rocprofiler_status_t (* rocprofiler_context_is_valid_t) (rocprofiler_context_id_t context_id, int *status);
+
+typedef rocprofiler_status_t (* rocprofiler_context_is_active_t) (rocprofiler_context_id_t context_id, int *status);
+
 typedef rocprofiler_status_t (* rocprofiler_create_profile_config_t) (rocprofiler_agent_id_t agent_id, rocprofiler_counter_id_t *counters_list, unsigned long counters_count, rocprofiler_profile_config_id_t *config_id);
 
 typedef rocprofiler_status_t (* rocprofiler_destroy_profile_config_t) (rocprofiler_profile_config_id_t config_id);
@@ -126,6 +130,8 @@ rocprofiler_create_buffer_t rocprofiler_create_buffer_FPTR;
 rocprofiler_create_context_t rocprofiler_create_context_FPTR;
 rocprofiler_start_context_t rocprofiler_start_context_FPTR;
 rocprofiler_stop_context_t rocprofiler_stop_context_FPTR;
+rocprofiler_context_is_active_t rocprofiler_context_is_active_FPTR;
+rocprofiler_context_is_valid_t rocprofiler_context_is_valid_FPTR;
 rocprofiler_create_profile_config_t rocprofiler_create_profile_config_FPTR;
 rocprofiler_force_configure_t rocprofiler_force_configure_FPTR;
 rocprofiler_get_status_string_t rocprofiler_get_status_string_FPTR;
@@ -219,6 +225,8 @@ obtain_function_pointers()
     DLL_SYM_CHECK(rocprofiler_create_buffer, rocprofiler_create_buffer_t);
     DLL_SYM_CHECK(rocprofiler_start_context, rocprofiler_start_context_t);
     DLL_SYM_CHECK(rocprofiler_stop_context, rocprofiler_stop_context_t);
+    DLL_SYM_CHECK(rocprofiler_context_is_valid, rocprofiler_context_is_valid_t);
+    DLL_SYM_CHECK(rocprofiler_context_is_active, rocprofiler_context_is_active_t);
     DLL_SYM_CHECK(rocprofiler_create_profile_config, rocprofiler_create_profile_config_t);
     DLL_SYM_CHECK(rocprofiler_force_configure, rocprofiler_force_configure_t);
     DLL_SYM_CHECK(rocprofiler_get_status_string, rocprofiler_get_status_string_t);
@@ -587,8 +595,19 @@ populate_event_list(void){
 
 /* ** */
 void stop_counting(void){
-    ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(get_client_ctx()), "stop context");
+    int ctx_active, ctx_valid;
     _counter_values = NULL;
+    ROCPROFILER_CALL(rocprofiler_context_is_valid_FPTR(get_client_ctx(), &ctx_valid), "check context validity");
+    if( !ctx_valid ){
+        SUBDBG("client_context is invalid\n");
+        return;
+    }
+    ROCPROFILER_CALL(rocprofiler_context_is_active_FPTR(get_client_ctx(), &ctx_active), "check if context is active");
+    if( !ctx_active ){
+        SUBDBG("client_context is not active\n");
+        return;
+    }
+    ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(get_client_ctx()), "stop context");
 }
 
 /* ** */
