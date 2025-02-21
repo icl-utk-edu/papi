@@ -200,7 +200,7 @@ int cuptid_ctx_destroy(cuptip_control_t *pcupti_ctl)
     return PAPI_ECMP;
 }
 
-int cuptid_evt_enum(uint64_t *event_code, int modifier)
+int cuptid_evt_enum(uint32_t *event_code, int modifier)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
@@ -218,7 +218,7 @@ int cuptid_evt_enum(uint64_t *event_code, int modifier)
     return PAPI_ECMP;
 }
 
-int cuptid_evt_code_to_descr(uint64_t event_code, char *descr, int len)
+int cuptid_evt_code_to_descr(uint32_t event_code, char *descr, int len)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
@@ -236,7 +236,7 @@ int cuptid_evt_code_to_descr(uint64_t event_code, char *descr, int len)
     return PAPI_ECMP;
 }
 
-int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
+int cuptid_evt_name_to_code(const char *name, uint32_t *event_code)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
@@ -254,7 +254,7 @@ int cuptid_evt_name_to_code(const char *name, uint64_t *event_code)
     return PAPI_ECMP;
 }
 
-int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
+int cuptid_evt_code_to_name(uint32_t event_code, char *name, int len)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
@@ -272,7 +272,7 @@ int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
     return PAPI_ECMP;
 }
 
-int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
+int cuptid_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
 {
     if (cuptic_is_runtime_perfworks_api()) {
 
