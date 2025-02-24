@@ -35,7 +35,6 @@ set key maxcolumns 0 maxrows 0
 set key noopaque
 unset label
 unset arrow
-set style increment default
 unset style line
 unset style arrow
 set style histogram clustered gap 2 title textcolor lt -1
