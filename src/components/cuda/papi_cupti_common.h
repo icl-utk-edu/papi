@@ -65,7 +65,7 @@ int cuptic_shutdown(void);
 
 /* context management interfaces */
 int cuptic_ctxarr_create(cuptic_info_t *pinfo);
-int cuptic_ctxarr_update_current(cuptic_info_t info);
+int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id);
 int cuptic_ctxarr_get_ctx(cuptic_info_t info, int gpu_idx, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 

@@ -606,46 +606,55 @@ int cuptic_ctxarr_create(cuptic_info_t *pinfo)
   * @param info
   *    Struct that contains a Cuda context, that can be indexed into based
   *    on device id.
+  * @param evt_dev_id
+  *    Device id from an appended device qualifier (e.g. :device=#).
 */
-int cuptic_ctxarr_update_current(cuptic_info_t info)
+int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id)
 {
-    int gpu_id;
     CUcontext pctx;
     CUresult cuda_err;
+    CUdevice dev_id;
 
-    /* get device currently being used */
-    cuda_err = cudaGetDevicePtr(&gpu_id);
-    if (cuda_err != cudaSuccess) {
-        return PAPI_EMISC;
-    }
-
-    /* return cuda context bound to the calling CPU thread */
+    // If a Cuda context already exists, get it
     cuda_err = cuCtxGetCurrentPtr(&pctx);
-    if (cuda_err != cudaSuccess) {
+    if (cuda_err != CUDA_SUCCESS) {
         return PAPI_EMISC;
     }
-    /* check to see if Cuda context exists for device  */
-    if (info[gpu_id].ctx == NULL) {
-        /* cuda context found for the calling CPU thread */
-        if (pctx != NULL) {
-            LOGDBG("Registering device = %d with ctx = %p.\n", gpu_id, pctx);
-            /* store current context into struct */
-            cuda_err = cuCtxGetCurrentPtr(&info[gpu_id].ctx);
-            if (cuda_err != cudaSuccess)
-                return PAPI_EMISC;
-        }
-        /* cuda context not found for calling CPU thread */
-        else {
-            cudaArtCheckErrors(cudaFreePtr(NULL), return PAPI_EMISC);
-            cudaCheckErrors(cuCtxGetCurrentPtr(&info[gpu_id].ctx), return PAPI_EMISC);
-            LOGDBG("Using primary device context %p for device %d.\n", info[gpu_id].ctx, gpu_id);
+
+    // Get the Device ID for the existing Cuda context
+    if (pctx != NULL) {
+        cuda_err = cuCtxGetDevicePtr(&dev_id);
+        if (cuda_err != CUDA_SUCCESS) {
+            return PAPI_EMISC;
         }
     }
 
-    /* if context exists then see if it has changed; if it has then keep the first
-       seen one, but show warning */
-    else if (info[gpu_id].ctx != pctx) {
-        ERRDBG("Warning: cuda context for gpu %d has changed from %p to %p\n", gpu_id, info[gpu_id].ctx, pctx);
+    // A context is not stored for the :device=# qualifier
+    if (info[evt_dev_id].ctx == NULL) {
+        // Cuda context was not found or a user did not provide an appropriate Cuda context for the
+        // device qualifier id that was supplied
+        if (pctx == NULL || dev_id != evt_dev_id) {
+            // If multiple devices are found on the machine, then we need to call cudaSetDevice
+            SUBDBG("A Cuda context was not found. Therefore, one is created for device: %d\n", evt_dev_id);
+            cudaArtCheckErrors(cudaSetDevicePtr(evt_dev_id), return PAPI_EMISC);
+            cudaArtCheckErrors(cudaFreePtr(0), return PAPI_EMISC);
+
+            cudaCheckErrors(cuCtxGetCurrentPtr(&info[evt_dev_id].ctx), return PAPI_EMISC);
+            cudaCheckErrors(cuCtxPopCurrentPtr(&info[evt_dev_id].ctx), return PAPI_EMISC);
+        }
+        // Cuda context was found
+        else {
+            SUBDBG("A cuda context was found for device: %d\n", evt_dev_id);
+            cudaCheckErrors(cuCtxGetCurrentPtr(&info[evt_dev_id].ctx), return PAPI_EMISC);
+        }
+    }
+    // If the Cuda context has changed for a device keep the first one seen, but output a warning
+    else if (pctx != NULL){
+        if (evt_dev_id == dev_id) {
+            if (info[dev_id].ctx != pctx) {
+                ERRDBG("Warning: cuda context for device %d has changed from %p to %p\n", dev_id, info[dev_id].ctx, pctx);
+            }
+        }
     }
 
     return PAPI_OK;
@@ -699,7 +708,7 @@ static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t 
     gpu_occupancy_t acq_mask = 0;
     cuptiu_event_t *evt_rec;
     for (i = 0; i < evt_table->count; i++) {
-        acq_mask |= (1 << evt_table->added_cuda_dev[i]);
+        acq_mask |= (1 << evt_table->cuda_devs[i]);
     }
     *bitmask = acq_mask;
 fn_exit:
