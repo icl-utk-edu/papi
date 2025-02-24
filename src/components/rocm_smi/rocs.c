@@ -1022,7 +1022,12 @@ init_device_table(void)
 
     for (i = 0; i < device_count; ++i) {
         status = rsmi_dev_pci_bandwidth_get_p(i, &pcie_table[i]);
-        if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED) {
+        /* 
+          Retrieve available PCIe bandwidths. This function is not supported on newer hardware (i.e., MI250 and MI300), but
+           supported on some hardware. Ignore statuses indicating lack of support or 
+           unimplemented functionality.
+        */
+        if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED && status != RSMI_STATUS_NOT_SUPPORTED) {
             papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
@@ -1377,7 +1382,7 @@ handle_derived_events_count(const char *v_name, int32_t dev, int64_t v_variant, 
             (*events_count) += ROCS_PCI_BW_VARIANT__CURRENT + 1;
         }
         int i;
-        for (i = 0; i < ROCS_PCI_BW_VARIANT__LANE_IDX - ROCS_PCI_BW_VARIANT__CURRENT + 1; ++i) {
+        for (i = 0; i < ROCS_PCI_BW_VARIANT__LANE_IDX - ROCS_PCI_BW_VARIANT__CURRENT; ++i) {
             (*events_count) += pcie_table[dev].transfer_rate.num_supported;
         }
 
@@ -1584,7 +1589,6 @@ handle_derived_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
         if (pcie_table[dev].transfer_rate.num_supported == 0) {
             return ROCS_EVENT_TYPE__DERIVED;
         }
-
         int64_t i;
         for (i = 0; i <= ROCS_PCI_BW_VARIANT__CURRENT; ++i) {
             events[*events_count].id = *events_count;
@@ -1604,7 +1608,7 @@ handle_derived_events(const char *v_name, int32_t dev, int64_t v_variant, int64_
         }
 
         int64_t j;
-        for (; i <= ROCS_PCI_BW_VARIANT__LANE_IDX; ++i) {
+        for (i = ROCS_PCI_BW_VARIANT__CURRENT + 1; i <= ROCS_PCI_BW_VARIANT__LANE_IDX; ++i) {
            for (j = 0; j < pcie_table[dev].transfer_rate.num_supported; ++j) {
                events[*events_count].id = *events_count;
                events[*events_count].name = get_event_name(v_name, dev, i, j);
@@ -1774,7 +1778,7 @@ handle_xgmi_events(int32_t dev, int *events_count, ntv_event_t *events)
 
     status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI);
     if (status == RSMI_STATUS_SUCCESS) {
-        for (i = RSMI_EVNT_XGMI_FIRST; i <= RSMI_EVNT_XGMI_LAST; ++i) {
+        for (i = RSMI_EVNT_XGMI_FIRST; i < RSMI_EVNT_XGMI_LAST; ++i) {
             events[*events_count].id = *events_count;
             events[*events_count].name = get_event_name("rsmi_dev_xgmi_evt_get", dev, i, -1);
             events[*events_count].descr = get_event_descr("rsmi_dev_xgmi_evt_get", i, -1);
@@ -1794,7 +1798,7 @@ handle_xgmi_events(int32_t dev, int *events_count, ntv_event_t *events)
 
     status = rsmi_dev_counter_group_supported_p(dev, RSMI_EVNT_GRP_XGMI_DATA_OUT);
     if (status == RSMI_STATUS_SUCCESS) {
-        for (i = RSMI_EVNT_XGMI_DATA_OUT_FIRST; i <= RSMI_EVNT_XGMI_DATA_OUT_LAST; ++i) {
+        for (i = RSMI_EVNT_XGMI_DATA_OUT_FIRST; i < RSMI_EVNT_XGMI_DATA_OUT_LAST; ++i) {
             events[*events_count].id = *events_count;
             events[*events_count].name = get_event_name("rsmi_dev_xgmi_evt_get", dev, i, -1);
             events[*events_count].descr = get_event_descr("rsmi_dev_xgmi_evt_get", i, -1);
