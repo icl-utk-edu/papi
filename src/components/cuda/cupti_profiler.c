@@ -47,9 +47,7 @@
 
 typedef struct byte_array_s         byte_array_t;
 typedef struct cuptip_gpu_state_s   cuptip_gpu_state_t;
-typedef struct list_metrics_s       list_metrics_t;
 typedef struct NVPA_MetricsContext  NVPA_MetricsContext;
-typedef NVPW_CUDA_MetricsContext_Create_Params MCCP_t;
 
 typedef struct {
     int device;
@@ -65,7 +63,7 @@ struct byte_array_s {
 
 struct cuptip_gpu_state_s {
     int                    gpu_id;
-    cuptiu_event_table_t  *event_names;
+    cuptiu_event_table_t  *added_events;
     int                    rmr_count;
     NVPA_RawMetricRequest *rmr;
     MCCP_t                *pmetricsContextCreateParams;
@@ -87,19 +85,11 @@ struct cuptip_control_s {
     cuptic_info_t       info;
 };
 
-struct list_metrics_s {
-    char chip_name[32];
-    MCCP_t *pmetricsContextCreateParams;
-    int num_metrics;
-    cuptiu_event_table_t *nv_metrics;
-};
-
 static void *dl_nvpw;
 static int num_gpus;
-static int num_unique_gpus = 1;
-static list_metrics_t *avail_events;
+static gpu_record_t *avail_gpu_info;
 
-static cuptiu_event_table_t cuptiu_table;
+/* main event table to store metrics */
 static cuptiu_event_table_t *cuptiu_table_p;
 
 /* load and unload cuda function pointers */
@@ -117,6 +107,7 @@ static int initialize_perfworks_api(void);
 
 /* utility functions to init metrics and cuda native event table */
 static int init_all_metrics(void);
+static int init_main_htable(void);
 static int init_event_table(void);
 static int shutdown_event_table(void);
 static void free_all_enumerated_metrics(void);
@@ -145,21 +136,21 @@ static int calculate_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig,
                                 NVPA_RawMetricRequest *rmr, int *num_pass);
 
 /* functions to set and get cuda native event info  or convert cuda native events  */
-static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, int gpu_id);
-static int verify_events(uint64_t *events_id, int num_events, cuptiu_event_table_t **targeted_event_names);
+static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, int gpu_id);
+static int verify_events(uint64_t *events_id, int num_events, cuptip_control_t state);
 static int evt_id_to_info(uint64_t event_id, event_info_t *info);
 static int evt_id_create(event_info_t *info, uint64_t *event_id);
 static int evt_code_to_name(uint64_t event_code, char *name, int len);
 static int evt_name_to_basename(const char *name, char *base, int len);
 static int evt_name_to_device(const char *name, int *device);
 static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
-                                  char *description, int gpu_id );
+                                  char *description, const char *chip_name );
 static int retrieve_metric_rmr( NVPA_MetricsContext *pMetricsContext, const char *evt_name,
                                 int *numDep, NVPA_RawMetricRequest **pRMR );
 
 /* misc */
 static int get_event_collection_method(const char *evt_name);
-static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl);
+static int get_added_events_rmr(cuptip_gpu_state_t *gpu_ctl);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts);
 
@@ -188,7 +179,6 @@ NVPA_Status ( *NVPW_Profiler_CounterData_GetRangeDescriptionsPtr ) (NVPW_Profile
 NVPA_Status ( *NVPW_MetricsContext_SetCounterDataPtr ) (NVPW_MetricsContext_SetCounterData_Params* params);
 NVPA_Status ( *NVPW_MetricsContext_EvaluateToGpuValuesPtr ) (NVPW_MetricsContext_EvaluateToGpuValues_Params* params);
 NVPA_Status ( *NVPW_RawMetricsConfig_GetNumPassesPtr ) (NVPW_RawMetricsConfig_GetNumPasses_Params* params);
-NVPA_Status ( *NVPW_RawMetricsConfig_GetNumPassesPtr_V2 ) (NVPW_RawMetricsConfig_GetNumPasses_V2_Params* params);
 NVPA_Status ( *NVPW_RawMetricsConfig_SetCounterAvailabilityPtr ) (NVPW_RawMetricsConfig_SetCounterAvailability_Params* params);
 NVPA_Status ( *NVPW_RawMetricsConfig_IsAddMetricsPossiblePtr ) (NVPW_RawMetricsConfig_IsAddMetricsPossible_Params* params);
 NVPA_Status ( *NVPW_MetricsContext_GetCounterNames_BeginPtr ) (NVPW_MetricsContext_GetCounterNames_Begin_Params* pParams);
@@ -468,7 +458,6 @@ static int initialize_perfworks_api(void)
     return PAPI_OK;
 }
 
-
 static int get_chip_name(int dev_num, char* chipName)
 {
     int papi_errno;
@@ -487,7 +476,7 @@ static int get_chip_name(int dev_num, char* chipName)
     return PAPI_OK;
 }
 
-/** @class get_event_names_rmr
+/** @class get_added_events_rmr
   * @brief For a Cuda native event name collect raw metrics and count
   *        of raw metrics for collection. Raw Metrics are one layer of the Metric API
   *        and contains the list of raw counters and generates configuration file
@@ -497,7 +486,7 @@ static int get_chip_name(int dev_num, char* chipName)
   *   Structure of type cuptip_gpu_state_t which has member variables such as 
   *   gpu_id, rmr, rmr_count, and more.
 */
-static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
+static int get_added_events_rmr(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
     int gpu_id, num_dep, count_raw_metrics = 0, papi_errno = PAPI_OK;
@@ -506,14 +495,12 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl)
     cuptiu_event_t *evt_rec;
 
     /* for each event in the event table collect the raw metric requests */
-    for (i = 0; i < gpu_ctl->event_names->count; i++) {
-        /* Not using the correct global event names now.*/
+    for (i = 0; i < gpu_ctl->added_events->count; i++) {
         papi_errno = retrieve_metric_rmr(
                          gpu_ctl->pmetricsContextCreateParams->pMetricsContext,
-                         gpu_ctl->event_names->added_cuda_evts[i], &num_dep, 
+                         gpu_ctl->added_events->cuda_evts[i], &num_dep, 
                          &collect_rmr
                      );
-        /* why is PAPI_ENOEVNT hard coded? */
         if (papi_errno != PAPI_OK) {
             papi_errno = PAPI_ENOEVNT;
             goto fn_exit;
@@ -631,7 +618,7 @@ static int nvpw_cuda_metricscontext_create(cuptip_control_t state)
        seee cuptip_gpu_state_s */
     cuptip_gpu_state_t *gpu_ctl;
 
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         found = find_same_chipname(gpu_id);
         if (found > -1) {
@@ -649,7 +636,7 @@ static int nvpw_cuda_metricscontext_create(cuptip_control_t state)
         
         /* setting metadata values */
         pMCCP->structSize = NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE;
-        pMCCP->pChipName = avail_events[gpu_id].chip_name;
+        pMCCP->pChipName = cuptiu_table_p->avail_gpu_info[gpu_id].chip_name;
 
         /* create context */
         nvpa_err = NVPW_CUDA_MetricsContext_CreatePtr(pMCCP);
@@ -677,7 +664,7 @@ static int nvpw_cuda_metricscontext_destroy(cuptip_control_t state)
     int gpu_id, found, papi_errno = PAPI_OK;
     cuptip_gpu_state_t *gpu_ctl;
 
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         found = find_same_chipname(gpu_id);
         if (found > -1) {
@@ -714,13 +701,13 @@ static int check_multipass(cuptip_control_t state)
     NVPA_Status nvpa_err;
     cuptip_gpu_state_t *gpu_ctl;
 
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
-        if (gpu_ctl->event_names->count == 0) {
+        if (gpu_ctl->added_events->count == 0) {
             continue;
         }
 
-        papi_errno = get_event_names_rmr(gpu_ctl);
+        papi_errno = get_added_events_rmr(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
@@ -730,7 +717,7 @@ static int check_multipass(cuptip_control_t state)
             .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
             .pPriv = NULL,
             .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
-            .pChipName = avail_events[gpu_id].chip_name,
+            .pChipName = cuptiu_table_p->avail_gpu_info[gpu_id].chip_name,
         };
         nvpa_err = NVPW_CUDA_RawMetricsConfig_CreatePtr(
                        &nvpw_metricsConfigCreateParams
@@ -807,7 +794,7 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
 
 /** @class metric_get_config_image
   * @brief Retrieves binary ConfigImage for the Cuda native event metrics listed 
-  *        for collection. The function get_event_names_rmr( ... ) must be 
+  *        for collection. The function get_added_events_rmr( ... ) must be 
   *        called before this step is possible. 
   * @param *gpu_ctl
   *   Structure of type cuptip_gpu_state_t which has member variables such as 
@@ -816,11 +803,13 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
 static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
+    int gpu_id = gpu_ctl->gpu_id;
+
     NVPW_CUDA_RawMetricsConfig_Create_Params nvpw_metricsConfigCreateParams = {
         .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
         .pPriv = NULL,
         .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
-        .pChipName = avail_events[gpu_ctl->gpu_id].chip_name,
+        .pChipName = cuptiu_table_p->avail_gpu_info[gpu_id].chip_name,
     };
     nvpwCheckErrors( NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams), goto fn_fail );
 
@@ -832,7 +821,7 @@ static int metric_get_config_image(cuptip_gpu_state_t *gpu_ctl)
             .pCounterAvailabilityImage = gpu_ctl->counterAvailabilityImage.data,
         };
         nvpwCheckErrors( NVPW_RawMetricsConfig_SetCounterAvailabilityPtr(&setCounterAvailabilityParams), goto fn_fail );
-    };
+    }
 
     /* NOTE: maxPassCount is being set to 1 as a final safety net to limit metric collection to a single pass.
              Metrics that require multiple passes would fail further down at AddMetrics due to this.
@@ -903,7 +892,7 @@ fn_fail:
 
 /** @class metric_get_counter_data_prefix_image
   * @brief Retrieves binary CounterDataPrefix for the Cuda native event metrics 
-  *        listed for collection. The function get_event_names_rmr( ... ) 
+  *        listed for collection. The function get_added_events_rmr( ... ) 
   *        must be called before this step is possible. 
   * @param *gpu_ctl
   *   Structure of type cuptip_gpu_state_t which has member variables such as 
@@ -912,10 +901,12 @@ fn_fail:
 static int metric_get_counter_data_prefix_image(cuptip_gpu_state_t *gpu_ctl)
 {
     COMPDBG("Entering.\n");
+    int gpu_id = gpu_ctl->gpu_id;
+
     NVPW_CounterDataBuilder_Create_Params counterDataBuilderCreateParams = {
         .structSize = NVPW_CounterDataBuilder_Create_Params_STRUCT_SIZE,
         .pPriv = NULL,
-        .pChipName = avail_events[gpu_ctl->gpu_id].chip_name,
+        .pChipName = cuptiu_table_p->avail_gpu_info[gpu_id].chip_name,
     };
     nvpwCheckErrors( NVPW_CounterDataBuilder_CreatePtr(&counterDataBuilderCreateParams), goto fn_fail );
 
@@ -1118,8 +1109,9 @@ static int begin_profiling(cuptip_gpu_state_t *gpu_ctl)
     };
     cuptiCheckErrors( cuptiProfilerEnableProfilingPtr(&enableProfilingParams), goto fn_fail );
 
-    char rangeName[64];
-    sprintf(rangeName, "PAPI_Range_%d", gpu_ctl->gpu_id);
+    char rangeName[PAPI_MIN_STR_LEN];
+    int gpu_id = gpu_ctl->gpu_id;
+    sprintf(rangeName, "PAPI_Range_%d", gpu_id);
     CUpti_Profiler_PushRange_Params pushRangeParams = {
         .structSize = CUpti_Profiler_PushRange_Params_STRUCT_SIZE,
         .pPriv = NULL,
@@ -1207,7 +1199,7 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts)
 {
     COMPDBG("eval_metric_values. dev = %d\n", gpu_ctl->gpu_id);
     int i, papi_errno = PAPI_OK;
-    int numMetrics = gpu_ctl->event_names->count;
+    int numMetrics = gpu_ctl->added_events->count;
     double *gpuValues;
     char **metricNames;
 
@@ -1231,7 +1223,7 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts)
     }    
 
     for (i = 0; i < numMetrics; i++) {
-        metricNames[i] = gpu_ctl->event_names->added_cuda_evts[i];
+        metricNames[i] = gpu_ctl->added_events->cuda_evts[i];
         LOGDBG("Setting metric name %s\n", metricNames[i]);
     }
 
@@ -1258,7 +1250,7 @@ static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts)
     nvpwCheckErrors( NVPW_MetricsContext_EvaluateToGpuValuesPtr(&evalToGpuParams), goto fn_fail );
 
     /* store the gpu values */
-    for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
+    for (i = 0; i < (int) gpu_ctl->added_events->count; i++) {
         counts[i] = gpuValues[i];
     }
 
@@ -1282,13 +1274,12 @@ static int find_same_chipname(int gpu_id)
 {
     int i;
     for (i = 0; i < gpu_id; i++) {
-        if (!strcmp(avail_events[gpu_id].chip_name, avail_events[i].chip_name)) {
+        if (!strcmp(cuptiu_table_p->avail_gpu_info[gpu_id].chip_name, cuptiu_table_p->avail_gpu_info[i].chip_name)) {
             return i;
         }
     }
     return -1;
 }
-
 
 /** @class init_all_metrics
   * @brief Initialize metrics for a specific GPU.
@@ -1297,22 +1288,18 @@ static int find_same_chipname(int gpu_id)
 static int init_all_metrics(void)
 {
     int gpu_id, papi_errno = PAPI_OK;
-    avail_events = (list_metrics_t *) papi_calloc(num_unique_gpus, sizeof(list_metrics_t));
-    if (avail_events == NULL) {
-        papi_errno = PAPI_ENOMEM;
-        goto fn_exit;
-    }
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
-        papi_errno = get_chip_name(gpu_id, avail_events[gpu_id].chip_name);
+
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
+        papi_errno = get_chip_name(gpu_id, cuptiu_table_p->avail_gpu_info[gpu_id].chip_name);
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
     }
     int found;
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         found = find_same_chipname(gpu_id);
         if (found > -1) {
-            avail_events[gpu_id].pmetricsContextCreateParams = avail_events[found].pmetricsContextCreateParams;
+            cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams = cuptiu_table_p->avail_gpu_info[found].pmetricsContextCreateParams;
             continue;
         }
         MCCP_t *pMCCP = (MCCP_t *) papi_calloc(1, sizeof(MCCP_t));
@@ -1321,10 +1308,10 @@ static int init_all_metrics(void)
             goto fn_exit;
         }
         pMCCP->structSize = NVPW_CUDA_MetricsContext_Create_Params_STRUCT_SIZE;
-        pMCCP->pChipName = avail_events[gpu_id].chip_name;
+        pMCCP->pChipName = cuptiu_table_p->avail_gpu_info[gpu_id].chip_name;
         nvpwCheckErrors( NVPW_CUDA_MetricsContext_CreatePtr(pMCCP), goto fn_fail );
 
-        avail_events[gpu_id].pmetricsContextCreateParams = pMCCP;
+        cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams = pMCCP;
     }
 
 fn_exit:
@@ -1342,34 +1329,71 @@ static void free_all_enumerated_metrics(void)
     COMPDBG("Entering.\n");
     int gpu_id, found;
     NVPW_MetricsContext_Destroy_Params metricsContextDestroyParams;
-    if (avail_events == NULL) {
+    if (cuptiu_table_p->avail_gpu_info == NULL) {
         return;
     }
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         found = find_same_chipname(gpu_id);
         if (found > -1) {
-            avail_events[gpu_id].num_metrics = 0;
-            avail_events[gpu_id].nv_metrics = NULL;
-            avail_events[gpu_id].pmetricsContextCreateParams = NULL;
+            cuptiu_table_p->avail_gpu_info[gpu_id].num_metrics = 0;
+            cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams = NULL;
             continue;
         }
-        if (avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext) {
+        if (cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams->pMetricsContext) {
             metricsContextDestroyParams = (NVPW_MetricsContext_Destroy_Params) {
                 .structSize = NVPW_MetricsContext_Destroy_Params_STRUCT_SIZE,
                 .pPriv = NULL,
-                .pMetricsContext = avail_events[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+                .pMetricsContext = cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams->pMetricsContext,
             };
             nvpwCheckErrors(NVPW_MetricsContext_DestroyPtr(&metricsContextDestroyParams), );
         }
-        papi_free(avail_events[gpu_id].pmetricsContextCreateParams);
-        avail_events[gpu_id].pmetricsContextCreateParams = NULL;
+        papi_free(cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams);
+        cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams = NULL;
 
-        if (avail_events[gpu_id].nv_metrics) {
-            cuptiu_event_table_destroy( &(avail_events[gpu_id].nv_metrics) );
-        }
     }
-    papi_free(avail_events);
-    avail_events = NULL;
+    papi_free(cuptiu_table_p->avail_gpu_info);
+    cuptiu_table_p->avail_gpu_info = NULL;
+}
+
+/** @class init_main_htable
+ *  @brief Initialize the main htable used to collect metrics.
+*/
+static int init_main_htable(void)
+{
+    int i, val = 1, base = 2, papi_errno = PAPI_OK;
+
+    /* allocate (2 ^ NAMEID_WIDTH) metric names, this matches the 
+       number of bits for the event encoding format */
+    for (i = 0; i < NAMEID_WIDTH; i++) {
+        val *= base;
+    }    
+   
+    /* initialize struct */ 
+    cuptiu_table_p = (cuptiu_event_table_t *) papi_malloc(sizeof(cuptiu_event_table_t));
+    if (cuptiu_table_p == NULL) {
+        goto fn_fail;
+    }
+    cuptiu_table_p->capacity = val; 
+    cuptiu_table_p->count = 0;
+
+    cuptiu_table_p->events = (cuptiu_event_t *) papi_calloc(val, sizeof(cuptiu_event_t));
+    if (cuptiu_table_p->events == NULL) {
+        goto fn_fail;
+    }
+
+    cuptiu_table_p->avail_gpu_info = (gpu_record_t *) papi_calloc(num_gpus, sizeof(gpu_record_t));
+    if (cuptiu_table_p->avail_gpu_info == NULL) {
+        goto fn_fail;
+    }
+
+    /* initialize the main hash table for metric collection */ 
+    htable_init(&cuptiu_table_p->htable);
+
+  fn_exit:
+    return papi_errno;
+  fn_fail:
+    papi_errno = PAPI_ENOMEM;
+    goto fn_exit;
 }
 
 /** @class cuptip_init
@@ -1392,13 +1416,12 @@ int cuptip_init(void)
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
-   
-    /* if no gpu's are found exit */
+
     if (num_gpus <= 0) {
         cuptic_disabled_reason_set("No GPUs found on system.");
         goto fn_fail;
     }
-    
+   
     /* initialize cupti profiler and perfworks api */
     papi_errno = initialize_cupti_profiler_api();
     papi_errno += initialize_perfworks_api();
@@ -1407,19 +1430,27 @@ int cuptip_init(void)
         goto fn_fail;
     }
 
+    papi_errno = init_main_htable();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
     papi_errno = init_all_metrics();
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
+
+    /* collect metrics */
+    papi_errno = init_event_table();
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
     papi_errno = cuInitPtr(0);
     if (papi_errno != CUDA_SUCCESS) {
         cuptic_disabled_reason_set("Failed to initialize CUDA driver API.");
         goto fn_fail;
     }
-
-    /* initialize hash table with cuda native events */
-    init_event_table();
-    cuptiu_table_p = &cuptiu_table;
 
     return PAPI_OK;
 fn_fail:
@@ -1427,47 +1458,56 @@ fn_fail:
 }
 
 /** @class verify_events
-  * @brief Verify user added events and create a subset table to be used for 
-  *        start, stop, etc.
+  * @brief Verify user added events and store metadata i.e. metric names 
+  *        and device id's .
   * @param *events_id
   *   Cuda native event id's.
   * @param num_events
   *   Number of Cuda native events a user is wanting to count.
-  * @param **targeted_event_names
-  *   Event table to hold subset of user added events.
+  * @param state
+  *   Struct that holds read count, running, cuptip_info_t, and 
+  *   cuptip_gpu_state_t. 
 */
 int verify_events(uint64_t *events_id, int num_events, 
-                  cuptiu_event_table_t **targeted_event_names) 
+                  cuptip_control_t state) 
 {
-    int papi_errno = PAPI_OK, i;
-    char name[PAPI_MAX_STR_LEN] = { 0 };
-     
-    papi_errno = cuptiu_event_table_create_init_capacity(
-                     num_events * num_gpus,
-                     sizeof(cuptiu_event_t), targeted_event_names
-                 );
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
+    int papi_errno, i;
+    char *metricName;
+    int idx;
+
+    for (i = 0; i < num_gpus; i++) {
+        papi_errno = cuptiu_event_table_create_init_capacity(
+                         num_events,
+                         sizeof(cuptiu_event_t), &(state->gpu_ctl[i].added_events)
+                     ); 
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
+     }  
 
     for (i = 0; i < num_events; i++) {
         event_info_t info;
         papi_errno = evt_id_to_info(events_id[i], &info);
         if (papi_errno != PAPI_OK) {
-            break;
+            return papi_errno;
         }
-        sprintf(name, "%s", cuptiu_table_p->events[info.nameid].name);
-        strcpy((*targeted_event_names)->added_cuda_evts[i], name);
-        (*targeted_event_names)->added_cuda_dev[i] = info.device;
+ 
+        /* for a specific device table, get the current event index */
+        idx = state->gpu_ctl[info.device].added_events->count; 
+
+        metricName = state->gpu_ctl[info.device].added_events->cuda_evts[idx];
+        snprintf(metricName, PAPI_MAX_STR_LEN, "%s", cuptiu_table_p->events[info.nameid].name);
+
         void *p;
-        if (htable_find(cuptiu_table_p->htable, name, (void **) &p) != HTABLE_SUCCESS) {
-            htable_insert((*targeted_event_names)->htable, name, (void **) &p );
+        if (htable_find(cuptiu_table_p->htable, metricName, (void **) &p) != HTABLE_SUCCESS) {
+            return PAPI_ENOEVNT;
         }
-        (*targeted_event_names)->count++;
+        state->gpu_ctl[info.device].added_events->cuda_devs[idx] = info.device;
+        state->gpu_ctl[info.device].added_events->evt_pos[idx] = i; 
+        state->gpu_ctl[info.device].added_events->count++; /* total number of events added for a specific device  */
     }
 
-  fn_exit:                                                                            
-    return papi_errno;  
+    return PAPI_OK;    
 }
 
 /** @class cuptip_ctx_create
@@ -1487,47 +1527,51 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint64_t
     int papi_errno = PAPI_OK, gpu_id, i;
     long long *counters = NULL;
     char name[PAPI_2MAX_STR_LEN] = { 0 };
-    cuptiu_event_table_t *targeted_event_names;
 
-    papi_errno = verify_events(events_id, num_events, &targeted_event_names);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
-
-    /* create a cuptip_control_t struct which contains read_count, running, cupti_info_t and cuptip_gpu_state_t */
     cuptip_control_t state = (cuptip_control_t) papi_calloc (1, sizeof(struct cuptip_control_s));
     if (state == NULL) {
         return PAPI_ENOMEM;
     }
 
-    /* allocate memory for the total number of gpus for the cuptip_gpu_state_t struct 
-       with the device qualifier refactor we only want to count the total number of unique gpus */
-    state->gpu_ctl = (cuptip_gpu_state_t *) papi_calloc(num_unique_gpus, sizeof(cuptip_gpu_state_t));
+    state->gpu_ctl = (cuptip_gpu_state_t *) papi_calloc(num_gpus, sizeof(cuptip_gpu_state_t));
     if (state->gpu_ctl == NULL) {
         return PAPI_ENOMEM;
     }
 
     counters = papi_malloc(num_events * sizeof(*counters));
-
-    /* for each unique gpu store the gpu id for that gpu index */
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
-        state->gpu_ctl[gpu_id].gpu_id = gpu_id;
-        state->gpu_ctl[gpu_id].event_names = targeted_event_names;
+    if (counters == NULL) {
+        return PAPI_ENOMEM;
     }
 
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
+        state->gpu_ctl[gpu_id].gpu_id = gpu_id;
+    }
+
+    event_info_t info;
+    papi_errno = evt_id_to_info(events_id[num_events - 1], &info);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    } 
+
     /* register the user created cuda context for the current gpu if not already known */
-    papi_errno = cuptic_ctxarr_update_current(thr_info);
+    papi_errno = cuptic_ctxarr_update_current(thr_info, info.device);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
-    /* creates a pMetricsContext */
+    /* create a MetricsContext */
     papi_errno = nvpw_cuda_metricscontext_create(state);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
-    /* multipass is not supporter; therefore, we must check the Cuda native event */
+    /* verify user added events are available on the machine */
+    papi_errno = verify_events(events_id, num_events, state);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    /* check to make sure added events do not require multiple passes */
     papi_errno = check_multipass(state);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -1556,27 +1600,22 @@ int cuptip_ctx_start(cuptip_control_t state)
     /* create a context handle */
     CUcontext userCtx, ctx;
 
-    /* return the Cuda context bound to the calling CPU thread */
+    // return the Cuda context bound to the calling CPU thread
     cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    /* if no context is found, create a context */
-    if (userCtx == NULL) {
-        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
-        cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    }
 
     /* enumerate through all of the unique gpus */
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
-        if (gpu_ctl->event_names->count == 0) {
+        if (gpu_ctl->added_events->count == 0) {
             continue;
         }
-        LOGDBG("Device num %d: event_count %d, rmr count %d\n", gpu_id, gpu_ctl->event_names->count, gpu_ctl->rmr_count);
-        papi_errno = cuptic_device_acquire(state->gpu_ctl[gpu_id].event_names);
+        LOGDBG("Device num %d: event_count %d, rmr count %d\n", gpu_id, gpu_ctl->added_events->count, gpu_ctl->rmr_count);
+        papi_errno = cuptic_device_acquire(state->gpu_ctl[gpu_id].added_events);
         if (papi_errno != PAPI_OK) {
             ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
             return papi_errno;
         }
-        /* get the cuda context for the unique gpu */
+        /* get the cuda context */
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
         /* bind the specified CUDA context to the calling CPU thread */
         cudaCheckErrors( cuCtxSetCurrentPtr(ctx), goto fn_fail_misc );
@@ -1627,20 +1666,16 @@ fn_fail_misc:
 int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 {
     COMPDBG("Entering.\n");
-    int papi_errno, gpu_id, i, j = 0, method;
+    int papi_errno, gpu_id, i, j = 0, method, evt_pos;
     long long counts[30], *counter_vals = state->counters;
     cuptip_gpu_state_t *gpu_ctl = NULL;
     CUcontext userCtx = NULL, ctx = NULL;
 
     cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    if (userCtx == NULL) {
-        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
-        cudaArtCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    }
 
-    for (gpu_id = 0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
-        if (gpu_ctl->event_names->count == 0) {
+        if (gpu_ctl->added_events->count == 0) {
             continue;
         }
 
@@ -1678,22 +1713,24 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
         }
-        for (i = 0; i < (int) gpu_ctl->event_names->count; i++) {
+
+        for (i = 0; i < gpu_ctl->added_events->count; i++) {
+            evt_pos = gpu_ctl->added_events->evt_pos[i];
             if (state->read_count == 0) {
-                counter_vals[i] = counts[i];
+                counter_vals[evt_pos] = counts[i];
             }
             else {
                 /* determine collection method such as max, min, sum, and avg for an added Cuda native event */
-                method = get_event_collection_method(gpu_ctl->event_names->added_cuda_evts[i]);
+                method = get_event_collection_method(gpu_ctl->added_events->cuda_evts[i]);
                 switch (method) {
                     case CUDA_SUM:
-                        counter_vals[i] += counts[i];
+                        counter_vals[evt_pos] += counts[i];
                         break;
                     case CUDA_MIN:
-                        counter_vals[i] = counter_vals[i] < counts[i] ? counter_vals[i] : counts[i];
+                        counter_vals[evt_pos] = counter_vals[evt_pos] < counts[i] ? counter_vals[evt_pos] : counts[i];
                         break;
                     case CUDA_MAX:
-                        counter_vals[i] = counter_vals[i] > counts[i] ? counter_vals[i] : counts[i];
+                        counter_vals[evt_pos] = counter_vals[evt_pos] > counts[i] ? counter_vals[evt_pos] : counts[i];
                         break;
                     case CUDA_AVG:
                          /* (size * average + value) / (size + 1) 
@@ -1701,15 +1738,15 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
                             average - current average
                             value - number to add to the average
                          */
-                         counter_vals[i] = (state->read_count * counter_vals[j++] + counts[i]) / (state->read_count + 1);
+                         counter_vals[evt_pos] = (state->read_count * counter_vals[j++] + counts[i]) / (state->read_count + 1);
                          break;
                     default:
-                        counter_vals[i] = counts[i];
+                        counter_vals[evt_pos] = counts[i];
                         break;
                 }
             }
         }
-        *counters = state->counters;
+        *counters = counter_vals;
 
         cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->initializeParams), goto fn_fail_misc );
         cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initScratchBufferParams), goto fn_fail_misc );
@@ -1721,7 +1758,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         };
         cuptiCheckErrors( cuptiProfilerBeginPassPtr(&beginPassParams), goto fn_fail_misc );
 
-        char rangeName[64];
+        char rangeName[PAPI_MIN_STR_LEN];
         sprintf(rangeName, "PAPI_Range_%d", gpu_ctl->gpu_id);
         CUpti_Profiler_PushRange_Params pushRangeParams = {
             .structSize = CUpti_Profiler_PushRange_Params_STRUCT_SIZE,
@@ -1754,7 +1791,7 @@ int cuptip_ctx_reset(cuptip_control_t state)
     int i;
 
     for (i = 0; i < state->read_count; i++) {
-        state->counters[i] = 1;
+        state->counters[i] = 0;
     }
 
     state->read_count = 0;
@@ -1776,17 +1813,11 @@ int cuptip_ctx_stop(cuptip_control_t state)
     cuptip_gpu_state_t *gpu_ctl;
     CUcontext userCtx = NULL, ctx = NULL;
 
-    
-
     cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    if (userCtx == NULL) {
-        cudaArtCheckErrors( cudaFreePtr(NULL), goto fn_fail_misc );
-        cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
-    }
 
-    for (gpu_id=0; gpu_id < num_unique_gpus; gpu_id++) {
+    for (gpu_id=0; gpu_id < num_gpus; gpu_id++) {
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
-        if (gpu_ctl->event_names->count == 0) {
+        if (gpu_ctl->added_events->count == 0) {
             continue;
         }
         papi_errno = cuptic_ctxarr_get_ctx(state->info, gpu_id, &ctx);
@@ -1795,7 +1826,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
-        papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].event_names);
+        papi_errno = cuptic_device_release(state->gpu_ctl[gpu_id].added_events);
         if (papi_errno != PAPI_OK) {
             goto fn_fail;
         }
@@ -1823,9 +1854,9 @@ int cuptip_ctx_destroy(cuptip_control_t *pstate)
     cuptip_control_t state = *pstate;
     int i, j;
     int papi_errno = nvpw_cuda_metricscontext_destroy(state);
-    for (i = 0; i < num_unique_gpus; i++) {
+    for (i = 0; i < num_gpus; i++) {
         reset_cupti_prof_config_images( &(state->gpu_ctl[i]) );
-        cuptiu_event_table_destroy( &(state->gpu_ctl[i].event_names) );
+        cuptiu_event_table_destroy( &(state->gpu_ctl[i].added_events) );
         for (j = 0; j < state->gpu_ctl[i].rmr_count; j++) {
             papi_free((void *) state->gpu_ctl[i].rmr[j].pMetricName);
         }
@@ -1915,10 +1946,6 @@ int evt_id_to_info(uint64_t event_id, event_info_t *info)
         return PAPI_ENOEVNT;
     }
 
-    if (cuptiu_dev_check(cuptiu_table_p->events[info->nameid].device_map, info->device) == 0) {
-        return PAPI_ENOEVNT;
-    }
-
     if (info->nameid >= cuptiu_table_p->count) {
         return PAPI_ENOEVNT;
     }
@@ -1931,48 +1958,56 @@ int evt_id_to_info(uint64_t event_id, event_info_t *info)
 */
 int init_event_table(void) 
 {
-    int gpu_idx, dev_id, i, listsubmetrics = 1, papi_errno = PAPI_OK;
+    int i, dev_id, found, table_idx = 0, papi_errno = PAPI_OK;
+    int listsubmetrics = 1;
 
-    for (gpu_idx = 0; gpu_idx < num_unique_gpus; gpu_idx++) {
-        NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = {
-            .structSize = NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE,
-            .pPriv = NULL,
-            .pMetricsContext = avail_events[gpu_idx].pmetricsContextCreateParams->pMetricsContext,
-            .hidePeakSubMetrics = !listsubmetrics,
-            .hidePerCycleSubMetrics = !listsubmetrics,
-            .hidePctOfPeakSubMetrics = !listsubmetrics,
-        };
-        nvpwCheckErrors( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail );
+    /* instatiate struct to collect the total metric count and metric names;
+       instantiated here to avoid scoping issues */
+    NVPW_MetricsContext_GetMetricNames_Begin_Params getMetricNameBeginParams = { NVPW_MetricsContext_GetMetricNames_Begin_Params_STRUCT_SIZE };
+    
+    /* loop through all available devices on the current system */
+    for (dev_id = 0; dev_id < num_gpus; dev_id++) {
+        found = find_same_chipname(dev_id);
+        /* unique device found, collect metadata  */
+        if (found == -1) {
+            /* increment table index */
+            if (dev_id > 0)
+                table_idx++;
 
-        avail_events[gpu_idx].num_metrics = getMetricNameBeginParams.numMetrics;
-        cuptiu_table.events = papi_calloc(avail_events[gpu_idx].num_metrics, sizeof(cuptiu_event_t));
-        if (cuptiu_table.events == NULL) {
-            papi_errno = PAPI_ENOMEM;
-            goto fn_fail;
-        }
-        
-        papi_errno = cuptiu_event_table_create_init_capacity(avail_events[gpu_idx].num_metrics * num_gpus, sizeof(cuptiu_event_t), &(avail_events[gpu_idx].nv_metrics));
-        if (papi_errno != PAPI_OK) {
-            goto fn_exit;
-        }
-        for (dev_id = 0; dev_id < num_gpus; dev_id++) {
-            for (i = 0; i < avail_events[gpu_idx].num_metrics; i++) {
-                papi_errno = get_ntv_events( avail_events[gpu_idx].nv_metrics,
-                                             getMetricNameBeginParams.ppMetricNames[i],
-                                             i, 0, dev_id );
-                if (papi_errno != PAPI_OK) {
-                    goto fn_exit;
-                }
-            }
-        }
-        cuptiu_table.events = papi_realloc(cuptiu_table.events, avail_events[gpu_idx].nv_metrics->count * sizeof(cuptiu_event_t));
-        cuptiu_table.count = avail_events[gpu_idx].nv_metrics->count;
-        cuptiu_table.htable = avail_events[gpu_idx].nv_metrics->htable;
+            /* assigning values to member variables */
+            getMetricNameBeginParams.pPriv = NULL;
+            getMetricNameBeginParams.pMetricsContext = cuptiu_table_p->avail_gpu_info[table_idx].pmetricsContextCreateParams->pMetricsContext;
+            getMetricNameBeginParams.hidePeakSubMetrics = !listsubmetrics;
+            getMetricNameBeginParams.hidePerCycleSubMetrics = !listsubmetrics;
+            getMetricNameBeginParams.hidePctOfPeakSubMetrics = !listsubmetrics;
 
+            nvpwCheckErrors( NVPW_MetricsContext_GetMetricNames_BeginPtr(&getMetricNameBeginParams), goto fn_fail ); 
+
+            /* for each unique device found, store both the total number of metrics and metric names */
+            cuptiu_table_p->avail_gpu_info[table_idx].num_metrics = getMetricNameBeginParams.numMetrics;
+            cuptiu_table_p->avail_gpu_info[table_idx].metric_names = getMetricNameBeginParams.ppMetricNames;
+        }
+        /* device metadata already collected, set table index */
+        else {
+            /* set table_idx to */
+            table_idx = found;
+        }
+
+        /* loop through metrics to add to overall event table */
+        for (i = 0; i < cuptiu_table_p->avail_gpu_info[table_idx].num_metrics; i++) {
+            papi_errno = get_ntv_events( cuptiu_table_p, cuptiu_table_p->avail_gpu_info[table_idx].metric_names[i], dev_id);
+            if (papi_errno != PAPI_OK)
+                goto fn_exit;
+        }
+
+    }
+
+    /* free memory */
+    for (i = 0; i < table_idx; i++) {
         NVPW_MetricsContext_GetMetricNames_End_Params getMetricNameEndParams = {
             .structSize = NVPW_MetricsContext_GetMetricNames_End_Params_STRUCT_SIZE,
             .pPriv = NULL,
-            .pMetricsContext = avail_events[gpu_idx].pmetricsContextCreateParams->pMetricsContext,
+            .pMetricsContext = cuptiu_table_p->avail_gpu_info[table_idx].pmetricsContextCreateParams->pMetricsContext,
         };
         nvpwCheckErrors( NVPW_MetricsContext_GetMetricNames_EndPtr((NVPW_MetricsContext_GetMetricNames_End_Params *) &getMetricNameEndParams), goto fn_fail );
     }
@@ -1980,39 +2015,33 @@ int init_event_table(void)
   fn_exit:
     return papi_errno;
   fn_fail:
+    papi_errno = PAPI_EMISC; 
     goto fn_exit;
 
 }
 
 /** @class get_ntv_events
-  * @brief Add the event name, event code, and event position to the hash table.
+  * @brief Store Cuda native events and their corresponding device(s).
   *
   * @param *evt_table
   *   Structure containing member variables such as name, evt_code, evt_pos,
       and htable.
   * @param *evt_name
   *   Cuda native event name.
-  * @param evt_code
-  *   Event code which corresponds to the Cuda native event name.
-  * @param evt_pos
-  *   Position within the hash table. 
 */
-static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, unsigned int evt_code, int evt_pos, int gpu_id) 
+static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, int gpu_id) 
 {
-    int papi_errno;
-    char description[256];
     int *count = &evt_table->count;
-    cuptiu_event_t *events = cuptiu_table.events;
-    
+    cuptiu_event_t *events = evt_table->events;
+
     /* check to see if evt_name argument has been provided */
     if (evt_name == NULL) {
         return PAPI_EINVAL;
     }
 
     /* check to see if capacity has been correctly allocated */
-    if (evt_table->count >= evt_table->capacity) {
-        printf("Table count is larger than allocated capacity.\n");
-        return PAPI_ENOMEM;
+    if (*count >= evt_table->capacity) {
+        return PAPI_EBUG;
     }
 
     cuptiu_event_t *event;
@@ -2042,8 +2071,6 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
 */
 static int shutdown_event_table(void)
 {
-    int i;
-
     cuptiu_table_p->count = 0;
 
     papi_free(cuptiu_table_p->events);
@@ -2063,7 +2090,7 @@ static int shutdown_event_table(void)
   * @param gpu_id
   *   Device number, e.g. 0, 1, 2, ... ,etc.
 */
-static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description, int gpu_id) 
+static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const char *evt_name, char *description, const char *chip_name) 
 {
     COMPDBG("Entering.\n");
     int num_dep, i, len, passes, papi_errno;
@@ -2134,7 +2161,7 @@ static int retrieve_metric_descr( NVPA_MetricsContext *pMetricsContext, const ch
         .structSize = NVPW_CUDA_RawMetricsConfig_Create_Params_STRUCT_SIZE,
         .pPriv = NULL, // assign to NULL
         .activityKind = NVPA_ACTIVITY_KIND_PROFILER,
-        .pChipName = avail_events[gpu_id].chip_name,
+        .pChipName = chip_name,
     };
     nvpa_err = NVPW_CUDA_RawMetricsConfig_CreatePtr(&nvpw_metricsConfigCreateParams);
     if (nvpa_err != NVPA_STATUS_SUCCESS) {
@@ -2348,7 +2375,6 @@ int cuptip_evt_code_to_descr(uint64_t event_code, char *descr, int len)
 */
 int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
 {
-
     int htable_errno, device, flags, nameid, papi_errno = PAPI_OK;
     cuptiu_event_t *event;
     char base[PAPI_MAX_STR_LEN] = { 0 };
@@ -2403,7 +2429,7 @@ int cuptip_evt_name_to_code(const char *name, uint64_t *event_code)
   *   Maximum alloted characters for base Cuda native event name. 
 */
 int cuptip_evt_code_to_name(uint64_t event_code, char *name, int len)
-{   
+{ 
     return evt_code_to_name(event_code, name, len);
 }
 
@@ -2458,19 +2484,28 @@ static int evt_code_to_name(uint64_t event_code, char *name, int len)
 */
 int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 {
-
-    int papi_errno, len, gpu_id;
-    event_info_t inf;
+    int papi_errno, i, gpu_id;
     char description[PAPI_HUGE_STR_LEN];
+
+    /* get the events nameid and flags */
+    event_info_t inf;
     papi_errno = evt_id_to_info(event_code, &inf);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
-    /* collect the description and calculated numpass for a specific nameid */
-    if (cuptiu_table_p->events[inf.nameid].desc[0] == 0) {
-        papi_errno = retrieve_metric_descr( avail_events[0].pmetricsContextCreateParams->pMetricsContext,
-                                            cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].desc, 0 );
+    /* collect the description and calculated numpass for the Cuda event  */
+    if (cuptiu_table_p->events[inf.nameid].desc[0] == '\0') {
+        /* find a matching device id to get correct MetricsContext and chip name */
+        for (i = 0; i < num_gpus; ++i) {
+            if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
+                gpu_id = i;
+                break;
+            }
+        }
+        papi_errno = retrieve_metric_descr( cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams->pMetricsContext,
+                                            cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].desc,
+                                            cuptiu_table_p->avail_gpu_info[gpu_id].pmetricsContextCreateParams->pChipName );
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -2478,30 +2513,32 @@ int cuptip_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
 
     switch (inf.flags) {
         case (0):
-            /* cuda native event name */
+            /* store details for the Cuda event */ 
             snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
-            /* cuda native event short description */
             snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
-            /* cuda native event long description */
             snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
             break;
         case DEVICE_FLAG:
         {
-            int i;
+            int init_metric_dev_id;
             char devices[PAPI_MAX_STR_LEN] = { 0 };
             for (i = 0; i < num_gpus; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
+                    /* for an event, store the first device found to use with :device=#, 
+                       as on a heterogenous system events may not appear on each device */
+                    if (devices[0] == '\0') {
+                        init_metric_dev_id = i;
+                    }
+
                     sprintf(devices + strlen(devices), "%i,", i);
                 }
             }
             *(devices + strlen(devices) - 1) = 0;
 
-            /* cuda native event name */
-            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, inf.device );
-            /* cuda native event short description */
+            /* store details for the Cuda event */
+            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, init_metric_dev_id );
             snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
                      cuptiu_table_p->events[inf.nameid].desc, devices );
-            /* cuda native event long description */
             snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
                       cuptiu_table_p->events[inf.nameid].desc, devices );
             break;
@@ -2541,8 +2578,9 @@ static int evt_name_to_basename(const char *name, char *base, int len)
 }
 
 /** @class evt_name_to_device
-  * @brief Take a Cuda native event name with a device qualifer appended to 
-  *        it and collect the device number.
+  * @brief Return the device number for a user provided Cuda native event.
+  *        This can be done with a device qualifier present (:device=#) or
+  *        we internally find the first device the native event exists for.
   * @param *name
   *   Cuda native event name with a device qualifier appended.
   * @param *device
@@ -2551,11 +2589,27 @@ static int evt_name_to_basename(const char *name, char *base, int len)
 static int evt_name_to_device(const char *name, int *device)
 {
     char *p = strstr(name, ":device=");
+    // User did provide :device=# qualifier
     if (p) {
         *device = (int) strtol(p + strlen(":device="), NULL, 10);
     }
+    // User did not provide :device=# qualifier
     else {
-        *device = 0;
+        int i, htable_errno;
+        cuptiu_event_t *event;
+
+        htable_errno = htable_find(cuptiu_table_p->htable, name, (void **) &event);
+        if (htable_errno != HTABLE_SUCCESS) {
+            return PAPI_EINVAL;
+        }
+
+        // Search for the first device the event exists for.
+        for (i = 0; i < num_gpus; ++i) {
+            if (cuptiu_dev_check(event->device_map, i)) {
+                *device = i;
+                break;
+            }
+        }
     }
     return PAPI_OK;
 }

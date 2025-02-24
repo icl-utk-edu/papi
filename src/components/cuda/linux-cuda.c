@@ -143,10 +143,9 @@ static int cuda_init_component(int cidx)
     _cuda_vector.cmp_info.num_native_events = -1;
     _cuda_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-    //_cuda_vector.cmp_info.initialized = 1;
     _cuda_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
     sprintf(_cuda_vector.cmp_info.disabled_reason,
-        "Not initialized. Access component events to initialize it.");
+            "Not initialized. Access component events to initialize it.");
     return PAPI_EDELAY_INIT;
 }
 
@@ -172,12 +171,17 @@ static int cuda_init_private(void)
     _papi_hwi_lock(COMPONENT_LOCK);
     SUBDBG("ENTER\n");
 
+    if (_cuda_vector.cmp_info.initialized) {
+        SUBDBG("Skipping cuda_init_private, as the Cuda event table has already been initialized.\n");
+        goto fn_exit;
+    }
+
     papi_errno = cuptid_init();
     if (papi_errno != PAPI_OK) {
         /* get and assign the string literal for the disabled reason */
         cuptid_disabled_reason_get(&disabled_reason);
         len = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", disabled_reason);
-        if (len > PAPI_MAX_STR_LEN) {
+        if (len < 0 || len > PAPI_MAX_STR_LEN) {
             SUBDBG("The disabled reason has been truncated.\n");
         }
         goto fn_fail;
@@ -204,7 +208,6 @@ static int check_n_initialize(void)
     if (!_cuda_vector.cmp_info.initialized) {
         return cuda_init_private();
     }
-
     return _cuda_vector.cmp_info.disabled;
 }
 
@@ -215,7 +218,7 @@ static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
+   
     uint64_t code = *(uint64_t *) event_code;
     papi_errno = cuptid_evt_enum(&code, modifier);
     *event_code = (unsigned int) code;
@@ -233,7 +236,7 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
+   
     uint64_t code;
     papi_errno = cuptid_evt_name_to_code(name, &code);
     *event_code = (unsigned int) code;
@@ -286,7 +289,7 @@ static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
         goto fn_fail;
     }
 
-    papi_errno = cuptid_evt_code_to_info((uint64_t) event_code, info); 
+    papi_errno = cuptid_evt_code_to_info((uint64_t) event_code, info);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -317,7 +320,7 @@ static int cuda_shutdown_thread(hwd_context_t *ctx)
 static int cuda_init_control_state(hwd_control_state_t __attribute__((unused)) *ctl)
 {
     COMPDBG("Entering.\n");
-    return PAPI_OK;
+    return check_n_initialize();
 }
 
 static int cuda_set_domain(hwd_control_state_t __attribute__((unused)) *ctrl, int domain)
@@ -360,9 +363,10 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-   
+
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
+
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
@@ -402,8 +406,6 @@ int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
         sorted_events[i].event_id = ntv_info[i].ni_event;
         sorted_events[i].frontend_idx = i;
     }
-
-    qsort(sorted_events, ntv_count, sizeof(struct event_map_item), compare);
 
     for (i = 0; i < ntv_count; ++i) {
         ctl->events_id[i] = sorted_events[i].event_id;
@@ -513,7 +515,6 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
         return PAPI_EMISC;
     }
 
-    /* To-do: Understand how this connects to values, memory addresses are not the same. */
     papi_errno = cuptid_ctx_reset(cuda_ctl->cuptid_ctx);
      
     return papi_errno;

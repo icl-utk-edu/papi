@@ -262,7 +262,7 @@ int cuptid_evt_code_to_name(uint64_t event_code, char *name, int len)
         return cuptip_evt_code_to_name(event_code, name, len);
 #endif
 
-    } else if(cuptic_is_runtime_perfworks_api()) {
+    } else if(cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
         return cuptie_evt_code_to_name(event_code, name, len);
@@ -280,7 +280,7 @@ int cuptid_evt_code_to_info(uint64_t event_code, PAPI_event_info_t *info)
         return cuptip_evt_code_to_info(event_code, info);
 #endif
 
-    } else if(cuptic_is_runtime_perfworks_api()) {
+    } else if(cuptic_is_runtime_events_api()) {
 
 #if defined(API_EVENTS)
         return cuptie_evt_code_to_info(event_code, info);
