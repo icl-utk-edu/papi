@@ -5,6 +5,38 @@ For details on installing PAPI on your machine, consult the INSTALL.txt file
 in this directory.
 
 ===============================================================================
+PAPI 7.2.0b2 RELEASE NOTES                                          24 Feb 2025
+===============================================================================
+
+PAPI 7.2.0b2 is now available as a beta release. This release introduces improvements
+to the rocp_sdk component, which supports AMD GPUs/APUs through the ROCprofiler-SDK
+interface, currently still under development and testing. The release also
+includes general improvements to the PAPI code, enhancing both design and
+functionality, as well as various bug fixes.
+
+Additional Major Changes are:
+* AMD ROCprofiler-SDK component (rocp_sdk): Support for sampling (device profiling) mode, and multiple devices
+   +++ Tested on Instinct MI50, MI210, MI250x, and MI300a
+   +++ Sampling functionality has been tested successfully with ROCm-6.3.2. Earlier versions might lead to unexpected behavior.
+* CUDA component:
+   +++ Added support for heterogeneous systems
+   +++ Added support for "device" qualifier to reduce papi_native_avail output length
+* Updated libpfm4 to latest commit 762ca94010d9a8f21f0440c0b5807e9a2e849420
+* AMD power: Added support for family 25 (19h) processors in the RAPL component
+* Intel power: Add support for RaptorLake in RAPL component
+* IBM POWER10: Added preset events
+* Updated papi_events.csv to remove deprecated preset events
+* Improvements in the Counter Analysis Toolkit (CAT)
+* Added tests for the lmsensors component
+* Allow user to optionally disable perf_event, perf_events_uncore, and cpu
+* Sysdetect: allow users to disable component
+* papi_mem_info: added support for ARM Neoverse V2
+* Testing: run_tests.sh tests only active components
+
+Acknowledgements:
+This release is the result of efforts from many people. The PAPI team would like to express special Thanks to Vince Weaver, Stephane Eranian (for libpfm4), William Cohen, Steve Kaufmann, Peinan Zhang, Rashawn Knapp and Phil Mucci.
+
+===============================================================================
 PAPI 7.2.0b1 RELEASE NOTES                                          30 Aug 2024
 ===============================================================================
 
