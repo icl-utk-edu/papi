@@ -34,6 +34,12 @@ if [ "$COMPONENT" = "rocm" ] || [ "$COMPONENT" = "rocm_smi" ]; then
   export PAPI_ROCMSMI_ROOT=$PAPI_ROCM_ROOT/rocm_smi
 fi
 
+# set necessary environment variables for rocp_sdk
+if [ "$COMPONENT" = "rocp_sdk" ]; then
+    module load rocm/6.3.2
+    export PAPI_ROCP_SDK_ROOT=$ROCM_PATH
+fi
+
 # set necessary environemnt variables for cuda and nvml
 if [ "$COMPONENT" = "cuda" ] || [ "$COMPONENT" = "nvml" ]; then
   module load cuda
