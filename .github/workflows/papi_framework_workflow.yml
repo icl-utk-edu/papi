@@ -31,7 +31,7 @@ jobs:
   papi_components_amd:
     strategy:
       matrix:
-        components: [rocm rocm_smi]
+        components: [rocm rocm_smi rocp_sdk]
         debug: [yes, no] 
         shlib: [with, without]
       fail-fast: false

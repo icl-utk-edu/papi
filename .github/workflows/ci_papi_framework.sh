@@ -32,9 +32,11 @@ esac
 
 # set necessary environment variables for rocm and rocm_smi
 case "$COMPONENTS" in
-  *"rocm rocm_smi"*)
-    export PAPI_ROCM_ROOT=/apps/rocm/rocm-5.5.3
-    export PAPI_ROCMSMI_ROOT=$PAPI_ROCM_ROOT/rocm_smi
+  *"rocm rocm_smi rocp_sdk"*)
+    module load rocm/6.3.2
+    export PAPI_ROCM_ROOT=$ROCM_PATH
+    export PAPI_ROCMSMI_ROOT=$ROCM_PATH
+    export PAPI_ROCP_SDK_ROOT=$ROCM_PATH
     ;;
 esac
 
@@ -63,8 +65,8 @@ utils/papi_component_avail
 CURRENT_ACTIVE_COMPONENTS=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
 if [ "$COMPONENTS" = "cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde" ]; then 
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore cuda nvml powercap net appio io stealtime coretemp lmsensors sde sysdetect" ]
-elif [ "$COMPONENTS" = "rocm rocm_smi" ]; then
-    [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore rocm rocm_smi sysdetect" ]
+elif [ "$COMPONENTS" = "rocm rocm_smi rocp_sdk" ]; then
+    [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore rocm rocm_smi rocp_sdk sysdetect" ]
 elif [ "$COMPONENTS" = "infiniband" ]; then
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore infiniband sysdetect" ]
 else
