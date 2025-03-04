@@ -91,10 +91,10 @@ void init_vector(StringVector *vec) {
 
 // Add a string to the vector 
 int push_back(StringVector *vec, const char *str) {
-    size_t i
+    size_t i;
     for (i = 0; i < vec->size; i++) {
       if (strcmp(vec->data[i], str) == 0) {
-          return; // String found
+          return PAPI_OK;        
       }
     }
 
@@ -118,6 +118,7 @@ int push_back(StringVector *vec, const char *str) {
     }
     strcpy(vec->data[vec->size], str); // Copy string to the vector
     vec->size++; // Increase the size
+    return PAPI_OK;
 }
 
 // Free the memory used by the vector
