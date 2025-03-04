@@ -10,7 +10,7 @@ As of 02/02/25, there are a total of 2 unused bits. These bits can be used to cr
 
 ## STAT
 
-3 bits are allocated for the statistic qualifier. ([0 - 8 stats]).
+3 bits are allocated for the statistic qualifier. ([0 - 7 stats]).
 
 ## Device
 
@@ -28,7 +28,7 @@ As of 02/02/25, there are a total of 2 unused bits. These bits can be used to cr
 
 | #DEFINE      | Bits                                                                       |
 | ------------ | -------------------------------------------------------------------------- |
-| EVENTS_WIDTH | `(sizeof(uint64_t) * 8)`                                                   |
+| EVENTS_WIDTH | `(sizeof(uint32_t) * 8)`                                                   |
 | STAT_WIDTH   | `( 3)`                                                                     |
 | DEVICE_WIDTH | `( 7)`                                                                     |
 | QLMASK_WIDTH | `( 2)`                                                                     |

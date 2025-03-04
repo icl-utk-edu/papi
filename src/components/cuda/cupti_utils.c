@@ -90,9 +90,9 @@ void init_vector(StringVector *vec) {
 }
 
 // Add a string to the vector 
-void push_back(StringVector *vec, const char *str) {
-
-    for (size_t i = 0; i < vec->size; i++) {
+int push_back(StringVector *vec, const char *str) {
+    size_t i
+    for (i = 0; i < vec->size; i++) {
       if (strcmp(vec->data[i], str) == 0) {
           return; // String found
       }
@@ -104,7 +104,7 @@ void push_back(StringVector *vec, const char *str) {
         char **new_data = realloc(vec->data, new_capacity * sizeof(char*));
         if (new_data == NULL) {
             fprintf(stderr, "Memory allocation failed\n");
-            exit(1); // Exit if memory allocation fails
+            return PAPI_ENOMEM;
         }
         vec->data = new_data;
         vec->capacity = new_capacity;
@@ -114,7 +114,7 @@ void push_back(StringVector *vec, const char *str) {
     vec->data[vec->size] = malloc(strlen(str) + 1); 
     if (vec->data[vec->size] == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
-        exit(1);
+        return PAPI_ENOMEM;
     }
     strcpy(vec->data[vec->size], str); // Copy string to the vector
     vec->size++; // Increase the size

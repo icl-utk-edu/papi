@@ -30,7 +30,7 @@ int cuptid_evt_code_to_name(uint32_t event_code, char *name, int len);
 int cuptid_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info);
 
 /* profiling context handling interfaces */
-int cuptid_ctx_create(cuptid_info_t thread_info, cuptip_control_t *pcupti_ctl, uint64_t *papi, int num_events);
+int cuptid_ctx_create(cuptid_info_t thread_info, cuptip_control_t *pcupti_ctl, uint64_t *events_id, int num_events);
 int cuptid_ctx_start(cuptip_control_t ctl);
 int cuptid_ctx_read(cuptip_control_t ctl, long long **counters);
 int cuptid_ctx_reset(cuptip_control_t ctl);
