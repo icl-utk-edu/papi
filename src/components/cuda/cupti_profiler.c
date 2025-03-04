@@ -2669,29 +2669,10 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         }
     }
      
-
-    all_stat[0]= '\0'; 
-    size_t current_len = strlen(all_stat);
-    for (size_t i = 0; i < cuptiu_table_p->events[inf.nameid].stat->size; i++) {
-          size_t remaining_space = PAPI_HUGE_STR_LEN - current_len - 1;  // Calculate remaining space
-        
-        // Ensure there's enough space for the string before concatenating
-        if (remaining_space > 0) {
-            strncat(all_stat, cuptiu_table_p->events[inf.nameid].stat->data[i], remaining_space);
-            current_len += strlen(cuptiu_table_p->events[inf.nameid].stat->data[i]);
-        }
-
-        // Add a comma only if there is space and it is not the last element
-        if (i < cuptiu_table_p->events[inf.nameid].stat->size - 1 && remaining_space > 2) {
-            strncat(all_stat, ", ", remaining_space - 2);
-            current_len += 2;  // Account for the added comma and space
-        }
-    }
-    
     switch (inf.flags) {
         case (0):
             /* cuda native event name */
-            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s",  cuptiu_table_p->events[inf.nameid].name );
+            snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].name );
             /* cuda native event short description */
             snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
             /* cuda native event long description */
@@ -2721,6 +2702,24 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         
         case STAT_FLAG:
         {
+            all_stat[0]= '\0'; 
+            size_t current_len = strlen(all_stat);
+            for (size_t i = 0; i < cuptiu_table_p->events[inf.nameid].stat->size; i++) {
+                  size_t remaining_space = PAPI_HUGE_STR_LEN - current_len - 1;  // Calculate remaining space
+                
+                // Ensure there's enough space for the string before concatenating
+                if (remaining_space > 0) {
+                    strncat(all_stat, cuptiu_table_p->events[inf.nameid].stat->data[i], remaining_space);
+                    current_len += strlen(cuptiu_table_p->events[inf.nameid].stat->data[i]);
+                }
+
+            // Add a comma only if there is space and it is not the last element
+            if (i < cuptiu_table_p->events[inf.nameid].stat->size - 1 && remaining_space > 2) {
+                strncat(all_stat, ", ", remaining_space - 2);
+                current_len += 2;  // Account for the added comma and space
+                }
+            }
+        
             /* cuda native event name */
             snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:stat=%s", cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].stat->data[0] );
             /* cuda native event short description */
