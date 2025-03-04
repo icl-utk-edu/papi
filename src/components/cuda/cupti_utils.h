@@ -45,7 +45,7 @@ void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
 
 /* These functions handle list of strings for statistics qualifiers */
 void init_vector(StringVector *vec);
-void push_back(StringVector *vec, const char *str);
+int push_back(StringVector *vec, const char *str);
 void free_vector(StringVector *vec);
 
 /* Utility to locate a file in a given path */
