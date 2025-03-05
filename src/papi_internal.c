@@ -50,6 +50,12 @@ static int default_debug_handler( int errorCode );
 static long long handle_derived( EventInfo_t * evi, long long *from );
 
 /* Global definitions used by other files */
+int num_all_presets = 0;                  // total number of presets
+int _papi_hwi_start_idx[PAPI_NUM_COMP];   // first index for given component
+int pe_idx = -1;                          // track the perf_event component index
+int comp_idx = -1;                        // track the first non-perf_event component index
+int first_comp_preset_idx = 0;            // track the first non-perf_event component preset index
+
 int init_level = PAPI_NOT_INITED;
 int _papi_hwi_error_level = PAPI_QUIET;
 PAPI_debug_handler_t _papi_hwi_debug_handler = default_debug_handler;
@@ -83,7 +89,6 @@ static int num_native_chunks=0;
 
 char **_papi_errlist= NULL;
 static int num_error_chunks = 0;
-
 
 // pointer to event:mask string associated with last enum call to a components
 // will be NULL for non libpfm4 components
@@ -525,10 +530,15 @@ _papi_hwi_component_index( int event_code ) {
   int cidx;
   int event_index;
 
-  /* currently assume presets are for component 0 only */
   if (IS_PRESET(event_code)) {
      INTDBG("EXIT: Event %#x is a PRESET, assigning component %d\n", event_code,0);
-     return 0;
+     hwi_presets_t *_preset_ptr = get_preset(event_code);
+     if( NULL == _preset_ptr ) {
+        INTDBG("EXIT: preset not found\n");
+        return PAPI_EINVAL;
+     } else {
+        return _preset_ptr->component_index;
+     }
   }
 
   /* user defined events are treated like preset events (component 0 only) */
@@ -630,6 +640,52 @@ PAPIWARN( char *format, ... )
 		fprintf( stderr, "\n" );
 		va_end( args );
 	}
+}
+
+/* Return index of first non-perf_event component's preset. */
+int
+get_first_cmp_preset_idx( void ) {
+
+    int cmpnt = comp_idx;
+    if( cmpnt < 0 ) {
+        return -1;
+    }
+
+    return first_comp_preset_idx;
+}
+
+/* Return index of component containing preset with given index. */
+int
+get_preset_cmp( unsigned int *index ) {
+
+    int i;
+    unsigned int sum = 0;
+    for(i = 0; i < PAPI_NUM_COMP; ++i) {
+        sum += _papi_hwi_max_presets[i];
+        if(*index < sum) {
+            *index = *index - (sum - _papi_hwi_max_presets[i]);
+            return i;
+        }
+    }
+
+    /* If we did not find the component to which the preset belongs. */
+    return PAPI_EINVAL;
+}
+
+/* Return a pointer to preset which has given event code. */
+hwi_presets_t*
+get_preset( int event_code ) {
+    unsigned int preset_index = ( event_code & PAPI_PRESET_AND_MASK );
+    hwi_presets_t *_papi_hwi_list;
+
+    int i = get_preset_cmp(&preset_index);
+    if( i < 0 ) {
+        return NULL;
+    }
+
+    _papi_hwi_list = _papi_hwi_comp_presets[i];
+
+    return &_papi_hwi_list[preset_index];
 }
 
 static int
@@ -1102,11 +1158,17 @@ _papi_hwi_map_events_to_native( EventSetInfo_t *ESI)
 
 		/* If it's a preset */
 		if ( IS_PRESET(ESI->EventInfoArray[event].event_code) ) {
-			preset_index = ( int ) ESI->EventInfoArray[event].event_code & PAPI_PRESET_AND_MASK;
+
+            /* If it is a component preset, it will be in a separate array. */
+            hwi_presets_t *_preset_ptr = get_preset((int)ESI->EventInfoArray[event].event_code);
+            if( NULL == _preset_ptr ) {
+                INTDBG("EXIT: preset not found\n");
+                return;
+            }
 
 			/* walk all sub-events in the preset */
 			for( k = 0; k < PAPI_EVENTS_IN_DERIVED_EVENT; k++ ) {
-				nevt = _papi_hwi_presets[preset_index].code[k];
+				nevt = _preset_ptr->code[k];
 				if ( nevt == PAPI_NULL ) {
 					break;
 				}
@@ -1380,17 +1442,23 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
     if ( !_papi_hwi_is_sw_multiplex( ESI ) ) {
 
        /* Handle preset case */
-       if ( IS_PRESET(EventCode) ) {
+       if ( IS_PRESET(EventCode) ) { /* begin preset case */
 	  int count;
 	  int preset_index = EventCode & ( int ) PAPI_PRESET_AND_MASK;
 
 	  /* Check if it's within the valid range */
-	  if ( ( preset_index < 0 ) || ( preset_index >= PAPI_MAX_PRESET_EVENTS ) ) {
+	  if ( ( preset_index < 0 ) || ( preset_index >= num_all_presets ) ) {
 	     return PAPI_EINVAL;
 	  }
 
+      hwi_presets_t *_preset_ptr = get_preset(EventCode);
+      if( NULL == _preset_ptr ) {
+	      INTDBG("EXIT: preset not found\n");
+	      return PAPI_ENOEVNT;
+      }
+
 	  /* count the number of native events in this preset */
-	  count = ( int ) _papi_hwi_presets[preset_index].count;
+	  count = ( int ) _preset_ptr->count;
 
 	  /* Check if event exists */
 	  if ( !count ) {
@@ -1403,7 +1471,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     for( i = 0; i < count; i++ ) {
 		for( j = 0; j < ESI->overflow.event_counter; j++ ) {
 		  if ( ESI->overflow.EventCode[j] ==(int)
-			( _papi_hwi_presets[preset_index].code[i] ) ) {
+			( _preset_ptr->code[i] ) ) {
 		      return PAPI_ECNFLCT;
 		   }
 		}
@@ -1413,7 +1481,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  /* Try to add the preset. */
 
 	  remap = add_native_events( ESI,
-				     _papi_hwi_presets[preset_index].code,
+				     _preset_ptr->code,
 				     count, &ESI->EventInfoArray[thisindex] );
 	  if ( remap < 0 ) {
 	     return remap;
@@ -1423,14 +1491,15 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	     ESI->EventInfoArray[thisindex].event_code =
                                   ( unsigned int ) EventCode;
 	     ESI->EventInfoArray[thisindex].derived =
-				  _papi_hwi_presets[preset_index].derived_int;
+				  _preset_ptr->derived_int;
 	     ESI->EventInfoArray[thisindex].ops =
-				  _papi_hwi_presets[preset_index].postfix;
+				  _preset_ptr->postfix;
              ESI->NumberOfEvents++;
 	     _papi_hwi_map_events_to_native( ESI );
 
 	  }
        }
+
        /* Handle adding Native events */
        else if ( IS_NATIVE(EventCode) ) {
 
@@ -1975,6 +2044,49 @@ _papi_hwi_init_global( int PE_OR_PEU )
 	return PAPI_OK;
 }
 
+
+/*
+ * Routine that initializes the presets for all components other
+ * than perf_event. Ignore perf_event component.
+ */
+int
+_papi_hwi_init_global_presets( void )
+{
+    int retval = PAPI_OK, is_pe = 0, i = 0;
+
+    while ( _papi_hwd[i] ) {
+        is_pe = 0;
+        if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event") == 0) {
+            is_pe  = 1;
+            pe_idx = i;
+            first_comp_preset_idx += _papi_hwi_max_presets[i];
+        } else {
+            /* Only set the first non-perf_event component index once. */
+            if ( -1 == comp_idx ) {
+                comp_idx = i;
+            }
+        }
+
+        /* Force initialization of component if needed. */
+        if (_papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT) {
+            int junk;
+            _papi_hwd[i]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
+        }
+
+        if ( (NULL != _papi_hwd[i]->init_comp_presets) && !is_pe
+              && ( !_papi_hwd[i]->cmp_info.disabled ||
+                    _papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT ) ) {
+                retval = _papi_hwd[i]->init_comp_presets();
+        }
+
+        _papi_hwi_start_idx[i] = num_all_presets;
+        num_all_presets += _papi_hwi_max_presets[i];
+        i++;
+    }
+    return retval;
+}
+
+
 /* Machine info struct initialization using defaults */
 /* See _papi_mdi definition in papi_internal.h       */
 
@@ -2292,45 +2404,49 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 {
 	INTDBG("ENTER: EventCode: %#x, info: %p\n", EventCode, info);
 
-	int i = EventCode & PAPI_PRESET_AND_MASK;
 	unsigned int j;
+    hwi_presets_t *_preset_ptr = get_preset(EventCode);
+    if( NULL == _preset_ptr ) {
+        INTDBG("EXIT: preset not found\n");
+        return PAPI_ENOEVNT;
+    }
 
-	if ( _papi_hwi_presets[i].symbol ) {	/* if the event is in the preset table */
+	if ( _preset_ptr->symbol ) {	/* if the event is in the preset table */
       // since we are setting the whole structure to zero the strncpy calls below will 
       // be leaving NULL terminates strings as long as they copy 1 less byte than the 
       // buffer size of the field.
 
-	   INTDBG("ENTER: Configuring: %s\n", _papi_hwi_presets[i].symbol);
+	   INTDBG("ENTER: Configuring: %s\n", _preset_ptr->symbol);
 
 	   memset( info, 0, sizeof ( PAPI_event_info_t ) );
 
 		/* set up eventcode and name */
 	   info->event_code = ( unsigned int ) EventCode;
-	   strncpy( info->symbol, _papi_hwi_presets[i].symbol,
+	   strncpy( info->symbol, _preset_ptr->symbol,
 	            sizeof(info->symbol)-1);
 
 		/* set up short description, if available */
-	   if ( _papi_hwi_presets[i].short_descr != NULL ) {
-	      strncpy( info->short_descr, _papi_hwi_presets[i].short_descr,
+	   if ( _preset_ptr->short_descr != NULL ) {
+	      strncpy( info->short_descr, _preset_ptr->short_descr,
 		          sizeof ( info->short_descr )-1 );
 	   }
 
 		/* set up long description, if available */
-	   if ( _papi_hwi_presets[i].long_descr != NULL ) {
-	      strncpy( info->long_descr,  _papi_hwi_presets[i].long_descr,
+	   if ( _preset_ptr->long_descr != NULL ) {
+	      strncpy( info->long_descr,  _preset_ptr->long_descr,
 		          sizeof ( info->long_descr )-1 );
 	   }
 
-	   info->event_type = _papi_hwi_presets[i].event_type;
-	   info->count = _papi_hwi_presets[i].count;
+	   info->event_type = _preset_ptr->event_type;
+	   info->count = _preset_ptr->count;
 
 
 		/* set up if derived event */
-	   _papi_hwi_derived_string( _papi_hwi_presets[i].derived_int,
+	   _papi_hwi_derived_string( _preset_ptr->derived_int,
 				     info->derived,  sizeof ( info->derived )-1 );
 
-	   if ( _papi_hwi_presets[i].postfix != NULL ) {
-	      strncpy( info->postfix, _papi_hwi_presets[i].postfix,
+	   if ( _preset_ptr->postfix != NULL ) {
+	      strncpy( info->postfix, _preset_ptr->postfix,
 		          sizeof ( info->postfix )-1 );
 	   }
 
@@ -2342,21 +2458,33 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
 		/* ideally that should never happen, but also ideally */
 		/* we wouldn't segfault if it does */
 
-	      if (_papi_hwi_presets[i].name[j]==NULL) {
-		INTDBG("ERROR in event definition of %s\n", _papi_hwi_presets[i].symbol);
+	      if (_preset_ptr->name[j]==NULL) {
+		INTDBG("ERROR in event definition of %s\n", _preset_ptr->symbol);
 			   return PAPI_ENOEVNT;
 		}
 		else {
-			info->code[j]=_papi_hwi_presets[i].code[j];
-			strncpy(info->name[j], _papi_hwi_presets[i].name[j],
+			info->code[j]=_preset_ptr->code[j];
+			strncpy(info->name[j], _preset_ptr->name[j],
 				sizeof(info->name[j])-1);
 		}
 	   }
 
-	   if ( _papi_hwi_presets[i].note != NULL ) {
-	      strncpy( info->note, _papi_hwi_presets[i].note,
+	   if ( _preset_ptr->note != NULL ) {
+	      strncpy( info->note, _preset_ptr->note,
 		          sizeof ( info->note )-1 );
 	   }
+
+       /* Copy the qualifiers and their associated descriptions into
+        * the info struct. */
+       int k;
+	   for( k = 0; k < _preset_ptr->num_quals; ++k ) {
+	      strncpy( info->quals[k], _preset_ptr->quals[k],
+		          sizeof ( info->quals[k] )-1 );
+	      strncpy( info->quals_descrs[k], _preset_ptr->quals_descrs[k],
+		          sizeof ( info->quals_descrs[k] )-1 );
+	   }
+       info->num_quals = _preset_ptr->num_quals;
+       info->component_index = _preset_ptr->component_index;
 
 	   return PAPI_OK;
 	} else {
