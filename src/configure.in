@@ -6,7 +6,7 @@
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
-AC_INIT(PAPI, 7.2.0.0b1, ptools-perfapi@icl.utk.edu)
+AC_INIT(PAPI, 7.2.0.0b2, ptools-perfapi@icl.utk.edu)
 AC_CONFIG_SRCDIR([papi.c])
 AC_CONFIG_HEADER([config.h])
 
