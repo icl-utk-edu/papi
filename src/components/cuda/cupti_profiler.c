@@ -2060,7 +2060,7 @@ bool is_stat(const char *token) {
 */
 void restructure_event_name(const char *input, char *output, char *base, char *stat) {
     char input_copy[PAPI_HUGE_STR_LEN];
-    strncpy(input_copy, input, sizeof(input_copy) - 1);
+    snprintf(input_copy, sizeof(input_copy), "%s", input);
     input_copy[sizeof(input_copy) - 1] = '\0';
 
     char *parts[10] = {0};
@@ -2087,14 +2087,14 @@ void restructure_event_name(const char *input, char *output, char *base, char *s
 
     // If no stat found, copy input directly to output, base, and stat
     if (stat_index == -1) {
-        strcpy(output, input);
-        strcpy(base, input);
-        strcpy(stat, "");  // Set stat as an empty string if no stat is found
+        snprintf(output, sizeof(output), "%s", input);
+        snprintf(base, sizeof(base), "%s", input);
+        snprintf(stat, sizeof(stat), "%s", ""); // Set stat as an empty string if no stat is found
         return;
     }
 
     // Copy the stat
-    strcpy(stat, parts[stat_index]);
+    snprintf(stat, sizeof(stat), "%s", parts[stat_index]);
 
     // Build base name (everything except the stat)
     for (int i = 0; i < segment_count; i++) {
@@ -2157,8 +2157,9 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
         /* increment count */
         (*count)++;
 
-        strcpy(event->name, base_name);
-        strcpy(event->basename, name_restruct);
+        snprintf(event->name, sizeof(event->name), "%s", base_name);
+        snprintf(event->basename, sizeof(event->basename), "%s", name_restruct);
+
         event->stat = stat_vec;
         init_vector(event->stat);
         
@@ -2652,8 +2653,8 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
     }
     
     const char *stat_position = strstr(cuptiu_table_p->events[inf.nameid].basename, "stat");
-    size_t prefix_len = stat_position - cuptiu_table_p->events[inf.nameid].basename; 
-    strncpy(basename, cuptiu_table_p->events[inf.nameid].basename, prefix_len);       
+    size_t prefix_len = stat_position - cuptiu_table_p->events[inf.nameid].basename;
+    snprintf(basename, sizeof(basename), "%.*s", (int)prefix_len, cuptiu_table_p->events[inf.nameid].basename);
     basename[prefix_len] = '\0';
     strcat(basename, cuptiu_table_p->events[inf.nameid].stat->data[0]);                 
     strcat(basename, stat_position + 4); 
