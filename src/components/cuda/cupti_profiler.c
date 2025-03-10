@@ -2553,7 +2553,7 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
         goto fn_exit;
     }
 
-    flags = (device >= 0) ? DEVICE_FLAG:STAT_FLAG;
+    flags = (device >= 0) ? (STAT_FLAG | DEVICE_FLAG) : DEVICE_FLAG;
     if (flags == 0){
         papi_errno = PAPI_EINVAL;
         goto fn_exit;
@@ -2562,6 +2562,7 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
     nameid = (int) (event - cuptiu_table_p->events);
 
     event_info_t info = { stat, device, flags, nameid };
+
     papi_errno = evt_id_create(&info, event_code);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -2602,16 +2603,47 @@ int cuptip_evt_code_to_name(uint32_t event_code, char *name, int len)
 static int evt_code_to_name(uint32_t event_code, char *name, int len)
 {
     int papi_errno, str_len;
-
+    const char *stat = "";
+            
     event_info_t info;
     papi_errno = evt_id_to_info(event_code, &info);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
+    
+    if (info.stat == 0) {
+        stat = "avg";
+    } else if (info.stat == 1) {
+        stat = "sum";
+    } else if (info.stat == 2) {
+        stat = "min";
+    } else if (info.stat == 3) {
+        stat = "max";
+    } else if (info.stat == 4) {
+        stat = "max_rate";
+    } else if (info.stat == 5) {
+        stat = "pct";
+    } else if (info.stat == 6) {
+        stat = "ratio";
+    }
 
     switch (info.flags) {
         case (DEVICE_FLAG):
             str_len = snprintf(name, len, "%s:device=%i", cuptiu_table_p->events[info.nameid].name, info.device);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+        case (STAT_FLAG):    
+            str_len = snprintf(name, len, "%s:stat=%s", cuptiu_table_p->events[info.nameid].name, stat);
+            if (str_len > len) {
+                ERRDBG("String formatting exceeded max string length.\n");
+                return PAPI_ENOMEM;
+            }
+            break;
+        case (DEVICE_FLAG | STAT_FLAG):
+            str_len = snprintf(name, len, "%s:stat=%s:device=%i", cuptiu_table_p->events[info.nameid].name, stat, info.device);
             if (str_len > len) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_ENOMEM;
