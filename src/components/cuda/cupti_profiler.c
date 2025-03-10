@@ -21,8 +21,6 @@
 #include "cupti_config.h"
 #include "lcuda_debug.h"
 #include "htable.h"
-#include <stdbool.h>
-#include <math.h>
 
 /**
  * Event identifier encoding format:
@@ -174,7 +172,7 @@ static int get_event_names_rmr(cuptip_gpu_state_t *gpu_ctl);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts);
 static void restructure_event_name(const char *input, char *output, char *base, char *stat);
-static bool is_stat(const char *token);
+static int is_stat(const char *token);
 
 
 /* nvperf function pointers */
@@ -1944,7 +1942,7 @@ int evt_id_to_info(uint32_t event_id, event_info_t *info)
     info->flags    = (uint32_t)((event_id & QLMASK_MASK) >> QLMASK_SHIFT);
     info->nameid   = (uint32_t)((event_id & NAMEID_MASK) >> NAMEID_SHIFT);
 
-    if (info->stat >= pow(2, STAT_WIDTH)) {
+    if (info->stat >= (1 << STAT_WIDTH)) {
         return PAPI_ENOEVNT;
     }
 
@@ -2039,7 +2037,7 @@ int init_event_table(void)
   * @param token
   *   A string
 */
-bool is_stat(const char *token) {
+int is_stat(const char *token) {
     return (strcmp(token, "avg") == 0 || strcmp(token, "sum") == 0 ||
             strcmp(token, "min") == 0 || strcmp(token, "max") == 0 ||
             strcmp(token, "max_rate") == 0 || strcmp(token, "pct") == 0 ||
