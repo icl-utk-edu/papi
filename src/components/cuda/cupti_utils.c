@@ -116,7 +116,7 @@ int push_back(StringVector *vec, const char *str) {
         fprintf(stderr, "Memory allocation failed\n");
         return PAPI_ENOMEM;
     }
-    strcpy(vec->data[vec->size], str); // Copy string to the vector
+    snprintf(vec->data[vec->size], strlen(str) + 1, "%s", str);
     vec->size++; // Increase the size
     return PAPI_OK;
 }
