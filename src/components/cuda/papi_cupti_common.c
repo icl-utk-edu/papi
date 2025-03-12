@@ -54,13 +54,13 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
 /**@class load_cuda_sym
- * @brief Search for libcuda.so.
+ * @brief Search for libcuda.so.1.
  */
 static int load_cuda_sym(void)
 {
-    dl_drv = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+    dl_drv = dlopen("libcuda.so.1", RTLD_NOW | RTLD_GLOBAL);
     if (!dl_drv) {
-        ERRDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
+        ERRDBG("Loading installed libcuda.so.1 failed. Check that cuda drivers are installed.\n");
         goto fn_fail;
     }
 

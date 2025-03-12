@@ -204,9 +204,9 @@ int _local_linkDynamicLibraries(void)
    }
 
    // Exit if we cannot link the cuda or NVML libs.
-   dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+   dl1 = dlopen("libcuda.so.1", RTLD_NOW | RTLD_GLOBAL);
    if (!dl1) {
-      fprintf(stderr, "CUDA library libcuda.so not found.");
+      fprintf(stderr, "CUDA library libcuda.so.1 not found.");
       return (-1);
    }
 
