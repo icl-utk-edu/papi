@@ -165,8 +165,7 @@ static int cuda_shutdown_component(void)
 
 static int cuda_init_private(void)
 {
-    int papi_errno = PAPI_OK, len, count = 0;
-    const char *disabled_reason;
+    int papi_errno = PAPI_OK;
 
     _papi_hwi_lock(COMPONENT_LOCK);
     SUBDBG("ENTER\n");
@@ -174,33 +173,60 @@ static int cuda_init_private(void)
     if (_cuda_vector.cmp_info.initialized) {
         SUBDBG("Skipping cuda_init_private, as the Cuda event table has already been initialized.\n");
         goto fn_exit;
+    } 
+
+    int strLen = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MIN_STR_LEN, "%s", "");
+    if (strLen < 0 || strLen >= PAPI_MIN_STR_LEN) {
+        SUBDBG("Failed to fully write initial disabled_reason.\n");
+    }
+
+    strLen = snprintf(_cuda_vector.cmp_info.partially_disabled_reason, PAPI_MIN_STR_LEN, "%s", "");
+    if (strLen < 0 || strLen >= PAPI_MIN_STR_LEN) {
+         SUBDBG("Failed to fully write initial partially_disabled_reason.\n");
     }
 
     papi_errno = cuptid_init();
     if (papi_errno != PAPI_OK) {
-        /* get and assign the string literal for the disabled reason */
-        cuptid_disabled_reason_get(&disabled_reason);
-        len = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", disabled_reason);
-        if (len < 0 || len > PAPI_MAX_STR_LEN) {
-            SUBDBG("The disabled reason has been truncated.\n");
+        // Get last error message
+        const char *err_string;
+        cuptid_err_get_last(&err_string);
+        // Cuda component is partially disabled
+        if (papi_errno == PAPI_PARTIAL) {
+            _cuda_vector.cmp_info.partially_disabled = 1;
+            strLen = snprintf(_cuda_vector.cmp_info.partially_disabled_reason, PAPI_HUGE_STR_LEN, "%s", err_string);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                SUBDBG("Failed to fully write the partially disabled reason.\n");
+            }
+            // Reset variable that holds error code
+            papi_errno = PAPI_OK; 
         }
-        goto fn_fail;
+        // Cuda component is disabled
+        else {
+            strLen = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", err_string);
+            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+                SUBDBG("Failed to fully write the disabled reason.\n");
+            }
+            goto fn_fail;
+        }
     }
 
-    strcpy(_cuda_vector.cmp_info.disabled_reason, "");
-
-    /* get the number of native events count */
+    // Get the metric count found on a machine
+    int count;
     papi_errno = cuda_get_evt_count(&count);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
     _cuda_vector.cmp_info.num_native_events = count;
 
-  fn_exit:
     _cuda_vector.cmp_info.initialized = 1;
-    _cuda_vector.cmp_info.disabled = papi_errno;
-    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
-    _papi_hwi_unlock(COMPONENT_LOCK);
-    return papi_errno;
-  fn_fail:
-    goto fn_exit;
+
+    fn_exit:
+      _cuda_vector.cmp_info.disabled = papi_errno;
+      SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+      _papi_hwi_unlock(COMPONENT_LOCK);
+      return papi_errno;
+    fn_fail:
+      goto fn_exit;
 }
 
 static int check_n_initialize(void)
