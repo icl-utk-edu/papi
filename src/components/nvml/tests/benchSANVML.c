@@ -216,9 +216,9 @@ int _local_linkDynamicLibraries(void)
       return (-1);
    }
 
-   dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+   dl3 = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_GLOBAL);
    if (!dl3) {
-      fprintf(stderr, "NVML runtime library libnvidia-ml.so not found.");
+      fprintf(stderr, "NVML runtime library libnvidia-ml.so.1 not found.");
        return (-1);
    }
 

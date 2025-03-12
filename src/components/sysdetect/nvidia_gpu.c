@@ -291,7 +291,7 @@ nvml_is_enabled( void )
 int
 load_nvml_sym( char *status )
 {
-    nvml_dlp = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+    nvml_dlp = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_GLOBAL);
     if (nvml_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {

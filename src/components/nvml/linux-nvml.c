@@ -1260,7 +1260,7 @@ linkCudaLibraries()
     // getenv returns NULL if environment variable is not found.
     char *cuda_root = getenv("PAPI_CUDA_ROOT");
 
-    // We need the NVML main library, normally libnvidia-ml.so. 
+    // We need the NVML main library, normally libnvidia-ml.so.1.
     dl3 = NULL;                                                 // Ensure reset to NULL.
 
     // Step 1: Process override if given.   
@@ -1274,22 +1274,22 @@ linkCudaLibraries()
 
     // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
     if (dl3 == NULL) {                                              // If no override,
-        dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
+        dl3 = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
     }
 
     // Step 3: Try the explicit install default. 
     if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
-        snprintf(path_lib, 1024, "%s/lib64/libnvidia-ml.so", cuda_root);            // PAPI Root check.
+        snprintf(path_lib, 1024, "%s/lib64/libnvidia-ml.so.1", cuda_root);            // PAPI Root check.
         dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
     }
 
     // Check for failure.
     if (dl3 == NULL) {
-        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libnvidia-ml.so not found.");
+        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libnvidia-ml.so.1 not found.");
         return(PAPI_ENOSUPP);   // Not found on default paths.
     }
 
-    // We have a dl3. (libnvidia-ml.so).
+    // We have a dl3. (libnvidia-ml.so.1).
 
     nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
     if (dlerror() != NULL) {
