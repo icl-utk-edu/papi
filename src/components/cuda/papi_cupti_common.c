@@ -141,24 +141,24 @@ void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, cons
 }
 
 /**@class load_cudart_sym
- * @brief Search for libcudart.so. Order of search is outlined below.
+ * @brief Search for libcudart.so.12. Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_RUNTIME, this will take precedent over
  *    the options listed below to be searched.
- * 2. If we fail to collect libcudart.so from PAPI_CUDA_RUNTIME or it is not set,
+ * 2. If we fail to collect libcudart.so.12 from PAPI_CUDA_RUNTIME or it is not set,
  *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect libcudart.so from steps 1 and 2, then we will search the linux
+ * 3. If we fail to collect libcudart.so.12 from steps 1 and 2, then we will search the linux
  *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
  *    advised for this option.
- * 4. We use dlopen to search for libcudart.so.
- *    If this fails, then we failed to find libcudart.so
+ * 4. We use dlopen to search for libcudart.so.12.
+ *    If this fails, then we failed to find libcudart.so.12
  */
 static int load_cudart_sym(void)
 {
-    char dlname[] = "libcudart.so";
+    char dlname[] = "libcudart.so.12";
     char lookup_path[PATH_MAX];
 
-    /* search PAPI_CUDA_RUNTIME for libcudart.so (takes precedent over PAPI_CUDA_ROOT) */
+    /* search PAPI_CUDA_RUNTIME for libcudart.so.12 (takes precedent over PAPI_CUDA_ROOT) */
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
     if (papi_cuda_runtime) {
         sprintf(lookup_path, "%s/%s", papi_cuda_runtime, dlname);
@@ -170,22 +170,22 @@ static int load_cudart_sym(void)
         NULL,
     };
 
-    /* search PAPI_CUDA_ROOT for libcudart.so */
+    /* search PAPI_CUDA_ROOT for libcudart.so.12 */
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_rt) {
         dl_rt = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
     }
 
-    /* search linux default directories for libcudart.so */
+    /* search linux default directories for libcudart.so.12 */
     if (linked_cudart_path && !dl_rt) {
         dl_rt = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
     }
 
-    /* last ditch effort to find libcudart.so */
+    /* last ditch effort to find libcudart.so.12 */
     if (!dl_rt) {
         dl_rt = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
         if (!dl_rt) {
-            ERRDBG("Loading libcudart.so failed. Try setting PAPI_CUDA_ROOT\n");
+            ERRDBG("Loading libcudart.so.12 failed. Try setting PAPI_CUDA_ROOT\n");
             goto fn_fail;
         }
     }
@@ -450,7 +450,7 @@ void cuptic_disabled_reason_get(const char **pmsg)
 
 static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused)) size_t size, __attribute__((unused)) void *data)
 {
-    const char *library_name = "libcudart.so";
+    const char *library_name = "libcudart.so.12";
     char *library_path = strdup(info->dlpi_name);
 
     if (library_path != NULL && strstr(library_path, library_name) != NULL) {

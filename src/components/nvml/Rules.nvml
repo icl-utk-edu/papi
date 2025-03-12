@@ -18,12 +18,12 @@ PAPI_CUDA_ROOT ?= /opt/cuda
 # Both at compile time and run time, the software depends on PAPI_CUDA_ROOT.
 # There are three libraries used by the NVML component, they are 
 # libcuda.so.1
-# libcudart.so 
+# libcudart.so.12
 # libnvidia-ml.so.1
 
 # The standard installed locations for these libraries, with overrides:
 # $(PAPI_CUDA_ROOT)/lib64/libcuda.so.1             #O.R. PAPI_CUDA_MAIN
-# $(PAPI_CUDA_ROOT)/lib64/libcudart.so             #O.R. PAPI_CUDA_RUNTIME
+# $(PAPI_CUDA_ROOT)/lib64/libcudart.so.12          #O.R. PAPI_CUDA_RUNTIME
 # $(PAPI_CUDA_ROOT)/lib64/libnvidia-ml.so.1        #O.R. PAPI_NVML_MAIN
 # 
 # There are many ways to cause these paths to be known. 

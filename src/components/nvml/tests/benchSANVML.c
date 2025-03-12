@@ -210,9 +210,9 @@ int _local_linkDynamicLibraries(void)
       return (-1);
    }
 
-   dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
+   dl2 = dlopen("libcudart.so.12", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
    if (!dl2) {
-      fprintf(stderr, "CUDA runtime library libcudart.so not found.");
+      fprintf(stderr, "CUDA runtime library libcudart.so.12 not found.");
       return (-1);
    }
 
