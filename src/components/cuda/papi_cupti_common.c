@@ -17,7 +17,7 @@
 static void *dl_drv, *dl_rt;
 
 const char *linked_cudart_path;
-char error_string[PAPI_HUGE_STR_LEN];
+static char cuda_error_string[PAPI_HUGE_STR_LEN];
 
 void *dl_cupti;
 
@@ -489,7 +489,7 @@ int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs)
 */
 int cuptic_err_set_last(const char *error_str)
 {
-    int strLen = snprintf(error_string, PAPI_HUGE_STR_LEN, "%s", error_str);
+    int strLen = snprintf(cuda_error_string, PAPI_HUGE_STR_LEN, "%s", error_str);
     if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Last set error message not fully written.\n");
     }
@@ -504,7 +504,7 @@ int cuptic_err_set_last(const char *error_str)
 */
 int cuptic_err_get_last(const char **error_str)
 {
-    *error_str = error_string;
+    *error_str = cuda_error_string;
     return PAPI_OK;
 }
 
