@@ -50,7 +50,6 @@ esac
 # test linking with or without --with-shlib-tools 
 if [ "$SHLIB" = "without" ]; then
     ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS"
-    ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS" --with-shlib-tools
 else
     ./configure --with-debug=$DEBUG --enable-warnings --with-components="$COMPONENTS" --with-shlib-tools
 fi
@@ -62,7 +61,7 @@ utils/papi_component_avail
 
 # active component check
 CURRENT_ACTIVE_COMPONENTS=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
-if [ "$COMPONENTS" = "cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc infiniband net appio io lustre stealtime coretemp lmsensors mx sde" ]; then 
+if [ "$COMPONENTS" = "cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde" ]; then 
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore cuda nvml powercap net appio io stealtime coretemp lmsensors sde sysdetect" ]
 elif [ "$COMPONENTS" = "rocm rocm_smi" ]; then
     [ "$CURRENT_ACTIVE_COMPONENTS" = "perf_event perf_event_uncore rocm rocm_smi sysdetect" ]
