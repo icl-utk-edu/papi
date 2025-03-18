@@ -19,7 +19,7 @@ jobs:
   papi_components_comprehensive:
     strategy:
       matrix:
-        components: [cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc infiniband net appio io lustre stealtime coretemp lmsensors mx sde]
+        components: [cuda nvml rocm rocm_smi powercap powercap_ppc rapl sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde]
         debug: [yes, no]
         shlib: [with, without]
       fail-fast: false
