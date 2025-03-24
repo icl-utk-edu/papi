@@ -83,6 +83,9 @@ int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 /* functions to handle a partially disabled Cuda component */
 void cuptic_partial(int *isCmpPartial, int **cudaEnabledDeviceIds, size_t *totalNumEnabledDevices);
 
+/* function to get a devices compute capability */
+int get_gpu_compute_capability(int dev_num, int *cc);
+
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
     if (dlerror() != NULL) {  \
         ERRDBG("A CUDA required function '%s' was not found in lib '%s'.\n", name, #dllib);  \

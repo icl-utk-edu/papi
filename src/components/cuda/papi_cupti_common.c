@@ -35,8 +35,10 @@ typedef enum
 {
     sys_gpu_ccs_unknown = 0,
     sys_gpu_ccs_mixed,
-    sys_gpu_ccs_all_lte_70,
+    sys_gpu_ccs_all_lt_70,
     sys_gpu_ccs_all_eq_70,
+    sys_gpu_ccs_all_gt_70,
+    sys_gpu_ccs_all_lte_70,
     sys_gpu_ccs_all_gte_70
 } sys_compute_capabilities_e;
 
@@ -64,7 +66,6 @@ static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused))
 static int get_user_cudart_path(void);
 
 // Function to determine compute capabilities
-static int get_gpu_compute_capability(int dev_num, int *cc);
 static int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs);
 
 // Functions to handle a partially disabled Cuda component
@@ -440,42 +441,50 @@ int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs)
     }
 
     int i, cc;
-    int num_gpus_with_ccs_gte_cc70 = 0, num_gpus_with_ccs_eq_cc70 = 0, num_gpus_with_ccs_lte_cc70 = 0;
+    int num_gpus_with_ccs_gt_cc70 = 0, num_gpus_with_ccs_eq_cc70 = 0, num_gpus_with_ccs_lt_cc70 = 0;
     for (i = 0; i < total_gpus; i++) {
         papi_errno = get_gpu_compute_capability(i, &cc);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
-        if (cc >= 70) {
-            ++num_gpus_with_ccs_gte_cc70;
+
+        if (cc > 70) {
+            ++num_gpus_with_ccs_gt_cc70;
         }
         if (cc == 70) {
             ++num_gpus_with_ccs_eq_cc70;
         }
-        if (cc <= 70) {
-            ++num_gpus_with_ccs_lte_cc70;
+        if (cc < 70) {
+            ++num_gpus_with_ccs_lt_cc70;
         }
     }
 
     sys_compute_capabilities_e sys_ccs = sys_gpu_ccs_unknown;
-    // All devices detected are cc >= 7.0.
-    // Therefore use Perfworks API.
-    if (num_gpus_with_ccs_gte_cc70 == total_gpus) {
-        sys_ccs = sys_gpu_ccs_all_gte_70;
+    // All devices have CCs > 7.0.
+    if (num_gpus_with_ccs_gt_cc70 == total_gpus) {
+        sys_ccs = sys_gpu_ccs_all_gt_70;
     }
-    // All devices detected are cc = 7.0.
-    // Therefore Events API or Perfworks API could be used.
+    // All devices have CCs = 7.0
     else if (num_gpus_with_ccs_eq_cc70 == total_gpus) {
         sys_ccs = sys_gpu_ccs_all_eq_70;
     }
-    // All devices detected are <= 7.0.
-    // Therefore use Events API.
-    else if (num_gpus_with_ccs_lte_cc70 == total_gpus) {
-        sys_ccs = sys_gpu_ccs_all_lte_70;
+    // All devices have CCs < 7.0
+    else if (num_gpus_with_ccs_lt_cc70 == total_gpus) {
+        sys_ccs = sys_gpu_ccs_all_lt_70;
     }
-    // Devices detected have mixed compute capabilities.
+    // Devices can result in a partially disabled Cuda component
     else {
-       sys_ccs = sys_gpu_ccs_mixed;
+        sys_ccs = sys_gpu_ccs_mixed;
+
+        int all_ccs_gte_cc70 = num_gpus_with_ccs_eq_cc70 + num_gpus_with_ccs_gt_cc70;
+        if (all_ccs_gte_cc70 == total_gpus) {
+            sys_ccs = sys_gpu_ccs_all_gte_70;
+        }
+ 
+        int all_ccs_lte_cc70 = num_gpus_with_ccs_eq_cc70 + num_gpus_with_ccs_lt_cc70;
+        if (all_ccs_lte_cc70 == total_gpus) {
+            sys_ccs = sys_gpu_ccs_all_lte_70;
+        }
     }
     *system_ccs = sys_ccs;
 
@@ -558,10 +567,17 @@ int cuptic_init(void)
         return papi_errno;
     }
 
-    // Handle mixed CC's with partially disabled Cuda component
-    if (system_ccs == sys_gpu_ccs_mixed) {
+    // Handle a partially disabled Cuda component
+    // TODO: Once the Events API is added back, this conditional will need to be updated for Issue #297 section 2
+    if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70) {
         char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
-        char *cc_support = (PAPI_CUDA_API != NULL) ? "<=7.0" : ">=7.0";
+        char *cc_support = ">=7.0";
+        if (PAPI_CUDA_API != NULL) {
+            int result = strcasecmp(PAPI_CUDA_API, "EVENTS");
+            if (result == 0) {
+                cc_support = "<=7.0";
+            }
+        }
 
         // Convert int array to char array for partially disabled message
         char stringEnabledDevices[PAPI_MAX_STR_LEN];
@@ -580,7 +596,7 @@ int cuptic_init(void)
         strLen = snprintf(errMsg, PAPI_HUGE_STR_LEN,
                               "System includes multiple compute capabilities: <7.0, =7.0, >7.0."
                               " Only support for CC %s enabled."
-                              " As a result, Device IDs: %s are available.", cc_support, stringEnabledDevices);
+                              " As a result, Device ID(s): %s are available.", cc_support, stringEnabledDevices);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
             SUBDBG("Failed to fully write the partially disabled error message.\n");
             return PAPI_ENOMEM;
@@ -626,22 +642,24 @@ int cuptic_determine_runtime_api(void)
 
     // Determine which CUPTI API will be in use
     switch (system_ccs) {
-        // All devices have CC's <= 7.0
-        // Must use Events API
-        case sys_gpu_ccs_all_lte_70:
+        // All devices have CCs < 7.0
+        case sys_gpu_ccs_all_lt_70:
             cupti_api = API_EVENTS;
             break;
-        // All devices have CC's >= 7.0
-        // Must use Perfworks API
-        case sys_gpu_ccs_all_gte_70:
+        // All devices have CCs > 7.0
+        case sys_gpu_ccs_all_gt_70:
             cupti_api = API_PERFWORKS;
             break;
+        // All devices have CCs <= 7.0
+        // TODO: Once the Events API is added back, this case will default to use the Events API
+        case sys_gpu_ccs_all_lte_70:
+        // All devices have CCs >= 7.0
+        case sys_gpu_ccs_all_gte_70:
         // ALL devices have CC's = 7.0
-        // Perfworks or Events API can be used
         case sys_gpu_ccs_all_eq_70:
-        // Devices are mixed with CC's > 7.0, CC's = 7.0, and CC's < 7.0
-        // Default will be to use Perfworks API, user can change this by setting PAPI_CUDA_API.
+        // Devices are mixed with CC's > 7.0 and CC's < 7.0
         case sys_gpu_ccs_mixed:
+            // Default will be to use Perfworks API, user can change this by setting PAPI_CUDA_API.
             cupti_api = API_PERFWORKS;
             if (PAPI_CUDA_API != NULL) {
                 int result = strcasecmp(PAPI_CUDA_API, "EVENTS");

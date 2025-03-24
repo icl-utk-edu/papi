@@ -153,7 +153,7 @@ static int get_event_collection_method(const char *evt_name);
 static int get_added_events_rmr(cuptip_gpu_state_t *gpu_ctl);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static int get_measured_values(cuptip_gpu_state_t *gpu_ctl, long long *counts);
-static int determine_dev_cc_major(int dev_id); 
+static int determine_dev_cc_major(int gpu_id);
 
 /* nvperf function pointers */
 NVPA_Status ( *NVPW_GetSupportedChipNamesPtr ) (NVPW_GetSupportedChipNames_Params* params);
@@ -621,9 +621,16 @@ static int nvpw_cuda_metricscontext_create(cuptip_control_t state)
 
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
-        } 
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
+        }
 
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         found = find_same_chipname(gpu_id);
@@ -672,8 +679,15 @@ static int nvpw_cuda_metricscontext_destroy(cuptip_control_t state)
 
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
         }
 
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
@@ -714,9 +728,17 @@ static int check_multipass(cuptip_control_t state)
 
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
-        } 
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
+        }
+
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -1305,9 +1327,16 @@ static int init_all_metrics(void)
     int gpu_id, papi_errno = PAPI_OK;
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) {
-            continue;
-        } 
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
+        }
 
         papi_errno = get_chip_name(gpu_id, cuptiu_table_p->avail_gpu_info[gpu_id].chip_name);
         if (papi_errno != PAPI_OK) {
@@ -1317,9 +1346,16 @@ static int init_all_metrics(void)
     int found;
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) {
-            continue;
-        } 
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
+        }
 
         found = find_same_chipname(gpu_id);
         if (found > -1) {
@@ -1358,9 +1394,17 @@ static void free_all_enumerated_metrics(void)
     }
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                return;
+            }
+
         }
+
         found = find_same_chipname(gpu_id);
         if (found > -1) {
             cuptiu_table_p->avail_gpu_info[gpu_id].num_metrics = 0;
@@ -1635,9 +1679,17 @@ int cuptip_ctx_start(cuptip_control_t state)
     /* enumerate through all of the unique gpus */
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
-        }  
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail_misc;
+            }
+
+        }
+
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -1707,9 +1759,17 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
     cudaCheckErrors( cuCtxGetCurrentPtr(&userCtx), goto fn_fail_misc );
     for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
-        }  
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail_misc;
+            }
+
+        }
+
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -1853,9 +1913,17 @@ int cuptip_ctx_stop(cuptip_control_t state)
 
     for (gpu_id=0; gpu_id < num_gpus; gpu_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(gpu_id)) { 
-            continue;
-        }  
+        int cupti_api = determine_dev_cc_major(gpu_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail_misc;
+            }
+
+        }
+ 
         gpu_ctl = &(state->gpu_ctl[gpu_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -2008,9 +2076,16 @@ int init_event_table(void)
     /* loop through all available devices on the current system */
     for (dev_id = 0; dev_id < num_gpus; dev_id++) {
         // Skip devices that will require the Events API to be profiled
-        if (determine_dev_cc_major(dev_id)) { 
-            continue;
-        } 
+        int cupti_api = determine_dev_cc_major(dev_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                goto fn_fail;
+            }
+
+        }
 
         found = find_same_chipname(dev_id);
         /* unique device found, collect metadata  */
@@ -2678,19 +2753,21 @@ static int evt_name_to_device(const char *name, int *device)
     return PAPI_OK;
 }
 
-static int determine_dev_cc_major(int dev_id) 
+static int determine_dev_cc_major(int gpu_id)
 {
-    int cc_major;
-    cudaError_t cuda_errno = cudaDeviceGetAttributePtr(&cc_major, cudaDevAttrComputeCapabilityMajor, dev_id);
-    if (cuda_errno != cudaSuccess) {
-        SUBDBG("Failed to get major compute capability.\n");
+    int cc;
+    int papi_errno = get_gpu_compute_capability(gpu_id, &cc);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
     }
 
-    if (cc_major >= 7) {
-        return 0;
+    if (cc >= 70) {
+        return API_PERFWORKS;
     }
+    // TODO: Once the Events API is added back, move this to either cupti_utils or papi_cupti_common
+    //       with updated logic.
     else {
-        return 1;
+        return API_EVENTS;
     }
 }
 
