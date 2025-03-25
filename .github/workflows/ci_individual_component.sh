@@ -34,7 +34,7 @@ if [ "$COMPONENT" = "rocm" ] || [ "$COMPONENT" = "rocm_smi" ]; then
   export PAPI_ROCMSMI_ROOT=$PAPI_ROCM_ROOT/rocm_smi
 fi
 
-# set necessary environment variables for rocp_sdk
+# set necessary environment variable for rocp_sdk
 if [ "$COMPONENT" = "rocp_sdk" ]; then
     module load rocm/6.3.2
     export PAPI_ROCP_SDK_ROOT=$ROCM_PATH
