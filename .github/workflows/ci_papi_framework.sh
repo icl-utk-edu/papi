@@ -3,7 +3,8 @@
 COMPONENTS=$1
 DEBUG=$2
 SHLIB=$3
-COMPILER=$4
+RUNNERNAME=$4
+COMPILER=$5
 
 [ -z "$COMPILER" ] && COMPILER=gcc@11
 
@@ -48,6 +49,8 @@ case "$COMPONENTS" in
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PAPI_CUDA_ROOT/extras/CUPTI/lib64
     ;;
 esac
+
+echo "$RUNNERNAME"
 
 # test linking with or without --with-shlib-tools 
 if [ "$SHLIB" = "without" ]; then

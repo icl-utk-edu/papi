@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: comprehensive component tests 
-        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}}
+        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{ runner.name }}
   # build PAPI only with the amd components, as they will not be active in the above comprehensive job
   papi_components_amd:
     strategy:
