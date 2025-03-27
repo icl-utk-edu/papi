@@ -35,6 +35,10 @@ rocc_init(void)
 
     hsa_status_t status = hsa_init_p();
     if (status != HSA_STATUS_SUCCESS) {
+        int errMsgLen = snprintf(error_string, PAPI_MAX_STR_LEN, "%s", "Call to hsa_init() failed.");
+        if( errMsgLen < 0 || errMsgLen >= PAPI_MAX_STR_LEN ) {
+            SUBDBG("error_string was truncated.\n");
+        }
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
