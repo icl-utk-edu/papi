@@ -336,10 +336,10 @@ fi
 
 AC_MSG_CHECKING(for tests)
 AC_ARG_WITH(tests,
-           [AS_HELP_STRING([--with-tests=<"ctests ftests mpitests", no>],
+           [AS_HELP_STRING([--with-tests=<"ctests ftests mpitests comp_tests", no>],
            [Specify which tests to run on install, or "no" tests (default: all available tests)])],
     [tests=$withval],
-    [tests="ctests ftests mpitests"])
+    [tests="ctests ftests mpitests comp_tests"])
 
 if test "$tests" = "no"; then
   AC_MSG_RESULT($tests)
@@ -357,6 +357,11 @@ else
   case "$tests" in
       *ftests*)
           tmp_tests+="ftests "
+          ;;
+  esac
+  case "$tests" in
+      *comp_tests*)
+          tmp_tests+="comp_tests "
           ;;
   esac
   case "$tests" in
@@ -1960,7 +1965,6 @@ for comp in $components; do
 	COMPONENTS="$COMPONENTS $comp"
   fi
 done
-tests="$tests comp_tests"
 
 for comp in $components; do
   # check for SDE component to determine linking flags.
