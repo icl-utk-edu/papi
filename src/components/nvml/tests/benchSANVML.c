@@ -204,21 +204,21 @@ int _local_linkDynamicLibraries(void)
    }
 
    // Exit if we cannot link the cuda or NVML libs.
-   dl1 = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+   dl1 = dlopen("libcuda.so.1", RTLD_NOW | RTLD_GLOBAL);
    if (!dl1) {
-      fprintf(stderr, "CUDA library libcuda.so not found.");
+      fprintf(stderr, "CUDA library libcuda.so.1 not found.");
       return (-1);
    }
 
-   dl2 = dlopen("libcudart.so", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
+   dl2 = dlopen("libcudart.so.12", RTLD_NOW | RTLD_GLOBAL | RTLD_NODELETE);
    if (!dl2) {
-      fprintf(stderr, "CUDA runtime library libcudart.so not found.");
+      fprintf(stderr, "CUDA runtime library libcudart.so.12 not found.");
       return (-1);
    }
 
-   dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
+   dl3 = dlopen("libnvidia-ml.so.1", RTLD_NOW | RTLD_GLOBAL);
    if (!dl3) {
-      fprintf(stderr, "NVML runtime library libnvidia-ml.so not found.");
+      fprintf(stderr, "NVML runtime library libnvidia-ml.so.1 not found.");
        return (-1);
    }
 
