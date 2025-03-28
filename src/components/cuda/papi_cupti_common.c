@@ -579,24 +579,10 @@ int cuptic_init(void)
             }
         }
 
-        // Convert int array to char array for partially disabled message
-        char stringEnabledDevices[PAPI_MAX_STR_LEN];
-        int i, strLen;
-        for (i = 0; i < enabledDevicesCnt; i++) {
-            strLen = snprintf(stringEnabledDevices + strlen(stringEnabledDevices), PAPI_MAX_STR_LEN, "%d,", enabledDeviceIds[i]);
-            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-                SUBDBG("Failed to fully write enabled devices.\n");
-            }
-        }
-        // Remove trailing comma
-        strLen = strlen(stringEnabledDevices); 
-        stringEnabledDevices[strLen - 1] = '\0';
-
         char errMsg[PAPI_HUGE_STR_LEN];
-        strLen = snprintf(errMsg, PAPI_HUGE_STR_LEN,
+        int strLen = snprintf(errMsg, PAPI_HUGE_STR_LEN,
                               "System includes multiple compute capabilities: <7.0, =7.0, >7.0."
-                              " Only support for CC %s enabled."
-                              " As a result, Device ID(s): %s are available.", cc_support, stringEnabledDevices);
+                              " Only support for CC %s enabled.", cc_support);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
             SUBDBG("Failed to fully write the partially disabled error message.\n");
             return PAPI_ENOMEM;
