@@ -17,7 +17,7 @@
 
 int cuptie_init(void)
 {
-    cuptic_disabled_reason_set("CUDA events API not implemented.");
+    cuptic_err_set_last("CUDA events API not implemented.");
     return PAPI_ENOIMPL;
 }
 
