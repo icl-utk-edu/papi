@@ -1399,13 +1399,13 @@ static int init_main_htable(void)
 
     cuptiu_table_p->event_stats = (StringVector *) papi_calloc(val, sizeof(StringVector));
     if (cuptiu_table_p->event_stats == NULL) {
-        ERRDBG("Failed to allocate memory for cuptiu_table_p->event_stats")
+        //ERRDBG("Failed to allocate memory for cuptiu_table_p->event_stats")
         goto fn_fail;
     }
 
     cuptiu_table_p->avail_gpu_info = (gpu_record_t *) papi_calloc(num_gpus, sizeof(gpu_record_t));
     if (cuptiu_table_p->avail_gpu_info == NULL) {
-        ERRDBG("Failed to allocate memory for cuptiu_table_p->avail_gpu_info")
+        //ERRDBG("Failed to allocate memory for cuptiu_table_p->avail_gpu_info")
         goto fn_fail;
     }
 
@@ -1540,7 +1540,8 @@ int verify_events(uint32_t *events_id, int num_events, cuptip_control_t state)
         const char *stat_position = strstr(cuptiu_table_p->events[info.nameid].basename, "stat");
         
         if (stat_position == NULL) { 
-            ERRDBG("Event does not have a 'stat' placeholder.\n"); return PAPI_EBUG; 
+            //ERRDBG("Event does not have a 'stat' placeholder.\n"); 
+            return PAPI_EBUG; 
         }
         
         prefix_len = stat_position - cuptiu_table_p->events[info.nameid].basename; 
