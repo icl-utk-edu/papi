@@ -292,7 +292,11 @@ clobber distclean: clean native_clobber
 	$(MAKE) -C utils distclean
 	$(MAKE) -C validation_tests distclean
 	$(MAKE) -C components -f Makefile_comp_tests distclean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so sde_lib/libsde.so* sde_lib/libsde.a libsde.so libsde.a papi.pc components_config.h $(PAPI_EVENTS_TABLE)
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so sde_lib/libsde.so* sde_lib/libsde.a libsde.so libsde.a papi.pc components_config.h papiStdEventDefs.h $(PAPI_EVENTS_TABLE)
+	$(if ${COMPONENTS}, \
+		set -ex; for comp in ${COMPONENTS}; do \
+		    rm -f papi_$${comp}_std_event_defs.h; \
+		done)
 	rm -f config.log config.status f77papi.h f90papi.h fpapi.h
 
 null:
@@ -322,6 +326,12 @@ install-lib: native_install
 	-mkdir -p $(DESTDIR)$(INCDIR)
 	-chmod go+rx $(DESTDIR)$(INCDIR)
 	cp $(FHEADERS) papi.h papiStdEventDefs.h $(DESTDIR)$(INCDIR)
+	$(if ${COMPONENTS}, \
+		set -ex; for comp in ${COMPONENTS}; do \
+            if [ -e papi_$${comp}_std_event_defs.h ]; then \
+			    cp papi_$${comp}_std_event_defs.h $(DESTDIR)$(INCDIR); \
+            fi; \
+		done)
 	cp sde_lib/sde_lib.h sde_lib/sde_lib.hpp $(DESTDIR)$(INCDIR)
 	cd $(DESTDIR)$(INCDIR) && chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h sde_lib.h sde_lib.hpp
 	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
