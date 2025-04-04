@@ -6,7 +6,7 @@ At current the Cuda component uses bits to create an Event identifier. The follo
 
 ## Unused bits
 
-As of 02/02/25, there are a total of 2 unused bits. These bits can be used to create a new qualifier or can be used to extended the number of bits for an existing qualifier.
+As of 02/02/25, there are a total of 2 unused bits. These bits can be used to create a new qualifier or can be used to extend the number of bits for an existing qualifier.
 
 ## STAT
 

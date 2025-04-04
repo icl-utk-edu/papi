@@ -236,7 +236,7 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
+
     uint32_t code;
     papi_errno = cuptid_evt_name_to_code(name, &code);
     *event_code = (unsigned int) code;
@@ -289,7 +289,7 @@ static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
         goto fn_fail;
     }
 
-    papi_errno = cuptid_evt_code_to_info((uint32_t) event_code, info); 
+    papi_errno = cuptid_evt_code_to_info((uint32_t) event_code, info);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
