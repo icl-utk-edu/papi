@@ -32,7 +32,7 @@
  * stat      : 3  bit  ([0 -   8] stats)
  * device    : 7  bits ([0 - 127] devices)
  * qlmask    : 2  bits (qualifier mask)
- * nameid    : 18: bits (roughly > 2 million event names)
+ * nameid    : 18: bits (roughly > 262 Thousand event names)
  */
 #define EVENTS_WIDTH (sizeof(uint32_t) * 8)
 #define STAT_WIDTH   ( 3)
@@ -149,7 +149,6 @@ static int calculate_num_passes(struct NVPA_RawMetricsConfig *pRawMetricsConfig,
 /* functions to set and get cuda native event info  or convert cuda native events  */
 static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name, int gpu_id);
 static int verify_events(uint32_t *events_id, int num_events, cuptip_control_t state);
-//static int verify_events(uint32_t *events_id, int num_events, cuptiu_event_table_t **targeted_event_names);
 static int evt_id_to_info(uint32_t event_id, event_info_t *info);
 static int evt_id_create(event_info_t *info, uint32_t *event_id);
 static int evt_code_to_name(uint32_t event_code, char *name, int len);
@@ -1400,11 +1399,13 @@ static int init_main_htable(void)
 
     cuptiu_table_p->event_stats = (StringVector *) papi_calloc(val, sizeof(StringVector));
     if (cuptiu_table_p->event_stats == NULL) {
+        ERRDBG("Failed to allocate memory for cuptiu_table_p->event_stats")
         goto fn_fail;
     }
 
     cuptiu_table_p->avail_gpu_info = (gpu_record_t *) papi_calloc(num_gpus, sizeof(gpu_record_t));
     if (cuptiu_table_p->avail_gpu_info == NULL) {
+        ERRDBG("Failed to allocate memory for cuptiu_table_p->avail_gpu_info")
         goto fn_fail;
     }
 
@@ -1493,7 +1494,6 @@ fn_fail:
 int verify_events(uint32_t *events_id, int num_events, cuptip_control_t state)
 {
     int papi_errno, i;
-    char name[PAPI_MAX_STR_LEN] = { 0 };
     char basename[PAPI_HUGE_STR_LEN]="", stat[PAPI_HUGE_STR_LEN]="";
     size_t prefix_len;
     int idx;
@@ -1538,6 +1538,11 @@ int verify_events(uint32_t *events_id, int num_events, cuptip_control_t state)
             }
         }
         const char *stat_position = strstr(cuptiu_table_p->events[info.nameid].basename, "stat");
+        
+        if (stat_position == NULL) { 
+            ERRDBG("Event does not have a 'stat' placeholder.\n"); return PAPI_EBUG; 
+        }
+        
         prefix_len = stat_position - cuptiu_table_p->events[info.nameid].basename; 
         strncpy(basename, cuptiu_table_p->events[info.nameid].basename, prefix_len);  
         basename[prefix_len] = '\0';     
