@@ -100,10 +100,10 @@ int push_back(StringVector *vec, const char *str) {
 
     // Resize if necessary
     if (vec->size == vec->capacity) {
-        size_t new_capacity = (vec->capacity == 0) ? 1 : vec->capacity * 2;
+        size_t new_capacity = (vec->capacity == 0) ? 4 : vec->capacity * 2;
         char **new_data = realloc(vec->data, new_capacity * sizeof(char*));
         if (new_data == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
+            ERRDBG(stderr, "Memory allocation failed\n");
             return PAPI_ENOMEM;
         }
         vec->data = new_data;
@@ -113,7 +113,7 @@ int push_back(StringVector *vec, const char *str) {
     // Allocate memory for the new string and copy it
     vec->data[vec->size] = malloc(strlen(str) + 1); 
     if (vec->data[vec->size] == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
+        ERRDBG(stderr, "Memory allocation failed\n");
         return PAPI_ENOMEM;
     }
     snprintf(vec->data[vec->size], strlen(str) + 1, "%s", str);
