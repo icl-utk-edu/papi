@@ -218,7 +218,7 @@ static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
+
     uint32_t code = *(uint32_t *) event_code;
     papi_errno = cuptid_evt_enum(&code, modifier);
     *event_code = (unsigned int) code;
