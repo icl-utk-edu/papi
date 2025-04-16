@@ -643,8 +643,12 @@ _peu_init_component( int cidx )
      goto fn_fail;
    }
 
-   perfmon_capabilities = (cap_data[0].permitted & (1 << CAP_SYS_ADMIN)) ||
-                          (cap_data[1].permitted & (1 << (CAP_PERFMON - 32)));
+   #ifdef CAP_PERFMON
+      perfmon_capabilities = (cap_data[0].permitted & (1 << CAP_SYS_ADMIN)) ||
+                             (cap_data[1].permitted & (1 << (CAP_PERFMON - 32)));
+   #else
+      perfmon_capabilities = cap_data[0].permitted & (1 << CAP_SYS_ADMIN);
+   #endif
 
    /* Run the libpfm4-specific setup */
 
