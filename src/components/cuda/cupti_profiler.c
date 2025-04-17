@@ -2920,7 +2920,14 @@ static int evt_name_to_device(const char *name, int *device, const char *base)
     char *p = strstr(name, ":device=");
     // User did provide :device=# qualifier
     if (p != NULL) {
-        *device = (int) strtol(p + strlen(":device="), NULL, 10);
+        char *endPtr;
+        *device = (int) strtol(p + strlen(":device="), &endPtr, 10);
+        // Check to make sure only qualifiers have been appended
+        if (*endPtr != '\0') {
+            if (strncmp(endPtr, ":stat", 5) != 0) {
+                return PAPI_ENOEVNT;
+            }
+        }
     }
     // User did not provide :device=# qualifier
     else {
@@ -2956,15 +2963,20 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
     cuptiu_event_t *event;
     char *p = strstr(name, ":stat=");
     if (p != NULL) {
-      p += 6; // Move past ":stat="
-      int i;
-      for (i = 0; i < NUM_STATS_QUALS; i++) {
-          size_t token_len = strlen(stats[i]);
-          if (strncmp(p, stats[i], token_len) == 0) {
-                *stat = i;
-                return PAPI_OK;
-          }
+        p += 6; // Move past ":stat="
+        int i;
+        for (i = 0; i < NUM_STATS_QUALS; i++) {
+            size_t token_len = strlen(stats[i]);
+            if (strncmp(p, stats[i], token_len) == 0) {
+                // Check to make sure only qualifiers have been appended 
+                char *no_excess_chars = p + token_len;
+                if (strlen(no_excess_chars) == 0 || strncmp(no_excess_chars, ":device", 7) == 0) {
+                    *stat = i;
+                    return PAPI_OK;
+                }
+            }
         }
+        return PAPI_ENOEVNT;
     } else {
         htable_errno = htable_find(cuptiu_table_p->htable, base, (void **) &event);
         if (htable_errno != HTABLE_SUCCESS) {
@@ -2979,5 +2991,4 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
           }
         }
     }
-    return PAPI_OK;
 }
