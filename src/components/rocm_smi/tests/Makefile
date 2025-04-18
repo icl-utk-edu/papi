@@ -4,7 +4,7 @@
 NAME=rocm_smi
 include ../../Makefile_comp_tests.target
 PAPI_ROCM_ROOT ?= /opt/rocm
-HIP_PATH= ${PAPI_ROCM_ROOT}/hip
+HIP_PATH= ${PAPI_ROCM_ROOT}
 HIPCC=$(HIP_PATH)/bin/hipcc
 
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include
@@ -24,7 +24,7 @@ LDFLAGS = -ldl -g -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
 	@echo "CFLAGS=" $(CFLAGS)
 	g++ $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = 
+TESTS = rocm_command_line rocm_smi_all power_monitor_rocm rocmsmi_example rocm_smi_writeTests
 
 rocm_smi_tests: $(TESTS)
 
@@ -61,15 +61,8 @@ rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
 rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
-square.o: square.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-
-square: square.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
-
 clean:
 	rm -f $(TESTS) *.o
-	rm -f rocm_command_line rocmsmi_example power_monitor_rocm rocm_smi_writeTests square
 
 checkpath: 
 	echo PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)
