@@ -396,7 +396,7 @@ rocs_evt_enum(unsigned int *event_code, int modifier)
             if (*event_code + 1 < (unsigned int) ntv_table_p->count) {
                 ++(*event_code);
             } else {
-                papi_errno = PAPI_END;
+                papi_errno = PAPI_ENOEVNT;
             }
             break;
         default:
