@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <dlfcn.h>
 
+
 #ifndef _GNU_SOURCE
 	#define _GNU_SOURCE
 #endif
@@ -40,6 +41,7 @@ static int num_events = 0;
 
 static int librseq_loaded = 0;
 
+
 #define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
 #define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
 #define INTEL_CORE_TYPE_HOMOGENEOUS	-1		/* core type is non-issue */
@@ -68,6 +70,7 @@ static inline unsigned long long _rdpmc(unsigned int counter) {
 		/* between assert_affinity() and the inline asm */
 		assert_affinity(required_core_type);
 	}
+
 	__asm__ volatile("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
 
 	return (unsigned long long)low | ((unsigned long long)high) <<32;
@@ -269,6 +272,7 @@ __attribute__((weak)) int perf_event_open(struct perf_event_attr *attr, pid_t pi
 {
 	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
 }
+
 
 /* read PERF_METRICS */
 static inline unsigned long long read_metrics(void)

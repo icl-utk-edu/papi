@@ -80,7 +80,7 @@ typedef struct {
     unsigned int overflow_signal;
     unsigned int attached;
     int component_id;
-    uint64_t *events_id;
+    uint32_t *events_id;
     cuptid_info_t info;
     /* struct holding read count, gpu_ctl, etc. */
     cuptip_control_t cuptid_ctx;
@@ -218,8 +218,8 @@ static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-   
-    uint64_t code = *(uint64_t *) event_code;
+
+    uint32_t code = *(uint32_t *) event_code;
     papi_errno = cuptid_evt_enum(&code, modifier);
     *event_code = (unsigned int) code;
     
@@ -236,8 +236,8 @@ static int cuda_ntv_name_to_code(const char *name, unsigned int *event_code)
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-   
-    uint64_t code;
+
+    uint32_t code;
     papi_errno = cuptid_evt_name_to_code(name, &code);
     *event_code = (unsigned int) code;
 
@@ -255,7 +255,7 @@ static int cuda_ntv_code_to_name(unsigned int event_code, char *name, int len)
         return papi_errno;
     }
 
-    papi_errno = cuptid_evt_code_to_name((uint64_t) event_code, name, len);
+    papi_errno = cuptid_evt_code_to_name((uint32_t) event_code, name, len);
 
     fn_exit:
         SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -272,7 +272,7 @@ static int cuda_ntv_code_to_descr(unsigned int event_code, char *descr, int len)
         goto fn_fail;
     }
 
-    papi_errno = cuptid_evt_code_to_descr((uint64_t) event_code, descr, len);
+    papi_errno = cuptid_evt_code_to_descr((uint32_t) event_code, descr, len);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -289,7 +289,7 @@ static int cuda_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
         goto fn_fail;
     }
 
-    papi_errno = cuptid_evt_code_to_info((uint64_t) event_code, info);
+    papi_errno = cuptid_evt_code_to_info((uint32_t) event_code, info);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -603,7 +603,7 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 */
 static int cuda_get_evt_count(int *count)
 {
-    uint64_t event_code = 0;
+    uint32_t event_code = 0;
 
     if (cuptid_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
         ++(*count);
