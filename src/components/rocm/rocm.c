@@ -221,16 +221,22 @@ rocm_init_private(void)
     papi_errno = evt_get_count(&count);
     _rocm_vector.cmp_info.num_native_events = count;
     _rocm_vector.cmp_info.num_cntrs = count;
+    _rocm_vector.cmp_info.initialized = 1;
+    int strLen = snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", "");
+    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+        SUBDBG("Failed to fully write disabled_reason.\n");
+    }
+
+    goto fn_exit;
+
+  fn_fail:
+    _rocm_vector.cmp_info.initialized = 0;
 
   fn_exit:
-    _rocm_vector.cmp_info.initialized = 1;
     _rocm_vector.cmp_info.disabled = papi_errno;
-    strcpy(_rocm_vector.cmp_info.disabled_reason, "");
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     _papi_hwi_unlock(COMPONENT_LOCK);
     return papi_errno;
-  fn_fail:
-    goto fn_exit;
 }
 
 int
