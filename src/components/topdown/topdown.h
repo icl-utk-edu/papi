@@ -1,3 +1,5 @@
+#define TOPDOWN_COMPONENT_DESCRIPTION	"A component for accessing topdown " \
+									"metrics on 10th gen+ Intel processors"
 
 /* these MSR access defines are constant based on the assumptoin that */
 /* new architectures will not change them */
