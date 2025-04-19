@@ -222,7 +222,7 @@ rocp_evt_enum(uint64_t *event_code, int modifier)
                 papi_errno = evt_id_create(&info, event_code);
                 break;
             }
-            papi_errno = PAPI_END;
+            papi_errno = PAPI_ENOEVNT;
             break;
         case PAPI_NTV_ENUM_UMASKS:
             papi_errno = evt_id_to_info(*event_code, &info);
@@ -245,7 +245,7 @@ rocp_evt_enum(uint64_t *event_code, int modifier)
                     break;
                 }
             }
-            papi_errno = PAPI_END;
+            papi_errno = PAPI_ENOEVNT;
             break;
         default:
             papi_errno = PAPI_EINVAL;
