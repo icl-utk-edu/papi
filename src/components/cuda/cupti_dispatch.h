@@ -43,5 +43,7 @@ int cuptid_thread_info_destroy(cuptid_info_t *info);
 
 /* misc. */
 void cuptid_disabled_reason_get(const char **msg);
+int cuptid_get_chip_name(int dev_num, char *name);
+int cuptid_device_get_count(int *num_gpus);
 
 #endif /* __CUPTI_DISPATCH_H__ */
