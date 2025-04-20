@@ -1,3 +1,5 @@
+#define TOPDOWN_COMPONENT_DESCRIPTION	"A component for accessing topdown " \
+									"metrics on 10th gen+ Intel processors"
 
 /* these MSR access defines are constant based on the assumptoin that */
 /* new architectures will not change them */
@@ -50,6 +52,27 @@ typedef struct topdown_control_state
 	void *metrics_p; /* we need this in ctl so it can be freed */
 	unsigned long long metrics_before;
 } _topdown_control_state_t;
+
+/* these MSR access defines are constant based on the assumptoin that */
+/* new architectures will not change them */
+#define TOPDOWN_PERF_FIXED	(1 << 30)	/* return fixed counters */
+#define TOPDOWN_PERF_METRICS	(1 << 29)	/* return metric counters */
+
+#define TOPDOWN_FIXED_COUNTER_SLOTS		        3
+#define TOPDOWN_METRIC_COUNTER_TOPDOWN_L1_L2	0
+
+/* L1 Topdown indices in the PERF_METRICS counter */
+#define TOPDOWN_METRIC_IDX_RETIRING     0
+#define TOPDOWN_METRIC_IDX_BAD_SPEC     1
+#define TOPDOWN_METRIC_IDX_FE_BOUND     2
+#define TOPDOWN_METRIC_IDX_BE_BOUND     3
+
+/* L2 Topdown indices in the PERF_METRICS counter */
+/* The L2 events not here are derived from the others */
+#define TOPDOWN_METRIC_IDX_HEAVY_OPS        4
+#define TOPDOWN_METRIC_IDX_BR_MISPREDICT    5
+#define TOPDOWN_METRIC_IDX_FETCH_LAT        6
+#define TOPDOWN_METRIC_IDX_MEM_BOUND        7
 
 /** Holds per thread information */
 typedef struct topdown_context

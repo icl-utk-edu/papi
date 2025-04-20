@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,6 +7,8 @@
 #include <sys/sysinfo.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stddef.h>
+#include <dlfcn.h>
 
 #ifndef _GNU_SOURCE
 	#define _GNU_SOURCE
@@ -36,6 +37,7 @@ papi_vector_t _topdown_vector;
 static _topdown_native_event_entry_t *topdown_native_events = NULL;
 static int num_events = 0;
 
+static int librseq_loaded = 0;
 
 #define INTEL_CORE_TYPE_EFFICIENT	0x20	/* also known as 'ATOM' */
 #define INTEL_CORE_TYPE_PERFORMANCE	0x40	/* also known as 'CORE' */
@@ -46,15 +48,26 @@ static int required_core_type = INTEL_CORE_TYPE_HOMOGENEOUS;
 /* x86 specific functions */
 /**************************/
 
-/* forward declaration of assert_affinity so _rdpmc() can call it */
+/* forward declarations */
 void assert_affinity(int core_type);
+static inline __attribute__((always_inline))
+unsigned long long rdpmc_rseq_protected(unsigned int counter, int allowed_core_type);
 
 /* rdpmc instruction wrapper */
 static inline unsigned long long _rdpmc(unsigned int counter) {
 
 	unsigned int low, high;
+	/* if we need protection... */
+	if (required_core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
+		/* if librseq is available, protect with librseq */
+		if (librseq_loaded)
+			return rdpmc_rseq_protected(counter, required_core_type);
 
-	assert_affinity(required_core_type);
+		/* otherwise, just hope we aren't moved to an unsupported core */
+		/* between assert_affinity() and the inline asm */
+		assert_affinity(required_core_type);
+	}
+
 	__asm__ volatile("rdpmc" : "=a" (low), "=d" (high) : "c" (counter));
 
 	return (unsigned long long)low | ((unsigned long long)high) <<32;
@@ -134,12 +147,112 @@ void handle_affinity_error(int allowed_type)
 
 /* assert that the current process affinity is to an allowed core type */
 void assert_affinity(int core_type) {
-	if (core_type != INTEL_CORE_TYPE_HOMOGENEOUS) {
-		/* ensure the process is still on a valid core to avoid segfaulting */
-		if (!active_core_type_is(core_type)) {
-			handle_affinity_error(core_type);
-		}
+	/* ensure the process is still on a valid core to avoid segfaulting */
+	if (!active_core_type_is(core_type)) {
+		handle_affinity_error(core_type);
 	}
+}
+
+/**********************************************/
+/* Restartable sequence heterogeneous support */
+/**********************************************/
+
+/* dlsym access to librseq symbols */
+static ptrdiff_t *rseq_offset_ptr;
+static int (*rseq_available_ptr)(unsigned int query);
+
+/* local wrappers for dlsym function pointers */
+static int librseq_rseq_available(unsigned int query) { return (*rseq_available_ptr)(query); }
+
+int link_librseq()
+{
+	void* lib = dlopen("librseq.so", RTLD_NOW);
+	if (!lib) {
+		return PAPI_ENOSUPP;
+	}
+
+	rseq_available_ptr = dlsym(lib, "rseq_available");
+    if (rseq_available_ptr == NULL) {
+		return PAPI_ENOSUPP;
+    }
+	rseq_offset_ptr = dlsym(lib, "rseq_offset");
+    if (rseq_offset_ptr == NULL) {
+		return PAPI_ENOSUPP;
+    }
+
+	if (!rseq_available_ptr(0)) {
+		return PAPI_ENOSUPP;
+	}
+
+    return 0;
+} 
+
+/* This function assumes some properties of the system have been verified. */
+/* 1. Must be an Intel x86 processor */
+/* 2. Processor must be hybrid/heterogeneous (e-core/p-core) */
+/* 3. perf_event_open() + mmap() have been used to enable userspace rdpmc */
+static inline __attribute__((always_inline))
+unsigned long long rdpmc_rseq_protected(unsigned int counter, int allowed_core_type)
+{
+	unsigned int low = -1;
+	unsigned int high = -1;
+	int core_check;
+
+restart_sequence:
+	core_check = 0;
+	__asm__ __volatile__ goto (
+		/* set up critical section of restartable sequence */
+		".pushsection __rseq_cs, \"aw\"\n\t" ".balign 32\n\t" "3:\n\t" ".long 0x0\n\t" ".long 0x0\n\t" ".quad 1f\n\t" ".quad (2f) - (1f)\n\t" ".quad 4f\n\t" ".long 0x0\n\t" ".long 0x0\n\t" ".quad 1f\n\t" ".quad (2f) - (1f)\n\t" ".quad 4f\n\t" ".popsection\n\t" ".pushsection __rseq_cs_ptr_array, \"aw\"\n\t" ".quad 3b\n\t" ".popsection\n\t"
+		
+		/* start rseq by storing table entry pointer into rseq_cs. */
+		"leaq 3b(%%rip), %%rax\n\t" 
+		"movq %%rax, %%fs:8(%[rseq_offset])\n\t" 
+		"1:\n\t"
+
+		/* check if core type is valid */
+		"mov $0x1A, %%eax\n\t"
+		"mov $0x00, %%ecx\n\t"
+		"cpuid\n\t"
+		"mov %%eax, %[core_check]\n\t"
+		"test %[core_type], %%eax\n\t"
+		"jz 4f\n\t" /* abort if core type is invalid */
+
+		/* make the rdpmc call */
+		"movl %[counter], %%ecx\n\t"
+		"rdpmc\n\t"
+		/* retrieve results of rdpmc */
+		"mov %%edx, %[high]\n\t"
+		"mov %%eax, %[low]\n\t"
+		"2:\n\t"
+		/* define abort section */
+		".pushsection __rseq_failure, \"ax\"\n\t" ".byte 0x0f, 0xb9, 0x3d\n\t" ".long " "0x53053053" "\n\t" "4" ":\n\t" "" "jmp %l[" "abort" "]\n\t" ".popsection\n\t"
+		:
+		: [core_check]	"m"  (core_check),
+		  [low]			"m"	 (low),
+		  [high]		"m"  (high),
+		  [rseq_offset]	"r" (*rseq_offset_ptr),
+		  [counter]		"r" (counter),
+		  [core_type]	"r" (allowed_core_type << 24) /* shift mask into place */
+		: "memory", "cc", "rax", "eax", "ecx", "edx"
+		: abort
+	);
+	return (unsigned long long)low | ((unsigned long long)high) << 32;
+
+abort:
+	/* we may abort because the core type was found to be invalid, or */
+	/* we might abort because the restartable sequence was preempted */
+	/* therefore we have to check why the abort happened here */
+	if ((((core_check >> 24) & 0xff) != allowed_core_type) && core_check != 0) {
+		/* sequence reached the core check, and the core type was disallowed !*/
+		handle_affinity_error(allowed_core_type);
+		return PAPI_EBUG; /* should never return, handle_affinity_error exits */
+	}
+	
+	/* if the critical section aborted, but not because the core type is */ 
+	/* invalid, then give it another shot */
+	/* while theoretically possible, this has never been observed to restart */
+	/* more than once before either succeeding or failing the check */
+	goto restart_sequence;
 }
 
 /********************************/
@@ -155,12 +268,6 @@ __attribute__((weak)) int perf_event_open(struct perf_event_attr *attr, pid_t pi
 										  int cpu, int group_fd, unsigned long flags)
 {
 	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
-}
-
-/* read SLOTS */
-static inline unsigned long long read_slots(void)
-{
-	return _rdpmc(TOPDOWN_PERF_FIXED | TOPDOWN_FIXED_COUNTER_SLOTS);
 }
 
 /* read PERF_METRICS */
@@ -197,11 +304,10 @@ _topdown_init_component(int cidx)
 	switch (hw_info->vendor)
 	{
 	case PAPI_VENDOR_INTEL:
-	case PAPI_VENDOR_AMD:
 		break;
 	default:
 		err = snprintf(_topdown_vector.cmp_info.disabled_reason,
-					   PAPI_MAX_STR_LEN, "Not a supported processor");
+					   PAPI_MAX_STR_LEN, "Not a supported CPU vendor");
 		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
 		if (err > PAPI_MAX_STR_LEN)
 			HANDLE_STRING_ERROR;
@@ -265,6 +371,17 @@ _topdown_init_component(int cidx)
 		case 0xbf:	/* RaptorLake 13th gen Core hybrid */
 			required_core_type = INTEL_CORE_TYPE_PERFORMANCE;
 			supports_l2 = 1;
+			
+			/* if we are on a heterogeneous processor, try and load librseq */
+			if (link_librseq() == PAPI_OK) {
+        		librseq_loaded = 1;
+
+				/* indicate in desc that librseq was found and is being used */
+				err = snprintf(_topdown_vector.cmp_info.description, PAPI_MAX_STR_LEN,
+				TOPDOWN_COMPONENT_DESCRIPTION " (librseq in use)");
+				_topdown_vector.cmp_info.description[PAPI_MAX_STR_LEN - 1] = 0;
+			}
+
 			break;
 
 		default: /* not a supported model */
@@ -777,8 +894,8 @@ papi_vector_t _topdown_vector = {
 	.cmp_info = {
 		.name = "topdown",
 		.short_name = "topdown",
-		.description = "A component for using Intel's topdown metrics",
-		.version = "0.1",
+		.description = TOPDOWN_COMPONENT_DESCRIPTION,
+		.version = "1.0",
 		.support_version = "n/a",
 		.kernel_version = "n/a",
 		.default_domain = PAPI_DOM_USER,
