@@ -2617,7 +2617,7 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
         goto fn_exit;
     }
  
-    flags = (event->stat->size >= 0) ? (STAT_FLAG | DEVICE_FLAG) : DEVICE_FLAG;
+    flags = (event->stat->size >= 0) ? STAT_FLAG : DEVICE_FLAG;
 
     if (flags == 0){
         papi_errno = PAPI_EINVAL;
