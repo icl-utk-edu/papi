@@ -2870,6 +2870,67 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
             }
             break;
         }
+        case (STAT_FLAG | DEVICE_FLAG):
+        {
+            int init_metric_dev_id;
+            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            for (i = 0; i < num_gpus; ++i) {
+                if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
+                    /* for an event, store the first device found to use with :device=#, 
+                       as on a heterogenous system events may not appear on each device */
+                    if (devices[0] == '\0') {
+                        init_metric_dev_id = i;
+                    }
+
+                    sprintf(devices + strlen(devices), "%i,", i);
+                }
+            }
+            *(devices + strlen(devices) - 1) = 0;
+            
+            all_stat[0]= '\0'; 
+            size_t current_len = strlen(all_stat);
+            for (size_t i = 0; i < cuptiu_table_p->events[inf.nameid].stat->size; i++) {
+                  size_t remaining_space = PAPI_HUGE_STR_LEN - current_len - 1;  // Calculate remaining space
+                
+                // Ensure there's enough space for the string before concatenating
+                if (remaining_space > 0) {
+                    strncat(all_stat, cuptiu_table_p->events[inf.nameid].stat->arrayMetricStatistics[i], remaining_space);
+                    current_len += strlen(cuptiu_table_p->events[inf.nameid].stat->arrayMetricStatistics[i]);
+                } else {
+                    ERRDBG("Not enough space for the all_stat string")
+                    return papi_errno;
+                }
+
+                // Add a comma only if there is space and it is not the last element
+                if (i < cuptiu_table_p->events[inf.nameid].stat->size - 1 && remaining_space > 2) {
+                    strncat(all_stat, ", ", remaining_space - 2);
+                    current_len += 2;  // Account for the added comma and space
+                }
+            }
+        
+            /* cuda native event name */
+            strLen = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:stat=%s:device=%i", cuptiu_table_p->events[inf.nameid].name, cuptiu_table_p->events[inf.nameid].stat->arrayMetricStatistics[0], init_metric_dev_id);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+                return PAPI_EBUF;
+            }
+            
+            /* cuda native event short description */
+            strLen = snprintf( info->short_descr, PAPI_MIN_STR_LEN, "%s masks:Mandatory stat qualifier [%s]:Mandatory device qualifier [%s]",
+                     cuptiu_table_p->events[inf.nameid].desc, all_stat, devices  );
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+                return PAPI_EBUF;
+            }
+            /* cuda native event long description */
+            strLen = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s masks:Mandatory stat qualifier [%s]:Mandatory device qualifier [%s]",
+                      cuptiu_table_p->events[inf.nameid].desc, all_stat, devices  );
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+                return PAPI_EBUF;
+            }
+            break;
+        }
         default:
             papi_errno = PAPI_EINVAL;
     }
