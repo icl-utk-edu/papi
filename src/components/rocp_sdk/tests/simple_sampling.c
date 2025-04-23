@@ -6,7 +6,7 @@
 
 #define NUM_EVENTS (12)
 
-extern void launch_kernel(int device_id);
+extern int launch_kernel(int device_id);
 int eventset = PAPI_NULL;
 volatile int gv=0;
 
@@ -79,7 +79,10 @@ int main(int argc, char *argv[])
 
     printf("---------------------  launch_kernel(0)\n");
     gv = 1;
-    launch_kernel(0);
+    papi_errno = launch_kernel(0);
+    if (papi_errno != 0) {
+        test_fail(__FILE__, __LINE__, "launch_kernel(0)", papi_errno);
+    }
 
     usleep(20000);
 
