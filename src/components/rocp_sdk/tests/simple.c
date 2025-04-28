@@ -3,7 +3,7 @@
 #include <papi.h>
 #include <papi_test.h>
 
-extern void launch_kernel(int device_id);
+extern int launch_kernel(int device_id);
 
 int main(int argc, char *argv[])
 {
@@ -44,9 +44,11 @@ int main(int argc, char *argv[])
         test_fail(__FILE__, __LINE__, "PAPI_start", papi_errno);
     }
 
-
     printf("---------------------  launch_kernel(0)\n");
-    launch_kernel(0);
+    papi_errno = launch_kernel(0);
+    if (papi_errno != 0) {
+        test_fail(__FILE__, __LINE__, "launch_kernel(0)", papi_errno);
+    }
 
     usleep(10000);
 
