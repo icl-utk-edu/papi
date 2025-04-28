@@ -3286,6 +3286,9 @@ access_rsmi_dev_perf_level(rocs_access_mode_e mode, void *arg)
         data = (rsmi_dev_perf_level_t) event->value;
         status = rsmi_dev_perf_level_set_p(event->device, data);
         if (status != RSMI_STATUS_SUCCESS) {
+            if (status == RSMI_STATUS_PERMISSION ) {
+                return PAPI_EPERM;
+            }
             return PAPI_EMISC;
         }
     }
@@ -3516,7 +3519,6 @@ int
 access_rsmi_dev_fan_rpms(rocs_access_mode_e mode, void *arg)
 {
     ntv_event_t *event = (ntv_event_t *) arg;
-
     if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
         return PAPI_ENOSUPP;
     }
@@ -3552,18 +3554,29 @@ int
 access_rsmi_dev_fan_speed(rocs_access_mode_e mode, void *arg)
 {
     ntv_event_t *event = (ntv_event_t *) arg;
-
-    if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
+    rsmi_status_t status;
+    
+    if (!(mode & event->mode)) {
         /* Return error code as counter value to distinguish
          * this case from a successful read */
         event->value = PAPI_ENOSUPP;
         return PAPI_OK;
     }
-
-    rsmi_status_t status;
-    status = rsmi_dev_fan_speed_get_p(event->device, event->subvariant, &event->value);
-    if (status != RSMI_STATUS_SUCCESS) {
-        return PAPI_EMISC;
+    
+    if (mode == ROCS_ACCESS_MODE__READ) {
+        status = rsmi_dev_fan_speed_get_p(event->device, event->subvariant, &event->value);
+        if (status != RSMI_STATUS_SUCCESS) {
+            return PAPI_EMISC;
+        }
+    } else {
+        uint64_t data = (uint64_t) event->value;
+        status = rsmi_dev_fan_speed_set_p(event->device, event->subvariant, data);
+        if (status != RSMI_STATUS_SUCCESS) {
+            if (status == RSMI_STATUS_PERMISSION ) {
+                return PAPI_EPERM;
+            }
+                return PAPI_EMISC;
+        }
     }
     return PAPI_OK;
 }
@@ -3611,6 +3624,9 @@ access_rsmi_dev_power_cap(rocs_access_mode_e mode, void *arg)
         data = (uint64_t) event->value;
         status = rsmi_dev_power_cap_set_p(event->device, event->subvariant, data);
         if (status != RSMI_STATUS_SUCCESS) {
+            if (status == RSMI_STATUS_PERMISSION ) {
+                return PAPI_EPERM;
+            }
             return PAPI_EMISC;
         }
      }
