@@ -195,7 +195,7 @@ void print_measured_values(perDeviceData &d, vector<string> const &metricNames)
     PRINT(quiet, "%s\n", std::string(80, '-').c_str());
     for (int i=0; i < metricNames.size(); i++) {
         evt_name = metricNames[i] + std::to_string(d.config.device);
-        PRINT(quiet, "%s\t\t\t%ld\n", evt_name.c_str(), d.values[i]);
+        PRINT(quiet, "%s\t\t\t%lld\n", evt_name.c_str(), d.values[i]);
     }
 }
 

@@ -677,42 +677,16 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
 typedef int64_t gpu_occupancy_t;
 static gpu_occupancy_t global_gpu_bitmask;
 
-static int event_name_get_gpuid(const char *name, int *gpuid)
-{
-    int papi_errno = PAPI_OK;
-    char *token;
-    char *copy = strdup(name);
-
-    token = strtok(copy, "=");
-    if (token == NULL) {
-        goto fn_fail;
-    }
-    token = strtok(NULL, "\0");
-    if (token == NULL) {
-        goto fn_fail;
-    }
-    *gpuid = strtol(token, NULL, 10);
-
-fn_exit:
-    papi_free(copy);
-    return papi_errno;
-fn_fail:
-    papi_errno = PAPI_EINVAL;
-    goto fn_exit;
-}
-
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
 {
-    int papi_errno = PAPI_OK, gpu_id;
-    long i;
     gpu_occupancy_t acq_mask = 0;
-    cuptiu_event_t *evt_rec;
+    long i;
     for (i = 0; i < evt_table->count; i++) {
         acq_mask |= (1 << evt_table->cuda_devs[i]);
     }
     *bitmask = acq_mask;
-fn_exit:
-    return papi_errno;
+
+    return PAPI_OK;
 }
 
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table)

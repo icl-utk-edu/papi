@@ -16,7 +16,6 @@
 
 typedef int64_t cuptiu_bitmap_t;
 typedef int (*cuptiu_dev_get_map_cb)(uint64_t event_id, int *dev_id);
-typedef NVPW_CUDA_MetricsContext_Create_Params MCCP_t;
 
 typedef struct {
     char **arrayMetricStatistics ;   
@@ -33,10 +32,9 @@ typedef struct event_record_s {
 } cuptiu_event_t;
 
 typedef struct gpu_record_s {
-    char chip_name[PAPI_MIN_STR_LEN];
-    MCCP_t *pmetricsContextCreateParams;
-    int num_metrics;
-    const char* const* metric_names;
+    char chipName[PAPI_MIN_STR_LEN];
+    int totalMetricCount;
+    char **metricNames;
 } gpu_record_t;
 
 typedef struct event_table_s {
