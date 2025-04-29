@@ -154,9 +154,9 @@ rocp_sdk_init_component(int cid)
         return papi_errno;
     }
 
-    sprintf(_rocp_sdk_vector.cmp_info.disabled_reason, "Not initialized. Access component events to initialize it.");
-    _rocp_sdk_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
-    return PAPI_EDELAY_INIT;
+    // This component needs to be fully initialized from the beginning,
+    // because interleaving hip calls and PAPI calls leads to errors.
+    return check_n_initialize();
 }
 
 int
