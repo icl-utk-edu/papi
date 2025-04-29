@@ -2475,10 +2475,12 @@ _pe_handle_paranoid(papi_vector_t *component) {
 	if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
 	fclose(fff);
 
-	if (paranoid_level==3) {
-		strCpy=strncpy(component->cmp_info.disabled_reason,
-			"perf_event support disabled by Linux with paranoid=3",PAPI_MAX_STR_LEN);
-      if (strCpy == NULL) HANDLE_STRING_ERROR;
+	if (paranoid_level >= 3) {
+		int strLen = snprintf(component->cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "perf_event support disabled by Linux with paranoid=%d", paranoid_level);
+		if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+			SUBDBG("Failed to fully write disabled reason due to paranoid level.\n");
+			return PAPI_EBUF;
+		}
 		return PAPI_ECMP;
 	}
 
