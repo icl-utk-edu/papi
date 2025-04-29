@@ -66,7 +66,7 @@ int cuptic_shutdown(void);
 /* context management interfaces */
 int cuptic_ctxarr_create(cuptic_info_t *pinfo);
 int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id);
-int cuptic_ctxarr_get_ctx(cuptic_info_t info, int gpu_idx, CUcontext *ctx);
+int cuptic_ctxarr_get_ctx(cuptic_info_t info, int dev_id, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 
 /* functions to track the occupancy of gpu counters in event sets */
@@ -120,7 +120,7 @@ int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 #define nvpwCheckErrors( call, handleerror ) \
     do {  \
         NVPA_Status _status = (call);  \
-        LOGCUPTICALL("\t" #call "\n");  \
+        LOGPERFWORKSCALL("\t" #call "\n");  \
         if (_status != NVPA_STATUS_SUCCESS) {  \
             ERRDBG("NVPA Error %d: Error in call to " #call "\n", _status);  \
             EXIT_OR_NOT; \
