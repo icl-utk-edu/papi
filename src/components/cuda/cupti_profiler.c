@@ -290,51 +290,41 @@ static int unload_cupti_perf_sym(void)
 }
 
 /**@class load_nvpw_sym
- * @brief Search for libnvperf_host.so. Order of search is outlined below.
+ * @brief Search for a variation of the shared object libnvperf_host.
+ *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_PERFWORKS, this will take precedent over
  *    the options listed below to be searched.
- * 2. If we fail to collect libnvperf_host.so from PAPI_CUDA_PERFWORKS or it is not set,
- *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect libnvperf_host.so from steps 1 and 2, then we will search the linux
- *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
- *    advised for this option.
- * 4. We use dlopen to search for libnvperf_host.so.
- *    If this fails, then we failed to find libnvperf_host.so.
+ * 2. If we fail to collect a variation of the shared object libnvperf_host from
+ *    PAPI_CUDA_PERFWORKS or it is not set, we will search the path defined with PAPI_CUDA_ROOT;
+ *    as this is supposed to always be set.
+ * 3. If we fail to collect a variation of the shared object libnvperf_host from steps 1 and 2,
+ *    then we will search the linux default directories listed by /etc/ld.so.conf. As a note,
+ *    updating the LD_LIBRARY_PATH is advised for this option.
+ * 4. We use dlopen to search for a variation of the shared object libnvperf_host.
+ *    If this fails, then we failed to find a variation of the shared object libnvperf_host.
  */
 static int load_nvpw_sym(void)
 {
-    COMPDBG("Entering.\n");
-    char dlname[] = "libnvperf_host.so";
-    char lookup_path[PATH_MAX];
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libnvperf_host.so", "libnvperf_host.so.1", "libnvperf_host"};
 
-    /* search PAPI_CUDA_PERFWORKS for libnvperf_host.so (takes precedent over PAPI_CUDA_ROOT) */
+    // If a user set PAPI_CUDA_PERFWORKS with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_perfworks = getenv("PAPI_CUDA_PERFWORKS");
     if (papi_cuda_perfworks) {
-        sprintf(lookup_path, "%s/%s", papi_cuda_perfworks, dlname);
-        dl_nvpw = dlopen(lookup_path, RTLD_NOW | RTLD_GLOBAL);
+        dl_nvpw = search_and_load_shared_objects(papi_cuda_perfworks, NULL, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    const char *standard_paths[] = {
-        "%s/extras/CUPTI/lib64/%s",
-        "%s/lib64/%s",
-        NULL,
-    };
-
-    /* search PAPI_CUDA_ROOT for libnvperf_host.so */
+    char *soMainName = "libnvperf_host";
+    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_nvpw) {
-        dl_nvpw = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
+          dl_nvpw = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    /* search linux default directories for libnvperf_host.so */
-    if (linked_cudart_path && !dl_nvpw) {
-        dl_nvpw = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
-    }
-
-    /* last ditch effort to find libcupti.so */
+    // Last ditch effort to find a variation of libnvperf_host, see dlopen manpages for how search occurs
     if (!dl_nvpw) {
-        dl_nvpw = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
+        dl_nvpw = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
         if (!dl_nvpw) {
             ERRDBG("Loading libnvperf_host.so failed.\n");
             goto fn_fail;
