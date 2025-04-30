@@ -509,6 +509,7 @@ _papi_hwi_init_errors(void) {
 	/* 25 PAPI_ECMP_DISABLED */_papi_hwi_add_error("Component containing event is disabled");
     /* 26 PAPI_EDELAY_INIT */ _papi_hwi_add_error("Delayed initialization component");
     /* 27 PAPI_EMULPASS */ _papi_hwi_add_error("Event exists, but cannot be counted due to multiple passes required by hardware");
+    /* 28 PAPI_PARTIAL */ _papi_hwi_add_error("Component in use is partially disabled, see utils/papi_component_avail for more information.");
 }
 
 int

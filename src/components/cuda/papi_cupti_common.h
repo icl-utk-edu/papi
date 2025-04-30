@@ -15,6 +15,10 @@
 #include "cupti_utils.h"
 #include "lcuda_debug.h"
 
+// Set to match the maximum number of devices allowed for the event identifier
+// encoding format. See README_internal.md for more details.
+#define PAPI_CUDA_MAX_DEVICES 128
+
 typedef struct cuptic_info *cuptic_info_t;
 
 extern void *dl_cupti;
@@ -54,13 +58,12 @@ extern CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
 /* utility functions to check runtime api, disabled reason, etc. */
 int cuptic_init(void);
-int cuptic_is_runtime_perfworks_api(void);
-int cuptic_is_runtime_events_api(void);
+int cuptic_determine_runtime_api(void);
 int cuptic_device_get_count(int *num_gpus);
-void cuptic_disabled_reason_set(const char *msg);
-void cuptic_disabled_reason_get(const char **pmsg);
 void *search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount);
 void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int soNamesToSearchCount);
+int cuptic_err_get_last(const char **error_str);
+int cuptic_err_set_last(const char *error_str);
 int cuptic_shutdown(void);
 
 /* context management interfaces */
@@ -76,6 +79,12 @@ int cuptic_device_release(cuptiu_event_table_t *evt_table);
 /* device qualifier interfaces */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
+
+/* functions to handle a partially disabled Cuda component */
+void cuptic_partial(int *isCmpPartial, int **cudaEnabledDeviceIds, size_t *totalNumEnabledDevices);
+
+/* function to get a devices compute capability */
+int get_gpu_compute_capability(int dev_num, int *cc);
 
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
     if (dlerror() != NULL) {  \

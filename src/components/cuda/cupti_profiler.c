@@ -216,6 +216,9 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base);
 static int restructure_event_name(const char *input, char *output, char *base, char *stat);
 static int is_stat(const char *token);
 
+// Functions related to a partially disabled Cuda component
+static int determine_dev_cc_major(int dev_id);
+
 // Load and unload function pointers
 static int load_cupti_perf_sym(void);
 static int unload_cupti_perf_sym(void);
@@ -575,8 +578,8 @@ int cuptip_init(void)
     int papi_errno = load_cupti_perf_sym();
     papi_errno += load_nvpw_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_disabled_reason_set("Unable to load CUDA library functions.");
-        return PAPI_EMISC;
+        cuptic_err_set_last("Unable to load CUDA library functions.");
+        return papi_errno;
     }
 
     // Collect the number of devices on the machine
@@ -586,7 +589,7 @@ int cuptip_init(void)
     }
 
     if (numDevicesOnMachine <= 0) {
-        cuptic_disabled_reason_set("No GPUs found on system.");
+        cuptic_err_set_last("No GPUs found on system.");
         return PAPI_ECMP;
     }
    
@@ -594,7 +597,7 @@ int cuptip_init(void)
     papi_errno = initialize_cupti_profiler_api();
     papi_errno += initialize_perfworks_api();
     if (papi_errno != PAPI_OK) {
-        cuptic_disabled_reason_set("Unable to initialize CUPTI profiler libraries.");
+        cuptic_err_set_last("Unable to initialize CUPTI profiler libraries.");
         return PAPI_EMISC;
     }
 
@@ -614,9 +617,9 @@ int cuptip_init(void)
         return papi_errno;
     }
 
-    CUresult cuErr = cuInitPtr(0);
-    if (cuErr != CUDA_SUCCESS) {
-        cuptic_disabled_reason_set("Failed to initialize CUDA driver API.");
+    papi_errno = cuInitPtr(0);
+    if (papi_errno != CUDA_SUCCESS) {
+        cuptic_err_set_last("Failed to initialize CUDA driver API.");
         return PAPI_EMISC;
     }
 
@@ -645,7 +648,7 @@ int verify_user_added_events(uint32_t *events_id, int num_events, cuptip_control
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
-     }
+    }  
 
      for (i = 0; i < num_events; i++) {
         event_info_t info;
@@ -797,6 +800,17 @@ int cuptip_ctx_start(cuptip_control_t state)
     // Enumerate through the devices a user has added an event for
     int dev_id;
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        // Skip devices that will require the Events API to be profiled
+        int cupti_api = determine_dev_cc_major(dev_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                return PAPI_EMISC;
+            }
+
+        }
         gpu_ctl = &(state->gpu_ctl[dev_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -928,6 +942,17 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
 
     int dev_id;
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        // Skip devices that will require the Events API to be profiled
+        int cupti_api = determine_dev_cc_major(dev_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                return PAPI_EMISC;
+            }
+
+        }
         cuptip_gpu_state_t *gpu_ctl = &(state->gpu_ctl[dev_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -1079,6 +1104,17 @@ int cuptip_ctx_stop(cuptip_control_t state)
 
     int dev_id;
     for (dev_id=0; dev_id < numDevicesOnMachine; dev_id++) {
+        // Skip devices that will require the Events API to be profiled
+        int cupti_api = determine_dev_cc_major(dev_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                return PAPI_EMISC;
+            }
+
+        }        
         cuptip_gpu_state_t *gpu_ctl = &(state->gpu_ctl[dev_id]);
         if (gpu_ctl->added_events->count == 0) {
             continue;
@@ -1256,6 +1292,18 @@ int init_event_table(void)
     int dev_id, deviceRecord = 0; 
     // Loop through all available devices on the current system
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        // Skip devices that will require the Events API to be profiled
+        int cupti_api = determine_dev_cc_major(dev_id);
+        if (cupti_api != API_PERFWORKS) {
+            if (cupti_api == API_EVENTS) {
+                continue;
+            }
+            else {
+                return PAPI_EMISC;
+            }
+
+        }
+        
         int papi_errno;
         int found = find_same_chipname(dev_id);
         // Unique device found, collect the constructed metric names
@@ -1651,6 +1699,25 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
         goto fn_exit;
     }
     papi_errno = evt_id_to_info(*event_code, &info);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
+    // Section handles if the Cuda component is partially disabled
+    int *enabledCudaDeviceIds, cudaCmpPartial;
+    size_t cudaEnabledDevicesCnt;
+    cuptic_partial(&cudaCmpPartial, &enabledCudaDeviceIds, &cudaEnabledDevicesCnt);
+    if (cudaCmpPartial) {
+        papi_errno = PAPI_PARTIAL;
+
+        int i; 
+        for (i = 0; i < cudaEnabledDevicesCnt; i++) {
+            if (device == enabledCudaDeviceIds[i]) {
+                papi_errno = PAPI_OK;
+                break;
+            }
+        }
+    }
 
     fn_exit:
         SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -2075,6 +2142,24 @@ static int assign_chipnames_for_a_device_index(void)
     return PAPI_OK;
 }
 
+static int determine_dev_cc_major(int dev_id)
+{
+    int cc;
+    int papi_errno = get_gpu_compute_capability(dev_id, &cc);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    if (cc >= 70) {
+        return API_PERFWORKS;
+    }
+    // TODO: Once the Events API is added back, move this to either cupti_utils or papi_cupti_common
+    //       with updated logic.
+    else {
+        return API_EVENTS;
+    }
+}
+
 /**
  *  @}
  ******************************************************************************/
@@ -2218,7 +2303,7 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
     *arrayOfMetricNames = metricNames;
 
     return PAPI_OK;
-}
+} 
 
 /** @class get_rollup_metrics
   * @brief Get the appropriate string for a provided member of the NVPW_RollupOp
