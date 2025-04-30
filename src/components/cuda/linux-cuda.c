@@ -377,13 +377,6 @@ struct event_map_item {
     int frontend_idx;
 };
 
-static int compare(const void *a, const void *b)
-{
-    struct event_map_item *A = (struct event_map_item *) a;
-    struct event_map_item *B = (struct event_map_item *) b;
-    return  A->event_id - B->event_id;
-}
-
 int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
                          int ntv_count)
 {
@@ -437,14 +430,12 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     int papi_errno, i;
     cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
-   
-    /* will need to flesh this out more and decide if I want to keep this, may not need it 
-    if (cuda_ctx->state & CUDA_EVENTS_OPENED) {
+
+    if (cuda_ctx->state == CUDA_EVENTS_RUNNING) {
         SUBDBG("Error! Cannot PAPI_start more than one eventset at a time for every component.");
-        papi_errno = PAPI_ECNFLCT;
+        papi_errno = PAPI_EISRUN;
         goto fn_fail;
     }
-    */
 
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
     if (papi_errno != PAPI_OK)
@@ -462,7 +453,6 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
        SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
        return papi_errno;
    fn_fail:
-       /* same as above may need to flesh this out more. */
        cuda_ctx->state = CUDA_EVENTS_STOPPED;
        goto fn_exit;
 }

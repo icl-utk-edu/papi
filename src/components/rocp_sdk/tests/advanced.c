@@ -2,11 +2,13 @@
 #include <unistd.h>
 #include <papi.h>
 #include <papi_test.h>
+#include <hip/hip_runtime.h>
 
-extern void launch_kernel(int device_id);
+extern int launch_kernel(int device_id);
 
 int main(int argc, char *argv[])
 {
+    int dev_count=0;
     int papi_errno;
 #define NUM_EVENTS (14)
     long long counters[NUM_EVENTS] = { 0 };
@@ -27,9 +29,6 @@ int main(int argc, char *argv[])
                   "rocp_sdk:::SQ_WAVE_CYCLES:DIMENSION_SHADER_ENGINE=4:device=0",
                   "rocp_sdk:::SQ_WAVE_CYCLES:device=0"
     };
-//                  "rocp_sdk:::SQ_WAVES:device=0",
-//                  "rocp_sdk:::TCC_READ:device=0",
-//                  "rocp_sdk:::TCC_CYCLE:device=0"
 
     papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
     if (papi_errno != PAPI_VER_CURRENT) {
@@ -56,7 +55,10 @@ int main(int argc, char *argv[])
     for(int rep=0; rep<=4; ++rep){
 
         printf("---------------------  launch_kernel(0)\n");
-        launch_kernel(0);
+        papi_errno = launch_kernel(0);
+        if (papi_errno != 0) {
+            test_fail(__FILE__, __LINE__, "launch_kernel(0)", papi_errno);
+        }
 
         usleep(1000);
 
@@ -82,40 +84,49 @@ int main(int argc, char *argv[])
             fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
     }
 
-    printf("======================================================\n");
-    printf("==================== SECOND ROUND ====================\n");
-    printf("======================================================\n");
-     
-    for(int rep=0; rep<=3; ++rep){
-        papi_errno = PAPI_start(eventset);
-        if (papi_errno != PAPI_OK) {
-            test_fail(__FILE__, __LINE__, "PAPI_start", papi_errno);
-        }
+    if (hipGetDeviceCount(&dev_count) != hipSuccess){
+        test_fail(__FILE__, __LINE__, "Error while counting AMD devices:", papi_errno);
+    }
 
-        printf("---------------------  launch_kernel(1)\n");
-        launch_kernel(1);
+    if( dev_count > 1 ){
+        printf("======================================================\n");
+        printf("==================== SECOND ROUND ====================\n");
+        printf("======================================================\n");
 
-        usleep(1000);
+        for(int rep=0; rep<=3; ++rep){
+            papi_errno = PAPI_start(eventset);
+            if (papi_errno != PAPI_OK) {
+                test_fail(__FILE__, __LINE__, "PAPI_start", papi_errno);
+            }
 
-        papi_errno = PAPI_read(eventset, counters);
-        if (papi_errno != PAPI_OK) {
-            test_fail(__FILE__, __LINE__, "PAPI_read", papi_errno);
-        }
-        printf("---------------------  PAPI_read()\n");
+            printf("---------------------  launch_kernel(1)\n");
+            papi_errno = launch_kernel(1);
+            if (papi_errno != 0) {
+                test_fail(__FILE__, __LINE__, "launch_kernel(1)", papi_errno);
+            }
 
-        for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
-        }
+            usleep(1000);
 
-        papi_errno = PAPI_stop(eventset, counters);
-        if (papi_errno != PAPI_OK) {
-            test_fail(__FILE__, __LINE__, "PAPI_stop", papi_errno);
-        }
+            papi_errno = PAPI_read(eventset, counters);
+            if (papi_errno != PAPI_OK) {
+                test_fail(__FILE__, __LINE__, "PAPI_read", papi_errno);
+            }
+            printf("---------------------  PAPI_read()\n");
 
-        printf("---------------------  PAPI_stop()\n");
+            for (int i = 0; i < NUM_EVENTS; ++i) {
+                fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
+            }
 
-        for (int i = 0; i < NUM_EVENTS; ++i) {
-            fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
+            papi_errno = PAPI_stop(eventset, counters);
+            if (papi_errno != PAPI_OK) {
+                test_fail(__FILE__, __LINE__, "PAPI_stop", papi_errno);
+            }
+
+            printf("---------------------  PAPI_stop()\n");
+
+            for (int i = 0; i < NUM_EVENTS; ++i) {
+                fprintf(stdout, "%s: %.2lfM\n", events[i], (double)counters[i]/1e6);
+            }
         }
     }
 
