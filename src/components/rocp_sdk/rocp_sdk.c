@@ -15,15 +15,42 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
 #include "papi_memory.h"
 #include "extras.h"
 #include "sdk_class.h"
+#include "hsa.h"
 
 #define ROCPROF_SDK_MAX_COUNTERS (64)
 #define RPSDK_CTX_RUNNING (1)
+
+#define ROCM_CALL(call, err_handle) do {   \
+    hsa_status_t _status = (call);         \
+    if (_status == HSA_STATUS_SUCCESS ||   \
+        _status == HSA_STATUS_INFO_BREAK)  \
+        break;                             \
+    err_handle;                            \
+} while(0)
+
+static void *rocm_dlp = NULL;
+
+static hsa_status_t (*hsa_initPtr)( void ) = NULL;
+static hsa_status_t (*hsa_shut_downPtr)( void ) = NULL;
+static hsa_status_t (*hsa_iterate_agentsPtr)( hsa_status_t (*)(hsa_agent_t agent,
+                                                               void *value),
+                                              void *value ) = NULL;
+static hsa_status_t (*hsa_agent_get_infoPtr)( hsa_agent_t agent,
+                                              hsa_agent_info_t attribute,
+                                              void *value ) = NULL;
+
+/* Utility functions */
+static int check_for_available_devices(char *err_msg);
+static int load_hsa_sym( char *err_msg );
+static int unload_hsa_sym( void );
+static hsa_status_t get_device_count( int *count );
 
 unsigned int _rocp_sdk_lock;
 
@@ -74,7 +101,7 @@ papi_vector_t _rocp_sdk_vector = {
         .version = "1.0",
         .description = "GPU events and metrics via AMD ROCprofiler-SDK",
         .initialized = 0,
-        .num_mpx_cntrs = ROCPROF_SDK_MAX_COUNTERS,
+        .num_mpx_cntrs = 0
     },
 
     .size = {
@@ -175,6 +202,11 @@ rocp_sdk_init_private(void)
         goto fn_exit;
     }
 
+    papi_errno = check_for_available_devices(_rocp_sdk_vector.cmp_info.disabled_reason);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
+
     papi_errno = rocprofiler_sdk_init();
     if (papi_errno != PAPI_OK) {
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
@@ -188,6 +220,7 @@ rocp_sdk_init_private(void)
     papi_errno = evt_get_count(&count);
     _rocp_sdk_vector.cmp_info.num_native_events = count;
     _rocp_sdk_vector.cmp_info.num_cntrs = count;
+    _rocp_sdk_vector.cmp_info.num_mpx_cntrs = count;
 
   fn_exit:
     _rocp_sdk_vector.cmp_info.initialized = 1;
@@ -417,4 +450,124 @@ check_n_initialize(void)
         return rocp_sdk_init_private();
     }
     return _rocp_sdk_vector.cmp_info.disabled;
+}
+
+int
+check_for_available_devices(char *err_msg)
+{
+    if( PAPI_OK != load_hsa_sym(err_msg) ){
+        return PAPI_EMISC;
+    }
+
+    int dev_count = 0;
+    hsa_status_t status = get_device_count(&dev_count);
+    if( status != HSA_STATUS_SUCCESS || dev_count == 0 ) {
+        sprintf(err_msg, "No compatible devices found.");
+        return PAPI_EMISC;
+    }
+
+    if( unload_hsa_sym() )
+        return PAPI_EMISC;
+
+    return PAPI_OK;
+}
+
+static inline int
+hsa_is_enabled( void )
+{
+    return ( (hsa_initPtr != NULL) &&
+             (hsa_shut_downPtr != NULL) &&
+             (hsa_iterate_agentsPtr != NULL) &&
+             (hsa_agent_get_infoPtr != NULL) );
+}
+
+static int
+load_hsa_sym( char *err_msg )
+{
+    char pathname[PATH_MAX] = "libhsa-runtime64.so";
+    char *rocm_root = getenv("PAPI_ROCP_SDK_ROOT");
+    if (rocm_root != NULL) {
+        int count = snprintf(pathname, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root);
+        if (count >= PATH_MAX) {
+            SUBDBG("Status string truncated.");
+        }
+    }
+
+    rocm_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    if (rocm_dlp == NULL) {
+        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", dlerror());
+        if (count >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Status string truncated.");
+        }
+        return PAPI_EMISC;
+    }
+
+    hsa_initPtr           = dlsym(rocm_dlp, "hsa_init");
+    hsa_shut_downPtr      = dlsym(rocm_dlp, "hsa_shut_down");
+    hsa_iterate_agentsPtr = dlsym(rocm_dlp, "hsa_iterate_agents");
+    hsa_agent_get_infoPtr = dlsym(rocm_dlp, "hsa_agent_get_info");
+
+    if ( !hsa_is_enabled() ){
+        const char *message = "dlsym() of HSA symbols failed.";
+        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", message);
+        if (count >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Status string truncated.");
+        }
+        return PAPI_EMISC;
+    }
+    if ( (*hsa_initPtr)() ) {
+        const char *message = "hsa_init() failed. Possibly no AMD GPUs present.";
+        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", message);
+        if (count >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Status string truncated.");
+        }
+        return PAPI_EMISC;
+    }
+
+    return PAPI_OK;
+}
+
+int
+unload_hsa_sym( void )
+{
+    if (hsa_is_enabled())
+        (*hsa_shut_downPtr)();
+
+    if (rocm_dlp != NULL) {
+        dlclose(rocm_dlp);
+    }
+
+    hsa_initPtr           = NULL;
+    hsa_shut_downPtr      = NULL;
+    hsa_iterate_agentsPtr = NULL;
+    hsa_agent_get_infoPtr = NULL;
+
+    return hsa_is_enabled();
+}
+
+hsa_status_t
+count_devices( hsa_agent_t agent, void *data )
+{
+    int *count = (int *) data;
+
+    hsa_device_type_t type;
+    ROCM_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
+              return _status);
+
+    if (type == HSA_DEVICE_TYPE_GPU) {
+        ++(*count);
+    }
+
+    return HSA_STATUS_SUCCESS;
+}
+
+hsa_status_t
+get_device_count( int *count )
+{
+    *count = 0;
+
+    ROCM_CALL((*hsa_iterate_agentsPtr)(&count_devices, count),
+              return _status);
+
+    return HSA_STATUS_SUCCESS;
 }

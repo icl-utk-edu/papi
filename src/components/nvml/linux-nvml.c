@@ -33,6 +33,7 @@ template.
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
+#include <dirent.h>
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
@@ -1240,6 +1241,117 @@ nvml_init_private_exit:
     return err;
 }
 
+/**@class nvml_search_and_load_shared_objects
+ * @brief Search and load Cuda shared objects.
+ *
+ * @param *parentPath
+ *   The main path we will use to search for the shared objects. 
+ * @param *soMainName
+ *   The name of the shared object e.g. libnvidia. This is used
+ *   to select the standardSubPaths to use.
+ * @param *soNamesToSearchFor[]
+ *   Varying names of the shared object we want to search for.
+ * @param soNamesToSearchCount
+ *   Total number of names in soNamesToSearchFor.
+ */
+static void *nvml_search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount)
+{
+    const char *standardSubPaths[3];
+    // Case for when we want to search explicit subpaths for a shared object 
+    if (soMainName != NULL) {
+        if (strcmp(soMainName, "libnvidia-ml") == 0) {
+            standardSubPaths[0] = "%s/lib64/";
+            standardSubPaths[1] = "%s/";
+            standardSubPaths[2] = NULL;
+        }
+    }
+    // Case for when a user provides an exact path e.g. PAPI_NVML_MAIN
+    // and we do not want to search subpaths
+    else{
+        standardSubPaths[0] = "%s/";
+        standardSubPaths[1] = NULL;
+    }
+
+    char pathToSharedLibrary[PAPI_HUGE_STR_LEN], directoryPathToSearch[PAPI_HUGE_STR_LEN];
+    void *so = NULL;
+    char *soNameFound;
+    int i, strLen;
+    for (i = 0; standardSubPaths[i] != NULL; i++) {
+        // Create path to search for dl names
+        int strLen = snprintf(directoryPathToSearch, PAPI_HUGE_STR_LEN, standardSubPaths[i], parentPath);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to fully write path to search for dlnames.\n");
+            return NULL;
+        }
+
+        DIR *dir = opendir(directoryPathToSearch);
+        if (dir == NULL) {
+            SUBDBG("Directory path could not be opened.\n");
+            continue;
+        }
+
+        int j;
+        for (j = 0; j < soNamesToSearchCount; j++) {
+            struct dirent *dirEntry;
+            while( ( dirEntry = readdir(dir) ) != NULL ) {
+                int result;
+                char *p = strstr(soNamesToSearchFor[j], "so");
+                // Check for an exact match of a shared object name (.so and .so.1 case)
+                if (p) {
+                    result = strcmp(dirEntry->d_name, soNamesToSearchFor[j]);
+                }
+                // Check for any match of a shared object name (we could not find .so and .so.1)
+                else {
+                    result = strncmp(dirEntry->d_name, soNamesToSearchFor[j], strlen(soNamesToSearchFor[j]));
+                }
+
+                if (result == 0) {
+                    soNameFound = dirEntry->d_name;
+                    goto found;
+                }
+            }
+            // Reset the position of the directory stream
+            rewinddir(dir);
+        }
+    }
+
+  exit:
+    return so;
+  found:
+    // Construct path to shared library
+    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to fully write constructed path to shared library.\n");
+        return NULL;
+    }
+    so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
+
+    goto exit;
+}
+
+/**@class nvml_search_and_load_from_system_paths
+ * @brief A simple wrapper to try and search and load
+ *        Cuda shared objects from system paths.
+ *
+ * @param *soNamesToSearchFor[]
+ *   Varying names of the shared object we want to search for.
+ * @param soNamesToSearchCount
+ *   Total number of names in soNamesToSearchFor.
+ */
+static void *nvml_search_and_load_from_system_paths(const char *soNamesToSearchFor[], int soNamesToSearchCount)
+{
+    void *so = NULL;
+    int i;
+    for (i = 0; i < soNamesToSearchCount; i++) {
+        so = dlopen(soNamesToSearchFor[i], RTLD_NOW | RTLD_GLOBAL);
+        if (so) {
+            return so; 
+        }   
+    }   
+
+    return so;
+}
+
 /*
  * Link the necessary CUDA libraries to use the NVML component.  If any of them can not be found, then
  * the NVML component will just be disabled.  This is done at runtime so that a version of PAPI built
@@ -1260,27 +1372,29 @@ linkCudaLibraries()
     // getenv returns NULL if environment variable is not found.
     char *cuda_root = getenv("PAPI_CUDA_ROOT");
 
-    // We need the NVML main library, normally libnvidia-ml.so. 
+    // We need the NVML main library, normally libnvidia-ml.so or libnvidia-ml.so.1.
     dl3 = NULL;                                                 // Ensure reset to NULL.
 
+    int soNamesToSearchCount = 3; 
+    const char *soNamesToSearchFor[] = {"libnvidia-ml.so", "libnvidia-ml.so.1", "libnvidia"};
     // Step 1: Process override if given.   
     if (strlen(nvml_main) > 0) {                                        // If override given, it MUST work.
-        dl3 = dlopen(nvml_main, RTLD_NOW | RTLD_GLOBAL);                // Try to open that path.
+        dl3 = nvml_search_and_load_shared_objects(nvml_main, NULL, soNamesToSearchFor, soNamesToSearchCount); // Try to open that path
         if (dl3 == NULL) {
             snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_NVML_MAIN override '%s' given in Rules.nvml not found.", nvml_main);
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
 
-    // Step 2: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl3 == NULL) {                                              // If no override,
-        dl3 = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);    // Try system paths.
-    }
-
-    // Step 3: Try the explicit install default. 
+    char *soMainName = "libnvidia-ml";
+    // Step 2: Try the explicit install default. 
     if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
-        snprintf(path_lib, 1024, "%s/lib64/libnvidia-ml.so", cuda_root);            // PAPI Root check.
-        dl3 = dlopen(path_lib, RTLD_NOW | RTLD_GLOBAL);                             // Try to open that path.
+        dl3 = nvml_search_and_load_shared_objects(cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount); // Try to open that path.
+    } 
+
+    // Step 3: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
+    if (dl3 == NULL) {                                              // If no override,
+        dl3 = nvml_search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount); // Try system paths.
     }
 
     // Check for failure.

@@ -17,7 +17,6 @@
 
 typedef struct cuptic_info *cuptic_info_t;
 
-extern const char *linked_cudart_path;
 extern void *dl_cupti;
 
 extern unsigned int _cuda_lock;
@@ -60,13 +59,14 @@ int cuptic_is_runtime_events_api(void);
 int cuptic_device_get_count(int *num_gpus);
 void cuptic_disabled_reason_set(const char *msg);
 void cuptic_disabled_reason_get(const char **pmsg);
-void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[]);
+void *search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount);
+void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int soNamesToSearchCount);
 int cuptic_shutdown(void);
 
 /* context management interfaces */
 int cuptic_ctxarr_create(cuptic_info_t *pinfo);
 int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id);
-int cuptic_ctxarr_get_ctx(cuptic_info_t info, int gpu_idx, CUcontext *ctx);
+int cuptic_ctxarr_get_ctx(cuptic_info_t info, int dev_id, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 
 /* functions to track the occupancy of gpu counters in event sets */
@@ -120,7 +120,7 @@ int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i);
 #define nvpwCheckErrors( call, handleerror ) \
     do {  \
         NVPA_Status _status = (call);  \
-        LOGCUPTICALL("\t" #call "\n");  \
+        LOGPERFWORKSCALL("\t" #call "\n");  \
         if (_status != NVPA_STATUS_SUCCESS) {  \
             ERRDBG("NVPA Error %d: Error in call to " #call "\n", _status);  \
             EXIT_OR_NOT; \

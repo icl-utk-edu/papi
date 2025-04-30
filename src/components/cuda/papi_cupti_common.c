@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include <link.h>
 #include <libgen.h>
+#include <dirent.h>
 #include <papi.h>
 #include "papi_memory.h"
 
@@ -16,7 +17,6 @@
 
 static void *dl_drv, *dl_rt;
 
-const char *linked_cudart_path;
 void *dl_cupti;
 
 unsigned int _cuda_lock;
@@ -54,11 +54,14 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 
 /**@class load_cuda_sym
- * @brief Search for libcuda.so.
+ * @brief Search for a variation of the shared object libcuda.
  */
 static int load_cuda_sym(void)
 {
-    dl_drv = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libcuda.so", "libcuda.so.1", "libcuda"};
+
+    dl_drv = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
     if (!dl_drv) {
         ERRDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
         goto fn_fail;
@@ -114,78 +117,164 @@ static int unload_cuda_sym(void)
     return PAPI_OK;
 }
 
-void *cuptic_load_dynamic_syms(const char *parent_path, const char *dlname, const char *search_subpaths[])
+/**@class search_and_load_shared_objects
+ * @brief Search and load Cuda shared objects.
+ *
+ * @param *parentPath
+ *   The main path we will use to search for the shared objects. 
+ * @param *soMainName
+ *   The name of the shared object e.g. libcudart. This is used
+ *   to select the standardSubPaths to use.
+ * @param *soNamesToSearchFor[]
+ *   Varying names of the shared object we want to search for.
+ * @param soNamesToSearchCount
+ *   Total number of names in soNamesToSearchFor.
+ */
+void *search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount)
 {
-    void *dl = NULL;
-    char lookup_path[PATH_MAX];
-    char *found_files[CUPTIU_MAX_FILES];
-    int i, count;
-    for (i = 0; search_subpaths[i] != NULL; i++) {
-        sprintf(lookup_path, search_subpaths[i], parent_path, dlname);
-        dl = dlopen(lookup_path, RTLD_NOW | RTLD_GLOBAL);
-        if (dl) {
-            return dl;
+    const char *standardSubPaths[3];
+    // Case for when we want to search explicit subpaths for a shared object
+    if (soMainName != NULL) {
+        if (strcmp(soMainName, "libcudart") == 0) {
+            standardSubPaths[0] = "%s/lib64/";
+            standardSubPaths[1] = NULL;
+        }
+        else if (strcmp(soMainName, "libcupti") == 0) {
+            standardSubPaths[0] = "%s/extras/CUPTI/lib64/";
+            standardSubPaths[1] = "%s/lib64/";
+            standardSubPaths[2] = NULL;
+        }
+        else if (strcmp(soMainName, "libnvperf_host") == 0) {
+            standardSubPaths[0] = "%s/extras/CUPTI/lib64/";
+            standardSubPaths[1] = "%s/lib64/";
+            standardSubPaths[2] = NULL;
         }
     }
-    count = cuptiu_files_search_in_path(dlname, parent_path, found_files);
-    for (i = 0; i < count; i++) {
-        dl = dlopen(found_files[i], RTLD_NOW | RTLD_GLOBAL);
-        if (dl) {
-            break;
+    // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
+    // and we do not want to search subpaths
+    else{
+        standardSubPaths[0] = "%s/";
+        standardSubPaths[1] = NULL;     
+    }
+
+    char pathToSharedLibrary[PAPI_HUGE_STR_LEN], directoryPathToSearch[PAPI_HUGE_STR_LEN];
+    void *so = NULL;
+    char *soNameFound;
+    int i, strLen;
+    for (i = 0; standardSubPaths[i] != NULL; i++) {
+        // Create path to search for dl names
+        int strLen = snprintf(directoryPathToSearch, PAPI_HUGE_STR_LEN, standardSubPaths[i], parentPath);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            ERRDBG("Failed to fully write path to search for dlnames.\n");
+            return NULL;
+        }   
+
+        DIR *dir = opendir(directoryPathToSearch);
+        if (dir == NULL) {
+            ERRDBG("Directory path could not be opened.\n");
+            continue;
+        }
+
+        int j;
+        for (j = 0; j < soNamesToSearchCount; j++) {
+            struct dirent *dirEntry;
+            while( ( dirEntry = readdir(dir) ) != NULL ) {
+                int result;
+                char *p = strstr(soNamesToSearchFor[j], "so");
+                // Check for an exact match of a shared object name (.so and .so.1 case)
+                if (p) {
+                    result = strcmp(dirEntry->d_name, soNamesToSearchFor[j]);
+                }
+                // Check for any match of a shared object name (we could not find .so and .so.1)
+                else {
+                    result = strncmp(dirEntry->d_name, soNamesToSearchFor[j], strlen(soNamesToSearchFor[j]));
+                }
+
+                if (result == 0) {
+                    soNameFound = dirEntry->d_name;
+                    goto found;
+                }
+            }
+            // Reset the position of the directory stream
+            rewinddir(dir);
         }
     }
-    for (i = 0; i < count; i++) {
-        papi_free(found_files[i]);
+
+  exit:
+    return so;
+  found:
+    // Construct path to shared library
+    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        ERRDBG("Failed to fully write constructed path to shared library.\n");
+        return NULL;
     }
-    return dl;
+    so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
+   
+    goto exit; 
+}
+
+/**@class search_and_load_from_system_paths
+ * @brief A simple wrapper to try and search and load
+ *        Cuda shared objects from system paths.
+ *
+ * @param *soNamesToSearchFor[]
+ *   Varying names of the shared object we want to search for.
+ * @param soNamesToSearchCount
+ *   Total number of names in soNamesToSearchFor.
+ */
+void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int soNamesToSearchCount)
+{
+    void *so = NULL;
+    int i;
+    for (i = 0; i < soNamesToSearchCount; i++) {
+        so = dlopen(soNamesToSearchFor[i], RTLD_NOW | RTLD_GLOBAL);
+        if (so) {
+            return so;
+        }   
+    }
+
+    return so; 
 }
 
 /**@class load_cudart_sym
- * @brief Search for libcudart.so. Order of search is outlined below.
+ * @brief Search for a variation of the shared object libcudart.
+ *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_RUNTIME, this will take precedent over
  *    the options listed below to be searched.
- * 2. If we fail to collect libcudart.so from PAPI_CUDA_RUNTIME or it is not set,
+ * 2. If we fail to collect a variation of the shared object libcudart from PAPI_CUDA_RUNTIME or it is not set,
  *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect libcudart.so from steps 1 and 2, then we will search the linux
+ * 3. If we fail to collect a variation of the shared object libcudart from steps 1 and 2, then we will search the linux
  *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
  *    advised for this option.
- * 4. We use dlopen to search for libcudart.so.
- *    If this fails, then we failed to find libcudart.so
+ * 4. We use dlopen to search for a variation of the shared object libcudart.
+ *    If this fails, then we failed to find a variation of the shared object
+ *    libcudart.
  */
 static int load_cudart_sym(void)
 {
-    char dlname[] = "libcudart.so";
-    char lookup_path[PATH_MAX];
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libcudart.so", "libcudart.so.1", "libcudart"};
 
-    /* search PAPI_CUDA_RUNTIME for libcudart.so (takes precedent over PAPI_CUDA_ROOT) */
+    // If a user set PAPI_CUDA_RUNTIME with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
     if (papi_cuda_runtime) {
-        sprintf(lookup_path, "%s/%s", papi_cuda_runtime, dlname);
-        dl_rt = dlopen(lookup_path, RTLD_NOW | RTLD_GLOBAL);
+        dl_rt = search_and_load_shared_objects(papi_cuda_runtime, NULL, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    const char *standard_paths[] = {
-        "%s/lib64/%s",
-        NULL,
-    };
-
-    /* search PAPI_CUDA_ROOT for libcudart.so */
+    char *soMainName = "libcudart";
+    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_rt) {
-        dl_rt = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
+        dl_rt = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    /* search linux default directories for libcudart.so */
-    if (linked_cudart_path && !dl_rt) {
-        dl_rt = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
-    }
-
-    /* last ditch effort to find libcudart.so */
+    // Last ditch effort to find a variation of libcudart, see dlopen manpages for how search occurs
     if (!dl_rt) {
-        dl_rt = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
+        dl_rt = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
         if (!dl_rt) {
-            ERRDBG("Loading libcudart.so failed. Try setting PAPI_CUDA_ROOT\n");
+            ERRDBG("Loading libcudart shared library failed. Try setting PAPI_CUDA_ROOT\n");
             goto fn_fail;
         }
     }
@@ -227,50 +316,41 @@ static int unload_cudart_sym(void)
 }
 
 /**@class load_cupti_common_sym
- * @brief Search for libcupti.so. Order of search is outlined below.
+ * @brief Search for a variation of the shared object libcupti.
+ *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_CUPTI, this will take precedent over
  *    the options listed below to be searched.
- * 2. If we fail to collect libcupti.so from PAPI_CUDA_CUPTI or it is not set,
+ * 2. If we fail to collect a variation of the shared object libcupti from PAPI_CUDA_CUPTI or it is not set,
  *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect libcupti.so from steps 1 and 2, then we will search the linux
+ * 3. If we fail to collect a variation of the shared object libcupti from steps 1 and 2, then we will search the linux
  *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
  *    advised for this option.
- * 4. We use dlopen to search for libcupti.so.
- *    If this fails, then we failed to find libcupti.so
+ * 4. We use dlopen to search for a variation of the shared object libcupti.
+ *    If this fails, then we failed to find a variation of the shared object
+ *    libcupti.
  */
 static int load_cupti_common_sym(void)
 {
-    char dlname[] = "libcupti.so";
-    char lookup_path[PATH_MAX];
+    int soNamesToSearchCount = 3;
+    const char  *soNamesToSearchFor[] = {"libcupti.so", "libcupti.so.1", "libcupti"};
 
-    /* search PAPI_CUDA_CUPTI for libcupti.so (takes precedent over PAPI_CUDA_ROOT) */
+    // If a user set PAPI_CUDA_CUPTI with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
     if (papi_cuda_cupti) {
-        sprintf(lookup_path, "%s/%s", papi_cuda_cupti, dlname);
-        dl_cupti = dlopen(lookup_path, RTLD_NOW | RTLD_GLOBAL);
+        dl_cupti = search_and_load_shared_objects(papi_cuda_cupti, NULL, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    const char *standard_paths[] = {
-        "%s/extras/CUPTI/lib64/%s",
-        "%s/lib64/%s",
-        NULL,
-    };
-
-    /* search PAPI_CUDA_ROOT for libcupti.so */
+    char *soMainName = "libcupti";
+    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
     if (papi_cuda_root && !dl_cupti) {
-        dl_cupti = cuptic_load_dynamic_syms(papi_cuda_root, dlname, standard_paths);
+        dl_cupti = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
     }
 
-    /* search linux default directories for libcupti.so */
-    if (linked_cudart_path && !dl_cupti) {
-        dl_cupti = cuptic_load_dynamic_syms(linked_cudart_path, dlname, standard_paths);
-    }
-
-    /* last ditch effort to find libcupti.so */
+    // Last ditch effort to find a variation of libcupti, see dlopen manpages for how search occurs
     if (!dl_cupti) {
-        dl_cupti = dlopen(dlname, RTLD_NOW | RTLD_GLOBAL);
+        dl_cupti = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
         if (!dl_cupti) {
             ERRDBG("Loading libcupti.so failed. Try setting PAPI_CUDA_ROOT\n");
             goto fn_fail;
@@ -310,20 +390,11 @@ static int util_load_cuda_sym(void)
         return PAPI_OK;
 }
 
-static void unload_linked_cudart_path(void)
-{
-    if (linked_cudart_path) {
-        papi_free((void*) linked_cudart_path);
-        linked_cudart_path = NULL;
-    }
-}
-
 int cuptic_shutdown(void)
 {
     unload_cuda_sym();
     unload_cudart_sym();
     unload_cupti_common_sym();
-    unload_linked_cudart_path();
     return PAPI_OK;
 }
 
@@ -448,38 +519,9 @@ void cuptic_disabled_reason_get(const char **pmsg)
     *pmsg = cuptic_disabled_reason_g;
 }
 
-static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused)) size_t size, __attribute__((unused)) void *data)
-{
-    const char *library_name = "libcudart.so";
-    char *library_path = strdup(info->dlpi_name);
-
-    if (library_path != NULL && strstr(library_path, library_name) != NULL) {
-        linked_cudart_path = strdup(dirname(dirname((char *) library_path)));
-    }
-
-    free(library_path);
-    return PAPI_OK;
-}
-
-static int get_user_cudart_path(void)
-{
-    dl_iterate_phdr(dl_iterate_phdr_cb, NULL);
-    if (NULL == linked_cudart_path) {
-        return PAPI_EMISC;
-    }
-    return PAPI_OK;
-}
-
 int cuptic_init(void)
 {
-    int papi_errno = get_user_cudart_path();
-    if (papi_errno == PAPI_OK) {
-        LOGDBG("Linked cudart root: %s\n", linked_cudart_path);
-    }
-    else {
-        LOGDBG("Target application not linked with cuda runtime libraries.\n");
-    }
-    papi_errno = util_load_cuda_sym();
+    int papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
         cuptic_disabled_reason_set("Unable to load CUDA library functions.");
         goto fn_exit;
@@ -677,42 +719,16 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
 typedef int64_t gpu_occupancy_t;
 static gpu_occupancy_t global_gpu_bitmask;
 
-static int event_name_get_gpuid(const char *name, int *gpuid)
-{
-    int papi_errno = PAPI_OK;
-    char *token;
-    char *copy = strdup(name);
-
-    token = strtok(copy, "=");
-    if (token == NULL) {
-        goto fn_fail;
-    }
-    token = strtok(NULL, "\0");
-    if (token == NULL) {
-        goto fn_fail;
-    }
-    *gpuid = strtol(token, NULL, 10);
-
-fn_exit:
-    papi_free(copy);
-    return papi_errno;
-fn_fail:
-    papi_errno = PAPI_EINVAL;
-    goto fn_exit;
-}
-
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
 {
-    int papi_errno = PAPI_OK, gpu_id;
-    long i;
     gpu_occupancy_t acq_mask = 0;
-    cuptiu_event_t *evt_rec;
+    long i;
     for (i = 0; i < evt_table->count; i++) {
         acq_mask |= (1 << evt_table->cuda_devs[i]);
     }
     *bitmask = acq_mask;
-fn_exit:
-    return papi_errno;
+
+    return PAPI_OK;
 }
 
 int cuptic_device_acquire(cuptiu_event_table_t *evt_table)
