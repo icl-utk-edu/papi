@@ -280,7 +280,8 @@ failure.
 #define PAPI_ECMP_DISABLED	-25    /**< Component containing event is disabled */
 #define PAPI_EDELAY_INIT -26   /**< Delayed initialization component */
 #define PAPI_EMULPASS   -27    /**< Event exists, but cannot be counted due to multiple passes required by hardware */
-#define PAPI_NUM_ERRORS	 28    /**< Number of error messages specified in this API */
+#define PAPI_PARTIAL    -28    /**< Component is partially disabled */
+#define PAPI_NUM_ERRORS	 29    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -634,6 +635,8 @@ typedef void *vptr_t;
      char kernel_version[PAPI_MIN_STR_LEN];  /**< Version of the kernel PMC support driver */
      char disabled_reason[PAPI_HUGE_STR_LEN]; /**< Reason for failure of initialization */
      int disabled;   /**< 0 if enabled, otherwise error code from initialization */
+     char partially_disabled_reason[PAPI_HUGE_STR_LEN]; /**< Reason for partial initialization */
+     int partially_disabled; /**< 1 if component is partially disabled, 0 otherwise */
      int initialized;                        /**< Component is ready to use */
      int CmpIdx;				/**< Index into the vector array for this component; set at init time */
      int num_cntrs;               /**< Number of hardware counters the component supports */

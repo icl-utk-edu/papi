@@ -42,6 +42,6 @@ int cuptid_thread_info_create(cuptid_info_t *info);
 int cuptid_thread_info_destroy(cuptid_info_t *info);
 
 /* misc. */
-void cuptid_disabled_reason_get(const char **msg);
+int cuptid_err_get_last(const char **error_str);
 
 #endif /* __CUPTI_DISPATCH_H__ */
