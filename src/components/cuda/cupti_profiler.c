@@ -178,7 +178,7 @@ static int get_metric_eval_request(NVPW_MetricsEvaluator *metricEvaluator, const
 static int create_raw_metric_requests(NVPW_MetricsEvaluator *pMetricsEvaluator, NVPW_MetricEvalRequest *metricEvalRequest, NVPA_RawMetricRequest **rawMetricRequests, int *rawMetricRequestsCount);
 // Metric Evaluation
 static int get_number_of_passes_for_eventsets(const char *pChipName, const char *metricName, int *numOfPasses);
-static int get_evaluated_metric_values(NVPW_MetricsEvaluator *pMetricsEvaluator, cuptip_gpu_state_t *gpu_ctl, int *evaluatedMetricValues);
+static int get_evaluated_metric_values(NVPW_MetricsEvaluator *pMetricsEvaluator, cuptip_gpu_state_t *gpu_ctl, long long *evaluatedMetricValues);
 // Destroy MetricsEvaluator
 static int destroy_metrics_evaluator(NVPW_MetricsEvaluator *pMetricsEvaluator);
 
@@ -994,7 +994,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         nvpwCheckErrors( NVPW_CUDA_MetricsEvaluator_InitializePtr(&metricEvaluatorInitializeParams), return PAPI_EMISC );
         NVPW_MetricsEvaluator *pMetricsEvaluator = metricEvaluatorInitializeParams.pMetricsEvaluator;
 
-        int *metricValues = (int *) calloc(gpu_ctl->added_events->count, sizeof(int));
+        long long *metricValues = (long long *) calloc(gpu_ctl->added_events->count, sizeof(long long));
         if (metricValues == NULL) {
             SUBDBG("Failed to allocate memory for metricValues.\n");
             return PAPI_ENOMEM;
@@ -2822,7 +2822,7 @@ static int create_raw_metric_requests(NVPW_MetricsEvaluator *pMetricsEvaluator, 
  *  @param *evaluatedMetricValues
  *    Total number of raw metric requests created.
 */
-static int get_evaluated_metric_values(NVPW_MetricsEvaluator *pMetricsEvaluator, cuptip_gpu_state_t *gpu_ctl, int *evaluatedMetricValues)
+static int get_evaluated_metric_values(NVPW_MetricsEvaluator *pMetricsEvaluator, cuptip_gpu_state_t *gpu_ctl, long long *evaluatedMetricValues)
 {
     int i;
     for (i = 0; i < gpu_ctl->added_events->count; i++) {
