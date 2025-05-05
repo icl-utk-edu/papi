@@ -144,6 +144,10 @@ rocp_sdk_init_component(int cid)
     _rocp_sdk_vector.cmp_info.num_cntrs = -1;
     _rocp_sdk_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cid;
 
+    // We set this env variable to silence some unnecessary ROCprofiler-SDK debug messages.
+    // It is not critical, so if it fails to be set, we can safely ignore the error.
+    (void)setenv("ROCPROFILER_LOG_LEVEL","fatal",0);
+
     int papi_errno = rocprofiler_sdk_init_pre();
     if (papi_errno != PAPI_OK) {
         _rocp_sdk_vector.cmp_info.initialized = 1;
