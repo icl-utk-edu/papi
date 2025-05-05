@@ -235,6 +235,9 @@ int
 rocp_sdk_shutdown_component(void)
 {
     _rocp_sdk_vector.cmp_info.initialized = 0;
+    if (rocm_dlp != NULL) {
+        dlclose(rocm_dlp);
+    }
     return rocprofiler_sdk_shutdown();
 }
 
@@ -532,10 +535,6 @@ unload_hsa_sym( void )
 {
     if (hsa_is_enabled())
         (*hsa_shut_downPtr)();
-
-    if (rocm_dlp != NULL) {
-        dlclose(rocm_dlp);
-    }
 
     hsa_initPtr           = NULL;
     hsa_shut_downPtr      = NULL;
