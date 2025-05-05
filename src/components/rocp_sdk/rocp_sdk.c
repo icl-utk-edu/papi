@@ -154,9 +154,9 @@ rocp_sdk_init_component(int cid)
         return papi_errno;
     }
 
-    sprintf(_rocp_sdk_vector.cmp_info.disabled_reason, "Not initialized. Access component events to initialize it.");
-    _rocp_sdk_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
-    return PAPI_EDELAY_INIT;
+    // This component needs to be fully initialized from the beginning,
+    // because interleaving hip calls and PAPI calls leads to errors.
+    return check_n_initialize();
 }
 
 int
@@ -235,6 +235,9 @@ int
 rocp_sdk_shutdown_component(void)
 {
     _rocp_sdk_vector.cmp_info.initialized = 0;
+    if (rocm_dlp != NULL) {
+        dlclose(rocm_dlp);
+    }
     return rocprofiler_sdk_shutdown();
 }
 
@@ -532,10 +535,6 @@ unload_hsa_sym( void )
 {
     if (hsa_is_enabled())
         (*hsa_shut_downPtr)();
-
-    if (rocm_dlp != NULL) {
-        dlclose(rocm_dlp);
-    }
 
     hsa_initPtr           = NULL;
     hsa_shut_downPtr      = NULL;

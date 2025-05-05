@@ -57,7 +57,7 @@ static std::condition_variable agent_cond_var = {};
 static bool data_is_ready = false;
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
-static int rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
+static int rpsdk_profiling_mode = RPSDK_MODE_DEVICE_SAMPLING;
 
 static agent_map_t gpu_agents = agent_map_t{};
 
@@ -394,13 +394,6 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
     _papi_hwi_unlock(_rocp_sdk_lock);
 
-#if defined(DEBUG_OUTPUT_OF_RECORDED_VALUES)
-    for(size_t i = 0; i < record_count; ++i){
-        rocprofiler_counter_id_t counter_id;
-        ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(record_data[i].id, &counter_id), "Could not retrieve counter_id");
-        std::cerr << " ## record_data[" << i << "].id: " << record_data[i].id << " -> counter_id: " << counter_id.handle << " Value= " << record_data[i].counter_value << std::endl;
-    }
-#endif
     return;
 }
 
@@ -490,9 +483,10 @@ buffered_callback(rocprofiler_context_id_t,
 int
 tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
 {
-
-
     assert(tool_data != nullptr);
+
+    // Obtain the list of available (GPU) agents.
+    gpu_agents = get_GPU_agent_info();
 
     ROCPROFILER_CALL(rocprofiler_create_context_FPTR(&get_client_ctx()), "context creation");
 
@@ -505,6 +499,13 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
                                                tool_data,
                                                &get_buffer()),
                          "buffer creation failed");
+
+        // Configure device_counting_service for all devices.
+        for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
+            ROCPROFILER_CALL(rocprofiler_configure_device_counting_service_FPTR(
+                                 get_client_ctx(), get_buffer(), g_it->second->id, set_profile, nullptr),
+                             "Could not setup sampling");
+        }
     }else{
         ROCPROFILER_CALL(rocprofiler_configure_callback_dispatch_counting_service_FPTR(
                              get_client_ctx(), dispatch_callback, tool_data, record_callback, tool_data),
@@ -512,7 +513,6 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
     }
 
     return 0;
-
 }
 
 /* ** */
@@ -613,22 +613,11 @@ void stop_counting(void){
 /* ** */
 void
 start_counting(vendorp_ctx_t ctx){
-    static bool is_device_counting_configured = false;
 
     // Store a pointer to the counter value array in a global variable so that
     // our functions that are called from the ROCprofiler-SDK (instead of our
     // API) can still find the array.
     _counter_values = ctx->counters;
-
-    if( (RPSDK_MODE_DEVICE_SAMPLING == get_profiling_mode()) && !is_device_counting_configured ){
-        is_device_counting_configured = true;
-        // Configure device_counting_service for all devices.
-        for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
-            ROCPROFILER_CALL(rocprofiler_configure_device_counting_service_FPTR(
-                                 get_client_ctx(), get_buffer(), g_it->second->id, set_profile, nullptr),
-                             "Could not setup sampling");
-        }
-    }
 
     ROCPROFILER_CALL(rocprofiler_start_context_FPTR(get_client_ctx()), "start context");
 }
@@ -677,11 +666,6 @@ read_sample(){
 
             ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
             rec_info.counter_id = counter_id;
-
-#if defined(DEBUG_OUTPUT)
-            printf(" ## output_records[%d].id: %lu -> counter_id: %lu Value= %lf\n", i, output_records[i].id, counter_id.handle, output_records[i].counter_value);
-	    fflush(stdout);
-#endif // DEBUG_OUTPUT
 
             std::vector<rocprofiler_record_dimension_info_t> dimensions = counter_dimensions(counter_id);
             for(auto& dim : dimensions ){
@@ -1044,9 +1028,6 @@ int setup() {
         SUBDBG("dlsym(): %s\n", error_msg);
         goto fn_fail;
     }
-
-    // Obtain the list of available (GPU) agents.
-    gpu_agents = get_GPU_agent_info();
 
     if( (ROCPROFILER_STATUS_SUCCESS == rocprofiler_is_initialized_FPTR(&status)) && (0 == status) ){
         ROCPROFILER_CALL(rocprofiler_force_configure_FPTR(&rocprofiler_configure), "force configuration");
