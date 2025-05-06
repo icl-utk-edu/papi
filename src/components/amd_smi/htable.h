@@ -1,7 +1,7 @@
 /**
  * @file    htable.h
- * @author  Dong Jun Woun
- *          djwoun@gmail.com
+ * @author  Giuseppe Congiu
+ *          gcongiu@icl.utk.edu
  *
  */
 #ifndef __HTABLE_H__
