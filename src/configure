@@ -6911,11 +6911,138 @@ if test $rocm_found -eq 1 && test $rocp_sdk_found -eq 1; then
     echo "WARNING: Components rocm and rocp_sdk should not be configured together. See components/rocm/README.md for more details."
 fi
 
+# If both SMI components were requested, select the one that matches the
+# available ROCm stack. amd_smi should be used for ROCm >= 6.4.0, while
+# rocm_smi remains the fallback for older releases.
+amd_smi_found=0
+rocm_smi_found=0
+for comp in $components
+do
+    case "$comp" in
+    amd_smi)
+        amd_smi_found=1
+        ;;
+    rocm_smi)
+        rocm_smi_found=1
+        ;;
+    esac
+done
+
+if test $amd_smi_found -eq 1 && test $rocm_smi_found -eq 1; then
+    rocm_version=""
+
+    for root in "$PAPI_AMDSMI_ROOT" "$PAPI_ROCMSMI_ROOT" "$PAPI_ROCM_ROOT"
+    do
+        if test "x$root" != "x"; then
+            for probe in "$root/.info/version" "$root/../.info/version" "$root/version.txt"
+            do
+                if test -f "$probe"; then
+                    rocm_version=`head -n 1 "$probe" 2>/dev/null`
+                    break 2
+                fi
+            done
+        fi
+    done
+
+    if test "x$rocm_version" = "x"; then
+        if command -v hipconfig >/dev/null 2>&1; then
+            rocm_version=`hipconfig --rocm-version 2>/dev/null | head -n 1`
+        elif command -v rocminfo >/dev/null 2>&1; then
+            rocm_version=`rocminfo --version 2>/dev/null | head -n 1`
+        elif command -v amd-smi >/dev/null 2>&1; then
+            rocm_version=`amd-smi --version 2>/dev/null | head -n 1`
+        elif command -v rocm-smi >/dev/null 2>&1; then
+            rocm_version=`rocm-smi --version 2>/dev/null | head -n 1`
+        fi
+    fi
+
+    rocm_version_clean=`echo "$rocm_version" | sed -n 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)\?\).*/\1/p'`
+    if test "x$rocm_version_clean" = "x"; then
+        rocm_version_clean=`echo "$rocm_version" | tr -cd '0-9.'`
+    fi
+
+    have_amd_smi_lib=0
+    have_rocm_smi_lib=0
+    for root in "$PAPI_AMDSMI_ROOT" "$PAPI_ROCM_ROOT"
+    do
+        if test "x$root" != "x"; then
+            if test -f "$root/lib/libamd_smi.so" || test -f "$root/lib64/libamd_smi.so"; then
+                have_amd_smi_lib=1
+            fi
+        fi
+    done
+    for root in "$PAPI_ROCMSMI_ROOT" "$PAPI_ROCM_ROOT"
+    do
+        if test "x$root" != "x"; then
+            if test -f "$root/lib/librocm_smi64.so" || test -f "$root/lib64/librocm_smi64.so"; then
+                have_rocm_smi_lib=1
+            fi
+        fi
+    done
+
+    selected_smi="amd_smi"
+    rocm_version_value=""
+    if test "x$rocm_version_clean" != "x"; then
+        rocm_major=`echo "$rocm_version_clean" | cut -d. -f1`
+        rocm_minor=`echo "$rocm_version_clean" | cut -d. -f2`
+        rocm_patch=`echo "$rocm_version_clean" | cut -d. -f3`
+        if test "x$rocm_minor" = "x"; then
+            rocm_minor=0
+        fi
+        if test "x$rocm_patch" = "x"; then
+            rocm_patch=0
+        fi
+        rocm_version_value=$((10#$rocm_major * 10000 + 10#$rocm_minor * 100 + 10#$rocm_patch))
+        if test $rocm_version_value -lt 60400; then
+            selected_smi="rocm_smi"
+        fi
+    else
+        if test $have_amd_smi_lib -eq 0 && test $have_rocm_smi_lib -eq 1; then
+            selected_smi="rocm_smi"
+        elif test $have_amd_smi_lib -eq 0 && test $have_rocm_smi_lib -eq 0; then
+            echo "WARNING: Unable to determine ROCm version or locate AMD/ROCm SMI libraries. Defaulting to amd_smi when both components are requested."
+        else
+            echo "WARNING: Unable to determine ROCm version. Defaulting to amd_smi when both SMI components are requested."
+        fi
+    fi
+
+    filtered_components=""
+    for comp in $components
+    do
+        if test "$comp" = "amd_smi" && test "$selected_smi" = "rocm_smi"; then
+            continue
+        fi
+        if test "$comp" = "rocm_smi" && test "$selected_smi" = "amd_smi"; then
+            continue
+        fi
+        filtered_components="$filtered_components $comp"
+    done
+    components=`echo $filtered_components`
+
+    if test "x$rocm_version_clean" != "x"; then
+        if test "$selected_smi" = "amd_smi"; then
+            echo "INFO: Detected ROCm version $rocm_version_clean. Building amd_smi and skipping rocm_smi."
+        else
+            echo "INFO: Detected ROCm version $rocm_version_clean. Building rocm_smi and skipping amd_smi."
+        fi
+    else
+        if test $have_amd_smi_lib -eq 1 && test $have_rocm_smi_lib -eq 0; then
+            echo "INFO: Only AMD SMI libraries were found. Building amd_smi and skipping rocm_smi."
+        elif test $have_rocm_smi_lib -eq 1 && test $have_amd_smi_lib -eq 0; then
+            echo "INFO: Only ROCm SMI libraries were found. Building rocm_smi and skipping amd_smi."
+        elif test "$selected_smi" = "rocm_smi"; then
+            echo "INFO: Falling back to rocm_smi because AMD SMI libraries were not detected."
+        else
+            echo "INFO: Defaulting to amd_smi when both SMI components are requested."
+        fi
+    fi
+fi
+
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
 	if test "x$components" = "x"; then
 		echo "papi_vector_t ${VECTOR} = {" >> components_config.h
- 		echo "	.size = {
+		echo "	.size = {
 		.context = sizeof ( int ),
 		.control_state = sizeof ( int ),
 		.reg_value = sizeof ( int ),
