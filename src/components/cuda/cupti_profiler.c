@@ -2075,7 +2075,6 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
     return PAPI_OK;
 }
 
-
 /** @class cuda_verify_qualifiers
   * @brief Verify that the device and/or stats qualifier provided by the user
   *        is valid. E.g. :device=# or :stat=avg.
@@ -2089,7 +2088,7 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
   *   Position of where the equal sign is located in the qualifier string name.
   * @param *qualifierValue
   *   Upon verifying the provided qualifier is valid. Store either a device index
-  *   or statistic.
+  *   or a statistic index.
 */
 static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
 {
