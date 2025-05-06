@@ -335,8 +335,6 @@ amds_init(void)
     }
     for (uint32_t s = 0; s < socket_count; ++s) {
         uint32_t gpu_count = 0;
-        // Get GPU processors for this socket
-        amdsmi_processor_handle gpu_handle;
         processor_type_t processor_type = AMDSMI_PROCESSOR_TYPE_AMD_GPU;
         //ret = amdsmi_get_processor_type(gpu_handle[j], &processor_type);
         ///////////////////////////////////////////////////////////////////////FIX
@@ -346,19 +344,26 @@ amds_init(void)
         ///////////////////////////////////////////////////////////////////////FIX
         ///////////////////////////////////////////////////////////////////////FIX
 
-        status = amdsmi_get_processor_handles_by_type_p(sockets[s], processor_type, &gpu_handle, &gpu_count);
-        if (status != AMDSMI_STATUS_SUCCESS) {
-            continue;
-        }
+        status = amdsmi_get_processor_handles_by_type_p(sockets[s],
+                                                       processor_type,
+                                                       NULL,            /* NULL buffer */
+                                                       &gpu_count);
+        if (status != AMDSMI_STATUS_SUCCESS || gpu_count == 0)
+           continue;
+
         if (gpu_count > 0) {
             // There might be multiple GPU handles if socket has multiple GPU dies (e.g., MI200 series GCDs).
             // For simplicity, handle one GPU per call. If gpu_count > 1, allocate accordingly.
-            amdsmi_processor_handle *gpu_handles = (amdsmi_processor_handle *) papi_calloc(gpu_count, sizeof(amdsmi_processor_handle));
+            amdsmi_processor_handle *gpu_handles = (amdsmi_processor_handle *)papi_calloc(gpu_count,
+                                                    sizeof(*gpu_handles));
             if (!gpu_handles) {
                 papi_errno = PAPI_ENOMEM;
                 continue;
             }
-            status = amdsmi_get_processor_handles_by_type_p(sockets[s], processor_type, gpu_handles, &gpu_count);
+            status = amdsmi_get_processor_handles_by_type_p(sockets[s],
+                                              processor_type,
+                                              gpu_handles,
+                                              &gpu_count);
             if (status == AMDSMI_STATUS_SUCCESS) {
                 for (uint32_t g = 0; g < gpu_count; ++g) {
                     device_handles[device_count++] = gpu_handles[g];
@@ -368,6 +373,7 @@ amds_init(void)
         }
     }
     papi_free(sockets);
+    
     if (device_count == 0) {
         sprintf(error_string, "No AMD GPU devices found.");
         papi_errno = PAPI_ENOEVNT;
