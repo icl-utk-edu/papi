@@ -28,15 +28,18 @@ static amdsmi_status_t (*amdsmi_get_gpu_fan_speed_p)(amdsmi_processor_handle, ui
 static amdsmi_status_t (*amdsmi_get_gpu_fan_speed_max_p)(amdsmi_processor_handle, uint32_t, int64_t *);
 static amdsmi_status_t (*amdsmi_get_total_memory_p)(amdsmi_processor_handle, amdsmi_memory_type_t, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_memory_usage_p)(amdsmi_processor_handle, amdsmi_memory_type_t, uint64_t *);
-static amdsmi_status_t (*amdsmi_get_gpu_busy_percent_p)(amdsmi_processor_handle, uint32_t *);
-static amdsmi_status_t (*amdsmi_get_gpu_power_cap_info_p)(amdsmi_processor_handle, amdsmi_power_cap_info_t *);
+static amdsmi_status_t (*amdsmi_get_gpu_activity_p)(amdsmi_processor_handle, amdsmi_engine_usage_t *);
+static amdsmi_status_t (*amdsmi_get_power_cap_info_p)(amdsmi_processor_handle, amdsmi_power_cap_info_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_power_cap_set_p)(amdsmi_processor_handle, uint32_t, uint64_t);
 static amdsmi_status_t (*amdsmi_get_gpu_power_ave_p)(amdsmi_processor_handle, uint32_t, uint64_t *);
+static amdsmi_status_t (*amdsmi_get_power_info_p)(amdsmi_processor_handle, amdsmi_power_info_t *);
+static amdsmi_status_t (*amdsmi_set_power_cap_p)(amdsmi_processor_handle, uint32_t, uint64_t);
 static amdsmi_status_t (*amdsmi_get_gpu_pci_throughput_p)(amdsmi_processor_handle, uint64_t *, uint64_t *, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_pci_replay_counter_p)(amdsmi_processor_handle, uint64_t *);
-static amdsmi_status_t (*amdsmi_get_gpu_clk_freq_info_p)(amdsmi_processor_handle, amdsmi_clk_type_t, amdsmi_frequencies_t *);
-static amdsmi_status_t (*amdsmi_set_gpu_clk_freq_p)(amdsmi_processor_handle, amdsmi_clk_type_t, uint64_t);
+static amdsmi_status_t (*amdsmi_get_clk_freq_p)(amdsmi_processor_handle, amdsmi_clk_type_t, amdsmi_frequencies_t *);
+static amdsmi_status_t (*amdsmi_set_clk_freq_p)(amdsmi_processor_handle, amdsmi_clk_type_t, uint64_t);
 static amdsmi_status_t (*amdsmi_get_gpu_metrics_info_p)(amdsmi_processor_handle, amdsmi_gpu_metrics_t *);
+
 
 /* Global device list and count */
 static int32_t device_count = 0;
@@ -144,63 +147,116 @@ static int stop_simple(native_event_t *event) {
 }
 
 /* Load AMD SMI symbols using dlopen and dlsym */
-static int
-load_amdsmi_sym(void)
+/* helper ? try preferred symbol then optional fallback */
+static void *sym(const char *preferred, const char *fallback)
 {
-    int papi_errno = PAPI_OK;
-    char pathname[PATH_MAX] = {0};
-    char *amdsmi_root = getenv("PAPI_AMDSMI_ROOT");
-    if (amdsmi_root == NULL) {
-        sprintf(error_string, "Can't load libamd_smi.so, PAPI_AMDSMI_ROOT not set.");
-        papi_errno = PAPI_ENOSUPP;
-        goto fn_fail;
-    }
-    snprintf(pathname, PATH_MAX, "%s/lib/libamd_smi.so", amdsmi_root);
-    amds_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
-    if (!amds_dlp) {
-        sprintf(error_string, "%s", dlerror());
-        papi_errno = PAPI_ENOSUPP;
-        goto fn_fail;
-    }
-    // Load required symbols
-    amdsmi_init_p                               = dlsym(amds_dlp, "amdsmi_init");
-    amdsmi_shut_down_p                          = dlsym(amds_dlp, "amdsmi_shut_down");
-    amdsmi_get_socket_handles_p                = dlsym(amds_dlp, "amdsmi_get_socket_handles");
-    amdsmi_get_processor_handles_by_type_p     = dlsym(amds_dlp, "amdsmi_get_processor_handles_by_type");
-    amdsmi_get_temp_metric_p                   = dlsym(amds_dlp, "amdsmi_get_temp_metric");
-    amdsmi_get_gpu_fan_rpms_p                  = dlsym(amds_dlp, "amdsmi_get_gpu_fan_rpms");
-    amdsmi_get_gpu_fan_speed_p                 = dlsym(amds_dlp, "amdsmi_get_gpu_fan_speed");
-    amdsmi_get_gpu_fan_speed_max_p             = dlsym(amds_dlp, "amdsmi_get_gpu_fan_speed_max");
-    amdsmi_get_total_memory_p                  = dlsym(amds_dlp, "amdsmi_get_total_memory");
-    amdsmi_get_memory_usage_p                  = dlsym(amds_dlp, "amdsmi_get_memory_usage");
-    amdsmi_get_gpu_busy_percent_p              = dlsym(amds_dlp, "amdsmi_dev_busy_percent_get"); // possibly different naming in AMD SMI
-    amdsmi_get_gpu_power_cap_info_p            = dlsym(amds_dlp, "amdsmi_get_power_cap_info");
-    amdsmi_get_gpu_power_cap_set_p             = dlsym(amds_dlp, "amdsmi_dev_set_power_cap");
-    amdsmi_get_gpu_power_ave_p                 = dlsym(amds_dlp, "amdsmi_dev_get_power_ave");
-    amdsmi_get_gpu_pci_throughput_p            = dlsym(amds_dlp, "amdsmi_get_gpu_pci_throughput");
-    amdsmi_get_gpu_pci_replay_counter_p        = dlsym(amds_dlp, "amdsmi_get_gpu_pci_replay_counter");
-    amdsmi_get_gpu_clk_freq_info_p             = dlsym(amds_dlp, "amdsmi_get_gpu_clk_freq_info");
-    amdsmi_set_gpu_clk_freq_p                  = dlsym(amds_dlp, "amdsmi_set_gpu_clk_freq");
-    amdsmi_get_gpu_metrics_info_p              = dlsym(amds_dlp, "amdsmi_get_gpu_metrics_info");
+    void *p = dlsym(amds_dlp, preferred);
+    return p ? p : (fallback ? dlsym(amds_dlp, fallback) : NULL);
+}
 
-    // Check that critical symbols are loaded
-    int missing = (!amdsmi_init_p || !amdsmi_shut_down_p || !amdsmi_get_socket_handles_p || !amdsmi_get_processor_handles_by_type_p ||
-                   !amdsmi_get_temp_metric_p || !amdsmi_get_gpu_fan_rpms_p || !amdsmi_get_gpu_fan_speed_p || !amdsmi_get_gpu_fan_speed_max_p ||
-                   !amdsmi_get_total_memory_p || !amdsmi_get_memory_usage_p || !amdsmi_get_gpu_power_cap_info_p || !amdsmi_get_gpu_power_ave_p ||
-                   !amdsmi_get_gpu_pci_throughput_p || !amdsmi_get_gpu_pci_replay_counter_p);
-    if (missing) {
-        sprintf(error_string, "Error while loading AMD SMI symbols.");
-        papi_errno = PAPI_ENOSUPP;
-        goto fn_fail;
+/* ------------------------------------------------------------------------ */
+/*  load_amdsmi_sym()                                                      */
+/* ------------------------------------------------------------------------ */
+static int load_amdsmi_sym(void)
+{
+    char so_path[PATH_MAX] = {0};
+    const char *root = getenv("PAPI_AMDSMI_ROOT");
+    if (!root) {
+        snprintf(error_string, sizeof(error_string),
+                 "PAPI_AMDSMI_ROOT not set ? can¡¯t find libamd_smi.so");
+        return PAPI_ENOSUPP;
+    }
+    snprintf(so_path, sizeof(so_path), "%s/lib/libamd_smi.so", root);
+    amds_dlp = dlopen(so_path, RTLD_NOW | RTLD_GLOBAL);
+    if (!amds_dlp) {
+        snprintf(error_string, sizeof(error_string),
+                 "dlopen(\"%s\"): %s", so_path, dlerror());
+        return PAPI_ENOSUPP;
+    }
+
+    /* ------------ resolve every function pointer ------------- */
+    amdsmi_init_p                         = sym("amdsmi_init",                    NULL);
+    amdsmi_shut_down_p                    = sym("amdsmi_shut_down",               NULL);
+    amdsmi_get_socket_handles_p           = sym("amdsmi_get_socket_handles",      NULL);
+    amdsmi_get_processor_handles_by_type_p= sym("amdsmi_get_processor_handles_by_type",
+                                                NULL);
+
+    /* sensors ------------------------------------------------ */
+    amdsmi_get_temp_metric_p              = sym("amdsmi_get_temp_metric",         NULL);
+    amdsmi_get_gpu_fan_rpms_p             = sym("amdsmi_get_gpu_fan_rpms",        NULL);
+    amdsmi_get_gpu_fan_speed_p            = sym("amdsmi_get_gpu_fan_speed",       NULL);
+    amdsmi_get_gpu_fan_speed_max_p        = sym("amdsmi_get_gpu_fan_speed_max",   NULL);
+
+    /* memory ------------------------------------------------- */
+    amdsmi_get_total_memory_p             = sym("amdsmi_get_gpu_memory_total",
+                                                "amdsmi_get_total_memory");
+    amdsmi_get_memory_usage_p             = sym("amdsmi_get_gpu_memory_usage",
+                                                "amdsmi_get_memory_usage");
+
+    /* utilisation / activity -------------------------------- */
+    amdsmi_get_gpu_activity_p             = sym("amdsmi_get_gpu_activity",
+                                                "amdsmi_get_engine_usage"); /* old alias */
+
+    /* power -------------------------------------------------- */
+    amdsmi_get_power_info_p               = sym("amdsmi_get_power_info_v2",
+                                                "amdsmi_get_power_info");
+    amdsmi_get_power_cap_info_p           = sym("amdsmi_get_power_cap_info",      NULL);
+    amdsmi_set_power_cap_p                = sym("amdsmi_set_power_cap",
+                                                "amdsmi_dev_set_power_cap");
+
+    /* PCIe --------------------------------------------------- */
+    amdsmi_get_gpu_pci_throughput_p       = sym("amdsmi_get_gpu_pci_throughput",  NULL);
+    amdsmi_get_gpu_pci_replay_counter_p   = sym("amdsmi_get_gpu_pci_replay_counter",
+                                                NULL);
+
+    /* clocks ------------------------------------------------- */
+    amdsmi_get_clk_freq_p                 = sym("amdsmi_get_clk_freq",            NULL);
+    amdsmi_set_clk_freq_p                 = sym("amdsmi_set_clk_freq",            NULL);
+
+    /* GPU metrics ------------------------------------------- */
+    amdsmi_get_gpu_metrics_info_p         = sym("amdsmi_get_gpu_metrics_info",    NULL);
+
+    /* ------------ verify required symbols ------------------ */
+    struct { const char *name; void *ptr; } required[] = {
+        { "amdsmi_init",                    amdsmi_init_p },
+        { "amdsmi_shut_down",               amdsmi_shut_down_p },
+        { "amdsmi_get_socket_handles",      amdsmi_get_socket_handles_p },
+        { "amdsmi_get_processor_handles_by_type", amdsmi_get_processor_handles_by_type_p },
+        { "amdsmi_get_temp_metric",         amdsmi_get_temp_metric_p },
+        { "amdsmi_get_gpu_memory_total",    amdsmi_get_total_memory_p },
+        { "amdsmi_get_gpu_memory_usage",    amdsmi_get_memory_usage_p },
+        { "amdsmi_get_gpu_activity",        amdsmi_get_gpu_activity_p },
+        { "amdsmi_get_power_cap_info",      amdsmi_get_power_cap_info_p },
+        { "amdsmi_set_power_cap",           amdsmi_set_power_cap_p },
+        { "amdsmi_get_power_info",          amdsmi_get_power_info_p },
+        { "amdsmi_get_gpu_pci_throughput",  amdsmi_get_gpu_pci_throughput_p },
+        { "amdsmi_get_gpu_pci_replay_counter", amdsmi_get_gpu_pci_replay_counter_p },
+        { "amdsmi_get_gpu_fan_rpms",        amdsmi_get_gpu_fan_rpms_p },
+        { "amdsmi_get_gpu_fan_speed",       amdsmi_get_gpu_fan_speed_p },
+        { "amdsmi_get_gpu_fan_speed_max",   amdsmi_get_gpu_fan_speed_max_p },
+        { "amdsmi_get_clk_freq",            amdsmi_get_clk_freq_p },
+        { "amdsmi_set_clk_freq",            amdsmi_set_clk_freq_p },
+        { "amdsmi_get_gpu_metrics_info",    amdsmi_get_gpu_metrics_info_p },
+    };
+
+    int miss = 0, pos = 0;
+    pos = snprintf(error_string, sizeof(error_string),
+                   "Error loading AMD?SMI symbols:");
+    for (size_t i = 0; i < sizeof(required)/sizeof(required[0]); ++i) {
+        if (!required[i].ptr) {
+            ++miss;
+            pos += snprintf(error_string + pos,
+                            sizeof(error_string) - pos,
+                            "\n  %s", required[i].name);
+        }
+    }
+    if (miss) {                       /* something missing      */
+        dlclose(amds_dlp); amds_dlp = NULL;
+        return PAPI_ENOSUPP;
     }
     return PAPI_OK;
-fn_fail:
-    if (amds_dlp) {
-        dlclose(amds_dlp);
-        amds_dlp = NULL;
-    }
-    return papi_errno;
 }
+
 
 static int
 unload_amdsmi_sym(void)
@@ -216,14 +272,14 @@ unload_amdsmi_sym(void)
     amdsmi_get_gpu_fan_speed_max_p = NULL;
     amdsmi_get_total_memory_p = NULL;
     amdsmi_get_memory_usage_p = NULL;
-    amdsmi_get_gpu_busy_percent_p = NULL;
-    amdsmi_get_gpu_power_cap_info_p = NULL;
-    amdsmi_get_gpu_power_cap_set_p = NULL;
-    amdsmi_get_gpu_power_ave_p = NULL;
+    amdsmi_get_gpu_activity_p = NULL;
+    amdsmi_get_power_cap_info_p = NULL;
+    amdsmi_set_power_cap_p = NULL;
+    amdsmi_get_power_info_p = NULL;
     amdsmi_get_gpu_pci_throughput_p = NULL;
     amdsmi_get_gpu_pci_replay_counter_p = NULL;
-    amdsmi_get_gpu_clk_freq_info_p = NULL;
-    amdsmi_set_gpu_clk_freq_p = NULL;
+    amdsmi_get_clk_freq_p = NULL;
+    amdsmi_set_clk_freq_p = NULL;
     amdsmi_get_gpu_metrics_info_p = NULL;
     if (amds_dlp) {
         dlclose(amds_dlp);
@@ -283,6 +339,11 @@ amds_init(void)
         amdsmi_processor_handle gpu_handle;
         processor_type_t processor_type = AMDSMI_PROCESSOR_TYPE_AMD_GPU;
         //ret = amdsmi_get_processor_type(gpu_handle[j], &processor_type);
+        ///////////////////////////////////////////////////////////////////////FIX
+        ///////////////////////////////////////////////////////////////////////FIX
+        ///////////////////////////////////////////////////////////////////////FIX
+        ///////////////////////////////////////////////////////////////////////FIX
+        ///////////////////////////////////////////////////////////////////////FIX
         ///////////////////////////////////////////////////////////////////////FIX
 
         status = amdsmi_get_processor_handles_by_type_p(sockets[s], processor_type, &gpu_handle, &gpu_count);
@@ -952,7 +1013,7 @@ access_amdsmi_power_cap(int mode, void *arg)
     if (mode == PAPI_MODE_READ) {
         // Use amdsmi_get_power_cap_info to retrieve current cap
         amdsmi_power_cap_info_t info;
-        amdsmi_status_t status = amdsmi_get_gpu_power_cap_info_p(device_handles[event->device], &info);
+        amdsmi_status_t status = amdsmi_get_power_cap_info_p(device_handles[event->device], &info);
         if (status != AMDSMI_STATUS_SUCCESS) {
             return PAPI_EMISC;
         }
@@ -963,7 +1024,7 @@ access_amdsmi_power_cap(int mode, void *arg)
     } else if (mode == PAPI_MODE_WRITE) {
         // Set new power cap from event->value (in microWatts)
         uint64_t new_cap = (uint64_t) event->value;
-        amdsmi_status_t status = amdsmi_get_gpu_power_cap_set_p(device_handles[event->device], 0, new_cap);
+        amdsmi_status_t status = amdsmi_set_power_cap_p(device_handles[event->device], 0, new_cap);
         return (status == AMDSMI_STATUS_SUCCESS ? PAPI_OK : PAPI_EMISC);
     }
     return PAPI_ENOSUPP;
@@ -975,7 +1036,7 @@ access_amdsmi_power_cap_range(int mode, void *arg)
     native_event_t *event = (native_event_t *) arg;
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_power_cap_info_t info;
-    amdsmi_status_t status = amdsmi_get_gpu_power_cap_info_p(device_handles[event->device], &info);
+    amdsmi_status_t status = amdsmi_get_power_cap_info_p(device_handles[event->device], &info);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -996,13 +1057,13 @@ access_amdsmi_power_average(int mode, void *arg)
 {
     native_event_t *event = (native_event_t *) arg;
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
-    uint64_t power = 0;
+    amdsmi_power_info_t power;
     // sensor_id = 0 (only one power sensor)
-    amdsmi_status_t status = amdsmi_get_gpu_power_ave_p(device_handles[event->device], 0, &power);
+    amdsmi_status_t status = amdsmi_get_power_info_p(device_handles[event->device], &power);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
-    event->value = (int64_t) power;
+    event->value = (int64_t) power.average_socket_power;
     return PAPI_OK;
 }
 
@@ -1042,12 +1103,32 @@ access_amdsmi_pci_replay_counter(int mode, void *arg)
 static int
 access_amdsmi_clk_freq(int mode, void *arg)
 {
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+
+////////////////////////////////////////////////////// ADD amdsmi_set_clk_freq_p
+/*
+clk_freq_def_t amd_smi_clocks[] = {
+    {AMDSMI_CLK_TYPE_SYS, "SelectedClk_SYS_MHz"}, // System clock, often represents GPU clock
+    {AMDSMI_CLK_TYPE_MEM, "SelectedClk_MEM_MHz"}, // Memory clock
+    {AMDSMI_CLK_TYPE_DF,  "SelectedClk_DF_MHz"},  // Data Fabric clock (if needed and supported)
+    // {AMDSMI_CLK_TYPE_DCEF, "SelectedClk_DCEF_MHz"} // Display Controller clock (if needed and supported)
+};
+*/
     native_event_t *event = (native_event_t *) arg;
     // For simplicity, we only handle read of "current" frequency and count in this implementation
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_frequencies_t freq_info;
-    amdsmi_status_t status = amdsmi_get_gpu_clk_freq_info_p(device_handles[event->device],
-                                                           (amdsmi_clk_type_t) event->variant, &freq_info);
+    amdsmi_status_t status = amdsmi_get_clk_freq_p(device_handles[event->device], AMDSMI_CLK_TYPE_SYS ,&freq_info);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
