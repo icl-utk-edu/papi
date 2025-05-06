@@ -211,6 +211,8 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len);
 static int evt_name_to_basename(const char *name, char *base, int len);
 static int evt_name_to_device(const char *name, int *device, const char *base);
 static int evt_name_to_stat(const char *name, int *stat, const char *base);
+static int cuda_verify_no_repeated_qualifiers(const char *eventName);
+static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue);
 
 // Functions related to the stats qualifier
 static int restructure_event_name(const char *input, char *output, char *base, char *stat);
@@ -1657,17 +1659,21 @@ int cuptip_evt_code_to_descr(uint32_t event_code, char *descr, int len)
 */
 int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
 {
-
     int htable_errno, device, stat, flags, nameid, papi_errno = PAPI_OK;
     cuptiu_event_t *event;
     char base[PAPI_MAX_STR_LEN] = { 0 };
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
+    papi_errno = cuda_verify_no_repeated_qualifiers(name);
+    if (papi_errno != PAPI_OK) {
+        goto fn_exit;
+    }
+
     papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
-    
+
     papi_errno = evt_name_to_device(name, &device, base);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -2033,6 +2039,113 @@ static int evt_name_to_basename(const char *name, char *base, int len)
     return PAPI_OK;
 }
 
+/** @class cuda_verify_no_repeated_qualifiers
+  * @brief Verify that a user has not added multiple device or stats qualifiers
+  *        to an event name.
+  *
+  * @param *eventName
+  *   User provided event name we need to verify.
+*/
+static int cuda_verify_no_repeated_qualifiers(const char *eventName)
+{
+    int numDeviceQualifiers = 0, numStatsQualifiers = 0;
+    char tmpEventName[PAPI_2MAX_STR_LEN];
+    int strLen = snprintf(tmpEventName, PAPI_2MAX_STR_LEN, "%s", eventName);
+    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+        ERRDBG("Failed to fully write eventName into tmpEventName.\n");
+        return PAPI_EBUF;
+    }
+    char *token = strtok(tmpEventName, ":");
+    while(token != NULL) {
+        if (strncmp(token, "device", 6) == 0) {
+            numDeviceQualifiers++;
+        }
+        else if (strncmp(token, "stat", 4) == 0){
+            numStatsQualifiers++;
+        }
+
+        token = strtok(NULL, ":");
+    }
+
+    if (numDeviceQualifiers > 1 || numStatsQualifiers > 1) {
+        ERRDBG("Provided Cuda event has multiple device or stats qualifiers appended.\n");
+        return PAPI_ENOEVNT;
+    }
+
+    return PAPI_OK;
+}
+
+
+/** @class cuda_verify_qualifiers
+  * @brief Verify that the device and/or stats qualifier provided by the user
+  *        is valid. E.g. :device=# or :stat=avg.
+  *
+  * @param flag
+  *   Device or stats flag define. Allows us to determine the case to enter for
+  *   the switch statement.
+  * @param *qualifierName
+  *   Name of the qualifier we need to verify. E.g. :device or :stat.
+  * @param equalitySignPosition
+  *   Position of where the equal sign is located in the qualifier string name.
+  * @param *qualifierValue
+  *   Upon verifying the provided qualifier is valid. Store either a device index
+  *   or statistic.
+*/
+static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
+{
+    int pos = equalitySignPosition;
+    // Verify that an equal sign was provided where it was suppose to be
+    if (qualifierName[pos] != '=') {
+        SUBDBG("Improper qualifier name. No equal sign found.\n");
+        return PAPI_ENOEVNT;
+    }
+
+    switch(flag)
+    {
+        case DEVICE_FLAG:
+        {
+            // Verify that the next character after the equal sign is indeed a digit
+            pos++;
+            int isDigit = (unsigned) qualifierName[pos] - '0' < 10;
+            if (!isDigit) {
+                SUBDBG("Improper device qualifier name. Digit does not follow equal sign.\n");
+                return PAPI_ENOEVNT;
+            }
+
+            // Verify that only qualifiers have been appended
+            char *endPtr;
+            *qualifierValue = (int) strtol(qualifierName + strlen(":device="), &endPtr, 10);
+            // Check to make sure only qualifiers have been appended
+            if (*endPtr != '\0') {
+                if (strncmp(endPtr, ":stat", 5) != 0) {
+                    return PAPI_ENOEVNT;
+                }
+            }
+            return PAPI_OK;
+        }
+        case STAT_FLAG:
+        {
+            qualifierName += 6; // Move past ":stat="
+            int i;
+            for (i = 0; i < NUM_STATS_QUALS; i++) {
+                size_t token_len = strlen(stats[i]);
+                if (strncmp(qualifierName, stats[i], token_len) == 0) {
+                    // Check to make sure only qualifiers have been appended
+                    char *no_excess_chars = qualifierName + token_len;
+                    if (strlen(no_excess_chars) == 0 || strncmp(no_excess_chars, ":device", 7) == 0) {
+                        *qualifierValue = i;
+                        return PAPI_OK;
+                    }
+                }
+            }
+            return PAPI_ENOEVNT;
+        }
+        default:
+            SUBDBG("Flag provided is not accounted for in switch statement.\n");
+            return PAPI_EINVAL;
+    }
+}
+
 /** @class evt_name_to_device
   * @brief Return the device number for a user provided Cuda native event.
   *        This can be done with a device qualifier present (:device=#) or
@@ -2044,16 +2157,13 @@ static int evt_name_to_basename(const char *name, char *base, int len)
 */
 static int evt_name_to_device(const char *name, int *device, const char *base)
 {
-    char *p = strstr(name, ":device=");
+    char *p = strstr(name, ":device");
     // User did provide :device=# qualifier
     if (p != NULL) {
-        char *endPtr;
-        *device = (int) strtol(p + strlen(":device="), &endPtr, 10);
-        // Check to make sure only qualifiers have been appended
-        if (*endPtr != '\0') {
-            if (strncmp(endPtr, ":stat", 5) != 0) {
-                return PAPI_ENOEVNT;
-            }
+        int equalitySignPos = 7;
+        int papi_errno = cuda_verify_qualifiers(DEVICE_FLAG, p, equalitySignPos, device);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
         }
     }
     // User did not provide :device=# qualifier
@@ -2073,6 +2183,7 @@ static int evt_name_to_device(const char *name, int *device, const char *base)
             }
         }
     }
+
     return PAPI_OK;
 }
 
@@ -2086,26 +2197,16 @@ static int evt_name_to_device(const char *name, int *device, const char *base)
 */
 static int evt_name_to_stat(const char *name, int *stat, const char *base)
 {
-    int htable_errno, papi_errno;
-    cuptiu_event_t *event;
-    char *p = strstr(name, ":stat=");
+    char *p = strstr(name, ":stat");
     if (p != NULL) {
-        p += 6; // Move past ":stat="
-        int i;
-        for (i = 0; i < NUM_STATS_QUALS; i++) {
-            size_t token_len = strlen(stats[i]);
-            if (strncmp(p, stats[i], token_len) == 0) {
-                // Check to make sure only qualifiers have been appended 
-                char *no_excess_chars = p + token_len;
-                if (strlen(no_excess_chars) == 0 || strncmp(no_excess_chars, ":device", 7) == 0) {
-                    *stat = i;
-                    return PAPI_OK;
-                }
-            }
+        int equalitySignPos = 5;
+        int papi_errno = cuda_verify_qualifiers(STAT_FLAG, p, equalitySignPos, stat);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
         }
-        return PAPI_ENOEVNT;
     } else {
-        htable_errno = htable_find(cuptiu_table_p->htable, base, (void **) &event);
+        cuptiu_event_t *event;
+        int htable_errno = htable_find(cuptiu_table_p->htable, base, (void **) &event);
         if (htable_errno != HTABLE_SUCCESS) {
             return PAPI_ENOEVNT;
         }
