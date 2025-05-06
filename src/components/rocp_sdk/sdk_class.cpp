@@ -187,6 +187,7 @@ obtain_function_pointers()
     static bool first_time = true;
     void *dllHandle = nullptr;
     const char* pathname;
+    const char *rocm_root;
     const char *ret_val = NULL;
 
     if( !first_time ){
@@ -199,40 +200,44 @@ obtain_function_pointers()
     // If the user gave us an explicit path to librocprofiler-sdk.so, use it.
     if ( nullptr != pathname && strlen(pathname) <= PATH_MAX ) {
         dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
-    }
-
-    // If we were not given an explicit path, or the path didn't work, try elsewhere.
-    if ( NULL == pathname || nullptr == dllHandle ) {
-        std::string path2;
-        const char *rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
-        if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
-            // If we are here, the user has not given us any hint about the
-            // location of the library, so we let dlopen() try the default paths.
-            path2 = std::string("librocprofiler-sdk.so");
-        }else{
-            int err;
-            struct stat stat_info;
-
-            path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
-            err = stat(path2.c_str(), &stat_info);
-            if (err != 0 || !S_ISREG(stat_info.st_mode)) {
-                std::string err_str = std::string("Invalid path: ")+path2;
-                set_error_string(err_str);
-                ret_val = err_str.c_str();
-                goto fn_fail;
-            }
-        }
-
-        // Clear previous errors.
-        (void)dlerror();
-
-        dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        if (dllHandle == NULL) {
-            // Nothing worked. Giving up.
-            set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB. Error: ")+dlerror());
-            ret_val = dlerror();
+        if ( nullptr == dllHandle ) {
+            std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_LIB: ")+pathname;
+            set_error_string(err_str);
+            ret_val = strdup(err_str.c_str());
             goto fn_fail;
         }
+    }
+
+    // If we were not given an explicit path to the library, try elsewhere.
+    rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
+    if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
+        // If we are here, the user has not given us any hint about the
+        // location of the library, so we let dlopen() try the default paths.
+        pathname = "librocprofiler-sdk.so";
+    }else{
+        int err;
+        struct stat stat_info;
+
+        std::string tmp_str = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
+        pathname = strdup(tmp_str.c_str());
+        err = stat(pathname, &stat_info);
+        if (err != 0 || !S_ISREG(stat_info.st_mode)) {
+            std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_ROOT: ")+tmp_str;
+            set_error_string(err_str);
+            ret_val = strdup(err_str.c_str());
+            goto fn_fail;
+        }
+    }
+
+    // Clear previous errors.
+    (void)dlerror();
+
+    dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    if (dllHandle == NULL) {
+        // Nothing worked. Giving up.
+        set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB. Error: ")+dlerror());
+        ret_val = dlerror();
+        goto fn_fail;
     }
 
     DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
