@@ -371,26 +371,30 @@ else
             if test "x$NO_MPI_TESTS" = "x"; then
               mpi_tests=yes
               # mpitests only works together with ctests
-              if test "x$tmp_tests" = "x"; then
-                AC_MSG_RESULT(no)
-              else
-                AC_MSG_RESULT($tmp_tests mpitests)
+              if test "x$tmp_tests" != "x"; then
+                tmp_tests+="mpitests "
               fi
-            fi
-          else
-            NO_MPI_TESTS=yes
-            if test "x$tmp_tests" = "x"; then
-              AC_MSG_RESULT(no)
-            else
-              AC_MSG_RESULT($tmp_tests)
             fi
           fi
           ;;
   esac
-  # do not list mpi_tests for makefile target
+
+  if test "x$tmp_tests" = "x"; then
+    AC_MSG_RESULT(no)
+  else
+    AC_MSG_RESULT($tmp_tests)
+  fi
+
+  # do not list mpitests for makefile target
+  case "$tmp_tests" in
+    *mpitests* )
+        tmp_tests=$(echo "$tmp_tests" | sed 's/ mpitests//')
+        ;;
+  esac
+
   tests=$tmp_tests
   
-  # mpi_tests is not listed by the user
+  # mpitests is not listed by the user
   if test "$mpi_tests" = "no"; then
     NO_MPI_TESTS=yes
   fi
