@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <rocprofiler-sdk/buffer.h>
 #include <rocprofiler-sdk/registration.h>
 #include <rocprofiler-sdk/device_counting_service.h>

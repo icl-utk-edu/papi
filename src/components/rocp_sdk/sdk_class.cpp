@@ -210,7 +210,17 @@ obtain_function_pointers()
             // location of the library, so we let dlopen() try the default paths.
             path2 = std::string("librocprofiler-sdk.so");
         }else{
+            int err;
+            struct stat stat_info;
+
             path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
+            err = stat(path2.c_str(), &stat_info);
+            if (err != 0 || !S_ISREG(stat_info.st_mode)) {
+                std::string err_str = std::string("Invalid path: ")+path2;
+                set_error_string(err_str);
+                ret_val = err_str.c_str();
+                goto fn_fail;
+            }
         }
 
         // Clear previous errors.
