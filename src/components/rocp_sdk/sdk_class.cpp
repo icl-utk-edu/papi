@@ -186,35 +186,58 @@ obtain_function_pointers()
 {
     static bool first_time = true;
     void *dllHandle = nullptr;
+    const char* pathname;
+    const char *rocm_root;
+    const char *ret_val = NULL;
 
-    if( !first_time )
-        return NULL;
+    if( !first_time ){
+        ret_val = NULL;
+        goto fn_exit;
+    }
 
-    const char* pathname = std::getenv("PAPI_ROCP_SDK_LIB");
+    pathname = std::getenv("PAPI_ROCP_SDK_LIB");
 
     // If the user gave us an explicit path to librocprofiler-sdk.so, use it.
     if ( nullptr != pathname && strlen(pathname) <= PATH_MAX ) {
         dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+        if ( nullptr == dllHandle ) {
+            std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_LIB: ")+pathname;
+            set_error_string(err_str);
+            ret_val = strdup(err_str.c_str());
+            goto fn_fail;
+        }
     }
 
-    // If we were not given an explicit path, or the path didn't work, try elsewhere.
-    if ( NULL == pathname || nullptr == dllHandle ) {
-        std::string path2;
-        const char *rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
-        if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
-            set_error_string("Did not find path for librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB.");
-            return get_error_string().c_str();
-        }
-        path2 = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
+    // If we were not given an explicit path to the library, try elsewhere.
+    rocm_root = std::getenv("PAPI_ROCP_SDK_ROOT");
+    if( nullptr == rocm_root || strlen(rocm_root) > PATH_MAX ){
+        // If we are here, the user has not given us any hint about the
+        // location of the library, so we let dlopen() try the default paths.
+        pathname = "librocprofiler-sdk.so";
+    }else{
+        int err;
+        struct stat stat_info;
 
-        // Clear previous errors.
-        (void)dlerror();
-
-        dllHandle = dlopen(path2.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        if (dllHandle == NULL) {
-            set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or ROCP_SDK_LIB. Error: ")+dlerror());
-            return dlerror();
+        std::string tmp_str = std::string(rocm_root) + "/lib/librocprofiler-sdk.so";
+        pathname = strdup(tmp_str.c_str());
+        err = stat(pathname, &stat_info);
+        if (err != 0 || !S_ISREG(stat_info.st_mode)) {
+            std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_ROOT: ")+tmp_str;
+            set_error_string(err_str);
+            ret_val = strdup(err_str.c_str());
+            goto fn_fail;
         }
+    }
+
+    // Clear previous errors.
+    (void)dlerror();
+
+    dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    if (dllHandle == NULL) {
+        // Nothing worked. Giving up.
+        set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB. Error: ")+dlerror());
+        ret_val = dlerror();
+        goto fn_fail;
     }
 
     DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
@@ -241,10 +264,12 @@ obtain_function_pointers()
     DLL_SYM_CHECK(rocprofiler_query_record_counter_id, rocprofiler_query_record_counter_id_t);
     DLL_SYM_CHECK(rocprofiler_query_record_dimension_position, rocprofiler_query_record_dimension_position_t);
 
-    // Make sure we don't run this code multiple times.
-    first_time = false;
-
-    return NULL;
+    fn_exit:
+      // Make sure we don't run this code multiple times.
+      first_time = false;
+      return ret_val;
+    fn_fail:
+      goto fn_exit;
 }
 
 /**
@@ -1024,8 +1049,10 @@ int setup() {
 
     const char *error_msg = obtain_function_pointers();
     if( NULL != error_msg ){
-        set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
-        SUBDBG("dlsym(): %s\n", error_msg);
+        if( get_error_string().empty() ){
+            set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
+            SUBDBG("dlsym(): %s\n", error_msg);
+        }
         goto fn_fail;
     }
 
@@ -1295,8 +1322,10 @@ rocprofiler_configure(uint32_t                 version,
     const char *error_msg = papi_rocpsdk::obtain_function_pointers();
 
     if( NULL != error_msg ){
-        papi_rocpsdk::set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
-        SUBDBG("dlsym(): %s\n", error_msg);
+        if( papi_rocpsdk::get_error_string().empty() ){
+            papi_rocpsdk::set_error_string("Could not obtain all functions from librocprofiler-sdk.so. Possible library version mismatch.");
+            SUBDBG("dlsym(): %s\n", error_msg);
+        }
         return NULL;
     }
 
