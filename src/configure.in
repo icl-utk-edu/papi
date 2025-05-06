@@ -2132,6 +2132,10 @@ for comp in $components; do
       if test "x`find $PAPI_ROCMSMI_ROOT -name "rocm_smi.h"`" != "x" ; then
           CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
       fi
+      
+      if test "x`find $PAPI_AMDMSMI_ROOT -name "amdsmi.h"`" != "x" ; then
+          CFLAGS="$CFLAGS -DHAVE_AMD_SMI"
+      fi
   fi
 done
 
