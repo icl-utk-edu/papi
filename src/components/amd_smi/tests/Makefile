@@ -1,74 +1,106 @@
-# ***NOTE*** The Environment Variable PAPI_ROCM_ROOT must be defined for 
+# ***NOTE*** The Environment Variable PAPI_ROCM_ROOT must be defined for
 # programs to compile correctly. one typical location is /opt/rocm, but
 # contact your sysadmin if you cannot find it.
-NAME=amd_smi
-include ../../Makefile_comp_tests.target
-PAPI_ROCM_ROOT ?= /opt/rocm
-HIP_PATH= ${PAPI_ROCM_ROOT}
-HIPCC=$(HIP_PATH)/bin/hipcc
 
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
-LDFLAGS = -ldl -g -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
+# Set the default PAPI_ROCM_ROOT if not already set in the environment
+PAPI_ROCM_ROOT ?= /apps/rocm/rocm-6.3.2
+HIP_PATH := $(PAPI_ROCM_ROOT)
+HIPCC := $(HIP_PATH)/bin/hipcc
 
-%.o:%.c
-	@echo "INCLUDE=" $(INCLUDE)
-	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
+# --- DIAGNOSIS STEP: Comment out the include temporarily ---
+# include ../../Makefile_comp_tests.target
 
-%.o:%.cpp
-	@echo "INCLUDE=" $(INCLUDE)
-	@echo "CFLAGS=" $(CFLAGS)
-	g++ $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
+# --- Manually define variables expected from Makefile_comp_tests.target ---
+# These values are based on your successful amdsmi_example compilation log:
+CFLAGS ?= -DPAPI_NUM_COMP=3
+OPTFLAGS ?= -O2
+UTILOBJS ?= ../../../testlib/libtestlib.a
+PAPILIB ?= ../../../libpapi.a
+# Base includes that were part of your amdsmi_example compile line (before PAPI/ROCm specifics)
+BASE_INCLUDES_FROM_LOG ?= -I. -I../../.. -I../../../testlib -I../../../validation_tests
 
-TESTS = rocm_command_line rocm_smi_all power_monitor_rocm rocmsmi_example rocm_smi_writeTests
+# Specific PAPI include path
+PAPI_DIR_INCLUDE ?= /home/dwoun/apps/papi/include
 
-rocm_smi_tests: $(TESTS)
+# Consolidate INCLUDE paths
+EFFECTIVE_INCLUDE := $(BASE_INCLUDES_FROM_LOG)
+EFFECTIVE_INCLUDE += -I$(PAPI_DIR_INCLUDE) # Add PAPI include
+# Add ROCm specific paths
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas # For GEMM
 
-# Note: We compile .o separately from the executable link; some versions of hipcc
-#       have trouble managing libraries if we try to do both in a single step.
+# Common Linker Flags
+COMMON_LDFLAGS = -ldl -g -lpthread
 
-rocm_command_line.o: rocm_command_line.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@ 
+# Specific linker flags for amdsmi_example
+LDFLAGS_AMDSMI = $(UTILOBJS) $(PAPILIB) $(COMMON_LDFLAGS)
 
-rocm_command_line: rocm_command_line.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+# Specific linker flags for gemm_example
+LDFLAGS_GEMM = $(UTILOBJS) $(PAPILIB) -L$(PAPI_ROCM_ROOT)/lib -lrocblas $(COMMON_LDFLAGS)
 
-rocm_smi_all.o: rocm_smi_all.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+# Default target
+all: amdsmi_example gemm_example
 
-rocm_smi_all: rocm_smi_all.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+# Generic Rule for .cpp to .o compilation (e.g., for amdsmi_example.o from amdsmi_example.cpp)
+# This rule is used when the target is X.o and prerequisite is X.cpp
+%.o: %.cpp
+	@echo "Compiling $< to $@ using pattern rule..."
+	@echo "HIPCC: $(HIPCC)"
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "OPTFLAGS: $(OPTFLAGS)"
+	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
+	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
 
-power_monitor_rocm.o: power_monitor_rocm.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+# Rule for amdsmi_example.o (uses the pattern rule above)
+amdsmi_example.o: amdsmi_example.cpp
 
-power_monitor_rocm: power_monitor_rocm.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+# Rule for linking amdsmi_example
+amdsmi_example: amdsmi_example.o $(UTILOBJS) $(PAPILIB)
+	@echo "Linking $@..."
+	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
+	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_example.o $(LDFLAGS_AMDSMI)
 
-rocmsmi_example.o: rocmsmi_example.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+# Rule for gemm_example.o from gemm.cpp (NEEDS AN EXPLICIT RECIPE)
+# Here, the target object name (gemm_example.o) doesn't match the source stem (gemm.cpp)
+# for the simple %.o: %.cpp pattern rule.
+gemm_example.o: gemm.cpp
+	@echo "Compiling $< (gemm.cpp) to produce $@ (gemm_example.o) with explicit rule..."
+	@echo "HIPCC: $(HIPCC)"
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "OPTFLAGS: $(OPTFLAGS)"
+	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
+	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
 
-rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread
-
-rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-
-rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+# Rule for linking gemm_example
+gemm_example: gemm_example.o $(UTILOBJS) $(PAPILIB)
+	@echo "Linking $@..."
+	@echo "Using LDFLAGS_GEMM: $(LDFLAGS_GEMM)"
+	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ gemm_example.o $(LDFLAGS_GEMM)
 
 clean:
-	rm -f $(TESTS) *.o
+	@echo "Cleaning up..."
+	rm -f amdsmi_example amdsmi_example.o gemm_example gemm_example.o *.exe
 
-checkpath: 
-	echo PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)
-	echo HIP_PATH = $(HIP_PATH)
-	echo HIPCC = $(HIPCC)
-	echo INCLUDE = $(INCLUDE)
-	echo LDFLAGS = $(LDFLAGS)
-	echo CFLAGS = $(CFLAGS)
+checkpath:
+	@echo "--- Variables (with Makefile_comp_tests.target potentially commented out) ---"
+	@echo "PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)"
+	@echo "HIP_PATH = $(HIP_PATH)"
+	@echo "HIPCC = $(HIPCC)"
+	@echo "PAPI_DIR_INCLUDE = $(PAPI_DIR_INCLUDE)"
+	@echo "--- Manually set CFLAGS, OPTFLAGS, etc. (if include is commented) ---"
+	@echo "CFLAGS = $(CFLAGS)"
+	@echo "OPTFLAGS = $(OPTFLAGS)"
+	@echo "UTILOBJS = $(UTILOBJS)"
+	@echo "PAPILIB = $(PAPILIB)"
+	@echo "BASE_INCLUDES_FROM_LOG = $(BASE_INCLUDES_FROM_LOG)"
+	@echo "--- Effective values ---"
+	@echo "EFFECTIVE_INCLUDE = $(EFFECTIVE_INCLUDE)"
+	@echo "COMMON_LDFLAGS = $(COMMON_LDFLAGS)"
+	@echo "LDFLAGS_AMDSMI = $(LDFLAGS_AMDSMI)"
+	@echo "LDFLAGS_GEMM = $(LDFLAGS_GEMM)"
 
+.PHONY: all clean checkpath amdsmi_example gemm_example
