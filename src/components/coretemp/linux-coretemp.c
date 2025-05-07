@@ -762,6 +762,7 @@ papi_vector_t _coretemp_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
+				 .kernel_multiplex = 1,
 				 }
 	,
 
