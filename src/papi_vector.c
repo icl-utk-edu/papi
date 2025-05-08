@@ -144,6 +144,9 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->init_component = ( int ( * )( int ) ) vec_int_ok_dummy;
 	if ( !v->init_thread )
 		v->init_thread = ( int ( * )( hwd_context_t * ) ) vec_int_ok_dummy;
+	if ( !v->init_comp_presets ) {
+		v->init_comp_presets = ( int ( * )( void ) ) vec_int_ok_dummy;
+    }
 	if ( !v->init_control_state )
 		v->init_control_state =
 			( int ( * )( hwd_control_state_t * ptr ) ) vec_int_dummy;

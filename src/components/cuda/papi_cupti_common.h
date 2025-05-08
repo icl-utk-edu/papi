@@ -86,6 +86,9 @@ void cuptic_partial(int *isCmpPartial, int **cudaEnabledDeviceIds, size_t *total
 /* function to get a devices compute capability */
 int get_gpu_compute_capability(int dev_num, int *cc);
 
+/* misc. */
+int get_chip_name(int dev_num, char* chipName);
+
 #define DLSYM_AND_CHECK( dllib, name ) dlsym( dllib, name );  \
     if (dlerror() != NULL) {  \
         ERRDBG("A CUDA required function '%s' was not found in lib '%s'.\n", name, #dllib);  \

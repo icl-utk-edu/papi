@@ -10,6 +10,7 @@
 #include <libgen.h>
 #include <dirent.h>
 #include <papi.h>
+#include <cupti_target.h>
 #include "papi_memory.h"
 
 #include "cupti_config.h"
@@ -105,6 +106,7 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 
 /* cupti function pointer */
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
+CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
 
 /**@class load_cuda_sym
  * @brief Search for a variation of the shared object libcuda.
@@ -411,6 +413,7 @@ int load_cupti_common_sym(void)
     }
 
     cuptiGetVersionPtr = DLSYM_AND_CHECK(dl_cupti, "cuptiGetVersion");
+    cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
 
     Dl_info info;
     dladdr(cuptiGetVersionPtr, &info);
@@ -427,6 +430,7 @@ int unload_cupti_common_sym(void)
         dl_cupti = NULL;
     }
     cuptiGetVersionPtr = NULL;
+    cuptiDeviceGetChipNamePtr = NULL;
     return PAPI_OK;
 }
 
@@ -907,4 +911,22 @@ int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i)
 int cuptiu_dev_check(cuptiu_bitmap_t bitmap, int i)
 {
     return (bitmap & (1ULL << i));
+}
+
+int get_chip_name(int dev_num, char* chipName)
+{
+    int papi_errno;
+    CUpti_Device_GetChipName_Params getChipName = {
+        .structSize = CUpti_Device_GetChipName_Params_STRUCT_SIZE,
+        .pPriv = NULL,
+        .deviceIndex = 0
+    };
+    getChipName.deviceIndex = dev_num;
+    papi_errno = cuptiDeviceGetChipNamePtr(&getChipName);
+    if (papi_errno != CUPTI_SUCCESS) {
+        ERRDBG("CUPTI error %d: Failed to get chip name for device %d\n", papi_errno, dev_num);
+        return PAPI_EMISC;
+    }
+    strcpy(chipName, getChipName.pChipName);
+    return PAPI_OK;
 }
