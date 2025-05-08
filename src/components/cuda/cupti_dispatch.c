@@ -62,12 +62,13 @@ int cuptid_device_get_count(int *num_gpus)
 
 int cuptid_init(void)
 {
+    int papi_errno;
     int init_errno = cuptic_init();
     if (init_errno != PAPI_OK && init_errno != PAPI_PARTIAL) {
+        papi_errno = init_errno;
         goto fn_exit;
     }
 
-    int papi_errno;
     int cupti_api = cuptic_determine_runtime_api();
     if (cupti_api == API_PERFWORKS) {
 
