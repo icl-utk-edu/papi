@@ -198,8 +198,8 @@ static int load_amdsmi_sym(void)
                                                 "amdsmi_get_engine_usage"); /* old alias */
 
     /* power -------------------------------------------------- */
-    amdsmi_get_power_info_p               = sym("amdsmi_get_power_info_v2",
-                                                "amdsmi_get_power_info");
+    amdsmi_get_power_info_p               = sym("amdsmi_get_power_info",          NULL);
+                                                //"amdsmi_get_power_info_v2",
     amdsmi_get_power_cap_info_p           = sym("amdsmi_get_power_cap_info",      NULL);
     amdsmi_set_power_cap_p                = sym("amdsmi_set_power_cap",
                                                 "amdsmi_dev_set_power_cap");
@@ -449,14 +449,16 @@ amds_evt_code_to_name(unsigned int EventCode, char *name, int len)
 }
 
 int
-amds_evt_name_to_code(const char *name, unsigned int *EventCode)
-{
-    int hret = htable_find(htable, name, (void **) &(*EventCode));
+amds_evt_name_to_code(const char *name, unsigned int *EventCode) {
+    native_event_t *event = NULL;
+    int hret = htable_find(htable, name, (void**)&event);
     if (hret != HTABLE_SUCCESS) {
         return (hret == HTABLE_ENOVAL) ? PAPI_ENOEVNT : PAPI_ECMP;
     }
+    *EventCode = event->id;   // assign the found event¡¯s ID
     return PAPI_OK;
 }
+
 
 int
 amds_evt_code_to_descr(unsigned int EventCode, char *descr, int len)
@@ -634,7 +636,7 @@ init_event_table(void)
                 ev->start_func = start_simple;
                 ev->stop_func = stop_simple;
                 ev->access_func = access_amdsmi_temp_metric;
-                htable_insert(htable, ev->name, &ev->id);
+                htable_insert(htable, ev->name, ev);
                 idx++;
             }
         }
@@ -728,7 +730,7 @@ init_event_table(void)
     for (int d = 0; d < device_count; ++d) {
         // Average power consumption (in microWatts)
         snprintf(name_buf, sizeof(name_buf), "power_average:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d average power consumption (uW)", d);
+        snprintf(descr_buf, sizeof(descr_buf), "Device %d average power consumption (W)", d);
         native_event_t *ev_pwr_avg = &ntv_table.events[idx];
         ev_pwr_avg->id = idx;
         ev_pwr_avg->name = strdup(name_buf);
@@ -747,7 +749,7 @@ init_event_table(void)
         idx++;
         // Power cap (current limit)
         snprintf(name_buf, sizeof(name_buf), "power_cap:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d current power cap (uW)", d);
+        snprintf(descr_buf, sizeof(descr_buf), "Device %d current power cap (W)", d);
         native_event_t *ev_pcap = &ntv_table.events[idx];
         ev_pcap->id = idx;
         ev_pcap->name = strdup(name_buf);
@@ -766,7 +768,7 @@ init_event_table(void)
         idx++;
         // Power cap range min
         snprintf(name_buf, sizeof(name_buf), "power_cap_range_min:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d minimum allowed power cap (uW)", d);
+        snprintf(descr_buf, sizeof(descr_buf), "Device %d minimum allowed power cap (W)", d);
         native_event_t *ev_pcap_min = &ntv_table.events[idx];
         ev_pcap_min->id = idx;
         ev_pcap_min->name = strdup(name_buf);
@@ -785,7 +787,7 @@ init_event_table(void)
         idx++;
         // Power cap range max
         snprintf(name_buf, sizeof(name_buf), "power_cap_range_max:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d maximum allowed power cap (uW)", d);
+        snprintf(descr_buf, sizeof(descr_buf), "Device %d maximum allowed power cap (W)", d);
         native_event_t *ev_pcap_max = &ntv_table.events[idx];
         ev_pcap_max->id = idx;
         ev_pcap_max->name = strdup(name_buf);
@@ -1065,10 +1067,49 @@ access_amdsmi_power_average(int mode, void *arg)
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_power_info_t power;
     // sensor_id = 0 (only one power sensor)
+    
     amdsmi_status_t status = amdsmi_get_power_info_p(device_handles[event->device], &power);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
+    
+        // Diagnostic prints for every field in the struct
+    printf("=== power info dump ===\n");
+    //printf("socket_power           : %llu uW (host only)\n",
+    //       (unsigned long long)power.socket_power);
+    printf("current_socket_power   : %u W (linux_bm only)\n",
+           power.current_socket_power);
+    printf("average_socket_power   : %u W (linux_bm only)\n",
+           power.average_socket_power);
+    printf("gfx_voltage            : %u %s\n",
+           power.gfx_voltage,
+           /* choose unit based on build */ 
+           #ifdef __linux__
+             "mV"
+           #else
+             "V"
+           #endif
+    );
+    printf("soc_voltage            : %u %s\n",
+           power.soc_voltage,
+           #ifdef __linux__
+             "mV"
+           #else
+             "V"
+           #endif
+    );
+    printf("mem_voltage            : %u %s\n",
+           power.mem_voltage,
+           #ifdef __linux__
+             "mV"
+           #else
+             "V"
+           #endif
+    );
+    printf("power_limit            : %u W (linux_bm only)\n",
+           power.power_limit);
+    printf("========================\n");
+    
     event->value = (int64_t) power.average_socket_power;
     return PAPI_OK;
 }
