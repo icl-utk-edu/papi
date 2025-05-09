@@ -152,10 +152,10 @@ int main(int argc, char *argv[]) {
 
     /* Add GPU events to the event set. */
     const char *event1 = "amd_smi:::temp_current:device=0:sensor=0";
-    const char *event2 = "rocm_smi:::temp_current:device=1:sensor=2";
-    const char *event3 = "rocm_smi:::mem_usage_VRAM:device=1";
-    const char *event4 = "rocm_smi:::busy_percent:device=1";
-    const char *event5 = "rocm_smi:::memory_busy_percent:device=1";  // New event
+    const char *event2 = "amd_smi:::temp_current:device=0:sensor=1";
+    const char *event3 = "amd_smi:::temp_current:device=0:sensor=2";
+    const char *event4 = "amd_smi:::temp_current:device=0:sensor=3";
+    const char *event5 = "amd_smi:::power_average:device=0";  // New event
 
     statusFlag = PAPI_add_named_event(EventSet, event1);
     if (statusFlag != PAPI_OK) {
