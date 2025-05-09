@@ -3,7 +3,7 @@
 # contact your sysadmin if you cannot find it.
 
 # Set the default PAPI_ROCM_ROOT if not already set in the environment
-PAPI_ROCM_ROOT ?= /apps/rocm/rocm-6.3.2
+PAPI_ROCM_ROOT ?= /opt/rocm-6.4.0 # Updated to match your log, or ensure your env var is set
 HIP_PATH := $(PAPI_ROCM_ROOT)
 HIPCC := $(HIP_PATH)/bin/hipcc
 
@@ -11,96 +11,120 @@ HIPCC := $(HIP_PATH)/bin/hipcc
 # include ../../Makefile_comp_tests.target
 
 # --- Manually define variables expected from Makefile_comp_tests.target ---
-# These values are based on your successful amdsmi_example compilation log:
+# For C++ specific flags, you might need CXXFLAGS
+CXXFLAGS ?= $(CFLAGS) -std=c++17 # Add -std=c++17 if not already in CFLAGS from an outer makefile
 CFLAGS ?= -DPAPI_NUM_COMP=3
 OPTFLAGS ?= -O2
 UTILOBJS ?= ../../../testlib/libtestlib.a
 PAPILIB ?= ../../../libpapi.a
-# Base includes that were part of your amdsmi_example compile line (before PAPI/ROCm specifics)
+
+# Base includes that were part of your amdsmi_example compilation log
 BASE_INCLUDES_FROM_LOG ?= -I. -I../../.. -I../../../testlib -I../../../validation_tests
 
 # Specific PAPI include path
-PAPI_DIR_INCLUDE ?= /home/dwoun/apps/papi/include
+PAPI_DIR_INCLUDE ?= /home/dwoun/apps/papi/include # Your path
 
 # Consolidate INCLUDE paths
 EFFECTIVE_INCLUDE := $(BASE_INCLUDES_FROM_LOG)
-EFFECTIVE_INCLUDE += -I$(PAPI_DIR_INCLUDE) # Add PAPI include
-# Add ROCm specific paths
+EFFECTIVE_INCLUDE += -I$(PAPI_DIR_INCLUDE)
 EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include
-EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi # For amdsmi.h if needed by amdsmi_example
 EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
 EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
 EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
-EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas # For GEMM
+EFFECTIVE_INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
 
 # Common Linker Flags
 COMMON_LDFLAGS = -ldl -g -lpthread
 
-# Specific linker flags for amdsmi_example
-LDFLAGS_AMDSMI = $(UTILOBJS) $(PAPILIB) $(COMMON_LDFLAGS)
+# Specific linker flags for AMD SMI tests
+# Assuming the library is libamdsmi_runtime.so. Adjust if it's libamdsmi.so
+# Also ensure that PAPI_ROCM_ROOT/lib is the correct path for this library.
+LDFLAGS_AMDSMI = $(UTILOBJS) $(PAPILIB) -L$(PAPI_ROCM_ROOT)/lib -lamd_smi $(COMMON_LDFLAGS)
 
-# Specific linker flags for gemm_example
+# Specific linker flags for GEMM example
 LDFLAGS_GEMM = $(UTILOBJS) $(PAPILIB) -L$(PAPI_ROCM_ROOT)/lib -lrocblas $(COMMON_LDFLAGS)
 
 # Default target
-all: amdsmi_example gemm_example
+all: amdsmi_example amdsmi_basics gemm
 
-# Generic Rule for .cpp to .o compilation (e.g., for amdsmi_example.o from amdsmi_example.cpp)
-# This rule is used when the target is X.o and prerequisite is X.cpp
-%.o: %.cpp
-	@echo "Compiling $< to $@ using pattern rule..."
+# ------------------------
+# Pattern rules
+# ------------------------
+
+# Generic rule for .c to .o compilation (if you still have pure C files)
+# Note: If amdsmi_basics.c was indeed C++, this rule won't be used for it after renaming.
+%.o: %.c
+	@echo "Compiling C source $< to $@..."
 	@echo "HIPCC: $(HIPCC)"
-	@echo "CFLAGS: $(CFLAGS)"
-	@echo "OPTFLAGS: $(OPTFLAGS)"
+	@echo "CFLAGS: $(CFLAGS) OPTFLAGS: $(OPTFLAGS)"
 	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
 	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
 
-# Rule for amdsmi_example.o (uses the pattern rule above)
-amdsmi_example.o: amdsmi_example.cpp
+# Generic rule for .cpp to .o compilation
+%.o: %.cpp
+	@echo "Compiling C++ source $< to $@..."
+	@echo "HIPCC: $(HIPCC)"
+	@echo "CXXFLAGS: $(CXXFLAGS) OPTFLAGS: $(OPTFLAGS)" # Use CXXFLAGS here
+	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
+	$(HIPCC) $(CXXFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
 
-# Rule for linking amdsmi_example
+# ------------------------
+# AMD SMI example
+# ------------------------
+
+# amdsmi_example.o will use the generic %.o: %.cpp rule
+# amdsmi_example.o: amdsmi_example.cpp # This explicit rule is fine but not strictly necessary if generic one exists
+
 amdsmi_example: amdsmi_example.o $(UTILOBJS) $(PAPILIB)
 	@echo "Linking $@..."
 	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_example.o $(LDFLAGS_AMDSMI)
+	# Pass CXXFLAGS for linking if they contain necessary flags like -std=c++17 that hipcc might need for consistency
+	$(HIPCC) $(CXXFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_example.o $(LDFLAGS_AMDSMI)
 
-# Rule for gemm_example.o from gemm.cpp (NEEDS AN EXPLICIT RECIPE)
-# Here, the target object name (gemm_example.o) doesn't match the source stem (gemm.cpp)
-# for the simple %.o: %.cpp pattern rule.
-gemm_example.o: gemm.cpp
-	@echo "Compiling $< (gemm.cpp) to produce $@ (gemm_example.o) with explicit rule..."
-	@echo "HIPCC: $(HIPCC)"
-	@echo "CFLAGS: $(CFLAGS)"
-	@echo "OPTFLAGS: $(OPTFLAGS)"
-	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
-	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
+# Assuming amdsmi_basics.c has been renamed to amdsmi_basics.cpp
+# amdsmi_basics.o will use the generic %.o: %.cpp rule
+# amdsmi_basics.o: amdsmi_basics.cpp # This explicit rule is fine but not strictly necessary
 
-# Rule for linking gemm_example
-gemm_example: gemm_example.o $(UTILOBJS) $(PAPILIB)
+amdsmi_basics: amdsmi_basics.o $(UTILOBJS) $(PAPILIB)
+	@echo "Linking $@..."
+	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
+	$(HIPCC) $(CXXFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
+
+# ------------------------
+# GEMM example
+# ------------------------
+
+# gemm.o will use the generic %.o: %.cpp rule
+# gemm.o: gemm.cpp # This explicit rule is fine but not strictly necessary
+
+gemm: gemm.o $(UTILOBJS) $(PAPILIB)
 	@echo "Linking $@..."
 	@echo "Using LDFLAGS_GEMM: $(LDFLAGS_GEMM)"
-	$(HIPCC) $(CFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ gemm_example.o $(LDFLAGS_GEMM)
+	$(HIPCC) $(CXXFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ gemm.o $(LDFLAGS_GEMM)
+
+# ------------------------
+# Cleanup and diagnostics
+# ------------------------
 
 clean:
 	@echo "Cleaning up..."
-	rm -f amdsmi_example amdsmi_example.o gemm_example gemm_example.o *.exe
+	rm -f amdsmi_example amdsmi_example.o \
+	      amdsmi_basics amdsmi_basics.o \
+	      gemm gemm.o *.exe
 
 checkpath:
-	@echo "--- Variables (with Makefile_comp_tests.target potentially commented out) ---"
+	@echo "--- Variables ---"
 	@echo "PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)"
-	@echo "HIP_PATH = $(HIP_PATH)"
 	@echo "HIPCC = $(HIPCC)"
-	@echo "PAPI_DIR_INCLUDE = $(PAPI_DIR_INCLUDE)"
-	@echo "--- Manually set CFLAGS, OPTFLAGS, etc. (if include is commented) ---"
+	@echo "INCLUDES = $(EFFECTIVE_INCLUDE)"
 	@echo "CFLAGS = $(CFLAGS)"
+	@echo "CXXFLAGS = $(CXXFLAGS)"
 	@echo "OPTFLAGS = $(OPTFLAGS)"
 	@echo "UTILOBJS = $(UTILOBJS)"
 	@echo "PAPILIB = $(PAPILIB)"
-	@echo "BASE_INCLUDES_FROM_LOG = $(BASE_INCLUDES_FROM_LOG)"
-	@echo "--- Effective values ---"
-	@echo "EFFECTIVE_INCLUDE = $(EFFECTIVE_INCLUDE)"
 	@echo "COMMON_LDFLAGS = $(COMMON_LDFLAGS)"
 	@echo "LDFLAGS_AMDSMI = $(LDFLAGS_AMDSMI)"
 	@echo "LDFLAGS_GEMM = $(LDFLAGS_GEMM)"
 
-.PHONY: all clean checkpath amdsmi_example gemm_example
+.PHONY: all clean checkpath amdsmi_example amdsmi_basics gemm

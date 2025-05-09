@@ -15,7 +15,7 @@
 #define NUM_STREAMS 1
 
 // Number of iterations to run in each stream
-#define ITERATIONS_PER_STREAM 20
+#define ITERATIONS_PER_STREAM 1
 
 // Global flag to signal the monitor thread to stop.
 volatile int stop_monitor = 0;
