@@ -401,6 +401,9 @@ else
 fi
 
 AC_MSG_CHECKING(for debug build)
+
+# default value for --with-debug if not set by user
+debug="no"
 AC_ARG_WITH(debug,
             [AS_HELP_STRING([--with-debug=<yes,memory,no>],
             [Build a debug version, debug version plus memory tracker or none])],
