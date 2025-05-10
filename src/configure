@@ -4712,6 +4712,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for debug build" >&5
 $as_echo_n "checking for debug build... " >&6; }
 
+# default value for --with-debug if not set by user
+debug="no"
+
 # Check whether --with-debug was given.
 if test "${with_debug+set}" = set; then :
   withval=$with_debug; debug=$withval
