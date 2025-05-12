@@ -46,7 +46,7 @@ static amdsmi_status_t (*amdsmi_get_gpu_metrics_info_p)(amdsmi_processor_handle,
 static amdsmi_status_t (*amdsmi_get_gpu_id_p)(amdsmi_processor_handle, uint16_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_revision_p)(amdsmi_processor_handle, uint16_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_subsystem_id_p)(amdsmi_processor_handle, uint16_t *);
-static amdsmi_status_t (*amdsmi_get_gpu_virtualization_mode_p)(amdsmi_processor_handle, amdsmi_virtualization_mode_t *);
+//static amdsmi_status_t (*amdsmi_get_gpu_virtualization_mode_p)(amdsmi_processor_handle, amdsmi_virtualization_mode_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_pci_bandwidth_p)(amdsmi_processor_handle, amdsmi_pcie_bandwidth_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_bdf_id_p)(amdsmi_processor_handle, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_topo_numa_affinity_p)(amdsmi_processor_handle, int32_t *);
@@ -260,7 +260,7 @@ static int load_amdsmi_sym(void) {
     amdsmi_get_gpu_id_p                    = sym("amdsmi_get_gpu_id", NULL);
     amdsmi_get_gpu_revision_p             = sym("amdsmi_get_gpu_revision", NULL);
     amdsmi_get_gpu_subsystem_id_p         = sym("amdsmi_get_gpu_subsystem_id", NULL);
-    amdsmi_get_gpu_virtualization_mode_p  = sym("amdsmi_get_gpu_virtualization_mode", NULL);
+//    amdsmi_get_gpu_virtualization_mode_p  = sym("amdsmi_get_gpu_virtualization_mode", NULL);
     amdsmi_get_gpu_pci_bandwidth_p        = sym("amdsmi_get_gpu_pci_bandwidth", NULL);
     amdsmi_get_gpu_bdf_id_p               = sym("amdsmi_get_gpu_bdf_id", NULL);
     amdsmi_get_gpu_topo_numa_affinity_p   = sym("amdsmi_get_gpu_topo_numa_affinity", NULL);
@@ -312,7 +312,7 @@ static int load_amdsmi_sym(void) {
         { "amdsmi_get_gpu_id",          amdsmi_get_gpu_id_p },
         { "amdsmi_get_gpu_revision",    amdsmi_get_gpu_revision_p },
         { "amdsmi_get_gpu_subsystem_id", amdsmi_get_gpu_subsystem_id_p },
-        { "amdsmi_get_gpu_virtualization_mode", amdsmi_get_gpu_virtualization_mode_p },
+//        { "amdsmi_get_gpu_virtualization_mode", amdsmi_get_gpu_virtualization_mode_p },
         { "amdsmi_get_gpu_pci_bandwidth", amdsmi_get_gpu_pci_bandwidth_p },
         { "amdsmi_get_gpu_bdf_id",      amdsmi_get_gpu_bdf_id_p },
         { "amdsmi_get_gpu_topo_numa_affinity", amdsmi_get_gpu_topo_numa_affinity_p },
@@ -380,7 +380,7 @@ static int unload_amdsmi_sym(void) {
     amdsmi_get_gpu_id_p = NULL;
     amdsmi_get_gpu_revision_p = NULL;
     amdsmi_get_gpu_subsystem_id_p = NULL;
-    amdsmi_get_gpu_virtualization_mode_p = NULL;
+//    amdsmi_get_gpu_virtualization_mode_p = NULL;
     amdsmi_get_gpu_pci_bandwidth_p = NULL;
     amdsmi_get_gpu_bdf_id_p = NULL;
     amdsmi_get_gpu_topo_numa_affinity_p = NULL;
@@ -810,11 +810,18 @@ static int init_event_table(void) {
         for (size_t si = 0; si < sizeof(temp_sensors)/sizeof(temp_sensors[0]); ++si) {
             // Probe if sensor exists by reading current temperature
             int64_t dummy_val;
-            if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si], AMDSMI_TEMP_CURRENT, &dummy_val)
+            if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
+                                         AMDSMI_TEMP_CURRENT, &dummy_val)
                 != AMDSMI_STATUS_SUCCESS) {
                 continue;  // skip this sensor if not present
             }
             for (size_t mi = 0; mi < sizeof(temp_metrics)/sizeof(temp_metrics[0]); ++mi) {
+                int64_t metric_val;
+                if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
+                                             temp_metrics[mi], &metric_val)
+                    != AMDSMI_STATUS_SUCCESS) {
+                    continue;  /* skip this metric if not supported */
+                }
                 snprintf(name_buf, sizeof(name_buf), "%s:device=%d:sensor=%d",
                          temp_metric_names[mi], d, (int) temp_sensors[si]);
                 snprintf(descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d",
@@ -1262,7 +1269,7 @@ static int init_event_table(void) {
     for (int d = 0; d < gpu_count; ++d) {
         uint16_t id16;
         uint64_t id64;
-        amdsmi_virtualization_mode_t vmode;
+        //amdsmi_virtualization_mode_t vmode;
         int32_t numa;
         // GPU ID
         if (amdsmi_get_gpu_id_p(device_handles[d], &id16) == AMDSMI_STATUS_SUCCESS) {
@@ -1348,6 +1355,7 @@ static int init_event_table(void) {
             htable_insert(htable, ev_bdf->name, ev_bdf);
             idx++;
         }
+        /*
         // GPU Virtualization Mode
         if (amdsmi_get_gpu_virtualization_mode_p(device_handles[d], &vmode) == AMDSMI_STATUS_SUCCESS) {
             snprintf(name_buf, sizeof(name_buf), "gpu_virtualization_mode:device=%d", d);
@@ -1369,6 +1377,7 @@ static int init_event_table(void) {
             htable_insert(htable, ev_vmode->name, ev_vmode);
             idx++;
         }
+        */
         // GPU NUMA Node
         if (amdsmi_get_gpu_topo_numa_affinity_p(device_handles[d], &numa) == AMDSMI_STATUS_SUCCESS) {
             snprintf(name_buf, sizeof(name_buf), "numa_node:device=%d", d);
@@ -2199,14 +2208,14 @@ static int access_amdsmi_gpu_info(int mode, void *arg) {
             }
             break;
         }
-        case 4: {
+        /*case 4: {
             amdsmi_virtualization_mode_t mode_val;
             status = amdsmi_get_gpu_virtualization_mode_p(device_handles[event->device], &mode_val);
             if (status == AMDSMI_STATUS_SUCCESS) {
                 event->value = mode_val;
             }
             break;
-        }
+        }*/
         case 5: {
             int32_t numa_node = -1;
             status = amdsmi_get_gpu_topo_numa_affinity_p(device_handles[event->device], &numa_node);
