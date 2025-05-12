@@ -17,6 +17,23 @@
 // Number of iterations to run in each stream
 #define ITERATIONS_PER_STREAM 1
 
+
+#define HIP_CHECK(cmd) do { \
+    hipError_t e = cmd; \
+    if (e != hipSuccess) { \
+        fprintf(stderr, "Failed: HIP error %s:%d '%s' (code: %d)\n", __FILE__, __LINE__, hipGetErrorString(e), e); \
+        exit(EXIT_FAILURE); \
+    } \
+} while(0)
+
+// For cleanup functions, you might prefer not to exit immediately
+#define HIP_CHECK_CLEANUP(cmd) do { \
+    hipError_t e = cmd; \
+    if (e != hipSuccess) { \
+        fprintf(stderr, "Warning: HIP cleanup error %s:%d '%s' (code: %d)\n", __FILE__, __LINE__, hipGetErrorString(e), e); \
+    } \
+} while(0)
+
 // Global flag to signal the monitor thread to stop.
 volatile int stop_monitor = 0;
 
@@ -184,9 +201,9 @@ int main(int argc, char *argv[]) {
     }
 
     /* Set HIP device properties to optimize for MI300 */
-    hipSetDevice(1);
+    HIP_CHECK(hipSetDevice(1));
     hipDeviceProp_t deviceProp;
-    hipGetDeviceProperties(&deviceProp, 1);
+    HIP_CHECK(hipGetDeviceProperties(&deviceProp, 1)); 
     printf("Device Name: %s\n", deviceProp.name);
     printf("Compute Units: %d\n", deviceProp.multiProcessorCount);
     printf("Max Threads Per Block: %d\n", deviceProp.maxThreadsPerBlock);
@@ -197,12 +214,15 @@ int main(int argc, char *argv[]) {
     size_t size_C = ((size_t)M_DIM * N_DIM * sizeof(double));
 
     double *h_A, *h_B, *h_C;
-    hipHostMalloc(&h_A, size_A, hipHostMallocDefault);
-    hipHostMalloc(&h_B, size_B, hipHostMallocDefault);
-    hipHostMalloc(&h_C, size_C, hipHostMallocDefault);
+    HIP_CHECK(hipHostMalloc(&h_A, size_A, hipHostMallocDefault));
+    HIP_CHECK(hipHostMalloc(&h_B, size_B, hipHostMallocDefault));
+    HIP_CHECK(hipHostMalloc(&h_C, size_C, hipHostMallocDefault));
     
     if (!h_A || !h_B || !h_C) {
         fprintf(stderr, "Host memory allocation failed.\n");
+          if (h_A) HIP_CHECK_CLEANUP(hipHostFree(h_A));
+          if (h_B) HIP_CHECK_CLEANUP(hipHostFree(h_B));
+          if (h_C) HIP_CHECK_CLEANUP(hipHostFree(h_C));
         return -1;
     }
 
@@ -307,7 +327,7 @@ int main(int argc, char *argv[]) {
 
     /* Wait for initial copies to complete */
     for (int s = 0; s < NUM_STREAMS; s++) {
-        hipStreamSynchronize(streams[s]);
+        HIP_CHECK(hipStreamSynchronize(streams[s]));
     }
 
     /* GEMM parameters */
@@ -328,9 +348,9 @@ int main(int argc, char *argv[]) {
                                M_DIM, N_DIM, K_DIM, alpha, beta);
 
             // Record event but don't synchronize.
-            hipEventRecord(events[s], streams[s]);
+            HIP_CHECK(hipEventRecord(events[s], streams[s]));
             
-            hipStreamSynchronize(streams[s]);
+            HIP_CHECK(hipStreamSynchronize(streams[s]));
             usleep(3000000);
         }
     }
@@ -349,7 +369,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }*/
     
-    hipStreamSynchronize(streams[0]);
+    //hipStreamSynchronize(streams[0]);
 
     /* Signal the monitor thread to stop and wait for it to finish. */
     stop_monitor = 1;
@@ -359,16 +379,16 @@ int main(int argc, char *argv[]) {
     fclose(csvFile);
     
     for (int s = 0; s < NUM_STREAMS; s++) {
-        hipEventDestroy(events[s]);
-        hipStreamDestroy(streams[s]);
-        hipFree(d_A[s]);
-        hipFree(d_B[s]);
-        hipFree(d_C[s]);
+        HIP_CHECK_CLEANUP(hipEventDestroy(events[s]));
+        HIP_CHECK_CLEANUP(hipStreamDestroy(streams[s]));
+        if (d_A[s]) HIP_CHECK_CLEANUP(hipFree(d_A[s])); // Check if pointer is non-null before freeing
+        if (d_B[s]) HIP_CHECK_CLEANUP(hipFree(d_B[s]));
+        if (d_C[s]) HIP_CHECK_CLEANUP(hipFree(d_C[s]));
     }
     
-    hipHostFree(h_A);
-    hipHostFree(h_B);
-    hipHostFree(h_C);
+    if (h_A) HIP_CHECK_CLEANUP(hipHostFree(h_A)); // Check if pointer is non-null
+    if (h_B) HIP_CHECK_CLEANUP(hipHostFree(h_B));
+    if (h_C) HIP_CHECK_CLEANUP(hipHostFree(h_C));
 
     statusFlag = PAPI_stop(EventSet, NULL);
     if (statusFlag != PAPI_OK) {

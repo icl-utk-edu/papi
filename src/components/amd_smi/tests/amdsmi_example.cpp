@@ -39,8 +39,6 @@ int main(int argc, char **argv) {
     
     // --- Step 1: Initialize the PAPI library ---
     retval = PAPI_library_init(PAPI_VER_CURRENT);
-    printf("AAAAAAAAAAAAAAAAAAAA\n");
-    printf("%d\n", retval);
     if (retval != PAPI_VER_CURRENT && retval > 0) {
         // PAPI_VER_CURRENT is the version, > 0 are error codes
         fprintf(stderr, "PAPI library version mismatch! Expected %d, got %d\n",
@@ -48,16 +46,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     
-    printf("BBBBBBBBBBBBBBBBBBBB\n");
-    
-    
-    printf("%d\n", retval);
-    
-    
-    // For other errors from PAPI_library_init (negative values)
-    handle_papi_error(retval, "PAPI_library_init", EventSet, papi_is_initialized);
-    papi_is_initialized = 1;
-    printf("PAPI library initialized successfully.\n");
+
 
     // --- Step 2: Create an EventSet ---
     retval = PAPI_create_eventset(&EventSet);
@@ -71,7 +60,7 @@ int main(int argc, char **argv) {
     // e.g., "rocm_smi:::power_average:device=0" (Average GPU Power)
     // e.g., "rocm_smi:::temp_rx_soc:device=0" (GPU Temperature)
     // Check availability with `papi_avail` or `papi_native_avail` utilities.
-    const char *eventName = "PAPI_TOT_INS"; // Example: Total Instructions Executed
+    const char *eventName = "amd_smi:::temp_current:device=0:sensor=0"; // Example: Total Instructions Executed
 
     printf("Attempting to add event: %s\n", eventName);
     retval = PAPI_add_named_event(EventSet, eventName);

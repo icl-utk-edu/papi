@@ -19,6 +19,7 @@ typedef enum {
     PAPI_MODE_RDWR,
 } rocs_access_mode_e;
 
+
 /* Pointers to AMD SMI library functions (dynamically loaded) */
 static amdsmi_status_t (*amdsmi_init_p)(uint64_t);
 static amdsmi_status_t (*amdsmi_shut_down_p)(void);
@@ -848,66 +849,81 @@ static int init_event_table(void) {
 
     /* Fan metrics (assume one fan sensor index 0 per device) */
     for (int d = 0; d < gpu_count; ++d) {
-        // Fan RPM (speed in RPM)
-        snprintf(name_buf, sizeof(name_buf), "fan_rpms:device=%d:sensor=0", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d fan speed in RPM", d);
+        int64_t dummy;
 
-        native_event_t *ev_rpm = &ntv_table.events[idx];
-        ev_rpm->id = idx;
-        ev_rpm->name = strdup(name_buf);
-        ev_rpm->descr = strdup(descr_buf);
-        ev_rpm->device = d;
-        ev_rpm->value = 0;
-        ev_rpm->mode = PAPI_MODE_READ;
-        ev_rpm->variant = 0;
-        ev_rpm->subvariant = 0;
-        ev_rpm->open_func = open_simple;
-        ev_rpm->close_func = close_simple;
-        ev_rpm->start_func = start_simple;
-        ev_rpm->stop_func = stop_simple;
-        ev_rpm->access_func = access_amdsmi_fan_rpms;
-        htable_insert(htable, ev_rpm->name, ev_rpm);
-        idx++;
+        /* --- only register Fan RPM if reading it works --- */
+        if (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy)
+            == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf),
+                     "fan_rpms:device=%d:sensor=0", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d fan speed in RPM", d);
+            native_event_t *ev_rpm = &ntv_table.events[idx];
+            ev_rpm->id         = idx;
+            ev_rpm->name       = strdup(name_buf);
+            ev_rpm->descr      = strdup(descr_buf);
+            ev_rpm->device     = d;
+            ev_rpm->value      = 0;
+            ev_rpm->mode       = PAPI_MODE_READ;
+            ev_rpm->variant    = 0;
+            ev_rpm->subvariant = 0;
+            ev_rpm->open_func  = open_simple;
+            ev_rpm->close_func = close_simple;
+            ev_rpm->start_func = start_simple;
+            ev_rpm->stop_func  = stop_simple;
+            ev_rpm->access_func= access_amdsmi_fan_rpms;
+            htable_insert(htable, ev_rpm->name, ev_rpm);
+            idx++;
+        }
 
-        // Fan speed (relative value 0-255, read-only; write not implemented)
-        snprintf(name_buf, sizeof(name_buf), "fan_speed:device=%d:sensor=0", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d fan speed (0-255 relative)", d);
-        native_event_t *ev_fan = &ntv_table.events[idx];
-        ev_fan->id = idx;
-        ev_fan->name = strdup(name_buf);
-        ev_fan->descr = strdup(descr_buf);
-        ev_fan->device = d;
-        ev_fan->value = 0;
-        ev_fan->mode = PAPI_MODE_READ;  /* FIX: only read supported, write not implemented */
-        ev_fan->variant = 0;
-        ev_fan->subvariant = 0;
-        ev_fan->open_func = open_simple;
-        ev_fan->close_func = close_simple;
-        ev_fan->start_func = start_simple;
-        ev_fan->stop_func = stop_simple;
-        ev_fan->access_func = access_amdsmi_fan_speed;
-        htable_insert(htable, ev_fan->name, ev_fan);
-        idx++;
+        /* --- only register Fan SPEED (0?255) if reading it works --- */
+        if (amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy)
+            == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf),
+                     "fan_speed:device=%d:sensor=0", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d fan speed (0-255 relative)", d);
+            native_event_t *ev_fan = &ntv_table.events[idx];
+            ev_fan->id         = idx;
+            ev_fan->name       = strdup(name_buf);
+            ev_fan->descr      = strdup(descr_buf);
+            ev_fan->device     = d;
+            ev_fan->value      = 0;
+            ev_fan->mode       = PAPI_MODE_READ;
+            ev_fan->variant    = 0;
+            ev_fan->subvariant = 0;
+            ev_fan->open_func  = open_simple;
+            ev_fan->close_func = close_simple;
+            ev_fan->start_func = start_simple;
+            ev_fan->stop_func  = stop_simple;
+            ev_fan->access_func= access_amdsmi_fan_speed;
+            htable_insert(htable, ev_fan->name, ev_fan);
+            idx++;
+        }
 
-        // Fan max RPM (maximum speed in RPM)
-        snprintf(name_buf, sizeof(name_buf), "fan_rpms_max:device=%d:sensor=0", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d fan maximum speed in RPM", d);
-        native_event_t *ev_fanmax = &ntv_table.events[idx];
-        ev_fanmax->id = idx;
-        ev_fanmax->name = strdup(name_buf);
-        ev_fanmax->descr = strdup(descr_buf);
-        ev_fanmax->device = d;
-        ev_fanmax->value = 0;
-        ev_fanmax->mode = PAPI_MODE_READ;
-        ev_fanmax->variant = 0;
-        ev_fanmax->subvariant = 0;
-        ev_fanmax->open_func = open_simple;
-        ev_fanmax->close_func = close_simple;
-        ev_fanmax->start_func = start_simple;
-        ev_fanmax->stop_func = stop_simple;
-        ev_fanmax->access_func = access_amdsmi_fan_speed_max;
-        htable_insert(htable, ev_fanmax->name, ev_fanmax);
-        idx++;
+        if (amdsmi_get_gpu_fan_speed_max_p(device_handles[d], 0, &dummy)
+            == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf),
+                     "fan_rpms_max:device=%d:sensor=0", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d fan maximum speed in RPM", d);
+            native_event_t *ev_fanmax = &ntv_table.events[idx];
+            ev_fanmax->id         = idx;
+            ev_fanmax->name       = strdup(name_buf);
+            ev_fanmax->descr      = strdup(descr_buf);
+            ev_fanmax->device     = d;
+            ev_fanmax->value      = 0;
+            ev_fanmax->mode       = PAPI_MODE_READ;
+            ev_fanmax->variant    = 0;
+            ev_fanmax->subvariant = 0;
+            ev_fanmax->open_func  = open_simple;
+            ev_fanmax->close_func = close_simple;
+            ev_fanmax->start_func = start_simple;
+            ev_fanmax->stop_func  = stop_simple;
+            ev_fanmax->access_func= access_amdsmi_fan_speed_max;
+            htable_insert(htable, ev_fanmax->name, ev_fanmax);
+            idx++;
+        }
     }
 
     /* VRAM memory metrics */

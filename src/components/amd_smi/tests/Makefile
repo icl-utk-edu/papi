@@ -79,7 +79,6 @@ all: amdsmi_example amdsmi_basics gemm
 amdsmi_example: amdsmi_example.o $(UTILOBJS) $(PAPILIB)
 	@echo "Linking $@..."
 	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	# Pass CXXFLAGS for linking if they contain necessary flags like -std=c++17 that hipcc might need for consistency
 	$(HIPCC) $(CXXFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_example.o $(LDFLAGS_AMDSMI)
 
 # Assuming amdsmi_basics.c has been renamed to amdsmi_basics.cpp

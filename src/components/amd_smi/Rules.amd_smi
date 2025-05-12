@@ -3,7 +3,7 @@
 # There are four other environment variables that must be exported
 # for runtime operation; see the README file.
 
-PAPI_AMDMSMI_ROOT ?= /opt/rocm
+PAPI_AMDMSMI_ROOT ?= /opt/rocm-6.4.0
 
 # There is one library used by the AMD_SMI component: libamd_smi64.so
 # By default, the software tries to find this in system paths, including
