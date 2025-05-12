@@ -746,6 +746,7 @@ papi_vector_t _appio_vector = {
         .name                  = "appio",
         .short_name            = "appio",
         .version               = "1.1.2.4",
+        .description           = "Linux I/O system calls",
         .CmpIdx                = 0,              /* set by init_component */
         .num_mpx_cntrs         = APPIO_MAX_COUNTERS,
         .num_cntrs             = APPIO_MAX_COUNTERS,
