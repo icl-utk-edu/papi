@@ -834,7 +834,7 @@ rocm_verify_no_repeated_qualifiers(const char *eventName)
         if (strncmp(token, "device", 6) == 0) {
             numDeviceQualifiers++;
         }
-        else if (strncmp(token, "stat", 4) == 0){
+        else if (strncmp(token, "instance", 8) == 0){
             numStatsQualifiers++;
         }
 
