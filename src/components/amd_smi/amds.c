@@ -9,6 +9,8 @@
 #include "amds.h"
 #include "htable.h"
 
+#define AMDSMI_DISABLE_ESMI
+
 unsigned int _amd_smi_lock;
 
 typedef enum {
@@ -21,20 +23,15 @@ typedef enum {
 static amdsmi_status_t (*amdsmi_init_p)(uint64_t);
 static amdsmi_status_t (*amdsmi_shut_down_p)(void);
 static amdsmi_status_t (*amdsmi_get_socket_handles_p)(uint32_t *, amdsmi_socket_handle *);
-static amdsmi_status_t (*amdsmi_get_processor_handles_by_type_p)(amdsmi_socket_handle,
-                                                                 processor_type_t,
-                                                                 amdsmi_processor_handle *, uint32_t *);
-static amdsmi_status_t (*amdsmi_get_temp_metric_p)(amdsmi_processor_handle,
-                                                   amdsmi_temperature_type_t,
-                                                   amdsmi_temperature_metric_t, int64_t *);
+static amdsmi_status_t (*amdsmi_get_processor_handles_by_type_p)(amdsmi_socket_handle, processor_type_t, amdsmi_processor_handle *, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_temp_metric_p)(amdsmi_processor_handle, amdsmi_temperature_type_t, amdsmi_temperature_metric_t, int64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_fan_rpms_p)(amdsmi_processor_handle, uint32_t, int64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_fan_speed_p)(amdsmi_processor_handle, uint32_t, int64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_fan_speed_max_p)(amdsmi_processor_handle, uint32_t, int64_t *);
-
 static amdsmi_status_t (*amdsmi_get_total_memory_p)(amdsmi_processor_handle, amdsmi_memory_type_t, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_memory_usage_p)(amdsmi_processor_handle, amdsmi_memory_type_t, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_activity_p)(amdsmi_processor_handle, amdsmi_engine_usage_t *);
-static amdsmi_status_t (*amdsmi_get_power_cap_info_p)(amdsmi_processor_handle, uint32_t, amdsmi_power_cap_info_t *);  /* FIX: added sensor index param */
+static amdsmi_status_t (*amdsmi_get_power_cap_info_p)(amdsmi_processor_handle, uint32_t, amdsmi_power_cap_info_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_power_cap_set_p)(amdsmi_processor_handle, uint32_t, uint64_t);
 static amdsmi_status_t (*amdsmi_get_gpu_power_ave_p)(amdsmi_processor_handle, uint32_t, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_power_info_p)(amdsmi_processor_handle, amdsmi_power_info_t *);
@@ -56,10 +53,39 @@ static amdsmi_status_t (*amdsmi_get_gpu_topo_numa_affinity_p)(amdsmi_processor_h
 static amdsmi_status_t (*amdsmi_get_energy_count_p)(amdsmi_processor_handle, uint64_t *, float *, uint64_t *);
 static amdsmi_status_t (*amdsmi_get_gpu_power_profile_presets_p)(amdsmi_processor_handle, uint32_t, amdsmi_power_profile_status_t *);
 
+
+#ifndef AMDSMI_DISABLE_ESMI
+/* CPU function pointers */
+static amdsmi_status_t (*amdsmi_get_cpu_handles_p)(uint32_t *, amdsmi_processor_handle *);
+static amdsmi_status_t (*amdsmi_get_cpucore_handles_p)(uint32_t *, amdsmi_processor_handle *);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_power_p)(amdsmi_processor_handle, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_power_cap_p)(amdsmi_processor_handle, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_power_cap_max_p)(amdsmi_processor_handle, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_core_energy_p)(amdsmi_processor_handle, uint64_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_energy_p)(amdsmi_processor_handle, uint64_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_smu_fw_version_p)(amdsmi_processor_handle, amdsmi_smu_fw_version_t *);
+static amdsmi_status_t (*amdsmi_get_threads_per_core_p)(uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_family_p)(uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_model_p)(uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_core_boostlimit_p)(amdsmi_processor_handle, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_current_active_freq_limit_p)(amdsmi_processor_handle, uint16_t *, char **);
+static amdsmi_status_t (*amdsmi_get_cpu_socket_freq_range_p)(amdsmi_processor_handle, uint16_t *, uint16_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_core_current_freq_limit_p)(amdsmi_processor_handle, uint32_t *);
+static amdsmi_status_t (*amdsmi_get_minmax_bandwidth_between_processors_p)(amdsmi_processor_handle, amdsmi_processor_handle, uint64_t *, uint64_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p)(amdsmi_processor_handle, uint8_t, amdsmi_temp_range_refresh_rate_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_dimm_power_consumption_p)(amdsmi_processor_handle, uint8_t, amdsmi_dimm_power_t *);
+static amdsmi_status_t (*amdsmi_get_cpu_dimm_thermal_sensor_p)(amdsmi_processor_handle, uint8_t, amdsmi_dimm_thermal_t *);
+#endif
+
+
 /* Global device list and count */
 static int32_t device_count = 0;
 static amdsmi_processor_handle *device_handles = NULL;
 static int32_t device_mask = 0;
+static int32_t gpu_count = 0;
+static int32_t cpu_count = 0;
+static amdsmi_processor_handle **cpu_core_handles = NULL;
+static uint32_t *cores_per_socket = NULL;
 
 static void *amds_dlp = NULL;
 static void *htable = NULL;
@@ -149,13 +175,29 @@ static int access_amdsmi_pci_bandwidth(int mode, void *arg);
 static int access_amdsmi_energy_count(int mode, void *arg);
 static int access_amdsmi_power_profile_status(int mode, void *arg);
 
+
+#ifndef AMDSMI_DISABLE_ESMI
+static int access_amdsmi_cpu_socket_power(int mode, void *arg);
+static int access_amdsmi_cpu_socket_energy(int mode, void *arg);
+static int access_amdsmi_cpu_socket_freq_limit(int mode, void *arg);
+static int access_amdsmi_cpu_socket_freq_range(int mode, void *arg);
+static int access_amdsmi_cpu_power_cap(int mode, void *arg);
+static int access_amdsmi_cpu_core_energy(int mode, void *arg);
+static int access_amdsmi_cpu_core_freq_limit(int mode, void *arg);
+static int access_amdsmi_cpu_core_boostlimit(int mode, void *arg);
+static int access_amdsmi_dimm_temp(int mode, void *arg);
+static int access_amdsmi_dimm_power(int mode, void *arg);
+static int access_amdsmi_dimm_range_refresh(int mode, void *arg);
+static int access_amdsmi_threads_per_core(int mode, void *arg);
+static int access_amdsmi_cpu_family(int mode, void *arg);
+static int access_amdsmi_cpu_model(int mode, void *arg);
+static int access_amdsmi_smu_fw_version(int mode, void *arg);
+static int access_amdsmi_xgmi_bandwidth(int mode, void *arg);
+#endif
 /* Simple open/close/start/stop functions (no special handling needed for most events) */
 static int open_simple(native_event_t *event)   { (void)event; return PAPI_OK; }
-
 static int close_simple(native_event_t *event)  { (void)event; return PAPI_OK; }
-
 static int start_simple(native_event_t *event)  { (void)event; return PAPI_OK; }
-
 static int stop_simple(native_event_t *event)   { (void)event; return PAPI_OK; }
 
 /* Dynamic load of AMD SMI library symbols */
@@ -224,7 +266,28 @@ static int load_amdsmi_sym(void) {
     amdsmi_get_gpu_topo_numa_affinity_p   = sym("amdsmi_get_gpu_topo_numa_affinity", NULL);
     amdsmi_get_energy_count_p             = sym("amdsmi_get_energy_count", NULL);
     amdsmi_get_gpu_power_profile_presets_p = sym("amdsmi_get_gpu_power_profile_presets", NULL);
-
+#ifndef AMDSMI_DISABLE_ESMI
+    /* CPU functions */
+    amdsmi_get_cpu_handles_p = sym("amdsmi_get_cpu_handles", NULL);
+    amdsmi_get_cpucore_handles_p = sym("amdsmi_get_cpucore_handles", NULL);
+    amdsmi_get_cpu_socket_power_p = sym("amdsmi_get_cpu_socket_power", NULL);
+    amdsmi_get_cpu_socket_power_cap_p = sym("amdsmi_get_cpu_socket_power_cap", NULL);
+    amdsmi_get_cpu_socket_power_cap_max_p = sym("amdsmi_get_cpu_socket_power_cap_max", NULL);
+    amdsmi_get_cpu_core_energy_p = sym("amdsmi_get_cpu_core_energy", NULL);
+    amdsmi_get_cpu_socket_energy_p = sym("amdsmi_get_cpu_socket_energy", NULL);
+    amdsmi_get_cpu_smu_fw_version_p = sym("amdsmi_get_cpu_smu_fw_version", NULL);
+    amdsmi_get_threads_per_core_p = sym("amdsmi_get_threads_per_core", NULL);
+    amdsmi_get_cpu_family_p = sym("amdsmi_get_cpu_family", NULL);
+    amdsmi_get_cpu_model_p = sym("amdsmi_get_cpu_model", NULL);
+    amdsmi_get_cpu_core_boostlimit_p = sym("amdsmi_get_cpu_core_boostlimit", NULL);
+    amdsmi_get_cpu_socket_current_active_freq_limit_p = sym("amdsmi_get_cpu_socket_current_active_freq_limit", NULL);
+    amdsmi_get_cpu_socket_freq_range_p = sym("amdsmi_get_cpu_socket_freq_range", NULL);
+    amdsmi_get_cpu_core_current_freq_limit_p = sym("amdsmi_get_cpu_core_current_freq_limit", NULL);
+    amdsmi_get_minmax_bandwidth_between_processors_p = sym("amdsmi_get_minmax_bandwidth_between_processors", NULL);
+    amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p = sym("amdsmi_get_cpu_dimm_temp_range_and_refresh_rate", NULL);
+    amdsmi_get_cpu_dimm_power_consumption_p = sym("amdsmi_get_cpu_dimm_power_consumption", NULL);
+    amdsmi_get_cpu_dimm_thermal_sensor_p = sym("amdsmi_get_cpu_dimm_thermal_sensor", NULL);
+#endif
     /* Verify that all required symbols are loaded */
     struct { const char *name; void *ptr; } required[] = {
         { "amdsmi_init",          amdsmi_init_p },
@@ -254,7 +317,29 @@ static int load_amdsmi_sym(void) {
         { "amdsmi_get_gpu_bdf_id",      amdsmi_get_gpu_bdf_id_p },
         { "amdsmi_get_gpu_topo_numa_affinity", amdsmi_get_gpu_topo_numa_affinity_p },
         { "amdsmi_get_energy_count",    amdsmi_get_energy_count_p },
-        { "amdsmi_get_gpu_power_profile_presets", amdsmi_get_gpu_power_profile_presets_p }
+        { "amdsmi_get_gpu_power_profile_presets", amdsmi_get_gpu_power_profile_presets_p },
+        
+#ifndef AMDSMI_DISABLE_ESMI
+        { "amdsmi_get_cpu_handles", amdsmi_get_cpu_handles_p },
+        { "amdsmi_get_cpucore_handles", amdsmi_get_cpucore_handles_p },
+        { "amdsmi_get_cpu_socket_power", amdsmi_get_cpu_socket_power_p },
+        { "amdsmi_get_cpu_socket_power_cap", amdsmi_get_cpu_socket_power_cap_p },
+        { "amdsmi_get_cpu_socket_power_cap_max", amdsmi_get_cpu_socket_power_cap_max_p },
+        { "amdsmi_get_cpu_core_energy", amdsmi_get_cpu_core_energy_p },
+        { "amdsmi_get_cpu_socket_energy", amdsmi_get_cpu_socket_energy_p },
+        { "amdsmi_get_cpu_smu_fw_version", amdsmi_get_cpu_smu_fw_version_p },
+        { "amdsmi_get_threads_per_core", amdsmi_get_threads_per_core_p },
+        { "amdsmi_get_cpu_family", amdsmi_get_cpu_family_p },
+        { "amdsmi_get_cpu_model", amdsmi_get_cpu_model_p },
+        { "amdsmi_get_cpu_core_boostlimit", amdsmi_get_cpu_core_boostlimit_p },
+        { "amdsmi_get_cpu_socket_current_active_freq_limit", amdsmi_get_cpu_socket_current_active_freq_limit_p },
+        { "amdsmi_get_cpu_socket_freq_range", amdsmi_get_cpu_socket_freq_range_p },
+        { "amdsmi_get_cpu_core_current_freq_limit", amdsmi_get_cpu_core_current_freq_limit_p },
+        { "amdsmi_get_minmax_bandwidth_between_processors", amdsmi_get_minmax_bandwidth_between_processors_p },
+        { "amdsmi_get_cpu_dimm_temp_range_and_refresh_rate", amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p },
+        { "amdsmi_get_cpu_dimm_power_consumption", amdsmi_get_cpu_dimm_power_consumption_p },
+        { "amdsmi_get_cpu_dimm_thermal_sensor", amdsmi_get_cpu_dimm_thermal_sensor_p }
+#endif
     };
     int miss = 0;
     int pos = snprintf(error_string, sizeof(error_string), "Missing AMD SMI symbols:");
@@ -301,6 +386,27 @@ static int unload_amdsmi_sym(void) {
     amdsmi_get_gpu_topo_numa_affinity_p = NULL;
     amdsmi_get_energy_count_p = NULL;
     amdsmi_get_gpu_power_profile_presets_p = NULL;
+#ifndef AMDSMI_DISABLE_ESMI
+    amdsmi_get_cpu_handles_p = NULL;
+    amdsmi_get_cpucore_handles_p = NULL;
+    amdsmi_get_cpu_socket_power_p = NULL;
+    amdsmi_get_cpu_socket_power_cap_p = NULL;
+    amdsmi_get_cpu_socket_power_cap_max_p = NULL;
+    amdsmi_get_cpu_core_energy_p = NULL;
+    amdsmi_get_cpu_socket_energy_p = NULL;
+    amdsmi_get_cpu_smu_fw_version_p = NULL;
+    amdsmi_get_threads_per_core_p = NULL;
+    amdsmi_get_cpu_family_p = NULL;
+    amdsmi_get_cpu_model_p = NULL;
+    amdsmi_get_cpu_core_boostlimit_p = NULL;
+    amdsmi_get_cpu_socket_current_active_freq_limit_p = NULL;
+    amdsmi_get_cpu_socket_freq_range_p = NULL;
+    amdsmi_get_cpu_core_current_freq_limit_p = NULL;
+    amdsmi_get_minmax_bandwidth_between_processors_p = NULL;
+    amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p = NULL;
+    amdsmi_get_cpu_dimm_power_consumption_p = NULL;
+    amdsmi_get_cpu_dimm_thermal_sensor_p = NULL;
+#endif
     if (amds_dlp) {
         dlclose(amds_dlp);
         amds_dlp = NULL;
@@ -314,18 +420,18 @@ int amds_init(void) {
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS);
+    amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS | AMDSMI_INIT_AMD_CPUS);
     if (status != AMDSMI_STATUS_SUCCESS) {
         strcpy(error_string, "amdsmi_init failed");
         return PAPI_ENOSUPP;
     }
     htable_init(&htable);
 
-    // Discover GPU devices (get socket handles, then GPU handles)
+    // Discover GPU and CPU devices
     uint32_t socket_count = 0;
     status = amdsmi_get_socket_handles_p(&socket_count, NULL);
     if (status != AMDSMI_STATUS_SUCCESS || socket_count == 0) {
-        sprintf(error_string, "Error discovering sockets or no AMD GPU socket found.");
+        sprintf(error_string, "Error discovering sockets or no AMD socket found.");
         papi_errno = PAPI_ENOEVNT;
         goto fn_fail;
     }
@@ -342,24 +448,36 @@ int amds_init(void) {
         goto fn_fail;
     }
 
-    // **FIX**: Handle multiple GPUs per socket by counting total GPUs first
     device_count = 0;
     uint32_t total_gpu_count = 0;
     for (uint32_t s = 0; s < socket_count; ++s) {
-        uint32_t gpu_count = 0;
+        uint32_t gpu_count_local = 0;
         processor_type_t proc_type = AMDSMI_PROCESSOR_TYPE_AMD_GPU;
-        amdsmi_status_t st = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, NULL, &gpu_count);
+        amdsmi_status_t st = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, NULL, &gpu_count_local);
         if (st == AMDSMI_STATUS_SUCCESS) {
-            total_gpu_count += gpu_count;
+            total_gpu_count += gpu_count_local;
         }
     }
-    if (total_gpu_count == 0) {
-        sprintf(error_string, "No AMD GPU devices found.");
+    
+    
+    
+
+    uint32_t total_cpu_count = 0;
+    
+#ifndef AMDSMI_DISABLE_ESMI
+    status = amdsmi_get_cpu_handles_p(&total_cpu_count, NULL);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        total_cpu_count = 0;
+    }
+#endif
+    
+    if (total_gpu_count == 0 && total_cpu_count == 0) {
+        sprintf(error_string, "No AMD GPU or CPU devices found.");
         papi_errno = PAPI_ENOEVNT;
         papi_free(sockets);
         goto fn_fail;
     }
-    device_handles = (amdsmi_processor_handle *) papi_calloc(total_gpu_count, sizeof(*device_handles));
+    device_handles = (amdsmi_processor_handle *) papi_calloc(total_gpu_count + total_cpu_count, sizeof(*device_handles));
     if (!device_handles) {
         papi_errno = PAPI_ENOMEM;
         sprintf(error_string, "Memory allocation error for device handles.");
@@ -369,32 +487,97 @@ int amds_init(void) {
 
     // Retrieve GPU processor handles for each socket
     for (uint32_t s = 0; s < socket_count; ++s) {
-        uint32_t gpu_count = 0;
+        uint32_t gpu_count_local = 0;
         processor_type_t proc_type = AMDSMI_PROCESSOR_TYPE_AMD_GPU;
-        status = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, NULL, &gpu_count);
-        if (status != AMDSMI_STATUS_SUCCESS || gpu_count == 0) {
+        status = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, NULL, &gpu_count_local);
+        if (status != AMDSMI_STATUS_SUCCESS || gpu_count_local == 0) {
             continue;  // no GPU on this socket or error
         }
-        amdsmi_processor_handle *gpu_handles = (amdsmi_processor_handle *) papi_calloc(gpu_count, sizeof(*gpu_handles));
+        amdsmi_processor_handle *gpu_handles = (amdsmi_processor_handle *) papi_calloc(gpu_count_local, sizeof(*gpu_handles));
         if (!gpu_handles) {
             papi_errno = PAPI_ENOMEM;
             sprintf(error_string, "Memory allocation error for GPU handles on socket %u.", s);
             papi_free(sockets);
             goto fn_fail;
         }
-        status = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, gpu_handles, &gpu_count);
+        status = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, gpu_handles, &gpu_count_local);
         if (status == AMDSMI_STATUS_SUCCESS) {
-            for (uint32_t g = 0; g < gpu_count; ++g) {
+            for (uint32_t g = 0; g < gpu_count_local; ++g) {
                 device_handles[device_count++] = gpu_handles[g];
             }
         }
         papi_free(gpu_handles);
     }
     papi_free(sockets);
-    if (device_count == 0) {
-        sprintf(error_string, "No AMD GPU devices found.");
-        papi_errno = PAPI_ENOEVNT;
-        goto fn_fail;
+    // (No need to check device_count here; CPU may still be added even if GPU count is zero)
+
+#ifndef AMDSMI_DISABLE_ESMI
+    // Retrieve CPU socket handles
+    amdsmi_processor_handle *cpu_handles = NULL;
+    if (total_cpu_count > 0) {
+        cpu_handles = (amdsmi_processor_handle *) papi_calloc(total_cpu_count, sizeof(amdsmi_processor_handle));
+        if (!cpu_handles) {
+            papi_errno = PAPI_ENOMEM;
+            sprintf(error_string, "Memory allocation error for CPU handles.");
+            goto fn_fail;
+        }
+        status = amdsmi_get_cpu_handles_p(&total_cpu_count, cpu_handles);
+        if (status != AMDSMI_STATUS_SUCCESS) {
+            papi_free(cpu_handles);
+            cpu_handles = NULL;
+            total_cpu_count = 0;
+        }
+    }
+    if (cpu_handles) {
+        for (uint32_t i = 0; i < total_cpu_count; ++i) {
+            device_handles[device_count++] = cpu_handles[i];
+        }
+        papi_free(cpu_handles);
+    }
+#endif
+    // Set global GPU/CPU counts
+    gpu_count = total_gpu_count;
+    cpu_count = total_cpu_count;
+
+    // Retrieve CPU core handles for each CPU socket
+    if (cpu_count > 0) {
+        cpu_core_handles = (amdsmi_processor_handle **) papi_calloc(cpu_count, sizeof(amdsmi_processor_handle *));
+        cores_per_socket = (uint32_t *) papi_calloc(cpu_count, sizeof(uint32_t));
+        if (!cpu_core_handles || !cores_per_socket) {
+            papi_errno = PAPI_ENOMEM;
+            sprintf(error_string, "Memory allocation error for CPU core handles.");
+            if (cpu_core_handles) papi_free(cpu_core_handles);
+            if (cores_per_socket) papi_free(cores_per_socket);
+            goto fn_fail;
+        }
+        for (uint32_t s = 0; s < cpu_count; ++s) {
+            uint32_t core_count = 0;
+            amdsmi_status_t st = amdsmi_get_processor_handles_by_type_p(device_handles[gpu_count + s], AMDSMI_PROCESSOR_TYPE_AMD_CPU_CORE, NULL, &core_count);
+            if (st != AMDSMI_STATUS_SUCCESS || core_count == 0) {
+                cores_per_socket[s] = 0;
+                cpu_core_handles[s] = NULL;
+                continue;
+            }
+            cpu_core_handles[s] = (amdsmi_processor_handle *) papi_calloc(core_count, sizeof(amdsmi_processor_handle));
+            if (!cpu_core_handles[s]) {
+                papi_errno = PAPI_ENOMEM;
+                sprintf(error_string, "Memory allocation error for CPU core handles on socket %u.", s);
+                for (uint32_t t = 0; t < s; ++t) {
+                    if (cpu_core_handles[t]) papi_free(cpu_core_handles[t]);
+                }
+                papi_free(cpu_core_handles);
+                papi_free(cores_per_socket);
+                goto fn_fail;
+            }
+            st = amdsmi_get_processor_handles_by_type_p(device_handles[gpu_count + s], AMDSMI_PROCESSOR_TYPE_AMD_CPU_CORE, cpu_core_handles[s], &core_count);
+            if (st != AMDSMI_STATUS_SUCCESS) {
+                papi_free(cpu_core_handles[s]);
+                cpu_core_handles[s] = NULL;
+                cores_per_socket[s] = 0;
+            } else {
+                cores_per_socket[s] = core_count;
+            }
+        }
     }
 
     // Initialize the native event table for all discovered metrics
@@ -408,8 +591,23 @@ int amds_init(void) {
 
 fn_fail:
     htable_shutdown(htable);
-    if (device_handles) { papi_free(device_handles); device_handles = NULL; device_count = 0; }
-    if (sockets) papi_free(sockets);
+    if (device_handles) {
+        papi_free(device_handles);
+        device_handles = NULL;
+        device_count = 0;
+    }
+    // sockets already freed if allocated
+    if (cpu_core_handles) {
+        for (int s = 0; s < cpu_count; ++s) {
+            if (cpu_core_handles[s]) papi_free(cpu_core_handles[s]);
+        }
+        papi_free(cpu_core_handles);
+        cpu_core_handles = NULL;
+    }
+    if (cores_per_socket) {
+        papi_free(cores_per_socket);
+        cores_per_socket = NULL;
+    }
     amdsmi_shut_down_p();
     unload_amdsmi_sym();
     return papi_errno;
@@ -608,7 +806,7 @@ static int init_event_table(void) {
         "temp_critical", "temp_critical_hyst", "temp_emergency", "temp_emergency_hyst",
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         for (size_t si = 0; si < sizeof(temp_sensors)/sizeof(temp_sensors[0]); ++si) {
             // Probe if sensor exists by reading current temperature
             int64_t dummy_val;
@@ -642,10 +840,11 @@ static int init_event_table(void) {
     }
 
     /* Fan metrics (assume one fan sensor index 0 per device) */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         // Fan RPM (speed in RPM)
         snprintf(name_buf, sizeof(name_buf), "fan_rpms:device=%d:sensor=0", d);
         snprintf(descr_buf, sizeof(descr_buf), "Device %d fan speed in RPM", d);
+
         native_event_t *ev_rpm = &ntv_table.events[idx];
         ev_rpm->id = idx;
         ev_rpm->name = strdup(name_buf);
@@ -705,7 +904,7 @@ static int init_event_table(void) {
     }
 
     /* VRAM memory metrics */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         // Total VRAM
         snprintf(name_buf, sizeof(name_buf), "mem_total_VRAM:device=%d", d);
         snprintf(descr_buf, sizeof(descr_buf), "Device %d total VRAM memory (bytes)", d);
@@ -748,7 +947,7 @@ static int init_event_table(void) {
     }
 
     /* GPU power metrics: average power, power cap, and cap range */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         // Check support for power metrics on this device
         amdsmi_power_info_t pinfo;
         amdsmi_power_cap_info_t cinfo;
@@ -843,7 +1042,7 @@ static int init_event_table(void) {
     }
 
     /* PCIe throughput and replay counter metrics */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         // PCIe bytes sent
         snprintf(name_buf, sizeof(name_buf), "pci_throughput_sent:device=%d", d);
         snprintf(descr_buf, sizeof(descr_buf), "Device %d PCIe bytes sent per second", d);
@@ -927,7 +1126,7 @@ static int init_event_table(void) {
 
     /* Additional GPU metrics and system information */
     /* GPU engine utilization metrics (gfx, umc, mm) */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         amdsmi_engine_usage_t usage;
         if (amdsmi_get_gpu_activity_p(device_handles[d], &usage) != AMDSMI_STATUS_SUCCESS) {
             continue;
@@ -991,7 +1190,7 @@ static int init_event_table(void) {
     }
 
     /* GPU clock frequency levels */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         amdsmi_frequencies_t f;
         if (amdsmi_get_clk_freq_p(device_handles[d], AMDSMI_CLK_TYPE_SYS, &f) != AMDSMI_STATUS_SUCCESS || f.num_supported == 0) {
             continue;
@@ -1060,7 +1259,7 @@ static int init_event_table(void) {
     }
 
     /* GPU identification and topology metrics */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         uint16_t id16;
         uint64_t id64;
         amdsmi_virtualization_mode_t vmode;
@@ -1194,7 +1393,7 @@ static int init_event_table(void) {
     }
 
     /* Energy consumption counter */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         uint64_t energy = 0;
         float resolution = 0.0;
         uint64_t timestamp = 0;
@@ -1222,7 +1421,7 @@ static int init_event_table(void) {
     }
 
     /* GPU power profile information */
-    for (int d = 0; d < device_count; ++d) {
+    for (int d = 0; d < gpu_count; ++d) {
         amdsmi_power_profile_status_t profile_status;
         if (amdsmi_get_gpu_power_profile_presets_p(device_handles[d], 0, &profile_status) != AMDSMI_STATUS_SUCCESS) {
             continue;
@@ -1265,7 +1464,416 @@ static int init_event_table(void) {
         htable_insert(htable, ev_prof_curr->name, ev_prof_curr);
         idx++;
     }
+    
+#ifndef AMDSMI_DISABLE_ESMI
+    /* CPU metrics events */
+    if (cpu_count > 0) {
+        // CPU socket-level events
+        for (int s = 0; s < cpu_count; ++s) {
+            int dev = gpu_count + s;
+            uint32_t pwr;
+            if (amdsmi_get_cpu_socket_power_p(device_handles[dev], &pwr) == AMDSMI_STATUS_SUCCESS) {
+                snprintf(name_buf, sizeof(name_buf), "power:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d power (W)", s);
+                native_event_t *ev_pwr = &ntv_table.events[idx];
+                ev_pwr->id = idx;
+                ev_pwr->name = strdup(name_buf);
+                ev_pwr->descr = strdup(descr_buf);
+                ev_pwr->device = dev;
+                ev_pwr->value = 0;
+                ev_pwr->mode = PAPI_MODE_READ;
+                ev_pwr->variant = 0;
+                ev_pwr->subvariant = 0;
+                ev_pwr->open_func = open_simple;
+                ev_pwr->close_func = close_simple;
+                ev_pwr->start_func = start_simple;
+                ev_pwr->stop_func = stop_simple;
+                ev_pwr->access_func = access_amdsmi_cpu_socket_power;
+                htable_insert(htable, ev_pwr->name, ev_pwr);
+                idx++;
+            }
+            uint64_t sock_energy;
+            if (amdsmi_get_cpu_socket_energy_p(device_handles[dev], &sock_energy) == AMDSMI_STATUS_SUCCESS) {
+                snprintf(name_buf, sizeof(name_buf), "energy:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d energy consumed (uJ)", s);
+                native_event_t *ev_sock_energy = &ntv_table.events[idx];
+                ev_sock_energy->id = idx;
+                ev_sock_energy->name = strdup(name_buf);
+                ev_sock_energy->descr = strdup(descr_buf);
+                ev_sock_energy->device = dev;
+                ev_sock_energy->value = 0;
+                ev_sock_energy->mode = PAPI_MODE_READ;
+                ev_sock_energy->variant = 0;
+                ev_sock_energy->subvariant = 0;
+                ev_sock_energy->open_func = open_simple;
+                ev_sock_energy->close_func = close_simple;
+                ev_sock_energy->start_func = start_simple;
+                ev_sock_energy->stop_func = stop_simple;
+                ev_sock_energy->access_func = access_amdsmi_cpu_socket_energy;
+                htable_insert(htable, ev_sock_energy->name, ev_sock_energy);
+                idx++;
+            }
+            uint16_t fmax, fmin;
+            if (amdsmi_get_cpu_socket_freq_range_p(device_handles[dev], &fmax, &fmin) == AMDSMI_STATUS_SUCCESS) {
+                snprintf(name_buf, sizeof(name_buf), "freq_max:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d maximum frequency (MHz)", s);
+                native_event_t *ev_fmax = &ntv_table.events[idx];
+                ev_fmax->id = idx;
+                ev_fmax->name = strdup(name_buf);
+                ev_fmax->descr = strdup(descr_buf);
+                ev_fmax->device = dev;
+                ev_fmax->value = 0;
+                ev_fmax->mode = PAPI_MODE_READ;
+                ev_fmax->variant = 1;
+                ev_fmax->subvariant = 0;
+                ev_fmax->open_func = open_simple;
+                ev_fmax->close_func = close_simple;
+                ev_fmax->start_func = start_simple;
+                ev_fmax->stop_func = stop_simple;
+                ev_fmax->access_func = access_amdsmi_cpu_socket_freq_range;
+                htable_insert(htable, ev_fmax->name, ev_fmax);
+                idx++;
+                snprintf(name_buf, sizeof(name_buf), "freq_min:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d minimum frequency (MHz)", s);
+                native_event_t *ev_fmin = &ntv_table.events[idx];
+                ev_fmin->id = idx;
+                ev_fmin->name = strdup(name_buf);
+                ev_fmin->descr = strdup(descr_buf);
+                ev_fmin->device = dev;
+                ev_fmin->value = 0;
+                ev_fmin->mode = PAPI_MODE_READ;
+                ev_fmin->variant = 0;
+                ev_fmin->subvariant = 0;
+                ev_fmin->open_func = open_simple;
+                ev_fmin->close_func = close_simple;
+                ev_fmin->start_func = start_simple;
+                ev_fmin->stop_func = stop_simple;
+                ev_fmin->access_func = access_amdsmi_cpu_socket_freq_range;
+                htable_insert(htable, ev_fmin->name, ev_fmin);
+                idx++;
+            }
+            uint32_t cap;
+            amdsmi_status_t st_cap = amdsmi_get_cpu_socket_power_cap_p(device_handles[dev], &cap);
+            uint32_t cap_max;
+            amdsmi_status_t st_capmax = amdsmi_get_cpu_socket_power_cap_max_p(device_handles[dev], &cap_max);
+            if (st_cap == AMDSMI_STATUS_SUCCESS || st_capmax == AMDSMI_STATUS_SUCCESS) {
+                if (st_cap == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "power_cap:socket=%d", s);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d current power cap (W)", s);
+                    native_event_t *ev_cap = &ntv_table.events[idx];
+                    ev_cap->id = idx;
+                    ev_cap->name = strdup(name_buf);
+                    ev_cap->descr = strdup(descr_buf);
+                    ev_cap->device = dev;
+                    ev_cap->value = 0;
+                    ev_cap->mode = PAPI_MODE_READ;
+                    ev_cap->variant = 0;
+                    ev_cap->subvariant = 0;
+                    ev_cap->open_func = open_simple;
+                    ev_cap->close_func = close_simple;
+                    ev_cap->start_func = start_simple;
+                    ev_cap->stop_func = stop_simple;
+                    ev_cap->access_func = access_amdsmi_cpu_power_cap;
+                    htable_insert(htable, ev_cap->name, ev_cap);
+                    idx++;
+                }
+                if (st_capmax == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "power_cap_max:socket=%d", s);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d max power cap (W)", s);
+                    native_event_t *ev_capmax = &ntv_table.events[idx];
+                    ev_capmax->id = idx;
+                    ev_capmax->name = strdup(name_buf);
+                    ev_capmax->descr = strdup(descr_buf);
+                    ev_capmax->device = dev;
+                    ev_capmax->value = 0;
+                    ev_capmax->mode = PAPI_MODE_READ;
+                    ev_capmax->variant = 1;
+                    ev_capmax->subvariant = 0;
+                    ev_capmax->open_func = open_simple;
+                    ev_capmax->close_func = close_simple;
+                    ev_capmax->start_func = start_simple;
+                    ev_capmax->stop_func = stop_simple;
+                    ev_capmax->access_func = access_amdsmi_cpu_power_cap;
+                    htable_insert(htable, ev_capmax->name, ev_capmax);
+                    idx++;
+                }
+            }
+            uint16_t freq;
+            char *src_type = NULL;
+            if (amdsmi_get_cpu_socket_current_active_freq_limit_p(device_handles[dev], &freq, &src_type) == AMDSMI_STATUS_SUCCESS) {
+                if (src_type) free(src_type);
+                snprintf(name_buf, sizeof(name_buf), "freq_limit:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d current frequency limit (MHz)", s);
+                native_event_t *ev_flim = &ntv_table.events[idx];
+                ev_flim->id = idx;
+                ev_flim->name = strdup(name_buf);
+                ev_flim->descr = strdup(descr_buf);
+                ev_flim->device = dev;
+                ev_flim->value = 0;
+                ev_flim->mode = PAPI_MODE_READ;
+                ev_flim->variant = 0;
+                ev_flim->subvariant = 0;
+                ev_flim->open_func = open_simple;
+                ev_flim->close_func = close_simple;
+                ev_flim->start_func = start_simple;
+                ev_flim->stop_func = stop_simple;
+                ev_flim->access_func = access_amdsmi_cpu_socket_freq_limit;
+                htable_insert(htable, ev_flim->name, ev_flim);
+                idx++;
+            }
+            amdsmi_smu_fw_version_t fw;
+            if (amdsmi_get_cpu_smu_fw_version_p(device_handles[dev], &fw) == AMDSMI_STATUS_SUCCESS) {
+                snprintf(name_buf, sizeof(name_buf), "smu_fw_version:socket=%d", s);
+                snprintf(descr_buf, sizeof(descr_buf), "Socket %d SMU firmware version (encoded)", s);
+                native_event_t *ev_fw = &ntv_table.events[idx];
+                ev_fw->id = idx;
+                ev_fw->name = strdup(name_buf);
+                ev_fw->descr = strdup(descr_buf);
+                ev_fw->device = dev;
+                ev_fw->value = 0;
+                ev_fw->mode = PAPI_MODE_READ;
+                ev_fw->variant = 0;
+                ev_fw->subvariant = 0;
+                ev_fw->open_func = open_simple;
+                ev_fw->close_func = close_simple;
+                ev_fw->start_func = start_simple;
+                ev_fw->stop_func = stop_simple;
+                ev_fw->access_func = access_amdsmi_smu_fw_version;
+                htable_insert(htable, ev_fw->name, ev_fw);
+                idx++;
+            }
+        }
 
+        // CPU core-level events
+        for (int s = 0; s < cpu_count; ++s) {
+            int dev = gpu_count + s;
+            for (uint32_t c = 0; c < cores_per_socket[s]; ++c) {
+                uint64_t energy;
+                if (amdsmi_get_cpu_core_energy_p(cpu_core_handles[s][c], &energy) == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "energy:socket=%d:core=%d", s, c);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d Core %d energy (uJ)", s, c);
+                    native_event_t *ev_core_energy = &ntv_table.events[idx];
+                    ev_core_energy->id = idx;
+                    ev_core_energy->name = strdup(name_buf);
+                    ev_core_energy->descr = strdup(descr_buf);
+                    ev_core_energy->device = dev;
+                    ev_core_energy->value = 0;
+                    ev_core_energy->mode = PAPI_MODE_READ;
+                    ev_core_energy->variant = 0;
+                    ev_core_energy->subvariant = c;
+                    ev_core_energy->open_func = open_simple;
+                    ev_core_energy->close_func = close_simple;
+                    ev_core_energy->start_func = start_simple;
+                    ev_core_energy->stop_func = stop_simple;
+                    ev_core_energy->access_func = access_amdsmi_cpu_core_energy;
+                    htable_insert(htable, ev_core_energy->name, ev_core_energy);
+                    idx++;
+                }
+                uint32_t freq;
+                if (amdsmi_get_cpu_core_current_freq_limit_p(cpu_core_handles[s][c], &freq) == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "freq_limit:socket=%d:core=%d", s, c);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d Core %d frequency limit (MHz)", s, c);
+                    native_event_t *ev_core_flim = &ntv_table.events[idx];
+                    ev_core_flim->id = idx;
+                    ev_core_flim->name = strdup(name_buf);
+                    ev_core_flim->descr = strdup(descr_buf);
+                    ev_core_flim->device = dev;
+                    ev_core_flim->value = 0;
+                    ev_core_flim->mode = PAPI_MODE_READ;
+                    ev_core_flim->variant = 0;
+                    ev_core_flim->subvariant = c;
+                    ev_core_flim->open_func = open_simple;
+                    ev_core_flim->close_func = close_simple;
+                    ev_core_flim->start_func = start_simple;
+                    ev_core_flim->stop_func = stop_simple;
+                    ev_core_flim->access_func = access_amdsmi_cpu_core_freq_limit;
+                    htable_insert(htable, ev_core_flim->name, ev_core_flim);
+                    idx++;
+                }
+                uint32_t boost;
+                if (amdsmi_get_cpu_core_boostlimit_p(cpu_core_handles[s][c], &boost) == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "boostlimit:socket=%d:core=%d", s, c);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d Core %d boost limit (MHz)", s, c);
+                    native_event_t *ev_boost = &ntv_table.events[idx];
+                    ev_boost->id = idx;
+                    ev_boost->name = strdup(name_buf);
+                    ev_boost->descr = strdup(descr_buf);
+                    ev_boost->device = dev;
+                    ev_boost->value = 0;
+                    ev_boost->mode = PAPI_MODE_READ;
+                    ev_boost->variant = 0;
+                    ev_boost->subvariant = c;
+                    ev_boost->open_func = open_simple;
+                    ev_boost->close_func = close_simple;
+                    ev_boost->start_func = start_simple;
+                    ev_boost->stop_func = stop_simple;
+                    ev_boost->access_func = access_amdsmi_cpu_core_boostlimit;
+                    htable_insert(htable, ev_boost->name, ev_boost);
+                    idx++;
+                }
+            }
+        }
+
+        // CPU DIMM events
+        for (int s = 0; s < cpu_count; ++s) {
+            int dev = gpu_count + s;
+            for (uint8_t dimm = 0; dimm < 16; ++dimm) {
+                amdsmi_dimm_thermal_t dimm_temp;
+                amdsmi_dimm_power_t dimm_pow;
+                amdsmi_temp_range_refresh_rate_t range_info;
+                amdsmi_status_t st_temp = amdsmi_get_cpu_dimm_thermal_sensor_p(device_handles[dev], dimm, &dimm_temp);
+                amdsmi_status_t st_power = amdsmi_get_cpu_dimm_power_consumption_p(device_handles[dev], dimm, &dimm_pow);
+                amdsmi_status_t st_range = amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p(device_handles[dev], dimm, &range_info);
+                if (st_temp != AMDSMI_STATUS_SUCCESS && st_power != AMDSMI_STATUS_SUCCESS && st_range != AMDSMI_STATUS_SUCCESS) {
+                    continue;
+                }
+                if (st_temp == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "dimm_temp:socket=%d:dimm=%d", s, dimm);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d DIMM %d temperature (C)", s, dimm);
+                    native_event_t *ev_dimm_temp = &ntv_table.events[idx];
+                    ev_dimm_temp->id = idx;
+                    ev_dimm_temp->name = strdup(name_buf);
+                    ev_dimm_temp->descr = strdup(descr_buf);
+                    ev_dimm_temp->device = dev;
+                    ev_dimm_temp->value = 0;
+                    ev_dimm_temp->mode = PAPI_MODE_READ;
+                    ev_dimm_temp->variant = 0;
+                    ev_dimm_temp->subvariant = dimm;
+                    ev_dimm_temp->open_func = open_simple;
+                    ev_dimm_temp->close_func = close_simple;
+                    ev_dimm_temp->start_func = start_simple;
+                    ev_dimm_temp->stop_func = stop_simple;
+                    ev_dimm_temp->access_func = access_amdsmi_dimm_temp;
+                    htable_insert(htable, ev_dimm_temp->name, ev_dimm_temp);
+                    idx++;
+                }
+                if (st_power == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "dimm_power:socket=%d:dimm=%d", s, dimm);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d DIMM %d power (mW)", s, dimm);
+                    native_event_t *ev_dimm_pow = &ntv_table.events[idx];
+                    ev_dimm_pow->id = idx;
+                    ev_dimm_pow->name = strdup(name_buf);
+                    ev_dimm_pow->descr = strdup(descr_buf);
+                    ev_dimm_pow->device = dev;
+                    ev_dimm_pow->value = 0;
+                    ev_dimm_pow->mode = PAPI_MODE_READ;
+                    ev_dimm_pow->variant = 0;
+                    ev_dimm_pow->subvariant = dimm;
+                    ev_dimm_pow->open_func = open_simple;
+                    ev_dimm_pow->close_func = close_simple;
+                    ev_dimm_pow->start_func = start_simple;
+                    ev_dimm_pow->stop_func = stop_simple;
+                    ev_dimm_pow->access_func = access_amdsmi_dimm_power;
+                    htable_insert(htable, ev_dimm_pow->name, ev_dimm_pow);
+                    idx++;
+                }
+                if (st_range == AMDSMI_STATUS_SUCCESS) {
+                    snprintf(name_buf, sizeof(name_buf), "dimm_temp_range:socket=%d:dimm=%d", s, dimm);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d DIMM %d temperature range", s, dimm);
+                    native_event_t *ev_range = &ntv_table.events[idx];
+                    ev_range->id = idx;
+                    ev_range->name = strdup(name_buf);
+                    ev_range->descr = strdup(descr_buf);
+                    ev_range->device = dev;
+                    ev_range->value = 0;
+                    ev_range->mode = PAPI_MODE_READ;
+                    ev_range->variant = 0;
+                    ev_range->subvariant = dimm;
+                    ev_range->open_func = open_simple;
+                    ev_range->close_func = close_simple;
+                    ev_range->start_func = start_simple;
+                    ev_range->stop_func = stop_simple;
+                    ev_range->access_func = access_amdsmi_dimm_range_refresh;
+                    htable_insert(htable, ev_range->name, ev_range);
+                    idx++;
+                    snprintf(name_buf, sizeof(name_buf), "dimm_refresh_rate:socket=%d:dimm=%d", s, dimm);
+                    snprintf(descr_buf, sizeof(descr_buf), "Socket %d DIMM %d refresh rate mode", s, dimm);
+                    native_event_t *ev_ref = &ntv_table.events[idx];
+                    ev_ref->id = idx;
+                    ev_ref->name = strdup(name_buf);
+                    ev_ref->descr = strdup(descr_buf);
+                    ev_ref->device = dev;
+                    ev_ref->value = 0;
+                    ev_ref->mode = PAPI_MODE_READ;
+                    ev_ref->variant = 1;
+                    ev_ref->subvariant = dimm;
+                    ev_ref->open_func = open_simple;
+                    ev_ref->close_func = close_simple;
+                    ev_ref->start_func = start_simple;
+                    ev_ref->stop_func = stop_simple;
+                    ev_ref->access_func = access_amdsmi_dimm_range_refresh;
+                    htable_insert(htable, ev_ref->name, ev_ref);
+                    idx++;
+                }
+            }
+        }
+
+        // System-wide CPU events
+        uint32_t threads;
+        if (amdsmi_get_threads_per_core_p(&threads) == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf), "threads_per_core");
+            snprintf(descr_buf, sizeof(descr_buf), "SMT threads per core");
+            native_event_t *ev_threads = &ntv_table.events[idx];
+            ev_threads->id = idx;
+            ev_threads->name = strdup(name_buf);
+            ev_threads->descr = strdup(descr_buf);
+            ev_threads->device = -1;
+            ev_threads->value = 0;
+            ev_threads->mode = PAPI_MODE_READ;
+            ev_threads->variant = 0;
+            ev_threads->subvariant = 0;
+            ev_threads->open_func = open_simple;
+            ev_threads->close_func = close_simple;
+            ev_threads->start_func = start_simple;
+            ev_threads->stop_func = stop_simple;
+            ev_threads->access_func = access_amdsmi_threads_per_core;
+            htable_insert(htable, ev_threads->name, ev_threads);
+            idx++;
+        }
+        uint32_t family;
+        if (amdsmi_get_cpu_family_p(&family) == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf), "cpu_family");
+            snprintf(descr_buf, sizeof(descr_buf), "CPU family ID");
+            native_event_t *ev_family = &ntv_table.events[idx];
+            ev_family->id = idx;
+            ev_family->name = strdup(name_buf);
+            ev_family->descr = strdup(descr_buf);
+            ev_family->device = -1;
+            ev_family->value = 0;
+            ev_family->mode = PAPI_MODE_READ;
+            ev_family->variant = 0;
+            ev_family->subvariant = 0;
+            ev_family->open_func = open_simple;
+            ev_family->close_func = close_simple;
+            ev_family->start_func = start_simple;
+            ev_family->stop_func = stop_simple;
+            ev_family->access_func = access_amdsmi_cpu_family;
+            htable_insert(htable, ev_family->name, ev_family);
+            idx++;
+        }
+        uint32_t model;
+        if (amdsmi_get_cpu_model_p(&model) == AMDSMI_STATUS_SUCCESS) {
+            snprintf(name_buf, sizeof(name_buf), "cpu_model");
+            snprintf(descr_buf, sizeof(descr_buf), "CPU model ID");
+            native_event_t *ev_model = &ntv_table.events[idx];
+            ev_model->id = idx;
+            ev_model->name = strdup(name_buf);
+            ev_model->descr = strdup(descr_buf);
+            ev_model->device = -1;
+            ev_model->value = 0;
+            ev_model->mode = PAPI_MODE_READ;
+            ev_model->variant = 0;
+            ev_model->subvariant = 0;
+            ev_model->open_func = open_simple;
+            ev_model->close_func = close_simple;
+            ev_model->start_func = start_simple;
+            ev_model->stop_func = stop_simple;
+            ev_model->access_func = access_amdsmi_cpu_model;
+            htable_insert(htable, ev_model->name, ev_model);
+            idx++;
+        }
+    }
+#endif
     ntv_table.count = idx;
     return PAPI_OK;
 }
@@ -1293,12 +1901,24 @@ static int shutdown_device_table(void) {
         papi_free(device_handles);
         device_handles = NULL;
     }
+    if (cpu_core_handles) {
+        for (int s = 0; s < cpu_count; ++s) {
+            if (cpu_core_handles[s]) papi_free(cpu_core_handles[s]);
+        }
+        papi_free(cpu_core_handles);
+        cpu_core_handles = NULL;
+    }
+    if (cores_per_socket) {
+        papi_free(cores_per_socket);
+        cores_per_socket = NULL;
+    }
     device_count = 0;
+    gpu_count = 0;
+    cpu_count = 0;
     return PAPI_OK;
 }
 
 /* Access function implementations (read/write operations for each event) */
-
 static int access_amdsmi_temp_metric(int mode, void *arg) {
     native_event_t *event = (native_event_t *) arg;
     if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
@@ -1307,7 +1927,8 @@ static int access_amdsmi_temp_metric(int mode, void *arg) {
     if (mode != PAPI_MODE_READ) {
         return PAPI_ENOSUPP;
     }
-    amdsmi_status_t status = amdsmi_get_temp_metric_p(device_handles[event->device],
+    amdsmi_status_t status = 
+    amdsmi_get_temp_metric_p(device_handles[event->device],
                         (amdsmi_temperature_type_t) event->subvariant,
                         (amdsmi_temperature_metric_t) event->variant,
                         (int64_t *)&event->value);
@@ -1323,7 +1944,8 @@ static int access_amdsmi_fan_rpms(int mode, void *arg) {
         return PAPI_ENOSUPP;
     }
     int64_t speed = 0;
-    amdsmi_status_t status = amdsmi_get_gpu_fan_rpms_p(device_handles[event->device],
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_fan_rpms_p(device_handles[event->device],
                                                       event->subvariant, &speed);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
@@ -1341,8 +1963,9 @@ static int access_amdsmi_fan_speed(int mode, void *arg) {
         return PAPI_ENOSUPP;  // writing fan speed not supported
     }
     int64_t val = 0;
-    amdsmi_status_t status = amdsmi_get_gpu_fan_speed_p(device_handles[event->device],
-                                                       event->subvariant, &val);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_fan_speed_p(device_handles[event->device],
+                                                         event->subvariant, &val);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1357,8 +1980,9 @@ static int access_amdsmi_mem_total(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     uint64_t data = 0;
-    amdsmi_status_t status = amdsmi_get_total_memory_p(device_handles[event->device],
-                                                       (amdsmi_memory_type_t) event->variant, &data);
+    amdsmi_status_t status = 
+    amdsmi_get_total_memory_p(device_handles[event->device],
+                                                         (amdsmi_memory_type_t) event->variant, &data);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1373,8 +1997,9 @@ static int access_amdsmi_mem_usage(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     uint64_t data = 0;
-    amdsmi_status_t status = amdsmi_get_memory_usage_p(device_handles[event->device],
-                                                       (amdsmi_memory_type_t) event->variant, &data);
+    amdsmi_status_t status = 
+    amdsmi_get_memory_usage_p(device_handles[event->device],
+                                                         (amdsmi_memory_type_t) event->variant, &data);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1390,7 +2015,8 @@ static int access_amdsmi_power_cap(int mode, void *arg) {
     if (mode == PAPI_MODE_READ) {
         // Read current power cap
         amdsmi_power_cap_info_t info;
-        amdsmi_status_t status = amdsmi_get_power_cap_info_p(device_handles[event->device], 0, &info);  // sensor index 0
+        amdsmi_status_t status = 
+        amdsmi_get_power_cap_info_p(device_handles[event->device], 0, &info);  // sensor index 0
         if (status != AMDSMI_STATUS_SUCCESS) {
             return PAPI_EMISC;
         }
@@ -1399,7 +2025,8 @@ static int access_amdsmi_power_cap(int mode, void *arg) {
     } else if (mode == PAPI_MODE_WRITE) {
         // Set new power cap (value expected in microWatts if API uses uW)
         uint64_t new_cap = (uint64_t) event->value;
-        amdsmi_status_t status = amdsmi_set_power_cap_p(device_handles[event->device], 0, new_cap);
+        amdsmi_status_t status = 
+        amdsmi_set_power_cap_p(device_handles[event->device], 0, new_cap);
         return (status == AMDSMI_STATUS_SUCCESS ? PAPI_OK : PAPI_EMISC);
     }
     return PAPI_ENOSUPP;
@@ -1412,7 +2039,8 @@ static int access_amdsmi_power_cap_range(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_power_cap_info_t info;
-    amdsmi_status_t status = amdsmi_get_power_cap_info_p(device_handles[event->device], 0, &info);
+    amdsmi_status_t status = 
+    amdsmi_get_power_cap_info_p(device_handles[event->device], 0, &info);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1433,21 +2061,11 @@ static int access_amdsmi_power_average(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_power_info_t power;
-    amdsmi_status_t status = amdsmi_get_power_info_p(device_handles[event->device], &power);
+    amdsmi_status_t status = 
+    amdsmi_get_power_info_p(device_handles[event->device], &power);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
-    // Remove debug prints to avoid unnecessary console output
-    #if 0
-    printf("=== power info dump ===\n");
-    printf("current_socket_power   : %u W\n", power.current_socket_power);
-    printf("average_socket_power   : %u W\n", power.average_socket_power);
-    printf("gfx_voltage            : %u mV\n", power.gfx_voltage);
-    printf("soc_voltage            : %u mV\n", power.soc_voltage);
-    printf("mem_voltage            : %u mV\n", power.mem_voltage);
-    printf("power_limit            : %u W\n", power.power_limit);
-    printf("========================\n");
-    #endif
     event->value = (int64_t) power.average_socket_power;
     return PAPI_OK;
 }
@@ -1459,7 +2077,8 @@ static int access_amdsmi_pci_throughput(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     uint64_t sent = 0, received = 0, max_pkt = 0;
-    amdsmi_status_t status = amdsmi_get_gpu_pci_throughput_p(device_handles[event->device],
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_pci_throughput_p(device_handles[event->device],
                                                              &sent, &received, &max_pkt);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
@@ -1480,7 +2099,8 @@ static int access_amdsmi_pci_replay_counter(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     uint64_t counter = 0;
-    amdsmi_status_t status = amdsmi_get_gpu_pci_replay_counter_p(device_handles[event->device], &counter);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_pci_replay_counter_p(device_handles[event->device], &counter);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1495,7 +2115,8 @@ static int access_amdsmi_clk_freq(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_frequencies_t freq_info;
-    amdsmi_status_t status = amdsmi_get_clk_freq_p(device_handles[event->device], AMDSMI_CLK_TYPE_SYS, &freq_info);
+    amdsmi_status_t status = 
+    amdsmi_get_clk_freq_p(device_handles[event->device], AMDSMI_CLK_TYPE_SYS, &freq_info);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1526,7 +2147,8 @@ static int access_amdsmi_gpu_metrics(int mode, void *arg) {
     }
     if (mode != PAPI_MODE_READ) return PAPI_ENOSUPP;
     amdsmi_gpu_metrics_t metrics;
-    amdsmi_status_t status = amdsmi_get_gpu_metrics_info_p(device_handles[event->device], &metrics);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_metrics_info_p(device_handles[event->device], &metrics);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1608,7 +2230,8 @@ static int access_amdsmi_gpu_activity(int mode, void *arg) {
         return PAPI_ENOSUPP;
     }
     amdsmi_engine_usage_t usage;
-    amdsmi_status_t status = amdsmi_get_gpu_activity_p(device_handles[event->device], &usage);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_activity_p(device_handles[event->device], &usage);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1630,7 +2253,8 @@ static int access_amdsmi_fan_speed_max(int mode, void *arg) {
         return PAPI_ENOSUPP;
     }
     int64_t max_speed = 0;
-    amdsmi_status_t status = amdsmi_get_gpu_fan_speed_max_p(device_handles[event->device], event->subvariant, &max_speed);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_fan_speed_max_p(device_handles[event->device], event->subvariant, &max_speed);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1647,7 +2271,8 @@ static int access_amdsmi_pci_bandwidth(int mode, void *arg) {
         return PAPI_ENOSUPP;
     }
     amdsmi_pcie_bandwidth_t bw;
-    amdsmi_status_t status = amdsmi_get_gpu_pci_bandwidth_p(device_handles[event->device], &bw);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_pci_bandwidth_p(device_handles[event->device], &bw);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1682,7 +2307,8 @@ static int access_amdsmi_energy_count(int mode, void *arg) {
     uint64_t energy = 0;
     float resolution = 0.0;
     uint64_t timestamp = 0;
-    amdsmi_status_t status = amdsmi_get_energy_count_p(device_handles[event->device], &energy, &resolution, &timestamp);
+    amdsmi_status_t status = 
+    amdsmi_get_energy_count_p(device_handles[event->device], &energy, &resolution, &timestamp);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1700,7 +2326,8 @@ static int access_amdsmi_power_profile_status(int mode, void *arg) {
         return PAPI_ENOSUPP;
     }
     amdsmi_power_profile_status_t status_info;
-    amdsmi_status_t status = amdsmi_get_gpu_power_profile_presets_p(device_handles[event->device], 0, &status_info);
+    amdsmi_status_t status = 
+    amdsmi_get_gpu_power_profile_presets_p(device_handles[event->device], 0, &status_info);
     if (status != AMDSMI_STATUS_SUCCESS) {
         return PAPI_EMISC;
     }
@@ -1713,3 +2340,304 @@ static int access_amdsmi_power_profile_status(int mode, void *arg) {
     }
     return PAPI_OK;
 }
+
+#ifndef AMDSMI_DISABLE_ESMI
+/* The functions below implement CPU metrics access */
+static int access_amdsmi_cpu_socket_power(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint32_t power = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_socket_power_p(device_handles[event->device], &power);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = (int64_t) power;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_socket_energy(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint64_t energy = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_socket_energy_p(device_handles[event->device], &energy);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = (int64_t) energy;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_socket_freq_limit(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint16_t freq = 0;
+    char *src = NULL;
+    amdsmi_status_t status = amdsmi_get_cpu_socket_current_active_freq_limit_p(device_handles[event->device], &freq, &src);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    if (src) free(src);
+    event->value = freq;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_socket_freq_range(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint16_t fmax = 0, fmin = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_socket_freq_range_p(device_handles[event->device], &fmax, &fmin);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    if (event->variant == 0) {
+        event->value = fmin;
+    } else {
+        event->value = fmax;
+    }
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_power_cap(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint32_t cap_value = 0;
+    amdsmi_status_t status;
+    if (event->variant == 0) {
+        status = amdsmi_get_cpu_socket_power_cap_p(device_handles[event->device], &cap_value);
+    } else {
+        status = amdsmi_get_cpu_socket_power_cap_max_p(device_handles[event->device], &cap_value);
+    }
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = (int64_t) cap_value;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_core_energy(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    int s_index = event->device - gpu_count;
+    if (s_index < 0 || s_index >= cpu_count) {
+        return PAPI_EMISC;
+    }
+    uint64_t energy = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_core_energy_p(cpu_core_handles[s_index][event->subvariant], &energy);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = (int64_t) energy;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_core_freq_limit(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    int s_index = event->device - gpu_count;
+    if (s_index < 0 || s_index >= cpu_count) {
+        return PAPI_EMISC;
+    }
+    uint32_t freq = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_core_current_freq_limit_p(cpu_core_handles[s_index][event->subvariant], &freq);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = freq;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_core_boostlimit(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    int s_index = event->device - gpu_count;
+    if (s_index < 0 || s_index >= cpu_count) {
+        return PAPI_EMISC;
+    }
+    uint32_t boost = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_core_boostlimit_p(cpu_core_handles[s_index][event->subvariant], &boost);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = boost;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_dimm_temp(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    amdsmi_dimm_thermal_t dimm_temp;
+    amdsmi_status_t status = amdsmi_get_cpu_dimm_thermal_sensor_p(device_handles[event->device], (uint8_t) event->subvariant, &dimm_temp);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = (int64_t) dimm_temp.temp;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_dimm_power(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    amdsmi_dimm_power_t dimm_pow;
+    amdsmi_status_t status = amdsmi_get_cpu_dimm_power_consumption_p(device_handles[event->device], (uint8_t) event->subvariant, &dimm_pow);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    event->value = dimm_pow.power;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_dimm_range_refresh(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    amdsmi_temp_range_refresh_rate_t rate;
+    amdsmi_status_t status = amdsmi_get_cpu_dimm_temp_range_and_refresh_rate_p(device_handles[event->device], (uint8_t) event->subvariant, &rate);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    if (event->variant == 0) {
+        event->value = rate.range;
+    } else {
+        event->value = rate.ref_rate;
+    }
+    return PAPI_OK;
+}
+
+static int access_amdsmi_threads_per_core(int mode, void *arg) {
+    (void) arg;
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint32_t threads = 0;
+    amdsmi_status_t status = amdsmi_get_threads_per_core_p(&threads);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    ((native_event_t *) arg)->value = threads;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_family(int mode, void *arg) {
+    (void) arg;
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint32_t family = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_family_p(&family);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    ((native_event_t *) arg)->value = family;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_cpu_model(int mode, void *arg) {
+    (void) arg;
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    uint32_t model = 0;
+    amdsmi_status_t status = amdsmi_get_cpu_model_p(&model);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    ((native_event_t *) arg)->value = model;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_smu_fw_version(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    amdsmi_smu_fw_version_t fw;
+    amdsmi_status_t status = amdsmi_get_cpu_smu_fw_version_p(device_handles[event->device], &fw);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    int encoded = ((int) fw.major << 16) | ((int) fw.minor << 8) | fw.debug;
+    event->value = encoded;
+    return PAPI_OK;
+}
+
+static int access_amdsmi_xgmi_bandwidth(int mode, void *arg) {
+    native_event_t *event = (native_event_t *) arg;
+    if (event->device < 0 || event->device >= device_count || !device_handles) {
+        return PAPI_EMISC;
+    }
+    if (mode != PAPI_MODE_READ) {
+        return PAPI_ENOSUPP;
+    }
+    amdsmi_processor_handle src = device_handles[event->device];
+    amdsmi_processor_handle dst = device_handles[gpu_count + event->subvariant];
+    uint64_t min_bw = 0, max_bw = 0;
+    amdsmi_status_t status = amdsmi_get_minmax_bandwidth_between_processors_p(src, dst, &min_bw, &max_bw);
+    if (status != AMDSMI_STATUS_SUCCESS) {
+        return PAPI_EMISC;
+    }
+    if (event->variant == 0) {
+        event->value = (int64_t) min_bw;
+    } else {
+        event->value = (int64_t) max_bw;
+    }
+    return PAPI_OK;
+}
+
+#endif
