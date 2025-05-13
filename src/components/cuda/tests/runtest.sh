@@ -26,8 +26,8 @@ echo -e "Running: \e[36m./test_multi_read_and_reset\e[0m" "${evt_names[@]}"
 echo -e "-------------------------------------\n"
 
 make test_2thr_1gpu_not_allowed
-echo -e "Running: \e[36m./test_2thr_1gpu_not_allowed\e[0m" "${evt_names[@]}"
-./test_2thr_1gpu_not_allowed "${evt_names[@]}"
+echo -e "Running: \e[36m./test_2thr_1gpu_not_allowed\e[0m" "${evt_names[@]:0:2}"
+./test_2thr_1gpu_not_allowed "${evt_names[@]:0:2}"
 echo -e "-------------------------------------\n"
 
 make HelloWorld
