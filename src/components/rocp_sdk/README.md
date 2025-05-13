@@ -56,3 +56,4 @@ Note that this variable takes precedence over PAPI\_ROCP\_SDK\_ROOT.
 ## Known Limitations
 
 * In dispatch mode, PAPI may read zeros if reading takes place immediately after the return of a GPU kernel. This is not a PAPI bug. It may occur because calls such as hipDeviceSynchronize() do not guarantee that ROCprofiler has been called and all counter buffers have been flushed.  Therefore, it is recommended that the user code adds a delay between the return of a kernel and calls to PAPI_read(), PAPI_stop(), etc.
+* If an application is linked against the static PAPI library libpapi.a, then the application must call PAPI_library_init() before calling any hip routines (e.g. hipInit(), hipGetDeviceCount(), hipLaunchKernelGGL(), etc). If the application is linked against the dynamic library libpapi.so, then the order of operations does not matter.
