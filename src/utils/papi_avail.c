@@ -570,10 +570,10 @@ main( int argc, char **argv )
         }
         printf( "Deriv Description (Note)\n" );
      } else {
-        printf( "%-*s%-11s%-8s%-16s\n |Long Description|\n", maxSymLen,
-                    " |Developer's Notes|\n |Derived|\n |PostFix|\n"
-                    " Native Code[n]: <hex> |name|\n",
-            "Symbol", "Event Code", "Count", "|Short Description|" );
+        printf( "%-13s%-11s%-8s%-16s\n |Long Description|\n"
+                " |Developer's Notes|\n |Derived|\n |PostFix|\n"
+                " Native Code[n]: <hex> |name|\n",
+                "Symbol", "Event Code", "Count", "|Short Description|" );
      }
      do {
         if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
@@ -684,7 +684,7 @@ main( int argc, char **argv )
             }
             printf( "Deriv Description (Note)\n" );
           } else {
-            printf( "%-*s%-11s%-8s%-16s\n |Long Description|\n", maxCompSymLen,
+            printf( "%-13s%-11s%-8s%-16s\n |Long Description|\n"
                     " |Developer's Notes|\n |Derived|\n |PostFix|\n"
                     " Native Code[n]: <hex> |name|\n",
                     "Symbol", "Event Code", "Count", "|Short Description|" );
