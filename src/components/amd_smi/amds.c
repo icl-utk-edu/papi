@@ -239,7 +239,7 @@ static int load_amdsmi_sym(void) {
     amdsmi_get_memory_usage_p   = sym("amdsmi_get_gpu_memory_usage", "amdsmi_get_memory_usage");
 
     /* Utilization / activity */
-    amdsmi_get_gpu_activity_p   = sym("amdsmi_get_gpu_activity", "amdsmi_get_engine_usage"); /* fallback for older name */
+    amdsmi_get_gpu_activity_p   = sym("amdsmi_get_gpu_activity", "amdsmi_get_engine_usage");
 
     /* Power */
     amdsmi_get_power_info_p     = sym("amdsmi_get_power_info", NULL);
@@ -421,7 +421,9 @@ int amds_init(void) {
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS | AMDSMI_INIT_AMD_CPUS);
+    
+    //AMDSMI_INIT_AMD_CPUS
+    amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS);
     if (status != AMDSMI_STATUS_SUCCESS) {
         strcpy(error_string, "amdsmi_init failed");
         return PAPI_ENOSUPP;
@@ -928,45 +930,63 @@ static int init_event_table(void) {
 
     /* VRAM memory metrics */
     for (int d = 0; d < gpu_count; ++d) {
-        // Total VRAM
-        snprintf(name_buf, sizeof(name_buf), "mem_total_VRAM:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d total VRAM memory (bytes)", d);
-        native_event_t *ev_mem_tot = &ntv_table.events[idx];
-        ev_mem_tot->id = idx;
-        ev_mem_tot->name = strdup(name_buf);
-        ev_mem_tot->descr = strdup(descr_buf);
-        ev_mem_tot->device = d;
-        ev_mem_tot->value = 0;
-        ev_mem_tot->mode = PAPI_MODE_READ;
-        ev_mem_tot->variant = AMDSMI_MEM_TYPE_VRAM;
-        ev_mem_tot->subvariant = 0;
-        ev_mem_tot->open_func = open_simple;
-        ev_mem_tot->close_func = close_simple;
-        ev_mem_tot->start_func = start_simple;
-        ev_mem_tot->stop_func = stop_simple;
-        ev_mem_tot->access_func = access_amdsmi_mem_total;
-        htable_insert(htable, ev_mem_tot->name, ev_mem_tot);
-        idx++;
+        uint64_t mem_dummy = 0;
 
-        // Used VRAM
-        snprintf(name_buf, sizeof(name_buf), "mem_usage_VRAM:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d VRAM memory usage (bytes)", d);
-        native_event_t *ev_mem_use = &ntv_table.events[idx];
-        ev_mem_use->id = idx;
-        ev_mem_use->name = strdup(name_buf);
-        ev_mem_use->descr = strdup(descr_buf);
-        ev_mem_use->device = d;
-        ev_mem_use->value = 0;
-        ev_mem_use->mode = PAPI_MODE_READ;
-        ev_mem_use->variant = AMDSMI_MEM_TYPE_VRAM;
-        ev_mem_use->subvariant = 0;
-        ev_mem_use->open_func = open_simple;
-        ev_mem_use->close_func = close_simple;
-        ev_mem_use->start_func = start_simple;
-        ev_mem_use->stop_func = stop_simple;
-        ev_mem_use->access_func = access_amdsmi_mem_usage;
-        htable_insert(htable, ev_mem_use->name, ev_mem_use);
-        idx++;
+        /* total VRAM bytes */
+        if (amdsmi_get_total_memory_p(device_handles[d],
+                                      AMDSMI_MEM_TYPE_VRAM,
+                                      &mem_dummy) == AMDSMI_STATUS_SUCCESS) {
+
+            snprintf(name_buf, sizeof(name_buf),
+                     "mem_total_VRAM:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d total VRAM memory (bytes)", d);
+
+            native_event_t *ev = &ntv_table.events[idx];
+            ev->id   = idx;
+            ev->name = strdup(name_buf);
+            ev->descr= strdup(descr_buf);
+            ev->device = d;
+            ev->value  = 0;
+            ev->mode   = PAPI_MODE_READ;
+            ev->variant= AMDSMI_MEM_TYPE_VRAM;
+            ev->subvariant = 0;
+            ev->open_func  = open_simple;
+            ev->close_func = close_simple;
+            ev->start_func = start_simple;
+            ev->stop_func  = stop_simple;
+            ev->access_func= access_amdsmi_mem_total;
+            htable_insert(htable, ev->name, ev);
+            ++idx;
+        }
+
+        /* used VRAM bytes */
+        if (amdsmi_get_memory_usage_p(device_handles[d],
+                                      AMDSMI_MEM_TYPE_VRAM,
+                                      &mem_dummy) == AMDSMI_STATUS_SUCCESS) {
+
+            snprintf(name_buf, sizeof(name_buf),
+                     "mem_usage_VRAM:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d VRAM memory usage (bytes)", d);
+
+            native_event_t *ev = &ntv_table.events[idx];
+            ev->id   = idx;
+            ev->name = strdup(name_buf);
+            ev->descr= strdup(descr_buf);
+            ev->device = d;
+            ev->value  = 0;
+            ev->mode   = PAPI_MODE_READ;
+            ev->variant= AMDSMI_MEM_TYPE_VRAM;
+            ev->subvariant = 0;
+            ev->open_func  = open_simple;
+            ev->close_func = close_simple;
+            ev->start_func = start_simple;
+            ev->stop_func  = stop_simple;
+            ev->access_func= access_amdsmi_mem_usage;
+            htable_insert(htable, ev->name, ev);
+            ++idx;
+        }
     }
 
     /* GPU power metrics: average power, power cap, and cap range */
@@ -1065,86 +1085,110 @@ static int init_event_table(void) {
     }
 
     /* PCIe throughput and replay counter metrics */
-    for (int d = 0; d < gpu_count; ++d) {
-        // PCIe bytes sent
-        snprintf(name_buf, sizeof(name_buf), "pci_throughput_sent:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d PCIe bytes sent per second", d);
-        native_event_t *ev_pci_tx = &ntv_table.events[idx];
-        ev_pci_tx->id = idx;
-        ev_pci_tx->name = strdup(name_buf);
-        ev_pci_tx->descr = strdup(descr_buf);
-        ev_pci_tx->device = d;
-        ev_pci_tx->value = 0;
-        ev_pci_tx->mode = PAPI_MODE_READ;
-        ev_pci_tx->variant = 0;  // 0 for "sent"
-        ev_pci_tx->subvariant = 0;
-        ev_pci_tx->open_func = open_simple;
-        ev_pci_tx->close_func = close_simple;
-        ev_pci_tx->start_func = start_simple;
-        ev_pci_tx->stop_func = stop_simple;
-        ev_pci_tx->access_func = access_amdsmi_pci_throughput;
-        htable_insert(htable, ev_pci_tx->name, ev_pci_tx);
-        idx++;
+        for (int d = 0; d < gpu_count; ++d) {
+        uint64_t tx = 0, rx = 0, pkt = 0;
 
-        // PCIe bytes received
-        snprintf(name_buf, sizeof(name_buf), "pci_throughput_received:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d PCIe bytes received per second", d);
-        native_event_t *ev_pci_rx = &ntv_table.events[idx];
-        ev_pci_rx->id = idx;
-        ev_pci_rx->name = strdup(name_buf);
-        ev_pci_rx->descr = strdup(descr_buf);
-        ev_pci_rx->device = d;
-        ev_pci_rx->value = 0;
-        ev_pci_rx->mode = PAPI_MODE_READ;
-        ev_pci_rx->variant = 1;  // 1 for "received"
-        ev_pci_rx->subvariant = 0;
-        ev_pci_rx->open_func = open_simple;
-        ev_pci_rx->close_func = close_simple;
-        ev_pci_rx->start_func = start_simple;
-        ev_pci_rx->stop_func = stop_simple;
-        ev_pci_rx->access_func = access_amdsmi_pci_throughput;
-        htable_insert(htable, ev_pci_rx->name, ev_pci_rx);
-        idx++;
+        amdsmi_status_t st_thr =
+            amdsmi_get_gpu_pci_throughput_p(device_handles[d],
+                                            &tx, &rx, &pkt);
 
-        // PCIe max packet size
-        snprintf(name_buf, sizeof(name_buf), "pci_throughput_max_packet:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d PCIe max packet size (bytes)", d);
-        native_event_t *ev_pci_pkt = &ntv_table.events[idx];
-        ev_pci_pkt->id = idx;
-        ev_pci_pkt->name = strdup(name_buf);
-        ev_pci_pkt->descr = strdup(descr_buf);
-        ev_pci_pkt->device = d;
-        ev_pci_pkt->value = 0;
-        ev_pci_pkt->mode = PAPI_MODE_READ;
-        ev_pci_pkt->variant = 2;  // 2 for "max_packet"
-        ev_pci_pkt->subvariant = 0;
-        ev_pci_pkt->open_func = open_simple;
-        ev_pci_pkt->close_func = close_simple;
-        ev_pci_pkt->start_func = start_simple;
-        ev_pci_pkt->stop_func = stop_simple;
-        ev_pci_pkt->access_func = access_amdsmi_pci_throughput;
-        htable_insert(htable, ev_pci_pkt->name, ev_pci_pkt);
-        idx++;
+        if (st_thr == AMDSMI_STATUS_SUCCESS) {
+            /* bytes sent per second */
+            snprintf(name_buf, sizeof(name_buf),
+                     "pci_throughput_sent:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d PCIe bytes sent per second", d);
 
-        // PCIe replay counter (NAK counter)
-        snprintf(name_buf, sizeof(name_buf), "pci_replay_counter:device=%d", d);
-        snprintf(descr_buf, sizeof(descr_buf), "Device %d PCIe replay (NAK) counter", d);
-        native_event_t *ev_pci_replay = &ntv_table.events[idx];
-        ev_pci_replay->id = idx;
-        ev_pci_replay->name = strdup(name_buf);
-        ev_pci_replay->descr = strdup(descr_buf);
-        ev_pci_replay->device = d;
-        ev_pci_replay->value = 0;
-        ev_pci_replay->mode = PAPI_MODE_READ;
-        ev_pci_replay->variant = 0;
-        ev_pci_replay->subvariant = 0;
-        ev_pci_replay->open_func = open_simple;
-        ev_pci_replay->close_func = close_simple;
-        ev_pci_replay->start_func = start_simple;
-        ev_pci_replay->stop_func = stop_simple;
-        ev_pci_replay->access_func = access_amdsmi_pci_replay_counter;
-        htable_insert(htable, ev_pci_replay->name, ev_pci_replay);
-        idx++;
+            native_event_t *ev_tx = &ntv_table.events[idx];
+            ev_tx->id   = idx;
+            ev_tx->name = strdup(name_buf);
+            ev_tx->descr= strdup(descr_buf);
+            ev_tx->device = d;
+            ev_tx->value  = 0;
+            ev_tx->mode   = PAPI_MODE_READ;
+            ev_tx->variant= 0; /* sent */
+            ev_tx->subvariant = 0;
+            ev_tx->open_func  = open_simple;
+            ev_tx->close_func = close_simple;
+            ev_tx->start_func = start_simple;
+            ev_tx->stop_func  = stop_simple;
+            ev_tx->access_func= access_amdsmi_pci_throughput;
+            htable_insert(htable, ev_tx->name, ev_tx);
+            ++idx;
+
+            /* bytes received per second */
+            snprintf(name_buf, sizeof(name_buf),
+                     "pci_throughput_received:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d PCIe bytes received per second", d);
+
+            native_event_t *ev_rx = &ntv_table.events[idx];
+            ev_rx->id   = idx;
+            ev_rx->name = strdup(name_buf);
+            ev_rx->descr= strdup(descr_buf);
+            ev_rx->device = d;
+            ev_rx->value  = 0;
+            ev_rx->mode   = PAPI_MODE_READ;
+            ev_rx->variant= 1; /* received */
+            ev_rx->subvariant = 0;
+            ev_rx->open_func  = open_simple;
+            ev_rx->close_func = close_simple;
+            ev_rx->start_func = start_simple;
+            ev_rx->stop_func  = stop_simple;
+            ev_rx->access_func= access_amdsmi_pci_throughput;
+            htable_insert(htable, ev_rx->name, ev_rx);
+            ++idx;
+
+            /* max packet size */
+            snprintf(name_buf, sizeof(name_buf),
+                     "pci_throughput_max_packet:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d PCIe max packet size (bytes)", d);
+
+            native_event_t *ev_pkt = &ntv_table.events[idx];
+            ev_pkt->id   = idx;
+            ev_pkt->name = strdup(name_buf);
+            ev_pkt->descr= strdup(descr_buf);
+            ev_pkt->device = d;
+            ev_pkt->value  = 0;
+            ev_pkt->mode   = PAPI_MODE_READ;
+            ev_pkt->variant= 2; /* max pkt */
+            ev_pkt->subvariant = 0;
+            ev_pkt->open_func  = open_simple;
+            ev_pkt->close_func = close_simple;
+            ev_pkt->start_func = start_simple;
+            ev_pkt->stop_func  = stop_simple;
+            ev_pkt->access_func= access_amdsmi_pci_throughput;
+            htable_insert(htable, ev_pkt->name, ev_pkt);
+            ++idx;
+        }
+
+        uint64_t replay = 0;
+        if (amdsmi_get_gpu_pci_replay_counter_p(device_handles[d],
+                                                &replay) == AMDSMI_STATUS_SUCCESS) {
+
+            snprintf(name_buf, sizeof(name_buf),
+                     "pci_replay_counter:device=%d", d);
+            snprintf(descr_buf, sizeof(descr_buf),
+                     "Device %d PCIe replay (NAK) counter", d);
+
+            native_event_t *ev_rep = &ntv_table.events[idx];
+            ev_rep->id   = idx;
+            ev_rep->name = strdup(name_buf);
+            ev_rep->descr= strdup(descr_buf);
+            ev_rep->device = d;
+            ev_rep->value  = 0;
+            ev_rep->mode   = PAPI_MODE_READ;
+            ev_rep->variant= 0;
+            ev_rep->subvariant = 0;
+            ev_rep->open_func  = open_simple;
+            ev_rep->close_func = close_simple;
+            ev_rep->start_func = start_simple;
+            ev_rep->stop_func  = stop_simple;
+            ev_rep->access_func= access_amdsmi_pci_replay_counter;
+            htable_insert(htable, ev_rep->name, ev_rep);
+            ++idx;
+        }
     }
 
     /* Additional GPU metrics and system information */
