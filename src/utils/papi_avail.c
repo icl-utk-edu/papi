@@ -287,17 +287,17 @@ get_max_symbol_length ( int initModifier, int iterModifier ) {
 static int
 print_comp_header_flag ( void ) {
 
-	int numComps = PAPI_num_components();
+    int numComps = PAPI_num_components();
     const PAPI_component_info_t *cmpinfo;
     int cid, non_cpu_comps = 0;
-	for ( cid = 0; cid < numComps; cid++ ) {
-	  cmpinfo = PAPI_get_component_info( cid );
+    for ( cid = 0; cid < numComps; cid++ ) {
+      cmpinfo = PAPI_get_component_info( cid );
       if ( strcmp(cmpinfo->name, "perf_event") == 0
            || strcmp(cmpinfo->name, "sysdetect") == 0
            || strcmp(cmpinfo->name, "No Components Configured. ") == 0 ) {
          continue;
       }
-	  non_cpu_comps++;
+      non_cpu_comps++;
     }
 
     return non_cpu_comps;
