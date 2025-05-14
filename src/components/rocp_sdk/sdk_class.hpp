@@ -10,8 +10,18 @@
 #include <rocprofiler-sdk/rocprofiler.h>
 
 #include "papi.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "papi_internal.h"
 #include "papi_memory.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #include <dlfcn.h>
 #include <cxxabi.h>
