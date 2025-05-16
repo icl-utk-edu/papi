@@ -475,6 +475,14 @@ papi_vector_t _sysdetect_vector = {
                  .kernel_version = "n/a",
                 },
 
+    /* Sizes of framework-opaque component-private structures */
+    .size = {
+        .context = 1, /* unused */
+        .control_state = 1, /* unused */
+        .reg_value = 1, /* unused */
+        .reg_alloc = 1, /* unused */
+    },
+
     /* Used for general PAPI interactions */
     .init_component = _sysdetect_init_component,
     .init_thread = _sysdetect_init_thread,
