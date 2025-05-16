@@ -22,7 +22,7 @@
 #include "papi_memory.h"
 #include "extras.h"
 #include "sdk_class.h"
-#include "hsa.h"
+#include "rocprofiler-sdk/hsa.h"
 
 #define ROCPROF_SDK_MAX_COUNTERS (64)
 #define RPSDK_CTX_RUNNING (1)
