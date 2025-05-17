@@ -492,7 +492,7 @@ static int
 load_hsa_sym( char *err_msg )
 {
     char pathname[PATH_MAX] = "libhsa-runtime64.so";
-    char *rocm_root = getenv("PAPI_ROCP_SDK_ROOT");
+    char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root != NULL) {
         int count = snprintf(pathname, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root);
         if (count >= PATH_MAX) {
