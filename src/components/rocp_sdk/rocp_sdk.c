@@ -22,7 +22,7 @@
 #include "papi_memory.h"
 #include "extras.h"
 #include "sdk_class.h"
-#include "hsa.h"
+#include "rocprofiler-sdk/hsa.h"
 
 #define ROCPROF_SDK_MAX_COUNTERS (64)
 #define RPSDK_CTX_RUNNING (1)
@@ -488,19 +488,32 @@ hsa_is_enabled( void )
              (hsa_agent_get_infoPtr != NULL) );
 }
 
-static int
-load_hsa_sym( char *err_msg )
+void *dlopen_from_paths( char *libname, int pathCount, const char *paths[] )
 {
-    char pathname[PATH_MAX] = "libhsa-runtime64.so";
-    char *rocm_root = getenv("PAPI_ROCP_SDK_ROOT");
-    if (rocm_root != NULL) {
-        int count = snprintf(pathname, PATH_MAX, "%s/lib/libhsa-runtime64.so", rocm_root);
+    void *so = NULL;
+    for (int i = 0; i < pathCount; i++) {
+        if ( paths[i] == NULL ) {
+            continue;
+        }
+        char newpath[PATH_MAX];
+        int count = snprintf(newpath, PATH_MAX, "%s/lib/%s", paths[i], libname);
         if (count >= PATH_MAX) {
             SUBDBG("Status string truncated.");
         }
+        so = dlopen(newpath, RTLD_NOW | RTLD_GLOBAL);
+        if (so) {
+            return so;
+        }
     }
+    so = dlopen(libname, RTLD_NOW | RTLD_GLOBAL);
+    return so;
+}
 
-    rocm_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+static int
+load_hsa_sym( char *err_msg )
+{
+    const char *paths[] = {getenv("PAPI_ROCP_SDK_ROOT"), getenv("PAPI_ROCM_ROOT")};
+    rocm_dlp = dlopen_from_paths("libhsa-runtime64.so", 2, paths);
     if (rocm_dlp == NULL) {
         int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
