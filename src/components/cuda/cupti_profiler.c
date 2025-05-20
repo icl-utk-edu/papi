@@ -1211,11 +1211,8 @@ int cuptip_shutdown(void)
 {
     COMPDBG("Entering.\n");
 
-    printf("1.\n");
     shutdown_event_stats_table();
-    printf("2.\n");
     shutdown_event_table();
-    printf("3.\n");
 
     int papi_errno = deinitialize_cupti_profiler_api();
     if (papi_errno != PAPI_OK) {
