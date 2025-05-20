@@ -173,7 +173,7 @@ generateNetEventList( void )
             } else if (last) {
                 last->next = temp;
             } else {
-                free(temp);
+                papi_free(temp);
                 fclose(fin);
                 PAPIERROR("This shouldn't be possible\n");
                 snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
