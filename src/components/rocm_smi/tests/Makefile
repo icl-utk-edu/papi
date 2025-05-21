@@ -4,8 +4,7 @@
 NAME=rocm_smi
 include ../../Makefile_comp_tests.target
 PAPI_ROCM_ROOT ?= /opt/rocm
-HIP_PATH= ${PAPI_ROCM_ROOT}
-HIPCC=$(HIP_PATH)/bin/hipcc
+HIPCC ?= $(PAPI_ROCM_ROOT)/bin/hipcc
 
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
@@ -66,7 +65,6 @@ clean:
 
 checkpath: 
 	echo PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)
-	echo HIP_PATH = $(HIP_PATH)
 	echo HIPCC = $(HIPCC)
 	echo INCLUDE = $(INCLUDE)
 	echo LDFLAGS = $(LDFLAGS)
