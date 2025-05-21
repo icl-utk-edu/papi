@@ -13,7 +13,7 @@ INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
-LDFLAGS = -ldl -g -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
+LDFLAGS = -ldl -g -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas -pthread
 
 %.o:%.c
 	@echo "INCLUDE=" $(INCLUDE)
