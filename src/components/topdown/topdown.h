@@ -74,7 +74,8 @@ typedef struct topdown_control_state
 #define TOPDOWN_METRIC_IDX_FETCH_LAT        6
 #define TOPDOWN_METRIC_IDX_MEM_BOUND        7
 
-/* We do not use this structure, but the framework needs its size */
+/* Holds per thread information; however, we do not use this structure,
+   but the framework still needs its size */
 typedef struct topdown_context
 {
     int junk;
