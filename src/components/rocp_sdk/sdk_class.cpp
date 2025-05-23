@@ -229,14 +229,12 @@ obtain_function_pointers()
         }
     }
 
-    // Clear previous errors.
-    (void)dlerror();
-
     dllHandle = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (dllHandle == NULL) {
         // Nothing worked. Giving up.
-        set_error_string(std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB. Error: ")+dlerror());
-        ret_val = dlerror();
+        std::string err_str = std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB.");
+        set_error_string(err_str);
+        ret_val = strdup(err_str.c_str());
         goto fn_fail;
     }
 
