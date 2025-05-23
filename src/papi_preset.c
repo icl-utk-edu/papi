@@ -140,14 +140,14 @@ _papi_hwi_cleanup_all_presets( void )
         }
         /* Free the event names used to define the preset. */
         for(j=0; j<_papi_hwi_list[preset_index].count;j++) {
-           papi_free(_papi_hwi_list[preset_index].name[j]);
-           papi_free(_papi_hwi_list[preset_index].base_name[j]);
-           papi_free(_papi_hwi_list[preset_index].default_name[j]);
+           free(_papi_hwi_list[preset_index].name[j]);
+           free(_papi_hwi_list[preset_index].base_name[j]);
+           free(_papi_hwi_list[preset_index].default_name[j]);
         }
         /* Free the qualifier names and descriptions. */
         for(j=0; j<_papi_hwi_list[preset_index].num_quals;j++) {
-           papi_free(_papi_hwi_list[preset_index].quals[j]);
-           papi_free(_papi_hwi_list[preset_index].quals_descrs[j]);
+           free(_papi_hwi_list[preset_index].quals[j]);
+           free(_papi_hwi_list[preset_index].quals_descrs[j]);
         }
       }
     }
@@ -1222,9 +1222,9 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 
                 /* If it is a valid event, then update the preset fields here. */
                 /* Initially, the event name should be those with a default, mandatory qualifiers. */
-                results[res_idx].name[results[res_idx].count]         = papi_strdup(t);
-                results[res_idx].base_name[results[res_idx].count]    = papi_strdup(t);
-                results[res_idx].default_name[results[res_idx].count] = papi_strdup(t);
+                results[res_idx].name[results[res_idx].count]         = strdup(t);
+                results[res_idx].base_name[results[res_idx].count]    = strdup(t);
+                results[res_idx].default_name[results[res_idx].count] = strdup(t);
                 results[res_idx].default_code[results[res_idx].count] = results[res_idx].code[results[res_idx].count];
                 results[res_idx].count++;
 
@@ -1706,9 +1706,9 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 
                 /* If it is a valid event, then update the preset fields here. */
                 /* Initially, the event name should be those with a default, mandatory qualifiers. */
-                results[res_idx].name[results[res_idx].count]         = papi_strdup(tmpEvent);
-                results[res_idx].base_name[results[res_idx].count]    = papi_strdup(basename);
-                results[res_idx].default_name[results[res_idx].count] = papi_strdup(tmpEvent);
+                results[res_idx].name[results[res_idx].count]         = strdup(tmpEvent);
+                results[res_idx].base_name[results[res_idx].count]    = strdup(basename);
+                results[res_idx].default_name[results[res_idx].count] = strdup(tmpEvent);
                 results[res_idx].default_code[results[res_idx].count] = results[res_idx].code[results[res_idx].count];
                 results[res_idx].count++;
 
