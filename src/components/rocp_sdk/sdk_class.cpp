@@ -204,6 +204,7 @@ obtain_function_pointers()
             std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_LIB: ")+pathname;
             set_error_string(err_str);
             ret_val = strdup(err_str.c_str());
+            SUBDBG("%s\n",ret_val);
             goto fn_fail;
         }
     }else{
@@ -224,6 +225,7 @@ obtain_function_pointers()
                 std::string err_str = std::string("Invalid path in PAPI_ROCP_SDK_ROOT: ")+tmp_str;
                 set_error_string(err_str);
                 ret_val = strdup(err_str.c_str());
+                SUBDBG("%s\n",ret_val);
                 goto fn_fail;
             }
         }
@@ -234,6 +236,7 @@ obtain_function_pointers()
             std::string err_str = std::string("Could not dlopen() librocprofiler-sdk.so. Set either PAPI_ROCP_SDK_ROOT, or PAPI_ROCP_SDK_LIB.");
             set_error_string(err_str);
             ret_val = strdup(err_str.c_str());
+            SUBDBG("%s\n",ret_val);
             goto fn_fail;
         }
     }
