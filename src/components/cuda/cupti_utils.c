@@ -16,7 +16,7 @@
 
 int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table)
 {
-    cuptiu_event_table_t *evt_table = (cuptiu_event_table_t *) papi_malloc(sizeof(cuptiu_event_table_t));
+    cuptiu_event_table_t *evt_table = (cuptiu_event_table_t *) malloc(sizeof(cuptiu_event_table_t));
     if (evt_table == NULL) {
         goto fn_fail;
     }
@@ -48,7 +48,7 @@ void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table)
         evt_table->htable = NULL;
     }
 
-    papi_free(evt_table);
+    free(evt_table);
     *pevt_table = NULL;
 }
 
