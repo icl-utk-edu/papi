@@ -983,7 +983,7 @@ papi_vector_t _infiniband_vector = {
         .context = sizeof (infiniband_context_t),
         .control_state = sizeof (infiniband_control_state_t),
         .reg_value = sizeof (infiniband_register_t),
-        /* .reg_alloc = sizeof (infiniband_reg_alloc_t), */
+        .reg_alloc = 1 /* unused */
     },
     /* function pointers in this component */
     .init_thread =          _infiniband_init_thread,
