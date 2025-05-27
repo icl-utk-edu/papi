@@ -136,7 +136,7 @@ typedef struct pfmlib_node {
 typedef struct pfmlib_pmu {
 	const char 	*desc;			/* PMU description */
 	const char 	*name;			/* pmu short name */
-	const char	*perf_name;		/* perf_event pmu name (optional) */
+	const char	*perf_name;		/* (Linux optional): comma separated list of possible perf_events PMU names */
 	pfmlib_node_t   node;			/* active list node */
 	struct pfmlib_pmu *next_active;		/* active PMU link list */
 	struct pfmlib_pmu *prev_active;		/* active PMU link list */

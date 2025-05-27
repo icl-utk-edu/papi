@@ -42,81 +42,46 @@
 static int
 pfm_arm_detect_n2(void *this)
 {
-	int ret;
+	/* ARM Neoverse N2 */
+	arm_cpuid_t attr = { .impl = 0x41, .arch = 9, .part = 0xd49 };
 
-	ret = pfm_arm_detect(this);
-	if (ret != PFM_SUCCESS)
-		return PFM_ERR_NOTSUPP;
-
-	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xd49)) { /* Neoverse N2 */
-			return PFM_SUCCESS;
-	}
-	return PFM_ERR_NOTSUPP;
+	return pfm_arm_detect(&attr, NULL);
 }
 
 static int
 pfm_arm_detect_n3(void *this)
 {
-	int ret;
+	/* ARM Neoverse N3 */
+	arm_cpuid_t attr = { .impl = 0x41, .arch = 9, .part = 0xd8e };
 
-	ret = pfm_arm_detect(this);
-	if (ret != PFM_SUCCESS)
-		return PFM_ERR_NOTSUPP;
-
-	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xd8e)) { /* Neoverse N3 */
-			return PFM_SUCCESS;
-	}
-	return PFM_ERR_NOTSUPP;
+	return pfm_arm_detect(&attr, NULL);
 }
 
 static int
 pfm_arm_detect_v2(void *this)
 {
-	int ret;
+	/* ARM Neoverse V2 */
+	arm_cpuid_t attr = { .impl = 0x41, .arch = 9, .part = 0xd4f };
 
-	ret = pfm_arm_detect(this);
-	if (ret != PFM_SUCCESS)
-		return PFM_ERR_NOTSUPP;
-
-	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xd4f)) { /* Neoverse V2 */
-			return PFM_SUCCESS;
-	}
-	return PFM_ERR_NOTSUPP;
+	return pfm_arm_detect(&attr, NULL);
 }
 
 static int
 pfm_arm_detect_v3(void *this)
 {
-	int ret;
+	/* ARM Neoverse V3 */
+	arm_cpuid_t attr = { .impl = 0x41, .arch = 9, .part = 0xd84 };
 
-	ret = pfm_arm_detect(this);
-	if (ret != PFM_SUCCESS)
-		return PFM_ERR_NOTSUPP;
-
-	if ((pfm_arm_cfg.implementer == 0x41) && /* ARM */
-		(pfm_arm_cfg.part == 0xd84)) { /* Neoverse V3 */
-			return PFM_SUCCESS;
-	}
-	return PFM_ERR_NOTSUPP;
+	return pfm_arm_detect(&attr, NULL);
 }
 
 static int
 pfm_arm_detect_monaka(void *this)
 {
-	int ret;
+	/* Fujitsu Monaka */
+	arm_cpuid_t attr = { .impl = 0x46, .arch = 9, .part = 0x3 };
 
-	ret = pfm_arm_detect(this);
-	if (ret != PFM_SUCCESS)
-		return PFM_ERR_NOTSUPP;
-
-	if ((pfm_arm_cfg.implementer == 0x46) && /* Fujitsu */
-		(pfm_arm_cfg.part == 0x003)) { /* monaka */
-			return PFM_SUCCESS;
-	}
-	return PFM_ERR_NOTSUPP;
+	return pfm_arm_detect(&attr, NULL);
 }
 
 pfmlib_pmu_t arm_n2_support={
