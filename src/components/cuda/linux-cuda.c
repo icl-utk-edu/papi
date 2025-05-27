@@ -213,7 +213,7 @@ static int cuda_init_private(void)
     }
 
     // Get the metric count found on a machine
-    int count;
+    int count = 0;
     papi_errno = cuda_get_evt_count(&count);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
