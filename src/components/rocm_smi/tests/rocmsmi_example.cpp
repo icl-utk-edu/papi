@@ -81,7 +81,7 @@
 #include <time.h>
 
 #include "papi.h"
-#include "rocblas.h"
+#include <rocblas/rocblas.h>
 #include <hip/hip_runtime.h>
 
 // This is a structure to hold variables for our work example to exercise the

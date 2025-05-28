@@ -84,9 +84,7 @@ COMPOBJS += linux-rocm-smi.o \
 # Where to find rocm_smi.h varied in early ROCM releases. If it changes again,
 # for backward compatibility add *more* -I paths, do not just replace this one.
 
-CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/../include/rocm_smi
 CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/../include
-CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi
 CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/include
 CFLAGS += -g
 LDFLAGS += $(LDL) -g

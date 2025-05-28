@@ -1,7 +1,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
-#include <rocm_smi.h>
+#include <rocm_smi/rocm_smi.h>
 #include <inttypes.h>
 #include "papi.h"
 #include "papi_memory.h"

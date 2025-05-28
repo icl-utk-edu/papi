@@ -7,12 +7,7 @@ PAPI_ROCM_ROOT ?= /opt/rocm
 HIPCC ?= $(PAPI_ROCM_ROOT)/bin/hipcc
 
 INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include
-INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
 LDFLAGS = -ldl -g 
 
 %.o:%.c
