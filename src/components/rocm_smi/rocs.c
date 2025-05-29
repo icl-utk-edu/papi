@@ -997,13 +997,13 @@ init_device_table(void)
     int i, j;
     rsmi_status_t status;
 
-    freq_table = calloc(device_count * ROCS_GPU_CLK_FREQ_VARIANT__NUM, sizeof(rsmi_frequencies_t));
+    freq_table = papi_calloc(device_count * ROCS_GPU_CLK_FREQ_VARIANT__NUM, sizeof(rsmi_frequencies_t));
     if (freq_table == NULL) {
         papi_errno = PAPI_ENOMEM;
         goto fn_fail;
     }
 
-    pcie_table = calloc(device_count, sizeof(rsmi_pcie_bandwidth_t));
+    pcie_table = papi_calloc(device_count, sizeof(rsmi_pcie_bandwidth_t));
     if (pcie_table == NULL) {
         papi_errno = PAPI_ENOMEM;
         goto fn_fail;
@@ -1862,11 +1862,11 @@ get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvarian
     char event_name_str[PAPI_MAX_STR_LEN] = { 0 };
 
     if (strcmp(name, "rsmi_dev_count") == 0) {
-        return strdup("NUMDevices");
+        return papi_strdup("NUMDevices");
     } else if (strcmp(name, "rsmi_lib_version") == 0) {
-        return strdup("rsmi_version");
+        return papi_strdup("rsmi_version");
     } else if (strcmp(name, "rsmi_dev_driver_version_str_get") == 0) {
-        return strdup("driver_version_str");
+        return papi_strdup("driver_version_str");
     } else if (strcmp(name, "rsmi_dev_id_get") == 0) {
         sprintf(event_name_str, "device_id:device=%i", dev);
     } else if (strcmp(name, "rsmi_dev_subsystem_vendor_id_get") == 0) {
@@ -2362,7 +2362,7 @@ get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvarian
         return NULL;
     }
 
-    return strdup(event_name_str);
+    return papi_strdup(event_name_str);
 }
 
 char *
@@ -2371,25 +2371,25 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
     char event_descr_str[PAPI_MAX_STR_LEN] = { 0 };
 
     if (strcmp(name, "rsmi_dev_count") == 0) {
-        return strdup("Number of Devices which have monitors, accessible by rocm_smi.");
+        return papi_strdup("Number of Devices which have monitors, accessible by rocm_smi.");
     } else if (strcmp(name, "rsmi_lib_version") == 0) {
-        return strdup("Version of RSMI lib; 0x0000MMMMmmmmpppp Major, Minor, Patch.");
+        return papi_strdup("Version of RSMI lib; 0x0000MMMMmmmmpppp Major, Minor, Patch.");
     } else if (strcmp(name, "rsmi_dev_driver_version_str_get") == 0) {
-        return strdup("Returns char* to z-terminated driver version string; do not free().");
+        return papi_strdup("Returns char* to z-terminated driver version string; do not free().");
     } else if (strcmp(name, "rsmi_dev_id_get") == 0) {
-        return strdup("Vendor supplied device id number. May be shared by same model devices; see pci_id for a unique identifier.");
+        return papi_strdup("Vendor supplied device id number. May be shared by same model devices; see pci_id for a unique identifier.");
     } else if (strcmp(name, "rsmi_dev_subsystem_vendor_id_get") == 0) {
-        return strdup("System vendor id number.");
+        return papi_strdup("System vendor id number.");
     } else if (strcmp(name, "rsmi_dev_vendor_id_get") == 0) {
-        return strdup("Vendor id number.");
+        return papi_strdup("Vendor id number.");
     } else if (strcmp(name, "rsmi_dev_unique_id_get") == 0) {
-        return strdup("Unique id for device.");
+        return papi_strdup("Unique id for device.");
     } else if (strcmp(name, "rsmi_dev_subsystem_id_get") == 0) {
-        return strdup("Subsystem id number.");
+        return papi_strdup("Subsystem id number.");
     } else if (strcmp(name, "rsmi_dev_drm_render_minor_get") == 0) {
-        return strdup("DRM Minor Number associated with this device.");
+        return papi_strdup("DRM Minor Number associated with this device.");
     } else if (strcmp(name, "rsmi_dev_overdrive_level_get") == 0) {
-        return strdup("Overdriver Level \% for device, 0 to 20, max overclocked permitted. Read Only.");
+        return papi_strdup("Overdriver Level \% for device, 0 to 20, max overclocked permitted. Read Only.");
     } else if (strcmp(name, "rsmi_dev_perf_level_get") == 0) {
         sprintf(event_descr_str, "PowerPlay Performance Level; Read Only, enum rsmi_dev_perf_level_t [0-%i], see ROCm_SMI_Manual for details.",
                 RSMI_DEV_PERF_LEVEL_LAST);
@@ -2425,139 +2425,139 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_busy_percent_get") == 0) {
-        return strdup("Percentage of time the device was busy doing any processing.");
+        return papi_strdup("Percentage of time the device was busy doing any processing.");
     } else if (strcmp(name, "rsmi_dev_memory_busy_percent_get") == 0) {
-        return strdup("Percentage_of time any device memory is being used.");
+        return papi_strdup("Percentage_of time any device memory is being used.");
     } else if (strcmp(name, "rsmi_dev_pci_id_get") == 0) {
-        return strdup("BDF (Bus/Device/Function) ID, unique per device.");
+        return papi_strdup("BDF (Bus/Device/Function) ID, unique per device.");
     } else if (strcmp(name, "rsmi_dev_pci_replay_counter_get") == 0) {
-        return strdup("Sum of the number of NAK's received by the GPU and the NAK's generated by the GPU.");
+        return papi_strdup("Sum of the number of NAK's received by the GPU and the NAK's generated by the GPU.");
     } else if (strcmp(name, "rsmi_dev_pci_throughput_get") == 0) {
         switch (variant) {
             case ROCS_PCI_THROUGHPUT_VARIANT__SENT:
-                return strdup("Throughput on PCIe traffic, bytes/second sent.");
+                return papi_strdup("Throughput on PCIe traffic, bytes/second sent.");
             case ROCS_PCI_THROUGHPUT_VARIANT__RECEIVED:
-                return strdup("Throughput on PCIe traffic, bytes/second received.");
+                return papi_strdup("Throughput on PCIe traffic, bytes/second received.");
             case ROCS_PCI_THROUGHPUT_VARIANT__MAX_PACKET_SIZE:
-                return strdup("Maximum PCIe packet size.");
+                return papi_strdup("Maximum PCIe packet size.");
             default:
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_power_profile_presets_get") == 0) {
         switch (variant) {
             case ROCS_POWER_PRESETS_VARIANT__COUNT:
-                return strdup("Number of power profile presets available. See ROCM_SMI Manual for details.");
+                return papi_strdup("Number of power profile presets available. See ROCM_SMI Manual for details.");
             case ROCS_POWER_PRESETS_VARIANT__AVAIL_PROFILES:
-                return strdup("Bit mask for available power profile presets. See ROCM_SMI Manual for details.");
+                return papi_strdup("Bit mask for available power profile presets. See ROCM_SMI Manual for details.");
             case ROCS_POWER_PRESETS_VARIANT__CURRENT:
-                return strdup("Bit mask for current power profile preset. Read/Write. See ROCM_SMI Manual for details.");
+                return papi_strdup("Bit mask for current power profile preset. Read/Write. See ROCM_SMI Manual for details.");
             default:
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_power_profile_set") == 0) {
-        return strdup("Write Only, set the power profile to one of the available masks. See ROCM_SMI Manual for details.");
+        return papi_strdup("Write Only, set the power profile to one of the available masks. See ROCM_SMI Manual for details.");
     } else if (strcmp(name, "rsmi_dev_fan_reset") == 0) {
-        return strdup("Fan Reset. Write Only, data value is ignored.");
+        return papi_strdup("Fan Reset. Write Only, data value is ignored.");
     } else if (strcmp(name, "rsmi_dev_fan_rpms_get") == 0) {
-        return strdup("Current fan speed in RPMs (Rotations Per Minute).");
+        return papi_strdup("Current fan speed in RPMs (Rotations Per Minute).");
     } else if (strcmp(name, "rsmi_dev_fan_speed_max_get") == 0) {
-        return strdup("Maximum possible fan speed in RPMs (Rotations Per Minute).");
+        return papi_strdup("Maximum possible fan speed in RPMs (Rotations Per Minute).");
     } else if (strcmp(name, "rsmi_dev_fan_speed_get") == 0) {
-        return strdup("Current fan speed in RPMs (Rotations Per Minute), Read Only, result [0-255].");
+        return papi_strdup("Current fan speed in RPMs (Rotations Per Minute), Read Only, result [0-255].");
     } else if (strcmp(name, "rsmi_dev_fan_speed_set") == 0) {
-        return strdup("Current fan speed in RPMs (Rotations Per Minute), Read/Write, Write must be <= MAX (see fan_speed_max event), arg in [0-255].");
+        return papi_strdup("Current fan speed in RPMs (Rotations Per Minute), Read/Write, Write must be <= MAX (see fan_speed_max event), arg in [0-255].");
     } else if (strcmp(name, "rsmi_dev_power_ave_get") == 0) {
-        return strdup("Current Average Power consumption in microwatts. Requires root privileges.");
+        return papi_strdup("Current Average Power consumption in microwatts. Requires root privileges.");
     } else if (strcmp(name, "rsmi_dev_power_cap_get") == 0) {
-        return strdup("Power cap in microwatts. Read Only. Between min/max (see power_cap_range_min/max). May require root privileges.");
+        return papi_strdup("Power cap in microwatts. Read Only. Between min/max (see power_cap_range_min/max). May require root privileges.");
     } else if (strcmp(name, "rsmi_dev_power_cap_set") == 0) {
-        return strdup("Power cap in microwatts. Read/Write. Between min/max (see power_cap_range_min/max). May require root privileges.");
+        return papi_strdup("Power cap in microwatts. Read/Write. Between min/max (see power_cap_range_min/max). May require root privileges.");
     } else if (strcmp(name, "rsmi_dev_power_cap_range_get") == 0) {
         switch (variant) {
             case ROCS_POWER_CAP_RANGE_VARIANT__MIN:
-                return strdup("Power cap Minimum settable value, in microwatts.");
+                return papi_strdup("Power cap Minimum settable value, in microwatts.");
             case ROCS_POWER_CAP_RANGE_VARIANT__MAX:
-                return strdup("Power cap Maximim settable value, in microwatts.");
+                return papi_strdup("Power cap Maximim settable value, in microwatts.");
             default:
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
         switch (variant) {
             case RSMI_TEMP_CURRENT:
-                return strdup("Temperature current value, millidegrees Celsius.");
+                return papi_strdup("Temperature current value, millidegrees Celsius.");
             case RSMI_TEMP_MAX:
-                return strdup("Temperature maximum value, millidegrees Celsius.");
+                return papi_strdup("Temperature maximum value, millidegrees Celsius.");
             case RSMI_TEMP_MIN:
-                return strdup("Temperature minimum value, millidegrees Celsius.");
+                return papi_strdup("Temperature minimum value, millidegrees Celsius.");
             case RSMI_TEMP_MAX_HYST:
-                return strdup("Temperature hysteresis value for max limit, millidegrees Celsius.");
+                return papi_strdup("Temperature hysteresis value for max limit, millidegrees Celsius.");
             case RSMI_TEMP_MIN_HYST:
-                return strdup("Temperature hysteresis value for min limit, millidegrees Celsius.");
+                return papi_strdup("Temperature hysteresis value for min limit, millidegrees Celsius.");
             case RSMI_TEMP_CRITICAL:
-                return strdup("Temperature critical max value, typical > temp_max, millidegrees Celsius.");
+                return papi_strdup("Temperature critical max value, typical > temp_max, millidegrees Celsius.");
             case RSMI_TEMP_CRITICAL_HYST:
-                return strdup("Temperature hysteresis value for critical limit, millidegrees Celsius.");
+                return papi_strdup("Temperature hysteresis value for critical limit, millidegrees Celsius.");
             case RSMI_TEMP_EMERGENCY:
-                return strdup("Temperature emergency max for chips supporting more than two upper temp limits, millidegrees Celsius.");
+                return papi_strdup("Temperature emergency max for chips supporting more than two upper temp limits, millidegrees Celsius.");
             case RSMI_TEMP_EMERGENCY_HYST:
-                return strdup("Temperature hysteresis value for emergency limit, millidegrees Celsius.");
+                return papi_strdup("Temperature hysteresis value for emergency limit, millidegrees Celsius.");
             case RSMI_TEMP_CRIT_MIN:
-                return strdup("Temperature critical min value, typical < temp_min, millidegrees Celsius.");
+                return papi_strdup("Temperature critical min value, typical < temp_min, millidegrees Celsius.");
             case RSMI_TEMP_CRIT_MIN_HYST:
-                return strdup("Temperature hysteresis value for critical min limit, millidegrees Celsius.");
+                return papi_strdup("Temperature hysteresis value for critical min limit, millidegrees Celsius.");
             case RSMI_TEMP_OFFSET:
-                return strdup("Temperature offset added to temp reading by the chip, millidegrees Celsius.");
+                return papi_strdup("Temperature offset added to temp reading by the chip, millidegrees Celsius.");
             case RSMI_TEMP_LOWEST:
-                return strdup("Temperature historical minimum, millidegrees Celsius.");
+                return papi_strdup("Temperature historical minimum, millidegrees Celsius.");
             case RSMI_TEMP_HIGHEST:
-                return strdup("Temperature historical maximum, millidegrees Celsius.");
+                return papi_strdup("Temperature historical maximum, millidegrees Celsius.");
             default:
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_firmware_version_get") == 0) {
         switch (variant) {
             case RSMI_FW_BLOCK_ASD:
-                return strdup("Firmware Version Block ASD.");
+                return papi_strdup("Firmware Version Block ASD.");
             case RSMI_FW_BLOCK_CE:
-                return strdup("Firmware Version Block CE.");
+                return papi_strdup("Firmware Version Block CE.");
             case RSMI_FW_BLOCK_DMCU:
-                return strdup("Firmware Version Block DMCU.");
+                return papi_strdup("Firmware Version Block DMCU.");
             case RSMI_FW_BLOCK_MC:
-                return strdup("Firmware Version Block MC.");
+                return papi_strdup("Firmware Version Block MC.");
             case RSMI_FW_BLOCK_ME:
-                return strdup("Firmware Version Block ME.");
+                return papi_strdup("Firmware Version Block ME.");
             case RSMI_FW_BLOCK_MEC:
-                return strdup("Firmware Version Block MEC.");
+                return papi_strdup("Firmware Version Block MEC.");
             case RSMI_FW_BLOCK_MEC2:
-                return strdup("Firmware Version Block MEC2.");
+                return papi_strdup("Firmware Version Block MEC2.");
             case RSMI_FW_BLOCK_PFP:
-                return strdup("Firmware Version Block PFP.");
+                return papi_strdup("Firmware Version Block PFP.");
             case RSMI_FW_BLOCK_RLC:
-                return strdup("Firmware Version Block RLC.");
+                return papi_strdup("Firmware Version Block RLC.");
             case RSMI_FW_BLOCK_RLC_SRLC:
-                return strdup("Firmware Version Block SRLC.");
+                return papi_strdup("Firmware Version Block SRLC.");
             case RSMI_FW_BLOCK_RLC_SRLG:
-                return strdup("Firmware Version Block SRLG.");
+                return papi_strdup("Firmware Version Block SRLG.");
             case RSMI_FW_BLOCK_RLC_SRLS:
-                return strdup("Firmware Version Block SRLS.");
+                return papi_strdup("Firmware Version Block SRLS.");
             case RSMI_FW_BLOCK_SDMA:
-                return strdup("Firmware Version Block SDMA.");
+                return papi_strdup("Firmware Version Block SDMA.");
             case RSMI_FW_BLOCK_SDMA2:
-                return strdup("Firmware Version Block SDMA2.");
+                return papi_strdup("Firmware Version Block SDMA2.");
             case RSMI_FW_BLOCK_SMC:
-                return strdup("Firmware Version Block SMC.");
+                return papi_strdup("Firmware Version Block SMC.");
             case RSMI_FW_BLOCK_SOS:
-                return strdup("Firmware Version Block SOS.");
+                return papi_strdup("Firmware Version Block SOS.");
             case RSMI_FW_BLOCK_TA_RAS:
-                return strdup("Firmware Version Block RAS.");
+                return papi_strdup("Firmware Version Block RAS.");
             case RSMI_FW_BLOCK_TA_XGMI:
-                return strdup("Firmware Version Block XGMI.");
+                return papi_strdup("Firmware Version Block XGMI.");
             case RSMI_FW_BLOCK_UVD:
-                return strdup("Firmware Version Block UVD.");
+                return papi_strdup("Firmware Version Block UVD.");
             case RSMI_FW_BLOCK_VCE:
-                return strdup("Firmware Version Block VCE.");
+                return papi_strdup("Firmware Version Block VCE.");
             case RSMI_FW_BLOCK_VCN:
-                return strdup("Firmware Version Block VCN.");
+                return papi_strdup("Firmware Version Block VCN.");
             default:
                 return NULL;
         }
@@ -2621,37 +2621,37 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_ecc_enabled_get") == 0) {
-        return strdup("Bit mask of GPU blocks with ecc error counting enabled.");
+        return papi_strdup("Bit mask of GPU blocks with ecc error counting enabled.");
     } else if (strcmp(name, "rsmi_dev_ecc_status_get") == 0) {
         switch (variant) {
             case RSMI_GPU_BLOCK_UMC:
-                return strdup("ECC Error Status for the GPU Block UMC.");
+                return papi_strdup("ECC Error Status for the GPU Block UMC.");
             case RSMI_GPU_BLOCK_SDMA:
-                return strdup("ECC Error Status for the GPU Block SDMA.");
+                return papi_strdup("ECC Error Status for the GPU Block SDMA.");
             case RSMI_GPU_BLOCK_GFX:
-                return strdup("ECC Error Status for the GPU Block GFX.");
+                return papi_strdup("ECC Error Status for the GPU Block GFX.");
             case RSMI_GPU_BLOCK_MMHUB:
-                return strdup("ECC Error Status for the GPU Block MMHUB.");
+                return papi_strdup("ECC Error Status for the GPU Block MMHUB.");
             case RSMI_GPU_BLOCK_ATHUB:
-                return strdup("ECC Error Status for the GPU Block ATHUB.");
+                return papi_strdup("ECC Error Status for the GPU Block ATHUB.");
             case RSMI_GPU_BLOCK_PCIE_BIF:
-                return strdup("ECC Error Status for the GPU Block BIF.");
+                return papi_strdup("ECC Error Status for the GPU Block BIF.");
             case RSMI_GPU_BLOCK_HDP:
-                return strdup("ECC Error Status for the GPU Block HDP.");
+                return papi_strdup("ECC Error Status for the GPU Block HDP.");
             case RSMI_GPU_BLOCK_XGMI_WAFL:
-                return strdup("ECC Error Status for the GPU Block WAFL.");
+                return papi_strdup("ECC Error Status for the GPU Block WAFL.");
             case RSMI_GPU_BLOCK_DF:
-                return strdup("ECC Error Status for the GPU Block DF.");
+                return papi_strdup("ECC Error Status for the GPU Block DF.");
             case RSMI_GPU_BLOCK_SMN:
-                return strdup("ECC Error Status for the GPU Block SMN.");
+                return papi_strdup("ECC Error Status for the GPU Block SMN.");
             case RSMI_GPU_BLOCK_SEM:
-                return strdup("ECC Error Status for the GPU Block SEM.");
+                return papi_strdup("ECC Error Status for the GPU Block SEM.");
             case RSMI_GPU_BLOCK_MP0:
-                return strdup("ECC Error Status for the GPU Block MP0.");
+                return papi_strdup("ECC Error Status for the GPU Block MP0.");
             case RSMI_GPU_BLOCK_MP1:
-                return strdup("ECC Error Status for the GPU Block MP1.");
+                return papi_strdup("ECC Error Status for the GPU Block MP1.");
             case RSMI_GPU_BLOCK_FUSE:
-                return strdup("ECC Error Status for the GPU Block FUSE.");
+                return papi_strdup("ECC Error Status for the GPU Block FUSE.");
             default:
                 return NULL;
         }
@@ -2680,9 +2680,9 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
         int idx;
         switch (subvariant) {
             case ROCS_GPU_CLK_FREQ_SUBVARIANT__COUNT:
-                return strdup("Number of frequencies available.");
+                return papi_strdup("Number of frequencies available.");
             case ROCS_GPU_CLK_FREQ_SUBVARIANT__CURRENT:
-                return strdup("Current operating frequency.");
+                return papi_strdup("Current operating frequency.");
             default:
                 idx = subvariant - ROCS_GPU_CLK_FREQ_SUBVARIANT__NUM;
         }
@@ -2714,9 +2714,9 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
     } else if (strcmp(name, "rsmi_dev_pci_bandwidth_get") == 0) {
         switch (variant) {
             case ROCS_PCI_BW_VARIANT__COUNT:
-                return strdup("Number of PCI transfers rates available.");
+                return papi_strdup("Number of PCI transfers rates available.");
             case ROCS_PCI_BW_VARIANT__CURRENT:
-                return strdup("Current PCI transfer rate.");
+                return papi_strdup("Current PCI transfer rate.");
             case ROCS_PCI_BW_VARIANT__RATE_IDX:
                 sprintf(event_descr_str, "Returns PCI bandwidth rate value from supported_table[%i].", (int) subvariant);
                 break;
@@ -2727,19 +2727,19 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_pci_bandwidth_set") == 0) {
-        return strdup("Write Only. Sets bit mask, 1's for PCI transfer rates in supported_table permitted. All 0 mask prohibited");
+        return papi_strdup("Write Only. Sets bit mask, 1's for PCI transfer rates in supported_table permitted. All 0 mask prohibited");
     } else if (strcmp(name, "rsmi_dev_brand_get") == 0) {
-        return strdup("Returns char* to z-terminated brand string; do not free().");
+        return papi_strdup("Returns char* to z-terminated brand string; do not free().");
     } else if (strcmp(name, "rsmi_dev_name_get") == 0) {
-        return strdup("Returns char* to z-terminated name string; do not free().");
+        return papi_strdup("Returns char* to z-terminated name string; do not free().");
     } else if (strcmp(name, "rsmi_dev_serial_number_get") == 0) {
-        return strdup("Returns char* to z-terminated serial number string; do not free().");
+        return papi_strdup("Returns char* to z-terminated serial number string; do not free().");
     } else if (strcmp(name, "rsmi_dev_subsystem_name_get") == 0) {
-        return strdup("Returns char* to z-terminated subsystem name string; do not free().");
+        return papi_strdup("Returns char* to z-terminated subsystem name string; do not free().");
     } else if (strcmp(name, "rsmi_dev_vbios_version_get") == 0) {
-        return strdup("Returns char* to z-terminated vbios version string; do not free().");
+        return papi_strdup("Returns char* to z-terminated vbios version string; do not free().");
     } else if (strcmp(name, "rsmi_dev_vendor_name_get") == 0) {
-        return strdup("Returns char* to z-terminated vendor name string; do not free().");
+        return papi_strdup("Returns char* to z-terminated vendor name string; do not free().");
     } else if (strcmp(name, "rsmi_dev_xgmi_evt_get") == 0) {
         const char *variant_str = NULL;
         switch (variant) {
@@ -2804,7 +2804,7 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
         return NULL;
     }
 
-    return strdup(event_descr_str);
+    return papi_strdup(event_descr_str);
 }
 
 rocs_access_mode_e
