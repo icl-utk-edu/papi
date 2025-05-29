@@ -761,7 +761,7 @@ int cuptic_ctxarr_create(cuptic_info_t *pinfo)
     }
   
     /* allocate memory */ 
-    *pinfo = (cuptic_info_t) papi_calloc (total_gpus, sizeof(*pinfo));
+    *pinfo = (cuptic_info_t) calloc (total_gpus, sizeof(*pinfo));
     if (*pinfo == NULL) {
         return PAPI_ENOMEM;
     }
@@ -837,7 +837,7 @@ int cuptic_ctxarr_get_ctx(cuptic_info_t info, int gpu_idx, CUcontext *ctx)
 
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
 {
-    papi_free(*pinfo);
+    free(*pinfo);
     *pinfo = NULL;
     return PAPI_OK;
 }
