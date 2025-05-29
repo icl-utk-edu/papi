@@ -1893,7 +1893,7 @@ papi_vector_t _nvml_vector = {
         .context = sizeof(nvml_context_t),
         .control_state = sizeof(nvml_control_state_t),
         .reg_value = sizeof(nvml_register_t),
-        // .reg_alloc = sizeof ( nvml_reg_alloc_t ),
+        .reg_alloc = 1, /* unused */
     },
 
     /* function pointers */
