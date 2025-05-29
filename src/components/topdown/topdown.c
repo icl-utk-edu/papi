@@ -909,6 +909,8 @@ papi_vector_t _topdown_vector = {
 	.size = {
 		.context = sizeof(_topdown_context_t),
 		.control_state = sizeof(_topdown_control_state_t),
+		.reg_value = 1, /* unused */
+		.reg_alloc = 1, /* unused */
 	},
 
 	/* Used for general PAPI interactions */
