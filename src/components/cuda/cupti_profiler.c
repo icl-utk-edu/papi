@@ -460,7 +460,7 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
 
     // Allocate the necessary memory for data
     gpu_ctl->counterAvailabilityImage.size = getCounterAvailabilityParams.counterAvailabilityImageSize;
-    gpu_ctl->counterAvailabilityImage.data = (uint8_t *) papi_malloc(gpu_ctl->counterAvailabilityImage.size);
+    gpu_ctl->counterAvailabilityImage.data = (uint8_t *) malloc(gpu_ctl->counterAvailabilityImage.size);
     if (gpu_ctl->counterAvailabilityImage.data == NULL) {
         ERRDBG("Failed to allocate memory for counterAvailabilityImage.data.\n");
         return PAPI_ENOMEM;
@@ -484,23 +484,23 @@ void free_and_reset_configuration_images(cuptip_gpu_state_t *gpu_ctl)
     COMPDBG("Entering.\n");
     // Note that you can find the memory allocation for the below variables
     // in cuptip_ctx_start as of April 21st, 2025
-    papi_free(gpu_ctl->configImage.data);
+    free(gpu_ctl->configImage.data);
     gpu_ctl->configImage.data = NULL;
     gpu_ctl->configImage.size = 0;
 
-    papi_free(gpu_ctl->counterDataPrefixImage.data);
+    free(gpu_ctl->counterDataPrefixImage.data);
     gpu_ctl->counterDataPrefixImage.data = NULL;
     gpu_ctl->counterDataPrefixImage.size = 0;
 
-    papi_free(gpu_ctl->counterDataScratchBuffer.data);
+    free(gpu_ctl->counterDataScratchBuffer.data);
     gpu_ctl->counterDataScratchBuffer.data = NULL;
     gpu_ctl->counterDataScratchBuffer.size = 0;
 
-    papi_free(gpu_ctl->counterDataImage.data);
+    free(gpu_ctl->counterDataImage.data);
     gpu_ctl->counterDataImage.data = NULL;
     gpu_ctl->counterDataImage.size = 0; 
     
-    papi_free(gpu_ctl->counterAvailabilityImage.data);
+    free(gpu_ctl->counterAvailabilityImage.data);
     gpu_ctl->counterAvailabilityImage.data = NULL;
     gpu_ctl->counterAvailabilityImage.size = 0;
 }
@@ -534,7 +534,7 @@ static int init_main_htable(void)
         val *= base;
     }    
    
-    cuptiu_table_p = (cuptiu_event_table_t *) papi_malloc(sizeof(cuptiu_event_table_t));
+    cuptiu_table_p = (cuptiu_event_table_t *) malloc(sizeof(cuptiu_event_table_t));
     if (cuptiu_table_p == NULL) {
         ERRDBG("Failed to allocate memory for cuptiu_table_p.\n");
         return PAPI_ENOMEM;
@@ -543,19 +543,19 @@ static int init_main_htable(void)
     cuptiu_table_p->count = 0;
     cuptiu_table_p->event_stats_count = 0;
 
-    cuptiu_table_p->events = (cuptiu_event_t *) papi_calloc(val, sizeof(cuptiu_event_t));
+    cuptiu_table_p->events = (cuptiu_event_t *) calloc(val, sizeof(cuptiu_event_t));
     if (cuptiu_table_p->events == NULL) {
         ERRDBG("Failed to allocate memory for cuptiu_table_p->events.\n");
         return PAPI_ENOMEM;
     }
 
-    cuptiu_table_p->event_stats = (StringVector *) papi_calloc(val, sizeof(StringVector));
+    cuptiu_table_p->event_stats = (StringVector *) calloc(val, sizeof(StringVector));
     if (cuptiu_table_p->event_stats == NULL) {
         ERRDBG("Failed to allocate memory for cuptiu_table_p->event_stats.\n");
         return PAPI_ENOMEM;
     }
 
-    cuptiu_table_p->avail_gpu_info = (gpu_record_t *) papi_calloc(numDevicesOnMachine, sizeof(gpu_record_t));
+    cuptiu_table_p->avail_gpu_info = (gpu_record_t *) calloc(numDevicesOnMachine, sizeof(gpu_record_t));
     if (cuptiu_table_p->avail_gpu_info == NULL) {
         ERRDBG("Failed to allocate memory for cuptiu_table_p->avail_gpu_info.\n");
         return PAPI_ENOMEM;
@@ -732,19 +732,19 @@ int cuptip_ctx_create(cuptic_info_t thr_info, cuptip_control_t *pstate, uint32_t
 {
     COMPDBG("Entering.\n");
 
-    cuptip_control_t state = (cuptip_control_t) papi_calloc (1, sizeof(struct cuptip_control_s));
+    cuptip_control_t state = (cuptip_control_t) calloc (1, sizeof(struct cuptip_control_s));
     if (state == NULL) {
         SUBDBG("Failed to allocate memory for state.\n");
         return PAPI_ENOMEM;
     }
 
-    state->gpu_ctl = (cuptip_gpu_state_t *) papi_calloc(numDevicesOnMachine, sizeof(cuptip_gpu_state_t));
+    state->gpu_ctl = (cuptip_gpu_state_t *) calloc(numDevicesOnMachine, sizeof(cuptip_gpu_state_t));
     if (state->gpu_ctl == NULL) {
         SUBDBG("Failed to allocate memory for state->gpu_ctl.\n"); 
         return PAPI_ENOMEM;
     }
 
-    long long *counters = (long long *) papi_malloc(num_events * sizeof(*counters));
+    long long *counters = (long long *) malloc(num_events * sizeof(*counters));
     if (counters == NULL) {
         SUBDBG("Failed to allocate memory for counters.\n");
         return PAPI_ENOMEM;
@@ -1034,7 +1034,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
                 }
             }
         }
-        papi_free(metricValues);
+        free(metricValues);
         *counters = counter_vals;
 
         papi_errno = begin_pass();
@@ -1165,15 +1165,15 @@ int cuptip_ctx_destroy(cuptip_control_t *pstate)
         // Free the created rawMetricRequests from cuptip_ctx_start
         int j;
         for (j = 0; j < state->gpu_ctl[i].numberOfRawMetricRequests; j++) {
-            papi_free((void *) state->gpu_ctl[i].rawMetricRequests[j].pMetricName);
+            free((void *) state->gpu_ctl[i].rawMetricRequests[j].pMetricName);
         }
-        papi_free(state->gpu_ctl[i].rawMetricRequests);
+        free(state->gpu_ctl[i].rawMetricRequests);
     }
 
     // Free the allocated memory from cuptip_ctx_create
-    papi_free(state->counters);
-    papi_free(state->gpu_ctl);
-    papi_free(state);
+    free(state->counters);
+    free(state->gpu_ctl);
+    free(state);
     *pstate = NULL;
 
     return PAPI_OK;
@@ -1522,13 +1522,13 @@ static void shutdown_event_table(void)
 {
     cuptiu_table_p->count = 0;
 
-    papi_free(cuptiu_table_p->avail_gpu_info);
+    free(cuptiu_table_p->avail_gpu_info);
     cuptiu_table_p->avail_gpu_info = NULL;
 
-    papi_free(cuptiu_table_p->events);
+    free(cuptiu_table_p->events);
     cuptiu_table_p->events = NULL;
 
-    papi_free(cuptiu_table_p);
+    free(cuptiu_table_p);
     cuptiu_table_p = NULL;
 }
 
@@ -1545,7 +1545,7 @@ static void shutdown_event_stats_table(void)
     
     cuptiu_table_p->event_stats_count = 0;
 
-    papi_free(cuptiu_table_p->event_stats);
+    free(cuptiu_table_p->event_stats);
 }
 
 /** @class cuptip_evt_enum

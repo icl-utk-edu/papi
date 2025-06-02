@@ -449,7 +449,7 @@ int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
     struct event_map_item sorted_events[PAPI_CUDA_MAX_COUNTERS];
 
     if (ntv_count != ctl->num_events) {
-        ctl->events_id = papi_realloc(ctl->events_id,
+        ctl->events_id = realloc(ctl->events_id,
                                       ntv_count * sizeof(*ctl->events_id));
         if (ctl->events_id == NULL) {
             papi_errno = PAPI_ENOMEM;
@@ -642,7 +642,7 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
     }
 
     /* free int array of event id's and reset number of events */
-    papi_free(cuda_ctl->events_id);
+    free(cuda_ctl->events_id);
     cuda_ctl->events_id = NULL;
     cuda_ctl->num_events = 0;
 
