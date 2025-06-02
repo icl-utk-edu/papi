@@ -167,11 +167,15 @@ templ_init_private(void)
 
     int count = 0;
     papi_errno = evt_get_count(&count);
+    if (papi_errno != PAPI_OK) {
+        goto fn_fail;
+    }
     _template_vector.cmp_info.num_native_events = count;
     _template_vector.cmp_info.num_cntrs = count;
 
-  fn_exit:
     _template_vector.cmp_info.initialized = 1;
+
+  fn_exit:
     _template_vector.cmp_info.disabled = papi_errno;
     _papi_hwi_unlock(COMPONENT_LOCK);
     return papi_errno;
