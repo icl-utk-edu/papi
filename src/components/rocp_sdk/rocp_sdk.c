@@ -436,9 +436,6 @@ rocp_sdk_ntv_code_to_info(unsigned int event_code, PAPI_event_info_t *info)
         return papi_errno;
     }
 
-    info->event_code = event_code;
-    info->component_index = _rocp_sdk_vector.cmp_info.CmpIdx;
-
     return rocprofiler_sdk_evt_code_to_info(event_code, info);
 }
 
