@@ -8,6 +8,11 @@ HIPCC ?= $(PAPI_ROCM_ROOT)/bin/hipcc
 
 INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include
+INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
+INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
+INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
+INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
+INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
 LDFLAGS = -ldl -g 
 
 %.o:%.c
@@ -51,7 +56,7 @@ rocmsmi_example.o: rocmsmi_example.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread -lrocblas
 
 rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
