@@ -56,7 +56,7 @@ rocmsmi_example.o: rocmsmi_example.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread -lrocblas
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -lpthread -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
 
 rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
