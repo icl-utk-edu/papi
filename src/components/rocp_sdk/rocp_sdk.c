@@ -275,6 +275,15 @@ update_native_events(rocp_sdk_control_t *ctl, NativeInfo_t *ntv_info, int ntv_co
 {
     int papi_errno = PAPI_OK;
 
+    if (0 == ntv_count) {
+        if ( NULL != ctl->events_id ){
+            papi_free(ctl->events_id);
+            ctl->events_id = NULL;
+        }
+        ctl->num_events = ntv_count;
+        goto fn_exit;
+    }
+
     if (ntv_count != ctl->num_events) {
         ctl->events_id = papi_realloc(ctl->events_id, ntv_count * sizeof(*ctl->events_id));
         if (NULL == ctl->events_id) {
@@ -325,6 +334,11 @@ rocp_sdk_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     int papi_errno = PAPI_OK;
     rocp_sdk_context_t *rocp_sdk_ctx = (rocp_sdk_context_t *) ctx;
     rocp_sdk_control_t *rocp_sdk_ctl = (rocp_sdk_control_t *) ctl;
+
+    if (0 == rocp_sdk_ctl->num_events){
+        SUBDBG("Error! Cannot PAPI_start an empty eventset.");
+        return PAPI_ENOSUPP;
+    }
 
     if (rocp_sdk_ctx->state & RPSDK_CTX_RUNNING) {
         SUBDBG("Error! Cannot PAPI_start more than one eventset at a time for every component.");
