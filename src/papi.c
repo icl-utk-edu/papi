@@ -6652,7 +6652,7 @@ PAPI_remove_events( int EventSet, int *Events, int number )
  *
  * @par C Interface
  * \#include <papi.h> @n
- * int PAPI_list_events(int *EventSet, int *Events, int *number );
+ * int PAPI_list_events(int EventSet, int *Events, int *number);
 *
  *	@param[in] EventSet
  *		An integer handle for a PAPI event set as created by PAPI_create_eventset 
