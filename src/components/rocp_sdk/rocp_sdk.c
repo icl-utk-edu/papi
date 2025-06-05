@@ -242,10 +242,8 @@ rocp_sdk_init_private(void)
 int
 rocp_sdk_shutdown_component(void)
 {
+    unload_hsa_sym();
     _rocp_sdk_vector.cmp_info.initialized = 0;
-    if (rocm_dlp != NULL) {
-        dlclose(rocm_dlp);
-    }
     return rocprofiler_sdk_shutdown();
 }
 
@@ -488,9 +486,6 @@ check_for_available_devices(char *err_msg)
         return PAPI_EMISC;
     }
 
-    if( unload_hsa_sym() )
-        return PAPI_EMISC;
-
     return PAPI_OK;
 }
 
@@ -572,6 +567,8 @@ unload_hsa_sym( void )
     hsa_shut_downPtr      = NULL;
     hsa_iterate_agentsPtr = NULL;
     hsa_agent_get_infoPtr = NULL;
+
+    dlclose(rocm_dlp);
 
     return hsa_is_enabled();
 }
