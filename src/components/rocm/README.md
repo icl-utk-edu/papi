@@ -75,6 +75,11 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
 
 ## Known Limitations
 
+* The `rocm` component is deprecated starting at the AMD Instinct MI300A and will continue to be for any future AMD device releases.
+  Please instead use the [`rocp_sdk`](https://github.com/icl-utk-edu/papi/blob/master/src/components/rocp_sdk/README.md) component.
+
+* For AMD devices older than the AMD Instinct MI300A, PAPI should not be configured with both `rocm` and `rocp_sdk`.
+
 * PAPI may read zeros for many events if rocprofiler environment variables are
   not exported and HIP functions are executed by the user before the user
   executes PAPI\_library\_init().
