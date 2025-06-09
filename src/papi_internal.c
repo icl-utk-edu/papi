@@ -2228,15 +2228,16 @@ _papi_hwi_init_global_presets( void )
         }
 
         /* Force initialization of component if needed. */
-        if (_papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT) {
+        if ( NULL != _papi_hwd[i]->init_comp_presets ) {
+          if ( _papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
             int junk;
             _papi_hwd[i]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
-        }
+          }
 
-        if ( (NULL != _papi_hwd[i]->init_comp_presets) && !is_pe
-              && ( !_papi_hwd[i]->cmp_info.disabled ||
-                    _papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT ) ) {
+          if ( !is_pe && ( !_papi_hwd[i]->cmp_info.disabled ||
+               _papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT ) ) {
                 retval = _papi_hwd[i]->init_comp_presets();
+          }
         }
 
         _papi_hwi_start_idx[i] = num_all_presets;
