@@ -80,7 +80,7 @@ static int
 _sysdetect_init_component( int cidx )
 {
 
-    SUBDBG( "_sysdetect_init_component..." );
+    SUBDBG( "_sysdetect_init_component...\n" );
 
     /* Export the component id */
     _sysdetect_vector.cmp_info.CmpIdx = cidx;
@@ -99,7 +99,7 @@ static int
 _sysdetect_shutdown_component( void )
 {
 
-    SUBDBG( "_sysdetect_shutdown_component..." );
+    SUBDBG( "_sysdetect_shutdown_component...\n" );
 
     cleanup_dev_info( );
 
