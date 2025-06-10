@@ -35,7 +35,6 @@ typedef struct papi_vectors {
     int		(*init_component)	(int);										/**< */
     int		(*init_thread)		 (hwd_context_t *);								/**< */
     int		(*init_control_state)	(hwd_control_state_t * ptr);			/**< */
-    int		(*init_comp_presets)     (void);                                /**< */
     int		(*update_control_state)	(hwd_control_state_t *, NativeInfo_t *, int, hwd_context_t *);	/**< */
     int		(*ctl)			(hwd_context_t *, int , _papi_int_option_t *);	/**< */
     int		(*set_overflow)		(EventSetInfo_t *, int, int);				/**< */

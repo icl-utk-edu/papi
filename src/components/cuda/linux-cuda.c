@@ -118,7 +118,6 @@ papi_vector_t _cuda_vector = {
 
     .init_thread = cuda_init_thread,
     .shutdown_thread = cuda_shutdown_thread,
-    .init_comp_presets = cuda_init_comp_presets,
 
     .ntv_enum_events = cuda_ntv_enum_events,
     .ntv_code_to_name = cuda_ntv_code_to_name,
@@ -234,7 +233,18 @@ static int cuda_init_private(void)
 static int check_n_initialize(void)
 {
     if (!_cuda_vector.cmp_info.initialized) {
-        return cuda_init_private();
+        int papi_errno = cuda_init_private();
+        if( PAPI_OK != papi_errno ) {
+            return papi_errno;
+        }
+
+        // Setup the presets.
+        papi_errno = cuda_init_comp_presets();
+        if( PAPI_OK != papi_errno ) {
+            return papi_errno;
+        }
+
+        return papi_errno;
     }
     return _cuda_vector.cmp_info.disabled;
 }

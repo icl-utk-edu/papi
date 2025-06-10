@@ -26,8 +26,6 @@ extern hwi_presets_t user_defined_events[];
 extern int user_defined_events_count;
 extern int num_all_presets;
 extern int _papi_hwi_start_idx[PAPI_NUM_COMP];
-extern int first_comp_idx;
-extern int first_comp_preset_idx;
 
 static int papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag);
 static int papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx);
