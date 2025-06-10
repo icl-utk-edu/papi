@@ -261,7 +261,7 @@ rocm_shutdown_component(void)
     }
 
   fn_exit:
-    SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
+    SUBDBG("EXIT\n");
     return papi_errno;
   fn_fail:
     _rocm_vector.cmp_info.initialized = orig_state;
