@@ -459,14 +459,19 @@ int update_native_events(cuda_control_t *ctl, NativeInfo_t *ntv_info,
     struct event_map_item sorted_events[PAPI_CUDA_MAX_COUNTERS];
 
     if (ntv_count != ctl->num_events) {
-        ctl->events_id = realloc(ctl->events_id,
-                                      ntv_count * sizeof(*ctl->events_id));
-        if (ctl->events_id == NULL) {
-            papi_errno = PAPI_ENOMEM;
-            goto fn_fail;
-        }
-
         ctl->num_events = ntv_count;
+        if (ntv_count == 0) {
+            free(ctl->events_id);
+            ctl->events_id = NULL;
+            goto fn_exit;
+        }
+        else {
+            ctl->events_id = realloc(ctl->events_id, ntv_count * sizeof(*ctl->events_id));
+            if (ctl->events_id == NULL) {
+                papi_errno = PAPI_ENOMEM;
+                goto fn_fail;
+            }
+        }
     }
 
     int i;

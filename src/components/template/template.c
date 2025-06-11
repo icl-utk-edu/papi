@@ -239,12 +239,19 @@ update_native_events(templ_control_t *ctl, NativeInfo_t *ntv_info, int ntv_count
     int papi_errno = PAPI_OK;
 
     if (ntv_count != ctl->num_events) {
-        ctl->events_id = papi_realloc(ctl->events_id, ntv_count * sizeof(*ctl->events_id));
-        if (NULL == ctl->events_id) {
-            papi_errno = PAPI_ENOMEM;
-            goto fn_fail;
-        }
         ctl->num_events = ntv_count;
+        if (ntv_count == 0) {
+            papi_free(ctl->events_id);
+            ctl->events_id = NULL;
+            goto fn_exit;
+        }
+        else {
+            ctl->events_id = papi_realloc(ctl->events_id, ntv_count * sizeof(*ctl->events_id));
+            if (ctl->events_id == NULL) {
+                papi_errno = PAPI_ENOMEM;
+                goto fn_fail;
+            }
+        }
     }
 
     int i;
