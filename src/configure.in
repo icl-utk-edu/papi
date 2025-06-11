@@ -1881,6 +1881,23 @@ fi
 
 AC_MSG_RESULT($components)
 
+# Check whether rocm and rocp_sdk were configured together
+rocm_found=0
+rocp_sdk_found=0
+for comp in $components
+do
+    if test "$comp" = "rocm"; then
+        rocm_found=1
+    fi
+
+    if test "$comp" = "rocp_sdk"; then
+        rocp_sdk_found=1
+    fi
+done
+if test $rocm_found -eq 1 && test $rocp_sdk_found -eq 1; then
+    echo "WARNING: Components rocm and rocp_sdk should not be configured together. See components/rocm/README.md for more details."
+fi
+
 # This is an ugly hack to keep building on configurations covered by any-null in the past.
 if test "$VECTOR" = "_papi_dummy_vector"; then
 	if test "x$components" = "x"; then 
