@@ -52,7 +52,7 @@ static long long handle_derived( EventInfo_t * evi, long long *from );
 /* Global definitions used by other files */
 int num_all_presets = 0;                            // total number of presets
 int _papi_hwi_start_idx[PAPI_NUM_COMP];             // first index for given component
-int first_comp_idx = -1;                            // track the first non-perf_event component index
+int first_comp_with_presets = -1;                   // track the first component that has presets
 int first_comp_preset_idx = PAPI_MAX_PRESET_EVENTS; // track the first non-perf_event component preset index
 int pe_disabled = 1;                                // track whether perf_event component is available
 
@@ -533,13 +533,8 @@ _papi_hwi_component_index( int event_code ) {
 
   if (IS_PRESET(event_code)) {
      INTDBG("EXIT: Event %#x is a PRESET, assigning component %d\n", event_code,0);
-     hwi_presets_t *_preset_ptr = get_preset(event_code);
-     if( NULL == _preset_ptr ) {
-        INTDBG("EXIT: preset not found\n");
-        return PAPI_ENOEVNT;
-     } else {
-        return _preset_ptr->component_index;
-     }
+     event_index = event_code & PAPI_PRESET_AND_MASK;
+     return get_preset_cmp(&event_index);
   }
 
   /* user defined events are treated like preset events (component 0 only) */
@@ -783,7 +778,7 @@ overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
 int
 get_first_cmp_preset_idx( void ) {
 
-    int cmpnt = first_comp_idx;
+    int cmpnt = first_comp_with_presets;
     if( cmpnt < 0 ) {
         return PAPI_EINVAL;
     }
@@ -2221,22 +2216,10 @@ _papi_hwi_init_global_presets( void )
         if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event") == 0) {
             is_pe = 1;
         } else {
-            /* Only set the first non-perf_event component index once. */
-            if ( -1 == first_comp_idx ) {
-                first_comp_idx++;
+            /* Only set the first non-perf_event component with presets once. */
+            if ( -1 == first_comp_with_presets && _papi_hwi_max_presets[i] > 0 ) {
+                first_comp_with_presets = i;
             }
-        }
-
-        /* Force initialization of component if needed. */
-        if (_papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT) {
-            int junk;
-            _papi_hwd[i]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
-        }
-
-        if ( (NULL != _papi_hwd[i]->init_comp_presets) && !is_pe
-              && ( !_papi_hwd[i]->cmp_info.disabled ||
-                    _papi_hwd[i]->cmp_info.disabled == PAPI_EDELAY_INIT ) ) {
-                retval = _papi_hwd[i]->init_comp_presets();
         }
 
         _papi_hwi_start_idx[i] = num_all_presets;
