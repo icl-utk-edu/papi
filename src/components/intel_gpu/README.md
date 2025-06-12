@@ -34,7 +34,7 @@ It is requred to build with Intel oneAPI Level Zero header files. The directory 
 
 * To enable metrics query on an kernel
 	```sh 
-    ZET_ENABLE_API_TRACING_EXP=1
+    ZE_ENABLE_TRACING_LAYER=1
 	```
 
 ## Metric collection mode:
@@ -42,7 +42,7 @@ It is requred to build with Intel oneAPI Level Zero header files. The directory 
 Two metrics collection modes are supported.
 
 * Time based sampling. In this mode, data collection and app can run in separate processes. 
-* Metrics query on a kernel. In this mode,  the PAPI_start() and PAPI_stop must be called before kernel launch and after kernel execution completes. When setting ZET_ENABLE_API_TRACING_EXP=1,  the collection will switch to metrics query mode.
+* Metrics query on a kernel. In this mode,  the PAPI_start() and PAPI_stop must be called before kernel launch and after kernel execution completes. When setting ZE_ENABLE_TRACING_LAYER=1,  the collection will switch to metrics query mode.
 
 ## Metrics:
 
