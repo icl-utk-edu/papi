@@ -10,7 +10,7 @@ CFLAGS    = $(OPTFLAGS)
 CPPFLAGS += $(INCLUDE) $(ROCP_SDK_INCL)
 LDFLAGS  += $(PAPILIB) $(TESTLIB) $(UTILOBJS)
 
-GPUARCH = $(shell rocm_agent_enumerator 2>/dev/null | head -1)
+GPUARCH = $(shell rocm_agent_enumerator 2>/dev/null | grep -v "gfx000" | head -1)
 ifneq ($(GPUARCH),)
     ARCHFLAG=--offload-arch=$(GPUARCH)
 endif
