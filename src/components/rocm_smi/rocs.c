@@ -4030,7 +4030,7 @@ access_rsmi_dev_energy_count(rocs_access_mode_e mode, void *arg)
      * an int64_t in microjoules. Watch for overflow if the accumulated
      * energy is very large.
      */
-    double total_uJ = (double)(raw_count - event->offset) * (double)resolution;
+    double total_uJ = (double)raw_count * (double)resolution;
     if (total_uJ > INT64_MAX) {
         /* clamp to avoid overflow */
         total_uJ = INT64_MAX;
