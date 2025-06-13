@@ -203,6 +203,8 @@ static int access_rsmi_dev_fan_speed(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_ave(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_cap(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_cap_range(rocs_access_mode_e, void *);
+static int access_rsmi_dev_energy_count(rocs_access_mode_e, void *);
+static int access_rsmi_dev_current_socket_power(rocs_access_mode_e, void *);
 static int access_rsmi_dev_temp_metric(rocs_access_mode_e, void *);
 static int access_rsmi_dev_firmware_version(rocs_access_mode_e, void *);
 static int access_rsmi_dev_ecc_count(rocs_access_mode_e, void *);
