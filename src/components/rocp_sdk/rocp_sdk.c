@@ -465,27 +465,35 @@ check_for_available_devices(char *err_msg)
 {
     int ret_val;
     struct stat stat_info;
-    const char *dirPath="/sys/class/kfd/kfd/topology/nodes";
+    const char *dir_path="/sys/class/kfd/kfd/topology/nodes";
 
     // If the path does not exist, there are no AMD devices on this system.
-    ret_val = stat(dirPath, &stat_info);
+    ret_val = stat(dir_path, &stat_info);
     if (ret_val != 0 || !S_ISDIR(stat_info.st_mode)) {
         goto fn_fail;
     }
 
     // If we can't open this directory, there are no AMD devices on this system.
-    DIR *dir = opendir(dirPath);
+    DIR *dir = opendir(dir_path);
     if (dir == NULL) {
         goto fn_fail;
     }
 
-    // If there are no entries in this directory, there are no AMD devices on this system.
-    if( NULL == readdir(dir) ) {
+    // If there are no non-trivial entries in this directory, there are no AMD devices on this system.
+    struct dirent *dir_entry;
+    while( NULL != (dir_entry = readdir(dir)) ) {
+        if( strlen(dir_entry->d_name) < 1 || dir_entry->d_name[0] == '.' ){
+            continue;
+        }
+
+        // If we made it here, it means we found an entry that is not "." or ".."
         closedir(dir);
-        goto fn_fail;
+        goto fn_exit;
     }
 
+    // If we made it here, it means we only found entries that start with a "."
     closedir(dir);
+    goto fn_fail;
 
   fn_exit:
     return PAPI_OK;
