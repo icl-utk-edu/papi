@@ -15,7 +15,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <dlfcn.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "papi.h"
 #include "papi_internal.h"
 #include "papi_vector.h"
@@ -35,22 +37,9 @@
     err_handle;                            \
 } while(0)
 
-static void *rocm_dlp = NULL;
-
-static hsa_status_t (*hsa_initPtr)( void ) = NULL;
-static hsa_status_t (*hsa_shut_downPtr)( void ) = NULL;
-static hsa_status_t (*hsa_iterate_agentsPtr)( hsa_status_t (*)(hsa_agent_t agent,
-                                                               void *value),
-                                              void *value ) = NULL;
-static hsa_status_t (*hsa_agent_get_infoPtr)( hsa_agent_t agent,
-                                              hsa_agent_info_t attribute,
-                                              void *value ) = NULL;
 
 /* Utility functions */
 static int check_for_available_devices(char *err_msg);
-static int load_hsa_sym( char *err_msg );
-static int unload_hsa_sym( void );
-static hsa_status_t get_device_count( int *count );
 
 unsigned int _rocp_sdk_lock;
 
@@ -243,9 +232,6 @@ int
 rocp_sdk_shutdown_component(void)
 {
     _rocp_sdk_vector.cmp_info.initialized = 0;
-    if (rocm_dlp != NULL) {
-        dlclose(rocm_dlp);
-    }
     return rocprofiler_sdk_shutdown();
 }
 
@@ -477,128 +463,41 @@ check_n_initialize(void)
 int
 check_for_available_devices(char *err_msg)
 {
-    if( PAPI_OK != load_hsa_sym(err_msg) ){
-        return PAPI_EMISC;
+    int ret_val;
+    struct stat stat_info;
+    const char *dir_path="/sys/class/kfd/kfd/topology/nodes";
+
+    // If the path does not exist, there are no AMD devices on this system.
+    ret_val = stat(dir_path, &stat_info);
+    if (ret_val != 0 || !S_ISDIR(stat_info.st_mode)) {
+        goto fn_fail;
     }
 
-    int dev_count = 0;
-    hsa_status_t status = get_device_count(&dev_count);
-    if( status != HSA_STATUS_SUCCESS || dev_count == 0 ) {
-        sprintf(err_msg, "No compatible devices found.");
-        return PAPI_EMISC;
+    // If we can't open this directory, there are no AMD devices on this system.
+    DIR *dir = opendir(dir_path);
+    if (dir == NULL) {
+        goto fn_fail;
     }
 
-    if( unload_hsa_sym() )
-        return PAPI_EMISC;
-
-    return PAPI_OK;
-}
-
-static inline int
-hsa_is_enabled( void )
-{
-    return ( (hsa_initPtr != NULL) &&
-             (hsa_shut_downPtr != NULL) &&
-             (hsa_iterate_agentsPtr != NULL) &&
-             (hsa_agent_get_infoPtr != NULL) );
-}
-
-void *dlopen_from_paths( char *libname, int pathCount, const char *paths[] )
-{
-    void *so = NULL;
-    for (int i = 0; i < pathCount; i++) {
-        if ( paths[i] == NULL ) {
+    // If there are no non-trivial entries in this directory, there are no AMD devices on this system.
+    struct dirent *dir_entry;
+    while( NULL != (dir_entry = readdir(dir)) ) {
+        if( strlen(dir_entry->d_name) < 1 || dir_entry->d_name[0] == '.' ){
             continue;
         }
-        char newpath[PATH_MAX];
-        int count = snprintf(newpath, PATH_MAX, "%s/lib/%s", paths[i], libname);
-        if (count >= PATH_MAX) {
-            SUBDBG("Status string truncated.");
-        }
-        so = dlopen(newpath, RTLD_NOW | RTLD_GLOBAL);
-        if (so) {
-            return so;
-        }
-    }
-    so = dlopen(libname, RTLD_NOW | RTLD_GLOBAL);
-    return so;
-}
 
-static int
-load_hsa_sym( char *err_msg )
-{
-    const char *paths[] = {getenv("PAPI_ROCP_SDK_ROOT"), getenv("PAPI_ROCM_ROOT")};
-    rocm_dlp = dlopen_from_paths("libhsa-runtime64.so", 2, paths);
-    if (rocm_dlp == NULL) {
-        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", dlerror());
-        if (count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Status string truncated.");
-        }
-        return PAPI_EMISC;
+        // If we made it here, it means we found an entry that is not "." or ".."
+        closedir(dir);
+        goto fn_exit;
     }
 
-    hsa_initPtr           = dlsym(rocm_dlp, "hsa_init");
-    hsa_shut_downPtr      = dlsym(rocm_dlp, "hsa_shut_down");
-    hsa_iterate_agentsPtr = dlsym(rocm_dlp, "hsa_iterate_agents");
-    hsa_agent_get_infoPtr = dlsym(rocm_dlp, "hsa_agent_get_info");
+    // If we made it here, it means we only found entries that start with a "."
+    closedir(dir);
+    goto fn_fail;
 
-    if ( !hsa_is_enabled() ){
-        const char *message = "dlsym() of HSA symbols failed.";
-        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Status string truncated.");
-        }
-        return PAPI_EMISC;
-    }
-    if ( (*hsa_initPtr)() ) {
-        const char *message = "hsa_init() failed. Possibly no AMD GPUs present.";
-        int count = snprintf(err_msg, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Status string truncated.");
-        }
-        return PAPI_EMISC;
-    }
-
+  fn_exit:
     return PAPI_OK;
-}
-
-int
-unload_hsa_sym( void )
-{
-    if (hsa_is_enabled())
-        (*hsa_shut_downPtr)();
-
-    hsa_initPtr           = NULL;
-    hsa_shut_downPtr      = NULL;
-    hsa_iterate_agentsPtr = NULL;
-    hsa_agent_get_infoPtr = NULL;
-
-    return hsa_is_enabled();
-}
-
-hsa_status_t
-count_devices( hsa_agent_t agent, void *data )
-{
-    int *count = (int *) data;
-
-    hsa_device_type_t type;
-    ROCM_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
-              return _status);
-
-    if (type == HSA_DEVICE_TYPE_GPU) {
-        ++(*count);
-    }
-
-    return HSA_STATUS_SUCCESS;
-}
-
-hsa_status_t
-get_device_count( int *count )
-{
-    *count = 0;
-
-    ROCM_CALL((*hsa_iterate_agentsPtr)(&count_devices, count),
-              return _status);
-
-    return HSA_STATUS_SUCCESS;
+  fn_fail:
+    sprintf(err_msg, "No compatible devices found.");
+    return PAPI_EMISC;
 }
