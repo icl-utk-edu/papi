@@ -511,6 +511,10 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
 {
     assert(tool_data != nullptr);
 
+    if( NULL != getenv("PAPI_ROCP_SDK_DISPATCH_MODE") ){
+        rpsdk_profiling_mode = RPSDK_MODE_DISPATCH;
+    }
+
     // Obtain the list of available (GPU) agents.
     gpu_agents = get_GPU_agent_info();
 
