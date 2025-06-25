@@ -215,15 +215,15 @@
  * _should_ modify the minor version number as to force user applications 
  * to re-compile.
  */
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
+#define PAPI_VERSION_NUMBER(maj,min,rev,inc) (((maj)<<24) | ((min)<<16) | ((rev)<<8) | (inc))
+#define PAPI_VERSION_MAJOR(x)   	(((x)>>24)    & 0xff)
+#define PAPI_VERSION_MINOR(x)		(((x)>>16)    & 0xff)
+#define PAPI_VERSION_REVISION(x)	(((x)>>8)     & 0xff)
+#define PAPI_VERSION_INCREMENT(x)((x)          & 0xff)
 
 /* This is the official PAPI version */
 /* The final digit represents the patch count */
-#define PAPI_VERSION                    PAPI_VERSION_NUMBER(7,2,0,0)
+#define PAPI_VERSION  			PAPI_VERSION_NUMBER(7,2,0,0)
 #define PAPI_VER_CURRENT 		(PAPI_VERSION & 0xffff0000)
 
   /* Tests for checking event code type */
