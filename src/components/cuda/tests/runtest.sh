@@ -15,6 +15,11 @@ multi_pass_evt_name="cuda:::gpu__compute_memory_access_throughput_internal_activ
 concurrent_evt_names=("cuda:::sm__cycles_active:stat=sum:device=" \
                       "cuda:::sm__cycles_elapsed:stat=max:device=")
 
+make test_cuda_cmp_presets
+echo -e "Running: \e[36m./test_cuda_cmp_presets\e[0m"
+./test_cuda_cmp_presets
+echo -e "-------------------------------------\n"
+
 make test_multipass_event_fail
 echo -e "Running: \e[36m./test_multipass_event_fail\e[0m" "${evt_names[@]}" $multi_pass_evt_name
 ./test_multipass_event_fail "${evt_names[@]}" $multi_pass_evt_name
