@@ -161,6 +161,13 @@ main( int argc, char **argv )
     printf( "\nThis utility lets you add events from the command line "
         "interface to see if they work.\n\n" );
 
+    if ( argc < 2 ) {
+        printf("No events specified!\n");
+        printf("Specify events like rocm_smi:::device=0:mem_usage_VRAM rocm_smi:::device=0:pci_throughput_sent\n");
+        printf("Use papi/src/utils/papi_native_avail for a list of all events; search for 'rocm_smi:::'.\n");
+        exit(-1);
+    }
+
     retval = PAPI_library_init( PAPI_VER_CURRENT );
     if (retval != PAPI_VER_CURRENT ) {
         fprintf(stderr,"Error! PAPI_library_init\n");
@@ -239,14 +246,6 @@ main( int argc, char **argv )
                 printf( "Successfully added: %s\n", argv[i] );
             }
         }
-    }
-
-    /* Automatically pass if no events, for run_tests.sh */
-    if ( num_events == 0 ) {
-        printf("No events specified!\n");
-        printf("Specify events like rocm_smi:::device=0:mem_usage_VRAM rocm_smi:::device=0:pci_throughput_sent\n");
-        printf("Use papi/src/utils/papi_native_avail for a list of all events; search for 'rocm_smi:::'.\n");
-        return 0;
     }
 
    // ROCM Activity.
