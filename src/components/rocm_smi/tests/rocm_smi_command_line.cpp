@@ -1,6 +1,6 @@
 #define __HIP_PLATFORM_HCC__
 
-/* file rocm_command_line.c
+/* file rocm_smi_command_line.c
  * Nearly identical to "papi/src/utils/papi_command_line.c". 
  * This simply tries to add the events listed on the command line,
  * all into a single event set. It will then conduct a test using
