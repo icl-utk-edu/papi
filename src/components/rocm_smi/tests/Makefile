@@ -24,7 +24,7 @@ ROCM_SMI_LDFLAGS := $(LDFLAGS) -ldl -g -pthread
 	@echo "CFLAGS=" $(CFLAGS)
 	g++ $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = rocm_command_line rocm_smi_all power_monitor_rocm rocm_smi_writeTests
+TESTS = rocm_smi_command_line rocm_smi_all power_monitor_rocm rocm_smi_writeTests
 TESTS_LONG = rocmsmi_example
 
 rocm_smi_tests: $(TESTS)
@@ -33,11 +33,11 @@ rocm_smi_tests_long: $(TESTS_LONG)
 # Note: We compile .o separately from the executable link; some versions of hipcc
 #       have trouble managing libraries if we try to do both in a single step.
 
-rocm_command_line.o: rocm_command_line.cpp $(UTILOBJS) $(PAPILIB)
+rocm_smi_command_line.o: rocm_smi_command_line.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@ 
 
-rocm_command_line: rocm_command_line.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
+rocm_smi_command_line: rocm_smi_command_line.o $(UTILOBJS) $(PAPILIB)
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS) 
 
 rocm_smi_all.o: rocm_smi_all.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
