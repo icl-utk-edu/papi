@@ -5154,12 +5154,6 @@ PAPI_num_events( int EventSet )
 	if ( !ESI )
 		papi_return( PAPI_ENOEVST );
 
-#ifdef DEBUG
-	/* Not necessary */
-	if ( ESI->NumberOfEvents == 0 )
-		papi_return( PAPI_EINVAL );
-#endif
-
 	return ( ESI->NumberOfEvents );
 }
 
