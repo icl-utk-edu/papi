@@ -1811,15 +1811,18 @@ PAPI_enum_event( int *EventCode, int modifier )
         /* Iterate over all or all available presets. */
         if ( modifier == PAPI_ENUM_EVENTS || modifier == PAPI_PRESET_ENUM_AVAIL ) {
 
-            if ( _papi_hwd[cidx]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
-                int junk;
-                _papi_hwd[cidx]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
-            }
-
             /* NULL pointer used to terminate the list. However, now we have
              * more presets that exist beyond the bounds of the original
              * array, so skip over the NULL entries. */
             do {
+                cidx = _papi_hwi_component_index( (int)(i | PAPI_PRESET_MASK) );
+                if (cidx < 0) return PAPI_ENOCMP;
+                if ( _papi_hwd[cidx]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
+                    APIDBG("Triggered forced initialization of component ID=%d.\n", cidx);
+                    int junk;
+                    _papi_hwd[cidx]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
+                }
+
                 if ( ++i >= num_all_presets ) {
                     return ( PAPI_EINVAL );
                 }
