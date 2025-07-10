@@ -18,25 +18,30 @@ FFLAGS +=-g
 CFLAGS +=-g
 CXXFLAGS +=-g -std=c++11
 
+ifeq ($(BUILD_LIBSDE_STATIC),yes)
+	LD_STATIC_FLAGS = $(LDFLAGS) $(datadir)/libpapi.a $(datadir)/libsde.a
+	LIBSDE=yes
+endif
+
 ifeq ($(BUILD_LIBSDE_SHARED),yes)
-	LDFLAGS += -Llib -L$(datadir) -L$(datadir)/libpfm4/lib -lpapi -lpfm -lsde
+	sdeLDFLAGS = $(LDFLAGS) -Llib -L$(datadir) -L$(datadir)/libpfm4/lib -lpapi -lpfm -lsde
 	LIBSDE=yes
-else ifeq ($(BUILD_LIBSDE_STATIC),yes)
-	LDFLAGS += -Llib $(datadir)/libsde.a -lpapi
-	LIBSDE=yes
+else
+	sdeLDFLAGS = $(LD_STATIC_FLAGS)
 endif
 
 SDE_F08_API=../sde_F.F90
 
 ifeq ($(LIBSDE),yes)
 	TESTS = Minimal_Test Minimal_Test++ Simple_Test Simple2_Test Simple2_NoPAPI_Test Simple2_Test++ Recorder_Test Recorder_Test++ Created_Counter_Test Created_Counter_Test++ Overflow_Test Counting_Set_Simple_Test Counting_Set_MemLeak_Test Counting_Set_Simple_Test++ Counting_Set_MemLeak_Test++
-endif
+
 ifeq ($(BUILD_LIBSDE_STATIC),yes)
 	TESTS += Overflow_Static_Test
 endif
 
 ifeq ($(ENABLE_FORTRAN_TESTS),yes)
     TESTS += sde_test_f08
+endif
 endif
 
 
@@ -47,10 +52,10 @@ sde_tests: $(TESTS)
 prfx=Minimal
 
 Minimal_Test: $(prfx)/Minimal_Test.c
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) $(LDFLAGS)
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) $(sdeLDFLAGS)
 
 Minimal_Test++: $(prfx)/Minimal_Test++.cpp
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) $(LDFLAGS)
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) $(sdeLDFLAGS)
 
 ################################################################################
 ## Simple test
@@ -60,7 +65,7 @@ libSimple.so: $(prfx)/Simple_Lib.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Simple_Test: $(prfx)/Simple_Driver.c libSimple.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple $(LDFLAGS) -lm
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple $(sdeLDFLAGS) -lm
 
 ################################################################################
 ## Simple2 test
@@ -70,7 +75,7 @@ libSimple2.so: $(prfx)/Simple2_Lib.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Simple2_Test: $(prfx)/Simple2_Driver.c libSimple2.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple2 $(LDFLAGS) -lm
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lSimple2 $(sdeLDFLAGS) -lm
 
 Simple2_NoPAPI_Test: $(prfx)/Simple2_NoPAPI_Driver.c libSimple2.so
 	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) -Llib -lSimple2 -L$(datadir) -lsde -lm -ldl
@@ -79,7 +84,7 @@ libSimple2++.so: $(prfx)/Simple2_Lib++.cpp
 	$(CXX) -shared -Wall -fPIC $(CXXFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Simple2_Test++: $(prfx)/Simple2_Driver++.cpp libSimple2++.so
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lSimple2++ $(LDFLAGS) -lm
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lSimple2++ $(sdeLDFLAGS) -lm
 
 ################################################################################
 ## Recorder test
@@ -89,13 +94,13 @@ libRecorder.so: $(prfx)/Lib_With_Recorder.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Recorder_Test: $(prfx)/Recorder_Driver.c libRecorder.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lRecorder $(LDFLAGS) -lm
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lRecorder $(sdeLDFLAGS) -lm
 
 libRecorder++.so: $(prfx)/Lib_With_Recorder++.cpp
 	$(CXX) -shared -Wall -fPIC $(CXXFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Recorder_Test++: $(prfx)/Recorder_Driver++.cpp libRecorder++.so
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lRecorder++ $(LDFLAGS) -lm
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lRecorder++ $(sdeLDFLAGS) -lm
 
 
 ################################################################################
@@ -111,17 +116,17 @@ libCreated_Counter_static.a: $(prfx)/Lib_With_Created_Counter.c
 	rm lib/Lib_With_Created_Counter.o
 
 Created_Counter_Test: $(prfx)/Created_Counter_Driver.c libCreated_Counter.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(LDFLAGS) -lm
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(sdeLDFLAGS) -lm
 Overflow_Test: $(prfx)/Overflow_Driver.c libCreated_Counter.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(LDFLAGS) -lm
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCreated_Counter $(sdeLDFLAGS) -lm
 Overflow_Static_Test: $(prfx)/Overflow_Driver.c libCreated_Counter_static.a
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) lib/libCreated_Counter_static.a $(datadir)/libpapi.a $(datadir)/libsde.a -ldl -lrt
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) lib/libCreated_Counter_static.a $(LD_STATIC_FLAGS)
 
 libCreated_Counter++.so: $(prfx)/Lib_With_Created_Counter++.cpp
 	$(CXX) -shared -Wall -fPIC $(CXXFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Created_Counter_Test++: $(prfx)/Created_Counter_Driver++.cpp libCreated_Counter++.so
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCreated_Counter++ $(LDFLAGS) -lm
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCreated_Counter++ $(sdeLDFLAGS) -lm
 
 ################################################################################
 ## Counting Set test
@@ -131,19 +136,19 @@ libCounting_Set++.so: $(prfx)/CountingSet_Lib++.cpp $(prfx)/cset_lib.hpp
 	$(CXX) -shared -Wall -fPIC $(CXXFLAGS) $(INCLUDE) -o lib/$@ $<
 
 Counting_Set_MemLeak_Test++: $(prfx)/MemoryLeak_CountingSet_Driver++.cpp libCounting_Set++.so
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCounting_Set++ $(LDFLAGS)
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCounting_Set++ $(sdeLDFLAGS)
 
 Counting_Set_Simple_Test++: $(prfx)/Simple_CountingSet_Driver++.cpp libCounting_Set++.so
-	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCounting_Set++ $(LDFLAGS)
+	$(CXX) $< -o $@ $(INCLUDE) $(CXXFLAGS) $(UTILOBJS) -lCounting_Set++ $(sdeLDFLAGS)
 
 libCounting_Set.so: $(prfx)/CountingSet_Lib.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
 
 Counting_Set_Simple_Test: $(prfx)/Simple_CountingSet_Driver.c libCounting_Set.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(LDFLAGS)
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(sdeLDFLAGS)
 
 Counting_Set_MemLeak_Test: $(prfx)/MemoryLeak_CountingSet_Driver.c libCounting_Set.so
-	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(LDFLAGS)
+	$(CC) $< -o $@ $(INCLUDE) $(CFLAGS) $(UTILOBJS) -lCounting_Set $(sdeLDFLAGS)
 
 ################################################################################
 ## Advanced test
@@ -157,7 +162,7 @@ libGamum.so: $(prfx)/Gamum.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o lib/$@ $^
 
 sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) libXandria.so libGamum.so libRecorder.so
-	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(UTILOBJS) -lXandria -lGamum -lRecorder $(LDFLAGS)
+	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(UTILOBJS) -lXandria -lGamum -lRecorder $(sdeLDFLAGS)
 
 ################################################################################
 ## Cleaning
