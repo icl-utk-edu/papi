@@ -788,9 +788,6 @@ main( int argc, char **argv )
               }
             }
           } while (PAPI_enum_event( &event_code, print_avail_only ) == PAPI_OK);
-
-        printf( "================================================================================\n" );
-
     }
 
 
@@ -798,6 +795,7 @@ main( int argc, char **argv )
   }
       }
 
+    printf( "================================================================================\n" );
     if ( !print_event_info ) {
         if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL || print_avail_only == PAPI_PRESET_ENUM_AVAIL ) {
             printf( "Of %d available events, %d ", avail_count, deriv_count );
