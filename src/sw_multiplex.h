@@ -34,7 +34,6 @@ typedef struct EventSetMultiplexInfo {
   int flags;
 } EventSetMultiplexInfo_t;
 
-int mpx_check( int EventSet );
 int mpx_init( int );
 int mpx_add_event( MPX_EventSet **, int EventCode, int domain,
 		   int granularity );
