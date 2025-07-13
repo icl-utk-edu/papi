@@ -156,7 +156,7 @@ static int _amd_smi_start(hwd_context_t *ctx, hwd_control_state_t *ctrl) {
     amdsmi_context_t *amdsmi_ctx = (amdsmi_context_t *) ctx;
     amdsmi_control_t *amdsmi_ctl = (amdsmi_control_t *) ctrl;
 
-    if (amdsmi_ctx->state & AMDS_EVENTS_OPENED) {
+    if (amdsmi_ctx->state & AMDS_EVENTS_RUNNING) {
         return PAPI_EMISC;
     }
     papi_errno = amds_ctx_open(amdsmi_ctl->events_id, amdsmi_ctl->num_events, &amdsmi_ctl->amds_ctx);
@@ -209,7 +209,7 @@ static int _amd_smi_stop(hwd_context_t *ctx, hwd_control_state_t *ctrl) {
     }
     amdsmi_ctx->state &= ~AMDS_EVENTS_RUNNING;
     papi_errno = amds_ctx_close(amdsmi_ctl->amds_ctx);
-    amdsmi_ctx->state = 0;
+    amdsmi_ctx->state &= ~AMDS_EVENTS_OPENED;
     amdsmi_ctl->amds_ctx = NULL;
     return papi_errno;
 }
@@ -319,8 +319,8 @@ papi_vector_t _amd_smi_vector = {
     .size = {
         .context = sizeof(amdsmi_context_t),
         .control_state = sizeof(amdsmi_control_t),
-        .reg_value = sizeof(int),
-        .reg_alloc = sizeof(int),
+        .reg_value = 1,
+        .reg_alloc = 1,
     },
     .init_thread =       _amd_smi_init_thread,
     .init_component =    _amd_smi_init_component,
