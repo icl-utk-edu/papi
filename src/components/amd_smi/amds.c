@@ -825,6 +825,12 @@ static int init_event_table(void) {
     ntv_table.count = 0;
     int idx = 0;
     
+    // Safety check - if no devices, return early
+    if (device_count <= 0) {
+        ntv_table.events = NULL;
+        return PAPI_OK;
+    }
+    
     // Keep original allocation approach
     ntv_table.events = (native_event_t *) papi_calloc(512 * device_count, sizeof(native_event_t));
     if (!ntv_table.events) {
@@ -834,32 +840,36 @@ static int init_event_table(void) {
     char name_buf[PAPI_MAX_STR_LEN];
     char descr_buf[PAPI_MAX_STR_LEN];
 
-    // Cache sensor availability to avoid repeated API calls
-    typedef struct {
-        bool temp_sensors_available[8];  // Max 8 temperature sensor types
-        bool fan_rpm_available;
-        bool fan_speed_available;
-        bool power_available;
-        bool memory_available;
-        bool activity_available;
-    } device_capabilities_t;
-    
-    device_capabilities_t *dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
-    if (!dev_caps) {
-        papi_free(ntv_table.events);
-        ntv_table.events = NULL;
-        return PAPI_ENOMEM;
-    }
-    
-    // Pre-probe device capabilities once
+    // Define sensor arrays first
     amdsmi_temperature_type_t temp_sensors[] = {
         AMDSMI_TEMPERATURE_TYPE_EDGE, AMDSMI_TEMPERATURE_TYPE_JUNCTION, 
         AMDSMI_TEMPERATURE_TYPE_VRAM, AMDSMI_TEMPERATURE_TYPE_HBM_0,
         AMDSMI_TEMPERATURE_TYPE_HBM_1, AMDSMI_TEMPERATURE_TYPE_HBM_2,
         AMDSMI_TEMPERATURE_TYPE_HBM_3, AMDSMI_TEMPERATURE_TYPE_PLX
     };
+
+    // Cache sensor availability to avoid repeated API calls
+    typedef struct {
+        int temp_sensors_available[8];  // Max 8 temperature sensor types
+        int fan_rpm_available;
+        int fan_speed_available;
+        int power_available;
+        int memory_available;
+        int activity_available;
+    } device_capabilities_t;
     
-    for (int d = 0; d < gpu_count; ++d) {
+    device_capabilities_t *dev_caps = NULL;
+    if (gpu_count > 0) {
+        dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
+        if (!dev_caps) {
+            papi_free(ntv_table.events);
+            ntv_table.events = NULL;
+            return PAPI_ENOMEM;
+        }
+    }
+    
+    // Pre-probe device capabilities once (only if we have GPUs)
+    for (int d = 0; d < gpu_count && dev_caps; ++d) {
         // Probe temperature sensors once per device
         for (size_t si = 0; si < sizeof(temp_sensors)/sizeof(temp_sensors[0]); ++si) {
             int64_t dummy_val;
@@ -899,11 +909,11 @@ static int init_event_table(void) {
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
     
-    /* Temperature sensors - use cached availability */
+    /* Temperature sensors - use cached availability if available */
     for (int d = 0; d < gpu_count; ++d) {
         for (size_t si = 0; si < sizeof(temp_sensors)/sizeof(temp_sensors[0]); ++si) {
-            // Skip if sensor not available (already probed)
-            if (!dev_caps[d].temp_sensors_available[si]) {
+            // Skip if sensor not available (already probed) or no cache
+            if (!dev_caps || !dev_caps[d].temp_sensors_available[si]) {
                 continue;
             }
             
@@ -911,7 +921,7 @@ static int init_event_table(void) {
             for (size_t mi = 0; mi < sizeof(temp_metrics)/sizeof(temp_metrics[0]); ++mi) {
                 // Bounds check to prevent buffer overflow
                 if (idx >= 512 * device_count) {
-                    papi_free(dev_caps);
+                    if (dev_caps) papi_free(dev_caps);
                     return PAPI_ENOSUPP; // Too many events
                 }
                 
@@ -931,7 +941,7 @@ static int init_event_table(void) {
                 ev->name = strdup(name_buf);
                 ev->descr = strdup(descr_buf);
                 if (!ev->name || !ev->descr) {
-                    papi_free(dev_caps);
+                    if (dev_caps) papi_free(dev_caps);
                     return PAPI_ENOMEM;
                 }
                 ev->device = d;
@@ -950,12 +960,12 @@ static int init_event_table(void) {
         }
     }
 
-    /* Fan metrics - use cached availability */
+    /* Fan metrics - use cached availability if available */
     for (int d = 0; d < gpu_count; ++d) {
         /* Register Fan RPM if available */
-        if (dev_caps[d].fan_rpm_available) {
+        if (dev_caps && dev_caps[d].fan_rpm_available) {
             if (idx >= 512 * device_count) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
             }
             
@@ -968,7 +978,7 @@ static int init_event_table(void) {
             ev_rpm->name       = strdup(name_buf);
             ev_rpm->descr      = strdup(descr_buf);
             if (!ev_rpm->name || !ev_rpm->descr) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOMEM;
             }
             ev_rpm->device     = d;
@@ -986,9 +996,9 @@ static int init_event_table(void) {
         }
 
         /* Register Fan SPEED if available */
-        if (dev_caps[d].fan_speed_available) {
+        if (dev_caps && dev_caps[d].fan_speed_available) {
             if (idx >= 512 * device_count) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
             }
             
@@ -1001,7 +1011,7 @@ static int init_event_table(void) {
             ev_fan->name       = strdup(name_buf);
             ev_fan->descr      = strdup(descr_buf);
             if (!ev_fan->name || !ev_fan->descr) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOMEM;
             }
             ev_fan->device     = d;
@@ -1022,7 +1032,7 @@ static int init_event_table(void) {
         uint64_t dummy_u64;
         if (amdsmi_get_gpu_fan_speed_max_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) {
             if (idx >= 512 * device_count) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
             }
             
@@ -1035,7 +1045,7 @@ static int init_event_table(void) {
             ev_fanmax->name       = strdup(name_buf);
             ev_fanmax->descr      = strdup(descr_buf);
             if (!ev_fanmax->name || !ev_fanmax->descr) {
-                papi_free(dev_caps);
+                if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOMEM;
             }
             ev_fanmax->device     = d;
@@ -2070,7 +2080,9 @@ static int init_event_table(void) {
 #endif
     
     // Cleanup device capabilities cache
-    papi_free(dev_caps);
+    if (dev_caps) {
+        papi_free(dev_caps);
+    }
     
     ntv_table.count = idx;
     return PAPI_OK;
