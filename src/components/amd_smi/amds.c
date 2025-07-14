@@ -983,7 +983,7 @@ static int init_event_table(void) {
         }
         
         /* Register Fan RPM if available */
-        if (dev_caps && dev_caps[d].fan_rpm_available) {
+        if (dev_caps && dev_caps[d].device_supports_fan) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
@@ -1016,7 +1016,7 @@ static int init_event_table(void) {
         }
 
         /* Register Fan SPEED if available */
-        if (dev_caps && dev_caps[d].fan_speed_available) {
+        if (dev_caps && dev_caps[d].device_supports_fan) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
@@ -1092,7 +1092,7 @@ static int init_event_table(void) {
         }
         
         // Use cached memory availability instead of probing every time
-        if (!dev_caps || !dev_caps[d].memory_available) {
+        if (!dev_caps || !dev_caps[d].device_supports_memory) {
             continue;  // Skip if memory not available
         }
 
@@ -1168,7 +1168,7 @@ static int init_event_table(void) {
     /* GPU power metrics: average power, power cap, and cap range */
     for (int d = 0; d < gpu_count; ++d) {
         // Use cached power availability instead of probing every time
-        if (!dev_caps || !dev_caps[d].power_available) {
+        if (!dev_caps || !dev_caps[d].device_supports_power) {
             continue;  // Skip if power not available (already cached)
         }
         // Register power average event (trust the cache)
@@ -1373,7 +1373,7 @@ static int init_event_table(void) {
         }
         
         // Use cached activity availability instead of probing every time
-        if (!dev_caps || !dev_caps[d].activity_available) {
+        if (!dev_caps || !dev_caps[d].device_supports_activity) {
             continue;  // Skip if activity not available
         }
         
