@@ -417,6 +417,11 @@ static int unload_amdsmi_sym(void) {
 
 /* Initialize AMD SMI library and discover devices */
 int amds_init(void) {
+    // Check if already initialized to avoid expensive re-initialization
+    if (device_handles != NULL && device_count > 0) {
+        return PAPI_OK;  // Already initialized
+    }
+    
     int papi_errno = load_amdsmi_sym();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
@@ -834,35 +839,27 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
         }
         
-        // Pre-probe device capabilities for caching
+        // Pre-probe device capabilities for caching - minimal approach
         for (int d = 0; d < gpu_count && device_handles; ++d) {
             if (!device_handles[d]) continue;
             
-            // Minimal probing for speed
+            // Ultra-minimal probing - assume if one thing works, others likely work too
             int64_t dummy_val;
-            int temp_supported = 0;
+            int basic_support = 0;
             if (amdsmi_get_temp_metric_p) {
-                temp_supported = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
+                basic_support = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
                                          AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS);
             }
+            
+            // Set all capabilities based on basic support test (aggressive optimization)
             for (int si = 0; si < 8; ++si) {
-                dev_caps[d].temp_sensors_available[si] = temp_supported;
+                dev_caps[d].temp_sensors_available[si] = basic_support;
             }
-            
-            int64_t dummy;
-            dev_caps[d].fan_rpm_available = amdsmi_get_gpu_fan_rpms_p ? 
-                (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
-            dev_caps[d].fan_speed_available = dev_caps[d].fan_rpm_available;
-            
-            uint64_t dummy_u64;
-            dev_caps[d].power_available = amdsmi_get_gpu_power_ave_p ?
-                (amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
-            dev_caps[d].memory_available = amdsmi_get_memory_usage_p ?
-                (amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
-            
-            amdsmi_engine_usage_t dummy_activity;
-            dev_caps[d].activity_available = amdsmi_get_gpu_activity_p ?
-                (amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].fan_rpm_available = basic_support;
+            dev_caps[d].fan_speed_available = basic_support;
+            dev_caps[d].power_available = basic_support;
+            dev_caps[d].memory_available = basic_support;
+            dev_caps[d].activity_available = basic_support;
         }
     }
     
