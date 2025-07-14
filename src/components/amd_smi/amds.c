@@ -3,13 +3,21 @@
 #include <dlfcn.h>
 #include <amd_smi/amdsmi.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 #include "papi.h"
 #include "papi_memory.h"
 #include "amds.h"
 #include "htable.h"
 
-#define AMDSMI_DISABLE_ESMI
+// #define AMDSMI_DISABLE_ESMI
+
+// Timing helper functions
+static double get_time_ms() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
+}
 
 unsigned int _amd_smi_lock;
 
@@ -417,25 +425,37 @@ static int unload_amdsmi_sym(void) {
 
 /* Initialize AMD SMI library and discover devices */
 int amds_init(void) {
+    double start_time = get_time_ms();
+    printf("[AMD_SMI TIMING] Starting amds_init at %.3f ms\n", start_time);
+    
     // Check if already initialized to avoid expensive re-initialization
     if (device_handles != NULL && device_count > 0) {
+        printf("[AMD_SMI TIMING] Already initialized, skipping (%.3f ms)\n", get_time_ms() - start_time);
         return PAPI_OK;  // Already initialized
     }
     
+    double step_start = get_time_ms();
     int papi_errno = load_amdsmi_sym();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
+    printf("[AMD_SMI TIMING] Symbol loading took %.3f ms\n", get_time_ms() - step_start);
     
+    step_start = get_time_ms();
     //AMDSMI_INIT_AMD_CPUS
     amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS);
     if (status != AMDSMI_STATUS_SUCCESS) {
         strcpy(error_string, "amdsmi_init failed");
         return PAPI_ENOSUPP;
     }
+    printf("[AMD_SMI TIMING] amdsmi_init_p took %.3f ms\n", get_time_ms() - step_start);
+    
+    step_start = get_time_ms();
     htable_init(&htable);
+    printf("[AMD_SMI TIMING] htable_init took %.3f ms\n", get_time_ms() - step_start);
 
     // Discover GPU and CPU devices
+    step_start = get_time_ms();
     uint32_t socket_count = 0;
     status = amdsmi_get_socket_handles_p(&socket_count, NULL);
     if (status != AMDSMI_STATUS_SUCCESS || socket_count == 0) {
@@ -443,6 +463,8 @@ int amds_init(void) {
         papi_errno = PAPI_ENOEVNT;
         goto fn_fail;
     }
+    printf("[AMD_SMI TIMING] Socket discovery took %.3f ms (found %u sockets)\n", 
+           get_time_ms() - step_start, socket_count);
     amdsmi_socket_handle *sockets = (amdsmi_socket_handle *) papi_calloc(socket_count, sizeof(amdsmi_socket_handle));
     if (!sockets) {
         papi_errno = PAPI_ENOMEM;
@@ -584,12 +606,16 @@ int amds_init(void) {
     }
 
     // Initialize the native event table for all discovered metrics
+    step_start = get_time_ms();
     papi_errno = init_event_table();
     if (papi_errno != PAPI_OK) {
         sprintf(error_string, "Error while initializing the native event table.");
         goto fn_fail;
     }
+    printf("[AMD_SMI TIMING] Event table initialization took %.3f ms\n", get_time_ms() - step_start);
+    
     ntv_table_p = &ntv_table;
+    printf("[AMD_SMI TIMING] Total amds_init took %.3f ms\n", get_time_ms() - start_time);
     return PAPI_OK;
 
 fn_fail:
@@ -783,8 +809,13 @@ amds_ctx_reset(amds_ctx_t ctx)
 
 /* Initialize native event table: enumerate all supported events */
 static int init_event_table(void) {
+    double start_time = get_time_ms();
+    printf("[AMD_SMI TIMING] Starting init_event_table\n");
+    
     // Check if event table is already initialized
     if (ntv_table.count > 0 && ntv_table.events != NULL) {
+        printf("[AMD_SMI TIMING] Event table already initialized, skipping (%.3f ms)\n", 
+               get_time_ms() - start_time);
         return PAPI_OK;  // Already initialized, skip expensive rebuild
     }
     
@@ -794,6 +825,8 @@ static int init_event_table(void) {
     // Safety check - if no devices, return early
     if (device_count <= 0) {
         ntv_table.events = NULL;
+        printf("[AMD_SMI TIMING] No devices found, init_event_table took %.3f ms\n", 
+               get_time_ms() - start_time);
         return PAPI_OK;
     }
     
@@ -815,17 +848,17 @@ static int init_event_table(void) {
     };
     const int num_temp_sensors = sizeof(temp_sensors)/sizeof(temp_sensors[0]);
 
-    // Cache sensor availability to avoid repeated API calls
+    // Cache sensor availability to avoid repeated API calls - but still test individual events
     typedef struct {
-        int temp_sensors_available[8];  // Must match temp_sensors array size
-        int fan_rpm_available;
-        int fan_speed_available;
-        int power_available;
-        int memory_available;
-        int activity_available;
+        int device_supports_temp;     // Does device support ANY temperature?
+        int device_supports_fan;      // Does device support ANY fan metrics?
+        int device_supports_power;    // Does device support ANY power metrics?
+        int device_supports_memory;   // Does device support ANY memory metrics?
+        int device_supports_activity; // Does device support ANY activity metrics?
     } device_capabilities_t;
     
     device_capabilities_t *dev_caps = NULL;
+    double step_start = get_time_ms();
     if (gpu_count > 0) {
         dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
         if (!dev_caps) {
@@ -834,43 +867,37 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
         }
         
-        // Pre-probe device capabilities for caching - proper testing
+        // Pre-probe device capabilities for caching - device-level only
         for (int d = 0; d < gpu_count && device_handles; ++d) {
             if (!device_handles[d]) continue;
             
-            // Test temperature capability properly - check function exists first
+            // Test if device supports temperature at all
             int64_t dummy_val;
-            int temp_supported = 0;
-            if (amdsmi_get_temp_metric_p) {
-                temp_supported = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
-                                         AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS);
-            }
-            for (int si = 0; si < 8; ++si) {
-                dev_caps[d].temp_sensors_available[si] = temp_supported;
-            }
+            dev_caps[d].device_supports_temp = (amdsmi_get_temp_metric_p &&
+                amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
+                                         AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test fan capabilities - check functions exist first
+            // Test if device supports fan metrics at all
             int64_t dummy;
-            dev_caps[d].fan_rpm_available = (amdsmi_get_gpu_fan_rpms_p && 
+            dev_caps[d].device_supports_fan = (amdsmi_get_gpu_fan_rpms_p && 
                 amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
-            dev_caps[d].fan_speed_available = (amdsmi_get_gpu_fan_speed_p &&
-                amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test power capability - check function exists first
+            // Test if device supports power at all
             uint64_t dummy_u64;
-            dev_caps[d].power_available = (amdsmi_get_gpu_power_ave_p &&
+            dev_caps[d].device_supports_power = (amdsmi_get_gpu_power_ave_p &&
                 amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test memory capability - check function exists first
-            dev_caps[d].memory_available = (amdsmi_get_memory_usage_p &&
+            // Test if device supports memory at all
+            dev_caps[d].device_supports_memory = (amdsmi_get_memory_usage_p &&
                 amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test activity capability - check function exists first
+            // Test if device supports activity at all
             amdsmi_engine_usage_t dummy_activity;
-            dev_caps[d].activity_available = (amdsmi_get_gpu_activity_p &&
+            dev_caps[d].device_supports_activity = (amdsmi_get_gpu_activity_p &&
                 amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
         }
     }
+    printf("[AMD_SMI TIMING] Capability caching took %.3f ms\n", get_time_ms() - step_start);
     
     // Now register events using cached capabilities
     const amdsmi_temperature_metric_t temp_metrics[] = {
@@ -885,20 +912,27 @@ static int init_event_table(void) {
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
     
-    /* Temperature sensors - use cached availability properly */
+    /* Temperature sensors - device-level cache + individual testing */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
             continue;
         }
         
+        // First check: Does this device support temperature at all? (cached)
+        if (!dev_caps || !dev_caps[d].device_supports_temp) {
+            continue;  // Skip entire device if it doesn't support temperature
+        }
+        
         for (int si = 0; si < num_temp_sensors && si < 8; ++si) {
-            // Skip if sensor not available (already cached) or no cache
-            if (!dev_caps || !dev_caps[d].temp_sensors_available[si]) {
-                continue;
+            // Test each sensor individually (not cached, but only for devices that support temp)
+            int64_t sensor_test_val;
+            if (!amdsmi_get_temp_metric_p || 
+                amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si], AMDSMI_TEMP_CURRENT, &sensor_test_val) != AMDSMI_STATUS_SUCCESS) {
+                continue;  // Skip this specific sensor if it doesn't work
             }
             
-            // Register all metrics for this available sensor - trust the cache
+            // Register metrics for this working sensor, testing each metric individually
             for (size_t mi = 0; mi < sizeof(temp_metrics)/sizeof(temp_metrics[0]); ++mi) {
                 // Bounds check to prevent buffer overflow
                 if (idx >= 512 * device_count) {
@@ -906,12 +940,13 @@ static int init_event_table(void) {
                     return PAPI_ENOSUPP; // Too many events
                 }
                 
-                // Skip if function not available
-                if (!amdsmi_get_temp_metric_p) {
-                    continue;
+                // Test this specific metric on this specific sensor
+                int64_t metric_val;
+                if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
+                                             temp_metrics[mi], &metric_val) != AMDSMI_STATUS_SUCCESS) {
+                    continue;  /* skip this specific metric if not supported */
                 }
                 
-                // Trust the cache - don't re-probe each metric (this was the inefficiency!)
                 snprintf(name_buf, sizeof(name_buf), "%s:device=%d:sensor=%d",
                          temp_metric_names[mi], d, (int) temp_sensors[si]);
                 snprintf(descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d",
@@ -2097,6 +2132,8 @@ static int init_event_table(void) {
     }
     
     ntv_table.count = idx;
+    printf("[AMD_SMI TIMING] Event registration completed, total events: %d\n", idx);
+    printf("[AMD_SMI TIMING] Total init_event_table took %.3f ms\n", get_time_ms() - start_time);
     return PAPI_OK;
 }
 
