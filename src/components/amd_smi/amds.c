@@ -493,7 +493,7 @@ int amds_init(void) {
         goto fn_fail;
     }
 
-    // Retrieve GPU processor handles for each socket
+    // Retrieve GPU processor handles for each socket - optimized to reduce allocations
     for (uint32_t s = 0; s < socket_count; ++s) {
         uint32_t gpu_count_local = 0;
         processor_type_t proc_type = AMDSMI_PROCESSOR_TYPE_AMD_GPU;
@@ -501,23 +501,18 @@ int amds_init(void) {
         if (status != AMDSMI_STATUS_SUCCESS || gpu_count_local == 0) {
             continue;  // no GPU on this socket or error
         }
-        amdsmi_processor_handle *gpu_handles = (amdsmi_processor_handle *) papi_calloc(gpu_count_local, sizeof(*gpu_handles));
-        if (!gpu_handles) {
-            papi_errno = PAPI_ENOMEM;
-            sprintf(error_string, "Memory allocation error for GPU handles on socket %u.", s);
-            papi_free(sockets);
-            goto fn_fail;
-        }
+        
+        // Use the main device_handles array directly to avoid extra allocation
+        amdsmi_processor_handle *gpu_handles = &device_handles[device_count];
         status = amdsmi_get_processor_handles_by_type_p(sockets[s], proc_type, gpu_handles, &gpu_count_local);
         if (status == AMDSMI_STATUS_SUCCESS) {
-            for (uint32_t g = 0; g < gpu_count_local; ++g) {
-                device_handles[device_count++] = gpu_handles[g];
-            }
+            device_count += gpu_count_local;
         }
-        papi_free(gpu_handles);
     }
     papi_free(sockets);
-    // (No need to check device_count here; CPU may still be added even if GPU count is zero)
+    
+    // Set gpu_count for use in event table initialization
+    gpu_count = device_count;  // All devices added so far are GPUs
 
 #ifndef AMDSMI_DISABLE_ESMI
     // Retrieve CPU socket handles
@@ -839,27 +834,41 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
         }
         
-        // Pre-probe device capabilities for caching - minimal approach
+        // Pre-probe device capabilities for caching - proper testing
         for (int d = 0; d < gpu_count && device_handles; ++d) {
             if (!device_handles[d]) continue;
             
-            // Ultra-minimal probing - assume if one thing works, others likely work too
+            // Test temperature capability properly
             int64_t dummy_val;
-            int basic_support = 0;
+            int temp_supported = 0;
             if (amdsmi_get_temp_metric_p) {
-                basic_support = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
+                temp_supported = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
                                          AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS);
             }
-            
-            // Set all capabilities based on basic support test (aggressive optimization)
             for (int si = 0; si < 8; ++si) {
-                dev_caps[d].temp_sensors_available[si] = basic_support;
+                dev_caps[d].temp_sensors_available[si] = temp_supported;
             }
-            dev_caps[d].fan_rpm_available = basic_support;
-            dev_caps[d].fan_speed_available = basic_support;
-            dev_caps[d].power_available = basic_support;
-            dev_caps[d].memory_available = basic_support;
-            dev_caps[d].activity_available = basic_support;
+            
+            // Test fan capabilities
+            int64_t dummy;
+            dev_caps[d].fan_rpm_available = amdsmi_get_gpu_fan_rpms_p ? 
+                (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].fan_speed_available = amdsmi_get_gpu_fan_speed_p ?
+                (amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
+            
+            // Test power capability
+            uint64_t dummy_u64;
+            dev_caps[d].power_available = amdsmi_get_gpu_power_ave_p ?
+                (amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            
+            // Test memory capability
+            dev_caps[d].memory_available = amdsmi_get_memory_usage_p ?
+                (amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            
+            // Test activity capability
+            amdsmi_engine_usage_t dummy_activity;
+            dev_caps[d].activity_available = amdsmi_get_gpu_activity_p ?
+                (amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) : 0;
         }
     }
     
