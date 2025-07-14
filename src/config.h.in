@@ -45,9 +45,6 @@
 /* Define to 1 if you have the `cpc' library (-lcpc). */
 #undef HAVE_LIBCPC
 
-/* perfctr header file */
-#undef HAVE_LIBPERFCTR_H
-
 /* Define to 1 if you have the `mach_absolute_time' function. */
 #undef HAVE_MACH_ABSOLUTE_TIME
 
@@ -155,9 +152,6 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
-
-/* Use the perfctr virtual TSC for per-thread times */
-#undef USE_PERFCTR_PTTIMER
 
 /* Use /proc for per-thread times */
 #undef USE_PROC_PTTIMER

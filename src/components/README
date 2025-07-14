@@ -66,8 +66,6 @@ nvml                          Requires its own configure; monitors NVIDIA hardwa
 pcp                           Performance Co-Pilot interface.
 perf_event                    Linux perf_event CPU counters
 perf_event_uncore             Linux perf-event CPU uncore and Northbridge
-perfmon2                      OLD, only used for Linux before 2.6.31.
-perfmon_ia64                  OLD, only used for Linux before 2.6.31.
 powercap                      Linux Powercap energy measurements.
 rapl                          Linux RAPL energy measurments.
 stealtime                     Stealtime Filesystem statistics. 
