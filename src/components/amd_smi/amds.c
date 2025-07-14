@@ -838,7 +838,7 @@ static int init_event_table(void) {
         for (int d = 0; d < gpu_count && device_handles; ++d) {
             if (!device_handles[d]) continue;
             
-            // Test temperature capability properly
+            // Test temperature capability properly - check function exists first
             int64_t dummy_val;
             int temp_supported = 0;
             if (amdsmi_get_temp_metric_p) {
@@ -849,26 +849,26 @@ static int init_event_table(void) {
                 dev_caps[d].temp_sensors_available[si] = temp_supported;
             }
             
-            // Test fan capabilities
+            // Test fan capabilities - check functions exist first
             int64_t dummy;
-            dev_caps[d].fan_rpm_available = amdsmi_get_gpu_fan_rpms_p ? 
-                (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
-            dev_caps[d].fan_speed_available = amdsmi_get_gpu_fan_speed_p ?
-                (amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].fan_rpm_available = (amdsmi_get_gpu_fan_rpms_p && 
+                amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
+            dev_caps[d].fan_speed_available = (amdsmi_get_gpu_fan_speed_p &&
+                amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test power capability
+            // Test power capability - check function exists first
             uint64_t dummy_u64;
-            dev_caps[d].power_available = amdsmi_get_gpu_power_ave_p ?
-                (amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].power_available = (amdsmi_get_gpu_power_ave_p &&
+                amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test memory capability
-            dev_caps[d].memory_available = amdsmi_get_memory_usage_p ?
-                (amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            // Test memory capability - check function exists first
+            dev_caps[d].memory_available = (amdsmi_get_memory_usage_p &&
+                amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
             
-            // Test activity capability
+            // Test activity capability - check function exists first
             amdsmi_engine_usage_t dummy_activity;
-            dev_caps[d].activity_available = amdsmi_get_gpu_activity_p ?
-                (amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].activity_available = (amdsmi_get_gpu_activity_p &&
+                amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
         }
     }
     
@@ -1341,6 +1341,9 @@ static int init_event_table(void) {
         if (!dev_caps || !dev_caps[d].activity_available) {
             continue;  // Skip if activity not available
         }
+        
+        // Register GFX activity event - check function exists and trust the cache
+        if (amdsmi_get_gpu_activity_p) {
         snprintf(name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
         snprintf(descr_buf, sizeof(descr_buf), "Device %d GFX engine activity (%%)", d);
         native_event_t *ev_gfx = &ntv_table.events[idx];
@@ -1397,6 +1400,7 @@ static int init_event_table(void) {
         ev_mm->access_func = access_amdsmi_gpu_activity;
         htable_insert(htable, ev_mm->name, ev_mm);
         idx++;
+        }  // End of amdsmi_get_gpu_activity_p function check
     }
 
     /* GPU clock frequency levels */
