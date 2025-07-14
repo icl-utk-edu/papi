@@ -810,7 +810,10 @@ static int init_event_table(void) {
     };
     const int num_temp_sensors = sizeof(temp_sensors)/sizeof(temp_sensors[0]);
 
-    // Cache sensor availability to avoid repeated API calls
+    // Disable capability caching for faster initialization (can be enabled later)
+    const int use_capability_caching = 0;  // Set to 1 to enable caching
+    
+    // Cache sensor availability to avoid repeated API calls (optional)
     typedef struct {
         int temp_sensors_available[8];  // Must match temp_sensors array size
         int fan_rpm_available;
@@ -821,71 +824,43 @@ static int init_event_table(void) {
     } device_capabilities_t;
     
     device_capabilities_t *dev_caps = NULL;
-    if (gpu_count > 0) {
+    if (use_capability_caching && gpu_count > 0) {
         dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
         if (!dev_caps) {
             papi_free(ntv_table.events);
             ntv_table.events = NULL;
             return PAPI_ENOMEM;
         }
-    }
-    
-    // Pre-probe device capabilities once (only if we have GPUs and valid handles)
-    for (int d = 0; d < gpu_count && dev_caps && device_handles; ++d) {
-        // Safety check for device handle
-        if (!device_handles[d]) {
-            continue;
-        }
         
-        // Probe temperature sensors once per device - use safe bounds
-        for (int si = 0; si < num_temp_sensors && si < 8; ++si) {
+        // Pre-probe device capabilities (only if caching enabled)
+        for (int d = 0; d < gpu_count && device_handles; ++d) {
+            if (!device_handles[d]) continue;
+            
+            // Minimal probing for speed
             int64_t dummy_val;
+            int temp_supported = 0;
             if (amdsmi_get_temp_metric_p) {
-                dev_caps[d].temp_sensors_available[si] = 
-                    (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
-                                             AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS);
-            } else {
-                dev_caps[d].temp_sensors_available[si] = 0;
+                temp_supported = (amdsmi_get_temp_metric_p(device_handles[d], AMDSMI_TEMPERATURE_TYPE_EDGE,
+                                         AMDSMI_TEMP_CURRENT, &dummy_val) == AMDSMI_STATUS_SUCCESS);
             }
-        }
-        
-        // Probe other capabilities once per device
-        int64_t dummy;
-        if (amdsmi_get_gpu_fan_rpms_p) {
-            dev_caps[d].fan_rpm_available = 
-                (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
-        } else {
-            dev_caps[d].fan_rpm_available = 0;
-        }
-        
-        if (amdsmi_get_gpu_fan_speed_p) {
-            dev_caps[d].fan_speed_available = 
-                (amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
-        } else {
-            dev_caps[d].fan_speed_available = 0;
-        }
-        
-        uint64_t dummy_u64;
-        if (amdsmi_get_gpu_power_ave_p) {
-            dev_caps[d].power_available = 
-                (amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS);
-        } else {
-            dev_caps[d].power_available = 0;
-        }
-        
-        if (amdsmi_get_memory_usage_p) {
-            dev_caps[d].memory_available = 
-                (amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS);
-        } else {
-            dev_caps[d].memory_available = 0;
-        }
-        
-        amdsmi_engine_usage_t dummy_activity;
-        if (amdsmi_get_gpu_activity_p) {
-            dev_caps[d].activity_available = 
-                (amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS);
-        } else {
-            dev_caps[d].activity_available = 0;
+            for (int si = 0; si < 8; ++si) {
+                dev_caps[d].temp_sensors_available[si] = temp_supported;
+            }
+            
+            int64_t dummy;
+            dev_caps[d].fan_rpm_available = amdsmi_get_gpu_fan_rpms_p ? 
+                (amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].fan_speed_available = dev_caps[d].fan_rpm_available;
+            
+            uint64_t dummy_u64;
+            dev_caps[d].power_available = amdsmi_get_gpu_power_ave_p ?
+                (amdsmi_get_gpu_power_ave_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            dev_caps[d].memory_available = amdsmi_get_memory_usage_p ?
+                (amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM, &dummy_u64) == AMDSMI_STATUS_SUCCESS) : 0;
+            
+            amdsmi_engine_usage_t dummy_activity;
+            dev_caps[d].activity_available = amdsmi_get_gpu_activity_p ?
+                (amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) : 0;
         }
     }
     
@@ -902,7 +877,7 @@ static int init_event_table(void) {
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
     
-    /* Temperature sensors - use cached availability if available */
+    /* Temperature sensors - use original approach or cached availability */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
@@ -910,9 +885,19 @@ static int init_event_table(void) {
         }
         
         for (int si = 0; si < num_temp_sensors && si < 8; ++si) {
-            // Skip if sensor not available (already probed) or no cache
-            if (!dev_caps || !dev_caps[d].temp_sensors_available[si]) {
-                continue;
+            // Use cache if available, otherwise probe each sensor (original behavior)
+            if (use_capability_caching && dev_caps) {
+                if (!dev_caps[d].temp_sensors_available[si]) {
+                    continue;
+                }
+            } else {
+                // Original behavior - probe each sensor
+                int64_t dummy_val;
+                if (!amdsmi_get_temp_metric_p || 
+                    amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
+                                           AMDSMI_TEMP_CURRENT, &dummy_val) != AMDSMI_STATUS_SUCCESS) {
+                    continue;  // skip this sensor if not present
+                }
             }
             
             // Register all metrics for this available sensor
@@ -923,7 +908,7 @@ static int init_event_table(void) {
                     return PAPI_ENOSUPP; // Too many events
                 }
                 
-                // Only test the specific metric if sensor is available and function exists
+                // Test specific metric (original behavior)
                 if (!amdsmi_get_temp_metric_p) {
                     continue;
                 }
@@ -962,7 +947,7 @@ static int init_event_table(void) {
         }
     }
 
-    /* Fan metrics - use cached availability if available */
+    /* Fan metrics - use original approach or cached availability */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
@@ -970,7 +955,17 @@ static int init_event_table(void) {
         }
         
         /* Register Fan RPM if available */
-        if (dev_caps && dev_caps[d].fan_rpm_available) {
+        int fan_rpm_available = 0;
+        if (use_capability_caching && dev_caps) {
+            fan_rpm_available = dev_caps[d].fan_rpm_available;
+        } else {
+            // Original behavior - probe directly
+            int64_t dummy;
+            fan_rpm_available = (amdsmi_get_gpu_fan_rpms_p && 
+                amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
+        }
+        
+        if (fan_rpm_available) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
@@ -1003,7 +998,17 @@ static int init_event_table(void) {
         }
 
         /* Register Fan SPEED if available */
-        if (dev_caps && dev_caps[d].fan_speed_available) {
+        int fan_speed_available = 0;
+        if (use_capability_caching && dev_caps) {
+            fan_speed_available = dev_caps[d].fan_speed_available;
+        } else {
+            // Original behavior - probe directly
+            int64_t dummy;
+            fan_speed_available = (amdsmi_get_gpu_fan_speed_p && 
+                amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
+        }
+        
+        if (fan_speed_available) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
@@ -1035,7 +1040,7 @@ static int init_event_table(void) {
             idx++;
         }
 
-        /* Register Fan Max Speed - probe once since not cached */
+        /* Register Fan Max Speed - always probe directly */
         uint64_t dummy_u64;
         if (amdsmi_get_gpu_fan_speed_max_p && 
             amdsmi_get_gpu_fan_speed_max_p(device_handles[d], 0, &dummy_u64) == AMDSMI_STATUS_SUCCESS) {
