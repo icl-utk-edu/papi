@@ -1118,37 +1118,6 @@ MPX_shutdown( void )
 }
 
 int
-mpx_check( int EventSet )
-{
-	/* Currently, there is only the need for one mpx check: if
-	 * running on POWER6/perfctr platform, the domain must
-	 * include user, kernel, and supervisor, since the scale
-	 * event uses the dedicated counter #6, PM_RUN_CYC, which
-	 * cannot be controlled on a domain level.
-	 */
-	EventSetInfo_t *ESI = _papi_hwi_lookup_EventSet( EventSet );
-
-	if (ESI==NULL) return PAPI_EBUG;
-
-	if ( strstr( _papi_hwd[ESI->CmpIdx]->cmp_info.name, "perfctr.c" ) == NULL )
-		return PAPI_OK;
-
-	if ( strcmp( _papi_hwi_system_info.hw_info.model_string, "POWER6" ) == 0 ) {
-		unsigned int chk_domain =
-			PAPI_DOM_USER + PAPI_DOM_KERNEL + PAPI_DOM_SUPERVISOR;
-
-		if ( ( ESI->domain.domain & chk_domain ) != chk_domain ) {
-			PAPIERROR
-				( "This platform requires PAPI_DOM_USER+PAPI_DOM_KERNEL+PAPI_DOM_SUPERVISOR\n"
-				  "to be set in the domain when using multiplexing.  Instead, found %#x\n",
-				  ESI->domain.domain );
-			return ( PAPI_EINVAL_DOM );
-		}
-	}
-	return PAPI_OK;
-}
-
-int
 mpx_init( int interval_ns )
 {
 #if defined(PTHREADS) || defined(_POWER6)
