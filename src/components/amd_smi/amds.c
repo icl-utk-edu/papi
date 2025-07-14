@@ -783,6 +783,11 @@ amds_ctx_reset(amds_ctx_t ctx)
 
 /* Initialize native event table: enumerate all supported events */
 static int init_event_table(void) {
+    // Check if event table is already initialized
+    if (ntv_table.count > 0 && ntv_table.events != NULL) {
+        return PAPI_OK;  // Already initialized, skip expensive rebuild
+    }
+    
     ntv_table.count = 0;
     int idx = 0;
     
@@ -810,10 +815,7 @@ static int init_event_table(void) {
     };
     const int num_temp_sensors = sizeof(temp_sensors)/sizeof(temp_sensors[0]);
 
-    // Disable capability caching for faster initialization (can be enabled later)
-    const int use_capability_caching = 0;  // Set to 1 to enable caching
-    
-    // Cache sensor availability to avoid repeated API calls (optional)
+    // Cache sensor availability to avoid repeated API calls
     typedef struct {
         int temp_sensors_available[8];  // Must match temp_sensors array size
         int fan_rpm_available;
@@ -824,7 +826,7 @@ static int init_event_table(void) {
     } device_capabilities_t;
     
     device_capabilities_t *dev_caps = NULL;
-    if (use_capability_caching && gpu_count > 0) {
+    if (gpu_count > 0) {
         dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
         if (!dev_caps) {
             papi_free(ntv_table.events);
@@ -832,7 +834,7 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
         }
         
-        // Pre-probe device capabilities (only if caching enabled)
+        // Pre-probe device capabilities for caching
         for (int d = 0; d < gpu_count && device_handles; ++d) {
             if (!device_handles[d]) continue;
             
@@ -877,7 +879,7 @@ static int init_event_table(void) {
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
     
-    /* Temperature sensors - use original approach or cached availability */
+    /* Temperature sensors - use cached availability */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
@@ -885,19 +887,9 @@ static int init_event_table(void) {
         }
         
         for (int si = 0; si < num_temp_sensors && si < 8; ++si) {
-            // Use cache if available, otherwise probe each sensor (original behavior)
-            if (use_capability_caching && dev_caps) {
-                if (!dev_caps[d].temp_sensors_available[si]) {
-                    continue;
-                }
-            } else {
-                // Original behavior - probe each sensor
-                int64_t dummy_val;
-                if (!amdsmi_get_temp_metric_p || 
-                    amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
-                                           AMDSMI_TEMP_CURRENT, &dummy_val) != AMDSMI_STATUS_SUCCESS) {
-                    continue;  // skip this sensor if not present
-                }
+            // Skip if sensor not available (already cached) or no cache
+            if (!dev_caps || !dev_caps[d].temp_sensors_available[si]) {
+                continue;
             }
             
             // Register all metrics for this available sensor
@@ -908,7 +900,7 @@ static int init_event_table(void) {
                     return PAPI_ENOSUPP; // Too many events
                 }
                 
-                // Test specific metric (original behavior)
+                // Test specific metric (still needed for individual metric support)
                 if (!amdsmi_get_temp_metric_p) {
                     continue;
                 }
@@ -947,7 +939,7 @@ static int init_event_table(void) {
         }
     }
 
-    /* Fan metrics - use original approach or cached availability */
+    /* Fan metrics - use cached availability */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
@@ -955,17 +947,7 @@ static int init_event_table(void) {
         }
         
         /* Register Fan RPM if available */
-        int fan_rpm_available = 0;
-        if (use_capability_caching && dev_caps) {
-            fan_rpm_available = dev_caps[d].fan_rpm_available;
-        } else {
-            // Original behavior - probe directly
-            int64_t dummy;
-            fan_rpm_available = (amdsmi_get_gpu_fan_rpms_p && 
-                amdsmi_get_gpu_fan_rpms_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
-        }
-        
-        if (fan_rpm_available) {
+        if (dev_caps && dev_caps[d].fan_rpm_available) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
@@ -998,17 +980,7 @@ static int init_event_table(void) {
         }
 
         /* Register Fan SPEED if available */
-        int fan_speed_available = 0;
-        if (use_capability_caching && dev_caps) {
-            fan_speed_available = dev_caps[d].fan_speed_available;
-        } else {
-            // Original behavior - probe directly
-            int64_t dummy;
-            fan_speed_available = (amdsmi_get_gpu_fan_speed_p && 
-                amdsmi_get_gpu_fan_speed_p(device_handles[d], 0, &dummy) == AMDSMI_STATUS_SUCCESS);
-        }
-        
-        if (fan_speed_available) {
+        if (dev_caps && dev_caps[d].fan_speed_available) {
             if (idx >= 512 * device_count) {
                 if (dev_caps) papi_free(dev_caps);
                 return PAPI_ENOSUPP;
