@@ -3,18 +3,10 @@
 #include <dlfcn.h>
 #include <rocm_smi.h>
 #include <inttypes.h>
-#include <sys/time.h>
 #include "papi.h"
 #include "papi_memory.h"
 #include "rocs.h"
 #include "htable.h"
-
-// Timing helper functions
-static double get_time_ms() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
-}
 
 unsigned int _rocm_smi_lock;
 
@@ -340,19 +332,13 @@ static rsmi_pcie_bandwidth_t *pcie_table;
 int
 rocs_init(void)
 {
-    double start_time = get_time_ms();
-    printf("[ROCM_SMI TIMING] Starting rocs_init at %.3f ms\n", start_time);
-    
     int papi_errno;
 
-    double step_start = get_time_ms();
     papi_errno = load_rsmi_sym();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    printf("[ROCM_SMI TIMING] Symbol loading took %.3f ms\n", get_time_ms() - step_start);
 
-    step_start = get_time_ms();
     rsmi_status_t status = rsmi_init_p(0);
     if (status != RSMI_STATUS_SUCCESS) {
         const char *status_string = NULL;
@@ -360,40 +346,29 @@ rocs_init(void)
         strcpy(error_string, status_string);
         return PAPI_EMISC;
     }
-    printf("[ROCM_SMI TIMING] rsmi_init_p took %.3f ms\n", get_time_ms() - step_start);
 
-    step_start = get_time_ms();
     htable_init(&htable);
-    printf("[ROCM_SMI TIMING] htable_init took %.3f ms\n", get_time_ms() - step_start);
 
-    step_start = get_time_ms();
     status = rsmi_num_monitor_dev_p((uint32_t *)&device_count);
     if (status != RSMI_STATUS_SUCCESS) {
         sprintf(error_string, "Error while counting available devices.");
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
-    printf("[ROCM_SMI TIMING] Device counting took %.3f ms (found %d devices)\n", 
-           get_time_ms() - step_start, device_count);
 
-    step_start = get_time_ms();
     papi_errno = init_device_table();
     if (papi_errno != PAPI_OK) {
         sprintf(error_string, "Error while initializing device tables.");
         goto fn_fail;
     }
-    printf("[ROCM_SMI TIMING] Device table initialization took %.3f ms\n", get_time_ms() - step_start);
 
-    step_start = get_time_ms();
     papi_errno = init_event_table();
     if (papi_errno != PAPI_OK) {
         sprintf(error_string, "Error while initializing the native event table.");
         goto fn_fail;
     }
-    printf("[ROCM_SMI TIMING] Event table initialization took %.3f ms\n", get_time_ms() - step_start);
 
     ntv_table_p = &ntv_table;
-    printf("[ROCM_SMI TIMING] Total rocs_init took %.3f ms\n", get_time_ms() - start_time);
 
   fn_exit:
     return papi_errno;
@@ -930,19 +905,13 @@ static int get_ntv_events(ntv_event_t *, int);
 int
 init_event_table(void)
 {
-    double start_time = get_time_ms();
-    printf("[ROCM_SMI TIMING] Starting init_event_table\n");
-    
     int papi_errno = PAPI_OK;
 
-    double step_start = get_time_ms();
     int ntv_events_count;
     papi_errno = get_ntv_events_count(&ntv_events_count);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    printf("[ROCM_SMI TIMING] Event counting took %.3f ms (found %d events)\n", 
-           get_time_ms() - step_start, ntv_events_count);
 
     ntv_event_t *ntv_events = papi_calloc(ntv_events_count, sizeof(*ntv_events));
     if (ntv_events == NULL) {
@@ -950,17 +919,13 @@ init_event_table(void)
         goto fn_fail;
     }
 
-    step_start = get_time_ms();
     papi_errno = get_ntv_events(ntv_events, ntv_events_count);
     if (papi_errno != PAPI_OK) {
         goto fn_fail;
     }
-    printf("[ROCM_SMI TIMING] Event population took %.3f ms\n", get_time_ms() - step_start);
 
     ntv_table.count = ntv_events_count;
     ntv_table.events = ntv_events;
-    
-    printf("[ROCM_SMI TIMING] Total init_event_table took %.3f ms\n", get_time_ms() - start_time);
 
   fn_exit:
     return papi_errno;

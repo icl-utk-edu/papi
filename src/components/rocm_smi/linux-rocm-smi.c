@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <sys/time.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -23,13 +22,6 @@
 #include "papi_memory.h"
 #include "extras.h"
 #include "rocs.h"
-
-// Timing helper functions
-static double get_time_ms() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
-}
 
 typedef struct {
     int initialized;
@@ -102,20 +94,15 @@ evt_get_count(int *count)
 static int
 _rocm_smi_init_private(void)
 {
-    double start_time = get_time_ms();
-    printf("[ROCM_SMI TIMING] Starting rocs_init_private at %.3f ms\n", start_time);
-    
     int papi_errno = PAPI_OK;
 
     PAPI_lock(COMPONENT_LOCK);
 
     if (_rocm_smi_vector.cmp_info.initialized) {
         papi_errno = _rocm_smi_vector.cmp_info.disabled;
-        printf("[ROCM_SMI TIMING] Already initialized, skipping (%.3f ms)\n", get_time_ms() - start_time);
         goto fn_exit;
     }
 
-    double step_start = get_time_ms();
     papi_errno = rocs_init();
     if (papi_errno != PAPI_OK) {
         _rocm_smi_vector.cmp_info.disabled = papi_errno;
@@ -124,22 +111,17 @@ _rocm_smi_init_private(void)
         sprintf(_rocm_smi_vector.cmp_info.disabled_reason, "%s", error_str);
         goto fn_fail;
     }
-    printf("[ROCM_SMI TIMING] rocs_init took %.3f ms\n", get_time_ms() - step_start);
 
-    step_start = get_time_ms();
     int count = 0;
     papi_errno = evt_get_count(&count);
     _rocm_smi_vector.cmp_info.num_native_events = count;
     _rocm_smi_vector.cmp_info.num_cntrs = count;
     _rocm_smi_vector.cmp_info.num_mpx_cntrs = count;
-    printf("[ROCM_SMI TIMING] Event counting took %.3f ms (found %d events)\n", 
-           get_time_ms() - step_start, count);
 
   fn_exit:
     _rocm_smi_vector.cmp_info.initialized = 1;
     _rocm_smi_vector.cmp_info.disabled = papi_errno;
     PAPI_unlock(COMPONENT_LOCK);
-    printf("[ROCM_SMI TIMING] Total rocs_init_private took %.3f ms\n", get_time_ms() - start_time);
     return papi_errno;
   fn_fail:
     goto fn_exit;

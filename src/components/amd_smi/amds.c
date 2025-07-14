@@ -3,7 +3,6 @@
 #include <dlfcn.h>
 #include <amd_smi/amdsmi.h>
 #include <inttypes.h>
-#include <sys/time.h>
 
 #include "papi.h"
 #include "papi_memory.h"
@@ -11,13 +10,6 @@
 #include "htable.h"
 
 // #define AMDSMI_DISABLE_ESMI
-
-// Timing helper functions
-static double get_time_ms() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
-}
 
 unsigned int _amd_smi_lock;
 
@@ -425,37 +417,25 @@ static int unload_amdsmi_sym(void) {
 
 /* Initialize AMD SMI library and discover devices */
 int amds_init(void) {
-    double start_time = get_time_ms();
-    printf("[AMD_SMI TIMING] Starting amds_init at %.3f ms\n", start_time);
-    
     // Check if already initialized to avoid expensive re-initialization
     if (device_handles != NULL && device_count > 0) {
-        printf("[AMD_SMI TIMING] Already initialized, skipping (%.3f ms)\n", get_time_ms() - start_time);
         return PAPI_OK;  // Already initialized
     }
     
-    double step_start = get_time_ms();
     int papi_errno = load_amdsmi_sym();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    printf("[AMD_SMI TIMING] Symbol loading took %.3f ms\n", get_time_ms() - step_start);
     
-    step_start = get_time_ms();
     //AMDSMI_INIT_AMD_CPUS
     amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS);
     if (status != AMDSMI_STATUS_SUCCESS) {
         strcpy(error_string, "amdsmi_init failed");
         return PAPI_ENOSUPP;
     }
-    printf("[AMD_SMI TIMING] amdsmi_init_p took %.3f ms\n", get_time_ms() - step_start);
-    
-    step_start = get_time_ms();
     htable_init(&htable);
-    printf("[AMD_SMI TIMING] htable_init took %.3f ms\n", get_time_ms() - step_start);
 
     // Discover GPU and CPU devices
-    step_start = get_time_ms();
     uint32_t socket_count = 0;
     status = amdsmi_get_socket_handles_p(&socket_count, NULL);
     if (status != AMDSMI_STATUS_SUCCESS || socket_count == 0) {
@@ -463,8 +443,6 @@ int amds_init(void) {
         papi_errno = PAPI_ENOEVNT;
         goto fn_fail;
     }
-    printf("[AMD_SMI TIMING] Socket discovery took %.3f ms (found %u sockets)\n", 
-           get_time_ms() - step_start, socket_count);
     amdsmi_socket_handle *sockets = (amdsmi_socket_handle *) papi_calloc(socket_count, sizeof(amdsmi_socket_handle));
     if (!sockets) {
         papi_errno = PAPI_ENOMEM;
@@ -606,16 +584,12 @@ int amds_init(void) {
     }
 
     // Initialize the native event table for all discovered metrics
-    step_start = get_time_ms();
     papi_errno = init_event_table();
     if (papi_errno != PAPI_OK) {
         sprintf(error_string, "Error while initializing the native event table.");
         goto fn_fail;
     }
-    printf("[AMD_SMI TIMING] Event table initialization took %.3f ms\n", get_time_ms() - step_start);
-    
     ntv_table_p = &ntv_table;
-    printf("[AMD_SMI TIMING] Total amds_init took %.3f ms\n", get_time_ms() - start_time);
     return PAPI_OK;
 
 fn_fail:
@@ -809,13 +783,8 @@ amds_ctx_reset(amds_ctx_t ctx)
 
 /* Initialize native event table: enumerate all supported events */
 static int init_event_table(void) {
-    double start_time = get_time_ms();
-    printf("[AMD_SMI TIMING] Starting init_event_table\n");
-    
     // Check if event table is already initialized
     if (ntv_table.count > 0 && ntv_table.events != NULL) {
-        printf("[AMD_SMI TIMING] Event table already initialized, skipping (%.3f ms)\n", 
-               get_time_ms() - start_time);
         return PAPI_OK;  // Already initialized, skip expensive rebuild
     }
     
@@ -825,8 +794,6 @@ static int init_event_table(void) {
     // Safety check - if no devices, return early
     if (device_count <= 0) {
         ntv_table.events = NULL;
-        printf("[AMD_SMI TIMING] No devices found, init_event_table took %.3f ms\n", 
-               get_time_ms() - start_time);
         return PAPI_OK;
     }
     
@@ -858,7 +825,6 @@ static int init_event_table(void) {
     } device_capabilities_t;
     
     device_capabilities_t *dev_caps = NULL;
-    double step_start = get_time_ms();
     if (gpu_count > 0) {
         dev_caps = (device_capabilities_t *) papi_calloc(gpu_count, sizeof(device_capabilities_t));
         if (!dev_caps) {
@@ -897,7 +863,6 @@ static int init_event_table(void) {
                 amdsmi_get_gpu_activity_p(device_handles[d], &dummy_activity) == AMDSMI_STATUS_SUCCESS) ? 1 : 0;
         }
     }
-    printf("[AMD_SMI TIMING] Capability caching took %.3f ms\n", get_time_ms() - step_start);
     
     // Now register events using cached capabilities
     const amdsmi_temperature_metric_t temp_metrics[] = {
@@ -2132,8 +2097,6 @@ static int init_event_table(void) {
     }
     
     ntv_table.count = idx;
-    printf("[AMD_SMI TIMING] Event registration completed, total events: %d\n", idx);
-    printf("[AMD_SMI TIMING] Total init_event_table took %.3f ms\n", get_time_ms() - start_time);
     return PAPI_OK;
 }
 
