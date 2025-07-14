@@ -16,28 +16,37 @@ module load $COMPILER
 
 cd src
 
-# test linking with or without --with-shlib-tools 
+# --- Configure and Build PAPI ---
+## Configure without --with-shlib-tools
 if [ "$SHLIB" = "without" ]; then
-    ./configure --with-debug=$DEBUG --enable-warnings 
+    ./configure --with-debug=$DEBUG --enable-warnings
+## Configure with --with-shlib-tools 
 else
     ./configure --with-debug=$DEBUG --enable-warnings --with-shlib-tools
 fi
-
 make -j4
 
-# run PAPI utilities
+# --- Verify Components we Expect to Be Active are Active ---
+## For the PAPI build get the active components
 utils/papi_component_avail
+current_active_components=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
 
-# active component check
-EXPECTED_ACTIVE_COMPONENTS="perf_event perf_event_uncore sysdetect" 
-CURRENT_ACTIVE_COMPONENTS=$(utils/papi_component_avail | grep -A1000 'Active components' | grep "Name:   " | awk '{printf "%s%s", sep, $2; sep=" "} END{print ""}')
-[ "$EXPECTED_ACTIVE_COMPONENTS" = "$CURRENT_ACTIVE_COMPONENTS" ]
+## defining the components we expect to be active for the PAPI build
+declare -a expected_active_components
+expected_active_components=("perf_event" "perf_event_uncore" "sysdetect")
 
-# without '--with-shlib-tools' in ./configure
+## Verify the expected active components are active for the PAPI build
+for cmp in "${expected_active_components[@]}"; do
+    grep -q $cmp <<< $current_active_components || \
+    { echo "The component $cmp is not active and should be active!"; exit 1; }
+done
+
+# --- Run Tests: Ctests, Ftests, Component Tests, etc. ---
+## Without '--with-shlib-tools' in ./configure
 if [ "$SHLIB" = "without" ]; then
    echo "Running full test suite for active components"
    ./run_tests.sh TESTS_QUIET
-# with '--with-shlib-tools' in ./configure
+## With '--with-shlib-tools' in ./configure
 else
    echo "Running single component test for active components"
    ./run_tests_shlib.sh TESTS_QUIET
