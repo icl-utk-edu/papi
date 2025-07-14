@@ -885,7 +885,7 @@ static int init_event_table(void) {
         "temp_crit_min", "temp_crit_min_hyst", "temp_offset", "temp_lowest", "temp_highest"
     };
     
-    /* Temperature sensors - use cached availability */
+    /* Temperature sensors - use cached availability properly */
     for (int d = 0; d < gpu_count; ++d) {
         // Safety check for device handle
         if (!device_handles || !device_handles[d]) {
@@ -898,7 +898,7 @@ static int init_event_table(void) {
                 continue;
             }
             
-            // Register all metrics for this available sensor
+            // Register all metrics for this available sensor - trust the cache
             for (size_t mi = 0; mi < sizeof(temp_metrics)/sizeof(temp_metrics[0]); ++mi) {
                 // Bounds check to prevent buffer overflow
                 if (idx >= 512 * device_count) {
@@ -906,17 +906,12 @@ static int init_event_table(void) {
                     return PAPI_ENOSUPP; // Too many events
                 }
                 
-                // Test specific metric (still needed for individual metric support)
+                // Skip if function not available
                 if (!amdsmi_get_temp_metric_p) {
                     continue;
                 }
                 
-                int64_t metric_val;
-                if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
-                                             temp_metrics[mi], &metric_val) != AMDSMI_STATUS_SUCCESS) {
-                    continue;  /* skip this metric if not supported */
-                }
-                
+                // Trust the cache - don't re-probe each metric (this was the inefficiency!)
                 snprintf(name_buf, sizeof(name_buf), "%s:device=%d:sensor=%d",
                          temp_metric_names[mi], d, (int) temp_sensors[si]);
                 snprintf(descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d",
@@ -1054,15 +1049,25 @@ static int init_event_table(void) {
         }
     }
 
-    /* VRAM memory metrics */
+    /* VRAM memory metrics - use cached availability */
     for (int d = 0; d < gpu_count; ++d) {
-        uint64_t mem_dummy = 0;
+        // Safety check for device handle
+        if (!device_handles || !device_handles[d]) {
+            continue;
+        }
+        
+        // Use cached memory availability instead of probing every time
+        if (!dev_caps || !dev_caps[d].memory_available) {
+            continue;  // Skip if memory not available
+        }
 
-        /* total VRAM bytes */
-        if (amdsmi_get_total_memory_p(device_handles[d],
-                                      AMDSMI_MEM_TYPE_VRAM,
-                                      &mem_dummy) == AMDSMI_STATUS_SUCCESS) {
-
+        /* total VRAM bytes - trust the cache */
+        if (amdsmi_get_total_memory_p) {
+            if (idx >= 512 * device_count) {
+                if (dev_caps) papi_free(dev_caps);
+                return PAPI_ENOSUPP;
+            }
+            
             snprintf(name_buf, sizeof(name_buf),
                      "mem_total_VRAM:device=%d", d);
             snprintf(descr_buf, sizeof(descr_buf),
@@ -1072,6 +1077,10 @@ static int init_event_table(void) {
             ev->id   = idx;
             ev->name = strdup(name_buf);
             ev->descr= strdup(descr_buf);
+            if (!ev->name || !ev->descr) {
+                if (dev_caps) papi_free(dev_caps);
+                return PAPI_ENOMEM;
+            }
             ev->device = d;
             ev->value  = 0;
             ev->mode   = PAPI_MODE_READ;
@@ -1086,11 +1095,13 @@ static int init_event_table(void) {
             ++idx;
         }
 
-        /* used VRAM bytes */
-        if (amdsmi_get_memory_usage_p(device_handles[d],
-                                      AMDSMI_MEM_TYPE_VRAM,
-                                      &mem_dummy) == AMDSMI_STATUS_SUCCESS) {
-
+        /* used VRAM bytes - trust the cache */
+        if (amdsmi_get_memory_usage_p) {
+            if (idx >= 512 * device_count) {
+                if (dev_caps) papi_free(dev_caps);
+                return PAPI_ENOSUPP;
+            }
+            
             snprintf(name_buf, sizeof(name_buf),
                      "mem_usage_VRAM:device=%d", d);
             snprintf(descr_buf, sizeof(descr_buf),
@@ -1100,6 +1111,10 @@ static int init_event_table(void) {
             ev->id   = idx;
             ev->name = strdup(name_buf);
             ev->descr= strdup(descr_buf);
+            if (!ev->name || !ev->descr) {
+                if (dev_caps) papi_free(dev_caps);
+                return PAPI_ENOMEM;
+            }
             ev->device = d;
             ev->value  = 0;
             ev->mode   = PAPI_MODE_READ;
@@ -1117,16 +1132,12 @@ static int init_event_table(void) {
 
     /* GPU power metrics: average power, power cap, and cap range */
     for (int d = 0; d < gpu_count; ++d) {
-        // Check support for power metrics on this device
-        amdsmi_power_info_t pinfo;
-        amdsmi_power_cap_info_t cinfo;
-        amdsmi_status_t stat_avg = amdsmi_get_power_info_p(device_handles[d], &pinfo);
-        amdsmi_status_t stat_cap = amdsmi_get_power_cap_info_p(device_handles[d], 0, &cinfo);
-        if (stat_avg != AMDSMI_STATUS_SUCCESS && stat_cap != AMDSMI_STATUS_SUCCESS) {
-            // Device supports neither power reading nor capping
-            continue;
+        // Use cached power availability instead of probing every time
+        if (!dev_caps || !dev_caps[d].power_available) {
+            continue;  // Skip if power not available (already cached)
         }
-        if (stat_avg == AMDSMI_STATUS_SUCCESS) {
+        // Register power average event (trust the cache)
+        if (amdsmi_get_power_info_p) {
             // Average power consumption (in Watts or microWatts)
             snprintf(name_buf, sizeof(name_buf), "power_average:device=%d", d);
             snprintf(descr_buf, sizeof(descr_buf), "Device %d average power consumption (W)", d);
@@ -1147,7 +1158,8 @@ static int init_event_table(void) {
             htable_insert(htable, ev_pwr_avg->name, ev_pwr_avg);
             idx++;
         }
-        if (stat_cap == AMDSMI_STATUS_SUCCESS) {
+        // Register power cap events (if power cap functions are available)
+        if (amdsmi_get_power_cap_info_p) {
             // Current power cap limit
             snprintf(name_buf, sizeof(name_buf), "power_cap:device=%d", d);
             snprintf(descr_buf, sizeof(descr_buf), "Device %d current power cap (W)", d);
@@ -1318,11 +1330,16 @@ static int init_event_table(void) {
     }
 
     /* Additional GPU metrics and system information */
-    /* GPU engine utilization metrics (gfx, umc, mm) */
+    /* GPU engine utilization metrics - use cached availability */
     for (int d = 0; d < gpu_count; ++d) {
-        amdsmi_engine_usage_t usage;
-        if (amdsmi_get_gpu_activity_p(device_handles[d], &usage) != AMDSMI_STATUS_SUCCESS) {
+        // Safety check for device handle
+        if (!device_handles || !device_handles[d]) {
             continue;
+        }
+        
+        // Use cached activity availability instead of probing every time
+        if (!dev_caps || !dev_caps[d].activity_available) {
+            continue;  // Skip if activity not available
         }
         snprintf(name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
         snprintf(descr_buf, sizeof(descr_buf), "Device %d GFX engine activity (%%)", d);
