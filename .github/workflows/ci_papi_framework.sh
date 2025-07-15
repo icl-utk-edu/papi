@@ -44,6 +44,7 @@ esac
 ## Set the cuda component and the nvml component environment variables
 case "$COMPONENTS" in
   *"cuda"* | *"nvml"*)
+    module unload glibc
     export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
     module load cuda/12.8.0
     export PAPI_CUDA_ROOT=$ICL_CUDA_ROOT
