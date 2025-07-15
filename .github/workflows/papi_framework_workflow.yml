@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: comprehensive component tests 
-        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{hardware}}
+        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with rocm and rocm_smi components, as they will not be active in the above comprehensive job
   papi_components_amd:
     strategy:
@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: rocm and rocm_smi component tests
-        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{hardware}}
+        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with the infiniband component, as it will not always be active in the above comrehensive job
   papi_component_infiniband:
     strategy:
@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: infiniband component tests
-        run: .github/workflows/ci_papi_framework.sh ${{matrix.components}} ${{matrix.debug}} ${{matrix.shlib}} ${{hardware}}
+        run: .github/workflows/ci_papi_framework.sh ${{matrix.components}} ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   papi_spack:
     runs-on: cpu
     timeout-minutes: 60
