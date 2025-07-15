@@ -41,22 +41,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: rocm and rocm_smi component tests
         run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{hardware}}
-  # build PAPI only with the rocp_sdk component as we cannot add rocp_sdk to the above job as rocm and rocp_sdk should not be configured together
-    # build PAPI only with rocm and rocm_smi components, as they will not be active in the above comprehensive job
-  papi_components_amd:
-    strategy:
-      matrix:
-        components: [rocm rocm_smi]
-        debug: [yes, no] 
-        shlib: [with, without]
-        hardware: gpu_amd
-      fail-fast: false
-    runs-on: [self-hosted, gpu_amd]
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - name: rocm and rocm_smi component tests
-        run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{hardware}}
   # build PAPI only with the infiniband component, as it will not always be active in the above comrehensive job
   papi_component_infiniband:
     strategy:
