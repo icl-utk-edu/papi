@@ -13,7 +13,7 @@ INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
 INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
-LDFLAGS = -ldl -g -pthread
+ROCM_SMI_LDFLAGS := $(LDFLAGS) -ldl -g -pthread
 
 %.o:%.c
 	@echo "INCLUDE=" $(INCLUDE)
@@ -37,31 +37,31 @@ rocm_command_line.o: rocm_command_line.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@ 
 
 rocm_command_line: rocm_command_line.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 rocm_smi_all.o: rocm_smi_all.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 rocm_smi_all: rocm_smi_all.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 power_monitor_rocm.o: power_monitor_rocm.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 power_monitor_rocm: power_monitor_rocm.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 rocmsmi_example.o: rocmsmi_example.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS) -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
 
 rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 clean:
 	rm -f $(TESTS) $(TESTS_LONG) *.o
@@ -71,6 +71,6 @@ checkpath:
 	echo HIP_PATH = $(HIP_PATH)
 	echo HIPCC = $(HIPCC)
 	echo INCLUDE = $(INCLUDE)
-	echo LDFLAGS = $(LDFLAGS)
+	echo ROCM_SMI_LDFLAGS = $(ROCM_SMI_LDFLAGS)
 	echo CFLAGS = $(CFLAGS)
 
