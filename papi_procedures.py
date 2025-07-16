@@ -328,13 +328,16 @@ def papi_release():
     incrementalRelease = verify_user_input(promptForUser) 
     nameOfTagBranch = None
     if incrementalRelease == "n":
-        nameOfTagBranch = input(f"{spacesForFormatting} Not an incremental release, please provide a branch name to branch git (e.g. stable-7.2.0): ")
+        nameOfTagBranch = input(f"{spacesForFormatting}  Not an incremental release, please provide a branch name to branch git (e.g. stable-7.2.0): ")
         os.system(f"cd tag_papi; git checkout -b {nameOfTagBranch}")
+    else:
+        input("""The original release_procedure.txt that this Python script adopts from did not have incremental release directions.
+The rest of the script assumes this is not an incremental release. If this has changed exit and update this script.""")
 
     print(" ")
     # Step 15, tag PAPI and push the tag to the central repo. You will be prompted for a comment on the tags. A tags comment should be able to be seen
     # by clicking "Tags" on GitHub and then clicking the desired tag you would like to see. For a comment, "Release PAPI-7-2-0-t" is sufficient (your own version of course).
-    nameOfTag = input("Step 14: A tag will now be created, please provide a name for the tag (e.g. papi-7-2-0-t, note that for this tag you will be prompted for a comment): ")
+    nameOfTag = input("Step 15: A tag will now be created, please provide a name for the tag (e.g. papi-7-2-0-t, note that for this tag you will be prompted for a comment): ")
     os.system(f"cd tag_papi; git tag -a {nameOfTag}")
     if incrementalRelease == "n":
         os.system(f"cd tag_papi; git push --tags origin {nameOfTagBranch}")
@@ -527,7 +530,7 @@ def papi_bugfix():
     bugFixBranchName = None
     if firstBugFix == "y":
         bugFixBranchName = input(f"{spacesForFormatting} Provide the name of the release branch you are wanting to apply a bug fix for (e.g. stable-7.2.0): ")
-        os.system(f"git checkout {bugFixBrancName}")
+        os.system(f"git checkout {bugFixBranchName}")
     elif firstBugFix == "n":
         input(f"{spacesForFormatting} As this is not the first bug fix for this release we must create a branch from the last bug fix release. (Press Enter to Continue).")
         previousTag = input(f"{spacesForFormatting} Provide the tag of the previous bug fix release (e.g. tags/papi-7-2-0-1-t): ")
@@ -554,11 +557,15 @@ def papi_bugfix():
         commitsAreMerged = verify_user_input(promptForUser)
         for commitId in bugFixesCommits.split(","):
             if commitsAreMerged == "y":
-                os.system(f"git cherry-pick -m 1 {commitId}")
+                if os.system(f"git cherry-pick -m 1 {commitId}") != 0:
+                    input(f"""`git cherry-pick -m 1 {commitId}` was not applied successfully. Suspend this script (ctrl + z) and follow the steps listed above this message in yellow.
+Once completed, on the command line run `jobs`, locate papi_procedures.py, and finally run `fg %# where # is the value in brakcets in the left most column.`""")
             else:
-                os.system(f"git cherry-pick {commitId}") 
+                if os.system(f"git cherry-pick {commitId}")  != 0:
+                    input(f"""`git cherry-pick {commitId}` was not applied successfully. Suspend this script (ctrl + z) and follow the steps listed above this message in yellow.
+Once completed, on the command line run `jobs`, locate papi_procedures.py, and finally run `fg %# where # is the value in brakcets in the left most column.`""")
     elif bugFixesInMaster == "n":
-        input(f"{spacesForFormatting} Suspend this script (ctrl + z) and apply the bug fixes that are necessary. Once the bug fixes have been applied, on the command line run `jobs`\n"
+        input(f"{spacesForFormatting} Suspend this script (ctrl + z) and apply the bug fixes that are necessary. Once the bug fixes have been COMMITTED, on the command line run `jobs`\n"
               f"{spacesForFormatting} locate papi_procedures.py, and finally run `fg %#` where # is the value in brackets in the left most column.")
 
     print(" ")
@@ -577,28 +584,32 @@ def papi_bugfix():
     os.system("git push --tags")
 
     print(" ")
-    # Step 7, create a fresh clone of the papi repository under a directory name including the release number.
+    # Step 7, verify the tag was created.
+    input(f"Step 7: Go to https://github.com/icl-utk-edu/papi/tags and verify your tag {bugFixTag} was successfully created. (Press Enter to Continue).")
+
+    print(" ")
+    # Step 8, create a fresh clone of the papi repository under a directory name including the release number.
     # This release number needs to be the same as provided in Step 5 minus the -t and using periods instead of dashes. Example: papi-7.2.0.1.
-    tarballDirBugFix = input("Step 7: Provide a name to clone PAPI under (e.g. papi-7.2.0.1, note that it must have the release number with the bug identifier): ")
+    tarballDirBugFix = input("Step 8: Provide a name to clone PAPI under (e.g. papi-7.2.0.1, note that it must have the release number with the bug identifier): ")
     os.system(f"git clone https://github.com/icl-utk-edu/papi.git {tarballDirBugFix}")
 
     print(" ")
-    # Step 8, tar, zip, and update the permissions.
-    input("Step 8: The directory {targballDirBugFix} will now be tar'd and zipped. (Press Enter to Continue).")
+    # Step 9, tar, zip, and update the permissions.
+    input(f"Step 9: The directory {tarballDirBugFix} will now be tar'd and zipped. (Press Enter to Continue).")
     os.system(f"""tar -cvf {tarballDirBugFix}.tar {tarballDirBugFix};
                   gzip {tarballDirBugFix}.tar;
                   chmod 664 {tarballDirBugFix}.tar.gz""")
 
     print(" ")
-    # Step 9, copy the tarball to the website.
-    input("Step 9: The tarball will be copied to the website. (Press Enter to Continue).")
+    # Step 10, copy the tarball to the website.
+    input("Step 10: The tarball will be copied to the website. (Press Enter to Continue).")
     username = getpass.getuser()
     pathToDownloads = f"/home/{username}/websites/icl.utk.edu/projects/papi/downloads/"
     os.system(f"scp {tarballDirBugFix}.tar.gz {username}@icl.utk.edu:{pathToDownloads}")
 
     print(" ")
-    # Step 10, check the newly created link is functioning properly and can be downloaded.
-    input("Step 10: The newly created link with the tarball will now be downloaded to verify it is functioning properly. (Press Enter to Continue).")
+    # Step 11, check the newly created link is functioning properly and can be downloaded.
+    input("Step 11: The newly created link with the tarball will now be downloaded to verify it is functioning properly. (Press Enter to Continue).")
     os.system(f"wget http://icl.utk.edu/projects/papi/downloads/{tarballDirBugFix}.tar.gz")
     promptForUser = (f"{spacesForFormatting} Was the tarball successfully downloaded (y or n)? ")
     tarballDowloadSuccess = verify_user_input(promptForUser)
@@ -607,10 +618,10 @@ def papi_bugfix():
               f"{spacesForFormatting} `jobs`, locate papi_rocedures.py, and finally run `fg %#` where # is the value in brackets in the left most column.")
 
     print(" ")
-    # Step 11, create a link with supporting text on the PAPI software web page.
+    # Step 12, create a link with supporting text on the PAPI software web page.
     # Create an entry on the PAPI wiki: https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases
     # announcing the new release with details about the changes.
-    input("Step 11: Create a link with supporting text on the PAPI software web page and create an entry on the PAPI wiki (https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases). (Press Enter to Continue).")
+    input("Step 12: Create a link with supporting text on the PAPI software web page and create an entry on the PAPI wiki (https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases). (Press Enter to Continue).")
 
     print("\033[32mThe bug fix procedures have been completed!\033[0m")
 
