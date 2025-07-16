@@ -446,71 +446,6 @@ The rest of the script assumes this is not an incremental release. If this has c
 
     print("\033[32mThe release procedures have been completed!\033[0m")
 
-def papi_patch():
-    '''Goes through the PAPI patch procedures'''
-    spacesForFormatting = "       "
-    # Step 0, clone PAPI.
-    promptForUser = ("Step 0: Before proceeding, are you in a fresh clone of PAPI (git clone https://github.com/icl-utk-edu/papi.git) and in the root dir (cd papi/) (y or n)? ")
-    preemptiveStep = verify_user_input(promptForUser) 
-    if preemptiveStep != "y":
-        print("\033[31mStep 0 must be completed before continuing.\033[0m")
-        sys.exit(1)
-
-    print(" ")
-    # Step 1, checkout the branch that needs to be patched against and get the necessary tag.
-    patchBranchName = input("Step 1: What branch are you wanting to patch against (e.g. stable-7.2.0)? ")
-    tagName = input(f"{spacesForFormatting} What is the tag of this release (e.g. papi-7-2-0-t)? ")
-    os.system(f"git checkout {patchBranchName}")
-
-    print(" ")
-    # Step 2, verify that you are on the correct branch.
-    os.system("git branch")
-    promptForUser = ("Step 2: `git branch` was just ran. Are you on the correct branch to apply the necessary patch (y or n)? ")
-    correctBranch = verify_user_input(promptForUser)
-    if correctBranch == "n":
-         print("\033[31mOn incorrect branch, exiting the papi_procedures script.\033[0m")
-         sys.exit(1)
-
-    print(" ")
-    # Step 3, generate the patch.
-    nameOfPatch = input("Step 3: Generating the patch. Please provide a patch name (e.g. papi-7-2-1.patch): ")
-    os.system(f"git diff -p {tagName} {patchBranName} > {nameOfPatch}")
-
-    print(" ")
-    # Step 4, apply the patch.
-    papiVersion = input("Step 4: Apply the patch. Provide the PAPI version the patch needs to be applied to (e.g. papi-7.2.0): ")
-    os.system(f"""wget http://icl.utk.edu/projects/papi/downloads/{papiVersion}.tar.gz;
-                  tar xzf {papiVersion}.tar.gz;
-                  cd {papiVersion};
-                  patch -p1 ../{nameOfPatch}""")
-
-    print(" ")
-    # Step 5, if the patch was applied cleanly then build and test on the affected platforms.
-    # Otherwise clean up the patch and try again.
-    input("Step 5: Suspend this script (ctrl + z). If the patch was applied cleanly, then build and test on the affected platforms. If the patch was not applied cleanly then \n"
-          f"{spacesForFormatting} clean up the patch to try again. Once the patch was applied cleanly and testing is completed then on the command line run `jobs`,\n"
-          f"{spacesForFormatting} locate papi_procedures.py, and finally run `fg %#` where # is the value in brackets in the left most column.")
-
-    print(" ")
-    # Step 6, set the diff file permissions to 664 and copy the diff file to icl.utk.edu:websites/icl.utk.edu/projects/papi/downloads/patches/.
-    input(f"Step 6: The file {nameOfPatch} will be copied now to icl.utk.edu:websites/icl.utk.edu/projects/papi/downloads/patches/. (Press Enter to Continue).")
-    username = getpass.getuser()
-    pathToPatches = f"/home/{username}/websites/icl.utk.edu/projects/papi/downloads/patches/"
-    os.system(f"chmod 644 {nameOfPatch}; scp {nameOfPatch} {username}@icl.utk.edu:{pathToPatches}")
-
-    print(" ")
-    # Step #7, create a link with supporting text on the PAPI software web page, create a news item on the PAPI web page,
-    # create an entry on the PAPI wiki, and lastly email both mailing lists: perfapi-devel@icl.utk.edu, ptools-perfapi@icl.utk.edu.
-    updateDocsAndUsers = '''Step 7: Update documentation and email the mailing lists.
-Step 7.1: Create a link with supporting text on the PAPI software web page.
-Step 7.2: Create a news item on the PAPI web page.
-Step 7.3: Create a new release on the PAPI Wiki (https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases).
-Step 7.4: Email the mailing lists to notify them of the patch: perfapi-devel@icl.utk.edu, ptools-perfapi@icl.utk.edu.
-(Press Enter to Continue).'''
-    input(updateDocsAndUsers)
-
-    print("\033[32mThe patch  procedures have been completed!\033[0m")
-
 def papi_bugfix():
     '''Goes through the PAPI bug fix procedures.'''
     spacesForFormatting = "       "
@@ -627,18 +562,16 @@ Once completed, on the command line run `jobs`, locate papi_procedures.py, and f
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog = "papi_procedures.py",
-                                     description = "Functions that hold PAPI release procedures e.g. a PAPI release, bug fix, or patch."
+                                     description = "Python script to automate the PAPI procedures e.g. release or bug fix."
                                     )
     parser.add_argument("--procedure",
                         required = True,
-                        choices = ["release", "patch", "bugfix"],
-                        help = "Select a procedure to begin, options include: release, patch, or bugfix"
+                        choices = ["release", "bugfix"],
+                        help = "Select a procedure to begin, options include: release or bugfix"
                        )
 
     args = parser.parse_args()
     if args.procedure == "release":
         papi_release()
-    elif args.procedure == "patch":
-        papi_patch()
     else:
         papi_bugfix()
