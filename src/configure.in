@@ -2,7 +2,7 @@
 # File: configure.in
 
 # cross compile sample
-# ARCH=mips CC=scgcc ./configure --with-arch=mips --host=mips64el-gentoo-linux-gnu- --with-ffsll --with-libpfm4 --with-perf-events --with-virtualtimer=times --with-walltimer=gettimeofday --with-tls=__thread --with-CPU=mips
+# ARCH=mips CC=scgcc ./configure --with-arch=mips --host=mips64el-gentoo-linux-gnu- --with-ffsll --with-perf-events --with-virtualtimer=times --with-walltimer=gettimeofday --with-tls=__thread --with-CPU=mips
 # cross compiling should work differently...
 
 AC_PREREQ(2.59)
