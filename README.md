@@ -42,6 +42,20 @@ performance counters in a system, including the new software-defined events.
 
 ***
 
+# Preferred Citation
+
+If PAPI is used in a project or publication, please cite the following paper:
+
+> Jagode H, Danalis A, Congiu G, Barry D, Castaldo A, Dongarra J. 
+> **Advancements of PAPI for the exascale generation.**
+> *The International Journal of High Performance Computing Applications.* 
+> 2024;39(2):251-268. 
+> [doi:10.1177/10943420241303884](https://journals.sagepub.com/doi/10.1177/10943420241303884)
+
+**This helps us track the impact of the project and supports ongoing development. Thank you!**
+
+
+***
 
 # Getting Help
 
