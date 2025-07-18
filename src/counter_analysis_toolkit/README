@@ -2,9 +2,12 @@ Description:
 Benchmarks for helping in the understanding of native events
 by stressing different aspects of the architecture selectively.
 
-Compilation:
-make PAPIDIR=/path/to/your/papi/installation
+CMake Compilation (Recommended):
+mkdir build && cd build
+cmake -Dpapi_dir=/path/to/your/papi/installation ..
 
+Legacy Compilation:
+make PAPIDIR=/path/to/your/papi/installation
 
 Usage:
 ./cat_collect -in event_list.txt -out OUTPUT_DIRECTORY -branch -dcr
