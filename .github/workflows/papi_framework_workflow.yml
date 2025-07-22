@@ -15,7 +15,7 @@ jobs:
   papi_components_comprehensive:
     strategy:
       matrix:
-        components: [cuda nvml rocm rocm_smi powercap powercap_ppc rapl infiniband sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde]
+        components: [cuda nvml rocp_sdk rocm_smi powercap powercap_ppc rapl infiniband sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde]
         debug: [yes, no]
         shlib: [with, without]
         hardware: [gpu_nvidia_w_cpu_intel]
@@ -30,7 +30,7 @@ jobs:
   papi_components_amd:
     strategy:
       matrix:
-        components: [rocm rocm_smi]
+        components: [rocp_sdk rocm_smi]
         debug: [yes, no] 
         shlib: [with, without]
         hardware: [gpu_amd]
