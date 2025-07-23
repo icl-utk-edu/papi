@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: rocm and rocm_smi component tests
+      - name: rocp_sdk and rocm_smi component tests
         run: .github/workflows/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with the infiniband component, as it will not always be active in the above comrehensive job
   papi_component_infiniband:
