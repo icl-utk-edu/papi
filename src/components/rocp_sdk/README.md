@@ -53,6 +53,12 @@ Example:
 
 Note that this variable takes precedence over PAPI\_ROCP\_SDK\_ROOT.
 
+Additionally, the component supports installations where ROCprofiler-SDK does not reside inside the ROCm installation. For example, if installed from source (https://github.com/ROCm/rocprofiler-sdk). In such a case, the PAPI user must set PAPI_ROCP_SDK_ROOT to point to the ROCprofiler-SDK installation and PAPI_ROCM_ROOT to point to the ROCm installation.
+
+Example:
+    export PAPI_ROCP_SDK_ROOT=${HOME}/my_packages
+    export PAPI_ROCM_ROOT=/opt/rocm
+
 ## Known Limitations
 
 * In dispatch mode, PAPI may read zeros if reading takes place immediately after the return of a GPU kernel. This is not a PAPI bug. It may occur because calls such as hipDeviceSynchronize() do not guarantee that ROCprofiler has been called and all counter buffers have been flushed.  Therefore, it is recommended that the user code adds a delay between the return of a kernel and calls to PAPI_read(), PAPI_stop(), etc.
