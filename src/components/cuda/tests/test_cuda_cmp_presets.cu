@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cupti_profiler_target.h>
+#include <cupti_target.h>
 #include <cuda_runtime_api.h>
 
 #include "papi.h"
@@ -9,7 +11,7 @@
 
 // Currently there is only Cuda preset support for the A100 and H100
 #define NUM_SUPPORTED_PRESET_DEVS 2
-const char *deviceNames[NUM_SUPPORTED_PRESET_DEVS] = {"A100", "H100"};
+const char *deviceNamesWithPresetSupport[NUM_SUPPORTED_PRESET_DEVS] = {"GA100", "GH100"};
 
 int main()
 {
@@ -30,18 +32,29 @@ int main()
         printf("Total number of devices on the machine: %d\n", devCount);
     }
 
+    CUpti_Profiler_Initialize_Params profilerInitializeParams = {CUpti_Profiler_Initialize_Params_STRUCT_SIZE};
+    profilerInitializeParams.pPriv = NULL;
+    CUptiResult cuptiErr = cuptiProfilerInitialize(&profilerInitializeParams);
+    if (cuptiErr != CUPTI_SUCCESS) {
+        printf("Call to cuptiProfilerInitialize failed with error code: %d\n", cuptiErr);
+        exit(1);
+    }
     char devIdxsThatSupportCudaPresets[PAPI_MAX_STR_LEN] = "";
     int devIdx, firstDevIdxThatSupportsCudaPresets = -1;
     for (devIdx = 0; devIdx < devCount; devIdx++) {
-        cudaDeviceProp prop;
-        cudaErr = cudaGetDeviceProperties(&prop, devIdx);
-        if (cudaErr != cudaSuccess) {
-            printf("Failed cudaGetDeviceProperties: %d\n", cudaErr);
+        CUpti_Device_GetChipName_Params getChipNameParams = {CUpti_Device_GetChipName_Params_STRUCT_SIZE};
+        getChipNameParams.pPriv = NULL;
+        getChipNameParams.deviceIndex = devIdx;
+        cuptiErr = cuptiDeviceGetChipName(&getChipNameParams);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            fprintf(stderr, "Call to cuptiDeviceGetChipName failed with error code: %d\n", cuptiErr);
+            exit(1);
         }
+        const char *chipName = getChipNameParams.pChipName;
 
         int i;
         for (i = 0; i < NUM_SUPPORTED_PRESET_DEVS; i++) {
-            if (strstr(prop.name, deviceNames[i])) {
+            if (strstr(chipName, deviceNamesWithPresetSupport[i])) {
                 // Store the first device index that supports Cuda component presets, as this
                 // index will be used to create the Cuda context
                 if (firstDevIdxThatSupportsCudaPresets == -1) {

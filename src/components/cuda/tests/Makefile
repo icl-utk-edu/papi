@@ -20,8 +20,8 @@ ifeq ($(BUILD_SHARED_LIB),yes)
 	NVCFLAGS += -Xcompiler -fpic
 endif
 CFLAGS += -g $(PAPI_FLAG)
-INCLUDE += -I$(PAPI_CUDA_ROOT)/include
-CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -lcuda
+INCLUDE += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include
+CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -L$(PAPI_CUDA_ROOT)/extras/CUPTI/lib64 -lcudart -lcuda -lcupti
 
 cuda_tests: $(TESTS) $(TESTS_NOCTX)
 
