@@ -110,7 +110,8 @@ you will need to do the following:
 
 # License
 
-    Copyright (c) 2024, University of Tennessee
+    Copyright (c) 2025, Innovative Computing Laboratory, 
+    University of Tennessee Knoxville
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -134,3 +135,5 @@ you will need to do the following:
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+    This open source software license conforms to the BSD License template.
