@@ -1,7 +1,7 @@
-PAPIDIR?=${PAPI_DIR}
+PAPI_DIR?=${PAPI_DIR}
 USEMPI?=false
-LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
-INCFLAGS=-I$(PAPIDIR)/include
+LDFLAGS=-L$(PAPI_DIR)/lib -lpapi -lm -lpthread -ldl -lrt
+INCFLAGS=-I$(PAPI_DIR)/include
 CFLAGS+=-g -Wall -Wextra
 OPT0=-O0
 OPT1=-O1
@@ -62,11 +62,11 @@ ifeq ($(ARCH),ARM)
 endif
 
 all: branch.o d_cache eventstock.o flops i_cache instr vector
-	make cat_collect PAPIDIR=$(PAPIDIR)
+	make cat_collect PAPI_DIR=$(PAPI_DIR)
 
 d_cache: timing_kernels.o prepareArray.o compar.o dcache.o
 
-i_cache: icache.o icache_seq_kernel_0.o
+i_cache: icache.o icache_seq_kernel.o
 
 vector: weak_symbols.o vec.o vec_scalar_verify.o $(VECSRC)
 
@@ -92,15 +92,15 @@ flops: flops.c flops.h cat_arch.h
 	$(CC) $(CFLAGS) $(FLOP) $(OPT1) $(INCFLAGS) -c flops.c -o flops.o
 
 icache.o: icache.c icache.h
-	bash gen_seq_dlopen.sh
+	bash gen_seq_dlopen.sh ${PWD}
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c icache.c -o icache.o
 
-icache_seq_kernel_0.o: icache_seq.c icache_seq.h
+icache_seq_kernel.o: icache_seq.c icache_seq.h icache_seq_kernel.c
 	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -c icache_seq.c -o icache_seq.o
-	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -fPIC -c icache_seq_kernel.c -o icache_seq_kernel_0.o
-	$(CC) $(CFLAGS) $(OPT0) -shared -o icache_seq_kernel_0.so icache_seq_kernel_0.o
-	bash replicate.sh
-	rm icache_seq_kernel_0.o
+	$(CC) $(CFLAGS) $(OPT0) $(INCFLAGS) -fPIC -c icache_seq_kernel.c -o icache_seq_kernel.o
+	$(CC) $(CFLAGS) $(OPT0) -shared -o icache_seq_kernel_0.so icache_seq_kernel.o
+	bash replicate.sh ${PWD}
+	rm ${PWD}/icache_seq_kernel.o
 
 instr: instructions.c instr.h
 	-$(CC) -c $(CFLAGS) $(OPT2) -ftree-vectorize $(FLOP) $(INSTR) $(INCFLAGS) instructions.c -o instructions.o
