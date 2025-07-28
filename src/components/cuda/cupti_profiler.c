@@ -2648,6 +2648,17 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
         return PAPI_EBUF;
     }
 
+    // CTC metrics are not supported by the Perfworks API; therefore, append a note to the CTC metrics description
+    char *ctcMetric = strstr(metricName, "ctc__");
+    if (ctcMetric != NULL) {
+        const char *noteForCtcMetrics = "NOTE: The NVIDIA Perfworks API that the cuda component utilizes does not support profiling CTC metrics.";
+        strLen = snprintf(fullMetricDescription + strlen(fullMetricDescription), PAPI_HUGE_STR_LEN, " %s", noteForCtcMetrics);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to append the CTC metric note.\n");
+            return PAPI_EBUF;
+        }
+    }
+
     papi_errno = destroy_metrics_evaluator(pMetricsEvaluator);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
