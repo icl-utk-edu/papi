@@ -1,0 +1,22 @@
+name: PAPI Feature Suggestion Report
+description: File a PAPI feature suggestion.
+title: "[Feature Suggestion]: "
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for taking the time to make a feature request!
+  - type: textarea
+    id: feature-suggestion
+    attributes:
+      label: Description of Feature Suggestion
+      description: Describe the feature that you would like to see in PAPI.
+    validations:
+      required: True
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: If this is for a specific PAPI component, please mention it here (optional). 
+      placeholder: e.g. Cuda
+    validations:
+      required: False
