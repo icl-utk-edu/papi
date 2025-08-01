@@ -5,6 +5,15 @@ ROCP_SDK_INCL=-I$(PAPI_ROCP_SDK_ROOT)/include     \
               -I$(PAPI_ROCP_SDK_ROOT)/include/hsa \
               -I$(PAPI_ROCP_SDK_ROOT)/hsa/include
 
+# If ROCprofiler_SDK is installed at a different
+# path than the rest of ROCm, then the path to
+# ROCm should be specified via PAPI_ROCM_ROOT
+ifneq ($(PAPI_ROCM_ROOT),)
+ROCP_SDK_INCL+=-I$(PAPI_ROCM_ROOT)/include     \
+              -I$(PAPI_ROCM_ROOT)/include/hsa \
+              -I$(PAPI_ROCM_ROOT)/hsa/include
+endif
+
 AMDCXX   ?= amdclang++
 CFLAGS    = $(OPTFLAGS)
 CPPFLAGS += $(INCLUDE) $(ROCP_SDK_INCL)
