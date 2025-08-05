@@ -2498,9 +2498,9 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
                 return NULL;
         }
     } else if (strcmp(name, "rsmi_dev_energy_count_get") == 0) {
-        return papi_strdup("Accumulated GPU energy, in microjoules (µJ).");
+        return papi_strdup("Accumulated amount of GPU energy consumed in microjoules (uJ).");
     } else if (strcmp(name, "rsmi_dev_current_socket_power_get") == 0) {
-        return papi_strdup("Current power consumption in microwatts (µW)");
+        return papi_strdup("Current socket power (also known as instant power) in microwatts (uW).");
     } else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
         switch (variant) {
             case RSMI_TEMP_CURRENT:
@@ -4007,30 +4007,31 @@ access_rsmi_dev_energy_count(rocs_access_mode_e mode, void *arg)
     }
 
     rsmi_status_t status;
-    uint64_t raw_count = 0ULL;
+    uint64_t energy_counter = 0ULL;
     float    resolution = 0.0f;   /* in microjoules */
     uint64_t timestamp = 0ULL;    /* in ns, if you care */
 
     status = rsmi_dev_energy_count_get_p((uint32_t)event->device,
-                                         &raw_count,
+                                         &energy_counter,
                                          &resolution,
                                          &timestamp);
-    if (status != RSMI_STATUS_SUCCESS &&  status != RSMI_STATUS_INVALID_ARGS) {
-        /*
-         * Note: RSMI_STATUS_INVALID_ARGS can mean "power was null" if the device
-         * actually supports the call. If it’s truly unsupported, typically
-         * RSMI_STATUS_NOT_SUPPORTED is returned. Adjust logic if needed.
-         */
+    if (status != RSMI_STATUS_SUCCESS) {
+        if (status == RSMI_STATUS_INVALID_ARGS) {
+            SUBDBG("Energy counter is a nullptr. However, the function is supported with the provided arguments.\n");
+        }
+        else if (status == RSMI_STATUS_NOT_SUPPORTED) {
+            SUBDBG("Energy counter is a nullptr. However, the function is not supported with the installed software or hardware with the provided arguments.\n");
+        }
+
         return PAPI_EMISC;
     }
 
     /*
-     * According to the doc, 'raw_count' * 'resolution' (in µJ) is the total
-     * energy consumed since the counter began accumulating. We store as
-     * an int64_t in microjoules. Watch for overflow if the accumulated
-     * energy is very large.
+     * According to the doc (e.g. python_smi_tools/rocm_smi.py), 'energy_counter' * 'resolution' (in uJ)
+     * is the total energy consumed since the counter began accumulating. We store as an int64_t in
+     * microjoules. Watch for overflow if the accumulated energy is very large.
      */
-    double total_uJ = (double)raw_count * (double)resolution;
+    double total_uJ = (double)energy_counter * (double)resolution;
     if (total_uJ > INT64_MAX) {
         /* clamp to avoid overflow */
         total_uJ = INT64_MAX;
@@ -4051,18 +4052,20 @@ access_rsmi_dev_current_socket_power(rocs_access_mode_e mode, void *arg)
     }
 
     rsmi_status_t status;
-    uint64_t power = 0ULL; /* in µW */
+    uint64_t current_socket_power = 0ULL; /* in uW */
 
-    status = rsmi_dev_current_socket_power_get_p((uint32_t)event->device, &power);
-    if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_INVALID_ARGS) {
-        /*
-         * Note: RSMI_STATUS_INVALID_ARGS can mean "power was null" if the device
-         * actually supports the call. If it’s truly unsupported, typically
-         * RSMI_STATUS_NOT_SUPPORTED is returned. Adjust logic if needed.
-         */
+    status = rsmi_dev_current_socket_power_get_p((uint32_t)event->device, &current_socket_power);
+    if (status != RSMI_STATUS_SUCCESS) {
+        if (status == RSMI_STATUS_INVALID_ARGS) {
+            SUBDBG("Current socket power is a nullptr. However, the function is supported with the provided arguments.\n");
+        }
+        else if (status == RSMI_STATUS_NOT_SUPPORTED) {
+            SUBDBG("Current socket power is a nullptr. However, the function is not supported with the installed software or hardware with the provided arguments.\n");
+        }
+
         return PAPI_EMISC;
     }
 
-    event->value = (int64_t)power;
+    event->value = (int64_t)current_socket_power;
     return PAPI_OK;
 }
