@@ -193,7 +193,7 @@ static void free_and_reset_configuration_images(cuptip_gpu_state_t *gpu_ctl);
 
 // Functions related to Cuda component hash tables
 static int init_main_htable(void);
-static int init_event_table(void);
+static int init_perfworks_table(void);
 static void shutdown_event_table(void);
 static void shutdown_event_stats_table(void);
 
@@ -611,7 +611,7 @@ int cuptip_init(void)
     }
 
     // Collect the available metrics on the machine
-    papi_errno = init_event_table();
+    papi_errno = init_perfworks_table();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -1283,10 +1283,10 @@ int evt_id_to_info(uint32_t event_id, event_info_t *info)
     return PAPI_OK;
 }
 
-/** @class init_event_table
+/** @class init_perfworks_table
   * @brief For a device get and store the metric names.
 */
-int init_event_table(void) 
+int init_perfworks_table(void) 
 {
     int dev_id, deviceRecord = 0; 
     // Loop through all available devices on the current system

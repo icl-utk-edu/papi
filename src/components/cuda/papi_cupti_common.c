@@ -792,6 +792,7 @@ int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id)
 
     // Get the Device ID for the existing Cuda context
     if (pctx != NULL) {
+        printf("Context exists get the device id.\n");
         cuda_err = cuCtxGetDevicePtr(&dev_id);
         if (cuda_err != CUDA_SUCCESS) {
             return PAPI_EMISC;
@@ -803,6 +804,7 @@ int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id)
         // Cuda context was not found or a user did not provide an appropriate Cuda context for the
         // device qualifier id that was supplied
         if (pctx == NULL || dev_id != evt_dev_id) {
+            printf("Cuda context was not found.\n");
             // If multiple devices are found on the machine, then we need to call cudaSetDevice
             SUBDBG("A Cuda context was not found. Therefore, one is created for device: %d\n", evt_dev_id);
             cudaArtCheckErrors(cudaSetDevicePtr(evt_dev_id), return PAPI_EMISC);
@@ -813,6 +815,7 @@ int cuptic_ctxarr_update_current(cuptic_info_t info, int evt_dev_id)
         }
         // Cuda context was found
         else {
+            printf("Cuda context was found.\n");
             SUBDBG("A cuda context was found for device: %d\n", evt_dev_id);
             cudaCheckErrors(cuCtxGetCurrentPtr(&info[evt_dev_id].ctx), return PAPI_EMISC);
         }
