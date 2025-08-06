@@ -61,7 +61,7 @@ struct cuptie_control_s {
     cuptic_info_t       info;
 };
 
-static int num_gpus;
+static int numDevicesOnMachine;
 
 /* main event table to store metrics */
 static cuptiu_event_and_metric_table_t *cuptiu_table_p; // TODO: Possibly make this event take accessible from cupti_utils.h
@@ -94,7 +94,7 @@ CUptiResult (*cuptiEventGroupGetAttributePtr) (CUpti_EventGroup eventGroup, CUpt
 CUptiResult (*cuptiDeviceGetEventDomainAttributePtr) (CUdevice device, CUpti_EventDomainID eventDomain, CUpti_EventDomainAttribute attrib, size_t *valueSize, void *value);
 CUptiResult (*cuptiEventGroupDisablePtr) (CUpti_EventGroup eventGroup);
 
-CUptiResult ( *cuptiProfilerInitializePtr ) (CUpti_Profiler_Initialize_Params* params);
+CUptiResult ( *cuptiProfilerInitializeMetricsPtr ) (CUpti_Profiler_Initialize_Params* params);
 
 /* Metrics API Function Pointers */
 CUptiResult (*cuptiDeviceGetNumMetricsPtr) (CUdevice device, uint32_t *numMetrics);
@@ -106,7 +106,7 @@ CUptiResult (*cuptiMetricGetNumEventsPtr) (CUpti_MetricID metric, uint32_t *numE
 CUptiResult (*cuptiMetricEnumEventsPtr) (CUpti_MetricID metric, size_t *eventIdArraySizeBytes, CUpti_EventID *eventIdArray);
 CUptiResult (*cuptiMetricGetValuePtr) (CUdevice device, CUpti_MetricID metric, size_t eventIdArraySizeBytes, CUpti_EventID *eventIdArray, size_t eventValueArraySizeBytes, uint64_t *eventValueArray, uint64_t timeDuration, CUpti_MetricValue *metricValue);
 
-CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
+//CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
 
 // Helper functions
 int determine_dev_cc(int dev_id);
@@ -119,12 +119,14 @@ static int initialize_cupti_profiler_api(void);
 
 static int enumerate_events_for_event_api(cuptiu_event_and_metric_table_t *table, CUcontext ctx, CUdevice device, int dev_id);
 static int enumerate_metrics_for_metric_api(cuptiu_event_and_metric_table_t *table, CUcontext ctx, CUdevice device, int dev_id);
+static int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID);
+
 
 static gpu_record_event_and_metric_t *avail_gpu_info;
 
-CUpti_EventID *eventIDs = NULL;
-CUpti_MetricID *metricIDs = NULL;
-CUpti_EventGroup eventGroup;
+//CUpti_EventID *eventIDs = NULL;
+//CUpti_MetricID *metricIDs = NULL;
+//CUpti_EventGroup eventGroup;
 
 static int load_events_sym(void)
 {
@@ -173,8 +175,8 @@ static int load_events_sym(void)
     cuptiEventGroupReadAllEventsPtr     = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupReadAllEvents");
     cuptiEventGroupDisablePtr        = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupDisable");
 
-    cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
-    cuptiProfilerInitializePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
+    //cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
+    cuptiProfilerInitializeMetricsPtr = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
 
     // Metrics API
     cuptiDeviceGetNumMetricsPtr        = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetNumMetrics");
@@ -197,14 +199,14 @@ fn_fail:
 }
 
 
-// TODO: Move this to a universal file as events and perfworks use this?
+// TODO: Move this to a universal file as events and perfworks use this? Yes do this.
 static int initialize_cupti_profiler_api(void)
 {
     COMPDBG("Entering.\n");
 
     CUpti_Profiler_Initialize_Params profilerInitializeParams = {CUpti_Profiler_Initialize_Params_STRUCT_SIZE};
     profilerInitializeParams.pPriv = NULL;
-    cuptiCheckErrors( cuptiProfilerInitializePtr(&profilerInitializeParams), return PAPI_EMISC );
+    cuptiCheckErrors( cuptiProfilerInitializeMetricsPtr(&profilerInitializeParams), return PAPI_EMISC );
 
     return PAPI_OK;
 }
@@ -227,7 +229,7 @@ void init_main_htable(void)
     cuptiu_table_p->events = papi_calloc(val, sizeof(cuptiu_event_and_metric_t));
 
 
-    cuptiu_table_p->avail_gpu_info = (gpu_record_event_and_metric_t *) papi_calloc(num_gpus, sizeof(gpu_record_event_and_metric_t));
+    cuptiu_table_p->avail_gpu_info = (gpu_record_event_and_metric_t *) papi_calloc(numDevicesOnMachine, sizeof(gpu_record_event_and_metric_t));
     if (cuptiu_table_p->avail_gpu_info == NULL) {
         printf("Memory allocation failed in init_main_htable.\n");
     }
@@ -243,7 +245,7 @@ int init_all_metrics(void)
     char chipName[PAPI_MIN_STR_LEN];
 
 
-    for (i = 0; i < num_gpus; i++) {
+    for (i = 0; i < numDevicesOnMachine; i++) {
         papi_errno = get_chip_name(i, chipName);
         if (papi_errno != PAPI_OK) {
             printf("failed to get chip name: %d\n", papi_errno);
@@ -273,7 +275,7 @@ int cuptie_init(void)
     }
 
     // Get the number of GPUs on the machine
-    papi_errno = cuptic_device_get_count(&num_gpus);
+    papi_errno = cuptic_device_get_count(&numDevicesOnMachine);
     if (papi_errno != PAPI_OK) {
         return PAPI_EMISC;
     }
@@ -285,7 +287,7 @@ int cuptie_init(void)
     }
 
 
-    printf("num_gpus: %d\n", num_gpus); 
+    printf("numDevicesOnMachine: %d\n", numDevicesOnMachine); 
 
     // Init the main htable
     init_main_htable();
@@ -310,7 +312,7 @@ int init_events_and_metrics_table(void)
     SUBDBG("ENTERING: Adding events and metrics from the Event and Metric APIs to the hash table.\n");
     // Loop through all of the available devices on the machine
     int dev_id, table_idx = 0;
-    for (dev_id = 0; dev_id < num_gpus; dev_id++) {
+    for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
         // Skip devices that will require the Perfworks API to be profiled
         // TODO: Part this out to a separate file since it is used in the perfworks AP as well
         if (determine_dev_cc(dev_id) == 0) {
@@ -605,7 +607,7 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         {
             int init_metric_dev_id;
             char devices[PAPI_MAX_STR_LEN] = { 0 };
-            for (i = 0; i < num_gpus; ++i) {
+            for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
                     /* for an event, store the first device found to use with :device=#, 
                        as on a heterogenous system events may not appear on each device */
@@ -633,13 +635,9 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
     return papi_errno;
 }
 
-int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, cuptie_control_t state) 
+int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID) 
 {
-    printf("WE ARE IN CHECK.\n");
     SUBDBG("ENTERING: Checking if the user added event does not require multiple passes.\n");
-
-    int flags = 0;
-    
     // Check if a Cuda context is on the calling CPU thread
     CUcontext pctx;
     cudaCheckErrors( cuCtxGetCurrentPtr(&pctx), return PAPI_EMISC );
@@ -665,7 +663,6 @@ int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName,
         }
     }
 
-    printf("HERE!!!!!");
     CUdevice device;
     cudaCheckErrors( cuDeviceGetPtr(&device, deviceIdx), return PAPI_EMISC);
 
@@ -699,18 +696,11 @@ int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName,
         papi_errno = PAPI_EMULPASS;
     }
 
-    printf("deviceIdx is: %d\n", deviceIdx);
-    if (cuptiApi == event_api) {
-        state->gpu_ctl[deviceIdx].added_events->eventIDs[0] = eventId;
-    }
-    else {
-        printf("metricId is: %d\n", metricId);
-        state->gpu_ctl[deviceIdx].added_events->metricIDs[0] = metricId;
-    }
+    // Store the found Event or Metric ID 
+    *addedNativeEventID = (cuptiApi == event_api) ? eventId : metricId;
 
+    // Cleanup
     cudaCheckErrors( cuCtxDestroyPtr(pctx), return PAPI_EMISC );
-
-    // Free allocated memory
     free(eventGroupPasses);
 
     SUBDBG("EXITING: Check for multiple passes completed.\n");
@@ -741,7 +731,8 @@ int cuptiu_event_and_metric_table_create_init_capacity(int capacity, int sizeof_
     }   
 
     evt_table->capacity = capacity;
-    evt_table->count = 0;
+    evt_table->countOfMetricIDs = 0;
+    evt_table->countOfEventIDs = 0;
     
     if (htable_init(&(evt_table->htable)) != HTABLE_SUCCESS) {
         cuptiu_event_and_metric_table_destroy(&evt_table);
@@ -769,9 +760,8 @@ fn_fail:
 int verify_user_added_event_or_metric(uint32_t *events_id, int num_events, cuptie_control_t state)
 {
     SUBDBG("ENTERING: Verifying user added events exist and do not require multiple passes.\n");
-printf("Verify 1.\n");
     int i, papi_errno = PAPI_OK;
-    for (i = 0; i < num_gpus; i++) {
+    for (i = 0; i < numDevicesOnMachine; i++) {
         papi_errno = cuptiu_event_and_metric_table_create_init_capacity(
                          num_events,
                          sizeof(cuptiu_event_and_metric_t), &(state->gpu_ctl[i].added_events)
@@ -781,8 +771,7 @@ printf("Verify 1.\n");
            return papi_errno;
        }
     }
-printf("Verify 2.\n");
-    printf("num_events is: %d\n", num_events);
+
     for (i = 0; i < num_events; i++) {
         event_info_t native_event_info;
         papi_errno = evt_id_to_info(events_id[i], &native_event_info);
@@ -790,20 +779,30 @@ printf("Verify 2.\n");
             printf("Failed evt_id_to_info: %d\n", papi_errno);
             return papi_errno;
         }
-        printf("Verify 3.\n");
+
         // Verify the user added event exists
         void *p;
         if (htable_find(cuptiu_table_p->htable, cuptiu_table_p->events[native_event_info.nameid].name, (void **) &p) != HTABLE_SUCCESS) {
             return PAPI_ENOEVNT;
         }
-        printf("Verify 4.\n");
+
+        uint32_t addedNativeEventID;
         // Verify that the user added event does not require multiple passes
         int papi_errno = check_if_event_or_metric_requires_mutiple_passes(cuptiu_table_p->events[native_event_info.nameid].name,
                                                                           cuptiu_table_p->events[native_event_info.nameid].api,
-                                                                          native_event_info.device, state);
+                                                                          native_event_info.device, &addedNativeEventID);
         if (papi_errno != PAPI_OK) {
-            printf("We fail here!!!!.\n");
             return papi_errno;
+        }
+
+        // If everything checks out, store the user added event for profiling
+        if (cuptiu_table_p->events[native_event_info.nameid].api == event_api) {
+            state->gpu_ctl[native_event_info.device].added_events->eventIDs[state->gpu_ctl[native_event_info.device].added_events->countOfEventIDs] = addedNativeEventID;
+            state->gpu_ctl[native_event_info.device].added_events->countOfEventIDs++;
+        }
+        else {
+            state->gpu_ctl[native_event_info.device].added_events->metricIDs[state->gpu_ctl[native_event_info.device].added_events->countOfMetricIDs] = addedNativeEventID;
+            state->gpu_ctl[native_event_info.device].added_events->countOfMetricIDs++;
         }
     }
 
@@ -820,37 +819,37 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
         SUBDBG("Failed to allocate memory for state.\n");
         return PAPI_ENOMEM; 
     }
-printf("1.\n");
-    state->gpu_ctl = (cuptie_gpu_state_t *) calloc(num_gpus, sizeof(cuptie_gpu_state_t));
+
+    state->gpu_ctl = (cuptie_gpu_state_t *) calloc(numDevicesOnMachine, sizeof(cuptie_gpu_state_t));
     if (state->gpu_ctl == NULL) {
         SUBDBG("Failed to allocate memory for state->gpu_ctl.\n");
         return PAPI_ENOMEM;
     }
-printf("2.\n");
+
     // TODO: Is this correct? As in how does it work?
     long long *counters = (long long *) malloc(num_events * sizeof(*counters));
     if (counters == NULL) {
         SUBDBG("Failed to allocate memory for counters.\n");
         return PAPI_ENOMEM;
     }
-printf("3.\n");
+
     int dev_id;
-    for (dev_id = 0; dev_id < num_gpus; dev_id++) {
+    for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
         state->gpu_ctl[dev_id].dev_id = dev_id;
     }
-printf("4.\n");
+
     event_info_t info;
     int papi_errno = evt_id_to_info(events_id[num_events - 1], &info);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-printf("5.\n");
+
     papi_errno = verify_user_added_event_or_metric(events_id, num_events, state);
     if (papi_errno != PAPI_OK) {
         printf("We failed: %d\n", papi_errno);
         return papi_errno;    
     }
-printf("6.\n");
+
     //TODO: This causes issues with having to create a context for a user with CUPTI Event and Metric API.
     // Store a user created cuda context or create one
     // Why not move this to start? To Check at that point? I do not see a point for this now. 
@@ -865,88 +864,54 @@ printf("7.\n");
 
    //printf("cuptiu_table_p->events[info.nameid].name: %s\n", cuptiu_table_p->events[info.nameid].name);
 
-/* 
-   CUpti_EventGroup eventGroup;
-   uint32_t flags = 0; // From documenation this must be set to zero
-   
-   cuCtxCreatePtr(&context, 0, 1);
-   CUdevice device;
-   cudaCheckErrors( cuDeviceGetPtr(&device, 2), return PAPI_EMISC );
-
-
-   // Create an EventGroup, we need a context to do this
-   CUptiResult cuptiErr = cuptiEventGroupCreatePtr(context, &eventGroup, flags);
-   if (cuptiErr != CUPTI_SUCCESS) {
-       printf("Failed to create Group: %d\n", cuptiErr);
-   }
-
-   // A possibility could be that I have an entry in the events struct for the CUpti_EventID *event
-   // And when the user adds an event I get the ID. The option of cuptiEventGetIdFromName could work too
-   // but again need to make sure it is a valid name first.
-
-
-   // Have a verify events, but we will store all events in an CUpti_EventID array, and then loop through to add them.
-   cuptiErr = cuptiEventGroupAddEventPtr(eventGroup, eventIdArray[0]);
-   if (cuptiErr != CUPTI_SUCCESS) {
-       printf("Failed to add event: %d\n", cuptiErr);
-   }
-
-   cuptiErr = cuptiEventGroupEnablePtr(eventGroup);
-   if (cuptiErr != CUPTI_SUCCESS) {
-       printf("Failed to enable group.\n");
-   }
-
-
-   CUpti_ReadEventFlags eventFlags = CUPTI_EVENT_READ_FLAG_NONE;
-   size_t eventValueBufferSizeBytes = sizeof(uint64_t) * 1;
-   uint64_t eventValueBuffer[1];
-   size_t eventIdArraySizeBytes = sizeof(CUpti_EventID) * 1;
-   size_t numEventIdsRead;
-   cuptiErr = cuptiEventGroupReadAllEventsPtr(eventGroup, eventFlags, &eventValueBufferSizeBytes, eventValueBuffer, &eventIdArraySizeBytes, eventIdArray, &numEventIdsRead);
-   if (cuptiErr != CUPTI_SUCCESS) {
-       printf("Failed to Read all events.\n");
-   }
-
-   printf("numEventIdsRead: %d\n", numEventIdsRead);
-
-   printf("eventValueBuffer: %d\n", eventValueBuffer[0]); 
-*/
    SUBDBG("EXITING: Creation of a profiling context completed.\n");
    return PAPI_OK;
 }
 
-int cuptie_ctx_start(cuptie_control_t ctl)
+int cuptie_ctx_start(cuptie_control_t state)
 {
     SUBDBG("ENTERING: Setting up profiling for the Event and Metric APIs.\n");
     CUcontext pctx;
     cudaCheckErrors( cuCtxGetCurrentPtr(&pctx), return PAPI_EMISC );
     if (pctx == NULL) {
-        cudaCheckErrors( cuCtxCreatePtr(&pctx, 0, 1), return PAPI_EMISC );
+        cudaCheckErrors( cuCtxCreatePtr(&pctx, 0, 0), return PAPI_EMISC );
     }
-/*
-    int flags = 0; // From documentation flags are reserved for future use and should be set to zero
-    CUptiResult cuptiErr = cuptiEventGroupCreatePtr(pctx, &eventGroup, flags);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failes cuptiEventGroupSetsCreate: %d\n", cuptiErr);
-        return PAPI_EMISC;
-    }   
 
-    int i;
-    for (i = 0; i < 1; i++) {
-        cuptiErr = cuptiEventGroupAddEventPtr(eventGroup, eventIDs[i]);
+    // This setup is only required if a user adds native events from the Events API
+    int dev_id;
+    for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[dev_id]);
+        if (gpu_ctl->added_events->countOfEventIDs == 0) {
+            continue;
+        }
+
+        CUpti_EventGroup eventGroup;
+        int flags = 0; // From documentation flags are reserved for future use and should be set to zero
+        CUptiResult cuptiErr = cuptiEventGroupCreatePtr(pctx, &eventGroup, flags);
         if (cuptiErr != CUPTI_SUCCESS) {
-            printf("Failed to add event: %d\n", cuptiErr);
+            printf("Failes cuptiEventGroupSetsCreate: %d\n", cuptiErr);
             return PAPI_EMISC;
-        }   
-    }   
+        } 
 
-    // Enable the event group as late as possible as you cannot add more events once enabled
-    cuptiErr = cuptiEventGroupEnablePtr(eventGroup);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failed to enable event group: %d\n", cuptiErr);
-        return PAPI_EMISC;
-    } 
-*/
+        int eventIdx;
+        for (eventIdx = 0; eventIdx < gpu_ctl->added_events->countOfEventIDs; eventIdx++) {
+            cuptiErr = cuptiEventGroupAddEventPtr(eventGroup, gpu_ctl->added_events->eventIDs[eventIdx]);
+            if (cuptiErr != CUPTI_SUCCESS) {
+                printf("Failed to add event: %d\n", cuptiErr);
+                return PAPI_EMISC;
+            }   
+        }   
+
+        // Enable the event group as late as possible as you cannot add more events once enabled
+        cuptiErr = cuptiEventGroupEnablePtr(eventGroup);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            printf("Failed to enable event group: %d\n", cuptiErr);
+            return PAPI_EMISC;
+        }
+
+        gpu_ctl->added_events->eventGroup = eventGroup;
+    }
+ 
     SUBDBG("EXITING: Profiling setup completed.\n");
     return PAPI_OK;
 }
@@ -956,96 +921,100 @@ int cuptie_ctx_read(cuptie_control_t state, long long **values)
     SUBDBG("ENTERING: Reading values for the Event and Metric APIs.\n");
 
     CUdevice device;
-    int deviceIndex = 2;
+    int deviceIndex = 0;
     cuDeviceGetPtr(&device, deviceIndex);
-/*
-    uint32_t numInstances, numTotalInstances;
-    size_t numInstancesSize = sizeof(numInstances);
-    size_t numTotalInstancesSize = sizeof(numTotalInstances);
-    //CUptiResult cuptiErr = cuptiEventGroupGetAttribute(eventGroup, CUPTI_EVENT_GROUP_ATTR_INSTANCE_COUNT, &numInstancesSize, &numInstances);
-    //if (cuptiErr != CUPTI_SUCCESS) {
-    //    printf("Failed to get attribute instance count: %d\n", cuptiErr);
-    //    exit(1);
-    //}   
-    //printf("Num instances: %d\n", numInstances);
 
-    CUpti_EventDomainID groupDomain;
-    size_t groupDomainSize = sizeof(groupDomain);
-    CUptiResult cuptiErr = cuptiEventGroupGetAttributePtr(eventGroup, CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID, &groupDomainSize, &groupDomain);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failed to get attribture event domain id: %d\n", cuptiErr);
-        exit(1);
-    }   
-
-    cuptiErr = cuptiDeviceGetEventDomainAttributePtr(device, groupDomain, CUPTI_EVENT_DOMAIN_ATTR_TOTAL_INSTANCE_COUNT, &numTotalInstancesSize, &numTotalInstances);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failed to get domain attribute: %d\n", cuptiErr);
-        exit(1);
-    }   
-
-    printf("numTotalInstances: %d\n", numTotalInstances);
-
-    int num_events = 1;
-    size_t eventValueBufferSizeBytes = sizeof(uint64_t) * num_events * numInstances; // The CUPTI sample callback_metric.cu multiples by the numInstances; therefore, we follow suit as otherwise we get the error CUPTI_ERROR_PARAMETER_SIZE_NOT_SUFFICIENT
-    uint64_t *eventValueBuffer = (uint64_t *) malloc(eventValueBufferSizeBytes); // Same as pValues
-    size_t eventIdArraySizeBytes = num_events * sizeof(CUpti_EventID); //Same as eventIdsSize
-    CUpti_EventID *eventIdArray = (CUpti_EventID *) malloc(eventIdArraySizeBytes); // Same as pEventIds
-    size_t numEventIdsRead;
-    printf("Here.\n");
-    cuptiErr = cuptiEventGroupReadAllEventsPtr(eventGroup, CUPTI_EVENT_READ_FLAG_NONE, &eventValueBufferSizeBytes, eventValueBuffer, &eventIdArraySizeBytes, eventIdArray, &numEventIdsRead);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failed to call cuptiEventGroupReadAllEvents: %d\n", cuptiErr);
-        exit(1);         
-    }   
-
-    printf("event value buffer: %d\n", eventValueBuffer);
-*/
-    cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[2]);
-    //gpu_ctl->added_events->metricIDs[0];
-    // Workflow for Metrics API
-    uint32_t numEvents;
-    printf("gpu_ctl->added_events->metricIDs[0]: %d\n", gpu_ctl->added_events->metricIDs[0]);
-    CUptiResult cuptiErr = cuptiMetricGetNumEventsPtr(gpu_ctl->added_events->metricIDs[0], &numEvents);
-    if (cuptiErr != CUPTI_SUCCESS) {
-        printf("Failed to get num events: %d\n", cuptiErr);
-        exit(1);
-    }       
-    
-    printf("Num Events: %d\n", numEvents);
-    CUpti_EventID *eventIdArray2 = (CUpti_EventID *) malloc(numEvents * sizeof(CUpti_EventID));
-    if (eventIdArray2 == NULL) {
-        printf("Failed to allocate memory for eventIdArray.\n");
-        exit(1);
-    }       
-
-    int i;
-    for (i = 0; i < 1; i++) {
-        size_t bytes = numEvents * sizeof(CUpti_EventID);
-        cuptiErr = cuptiMetricEnumEventsPtr(gpu_ctl->added_events->metricIDs[0], &bytes, eventIdArray2);
-        if (cuptiErr != CUPTI_SUCCESS) {
-            printf("Failed to enum events for metric: %d\n", cuptiErr);
-            exit(1);
-        }       
-
-        uint64_t *eventValueArray = (uint64_t *) malloc(numEvents * sizeof(uint64_t));
-        if (eventValueArray == NULL) {
-            printf("Failed to allocate memory for eventValueArray\n");
-            exit(1);
-        }       
-//cuptiMetricGetValue(device, metricId, metricData.numEvents * sizeof(CUpti_EventID), metricData.pEventIdArray, metricData.numEvents * sizeof(uint64_t), metricData.pEventValueArray, s_KernelDuration, &metricValue)
-        uint64_t duration = 10;
-        CUpti_MetricValue metricValue;
-        cuptiErr = cuptiMetricGetValuePtr(device, gpu_ctl->added_events->metricIDs[0], bytes, eventIdArray2, numEvents * sizeof(uint64_t), eventValueArray, duration, &metricValue);
-        if (cuptiErr != CUPTI_SUCCESS) {
-            printf("Failed to get metric value: %d\n", cuptiErr);
-            exit(1);
+    int dev_id;
+    for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[dev_id]);
+        if (gpu_ctl->added_events->countOfEventIDs == 0 && gpu_ctl->added_events->countOfMetricIDs == 0) {
+            continue;
         }
-        printf("metricValue is: %f\n", metricValue.metricValueDouble);
+ 
+        CUpti_EventGroup eventGroup = gpu_ctl->added_events->eventGroup; 
+
+        int numGroupEvents = 0;
+        size_t numGroupEventsSize = sizeof(numGroupEvents);
+        CUptiResult cuptiErr = cuptiEventGroupGetAttributePtr(eventGroup, CUPTI_EVENT_GROUP_ATTR_NUM_EVENTS, &numGroupEventsSize, &numGroupEvents);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            printf("Failed to get num events attribute: %d\n", cuptiErr);
+            exit(1);
+        } 
+
+        CUpti_EventDomainID groupDomain;
+        size_t groupDomainSize = sizeof(groupDomain);
+        cuptiErr = cuptiEventGroupGetAttributePtr(eventGroup, CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID, &groupDomainSize, &groupDomain);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            printf("Failed to get attribture event domain id: %d\n", cuptiErr);
+            exit(1);
+        } 
+
+        uint32_t numTotalInstances;
+        size_t numTotalInstancesSize = sizeof(numTotalInstances);
+        cuptiErr = cuptiDeviceGetEventDomainAttributePtr(device, groupDomain, CUPTI_EVENT_DOMAIN_ATTR_TOTAL_INSTANCE_COUNT, &numTotalInstancesSize, &numTotalInstances);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            printf("Failed to get domain attribute: %d\n", cuptiErr);
+            exit(1);
+        } 
+
+        size_t sizeOfEventValueBufferInBytes = sizeof(uint64_t) * numGroupEvents * numTotalInstances;
+        uint64_t *eventValueBuffer = (uint64_t *) malloc(sizeOfEventValueBufferInBytes);
+
+        size_t sizeOfEventIdArrayInBytes = numGroupEvents * sizeof(CUpti_EventID);
+        CUpti_EventID *eventIdArray = (CUpti_EventID *) malloc(sizeOfEventIdArrayInBytes);
+
+        size_t numEventIdsRead;
+        cuptiErr = cuptiEventGroupReadAllEventsPtr(eventGroup, CUPTI_EVENT_READ_FLAG_NONE, &sizeOfEventValueBufferInBytes, eventValueBuffer, &sizeOfEventIdArrayInBytes, eventIdArray, &numEventIdsRead);
+        if (cuptiErr != CUPTI_SUCCESS) {
+            printf("Failed to call cuptiEventGroupReadAllEvents: %d\n", cuptiErr);
+            exit(1);         
+        } 
+
+        printf("eventValueBuffer: %d\n", eventValueBuffer[0]);
     }
 
+// This workflow for the Metric API is good.
+/*
+    int dev_id;
+    for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
+        cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[dev_id]);
+        if (gpu_ctl->added_events->countOfMetricIDs == 0) {
+            continue;
+        }
 
+        int metricIdx;
+        for (metricIdx = 0; metricIdx < gpu_ctl->added_events->countOfMetricIDs; metricIdx++) {
+            uint32_t numEvents;
+            cuptiCheckErrors( cuptiMetricGetNumEventsPtr(gpu_ctl->added_events->metricIDs[metricIdx], &numEvents), return PAPI_EMISC);
 
+     
+            // Event IDs required to calculate the metric 
+            CUpti_EventID *eventIdsArray = (CUpti_EventID *) malloc(numEvents * sizeof(CUpti_EventID));
+            if (eventIdsArray == NULL) {
+                printf("Failed to allocate memory for eventIdArray.\n");
+                exit(1);
+            }
+            // Size of eventIdsArray 
+            size_t sizeOfEventIdsArrayInBytes = numEvents * sizeof(CUpti_EventID);
 
+            cuptiCheckErrors( cuptiMetricEnumEventsPtr(gpu_ctl->added_events->metricIDs[metricIdx], &sizeOfEventIdsArrayInBytes, eventIdsArray), return PAPI_EMISC);
+
+            // Allocate memory for normalized event values required to calculate the metric
+            uint64_t *eventValuesArray = (uint64_t *) malloc(numEvents * sizeof(uint64_t));
+            if (eventValuesArray == NULL) {
+                printf("Failed to allocate memory for eventValueArray\n");
+                exit(1);
+            }
+            // Size of eventValueArray
+            size_t sizeOfEventValuesArrayInBytes = numEvents * sizeof(uint64_t);
+       
+            uint64_t duration = 10;
+            CUpti_MetricValue metricValue;
+            cuptiCheckErrors( cuptiMetricGetValuePtr(device, gpu_ctl->added_events->metricIDs[metricIdx], sizeOfEventIdsArrayInBytes, eventIdsArray, sizeOfEventValuesArrayInBytes, eventValuesArray, duration, &metricValue), return PAPI_EMISC);
+            printf("metricValue is: %f\n", metricValue.metricValueDouble);
+        }
+    }
+*/
     SUBDBG("EXITING: Reading values completed.\n");
     return PAPI_ENOIMPL;
 }
@@ -1100,7 +1069,7 @@ int evt_id_to_info(uint32_t event_id, event_info_t *info)
     info->flags    = (int)((event_id & QLMASK_MASK) >> QLMASK_SHIFT);
     info->nameid   = (int)((event_id & NAMEID_MASK) >> NAMEID_SHIFT);
 
-    if (info->device >= num_gpus) {
+    if (info->device >= numDevicesOnMachine) {
         return PAPI_ENOEVNT;
     }    
 
@@ -1299,7 +1268,7 @@ int evt_name_to_device(const char *name, int *device)
         }
 
         // Search for the first device the event exists for.
-        for (i = 0; i < num_gpus; ++i) {
+        for (i = 0; i < numDevicesOnMachine; ++i) {
             if (cuptiu_dev_check(event->device_map, i)) {
                 *device = i;
                 break;

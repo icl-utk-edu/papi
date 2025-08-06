@@ -59,6 +59,7 @@ typedef struct event_and_metric_table_s {
     unsigned int capacity;
     CUpti_EventID eventIDs[30];
     int countOfEventIDs;
+    CUpti_EventGroup eventGroup;
     CUpti_MetricID metricIDs[30];
     int countOfMetricIDs;
     int cuda_devs[30];
