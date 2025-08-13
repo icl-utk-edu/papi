@@ -7,7 +7,7 @@
 #include "papi_memory.h"
 #include "amds.h"
 #include "htable.h"
-// #define AMDSMI_DISABLE_ESMI
+define AMDSMI_DISABLE_ESMI
 unsigned int _amd_smi_lock;
 typedef enum {
     PAPI_MODE_READ = 1,
