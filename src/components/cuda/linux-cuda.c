@@ -610,7 +610,7 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
     if (cuda_ctx->state == CUDA_EVENTS_STOPPED) {
-        SUBDBG("Error! Cannot PAPI_stop counters for an eventset that has not been PAPI_start'ed.");
+        SUBDBG("Error! Cannot PAPI_stop counters for an eventset that has not been PAPI_start'ed.\n");
         papi_errno = PAPI_EMISC;
         goto fn_fail;
     }
