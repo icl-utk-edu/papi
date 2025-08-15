@@ -34,17 +34,20 @@ template_tests: $(TESTS)
 kernel.o: kernel.cpp
 	$(AMDCXX) -D__HIP_ROCclr__=1 -O2 -g -DNDEBUG $(ARCHFLAG) -W -Wall -Wextra -Wshadow -o kernel.o -x hip -c kernel.cpp
 
-simple: simple.o kernel.o
-	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple.o kernel.o -o simple $(LDFLAGS)
+helper_rocp_sdk.o: helper_rocp_sdk.c
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $^
 
-advanced: advanced.o kernel.o
-	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) advanced.o kernel.o -o advanced $(LDFLAGS)
+simple: simple.o kernel.o helper_rocp_sdk.o
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple.o kernel.o helper_rocp_sdk.o -o simple $(LDFLAGS)
 
-two_eventsets: two_eventsets.o kernel.o
-	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) two_eventsets.o kernel.o -o two_eventsets $(LDFLAGS)
+advanced: advanced.o kernel.o helper_rocp_sdk.o
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) advanced.o kernel.o helper_rocp_sdk.o -o advanced $(LDFLAGS)
 
-simple_sampling: simple_sampling.o kernel.o
-	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple_sampling.o kernel.o -o simple_sampling $(LDFLAGS) -pthread
+two_eventsets: two_eventsets.o kernel.o helper_rocp_sdk.o
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) two_eventsets.o kernel.o helper_rocp_sdk.o -o two_eventsets $(LDFLAGS)
+
+simple_sampling: simple_sampling.o kernel.o helper_rocp_sdk.o
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple_sampling.o kernel.o helper_rocp_sdk.o -o simple_sampling $(LDFLAGS) -pthread
 
 clean:
 	rm -f $(TESTS) *.o
