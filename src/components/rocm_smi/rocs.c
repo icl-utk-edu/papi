@@ -52,6 +52,10 @@ static rsmi_status_t (*rsmi_dev_power_cap_set_p)(uint32_t, uint32_t, uint64_t);
 static rsmi_status_t (*rsmi_dev_power_cap_range_get_p)(uint32_t, uint32_t, uint64_t *, uint64_t *);
 static rsmi_status_t (*rsmi_dev_power_profile_presets_get_p)(uint32_t, uint32_t, rsmi_power_profile_status_t *);
 static rsmi_status_t (*rsmi_dev_power_profile_set_p)(uint32_t, uint32_t, rsmi_power_profile_preset_masks_t);
+static rsmi_status_t (*rsmi_dev_energy_count_get_p)(uint32_t dv_ind, uint64_t *power, float *counter_resolution, uint64_t *timestamp);
+#if defined(SUPPORT_SOCKET)
+static rsmi_status_t (*rsmi_dev_current_socket_power_get_p)(uint32_t dv_ind, uint64_t *socket_power);
+#endif
 static rsmi_status_t (*rsmi_dev_temp_metric_get_p)(uint32_t, uint32_t, rsmi_temperature_metric_t, int64_t *);
 static rsmi_status_t (*rsmi_dev_pci_id_get_p)(uint32_t, uint64_t *);
 static rsmi_status_t (*rsmi_dev_pci_throughput_get_p)(uint32_t, uint64_t *, uint64_t *, uint64_t *);
@@ -201,6 +205,10 @@ static int access_rsmi_dev_fan_speed(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_ave(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_cap(rocs_access_mode_e, void *);
 static int access_rsmi_dev_power_cap_range(rocs_access_mode_e, void *);
+static int access_rsmi_dev_energy_count(rocs_access_mode_e, void *);
+#if defined(SUPPORT_SOCKET)
+static int access_rsmi_dev_current_socket_power(rocs_access_mode_e, void *);
+#endif
 static int access_rsmi_dev_temp_metric(rocs_access_mode_e, void *);
 static int access_rsmi_dev_firmware_version(rocs_access_mode_e, void *);
 static int access_rsmi_dev_ecc_count(rocs_access_mode_e, void *);
@@ -260,6 +268,10 @@ struct {
     {"rsmi_dev_power_cap_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap},
     {"rsmi_dev_power_cap_set", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap},
     {"rsmi_dev_power_cap_range_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_power_cap_range},
+    {"rsmi_dev_energy_count_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_energy_count},
+    #if defined(SUPPORT_SOCKET)
+    {"rsmi_dev_current_socket_power_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_current_socket_power},
+    #endif
     {"rsmi_dev_temp_metric_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_temp_metric},
     {"rsmi_dev_firmware_version_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_firmware_version},
     {"rsmi_dev_ecc_count_get", open_simple, close_simple, start_simple, stop_simple, access_rsmi_dev_ecc_count},
@@ -723,6 +735,10 @@ load_rsmi_sym(void)
     rsmi_dev_power_cap_range_get_p             = dlsym(rsmi_dlp, "rsmi_dev_power_cap_range_get");
     rsmi_dev_power_profile_presets_get_p       = dlsym(rsmi_dlp, "rsmi_dev_power_profile_presets_get");
     rsmi_dev_power_profile_set_p               = dlsym(rsmi_dlp, "rsmi_dev_power_profile_set");
+    rsmi_dev_energy_count_get_p                = dlsym(rsmi_dlp, "rsmi_dev_energy_count_get");
+    #if defined(SUPPORT_SOCKET)
+    rsmi_dev_current_socket_power_get_p        = dlsym(rsmi_dlp, "rsmi_dev_current_socket_power_get");
+    #endif
     rsmi_dev_temp_metric_get_p                 = dlsym(rsmi_dlp, "rsmi_dev_temp_metric_get");
     rsmi_dev_pci_id_get_p                      = dlsym(rsmi_dlp, "rsmi_dev_pci_id_get");
     rsmi_dev_pci_throughput_get_p              = dlsym(rsmi_dlp, "rsmi_dev_pci_throughput_get");
@@ -789,6 +805,10 @@ load_rsmi_sym(void)
                                 !rsmi_dev_power_cap_range_get_p             ||
                                 !rsmi_dev_power_profile_presets_get_p       ||
                                 !rsmi_dev_power_profile_set_p               ||
+                                !rsmi_dev_energy_count_get_p                ||
+                                #if defined(SUPPORT_SOCKET)
+                                !rsmi_dev_current_socket_power_get_p        ||
+                                #endif
                                 !rsmi_dev_temp_metric_get_p                 ||
                                 !rsmi_dev_pci_id_get_p                      ||
                                 !rsmi_dev_pci_throughput_get_p              ||
@@ -870,6 +890,10 @@ unload_rsmi_sym(void)
     rsmi_dev_power_cap_range_get_p             = NULL;
     rsmi_dev_power_profile_presets_get_p       = NULL;
     rsmi_dev_power_profile_set_p               = NULL;
+    rsmi_dev_energy_count_get_p                = NULL;
+    #if defined(SUPPORT_SOCKET)
+    rsmi_dev_current_socket_power_get_p        = NULL;
+    #endif
     rsmi_dev_temp_metric_get_p                 = NULL;
     rsmi_dev_pci_id_get_p                      = NULL;
     rsmi_dev_pci_throughput_get_p              = NULL;
@@ -1972,7 +1996,15 @@ get_event_name(const char *name, int32_t dev, int64_t variant, int64_t subvarian
             default:
                 return NULL;
         }
-    } else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
+    } else if (strcmp(name, "rsmi_dev_energy_count_get") == 0) {
+        sprintf(event_name_str, "energy_count:device=%i", dev);
+    }
+    #if defined(SUPPORT_SOCKET)
+    else if (strcmp(name, "rsmi_dev_current_socket_power_get") == 0) {
+        sprintf(event_name_str, "current_socket_power:device=%i", dev);
+    }
+    #endif
+    else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
         switch (variant) {
             case RSMI_TEMP_CURRENT:
                 sprintf(event_name_str, "temp_current:device=%i:sensor=%i", dev, (int) subvariant);
@@ -2481,7 +2513,15 @@ get_event_descr(const char *name, int64_t variant, int64_t subvariant)
             default:
                 return NULL;
         }
-    } else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
+    } else if (strcmp(name, "rsmi_dev_energy_count_get") == 0) {
+        return papi_strdup("Accumulated amount of GPU energy consumed in microjoules (uJ).");
+    }
+    #if defined(SUPPORT_SOCKET)
+    else if (strcmp(name, "rsmi_dev_current_socket_power_get") == 0) {
+        return papi_strdup("Current socket power (also known as instant power) in microwatts (uW).");
+    }
+    #endif
+    else if (strcmp(name, "rsmi_dev_temp_metric_get") == 0) {
         switch (variant) {
             case RSMI_TEMP_CURRENT:
                 return papi_strdup("Temperature current value, millidegrees Celsius.");
@@ -3975,3 +4015,79 @@ access_rsmi_dev_vendor_name(rocs_access_mode_e mode, void *arg)
     event->value = (int64_t) event->scratch;
     return PAPI_OK;
 }
+
+static int
+access_rsmi_dev_energy_count(rocs_access_mode_e mode, void *arg)
+{
+    ntv_event_t *event = (ntv_event_t *)arg;
+
+    /* This event is read-only. If a caller tries to WRITE, deny it. */
+    if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
+        return PAPI_ENOSUPP; /* not supported */
+    }
+
+    rsmi_status_t status;
+    uint64_t energy_counter = 0ULL;
+    float    resolution = 0.0f;   /* in microjoules */
+    uint64_t timestamp = 0ULL;    /* in ns, if you care */
+
+    status = rsmi_dev_energy_count_get_p((uint32_t)event->device,
+                                         &energy_counter,
+                                         &resolution,
+                                         &timestamp);
+    if (status != RSMI_STATUS_SUCCESS) {
+        if (status == RSMI_STATUS_INVALID_ARGS) {
+            SUBDBG("Energy counter is a nullptr. However, the function is supported with the provided arguments.\n");
+        }
+        else if (status == RSMI_STATUS_NOT_SUPPORTED) {
+            SUBDBG("Energy counter is a nullptr. However, the function is not supported with the installed software or hardware with the provided arguments.\n");
+        }
+
+        return PAPI_EMISC;
+    }
+
+    /*
+     * According to the doc (e.g. python_smi_tools/rocm_smi.py), 'energy_counter' * 'resolution' (in uJ)
+     * is the total energy consumed since the counter began accumulating. We store as an int64_t in
+     * microjoules. Watch for overflow if the accumulated energy is very large.
+     */
+    double total_uJ = (double)energy_counter * (double)resolution;
+    if (total_uJ > INT64_MAX) {
+        /* clamp to avoid overflow */
+        total_uJ = INT64_MAX;
+    }
+
+    event->value = (int64_t)total_uJ;
+    return PAPI_OK;
+}
+
+#if defined(SUPPORT_SOCKET)
+static int
+access_rsmi_dev_current_socket_power(rocs_access_mode_e mode, void *arg)
+{
+    ntv_event_t *event = (ntv_event_t *)arg;
+
+    /* This event is read-only. If a caller tries to WRITE, deny it. */
+    if (mode != ROCS_ACCESS_MODE__READ || mode != event->mode) {
+        return PAPI_ENOSUPP; /* not supported */
+    }
+
+    rsmi_status_t status;
+    uint64_t current_socket_power = 0ULL; /* in uW */
+
+    status = rsmi_dev_current_socket_power_get_p((uint32_t)event->device, &current_socket_power);
+    if (status != RSMI_STATUS_SUCCESS) {
+        if (status == RSMI_STATUS_INVALID_ARGS) {
+            SUBDBG("Current socket power is a nullptr. However, the function is supported with the provided arguments.\n");
+        }
+        else if (status == RSMI_STATUS_NOT_SUPPORTED) {
+            SUBDBG("Current socket power is a nullptr. However, the function is not supported with the installed software or hardware with the provided arguments.\n");
+        }
+
+        return PAPI_EMISC;
+    }
+
+    event->value = (int64_t)current_socket_power;
+    return PAPI_OK;
+}
+#endif
