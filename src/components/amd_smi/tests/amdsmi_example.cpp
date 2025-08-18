@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     // e.g., "rocm_smi:::power_average:device=0" (Average GPU Power)
     // e.g., "rocm_smi:::temp_rx_soc:device=0" (GPU Temperature)
     // Check availability with `papi_avail` or `papi_native_avail` utilities.
-    const char *eventName = "amd_smi:::temp_current:device=0:sensor=0"; // Example: Total Instructions Executed
+    const char *eventName = "amd_smi:::temp_current:device=0:sensor=1"; // Example: Total Instructions Executed
 
     printf("Attempting to add event: %s\n", eventName);
     retval = PAPI_add_named_event(EventSet, eventName);
