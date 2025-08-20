@@ -1105,61 +1105,6 @@ AC_ARG_WITH(perfnec,
 	         fi])
 
 
-force_pfm_incdir=no
-
-##################################################
-#          perfmon
-##################################################
-old_pfmv2=n
-perfmon=0
-perfmon2=no
-force_perfmon2=no
-
-AC_ARG_WITH(perfmon,
-            [AS_HELP_STRING([--with-perfmon=<x.y>],
-            [Specify perfmon as the performance interface and specify version])],
-            [perfmon=$withval 
-             user_specified_interface=perfmon
-	     force_perfmon2=yes
-	     pfm_incdir="libpfm-3.y/include"
-             perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
-             perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
-             if test "x$perfmon" = "x"; then
-               AC_MSG_ERROR("Badly formed perfmon version string")
-             fi
-             perfmon=`echo ${perfmon} | sed 's/\.//'`
-             if test $perfmon -gt 20; then
-               perfmon2=yes
-             fi
-             if test $perfmon -lt 25; then
-               old_pfmv2=y
-	       PFMCFLAGS="-DPFMLIB_OLD_PFMV2"
-             fi],
-            [perfmon=0
-	         if test "$cross_compiling" = "no" ; then
-	           AC_CHECK_FILE(/sys/kernel/perfmon/version,
-                             [perfmon=`cat /sys/kernel/perfmon/version`],
-                             [AC_CHECK_FILE(/proc/perfmon,
-                                            [perfmon=`cat /proc/perfmon | grep version | cut -d: -f2`],
-                                            [perfmon=0])])
-               if test "$perfmon" != 0; then
-	         pfm_incdir="libpfm-3.y/include"
-                 perfmon=`echo ${perfmon} | sed 's/^[ \t]*//;s/[ \t]*$//'`
-                 perfmon=`echo ${perfmon} | grep -e '[[1-9]]\.[[0-9]][[0-9]]*'`
-                 perfmon=`echo ${perfmon} | sed 's/\.//'`
-                 if test $perfmon -gt 20; then
-                   perfmon2=yes
-                 fi
-                 if test $perfmon -lt 25; then
-# must be y, not yes, or libpfm breaks
-                   old_pfmv2="y"           
-                   PFMCFLAGS="-DPFMLIB_OLD_PFMV2"
-                 fi
-               fi
-	         fi])
-
-
-force_pfm_incdir=no
 # default
 
 AC_ARG_WITH(pfm_root,
@@ -1331,81 +1276,20 @@ AC_ARG_WITH(pe_incdir,
 # MESSING WITH CFLAGS IS STUPID!
 #
 if test "$user_specified_interface" != "no"; then
-	if test "$user_specified_interface" = "perfmon"; then
-	   perf_events="no"
-	   PAPICFLAGS+=" $PFMCFLAGS"
-	   perfnec=0
-	else
-		if test "$user_specified_interface" = "pe"; then
-			   perfmon=0
-			   PAPICFLAGS+=" $PECFLAGS"
-			   perfnec=0
-		else
-			if test "$user_specified_interface" = "perfnec"; then
-				perfmon=0
-				perf_events=0
-				PAPICFLAGS+=" -DPERFNEC"
-				AC_MSG_NOTICE([XXXXX user_specified_interface perfnec])
-
-			else
-				AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perfmon=$perfmon perfmon2=$perfmon2 perf-events=$perf_events perfnec=$perfnec")
-			fi
-		fi								 
-	fi
+    if test "$user_specified_interface" = "pe"; then
+        PAPICFLAGS+=" $PECFLAGS"
+	perfnec=0
+    elif test "$user_specified_interface" = "perfnec"; then
+        perf_events=0
+        PAPICFLAGS+=" -DPERFNEC"
+        AC_MSG_NOTICE([XXXXX user_specified_interface perfnec])
+    else
+        AC_MSG_ERROR("Unknown user_specified_interface=$user_specified_interface perf-events=$perf_events perfnec=$perfnec")
+    fi
 else
-	if test "$perfmon" != 0; then
-	   PAPICFLAGS+=" $PFMCFLAGS"
-	fi
-	if test "$perf_events" = "yes"; then
-	   PAPICFLAGS+=" $PECFLAGS"
-	fi
-fi
-
-
-#
-# User has made no choice, so we default to the ordering below in the platform section, if
-# we detect more than one.
-#
-
-#
-# What does this next section do? It determines whether or not to run the tests for libpfm
-# based on the settings of pfm_root, pfm_prefix, pfm_incdir, pfm_libdir
-#
-
-# Both should be 0 for NEC
-if test "$perfmon" != 0 -o "$perf_events" = "yes"; then
-   # if prefix set, then yes
-   if test "x$pfm_prefix" != "x"; then
-      dotest=1
-   # if root not set and libdir set, then yes
-   elif test "x$pfm_root" = "x" -a "x$pfm_libdir" != "x"; then
-      dotest=1
-   else
-      dotest=0
-   fi
-  if test "$dotest" = 1; then
-    LIBS="-L$pfm_libdir -lpfm"
-    CPPFLAGS="$CPPFLAGS -I$pfm_incdir"
-    AC_CHECK_LIB([pfm], [pfm_initialize], 
-                 [AC_CHECK_HEADERS([perfmon/pfmlib.h],
-                                   [if test "$arch" = "ia64"; then
-   		                              AC_CHECK_HEADERS([perfmon/pfmlib_montecito.h])
-                                    fi
-   	                                AC_CHECK_FUNC(pfm_get_event_description, 
-                                                  [AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])],[])
-   	                                AC_CHECK_MEMBER(pfmlib_reg_t.reg_evt_idx, 
-                                                    [AC_DEFINE(HAVE_PFM_REG_EVT_IDX,1,[old reg_evt_idx])],[],[#include "perfmon/pfmlib.h"])
-   	                                AC_CHECK_MEMBER(pfmlib_output_param_t.pfp_pmd_count, 
-                                                    [AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])],[],[#include "perfmon/pfmlib.h"])
-   	                                AC_CHECK_MEMBER(pfm_msg_t.type, 
-                                                    [AC_DEFINE(HAVE_PFM_MSG_TYPE,1,[new pfm_msg_t])],[],[#include "perfmon/perfmon.h"]) ], 
-                                   [AC_MSG_ERROR([perfmon/pfmlib.h not found, rerun configure with different flags]) ]) ], 
-                 [AC_MSG_ERROR([libpfm.a not found, rerun configure with different flags]) ])
-  else
-    AC_DEFINE(HAVE_PERFMON_PFMLIB_MONTECITO_H,1,[Montecito headers])
-    AC_DEFINE(HAVE_PFM_GET_EVENT_DESCRIPTION,1,[event description function])
-    AC_DEFINE(HAVE_PFMLIB_OUTPUT_PFP_PMD_COUNT,1,[new pfmlib_output_param_t])
-  fi
+    if test "$perf_events" = "yes"; then
+        PAPICFLAGS+=" $PECFLAGS"
+    fi
 fi
 
 ##################################################
@@ -1423,15 +1307,7 @@ case "$OS" in
   bgq)
     MAKEVER=bgq ;;
   CLE)
-    if test "$perfmon2" = "yes"; then
-#  major_version=`echo $OSVER | sed 's/\([[^.]][[^.]]*\).*/\1/'`
-#  minor_version=`echo $OSVER | sed 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/'`
-#  point_version=`echo $OSVER | sed -e 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/' -e 's/[[^0-9]].*//'`
-#    if (test "$major_version" = 2 -a "$minor_version" = 6 -a "$point_version" -lt 31 -a "$perfmon2" != "yes" ); then
-       MAKEVER="$OS"-perfmon2
-    else
-       MAKEVER="$OS"-pe
-    fi ;;
+    MAKEVER="$OS"-pe ;;
   freebsd)
     MAKEVER="freebsd"
     LDFLAGS="-lpmc"
@@ -1476,12 +1352,8 @@ case "$OS" in
   linux)
     if test "$force_perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
-    elif test "$force_perfmon2" = "yes" ; then
-      MAKEVER="$OS"-perfmon2
     elif test "$perf_events" = "yes" ; then
       MAKEVER="$OS"-pe
-    elif test "$perfmon2" = "yes" ; then
-      MAKEVER="$OS"-perfmon2
     elif test "$old_pfmv2" = "y" ; then
       MAKEVER="$OS"-pfm-"$CPU"
     else
@@ -1678,17 +1550,6 @@ elif test "$MAKEVER" = "bgq"; then
   CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
   OMPCFLGS=""
 
-elif test "$MAKEVER" = "CLE-perfmon2"; then 
-    FILENAME=Rules.perfmon2
-    CPUCOMPONENT_NAME=perfmon
-    CPUCOMPONENT_C=perfmon.c
-    CPUCOMPONENT_OBJ=perfmon.o
-    VECTOR=_papi_pfm_vector
-    PAPI_EVENTS_CSV="papi_events.csv"
-  F77=gfortran
-  CFLAGS="$CFLAGS -D__crayxt"
-  FFLAGS=""
-
 elif test "$MAKEVER" = "freebsd"; then
     CPUCOMPONENT_NAME=freebsd
     CPUCOMPONENT_C=freebsd.c
@@ -1729,26 +1590,6 @@ elif test "$MAKEVER" = "nec-nec"; then
     FILENAME=Rules.perfnec
     CPUCOMPONENT_NAME=perfnec
     components="perfnec"
-
-elif test "$MAKEVER" = "linux-perfmon2"; then
-    FILENAME=Rules.perfmon2
-    CPUCOMPONENT_NAME=perfmon2
-    components="perfmon2"
-
-elif (test "$MAKEVER" = "linux-pfm-ia64" || test "$MAKEVER" = "linux-pfm-itanium2" || test "$MAKEVER" = "linux-pfm-montecito"); then
-    FILENAME=Rules.pfm
-    CPUCOMPONENT_NAME=perfmon-ia64
-    components="perfmon_ia64"
-    VERSION=3.y
-    if test "$MAKEVER" = "linux-pfm-itanium2"; then
-      CPU=2
-    else
-      CPU=3
-    fi
-    CFLAGS="$CFLAGS -DITANIUM$CPU"
-    FFLAGS="$FFLAGS -DITANIUM$CPU"
-
-  CC_SHR='$(CC) -fPIC -DPIC -shared -Wl,-soname -Wl,$(SHLIB) -Xlinker "-rpath" -Xlinker "$(LIBDIR)"'
 
 elif test "$MAKEVER" = "solaris-ultra"; then
     CPUCOMPONENT_NAME=solaris-ultra
