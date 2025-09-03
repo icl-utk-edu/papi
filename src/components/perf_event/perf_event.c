@@ -31,6 +31,7 @@
 #include <sys/utsname.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <linux/capability.h>
 
 /* PAPI-specific includes */
 #include "papi.h"
@@ -83,9 +84,17 @@ static int exclude_guest_unsupported;
 /* We're still tracking down why this happens.                        */
 
 #if defined(__powerpc__)
-#define PAPI_REFRESH_VALUE 0
-#else
-#define PAPI_REFRESH_VALUE 1
+    #define PAPI_REFRESH_VALUE 0
+    #define __NR_capget 183
+#elif defined(__x86_64__)
+    #define PAPI_REFRESH_VALUE 1
+    #define __NR_capget 125
+#elif defined(__i386__)
+    #define PAPI_REFRESH_VALUE 1
+    #define __NR_capget 184
+#elif defined(__arm__)
+    #define PAPI_REFRESH_VALUE 1
+    #define __NR_capget 184+0x900000
 #endif
 
 static int _pe_set_domain( hwd_control_state_t *ctl, int domain);
@@ -2466,6 +2475,31 @@ _pe_handle_paranoid(papi_vector_t *component) {
 		return PAPI_ECMP;
 	}
 
+
+	struct __user_cap_header_struct cap_header;
+	struct __user_cap_data_struct cap_data[2];
+
+	memset( &cap_header, 0, sizeof(cap_header) );
+	memset( cap_data, 0, sizeof(cap_data) );
+
+	cap_header.version = _LINUX_CAPABILITY_VERSION_3;
+	cap_header.pid = 0;
+
+	retval = syscall(__NR_capget, &cap_header, &cap_data);
+        if (retval < 0) {
+		strCpy = strncpy(component->cmp_info.disabled_reason, "Erroy querying Linux capabilities", PAPI_MAX_STR_LEN);
+		if (strCpy == NULL) HANDLE_STRING_ERROR;
+		return PAPI_ECMP;
+        }
+
+        int perfmon_capabilities;
+	#ifdef CAP_PERFMON
+            perfmon_capabilities = (cap_data[0].permitted & (1 << CAP_SYS_ADMIN)) ||
+                                   (cap_data[1].permitted & (1 << (CAP_PERFMON - 32)));
+        #else
+            perfmon_capabilities = cap_data[0].permitted & (1 << CAP_SYS_ADMIN);
+        #endif
+
 	/* 3 (vendor patch) means completely disabled */
 	/* 2 means no kernel measurements allowed   */
 	/* 1 means normal counter access            */
@@ -2475,8 +2509,9 @@ _pe_handle_paranoid(papi_vector_t *component) {
 	if (retval!=1) fprintf(stderr,"Error reading paranoid level\n");
 	fclose(fff);
 
-	if (paranoid_level >= 3) {
-		int strLen = snprintf(component->cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "perf_event support disabled by Linux with paranoid=%d", paranoid_level);
+	if (paranoid_level >= 3 && perfmon_capabilities == 0) {
+		const char *permissionsMsg = "Insufficient permissions for perf_event support with paranoid=%d. Set /proc/sys/kernel/perf_event_paranoid to 2 or less, run as root, or use CAP_PERFMON/CAP_SYS_ADMIN.";
+		int strLen = snprintf(component->cmp_info.disabled_reason, PAPI_2MAX_STR_LEN, permissionsMsg, paranoid_level);
 		if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
 			SUBDBG("Failed to fully write disabled reason due to paranoid level.\n");
 			return PAPI_EBUF;
@@ -2484,7 +2519,7 @@ _pe_handle_paranoid(papi_vector_t *component) {
 		return PAPI_ECMP;
 	}
 
-	if ((paranoid_level==2) && (getuid()!=0)) {
+	if ((paranoid_level==2) && (getuid()!=0) && (perfmon_capabilities == 0)) {
 		SUBDBG("/proc/sys/kernel/perf_event_paranoid prohibits kernel counts");
 		component->cmp_info.available_domains &=~PAPI_DOM_KERNEL;
 	}

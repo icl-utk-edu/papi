@@ -2269,7 +2269,8 @@ if test "$have_paranoid" = "yes"; then
 ***************************************************************************
 * Insufficient permissions for accessing any hardware counters.           *
 * Your current paranoid level is $paranoid_level.                                       *
-* Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root. *
+* Set /proc/sys/kernel/perf_event_paranoid to 2 (or less), run as root,   *
+* or use CAP_PERFMON/CAP_SYS_ADMIN.                                       *
 *                                                                         *
 * Example:                                                                *
 * sudo sh -c \"echo 2 > /proc/sys/kernel/perf_event_paranoid\"              *
