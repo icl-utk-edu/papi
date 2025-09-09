@@ -555,7 +555,7 @@ static int enumerate_events_for_event_api(cuptiu_event_and_metric_table_t *table
             char eventName[PAPI_2MAX_STR_LEN];
             cuptiCheckErrors( cuptiEventGetAttributePtr(eventArray[eventIdx], CUPTI_EVENT_ATTR_NAME, &size, eventName), return PAPI_EMISC );
 
-            // Reconstruct name to have event:eventName: to distinguish an event from a metric
+            // Reconstruct name to have event.eventName: to distinguish an event from a metric
             char reconstructedEventName[PAPI_2MAX_STR_LEN];
             int strLen = snprintf(reconstructedEventName, PAPI_2MAX_STR_LEN, "event.%s", eventName);
             if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
@@ -624,7 +624,7 @@ static int enumerate_metrics_for_metric_api(cuptiu_event_and_metric_table_t *tab
         char metricName[PAPI_2MAX_STR_LEN];
         cuptiCheckErrors( cuptiMetricGetAttributePtr(metricIdList[metricIdx], CUPTI_METRIC_ATTR_NAME, &size, metricName), return PAPI_EMISC );
 
-        // Reconstruct name to have metric:metricName: to distinguish a metric from an event
+        // Reconstruct name to have metric.metricName: to distinguish a metric from an event
         char reconstructedMetricName[PAPI_2MAX_STR_LEN];
         int strLen = snprintf(reconstructedMetricName, PAPI_2MAX_STR_LEN, "metric.%s", metricName);
         if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
@@ -990,7 +990,7 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
             }
 
             // If this is not a metric eventgroup, then store accumulated values
-            if (gpu_ctl->added_events->countOfMetricIDs == 0) {
+            if (gpu_ctl->added_events->typeOfGroupSet == EVENT) {
                 for (eventIdx = 0; eventIdx < numGroupEvents; eventIdx++) {
                     readCounterValues[numCountersRead] = accumulateEventVals[eventIdx];
                     numCountersRead++;

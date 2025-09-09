@@ -36,43 +36,4 @@ int cuptip_ctx_stop(cuptip_control_t state);
 int cuptip_ctx_read(cuptip_control_t state, long long **counters);
 int cuptip_ctx_reset(cuptip_control_t state);
 
-/*
-void init_vector(StringVector *vec);
-int push_back(StringVector *vec, const char *str);
-void free_vector(StringVector *vec);
-
-typedef struct gpu_record_s {
-    char chipName[PAPI_MIN_STR_LEN];
-    int totalMetricCount;
-    char **metricNames;
-} gpu_record_t;
-
-typedef struct {
-    char **arrayMetricStatistics ;   
-    size_t size;   
-    size_t capacity;
-} StringVector;
-
-typedef struct event_record_s {
-    char name[PAPI_2MAX_STR_LEN];
-    char basenameWithStatReplaced[PAPI_2MAX_STR_LEN];
-    char desc[PAPI_HUGE_STR_LEN];
-    StringVector * stat;
-    cuptiu_bitmap_t device_map;
-} cuptiu_event_t;
-
-typedef struct event_table_s {
-    unsigned int count;
-    unsigned int event_stats_count;
-    unsigned int capacity;
-    char cuda_evts[30][PAPI_2MAX_STR_LEN];
-    int cuda_devs[30];
-    int evt_pos[30];
-    gpu_record_t *avail_gpu_info;
-    cuptiu_event_t *events;
-    StringVector   *event_stats;
-    void *htable;
-} cuptiu_event_table_t;
-*/
-
 #endif  /* __CUPTI_PROFILER_H__ */

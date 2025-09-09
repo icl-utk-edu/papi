@@ -42,11 +42,11 @@ has been disabled will be directly below it.
 
 At the time of writing this, the `cuda` component supports the following three APIs:
 
-| API  | Cuda Toolkits Supported |Supported Compute Capabilities | Example GPU |
-| ------------- | :-------------: | :-------------: | :-------------: |
-| Event API  | Placeholder | CC <= 7.0  | P100 |
-| Metric API | Placeholder | CC <= 7.0  | P100 |
-| Perfworks API | Placeholder | CC >= 7.0 | A100 |
+| API | Supported Compute Capabilities | Example GPU |
+| ------------- | :-------------: | :-------------: |
+| Event API  | CC <= 7.0  | P100 |
+| Metric API | CC <= 7.0  | P100 |
+| Perfworks API | CC >= 7.0 | A100 |
 
 For the `cuda` component to be operational, the following dynamic libraries must be found at runtime for both the Event/Metric APIs and the Perfworks API:
 
@@ -74,8 +74,8 @@ The Event/Metric API only overlaps with the Perfworks API at CC 7.0 (V100). Mean
 
 To allow for this choice to be made the `cuda` component supports being ***Partially Disabled***. Which means:
 
-* If exposing counters and controls for CCs <= 7.0 (e.g. P100 and V100), then exposing counters and controls for CCs > 7.0 will be disabled
-* If exposing counters and controls for CCs >= 7.0 (e.g. V100 and A100), then exposing counters and controls for CCs < 7.0 will be disabled
+* If exposing counters and controls for CCs <= 7.0 (e.g. P100 and V100), then support for exposing counters and controls for CCs > 7.0 will be disabled
+* If exposing counters and controls for CCs >= 7.0 (e.g. V100 and A100), then support for exposing counters and controls for CCs < 7.0 will be disabled
 
 By default, counters and conrols for CCs >= 7.0 will be exposed. However, at runtime the choice of which CCs the counter and controls will be exposed for can be changed via the environment variable `PAPI_CUDA_API`.
 
