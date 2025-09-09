@@ -426,11 +426,10 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
 
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
-    /* allocating memoory for total number of devices */
+    // allocating memory for total number of devices
     if (cuda_ctl->info == NULL) {
         papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
         if (papi_errno != PAPI_OK) {
-            printf("cuptid_thread_info_create failed: %d\n", papi_errno);
             goto fn_exit;
         }   
     }
@@ -442,7 +441,6 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
 
     /* needed to make sure multipass events are caught with proper error code (PAPI_EMULPASS)*/
     papi_errno = cuptid_ctx_create(cuda_ctl->info, &(cuda_ctl->cuptid_ctx), cuda_ctl->events_id, cuda_ctl->num_events);
-    printf("papi_errno after cuptid_ctx_create: %d\n", papi_errno);
 
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));

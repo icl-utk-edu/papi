@@ -89,12 +89,16 @@ int cuptid_init(void)
     } else if (cupti_api == API_EVENTS) {
 
 #if defined(API_EVENTS)
-        // TODO: When the Events API is added back, add a similar check
-        // as above
         papi_errno = cuptie_init();
+        if (papi_errno == PAPI_OK) {
+            if (init_errno == PAPI_PARTIAL) {
+                papi_errno = init_errno;
+            }
+        }
 #else
-        cuptic_err_set_last("Unknown events API problem.");
+        cuptic_err_set_last("Unknown Event and Metric API issue.");
         papi_errno = PAPI_ECMP;
+        goto fn_exit;
 #endif
 
     } else {
