@@ -43,10 +43,6 @@ typedef enum
     sys_gpu_ccs_all_gte_70
 } sys_compute_capabilities_e;
 
-struct cuptic_info {
-    CUcontext ctx;
-};
-
 // Load necessary functions from Cuda toolkit e.g. cupti or runtime 
 static int util_load_cuda_sym(void);
 static int load_cuda_sym(void);
@@ -613,8 +609,7 @@ int cuptic_init(void)
     }
 
     // Handle a partially disabled Cuda component
-    // TODO: Once the Events API is added back, this conditional will need to be updated for Issue #297 section 2
-    if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70) {
+    if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70 || system_ccs == sys_gpu_ccs_all_gte_70) {
         char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
         char *cc_support = ">=7.0";
         if (PAPI_CUDA_API != NULL) {
@@ -630,7 +625,7 @@ int cuptic_init(void)
                               " Only support for CC %s enabled.", cc_support);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
             SUBDBG("Failed to fully write the partially disabled error message.\n");
-            return PAPI_ENOMEM;
+            return PAPI_EBUF;
         }
         cuptic_err_set_last(errMsg);
 
@@ -655,12 +650,17 @@ int cuptic_determine_runtime_api(void)
     int cupti_api = -1;
     char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
 
+    unsigned int cuptiVersion = util_dylib_cupti_version();
+    // For the Event and Metric API to be operational in the Cuda component,
+    // users must link with a Cuda toolkit version that has a CUPTI version < 13000.
+    if (cuptiVersion >= CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION && strcasecmp(PAPI_CUDA_API, "EVENTS") == 0) {
+        cuptic_err_set_last("Cannot use Event and Metric API with Cuda Toolkit versions >= 13.0 as support was removed.\n");
+        return cupti_api;
+    }
     // For the Perfworks API to be operational in the Cuda component,
     // users must link with a Cuda toolkit version that has a CUPTI version >= 13.
-    // TODO: Once the Events API is added back into the Cuda component. Add a similar
-    // check as the one shown below.
-    unsigned int cuptiVersion = util_dylib_cupti_version();
-    if (!(cuptiVersion >= CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION) && PAPI_CUDA_API == NULL) {
+    else if (cuptiVersion < CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION && PAPI_CUDA_API == NULL) {
+        cuptic_err_set_last("CUPTI version >= 13 is required for Perfworks API functionality.\n");
         return cupti_api; 
     }
 
@@ -682,7 +682,6 @@ int cuptic_determine_runtime_api(void)
             cupti_api = API_PERFWORKS;
             break;
         // All devices have CCs <= 7.0
-        // TODO: Once the Events API is added back, this case will default to use the Events API
         case sys_gpu_ccs_all_lte_70:
         // All devices have CCs >= 7.0
         case sys_gpu_ccs_all_gte_70:

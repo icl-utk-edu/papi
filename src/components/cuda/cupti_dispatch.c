@@ -7,6 +7,7 @@
 
 #include "cupti_config.h"
 #include "papi_cupti_common.h"
+#include "cupti_event_and_metric.h"
 #include "cupti_dispatch.h"
 #include "lcuda_debug.h"
 
@@ -88,12 +89,16 @@ int cuptid_init(void)
     } else if (cupti_api == API_EVENTS) {
 
 #if defined(API_EVENTS)
-        // TODO: When the Events API is added back, add a similar check
-        // as above
         papi_errno = cuptie_init();
+        if (papi_errno == PAPI_OK) {
+            if (init_errno == PAPI_PARTIAL) {
+                papi_errno = init_errno;
+            }
+        }
 #else
-        cuptic_err_set_last("Unknown events API problem.");
+        cuptic_err_set_last("Unknown Event and Metric API issue.");
         papi_errno = PAPI_ECMP;
+        goto fn_exit;
 #endif
 
     } else {
@@ -126,7 +131,7 @@ int cuptid_ctx_create(cuptid_info_t info,  cuptip_control_t *pcupti_ctl, uint32_
     } else if (cupti_api == API_EVENTS) {
 
 #if defined (API_EVENTS)
-        return cuptie_ctx_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
+        return cuptie_ctx_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl, events_id, num_events);
 #endif
 
     }
