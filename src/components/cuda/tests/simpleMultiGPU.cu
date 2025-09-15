@@ -235,7 +235,12 @@ int main( int argc, char **argv )
     // to as late as PAPI_start(), but they are needed to
     // create streams, alloc memory, etc.
     for (i = 0; i < num_gpus; i++) {
-        CHECK_CU_ERROR( cuCtxCreate( &(ctx[i]), 0, device[i] ), "cuCtxCreate" ); // automatically pushes the new context on the stack.
+        int flags = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+        CHECK_CU_ERROR( cuCtxCreate(&(ctx[i]), (CUctxCreateParams*)0, flags, device[i]), "cuCtxCreate" );
+#else
+        CHECK_CU_ERROR( cuCtxCreate(&(ctx[i]), flags, device[i]), "cuCtxCreate" );
+#endif
         CHECK_CU_ERROR( cuCtxPopCurrent(&poppedCtx), "cuCtxPopCurrent" );        // ... so take it off.
     }
 

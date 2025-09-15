@@ -77,11 +77,23 @@ void multi_reset(int event_count, char **evt_names, long long *values)
 {
     CUcontext ctx;
     int papi_errno, i;
-    papi_errno = cuCtxCreate(&ctx, 0, 0);
-    if (papi_errno != CUDA_SUCCESS) {
-        fprintf(stderr, "cuda error: failed to create cuda context.\n");
+
+    CUresult cuError;
+    int flags = 0;
+    CUdevice device = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+    cuError = cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version >= 13: %d\n", cuError);
         exit(1);
     }
+#else
+    cuError = cuCtxCreate(&ctx, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version < 13: %d\n", cuError);
+        exit(1);
+    }
+#endif
 
 #ifdef PAPI
     int EventSet = PAPI_NULL;
@@ -171,11 +183,23 @@ void multi_read(int event_count, char **evt_names, long long *values)
 {
     CUcontext ctx;
     int papi_errno, i;
-    papi_errno = cuCtxCreate(&ctx, 0, 0);
-    if (papi_errno != CUDA_SUCCESS) {
-        fprintf(stderr, "cuda error: failed to create cuda context.\n");
+
+    CUresult cuError;
+    int flags = 0;
+    CUdevice device = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+    cuError = cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version >= 13: %d\n", cuError);
         exit(1);
     }
+#else
+    cuError = cuCtxCreate(&ctx, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version < 13: %d\n", cuError);
+        exit(1);
+    }
+#endif
 
 #ifdef PAPI
     int EventSet = PAPI_NULL, j;
@@ -256,11 +280,24 @@ void single_read(int event_count, char **evt_names, long long *values, char ***a
 {
     int papi_errno, i;
     CUcontext ctx;
-    papi_errno = cuCtxCreate(&ctx, 0, 0);
-    if (papi_errno != CUDA_SUCCESS) {
-        fprintf(stderr, "cuda error: failed to create cuda context.\n");
+
+    CUresult cuError;
+    int flags = 0;
+    CUdevice device = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+    cuError = cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version >= 13: %d\n", cuError);
         exit(1);
     }
+#else
+    cuError = cuCtxCreate(&ctx, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version < 13: %d\n", cuError);
+        exit(1);
+    }
+#endif
+
 #ifdef PAPI
     int EventSet = PAPI_NULL, j;
     papi_errno = PAPI_create_eventset(&EventSet);

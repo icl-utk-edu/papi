@@ -350,7 +350,12 @@ int main(int argc, char **argv)
         // config.maxLaunchesPerPass = 1;     // Must be >= maxRangesPerPass.  Set this to the largest count of kernel launches which may be encountered in any Pass in this Session
 
         // // Device 0 has max of 3 passes; other devices only run one pass in this sample code
-        DRIVER_API_CALL(cuCtxCreate(&(config.context), 0, device)); // Either set to a context, or may be NULL if a default context has been created
+        int flags = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+        DRIVER_API_CALL( cuCtxCreate(&(config.context), (CUctxCreateParams*)0, flags, device) );
+#else
+        DRIVER_API_CALL( cuCtxCreate(&(config.context), flags, device) );
+#endif
         deviceData[device].config = config;// Save this device config
 
         // Initialize CUPTI Profiling structures

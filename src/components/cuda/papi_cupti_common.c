@@ -79,7 +79,6 @@ static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t 
 CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 CUresult ( *cuCtxDestroyPtr ) (CUcontext);
-CUresult ( *cuCtxCreatePtr ) (CUcontext *pctx, unsigned int flags, CUdevice dev);
 CUresult ( *cuCtxGetDevicePtr ) (CUdevice *);
 CUresult ( *cuDeviceGetPtr ) (CUdevice *, int);
 CUresult ( *cuDeviceGetCountPtr ) (int *);
@@ -125,7 +124,6 @@ int load_cuda_sym(void)
     cuCtxSetCurrentPtr           = DLSYM_AND_CHECK(dl_drv, "cuCtxSetCurrent");
     cuCtxGetCurrentPtr           = DLSYM_AND_CHECK(dl_drv, "cuCtxGetCurrent");
     cuCtxDestroyPtr              = DLSYM_AND_CHECK(dl_drv, "cuCtxDestroy");
-    cuCtxCreatePtr               = DLSYM_AND_CHECK(dl_drv, "cuCtxCreate");
     cuCtxGetDevicePtr            = DLSYM_AND_CHECK(dl_drv, "cuCtxGetDevice");
     cuDeviceGetPtr               = DLSYM_AND_CHECK(dl_drv, "cuDeviceGet");
     cuDeviceGetCountPtr          = DLSYM_AND_CHECK(dl_drv, "cuDeviceGetCount");
@@ -156,7 +154,6 @@ static int unload_cuda_sym(void)
     cuCtxSetCurrentPtr           = NULL;
     cuCtxGetCurrentPtr           = NULL;
     cuCtxDestroyPtr              = NULL;
-    cuCtxCreatePtr               = NULL;
     cuCtxGetDevicePtr            = NULL;
     cuDeviceGetPtr               = NULL;
     cuDeviceGetCountPtr          = NULL;
