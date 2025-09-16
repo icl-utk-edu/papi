@@ -802,7 +802,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -944,7 +944,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -1106,7 +1106,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -1294,7 +1294,7 @@ int init_event_table(void)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -2254,7 +2254,7 @@ static int determine_dev_cc_major(int dev_id)
     // TODO: Once the Events API is added back, move this to either cupti_utils or papi_cupti_common
     //       with updated logic.
     else {
-        return API_EVENTS;
+        return API_LEGACY;
     }
 }
 

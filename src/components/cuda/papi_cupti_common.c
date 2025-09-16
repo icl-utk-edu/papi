@@ -612,7 +612,7 @@ int cuptic_init(void)
     if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70 || system_ccs == sys_gpu_ccs_all_gte_70) {
         char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
         char *cc_support = (PAPI_CUDA_API != NULL) ? "<=7.0" : ">=7.0";
-        char *helpMsg  = (PAPI_CUDA_API != NULL) ? "To enable support for CCs >= 7.0 unset PAPI_CUDA_API" : "To enable support for CCs <= 7.0 run 'export PAPI_CUDA_API=EVENTS'"
+        char *helpMsg  = (PAPI_CUDA_API != NULL) ? "To enable support for CCs >= 7.0 run 'unset PAPI_CUDA_API'" : "To enable support for CCs <= 7.0 run 'export PAPI_CUDA_API=LEGACY'";
 
         char errMsg[PAPI_HUGE_STR_LEN];
         int strLen = snprintf(errMsg, PAPI_HUGE_STR_LEN,
@@ -647,13 +647,13 @@ int cuptic_determine_runtime_api(void)
     unsigned int cuptiVersion = util_dylib_cupti_version();
     // For the Event and Metric API to be operational in the Cuda component,
     // users must link with a Cuda toolkit version that has a CUPTI version < 13000.
-    if (cuptiVersion >= CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION && strcmp(PAPI_CUDA_API, "LEGACY") == 0) {
+    if (cuptiVersion >= CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION && strcasecmp(PAPI_CUDA_API, "LEGACY") == 0) {
         cuptic_err_set_last("Cannot use Event and Metric APIs with Cuda Toolkit versions >= 13.0 as support was removed.\n");
         return PAPI_EINVAL;
     }
     // For the Perfworks API to be operational in the Cuda component,
     // users must link with a Cuda toolkit version that has a CUPTI version >= 13.
-    else if (cuptiVersion < CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION && strcmp(PAPI_CUDA_API, "PERFWORKS")) {
+    else if (cuptiVersion < CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION && strcasecmp(PAPI_CUDA_API, "PERFWORKS")) {
         cuptic_err_set_last("CUPTI version >= 13 is required for Perfworks API functionality.\n");
         return PAPI_EINVAL;
     }
@@ -667,7 +667,7 @@ int cuptic_determine_runtime_api(void)
 
     // Check to make sure a user has not tried to set PAPI_CUDA_API with only devices
     // with CCs > 7.0
-    if (system_ccs == sys_gpu_ccs_all_gt_70 && strcmp(PAPI_CUDA_API, "LEGACY") == 0) {
+    if (system_ccs == sys_gpu_ccs_all_gt_70 && strcasecmp(PAPI_CUDA_API, "LEGACY") == 0) {
         cuptic_err_set_last("Devices detected have CCs > 7.0; therefore, only the Perfworks Metric API is supported. Unset PAPI_CUDA_API.\n");
         return  PAPI_EINVAL;
     }
@@ -677,7 +677,7 @@ int cuptic_determine_runtime_api(void)
     switch (system_ccs) {
         // All devices have CCs < 7.0
         case sys_gpu_ccs_all_lt_70:
-            cupti_api = API_EVENTS;
+            cupti_api = API_LEGACY;
             break;
         // All devices have CCs > 7.0
         case sys_gpu_ccs_all_gt_70:
@@ -694,9 +694,9 @@ int cuptic_determine_runtime_api(void)
             // Default will be to use Perfworks API, user can change this by setting PAPI_CUDA_API.
             cupti_api = API_PERFWORKS;
             if (PAPI_CUDA_API != NULL) {
-                int result = strcmp(PAPI_CUDA_API, "EVENTS");
+                int result = strcasecmp(PAPI_CUDA_API, "LEGACY");
                 if (result == 0)
-                    cupti_api = API_EVENTS;
+                    cupti_api = API_LEGACY;
             }
             break;
         default:
@@ -731,7 +731,7 @@ int get_enabled_devices(void)
         if (cupti_api == API_PERFWORKS && cc >= 70) {
             collectCudaDevice = 1;    
         }
-        else if (cupti_api == API_EVENTS && cc <= 70) {
+        else if (cupti_api == API_LEGACY && cc <= 70) {
             collectCudaDevice = 1;
         }
 

@@ -558,7 +558,7 @@ static int enumerate_events_for_event_api(cuptiu_event_and_metric_table_t *table
 
             // Reconstruct name to have event.eventName: to distinguish an event from a metric
             char reconstructedEventName[PAPI_2MAX_STR_LEN];
-            int strLen = snprintf(reconstructedEventName, PAPI_2MAX_STR_LEN, "event.%s", eventName);
+            int strLen = snprintf(reconstructedEventName, PAPI_2MAX_STR_LEN, "%s", eventName);
             if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                 SUBDBG("Failed to fully write event name with event: appended to front.\n");
                 return PAPI_EBUF;
@@ -627,7 +627,7 @@ static int enumerate_metrics_for_metric_api(cuptiu_event_and_metric_table_t *tab
 
         // Reconstruct name to have metric.metricName: to distinguish a metric from an event
         char reconstructedMetricName[PAPI_2MAX_STR_LEN];
-        int strLen = snprintf(reconstructedMetricName, PAPI_2MAX_STR_LEN, "metric.%s", metricName);
+        int strLen = snprintf(reconstructedMetricName, PAPI_2MAX_STR_LEN, "%s", metricName);
         if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
             SUBDBG("Failed to fully write event name with event: appended to front.\n");
             return PAPI_EBUF;
@@ -1293,12 +1293,9 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
             return PAPI_ENOEVNT;
         }
 
-        int numCharsToMovePass = strstr(cuptiu_table_p->events[native_event_info.nameid].name, "event.") ? strlen("event.") : strlen("metric.");
-        const char *cuptiName = cuptiu_table_p->events[native_event_info.nameid].name + numCharsToMovePass;
-
         uint32_t addedNativeEventID;
         // Verify that the user added event does not require multiple passes
-        int papi_errno = check_if_event_or_metric_requires_mutiple_passes(cuptiName,
+        int papi_errno = check_if_event_or_metric_requires_mutiple_passes(cuptiu_table_p->events[native_event_info.nameid].name,
                                                                           cuptiu_table_p->events[native_event_info.nameid].api,
                                                                           native_event_info.device, &addedNativeEventID);
         if (papi_errno != PAPI_OK) {
@@ -1706,7 +1703,7 @@ int cuptie_evt_code_to_name(uint32_t event_code, char *name, int len)
             }
             break;
         default:
-            strLen = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name, info.device);
+            strLen = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name);
             if (strLen < 0 || strLen > len) {
                 SUBDBG("Failed to fully write the Cuda native event name.\n");
                 return PAPI_EBUF;

@@ -77,10 +77,12 @@ To allow for this choice to be made the `cuda` component supports being ***Parti
 * If exposing counters and controls for CCs <= 7.0 (e.g. P100 and V100), then support for exposing counters and controls for CCs > 7.0 will be disabled
 * If exposing counters and controls for CCs >= 7.0 (e.g. V100 and A100), then support for exposing counters and controls for CCs < 7.0 will be disabled
 
-By default, counters and conrols for CCs >= 7.0 will be exposed. However, at runtime the choice of which CCs the counter and controls will be exposed for can be changed via the environment variable `PAPI_CUDA_API`.
+By default on mixed compute capability machines, counters and conrols for CCs >= 7.0 will be exposed. However, at runtime the choice of which CCs the counter and controls will be exposed for can be changed via the environment variable `PAPI_CUDA_API`. Simply
+set `PAPI_CUDA_API` equal to `LEGACY`, e.g:
 
-* If exposing counters and controls for CCs <= 7.0 then `export` `PAPI_CUDA_API=EVENTS`
-* If exposing counters and controls for CCS >= 7.0 then `export` `PAPI_CUDA_API=PERFWORKS`
+```
+export PAPI_CUDA_API=LEGACY
+```
 
 ## Known Limitations
 * Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Pefworks API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` make take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
