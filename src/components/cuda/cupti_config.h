@@ -1,8 +1,5 @@
 /**
  * @file    cupti_config.h
- *
- * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
- * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 
 #ifndef __LCUDA_CONFIG_H__
@@ -14,10 +11,12 @@
 #define CUDA_EVENTS_STOPPED (0x0)
 #define CUDA_EVENTS_RUNNING (0x2)
 
+/*
 #define CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION  (13)
 #if (CUPTI_API_VERSION >= CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION)
 #   define API_PERFWORKS 1
 #endif
+*/
 
 // NOTE: Cuda Toolkit 13 now formats the CUPTI API version as
 // xxyyzz where:
@@ -25,9 +24,18 @@
 // yy: Minor version of the Cuda Toolkit
 // zz: CUPTI-specific update or patch version
 // which is why we have 13000
+/*
 #define CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION (13000)
 #if (CUPTI_API_VERSION < CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION)
 #   define API_EVENTS 2
 #endif
+*/
+
+#define API_PERFWORKS 1
+#define CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION  (13)
+
+#define API_EVENTS 2
+#define CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION (13000)
+
 
 #endif  /* __LCUDA_CONFIG_H__ */

@@ -66,9 +66,10 @@ static cuptiu_event_and_metric_table_t *cuptiu_table_p;
 
 static gpu_record_event_and_metric_t *avail_gpu_info;
 
+
 // CUPTI Profiler API function pointers //
-CUptiResult ( *cuptiProfilerInitializeMetricsPtr ) (CUpti_Profiler_Initialize_Params* params);
-CUptiResult ( *cuptiProfilerDeInitializePtr ) (CUpti_Profiler_DeInitialize_Params* params);
+CUptiResult ( *cuptiProfilerInitializeEventAndMetricPtr ) (CUpti_Profiler_Initialize_Params* params);
+CUptiResult ( *cuptiProfilerDeInitializeEventAndMetricPtr ) (CUpti_Profiler_DeInitialize_Params* params);
 
 // Event API function pointers //
 // Enumeration
@@ -281,8 +282,8 @@ static int load_cupti_profiler_sym(void)
 {
     SUBDBG("ENTERING: Loading CUPTI Profiler API functions.\n");
 
-    cuptiProfilerInitializeMetricsPtr     = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
-    cuptiProfilerDeInitializePtr          = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerDeInitialize");
+    cuptiProfilerInitializeEventAndMetricPtr            = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerInitialize");
+    cuptiProfilerDeInitializeEventAndMetricPtr          = DLSYM_AND_CHECK(dl_cupti, "cuptiProfilerDeInitialize");
 
     SUBDBG("EXITING: Completed loading CUPTI Profiler API functions.\n");
     return PAPI_OK;
@@ -299,7 +300,7 @@ static int initialize_cupti_profiler_api(void)
     
     CUpti_Profiler_Initialize_Params profilerInitializeParams = {CUpti_Profiler_Initialize_Params_STRUCT_SIZE};
     profilerInitializeParams.pPriv = NULL;
-    cuptiCheckErrors( cuptiProfilerInitializeMetricsPtr(&profilerInitializeParams), return PAPI_EMISC );
+    cuptiCheckErrors( cuptiProfilerInitializeEventAndMetricPtr(&profilerInitializeParams), return PAPI_EMISC );
     
     SUBDBG("EXITING: Initialization of the CUPTI Profiler API completed.\n");
     return PAPI_OK;
@@ -1906,7 +1907,7 @@ static int deinitialize_cupti_profiler_api(void)
 
     CUpti_Profiler_DeInitialize_Params profilerDeInitializeParams = {CUpti_Profiler_DeInitialize_Params_STRUCT_SIZE};
     profilerDeInitializeParams.pPriv = NULL;
-    cuptiCheckErrors( cuptiProfilerDeInitializePtr(&profilerDeInitializeParams), return PAPI_EMISC );
+    cuptiCheckErrors( cuptiProfilerDeInitializeEventAndMetricPtr(&profilerDeInitializeParams), return PAPI_EMISC );
 
     SUBDBG("EXITING: Deinitialization of CUPTI Profiler API completed.\n");
     return PAPI_OK;
@@ -1985,8 +1986,8 @@ static void unload_cupti_profiler_sym(void)
 {
     SUBDBG("ENTERING: Unloading CUPTI Profiler API functions.\n");
 
-    cuptiProfilerInitializeMetricsPtr     = NULL;
-    cuptiProfilerDeInitializePtr          = NULL;
+    cuptiProfilerInitializeEventAndMetricPtr            = NULL;
+    cuptiProfilerDeInitializeEventAndMetricPtr          = NULL;
 
     SUBDBG("EXITING: Completed unloading CUPTI Profiler API functions.\n");
     return;
