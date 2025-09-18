@@ -2810,7 +2810,7 @@ _papi_hwi_native_name_to_code( const char *in, int *out )
 				retval = _papi_hwd[cidx]->ntv_code_to_name(i, name, sizeof(name));
 				/* printf("%#x\nname =|%s|\ninput=|%s|\n", i, name, in); */
 				if ( retval == PAPI_OK && in != NULL) {
-					if ( strcasecmp( name, in ) == 0 ) {
+					if ( strcmp( name, in ) == 0 ) {
 						*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
 						free (full_event_name);
 						INTDBG("EXIT: PAPI_OK, event: %s, code: %#x\n", in, *out);
