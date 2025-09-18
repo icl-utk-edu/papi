@@ -48,6 +48,7 @@ case "$COMPONENTS" in
     export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
     module load cuda/12.8.0
     export PAPI_CUDA_ROOT=$ICL_CUDA_ROOT
+    export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$PAPI_CUDA_ROOT/extras/CUPTI/lib64:$LD_LIBRARY_PATH
     ;;
 esac
 
