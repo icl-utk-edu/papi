@@ -151,7 +151,14 @@ int main(int argc, char **argv)
     for(i = 0; i < NUM_THREADS; i++)
     {
         data[i].idx = i;
-        DRIVER_API_CALL(cuCtxCreate(&(data[i].cuCtx), 0, 0));
+
+        int flags = 0;
+        CUdevice device = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+        DRIVER_API_CALL( cuCtxCreate(&(data[i].cuCtx), (CUctxCreateParams*)0, flags, device) );
+#else
+        DRIVER_API_CALL( cuCtxCreate(&(data[i].cuCtx), flags, device) );
+#endif
         DRIVER_API_CALL(cuCtxPopCurrent(&(data[i].cuCtx)));
 
         rc = pthread_create(&data[i].tid, NULL, thread_gpu, &(data[i]));

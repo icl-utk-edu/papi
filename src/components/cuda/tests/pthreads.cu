@@ -232,7 +232,14 @@ int main(int argc, char **argv)
     for(i = 0; i < numGPUs; i++)
     {
         tid[i] = i;
-        DRIVER_API_CALL(cuCtxCreate(&(cuCtx[i]), 0, i % numGPUs));
+
+        int flags = 0;
+        CUdevice device = i % numGPUs;
+#if defined(CUDA_TOOLKIT_GE_13)
+        DRIVER_API_CALL( cuCtxCreate(&(cuCtx[i]), (CUctxCreateParams*)0, flags, device) );
+#else
+        DRIVER_API_CALL( cuCtxCreate(&(cuCtx[i]), flags, device) );
+#endif
         DRIVER_API_CALL(cuCtxPopCurrent(&(cuCtx[i])));
 
         rc = pthread_create(&tidarr[i], NULL, thread_gpu, &(tid[i]));

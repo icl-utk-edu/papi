@@ -170,13 +170,21 @@ int main(int argc, char** argv)
     // If multiple GPUs/contexts were being used, you'd need to
     // create contexts for each device. See, for example,
     // simpleMultiGPU.cu.
-
-    // Context Create. We will use this one to run our kernel.
-    cuError = cuCtxCreate(&sessionCtx, 0, 0); // Create a context, NULL flags, Device 0.
+    int flags = 0;
+    CUdevice device = 0;
+#if defined(CUDA_TOOLKIT_GE_13)
+    cuError = cuCtxCreate(&sessionCtx, (CUctxCreateParams*)0, flags, device);
     if (cuError != CUDA_SUCCESS) {
-        fprintf(stderr, "Failed to create cuContext: %d\n", cuError);
-        exit(-1);
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version >= 13: %d\n", cuError);
+        exit(1);
     }
+#else
+    cuError = cuCtxCreate(&sessionCtx, flags, device);
+    if (cuError != CUDA_SUCCESS) {
+        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version < 13: %d\n", cuError);
+        exit(1);
+    }
+#endif
 
     if (STEP_BY_STEP_DEBUG) {
         cuCtxGetCurrent(&getCtx);

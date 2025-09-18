@@ -170,7 +170,13 @@ int main(int argc, char *argv[])
     int num_threads = (num_gpus > MAX_THREADS) ? MAX_THREADS : num_gpus;
     // Create a gpu context for every thread
     for (i=0; i < num_threads; i++) {
-        DRIVER_API_CALL(cuCtxCreate(&(ctx_arr[i]), 0, i % num_gpus));  // "% num_gpus" allows more CPU threads than GPU devices
+        int flags = 0;
+        CUdevice device = i % num_gpus;
+#if defined(CUDA_TOOLKIT_GE_13)
+        DRIVER_API_CALL( cuCtxCreate(&(ctx_arr[i]), (CUctxCreateParams*)0, flags, device) );
+#else
+        DRIVER_API_CALL( cuCtxCreate(&(ctx_arr[i]), flags, device) );
+#endif
         DRIVER_API_CALL(cuCtxPopCurrent(&(ctx_arr[i])));
     }
 

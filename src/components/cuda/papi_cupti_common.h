@@ -29,7 +29,6 @@ extern unsigned int _cuda_lock;
 extern CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 extern CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 extern CUresult ( *cuCtxDestroyPtr ) (CUcontext);
-extern CUresult ( *cuCtxCreatePtr ) (CUcontext *pctx, unsigned int flags, CUdevice dev);
 extern CUresult ( *cuCtxGetDevicePtr ) (CUdevice *);
 extern CUresult ( *cuDeviceGetPtr ) (CUdevice *, int);
 extern CUresult ( *cuDeviceGetCountPtr ) (int *);
