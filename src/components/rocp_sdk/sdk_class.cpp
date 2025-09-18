@@ -74,12 +74,31 @@ static std::unordered_map<std::string, unsigned int> event_instance_name_to_papi
 /* *** */
 typedef rocprofiler_status_t (* rocprofiler_flush_buffer_t) (rocprofiler_buffer_id_t buffer_id);
 
-typedef rocprofiler_status_t (* rocprofiler_sample_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags, rocprofiler_record_counter_t* output_records, size_t* rec_count);
-
-typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
-
-typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_device_counting_service_callback_t cb, void *user_data);
-
+#if defined(ROCPROFILER_VERSION_MAJOR) && ROCPROFILER_VERSION_MAJOR >= 1
+    // ROCm 7.0+ (ROCprofiler SDK 1.x) - use new types
+    typedef rocprofiler_status_t (*rocprofiler_sample_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_user_data_t, rocprofiler_counter_flag_t,
+        rocprofiler_counter_record_t *output_records, size_t *rec_count);
+    typedef rocprofiler_status_t (*rocprofiler_configure_callback_dispatch_counting_service_t)(
+        rocprofiler_context_id_t,
+        rocprofiler_dispatch_counting_service_cb_t dispatch_callback, void *dispatch_callback_args,
+        rocprofiler_dispatch_counting_record_cb_t record_callback, void *record_callback_args);
+    typedef rocprofiler_status_t (*rocprofiler_configure_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_buffer_id_t, rocprofiler_agent_id_t,
+        rocprofiler_device_counting_service_cb_t cb, void *user_data);
+#else
+    // Pre-7.0 ROCm - use old types
+    typedef rocprofiler_status_t (*rocprofiler_sample_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_user_data_t, rocprofiler_counter_flag_t,
+        rocprofiler_record_counter_t *output_records, size_t *rec_count);
+    typedef rocprofiler_status_t (*rocprofiler_configure_callback_dispatch_counting_service_t)(
+        rocprofiler_context_id_t,
+        rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args,
+        rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
+    typedef rocprofiler_status_t (*rocprofiler_configure_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_buffer_id_t, rocprofiler_agent_id_t,
+        rocprofiler_device_counting_service_callback_t cb, void *user_data);
+#endif
 
 
 typedef rocprofiler_status_t (* rocprofiler_create_buffer_t) (rocprofiler_context_id_t context, unsigned long size, unsigned long watermark, rocprofiler_buffer_policy_t policy, rocprofiler_buffer_tracing_cb_t callback, void *callback_data, rocprofiler_buffer_id_t *buffer_id);
@@ -133,6 +152,7 @@ rocprofiler_stop_context_t rocprofiler_stop_context_FPTR;
 rocprofiler_context_is_active_t rocprofiler_context_is_active_FPTR;
 rocprofiler_context_is_valid_t rocprofiler_context_is_valid_FPTR;
 rocprofiler_create_profile_config_t rocprofiler_create_profile_config_FPTR;
+rocprofiler_destroy_profile_config_t rocprofiler_destroy_profile_config_FPTR;
 rocprofiler_force_configure_t rocprofiler_force_configure_FPTR;
 rocprofiler_get_status_string_t rocprofiler_get_status_string_FPTR;
 rocprofiler_get_thread_id_t rocprofiler_get_thread_id_FPTR;
@@ -251,7 +271,13 @@ obtain_function_pointers()
     DLL_SYM_CHECK(rocprofiler_stop_context, rocprofiler_stop_context_t);
     DLL_SYM_CHECK(rocprofiler_context_is_valid, rocprofiler_context_is_valid_t);
     DLL_SYM_CHECK(rocprofiler_context_is_active, rocprofiler_context_is_active_t);
-    DLL_SYM_CHECK(rocprofiler_create_profile_config, rocprofiler_create_profile_config_t);
+    DLL_SYM_CHECK(rocprofiler_create_profile_config,
+                     "rocprofiler_create_counter_config",
+                     rocprofiler_create_profile_config_t);
+
+    DLL_SYM_CHECK(rocprofiler_destroy_profile_config,
+                   "rocprofiler_destroy_counter_config",
+                     rocprofiler_destroy_profile_config_t);
     DLL_SYM_CHECK(rocprofiler_force_configure, rocprofiler_force_configure_t);
     DLL_SYM_CHECK(rocprofiler_get_status_string, rocprofiler_get_status_string_t);
     DLL_SYM_CHECK(rocprofiler_get_thread_id, rocprofiler_get_thread_id_t);

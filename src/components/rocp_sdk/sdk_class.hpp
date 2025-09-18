@@ -51,15 +51,43 @@ extern "C"
 #include <thread>
 #include <vector>
 
-#define DLL_SYM_CHECK(name, type)                \
-do {                                             \
-    char *err;                                   \
-    name##_FPTR = (type) dlsym(dllHandle, #name);\
-    err = dlerror();                             \
-    if(NULL != err) {                            \
-        return err;                              \
-    }                                            \
-} while (0)
+// required, single name
+#define DLL_SYM_CHECK_2(name, type)                               \
+do {                                                               \
+    char* __err;                                                   \
+    /* clear any prior dlerror */                                  \
+    dlerror();                                                     \
+    name##_FPTR = (type) dlsym(dllHandle, #name);                  \
+    __err = dlerror();                                             \
+    if(__err != NULL) {                                            \
+        return __err;                                              \
+    }                                                              \
+} while(0)
+
+// required, either of two names (try alt first, then primary)
+#define DLL_SYM_CHECK_3(name, alt, type)                           \
+do {                                                               \
+    char* __err;                                                   \
+    void* __p;                                                     \
+    dlerror();                                                     \
+    __p = dlsym(dllHandle, alt);                                   \
+    __err = dlerror();                                             \
+    if(__err == NULL && __p) {                                     \
+        name##_FPTR = (type) __p;                                  \
+    } else {                                                       \
+        dlerror();                                                 \
+        name##_FPTR = (type) dlsym(dllHandle, #name);              \
+        __err = dlerror();                                         \
+        if(__err != NULL) {                                        \
+            return __err;                                          \
+        }                                                          \
+    }                                                              \
+} while(0)
+
+// arity dispatcher:  DLL_SYM_CHECK(name, type)  or  DLL_SYM_CHECK(name, "alt", type)
+#define __DLL_SYM_GET_MACRO(_1,_2,_3,NAME,...) NAME
+#define DLL_SYM_CHECK(...) __DLL_SYM_GET_MACRO(__VA_ARGS__, DLL_SYM_CHECK_3, DLL_SYM_CHECK_2)(__VA_ARGS__)
+
 
 #if defined(PAPI_ROCPSDK_DEBUG)
 #define ROCPROFILER_CALL(result, msg)                                                              \
