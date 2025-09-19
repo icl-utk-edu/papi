@@ -426,7 +426,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
 
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
-    /* allocating memoory for total number of devices */
+    // allocating memory for total number of devices
     if (cuda_ctl->info == NULL) {
         papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
         if (papi_errno != PAPI_OK) {

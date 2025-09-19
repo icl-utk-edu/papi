@@ -21,6 +21,10 @@
 
 typedef struct cuptic_info *cuptic_info_t;
 
+struct cuptic_info {
+    CUcontext ctx;
+};
+
 extern void *dl_cupti;
 
 extern unsigned int _cuda_lock;

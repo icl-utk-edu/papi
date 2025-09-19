@@ -11,11 +11,18 @@
 #include <papi.h>
 
 #include <nvperf_cuda_host.h> 
+#include <cuda.h>
 
 #include <stdint.h>
 
 typedef int64_t cuptiu_bitmap_t;
 typedef int (*cuptiu_dev_get_map_cb)(uint64_t event_id, int *dev_id);
+
+typedef struct gpu_record_s {
+    char chipName[PAPI_MIN_STR_LEN];
+    int totalMetricCount;
+    char **metricNames;
+} gpu_record_t;
 
 typedef struct {
     char **arrayMetricStatistics ;   
@@ -31,12 +38,6 @@ typedef struct event_record_s {
     cuptiu_bitmap_t device_map;
 } cuptiu_event_t;
 
-typedef struct gpu_record_s {
-    char chipName[PAPI_MIN_STR_LEN];
-    int totalMetricCount;
-    char **metricNames;
-} gpu_record_t;
-
 typedef struct event_table_s {
     unsigned int count;
     unsigned int event_stats_count;
@@ -50,14 +51,13 @@ typedef struct event_table_s {
     void *htable;
 } cuptiu_event_table_t;
 
-/* These functions form a simple API to handle dynamic list of strings */
-int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
-void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
-
-/* These functions handle list of strings for statistics qualifiers */
 void init_vector(StringVector *vec);
 int push_back(StringVector *vec, const char *str);
 void free_vector(StringVector *vec);
+
+/* These functions form a simple API to handle dynamic list of strings */
+int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
+void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
 
 /* Utility to locate a file in a given path */
 #define CUPTIU_MAX_FILES 100
