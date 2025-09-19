@@ -85,16 +85,8 @@ static int exclude_guest_unsupported;
 
 #if defined(__powerpc__)
     #define PAPI_REFRESH_VALUE 0
-    #define __NR_capget 183
-#elif defined(__x86_64__)
+#else
     #define PAPI_REFRESH_VALUE 1
-    #define __NR_capget 125
-#elif defined(__i386__)
-    #define PAPI_REFRESH_VALUE 1
-    #define __NR_capget 184
-#elif defined(__arm__)
-    #define PAPI_REFRESH_VALUE 1
-    #define __NR_capget 184+0x900000
 #endif
 
 static int _pe_set_domain( hwd_control_state_t *ctl, int domain);
@@ -2475,7 +2467,8 @@ _pe_handle_permissions(papi_vector_t *component) {
 		return PAPI_ECMP;
 	}
 
-
+	int perfmon_capabilities = 0;
+#if defined(__NR_capget)
 	struct __user_cap_header_struct cap_header;
 	struct __user_cap_data_struct cap_data[2];
 
@@ -2497,13 +2490,13 @@ _pe_handle_permissions(papi_vector_t *component) {
 	// capabilities while index 1 consists of the 64 bit capabilities. CAP_SYS_ADMIN is in the
 	// 32 bit capabilities while CAP_PERFMON is in the 64 bit capabilities. 32 is subtracted
 	// from CAP_PERFMON (value of 38) as there are only 32 bits per entry for __user_cap_data_struct. 
-	int perfmon_capabilities;
 	#ifdef CAP_PERFMON
 		perfmon_capabilities = (cap_data[0].effective & (1 << CAP_SYS_ADMIN)) ||
 				       (cap_data[1].effective & (1 << (CAP_PERFMON - 32)));
 	#else
 		perfmon_capabilities = cap_data[0].effective & (1 << CAP_SYS_ADMIN);
 	#endif
+#endif
 
 	/* 3 (vendor patch) means completely disabled */
 	/* 2 means no kernel measurements allowed   */
