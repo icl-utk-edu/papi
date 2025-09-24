@@ -3,6 +3,7 @@
 
 #include "cupti_utils.h"
 #include "papi_cupti_common.h"
+#include "cupti_config.h"
 
 #include <stdint.h>
 
@@ -34,12 +35,6 @@ typedef enum
     PERFWORKS_API,
 } compute_capability_required_api;
 
-typedef enum
-{
-   API_EVENT = 0,
-   API_METRIC,
-} cupti_profiling_api;
-
 typedef enum 
 {
    EVENT = 0,
@@ -54,19 +49,20 @@ typedef struct gpu_record_event_and_metric_s {
 typedef struct event_and_metric_record_s {
     char name[PAPI_2MAX_STR_LEN];
     char desc[PAPI_HUGE_STR_LEN];
-    cupti_profiling_api api;
+    cupti_event_or_metric api;
     cuptiu_bitmap_t device_map;
 } cuptiu_event_and_metric_t;
 
 typedef struct event_and_metric_table_s {
     unsigned int count;
     unsigned int capacity;
-    CUpti_EventID eventIDs[30];
-    int countOfEventIDs;
     CUpti_EventGroupSets *eventGroupSets;
-    CUpti_MetricID metricIDs[30];
-    cupti_event_or_metric typeOfGroupSet;
-    int countOfMetricIDs;
+    CUpti_MetricID metricIDs[PAPI_CUDA_MAX_COUNTERS];
+    int *idsThatMakeupAUserAddedEventArray[PAPI_CUDA_MAX_COUNTERS];
+    int *cumulativeValuesArray[PAPI_CUDA_MAX_COUNTERS];
+    int totalNumberOfIdsThatMakeupTheUserAddedEventArray[PAPI_CUDA_MAX_COUNTERS];
+    int totalNumberOfUserAddedNativeEvents;
+    cupti_event_or_metric userAddedIdsCorrespondingApiArray[PAPI_CUDA_MAX_COUNTERS];
     uint64_t startTimeStampNs;
     gpu_record_event_and_metric_t *avail_gpu_info;
     cuptiu_event_and_metric_t *events;

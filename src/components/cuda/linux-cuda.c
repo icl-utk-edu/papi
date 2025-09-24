@@ -31,9 +31,6 @@
 #include "cupti_config.h"
 #include "lcuda_debug.h"
 
-#define PAPI_CUDA_MPX_COUNTERS 512
-#define PAPI_CUDA_MAX_COUNTERS  30
-
 papi_vector_t _cuda_vector;
 
 /* init and shutdown functions */

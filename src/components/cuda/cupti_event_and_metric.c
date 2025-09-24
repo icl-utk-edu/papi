@@ -8,6 +8,7 @@
 
 #include "cupti_events.h"
 #include "cupti_metrics.h"
+#include "cupti_config.h"
 
 #include <cupti_activity.h>
 #include <cupti_target.h>
@@ -87,6 +88,7 @@ CUptiResult (*cuptiEventGroupGetAttributePtr) (CUpti_EventGroup eventGroup, CUpt
 CUptiResult (*cuptiDeviceGetEventDomainAttributePtr) (CUdevice device, CUpti_EventDomainID eventDomain, CUpti_EventDomainAttribute attrib, size_t *valueSize, void *value);
 CUptiResult (*cuptiEventGroupResetAllEventsPtr) (CUpti_EventGroup eventGroup);
 CUptiResult (*cuptiEventGroupSetDisablePtr) (CUpti_EventGroupSet *eventGroupSet);
+CUptiResult (*cuptiEventGroupSetsDestroyPtr) (CUpti_EventGroupSets *eventGroupSets);
 // Evaluation
 CUptiResult (*cuptiEventGroupReadAllEventsPtr) (CUpti_EventGroup eventGroup, CUpti_ReadEventFlags flags, size_t *eventValueBufferSizeBytes, uint64_t *eventValueBuffer, size_t *eventIdArraySizeBytes, CUpti_EventID *eventIdArray, size_t *numEventIdsRead);
 
@@ -103,6 +105,7 @@ CUptiResult (*cuptiMetricGetNumEventsPtr) (CUpti_MetricID metric, uint32_t *numE
 CUptiResult (*cuptiMetricEnumEventsPtr) (CUpti_MetricID metric, size_t *eventIdArraySizeBytes, CUpti_EventID *eventIdArray);
 CUptiResult (*cuptiGetTimestampPtr) (uint64_t* timestamp); // Apart of the Activity API, but allows us to get the timeDuration for cuptiMetricGetValue
 CUptiResult (*cuptiMetricGetValuePtr) (CUdevice device, CUpti_MetricID metric, size_t eventIdArraySizeBytes, CUpti_EventID *eventIdArray, size_t eventValueArraySizeBytes, uint64_t *eventValueArray, uint64_t timeDuration, CUpti_MetricValue *metricValue);
+
 
 // Helper functions for CUPTI Profiler API
 static int initialize_cupti_profiler_api(void);
@@ -254,6 +257,7 @@ static int load_event_and_metric_sym(void)
     cuptiDeviceGetEventDomainAttributePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetEventDomainAttribute");
     cuptiEventGroupResetAllEventsPtr      = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupResetAllEvents");
     cuptiEventGroupSetDisablePtr          = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupSetDisable");
+    cuptiEventGroupSetsDestroyPtr         = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupSetsDestroy");
     // Reading event values
     cuptiEventGroupReadAllEventsPtr       = DLSYM_AND_CHECK(dl_cupti, "cuptiEventGroupReadAllEvents");
 
@@ -322,7 +326,7 @@ static int init_event_and_metric_main_htable(void)
     }
 
     /* initialize struct */
-    cuptiu_table_p = malloc(sizeof(cuptiu_event_and_metric_table_t));
+    cuptiu_table_p = (cuptiu_event_and_metric_table_t *) malloc(sizeof(cuptiu_event_and_metric_table_t));
     if (cuptiu_table_p == NULL) {
         SUBDBG("Failed to allocate memroy for cuptiu_table_p.\n");
         return PAPI_ENOMEM;
@@ -331,7 +335,7 @@ static int init_event_and_metric_main_htable(void)
     cuptiu_table_p->capacity = val;
     cuptiu_table_p->count = 0;
 
-    cuptiu_table_p->events = calloc(val, sizeof(cuptiu_event_and_metric_t));
+    cuptiu_table_p->events = (cuptiu_event_and_metric_t *) calloc(val, sizeof(cuptiu_event_and_metric_t));
     if (cuptiu_table_p->events == NULL) {
         SUBDBG("Failed to allocate memory for cuptiu_table_p->events.\n");
         return PAPI_ENOMEM;
@@ -556,7 +560,6 @@ static int enumerate_events_for_event_api(cuptiu_event_and_metric_table_t *table
             char eventName[PAPI_2MAX_STR_LEN];
             cuptiCheckErrors( cuptiEventGetAttributePtr(eventArray[eventIdx], CUPTI_EVENT_ATTR_NAME, &size, eventName), return PAPI_EMISC );
 
-            // Reconstruct name to have event.eventName: to distinguish an event from a metric
             char reconstructedEventName[PAPI_2MAX_STR_LEN];
             int strLen = snprintf(reconstructedEventName, PAPI_2MAX_STR_LEN, "%s", eventName);
             if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
@@ -625,7 +628,6 @@ static int enumerate_metrics_for_metric_api(cuptiu_event_and_metric_table_t *tab
         char metricName[PAPI_2MAX_STR_LEN];
         cuptiCheckErrors( cuptiMetricGetAttributePtr(metricIdList[metricIdx], CUPTI_METRIC_ATTR_NAME, &size, metricName), return PAPI_EMISC );
 
-        // Reconstruct name to have metric.metricName: to distinguish a metric from an event
         char reconstructedMetricName[PAPI_2MAX_STR_LEN];
         int strLen = snprintf(reconstructedMetricName, PAPI_2MAX_STR_LEN, "%s", metricName);
         if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
@@ -850,43 +852,59 @@ int cuptie_ctx_start(cuptie_control_t state)
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
         cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[deviceIdx]);
-        if (gpu_ctl->added_events->countOfEventIDs == 0 &&
-            gpu_ctl->added_events->countOfMetricIDs == 0) {
+        if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
 
         cudaCheckErrors( cuCtxSetCurrentPtr(state->info[deviceIdx].ctx), return PAPI_EMISC );
 
-        CUpti_EventGroupSets *eventGroupSets;
-        // Event API Workflow
-        if (gpu_ctl->added_events->countOfEventIDs > 0) {
-            size_t numEventsAddedSize = sizeof(CUpti_EventID) * gpu_ctl->added_events->countOfEventIDs;
-            cuptiCheckErrors( cuptiEventGroupSetsCreatePtr(state->info[deviceIdx].ctx, numEventsAddedSize, gpu_ctl->added_events->eventIDs, &eventGroupSets), return PAPI_EMISC );
-            gpu_ctl->added_events->typeOfGroupSet = EVENT;
-        }
-        // Metric API Workflow
-        else {
-            cuptiCheckErrors( cuptiGetTimestampPtr(&gpu_ctl->added_events->startTimeStampNs), return PAPI_EMISC );
-            size_t numMetricsAddedSize = sizeof(CUpti_MetricID) * gpu_ctl->added_events->countOfMetricIDs;
-            cuptiCheckErrors( cuptiMetricCreateEventGroupSetsPtr(state->info[deviceIdx].ctx, numMetricsAddedSize, gpu_ctl->added_events->metricIDs, &eventGroupSets), return PAPI_EMISC );
-            gpu_ctl->added_events->typeOfGroupSet = METRIC;
+        // Calculate the total number of user added events
+        int numTotalEventIdEntries = 0;
+        int i;
+        for (i = 0; i < gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents; i++) {
+            numTotalEventIdEntries += gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[i];
         }
 
-        // NOTE: The index for `sets` will always be zero i.e. `sets[0]` as having numSets > 1
-        // would mean we require multiple passes which PAPI does not support and this is checked earlier
-        // in check_if_event_or_metric_requires_mutiple_passes
+        CUpti_EventID *eventIdsArray = (CUpti_EventID *) calloc(numTotalEventIdEntries, sizeof(CUpti_EventID));
+        if (eventIdsArray == NULL) {
+            SUBDBG("Failed to allocate memory for eventIdsArray in cuptie_ctx_start.\n");
+            return PAPI_ENOMEM;
+        }
+
+        // Convert 2D array of Event IDs into a 1D array of Event IDs
+        int index = 0;
+        int recordIdx;
+        for (recordIdx = 0; recordIdx < gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents; recordIdx++) {
+            int subIdsIdx;
+            for (subIdsIdx = 0; subIdsIdx < gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx]; subIdsIdx++) {
+                eventIdsArray[index++] = gpu_ctl->added_events->idsThatMakeupAUserAddedEventArray[recordIdx][subIdsIdx];
+            }
+        }
+
+        CUpti_EventGroupSets *eventGroupSets;
+        size_t numEventsAddedSize = sizeof(CUpti_EventID) * numTotalEventIdEntries;
+        cuptiCheckErrors( cuptiEventGroupSetsCreatePtr(state->info[deviceIdx].ctx, numEventsAddedSize, eventIdsArray, &eventGroupSets), return PAPI_EMISC );
+
+        // There should only ever be a single set, as sets > 1 require multiple passes
         CUpti_EventGroupSet *sets = &(eventGroupSets->sets[0]);
-        for (int i = 0; i < sets->numEventGroups; i++) {
+        for (i = 0; i < sets->numEventGroups; i++) {
             uint32_t trash = 1;
             CUpti_EventGroupAttribute eventGroupAttr = CUPTI_EVENT_GROUP_ATTR_PROFILE_ALL_DOMAIN_INSTANCES;
             cuptiCheckErrors( cuptiEventGroupSetAttributePtr(sets->eventGroups[i], eventGroupAttr, sizeof(trash), &trash), return PAPI_EMISC );
+
+            uint32_t numEvents;
+            size_t numGroupEventsSize = sizeof(numEvents);
+            cuptiCheckErrors( cuptiEventGroupGetAttributePtr(sets->eventGroups[i], CUPTI_EVENT_GROUP_ATTR_NUM_EVENTS, &numGroupEventsSize, &numEvents), return PAPI_EMISC);
         }
 
         cuptiCheckErrors( cuptiEventGroupSetEnablePtr(sets), return PAPI_EMISC );
 
         gpu_ctl->added_events->eventGroupSets = eventGroupSets;
-    }
 
+        free(eventIdsArray);
+
+        cuptiCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
+    }
 
     SUBDBG("EXITING: Profiling setup completed.\n");
     return PAPI_OK;
@@ -910,23 +928,28 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
 
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
-
         cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[deviceIdx]);
-        if (gpu_ctl->added_events->countOfEventIDs == 0 && gpu_ctl->added_events->countOfMetricIDs == 0) {
+        if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
+
+        // Get the read time stamp
+        uint64_t readTimeStampNs = 0;
+        cuptiCheckErrors( cuptiGetTimestampPtr(&readTimeStampNs), return PAPI_EMISC );
+        uint64_t duration = readTimeStampNs - gpu_ctl->added_events->startTimeStampNs;
+        gpu_ctl->added_events->startTimeStampNs = readTimeStampNs;
 
         cudaCheckErrors( cuCtxSetCurrentPtr(state->info[deviceIdx].ctx), return PAPI_EMISC );
 
         cudaCheckErrors( cuCtxSynchronizePtr(), return PAPI_EMISC );
 
         CUdevice device;
-        cudaCheckErrors( cuDeviceGetPtr(&device, deviceIdx), return PAPI_EMISC ); 
+        cudaCheckErrors( cuDeviceGetPtr(&device, deviceIdx), return PAPI_EMISC );
 
         // Irrespective of if we are working with Events or Metrics, this section below needs to be done
-        int groupSetIdx, aggCount = 0;
+        int groupSetIdx;
         int numEventGroups = gpu_ctl->added_events->eventGroupSets->sets[0].numEventGroups;
-        for (groupSetIdx = 0; groupSetIdx < numEventGroups; groupSetIdx++) {
+        for (groupSetIdx = 0; groupSetIdx < numEventGroups; groupSetIdx++) { // Go over all of the available event groups for the device
             CUpti_EventGroup eventGroup = gpu_ctl->added_events->eventGroupSets->sets[0].eventGroups[groupSetIdx];
 
             // Get the total number of events in the event group
@@ -968,6 +991,8 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
 
             size_t numEventIdsRead;
             CUpti_ReadEventFlags readEventFlags = CUPTI_EVENT_READ_FLAG_NONE;
+            // Will read us back the event values, with the eventIdArray holding the ids of the events in the same order
+            // as the values returned
             cuptiCheckErrors(cuptiEventGroupReadAllEventsPtr(eventGroup,
                                                              readEventFlags,
                                                              &sizeOfEventValueBufferInBytes,
@@ -976,100 +1001,100 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
                                                              eventIdArray,
                                                              &numEventIdsRead), return PAPI_EMISC);
 
-            uint64_t *accumulateEventVals = calloc(numEventIdsRead, sizeof(uint64_t));
+            // For the total number of event ids that have been read, accumulate the values
+            uint64_t *accumulateEventVals = (uint64_t *) calloc(numEventIdsRead, sizeof(uint64_t));
             if (accumulateEventVals == NULL) {
                 SUBDBG("Failed to allocate memory for aggregateCounterVals.\n");
                 return PAPI_ENOMEM;
             }
 
             int eventIdx; 
-            for (eventIdx = 0; eventIdx < numGroupEvents; eventIdx++) {
+            for (eventIdx = 0; eventIdx < numEventIdsRead; eventIdx++) {
                 int instanceIdx;
                 for (instanceIdx = 0; instanceIdx < numInstances; instanceIdx++) { 
                     accumulateEventVals[eventIdx] += eventValueBuffer[eventIdx + (numGroupEvents * instanceIdx)];
-                }    
-            }
-
-            // If this is not a metric eventgroup, then store accumulated values
-            if (gpu_ctl->added_events->typeOfGroupSet == EVENT) {
-                for (eventIdx = 0; eventIdx < numGroupEvents; eventIdx++) {
-                    readCounterValues[numCountersRead] = accumulateEventVals[eventIdx];
-                    numCountersRead++;
-                 }
-            }
-            // If this is a metric eventgroup, calculate the metric value and then store
-            //else if(gpu_ctl->added_events->countOfMetricIDs > 0) {
-            else if (gpu_ctl->added_events->typeOfGroupSet == METRIC) {
-                // As a metric has specific events that it is made up of, we want to make sure we only include
-                // those event values in the normalizedEventValuesArray below. The below indexForArraySlice
-                // keeps track of our "slicing" point.
-                int indexForArraySlice = 0;
-                int metricIdx;
-                for (metricIdx = 0; metricIdx < gpu_ctl->added_events->countOfMetricIDs; metricIdx++) {
-                    uint32_t numEvents;
-                    cuptiCheckErrors( cuptiMetricGetNumEventsPtr(gpu_ctl->added_events->metricIDs[metricIdx], &numEvents), return PAPI_EMISC);
-
-                    // Size of eventIdsArray 
-                    size_t sizeOfEventIdsArrayInBytes = numEvents * sizeof(CUpti_EventID);
-
-                    // Event IDs required to calculate the metric 
-                    CUpti_EventID *eventIdsArray = (CUpti_EventID *) malloc(numEvents * sizeof(CUpti_EventID));
-                    if (eventIdsArray == NULL) {
-                        SUBDBG("Failed to allocate memory for eventIdsArray.\n");
-                        return PAPI_ENOMEM;
-                    }
-
-                    cuptiCheckErrors( cuptiMetricEnumEventsPtr(gpu_ctl->added_events->metricIDs[metricIdx], &sizeOfEventIdsArrayInBytes, eventIdsArray), return PAPI_EMISC);
-
-                    // Size of eventValueArray
-                    size_t sizeOfNormalizedEventValuesArrayInBytes = numEvents * sizeof(uint64_t);
-
-                    // Allocate memory for normalized event values required to calculate the metric
-                    uint64_t *normalizedEventValuesArray = (uint64_t *) malloc(numEvents * sizeof(uint64_t));
-                    if (normalizedEventValuesArray == NULL) {
-                        SUBDBG("Failed to allocae memory for eventValuesArray.\n");
-                        return PAPI_ENOMEM;
-                    }
-
-                    
-                    int eventIdx;
-                    for (eventIdx = 0; eventIdx < numEvents; eventIdx++) {
-                        // For each EventID, we need to normalize the event value to represent the total number of domain instances
-                        // on the device
-                        normalizedEventValuesArray[eventIdx] = (accumulateEventVals[indexForArraySlice] * numTotalInstances) / numInstances;
-                        indexForArraySlice++;
-                    }
-
-                    uint64_t stopTimeStampNs = 0;
-                    cuptiCheckErrors( cuptiGetTimestampPtr(&stopTimeStampNs), return PAPI_EMISC );
-                    uint64_t duration = stopTimeStampNs - gpu_ctl->added_events->startTimeStampNs;
-                    CUpti_MetricValue metricValue;
-                    cuptiCheckErrors( cuptiMetricGetValuePtr(device,
-                                                             gpu_ctl->added_events->metricIDs[metricIdx],
-                                                             sizeOfEventIdsArrayInBytes,
-                                                             eventIdsArray,
-                                                             sizeOfNormalizedEventValuesArrayInBytes,
-                                                             normalizedEventValuesArray,
-                                                             duration,
-                                                             &metricValue), return PAPI_EMISC);
-
-                    long long metricValueLongLong;
-                    int papi_errno = convert_metric_value_to_long_long(gpu_ctl->added_events->metricIDs[metricIdx], metricValue, &metricValueLongLong);
-                    if (papi_errno != PAPI_OK) {
-                        return papi_errno;
-                    }
-
-                    readCounterValues[numCountersRead] = metricValueLongLong;
-                    numCountersRead++;
-
-                    free(eventIdsArray);
-                    free(normalizedEventValuesArray);
                 }
             }
-            free(eventIdArray);
+
+            int recordIdx;
+            for (recordIdx = 0; recordIdx < gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents; recordIdx++) {
+                if (gpu_ctl->added_events->userAddedIdsCorrespondingApiArray[recordIdx] == EVENT) {
+                    int subIdsIdx;
+                    for (subIdsIdx = 0; subIdsIdx < gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx]; subIdsIdx++) {
+                        for (eventIdx = 0; eventIdx < numEventIdsRead; eventIdx++) {
+                            if (gpu_ctl->added_events->idsThatMakeupAUserAddedEventArray[recordIdx][subIdsIdx] == eventIdArray[eventIdx]) {
+                                gpu_ctl->added_events->cumulativeValuesArray[recordIdx][subIdsIdx] += accumulateEventVals[eventIdx];
+                                readCounterValues[recordIdx] = gpu_ctl->added_events->cumulativeValuesArray[recordIdx][subIdsIdx];
+                                numCountersRead++;
+                            }
+                        }
+                    }
+                }
+                else if (gpu_ctl->added_events->userAddedIdsCorrespondingApiArray[recordIdx] == METRIC) {
+                    // NOTE: A metric is made up of one or more events. At the time of writing this (09/24/2025),
+                    // I have only ever seen a metric require a maximum of two events. If the metric does require
+                    // two events, then those two events are placed into a single event group by themselves
+                    // (this has been shown from my own personal testing). However, if a user were to add two metrics
+                    // with both metrics only requiring a single event, then these two events could be placed into the same eventGroup.
+                    size_t sizeOfNormalizedEventValuesArrayInBytes = gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx] * sizeof(uint64_t);
+                    uint64_t *normalizedEventValuesArray = (uint64_t *) calloc(gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx], sizeof(int));
+
+                    int allMatchingEventsFound = 0;
+
+                    int *eventsThatMakeupAMetricArray = (int *) calloc(gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx], sizeof(int));
+                    int subIdsIdx;
+                    for (subIdsIdx = 0; subIdsIdx < gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx]; subIdsIdx++) {
+                        for (eventIdx = 0; eventIdx < numEventIdsRead; eventIdx++) {
+                            // NOTE: Two metric's can have the same event id which can lead to the actual values being identical, for example
+                            // issue_slots and inst_issued. Due to this we just look for matching event id's and then store the value.
+                            if (gpu_ctl->added_events->idsThatMakeupAUserAddedEventArray[recordIdx][subIdsIdx] == eventIdArray[eventIdx]) {
+                                // Normalize the values
+                                gpu_ctl->added_events->cumulativeValuesArray[recordIdx][subIdsIdx] += (accumulateEventVals[eventIdx] * numTotalInstances) / numInstances;
+                                eventsThatMakeupAMetricArray[subIdsIdx] = eventIdArray[eventIdx];
+                                normalizedEventValuesArray[subIdsIdx] = gpu_ctl->added_events->cumulativeValuesArray[recordIdx][subIdsIdx];
+                                allMatchingEventsFound++;
+
+                                // Once we have collected all of the events that makeup the metric we can then get the metric value
+                                if (allMatchingEventsFound == gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx]) {
+                                    goto get_metric_value;
+                                }
+                            }
+                        }
+                    }
+                    // For the current record index and it's sub indexes we did not find a match; therefore,
+                    // we will free the memory and continue onto the next interation
+                    goto free_memory_and_continue;
+
+                    // Calculate the metric value as we have all the event's that makeup the current metric
+                    get_metric_value: ;
+                        CUpti_MetricValue metricValue;
+                        cuptiCheckErrors( cuptiMetricGetValuePtr(device,
+                                                                 gpu_ctl->added_events->metricIDs[recordIdx],
+                                                                 gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx] * sizeof(CUpti_EventID),
+                                                                 eventsThatMakeupAMetricArray,
+                                                                 sizeOfNormalizedEventValuesArrayInBytes,
+                                                                 normalizedEventValuesArray,
+                                                                 duration,
+                                                                 &metricValue), return PAPI_EMISC);
+
+                        long long metricValueLongLong;
+                        int papi_errno = convert_metric_value_to_long_long(gpu_ctl->added_events->metricIDs[recordIdx], metricValue, &metricValueLongLong);
+                        if (papi_errno != PAPI_OK) {
+                            return papi_errno;
+                        }
+                        readCounterValues[recordIdx] = metricValueLongLong;
+                        numCountersRead++;
+
+                    free_memory_and_continue:
+                        free(normalizedEventValuesArray);
+                        free(eventsThatMakeupAMetricArray);
+                }
+            }
             free(eventValueBuffer);
+            free(eventIdArray);
             free(accumulateEventVals);
         }
+        cudaCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
     }
     state->read_count = numCountersRead;
     *counterValues = readCounterValues;
@@ -1086,23 +1111,24 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
 */
 int cuptie_ctx_stop(cuptie_control_t state)
 {
-    SUBDBG("ENTERING: Disabling the event group sets created. Collection of events will be stopped.\n");
+    SUBDBG("ENTERING: Disabling and destroying the event group sets created. Collection of events will be stopped.\n");
 
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
         cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[deviceIdx]);
-        if (gpu_ctl->added_events->countOfEventIDs == 0 && gpu_ctl->added_events->countOfMetricIDs == 0) {
+        if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
 
         cudaCheckErrors( cuCtxSetCurrentPtr(state->info[deviceIdx].ctx), return PAPI_EMISC );
 
-        int groupSetIdx;
-        int numEventGroups = gpu_ctl->added_events->eventGroupSets->sets[0].numEventGroups;
-        for (groupSetIdx = 0; groupSetIdx < numEventGroups; groupSetIdx++) {
-            CUpti_EventGroupSet eventGroupSet = gpu_ctl->added_events->eventGroupSets->sets[0];
-            cuptiCheckErrors( cuptiEventGroupSetDisablePtr(&eventGroupSet), return PAPI_EMISC );
-        }
+        CUpti_EventGroupSets *eventGroupSets = gpu_ctl->added_events->eventGroupSets;
+        // There should only ever be a single set, as sets > 1 require multiple passes
+        CUpti_EventGroupSet *eventGroupSet = &(eventGroupSets->sets[0]);
+        cuptiCheckErrors( cuptiEventGroupSetDisablePtr(eventGroupSet), return PAPI_EMISC );
+        cuptiCheckErrors( cuptiEventGroupSetsDestroyPtr(eventGroupSets), return PAPI_EMISC );
+
+        cudaCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
     }
 
     SUBDBG("EXITING: Disabling event group sets completed.\n");
@@ -1129,18 +1155,23 @@ int cuptie_ctx_reset(cuptie_control_t state)
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
         cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[deviceIdx]);
-        if (gpu_ctl->added_events->countOfEventIDs == 0 && gpu_ctl->added_events->countOfMetricIDs == 0) {
+        if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
 
         cudaCheckErrors( cuCtxSetCurrentPtr(state->info[deviceIdx].ctx), return PAPI_EMISC );
 
+        // There should only ever be a single set, as sets > 1 require multiple passes
         int numEventGroups = gpu_ctl->added_events->eventGroupSets->sets[0].numEventGroups;
+        CUpti_EventGroupSet set = gpu_ctl->added_events->eventGroupSets->sets[0];
+
         int eventGroupIdx;
         for (eventGroupIdx = 0; eventGroupIdx < numEventGroups; eventGroupIdx++) {
-            CUpti_EventGroup eventGroup = gpu_ctl->added_events->eventGroupSets->sets[0].eventGroups[eventGroupIdx];
+            CUpti_EventGroup eventGroup = set.eventGroups[eventGroupIdx];
             cuptiCheckErrors( cuptiEventGroupResetAllEventsPtr(eventGroup), return PAPI_EMISC );
         }
+
+        cudaCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
     }
 
     SUBDBG("EXITING: Resetting counter values completed.\n");
@@ -1160,7 +1191,7 @@ int cuptie_ctx_destroy(cuptie_control_t *pstate)
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
         cuptie_gpu_state_t *gpu_ctl =  &((*pstate)->gpu_ctl[deviceIdx]);
-        if (gpu_ctl->added_events->countOfEventIDs == 0 && gpu_ctl->added_events->countOfMetricIDs == 0) {
+        if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
 
@@ -1275,7 +1306,7 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
         }
     }
 
-    int numEvents = 0, numMetrics = 0;
+    int totalNumberOfUserAddedEvents = 0;
     for (i = 0; i < num_events; i++) {
         event_info_t native_event_info;
         papi_errno = event_and_metric_id_to_info(events_id[i], &native_event_info);
@@ -1302,23 +1333,80 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
             return papi_errno;
         }
 
-        // If everything checks out, store the user added event for profiling
+        // If the user added event belongs to the Event API
         if (cuptiu_table_p->events[native_event_info.nameid].api == EVENT) {
-            state->gpu_ctl[native_event_info.device].added_events->eventIDs[state->gpu_ctl[native_event_info.device].added_events->countOfEventIDs] = addedNativeEventID;
-            state->gpu_ctl[native_event_info.device].added_events->countOfEventIDs++;
-            numEvents++;
-        }
-        // If everything checks out, store the user added metric for profiling
-        else {
-            state->gpu_ctl[native_event_info.device].added_events->metricIDs[state->gpu_ctl[native_event_info.device].added_events->countOfMetricIDs] = addedNativeEventID;
-            state->gpu_ctl[native_event_info.device].added_events->countOfMetricIDs++;
-            numMetrics++;
-        }
+            state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents] = (int *) calloc(1, sizeof(int));
+            if (state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents] == NULL) {
+                SUBDBG("Failed to allocate memory for index position %d.\n", totalNumberOfUserAddedEvents);
+                return PAPI_ENOMEM;
+            }
 
-        if (numMetrics > 0 && numEvents > 0) {
-            SUBDBG("Cannot profile both event's and metric's together.\n");
-            return PAPI_ECOMBO;
+            state->gpu_ctl[native_event_info.device].added_events->cumulativeValuesArray[totalNumberOfUserAddedEvents] = (int *) calloc(1, sizeof(int));
+            if (state->gpu_ctl[native_event_info.device].added_events->cumulativeValuesArray[totalNumberOfUserAddedEvents] == NULL) {
+                SUBDBG("Failed to allocate memory for index position %d.\n", totalNumberOfUserAddedEvents);
+                return PAPI_ENOMEM;
+            }
+
+            // Event IDs only ever have a single ID associated with them unlike with Metric IDs that may have 1 or more; therefore, 0 is harded coded
+            // along with 1
+            state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents][0] = addedNativeEventID;
+            state->gpu_ctl[native_event_info.device].added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[totalNumberOfUserAddedEvents] = 1;
+            state->gpu_ctl[native_event_info.device].added_events->userAddedIdsCorrespondingApiArray[totalNumberOfUserAddedEvents] = EVENT;
+
+            // -1 is used as placeholder here as if it not place here then we would need to keep track of a second index instead of just using
+            // totalNumberOfUserAddedEvents
+            state->gpu_ctl[native_event_info.device].added_events->metricIDs[totalNumberOfUserAddedEvents] = -1;
         }
+        // If the user added event belongs to the Metric API
+        else {
+            // NOTE: The Metric API can be thought of as a higher level api as metrics consist of events from the Event API.
+            // Due to this, you can convert a single metric to the event or events that it is made up of. To allow users to add
+            // both event and metrics at the same time we are going to convert a metric to the events that it is made up of.
+            // Because from testing, creating and enabling a cuptiMetricCreateEventGroupSets and cuptiEventGroupSetsCreate for the same context
+            // will result in a failure.
+            uint32_t numEvents;
+            cuptiCheckErrors( cuptiMetricGetNumEventsPtr(addedNativeEventID, &numEvents), return PAPI_EMISC);
+
+            // Allocate memory for the total number of events that the metric is made up of
+            size_t sizeOfEventIdsArrayInBytes = numEvents * sizeof(CUpti_EventID);
+            CUpti_EventID *eventIdsArray = (CUpti_EventID *) malloc(sizeOfEventIdsArrayInBytes);
+            if (eventIdsArray == NULL) {
+                SUBDBG("Failed to allocate memory for eventIdsArray.\n");
+                return PAPI_ENOMEM;
+            }
+
+            state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents] = (int *) calloc(numEvents, sizeof(int));
+            if (state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents] == NULL) {
+                SUBDBG("Failed to allocate memory for index position %d.\n", totalNumberOfUserAddedEvents);
+                return PAPI_ENOMEM;
+            }
+
+            state->gpu_ctl[native_event_info.device].added_events->cumulativeValuesArray[totalNumberOfUserAddedEvents] = (int *) calloc(numEvents, sizeof(int));
+            if (state->gpu_ctl[native_event_info.device].added_events->cumulativeValuesArray[totalNumberOfUserAddedEvents] == NULL) {
+                SUBDBG("Failed to allocate memory for index position %d.\n", totalNumberOfUserAddedEvents);
+                return PAPI_ENOMEM;
+            }
+
+            // For the metric id, get the event or events that it is made up of
+            cuptiCheckErrors( cuptiMetricEnumEventsPtr(addedNativeEventID, &sizeOfEventIdsArrayInBytes, eventIdsArray), return PAPI_EMISC);
+
+            // Store the Event Ids that makeup the metric
+            int eventIdx;
+            for (eventIdx = 0; eventIdx < numEvents; eventIdx++) {
+                state->gpu_ctl[native_event_info.device].added_events->idsThatMakeupAUserAddedEventArray[totalNumberOfUserAddedEvents][eventIdx] = eventIdsArray[eventIdx];
+            }
+
+            state->gpu_ctl[native_event_info.device].added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[totalNumberOfUserAddedEvents] = numEvents;
+            state->gpu_ctl[native_event_info.device].added_events->userAddedIdsCorrespondingApiArray[totalNumberOfUserAddedEvents] = METRIC;
+
+            // Store Metric ID as it will be needed within cuptie_ctx_read
+            state->gpu_ctl[native_event_info.device].added_events->metricIDs[totalNumberOfUserAddedEvents] = addedNativeEventID;
+
+            // Free allocated memory
+            free(eventIdsArray);
+        }
+        totalNumberOfUserAddedEvents++;
+        state->gpu_ctl[native_event_info.device].added_events->totalNumberOfUserAddedNativeEvents = totalNumberOfUserAddedEvents;
 
         // Pop off the set context
         cudaCheckErrors( cuCtxPopCurrentPtr(&thr_info[native_event_info.device].ctx), return PAPI_EMISC );
@@ -1386,9 +1474,8 @@ static int create_event_and_metric_table(int totalNumberOfEntries, cuptiu_event_
     }
 
     eventTable->capacity = totalNumberOfEntries;
-    eventTable->countOfMetricIDs = 0;
-    eventTable->countOfEventIDs = 0;
     eventTable->startTimeStampNs = 0;
+    eventTable->totalNumberOfUserAddedNativeEvents = 0;
 
     int htable_errno = htable_init(&(eventTable->htable));
     if (htable_errno != HTABLE_SUCCESS) {
@@ -1415,8 +1502,15 @@ fn_fail:
 static void destroy_event_and_metric_table(cuptiu_event_and_metric_table_t **initializedTable)
 {
     cuptiu_event_and_metric_table_t *eventTable = *initializedTable;
-    if (eventTable == NULL)
+    if (eventTable == NULL) {
         return;
+    }
+
+    int i;
+    for (i = 0; i < eventTable->totalNumberOfUserAddedNativeEvents; i++) {
+        free(eventTable->idsThatMakeupAUserAddedEventArray[i]);
+        free(eventTable->cumulativeValuesArray[i]);
+    }
 
     if (eventTable->htable) {
         htable_shutdown(eventTable->htable);
@@ -1955,6 +2049,7 @@ static void unload_event_and_metric_sym(void)
     cuptiDeviceGetEventDomainAttributePtr = NULL;
     cuptiEventGroupResetAllEventsPtr      = NULL;
     cuptiEventGroupSetDisablePtr          = NULL;
+    cuptiEventGroupSetsDestroyPtr         = NULL;
     // Reading event values
     cuptiEventGroupReadAllEventsPtr       = NULL;
 
