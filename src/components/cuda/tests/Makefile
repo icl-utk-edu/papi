@@ -15,6 +15,16 @@ TESTS_NOCTX = concurrent_profiling_noCuCtx pthreads_noCuCtx \
 NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
 NVCC_VERSION := $(shell $(NVCC) --version | grep -oP '(?<=release )\d+\.\d+')
 
+PAPI_FLAG = -DPAPI    # Comment this line for tests to run without PAPI profiling
+NVCFLAGS = -g -ccbin='$(CC)' $(PAPI_FLAG)
+
+# Check to see if the Cuda Toolkit version is either 12.8 or 12.9 such that
+# we can add -Wno-deprecated-gpu-targets to avoid compilation warning
+CUDA_TOOLKIT_EQUAL_TO_12_8_OR_12_9 := $(shell echo "$(NVCC_VERSION)" | awk '{print ($$1 == 12.8 || $$1 == 12.9)}')
+ifeq ($(CUDA_TOOLKIT_EQUAL_TO_12_8_OR_12_9), 1)
+    NVCFLAGS += -Wno-deprecated-gpu-targets
+endif
+
 # Check to see if we are using a Cuda Toolkit version greater than or equal to 13
 # as the API call for cuCtxCreate changed at this version
 CUDA_TOOLKIT_GE_13 := $(shell echo "$(NVCC_VERSION) 13.0" | awk '{print $$1 >= $$2}')
@@ -23,8 +33,6 @@ ifeq ($(CUDA_TOOLKIT_GE_13), 1)
     CUDA_CPPFLAGS += -DCUDA_TOOLKIT_GE_13
 endif
 
-PAPI_FLAG = -DPAPI    # Comment this line for tests to run without PAPI profiling
-NVCFLAGS = -g -ccbin='$(CC)' $(PAPI_FLAG)
 ifeq ($(BUILD_SHARED_LIB),yes)
 	NVCFLAGS += -Xcompiler -fpic
 endif
