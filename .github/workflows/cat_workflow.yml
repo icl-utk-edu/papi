@@ -20,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: counter analysis toolkit tests
-        run: .github/workflows/ci_cat.sh ${{matrix.debug}} ${{matrix.shlib}}
+        run: .github/workflows_scripts/ci_cat.sh ${{matrix.debug}} ${{matrix.shlib}}
