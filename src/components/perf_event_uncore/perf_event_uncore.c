@@ -117,16 +117,12 @@ get_read_format( unsigned int multiplex,
 
 #if defined(__powerpc__)
 #define __NR_perf_event_open	319
-#define __NR_capget				183
 #elif defined(__x86_64__)
 #define __NR_perf_event_open	298
-#define __NR_capget				125
 #elif defined(__i386__)
 #define __NR_perf_event_open	336
-#define __NR_capget				184
 #elif defined(__arm__)
 #define __NR_perf_event_open	364+0x900000
-#define __NR_capget				184+0x900000
 #endif
 
 #endif
@@ -604,10 +600,6 @@ _peu_init_component( int cidx )
    FILE *fff;
    char *strCpy;
 
-   struct __user_cap_header_struct cap_header;
-   struct __user_cap_data_struct cap_data[2];
-   int perfmon_capabilities;
-
    our_cidx=cidx;
 
    /* The is the official way to detect if perf_event support exists */
@@ -627,13 +619,18 @@ _peu_init_component( int cidx )
    fclose(fff);
 
    /* Check for availability of perf_event through capabilities */
+   int perfmon_capabilities = 0;
+#if defined(__NR_capget)
+   struct __user_cap_header_struct cap_header;
+   struct __user_cap_data_struct cap_data[2];
 
    memset( &cap_header, 0, sizeof(cap_header) );
    memset( cap_data, 0, sizeof(cap_data) );
+
    cap_header.version = _LINUX_CAPABILITY_VERSION_3;
    cap_header.pid = 0;
-   retval = syscall(__NR_capget, &cap_header, &cap_data);
 
+   retval = syscall(__NR_capget, &cap_header, &cap_data);
    if (retval < 0) {
      strCpy=strncpy( _papi_hwd[cidx]->cmp_info.disabled_reason,
 	     "Error querying Linux capabilities",PAPI_MAX_STR_LEN );
@@ -649,7 +646,7 @@ _peu_init_component( int cidx )
    #else
       perfmon_capabilities = cap_data[0].permitted & (1 << CAP_SYS_ADMIN);
    #endif
-
+#endif
    /* Run the libpfm4-specific setup */
 
    retval = _papi_libpfm4_init(_papi_hwd[cidx]);
