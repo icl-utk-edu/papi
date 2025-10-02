@@ -163,51 +163,72 @@ int cuptie_init(void)
     SUBDBG("ENTERING: Initializing the Cuda component for CUPTI Event and Metric API support.\n");
     int papi_errno;
 
+    int maxSupportedEventAndMetricCudaToolkit = 13000;
+    int cudaRuntimeVersion;
+    cudaArtCheckErrors( cudaRuntimeGetVersionPtr(&cudaRuntimeVersion), return PAPI_EMISC );
+    if (cudaRuntimeVersion >= 13000) {
+        cuptic_err_set_last("Event and Metric API support has been dropped by NVIDIA in Cuda Toolkit 13.\n");
+        return PAPI_ECMP;
+    }
+
     // Load Event and Metric API
     papi_errno = load_event_and_metric_sym();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to load Event and Metric API functions.\n");
         return papi_errno;
     }
 
     // Load CUPTI Profiler API
     papi_errno = load_cupti_profiler_sym();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to load CUPTI Profiler API functions.\n");
         return papi_errno;
     }
 
-    // Get the number of GPUs on the machine
+    // Get the number of devices on the system
     papi_errno = cuptic_device_get_count(&numDevicesOnMachine);
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to get the number of devices on the system.\n");
         return PAPI_EMISC;
+    }
+
+    if (numDevicesOnMachine < 0) {
+        cuptic_err_set_last("For the current system, no NVIDIA devices detected.\n");
+        return PAPI_ECMP;
     }
 
     // Initialize cupti profiler api such that we can get chip names
     papi_errno = initialize_cupti_profiler_api();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to initialize the CUPTI Profiler API.\n");
         return PAPI_EMISC;
     }
 
     // Initialize the main hash table
     papi_errno = init_event_and_metric_main_htable();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to allocate memory for the main hash table.\n");
         return papi_errno;
     }
 
     // For each device assign the chipnames
     papi_errno = assign_chipnames_for_a_device_index();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to assign chipname's for each device on the system.\n");
         return papi_errno;
     }
 
     // Enumerate through available devices and store the events and metrics 
     papi_errno = init_event_and_metric_table();
     if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failure to get the event's and metric's for each device on the system.\n");
         return papi_errno;
     }
 
     // Initialize the Cuda driver API
     CUresult cuError = cuInitPtr(0);
     if (cuError != CUDA_SUCCESS) {
+        cuptic_err_set_last("Failure to initialize the Cuda driver API.\n");
         return PAPI_EMISC;
     }
 

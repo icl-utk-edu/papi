@@ -33,7 +33,7 @@ typedef enum
     EVENT_OR_METRIC_API = 0,
     EITHER_API,
     PERFWORKS_API,
-} compute_capability_required_api;
+} required_api_for_a_cuda_device;
 
 typedef enum 
 {
