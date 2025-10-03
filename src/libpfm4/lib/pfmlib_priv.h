@@ -850,6 +850,7 @@ extern pfmlib_pmu_t arm_cortex_a53_support;
 extern pfmlib_pmu_t arm_cortex_a55_support;
 extern pfmlib_pmu_t arm_cortex_a72_support;
 extern pfmlib_pmu_t arm_cortex_a76_support;
+extern pfmlib_pmu_t arm_cortex_x4_support;
 extern pfmlib_pmu_t arm_xgene_support;
 extern pfmlib_pmu_t arm_n1_support;
 extern pfmlib_pmu_t arm_n2_support;
