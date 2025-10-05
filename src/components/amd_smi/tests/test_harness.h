@@ -139,12 +139,10 @@ static inline int harness_use_color(void) {
 }
 
 static inline void harness_exit_warning(void) {
-    if (harness_opts.print) {
-        if (harness_use_color())
-            printf("\033[1;33mPASSED with WARNING\033[0m\n");
-        else
-            printf("PASSED with WARNING\n");
-    }
+    if (harness_use_color())
+        printf("\033[1;33mPASSED with WARNING\033[0m\n");
+    else
+        printf("PASSED with WARNING\n");
     fflush(stdout);
     if (PAPI_is_initialized()) {
         PAPI_shutdown();

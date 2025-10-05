@@ -34,7 +34,7 @@ LDFLAGS_AMDSMI  = $(UTILOBJS) $(PAPILIB) -L$(PAPI_AMDSMI_ROOT)/lib -lamd_smi $(C
 LDFLAGS_GEMM    = $(UTILOBJS) $(PAPILIB) -L$(PAPI_AMDSMI_ROOT)/lib -lrocblas $(COMMON_LDFLAGS)
 
 # AMD SMI tests to build with 'make tests'
-TESTS_AMDSMI := amdsmi_energy_monotonic amdsmi_ctx_conflict
+TESTS_AMDSMI := amdsmi_energy_monotonic amdsmi_ctx_conflict amdsmi_set_test
 
 # Default target
 all: amdsmi_hello amdsmi_basics amdsmi_gemm $(TESTS_AMDSMI)
@@ -95,6 +95,11 @@ amdsmi_ctx_conflict: amdsmi_ctx_conflict.o $(UTILOBJS) $(PAPILIB)
 	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
 	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
 
+amdsmi_set_test: amdsmi_set_test.o $(UTILOBJS) $(PAPILIB)
+	@echo "Linking $@..."
+	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
+
 $(UTILOBJS):
 	$(MAKE) -C ../../../testlib libtestlib.a
 
@@ -113,6 +118,7 @@ clean:
 	  amdsmi_gemm amdsmi_gemm.o \
 	  amdsmi_energy_monotonic amdsmi_energy_monotonic.o \
 	  amdsmi_ctx_conflict amdsmi_ctx_conflict.o \
+	  amdsmi_set_test amdsmi_set_test.o \
 	  *.exe
 
 checkpath:
@@ -133,4 +139,4 @@ checkpath:
 
 .PHONY: all clean checkpath tests \
 	amdsmi_hello amdsmi_example amdsmi_basics amdsmi_gemm \
-	amdsmi_energy_monotonic amdsmi_ctx_conflict
+	amdsmi_energy_monotonic amdsmi_ctx_conflict amdsmi_set_test

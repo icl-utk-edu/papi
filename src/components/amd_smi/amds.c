@@ -294,6 +294,7 @@ static int load_amdsmi_sym(void) {
   amdsmi_get_gpu_fan_rpms_p = sym("amdsmi_get_gpu_fan_rpms", NULL);
   amdsmi_get_gpu_fan_speed_p = sym("amdsmi_get_gpu_fan_speed", NULL);
   amdsmi_get_gpu_fan_speed_max_p = sym("amdsmi_get_gpu_fan_speed_max", NULL);
+  amdsmi_set_gpu_fan_speed_p = sym("amdsmi_set_gpu_fan_speed", NULL);
   // Memory
   amdsmi_get_total_memory_p =
       sym("amdsmi_get_gpu_memory_total", "amdsmi_get_total_memory");

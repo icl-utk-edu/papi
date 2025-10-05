@@ -38,6 +38,8 @@
     (amdsmi_processor_handle, uint32_t, int64_t *))                            \
   _(amdsmi_get_gpu_fan_speed_max_p, amdsmi_status_t,                           \
     (amdsmi_processor_handle, uint32_t, int64_t *))                            \
+  _(amdsmi_set_gpu_fan_speed_p, amdsmi_status_t,                               \
+    (amdsmi_processor_handle, uint32_t, uint64_t))                             \
   _(amdsmi_get_total_memory_p, amdsmi_status_t,                                \
     (amdsmi_processor_handle, amdsmi_memory_type_t, uint64_t *))               \
   _(amdsmi_get_memory_usage_p, amdsmi_status_t,                                \

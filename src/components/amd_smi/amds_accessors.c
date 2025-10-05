@@ -860,16 +860,46 @@ int access_amdsmi_fan_speed(int mode, void *arg) {
   if (event->device < 0 || event->device >= device_count || !device_handles || !device_handles[event->device]) {
     return PAPI_EMISC;
   }
-  if (mode != PAPI_MODE_READ) {
-    return PAPI_ENOSUPP; // writing fan speed not supported
-  }
-  int64_t val = 0;
-  amdsmi_status_t status = amdsmi_get_gpu_fan_speed_p(device_handles[event->device], event->subvariant, &val);
-  if (status != AMDSMI_STATUS_SUCCESS) {
+
+  int64_t current = 0;
+  amdsmi_status_t status =
+      amdsmi_get_gpu_fan_speed_p(device_handles[event->device], event->subvariant,
+                                 &current);
+  if (status != AMDSMI_STATUS_SUCCESS)
     return PAPI_EMISC;
+
+  if (mode == PAPI_MODE_READ) {
+    event->value = current;
+    return PAPI_OK;
   }
-  event->value = val;
-  return PAPI_OK;
+
+  if (mode == PAPI_MODE_WRITE) {
+
+    if (event->value < 0)
+      return PAPI_EINVAL;
+
+    uint64_t new_speed = (uint64_t)event->value;
+    uint64_t max_speed = 255;
+    if (amdsmi_get_gpu_fan_speed_max_p) {
+      int64_t max_query = 0;
+      status = amdsmi_get_gpu_fan_speed_max_p(device_handles[event->device],  event->subvariant, &max_query);
+      if (status == AMDSMI_STATUS_SUCCESS && max_query > 0)
+        max_speed = (uint64_t)max_query;
+    }
+    if (new_speed > max_speed)
+      return PAPI_EINVAL;
+
+    status = amdsmi_set_gpu_fan_speed_p(device_handles[event->device], event->subvariant, new_speed);
+    if (status != AMDSMI_STATUS_SUCCESS)
+      return PAPI_EMISC;
+
+    int64_t verify = 0;
+    status = amdsmi_get_gpu_fan_speed_p(device_handles[event->device],  event->subvariant, &verify);
+    event->value = (status == AMDSMI_STATUS_SUCCESS) ? verify : (int64_t)new_speed;
+    return PAPI_OK;
+  }
+
+  return PAPI_ENOSUPP;
 }
 int access_amdsmi_mem_total(int mode, void *arg) {
   native_event_t *event = (native_event_t *)arg;
