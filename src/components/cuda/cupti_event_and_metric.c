@@ -65,9 +65,6 @@ static int numDevicesOnMachine;
 // Main table that holds event and metrics
 static cuptiu_event_and_metric_table_t *cuptiu_table_p;
 
-static gpu_record_event_and_metric_t *avail_gpu_info;
-
-
 // CUPTI Profiler API function pointers //
 CUptiResult ( *cuptiProfilerInitializeEventAndMetricPtr ) (CUpti_Profiler_Initialize_Params* params);
 CUptiResult ( *cuptiProfilerDeInitializeEventAndMetricPtr ) (CUpti_Profiler_DeInitialize_Params* params);
@@ -125,7 +122,7 @@ static int find_same_chipname(int gpu_id);
 static int assign_chipnames_for_a_device_index(void);
 static int determine_required_api(int deviceIdx);
 // Managing an EventGroup
-static int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID);
+static int check_if_event_or_metric_required_multiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID);
 // Evaluation
 static int convert_metric_value_to_long_long(CUpti_MetricID metricID, CUpti_MetricValue metricValue, long long *conversionOfMetricValue);
 
@@ -1058,7 +1055,7 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
                     // (this has been shown from my own personal testing). However, if a user were to add two metrics
                     // with both metrics only requiring a single event, then these two events could be placed into the same eventGroup.
                     size_t sizeOfNormalizedEventValuesArrayInBytes = gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx] * sizeof(uint64_t);
-                    uint64_t *normalizedEventValuesArray = (uint64_t *) calloc(gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx], sizeof(int));
+                    uint64_t *normalizedEventValuesArray = (uint64_t *) calloc(gpu_ctl->added_events->totalNumberOfIdsThatMakeupTheUserAddedEventArray[recordIdx], sizeof(uint64_t));
 
                     int allMatchingEventsFound = 0;
 
@@ -1257,7 +1254,7 @@ int cuptie_ctx_destroy(cuptie_control_t *pstate)
   *   If the event does not require multiple passes store it such that it can be added
   *   to an EventGroup later.
 */
-static int check_if_event_or_metric_requires_mutiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID)
+static int check_if_event_or_metric_required_multiple_passes(const char *addedEventName, int cuptiApi, int deviceIdx, uint32_t *addedNativeEventID)
 {
     SUBDBG("ENTERING: Checking if the user added event does not require multiple passes.\n");
 
@@ -1341,13 +1338,13 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
         // Verify the user added event exists
         void *p;
         if (htable_find(cuptiu_table_p->htable, cuptiu_table_p->events[native_event_info.nameid].name, (void **) &p) != HTABLE_SUCCESS) {
-            SUBDBG("The added event %s does not exist.\n", cuptiu_table_p->htable, cuptiu_table_p->events[native_event_info.nameid].name);
+            SUBDBG("The added event %s does not exist.\n", cuptiu_table_p->events[native_event_info.nameid].name);
             return PAPI_ENOEVNT;
         }
 
         uint32_t addedNativeEventID;
         // Verify that the user added event does not require multiple passes
-        int papi_errno = check_if_event_or_metric_requires_mutiple_passes(cuptiu_table_p->events[native_event_info.nameid].name,
+        int papi_errno = check_if_event_or_metric_required_multiple_passes(cuptiu_table_p->events[native_event_info.nameid].name,
                                                                           cuptiu_table_p->events[native_event_info.nameid].api,
                                                                           native_event_info.device, &addedNativeEventID);
         if (papi_errno != PAPI_OK) {

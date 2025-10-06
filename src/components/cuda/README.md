@@ -70,14 +70,14 @@ export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$LD_LIBRARY_PATH
 ## Partially Disabled Cuda Component
 As previously mentioned the `cuda` component supports three primary APIs to expose counters and controls for NVIDIA GPUs.
 
-The Event/Metric API only overlaps with the Perfworks API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capibilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
+The Event/Metric API only overlaps with the Perfworks API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
 
 To allow for this choice to be made the `cuda` component supports being ***Partially Disabled***. Which means:
 
 * If exposing counters and controls for CCs <= 7.0 (e.g. P100 and V100), then support for exposing counters and controls for CCs > 7.0 will be disabled
 * If exposing counters and controls for CCs >= 7.0 (e.g. V100 and A100), then support for exposing counters and controls for CCs < 7.0 will be disabled
 
-By default on mixed compute capability machines, counters and conrols for CCs >= 7.0 will be exposed. However, at runtime the choice of which CCs the counter and controls will be exposed for can be changed via the environment variable `PAPI_CUDA_API`. Simply
+By default on mixed compute capability machines, counters and controls for CCs >= 7.0 will be exposed. However, at runtime the choice of which CCs the counter and controls will be exposed for can be changed via the environment variable `PAPI_CUDA_API`. Simply
 set `PAPI_CUDA_API` equal to `LEGACY`, e.g:
 
 ```
@@ -85,7 +85,7 @@ export PAPI_CUDA_API=LEGACY
 ```
 
 ## Known Limitations
-* Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Pefworks API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` make take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
+* Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Pefworks API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` may take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
 ***
 
 ## FAQ
