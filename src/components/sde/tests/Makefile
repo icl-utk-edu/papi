@@ -24,7 +24,12 @@ ifeq ($(BUILD_LIBSDE_STATIC),yes)
 endif
 
 ifeq ($(BUILD_LIBSDE_SHARED),yes)
-	sdeLDFLAGS = $(LDFLAGS) -Llib -L$(datadir) -L$(datadir)/libpfm4/lib -lpapi -lpfm -lsde
+        sdeLDFLAGS = $(LDFLAGS) -Llib -L$(datadir)
+        ifeq ($(CPU_ENABLED),yes)
+            sdeLDFLAGS += -L$(datadir)/libpfm4/lib -lpapi -lpfm -lsde
+        else
+            sdeLDFLAGS += -lpapi -lsde
+        endif
 	LIBSDE=yes
 else
 	sdeLDFLAGS = $(LD_STATIC_FLAGS)

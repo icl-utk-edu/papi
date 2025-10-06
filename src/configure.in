@@ -1200,6 +1200,7 @@ fi
 perf_events=yes
 force_perf_events=no
 perf_events_uncore=yes
+CPU_ENABLED="yes"
 
 if test "x$mic" = "xno"; then
        perf_events=no
@@ -1223,6 +1224,7 @@ AC_ARG_ENABLE(cpu,
               [Disable cpu component])])
 
 AS_IF([test "x$enable_cpu" = "xno"],[
+	CPU_ENABLED="no"
 	perf_events=no
   force_perf_events=no
   perf_events_uncore=no
@@ -1248,6 +1250,7 @@ AC_ARG_ENABLE(perf_event,
               [Disable perf_event component])])
 
 AS_IF([test "x$enable_perf_event" = "xno"],[
+	CPU_ENABLED="no"
 	perf_events=no
   force_perf_events=no
 
@@ -1265,6 +1268,7 @@ AS_IF([test "x$enable_perf_event" = "xno"],[
     '  "$FILE_PATH" > "$TEMP_FILE"
   mv "$TEMP_FILE" "$FILE_PATH" 
 ])
+AC_SUBST(CPU_ENABLED)
 
 AC_ARG_ENABLE(perf_event_uncore,
               [AS_HELP_STRING([--disable-perf-event-uncore],

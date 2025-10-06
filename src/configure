@@ -695,6 +695,7 @@ PMINIT
 PMAPI
 MAKEVER
 arch
+CPU_ENABLED
 LIBSDEFLAGS
 BUILD_LIBSDE_STATIC
 BUILD_LIBSDE_SHARED
@@ -5975,6 +5976,7 @@ fi
 perf_events=yes
 force_perf_events=no
 perf_events_uncore=yes
+CPU_ENABLED="yes"
 
 if test "x$mic" = "xno"; then
        perf_events=no
@@ -6001,6 +6003,7 @@ fi
 
 if test "x$enable_cpu" = "xno"; then :
 
+	CPU_ENABLED="no"
 	perf_events=no
   force_perf_events=no
   perf_events_uncore=no
@@ -6030,6 +6033,7 @@ fi
 
 if test "x$enable_perf_event" = "xno"; then :
 
+	CPU_ENABLED="no"
 	perf_events=no
   force_perf_events=no
 
@@ -6048,6 +6052,7 @@ if test "x$enable_perf_event" = "xno"; then :
   mv "$TEMP_FILE" "$FILE_PATH"
 
 fi
+
 
 # Check whether --enable-perf_event_uncore was given.
 if test "${enable_perf_event_uncore+set}" = set; then :
