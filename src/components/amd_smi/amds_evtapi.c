@@ -331,8 +331,6 @@ int amds_evt_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) {
     default:
       return PAPI_ENOSUPP;
   }
-  info->event_code = EventCode;
-  info->code[0] = EventCode;
   info->num_quals = quals_to_report;
   return PAPI_OK;
 }
