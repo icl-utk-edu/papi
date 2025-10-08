@@ -550,16 +550,16 @@ int access_amdsmi_xgmi_info(int mode, void *arg) {
     return PAPI_EMISC;
   switch (event->variant) {
   case 0:
-    event->value = (int64_t)info.xgmi_lanes;
+    event->value = (uint64_t)info.xgmi_lanes;
     break;
   case 1:
-    event->value = (int64_t)info.xgmi_hive_id;
+    event->value = (uint64_t)info.xgmi_hive_id;
     break;
   case 2:
-    event->value = (int64_t)info.xgmi_node_id;
+    event->value = (uint64_t)info.xgmi_node_id;
     break;
   case 3:
-    event->value = (int64_t)info.index;
+    event->value = (uint64_t)info.index;
     break;
   default:
     return PAPI_ENOSUPP;
