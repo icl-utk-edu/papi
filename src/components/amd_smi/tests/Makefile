@@ -4,6 +4,7 @@
 PAPI_AMDSMI_ROOT ?= /opt/rocm-6.4.0
 HIP_PATH := $(PAPI_AMDSMI_ROOT)
 HIPCC := $(HIP_PATH)/bin/hipcc
+CC ?= cc
 
 # Toolchain / flags
 CFLAGS   ?= -DPAPI_NUM_COMP=3
@@ -19,14 +20,15 @@ PAPILIB  ?= ../../../libpapi.a
 BASE_INCLUDES_FROM_LOG ?= -I. -I../../.. -I../../../testlib -I../../../validation_tests
 PAPI_DIR_INCLUDE ?= ../../../include
 
-EFFECTIVE_INCLUDE := $(BASE_INCLUDES_FROM_LOG)
-EFFECTIVE_INCLUDE += -I$(PAPI_DIR_INCLUDE)
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include/rocm_smi
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include/hip
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include/hsa
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include/rocprofiler
-EFFECTIVE_INCLUDE += -I$(PAPI_AMDSMI_ROOT)/include/rocblas
+INCLUDE_PAPI := $(BASE_INCLUDES_FROM_LOG) -I$(PAPI_DIR_INCLUDE)
+INCLUDE_AMDSMI := -I$(PAPI_AMDSMI_ROOT)/include -I$(PAPI_AMDSMI_ROOT)/include/rocm_smi
+INCLUDE_HIP := -I$(PAPI_AMDSMI_ROOT)/include/hip \
+               -I$(PAPI_AMDSMI_ROOT)/include/hsa \
+               -I$(PAPI_AMDSMI_ROOT)/include/rocprofiler \
+               -I$(PAPI_AMDSMI_ROOT)/include/rocblas
+
+EFFECTIVE_INCLUDE_C := $(INCLUDE_PAPI) $(INCLUDE_AMDSMI)
+EFFECTIVE_INCLUDE_HIP := $(EFFECTIVE_INCLUDE_C) $(INCLUDE_HIP)
 
 # Linker flags
 COMMON_LDFLAGS  = -ldl -g -lpthread
@@ -45,19 +47,11 @@ all: amdsmi_hello amdsmi_basics amdsmi_gemm $(TESTS_AMDSMI)
 
 # .c -> .o
 %.o: %.c
-	@echo "Compiling C source $< to $@..."
-	@echo "HIPCC: $(HIPCC)"
-	@echo "CFLAGS: $(CFLAGS) CSTD: $(CSTD) OPTFLAGS: $(OPTFLAGS)"
-	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -c $< -o $@
 
 # amdsmi_gemm.c is compiled as HIP
 amdsmi_gemm.o: amdsmi_gemm.c
-	@echo "Compiling HIP source $< to $@..."
-	@echo "HIPCC: $(HIPCC)"
-	@echo "HIPFLAGS: $(HIPFLAGS) OPTFLAGS: $(OPTFLAGS)"
-	@echo "INCLUDES: $(EFFECTIVE_INCLUDE)"
-	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -x hip -c $< -o $@
+	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_HIP) -x hip -c $< -o $@
 
 # ------------------------
 # Link rules
@@ -65,40 +59,28 @@ amdsmi_gemm.o: amdsmi_gemm.c
 
 # amdsmi_hello replaces the older amdsmi_example
 amdsmi_hello: amdsmi_hello.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
 
 # Back-compat alias: allow 'make amdsmi_example' to build amdsmi_hello
 amdsmi_example: amdsmi_hello
 	@true
 
 amdsmi_basics: amdsmi_basics.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
 
 # GEMM sample linked against rocBLAS
 amdsmi_gemm: amdsmi_gemm.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_GEMM: $(LDFLAGS_GEMM)"
-	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_gemm.o $(LDFLAGS_GEMM)
+	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_HIP) -o $@ amdsmi_gemm.o $(LDFLAGS_GEMM)
 
 # Tests
 amdsmi_energy_monotonic: amdsmi_energy_monotonic.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
 
 amdsmi_ctx_conflict: amdsmi_ctx_conflict.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
 
 amdsmi_set_test: amdsmi_set_test.o $(UTILOBJS) $(PAPILIB)
-	@echo "Linking $@..."
-	@echo "Using LDFLAGS_AMDSMI: $(LDFLAGS_AMDSMI)"
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
+	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
 
 $(UTILOBJS):
 	$(MAKE) -C ../../../testlib libtestlib.a
@@ -124,8 +106,13 @@ clean:
 checkpath:
 	@echo "--- Variables ---"
 	@echo "PAPI_AMDSMI_ROOT = $(PAPI_AMDSMI_ROOT)"
+	@echo "CC = $(CC)"
 	@echo "HIPCC = $(HIPCC)"
-	@echo "INCLUDES = $(EFFECTIVE_INCLUDE)"
+	@echo "INCLUDE_PAPI = $(INCLUDE_PAPI)"
+	@echo "INCLUDE_AMDSMI = $(INCLUDE_AMDSMI)"
+	@echo "INCLUDE_HIP = $(INCLUDE_HIP)"
+	@echo "EFFECTIVE_INCLUDE_C = $(EFFECTIVE_INCLUDE_C)"
+	@echo "EFFECTIVE_INCLUDE_HIP = $(EFFECTIVE_INCLUDE_HIP)"
 	@echo "CFLAGS = $(CFLAGS)"
 	@echo "CSTD = $(CSTD)"
 	@echo "HIPFLAGS = $(HIPFLAGS)"
