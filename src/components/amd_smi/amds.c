@@ -1044,13 +1044,13 @@ static int init_event_table(void) {
       AMDSMI_TEMP_MAX_HYST,       AMDSMI_TEMP_MIN_HYST,      AMDSMI_TEMP_CRITICAL,
       AMDSMI_TEMP_CRITICAL_HYST,  AMDSMI_TEMP_EMERGENCY,     AMDSMI_TEMP_EMERGENCY_HYST,
       AMDSMI_TEMP_CRIT_MIN,       AMDSMI_TEMP_CRIT_MIN_HYST, AMDSMI_TEMP_OFFSET,
-      AMDSMI_TEMP_LOWEST,         AMDSMI_TEMP_HIGHEST};
+      AMDSMI_TEMP_LOWEST,         AMDSMI_TEMP_HIGHEST,       AMDSMI_TEMP_SHUTDOWN};
   const char *temp_metric_names[] = {
       "temp_current",       "temp_max",           "temp_min",
       "temp_max_hyst",      "temp_min_hyst",      "temp_critical",
       "temp_critical_hyst", "temp_emergency",     "temp_emergency_hyst",
       "temp_crit_min",      "temp_crit_min_hyst", "temp_offset",
-      "temp_lowest",        "temp_highest"};
+      "temp_lowest",        "temp_highest",       "temp_shutdown"};
   // Temperature sensors - device-level cache + individual testing
   for (int d = 0; d < gpu_count; ++d) {
     // Safety check for device handle
@@ -3739,9 +3739,14 @@ static int init_event_table(void) {
       amdsmi_link_metrics_t lm;
       if (amdsmi_get_link_metrics_p(device_handles[d], &lm) ==
           AMDSMI_STATUS_SUCCESS) {
-        int types[] = {AMDSMI_LINK_TYPE_XGMI, AMDSMI_LINK_TYPE_PCIE};
-        const char *type_names[] = {"xgmi", "pcie"};
-        for (int ti = 0; ti < 2; ++ti) {
+        amdsmi_link_type_t types[] = {
+            AMDSMI_LINK_TYPE_INTERNAL,       AMDSMI_LINK_TYPE_XGMI,
+            AMDSMI_LINK_TYPE_PCIE,           AMDSMI_LINK_TYPE_NOT_APPLICABLE,
+            AMDSMI_LINK_TYPE_UNKNOWN};
+        const char *type_names[] = {
+            "internal", "xgmi", "pcie", "not_applicable", "unknown"};
+        const size_t type_count = sizeof(types) / sizeof(types[0]);
+        for (size_t ti = 0; ti < type_count; ++ti) {
           uint32_t link_type = (uint32_t)types[ti];
           uint32_t sv = (link_type << 16) | 0xFFFF;
           int present = 0;
@@ -3763,8 +3768,7 @@ static int init_event_table(void) {
                                   "write throughput (KB)",
                                   "link bit rate (Gb/s)",
                                   "max bandwidth (Gb/s)"};
-          uint32_t v;
-          for (v = 0; v < 4; ++v) {
+          for (uint32_t v = 0; v < 4; ++v) {
             CHECK_EVENT_IDX(idx);
             CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s_%s:device=%d",
                      type_names[ti], mnames[v], d);
@@ -3812,10 +3816,14 @@ static int init_event_table(void) {
       }
     }
     if (amdsmi_get_link_topology_nearest_p) {
-      amdsmi_link_type_t lt_types[] = {AMDSMI_LINK_TYPE_XGMI,
-                                       AMDSMI_LINK_TYPE_PCIE};
-      const char *lt_names[] = {"xgmi", "pcie"};
-      for (int ti = 0; ti < 2; ++ti) {
+      amdsmi_link_type_t lt_types[] = {
+          AMDSMI_LINK_TYPE_INTERNAL,       AMDSMI_LINK_TYPE_XGMI,
+          AMDSMI_LINK_TYPE_PCIE,           AMDSMI_LINK_TYPE_NOT_APPLICABLE,
+          AMDSMI_LINK_TYPE_UNKNOWN};
+      const char *lt_names[] = {
+          "internal", "xgmi", "pcie", "not_applicable", "unknown"};
+      const size_t lt_count = sizeof(lt_types) / sizeof(lt_types[0]);
+      for (size_t ti = 0; ti < lt_count; ++ti) {
         amdsmi_topology_nearest_t info;
         memset(&info, 0, sizeof(info));
         if (amdsmi_get_link_topology_nearest_p(device_handles[d], lt_types[ti],
