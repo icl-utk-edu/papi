@@ -290,8 +290,9 @@ int amds_ctx_read(amds_ctx_t ctx, long long **counts) {
   }
 
   *counts = ctx->counters;
-  
-  return papi_errno;
+
+  /* return PAPI_OK so callers can inspect per-event errors in the counters */
+  return PAPI_OK;
 }
 
 int amds_ctx_write(amds_ctx_t ctx, long long *counts) {
