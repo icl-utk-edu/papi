@@ -77,6 +77,7 @@ static int evt_get_count(int *count) {
 
 static int _amd_smi_init_private(void) {
     int papi_errno = PAPI_OK;
+    int initialized = 0;
     PAPI_lock(COMPONENT_LOCK);
 
     if (_amd_smi_vector.cmp_info.initialized) {
@@ -110,7 +111,7 @@ static int _amd_smi_init_private(void) {
     _amd_smi_vector.cmp_info.num_mpx_cntrs = count;
 
 fn_exit:
-    const int initialized = (papi_errno == PAPI_OK);
+    initialized = (papi_errno == PAPI_OK);
     _amd_smi_vector.cmp_info.disabled = papi_errno;
     _amd_smi_vector.cmp_info.initialized = initialized;
     if (initialized) {
