@@ -84,6 +84,40 @@ void *amds_get_htable(void) { return htable; }
 uint32_t amds_get_lib_major(void) { return amdsmi_lib_major; }
 uint32_t amds_get_counter_slot_capacity(void) { return counter_slot_capacity; }
 
+amdsmi_status_t amds_query_gpu_memory_total(amdsmi_processor_handle processor_handle,
+                                            amdsmi_memory_type_t mem_type,
+                                            uint64_t *total) {
+  if (!amdsmi_get_total_memory_p)
+    return AMDSMI_STATUS_NOT_SUPPORTED;
+  if (!processor_handle || !total)
+    return AMDSMI_STATUS_INVAL;
+  if (mem_type < AMDSMI_MEM_TYPE_FIRST || mem_type > AMDSMI_MEM_TYPE_LAST)
+    return AMDSMI_STATUS_INVAL;
+  *total = 0;
+  amdsmi_status_t status =
+      amdsmi_get_total_memory_p(processor_handle, mem_type, total);
+  if (status != AMDSMI_STATUS_SUCCESS)
+    *total = 0;
+  return status;
+}
+
+amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_handle,
+                                            amdsmi_memory_type_t mem_type,
+                                            uint64_t *used) {
+  if (!amdsmi_get_memory_usage_p)
+    return AMDSMI_STATUS_NOT_SUPPORTED;
+  if (!processor_handle || !used)
+    return AMDSMI_STATUS_INVAL;
+  if (mem_type < AMDSMI_MEM_TYPE_FIRST || mem_type > AMDSMI_MEM_TYPE_LAST)
+    return AMDSMI_STATUS_INVAL;
+  *used = 0;
+  amdsmi_status_t status =
+      amdsmi_get_memory_usage_p(processor_handle, mem_type, used);
+  if (status != AMDSMI_STATUS_SUCCESS)
+    *used = 0;
+  return status;
+}
+
 #define CHECK_EVENT_IDX(i)                                                     \
   do {                                                                        \
     if ((i) >= MAX_EVENTS_PER_DEVICE * device_count) {                         \
@@ -1803,38 +1837,70 @@ static int init_event_table(void) {
         return PAPI_ENOMEM;
     }
   }
-  /* VRAM memory metrics - test each device individually */
+  /* GPU memory metrics - test each device individually */
   for (int d = 0; d < gpu_count; ++d) {
     // Safety check for device handle
     if (!device_handles || !device_handles[d])
       continue;
-    /* total VRAM bytes - test directly */
-    uint64_t dummy_total;
-    if (amdsmi_get_total_memory_p &&
-        amdsmi_get_total_memory_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM,
-                                  &dummy_total) == AMDSMI_STATUS_SUCCESS) {
-      if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
-        return PAPI_ENOSUPP;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_total_VRAM:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d total VRAM memory (bytes)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, AMDSMI_MEM_TYPE_VRAM, 0,
-                    PAPI_MODE_READ, access_amdsmi_mem_total) != PAPI_OK)
-        return PAPI_ENOMEM;
+    /* total memory bytes by memory type - probe with each type */
+    if (amdsmi_get_total_memory_p) {
+      const struct {
+        amdsmi_memory_type_t type;
+        const char *suffix;
+        const char *descr;
+      } mem_total_descs[] = {
+          {AMDSMI_MEM_TYPE_VRAM, "VRAM", "VRAM memory"},
+          {AMDSMI_MEM_TYPE_VIS_VRAM, "VIS_VRAM", "visible VRAM memory"},
+          {AMDSMI_MEM_TYPE_GTT, "GTT", "GTT memory"},
+      };
+      const size_t mem_total_count =
+          sizeof(mem_total_descs) / sizeof(mem_total_descs[0]);
+      for (size_t mt = 0; mt < mem_total_count; ++mt) {
+        uint64_t dummy_total = 0;
+        amdsmi_status_t st = amds_query_gpu_memory_total(
+            device_handles[d], mem_total_descs[mt].type, &dummy_total);
+        if (st != AMDSMI_STATUS_SUCCESS)
+          continue;
+        if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
+          return PAPI_ENOSUPP;
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_total_%s:device=%d",
+                 mem_total_descs[mt].suffix, d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                 "Device %d total %s (bytes)", d, mem_total_descs[mt].descr);
+        if (add_event(&idx, name_buf, descr_buf, d, mem_total_descs[mt].type, 0,
+                      PAPI_MODE_READ, access_amdsmi_mem_total) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
     }
-    /* used VRAM bytes - test directly */
-    uint64_t dummy_usage;
-    if (amdsmi_get_memory_usage_p &&
-        amdsmi_get_memory_usage_p(device_handles[d], AMDSMI_MEM_TYPE_VRAM,
-                                  &dummy_usage) == AMDSMI_STATUS_SUCCESS) {
-      if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
-        return PAPI_ENOSUPP;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_usage_VRAM:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d VRAM memory usage (bytes)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, AMDSMI_MEM_TYPE_VRAM, 0,
-                    PAPI_MODE_READ, access_amdsmi_mem_usage) != PAPI_OK)
-        return PAPI_ENOMEM;
+    /* used memory bytes by memory type - probe with each type */
+    if (amdsmi_get_memory_usage_p) {
+      const struct {
+        amdsmi_memory_type_t type;
+        const char *suffix;
+        const char *descr;
+      } mem_usage_descs[] = {
+          {AMDSMI_MEM_TYPE_VRAM, "VRAM", "VRAM memory"},
+          {AMDSMI_MEM_TYPE_VIS_VRAM, "VIS_VRAM", "visible VRAM memory"},
+          {AMDSMI_MEM_TYPE_GTT, "GTT", "GTT memory"},
+      };
+      const size_t mem_usage_count =
+          sizeof(mem_usage_descs) / sizeof(mem_usage_descs[0]);
+      for (size_t mt = 0; mt < mem_usage_count; ++mt) {
+        uint64_t dummy_usage = 0;
+        amdsmi_status_t st = amds_query_gpu_memory_usage(
+            device_handles[d], mem_usage_descs[mt].type, &dummy_usage);
+        if (st != AMDSMI_STATUS_SUCCESS)
+          continue;
+        if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
+          return PAPI_ENOSUPP;
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_usage_%s:device=%d",
+                 mem_usage_descs[mt].suffix, d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                 "Device %d %s usage (bytes)", d, mem_usage_descs[mt].descr);
+        if (add_event(&idx, name_buf, descr_buf, d, mem_usage_descs[mt].type, 0,
+                      PAPI_MODE_READ, access_amdsmi_mem_usage) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
     }
     if (amdsmi_get_gpu_vram_usage_p) {
       amdsmi_vram_usage_t vu;

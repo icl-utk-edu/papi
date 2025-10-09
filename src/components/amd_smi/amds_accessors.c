@@ -909,10 +909,15 @@ int access_amdsmi_mem_total(int mode, void *arg) {
   if (mode != PAPI_MODE_READ)
     return PAPI_ENOSUPP;
   uint64_t data = 0;
-  amdsmi_status_t status = amdsmi_get_total_memory_p(device_handles[event->device], (amdsmi_memory_type_t)event->variant, &data);
-  if (status != AMDSMI_STATUS_SUCCESS) {
+  amdsmi_status_t status = amds_query_gpu_memory_total(
+      device_handles[event->device], (amdsmi_memory_type_t)event->variant,
+      &data);
+  if (status == AMDSMI_STATUS_NOT_SUPPORTED)
+    return PAPI_ENOSUPP;
+  if (status == AMDSMI_STATUS_INVAL)
+    return PAPI_EINVAL;
+  if (status != AMDSMI_STATUS_SUCCESS)
     return PAPI_EMISC;
-  }
   event->value = (int64_t)data;
   return PAPI_OK;
 }
@@ -924,10 +929,15 @@ int access_amdsmi_mem_usage(int mode, void *arg) {
   if (mode != PAPI_MODE_READ)
     return PAPI_ENOSUPP;
   uint64_t data = 0;
-  amdsmi_status_t status = amdsmi_get_memory_usage_p(device_handles[event->device], (amdsmi_memory_type_t)event->variant, &data);
-  if (status != AMDSMI_STATUS_SUCCESS) {
+  amdsmi_status_t status = amds_query_gpu_memory_usage(
+      device_handles[event->device], (amdsmi_memory_type_t)event->variant,
+      &data);
+  if (status == AMDSMI_STATUS_NOT_SUPPORTED)
+    return PAPI_ENOSUPP;
+  if (status == AMDSMI_STATUS_INVAL)
+    return PAPI_EINVAL;
+  if (status != AMDSMI_STATUS_SUCCESS)
     return PAPI_EMISC;
-  }
   event->value = (int64_t)data;
   return PAPI_OK;
 }

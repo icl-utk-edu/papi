@@ -96,6 +96,12 @@ void *amds_get_htable(void);
 native_event_table_t *amds_get_ntv_table(void);
 uint32_t amds_get_lib_major(void);
 uint32_t amds_get_counter_slot_capacity(void);
+amdsmi_status_t amds_query_gpu_memory_total(amdsmi_processor_handle processor_handle,
+                                            amdsmi_memory_type_t mem_type,
+                                            uint64_t *total);
+amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_handle,
+                                            amdsmi_memory_type_t mem_type,
+                                            uint64_t *used);
 
 #ifndef AMDS_PRIV_IMPL
 #define device_handles (amds_get_device_handles())
