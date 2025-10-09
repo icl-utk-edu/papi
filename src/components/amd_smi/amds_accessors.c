@@ -1078,9 +1078,17 @@ int access_amdsmi_clk_freq(int mode, void *arg) {
   amdsmi_frequencies_t freq_info;
   memset(&freq_info, 0, sizeof(freq_info));  /* critical */
 
-  amdsmi_clk_type_t clk_type = AMDSMI_CLK_TYPE_SYS;
-  if (event->variant == 1) clk_type = AMDSMI_CLK_TYPE_DF;
-  else if (event->variant == 2) clk_type = AMDSMI_CLK_TYPE_DCEF;
+  static const amdsmi_clk_type_t clk_variant_map[] = {
+      AMDSMI_CLK_TYPE_SYS,  AMDSMI_CLK_TYPE_GFX,  AMDSMI_CLK_TYPE_DF,
+      AMDSMI_CLK_TYPE_DCEF, AMDSMI_CLK_TYPE_SOC,  AMDSMI_CLK_TYPE_MEM,
+      AMDSMI_CLK_TYPE_PCIE, AMDSMI_CLK_TYPE_VCLK0, AMDSMI_CLK_TYPE_VCLK1,
+      AMDSMI_CLK_TYPE_DCLK0, AMDSMI_CLK_TYPE_DCLK1};
+  const size_t clk_variant_count =
+      sizeof(clk_variant_map) / sizeof(clk_variant_map[0]);
+  if (event->variant >= clk_variant_count)
+    return PAPI_ENOSUPP;
+
+  amdsmi_clk_type_t clk_type = clk_variant_map[event->variant];
 
   amdsmi_status_t status =
       amdsmi_get_clk_freq_p(device_handles[event->device], clk_type, &freq_info);

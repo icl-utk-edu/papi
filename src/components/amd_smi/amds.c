@@ -2242,10 +2242,16 @@ static int init_event_table(void) {
   }
   /* GPU clock frequency levels for multiple clock domains */
   for (int d = 0; d < gpu_count; ++d) {
-    amdsmi_clk_type_t clk_types[] = {AMDSMI_CLK_TYPE_SYS, AMDSMI_CLK_TYPE_DF,
-                                     AMDSMI_CLK_TYPE_DCEF};
-    const char *clk_names[] = {"sys", "df", "dcef"};
-    for (int t = 0; t < 3; ++t) {
+    const amdsmi_clk_type_t clk_types[] = {
+        AMDSMI_CLK_TYPE_SYS,  AMDSMI_CLK_TYPE_GFX,  AMDSMI_CLK_TYPE_DF,
+        AMDSMI_CLK_TYPE_DCEF, AMDSMI_CLK_TYPE_SOC,  AMDSMI_CLK_TYPE_MEM,
+        AMDSMI_CLK_TYPE_PCIE, AMDSMI_CLK_TYPE_VCLK0, AMDSMI_CLK_TYPE_VCLK1,
+        AMDSMI_CLK_TYPE_DCLK0, AMDSMI_CLK_TYPE_DCLK1};
+    const char *clk_names[] = {"sys",  "gfx",  "df",   "dcef", "soc",  "mem",
+                               "pcie", "vclk0","vclk1","dclk0","dclk1"};
+    const size_t clk_count = sizeof(clk_types) / sizeof(clk_types[0]);
+    for (size_t t = 0; t < clk_count; ++t) {
+      const uint32_t variant = (uint32_t)t;
       amdsmi_frequencies_t f;
       if (amdsmi_get_clk_freq_p(device_handles[d], clk_types[t], &f) !=
               AMDSMI_STATUS_SUCCESS ||
@@ -2257,7 +2263,7 @@ static int init_event_table(void) {
       CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                "Device %d number of supported %s clock frequencies", d,
                clk_names[t]);
-      if (add_event(&idx, name_buf, descr_buf, d, t, 0, PAPI_MODE_READ,
+      if (add_event(&idx, name_buf, descr_buf, d, variant, 0, PAPI_MODE_READ,
                     access_amdsmi_clk_freq) != PAPI_OK)
         return PAPI_ENOMEM;
       // Current clock frequency for this domain
@@ -2265,7 +2271,7 @@ static int init_event_table(void) {
                clk_names[t], d);
       CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                "Device %d current %s clock frequency (MHz)", d, clk_names[t]);
-      if (add_event(&idx, name_buf, descr_buf, d, t, 1, PAPI_MODE_READ,
+      if (add_event(&idx, name_buf, descr_buf, d, variant, 1, PAPI_MODE_READ,
                     access_amdsmi_clk_freq) != PAPI_OK)
         return PAPI_ENOMEM;
       // Supported frequency levels for this domain
@@ -2274,9 +2280,9 @@ static int init_event_table(void) {
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_freq_%s_level_%u:device=%d",
                  clk_names[t], fi, d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d supported %s clock frequency level %u (MHz)", d,
-                 clk_names[t], fi);
-        if (add_event(&idx, name_buf, descr_buf, d, t, fi + 2, PAPI_MODE_READ,
+               "Device %d supported %s clock frequency level %u (MHz)", d,
+               clk_names[t], fi);
+        if (add_event(&idx, name_buf, descr_buf, d, variant, fi + 2, PAPI_MODE_READ,
                       access_amdsmi_clk_freq) != PAPI_OK)
           return PAPI_ENOMEM;
       }
