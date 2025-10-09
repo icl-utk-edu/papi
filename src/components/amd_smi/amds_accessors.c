@@ -51,6 +51,13 @@ int access_amdsmi_lib_version(int mode, void *arg) {
   }
   return PAPI_OK;
 }
+int access_amdsmi_num_devices(int mode, void *arg) {
+  native_event_t *event = (native_event_t *)arg;
+  if (mode != PAPI_MODE_READ)
+    return PAPI_ENOSUPP;
+  event->value = (int64_t)gpu_count;
+  return PAPI_OK;
+}
 int access_amdsmi_uuid_hash(int mode, void *arg) {
   if (mode != PAPI_MODE_READ)
     return PAPI_ENOSUPP;
@@ -617,7 +624,7 @@ int access_amdsmi_process_info(int mode, void *arg) {
   case 7:
     /* cu_occupancy added in AMD SMI 6.4.3; earlier versions store it in
        the first reserved slot which remains zero. */
-#if defined(AMDSMI_LIB_VERSION_MINOR) && AMDSMI_LIB_VERSION_MINOR >= 4
+#if defined(AMDSMI_LIB_VERSION_MINOR) && AMDSMI_LIB_VERSION_MINOR >= 5
     event->value = (int64_t)p->cu_occupancy;
 #else
     event->value = (int64_t)p->reserved[0];

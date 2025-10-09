@@ -167,6 +167,7 @@ int access_amdsmi_memory_partition_hash(int mode, void *arg);
 int access_amdsmi_memory_reserved_pages(int mode, void *arg);
 int access_amdsmi_accelerator_num_partitions(int mode, void *arg);
 int access_amdsmi_lib_version(int mode, void *arg);
+int access_amdsmi_num_devices(int mode, void *arg);
 int access_amdsmi_cache_stat(int mode, void *arg);
 int access_amdsmi_overdrive_level(int mode, void *arg);
 int access_amdsmi_mem_overdrive_level(int mode, void *arg);

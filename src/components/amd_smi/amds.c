@@ -370,7 +370,9 @@ static const char *fw_block_suffix(amdsmi_fw_block_t id) {
   case AMDSMI_FW_ID_RLC_SRLS: return "rlc_srls";
   case AMDSMI_FW_ID_PM: return "pm";
   case AMDSMI_FW_ID_DMCU: return "dmcu";
+#ifdef AMDSMI_FW_ID_PLDM_BUNDLE
   case AMDSMI_FW_ID_PLDM_BUNDLE: return "pldm_bundle";
+#endif
   default:
     return NULL;
   }
@@ -3432,6 +3434,14 @@ static int init_event_table(void) {
 #endif
 
   /* -------- Additional GPU discovery & version info (read-only) -------- */
+  /* Device count (global) */
+  CHECK_EVENT_IDX(idx);
+  CHECK_SNPRINTF(name_buf, sizeof(name_buf), "NUMDevices");
+  CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+           "Number of AMD SMI GPU devices detected");
+  if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
+                access_amdsmi_num_devices) != PAPI_OK)
+    return PAPI_ENOMEM;
   /* Library version (global) */
   if (amdsmi_get_lib_version_p) {
     amdsmi_version_t vinfo;
