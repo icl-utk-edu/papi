@@ -110,8 +110,12 @@ static int _amd_smi_init_private(void) {
     _amd_smi_vector.cmp_info.num_mpx_cntrs = count;
 
 fn_exit:
-    _amd_smi_vector.cmp_info.initialized = (papi_errno == PAPI_OK);
+    const int initialized = (papi_errno == PAPI_OK);
     _amd_smi_vector.cmp_info.disabled = papi_errno;
+    _amd_smi_vector.cmp_info.initialized = initialized;
+    if (initialized) {
+        _amd_smi_vector.cmp_info.disabled_reason[0] = '\0';
+    }
     PAPI_unlock(COMPONENT_LOCK);
     return papi_errno;
 fn_fail:
