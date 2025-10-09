@@ -197,7 +197,7 @@ int access_amdsmi_xgmi_plpd_id(int mode, void *arg);
 int access_amdsmi_xgmi_plpd_supported(int mode, void *arg);
 int access_amdsmi_process_isolation(int mode, void *arg);
 int access_amdsmi_xcd_counter(int mode, void *arg);
-int access_amdsmi_board_serial_hash(int mode, void *arg);
+int access_amdsmi_board_info_hash(int mode, void *arg);
 int access_amdsmi_fw_version(int mode, void *arg);
 int access_amdsmi_bad_page_count(int mode, void *arg);
 int access_amdsmi_bad_page_threshold(int mode, void *arg);

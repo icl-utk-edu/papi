@@ -102,6 +102,7 @@ int access_amdsmi_gpu_string_hash(int mode, void *arg) {
     break;
   case 3: /* driver name */
   case 4: /* driver date */
+  case 8: /* driver version */
     if (!amdsmi_get_gpu_driver_info_p)
       return PAPI_ENOSUPP;
     {
@@ -111,8 +112,10 @@ int access_amdsmi_gpu_string_hash(int mode, void *arg) {
       if (st == AMDSMI_STATUS_SUCCESS) {
         if (event->variant == 3)
           CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_name);
-        else
+        else if (event->variant == 4)
           CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_date);
+        else
+          CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_version);
       }
     }
     break;
@@ -2541,7 +2544,7 @@ int access_amdsmi_xcd_counter(int mode, void *arg) {
   return PAPI_OK;
 }
 
-int access_amdsmi_board_serial_hash(int mode, void *arg) {
+int access_amdsmi_board_info_hash(int mode, void *arg) {
   if (mode != PAPI_MODE_READ)
     return PAPI_ENOSUPP;
   if (!amdsmi_get_gpu_board_info_p)
@@ -2554,7 +2557,29 @@ int access_amdsmi_board_serial_hash(int mode, void *arg) {
   amdsmi_status_t st = amdsmi_get_gpu_board_info_p(device_handles[event->device], &info);
   if (st != AMDSMI_STATUS_SUCCESS)
     return PAPI_EMISC;
-  event->value = (int64_t)_str_to_u64_hash(info.product_serial);
+  const char *field = NULL;
+  switch (event->variant) {
+  case 0:
+    field = info.product_serial;
+    break;
+  case 1:
+    field = info.model_number;
+    break;
+  case 2:
+    field = info.fru_id;
+    break;
+  case 3:
+    field = info.product_name;
+    break;
+  case 4:
+    field = info.manufacturer_name;
+    break;
+  default:
+    return PAPI_ENOSUPP;
+  }
+  if (!field || !field[0])
+    return PAPI_ENOSUPP;
+  event->value = (int64_t)_str_to_u64_hash(field);
   return PAPI_OK;
 }
 

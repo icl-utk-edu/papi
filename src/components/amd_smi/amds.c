@@ -290,6 +290,109 @@ static const char *display_or_empty(const char *str) {
   return (str && str[0]) ? str : "<empty>";
 }
 
+static const char *fw_block_suffix(amdsmi_fw_block_t id) {
+  switch (id) {
+  case AMDSMI_FW_ID_SMU: return "smu";
+  case AMDSMI_FW_ID_CP_CE: return "cp_ce";
+  case AMDSMI_FW_ID_CP_PFP: return "cp_pfp";
+  case AMDSMI_FW_ID_CP_ME: return "cp_me";
+  case AMDSMI_FW_ID_CP_MEC_JT1: return "cp_mec_jt1";
+  case AMDSMI_FW_ID_CP_MEC_JT2: return "cp_mec_jt2";
+  case AMDSMI_FW_ID_CP_MEC1: return "cp_mec1";
+  case AMDSMI_FW_ID_CP_MEC2: return "cp_mec2";
+  case AMDSMI_FW_ID_RLC: return "rlc";
+  case AMDSMI_FW_ID_SDMA0: return "sdma0";
+  case AMDSMI_FW_ID_SDMA1: return "sdma1";
+  case AMDSMI_FW_ID_SDMA2: return "sdma2";
+  case AMDSMI_FW_ID_SDMA3: return "sdma3";
+  case AMDSMI_FW_ID_SDMA4: return "sdma4";
+  case AMDSMI_FW_ID_SDMA5: return "sdma5";
+  case AMDSMI_FW_ID_SDMA6: return "sdma6";
+  case AMDSMI_FW_ID_SDMA7: return "sdma7";
+  case AMDSMI_FW_ID_VCN: return "vcn";
+  case AMDSMI_FW_ID_UVD: return "uvd";
+  case AMDSMI_FW_ID_VCE: return "vce";
+  case AMDSMI_FW_ID_ISP: return "isp";
+  case AMDSMI_FW_ID_DMCU_ERAM: return "dmcu_eram";
+  case AMDSMI_FW_ID_DMCU_ISR: return "dmcu_isr";
+  case AMDSMI_FW_ID_RLC_RESTORE_LIST_GPM_MEM: return "rlc_restore_list_gpm_mem";
+  case AMDSMI_FW_ID_RLC_RESTORE_LIST_SRM_MEM: return "rlc_restore_list_srm_mem";
+  case AMDSMI_FW_ID_RLC_RESTORE_LIST_CNTL: return "rlc_restore_list_cntl";
+  case AMDSMI_FW_ID_RLC_V: return "rlc_v";
+  case AMDSMI_FW_ID_MMSCH: return "mmsch";
+  case AMDSMI_FW_ID_PSP_SYSDRV: return "psp_sysdrv";
+  case AMDSMI_FW_ID_PSP_SOSDRV: return "psp_sosdrv";
+  case AMDSMI_FW_ID_PSP_TOC: return "psp_toc";
+  case AMDSMI_FW_ID_PSP_KEYDB: return "psp_keydb";
+  case AMDSMI_FW_ID_DFC: return "dfc";
+  case AMDSMI_FW_ID_PSP_SPL: return "psp_spl";
+  case AMDSMI_FW_ID_DRV_CAP: return "drv_cap";
+  case AMDSMI_FW_ID_MC: return "mc";
+  case AMDSMI_FW_ID_PSP_BL: return "psp_bl";
+  case AMDSMI_FW_ID_CP_PM4: return "cp_pm4";
+  case AMDSMI_FW_ID_RLC_P: return "rlc_p";
+  case AMDSMI_FW_ID_SEC_POLICY_STAGE2: return "sec_policy_stage2";
+  case AMDSMI_FW_ID_REG_ACCESS_WHITELIST: return "reg_access_whitelist";
+  case AMDSMI_FW_ID_IMU_DRAM: return "imu_dram";
+  case AMDSMI_FW_ID_IMU_IRAM: return "imu_iram";
+  case AMDSMI_FW_ID_SDMA_TH0: return "sdma_th0";
+  case AMDSMI_FW_ID_SDMA_TH1: return "sdma_th1";
+  case AMDSMI_FW_ID_CP_MES: return "cp_mes";
+  case AMDSMI_FW_ID_MES_KIQ: return "mes_kiq";
+  case AMDSMI_FW_ID_MES_STACK: return "mes_stack";
+  case AMDSMI_FW_ID_MES_THREAD1: return "mes_thread1";
+  case AMDSMI_FW_ID_MES_THREAD1_STACK: return "mes_thread1_stack";
+  case AMDSMI_FW_ID_RLX6: return "rlx6";
+  case AMDSMI_FW_ID_RLX6_DRAM_BOOT: return "rlx6_dram_boot";
+  case AMDSMI_FW_ID_RS64_ME: return "rs64_me";
+  case AMDSMI_FW_ID_RS64_ME_P0_DATA: return "rs64_me_p0_data";
+  case AMDSMI_FW_ID_RS64_ME_P1_DATA: return "rs64_me_p1_data";
+  case AMDSMI_FW_ID_RS64_PFP: return "rs64_pfp";
+  case AMDSMI_FW_ID_RS64_PFP_P0_DATA: return "rs64_pfp_p0_data";
+  case AMDSMI_FW_ID_RS64_PFP_P1_DATA: return "rs64_pfp_p1_data";
+  case AMDSMI_FW_ID_RS64_MEC: return "rs64_mec";
+  case AMDSMI_FW_ID_RS64_MEC_P0_DATA: return "rs64_mec_p0_data";
+  case AMDSMI_FW_ID_RS64_MEC_P1_DATA: return "rs64_mec_p1_data";
+  case AMDSMI_FW_ID_RS64_MEC_P2_DATA: return "rs64_mec_p2_data";
+  case AMDSMI_FW_ID_RS64_MEC_P3_DATA: return "rs64_mec_p3_data";
+  case AMDSMI_FW_ID_PPTABLE: return "pptable";
+  case AMDSMI_FW_ID_PSP_SOC: return "psp_soc";
+  case AMDSMI_FW_ID_PSP_DBG: return "psp_dbg";
+  case AMDSMI_FW_ID_PSP_INTF: return "psp_intf";
+  case AMDSMI_FW_ID_RLX6_CORE1: return "rlx6_core1";
+  case AMDSMI_FW_ID_RLX6_DRAM_BOOT_CORE1: return "rlx6_dram_boot_core1";
+  case AMDSMI_FW_ID_RLCV_LX7: return "rlcv_lx7";
+  case AMDSMI_FW_ID_RLC_SAVE_RESTORE_LIST: return "rlc_save_restore_list";
+  case AMDSMI_FW_ID_ASD: return "asd";
+  case AMDSMI_FW_ID_TA_RAS: return "ta_ras";
+  case AMDSMI_FW_ID_TA_XGMI: return "ta_xgmi";
+  case AMDSMI_FW_ID_RLC_SRLG: return "rlc_srlg";
+  case AMDSMI_FW_ID_RLC_SRLS: return "rlc_srls";
+  case AMDSMI_FW_ID_PM: return "pm";
+  case AMDSMI_FW_ID_DMCU: return "dmcu";
+  case AMDSMI_FW_ID_PLDM_BUNDLE: return "pldm_bundle";
+  default:
+    return NULL;
+  }
+}
+
+static void format_fw_block_descr(const char *suffix, char *buf, size_t len) {
+  if (!suffix || !buf || len == 0) {
+    if (buf && len > 0)
+      buf[0] = '\0';
+    return;
+  }
+  size_t out = 0;
+  for (size_t i = 0; suffix[i] && out + 1 < len; ++i) {
+    char c = suffix[i];
+    if (c == '_')
+      buf[out++] = ' ';
+    else
+      buf[out++] = (char)toupper((unsigned char)c);
+  }
+  buf[out] = '\0';
+}
+
 // Dynamic load of AMD SMI library symbols
 static void *sym(const char *preferred, const char *fallback) {
   void *p = dlsym(amds_dlp, preferred);
@@ -2490,12 +2593,22 @@ static int init_event_table(void) {
           n = AMDSMI_FW_ID__MAX;
         for (uint8_t f = 0; f < n; ++f) {
           CHECK_EVENT_IDX(idx);
-          uint32_t fid = finfo.fw_info_list[f].fw_id;
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fw_version_id%u:device=%d", fid,
-                   d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                   "Device %d firmware id %u version", d, fid);
-          if (add_event(&idx, name_buf, descr_buf, d, fid, 0, PAPI_MODE_READ,
+          amdsmi_fw_block_t fw_id = finfo.fw_info_list[f].fw_id;
+          const char *fw_suffix = fw_block_suffix(fw_id);
+          if (fw_suffix) {
+            char fw_label[64];
+            format_fw_block_descr(fw_suffix, fw_label, sizeof(fw_label));
+            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fw_version_%s:device=%d",
+                     fw_suffix, d);
+            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                     "Device %d %s firmware version", d, fw_label);
+          } else {
+            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fw_version_id%u:device=%d",
+                     (uint32_t)fw_id, d);
+            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                     "Device %d firmware id %u version", d, (uint32_t)fw_id);
+          }
+          if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)fw_id, 0, PAPI_MODE_READ,
                         access_amdsmi_fw_version) != PAPI_OK)
             return PAPI_ENOMEM;
         }
@@ -2508,14 +2621,42 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_board_info_p(device_handles[d], &binfo) ==
           AMDSMI_STATUS_SUCCESS) {
         sanitize_description_text(binfo.product_serial);
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "board_serial_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d board serial number hash of '%s'", d,
-                 display_or_empty(binfo.product_serial));
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_board_serial_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        sanitize_description_text(binfo.model_number);
+        sanitize_description_text(binfo.fru_id);
+        sanitize_description_text(binfo.product_name);
+        sanitize_description_text(binfo.manufacturer_name);
+
+        const struct {
+          const char *value;
+          const char *event_name;
+          const char *descr_fmt;
+          uint32_t variant;
+        } board_fields[] = {
+            {binfo.product_serial, "board_serial_hash",
+             "Device %d board serial number hash of '%s'", 0},
+            {binfo.model_number, "board_model_number_hash",
+             "Device %d board model number hash of '%s'", 1},
+            {binfo.fru_id, "board_fru_id_hash",
+             "Device %d board FRU id hash of '%s'", 2},
+            {binfo.product_name, "board_product_name_hash",
+             "Device %d board product name hash of '%s'", 3},
+            {binfo.manufacturer_name, "board_manufacturer_hash",
+             "Device %d board manufacturer hash of '%s'", 4},
+        };
+
+        for (size_t bf = 0; bf < sizeof(board_fields) / sizeof(board_fields[0]);
+             ++bf) {
+          if (!board_fields[bf].value || !board_fields[bf].value[0])
+            continue;
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d",
+                   board_fields[bf].event_name, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), board_fields[bf].descr_fmt, d,
+                   display_or_empty(board_fields[bf].value));
+          if (add_event(&idx, name_buf, descr_buf, d, board_fields[bf].variant, 0,
+                        PAPI_MODE_READ, access_amdsmi_board_info_hash) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
       }
     }
 
@@ -3559,6 +3700,7 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         sanitize_description_text(dinfo.driver_name);
         sanitize_description_text(dinfo.driver_date);
+        sanitize_description_text(dinfo.driver_version);
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_name_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
@@ -3573,6 +3715,14 @@ static int init_event_table(void) {
                  "Device %d driver date hash of '%s'", d,
                  display_or_empty(dinfo.driver_date));
         if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_string_hash) != PAPI_OK)
+          return PAPI_ENOMEM;
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_version_hash:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                 "Device %d driver version hash of '%s'", d,
+                 display_or_empty(dinfo.driver_version));
+        if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_string_hash) != PAPI_OK)
           return PAPI_ENOMEM;
       }
