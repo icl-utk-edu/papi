@@ -26,13 +26,11 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "papi_cupti_common.h" //TODO: Restructure this include after Event and Metric API is merged into master
 #include "papi_memory.h"
 #include "cupti_dispatch.h"
 #include "cupti_config.h"
 #include "lcuda_debug.h"
-
-#define PAPI_CUDA_MPX_COUNTERS 512
-#define PAPI_CUDA_MAX_COUNTERS  30
 
 papi_vector_t _cuda_vector;
 
@@ -240,7 +238,18 @@ static int check_n_initialize(void)
 
         // Setup the presets.
         papi_errno = cuda_init_comp_presets();
-        if( PAPI_OK != papi_errno ) {
+        if (papi_errno != PAPI_OK) {
+            // No implementation for cuda component presets if:
+            // 1. PAPI_CUDA_API = LEGACY
+            // 2. The device chipname is not defined in papi_events.csv
+            //
+            // Even though presets are not implemented in the above two cases
+            // the cuda component should still be active; therefore, we change
+            // the return value to be PAPI_OK
+            if (papi_errno == PAPI_ENOIMPL) {
+                papi_errno = PAPI_OK;
+            }
+
             return papi_errno;
         }
 
@@ -366,30 +375,105 @@ static int cuda_init_comp_presets(void)
     int devIdx = -1;
     int numDevices = 0;
 
-    int retval = cuptid_device_get_count(&numDevices);
-    if ( retval != PAPI_OK ) {
-        return PAPI_EMISC;
+    char *PAPI_CUDA_API = (getenv("PAPI_CUDA_API") != NULL) ? "LEGACY" : "PERFWORKS";
+    if (strcasecmp(PAPI_CUDA_API, "LEGACY") == 0) {
+        SUBDBG("EXIT: Presets for the cuda component are not supported with the CUPTI legacy APIs (i.e. Event and Metric).\n");
+        return PAPI_ENOIMPL;
+    }
+
+    int papi_errno = cuptid_device_get_count(&numDevices);
+    if ( papi_errno != PAPI_OK ) {
+        SUBDBG("EXIT: Failed to get NVIDIA device count.\n");
+        return papi_errno;
+    }
+
+    char **archNamesArray = (char **) malloc(numDevices * sizeof(char *));
+    if (archNamesArray == NULL) {
+        SUBDBG("EXIT: Failed to allocate memory for archNamesArray.\n");
+        return PAPI_ENOMEM;
+    }
+
+    int archIdx;
+    for (archIdx = 0; archIdx < numDevices; archIdx++) {
+        archNamesArray[archIdx] = NULL;
     }
 
     /* Load preset table for every device type available on the system.
      * As long as one of the cards has presets defined, then they should
      * be available. */
+    int numArchNamesStored = 0;
     for( devIdx = 0; devIdx < numDevices; ++devIdx ) {
-        retval = cuptid_get_chip_name(devIdx, arch_name);
-        if ( retval == PAPI_OK ) {
-            break;
+        // Cuda component presets are currently only defined for devices compatible with the Perfworks Metrics API
+        // which is required for cc's >= 7.5.
+        // Due to the above, the below block of code serves as a soft check, meaning if a compute capability
+        // is less than 7.5 we do not attempt to load the presets table.
+        int deviceComputeCapability = 0;
+        papi_errno = get_gpu_compute_capability(devIdx, &deviceComputeCapability);
+        if (papi_errno != PAPI_OK) {
+            SUBDBG("EXIT: Failed to get compute capability for device: %d.\n", devIdx);
+            goto cleanup;
+        }
+
+        if (deviceComputeCapability <= 75) {
+            continue;
+        }
+        else {
+            papi_errno = cuptid_get_chip_name(devIdx, arch_name);
+            if ( papi_errno != PAPI_OK ) {
+                SUBDBG("EXIT: Failed to get chipname for device %d.\n", devIdx);
+                goto cleanup;
+            }
+
+            int archFound = 0;
+            for (archIdx = 0; archNamesArray[archIdx] != NULL; archIdx++) {
+                if (strcasecmp(arch_name, archNamesArray[archIdx]) == 0) {
+                    archFound++;
+                    break;
+                }
+            }
+
+            // If the architecture has already had its cuda component presets initialized
+            // we continue.
+            if (archFound) {
+                continue;
+            }
+
+            papi_errno = _papi_load_preset_table_component( cname, arch_name, cidx );
+            if ( papi_errno != PAPI_OK ) {
+                SUBDBG("EXIT: Failed to init CUDA component presets.\n");
+                goto cleanup;
+            }
+
+            archNamesArray[numArchNamesStored] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
+            if (archNamesArray[numArchNamesStored] == NULL) {
+                SUBDBG("EXIT: Failed to allocate memory for index %d in archNamesArray.\n", numArchNamesStored);
+                papi_errno = PAPI_ENOMEM;
+                goto cleanup;
+            }
+
+            int strLen = snprintf(archNamesArray[numArchNamesStored++], PAPI_MAX_STR_LEN, "%s", arch_name);
+            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+                SUBDBG("EXIT: Failed to fully write arch name: %s.\n", arch_name);
+                papi_errno = PAPI_EBUF;
+                goto cleanup;
+            }
         }
     }
 
-    if ( devIdx > -1  && devIdx < numDevices ) {
-        retval = _papi_load_preset_table_component( cname, arch_name, cidx );
-        if ( retval != PAPI_OK ) {
-            SUBDBG("EXIT: Failed to init CUDA component presets.\n");
-            return retval;
-        }
+    if (numArchNamesStored == 0) {
+        SUBDBG("EXIT: No devices on the system that support cuda component presets.\n");
+        papi_errno = PAPI_ENOIMPL;
     }
 
-    return PAPI_OK;
+    cleanup: ;
+    int i;
+    for(i = 0; i < numArchNamesStored; i++) {
+        free(archNamesArray[i]);
+    }
+    free(archNamesArray);
+    archNamesArray = NULL;
+
+    return papi_errno;
 }
 
 static int cuda_init_control_state(hwd_control_state_t __attribute__((unused)) *ctl)
@@ -426,7 +510,7 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
 
     cuda_control_t *cuda_ctl = (cuda_control_t *) ctl;
 
-    /* allocating memoory for total number of devices */
+    // allocating memory for total number of devices
     if (cuda_ctl->info == NULL) {
         papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
         if (papi_errno != PAPI_OK) {
