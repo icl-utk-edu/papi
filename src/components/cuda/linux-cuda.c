@@ -403,8 +403,9 @@ static int cuda_init_comp_presets(void)
      * be available. */
     int numArchNamesStored = 0;
     for( devIdx = 0; devIdx < numDevices; ++devIdx ) {
-        // Currently the cuda component only supports compute capabilities >= 8.0 (i.e. A100 and GH200).
-        // Due to this, the below block of code serves as a soft check, meaning if a compute capability
+        // Cuda component presets are currently only defined for devices compatible with the Perfworks Metrics API
+        // which is required for cc's >= 7.5.
+        // Due to the above, the below block of code serves as a soft check, meaning if a compute capability
         // is less than 7.5 we do not attempt to load the presets table.
         int deviceComputeCapability = 0;
         papi_errno = get_gpu_compute_capability(devIdx, &deviceComputeCapability);
