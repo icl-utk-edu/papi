@@ -2490,6 +2490,13 @@ static int init_event_table(void) {
               return PAPI_ENOMEM;
           }
         }
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "process_count:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+                 "Device %d total active processes", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
+                      access_amdsmi_process_info) != PAPI_OK)
+          return PAPI_ENOMEM;
       }
     }
 

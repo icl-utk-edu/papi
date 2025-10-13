@@ -593,12 +593,16 @@ int access_amdsmi_process_info(int mode, void *arg) {
     return PAPI_EMISC;
 
   uint32_t proc = event->subvariant;
-  if (proc >= count) {
-    event->value = 0;
-    return PAPI_OK;
+  amdsmi_proc_info_t *p = NULL;
+
+  if (event->variant != 8) {
+    if (proc >= count) {
+      event->value = 0;
+      return PAPI_OK;
+    }
+    p = &list[proc];
   }
 
-  amdsmi_proc_info_t *p = &list[proc];
   switch (event->variant) {
   case 0:
     event->value = (int64_t)p->pid;
@@ -629,6 +633,9 @@ int access_amdsmi_process_info(int mode, void *arg) {
 #else
     event->value = (int64_t)p->reserved[0];
 #endif
+    break;
+  case 8:
+    event->value = (int64_t)count;
     break;
   default:
     return PAPI_ENOSUPP;
