@@ -204,7 +204,7 @@ static int cuda_init_private(void)
         // Cuda component is disabled
         else {
             strLen = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", err_string);
-            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                 SUBDBG("Failed to fully write the disabled reason.\n");
             }
             goto fn_fail;
