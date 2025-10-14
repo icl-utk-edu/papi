@@ -2935,7 +2935,7 @@ static int init_event_table(void) {
 
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_l0_to_recov_count_acc:device=%d", d);
+                 "pcie_l0_to_recovery_count_acc:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                  "Device %d PCIe L0->recovery count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
