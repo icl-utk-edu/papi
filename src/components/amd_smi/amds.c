@@ -2952,7 +2952,7 @@ static int init_event_table(void) {
 
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_rover_count_acc:device=%d", d);
+                 "pcie_replay_rollover_count_acc:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                  "Device %d PCIe replay rollover count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
