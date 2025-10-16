@@ -118,6 +118,19 @@ Identifies an event on which this derived event is based\&. This may be a native
 .SS "Notes:"
 The PRESET command has traditionally been used in the PAPI provided preset definition file\&. The EVENT command is intended to be used in user defined event definition files\&. The code treats them the same so they are interchangeable and they can both be used in either event definition file\&.
 .br
+
+You can override the preset event definition by specifying the definition file for the preset event in the environment variable PAPI_CSV_EVENT_FILE when the app starts\&. The papi library is prepopulated with a table of preset events that are built in when the papi library is built\&. The contents of the built-in preset events table can be found in papi_events\&.csv, which is located in the PAPI source code\&. You can modify the table of preset events built into the papi library by editing papi_events\&.csv and specifying it in the environment variable PAPI_CSV_EVENT_FILE\&.
+.br
+Example
+.br
+$ edit papi_events.csv
+.br
+$ PAPI_CSV_EVENT_FILE=./papi_events.csv ./a.out
+.br
+
+You can also add user-defined events by specifying the definition file for user-defined events in the environment variable PAPI_USER_EVENTS_FILE when the app starts\&.
+.br
+
 .PP
 
 .br
