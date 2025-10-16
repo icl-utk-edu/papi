@@ -14,9 +14,9 @@ COMPSRCS += components/cuda/linux-cuda.c \
             components/cuda/cupti_utils.c \
             components/cuda/papi_cupti_common.c \
             components/cuda/cupti_profiler.c \
-            components/cuda/cupti_events.c \
+            components/cuda/cupti_event_and_metric.c \
 
-COMPOBJS += linux-cuda.o cupti_dispatch.o cupti_utils.o papi_cupti_common.o cupti_profiler.o cupti_events.o
+COMPOBJS += linux-cuda.o cupti_dispatch.o cupti_utils.o papi_cupti_common.o cupti_profiler.o cupti_event_and_metric.o
 
 # CFLAGS specifies compile flags; need include files here, and macro defines.
 CFLAGS += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include -g $(CUDA_MACS)
@@ -37,5 +37,5 @@ papi_cupti_common.o: components/cuda/papi_cupti_common.c
 cupti_profiler.o: components/cuda/cupti_profiler.c
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/cupti_profiler.c -o cupti_profiler.o
 
-cupti_events.o: components/cuda/cupti_events.c
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/cupti_events.c -o cupti_events.o
+cupti_event_and_metric.o: components/cuda/cupti_event_and_metric.c
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/cuda/cupti_event_and_metric.c -o cupti_event_and_metric.o

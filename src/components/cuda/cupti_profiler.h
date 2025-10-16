@@ -8,8 +8,6 @@
 #ifndef __CUPTI_PROFILER_H__
 #define __CUPTI_PROFILER_H__
 
-#include "cupti_utils.h"
-
 typedef struct cuptip_control_s     *cuptip_control_t;
 
 /* used to determine collection method in cupti_profiler.c, see cuptip_ctx_read */
