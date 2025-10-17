@@ -2535,7 +2535,7 @@ static int init_event_table(void) {
             AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
           CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                   "xgmi_min_bandwidth_src=%d_dst=%d", d, r);
+                   "xgmi_min_bandwidth_dst=%d:device=%d", r, d);
           CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                    "Min XGMI bandwidth from device %d to %d (MB/s)", d, r);
           if (add_event(&idx, name_buf, descr_buf, d, 0, r, PAPI_MODE_READ,
@@ -2543,7 +2543,7 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
           CHECK_EVENT_IDX(idx);
           CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                   "xgmi_max_bandwidth_src=%d_dst=%d", d, r);
+                   "xgmi_max_bandwidth_dst=%d:device=%d", r, d);
           CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
                    "Max XGMI bandwidth from device %d to %d (MB/s)", d, r);
           if (add_event(&idx, name_buf, descr_buf, d, 1, r, PAPI_MODE_READ,
