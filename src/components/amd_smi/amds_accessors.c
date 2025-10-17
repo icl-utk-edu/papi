@@ -1035,7 +1035,19 @@ int access_amdsmi_power_average(int mode, void *arg) {
   if (status != AMDSMI_STATUS_SUCCESS) {
     return PAPI_EMISC;
   }
-  event->value = (int64_t)power.average_socket_power;
+  switch (event->variant) {
+  case 0:
+    event->value = (int64_t)power.average_socket_power;
+    break;
+  case 1:
+    event->value = (int64_t)power.current_socket_power;
+    break;
+  case 2:
+    event->value = (int64_t)power.power_limit;
+    break;
+  default:
+    return PAPI_ENOSUPP;
+  }
   return PAPI_OK;
 }
 int access_amdsmi_pci_throughput(int mode, void *arg) {

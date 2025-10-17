@@ -2045,6 +2045,22 @@ static int init_event_table(void) {
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_power_average) != PAPI_OK)
         return PAPI_ENOMEM;
+      // Instantaneous socket power (W)
+      CHECK_EVENT_IDX(idx);
+      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_current:device=%d", d);
+      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+               "Device %d current socket power (W)", d);
+      if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
+                    access_amdsmi_power_average) != PAPI_OK)
+        return PAPI_ENOMEM;
+      // Power limit (W)
+      CHECK_EVENT_IDX(idx);
+      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_limit:device=%d", d);
+      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+               "Device %d configured power limit (W)", d);
+      if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
+                    access_amdsmi_power_average) != PAPI_OK)
+        return PAPI_ENOMEM;
     }
     // Register power cap events (if available) - test directly
     amdsmi_power_cap_info_t dummy_cap_info;
