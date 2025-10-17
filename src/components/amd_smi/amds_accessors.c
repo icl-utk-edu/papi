@@ -626,9 +626,10 @@ int access_amdsmi_process_info(int mode, void *arg) {
     event->value = (int64_t)p->memory_usage.vram_mem;
     break;
   case 7:
-    /* cu_occupancy added in AMD SMI 6.4.3; earlier versions store it in
-       the first reserved slot which remains zero. */
-#if defined(AMDSMI_LIB_VERSION_MINOR) && AMDSMI_LIB_VERSION_MINOR >= 5
+    /* cu_occupancy added in AMD SMI 6.4.3 and kept in later majors. */
+#if AMDSMI_LIB_VERSION_MAJOR > 25
+    event->value = (int64_t)p->cu_occupancy;
+#elif defined(AMDSMI_LIB_VERSION_MINOR) && AMDSMI_LIB_VERSION_MINOR >= 5
     event->value = (int64_t)p->cu_occupancy;
 #else
     event->value = (int64_t)p->reserved[0];
