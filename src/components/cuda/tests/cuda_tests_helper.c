@@ -138,7 +138,7 @@ void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int
     // The Legacy API only has the device qualifiers
     // while the Perfworks Metrics API has a stat and device
     // qualifier.
-    modifier = PAPI_NTV_ENUM_UMASKS;
+    modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
     papi_errno = PAPI_enum_cmp_event(&cuda_eventcode, modifier, cuda_cmp_idx);
     if (papi_errno != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_enum_cmp_event", papi_errno);

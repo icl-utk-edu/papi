@@ -252,7 +252,7 @@ int main(int argc, char **argv)
             // The Legacy API only has the device qualifiers
             // while the Perfworks Metrics API has a stat and device
             // qualifier.
-            modifier = PAPI_NTV_ENUM_UMASKS;
+            modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
             check_papi_api_call( PAPI_enum_cmp_event(&cuda_eventcode, modifier, cuda_cmp_idx) );
 
             do {

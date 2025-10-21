@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
     memset(&einfo, 0, sizeof(einfo));
     if (PAPI_get_event_info(ev_code, &einfo) == PAPI_OK && einfo.num_quals > 0) {
       int tmp = ev_code;
-      if (PAPI_enum_cmp_event(&tmp, PAPI_NTV_ENUM_UMASKS, cid) == PAPI_OK) {
+      if (PAPI_enum_cmp_event(&tmp, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid) == PAPI_OK) {
         enumerate_variants = true;
         qualified_code = tmp;
       }
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
         break;
 
       int next = qualified_code;
-      if (PAPI_enum_cmp_event(&next, PAPI_NTV_ENUM_UMASKS, cid) != PAPI_OK)
+      if (PAPI_enum_cmp_event(&next, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid) != PAPI_OK)
         break;
       qualified_code = next;
     }
