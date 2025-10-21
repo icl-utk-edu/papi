@@ -1771,6 +1771,8 @@ PAPI_event_name_to_code( const char *in, int *out )
  *         <li>PAPI_NTV_ENUM_UMASK_COMBOS -- Given an event, iterate
  *                     through all possible combinations of umasks.
  *                     This is not implemented on libpfm4.
+ *         <li>PAPI_NTV_ENUM_DEFAULT_QUALIFIERS -- Given an event, iterate through
+ *                     its default qualifiers.
  *	</ul>
  *
  *	@par Preset Modifiers
@@ -1812,7 +1814,8 @@ PAPI_enum_event( int *EventCode, int modifier )
         modifier != PAPI_PRESET_ENUM_CPU_AVAIL && 
         modifier != PAPI_PRESET_ENUM_FIRST_COMP && 
         modifier != PAPI_NTV_ENUM_UMASKS && 
-        modifier != PAPI_NTV_ENUM_UMASK_COMBOS)
+        modifier != PAPI_NTV_ENUM_UMASK_COMBOS &&
+        modifier != PAPI_NTV_ENUM_DEFAULT_QUALIFIERS)
         {
             return PAPI_EINVAL;
         }
