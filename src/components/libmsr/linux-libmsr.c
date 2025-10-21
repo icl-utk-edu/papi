@@ -829,7 +829,7 @@ int _libmsr_ntv_enum_events( unsigned int *EventCode, int modifier )
             return PAPI_ENOEVNT;
         }
         break;
-        // case PAPI_NTV_ENUM_UMASKS:
+        // case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:
     default:
         return PAPI_EINVAL;
     }
