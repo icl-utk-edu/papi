@@ -1691,7 +1691,7 @@ static int _pcp_set_domain(hwd_control_state_t *ctl, int domain)
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
-// Enumerate events. PAPI_NTV_ENUM_UMASKS has nothing to do; we don't have 
+// Enumerate events. PAPI_NTV_ENUM_DEFAULT_QUALIFIERS has nothing to do; we don't have
 // qualifying masks or options on any of our events.
 //----------------------------------------------------------------------------
 
@@ -1714,7 +1714,7 @@ static int _pcp_ntv_enum_events(unsigned int *EventCode, int modifier)
            return PAPI_OK;                                              // And exit.
            break;                                                       // END CASE.
                                                                         
-       case PAPI_NTV_ENUM_UMASKS:                                       // Note we HAVE no qualifiers or masks.
+       case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:                           // Note we HAVE no qualifiers or masks.
            return PAPI_ENOEVNT;                                         // There are no qualifiers to list.
                                                                         
        default:                                                         // If we don't understand the modifier,

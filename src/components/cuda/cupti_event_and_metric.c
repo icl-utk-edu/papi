@@ -1581,7 +1581,7 @@ int cuptie_evt_code_to_descr(uint32_t event_code, char *descr, int len)
   *   Cuda native event code. 
   * @param modifier
   *   Modifies the search logic. Three modifiers are used PAPI_ENUM_FIRST,
-  *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_UMASKS.
+  *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_DEFAULT_QUALIFIERS.
 */
 int cuptie_evt_enum(uint32_t *event_code, int modifier)
 {
@@ -1615,7 +1615,7 @@ int cuptie_evt_enum(uint32_t *event_code, int modifier)
             }
             papi_errno = PAPI_ENOEVNT;
             break;
-        case PAPI_NTV_ENUM_UMASKS:
+        case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:
             papi_errno = event_and_metric_id_to_info(*event_code, &info);
             if (papi_errno != PAPI_OK) {
                 break;
