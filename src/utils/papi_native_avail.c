@@ -375,55 +375,6 @@ parse_event_qualifiers( PAPI_event_info_t * info )
 	return ( 1 );
 }
 
-static void
-walk_event_qualifiers(int eventCode, int modifier, int componentIndex, command_flags_t flags)
-{
-	// clear event string using first mask
-	char first_event_mask_string[PAPI_HUGE_STR_LEN] = "";
-	PAPI_event_info_t info;
-	do {
-		int retval = PAPI_get_event_info( eventCode, &info );
-		if ( retval == PAPI_OK ) {
-			// if first event mask string not set yet, set it now
-			if (strlen(first_event_mask_string) == 0) {
-				strcpy (first_event_mask_string, info.symbol);
-			}
-
-			if ( flags.check ) {
-				check_event(&info);
-			}
-			// now test if the event qualifiers should be displayed to the user
-			if ( flags.qualifiers ) {
-				if ( parse_event_qualifiers( &info ) )
-					format_event_output( &info, 2);
-			}
-		}
-	} while ( PAPI_enum_cmp_event( &eventCode, modifier, componentIndex ) == PAPI_OK );
-	// if we are validating events and the event_available flag is not set yet, try a few more combinations
-	if (flags.check  && (event_available == 0)) {
-		// try using the event with the first mask defined for the event and the cpu mask
-		// this is a kludge but many of the uncore events require an event specific mask (usually
-		// the first one defined will do) and they all require the cpu mask
-		strcpy (info.symbol, first_event_mask_string);
-		strcat (info.symbol, ":cpu=1");
-		check_event(&info);
-	}
-	if (flags.check  && (event_available == 0)) {
-		// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' qualifiers to work correctly.
-		// if nothing else has worked, this code will try those two qualifiers with the current event name to see if it works
-		strcpy (info.symbol, first_event_mask_string);
-		char *wptr = strrchr (info.symbol, ':');
-		if (wptr != NULL) {
-			*wptr = '\0';
-			strcat (info.symbol, ":ff=64:cpu=1");
-			check_event(&info);
-		}
-	}
-
-	return;
-}
-
-
 #if SDE
 void
 invoke_hook_fptr( char *lib_path )
@@ -596,17 +547,27 @@ no_sdes:
 
 				/* if event qualifiers exist but none specified, process all */
 				if ( !strchr( ptr, ':' ) ) {
-					if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-						printf( "\nQualifiers:         Name -- Description\n" );
-						do {
-							retval = PAPI_get_event_info( i, &info );
-							if ( retval == PAPI_OK ) {
-								if ( parse_event_qualifiers( &info ) ) {
-									printf( "      Info:   %10s -- %s\n", info.symbol, info.long_descr );
-								}
-							}
-						} while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
-					}
+                                    int modifier = -1;
+                                    // For the CPU components, we enumerate through umasks
+                                    if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+                                        modifier = PAPI_NTV_ENUM_UMASKS;
+                                    }
+                                    // For the non-cpu components, we enumerate through qualifiers
+                                    else if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS ) == PAPI_OK ) {
+                                        modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+                                    }
+
+                                    if (modifier != -1) {
+                                        printf( "\nQualifiers:         Name -- Description\n" );
+                                        do {
+                                            retval = PAPI_get_event_info( i, &info );
+                                            if ( retval == PAPI_OK ) {
+                                                if ( parse_event_qualifiers( &info ) ) {
+                                                    printf( "      Info:   %10s -- %s\n", info.symbol, info.long_descr );
+                                                }
+                                            }
+                                        } while ( PAPI_enum_event( &i, modifier ) == PAPI_OK );
+                                    }
 				}
 			}
 		} else {
@@ -701,13 +662,58 @@ no_sdes:
 
 				if (flags.qualifiers || flags.check){
 					k = i;
-					// CPU components have umasks; therefore, we provide the modifier PAPI_NTV_ENUM_UMASKS
+					int modifier = -1;
+					// For the CPU components, we enumerate through umasks
 					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
-						walk_event_qualifiers(k, PAPI_NTV_ENUM_UMASKS, cid, flags);
+						modifier = PAPI_NTV_ENUM_UMASKS;
 					}
- 					// Non-CPU component have qualifiers; therfore, we provide the modifier PAPI_NTV_ENUM_DEFAULT_QUALIFIERS
+					// For the non-cpu components, we enumerate through qualifiers
 					else if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid) == PAPI_OK) {
-						walk_event_qualifiers(k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid, flags);
+						modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+					}
+
+					if (modifier != -1) {
+						// clear event string using first mask
+						char first_event_mask_string[PAPI_HUGE_STR_LEN] = "";
+						do {
+							retval = PAPI_get_event_info( k, &info );
+							if ( retval == PAPI_OK ) {
+								// if first event mask string not set yet, set it now
+								if (strlen(first_event_mask_string) == 0) {
+									strcpy (first_event_mask_string, info.symbol);
+								}
+
+								if ( flags.check ) {
+									check_event(&info);
+								}
+								// now test if the event qualifiers should be displayed to the user
+								if ( flags.qualifiers ) {
+									if ( parse_event_qualifiers( &info ) )
+										format_event_output( &info, 2);
+								}
+							}
+						} while ( PAPI_enum_cmp_event( &k, modifier, cid ) == PAPI_OK );
+
+						// if we are validating events and the event_available flag is not set yet, try a few more combinations
+						if (flags.check  && (event_available == 0)) {
+							// try using the event with the first mask defined for the event and the cpu mask
+							// this is a kludge but many of the uncore events require an event specific mask (usually
+							// the first one defined will do) and they all require the cpu mask
+							strcpy (info.symbol, first_event_mask_string);
+							strcat (info.symbol, ":cpu=1");
+							check_event(&info);
+						}
+						if (flags.check  && (event_available == 0)) {
+							// an even bigger kludge is that there are 4 snpep_unc_pcu events which require the 'ff' and 'cpu' qualifiers to work correctly.
+							// if nothing else has worked, this code will try those two qualifiers with the current event name to see if it works
+							strcpy (info.symbol, first_event_mask_string);
+							char *wptr = strrchr (info.symbol, ':');
+							if (wptr != NULL) {
+								*wptr = '\0';
+								strcat (info.symbol, ":ff=64:cpu=1");
+								check_event(&info);
+							}
+						}
 					}
 				}
 				print_event_output(flags.check);
