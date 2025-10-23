@@ -210,8 +210,9 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len);
 static int evt_name_to_basename(const char *name, char *base, int len);
 static int evt_name_to_device(const char *name, int *device, const char *base);
 static int evt_name_to_stat(const char *name, int *stat, const char *base);
-static int cuda_verify_no_repeated_qualifiers(const char *eventName);
-static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue);
+static int cuda_verify_qualifiers_are_not_repeated(const char *eventName);
+static int cuda_verify_qualifiers_are_valid(const char *qualifiers);
+static int cuda_verify_qualifiers_do_not_contain_junk(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue);
 
 // Functions related to the stats qualifier
 static int restructure_event_name(const char *input, char *output, char *base, char *stat);
@@ -1661,21 +1662,34 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
     char base[PAPI_MAX_STR_LEN] = { 0 };
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
-    papi_errno = cuda_verify_no_repeated_qualifiers(name);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
-    }
-
     papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
+    char *userAddedQualifiers = strstr(name, ":");
+    // Detected user added qualifiers, verify their validity
+    // If no qualifiers are added, we handle default cases in
+    // evt_name_to_device and evt_name_to_stat respectively.
+    if (userAddedQualifiers != NULL) {
+        papi_errno = cuda_verify_qualifiers_are_valid(userAddedQualifiers);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+
+        papi_errno = cuda_verify_qualifiers_are_not_repeated(userAddedQualifiers);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+    }
+
+    // Handle device qualifier case
     papi_errno = evt_name_to_device(name, &device, base);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
     
+    // Handle stat qualifier case
     papi_errno = evt_name_to_stat(name, &stat, base);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -2036,23 +2050,23 @@ static int evt_name_to_basename(const char *name, char *base, int len)
     return PAPI_OK;
 }
 
-/** @class cuda_verify_no_repeated_qualifiers
+/** @class cuda_verify_qualifiers_are_not_repeated
   * @brief Verify that a user has not added multiple device or stats qualifiers
   *        to an event name.
   *
   * @param *eventName
   *   User provided event name we need to verify.
 */
-static int cuda_verify_no_repeated_qualifiers(const char *eventName)
+static int cuda_verify_qualifiers_are_not_repeated(const char *qualifiers)
 {
     int numDeviceQualifiers = 0, numStatsQualifiers = 0;
-    char tmpEventName[PAPI_2MAX_STR_LEN];
-    int strLen = snprintf(tmpEventName, PAPI_2MAX_STR_LEN, "%s", eventName);
+    char tmpQualifiers[PAPI_2MAX_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_2MAX_STR_LEN, "%s", qualifiers);
     if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
-        ERRDBG("Failed to fully write eventName into tmpEventName.\n");
+        SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
         return PAPI_EBUF;
     }
-    char *token = strtok(tmpEventName, ":");
+    char *token = strtok(tmpQualifiers, ":");
     while(token != NULL) {
         if (strncmp(token, "device", 6) == 0) {
             numDeviceQualifiers++;
@@ -2065,16 +2079,46 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
     }
 
     if (numDeviceQualifiers > 1 || numStatsQualifiers > 1) {
-        ERRDBG("Provided Cuda event has multiple device or stats qualifiers appended.\n");
+        SUBDBG("Provided Cuda event has multiple device or stats qualifiers appended.\n");
         return PAPI_ENOEVNT;
     }
 
     return PAPI_OK;
 }
 
-/** @class cuda_verify_qualifiers
+/** @class cuda_verify_qualifiers_are_valid
+  * @brief Verify that a user has added valid qualifiers i.e. stat or device.
+  *
+  * @param *qualifiers
+  *   String of user added qualifiers.
+*/
+static int cuda_verify_qualifiers_are_valid(const char *qualifiers)
+{
+    char tmpQualifiers[PAPI_2MAX_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_2MAX_STR_LEN, "%s", qualifiers);
+    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+        SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
+        return PAPI_EBUF;
+    }
+
+    char *token = strtok(tmpQualifiers, ":");
+    while (token != NULL) {
+        if (strncmp(token, "device", 6) != 0 &&
+            strncmp(token, "stat", 4) != 0) {
+            SUBDBG("The appended qualifier is not supported: %s\n", token);
+            return PAPI_ENOEVNT;
+        }
+
+        token = strtok(NULL, ":");
+    }
+
+    return PAPI_OK;
+}
+
+/** @class cuda_verify_qualifiers_do_not_contain_junk
   * @brief Verify that the device and/or stats qualifier provided by the user
-  *        is valid. E.g. :device=# or :stat=avg.
+  *        does not contain excess characters or does not have the proper
+  *        equals sign.
   *
   * @param flag
   *   Device or stats flag define. Allows us to determine the case to enter for
@@ -2087,7 +2131,7 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
   *   Upon verifying the provided qualifier is valid. Store either a device index
   *   or a statistic index.
 */
-static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
+static int cuda_verify_qualifiers_do_not_contain_junk(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
 {
     int pos = equalitySignPosition;
     // Verify that an equal sign was provided where it was suppose to be
@@ -2108,7 +2152,7 @@ static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySig
                 return PAPI_ENOEVNT;
             }
 
-            // Verify that only qualifiers have been appended
+            // Verify that no junk has been appended after the device qualifier
             char *endPtr;
             *qualifierValue = (int) strtol(qualifierName + strlen(":device="), &endPtr, 10);
             // Check to make sure only qualifiers have been appended
@@ -2126,7 +2170,7 @@ static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySig
             for (i = 0; i < NUM_STATS_QUALS; i++) {
                 size_t token_len = strlen(stats[i]);
                 if (strncmp(qualifierName, stats[i], token_len) == 0) {
-                    // Check to make sure only qualifiers have been appended
+                    // Verify that no junk has been appended after the stats qualifier
                     char *no_excess_chars = qualifierName + token_len;
                     if (strlen(no_excess_chars) == 0 || strncmp(no_excess_chars, ":device", 7) == 0) {
                         *qualifierValue = i;
@@ -2157,7 +2201,7 @@ static int evt_name_to_device(const char *name, int *device, const char *base)
     // User did provide :device=# qualifier
     if (p != NULL) {
         int equalitySignPos = 7;
-        int papi_errno = cuda_verify_qualifiers(DEVICE_FLAG, p, equalitySignPos, device);
+        int papi_errno = cuda_verify_qualifiers_do_not_contain_junk(DEVICE_FLAG, p, equalitySignPos, device);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -2196,7 +2240,7 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
     char *p = strstr(name, ":stat");
     if (p != NULL) {
         int equalitySignPos = 5;
-        int papi_errno = cuda_verify_qualifiers(STAT_FLAG, p, equalitySignPos, stat);
+        int papi_errno = cuda_verify_qualifiers_do_not_contain_junk(STAT_FLAG, p, equalitySignPos, stat);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
