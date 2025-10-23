@@ -45,7 +45,7 @@
 
 #if defined(ENABLE_PAPI)
 #include "papi.h" 
-const char *env_str = "ZET_ENABLE_API_TRACING_EXP=1";
+const char *env_str = "ZE_ENABLE_TRACING_LAYER=1";
 #endif
 
 
@@ -394,8 +394,8 @@ main(int argc, char* argv[]) {
     int cid         = -1;
     retVal = putenv((char *)env_str);
     if (retVal) {
-		cout << "setting EXT_ENABLE_API_TRACING_EXP=1 failed. " 
-			 << "Not able to run query based data collection. " << endl;
+        cerr << "Failed to set ZE_ENABLE_TRACING_LAYER=1."
+             << "Set variable ZE_ENABLE_TRACING_LAYER=1 to enable query-based collection." << endl;
 		return 1;
     }
     cid = initPAPIGPUComp();
