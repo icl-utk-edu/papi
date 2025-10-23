@@ -154,56 +154,59 @@ main( int argc, char **argv )
 		do {
 			retval = PAPI_get_event_info( i, &info );
 
-			  k = i;
-	  if ( PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_UMASKS, cid )==PAPI_OK ) {
-	     do {
-		retval = PAPI_get_event_info( k, &info1 );
+			k = i;
+			int modifier = -1;
+			// For the CPU components, we enumerate through umasks
+			if ( PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_UMASKS, cid )==PAPI_OK ) {
+				modifier = PAPI_NTV_ENUM_UMASKS;
+			}
+			// For the non-cpu components, we enumerate through qualifiers
+			else if ( PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid )==PAPI_OK ) {
+				modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+                        }
 
+			if (modifier != -1) {
+				do {
+					retval = PAPI_get_event_info( k, &info1 );
+					/* Skip perf_raw event as it is hard to error out */
+					if (strstr(info1.symbol,"perf_raw")) {
+						break;
+					}
 
+					if (strlen(info1.symbol)>5) {
+						info1.symbol[strlen(info1.symbol)-4]^=0xa5;
+						retval=PAPI_add_named_event(EventSet,info1.symbol);
+						if (retval==PAPI_OK) {
+							if (!quiet) {
+								printf("Unexpectedly opened %s!\n", info1.symbol);
+								err_count++;
+							}
+						}
+					}
+				} while ( PAPI_enum_cmp_event( &k, modifier, cid ) == PAPI_OK );
+			}
+			else {
+				/* Event didn't have any umasks */
 
-		/* Skip perf_raw event as it is hard to error out */
-		if (strstr(info1.symbol,"perf_raw")) {
-			break;
-		}
+				// PROBLEM: info1 is NOT initialized by anyone!
+				// Original code referenced info1, changed to info. [Tony C. 11-27-19]
+				//		printf("%s\n",info.symbol);
+				if (strlen(info.symbol)>5) {
+					info.symbol[strlen(info.symbol)-4]^=0xa5;
 
-//		printf("%s\n",info1.symbol);
-
-		if (strlen(info1.symbol)>5) {
-			info1.symbol[strlen(info1.symbol)-4]^=0xa5;
-
-			retval=PAPI_add_named_event(EventSet,info1.symbol);
-			if (retval==PAPI_OK) {
-				if (!quiet) {
-					printf("Unexpectedly opened %s!\n",
-						info1.symbol);
-					err_count++;
+					retval=PAPI_add_named_event(EventSet,info.symbol);
+					if (retval==PAPI_OK) {
+						if (!quiet) {
+							printf("Unexpectedly opened %s!\n", info.symbol);
+							err_count++;
+						}
+					}
 				}
 			}
-		}
-	     } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
-	  } else {
-	    /* Event didn't have any umasks */
 
-      // PROBLEM: info1 is NOT initialized by anyone!
-      // Original code referenced info1, changed to info. [Tony C. 11-27-19] 
-//		printf("%s\n",info.symbol);
-		if (strlen(info.symbol)>5) {
-			info.symbol[strlen(info.symbol)-4]^=0xa5;
+		} while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
 
-			retval=PAPI_add_named_event(EventSet,info.symbol);
-			if (retval==PAPI_OK) {
-				if (!quiet) {
-					printf("Unexpectedly opened %s!\n",
-						info.symbol);
-					err_count++;
-				}
-			}
-		}
-	  }
-
-       } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
-
-    }
+	}
 
 
 
