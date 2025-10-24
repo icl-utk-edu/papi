@@ -21,7 +21,7 @@
  */
 
 /*
- *  This test case tests event based (query) data collection on Intel GPU performance metrics
+ *  This test case tests event-based (query) data collection on Intel GPU performance metrics
  *
  *  @ brief Collect  metric data for offload kernel "gemm"
  *
