@@ -56,6 +56,12 @@ if [ "$COMPONENT" = "cuda" ] || [ "$COMPONENT" = "nvml" ]; then
     export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$PAPI_CUDA_ROOT/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 fi
 
+## Set the intel_gpu component environment variables
+if [ "$COMPONENT" = "intel_gpu" ]; then
+    export PAPI_INTEL_GPU_ROOT=/usr
+    export ZET_ENABLE_METRICS=1
+fi
+
 # --- Configure and Build PAPI ---
 ## Configure without --with-shlib-tools
 if [ "$SHLIB" = "without" ]; then
