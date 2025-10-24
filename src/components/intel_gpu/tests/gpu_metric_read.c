@@ -20,7 +20,7 @@
  */
 
 /*
- *  This test case tests time based data collection on ntel GPU performance metrics
+ *  This test case tests time-based data collection on Intel GPU performance metrics
  *
  *  @ brief Collect  metric data for a certain time interval, with one or more loops.
  *          By default, the metric data will aggregate overtime for each loop.
