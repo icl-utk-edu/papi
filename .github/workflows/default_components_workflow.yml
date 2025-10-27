@@ -23,4 +23,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: default components tests
-        run: .github/workflows/ci_default_components.sh ${{matrix.debug}} ${{matrix.shlib}}
+        run: .github/workflows_scripts/ci_default_components.sh ${{matrix.debug}} ${{matrix.shlib}}
