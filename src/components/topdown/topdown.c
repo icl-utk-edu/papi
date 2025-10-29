@@ -486,6 +486,7 @@ _topdown_init_component(int cidx)
 		i++;
 		strcpy(topdown_native_events[i].name, "TOPDOWN_MEM_BOUND_PERC");
 		strcpy(topdown_native_events[i].description, "The percentage of pipeline slots that were stalled due to demand load/store instructions");
+		strcpy(topdown_native_events[i].units, "%");
 		topdown_native_events[i].return_type = PAPI_DATATYPE_FP64;
 		topdown_native_events[i].metric_idx = TOPDOWN_METRIC_IDX_MEM_BOUND;
 		topdown_native_events[i].selector = i + 1;
