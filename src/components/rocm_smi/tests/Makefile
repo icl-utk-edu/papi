@@ -58,7 +58,7 @@ rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS) -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
 
 rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(HIPCC) $(CFLAGS) $(INCLUDE) -I/opt/amdgpu/include -c $< -o $@
 
 rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
