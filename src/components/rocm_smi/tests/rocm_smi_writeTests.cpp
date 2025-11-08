@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include "papi.h"
 #include <hip/hip_runtime.h>
-#include "rocm_smi.h"
 #include "force_init.h"
 
 // Helper Function
