@@ -99,28 +99,37 @@ native( int cidx )
     }
 
     do {
-       k = i;
+        k = i;
+        int modifier = -1;
+        // For the CPU components, we enumerate through umasks
+        if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx) == PAPI_OK ) {
+            modifier = PAPI_NTV_ENUM_UMASKS;
+        }
+        // For the non-cpu components, we enumerate through qualifiers
+        else if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cidx) == PAPI_OK ) {
+            modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+        }
 
-       if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx) == PAPI_OK ) {
-	  if ( ( added = add_remove_event( EventSet, k ) ) == PAPI_OK ) {
-	     show_event_info( i );
-	     do {
-		retval = PAPI_get_event_info( k, &info );
-		if ( retval == PAPI_OK ) {
-		   printf( "    %#-10x%s  |%s|\n", info.event_code,
-			   strchr( info.symbol, ':' ),
-			   strchr( info.long_descr, ':' ) + 1 );
-		}
-	     } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) ==
-							  PAPI_OK );
-	     j++;
-	  }
-       } else {
-	  if ( ( added = add_remove_event( EventSet, i ) ) == PAPI_OK ) {
-	     show_event_info( i );
-	     j++;
-	  }
-       }
+        if (modifier != -1) {
+	    if ( ( added = add_remove_event( EventSet, k ) ) == PAPI_OK ) {
+	        show_event_info( i );
+	        do {
+		    retval = PAPI_get_event_info( k, &info );
+		    if ( retval == PAPI_OK ) {
+		        printf( "    %#-10x%s  |%s|\n", info.event_code,
+			        strchr( info.symbol, ':' ),
+			        strchr( info.long_descr, ':' ) + 1 );
+		    }
+	         } while ( PAPI_enum_cmp_event( &k, modifier, cidx ) == PAPI_OK );
+	         j++;
+	      }
+        }
+        else {
+	    if ( ( added = add_remove_event( EventSet, i ) ) == PAPI_OK ) {
+	        show_event_info( i );
+	        j++;
+	    }
+        }
 
        if ( added == PAPI_OK ) {
 	  /* modifier = PAPI_NTV_ENUM_GROUPS returns event codes with a

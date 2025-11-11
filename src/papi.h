@@ -511,6 +511,7 @@ enum {
    /* PAPI native event related section */
    PAPI_NTV_ENUM_UMASKS,		/**< all individual bits for given group */
    PAPI_NTV_ENUM_UMASK_COMBOS,	/**< all combinations of mask bits for given group */
+   PAPI_NTV_ENUM_DEFAULT_QUALIFIERS,	/**< Enumerate through an events default qualifiers */
    PAPI_NTV_ENUM_IARR,			/**< Enumerate events that support IAR (instruction address ranging) */
    PAPI_NTV_ENUM_DARR,			/**< Enumerate events that support DAR (data address ranging) */
    PAPI_NTV_ENUM_OPCM,			/**< Enumerate events that support OPC (opcode matching) */

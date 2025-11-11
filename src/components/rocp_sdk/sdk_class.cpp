@@ -941,7 +941,7 @@ evt_enum(unsigned int *event_code, int modifier){
             *event_code = tmp_code;
 
             break;
-        case PAPI_NTV_ENUM_UMASKS:
+        case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:
             tmp_code = *event_code;
 
             {
