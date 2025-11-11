@@ -568,14 +568,14 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 	int metrics_fd = -1;
 	void *slots_p, *metrics_p;
 
-	/* set up slots */
+	// Set up slots
 	memset(&slots, 0, sizeof(slots));
 	slots.type = PERF_TYPE_RAW;
 	slots.size = sizeof(struct perf_event_attr);
 	slots.config = 0x0400ull;
 	slots.exclude_kernel = 1;
 
-	/* open slots */
+	// Open slots
 	slots_fd = perf_event_open(&slots, 0, -1, -1, 0);
 	if (slots_fd < 0)
 	{
@@ -583,7 +583,7 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 		goto fn_fail;
 	}
 
-	/* memory mapping the fd to permit _rdpmc calls from userspace */
+	// Memory mapping the fd to permit _rdpmc calls from userspace
 	slots_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, slots_fd, 0);
 	if (slots_p == (void *) -1L)
 	{
@@ -591,14 +591,14 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 		goto fn_fail;
 	}
 
-	/* set up metrics */
+	// Set up metrics
 	memset(&metrics, 0, sizeof(metrics));
 	metrics.type = PERF_TYPE_RAW;
 	metrics.size = sizeof(struct perf_event_attr);
 	metrics.config = 0x8000;
 	metrics.exclude_kernel = 1;
 
-	/* open metrics with slots as the group leader */
+	// Open metrics with slots as the group leader
 	metrics_fd = perf_event_open(&metrics, 0, -1, slots_fd, 0);
 	if (metrics_fd < 0)
 	{
@@ -606,7 +606,7 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 		goto fn_fail;
 	}
 
-	/* memory mapping the fd to permit _rdpmc calls from userspace */
+	// Memory mapping the fd to permit _rdpmc calls from userspace
 	metrics_p = mmap(0, getpagesize(), PROT_READ, MAP_SHARED, metrics_fd, 0);
 	if (metrics_p == (void *) -1L)
 	{
@@ -614,7 +614,7 @@ _topdown_init_control_state(hwd_control_state_t *ctl)
 		goto fn_fail;
 	}
 
-	/* we set up with no errors, so fill out the control state */
+	// We set up with no errors, so fill out the control state
 	control->slots_fd = slots_fd;
 	control->slots_p;
 	control->metrics_fd = metrics_fd;
@@ -624,7 +624,7 @@ fn_exit:
 	return retval;
 
 fn_fail:
-	/* we need to close & free whatever we opened and allocated */
+	// We need to close & free whatever we opened and allocated
 	if (slots_p != NULL)
 		munmap(slots_p, getpagesize());
 	if (metrics_p != NULL)
@@ -642,11 +642,10 @@ _topdown_update_control_state(hwd_control_state_t *ctl,
 							  int count,
 							  hwd_context_t *ctx)
 {
-	int i, index;
 	(void)ctx;
-
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 
+	int i;
 	for (i = 0; i < TOPDOWN_MAX_COUNTERS; i++)
 	{
 		control->being_measured[i] = 0;
@@ -654,7 +653,7 @@ _topdown_update_control_state(hwd_control_state_t *ctl,
 
 	for (i = 0; i < count; i++)
 	{
-		index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
+		int index = native[i].ni_event & PAPI_NATIVE_AND_MASK;
 		native[i].ni_position = topdown_native_events[index].selector - 1;
 		control->being_measured[index] = 1;
 	}
@@ -662,107 +661,157 @@ _topdown_update_control_state(hwd_control_state_t *ctl,
 	return PAPI_OK;
 }
 
-static int
-_topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
+/**@class _wrapper_perf_event_ioc_reset
+ * @brief Reset the PERF_METRICS counter and slots to maintain precision
+ *        as perf the recommendation of section 21.3.9.3 of the IA-32
+ *        Architectures Software Developer's Manual. Resetting means we
+ *        do not need to record 'before' metrics/slot values, as they are
+ *        always effectively 0. Despite the reset meaning we don't need to
+ *        record the slots value at all, the SDM states that SLOTS and the
+ *        PERF_METRICS MSR should be reset together.
+*/
+static
+int _wrapper_perf_event_ioc_reset(_topdown_control_state_t *control)
 {
-	(void) ctx;
-	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
+        // This ioctl call does not need to be protected by assert_affinity()
+        int retval = ioctl(control->slots_fd, PERF_EVENT_IOC_RESET, 0);
+        if (retval != 0) {
+                SUBDBG("Resetting control->slots_fd failed.\n");
+                return PAPI_ESYS;
+        }
 
-	/* reset the PERF_METRICS counter and slots to maintain precision */
-	/* as per the recommendation of section 21.3.9.3 of the IA-32
-	/* Architectures Software Developer’s Manual. Resetting means we do not */
-	/* need to record 'before' metrics/slots values, as they are always */
-	/* effectively 0. Despite the reset meaning we don't need to record */
-	/* the slots value at all, the SDM states that SLOTS and the PERF_METRICS */
-	/* MSR should be reset together, so we do that here. */
+        // This ioctl call does not need to be protected by assert_affinity()
+        retval = ioctl(control->metrics_fd, PERF_EVENT_IOC_RESET, 0);
+        if (retval != 0) {
+                SUBDBG("Resetting control->metrics_fd failed.\n");
+                return PAPI_ESYS;
+        }
 
-	/* these ioctl calls do not need to be protected by assert_affinity() */
-	ioctl(control->slots_fd, PERF_EVENT_IOC_RESET, 0);
-	ioctl(control->metrics_fd, PERF_EVENT_IOC_RESET, 0);
+        return PAPI_OK;
+}
 
-	return PAPI_OK;
+/**@class _wrapper_perf_event_ioc_enable
+ * @brief Enable the event's.
+ *
+ *        NOTE: As control->slots_fd is the group leader for control->metrics_fd
+ *        you could use PERF_IOC_FLAG_GROUP in the ioctl argument to enable all events
+ *        in the group i.e. control->metrics_fd. However, from Linux 2.6.31 to Linux 3.4
+ *        PERF_IOC_FLAG_GROUP ioctl argument was broken.
+*/
+static
+int _wrapper_perf_event_ioc_enable(_topdown_control_state_t *control)
+{
+        int retval = ioctl(control->slots_fd, PERF_EVENT_IOC_ENABLE, 0);
+        if (retval != PAPI_OK) {
+		SUBDBG("Enabling control->slots_fd failed.\n");
+                return retval;
+        }
+
+        retval = ioctl(control->metrics_fd, PERF_EVENT_IOC_ENABLE, 0);
+        if (retval != PAPI_OK) {
+		SUBDBG("Enabling control->metrics_fd failed.\n");
+                return retval;
+        }
+
+        return PAPI_OK;
 }
 
 static int
-_topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
+_topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
-	_topdown_context_t *context = (_topdown_context_t *)ctx;
+	(void)ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
-	unsigned long long metrics_after;
 
-	int i, retval;
-	double ma, mb, perc;
+        // Reset counters to maintain precision.
+        int retval = _wrapper_perf_event_ioc_reset(control);
+        if (retval != PAPI_OK) {
+                return retval;
+        }
 
-	retval = PAPI_OK;
-
-	metrics_after = read_metrics();
-
-	/* extract the values */
-	for (i = 0; i < TOPDOWN_MAX_COUNTERS; i++)
-	{
-		if (control->being_measured[i])
-		{
-			/* handle case where the metric is not derived */
-			if (topdown_native_events[i].metric_idx >= 0)
-			{
-				perc = extract_metric(topdown_native_events[i].metric_idx,
-					metrics_after) * 100.0;
-			}
-			else /* handle case where the metric is derived */
-			{
-				/* metric perc = parent perc - sibling perc */
-				perc = extract_metric(
-					topdown_native_events[i].derived_parent_idx,
-					metrics_after) * 100.0
-					- extract_metric(
-					topdown_native_events[i].derived_sibling_idx,
-					metrics_after) * 100.0;
-			}
-
-			/* sometimes the percentage will be a very small negative value */ 
-			/* instead of 0 due to floating point error. tidy that up: */
-			if (perc < 0.0) {
-				perc = 0.0;
-			}
-
-			/* store the raw bits of the double into the counter value */
-			control->count[i] = *(long long*)&perc;
-		}
+	retval = _wrapper_perf_event_ioc_enable(control);
+	if (retval != PAPI_OK) {
+		return retval;
 	}
 
-fn_exit:
-	/* free & close everything in the control state */
-	munmap(control->slots_p, getpagesize());
-	control->slots_p = NULL;
-	munmap(control->metrics_p, getpagesize());
-	control->metrics_p = NULL;
-	close(control->slots_fd);
-	control->slots_fd = -1;
-	close(control->metrics_fd);
-	control->metrics_fd = -1;
-	
-	return retval;
+	return PAPI_OK;
 }
 
 static int
 _topdown_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
-			  long long **events, int flags)
+	       long long **events, int flags)
 {
-	(void)flags;
+        (void)flags;
+        (void)ctx;
+        _topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 
-	_topdown_stop(ctx, ctl);
+        // Extract the values
+        unsigned long long metrics_after = read_metrics();
+        int i;
+        for (i = 0; i < TOPDOWN_MAX_COUNTERS; i++)
+        {
+                if (control->being_measured[i])
+                {
+                        double perc;
+                        // Handle case where the metric is not derived
+                        if (topdown_native_events[i].metric_idx >= 0)
+                        {
+                                perc = extract_metric(topdown_native_events[i].metric_idx,
+                                        metrics_after) * 100.0;
+                        }
+                        else // Handle case where the metric is derived
+                        {
+                                // Metric perc = parent perc - sibling perc
+                                perc = extract_metric(
+                                        topdown_native_events[i].derived_parent_idx,
+                                        metrics_after) * 100.0
+                                        - extract_metric(
+                                        topdown_native_events[i].derived_sibling_idx,
+                                        metrics_after) * 100.0;
+                        }
 
-	/* Pass back a pointer to our results */
-	*events = ((_topdown_control_state_t *)ctl)->count;
+                        // Sometimes the percentage will be a very small negative value
+                        // instead of 0 due to floating point error. tidy that up:
+                        if (perc < 0.0) {
+                                perc = 0.0;
+                        }
 
-	return PAPI_OK;
+                        // Store the raw bits of the double into the counter value
+                        control->count[i] = *(long long*)&perc;
+                }
+        }
+        // Pass back a pointer to our results
+        *events = control->count;
+
+        return PAPI_OK;
 }
 
 static int
 _topdown_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
-	( void ) ctx;
-	( void ) ctl;
+        (void)ctx;
+        _topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
+
+        int retval = _wrapper_perf_event_ioc_reset(control);
+        if (retval != PAPI_OK) {
+                return retval;
+        }
+
+        return PAPI_OK;
+}
+
+static int
+_topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
+{
+	(void)ctx;
+	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
+
+        // slots_fd is defined as the group leader in _topdown_init_control_state;
+        // therefore, disabling slots_fd will disable the entire group.
+	int retval = ioctl(control->slots_fd, PERF_EVENT_IOC_DISABLE, 0);
+	if (retval != 0) {
+		SUBDBG("Disabling the entire event group failed.\n");
+		return PAPI_ESYS;
+	}
 
 	return PAPI_OK;
 }
