@@ -1,3 +1,6 @@
+NAME=amd_smi
+include ../../Makefile_comp_tests.target
+
 # ROCm + PAPI build settings
 # Set PAPI_AMDSMI_ROOT to your ROCm install prefix (e.g., /opt/rocm or /opt/rocm-6.4.0).
 # Used to find AMD SMI / HIP / ROCm headers and libraries. You can override on the command line.
@@ -31,16 +34,16 @@ EFFECTIVE_INCLUDE_C := $(INCLUDE_PAPI) $(INCLUDE_AMDSMI)
 EFFECTIVE_INCLUDE_HIP := $(EFFECTIVE_INCLUDE_C) $(INCLUDE_HIP)
 
 # Linker flags
-RPATH_FLAGS     ?= -Wl,-rpath,$(PAPI_AMDSMI_ROOT)/lib64 -Wl,-rpath,$(PAPI_AMDSMI_ROOT)/lib
-COMMON_LDFLAGS  = $(RPATH_FLAGS) -ldl -g -lpthread
-LDFLAGS_AMDSMI  = $(UTILOBJS) $(PAPILIB) -L$(PAPI_AMDSMI_ROOT)/lib -lamd_smi $(COMMON_LDFLAGS)
-LDFLAGS_GEMM    = $(UTILOBJS) $(PAPILIB) -L$(PAPI_AMDSMI_ROOT)/lib -lrocblas $(COMMON_LDFLAGS)
+COMMON_LDFLAGS  = $(UTILOBJS) $(PAPILIB) -L$(PAPI_AMDSMI_ROOT)/lib -L$(PAPI_AMDSMI_ROOT)/lib64 $(LDFLAGS) -pthread
+LDFLAGS_AMDSMI  = $(COMMON_LDFLAGS) -lamd_smi
+LDFLAGS_GEMM    = $(COMMON_LDFLAGS) -lrocblas
 
 # AMD SMI tests to build with 'make tests'
 TESTS_AMDSMI := amdsmi_energy_monotonic amdsmi_ctx_conflict amdsmi_set_test
 
 # Default target
-all: amdsmi_hello amdsmi_basics amdsmi_gemm $(TESTS_AMDSMI)
+TESTS = amdsmi_hello amdsmi_basics amdsmi_gemm $(TESTS_AMDSMI)
+amd_smi_tests: $(TESTS)
 
 # ------------------------
 # Compile rules
@@ -60,14 +63,14 @@ amdsmi_gemm.o: amdsmi_gemm.c
 
 # amdsmi_hello replaces the older amdsmi_example
 amdsmi_hello: amdsmi_hello.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
 
 # Back-compat alias: allow 'make amdsmi_example' to build amdsmi_hello
 amdsmi_example: amdsmi_hello
 	@true
 
 amdsmi_basics: amdsmi_basics.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
 
 # GEMM sample linked against rocBLAS
 amdsmi_gemm: amdsmi_gemm.o $(UTILOBJS) $(PAPILIB)
@@ -75,13 +78,13 @@ amdsmi_gemm: amdsmi_gemm.o $(UTILOBJS) $(PAPILIB)
 
 # Tests
 amdsmi_energy_monotonic: amdsmi_energy_monotonic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
 
 amdsmi_ctx_conflict: amdsmi_ctx_conflict.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
 
 amdsmi_set_test: amdsmi_set_test.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
 
 $(UTILOBJS):
 	$(MAKE) -C ../../../testlib libtestlib.a
@@ -120,6 +123,7 @@ checkpath:
 	@echo "OPTFLAGS = $(OPTFLAGS)"
 	@echo "UTILOBJS = $(UTILOBJS)"
 	@echo "PAPILIB = $(PAPILIB)"
+	@echo "LDFLAGS = $(LDFLAGS)"
 	@echo "COMMON_LDFLAGS = $(COMMON_LDFLAGS)"
 	@echo "LDFLAGS_AMDSMI = $(LDFLAGS_AMDSMI)"
 	@echo "LDFLAGS_GEMM = $(LDFLAGS_GEMM)"
