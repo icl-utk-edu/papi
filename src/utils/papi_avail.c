@@ -127,7 +127,8 @@
  *        @endcode
  *
  *        You can also add user-defined events by specifying the definition file for user-defined events in the environment variable
- *        PAPI_USER_EVENTS_FILE when the application starts.
+ *        PAPI_USER_EVENTS_FILE when the application starts.<br>
+ *
  * <br>
  *    @subsection types Derived Types:
  *        This describes values allowed in the 'derivedType' field of the PRESET and EVENT commands.  It also
