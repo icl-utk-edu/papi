@@ -1,18 +1,28 @@
-# ***NOTE*** The Environment Variable PAPI_ROCM_ROOT must be defined for 
-# programs to compile correctly. one typical location is /opt/rocm, but
-# contact your sysadmin if you cannot find it.
 NAME=rocm_smi
 include ../../Makefile_comp_tests.target
-PAPI_ROCM_ROOT ?= /opt/rocm
-HIPCC ?= $(PAPI_ROCM_ROOT)/bin/hipcc
 
-INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocm_smi
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hip
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/hsa
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocprofiler
-INCLUDE += -I$(PAPI_ROCM_ROOT)/include/rocblas
+path_to_rocblas =
+rocm_smi_included_in_path := $(shell echo "$(PAPI_ROCMSMI_ROOT)" | grep --ignore-case --fixed-strings rocm_smi)
+# Per the README, for ROCm versions 5.2 and newer users must set PAPI_ROCMSMI_ROOT to /opt/rocm
+ifeq ($(rocm_smi_included_in_path),)
+    HIPCC ?= $(PAPI_ROCMSMI_ROOT)/bin/hipcc
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/hip
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/hsa
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/rocprofiler
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/include/rocblas
+    path_to_rocblas := $(PAPI_ROCMSMI_ROOT)
+# Per the README, for ROCM versions prior to 5.2 users must set PAPI_ROCMSMI_ROOT to /opt/rocm/rocm_smi
+else
+    HIPCC ?= $(PAPI_ROCMSMI_ROOT)/../bin/hipcc
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/../include
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/../include/hip
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/../include/hsa
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/../include/rocprofiler
+    INCLUDE += -I$(PAPI_ROCMSMI_ROOT)/../include/rocblas
+    path_to_rocblas := $(PAPI_ROCMSMI_ROOT)/..
+endif
 ROCM_SMI_LDFLAGS := $(LDFLAGS) -ldl -g -pthread
 
 %.o:%.c
