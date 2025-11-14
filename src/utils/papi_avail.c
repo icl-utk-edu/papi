@@ -112,7 +112,22 @@
  *    @subsection notes Notes:
  *        The PRESET command has traditionally been used in the PAPI provided preset definition file.
  *        The EVENT command is intended to be used in user defined event definition files.  The code treats them
- *        the same so they are interchangeable and they can both be used in either event definition file.<br>
+ *        the same so they are interchangeable and they can both be used in either event definition file.
+ *
+ *        You can override the preset event definition by specifying the definition file for the preset event
+ *        in the environment variable PAPI_CSV_EVENT_FILE when the application starts.  The PAPI library is prepopulated
+ *        with a table of preset events that are built in when the PAPI library is built.  The contents of the built-in
+ *        preset events table can be found in papi_events.csv, which is located in the PAPI source code.  You can modify the table
+ *        of preset events built into the PAPI library by editing papi_events.csv and specifying it in the environment variable
+ *        PAPI_CSV_EVENT_FILE.
+ *        @code
+ *        Example
+ *        $ edit papi_events.csv
+ *        $ PAPI_CSV_EVENT_FILE=./papi_events.csv ./a.out
+ *        @endcode
+ *
+ *        You can also add user-defined events by specifying the definition file for user-defined events in the environment variable
+ *        PAPI_USER_EVENTS_FILE when the application starts.<br>
  *
  * <br>
  *    @subsection types Derived Types:
