@@ -21,4 +21,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: example component tests
-        run: .github/workflows/ci_individual_component.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
+        run: .github/workflows_scripts/ci_individual_component.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
