@@ -976,6 +976,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 	char *event_file_path=NULL;
 	char *event_table_ptr=NULL;
 	int event_type_bits = 0;
+	int event_type_bits_and = 0;
 	char *tmpn;
 	char *tok_save_ptr=NULL;
 	FILE *event_file = NULL;
@@ -1014,6 +1015,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 #endif
 		}
 		event_type_bits = PAPI_PRESET_MASK;
+		event_type_bits_and = PAPI_PRESET_AND_MASK;
 		results = &_papi_hwi_presets[0];
 		result_size = PAPI_MAX_PRESET_EVENTS;
 		event_count = &_papi_hwd[cidx]->cmp_info.num_preset_events;
@@ -1024,6 +1026,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 		}
 
 		event_type_bits = PAPI_UE_MASK;
+		event_type_bits_and = PAPI_UE_AND_MASK;
 		results = &user_defined_events[0];
 		result_size = PAPI_MAX_USER_EVENTS;
 		event_count = &user_defined_events_count;
@@ -1130,7 +1133,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			(void) preset;
 
 			SUBDBG( "Use event code: %#x for %s\n", preset, t);
-            unsigned int preset_index = ( preset & PAPI_PRESET_AND_MASK );
+            unsigned int preset_index = ( preset & event_type_bits_and );
 	        _papi_hwi_presets[preset_index].component_index = cidx;
 
 			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
