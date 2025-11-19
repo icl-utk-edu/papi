@@ -4075,9 +4075,6 @@ PAPI_set_multiplex( int EventSet )
 	if ( cidx < 0 )
 		papi_return( cidx );
 
-	if ( ( ret = mpx_check( EventSet ) ) != PAPI_OK )
-		papi_return( ret );
-
 	memset( &mpx, 0x0, sizeof ( mpx ) );
 	mpx.multiplex.eventset = EventSet;
 	mpx.multiplex.flags = PAPI_MULTIPLEX_DEFAULT;
