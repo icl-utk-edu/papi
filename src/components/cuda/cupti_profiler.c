@@ -2355,6 +2355,12 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
             size_t metricNameBeginIndex = getMetricNamesParams.pMetricNameBeginIndices[metricIdx];
             const char *baseMetricName = &getMetricNamesParams.pMetricNames[metricNameBeginIndex];
 
+            // CTC metrics are not supported by the Perfworks Metrics API
+            if (strstr(baseMetricName, "ctc__") || strstr(baseMetricName, "CTC")) {
+                SUBDBG("CTC metric found. The Perfworks Metrics API does not support profiling these metrics. Moving to the next metric.\n");
+                continue;
+            }
+
             char fullMetricName[PAPI_2MAX_STR_LEN];
             int strLen = snprintf(fullMetricName, PAPI_2MAX_STR_LEN, "%s", baseMetricName);
             if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
@@ -2690,17 +2696,6 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
     if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Failed to fully write metric description.\n");
         return PAPI_EBUF;
-    }
-
-    // CTC metrics are not supported by the Perfworks API; therefore, append a note to the CTC metrics description
-    char *ctcMetric = strstr(metricName, "ctc__");
-    if (ctcMetric != NULL) {
-        const char *noteForCtcMetrics = "NOTE: The NVIDIA Perfworks API that the cuda component utilizes does not support profiling CTC metrics.";
-        strLen = snprintf(fullMetricDescription + strlen(fullMetricDescription), PAPI_HUGE_STR_LEN, " %s", noteForCtcMetrics);
-        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-            SUBDBG("Failed to append the CTC metric note.\n");
-            return PAPI_EBUF;
-        }
     }
 
     papi_errno = destroy_metrics_evaluator(pMetricsEvaluator);
