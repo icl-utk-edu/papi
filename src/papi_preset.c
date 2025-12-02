@@ -703,7 +703,6 @@ check_derived_events(char *target, int derived_type, hwi_presets_t* results, hwi
 				results->code[results->count] = search[j].code[k];
 				INTDBG("results: %p, name[%d]: %s, code[%d]: %#x\n", results, results->count, results->name[results->count], results->count, results->code[results->count]);
 
-				results->count++;
 			}
 		}
 
