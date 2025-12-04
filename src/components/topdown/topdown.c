@@ -663,7 +663,7 @@ _topdown_update_control_state(hwd_control_state_t *ctl,
 }
 
 static int
-_topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
+_topdown_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
 	(void) ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
@@ -684,8 +684,11 @@ _topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 }
 
 static int
-_topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
+_topdown_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
+			  long long **events, int flags)
 {
+	(void)flags;
+
 	_topdown_context_t *context = (_topdown_context_t *)ctx;
 	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
 	unsigned long long metrics_after;
@@ -730,6 +733,27 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 		}
 	}
 
+	/* Pass back a pointer to our results */
+	*events = ((_topdown_control_state_t *)ctl)->count;
+
+	return retval;
+}
+
+static int
+_topdown_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
+{
+	return _topdown_reset(ctx, ctl);
+}
+
+static int
+_topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
+{
+	_topdown_context_t *context = (_topdown_context_t *)ctx;
+	_topdown_control_state_t *control = (_topdown_control_state_t *)ctl;
+
+	long long *events = NULL;
+	int retval = _topdown_read(ctx, ctl, &events, 0);
+
 fn_exit:
 	/* free & close everything in the control state */
 	munmap(control->slots_p, getpagesize());
@@ -742,29 +766,6 @@ fn_exit:
 	control->metrics_fd = -1;
 	
 	return retval;
-}
-
-static int
-_topdown_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
-			  long long **events, int flags)
-{
-	(void)flags;
-
-	_topdown_stop(ctx, ctl);
-
-	/* Pass back a pointer to our results */
-	*events = ((_topdown_control_state_t *)ctl)->count;
-
-	return PAPI_OK;
-}
-
-static int
-_topdown_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
-{
-	( void ) ctx;
-	( void ) ctl;
-
-	return PAPI_OK;
 }
 
 static int
