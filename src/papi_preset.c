@@ -703,7 +703,6 @@ check_derived_events(char *target, int derived_type, hwi_presets_t* results, hwi
 				results->code[results->count] = search[j].code[k];
 				INTDBG("results: %p, name[%d]: %s, code[%d]: %#x\n", results, results->count, results->name[results->count], results->count, results->code[results->count]);
 
-				results->count++;
 			}
 		}
 
@@ -1130,8 +1129,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 			(void) preset;
 
 			SUBDBG( "Use event code: %#x for %s\n", preset, t);
-            unsigned int preset_index = ( preset & PAPI_PRESET_AND_MASK );
-	        _papi_hwi_presets[preset_index].component_index = cidx;
+	        _papi_hwi_presets[res_idx].component_index = cidx;
 
 			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
 			if ((t == NULL) || (strlen(t) == 0)) {
@@ -1476,8 +1474,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 			(void) preset;
 
 			SUBDBG( "Use event code: %#x for %s\n", preset, t);
-            unsigned int preset_index = ( preset & PAPI_PRESET_AND_MASK );
-	        _papi_hwi_comp_presets[cidx][preset_index].component_index = cidx;
+	        _papi_hwi_comp_presets[cidx][res_idx].component_index = cidx;
 
 			t = trim_string(strtok_r(NULL, ",", &tok_save_ptr));
 			if ((t == NULL) || (strlen(t) == 0)) {
@@ -1559,7 +1556,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                 char *tmpEvent, *tmpQuals;
                 char *qualDelim = ":";
                 PAPI_event_info_t eventInfo;
-                hwi_presets_t *prstPtr = &(_papi_hwi_comp_presets[cidx][preset_index]);
+                hwi_presets_t *prstPtr = &(_papi_hwi_comp_presets[cidx][res_idx]);
 
                 if( firstTerm ) {
 
