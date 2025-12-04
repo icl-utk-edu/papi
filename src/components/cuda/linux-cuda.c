@@ -371,7 +371,7 @@ static int cuda_init_comp_presets(void)
     char *cname = _cuda_vector.cmp_info.name;
 
     /* Setup presets. */
-    char arch_name[PAPI_2MAX_STR_LEN];
+    char arch_name[PAPI_MAX_STR_LEN];
     int devIdx = -1;
     int numDevices = 0;
 
