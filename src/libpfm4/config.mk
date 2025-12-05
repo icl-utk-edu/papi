@@ -179,6 +179,9 @@ ifeq ($(ARCH),cell)
 CONFIG_PFMLIB_CELL=y
 endif
 
+ifeq ($(ARCH),riscv64)
+CONFIG_PFMLIB_ARCH_RISCV64=y
+endif
 
 #
 # you shouldn't have to touch anything beyond this point
