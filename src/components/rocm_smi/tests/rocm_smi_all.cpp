@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
                 if (isString) printf("%-64s: %-64s\n", info.symbol, ((char*) value));
                 else         printf("%-64s: %lli\n", info.symbol, value);
             }
-        } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK); // Get next umask entry (bits different) (should return PAPI_NOEVNT).
+        } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_DEFAULT_QUALIFIERS,cid)==PAPI_OK); // Get next qualifier entry (bits different) (should return PAPI_NOEVNT).
     } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
 
 //  fprintf(stderr, "%s:%i Finished Event Loops.\n", __FILE__, __LINE__);
