@@ -1,30 +1,30 @@
 #include "vec_scalar_verify.h"
 
-static double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp );
-static double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp );
-static double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp );
-static void   test_dp_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp );
+static double test_dp_mac_VEC_24( int EventSet, FILE *fp );
+static double test_dp_mac_VEC_48( int EventSet, FILE *fp );
+static double test_dp_mac_VEC_96( int EventSet, FILE *fp );
+static void   test_dp_VEC( int instr_per_loop, int EventSet, FILE *fp );
 
 /* Wrapper functions of different vector widths. */
 #if defined(X86_VEC_WIDTH_128B)
-void test_dp_x86_128B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+void test_dp_x86_128B_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, EventSet, fp );
 }
 #elif defined(X86_VEC_WIDTH_512B)
-void test_dp_x86_512B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+void test_dp_x86_512B_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, EventSet, fp );
 }
 #elif defined(X86_VEC_WIDTH_256B)
-void test_dp_x86_256B_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+void test_dp_x86_256B_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, EventSet, fp );
 }
 #elif defined(ARM)
-void test_dp_arm_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+void test_dp_arm_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, EventSet, fp );
 }
 #elif defined(POWER)
-void test_dp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_dp_VEC( instr_per_loop, iterations, EventSet, fp );
+void test_dp_power_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
+    return test_dp_VEC( instr_per_loop, EventSet, fp );
 }
 #endif
 
@@ -32,8 +32,13 @@ void test_dp_power_VEC( int instr_per_loop, uint64 iterations, int EventSet, FIL
 /* Loop unrolling:  24 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
-    register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+double test_dp_mac_VEC_24( int EventSet, FILE *fp ){
+
+    svbool_t pg = svptrue_b64();
+    volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+    double values = 0.0;
+    long long iterValues[1]; iterValues[0] = 0;
+    for (int iter=0; iter<ITERS; ++iter) {
 
     /* Generate starting data */
     r0 = SET_VEC_PD(0.01);
@@ -58,12 +63,7 @@ double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
         return -1;
     }
 
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < ITER){
             /* The performance critical part */
-
             r0 = MUL_VEC_PD(r0,rC);
             r1 = ADD_VEC_PD(r1,rD);
             r2 = MUL_VEC_PD(r2,rE);
@@ -90,13 +90,20 @@ double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
             rA = ADD_VEC_PD(rA,rD);
             rB = MUL_VEC_PD(rB,rC);
 
-            i++;
-        }
-        c++;
+    /* Stop PAPI counters */
+    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
+      return -1;
     }
 
-    /* Stop PAPI counters */
-    papi_stop_and_print(24, EventSet, fp);
+    values += iterValues[0];
+
+} // end of ITERS
+
+    values /= ITERS;
+
+    if ( NULL != fp ) {
+      papi_print(24, fp, values);
+    }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PD(r0,r1);
@@ -125,8 +132,13 @@ double test_dp_mac_VEC_24( uint64 iterations, int EventSet, FILE *fp ){
 /* Loop unrolling:  48 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
-    register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+double test_dp_mac_VEC_48( int EventSet, FILE *fp ){
+
+    svbool_t pg = svptrue_b64();
+    volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+    double values = 0.0;
+    long long iterValues[1]; iterValues[0] = 0;
+    for (int iter=0; iter<ITERS; ++iter) {
 
     /* Generate starting data */
     r0 = SET_VEC_PD(0.01);
@@ -151,12 +163,7 @@ double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
         return -1;
     }
 
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < ITER){
             /* The performance critical part */
-
             r0 = MUL_VEC_PD(r0,rC);
             r1 = ADD_VEC_PD(r1,rD);
             r2 = MUL_VEC_PD(r2,rE);
@@ -208,14 +215,21 @@ double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
             r9 = MUL_VEC_PD(r9,rE);
             rA = ADD_VEC_PD(rA,rD);
             rB = MUL_VEC_PD(rB,rC);
-
-            i++;
-        }
-        c++;
-    }
 
     /* Stop PAPI counters */
-    papi_stop_and_print(48, EventSet, fp);
+    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
+      return -1;
+    }
+
+    values += iterValues[0];
+
+} // end of ITERS
+
+    values /= ITERS;
+
+    if ( NULL != fp ) {
+      papi_print(48, fp, values);
+    }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PD(r0,r1);
@@ -244,8 +258,13 @@ double test_dp_mac_VEC_48( uint64 iterations, int EventSet, FILE *fp ){
 /* Loop unrolling:  96 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
-    register DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+double test_dp_mac_VEC_96( int EventSet, FILE *fp ){
+
+    svbool_t pg = svptrue_b64();
+    volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
+    double values = 0.0;
+    long long iterValues[1]; iterValues[0] = 0;
+    for (int iter=0; iter<ITERS; ++iter) {
 
     /* Generate starting data */
     r0 = SET_VEC_PD(0.01);
@@ -270,12 +289,7 @@ double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
         return -1;
     }
 
-    uint64 c = 0;
-    while (c < iterations){
-        size_t i = 0;
-        while (i < ITER){
             /* The performance critical part */
-
             r0 = MUL_VEC_PD(r0,rC);
             r1 = ADD_VEC_PD(r1,rD);
             r2 = MUL_VEC_PD(r2,rE);
@@ -379,14 +393,21 @@ double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
             r9 = MUL_VEC_PD(r9,rE);
             rA = ADD_VEC_PD(rA,rD);
             rB = MUL_VEC_PD(rB,rC);
-
-            i++;
-        }
-        c++;
-    }
 
     /* Stop PAPI counters */
-    papi_stop_and_print(96, EventSet, fp);
+    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
+      return -1;
+    }
+
+    values += iterValues[0];
+
+} // end of ITERS
+
+    values /= ITERS;
+
+    if ( NULL != fp ) {
+      papi_print(96, fp, values);
+    }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
     r0 = ADD_VEC_PD(r0,r1);
@@ -412,22 +433,22 @@ double test_dp_mac_VEC_96( uint64 iterations, int EventSet, FILE *fp ){
 }
 
 static
-void test_dp_VEC( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp )
+void test_dp_VEC( int instr_per_loop, int EventSet, FILE *fp )
 {
     double sum = 0.0;
     double scalar_sum = 0.0;
 
     if ( instr_per_loop == 24 ) {
-        sum += test_dp_mac_VEC_24( iterations, EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_24( iterations, EventSet, NULL );
+        sum += test_dp_mac_VEC_24( EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_24( EventSet, NULL );
     }
     else if ( instr_per_loop == 48 ) {
-        sum += test_dp_mac_VEC_48( iterations, EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_48( iterations, EventSet, NULL );
+        sum += test_dp_mac_VEC_48( EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_48( EventSet, NULL );
     }
     else if ( instr_per_loop == 96 ) {
-        sum += test_dp_mac_VEC_96( iterations, EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_96( iterations, EventSet, NULL );
+        sum += test_dp_mac_VEC_96( EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_96( EventSet, NULL );
     }
 
     if( sum/2.0 != scalar_sum ) {
