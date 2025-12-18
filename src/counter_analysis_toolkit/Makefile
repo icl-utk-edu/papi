@@ -54,10 +54,10 @@ ifeq ($(ARCH),POWER)
     VEC_ALL=$(VEC) -DPOWER
 endif
 ifeq ($(ARCH),ARM)
-    FLOP+=-march=armv8.2-a+fp16 -DARM
+    FLOP+=-march=armv8.2-a+fp16+sve -DARM
     VECSRC=vec_fma_hp.o vec_fma_sp.o vec_fma_dp.o vec_nonfma_hp.o vec_nonfma_sp.o vec_nonfma_dp.o
-    VEC=-march=armv8.2-a+fp16 -O0 -DARM
-    VEC_FMA=-march=armv8.2-a+fp16 -O0 -DARM
+    VEC=-march=armv8.2-a+fp16+sve -O0 -DARM
+    VEC_FMA=-march=armv8.2-a+fp16+sve -O0 -DARM
     VEC_ALL=$(VEC) -O0 -DARM
 endif
 
