@@ -34,6 +34,7 @@ template.
 #include <inttypes.h>
 #include <string.h>
 #include <dirent.h>
+#include <limits.h>
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
@@ -320,7 +321,7 @@ getPState(nvmlDevice_t dev)
 }
 
 unsigned long long
-getEnergyConsumption(nvmlDevice_t dev)
+getTotalEnergyConsumption(nvmlDevice_t dev)
 {
     unsigned long long energy = 0;
     nvmlReturn_t bad;
@@ -329,6 +330,9 @@ getEnergyConsumption(nvmlDevice_t dev)
     if (NVML_SUCCESS != bad) {
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
         return (unsigned long long) - 1;
+    }
+    if (energy > ULLONG_MAX) {
+        energy = ULLONG_MAX;
     }
     return energy;
 }
@@ -527,8 +531,8 @@ nvml_hardware_read(long long *value, int which_one)
     case FEATURE_POWER:
         *value = getPowerUsage(handle);
         break;
-    case FEATURE_ENERGY_CONSUMPTION:
-        *value = getEnergyConsumption(handle);
+    case FEATURE_TOTAL_ENERGY_CONSUMPTION:
+        *value = getTotalEnergyConsumption(handle);
         break;
     case FEATURE_GPU_INST:
         field_value->fieldId = NVML_FI_DEV_POWER_INSTANT;
@@ -537,7 +541,7 @@ nvml_hardware_read(long long *value, int which_one)
         break;
     case FEATURE_GPU_MEMORY_AVG:
         field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
-        field_value->scopeId = 2; // Module-wide scope
+        field_value->scopeId = 2; // GPU Memory scope
         *value = getDeviceFieldValue(handle, value_count, field_value);
 	break;
     case FEATURE_TEMP:
@@ -739,13 +743,13 @@ detectDevices()
         }
 
         /*Check if energy consumption data are available  */
-        if (getEnergyConsumption(devices[i]) != (unsigned long long) - 1) {
-            features[i] |= FEATURE_ENERGY_CONSUMPTION;
+        if (getTotalEnergyConsumption(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_TOTAL_ENERGY_CONSUMPTION;
             num_events++;
         }
 
-        
-	int value_count=1;
+
+        int value_count=1;
         nvmlFieldValue_t field_value[value_count];
 
         // GPU instant power
@@ -754,15 +758,15 @@ detectDevices()
         /* Check if the device field for gpu instant power data are available */
         if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
             features[i] |= FEATURE_GPU_INST;
-            num_events ++;
+            num_events++;
         }
         // GPU Memory average power
         field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
-        field_value->scopeId = 2; // Module-wide scope
+        field_value->scopeId = 2; // GPU Memory scope
         /* Check if the device field for gpu memory data are available */
         if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
             features[i] |= FEATURE_GPU_MEMORY_AVG;
-            num_events ++;
+            num_events++;
         }
 
         /* Check if temperature data are available */
@@ -1058,10 +1062,10 @@ createNativeEvents()
             devTableIdx++;
         }
 
-        if (HAS_FEATURE(features[i], FEATURE_ENERGY_CONSUMPTION)) {
-            sprintf(entry->name, "%s:energy_consumption", sanitized_name);
+        if (HAS_FEATURE(features[i], FEATURE_TOTAL_ENERGY_CONSUMPTION)) {
+            sprintf(entry->name, "%s:total_energy_consumption", sanitized_name);
             strncpy(entry->description, "Total energy consumption of the GPU in millijoules since the driver was last reloaded.", PAPI_MAX_STR_LEN);
-            entry->type = FEATURE_ENERGY_CONSUMPTION;
+            entry->type = FEATURE_TOTAL_ENERGY_CONSUMPTION;
             entry++;
             nvml_dev_id_table[devTableIdx] = i;
             devTableIdx++;
@@ -1070,7 +1074,7 @@ createNativeEvents()
         if (HAS_FEATURE(features[i], FEATURE_GPU_INST)) {
             sprintf(entry->name, "%s:gpu_inst_power", sanitized_name);
             strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
-            strncpy(entry->description, "Instateneous power usage for GPU.", PAPI_MAX_STR_LEN);
+            strncpy(entry->description, "Instantaneous power usage for GPU.", PAPI_MAX_STR_LEN);
             entry->type = FEATURE_GPU_INST;
             entry++;
             nvml_dev_id_table[devTableIdx] = i;
