@@ -2197,3 +2197,4 @@ PAPI_hl_stop()
    }
    return ( PAPI_ENOEVNT );
 }
+
