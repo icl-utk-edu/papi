@@ -534,16 +534,20 @@ nvml_hardware_read(long long *value, int which_one)
     case FEATURE_TOTAL_ENERGY_CONSUMPTION:
         *value = getTotalEnergyConsumption(handle);
         break;
+    #if defined(NVML_FI_DEV_POWER_INSTANT) && defined(NVML_POWER_SCOPE_GPU)
     case FEATURE_GPU_INST:
         field_value->fieldId = NVML_FI_DEV_POWER_INSTANT;
-        field_value->scopeId = 0; // GPU-only scope
+        field_value->scopeId = NVML_POWER_SCOPE_GPU;
         *value = getDeviceFieldValue(handle, value_count, field_value);
         break;
+    #endif
+    #if defined(NVML_FI_DEV_POWER_AVERAGE) && defined(NVML_POWER_SCOPE_MEMORY)
     case FEATURE_GPU_MEMORY_AVG:
         field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
-        field_value->scopeId = 2; // GPU Memory scope
+        field_value->scopeId = NVML_POWER_SCOPE_MEMORY;
         *value = getDeviceFieldValue(handle, value_count, field_value);
 	break;
+    #endif
     case FEATURE_TEMP:
         *value = getTemperature(handle);
         break;
@@ -752,23 +756,26 @@ detectDevices()
         int value_count=1;
         nvmlFieldValue_t field_value[value_count];
 
+        #if defined(NVML_FI_DEV_POWER_INSTANT) && defined(NVML_POWER_SCOPE_GPU)
         // GPU instant power
         field_value->fieldId = NVML_FI_DEV_POWER_INSTANT;
-        field_value->scopeId = 0; // GPU-only scope
+        field_value->scopeId = NVML_POWER_SCOPE_GPU;
         /* Check if the device field for gpu instant power data are available */
         if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
             features[i] |= FEATURE_GPU_INST;
             num_events++;
         }
+        #endif
+        #if defined(NVML_FI_DEV_POWER_AVERAGE) && defined(NVML_POWER_SCOPE_MEMORY)
         // GPU Memory average power
         field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
-        field_value->scopeId = 2; // GPU Memory scope
+        field_value->scopeId = NVML_POWER_SCOPE_MEMORY;
         /* Check if the device field for gpu memory data are available */
         if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
             features[i] |= FEATURE_GPU_MEMORY_AVG;
             num_events++;
         }
-
+        #endif
         /* Check if temperature data are available */
         if (getTemperature(devices[i]) != (unsigned long long) - 1) {
             features[i] |= FEATURE_TEMP;
