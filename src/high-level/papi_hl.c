@@ -606,18 +606,6 @@ static int _internal_hl_create_components()
          verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as instantaneous value.\n", requested_event_names[i]);
       }
 
-      // except from nvml energy_consumption delta
-      if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "energy_consumption") != NULL) ) {
-         event_type = 0;
-         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
-      }
-
-      // except from nvml gpu_inst_power average
-      if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "gpu_inst_power") != NULL) ) {
-         event_type = 2;
-         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as average value.\n", requested_event_names[i]);
-      }
-
       /* check if event is supported on current machine */
       retval = _internal_hl_checkCounter(requested_event_names[i]);
       if ( retval != PAPI_OK ) {
@@ -802,16 +790,15 @@ static int _internal_hl_start_counters()
 
    if ( state == PAPIHL_ACTIVE ) {
       for ( i = 0; i < num_of_components; i++ ) {
-         if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK ){
+         if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
             return (retval );
-         }
+
          /* warm up PAPI code paths and data structures */
          if ( ( retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &cycles ) != PAPI_OK ) ) {
             return (retval );
          }
       }
       _papi_hl_events_running = 1;
-
       return PAPI_OK;
    }
    return ( PAPI_EMISC );
@@ -866,7 +853,6 @@ static inline reads_t* _internal_hl_insert_read_node(reads_t** head_node)
    return new_node;
 }
 
-
 static inline int _internal_hl_add_values_to_region( regions_t *node, enum region_type reg_typ )
 {
    int i, j;
@@ -882,9 +868,8 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       node->values[1].begin = ts;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
-         for ( j = 0; j < components[i].num_of_events; j++ ){
+         for ( j = 0; j < components[i].num_of_events; j++ )
             node->values[cmp_iter++].begin = _local_components[i].values[j];
-         }
    } else if ( reg_typ == REGION_READ ) {
       /* create a new read node and add values*/
       reads_t* read_node;
@@ -898,13 +883,10 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             if ( ( read_node = _internal_hl_insert_read_node(&node->values[cmp_iter].read_values) ) == NULL )
                return ( PAPI_ENOMEM );
-            if ( components[i].event_types[j] == 1 ) //instantaneous
+            if ( components[i].event_types[j] == 1 )
                read_node->value = _local_components[i].values[j];
-            else if ( components[i].event_types[j] == 2 ) // average
-               read_node->value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;
-            else //delta
+            else
                read_node->value = _local_components[i].values[j] - node->values[cmp_iter].begin;
-                 
             cmp_iter++;
          }
       }
@@ -916,13 +898,11 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       for ( i = 0; i < num_of_components; i++ )
          for ( j = 0; j < components[i].num_of_events; j++ ) {
             /* if event type is instantaneous only save last value */
-            if ( components[i].event_types[j] == 1 )  //instantaneous
+            if ( components[i].event_types[j] == 1 ) {
                node->values[cmp_iter].region_value = _local_components[i].values[j];
-            else if ( components[i].event_types[j] == 2 )  // average
-               node->values[cmp_iter].region_value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;                  
-            else //delta
-               node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;               
-            
+            } else {
+               node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;
+            }
             cmp_iter++;
          }
    }
@@ -1075,19 +1055,20 @@ static int _internal_hl_read_counters()
 {
    int i, j, retval;
    for ( i = 0; i < num_of_components; i++ ) {
-      retval = PAPI_read( _local_components[i].EventSet, _local_components[i].values);
-      if ( retval != PAPI_OK ) 
-      	return ( retval );
+      if ( i < ( num_of_components - 1 ) ) {
+         retval = PAPI_read( _local_components[i].EventSet, _local_components[i].values);
+      } else {
+         /* get cycles for last component */
+         retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &_local_cycles );
+      }
       HLDBG("Thread-ID:%lu, Component-ID:%d\n", PAPI_thread_id(), components[i].component_id);
       for ( j = 0; j < components[i].num_of_events; j++ ) {
         HLDBG("Thread-ID:%lu, %s:%lld\n", PAPI_thread_id(), components[i].event_names[j], _local_components[i].values[j]);
       }
 
+      if ( retval != PAPI_OK )
+         return ( retval );
    }
-   /* get cycles for last component */
-   retval = PAPI_read_ts( _local_components[num_of_components - 1].EventSet, _local_components[num_of_components - 1].values, &_local_cycles );
-   if ( retval != PAPI_OK )
-   	return ( retval );
    return ( PAPI_OK );
 }
 
@@ -1108,7 +1089,6 @@ static int _internal_hl_read_and_store_counters( const char *region, enum region
       _internal_hl_clean_up_all(true);
       return ( retval );
    }
-   
    return ( PAPI_OK );
 }
 
@@ -1257,9 +1237,6 @@ static void _internal_hl_json_definitions(FILE* f, bool beautifier)
          const char *event_type = "delta";
          if ( components[i].event_types[j] == 1 )
             event_type = "instant";
-         if ( components[i].event_types[j] == 2 )
-            event_type = "region-average";
-
          const PAPI_component_info_t* cmpinfo;
          cmpinfo = PAPI_get_component_info( components[i].component_id );
 
@@ -2220,4 +2197,3 @@ PAPI_hl_stop()
    }
    return ( PAPI_ENOEVNT );
 }
-
