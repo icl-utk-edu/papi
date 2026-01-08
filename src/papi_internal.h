@@ -448,7 +448,7 @@ void _papi_hwi_free_papi_event_string();
 void _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag);
 unsigned int _papi_hwi_get_papi_event_code (void);
 int _papi_hwi_get_ntv_idx (unsigned int papi_evt_code);
-const char *_papi_hwi_strip_component_prefix(const char *event_name);
+void _papi_hwi_obtain_prefix(const char *full_event_name, char *prefix);
 int _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI );
 hwd_context_t *_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty );
 
