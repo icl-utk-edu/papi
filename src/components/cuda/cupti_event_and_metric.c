@@ -1588,7 +1588,7 @@ int cuptie_evt_enum(uint32_t *event_code, int modifier)
 
     int papi_errno = PAPI_OK;
     event_info_t info;
-    SUBDBG("ENTER: event_code: %lu, modifier: %d\n", *event_code, modifier);
+    SUBDBG("ENTER: event_code: %u, modifier: %d\n", *event_code, modifier);
 
     switch(modifier) {
         case PAPI_ENUM_FIRST:
