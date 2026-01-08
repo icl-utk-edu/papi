@@ -31,8 +31,8 @@ typedef struct {
 } StringVector;
 
 typedef struct event_record_s {
-    char name[PAPI_2MAX_STR_LEN];
-    char basenameWithStatReplaced[PAPI_2MAX_STR_LEN];
+    char name[PAPI_HUGE_STR_LEN];
+    char basenameWithStatReplaced[PAPI_HUGE_STR_LEN];
     char desc[PAPI_HUGE_STR_LEN];
     StringVector * stat;
     cuptiu_bitmap_t device_map;
@@ -42,7 +42,7 @@ typedef struct event_table_s {
     unsigned int count;
     unsigned int event_stats_count;
     unsigned int capacity;
-    char cuda_evts[30][PAPI_2MAX_STR_LEN];
+    char cuda_evts[30][PAPI_HUGE_STR_LEN];
     int cuda_devs[30];
     int evt_pos[30];
     gpu_record_t *avail_gpu_info;

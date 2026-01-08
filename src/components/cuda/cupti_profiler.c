@@ -681,13 +681,13 @@ int verify_user_added_events(uint32_t *events_id, int num_events, cuptip_control
         // Reconstructing event name. Append the basename, stat, and sub-metric.
         size_t basename_len = stat_position - cuptiu_table_p->events[info.nameid].basenameWithStatReplaced; 
         char reconstructedEventName[PAPI_HUGE_STR_LEN]="";
-        strLen = snprintf(reconstructedEventName, PAPI_MAX_STR_LEN, "%.*s%s%s",
+        strLen = snprintf(reconstructedEventName, PAPI_HUGE_STR_LEN, "%.*s%s%s",
                    (int)basename_len,
                    cuptiu_table_p->events[info.nameid].basenameWithStatReplaced,
                    stat,
                    stat_position + 4);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Failed to fully write reconstructed event name.\n");
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to add the CUPTI metric name as reconstruction of the basename and stat exceeded the buffer size.\n");
             return PAPI_EBUF;
         }
 
@@ -705,9 +705,9 @@ int verify_user_added_events(uint32_t *events_id, int num_events, cuptip_control
         int idx = state->gpu_ctl[info.device].added_events->count;
         // Store metadata
         strLen = snprintf(state->gpu_ctl[info.device].added_events->cuda_evts[idx],
-                         PAPI_MAX_STR_LEN, "%s", reconstructedEventName);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Failed to fully write reconstructed Cuda event name to array of added events.\n");
+                         PAPI_HUGE_STR_LEN, "%s", reconstructedEventName);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to fully write the reconstructed CUPTI metric name to array of added events.\n");
             return PAPI_EBUF;
         }
         state->gpu_ctl[info.device].added_events->cuda_devs[idx] = info.device;
@@ -1475,15 +1475,15 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
         // Increment event count
         (*count)++;
 
-        strLen = snprintf(event->name, PAPI_2MAX_STR_LEN, "%s", name_no_stat);
-        if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
-            ERRDBG("Failed to fully write name with no stat.\n");
+        strLen = snprintf(event->name, PAPI_HUGE_STR_LEN, "%s", name_no_stat);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            ERRDBG("Failed to fully write CUPTI metric name with no 'stat'.\n");
             return PAPI_EBUF;
         }
 
-        strLen = snprintf(event->basenameWithStatReplaced, sizeof(event->basenameWithStatReplaced), "%s", name_restruct);
+        strLen = snprintf(event->basenameWithStatReplaced, PAPI_HUGE_STR_LEN, "%s", name_restruct);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-            ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+            ERRDBG("Failed to fully write CUPTI metric name with the stat value replaced with 'stat'.\n");
             return PAPI_EBUF;
         }
 
@@ -1659,10 +1659,10 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
 {
     int htable_errno, device, stat, flags, nameid, papi_errno = PAPI_OK;
     cuptiu_event_t *event;
-    char base[PAPI_MAX_STR_LEN] = { 0 };
+    char base[PAPI_HUGE_STR_LEN] = { 0 };
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
-    papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
+    papi_errno = evt_name_to_basename(name, base, PAPI_HUGE_STR_LEN);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
@@ -1775,11 +1775,11 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len)
     }
 
     int str_len;
-    char stat[PAPI_HUGE_STR_LEN] = ""; 
+    char stat[PAPI_MIN_STR_LEN] = ""; 
     if (info.stat < NUM_STATS_QUALS){
-        str_len = snprintf(stat, sizeof(stat), "%s", stats[info.stat]);
-        if (str_len < 0 || str_len >= PAPI_HUGE_STR_LEN) {
-            ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+        str_len = snprintf(stat, PAPI_MIN_STR_LEN, "%s", stats[info.stat]);
+        if (str_len < 0 || str_len >= PAPI_MIN_STR_LEN) {
+            ERRDBG("Failed to fully write statistic qualifier name.\n");
             return PAPI_EBUF;
         }
     }
@@ -1794,7 +1794,7 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len)
             break;
         case (STAT_FLAG):    
             str_len = snprintf(name, len, "%s:stat=%s", cuptiu_table_p->events[info.nameid].name, stat);
-            if (str_len < 0 || str_len >= PAPI_HUGE_STR_LEN) {
+            if (str_len < 0 || str_len >= len) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_EBUF;
             }
@@ -1841,11 +1841,15 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
     }
     size_t basename_len = stat_position - cuptiu_table_p->events[inf.nameid].basenameWithStatReplaced;
     char reconstructedEventName[PAPI_HUGE_STR_LEN]="";
-    int strLen = snprintf(reconstructedEventName, PAPI_MAX_STR_LEN, "%.*s%s%s",
+    int strLen = snprintf(reconstructedEventName, PAPI_HUGE_STR_LEN, "%.*s%s%s",
                (int)basename_len,
                cuptiu_table_p->events[inf.nameid].basenameWithStatReplaced,
                cuptiu_table_p->events[inf.nameid].stat->arrayMetricStatistics[0],
                stat_position + 4);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to reconstruct CUPTI metric name with the basename and stat.\n");
+        return PAPI_EBUF;
+    }
 
     int i;
     // For a Cuda event collect the description, units, and number of passes
@@ -1890,7 +1894,7 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         }
         case DEVICE_FLAG:
         {
-            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            char devices[PAPI_2MAX_STR_LEN] = { 0 };
             int init_metric_dev_id;
             for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
@@ -1900,9 +1904,10 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                         init_metric_dev_id = i;
 
                     }
-                    int strLen = snprintf(devices + strlen(devices), PAPI_MAX_STR_LEN, "%i,", i);
-                    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-                        ERRDBG("Failed to fully write device qualifiers.\n");
+                    int strLen = snprintf(devices + strlen(devices), PAPI_2MAX_STR_LEN - strlen(devices), "%i,", i);
+                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN - strlen(devices)) {
+                        SUBDBG("Failed to write device %d into devices in DEVICE_FLAG case.\n", i);
+                        return PAPI_EBUF;
                     }
                     
                 }
@@ -1964,7 +1969,7 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         case (STAT_FLAG | DEVICE_FLAG):
         {
             int init_metric_dev_id;
-            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            char devices[PAPI_2MAX_STR_LEN] = { 0 };
             for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
                     /* for an event, store the first device found to use with :device=#, 
@@ -1973,7 +1978,11 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                         init_metric_dev_id = i;
                     }
 
-                    sprintf(devices + strlen(devices), "%i,", i);
+                    strLen = snprintf(devices + strlen(devices), PAPI_2MAX_STR_LEN - strlen(devices), "%i,", i);
+                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN - strlen(devices)) {
+                        SUBDBG("Failed to write device %d into devices in STAT_FLAG | DEVICE_FLAG case.\n", i);
+                        return PAPI_EBUF;
+                    }
                 }
             }
             *(devices + strlen(devices) - 1) = 0;
@@ -2060,9 +2069,9 @@ static int evt_name_to_basename(const char *name, char *base, int len)
 static int cuda_verify_qualifiers_are_not_repeated(const char *qualifiers)
 {
     int numDeviceQualifiers = 0, numStatsQualifiers = 0;
-    char tmpQualifiers[PAPI_2MAX_STR_LEN];
-    int strLen = snprintf(tmpQualifiers, PAPI_2MAX_STR_LEN, "%s", qualifiers);
-    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+    char tmpQualifiers[PAPI_HUGE_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_HUGE_STR_LEN, "%s", qualifiers);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
         return PAPI_EBUF;
     }
@@ -2094,9 +2103,9 @@ static int cuda_verify_qualifiers_are_not_repeated(const char *qualifiers)
 */
 static int cuda_verify_qualifiers_are_valid(const char *qualifiers)
 {
-    char tmpQualifiers[PAPI_2MAX_STR_LEN];
-    int strLen = snprintf(tmpQualifiers, PAPI_2MAX_STR_LEN, "%s", qualifiers);
-    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+    char tmpQualifiers[PAPI_HUGE_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_HUGE_STR_LEN, "%s", qualifiers);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
         return PAPI_EBUF;
     }
@@ -2361,9 +2370,9 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                 continue;
             }
 
-            char fullMetricName[PAPI_2MAX_STR_LEN];
-            int strLen = snprintf(fullMetricName, PAPI_2MAX_STR_LEN, "%s", baseMetricName);
-            if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+            char fullMetricName[PAPI_HUGE_STR_LEN];
+            int strLen = snprintf(fullMetricName, PAPI_HUGE_STR_LEN, "%s", baseMetricName);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                 SUBDBG("Failed to fully append the base metric name.\n");
                 return PAPI_EBUF;
             }
@@ -2381,8 +2390,8 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                         return papi_errno;
                     }
 
-                    strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_2MAX_STR_LEN - offsetForMetricName, "%s", rollupMetricName);
-                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", rollupMetricName);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
                         SUBDBG("Failed to fully append rollup metric name.\n");
                         return PAPI_EBUF;
                     }
@@ -2408,8 +2417,8 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                     }
 
                     if (supportedSubMetrics.pSupportedSubmetrics[subMetricIdx] != NVPW_SUBMETRIC_NONE) {
-                        strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_2MAX_STR_LEN - offsetForMetricName, "%s", subMetricName);
-                        if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                        strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", subMetricName);
+                        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
                             SUBDBG("Failed to fully append submetric names.\n");
                             return PAPI_EBUF;
                         }
@@ -2420,15 +2429,15 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                         SUBDBG("Failed to allocate memory for metricNames.\n");
                         return PAPI_ENOMEM;
                     }
-                    metricNames[metricCount] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+                    metricNames[metricCount] = (char *) malloc(PAPI_HUGE_STR_LEN * sizeof(char));
                     if (metricNames[metricCount] == NULL) {
                         SUBDBG("Failed to allocate memory for the index %d in the array metricNames.\n", metricCount);
                         return PAPI_ENOMEM;
                     }
 
                     // Store the constructed metric name
-                    strLen = snprintf(metricNames[metricCount], PAPI_2MAX_STR_LEN, "%s", fullMetricName);
-                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    strLen = snprintf(metricNames[metricCount], PAPI_HUGE_STR_LEN, "%s", fullMetricName);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                         SUBDBG("Failed to fully write constructued metric name: %s\n", fullMetricName);
                         return PAPI_EBUF;
                     }
@@ -2661,8 +2670,8 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
         dimUnitsParams.pDimUnits = dimUnitsFactor;
         nvpwCheckErrors( NVPW_MetricsEvaluator_GetMetricDimUnitsPtr(&dimUnitsParams), return PAPI_EMISC );
 
-        char tmpMetricUnits[PAPI_MAX_STR_LEN] = { 0 };
-        int i;
+        char tmpMetricUnits[PAPI_HUGE_STR_LEN] = { 0 };
+        int i, offsetMetricUnits = 0;
         for (i = 0; i < dimUnitsParams.numDimUnits; i++) {
             NVPW_MetricsEvaluator_DimUnitToString_Params dimUnitToStringParams = {NVPW_MetricsEvaluator_DimUnitToString_Params_STRUCT_SIZE};
             dimUnitToStringParams.pMetricsEvaluator = pMetricsEvaluator;
@@ -2671,11 +2680,12 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
             nvpwCheckErrors( NVPW_MetricsEvaluator_DimUnitToStringPtr(&dimUnitToStringParams), return PAPI_EMISC );
 
             char *unitsFormat = (i == 0) ? "%s" : "/%s";
-            strLen = snprintf(tmpMetricUnits + strlen(tmpMetricUnits), PAPI_MAX_STR_LEN - strlen(tmpMetricUnits), unitsFormat, dimUnitToStringParams.pPluralName);
-            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+            strLen = snprintf(tmpMetricUnits + offsetMetricUnits, PAPI_HUGE_STR_LEN - offsetMetricUnits, unitsFormat, dimUnitToStringParams.pPluralName);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetMetricUnits) {
                 SUBDBG("Failed to fully write dimensional units for a metric.\n");
                 return PAPI_EBUF;
             }
+            offsetMetricUnits = strlen(tmpMetricUnits);
         }
         free(dimUnitsFactor);
         metricUnits = tmpMetricUnits;
