@@ -56,6 +56,7 @@ typedef struct event_and_metric_record_s {
 typedef struct event_and_metric_table_s {
     unsigned int count;
     unsigned int capacity;
+    int cuda_devs[30];
     CUpti_EventGroupSets *eventGroupSets;
     CUpti_MetricID metricIDs[PAPI_CUDA_MAX_COUNTERS];
     int *idsThatMakeupAUserAddedEventArray[PAPI_CUDA_MAX_COUNTERS];

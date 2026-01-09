@@ -15,6 +15,7 @@
 
 #include "cupti_config.h"
 #include "papi_cupti_common.h"
+#include "cupti_event_and_metric.h"
 
 static void *dl_drv, *dl_rt;
 
@@ -848,47 +849,77 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
     return PAPI_OK;
 }
 
-int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
+int cuptic_device_acquire(void *evt_table, int flag)
 {
-    gpu_occupancy_t acq_mask = 0;
-    long i;
-    for (i = 0; i < evt_table->count; i++) {
-        acq_mask |= (1 << evt_table->cuda_devs[i]);
+    int i;
+    gpu_occupancy_t bitmask = 0;
+    switch(flag) {
+        case API_LEGACY:
+        {
+            cuptiu_event_and_metric_table_t *legacy_evt_table = (cuptiu_event_and_metric_table_t *) evt_table;
+            for (i = 0; i < legacy_evt_table->count; i++) {
+                bitmask |= (1 << legacy_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        case API_PERFWORKS:
+        {
+            cuptiu_event_table_t *perfworks_evt_table = (cuptiu_event_table_t *) evt_table;
+            for (i = 0; i < perfworks_evt_table->count; i++) {
+                bitmask |= (1 << perfworks_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        default:
+            SUBDBG("Provided flag is not accounted for in this switch statement. Code needs to be updated.\n");
+            return PAPI_EBUG;
     }
-    *bitmask = acq_mask;
 
-    return PAPI_OK;
-}
-
-int cuptic_device_acquire(cuptiu_event_table_t *evt_table)
-{
-    gpu_occupancy_t bitmask;
-    int papi_errno = _devmask_events_get(evt_table, &bitmask);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
     if (bitmask & global_gpu_bitmask) {
         return PAPI_ECNFLCT;
     }
+
     _papi_hwi_lock(_cuda_lock);
     global_gpu_bitmask |= bitmask;
     _papi_hwi_unlock(_cuda_lock);
+
     return PAPI_OK;
 }
 
-int cuptic_device_release(cuptiu_event_table_t *evt_table)
+int cuptic_device_release(void *evt_table, int flag)
 {
-    gpu_occupancy_t bitmask;
-    int papi_errno = _devmask_events_get(evt_table, &bitmask);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
+    int i;
+    gpu_occupancy_t bitmask = 0;
+    switch(flag) {
+        case API_LEGACY:
+        {
+            cuptiu_event_and_metric_table_t *legacy_evt_table = (cuptiu_event_and_metric_table_t *) evt_table;
+            for (i = 0; i < legacy_evt_table->count; i++) {
+                bitmask |= (1 << legacy_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        case API_PERFWORKS:
+        {
+            cuptiu_event_table_t *perfworks_evt_table = (cuptiu_event_table_t *) evt_table;
+            for (i = 0; i < perfworks_evt_table->count; i++) {
+                bitmask |= (1 << perfworks_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        default:
+            SUBDBG("Provided flag is not accounted for in this switch statement. Code needs to be updated.\n");
+            return PAPI_EBUG;
     }
+
     if ((bitmask & global_gpu_bitmask) != bitmask) {
         return PAPI_EMISC;
     }
+
     _papi_hwi_lock(_cuda_lock);
     global_gpu_bitmask ^= bitmask;
     _papi_hwi_unlock(_cuda_lock);
+
     return PAPI_OK;
 }
 
