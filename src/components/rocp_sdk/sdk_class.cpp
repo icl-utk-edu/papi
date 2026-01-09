@@ -840,7 +840,7 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
         // All qualifiers must have the form "qual_name=qual_value".
         pos=qual.find('=');
         if( pos == qual.npos){
-            return PAPI_EINVAL;
+            return PAPI_ENOEVNT;
         }
 
         std::string qual_name = qual.substr(0, pos-0);
@@ -859,7 +859,7 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
                 if( qual_name.compare(dim.name) == 0 ){
                     // Make sure that the qualifier value is within the proper range.
                     if( qual_val >= dim.instance_size ){
-                        return PAPI_EINVAL;
+                        return PAPI_ENOEVNT;
                     }
                     dim_instances.emplace_back( std::make_pair(dim.id, qual_val) );
                     // Mark which qualifiers we have found based on the order in which they appear in
