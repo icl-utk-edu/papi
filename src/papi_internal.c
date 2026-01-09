@@ -287,33 +287,6 @@ _papi_hwi_prefix_component_name( char *component_name, char *event_name, char *o
 	return (PAPI_OK);
 }
 
-/** @internal
- *  @class _papi_hwi_strip_component_prefix
- *  @brief Strip off cmp_name::: from an event name.
- *
- *  @param *event_name
- *  @return Start of the component consumable portion of the name.
- *
- *  This function checks specifically for ':::' and will return the start of
- *  event_name if it doesn't find the ::: .
- */
-const char *_papi_hwi_strip_component_prefix(const char *event_name)
-{
-	const char *start = NULL;
-/* We assume ::: is the seperator
- * eg:
- * 		papi_component:::event_name
- */
-
-	start = strstr( event_name, ":::" );
-	if ( start != NULL )
-		start+= 3; /* return the actual start of event_name */
-	else
-		start = event_name;
-
-	return (start);
-}
-
 /* find the papi event code (4000xxx) associated with the specified component, native event, and event name */
 static int
 _papi_hwi_find_native_event(int cidx, int event, const char *event_name) {
@@ -2730,6 +2703,26 @@ _papi_hwi_query_native_event( unsigned int EventCode )
    INTDBG("EXIT: ret: %d\n", ret);
    return (ret);
 }
+/** @internal
+ *  @class _papi_hwi_obtain_prefix
+ *  @brief Collect the component or pmu prefix name that should be appended to the beginning
+ *         of a native event.
+ *
+ *  @param *full_event_name
+ *    Event name provided by the user.
+ *  @param *prefix
+ *    Stores the component or pmu prefix name.
+ */
+void _papi_hwi_obtain_prefix(const char *full_event_name, char *prefix)
+{
+    // Obtain the component or pmu prefix name.
+    int i;
+    for (i = 0; full_event_name[i] != ':'; i++) {
+        prefix[i] = full_event_name[i];
+    }
+
+    return;
+}
 
 /* Converts an ASCII name into a native event code usable by other routines
    Returns code = 0 and PAPI_OK if name not found.
@@ -2738,94 +2731,138 @@ int
 _papi_hwi_native_name_to_code( const char *in, int *out )
 {
 	INTDBG("ENTER: in: %s, out: %p\n", in, out);
-
-	int retval = PAPI_ENOEVNT;
-	char name[PAPI_HUGE_STR_LEN];	/* make sure it's big enough */
-
-	unsigned int i;
-	int cidx;
-	char *full_event_name;
-
 	if (in == NULL) {
-		INTDBG("EXIT: PAPI_EINVAL\n");
+		INTDBG("EXIT: The first argument 'in' is NULL.\n");
 		return PAPI_EINVAL;
 	}
+	char *full_event_name = strdup(in);
 
-	full_event_name = strdup(in);
+	int cidx, retval = PAPI_ENOEVNT;
+	const char *event_name_to_code_input;
+	// Non-cpu components i.e. appio, cuda, or rocp_sdk.
+	// For non-cpu components we are looking for a component prefix name
+	// i.e. cuda::: or appio:::.
+	if (strstr(full_event_name, ":::") != NULL) {
+		char component_prefix_name[PAPI_MAX_STR_LEN] = { 0 };
+		_papi_hwi_obtain_prefix(full_event_name, component_prefix_name);
 
-	in = _papi_hwi_strip_component_prefix(in);
-
-	// look in each component
-	for(cidx=0; cidx < papi_num_components; cidx++) {
-
-		if (_papi_hwd[cidx]->cmp_info.disabled &&
-            _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT)
-            continue;
-
-		// if this component does not support the pmu
-		// which defines this event, no need to call it
-		if (is_supported_by_component(cidx, full_event_name) == 0) {
-			continue;
+		cidx = PAPI_get_component_index(component_prefix_name);
+		if (cidx < 0) {
+			INTDBG("EXIT: Component %s either does not exist or is not set.\n", component_prefix_name);
+			return cidx;
 		}
 
-		INTDBG("cidx: %d, name: %s, event: %s\n",
-			cidx, _papi_hwd[cidx]->cmp_info.name, in);
+		// Remove 'component_prefix_name:::' from the user provided event
+		// i.e. 'cuda:::dram__bytes' to 'dram__bytes'.
+		event_name_to_code_input = full_event_name + strlen(component_prefix_name) + strlen(":::");
+	}
+	// Cpu components i.e. perf_event and perf_event_uncore.
+	// For cpu components we are looking for pmu prefix names instead of component prefix names
+	// i.e. perf::.
+	else if (strstr(full_event_name, "::") != NULL) {
+		char pmu_prefix_name[PAPI_MAX_STR_LEN] = { 0 };
+		_papi_hwi_obtain_prefix(full_event_name, pmu_prefix_name);
 
-		// show that we do not have an event code yet
-		// (the component may create one and update this info)
-		// this also clears any values left over from a previous call
-		_papi_hwi_set_papi_event_code(-1, -1);
-
-
-		// if component has a ntv_name_to_code function, use it to get event code
-		if (_papi_hwd[cidx]->ntv_name_to_code != NULL) {
-			// try and get this events event code
-			retval = _papi_hwd[cidx]->ntv_name_to_code( in, ( unsigned * ) out );
-			if (retval==PAPI_OK) {
-				*out = _papi_hwi_native_to_eventcode(cidx, *out, -1, in);
-				free (full_event_name);
-				INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", in, *out);
-				return PAPI_OK;
-			}
-		} else {
-			// force the code through the work around
-			retval = PAPI_ECMP;
-		}
-
-		/* If not implemented, work around */
-		if ( retval==PAPI_ECMP) {
-			i = 0;
-			retval = _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
-			if (retval != PAPI_OK) {
-				free (full_event_name);
-				INTDBG("EXIT: retval: %d\n", retval);
-				return retval;
+		char *cpu_components_with_pmus[PAPI_MIN_STR_LEN] = {"perf_event", "perf_event_uncore", NULL};
+		int cpu_idx, found = 0;
+		for (cpu_idx = 0; cpu_components_with_pmus[cpu_idx] != NULL; cpu_idx++) {
+			cidx = PAPI_get_component_index(cpu_components_with_pmus[cpu_idx]);
+			if (cidx < 0) {
+				INTDBG("EXIT: Component %s either does not exist or is not set.\n", _papi_hwd[cidx]->cmp_info.name);
+				return cidx;
 			}
 
-//			_papi_hwi_lock( INTERNAL_LOCK );
+			int pmu_idx;
+			for (pmu_idx = 0; pmu_idx < PAPI_PMU_MAX; pmu_idx++) {
+				if (_papi_hwd[cidx]->cmp_info.pmu_names[pmu_idx] == NULL) {
+					continue;
+				}
 
-			do {
-				// save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
-				_papi_hwi_set_papi_event_code(i, 0);
-				retval = _papi_hwd[cidx]->ntv_code_to_name(i, name, sizeof(name));
-				/* printf("%#x\nname =|%s|\ninput=|%s|\n", i, name, in); */
-				if ( retval == PAPI_OK && in != NULL) {
-					if ( strcmp( name, in ) == 0 ) {
-						*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
-						free (full_event_name);
-						INTDBG("EXIT: PAPI_OK, event: %s, code: %#x\n", in, *out);
-						return PAPI_OK;
-					}
-					retval = PAPI_ENOEVNT;
-				} else {
-					*out = 0;
-					retval = PAPI_ENOEVNT;
+				if (strcmp(pmu_prefix_name, _papi_hwd[cidx]->cmp_info.pmu_names[pmu_idx]) == 0) {
+					INTDBG("EXIT: Component %s supports PMU %s and the event %s.\n", _papi_hwd[cidx]->cmp_info.name, pmu_prefix_name, full_event_name);
+					found = 1;
 					break;
 				}
-			} while ( ( _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_EVENTS ) == PAPI_OK ) );
-
-//			_papi_hwi_unlock( INTERNAL_LOCK );
+			}
+			if (found) {
+				break;
+			}
 		}
+		event_name_to_code_input = full_event_name;
+	}
+	// A component prefix name nor a pmu prefix name was given.
+	// As the perf_event component is the only component that can have events
+	// without a prefix, we only will check inside this component if the event
+	// will exist.
+	else {
+		cidx = PAPI_get_component_index("perf_event");
+		if (cidx < 0) {
+			INTDBG("EXIT: The perf_event component is not set.\n");
+			return cidx;
+		}
+		event_name_to_code_input = full_event_name;
+	}
+
+	if (_papi_hwd[cidx]->cmp_info.disabled &&
+	    _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT) {
+		INTDBG("Component %s at index %d is currently disabled.\n", _papi_hwd[cidx]->cmp_info.name, cidx);
+		return _papi_hwd[cidx]->cmp_info.disabled;
+	}
+
+	// Show that we do not have an event code yet.
+	// The component may create one and update this info.
+	// This also clears any values left over from a previous call.
+	_papi_hwi_set_papi_event_code(-1, -1);
+
+	// The component has a ntv_name_to_code function utilize it to get the event code.
+	if (_papi_hwd[cidx]->ntv_name_to_code != NULL) {
+		retval = _papi_hwd[cidx]->ntv_name_to_code( event_name_to_code_input, ( unsigned * ) out );
+		if (retval == PAPI_OK) {
+			*out = _papi_hwi_native_to_eventcode(cidx, *out, -1, event_name_to_code_input);
+			free (full_event_name);
+			INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", event_name_to_code_input, *out);
+			return PAPI_OK;
+		}
+	}
+	else {
+		retval = PAPI_ECMP;
+	}
+
+	// The component does not have a ntv_name_to_code function so utilize ntv_enum_events.
+	if (retval == PAPI_ECMP) {
+		// Make sure it is big enough
+		char name[PAPI_HUGE_STR_LEN];
+
+		int i = 0;
+		retval = _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_FIRST );
+		if (retval != PAPI_OK) {
+			free (full_event_name);
+			INTDBG("EXIT: retval: %d\n", retval);
+			return retval;
+		}
+
+//		_papi_hwi_lock( INTERNAL_LOCK );
+
+		do {
+			// Save event code so components can get it with call to: _papi_hwi_get_papi_event_code().
+			_papi_hwi_set_papi_event_code(i, 0);
+			retval = _papi_hwd[cidx]->ntv_code_to_name(i, name, sizeof(name));
+			if ( retval == PAPI_OK && event_name_to_code_input != NULL) {
+				if ( strcasecmp( name, event_name_to_code_input ) == 0 ) {
+					*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
+					free (full_event_name);
+					INTDBG("EXIT: PAPI_OK, event: %s, code: %#x\n", event_name_to_code_input, *out);
+					return PAPI_OK;
+				}
+				retval = PAPI_ENOEVNT;
+			} else {
+				*out = 0;
+				retval = PAPI_ENOEVNT;
+				break;
+			}
+		} while ( ( _papi_hwd[cidx]->ntv_enum_events( &i, PAPI_ENUM_EVENTS ) == PAPI_OK ) );
+
+//		_papi_hwi_unlock( INTERNAL_LOCK );
 	}
 
 	free (full_event_name);
