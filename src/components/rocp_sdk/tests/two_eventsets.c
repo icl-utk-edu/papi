@@ -118,10 +118,6 @@ int main(int argc, char *argv[])
         parse_and_assign_args(argc, argv, &rocp_sdk_native_event_names_eventset1, &total_event_count_eventset1, &rocp_sdk_native_event_names_eventset2, &total_event_count_eventset2);
     }
 
-    double exp1[NUM_EVENTS] = {1, 1300000000, 55000000000, 1, 1};
-    double exp2[NUM_EVENTS] = {45000000000, 1, 40000000, 1, 1300000000};
-    double exp3[NUM_EVENTS] = {28000000000, 40000000, 1, 1300000000, 1};
-
     int papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
     if (papi_errno != PAPI_VER_CURRENT) {
         test_fail(__FILE__, __LINE__, "PAPI_library_init", papi_errno);
@@ -187,7 +183,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_read()\n");
 
         for (i = 0; i < total_event_count_eventset1; ++i) {
-            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset1[i], counters1[i], 1.0*counters1[i]/((1.0+rep)*exp1[i]));
+            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset1[i], counters1[i], 1.0*counters1[i]/(1.0+rep));
         }
     }
 
@@ -199,7 +195,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_stop()\n");
 
     for (i = 0; i < total_event_count_eventset1; ++i) {
-        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset1[i], counters1[i], 1.0*counters1[i]/((1.0+3)*exp1[i]));
+        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset1[i], counters1[i], 1.0*counters1[i]/(1.0+3));
     }
 
     printf("==================== SECOND EVENTSET - DEVICE 1 ====================\n");
@@ -232,7 +228,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_read()\n");
 
         for (i = 0; i < total_event_count_eventset2; ++i) {
-            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/((1.0+rep)*exp2[i]));
+            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/(1.0+rep));
         }
     }
 
@@ -244,7 +240,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_stop()\n");
 
     for (i = 0; i < total_event_count_eventset2; ++i) {
-        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/((1.0+3)*exp2[i]));
+        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/(1.0+3));
     }
 
     printf("==================== SECOND EVENTSET - DEVICE 0 ====================\n");
@@ -270,7 +266,7 @@ int main(int argc, char *argv[])
         printf("---------------------  PAPI_read()\n");
 
         for (i = 0; i < total_event_count_eventset2; ++i) {
-            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/((1.0+rep)*exp3[i]));
+            printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/(1.0+rep));
         }
     }
 
@@ -282,7 +278,7 @@ int main(int argc, char *argv[])
     printf("---------------------  PAPI_stop()\n");
 
     for (i = 0; i < total_event_count_eventset2; ++i) {
-        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/((1.0+2)*exp3[i]));
+        printf("%s: %lld (%.2lf)\n", rocp_sdk_native_event_names_eventset2[i], counters2[i], 1.0*counters2[i]/(1.0+2));
     }
 
     /* * * Cleanup * * */
