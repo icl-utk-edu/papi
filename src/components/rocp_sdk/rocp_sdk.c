@@ -139,7 +139,7 @@ rocp_sdk_init_component(int cid)
 
     int papi_errno = rocprofiler_sdk_init_pre();
     if (papi_errno != PAPI_OK) {
-        _rocp_sdk_vector.cmp_info.initialized = 1;
+        _rocp_sdk_vector.cmp_info.initialized = 0;
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
@@ -147,9 +147,14 @@ rocp_sdk_init_component(int cid)
         return papi_errno;
     }
 
-    // This component needs to be fully initialized from the beginning,
-    // because interleaving hip calls and PAPI calls leads to errors.
-    return check_n_initialize();
+    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", \
+                          "Not initialized. Access component events to initialize it.");
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to fully write initial disabled_reason.\n");
+        return PAPI_EBUF;
+    }
+    _rocp_sdk_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
+    return PAPI_EDELAY_INIT;
 }
 
 int
@@ -193,6 +198,11 @@ rocp_sdk_init_private(void)
     if (_rocp_sdk_vector.cmp_info.initialized) {
         papi_errno = _rocp_sdk_vector.cmp_info.disabled;
         goto fn_exit;
+    }
+
+    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", "");
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to write empty disabled_reason.\n");
     }
 
     papi_errno = check_for_available_devices(_rocp_sdk_vector.cmp_info.disabled_reason);
