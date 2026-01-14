@@ -34,7 +34,9 @@ void test_sp_power_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
 static
 float test_sp_mac_VEC_24( int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
     svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
     long long iterValues[1]; iterValues[0] = 0;
@@ -137,7 +139,9 @@ float test_sp_mac_VEC_24( int EventSet, FILE *fp ){
 static
 float test_sp_mac_VEC_48( int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
     svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
     long long iterValues[1]; iterValues[0] = 0;
@@ -266,7 +270,9 @@ float test_sp_mac_VEC_48( int EventSet, FILE *fp ){
 static
 float test_sp_mac_VEC_96( int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
     svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
     long long iterValues[1]; iterValues[0] = 0;
@@ -461,6 +467,6 @@ void test_sp_VEC( int instr_per_loop, int EventSet, FILE *fp )
     }
 
     if( sum/4.0 != scalar_sum ) {
-        fprintf(stderr, "Inconsistent FLOP results detected!\n");
+        fprintf(stderr, "SP: Inconsistent FLOP results detected!\n");
     }
 }
