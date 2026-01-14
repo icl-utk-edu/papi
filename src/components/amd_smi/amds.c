@@ -256,12 +256,20 @@ static void sanitize_name(const char *src, char *dst, size_t len) {
 }
 
 static int strip_device_qualifier(const char *name, char *base, size_t len) {
-  if (!name || !base || len == 0)
+  if (!name || !base || len == 0) {
+    SUBDBG("strip_device_qualifier: invalid arguments.\n");
     return PAPI_EINVAL;
+  }
   size_t nlen = strlen(name);
-  if (nlen >= len)
+  if (nlen >= len) {
+    SUBDBG("strip_device_qualifier: event name too long: '%s'\n", name);
     return PAPI_EBUF;
-  CHECK_SNPRINTF(base, len, "%s", name);
+  }
+  int strLen = snprintf(base, len, "%s", name);
+  if (strLen < 0 || (size_t)strLen >= len) {
+    SUBDBG("strip_device_qualifier: failed to fully write base event name.\n");
+    return PAPI_EBUF;
+  }
   char *qual = strstr(base, ":device=");
   if (qual) {
     char *next = strchr(qual + strlen(":device="), ':');
@@ -648,6 +656,21 @@ static int shutdown_event_table(void) {
   int i;
   for (i = 0; i < ntv_table.count; ++i) {
     htable_delete(htable, ntv_table.events[i].name);
+    if ((ntv_table.events[i].evtinfo_flags & AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR) &&
+        ntv_table.events[i].per_device_descr) {
+      amds_per_device_descr_t *pd =
+          ntv_table.events[i].per_device_descr;
+      if (pd->descrs) {
+        int d;
+        for (d = 0; d < pd->num_devices; ++d) {
+          if (pd->descrs[d])
+            papi_free(pd->descrs[d]);
+        }
+        papi_free(pd->descrs);
+      }
+      papi_free(pd);
+      ntv_table.events[i].per_device_descr = NULL;
+    }
     papi_free(ntv_table.events[i].name);
     papi_free(ntv_table.events[i].descr);
   }
@@ -947,22 +970,30 @@ int amds_err_get_last(const char **err_string) {
 static int add_event(int *idx_ptr, const char *name, const char *descr, int device,
                      uint32_t variant, uint32_t subvariant, int mode,
                      amds_accessor_t access_func) {
-  if (!idx_ptr || !name || !descr)
+  if (!idx_ptr || !name || !descr) {
+    SUBDBG("add_event: invalid arguments.\n");
     return PAPI_EINVAL;
+  }
 
   char base_name[PAPI_MAX_STR_LEN];
   int papi_errno = strip_device_qualifier(name, base_name, sizeof(base_name));
-  if (papi_errno != PAPI_OK)
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_event: failed to strip device qualifier for '%s'.\n", name);
     return papi_errno;
+  }
 
   native_event_t *existing = NULL;
   int hret = htable_find(htable, base_name, (void **)&existing);
   if (hret == HTABLE_SUCCESS) {
     papi_errno = amds_dev_set(&existing->device_map, device);
-    if (papi_errno != PAPI_OK)
+    if (papi_errno != PAPI_OK) {
+      SUBDBG("add_event: failed to set device bitmap for '%s' device=%d.\n",
+             base_name, device);
       return papi_errno;
+    }
     return PAPI_OK;
   } else if (hret != HTABLE_ENOVAL) {
+    SUBDBG("add_event: failed to find '%s' in the event hash table.\n", base_name);
     return PAPI_ECMP;
   }
 
@@ -970,17 +1001,24 @@ static int add_event(int *idx_ptr, const char *name, const char *descr, int devi
   ev->id = *idx_ptr;
   ev->name = strdup(base_name);
   ev->descr = strdup(descr);
-  if (!ev->name || !ev->descr)
+  if (!ev->name || !ev->descr) {
+    SUBDBG("add_event: failed to allocate memory for '%s'.\n", base_name);
     return PAPI_ENOMEM;
+  }
   ev->device = (device < 0) ? device : -1;
   ev->device_map = 0;
   papi_errno = amds_dev_set(&ev->device_map, device);
-  if (papi_errno != PAPI_OK)
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_event: failed to set device bitmap for '%s' device=%d.\n",
+           base_name, device);
     return papi_errno;
+  }
   ev->value = 0;
   ev->mode = mode;
   ev->variant = variant;
   ev->subvariant = subvariant;
+  ev->evtinfo_flags = 0;
+  ev->per_device_descr = NULL;
   ev->priv = NULL;
   ev->open_func = open_simple;
   ev->close_func = close_simple;
@@ -992,20 +1030,108 @@ static int add_event(int *idx_ptr, const char *name, const char *descr, int devi
   return PAPI_OK;
 }
 
+static int add_event_with_perdev_descr(int *idx_ptr, const char *name,
+                                       const char *descr, int device,
+                                       uint32_t variant, uint32_t subvariant,
+                                       int mode, amds_accessor_t access_func,
+                                       uint32_t evtinfo_flags) {
+  if (!idx_ptr || !name || !descr) {
+    SUBDBG("add_event_with_perdev_descr: invalid arguments.\n");
+    return PAPI_EINVAL;
+  }
+
+  char base_name[PAPI_MAX_STR_LEN];
+  int papi_errno = strip_device_qualifier(name, base_name, sizeof(base_name));
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_event_with_perdev_descr: failed to strip device qualifier for '%s'.\n",
+           name);
+    return papi_errno;
+  }
+
+  /* Create or expand the base event entry using the existing add_event(). */
+  papi_errno = add_event(idx_ptr, name, descr, device, variant, subvariant, mode,
+                         access_func);
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_event_with_perdev_descr: add_event failed for '%s'.\n", base_name);
+    return papi_errno;
+  }
+
+  native_event_t *ev = NULL;
+  int hret = htable_find(htable, base_name, (void **)&ev);
+  if (hret != HTABLE_SUCCESS || !ev) {
+    SUBDBG("add_event_with_perdev_descr: failed to find '%s' in the event hash table.\n",
+           base_name);
+    return PAPI_ECMP;
+  }
+
+  ev->evtinfo_flags |= evtinfo_flags;
+
+  if (!(ev->evtinfo_flags & AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR))
+    return PAPI_OK;
+
+  amds_per_device_descr_t *pd = ev->per_device_descr;
+  if (!pd) {
+    pd = (amds_per_device_descr_t *)papi_calloc(1, sizeof(*pd));
+    if (!pd) {
+      SUBDBG("add_event_with_perdev_descr: failed to allocate per-device description metadata for '%s'.\n",
+             base_name);
+      return PAPI_ENOMEM;
+    }
+    int limit = device_count;
+    if (limit <= 0 || limit > 64) {
+      SUBDBG("add_event_with_perdev_descr: unsupported device_count=%d for '%s'.\n",
+             limit, base_name);
+      papi_free(pd);
+      return PAPI_ENOSUPP;
+    }
+    pd->num_devices = limit;
+    pd->descrs = (char **)papi_calloc((size_t)limit, sizeof(*pd->descrs));
+    if (!pd->descrs) {
+      SUBDBG("add_event_with_perdev_descr: failed to allocate per-device description array for '%s'.\n",
+             base_name);
+      papi_free(pd);
+      return PAPI_ENOMEM;
+    }
+    ev->per_device_descr = pd;
+  }
+
+  if (device >= 0 && device < pd->num_devices) {
+    if (pd->descrs[device])
+      papi_free(pd->descrs[device]);
+    pd->descrs[device] = strdup(descr);
+    if (!pd->descrs[device]) {
+      SUBDBG("add_event_with_perdev_descr: failed to allocate per-device description for '%s' device=%d.\n",
+             base_name, device);
+      return PAPI_ENOMEM;
+    }
+  }
+
+  return PAPI_OK;
+}
+
 static int add_counter_event(int *idx_ptr, const char *name, const char *descr,
                              int device, uint32_t variant, uint32_t subvariant) {
   int papi_errno = add_event(idx_ptr, name, descr, device, variant, subvariant,
                              PAPI_MODE_READ, access_amdsmi_gpu_counter);
-  if (papi_errno != PAPI_OK)
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_counter_event: add_event failed for '%s'.\n",
+           name ? name : "<null>");
     return papi_errno;
+  }
   char base_name[PAPI_MAX_STR_LEN];
   papi_errno = strip_device_qualifier(name, base_name, sizeof(base_name));
-  if (papi_errno != PAPI_OK)
+  if (papi_errno != PAPI_OK) {
+    SUBDBG("add_counter_event: failed to strip device qualifier for '%s'.\n",
+           name ? name : "<null>");
     return papi_errno;
+  }
   native_event_t *ev = NULL;
   int hret = htable_find(htable, base_name, (void **)&ev);
-  if (hret != HTABLE_SUCCESS || !ev)
+  if (hret != HTABLE_SUCCESS || !ev) {
+    SUBDBG("add_counter_event: failed to find '%s' in the event hash table.\n",
+           base_name);
     return PAPI_ECMP;
+  }
   ev->open_func = open_counter;
   ev->close_func = close_counter;
   ev->start_func = start_counter;
@@ -2263,7 +2389,8 @@ static int init_event_table(void) {
     }
   }
   /* GPU clock frequency levels for multiple clock domains */
-  for (int d = 0; d < gpu_count; ++d) {
+  int d;
+  for (d = 0; d < gpu_count; ++d) {
     const amdsmi_clk_type_t clk_types[] = {
         AMDSMI_CLK_TYPE_SYS,  AMDSMI_CLK_TYPE_GFX,  AMDSMI_CLK_TYPE_DF,
         AMDSMI_CLK_TYPE_DCEF, AMDSMI_CLK_TYPE_SOC,  AMDSMI_CLK_TYPE_MEM,
@@ -2668,15 +2795,15 @@ static int init_event_table(void) {
           uint32_t variant;
         } board_fields[] = {
             {binfo.product_serial, "board_serial_hash",
-             "Device %d board serial number hash of '%s'", 0},
+             "Hash of Device %d board serial number string '%s'", 0},
             {binfo.model_number, "board_model_number_hash",
-             "Device %d board model number hash of '%s'", 1},
+             "Hash of Device %d board model number string '%s'", 1},
             {binfo.fru_id, "board_fru_id_hash",
-             "Device %d board FRU id hash of '%s'", 2},
+             "Hash of Device %d board FRU id string '%s'", 2},
             {binfo.product_name, "board_product_name_hash",
-             "Device %d board product name hash of '%s'", 3},
+             "Hash of Device %d board product name string '%s'", 3},
             {binfo.manufacturer_name, "board_manufacturer_hash",
-             "Device %d board manufacturer hash of '%s'", 4},
+             "Hash of Device %d board manufacturer string '%s'", 4},
         };
 
         for (size_t bf = 0; bf < sizeof(board_fields) / sizeof(board_fields[0]);
@@ -2688,9 +2815,12 @@ static int init_event_table(void) {
                    board_fields[bf].event_name, d);
           CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), board_fields[bf].descr_fmt, d,
                    display_or_empty(board_fields[bf].value));
-          if (add_event(&idx, name_buf, descr_buf, d, board_fields[bf].variant, 0,
-                        PAPI_MODE_READ, access_amdsmi_board_info_hash) != PAPI_OK)
-            return PAPI_ENOMEM;
+          int papi_errno = add_event_with_perdev_descr(
+              &idx, name_buf, descr_buf, d, board_fields[bf].variant, 0,
+              PAPI_MODE_READ, access_amdsmi_board_info_hash,
+              AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+          if (papi_errno != PAPI_OK)
+            return papi_errno;
         }
       }
     }
@@ -3512,10 +3642,13 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "uuid_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d UUID hash of '%s'", d, display_or_empty(uuid_buf));
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_uuid_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+                 "Hash of Device %d UUID string '%s'", d,
+                 display_or_empty(uuid_buf));
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
+            access_amdsmi_uuid_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "uuid_length:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d UUID length", d);
@@ -3533,11 +3666,13 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vendor_name_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d vendor name hash of '%s'", d,
+                 "Hash of Device %d vendor name string '%s'", d,
                  display_or_empty(tmp));
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
 
@@ -3550,11 +3685,13 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_vendor_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d VRAM vendor hash of '%s'", d,
+                 "Hash of Device %d VRAM vendor string '%s'", d,
                  display_or_empty(tmp));
-        if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
 
@@ -3566,11 +3703,13 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "subsystem_name_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d subsystem name hash of '%s'", d,
+                 "Hash of Device %d subsystem name string '%s'", d,
                  display_or_empty(tmp));
-        if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
 
@@ -3669,11 +3808,14 @@ static int init_event_table(void) {
         CHECK_SNPRINTF(name_buf, sizeof(name_buf),
                  "compute_partition_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d compute partition hash of '%s'", d,
+                 "Hash of Device %d compute partition string '%s'", d,
                  display_or_empty(part));
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_compute_partition_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
+            access_amdsmi_compute_partition_hash,
+            AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
     if (amdsmi_get_gpu_memory_partition_p) {
@@ -3687,11 +3829,14 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "memory_partition_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d memory partition hash of '%s'", d,
+                 "Hash of Device %d memory partition string '%s'", d,
                  display_or_empty(part));
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_memory_partition_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
+            access_amdsmi_memory_partition_hash,
+            AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
     /*
@@ -3747,27 +3892,33 @@ static int init_event_table(void) {
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_name_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d driver name hash of '%s'", d,
+                 "Hash of Device %d driver name string '%s'", d,
                  display_or_empty(dinfo.driver_name));
-        if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        int papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_date_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d driver date hash of '%s'", d,
+                 "Hash of Device %d driver date string '%s'", d,
                  display_or_empty(dinfo.driver_date));
-        if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_version_hash:device=%d", d);
         CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d driver version hash of '%s'", d,
+                 "Hash of Device %d driver version string '%s'", d,
                  display_or_empty(dinfo.driver_version));
-        if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_string_hash) != PAPI_OK)
-          return PAPI_ENOMEM;
+        papi_errno = add_event_with_perdev_descr(
+            &idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
+            access_amdsmi_gpu_string_hash, AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR);
+        if (papi_errno != PAPI_OK)
+          return papi_errno;
       }
     }
     /* VBIOS info (strings hashed) */
