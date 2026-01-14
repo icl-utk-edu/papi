@@ -217,12 +217,11 @@ static inline int harness_eval_result(const char *file, int line, HarnessOpts op
  * @brief If adding the event set fails due to unsupported or hardware/resource
  *        limits, exit as "PASSED with WARNING".
  *
- * Recognizes PAPI_ENOEVNT, PAPI_ECNFLCT, and PAPI_EPERM.
+ * Recognizes PAPI_ENOEVNT, PAPI_ECNFLCT, PAPI_EPERM, and PAPI_ENOSUPP.
  */
 #define EXIT_WARNING_ON_ADD(rc, evname) do { \
-    if ((rc) == PAPI_ENOEVNT || (rc) == PAPI_ECNFLCT || (rc) == PAPI_EPERM) { \
-        EXIT_WARNING("Event unavailable (%s): %s", \
-            ((rc) == PAPI_ENOEVNT ? "ENOEVNT" : (rc) == PAPI_ECNFLCT ? "ECNFLCT" : "EPERM"), (evname)); \
+    if ((rc) == PAPI_ENOEVNT || (rc) == PAPI_ECNFLCT || (rc) == PAPI_EPERM || (rc) == PAPI_ENOSUPP) { \
+        EXIT_WARNING("Event unavailable (%s): %s", PAPI_strerror(rc), (evname)); \
     } \
 } while (0)
 
