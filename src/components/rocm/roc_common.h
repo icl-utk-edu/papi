@@ -49,4 +49,7 @@ int rocc_dev_check(rocc_bitmap_t bitmap, int i);
 
 int rocc_thread_get_id(unsigned long *tid);
 
+/* misc. */
+int rocc_get_chip_name(char *name);
+
 #endif /* End of __ROC_COMMON_H__ */

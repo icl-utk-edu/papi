@@ -322,3 +322,37 @@ init_thread_id_fn(void)
     thread_id_fn = (_papi_hwi_thread_id_fn) ?
         _papi_hwi_thread_id_fn : _papi_getpid;
 }
+
+/* misc. */
+hsa_status_t
+get_chip_name( hsa_agent_t agent, void *data ) {
+
+    char *name = (char *) data;
+
+    hsa_device_type_t type;
+    hsa_status_t hsa_errno = hsa_agent_get_info_p(agent, HSA_AGENT_INFO_DEVICE, &type);
+    if ( HSA_STATUS_SUCCESS != hsa_errno ) {
+        return hsa_errno;
+    }
+
+    if (type == HSA_DEVICE_TYPE_GPU) {
+        hsa_errno = hsa_agent_get_info_p(agent, HSA_AGENT_INFO_NAME, name);
+        if ( HSA_STATUS_SUCCESS != hsa_errno ) {
+            name = NULL;
+            return hsa_errno;
+        }
+    }
+
+    return HSA_STATUS_SUCCESS;
+}
+
+int
+rocc_get_chip_name(char *name) {
+
+    hsa_status_t hsa_errno = hsa_iterate_agents_p(&get_chip_name, name);
+    if ( HSA_STATUS_SUCCESS != hsa_errno ) {
+        return PAPI_EMISC;
+    }
+
+    return PAPI_OK;
+}
