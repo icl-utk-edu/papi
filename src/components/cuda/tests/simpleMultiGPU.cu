@@ -1,92 +1,37 @@
-/* 
- * PAPI Multiple GPU example.  This example is taken from the NVIDIA
- * documentation (Copyright 1993-2013 NVIDIA Corporation) and has been
- * adapted to show the use of CUPTI and PAPI in collecting event
- * counters for multiple GPU contexts.  PAPI Team (2015)
- *
- * Update, July/2021, for CUPTI 11. This version is for the CUPTI 11
- * API, which PAPI uses for Nvidia GPUs with Compute Capability >=
- * 7.0. It will only work on cuda distributions of 10.0 or better.
- * Similar to legacy CUpti API, PAPI is informed of the CUcontexts
- * that will be used to execute kernels at the time of adding PAPI
- * events for that device; as shown below.
- */
+/**
+* @file simpleMultiGPU.cu
+* @brief For all enabled NVIDIA devices detected on the machine a matching Cuda context
+*        will be created and work will be done on that device. 
+*
+*        Note: The cuda component supports being partially disabled, meaning that certain devices
+*        will not be "enabled" to profile on. If PAPI_CUDA_API is not set, then devices with
+*        CC's >= 7.0 will be used and if PAPI_CUDA_API is set to LEGACY then devices with
+*        CC's <= 7.0 will be used.
+*/
 
-/*
- * This software contains source code provided by NVIDIA Corporation
- *
- * According to the Nvidia EULA (compute 5.5 version)
- * http://developer.download.nvidia.com/compute/cuda/5_5/rel/docs/EULA.pdf
- *
- * Chapter 2. NVIDIA CORPORATION CUDA SAMPLES END USER LICENSE AGREEMENT
- * 2.1.1. Source Code
- * Developer shall have the right to modify and create derivative works with the Source
- * Code. Developer shall own any derivative works ("Derivatives") it creates to the Source
- * Code, provided that Developer uses the Materials in accordance with the terms and
- * conditions of this Agreement. Developer may distribute the Derivatives, provided that
- * all NVIDIA copyright notices and trademarks are propagated and used properly and
- * the Derivatives include the following statement: “This software contains source code
- * provided by NVIDIA Corporation.”
- */
-
-/*
- * This application demonstrates how to use the CUDA API to use multiple GPUs,
- * with an emphasis on simple illustration of the techniques (not on performance).
- *
- * Note that in order to detect multiple GPUs in your system you have to disable
- * SLI in the nvidia control panel. Otherwise only one GPU is visible to the
- * application. On the other side, you can still extend your desktop to screens
- * attached to both GPUs.
- *
- *  CUDA Context notes for CUPTI_11: Although a cudaSetDevice() will create a
- *  primary context for the device that allows kernel execution; PAPI cannot
- *  use a primary context to control the Nvidia Performance Profiler.
- *  Applications must create a context using cuCtxCreate() that will execute
- *  the kernel, this must be done prior to the PAPI_add_events() invocation in
- *  the code below. When multiple GPUs are in use, each requires its own
- *  context, and that context should be active when PAPI_events are added for
- *  each device. This means using seperate PAPI_add_events() for each device,
- *  as we do here.
- */
-
-// System includes
+// Standard library headers
 #include <stdio.h>
-
-// CUDA runtime
-#include <cuda.h>
 #include <timer.h>
 
-#ifdef PAPI
+// Cuda Toolkit headers
+#include <cuda.h>
+
+// Internal headers
+#include "cuda_tests_helper.h"
 #include "papi.h"
 #include "papi_test.h"
-#endif
+#include "simpleMultiGPU.h"
 
 #ifndef MAX
 #define MAX(a,b) (a > b ? a : b)
 #endif
-
-#include "simpleMultiGPU.h"
 
 // //////////////////////////////////////////////////////////////////////////////
 // Data configuration
 // //////////////////////////////////////////////////////////////////////////////
 const int MAX_GPU_COUNT = 32;
 const int DATA_N = 48576 * 32;
-#ifdef PAPI
 const int MAX_NUM_EVENTS = 32;
-#endif
-
-#define CHECK_CU_ERROR(err, cufunc)                                     \
-    if (err != CUDA_SUCCESS) { fprintf (stderr, "Error %d for CUDA Driver API function '%s'\n", err, cufunc); return -1; }
-
-#define CHECK_CUDA_ERROR(err)                                           \
-    if (err != cudaSuccess) { fprintf (stderr, "%s:%i Error %d for CUDA [%s]\n", __FILE__, __LINE__, err, cudaGetErrorString(err) ); return -1; }
-
-#define CHECK_CUPTI_ERROR(err, cuptifunc)                               \
-    if (err != CUPTI_SUCCESS) { const char *errStr; cuptiGetResultString(err, &errStr); \
-       fprintf (stderr, "%s:%i Error %d [%s] for CUPTI API function '%s'\n", __FILE__, __LINE__, err, errStr, cuptifunc); return -1; }
-
-#define PRINT(quiet, format, args...) {if (!quiet) {fprintf(stderr, format, ## args);}}
 
 // //////////////////////////////////////////////////////////////////////////////
 // Simple reduction kernel.
@@ -105,363 +50,397 @@ __global__ static void reduceKernel( float *d_Result, float *d_Input, int N )
     d_Result[tid] = sum;
 }
 
-/** @class add_events_from_command_line
-  * @brief Try and add each event provided on the command line by the user.
-  *
-  * @param EventSet
-  *   A PAPI eventset.
-  * @param totalEventCount
-  *   Number of events from the command line.
-  * @param **eventsFromCommandLine
-  *   Events provided on the command line.
-  * @param gpu_id
-  *   NVIDIA device index.
-  * @param *numEventsSuccessfullyAdded
-  *   Total number of successfully added events.
-  * @param **eventsSuccessfullyAdded
-  *   Events that we are able to add to the EventSet.
-  * @param *numMultipassEvents
-  *   Counter to see if a multiple pass event was provided on the command line.
-*/
-static void add_events_from_command_line(int EventSet, int totalEventCount, char **eventNamesFromCommandLine, int gpu_id, int *numEventsSuccessfullyAdded, char **eventsSuccessfullyAdded, int *numMultipassEvents)
+static void print_help_message(void)
 {
-    int i;
-    for (i = 0; i < totalEventCount; i++) {
-        char tmpEventName[PAPI_MAX_STR_LEN];
-        int strLen = snprintf(tmpEventName, PAPI_MAX_STR_LEN, "%s:device=%d", eventNamesFromCommandLine[i], gpu_id);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-
-        int papi_errno = PAPI_add_named_event(EventSet, tmpEventName);
-        if (papi_errno != PAPI_OK) {
-            if (papi_errno != PAPI_EMULPASS) {
-                fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", tmpEventName, papi_errno);
-                test_skip(__FILE__, __LINE__, "", 0);
-            }
-
-            // Handle multiple pass events
-            (*numMultipassEvents)++;
-            continue;
-        }
-
-        // Handle successfully added events
-        strLen = snprintf(eventsSuccessfullyAdded[(*numEventsSuccessfullyAdded)], PAPI_MAX_STR_LEN, "%s", tmpEventName);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            fprintf(stderr, "Failed to fully write successfully added event.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-        (*numEventsSuccessfullyAdded)++;
-    }
-
-    return;
+    printf("./simpleMultiGPU --cuda-native-event-names [list of cuda native event names separated by a comma].\n"
+           "Notes:\n"
+           "1. Native event names must not have the device qualifier appended.\n");
 }
 
-// //////////////////////////////////////////////////////////////////////////////
-// Program main
-// //////////////////////////////////////////////////////////////////////////////
-int main( int argc, char **argv )
+static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_event_names, int *total_event_count)
 {
-    // Solver config
-    TGPUplan plan[MAX_GPU_COUNT];
-    // GPU reduction results
-    float h_SumGPU[MAX_GPU_COUNT];
-    float sumGPU;
-    double sumCPU, diff;
-    int i, j, gpuBase, num_gpus;
+    int i;
+    for (i = 1; i < argc; ++i)
+    {   
+        char *arg = argv[i];
+        if (strcmp(arg, "--help") == 0)
+        {   
+            print_help_message();
+            exit(EXIT_SUCCESS);
+        }   
+        else if (strcmp(arg, "--cuda-native-event-names") == 0)
+        {   
+            if (!argv[i + 1]) 
+            {   
+                printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
+                exit(EXIT_FAILURE);
+            }   
 
-    const int BLOCK_N = 32;
-    const int THREAD_N = 256;
-    const int ACCUM_N = BLOCK_N * THREAD_N;
+            char **cmd_line_native_event_names = NULL;
+            const char *cuda_native_event_name = strtok(argv[i+1], ",");
+            while (cuda_native_event_name != NULL)
+            {   
+                if (strstr(cuda_native_event_name, ":device")) {
+                    fprintf(stderr, "Cuda native event name must not have a device qualifier appended for this test, i.e. no :device=#.\n");
+                    print_help_message();
+                    exit(EXIT_FAILURE);
+                }   
 
-    CUcontext ctx[MAX_GPU_COUNT];
-    CUcontext poppedCtx;
+                cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
+                check_memory_allocation_call(cmd_line_native_event_names);
 
-    char *test_quiet = getenv("PAPI_CUDA_TEST_QUIET");
-    int quiet = 0;
-    if (test_quiet)
-        quiet = (int) strtol(test_quiet, (char**) NULL, 10);
+                cmd_line_native_event_names[(*total_event_count)] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+                check_memory_allocation_call(cmd_line_native_event_names[(*total_event_count)]);
 
-    PRINT( quiet, "Starting simpleMultiGPU\n" );
+                int strLen = snprintf(cmd_line_native_event_names[(*total_event_count)], PAPI_2MAX_STR_LEN, "%s", cuda_native_event_name);
+                if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    fprintf(stderr, "Failed to fully write cuda native event name.\n");
+                    exit(EXIT_FAILURE);
+                }   
 
-#ifdef PAPI
-    int event_count = argc - 1;
+                (*total_event_count)++;
+                cuda_native_event_name = strtok(NULL, ",");
+            }   
+            i++;
+            *cuda_native_event_names = cmd_line_native_event_names;
+        }   
+        else
+        {   
+            print_help_message();
+            exit(EXIT_FAILURE);
+        }   
+    }   
+}
 
-    /* if no events passed at command line, just report test skipped. */
-    if (event_count == 0) {
-        fprintf(stderr, "No eventnames specified at command line.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
+int main(int argc, char **argv)
+{
+    // Determine the number of Cuda capable devices
+    int num_devices = 0;
+    check_cuda_runtime_api_call( cudaGetDeviceCount(&num_devices) );
+
+    // No devices detected on the machine, exit
+    if (num_devices < 1) {
+        fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
+        test_skip(__FILE__, __LINE__, "", 0); 
     }
 
-    /* PAPI Initialization must occur before any context creation/manipulation. */
-    /* This is to ensure PAPI can monitor CUpti library calls.                  */
+    char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
+    int suppress_output = 0;
+    if (user_defined_suppress_output) {
+        suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
+    }
+    PRINT(suppress_output, "Running the Cuda component test simpleMultiGPU.cu\n");
+
+    char **cuda_native_event_names = NULL;
+    // If command line arguments are provided then get their values.
+    int total_event_count = 0;
+    if (argc > 1) {
+        parse_and_assign_args(argc, argv, &cuda_native_event_names, &total_event_count);
+    }
+
+    // Initialize PAPI library
     int papi_errno = PAPI_library_init( PAPI_VER_CURRENT );
     if( papi_errno != PAPI_VER_CURRENT ) {
-        fprintf( stderr, "PAPI_library_init failed\n" );
-        exit(-1);
+        test_fail(__FILE__, __LINE__, "PAPI_library_init()", papi_errno);
+    }
+    PRINT(suppress_output, "PAPI version being used for this test: %d.%d.%d\n",
+          PAPI_VERSION_MAJOR(PAPI_VERSION),
+          PAPI_VERSION_MINOR(PAPI_VERSION),
+          PAPI_VERSION_REVISION(PAPI_VERSION));
+
+    int cuda_cmp_idx = PAPI_get_component_index("cuda");
+    if (cuda_cmp_idx < 0) {
+        test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
+    }
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);  
+
+    // Initialize the Cuda component
+    int cuda_eventcode = 0 | PAPI_NATIVE_MASK;
+    check_papi_api_call( PAPI_enum_cmp_event(&cuda_eventcode, PAPI_ENUM_FIRST, cuda_cmp_idx) );
+
+    // If we have not gotten an event via the command line, use the event obtained from PAPI_enum_cmp_event
+    if (total_event_count == 0) {
+        int num_spaces_to_allocate = 1;
+        cuda_native_event_names = (char **) malloc(num_spaces_to_allocate * sizeof(char *));
+        check_memory_allocation_call( cuda_native_event_names );
+
+        cuda_native_event_names[total_event_count] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+        check_memory_allocation_call( cuda_native_event_names[total_event_count] );
+
+        check_papi_api_call( PAPI_event_code_to_name(cuda_eventcode, cuda_native_event_names[total_event_count++]) );
+    }   
+
+    const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
+    if (cmpInfo == NULL) {
+        fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
+        exit(EXIT_FAILURE);
     }
 
-    printf( "PAPI version: %d.%d.%d\n", PAPI_VERSION_MAJOR( PAPI_VERSION ), PAPI_VERSION_MINOR( PAPI_VERSION ), PAPI_VERSION_REVISION( PAPI_VERSION ) );
-#endif 
-    
-    // Report on the available CUDA devices
-    int computeCapabilityMajor = 0, computeCapabilityMinor = 0;
-    int runtimeVersion = 0, driverVersion = 0;
-    char deviceName[PAPI_MIN_STR_LEN];
+    // Check to see if the Cuda component is partially disabled
+    if (cmpInfo->partially_disabled) {
+        const char *cc_support = (getenv("PAPI_CUDA_API") != NULL) ? "<=7.0" : ">=7.0";
+        PRINT(suppress_output, "\033[33mThe cuda component is partially disabled. Only support for CC's %s are enabled.\033[0m\n", cc_support);
+    }
+
+    check_cuda_runtime_api_call( cudaGetDeviceCount( &num_devices ) );
     CUdevice device[MAX_GPU_COUNT];
-    CHECK_CUDA_ERROR( cudaGetDeviceCount( &num_gpus ) );
-    if( num_gpus > MAX_GPU_COUNT ) num_gpus = MAX_GPU_COUNT;
-    PRINT( quiet, "CUDA-capable device count: %i\n", num_gpus );
-    for ( i=0; i<num_gpus; i++ ) {
-        CHECK_CU_ERROR( cuDeviceGet( &device[i], i ), "cuDeviceGet" );
-        CHECK_CU_ERROR( cuDeviceGetName( deviceName, PAPI_MIN_STR_LEN, device[i] ), "cuDeviceGetName" );
-        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMajor, 
-            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device[i]), "cuDeviceGetAttribute");
-        CHECK_CU_ERROR( cuDeviceGetAttribute( &computeCapabilityMinor, 
-            CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device[i]), "cuDeviceGetAttribute");
-        cudaRuntimeGetVersion( &runtimeVersion );
-        cudaDriverGetVersion( &driverVersion );
-        PRINT( quiet, "CUDA Device %d: %s : computeCapability %d.%d runtimeVersion %d.%d driverVersion %d.%d\n",
-                i, deviceName, computeCapabilityMajor, computeCapabilityMinor, runtimeVersion/1000, (runtimeVersion%100)/10, driverVersion/1000, (driverVersion%100)/10 );
-        if ( computeCapabilityMajor < 2 ) {
-            fprintf( stderr, "CUDA Device %d compute capability is too low... will not add any more GPUs\n", i );
-            num_gpus = i;
-            break;
-        }
-    }
-
-    // create one context per device. This can be delayed
+    // Create one context per device. This can be delayed
     // to as late as PAPI_start(), but they are needed to
     // create streams, alloc memory, etc.
-    for (i = 0; i < num_gpus; i++) {
-        int flags = 0;
-#if defined(CUDA_TOOLKIT_GE_13)
-        CHECK_CU_ERROR( cuCtxCreate(&(ctx[i]), (CUctxCreateParams*)0, flags, device[i]), "cuCtxCreate" );
-#else
-        CHECK_CU_ERROR( cuCtxCreate(&(ctx[i]), flags, device[i]), "cuCtxCreate" );
-#endif
-        CHECK_CU_ERROR( cuCtxPopCurrent(&poppedCtx), "cuCtxPopCurrent" );        // ... so take it off.
-    }
-
-    PRINT( quiet, "Generating input data...\n" );
-
-    // Subdividing input data across GPUs
-    // Get data sizes for each GPU
-    for( i = 0; i < num_gpus; i++ )
-        plan[i].dataN = DATA_N / num_gpus;
-    // Take into account "odd" data sizes
-    for( i = 0; i < DATA_N % num_gpus; i++ )
-        plan[i].dataN++;
-
-    // Assign data ranges to GPUs
-    gpuBase = 0;
-    for( i = 0; i < num_gpus; i++ ) {
-        plan[i].h_Sum = h_SumGPU + i; // point within h_SumGPU array
-        gpuBase += plan[i].dataN;
-    }
-
+    TGPUplan plan[MAX_GPU_COUNT];
+    float h_SumGPU[MAX_GPU_COUNT];
+    int gpuBase = 0;
+    CUcontext ctx[MAX_GPU_COUNT], poppedCtx;
+    const int BLOCK_N = 32; 
+    const int THREAD_N = 256;
+    const int ACCUM_N = BLOCK_N * THREAD_N;
     // Create streams for issuing GPU command asynchronously and allocate memory (GPU and System page-locked)
-    for( i = 0; i < num_gpus; i++ ) {
-        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
-        CHECK_CUDA_ERROR( cudaStreamCreate( &plan[i].stream ) );
-        CHECK_CUDA_ERROR( cudaMalloc( ( void ** ) &plan[i].d_Data, plan[i].dataN * sizeof( float ) ) );
-        CHECK_CUDA_ERROR( cudaMalloc( ( void ** ) &plan[i].d_Sum, ACCUM_N * sizeof( float ) ) );
-        CHECK_CUDA_ERROR( cudaMallocHost( ( void ** ) &plan[i].h_Sum_from_device, ACCUM_N * sizeof( float ) ) );
-        CHECK_CUDA_ERROR( cudaMallocHost( ( void ** ) &plan[i].h_Data, plan[i].dataN * sizeof( float ) ) );
-        for( j = 0; j < plan[i].dataN; j++ ) {
-            plan[i].h_Data[j] = ( float ) rand() / ( float ) RAND_MAX;
+    int j;
+    int dev_idx;
+    for (dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
         }
-        CHECK_CU_ERROR( cuCtxPopCurrent(&poppedCtx), "cuCtxPopCurrent" );
+
+        int flags = 0;
+        check_cuda_driver_api_call( cuDeviceGet(&device[dev_idx], dev_idx) );
+#if defined(CUDA_TOOLKIT_GE_13)
+        check_cuda_driver_api_call( cuCtxCreate(&(ctx[dev_idx]), (CUctxCreateParams*)0, flags, device[dev_idx]) );
+#else
+        check_cuda_driver_api_call( cuCtxCreate(&(ctx[dev_idx]), flags, device[dev_idx]) );
+#endif
+        plan[dev_idx].dataN = DATA_N / num_devices;
+        // Take into account odd data sizes and increment
+        if (plan[dev_idx].dataN % 2) {
+            plan[dev_idx].dataN++;
+        }
+
+        plan[dev_idx].h_Sum = h_SumGPU + dev_idx; // point within h_SumGPU array
+        gpuBase += plan[dev_idx].dataN;
+
+        // Create an asynchronous stream
+        check_cuda_runtime_api_call( cudaStreamCreate( &plan[dev_idx].stream ) );
+        // Allocate memory on the device
+        check_cuda_runtime_api_call( cudaMalloc((void **) &plan[dev_idx].d_Data, plan[dev_idx].dataN * sizeof(float)) );
+        check_cuda_runtime_api_call( cudaMalloc((void **) &plan[dev_idx].d_Sum, ACCUM_N * sizeof(float)) );
+        // Allocates page locked memory on the host
+        check_cuda_runtime_api_call( cudaMallocHost((void **) &plan[dev_idx].h_Sum_from_device, ACCUM_N * sizeof(float)) );
+        check_cuda_runtime_api_call( cudaMallocHost((void **) &plan[dev_idx].h_Data, plan[dev_idx].dataN * sizeof(float)) );
+
+        for (j = 0; j < plan[dev_idx].dataN; j++) {
+            plan[dev_idx].h_Data[j] = ( float ) rand() / ( float ) RAND_MAX;
+        }
+        check_cuda_driver_api_call( cuCtxPopCurrent(&poppedCtx) );
     }
 
-#ifdef PAPI
-    PRINT(quiet, "Setup PAPI counters internally (PAPI)\n");
     int EventSet = PAPI_NULL;
-    int NUM_EVENTS = MAX_GPU_COUNT*MAX_NUM_EVENTS;
-    long long values[NUM_EVENTS];
-
-    int cid = PAPI_get_component_index("cuda");
-    if (cid < 0) {
-        PAPI_shutdown();
-        test_fail(__FILE__, __LINE__, "Failed to get index of cuda component.", PAPI_ECMP);
-    }
-
-    PRINT(quiet, "Found CUDA Component at id %d\n", cid);
-
-    papi_errno = PAPI_create_eventset(&EventSet);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_create_eventset failed.", papi_errno);
-    }
-
-    papi_errno = PAPI_assign_eventset_component(EventSet, cid);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_assign_eventset_component failed.", papi_errno);
-    }
-
-    // In this example measure events from each GPU
-    // Add events at a GPU specific level ... eg cuda:::device:2:elapsed_cycles_sm
-    // Similar to legacy CUpti API, we must change the contexts to the appropriate device to
-    // add events to inform PAPI of the context that will run the kernels.
-
-    // Save current context, will restore after adding events.
-    CUcontext userContext;
-    CHECK_CU_ERROR(cuCtxGetCurrent(&userContext), "cuCtxGetCurrent");
+    check_papi_api_call( PAPI_create_eventset(&EventSet) );
 
     // Handle the events from the command line
-    int numEventsSuccessfullyAdded = 0, numMultipassEvents = 0;
-    char **eventsSuccessfullyAdded, **metricNames = argv + 1;
-    eventsSuccessfullyAdded = (char **) malloc(NUM_EVENTS * sizeof(char *));
-    if (eventsSuccessfullyAdded == NULL) {
-        fprintf(stderr, "Failed to allocate memory for successfully added events.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
-    }
-    for (i = 0; i < NUM_EVENTS; i++) {
-        eventsSuccessfullyAdded[i] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
-        if (eventsSuccessfullyAdded[i] == NULL) {
-            fprintf(stderr, "Failed to allocate memory for command line argument.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-    }
+    int num_events_successfully_added = 0, numMultipassEvents = 0;
+    int NUM_EVENTS = MAX_GPU_COUNT * MAX_NUM_EVENTS;
+    char **events_successfully_added = (char **) malloc(NUM_EVENTS * sizeof(char *));
+    check_memory_allocation_call( events_successfully_added );
 
-    int gpu_id;
-    for (gpu_id = 0; gpu_id < num_gpus; gpu_id++) {
-        CHECK_CU_ERROR(cuCtxSetCurrent(ctx[gpu_id]), "cuCtxSetCurrent");
-        add_events_from_command_line(EventSet, event_count, metricNames, gpu_id, &numEventsSuccessfullyAdded, eventsSuccessfullyAdded, &numMultipassEvents); 
+    int event_idx;
+    for (dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
+
+        for (event_idx = 0; event_idx < total_event_count; event_idx++) {
+            char tmp_event_name[PAPI_MAX_STR_LEN];
+            int strLen = snprintf(tmp_event_name, PAPI_MAX_STR_LEN, "%s:device=%d", cuda_native_event_names[event_idx], dev_idx);
+            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+                fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
+                exit(EXIT_FAILURE);
+            }
+
+            events_successfully_added[num_events_successfully_added] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
+            check_memory_allocation_call( events_successfully_added[event_idx] );
+
+            // We must change contexts to the appropriate device to add events to inform PAPI of the context that will run the kernels
+            check_cuda_driver_api_call( cuCtxSetCurrent(ctx[dev_idx]) );
+            add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &numMultipassEvents); 
+        }
     }
 
     // Only multiple pass events were provided on the command line
-    if (numEventsSuccessfullyAdded == 0) {
+    if (num_events_successfully_added == 0) {
         fprintf(stderr, "Events provided on the command line could not be added to an EventSet as they require multiple passes.\n");
         test_skip(__FILE__, __LINE__, "", 0);
     }
 
-    // Restore user context.
-
-    CHECK_CU_ERROR(cuCtxSetCurrent(userContext), "cuCtxSetCurrent");
-
     // Invoke PAPI_start().
-    papi_errno = PAPI_start( EventSet );
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__, __LINE__, "PAPI_start failed", papi_errno);
-    }
-#endif
+    check_papi_api_call( PAPI_start(EventSet) );
 
-    // Start timing and compute on GPU(s)
-    PRINT( quiet, "Computing with %d GPUs...\n", num_gpus );
+    // Start timing
     StartTimer();
 
     // Copy data to GPU, launch the kernel and copy data back. All asynchronously
-    for (i = 0; i < num_gpus; i++) {
+    for (dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
         // Pushing a context implicitly sets the device for which it was created.
-        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
+        check_cuda_driver_api_call( cuCtxPushCurrent(ctx[dev_idx]) );
         // Copy input data from CPU
-        CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].d_Data, plan[i].h_Data, plan[i].dataN * sizeof( float ), cudaMemcpyHostToDevice, plan[i].stream ) );
+        check_cuda_runtime_api_call( cudaMemcpyAsync( plan[dev_idx].d_Data, plan[dev_idx].h_Data, plan[dev_idx].dataN * sizeof( float ), cudaMemcpyHostToDevice, plan[dev_idx].stream ) );
         // Perform GPU computations
-        reduceKernel <<< BLOCK_N, THREAD_N, 0, plan[i].stream >>> ( plan[i].d_Sum, plan[i].d_Data, plan[i].dataN );
-        if ( cudaGetLastError() != cudaSuccess ) { printf( "reduceKernel() execution failed (GPU %d).\n", i ); exit(EXIT_FAILURE); }
+        reduceKernel <<< BLOCK_N, THREAD_N, 0, plan[dev_idx].stream >>> ( plan[dev_idx].d_Sum, plan[dev_idx].d_Data, plan[dev_idx].dataN );
+        check_cuda_runtime_api_call( cudaGetLastError() );
         // Read back GPU results
-        CHECK_CUDA_ERROR( cudaMemcpyAsync( plan[i].h_Sum_from_device, plan[i].d_Sum, ACCUM_N * sizeof( float ), cudaMemcpyDeviceToHost, plan[i].stream ) );
+        check_cuda_runtime_api_call( cudaMemcpyAsync( plan[dev_idx].h_Sum_from_device, plan[dev_idx].d_Sum, ACCUM_N * sizeof( float ), cudaMemcpyDeviceToHost, plan[dev_idx].stream ) );
         // Popping a context can change the device to match the previous context.
-        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+        check_cuda_driver_api_call( cuCtxPopCurrent(&(ctx[dev_idx])) );
     }
 
     // Process GPU results
-    PRINT( quiet, "Process GPU results on %d GPUs...\n", num_gpus );
-    for( i = 0; i < num_gpus; i++ ) {
+    PRINT(suppress_output, "Process GPU results...\n");
+    for(dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
         float sum;
         // Pushing a context implicitly sets the device for which it was created.
-        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
+        check_cuda_driver_api_call( cuCtxPushCurrent(ctx[dev_idx]) );
         // Wait for all operations to finish
-        cudaStreamSynchronize( plan[i].stream );
+        cudaStreamSynchronize( plan[dev_idx].stream );
         // Finalize GPU reduction for current subvector
         sum = 0;
-        for( j = 0; j < ACCUM_N; j++ ) {
-            sum += plan[i].h_Sum_from_device[j];
+        for (j = 0; j < ACCUM_N; j++) {
+            sum += plan[dev_idx].h_Sum_from_device[j];
         }
-        *( plan[i].h_Sum ) = ( float ) sum;
+        *( plan[dev_idx].h_Sum ) = ( float ) sum;
         // Popping a context can change the device to match the previous context.
-        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+        check_cuda_driver_api_call( cuCtxPopCurrent(&(ctx[dev_idx])) );
     }
     double gpuTime = GetTimer();
 
 
-#ifdef PAPI
-    for ( i=0; i<num_gpus; i++ ) {
+    for (dev_idx=0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
         // Pushing a context implicitly sets the device for which it was created.
-        CHECK_CU_ERROR(cuCtxPushCurrent(ctx[i]), "cuCtxPushCurrent");
-        CHECK_CU_ERROR( cuCtxSynchronize( ), "cuCtxSynchronize" );
+        check_cuda_driver_api_call( cuCtxPushCurrent(ctx[dev_idx]) );
+        check_cuda_driver_api_call( cuCtxSynchronize( ) );
         // Popping a context may change the current device to match the new current context.
-        CHECK_CU_ERROR( cuCtxPopCurrent(&(ctx[i])), "cuCtxPopCurrent" );
+        check_cuda_driver_api_call( cuCtxPopCurrent(&(ctx[dev_idx])) );
     }
 
-    papi_errno = PAPI_stop( EventSet, values );                                         // Stop (will read values).
-    if( papi_errno != PAPI_OK )  fprintf( stderr, "PAPI_stop failed\n" );
-    for( i = 0; i < numEventsSuccessfullyAdded; i++ )
-        PRINT( quiet, "PAPI counterValue %12lld \t\t --> %s \n", values[i], eventsSuccessfullyAdded[i] );
+    long long cuda_counter_values[NUM_EVENTS];
+    check_papi_api_call( PAPI_stop(EventSet, cuda_counter_values) );
 
-    papi_errno = PAPI_cleanup_eventset( EventSet );
-    if( papi_errno != PAPI_OK )  fprintf( stderr, "PAPI_cleanup_eventset failed\n" );
-    papi_errno = PAPI_destroy_eventset( &EventSet );
-    if( papi_errno != PAPI_OK ) fprintf( stderr, "PAPI_destroy_eventset failed\n" );
+    for(event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
+        PRINT(suppress_output, "Event %s produced the value:\t\t%lld\n", events_successfully_added[event_idx], cuda_counter_values[event_idx]);
+    }
+
+    check_papi_api_call( PAPI_cleanup_eventset(EventSet) );
+
+    check_papi_api_call( PAPI_destroy_eventset(&EventSet) );
+
     PAPI_shutdown();
-#endif
 
-    sumGPU = 0;
-    for( i = 0; i < num_gpus; i++ ) {
-        sumGPU += h_SumGPU[i];
+    float sumGPU = 0.0;
+    for(dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
+        sumGPU += h_SumGPU[dev_idx];
     }
-    PRINT( quiet, "  GPU Processing time: %f (ms)\n", gpuTime );
+    PRINT(suppress_output, "  GPU Processing time: %f (ms)\n", gpuTime);
 
     // Compute on Host CPU
-    PRINT( quiet, "Computing the same result with Host CPU...\n" );
+    PRINT(suppress_output, "Computing the same result with Host CPU...\n");
     StartTimer();
-    sumCPU = 0;
-    for( i = 0; i < num_gpus; i++ ) {
-        for( j = 0; j < plan[i].dataN; j++ ) {
-            sumCPU += plan[i].h_Data[j];
+    double sumCPU = 0.0;
+    for(dev_idx = 0; dev_idx < num_devices; dev_idx++) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
+
+        for (j = 0; j < plan[dev_idx].dataN; j++) {
+            sumCPU += plan[dev_idx].h_Data[j];
         }
     }
+
     double cpuTime = GetTimer();
     if (gpuTime > 0) {
-        PRINT( quiet, "  CPU Processing time: %f (ms) (speedup %.2fX)\n", cpuTime, (cpuTime/gpuTime) );
+        PRINT(suppress_output, "  CPU Processing time: %f (ms) (speedup %.2fX)\n", cpuTime, (cpuTime/gpuTime));
     } else {
-        PRINT( quiet, "  CPU Processing time: %f (ms)\n", cpuTime);
+        PRINT(suppress_output, "  CPU Processing time: %f (ms)\n", cpuTime);
     }
 
     // Compare GPU and CPU results
-    PRINT( quiet, "Comparing GPU and Host CPU results...\n" );
-    diff = fabs( sumCPU - sumGPU ) / fabs( sumCPU );
-    PRINT( quiet, "  GPU sum: %f\n  CPU sum: %f\n", sumGPU, sumCPU );
-    PRINT( quiet, "  Relative difference: %E \n", diff );
+    PRINT(suppress_output, "Comparing GPU and Host CPU results...\n");
+    double diff = fabs( sumCPU - sumGPU ) / fabs( sumCPU );
+    PRINT(suppress_output, "  GPU sum: %f\n  CPU sum: %f\n", sumGPU, sumCPU);
+    PRINT(suppress_output, "  Relative difference: %E \n", diff);
+
+    // Output a note that a multiple pass event was provided on the command line
+    if (numMultipassEvents > 0) {
+        PRINT(suppress_output, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
+    }
 
     // Cleanup and shutdown
-    for( i = 0; i < num_gpus; i++ ) {
-        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Sum_from_device ) );
-        CHECK_CUDA_ERROR( cudaFreeHost( plan[i].h_Data ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Sum ) );
-        CHECK_CUDA_ERROR( cudaFree( plan[i].d_Data ) );
-        // Shut down this GPU
-        CHECK_CUDA_ERROR( cudaStreamDestroy( plan[i].stream ) );
-        CHECK_CU_ERROR( cuCtxDestroy(ctx[i]), "cuCtxDestroy");
+    for(dev_idx = 0; dev_idx < num_devices; dev_idx++ ) {
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(dev_idx) == 0) {
+                continue;
+            }
+        }
+        // Free page-locked memory
+        check_cuda_runtime_api_call( cudaFreeHost(plan[dev_idx].h_Sum_from_device) );
+        check_cuda_runtime_api_call( cudaFreeHost(plan[dev_idx].h_Data) );
+        // Free memory on the device
+        check_cuda_runtime_api_call( cudaFree(plan[dev_idx].d_Sum) );
+        check_cuda_runtime_api_call( cudaFree(plan[dev_idx].d_Data) );
+        // Destroys and cleans up asynchronous stream
+        check_cuda_runtime_api_call( cudaStreamDestroy(plan[dev_idx].stream) );
+        // Destroy Cuda context
+        check_cuda_driver_api_call( cuCtxDestroy(ctx[dev_idx]) );
     }
 
     //Free allocated memory
-    for (i = 0; i < event_count; i++) {
-        free(eventsSuccessfullyAdded[i]);
-    }   
-    free(eventsSuccessfullyAdded);
+    for (event_idx = 0; event_idx < total_event_count; event_idx++) {
+        free(cuda_native_event_names[event_idx]);
+    }
+    free(cuda_native_event_names);
 
-#ifdef PAPI
-    // Output a note that a multiple pass event was provided on the command line
-    if (numMultipassEvents > 0) {
-        PRINT(quiet, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
+        free(events_successfully_added[event_idx]);
+    }   
+    free(events_successfully_added);
+
+    if (diff < 1e-5) {
+        test_pass(__FILE__);
+    }
+    else {
+        test_fail(__FILE__, __LINE__, "Result of GPU calculation doesn't match CPU.", PAPI_EINVAL);
     }
 
-    if ( diff < 1e-5 )
-        test_pass(__FILE__);
-    else
-        test_fail(__FILE__, __LINE__, "Result of GPU calculation doesn't match CPU.", PAPI_EINVAL);
-#endif
     return 0;
 }
