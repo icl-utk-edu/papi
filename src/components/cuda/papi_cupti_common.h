@@ -76,8 +76,8 @@ int cuptic_ctxarr_get_ctx(cuptic_info_t info, int dev_id, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 
 /* functions to track the occupancy of gpu counters in event sets */
-int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
-int cuptic_device_release(cuptiu_event_table_t *evt_table);
+int cuptic_device_acquire(void *evt_table, int flag);
+int cuptic_device_release(void *evt_table, int flag);
 
 /* device qualifier interfaces */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
