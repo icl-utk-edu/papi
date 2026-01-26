@@ -600,22 +600,23 @@ static int _internal_hl_create_components()
       }
 
       /* change event type to instantaneous for specific events */
-      /* we consider all nvml events as instantaneous values */
-      if( (strstr(requested_event_names[i], "nvml:::") != NULL) ) {
+      // NVML events
+      if( strstr(requested_event_names[i], "nvml:::") != NULL) {
+        // for nvml total_energy_consumption, we calculate a delta value
+	if( strstr(requested_event_names[i], "total_energy_consumption") != NULL ) {
+            event_type = 0;
+            verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
+        }
+        // for nvml gpu_inst_power, we calculate an average value
+        if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "gpu_inst_power") != NULL) ) {
+           event_type = 2;
+           verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as average value.\n", requested_event_names[i]);
+        }
+        else{
+        // all the rest nvml events, we consider them as instantaneous values
          event_type = 1;
          verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as instantaneous value.\n", requested_event_names[i]);
-      }
-
-      // except from nvml energy_consumption delta
-      if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "energy_consumption") != NULL) ) {
-         event_type = 0;
-         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
-      }
-
-      // except from nvml gpu_inst_power average
-      if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "gpu_inst_power") != NULL) ) {
-         event_type = 2;
-         verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as average value.\n", requested_event_names[i]);
+        }
       }
 
       /* check if event is supported on current machine */
@@ -802,16 +803,14 @@ static int _internal_hl_start_counters()
 
    if ( state == PAPIHL_ACTIVE ) {
       for ( i = 0; i < num_of_components; i++ ) {
-         if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK ){
+         if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
             return (retval );
-         }
          /* warm up PAPI code paths and data structures */
          if ( ( retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &cycles ) != PAPI_OK ) ) {
             return (retval );
          }
       }
       _papi_hl_events_running = 1;
-
       return PAPI_OK;
    }
    return ( PAPI_EMISC );
@@ -866,7 +865,6 @@ static inline reads_t* _internal_hl_insert_read_node(reads_t** head_node)
    return new_node;
 }
 
-
 static inline int _internal_hl_add_values_to_region( regions_t *node, enum region_type reg_typ )
 {
    int i, j;
@@ -882,9 +880,8 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
       node->values[1].begin = ts;
       /* events from components */
       for ( i = 0; i < num_of_components; i++ )
-         for ( j = 0; j < components[i].num_of_events; j++ ){
+         for ( j = 0; j < components[i].num_of_events; j++ )
             node->values[cmp_iter++].begin = _local_components[i].values[j];
-         }
    } else if ( reg_typ == REGION_READ ) {
       /* create a new read node and add values*/
       reads_t* read_node;
@@ -900,7 +897,7 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
                return ( PAPI_ENOMEM );
             if ( components[i].event_types[j] == 1 ) //instantaneous
                read_node->value = _local_components[i].values[j];
-            else if ( components[i].event_types[j] == 2 ) // average
+            else if ( components[i].event_types[j] == 2 ) //region-average
                read_node->value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;
             else //delta
                read_node->value = _local_components[i].values[j] - node->values[cmp_iter].begin;
@@ -918,7 +915,7 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
             /* if event type is instantaneous only save last value */
             if ( components[i].event_types[j] == 1 )  //instantaneous
                node->values[cmp_iter].region_value = _local_components[i].values[j];
-            else if ( components[i].event_types[j] == 2 )  // average
+            else if ( components[i].event_types[j] == 2 )  //region-average
                node->values[cmp_iter].region_value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;                  
             else //delta
                node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;               
