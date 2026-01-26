@@ -805,6 +805,7 @@ static int _internal_hl_start_counters()
       for ( i = 0; i < num_of_components; i++ ) {
          if ( ( retval = PAPI_start( _local_components[i].EventSet ) ) != PAPI_OK )
             return (retval );
+
          /* warm up PAPI code paths and data structures */
          if ( ( retval = PAPI_read_ts( _local_components[i].EventSet, _local_components[i].values, &cycles ) != PAPI_OK ) ) {
             return (retval );
@@ -1105,7 +1106,6 @@ static int _internal_hl_read_and_store_counters( const char *region, enum region
       _internal_hl_clean_up_all(true);
       return ( retval );
    }
-   
    return ( PAPI_OK );
 }
 
