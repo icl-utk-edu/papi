@@ -608,11 +608,11 @@ static int _internal_hl_create_components()
             verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
         }
         // for nvml gpu_inst_power, we calculate an average value
-        if( (strstr(requested_event_names[i], "nvml:::") != NULL) && (strstr(requested_event_names[i], "gpu_inst_power") != NULL) ) {
+        else if( strstr(requested_event_names[i], "gpu_inst_power") != NULL) {
            event_type = 2;
            verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as average value.\n", requested_event_names[i]);
         }
-        else{
+        else {
         // all the rest nvml events, we consider them as instantaneous values
          event_type = 1;
          verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as instantaneous value.\n", requested_event_names[i]);
