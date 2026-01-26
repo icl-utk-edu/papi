@@ -603,7 +603,7 @@ static int _internal_hl_create_components()
       // NVML events
       if( strstr(requested_event_names[i], "nvml:::") != NULL) {
         // for nvml total_energy_consumption, we calculate a delta value
-	if( strstr(requested_event_names[i], "total_energy_consumption") != NULL ) {
+        if( strstr(requested_event_names[i], "total_energy_consumption") != NULL ) {
             event_type = 0;
             verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
         }
