@@ -2,7 +2,9 @@
 
 The `cuda` component exposes counters and controls for NVIDIA GPUs.
 
-* [Enabling the CUDA Component](#enabling-the-cuda-component)
+* [Enabling the Cuda Component](#enabling-the-cuda-component)
+* [Hardware and Software Support](#hardware-and-software-support)
+* [Partially Disabled Cuda Component](#partially-disabled-cuda-component)
 * [Known Limitations](#known-limitations)
 * [FAQ](#faq)
 ***
@@ -40,15 +42,7 @@ run `papi_component_avail` (available in `utils/papi_component_avail`). This
 utility will display the components configured in your PAPI build and whether they are active or disabled. If a component is disabled a message on why the component
 has been disabled will be directly below it.
 
-At the time of writing this, the `cuda` component supports the following three APIs:
-
-| API | Supported Compute Capabilities | Example GPU |
-| ------------- | :-------------: | :-------------: |
-| Event API  | CC <= 7.0  | P100 |
-| Metric API | CC <= 7.0  | P100 |
-| Perfworks API | CC >= 7.0 | A100 |
-
-For the `cuda` component to be operational, the following dynamic libraries must be found at runtime for both the Event/Metric APIs and the Perfworks API:
+For the `cuda` component to be operational, the following dynamic libraries must be found at runtime for both the Event/Metric APIs and the PerfWorks Metrics API:
 
 ```
 libcuda.so
@@ -56,7 +50,7 @@ libcudart.so
 libcupti.so
 ```
 
-For the Perfworks API, the dynamic library `libnvperf_host.so` must also be found.
+For the PerfWorks Metrics API, the dynamic library `libnvperf_host.so` must also be found.
 
 If those libraries cannot be found or some of those are stub libraries in the
 standard `PAPI_CUDA_ROOT` subdirectories, you must add the correct paths,
@@ -66,11 +60,15 @@ This can be set using export; e.g.
 ```
 export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$LD_LIBRARY_PATH
 ```
+## Hardware and Software Support
+
+To see the `cuda` component's current supported hardware and software please visit the GitHub wiki page [Cuda Component - Hardware and Software Support](https://github.com/icl-utk-edu/papi/wiki/Cuda-Component-%E2%80%90-Hardware-and-Software-Support).
 
 ## Partially Disabled Cuda Component
-As previously mentioned the `cuda` component supports three primary APIs to expose counters and controls for NVIDIA GPUs.
+As shown on the GitHub wiki page [Cuda Component - Hardware and Software Support](https://github.com/icl-utk-edu/papi/wiki/Cuda-Component-%E2%80%90-Hardware-and-Software-Support) the `cuda` component supports a total of three primary APIs
+to expose counters and controls for NVIDIA GPUs.
 
-The Event/Metric API only overlaps with the Perfworks API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
+The Event/Metric APIs (Legacy) only overlaps with the PerfWorks Metrics API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
 
 To allow for this choice to be made the `cuda` component supports being ***Partially Disabled***. Which means:
 
@@ -84,7 +82,7 @@ set `PAPI_CUDA_API` equal to `LEGACY`, e.g:
 export PAPI_CUDA_API=LEGACY
 ```
 
-Important note, in the case of machines that only have GPUs with CCs = 7.0 there will be no partially disabled Cuda component. Counter and controls will be exposed via the Perfworks Metrics API; however, if you would like to expose counters and controls via the Legacy APIs please see the aforementioned environment variable.
+Important note, in the case of machines that only have GPUs with CCs = 7.0 there will be no partially disabled Cuda component. Counter and controls will be exposed via the PerfWorks Metrics API; however, if you would like to expose counters and controls via the Legacy APIs please see the aforementioned environment variable.
 
 ## Known Limitations
 * Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Pefworks API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` may take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
@@ -137,6 +135,6 @@ NVIDIA GPUs with compute capability 7.0 support profiling on both PerfWorks API 
 
 If CUDA toolkit version > 11.0 is used, then PAPI uses the newer API, but using toolkit version 11.0, PAPI uses the events API by default.
 
-If the environment variable `PAPI_CUDA_110_CC_70_PERFWORKS_API` is set to any non-empty value, then compute capability 7.0 using toolkit version 11.0 will use the Perfworks API. Eg:
+If the environment variable `PAPI_CUDA_110_CC_70_PERFWORKS_API` is set to any non-empty value, then compute capability 7.0 using toolkit version 11.0 will use the PerfWorks Metrics API. Eg:
 
     `export PAPI_CUDA_110_CC_70_PERFWORKS_API=1`
