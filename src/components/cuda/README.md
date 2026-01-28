@@ -62,10 +62,10 @@ export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$LD_LIBRARY_PATH
 ```
 ## Hardware and Software Support
 
-To see the `cuda` component's current supported hardware and software please visit the GitHub wiki page [Cuda Component - Hardware and Software Support](https://github.com/icl-utk-edu/papi/wiki/Cuda-Component-%E2%80%90-Hardware-and-Software-Support).
+To see the `cuda` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component).
 
 ## Partially Disabled Cuda Component
-As shown on the GitHub wiki page [Cuda Component - Hardware and Software Support](https://github.com/icl-utk-edu/papi/wiki/Cuda-Component-%E2%80%90-Hardware-and-Software-Support) the `cuda` component supports a total of three primary APIs
+As shown on the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component) the `cuda` component supports a total of three primary APIs
 to expose counters and controls for NVIDIA GPUs.
 
 The Event/Metric APIs (Legacy) only overlaps with the PerfWorks Metrics API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
