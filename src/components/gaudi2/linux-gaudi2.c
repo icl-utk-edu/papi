@@ -1,12 +1,17 @@
-/*
- * linux-gaudi2.c - PAPI component for Intel Gaudi2 SPMU counters
+/**
+ * @file    linux-gaudi2.c
  *
- * Accesses hardware performance counters on Gaudi2 AI accelerators
- * via the hlthunk library debug interface.
+ * @author  Tokey Tahmid ttahmid@icl.utk.edu
  *
- * Engines: TPC (24), EDMA (8), PDMA (2), MME (4)
+ * @ingroup papi_components
  *
- * Requires: libhl-thunk.so, /dev/accel/accel* access, debug mode
+ * @brief
+ *  This file implements a PAPI component for the Intel Gaudi2 SPMU counters
+ *  Accesses hardware performance counters on Gaudi2 AI accelerators
+ *  via the hlthunk library debug interface.
+ *
+ * The open source software license for PAPI conforms to the BSD
+ * License template.
  */
 
 #include <stdio.h>

@@ -1,24 +1,11 @@
 # Rules for the Gaudi2 component
-#
-# This component provides access to Intel Gaudi2 AI Accelerator
-# hardware performance counters (SPMU).
-#
-# Requirements:
-#   - libhl-thunk.so (Habana Labs thunk library)
-#   - /dev/accel/accel* device access
-#
-# Build with:
-#   ./configure --with-components="gaudi2"
-#
 # Environment variables (REQUIRED):
 #   PAPI_GAUDI2_ROOT - Path to Habana installation root
 #                      Example: /usr (for container builds with headers in /usr/include/habanalabs
 #                                     and libraries in /usr/lib/habanalabs)
-#
 # Expected directory structure under PAPI_GAUDI2_ROOT:
 #   $(PAPI_GAUDI2_ROOT)/include/habanalabs/hlthunk.h
 #   $(PAPI_GAUDI2_ROOT)/lib/habanalabs/libhl-thunk.so
-#
 
 # Component source files
 COMPSRCS += components/gaudi2/linux-gaudi2.c
