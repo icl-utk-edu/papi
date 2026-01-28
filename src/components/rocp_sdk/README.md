@@ -5,6 +5,7 @@ The component is an adapter to the ROCm profiling library ROCprofiler-SDK which 
 
 * [Enabling the ROCP\_SDK Component](#enabling-the-rocm-component)
 * [Environment Variables](#environment-variables)
+* [Hardware and Software Support](#hardware-and-software-support)
 * [Known Limitations](#known-limitations)
 * [FAQ](#faq)
 ***
@@ -58,6 +59,10 @@ Additionally, the component supports installations where ROCprofiler-SDK does no
 Example:
     export PAPI_ROCP_SDK_ROOT=${HOME}/my_packages
     export PAPI_ROCM_ROOT=/opt/rocm
+
+## Hardware and Software Support
+
+To see the ROCP\_SDK component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - ROCP\_SDK](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-ROCP_SDK-Component).
 
 ## Known Limitations
 
