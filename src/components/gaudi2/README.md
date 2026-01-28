@@ -1,33 +1,22 @@
-# PAPI Gaudi2 Component
+# Gaudi2 Component
 
-This PAPI component provides access to hardware performance counters on Intel Gaudi2 AI Accelerators through the SPMU interface.
+The `gaudi2` component provides access to hardware performance counters on Intel Gaudi2 AI Accelerators through the SPMU interface.
 
-## Overview
+- [Environment Variables](#environment-variables)
+- [Enabling the Gaudi2 Component](#enabling-the-gaudi2-component)
 
-The Gaudi2 component enables monitoring of:
-- **TPC (Tensor Processing Core)** - 24 TPCs across 4 DCOREs
-- **EDMA (External DMA)** - 8 EDMAs for data movement
-- **PDMA (PCIe DMA)** - 2 PDMAs for host-device transfers
-- **MME (Matrix Multiplication Engine)** - 4 MMEs for matrix operations
+## Environment Variables
+The `gaudi2` component requires setting the `PAPI_GAUDI2_ROOT` environment variable to habanalabs installed directory for `hl-thunk` headers and libraries.
 
-Each SPMU unit supports up to 6 programmable counters that can be configured to count various hardware events.
+```bash
+export PAPI_GAUDI2_ROOT=/usr`
+```
 
-## Requirements
+## Enabling the Gaudi2 Component
 
-- **Hardware**: Intel Gaudi2 AI Accelerator
-- **Software**:
-  - Habana Labs driver and runtime
-  - libhl-thunk.so (Habana thunk library)
-  - Access to `/dev/accel/accel*` devices
-- **Permissions**: User must have read/write access to accelerator devices
+To enable the `gaudi2` component, configure and build PAPI with the component enabled as follows:
 
-## Building
-
-Set the `PAPI_GAUDI2_ROOT` environment variable to habanalabs installed directory for `hl-thunk` headers and libraries.
-`export PAPI_GAUDI2_ROOT=/usr`
-
-Configure the component using:
-`./configure --with-components="gaudi2"`
-
-then build with:
-`make && make install`
+```bash
+./configure --with-components="gaudi2"
+make && make install
+```

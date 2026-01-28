@@ -1,8 +1,7 @@
-/*
- * gaudi2_events.h - Gaudi2 SPMU event definitions
+/**
+ * @file    gaudi2_events.h
  *
- * Event IDs from hl-prof-config -c gaudi2 --spmu-help
- * SPMU base addresses from gaudi2_blocks.h
+ * @author  Tokey Tahmid ttahmid@icl.utk.edu
  */
 
 #ifndef _GAUDI2_EVENTS_H
