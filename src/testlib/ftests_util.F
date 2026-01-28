@@ -284,10 +284,13 @@ C     Get PAPI h/w info
       end if
 
       if ( mstring(1:nchr).EQ."POWER6") then
-C     Setting domain to user+kernel+supervisor is really only necessary when
-C     using PAPI multiplexing on POWER6/perfctr.  But since the Fortran API
-C     does not include access to component info, we'll just set the domain
-C     in this manner for all components on POWER6.
+C     Setting the domain to user+kernel+supervisor was only necessary
+C     when using PAPI multiplexing on POWER6 with perfctr. The perfctr
+C     component was removed on June 18th, 2024 by commit 7d8f196. Due to
+C     the domain being set to user+kernel+supervisor for the last 16
+C     years and along with the Fortran API not including access to
+C     component info the domain will remain the same. This comment was
+C     updated just for the sake of clarity.
       call PAPIf_set_domain(PAPI_DOM_ALL, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
