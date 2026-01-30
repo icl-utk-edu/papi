@@ -1049,6 +1049,18 @@ PAPI_library_init( int version )
 
 	int tmp = 0;
 
+    char *disabledComps = getenv("PAPI_DISABLE_COMPONENTS");
+    if (disabledComps != NULL) {
+        char *penv = strdup(disabledComps);
+        char *p;
+        for (p = strtok (penv, ",:"); p != NULL; p = strtok (NULL, ",:")) {
+            (void) PAPI_disable_component_by_name(p);
+        }
+        free(penv);
+    } else {
+        SUBDBG("PAPI_library_init: getenv(PAPI_DISABLE_COMPONENTS) was not set.\n");
+    }
+
 	/* This is a poor attempt at a lock. 
 	   For 3.1 this should be replaced with a 
 	   true UNIX semaphore. We cannot use PAPI
