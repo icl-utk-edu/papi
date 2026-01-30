@@ -48,6 +48,11 @@ In both cases, the directory specified by `PAPI_ROCMSMI_ROOT` **must contain** t
 
 ## Known Limitations
 
+* For AMD devices older than the AMD Instinct MI300A, PAPI should not be configured with both `rocm_smi` and `amd_smi`.
+  If both components are configured, then `rocm_smi` will be active by default for ROCm < 6.4.0; `amd_smi` will be active by default for ROCm >= 6.4.0.
+  Users can override this when running an application by setting `export PAPI_DISABLE_COMPONENTS=rocm_smi` when `rocm_smi` is active by default, or
+  `export PAPI_DISABLE_COMPONENTS=amd_smi` when `amd_smi` is active by default.
+
 * Only sets of metrics and events that can be gathered in a single pass are supported.
 
 * Although AMD metrics may be floating point, all values are recast and returned as long long integers.
