@@ -57,11 +57,40 @@ static int _amd_smi_init_component(int cidx) {
     _amd_smi_vector.cmp_info.num_mpx_cntrs = -1;
     _amd_smi_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-    CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
-             "Not initialized. Access an AMD SMI event to initialize.");
-    _amd_smi_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
+    /* Manage contension between rocm_smi and amd_smi components. */
+    int use_amd_smi = 0;
+    #if defined(DEFAULT_TO_AMD_SMI)
+    use_amd_smi = 1;
+    #endif
+    #if defined(DEFAULT_TO_ROCM_SMI)
+        char *disabledComps = getenv("PAPI_DISABLE_COMPONENTS");
+        if (disabledComps != NULL) {
+            char *penv = strdup(disabledComps);
+            char *p;
+            for (p = strtok (penv, ",:"); p != NULL; p = strtok (NULL, ",:")) {
+                if(!strcmp(p, "rocm_smi")) use_amd_smi = 1;
+            }
+            free(penv);
+        } else {
+            SUBDBG("amd_smi: getenv(PAPI_DISABLE_COMPONENTS) was not set.\n");
+        }
+    #endif
 
-    return PAPI_EDELAY_INIT;
+    int papi_errno;
+    if (use_amd_smi) {
+        CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,
+                 "Not initialized. Access an AMD SMI event to initialize.");
+        papi_errno = PAPI_EDELAY_INIT;
+        _amd_smi_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    } else {
+        CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,
+                 "Not active while rocm_smi component is active. Set 'export PAPI_DISABLE_COMPONENTS=rocm_smi' to override.");
+        papi_errno = PAPI_ECOMBO;
+        _amd_smi_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
+
 }
 
 static int evt_get_count(int *count) {
@@ -93,8 +122,7 @@ static int _amd_smi_init_private(void) {
         if (!error_str || !error_str[0])
             error_str = "AMD SMI component initialization failed";
         CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason,
-                 sizeof _amd_smi_vector.cmp_info.disabled_reason, "%s",
-                 error_str);
+                 PAPI_HUGE_STR_LEN, "%s", error_str);
         goto fn_fail;
     }
 
