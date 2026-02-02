@@ -218,11 +218,14 @@ static inline int harness_eval_result(const char *file, int line, HarnessOpts op
  *        limits, exit as "PASSED with WARNING".
  *
  * Recognizes PAPI_ENOEVNT, PAPI_ECNFLCT, PAPI_EPERM, and PAPI_ENOSUPP.
+ * Any other non-OK return code is treated as a test failure.
  */
 #define EXIT_WARNING_ON_ADD(rc, evname) do { \
     if ((rc) == PAPI_ENOEVNT || (rc) == PAPI_ECNFLCT || (rc) == PAPI_EPERM || (rc) == PAPI_ENOSUPP) { \
         EXIT_WARNING("Event unavailable (%s): %s", PAPI_strerror(rc), (evname)); \
     } \
+    fprintf(stderr, "Unexpected error encountered (%d) when adding the event %s.\n", (rc), (evname)); \
+    exit(1); \
 } while (0)
 
 /**
