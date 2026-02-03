@@ -34,7 +34,6 @@
 
 #include "gaudi2_events.h"
 
-#define GAUDI2_COMPONENT_NAME "gaudi2"
 #define GAUDI2_MAX_COUNTERS 32
 
 /* Eventset status flags */
