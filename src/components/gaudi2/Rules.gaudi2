@@ -11,10 +11,8 @@
 COMPSRCS += components/gaudi2/linux-gaudi2.c
 COMPOBJS += linux-gaudi2.o
 
-# Require PAPI_GAUDI2_ROOT to be set
-ifndef PAPI_GAUDI2_ROOT
-  $(error PAPI_GAUDI2_ROOT must be set. Example: export PAPI_GAUDI2_ROOT=/usr)
-endif
+# Default to /usr if not set
+PAPI_GAUDI2_ROOT ?= /usr
 
 GAUDI2_INCDIR = $(PAPI_GAUDI2_ROOT)/include/habanalabs
 GAUDI2_LIBDIR = $(PAPI_GAUDI2_ROOT)/lib/habanalabs
