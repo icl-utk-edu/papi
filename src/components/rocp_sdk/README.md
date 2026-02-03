@@ -3,11 +3,10 @@
 The ROCP\_SDK component exposes numerous performance events on AMD GPUs and APUs.
 The component is an adapter to the ROCm profiling library ROCprofiler-SDK which is included in a standard ROCM release.
 
-* [Enabling the ROCP\_SDK Component](#enabling-the-rocm-component)
+* [Enabling the ROCP\_SDK Component](#enabling-the-rocp_sdk-component)
 * [Environment Variables](#environment-variables)
 * [Hardware and Software Support](#hardware-and-software-support)
 * [Known Limitations](#known-limitations)
-* [FAQ](#faq)
 ***
 ## Enabling the ROCP\_SDK Component
     
