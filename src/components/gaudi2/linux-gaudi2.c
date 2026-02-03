@@ -37,6 +37,10 @@
 #define GAUDI2_COMPONENT_NAME "gaudi2"
 #define GAUDI2_MAX_COUNTERS 32
 
+/* Eventset status flags */
+#define GAUDI2_EVENTS_STOPPED   (0x0)
+#define GAUDI2_EVENTS_RUNNING   (0x2)
+
 #define HLTHUNK_DEVICE_DONT_CARE 4
 #define HLTHUNK_DEVICE_GAUDI2    5
 
@@ -145,8 +149,6 @@ static gaudi2_native_event_t gaudi2_native_events[] = {
     {NULL, NULL, 0, 0}
 };
 
-static int num_native_events = 0;
-
 /* Per-event tracking */
 typedef struct {
     unsigned int event_idx;
@@ -171,25 +173,46 @@ typedef struct {
     int spmu_enabled;
 } gaudi2_context_t;
 
-static int gaudi2_initialized = 0;
 static int gaudi2_device_fd = -1;
 static unsigned int gaudi2_lock;
 
 papi_vector_t _gaudi2_vector;
 
-/* Load hlthunk library */
+/* Load hlthunk library, checking PAPI_GAUDI2_ROOT first */
 static int load_hlthunk_library(void)
 {
-    const char *lib_paths[] = {
-        "/usr/lib/habanalabs/libhl-thunk.so",
-        "libhl-thunk.so",
-        NULL
-    };
+    char root_lib_path[PAPI_MAX_STR_LEN];
+    const char *gaudi2_root;
+    int strLen;
 
-    for (int i = 0; lib_paths[i] != NULL; i++) {
-        hlthunk_handle = dlopen(lib_paths[i], RTLD_NOW | RTLD_GLOBAL);
-        if (hlthunk_handle) {
-            break;
+    gaudi2_root = getenv("PAPI_GAUDI2_ROOT");
+
+    /* Try PAPI_GAUDI2_ROOT first if set */
+    if (gaudi2_root != NULL) {
+        strLen = snprintf(root_lib_path, sizeof(root_lib_path),
+                          "%s/lib/habanalabs/libhl-thunk.so", gaudi2_root);
+        if (strLen > 0 && strLen < (int)sizeof(root_lib_path)) {
+            hlthunk_handle = dlopen(root_lib_path, RTLD_NOW | RTLD_GLOBAL);
+            if (hlthunk_handle) {
+                SUBDBG("Loaded libhl-thunk.so from PAPI_GAUDI2_ROOT: %s\n", root_lib_path);
+            }
+        }
+    }
+
+    /* Fallback paths */
+    if (!hlthunk_handle) {
+        const char *fallback_paths[] = {
+            "/usr/lib/habanalabs/libhl-thunk.so",
+            "libhl-thunk.so",
+            NULL
+        };
+
+        for (int i = 0; fallback_paths[i] != NULL; i++) {
+            hlthunk_handle = dlopen(fallback_paths[i], RTLD_NOW | RTLD_GLOBAL);
+            if (hlthunk_handle) {
+                SUBDBG("Loaded libhl-thunk.so from fallback: %s\n", fallback_paths[i]);
+                break;
+            }
         }
     }
 
@@ -203,7 +226,7 @@ static int load_hlthunk_library(void)
     p_hlthunk_debug = (hlthunk_debug_fn)dlsym(hlthunk_handle, "hlthunk_debug");
 
     if (!p_hlthunk_open || !p_hlthunk_close || !p_hlthunk_debug) {
-        SUBDBG("Failed to find hlthunk symbols\n");
+        SUBDBG("Failed to find required hlthunk symbols\n");
         dlclose(hlthunk_handle);
         hlthunk_handle = NULL;
         return PAPI_ENOSUPP;
@@ -214,26 +237,39 @@ static int load_hlthunk_library(void)
 
 /*
  * Find existing Gaudi2 device fd from /proc/self/fd.
- * When PyTorch has already opened the device.
+ * When PyTorch or another framework has already opened the device,
+ * we reuse that fd. Supports multiple devices by returning the first found.
+ *
+ * TODO: For multi-device support, extend to return an array of fds
+ * (similar to cuda/rocp_sdk components).
  */
 static int find_gaudi2_device_fd(void)
 {
     DIR *dir;
     struct dirent *entry;
-    char link_path[64];
-    char target[512];
+    char link_path[PAPI_MIN_STR_LEN];
+    char target[PAPI_MAX_STR_LEN];
     ssize_t len;
     int found_fd = -1;
+    int strLen;
+    int status;
 
     dir = opendir("/proc/self/fd");
-    if (!dir)
-        return -1;
+    if (!dir) {
+        SUBDBG("Failed to open /proc/self/fd: %s\n", strerror(errno));
+        return PAPI_ESYS;
+    }
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_name[0] == '.')
             continue;
 
-        snprintf(link_path, sizeof(link_path), "/proc/self/fd/%.20s", entry->d_name);
+        strLen = snprintf(link_path, sizeof(link_path), "/proc/self/fd/%s", entry->d_name);
+        if (strLen < 0 || strLen >= (int)sizeof(link_path)) {
+            SUBDBG("snprintf overflow for /proc/self/fd/%s\n", entry->d_name);
+            continue;
+        }
+
         len = readlink(link_path, target, sizeof(target) - 1);
         if (len < 0)
             continue;
@@ -248,7 +284,12 @@ static int find_gaudi2_device_fd(void)
         }
     }
 
-    closedir(dir);
+    status = closedir(dir);
+    if (status == -1) {
+        SUBDBG("closedir failed for /proc/self/fd: %s\n", strerror(errno));
+        return PAPI_ESYS;
+    }
+
     return found_fd;
 }
 
@@ -260,8 +301,10 @@ static int enable_debug_mode(int fd)
     debug.op = HL_DEBUG_OP_SET_MODE;
     debug.enable = 1;
 
-    if (p_hlthunk_debug(fd, &debug) < 0)
+    if (p_hlthunk_debug(fd, &debug) < 0) {
+        SUBDBG("Failed to enable debug mode on fd=%d\n", fd);
         return PAPI_ESYS;
+    }
 
     return PAPI_OK;
 }
@@ -296,8 +339,10 @@ static int enable_spmu(int fd, int reg_idx, uint64_t *events, int num_events)
     debug.input_ptr = (uint64_t)&params;
     debug.input_size = sizeof(params);
 
-    if (p_hlthunk_debug(fd, &debug) < 0)
+    if (p_hlthunk_debug(fd, &debug) < 0) {
+        SUBDBG("Failed to enable SPMU on fd=%d reg_idx=%d\n", fd, reg_idx);
         return PAPI_ESYS;
+    }
 
     return PAPI_OK;
 }
@@ -329,8 +374,11 @@ static int read_spmu_counters(int fd, uint64_t base_addr, int num_counters, long
 
     read_buffer = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (read_buffer == MAP_FAILED)
-        return PAPI_ENOMEM;
+    if (read_buffer == MAP_FAILED) {
+        SUBDBG("mmap failed for SPMU read buffer\n");
+        papi_errno = PAPI_ENOMEM;
+        goto cleanup;
+    }
 
     memset(read_buffer, 0, 4096);
 
@@ -346,6 +394,7 @@ static int read_spmu_counters(int fd, uint64_t base_addr, int num_counters, long
     debug.input_size = sizeof(params);
 
     if (p_hlthunk_debug(fd, &debug) < 0) {
+        SUBDBG("READBLOCK failed for base_addr=0x%llx\n", (unsigned long long)base_addr);
         papi_errno = PAPI_ESYS;
         goto cleanup;
     }
@@ -363,7 +412,7 @@ cleanup:
 
 static uint64_t get_spmu_base_address(gaudi2_engine_type_t engine, int dcore, int instance)
 {
-    static const uint64_t tpc_spmu_bases[4][6] = {
+    static const uint64_t tpc_spmu_bases[GAUDI2_NUM_DCORES][GAUDI2_TPC_PER_DCORE] = {
         {GAUDI2_DCORE0_TPC0_SPMU_BASE, GAUDI2_DCORE0_TPC1_SPMU_BASE,
          GAUDI2_DCORE0_TPC2_SPMU_BASE, GAUDI2_DCORE0_TPC3_SPMU_BASE,
          GAUDI2_DCORE0_TPC4_SPMU_BASE, GAUDI2_DCORE0_TPC5_SPMU_BASE},
@@ -378,7 +427,7 @@ static uint64_t get_spmu_base_address(gaudi2_engine_type_t engine, int dcore, in
          GAUDI2_DCORE3_TPC4_SPMU_BASE, GAUDI2_DCORE3_TPC5_SPMU_BASE}
     };
 
-    static const uint64_t edma_spmu_bases[4][2] = {
+    static const uint64_t edma_spmu_bases[GAUDI2_NUM_DCORES][GAUDI2_EDMA_PER_DCORE] = {
         {GAUDI2_DCORE0_EDMA0_SPMU_BASE, GAUDI2_DCORE0_EDMA1_SPMU_BASE},
         {GAUDI2_DCORE1_EDMA0_SPMU_BASE, GAUDI2_DCORE1_EDMA1_SPMU_BASE},
         {GAUDI2_DCORE2_EDMA0_SPMU_BASE, GAUDI2_DCORE2_EDMA1_SPMU_BASE},
@@ -387,12 +436,12 @@ static uint64_t get_spmu_base_address(gaudi2_engine_type_t engine, int dcore, in
 
     switch (engine) {
         case GAUDI2_ENGINE_TPC:
-            if (dcore < 4 && instance < 6) {
+            if (dcore < GAUDI2_NUM_DCORES && instance < GAUDI2_TPC_PER_DCORE) {
                 return tpc_spmu_bases[dcore][instance];
             }
             break;
         case GAUDI2_ENGINE_EDMA:
-            if (dcore < 4 && instance < 2) {
+            if (dcore < GAUDI2_NUM_DCORES && instance < GAUDI2_EDMA_PER_DCORE) {
                 return edma_spmu_bases[dcore][instance];
             }
             break;
@@ -411,13 +460,10 @@ static uint64_t get_spmu_base_address(gaudi2_engine_type_t engine, int dcore, in
  * PAPI component interface
  */
 
-/*
- * Initialize component.
- * Note: PyTorch must init the device first.
- */
 static int gaudi2_init_component(int cidx)
 {
     int papi_errno = PAPI_OK;
+    int num_events;
 
     SUBDBG("Initializing Gaudi2 component (cidx=%d)\n", cidx);
 
@@ -427,7 +473,7 @@ static int gaudi2_init_component(int cidx)
     if (papi_errno != PAPI_OK) {
         snprintf(_gaudi2_vector.cmp_info.disabled_reason,
                  PAPI_MAX_STR_LEN, "Failed to load libhl-thunk.so");
-        _gaudi2_vector.cmp_info.disabled = 1;
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
         return papi_errno;
     }
 
@@ -437,22 +483,23 @@ static int gaudi2_init_component(int cidx)
         gaudi2_device_fd = p_hlthunk_open(HLTHUNK_DEVICE_DONT_CARE, NULL);
 
     if (gaudi2_device_fd < 0) {
+        papi_errno = PAPI_ENOSUPP;
         snprintf(_gaudi2_vector.cmp_info.disabled_reason,
                  PAPI_MAX_STR_LEN, "No Gaudi2 device found");
-        _gaudi2_vector.cmp_info.disabled = 1;
-        return PAPI_ENOSUPP;
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
     }
 
-    num_native_events = 0;
-    while (gaudi2_native_events[num_native_events].name != NULL)
-        num_native_events++;
+    num_events = 0;
+    while (gaudi2_native_events[num_events].name != NULL)
+        num_events++;
 
-    _gaudi2_vector.cmp_info.num_native_events = num_native_events;
+    _gaudi2_vector.cmp_info.num_native_events = num_events;
     _gaudi2_vector.cmp_info.num_cntrs = GAUDI2_MAX_SPMU_COUNTERS;
     _gaudi2_vector.cmp_info.num_mpx_cntrs = GAUDI2_MAX_COUNTERS;
 
     gaudi2_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
-    gaudi2_initialized = 1;
+    _gaudi2_vector.cmp_info.initialized = 1;
 
     return PAPI_OK;
 }
@@ -466,7 +513,7 @@ static int gaudi2_shutdown_component(void)
         hlthunk_handle = NULL;
     }
 
-    gaudi2_initialized = 0;
+    _gaudi2_vector.cmp_info.initialized = 0;
     return PAPI_OK;
 }
 
@@ -510,18 +557,23 @@ static int gaudi2_update_control_state(hwd_control_state_t *ctl,
                                        hwd_context_t *ctx)
 {
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
     (void)ctx;
 
-    if (count > GAUDI2_MAX_COUNTERS)
+    if (count > GAUDI2_MAX_COUNTERS) {
+        SUBDBG("Event count %d exceeds max %d\n", count, GAUDI2_MAX_COUNTERS);
         return PAPI_ECOUNT;
+    }
 
     gaudi2_ctl->num_counters = count;
 
     for (int i = 0; i < count; i++) {
         int event_idx = native[i].ni_event;
 
-        if (event_idx < 0 || event_idx >= num_native_events)
+        if (event_idx < 0 || event_idx >= num_events) {
+            SUBDBG("Invalid event index %d (max %d)\n", event_idx, num_events);
             return PAPI_EINVAL;
+        }
 
         gaudi2_native_event_t *event = &gaudi2_native_events[event_idx];
 
@@ -570,7 +622,7 @@ static int gaudi2_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
         gaudi2_ctl->counters[i].accumulated = 0;
     }
 
-    gaudi2_ctl->running = 1;
+    gaudi2_ctl->running = GAUDI2_EVENTS_RUNNING;
     return PAPI_OK;
 }
 
@@ -579,7 +631,7 @@ static int gaudi2_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
 
-    if (gaudi2_ctl->running) {
+    if (gaudi2_ctl->running == GAUDI2_EVENTS_RUNNING) {
         long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
         uint64_t base = gaudi2_ctl->counters[0].spmu_base;
 
@@ -597,7 +649,7 @@ static int gaudi2_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
         gaudi2_ctx->spmu_enabled = 0;
     }
 
-    gaudi2_ctl->running = 0;
+    gaudi2_ctl->running = GAUDI2_EVENTS_STOPPED;
     return PAPI_OK;
 }
 
@@ -608,7 +660,7 @@ static int gaudi2_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
     (void)flags;
 
-    if (gaudi2_ctl->running) {
+    if (gaudi2_ctl->running == GAUDI2_EVENTS_RUNNING) {
         long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
         uint64_t base = gaudi2_ctl->counters[0].spmu_base;
 
@@ -639,12 +691,14 @@ static int gaudi2_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
 static int gaudi2_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+
     switch (modifier) {
         case PAPI_ENUM_FIRST:
             *EventCode = 0;
             return PAPI_OK;
         case PAPI_ENUM_EVENTS:
-            if (*EventCode + 1 < (unsigned int)num_native_events) {
+            if (*EventCode + 1 < (unsigned int)num_events) {
                 *EventCode = *EventCode + 1;
                 return PAPI_OK;
             }
@@ -656,17 +710,27 @@ static int gaudi2_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 static int gaudi2_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
-    if (EventCode >= (unsigned int)num_native_events)
-        return PAPI_ENOEVNT;
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
 
-    strncpy(name, gaudi2_native_events[EventCode].name, len);
-    name[len - 1] = '\0';
+    if (EventCode >= (unsigned int)num_events) {
+        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
+        return PAPI_ENOEVNT;
+    }
+
+    snprintf(name, len, "%s", gaudi2_native_events[EventCode].name);
     return PAPI_OK;
 }
 
+/*
+ * NOTE: Linear scan is acceptable for the current event count (~47).
+ * If the event list grows significantly, consider using a hash table
+ * for O(1) lookup (similar to rocp_sdk component).
+ */
 static int gaudi2_ntv_name_to_code(const char *name, unsigned int *EventCode)
 {
-    for (int i = 0; i < num_native_events; i++) {
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+
+    for (int i = 0; i < num_events; i++) {
         if (strcmp(name, gaudi2_native_events[i].name) == 0) {
             *EventCode = i;
             return PAPI_OK;
@@ -677,29 +741,31 @@ static int gaudi2_ntv_name_to_code(const char *name, unsigned int *EventCode)
 
 static int gaudi2_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
 {
-    if (EventCode >= (unsigned int)num_native_events)
-        return PAPI_ENOEVNT;
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
 
-    strncpy(descr, gaudi2_native_events[EventCode].description, len);
-    descr[len - 1] = '\0';
+    if (EventCode >= (unsigned int)num_events) {
+        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
+        return PAPI_ENOEVNT;
+    }
+
+    snprintf(descr, len, "%s", gaudi2_native_events[EventCode].description);
     return PAPI_OK;
 }
 
 static int gaudi2_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
-    if (EventCode >= (unsigned int)num_native_events)
+    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+
+    if (EventCode >= (unsigned int)num_events) {
+        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
         return PAPI_ENOEVNT;
+    }
 
     gaudi2_native_event_t *event = &gaudi2_native_events[EventCode];
 
-    strncpy(info->symbol, event->name, sizeof(info->symbol) - 1);
-    info->symbol[sizeof(info->symbol) - 1] = '\0';
-
-    strncpy(info->long_descr, event->description, sizeof(info->long_descr) - 1);
-    info->long_descr[sizeof(info->long_descr) - 1] = '\0';
-
-    strncpy(info->short_descr, event->description, sizeof(info->short_descr) - 1);
-    info->short_descr[sizeof(info->short_descr) - 1] = '\0';
+    snprintf(info->symbol, sizeof(info->symbol), "%s", event->name);
+    snprintf(info->long_descr, sizeof(info->long_descr), "%s", event->description);
+    snprintf(info->short_descr, sizeof(info->short_descr), "%s", event->description);
 
     info->event_code = EventCode;
     info->component_index = _gaudi2_vector.cmp_info.CmpIdx;
@@ -739,7 +805,6 @@ papi_vector_t _gaudi2_vector = {
         .fast_virtual_timer = 0,
         .attach = 0,
         .attach_must_ptrace = 0,
-        .initialized = 0,
     },
 
     .size = {
