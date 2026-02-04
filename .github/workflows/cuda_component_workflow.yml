@@ -22,5 +22,6 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: cuda component tests
         run: |
+          set -e
           .github/workflows_scripts/ci_individual_component.sh ${{matrix.component}} ${{matrix.debug}} ${{matrix.shlib}}
           echo "exit code was $?"
