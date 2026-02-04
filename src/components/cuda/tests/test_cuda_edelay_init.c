@@ -31,9 +31,10 @@ int main()
     }
 
     // Test 2
-    if (cmpinfo->num_native_events != -1) {
-        fprintf(stderr, "The cuda component should have -1 events set.\n");
-        exit(1);
+    if (cmpinfo->num_native_events == -1) {
+        test_fail(__FILE__, __LINE__, "Num native events equal -1.\n", PAPI_EINVAL);
+        //fprintf(stderr, "The cuda component should have -1 events set.\n");
+        //exit(1);
     }
 
     int eventcode = 0 | PAPI_NATIVE_MASK;
