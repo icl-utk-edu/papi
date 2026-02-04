@@ -2387,6 +2387,14 @@ PRESET,PAPI_CUDA_FP_FMA,DERIVED_POSTFIX,N0|N1|+|N2|+|,cuda:::sm__sass_thread_ins
 cuda,GH100
 PRESET,PAPI_CUDA_FP8_OPS,NOT_DERIVED,cuda:::sm__ops_path_tensor_src_fp8:stat=sum
 
+# AMD MI250X architecture
+rocm,gfx90a
+#
+PRESET,PAPI_ROCM_FP16_FMA,NOT_DERIVED,rocm:::SQ_INSTS_VALU_FMA_F16:device=0
+PRESET,PAPI_ROCM_FP32_FMA,NOT_DERIVED,rocm:::SQ_INSTS_VALU_FMA_F32:device=0
+PRESET,PAPI_ROCM_FP64_FMA,NOT_DERIVED,rocm:::SQ_INSTS_VALU_FMA_F64:device=0
+PRESET,PAPI_ROCM_FP_FMA,DERIVED_POSTFIX,N0|N1|+|N2|+|,rocm:::SQ_INSTS_VALU_FMA_F16:device=0,rocm:::SQ_INSTS_VALU_FMA_F32:device=0,rocm:::SQ_INSTS_VALU_FMA_F64:device=0
+
 #########################
 # ARM Neoverse V2       #
 #########################
