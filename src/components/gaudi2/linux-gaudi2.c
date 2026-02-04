@@ -42,6 +42,9 @@
 
 #define HLTHUNK_DEVICE_DONT_CARE 4
 #define HLTHUNK_DEVICE_GAUDI2    5
+#define HLTHUNK_DEVICE_GAUDI2B   8
+#define HLTHUNK_DEVICE_GAUDI2C   10
+#define HLTHUNK_DEVICE_GAUDI2D   11
 
 /* hlthunk structures (matches kernel header) */
 struct hl_debug_args {
@@ -76,10 +79,12 @@ static void *hlthunk_handle = NULL;
 typedef int (*hlthunk_open_fn)(int device_type, const char *busid);
 typedef int (*hlthunk_close_fn)(int fd);
 typedef int (*hlthunk_debug_fn)(int fd, struct hl_debug_args *debug);
+typedef int (*hlthunk_get_device_name_from_fd_fn)(int fd);
 
 static hlthunk_open_fn  p_hlthunk_open  = NULL;
 static hlthunk_close_fn p_hlthunk_close = NULL;
 static hlthunk_debug_fn p_hlthunk_debug = NULL;
+static hlthunk_get_device_name_from_fd_fn p_hlthunk_get_device_name_from_fd = NULL;
 
 /* Native event table */
 static gaudi2_native_event_t gaudi2_native_events[] = {
@@ -223,8 +228,11 @@ static int load_hlthunk_library(void)
     p_hlthunk_open = (hlthunk_open_fn)dlsym(hlthunk_handle, "hlthunk_open");
     p_hlthunk_close = (hlthunk_close_fn)dlsym(hlthunk_handle, "hlthunk_close");
     p_hlthunk_debug = (hlthunk_debug_fn)dlsym(hlthunk_handle, "hlthunk_debug");
+    p_hlthunk_get_device_name_from_fd = (hlthunk_get_device_name_from_fd_fn)
+        dlsym(hlthunk_handle, "hlthunk_get_device_name_from_fd");
 
-    if (!p_hlthunk_open || !p_hlthunk_close || !p_hlthunk_debug) {
+    if (!p_hlthunk_open || !p_hlthunk_close || !p_hlthunk_debug ||
+        !p_hlthunk_get_device_name_from_fd) {
         SUBDBG("Failed to find required hlthunk symbols\n");
         dlclose(hlthunk_handle);
         hlthunk_handle = NULL;
@@ -485,6 +493,25 @@ static int gaudi2_init_component(int cidx)
         papi_errno = PAPI_ENOSUPP;
         snprintf(_gaudi2_vector.cmp_info.disabled_reason,
                  PAPI_MAX_STR_LEN, "No Gaudi2 device found");
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
+
+    /* Verify the device is actually Gaudi2.
+     * SPMU events are architecture-defined: if the device is confirmed
+     * as Gaudi2, all events in gaudi2_native_events[] are valid.
+     * If it is not Gaudi2, the component is disabled entirely and
+     * no events will appear in papi_native_avail. */
+    int device_type = p_hlthunk_get_device_name_from_fd(gaudi2_device_fd);
+    if (device_type != HLTHUNK_DEVICE_GAUDI2  &&
+        device_type != HLTHUNK_DEVICE_GAUDI2B &&
+        device_type != HLTHUNK_DEVICE_GAUDI2C &&
+        device_type != HLTHUNK_DEVICE_GAUDI2D) {
+        papi_errno = PAPI_ENOSUPP;
+        SUBDBG("Device type %d is not Gaudi2\n", device_type);
+        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_MAX_STR_LEN,
+                 "Device is not Gaudi2 (type=%d)", device_type);
         _gaudi2_vector.cmp_info.disabled = papi_errno;
         return papi_errno;
     }
