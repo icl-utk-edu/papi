@@ -15,7 +15,7 @@ jobs:
   papi_components_comprehensive:
     strategy:
       matrix:
-        components: [cuda nvml rocp_sdk rocm_smi powercap powercap_ppc rapl infiniband sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde]
+        components: [cuda nvml rocp_sdk amd_smi powercap powercap_ppc rapl infiniband sensors_ppc net appio io lustre stealtime coretemp lmsensors mx sde]
         debug: [yes, no]
         shlib: [with, without]
         hardware: [gpu_nvidia_w_cpu_intel]
@@ -26,11 +26,11 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: comprehensive component tests 
         run: .github/workflows_scripts/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
-  # build PAPI only with rocm and rocm_smi components, as they will not be active in the above comprehensive job
+  # build PAPI only with rocp_sdk and amd_smi components, as they will not be active in the above comprehensive job
   papi_components_amd:
     strategy:
       matrix:
-        components: [rocp_sdk rocm_smi]
+        components: [rocp_sdk amd_smi]
         debug: [yes, no] 
         shlib: [with, without]
         hardware: [gpu_amd]
@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: rocp_sdk and rocm_smi component tests
+      - name: rocp_sdk and amd_smi component tests
         run: .github/workflows_scripts/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with the infiniband component, as it will not always be active in the above comrehensive job
   papi_component_infiniband:

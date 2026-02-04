@@ -31,7 +31,7 @@ fi
 
 ## Set the rocm component environment variable
 if [ "$COMPONENT" = "rocm" ]; then
-    module load rocm/6.3.2
+    module load rocm/6.2
     export PAPI_ROCM_ROOT=$ROCM_PATH
 fi
 
@@ -43,8 +43,14 @@ fi
 
 ## Set the rocp_sdk component environment variable
 if [ "$COMPONENT" = "rocp_sdk" ]; then
-    module load rocm/6.3.2
+    module load rocm/7.0.1
     export PAPI_ROCP_SDK_ROOT=$ROCM_PATH
+fi
+
+## Set the amd_smi component environment variable
+if [ "$COMPONENT" = "amd_smi" ]; then
+    module load rocm/7.0.1
+    export PAPI_AMDSMI_ROOT=$ROCM_PATH
 fi
 
 ## Set the cuda component or the nvml component environment variable

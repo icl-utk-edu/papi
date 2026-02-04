@@ -31,13 +31,12 @@ case "$COMPONENTS" in
     ;;  
 esac
 
-## Set the rocm, rocm_smi, and rocp_sdk component environment variables
+## Set the rocp_sdk and amd_smi component environment variables
 case "$COMPONENTS" in
-  *"rocm"* | *"rocm_smi"* | *"rocp_sdk"*)
-    module load rocm/6.3.2
-    export PAPI_ROCM_ROOT=$ROCM_PATH
-    export PAPI_ROCMSMI_ROOT=$ROCM_PATH
+  *"rocp_sdk"* | *"amd_smi"*)
+    module load rocm/7.0.1
     export PAPI_ROCP_SDK_ROOT=$ROCM_PATH
+    export PAPI_AMDSMI_ROOT=$ROCM_PATH
     ;;
 esac
 
@@ -72,7 +71,7 @@ declare -a per_hardware_expected_active_components
 if [ "$HARDWARE" = "gpu_nvidia_w_cpu_intel" ]; then
     per_hardware_expected_active_components=("perf_event" "perf_event_uncore" "cuda" "nvml" "powercap" "net" "appio" "io" "stealtime" "coretemp" "lmsensors" "sde" "sysdetect")
 elif [ "$HARDWARE" = "gpu_amd" ]; then
-    per_hardware_expected_active_components=("perf_event" "perf_event_uncore" "rocm" "rocm_smi" "sysdetect")
+    per_hardware_expected_active_components=("perf_event" "perf_event_uncore" "rocp_sdk" "amd_smi" "sysdetect")
 elif [ "$HARDWARE" = "infiniband" ]; then
     per_hardware_expected_active_components=("perf_event" "perf_event_uncore" "infiniband" "sysdetect")
 fi
