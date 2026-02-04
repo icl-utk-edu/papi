@@ -607,8 +607,8 @@ static int _internal_hl_create_components()
             event_type = 0;
             verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as delta value.\n", requested_event_names[i]);
         }
-        else if( strstr(requested_event_names[i], "gpu_inst_power") != NULL) {
-	// for nvml gpu_inst_power, we calculate an average value
+        else if( strstr(requested_event_names[i], "gpu_inst_power") != NULL || strstr(requested_event_names[i], "gpu_memory_avg_power") != NULL) {
+       	// for nvml gpu_inst_power and gpu_memory_avg_power, we calculate an average value
            event_type = 2;
            verbose_fprintf(stdout, "PAPI-HL Info: The event \"%s\" will be stored as average value.\n", requested_event_names[i]);
         }
