@@ -87,6 +87,28 @@ static int device_next(uint64_t bitmap, int after) {
   return -1;
 }
 
+static int split_device_number_field(const char *line, size_t *prefix_len,
+                                     const char **suffix) {
+  if (!line || !prefix_len || !suffix)
+    return 0;
+
+  const char *tag = strstr(line, "Device ");
+  if (!tag)
+    return 0;
+
+  const char *digits = tag + strlen("Device ");
+  if (*digits < '0' || *digits > '9')
+    return 0;
+
+  const char *end = digits;
+  while (*end >= '0' && *end <= '9')
+    ++end;
+
+  *prefix_len = (size_t)(digits - line);
+  *suffix = end;
+  return 1;
+}
+
 static int fill_event_description(const native_event_t *event, int device,
                                   char *buf, size_t len) {
   if (!buf || len == 0)
@@ -127,11 +149,62 @@ static int fill_event_description(const native_event_t *event, int device,
     return PAPI_OK;
   }
 
+  /*
+   * If all per-device description strings are identical aside from the device
+   * number, collapse them to a single line ("Device 0,1,2,3 ...") to avoid
+   * repeating the same value N times in tools like papi_native_avail.
+   */
+  const amds_per_device_descr_t *pd = event->per_device_descr;
+  int first = device_first(event->device_map);
+  if (first >= 0) {
+    const char *line0 = fallback;
+    if (pd && pd->descrs && pd->num_devices > 0 && first < pd->num_devices &&
+        pd->descrs[first]) {
+      line0 = pd->descrs[first];
+    }
+
+    size_t prefix_len0 = 0;
+    const char *suffix0 = NULL;
+    if (split_device_number_field(line0, &prefix_len0, &suffix0)) {
+      int can_collapse = 1;
+      int dev = device_next(event->device_map, first);
+      for (; dev >= 0; dev = device_next(event->device_map, dev)) {
+        const char *line = fallback;
+        if (pd && pd->descrs && pd->num_devices > 0 && dev < pd->num_devices &&
+            pd->descrs[dev]) {
+          line = pd->descrs[dev];
+        }
+
+        size_t prefix_len = 0;
+        const char *suffix = NULL;
+        if (!split_device_number_field(line, &prefix_len, &suffix) ||
+            prefix_len != prefix_len0 ||
+            memcmp(line, line0, prefix_len0) != 0 ||
+            strcmp(suffix, suffix0) != 0) {
+          can_collapse = 0;
+          break;
+        }
+      }
+
+      if (can_collapse) {
+        char devices[PAPI_MAX_STR_LEN] = {0};
+        if (format_device_bitmap(event->device_map, devices, sizeof(devices)) ==
+            PAPI_OK) {
+          int strLen = snprintf(buf, len, "%.*s%s%s", (int)prefix_len0, line0,
+                                devices, suffix0 ? suffix0 : "");
+          if (strLen < 0)
+            buf[0] = '\0';
+          return PAPI_OK;
+        }
+      }
+    }
+  }
+
   size_t used = 0;
   // Keep in sync with papi_native_avail's fixed-width folding (EVT_LINE - 12 - 2).
   const size_t line_width = 80 - 12 - 2;
 
-  const amds_per_device_descr_t *pd = event->per_device_descr;
+  pd = event->per_device_descr;
   int dev = device_first(event->device_map);
   for (; dev >= 0;) {
     int next = device_next(event->device_map, dev);
