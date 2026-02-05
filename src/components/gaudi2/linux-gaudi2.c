@@ -46,7 +46,7 @@
 #define HLTHUNK_DEVICE_GAUDI2C   10
 #define HLTHUNK_DEVICE_GAUDI2D   11
 
-/* hlthunk structures (matches kernel header) */
+/* hlthunk structures */
 struct hl_debug_args {
     __u64 input_ptr;
     __u64 output_ptr;
@@ -73,7 +73,7 @@ struct hl_debug_params_read_block {
     __u32 flags;
 };
 
-/* hlthunk function pointers (loaded via dlopen) */
+/* hlthunk function pointers */
 static void *hlthunk_handle = NULL;
 
 typedef int (*hlthunk_open_fn)(int device_type, const char *busid);
@@ -81,13 +81,65 @@ typedef int (*hlthunk_close_fn)(int fd);
 typedef int (*hlthunk_debug_fn)(int fd, struct hl_debug_args *debug);
 typedef int (*hlthunk_get_device_name_from_fd_fn)(int fd);
 
+/* hlthunk_hw_ip_info - hardware IP information structure */
+#define HL_INFO_VERSION_MAX_LEN_LOCAL  128
+#define HL_INFO_CARD_NAME_MAX_LEN_LOCAL 16
+
+struct hlthunk_hw_ip_info {
+    uint64_t sram_base_address;
+    uint64_t dram_base_address;
+    uint64_t dram_size;
+    uint32_t sram_size;
+    uint32_t num_of_events;
+    uint32_t device_id;
+    uint32_t cpld_version;
+    uint32_t psoc_pci_pll_nr;
+    uint32_t psoc_pci_pll_nf;
+    uint32_t psoc_pci_pll_od;
+    uint32_t psoc_pci_pll_div_factor;
+    uint16_t tpc_enabled_mask;
+    uint8_t dram_enabled;
+    uint8_t cpucp_version[HL_INFO_VERSION_MAX_LEN_LOCAL];
+    uint32_t module_id;
+    uint8_t card_name[HL_INFO_CARD_NAME_MAX_LEN_LOCAL];
+    uint32_t decoder_enabled_mask;
+    uint8_t mme_master_slave_mode;
+    uint64_t tpc_enabled_mask_ext;
+    uint64_t dram_page_size;
+    uint16_t first_available_interrupt_id;
+    uint32_t edma_enabled_mask;
+    uint16_t server_type;
+    uint64_t pdma_user_owned_ch_mask;
+    uint16_t number_of_user_interrupts;
+    uint64_t device_mem_alloc_default_page_size;
+    uint64_t nic_ports_mask;
+    uint8_t interposer_version;
+    uint8_t substrate_version;
+    uint64_t nic_ports_external_mask;
+    uint32_t mme_enabled_mask;
+    uint8_t odp_supported;
+    uint8_t security_enabled;
+    uint8_t revision_id;
+    uint16_t tpc_interrupt_id;
+    uint64_t engine_core_interrupt_reg_addr;
+    uint32_t rotator_enabled_mask;
+    uint32_t sched_arc_enabled_mask;
+    uint64_t reserved_dram_size;
+};
+
+typedef int (*hlthunk_get_hw_ip_info_fn)(int fd, struct hlthunk_hw_ip_info *hw_ip);
+
 static hlthunk_open_fn  p_hlthunk_open  = NULL;
 static hlthunk_close_fn p_hlthunk_close = NULL;
 static hlthunk_debug_fn p_hlthunk_debug = NULL;
 static hlthunk_get_device_name_from_fd_fn p_hlthunk_get_device_name_from_fd = NULL;
+static hlthunk_get_hw_ip_info_fn p_hlthunk_get_hw_ip_info = NULL;
 
-/* Native event table */
-static gaudi2_native_event_t gaudi2_native_events[] = {
+/** 
+* Event Catalog
+* TODO: add all gaudi2 events 
+*/
+static gaudi2_native_event_t gaudi2_event_catalog[] = {
     /* TPC backpressure */
     {"TPC_MEMORY2SB_BP", "Memory to SB backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_MEMORY2SB_BP},
     {"TPC_SB2MEMORY_BP", "SB to memory backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_SB2MEMORY_BP},
@@ -153,6 +205,10 @@ static gaudi2_native_event_t gaudi2_native_events[] = {
     {NULL, NULL, 0, 0}
 };
 
+/* Filtered event table - populated during init with only events
+ * whose engine type is enabled on the actual hardware. */
+static gaudi2_native_event_t *gaudi2_native_events = NULL;
+
 /* Per-event tracking */
 typedef struct {
     unsigned int event_idx;
@@ -182,7 +238,7 @@ static unsigned int gaudi2_lock;
 
 papi_vector_t _gaudi2_vector;
 
-/* Load hlthunk library, checking PAPI_GAUDI2_ROOT first */
+/* Load hlthunk library */
 static int load_hlthunk_library(void)
 {
     char root_lib_path[PAPI_MAX_STR_LEN];
@@ -191,7 +247,6 @@ static int load_hlthunk_library(void)
 
     gaudi2_root = getenv("PAPI_GAUDI2_ROOT");
 
-    /* Try PAPI_GAUDI2_ROOT first if set */
     if (gaudi2_root != NULL) {
         strLen = snprintf(root_lib_path, sizeof(root_lib_path),
                           "%s/lib/habanalabs/libhl-thunk.so", gaudi2_root);
@@ -203,7 +258,7 @@ static int load_hlthunk_library(void)
         }
     }
 
-    /* Fallback paths */
+    /* Fallback */
     if (!hlthunk_handle) {
         const char *fallback_paths[] = {
             "/usr/lib/habanalabs/libhl-thunk.so",
@@ -230,9 +285,11 @@ static int load_hlthunk_library(void)
     p_hlthunk_debug = (hlthunk_debug_fn)dlsym(hlthunk_handle, "hlthunk_debug");
     p_hlthunk_get_device_name_from_fd = (hlthunk_get_device_name_from_fd_fn)
         dlsym(hlthunk_handle, "hlthunk_get_device_name_from_fd");
+    p_hlthunk_get_hw_ip_info = (hlthunk_get_hw_ip_info_fn)
+        dlsym(hlthunk_handle, "hlthunk_get_hw_ip_info");
 
     if (!p_hlthunk_open || !p_hlthunk_close || !p_hlthunk_debug ||
-        !p_hlthunk_get_device_name_from_fd) {
+        !p_hlthunk_get_device_name_from_fd || !p_hlthunk_get_hw_ip_info) {
         SUBDBG("Failed to find required hlthunk symbols\n");
         dlclose(hlthunk_handle);
         hlthunk_handle = NULL;
@@ -242,13 +299,9 @@ static int load_hlthunk_library(void)
     return PAPI_OK;
 }
 
-/*
- * Find existing Gaudi2 device fd from /proc/self/fd.
- * When PyTorch or another framework has already opened the device,
- * we reuse that fd. Supports multiple devices by returning the first found.
- *
+/**
+ * Find existing Gaudi2 device fd from /proc/self/fd
  * TODO: For multi-device support, extend to return an array of fds
- * (similar to cuda/rocp_sdk components).
  */
 static int find_gaudi2_device_fd(void)
 {
@@ -367,7 +420,7 @@ static int disable_spmu(int fd, int reg_idx)
     return PAPI_OK;
 }
 
-/* Read SPMU counters via READBLOCK. */
+/* Read SPMU counters via READBLOCK */
 static int read_spmu_counters(int fd, uint64_t base_addr, int num_counters, long long *values)
 {
     struct hl_debug_params_read_block params;
@@ -484,7 +537,7 @@ static int gaudi2_init_component(int cidx)
         return papi_errno;
     }
 
-    /* Try to find existing fd from PyTorch, else open ourselves */
+    /* Try to find existing fd from PyTorch */
     gaudi2_device_fd = find_gaudi2_device_fd();
     if (gaudi2_device_fd < 0)
         gaudi2_device_fd = p_hlthunk_open(HLTHUNK_DEVICE_DONT_CARE, NULL);
@@ -497,11 +550,7 @@ static int gaudi2_init_component(int cidx)
         return papi_errno;
     }
 
-    /* Verify the device is actually Gaudi2.
-     * SPMU events are architecture-defined: if the device is confirmed
-     * as Gaudi2, all events in gaudi2_native_events[] are valid.
-     * If it is not Gaudi2, the component is disabled entirely and
-     * no events will appear in papi_native_avail. */
+    /* Verify the device is actually Gaudi2 */
     int device_type = p_hlthunk_get_device_name_from_fd(gaudi2_device_fd);
     if (device_type != HLTHUNK_DEVICE_GAUDI2  &&
         device_type != HLTHUNK_DEVICE_GAUDI2B &&
@@ -516,9 +565,88 @@ static int gaudi2_init_component(int cidx)
         return papi_errno;
     }
 
+    /* Query hardware IP info to determine which engines are enabled.
+     * Only expose events for engine types that 
+     * have at least one enabled instance */
+    struct hlthunk_hw_ip_info hw_ip;
+    memset(&hw_ip, 0, sizeof(hw_ip));
+
+    if (p_hlthunk_get_hw_ip_info(gaudi2_device_fd, &hw_ip) != 0) {
+        papi_errno = PAPI_ESYS;
+        SUBDBG("Failed to get hw_ip_info from device\n");
+        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_MAX_STR_LEN, "Failed to query device hw_ip_info");
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
+
+    int tpc_avail  = (hw_ip.tpc_enabled_mask_ext != 0);
+    int edma_avail = (hw_ip.edma_enabled_mask != 0);
+    /* MME and PDMA should be always present on Gaudi2 */
+    int mme_avail  = (hw_ip.mme_enabled_mask != 0) ? 1 : 1;
+    int pdma_avail = 1;
+
+    SUBDBG("Engine availability: TPC=%d (mask=0x%lx) EDMA=%d (mask=0x%x) "
+           "MME=%d (mask=0x%x) PDMA=%d\n",
+           tpc_avail, (unsigned long)hw_ip.tpc_enabled_mask_ext,
+           edma_avail, hw_ip.edma_enabled_mask,
+           mme_avail, hw_ip.mme_enabled_mask, pdma_avail);
+
+    /* First pass: count how many catalog events are available */
+    int catalog_size = 0;
+    while (gaudi2_event_catalog[catalog_size].name != NULL)
+        catalog_size++;
+
     num_events = 0;
-    while (gaudi2_native_events[num_events].name != NULL)
-        num_events++;
+    for (int i = 0; i < catalog_size; i++) {
+        switch (gaudi2_event_catalog[i].engine) {
+            case GAUDI2_ENGINE_TPC:  if (tpc_avail)  num_events++; break;
+            case GAUDI2_ENGINE_EDMA: if (edma_avail) num_events++; break;
+            case GAUDI2_ENGINE_MME:  if (mme_avail)  num_events++; break;
+            case GAUDI2_ENGINE_PDMA: if (pdma_avail) num_events++; break;
+            default: break;
+        }
+    }
+
+    if (num_events == 0) {
+        papi_errno = PAPI_ENOSUPP;
+        SUBDBG("No available engine types on this device\n");
+        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_MAX_STR_LEN, "No SPMU-capable engines enabled on device");
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
+
+    /* Allocate filtered event table */
+    gaudi2_native_events = (gaudi2_native_event_t *)
+        papi_calloc(num_events, sizeof(gaudi2_native_event_t));
+    if (!gaudi2_native_events) {
+        papi_errno = PAPI_ENOMEM;
+        SUBDBG("Failed to allocate filtered event table\n");
+        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_MAX_STR_LEN, "Failed to allocate event table");
+        _gaudi2_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
+
+    /* Second pass: copy available events into filtered table */
+    int idx = 0;
+    for (int i = 0; i < catalog_size; i++) {
+        int include = 0;
+        switch (gaudi2_event_catalog[i].engine) {
+            case GAUDI2_ENGINE_TPC:  include = tpc_avail;  break;
+            case GAUDI2_ENGINE_EDMA: include = edma_avail; break;
+            case GAUDI2_ENGINE_MME:  include = mme_avail;  break;
+            case GAUDI2_ENGINE_PDMA: include = pdma_avail; break;
+            default: break;
+        }
+        if (include) {
+            gaudi2_native_events[idx] = gaudi2_event_catalog[i];
+            idx++;
+        }
+    }
+
+    SUBDBG("Filtered %d events from catalog of %d\n", num_events, catalog_size);
 
     _gaudi2_vector.cmp_info.num_native_events = num_events;
     _gaudi2_vector.cmp_info.num_cntrs = GAUDI2_MAX_SPMU_COUNTERS;
@@ -533,6 +661,11 @@ static int gaudi2_init_component(int cidx)
 static int gaudi2_shutdown_component(void)
 {
     gaudi2_device_fd = -1;
+
+    if (gaudi2_native_events) {
+        papi_free(gaudi2_native_events);
+        gaudi2_native_events = NULL;
+    }
 
     if (hlthunk_handle) {
         dlclose(hlthunk_handle);
@@ -747,10 +880,8 @@ static int gaudi2_ntv_code_to_name(unsigned int EventCode, char *name, int len)
     return PAPI_OK;
 }
 
-/*
- * NOTE: Linear scan is acceptable for the current event count (~47).
- * If the event list grows significantly, consider using a hash table
- * for O(1) lookup (similar to rocp_sdk component).
+/**
+ * TODO: use a hash table when all events are added
  */
 static int gaudi2_ntv_name_to_code(const char *name, unsigned int *EventCode)
 {
