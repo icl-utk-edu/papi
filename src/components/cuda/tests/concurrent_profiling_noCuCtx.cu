@@ -282,18 +282,12 @@ int main(int argc, char **argv)
     // Find all devices capable of running CUPTI Profiling (CC >= 7.0)
     int dev_idx;
     for (dev_idx = 0; dev_idx < num_devices; dev_idx++)
-    {   
-        CUpti_Profiler_DeviceSupported_Params device_supported_params = { CUpti_Profiler_DeviceSupported_Params_STRUCT_SIZE };
-        device_supported_params.cuDevice = dev_idx;
-        device_supported_params.api = CUPTI_PROFILER_RANGE_PROFILING;
-        CUptiResult cuptiResult = cuptiProfilerDeviceSupported(&device_supported_params);
-        if (cuptiResult != CUPTI_SUCCESS) {
-             fprintf(stderr, "Call to cuptiProfilerDeviceSupported failed with error code %d.\n", cuptiResult);
-             exit(EXIT_FAILURE);
-        }   
-    
-        if (device_supported_params.isSupported == CUPTI_PROFILER_CONFIGURATION_SUPPORTED) {
-            PRINT(global_suppress_output, "--> Device %d is compatible with the concurrent_profiling test\n", dev_idx);
+    {
+        // Obtain major compute capability
+        int major;
+        check_cuda_runtime_api_call( cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, dev_idx) );
+        if (major >= 7) {
+            PRINT(global_suppress_output, "--> Device %d is compatible with the concurrent_profiling_noCuCtx test\n", dev_idx);
             device_ids.push_back(dev_idx);
         }   
     }   
