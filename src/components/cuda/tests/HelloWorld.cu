@@ -1,53 +1,118 @@
-/****************************/
-/* THIS IS OPEN SOURCE CODE */
-/****************************/
-
 /**
- * @file    HelloWorld.cu
- * @author  Heike Jagode
- *          jagode@eecs.utk.edu
- * Mods:	Anustuv Pal
- *			anustuv@icl.utk.edu
- * Mods:	<your name here>
- *			<your email address>
- * test case for Example component
- *
- *
- * @brief
- *  This file is a very simple HelloWorld C example which serves (together
- *	with its Makefile) as a guideline on how to add tests to components.
- *  The papi configure and papi Makefile will take care of the compilation
- *	of the component tests (if all tests are added to a directory named
- *	'tests' in the specific component dir).
- *	See components/README for more details.
- *
- *	The string "Hello World!" is mangled and then restored.
- *
- *  CUDA Context notes for CUPTI_11: Although a cudaSetDevice() will create a
- *  primary context for the device that allows kernel execution; PAPI cannot
- *  use a primary context to control the Nvidia Performance Profiler.
- *  Applications must create a context using cuCtxCreate() that will execute
- *  the kernel, this must be done prior to the PAPI_add_events() invocation in
- *  the code below. If multiple GPUs are in use, each requires its own context,
- *  and that context should be active when PAPI_events are added for each
- *  device.  Which means using Seperate PAPI_add_events() for each device. For
- *  an example see simpleMultiGPU.cu.
- *
- *  There are three points below where cuCtxCreate() is called, this code works
- *  if any one of them is used alone.
- */
+* @file HelloWorld.cu
+* @brief This test serves as a very simple hello world c example where the string
+*        "Hello World!" is mangled and then restored. cuCtxCreate is used for context
+*        creation.
+*
+*        Note: The cuda component supports being partially disabled, meaning that certain devices
+*        will not be "enabled" to profile on. If PAPI_CUDA_API is not set, then devices with
+*        CC's >= 7.0 will be used and if PAPI_CUDA_API is set to LEGACY then devices with
+*        CC's <= 7.0 will be used.
+*/
 
-#include <cuda.h>
+// Standard library headers
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#ifdef PAPI
+// Cuda Toolkit headers
+#include <cuda.h>
+
+// Internal headers
+#include "cuda_tests_helper.h"
 #include "papi.h"
 #include "papi_test.h"
-#endif
 
-#define STEP_BY_STEP_DEBUG 0 /* helps debug CUcontext issues. */
-#define PRINT(quiet, format, args...) {if (!quiet) {fprintf(stderr, format, ## args);}}
+// Aid in debugging Cuda contexts
+#define STEP_BY_STEP_DEBUG 0
+
+static void print_help_message(void)
+{
+    printf("./HelloWorld --device [nvidia device index] --cuda-native-event-names [list of cuda native event names separated by a comma].\n"
+           "Notes:\n"
+           "1. The device index must match the device qualifier if provided.\n");
+}
+
+static void parse_and_assign_args(int argc, char *argv[], int *device_index, char ***cuda_native_event_names, int *total_event_count)
+{
+    int num_device_indices = 0, *event_device_indices = NULL;
+    int i, device_arg_found = 0, cuda_native_event_name_arg_found = 0;
+    for (i = 1; i < argc; ++i)
+    {
+        char *arg = argv[i];
+        if (strcmp(arg, "--help") == 0)
+        {
+            print_help_message();
+            exit(EXIT_SUCCESS);
+        }
+        else if (strcmp(arg, "--device") == 0)
+        {
+            if (!argv[i + 1])
+            {
+                printf("ERROR!! Add a nvidia device index.\n");
+                exit(EXIT_FAILURE);
+            }
+            *device_index = atoi(argv[i + 1]);
+            device_arg_found++;
+            i++;
+        }
+        else if (strcmp(arg, "--cuda-native-event-names") == 0)
+        {
+            if (!argv[i + 1])
+            {
+                printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
+                exit(EXIT_FAILURE);
+            }
+
+            char **cmd_line_native_event_names = NULL;
+            const char *cuda_native_event_name = strtok(argv[i+1], ",");
+            while (cuda_native_event_name != NULL)
+            {
+                const char *device_substring = strstr(cuda_native_event_name, ":device=");
+                if (device_substring != NULL) {
+                    event_device_indices = (int *) realloc(event_device_indices, (num_device_indices + 1) *  sizeof(int));
+                    event_device_indices[num_device_indices++] = atoi(device_substring + strlen(":device="));
+                }
+
+                cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
+                check_memory_allocation_call(cmd_line_native_event_names);
+
+                cmd_line_native_event_names[(*total_event_count)] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+                check_memory_allocation_call(cmd_line_native_event_names[(*total_event_count)]);
+
+                int strLen = snprintf(cmd_line_native_event_names[(*total_event_count)], PAPI_2MAX_STR_LEN, "%s", cuda_native_event_name);
+                if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    fprintf(stderr, "Failed to fully write cuda native event name.\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                (*total_event_count)++;
+                cuda_native_event_name_arg_found++;
+                cuda_native_event_name = strtok(NULL, ",");
+            }
+            i++;
+            *cuda_native_event_names = cmd_line_native_event_names;
+        }
+        else
+        {
+            print_help_message();
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (device_arg_found == 0 || cuda_native_event_name_arg_found == 0) {
+        fprintf(stderr, "You must use both the --device arg and --cuda-native-event-names arg in conjunction.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (i = 0; i < num_device_indices; i++) {
+        if ((*device_index) != event_device_indices[i]) {
+            fprintf(stderr, "The device qualifier index %d does not match the index %d provided by --device.\n", event_device_indices[i], *device_index);
+            exit(EXIT_FAILURE);
+        }
+    }
+    free(event_device_indices);
+}
 
 // Device kernel
 __global__ void helloWorld(char* str)
@@ -58,342 +123,196 @@ __global__ void helloWorld(char* str)
         str[idx] += idx;
 }
 
-/** @class add_events_from_command_line
-  * @brief Try and add each event provided on the command line by the user.
-  *
-  * @param EventSet
-  *   A PAPI eventset.
-  * @param totalEventCount
-  *   Number of events from the command line.
-  * @param **eventNamesFromCommandLine
-  *   Events provided on the command line.
-  * @param *numEventsSuccessfullyAdded
-  *   Total number of successfully added events.
-  * @param **eventsSuccessfullyAdded
-  *   Events that we are able to add to the EventSet.
-  * @param *numMultipassEvents
-  *   Counter to see if a multiple pass event was provided on the command line.
-*/
-static void add_events_from_command_line(int EventSet, int totalEventCount, char **eventNamesFromCommandLine, int *numEventsSuccessfullyAdded, char **eventsSuccessfullyAdded, int *numMultipassEvents)
-{
-    int i;
-    for (i = 0; i < totalEventCount; i++) {
-        int papi_errno = PAPI_add_named_event(EventSet, eventNamesFromCommandLine[i]);
-        if (papi_errno != PAPI_OK) {
-            if (papi_errno != PAPI_EMULPASS) {
-                fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", eventNamesFromCommandLine[i], papi_errno);
-                test_skip(__FILE__, __LINE__, "", 0);
-            }
-
-            // Handle multiple pass events
-            (*numMultipassEvents)++;
-            continue;
-        }
-
-        // Handle successfully added events
-        int strLen = snprintf(eventsSuccessfullyAdded[(*numEventsSuccessfullyAdded)], PAPI_MAX_STR_LEN, "%s", eventNamesFromCommandLine[i]);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            fprintf(stderr, "Failed to fully write successfully added event.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-        (*numEventsSuccessfullyAdded)++;
-    }
-
-    return;
-}
-
 // Host function
 int main(int argc, char** argv)
 {
-    int quiet = 0;
-    CUcontext getCtx=NULL, sessionCtx=NULL;
-    cudaError_t cudaError;
-    CUresult cuError; (void) cuError;
+    check_cuda_driver_api_call( cuInit(0) );
 
-    cuError = cuInit(0);
-    if (cuError != CUDA_SUCCESS) {
-        fprintf(stderr, "Failed to initialize the CUDA driver API.\n");
-        exit(1);
+    // Determine the number of Cuda capable devices
+    int num_devices = 0;
+    check_cuda_runtime_api_call( cudaGetDeviceCount(&num_devices) );
+    // No devices detected on the machine, exit
+    if (num_devices < 1) {
+        fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
+        exit(EXIT_FAILURE);
     }
 
-#ifdef PAPI
-    char *test_quiet = getenv("PAPI_CUDA_TEST_QUIET");
-    if (test_quiet)
-        quiet = (int) strtol(test_quiet, (char**) NULL, 10);
+    int suppress_output = 0;
+    char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
+    if (user_defined_suppress_output) {
+        suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
+    }
+    PRINT(suppress_output, "Running the cuda component test HelloWorld.cu\n");
 
-    /* PAPI Initialization */
+    int cuda_device_index = -1;
+    char **cuda_native_event_names = NULL;
+    // If command line arguments are provided then get their values.
+    int total_event_count = 0;
+    if (argc > 1) {
+        parse_and_assign_args(argc, argv, &cuda_device_index, &cuda_native_event_names, &total_event_count);
+    }
+
+    // Initialize the PAPI library
     int papi_errno = PAPI_library_init( PAPI_VER_CURRENT );
     if( papi_errno != PAPI_VER_CURRENT ) {
-        test_fail(__FILE__,__LINE__, "PAPI_library_init failed", 0 );
+        test_fail(__FILE__,__LINE__, "PAPI_library_init()", papi_errno);
+    }
+    PRINT(suppress_output, "PAPI version being used for this test: %d.%d.%d\n",
+          PAPI_VERSION_MAJOR(PAPI_VERSION),
+          PAPI_VERSION_MINOR(PAPI_VERSION),
+          PAPI_VERSION_REVISION(PAPI_VERSION));
+
+    int cuda_cmp_idx = PAPI_get_component_index("cuda");
+    if (cuda_cmp_idx < 0) {
+        test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
+    }
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
+
+    // If a user does not provide an event or events, then we go get an event to add
+    if (total_event_count == 0) {
+        enumerate_and_store_cuda_native_events(&cuda_native_event_names, &total_event_count, &cuda_device_index);
     }
 
-    printf( "PAPI_VERSION     : %4d %6d %7d\n",
-        PAPI_VERSION_MAJOR( PAPI_VERSION ),
-        PAPI_VERSION_MINOR( PAPI_VERSION ),
-        PAPI_VERSION_REVISION( PAPI_VERSION ) );
-
-    int i;
     int EventSet = PAPI_NULL;
-    int eventCount = argc - 1;
-
-    /* if no events passed at command line, just report test skipped. */
-    if (eventCount == 0) {
-        fprintf(stderr, "No eventnames specified at command line.");
-        test_skip(__FILE__, __LINE__, "", 0);
-    }
-
-    long long *values = (long long *) calloc(eventCount, sizeof (long long));
-    if (values == NULL) {
-        test_fail(__FILE__, __LINE__, "Failed to allocate memory for values.\n", 0);
-    }
-
-    int *events = (int *) calloc(eventCount, sizeof (int));
-    if (events == NULL) {
-        test_fail(__FILE__, __LINE__, "Failed to allocate memory for events.\n", 0);
-    }
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i before PAPI_create_eventset() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
-
-    papi_errno = PAPI_create_eventset( &EventSet );
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__,__LINE__,"Cannot create eventset",papi_errno);
-    }
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_create_eventset() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
+    check_papi_api_call( PAPI_create_eventset( &EventSet ) );
 
     // If multiple GPUs/contexts were being used, you'd need to
     // create contexts for each device. See, for example,
     // simpleMultiGPU.cu.
+    CUcontext sessionCtx = NULL;
     int flags = 0;
-    CUdevice device = 0;
+    CUdevice device = cuda_device_index;
 #if defined(CUDA_TOOLKIT_GE_13)
-    cuError = cuCtxCreate(&sessionCtx, (CUctxCreateParams*)0, flags, device);
-    if (cuError != CUDA_SUCCESS) {
-        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version >= 13: %d\n", cuError);
-        exit(1);
-    }
+    check_cuda_driver_api_call( cuCtxCreate(&sessionCtx, (CUctxCreateParams*)0, flags, device) );
 #else
-    cuError = cuCtxCreate(&sessionCtx, flags, device);
-    if (cuError != CUDA_SUCCESS) {
-        fprintf(stderr, "Failed to create Cuda context for a Cuda Toolkit version < 13: %d\n", cuError);
-        exit(1);
-    }
+    check_cuda_driver_api_call( cuCtxCreate(&sessionCtx, flags, device) );
 #endif
 
+    CUcontext getCtx;
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cuCtxCreate(&sessionCtx), about to PAPI_start(), sessionCtx=%p, getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
+        check_cuda_driver_api_call( cuCtxGetCurrent(&getCtx) );
+        fprintf(stderr, "Address of Cuda context after call to cuCtxCreate is %p\n", getCtx);
     }
 
-    // Handle the events from the command line
-    int numEventsSuccessfullyAdded = 0, numMultipassEvents = 0;
-    char **eventsSuccessfullyAdded, **metricNames = argv + 1;
-    eventsSuccessfullyAdded = (char **) malloc(eventCount * sizeof(char *));
-    if (eventsSuccessfullyAdded == NULL) {
-        fprintf(stderr, "Failed to allocate memory for successfully added events.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
-    }
-    for (i = 0; i < eventCount; i++) {
-        eventsSuccessfullyAdded[i] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
-        if (eventsSuccessfullyAdded[i] == NULL) {
-            fprintf(stderr, "Failed to allocate memory for command line argument.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-    }
+    int num_events_successfully_added = 0, numMultipassEvents = 0;
+    char **events_successfully_added = (char **) malloc(total_event_count * sizeof(char *));
+    check_memory_allocation_call( events_successfully_added );
 
-    add_events_from_command_line(EventSet, eventCount, metricNames, &numEventsSuccessfullyAdded, eventsSuccessfullyAdded, &numMultipassEvents);
+    int event_idx;
+    for (event_idx = 0; event_idx < total_event_count; event_idx++) {
+        events_successfully_added[event_idx] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
+        check_memory_allocation_call( events_successfully_added[event_idx] );
+
+        add_cuda_native_events(EventSet, cuda_native_event_names[event_idx], &num_events_successfully_added, events_successfully_added, &numMultipassEvents);
+    }
 
     // Only multiple pass events were provided on the command line
-    if (numEventsSuccessfullyAdded == 0) {
+    if (num_events_successfully_added == 0) {
         fprintf(stderr, "Events provided on the command line could not be added to an EventSet as they require multiple passes.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
+        exit(EXIT_FAILURE);
     }
 
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i before PAPI_start(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+        check_cuda_driver_api_call( cuCtxGetCurrent(&getCtx) );
+        fprintf(stderr, "Address of Cuda context after events have been added is %p\n", getCtx);
     }
 
-    papi_errno = PAPI_start( EventSet );
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__, __LINE__, "PAPI_start failed.", papi_errno);
-    }
+    check_papi_api_call( PAPI_start(EventSet) );
 
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_start(), getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+        check_cuda_driver_api_call( cuCtxGetCurrent(&getCtx) );
+        fprintf(stderr, "Address of Cuda context after call to PAPI_start is %p\n", getCtx);
     }
 
-#endif
-
-    int j;
-
-    // desired output
+    // Mangle contents of output
+    // The null character is left intact for simplicity
     char str[] = "Hello World!";
-
-    // mangle contents of output
-    // the null character is left intact for simplicity
-    for(j = 0; j < 12; j++) {
-        str[j] -= j;
+    int i;
+    for (i = 0; i < strlen(str); i++) {
+        str[i] -= i;
     }
+    PRINT(suppress_output, "mangled str=%s\n", str);
 
-    PRINT(quiet, "mangled str=%s\n", str);
-
-    // allocate memory on the device
+    // Allocate memory on the device
     char *d_str;
     size_t size = sizeof(str);
-    cudaMalloc((void**)&d_str, size);
+    check_cuda_runtime_api_call( cudaMalloc((void**)&d_str, size) );
+    check_memory_allocation_call( d_str );
 
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cudaMalloc() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
+    // Copy the string to the device
+    check_cuda_runtime_api_call( cudaMemcpy(d_str, str, size, cudaMemcpyHostToDevice) );
 
-    // copy the string to the device
-    cudaMemcpy(d_str, str, size, cudaMemcpyHostToDevice);
+    // Set the grid and block sizes
+    dim3 dimGrid(2); // One block per word
+    dim3 dimBlock(6); // One thread per character
 
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cudaMemcpy(ToDevice) getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
-
-    // set the grid and block sizes
-    dim3 dimGrid(2); // one block per word
-    dim3 dimBlock(6); // one thread per character
-
-    // invoke the kernel
+    // Invoke the kernel
     helloWorld<<< dimGrid, dimBlock >>>(d_str);
+    check_cuda_runtime_api_call( cudaGetLastError() );
 
-    cudaError = cudaGetLastError();
-    if (STEP_BY_STEP_DEBUG) {
-        fprintf(stderr, "%s:%s:%i Kernel Return Code: %s.\n", __FILE__, __func__, __LINE__, cudaGetErrorString(cudaError));
-    }
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i After Kernel Execution: getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
-
-    // retrieve the results from the device
-    cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost);
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cudaMemcpy(ToHost) getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
+    // Retrieve the results from the device
+    check_cuda_runtime_api_call( cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost) );
 
     // free up the allocated memory on the device
-    cudaFree(d_str);
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cudaFree() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
+    check_cuda_runtime_api_call( cudaFree(d_str) );
 
 
-#ifdef PAPI
-    papi_errno = PAPI_read( EventSet, values );
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__, __LINE__, "PAPI_read failed", papi_errno);
+    long long *cuda_counter_values = (long long *) calloc(total_event_count, sizeof (long long));
+    check_memory_allocation_call(cuda_counter_values);
+
+    check_papi_api_call( PAPI_read(EventSet, cuda_counter_values) );
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++ ) {
+        PRINT(suppress_output, "After PAPI_read, the event %s produced the value: \t\t%lld\n", events_successfully_added[event_idx], cuda_counter_values[event_idx]);
     }
 
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_read getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+        check_cuda_driver_api_call( cuCtxGetCurrent(&getCtx) );
+        fprintf(stderr, "Address of Cuda context after call to PAPI_read is %p\n", getCtx);
     }
 
-    for( i = 0; i < numEventsSuccessfullyAdded; i++ ) {
-        PRINT( quiet, "read: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], eventsSuccessfullyAdded[i] );
-    }
-
-    papi_errno = cuCtxPopCurrent(&getCtx);
-    if( papi_errno != CUDA_SUCCESS) {
-        fprintf( stderr, "cuCtxPopCurrent failed, papi_errno=%d (%s)\n", papi_errno, PAPI_strerror(papi_errno) );
-        exit(1);
+    check_papi_api_call( PAPI_stop(EventSet, cuda_counter_values) );
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++ ) {
+        PRINT(suppress_output, "After PAPI_stop, the event %s produced the value: \t\t%lld\n", events_successfully_added[event_idx], cuda_counter_values[event_idx]);
     }
 
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cuCtxPopCurrent() getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
+        check_cuda_driver_api_call( cuCtxGetCurrent(&getCtx) );
+        fprintf(stderr, "Address of Cuda context after call to PAPI_stop is %p\n", getCtx);
     }
 
-    papi_errno = PAPI_stop( EventSet, values );
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__, __LINE__, "PAPI_stop failed", papi_errno);
-    }
+    check_papi_api_call( PAPI_cleanup_eventset(EventSet) );
 
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_stop getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
-
-    papi_errno = PAPI_cleanup_eventset(EventSet);
-    if( papi_errno != PAPI_OK ) {
-        test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset failed", papi_errno);
-    }
+    check_papi_api_call( PAPI_destroy_eventset(&EventSet) );
 
     if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_cleanup_eventset getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
 
-    papi_errno = PAPI_destroy_eventset(&EventSet);
-    if (papi_errno != PAPI_OK) {
-        test_fail(__FILE__, __LINE__, "PAPI_destroy_eventset failed", papi_errno);
-    }
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_destroy_eventset getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
-
-    for( i = 0; i < numEventsSuccessfullyAdded; i++ ) {
-        PRINT( quiet, "stop: %12lld \t=0X%016llX \t\t --> %s \n", values[i], values[i], eventsSuccessfullyAdded[i] );
-    }
-#endif
-
-    if (STEP_BY_STEP_DEBUG) {
         fprintf(stderr, "%s:%s:%i before cuCtxDestroy sessionCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx);
     }
 
-    // Test destroying the session Context.
-    if (sessionCtx != NULL) {
-        cuCtxDestroy(sessionCtx);
-    }
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after cuCtxDestroy(%p) getCtx=%p.\n", __FILE__, __func__, __LINE__, sessionCtx, getCtx);
-    }
+    // Destroy the context used for this test
+    check_cuda_driver_api_call( cuCtxDestroy(sessionCtx) );
 
     // Free allocated memory
-    free(values);
-    free(events);
-    for (i = 0; i < eventCount; i++) {
-        free(eventsSuccessfullyAdded[i]);
-    }
-    free(eventsSuccessfullyAdded);
+    free(cuda_counter_values);
 
-#ifdef PAPI
+    for (event_idx = 0; event_idx < total_event_count; event_idx++) {
+        free(cuda_native_event_names[event_idx]);
+    }
+    free(cuda_native_event_names);
+
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
+        free(events_successfully_added[event_idx]);
+    }
+    free(events_successfully_added);
+
     PAPI_shutdown();
-
-    if (STEP_BY_STEP_DEBUG) {
-        cuCtxGetCurrent(&getCtx);
-        fprintf(stderr, "%s:%s:%i after PAPI_shutdown getCtx=%p.\n", __FILE__, __func__, __LINE__, getCtx);
-    }
 
     // Output a note that a multiple pass event was provided on the command line
     if (numMultipassEvents > 0) {
-        PRINT(quiet, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
+        PRINT(suppress_output, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
     }
 
     test_pass(__FILE__);
-#endif
+
     return 0;
 }
