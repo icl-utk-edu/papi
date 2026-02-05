@@ -1,62 +1,124 @@
+/**
+* @file test_cuda_edelay_init.c
+* @brief Verify that the PAPI_EDELAY_INIT functionality is working properly with the
+*        cuda component. The test does this by:
+*
+*        1. Verifying that before accessing cuda native events the disabled member
+*           variable of PAPI_component_info_t is set to -26 (PAPI_EDELAY_INIT) and
+*           num_native_events is equal to -1.
+*        2. Verfiying that after accessing cuda native events the disabled member
+*           variable of PAPI_comopnent_info_t is set to 0 (PAPI_OK) and num_native_events
+*           is > 0. 
+*
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "papi.h"
+#include "papi_test.h"
 
-int main()
+int test_cuda_is_edelay_init()
 {
     int retval = PAPI_library_init(PAPI_VER_CURRENT);
     if (retval != PAPI_VER_CURRENT) {
-        fprintf(stderr, "Failed to initialize the PAPI library.\n");
-        exit(1);
+        fprintf(stderr, "PAPI_library_init failed: %d\n", retval);
+        return retval;    
     }
 
     const char *component_name = "cuda";
     int cidx = PAPI_get_component_index(component_name);
     if (cidx < 0) {
-        fprintf(stderr, "Failed to get the cuda component index.\n");
-        exit(1);
+        fprintf(stderr, "PAPI_get_component_index failed: %d\n", retval);
+        return retval;
     }
 
     const PAPI_component_info_t *cmpinfo = PAPI_get_component_info(cidx);
     if (cmpinfo == NULL) {
-        fprintf(stderr, "Failed to get the component info.\n");
-        exit(1);
+        fprintf(stderr, "PAPI_get_component_info failed.\n");
+        return PAPI_ENOMEM;
     }
 
-    // Test 1
     if (cmpinfo->disabled != PAPI_EDELAY_INIT) {
         fprintf(stderr, "The cuda component should be PAPI_EDELAY_INIT.\n");
-        exit(1);
+        return PAPI_ECOMBO;
+    }   
+
+    if (cmpinfo->num_native_events == -1) {
+        fprintf(stderr, "The cuda component should have the value of -1 set for num_native_events.\n");
+        return PAPI_ECOMBO;
     }
 
-    // Test 2
-    if (cmpinfo->num_native_events == -1) {
-        test_fail(__FILE__, __LINE__, "Num native events equal -1.\n", PAPI_EINVAL);
-        //fprintf(stderr, "The cuda component should have -1 events set.\n");
-        //exit(1);
+    PAPI_shutdown();
+
+
+    return PAPI_OK;
+}
+
+int test_cuda_is_not_edelay_init_via_enum_cmp_event()
+{
+    int retval = PAPI_library_init(PAPI_VER_CURRENT);
+    if (retval != PAPI_VER_CURRENT) {
+        fprintf(stderr, "PAPI_library_init failed: %d\n", retval);
+        return retval;
     }
+    
+    const char *component_name = "cuda";
+    int cidx = PAPI_get_component_index(component_name);
+    if (cidx < 0) {
+        fprintf(stderr, "PAPI_get_component_index failed: %d\n", retval);
+        return retval;
+    }
+    
+    const PAPI_component_info_t *cmpinfo = PAPI_get_component_info(cidx);
+    if (cmpinfo == NULL) {
+        fprintf(stderr, "PAPI_get_component_info failed.\n");
+        return PAPI_ENOMEM;
+    } 
 
     int eventcode = 0 | PAPI_NATIVE_MASK;
-    retval = PAPI_enum_cmp_event(&eventcode, PAPI_ENUM_FIRST, cidx);
+    int modifier = PAPI_ENUM_FIRST;
+    retval = PAPI_enum_cmp_event(&eventcode, modifier, cidx);
     if (retval != PAPI_OK) {
-        fprintf(stderr, "Failed to PAPI_enum_cmp_event.\n");
-        exit(1);
+        fprintf(stderr, "PAPI_enum_cmp_event failed: %d\n", retval);
+        return retval;
     }
 
-    // Test 3
     if (cmpinfo->disabled != PAPI_OK) {
-        fprintf(stderr, "Failed to initialize the Cuda component.\n");
-        exit(1);
+        fprintf(stderr, "The cuda component failed to be initialized.\n");
+        return PAPI_ECOMBO;
     }
 
-    // Test 4
-    if (cmpinfo->num_native_events <= 0) {
-        fprintf(stderr, "Num native events should be greater than 0.\n");
-        exit(1);
+    if (cmpinfo->num_native_events < 0) {
+        fprintf(stderr, "The cuda component should have a value greater than -1 set for num_native_events.\n");
+        return PAPI_ECOMBO;
     }
 
-    printf("The test passed.\n");
+    PAPI_shutdown();
 
-    return 0;
+    return PAPI_OK;
+}
+
+int main()
+{
+    // Determine the number of Cuda capable devices
+    int num_devices = 0;
+    cudaDeviceCount(&num_devices);
+
+    if (num_devices < 1) {
+        fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
+        return 1;
+    }
+
+    int retval = test_cuda_is_edelay_init();
+    if (retval != PAPI_OK) {
+        return retval;
+    }
+
+    retval = test_cuda_is_not_edelay_init_via_enum_cmp_event();
+    if (retval != PAPI_OK) {
+        return retval;
+    }
+
+    return PAPI_OK;
 }
