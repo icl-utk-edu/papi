@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # File:    run_tests_shlib.sh
 # Author:  Treece Burgess tburgess@icl.utk.edu
 # This script is designed specifically for the PAPI GitHub CI when

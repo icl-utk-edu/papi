@@ -3,14 +3,16 @@ include ../../Makefile_comp_tests.target
 
 PAPI_CUDA_ROOT ?= $(shell dirname $(shell dirname $(shell which nvcc)))
 
-TESTS = HelloWorld simpleMultiGPU \
-		pthreads cudaOpenMP concurrent_profiling \
-		test_multi_read_and_reset test_multipass_event_fail \
-		test_2thr_1gpu_not_allowed
+TESTS = test_cuda_edelay_init 
 
-TESTS_NOCTX = concurrent_profiling_noCuCtx pthreads_noCuCtx \
-			  cudaOpenMP_noCuCtx HelloWorld_noCuCtx \
-			  simpleMultiGPU_noCuCtx
+#TESTS = HelloWorld simpleMultiGPU \
+#		pthreads cudaOpenMP concurrent_profiling \
+#		test_multi_read_and_reset test_multipass_event_fail \
+#		test_2thr_1gpu_not_allowed
+
+#TESTS_NOCTX = concurrent_profiling_noCuCtx pthreads_noCuCtx \
+#			  cudaOpenMP_noCuCtx HelloWorld_noCuCtx \
+#			  simpleMultiGPU_noCuCtx
 
 NVCC = $(PAPI_CUDA_ROOT)/bin/nvcc
 NVCC_VERSION := $(shell $(NVCC) --version | grep -oP '(?<=release )\d+\.\d+')
@@ -40,7 +42,11 @@ CFLAGS += -g $(PAPI_FLAG)
 INCLUDE += -I$(PAPI_CUDA_ROOT)/include
 CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -lcuda
 
-cuda_tests: $(TESTS) $(TESTS_NOCTX)
+#cuda_tests: $(TESTS) $(TESTS_NOCTX)
+cuda_tests: $(TESTS)
+
+%.o:%.c
+	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 %.o:%.cu
 	$(NVCC) $(INCLUDE) $(NVCFLAGS) $(CUDA_CPPFLAGS) -c -o $@ $<
@@ -86,6 +92,9 @@ simpleMultiGPU: simpleMultiGPU.o $(UTILOBJS)
 
 simpleMultiGPU_noCuCtx: simpleMultiGPU_noCuCtx.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o simpleMultiGPU_noCuCtx simpleMultiGPU_noCuCtx.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+test_cuda_edelay_init: test_cuda_edelay_init.o $(UTILOBJS)
+	$(CC) $(CFLAGS) $(INCLUDE) -o test_cuda_edelay_init test_cuda_edelay_init.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) $(TESTS_NOCTX)
