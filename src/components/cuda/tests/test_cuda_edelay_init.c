@@ -101,15 +101,6 @@ int test_cuda_is_not_edelay_init_via_enum_cmp_event()
 
 int main()
 {
-    // Determine the number of Cuda capable devices
-    int num_devices = 0;
-    cudaDeviceCount(&num_devices);
-
-    if (num_devices < 1) {
-        fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
-        return 1;
-    }
-
     int retval = test_cuda_is_edelay_init();
     if (retval != PAPI_OK) {
         return retval;
