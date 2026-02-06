@@ -42,6 +42,14 @@ typedef enum {
 
 typedef int (*amds_accessor_t)(int mode, void *arg);
 
+/* Native event descriptor flags (native_event_t::evtinfo_flags) */
+#define AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR   0x1u  /* descr differs by device */
+
+typedef struct {
+  int num_devices; /* <= 64 */
+  char **descrs; /* descrs[device] */
+} amds_per_device_descr_t;
+
 /* Native event descriptor */
 typedef struct native_event {
   unsigned int id;
@@ -50,6 +58,8 @@ typedef struct native_event {
   uint64_t device_map;
   uint64_t value;
   uint32_t mode, variant, subvariant;
+  uint32_t evtinfo_flags;
+  amds_per_device_descr_t *per_device_descr;
   void *priv;
   int (*open_func)(struct native_event *);
   int (*close_func)(struct native_event *);
