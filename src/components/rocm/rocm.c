@@ -133,24 +133,57 @@ rocm_init_component(int cid)
     _rocm_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cid;
     SUBDBG("ENTER: cid: %d\n", cid);
 
-    int papi_errno = rocd_init_environment();
-    if (papi_errno != PAPI_OK) {
-        _rocm_vector.cmp_info.initialized = 1;
-        _rocm_vector.cmp_info.disabled = papi_errno;
-        const char *err_string;
-        rocd_err_get_last(&err_string);
-        int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
-                              PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
+    /* Manage contension between rocm and rocp_sdk components. */
+    int use_rocm = 0;
+    #if defined(DEFAULT_TO_ROCM)
+    use_rocm = 1;
+    #endif
+    #if defined(DEFAULT_TO_ROCP_SDK)
+        char *disabledComps = getenv("PAPI_DISABLE_COMPONENTS");
+        if (disabledComps != NULL) {
+            char *penv = strdup(disabledComps);
+            char *p;
+            for (p = strtok (penv, ",:"); p != NULL; p = strtok (NULL, ",:")) {
+                if(!strcmp(p, "rocp_sdk")) use_rocm = 1;
+            }
+            free(penv);
+        } else {
+            SUBDBG("rocm: getenv(PAPI_DISABLE_COMPONENTS) was not set.\n");
+        }
+    #endif
+
+    int papi_errno, expect;
+    if (use_rocm) {
+        papi_errno = rocd_init_environment();
+        if (papi_errno != PAPI_OK) {
+            _rocm_vector.cmp_info.initialized = 1;
+            _rocm_vector.cmp_info.disabled = papi_errno;
+            const char *err_string;
+            rocd_err_get_last(&err_string);
+            expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
+                              PAPI_HUGE_STR_LEN, "%s", err_string);
+            if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+                SUBDBG("disabled_reason truncated");
+            }
+            goto fn_fail;
+        }
+
+        expect = snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s",
+                         "Not initialized. Access component events to initialize it.");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
-        goto fn_fail;
+        papi_errno = PAPI_EDELAY_INIT;
+        _rocm_vector.cmp_info.disabled = papi_errno;
+    } else {
+        expect = snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s",
+                          "Not active while rocp_sdk component is active. Set 'export PAPI_DISABLE_COMPONENTS=rocp_sdk' to override.");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+        papi_errno = PAPI_ECOMBO;
+        _rocm_vector.cmp_info.disabled = papi_errno;
     }
-
-    sprintf(_rocm_vector.cmp_info.disabled_reason,
-            "Not initialized. Access component events to initialize it.");
-    papi_errno = PAPI_EDELAY_INIT;
-    _rocm_vector.cmp_info.disabled = papi_errno;
 
   fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
@@ -209,8 +242,8 @@ rocm_init_private(void)
         const char *err_string;
         rocd_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
-                              PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
+                              PAPI_HUGE_STR_LEN, "%s", err_string);
+        if (expect > PAPI_HUGE_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
 
@@ -222,8 +255,8 @@ rocm_init_private(void)
     _rocm_vector.cmp_info.num_native_events = count;
     _rocm_vector.cmp_info.num_cntrs = count;
     _rocm_vector.cmp_info.initialized = 1;
-    int strLen = snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", "");
-    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+    int strLen = snprintf(_rocm_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", "");
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Failed to fully write disabled_reason.\n");
     }
 
