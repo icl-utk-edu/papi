@@ -1505,7 +1505,7 @@ PAPI_event_code_to_name( int EventCode, char *out )
             return PAPI_ENOEVNT;
         }
         if ( _papi_hwd[compIdx]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
-            int junk;
+            unsigned int junk;
             _papi_hwd[compIdx]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
         }
 
@@ -1631,7 +1631,7 @@ PAPI_event_name_to_code( const char *in, int *out )
                      *out = ( int ) ( (i + _papi_hwi_start_idx[cmpnt]) | PAPI_PRESET_MASK );
 
                      if ( _papi_hwd[cmpnt]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
-                         int junk;
+                         unsigned int junk;
                          _papi_hwd[cmpnt]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
                      }
 
@@ -1819,7 +1819,7 @@ PAPI_enum_event( int *EventCode, int modifier )
                 if (cidx < 0) return PAPI_ENOCMP;
                 if ( _papi_hwd[cidx]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
                     APIDBG("Triggered forced initialization of component ID=%d.\n", cidx);
-                    int junk;
+                    unsigned int junk;
                     _papi_hwd[cidx]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
                 }
 
@@ -1854,7 +1854,7 @@ PAPI_enum_event( int *EventCode, int modifier )
             }
 
             if ( _papi_hwd[first_comp_with_presets]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
-                int junk;
+                unsigned int junk;
                 _papi_hwd[first_comp_with_presets]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
             }
 
@@ -2071,7 +2071,7 @@ PAPI_enum_cmp_event( int *EventCode, int modifier, int cidx )
     if ( IS_PRESET(i) ) {
 
         if ( _papi_hwd[cidx]->cmp_info.disabled == PAPI_EDELAY_INIT ) {
-            int junk;
+            unsigned int junk;
             _papi_hwd[cidx]->ntv_enum_events(&junk, PAPI_ENUM_FIRST);
         }
 
