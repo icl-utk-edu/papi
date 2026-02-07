@@ -120,7 +120,6 @@ int
 _papi_hwi_cleanup_all_presets( void )
 {
     int preset_index,cidx;
-    unsigned int j;
     hwi_presets_t *_papi_hwi_list;
 
     for(cidx=0;cidx<papi_num_components;cidx++) {
@@ -137,12 +136,14 @@ _papi_hwi_cleanup_all_presets( void )
            _papi_hwi_list[preset_index].note = NULL;
         }
         /* Free the event names used to define the preset. */
-        for(j=0; j<_papi_hwi_list[preset_index].count;j++) {
-           free(_papi_hwi_list[preset_index].name[j]);
-           free(_papi_hwi_list[preset_index].base_name[j]);
-           free(_papi_hwi_list[preset_index].default_name[j]);
+        unsigned int i;
+        for(i=0; i<_papi_hwi_list[preset_index].count;i++) {
+           free(_papi_hwi_list[preset_index].name[i]);
+           free(_papi_hwi_list[preset_index].base_name[i]);
+           free(_papi_hwi_list[preset_index].default_name[i]);
         }
         /* Free the qualifier names and descriptions. */
+        int j;
         for(j=0; j<_papi_hwi_list[preset_index].num_quals;j++) {
            free(_papi_hwi_list[preset_index].quals[j]);
            free(_papi_hwi_list[preset_index].quals_descrs[j]);
@@ -1434,7 +1435,6 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 			}
 
 			if (strcasecmp(t, arch_name) == 0) {
-				int type;
 
                 breakAfter = 1;
 
@@ -1552,7 +1552,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 				// this also clears any values left over from a previous call
 				_papi_hwi_set_papi_event_code(-1, -1);
 
-                unsigned int eventCode;
+                int eventCode;
                 char *tmpEvent, *tmpQuals;
                 char *qualDelim = ":";
                 PAPI_event_info_t eventInfo;
@@ -1594,7 +1594,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                         prstPtr->quals[prstPtr->num_quals] = (char*)malloc(qualLen*sizeof(char));
                         if( NULL != prstPtr->quals[prstPtr->num_quals] ) {
                             status = snprintf(prstPtr->quals[prstPtr->num_quals], qualLen, "%s%s", qualDelim, qualPtr);
-                            if( status < 0 || status >= qualLen ) {
+                            if( status < 0 || (size_t) status >= qualLen ) {
                                 invalid_event = 1;
                                 PAPIERROR("Failed to store qualifier for native event %s,",
                                           " used in derived event %s",
@@ -1623,7 +1623,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                         prstPtr->quals_descrs[count] = (char*)malloc(descLen*sizeof(char));
                         if( NULL != prstPtr->quals_descrs[count] ) {
                             status = snprintf(prstPtr->quals_descrs[count], descLen, "%s", descPtr);
-                            if( status < 0 || status >= descLen ) {
+                            if( status < 0 || (size_t) status >= descLen ) {
                                 invalid_event = 1;
                                 PAPIERROR("Failed to store qualifier description for native event %s,",
                                           " used in derived event %s",

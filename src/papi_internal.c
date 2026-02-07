@@ -642,7 +642,7 @@ PAPIWARN( char *format, ... )
 int
 construct_qualified_event(hwi_presets_t *prstPtr) {
 
-    int j;
+    unsigned int j;
     for(j = 0; j < prstPtr->count; j++ ) {
         /* Construct event with all qualifiers. */
         int k, strLenSum = 0, baseLen = 1+strlen(prstPtr->base_name[j]);
@@ -685,7 +685,8 @@ construct_qualified_event(hwi_presets_t *prstPtr) {
         prstPtr->name[j] = strdup(tmpEvent);
 
         /* Set the corresponding new code. */
-        status = _papi_hwi_native_name_to_code( tmpEvent, &(prstPtr->code[j]) );
+        int code_converted = (int) prstPtr->code[j];
+        status = _papi_hwi_native_name_to_code( tmpEvent, &code_converted );
         if( PAPI_OK != status ) {
             PAPIERROR("Failed to get code for native event %s used in derived event %s\n",
                       tmpEvent, prstPtr->symbol);
@@ -724,7 +725,7 @@ overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
     while( qualName != NULL ) {
         size_t qualLen = 1+strlen(qualDelim)+strlen(qualName);
         int status = snprintf(providedQuals[k], qualLen, "%s%s", qualDelim, qualName);
-        if( status < 0 || status >= qualLen ) {
+        if( status < 0 || (size_t) status >= qualLen ) {
             PAPIERROR("Failed to make copy of qualifier %s", qualName);
             return PAPI_ENOMEM;
         }
@@ -788,9 +789,9 @@ get_first_cmp_preset_idx( void ) {
 
 /* Return index of component containing preset with given index. */
 int
-get_preset_cmp( unsigned int *index ) {
+get_preset_cmp( int *index ) {
 
-    unsigned int sum = 0;
+    int sum = 0;
     if(pe_disabled) {
         sum += PAPI_MAX_PRESET_EVENTS;
         if(*index < sum) {
@@ -814,7 +815,7 @@ get_preset_cmp( unsigned int *index ) {
 /* Return a pointer to preset which has given event code. */
 hwi_presets_t*
 get_preset( int event_code ) {
-    unsigned int preset_index = ( event_code & PAPI_PRESET_AND_MASK );
+    int preset_index = ( event_code & PAPI_PRESET_AND_MASK );
     hwi_presets_t *_papi_hwi_list;
 
     int i = get_preset_cmp(&preset_index);
@@ -2195,7 +2196,7 @@ _papi_hwi_init_global( int PE_OR_PEU )
 int
 _papi_hwi_init_global_presets( void )
 {
-    int retval = PAPI_OK, is_pe, i = 0;
+    int retval = PAPI_OK, i = 0;
 
     /* Determine whether or not perf_event is available. */
     while ( _papi_hwd[i] ) {
@@ -2212,10 +2213,7 @@ _papi_hwi_init_global_presets( void )
 
     i = 0;
     while ( _papi_hwd[i] ) {
-        is_pe = 0;
-        if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event") == 0) {
-            is_pe = 1;
-        } else {
+        if (strcmp(_papi_hwd[i]->cmp_info.name, "perf_event") != 0) {
             /* Only set the first non-perf_event component with presets once. */
             if ( -1 == first_comp_with_presets && _papi_hwi_max_presets[i] > 0 ) {
                 first_comp_with_presets = i;

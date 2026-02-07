@@ -528,7 +528,7 @@ int _papi_hwi_get_dev_attr(void *handle, int id, PAPI_dev_attr_e attr, void *val
 int construct_qualified_event(hwi_presets_t *prstPtr);
 int overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset);
 int get_first_cmp_preset_idx( void );
-int get_preset_cmp( unsigned int *index );
+int get_preset_cmp( int *index );
 hwi_presets_t* get_preset( int event_code );
 
 #endif /* PAPI_INTERNAL_H */
