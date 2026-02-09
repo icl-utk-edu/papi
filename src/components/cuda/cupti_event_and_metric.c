@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <stdbool.h>
 
 #include "papi.h"
 #include "papi_debug.h"
