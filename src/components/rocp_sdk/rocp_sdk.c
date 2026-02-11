@@ -133,23 +133,57 @@ rocp_sdk_init_component(int cid)
     _rocp_sdk_vector.cmp_info.num_cntrs = -1;
     _rocp_sdk_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cid;
 
-    // We set this env variable to silence some unnecessary ROCprofiler-SDK debug messages.
-    // It is not critical, so if it fails to be set, we can safely ignore the error.
-    (void)setenv("ROCPROFILER_LOG_LEVEL","fatal",0);
+    /* Manage contension between rocm and rocp_sdk components. */
+    int use_rocp_sdk = 0;
+    #if defined(DEFAULT_TO_ROCP_SDK)
+    use_rocp_sdk = 1;
+    #endif
+    #if defined(DEFAULT_TO_ROCM)
+        char *disabledComps = getenv("PAPI_DISABLE_COMPONENTS");
+        if (disabledComps != NULL) {
+            char *penv = strdup(disabledComps);
+            char *p;
+            for (p = strtok (penv, ",:"); p != NULL; p = strtok (NULL, ",:")) {
+                if(!strcmp(p, "rocm")) use_rocp_sdk = 1;
+            }
+            free(penv);
+        } else {
+            SUBDBG("rocp_sdk: getenv(PAPI_DISABLE_COMPONENTS) was not set.\n");
+        }
+    #endif
 
-    int papi_errno = rocprofiler_sdk_init_pre();
-    if (papi_errno != PAPI_OK) {
-        _rocp_sdk_vector.cmp_info.initialized = 1;
+    int papi_errno, expect;
+    if( use_rocp_sdk) {
+        // We set this env variable to silence some unnecessary ROCprofiler-SDK debug messages.
+        // It is not critical, so if it fails to be set, we can safely ignore the error.
+        (void)setenv("ROCPROFILER_LOG_LEVEL","fatal",0);
+
+        papi_errno = rocprofiler_sdk_init_pre();
+        if (papi_errno != PAPI_OK) {
+            _rocp_sdk_vector.cmp_info.initialized = 1;
+            _rocp_sdk_vector.cmp_info.disabled = papi_errno;
+            const char *err_string;
+            rocprofiler_sdk_err_get_last(&err_string);
+            expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", err_string);
+            if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+                SUBDBG("disabled_reason truncated");
+            }
+            return papi_errno;
+        }
+
+        // This component needs to be fully initialized from the beginning,
+        // because interleaving hip calls and PAPI calls leads to errors.
+        return check_n_initialize();
+    } else {
+        expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s",
+                          "Not active while rocm component is active. Set 'export PAPI_DISABLE_COMPONENTS=rocm' to override.");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+        papi_errno = PAPI_ECOMBO;
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
-        const char *err_string;
-        rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
         return papi_errno;
     }
-
-    // This component needs to be fully initialized from the beginning,
-    // because interleaving hip calls and PAPI calls leads to errors.
-    return check_n_initialize();
 }
 
 int
@@ -205,7 +239,10 @@ rocp_sdk_init_private(void)
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        int expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", err_string);
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
         goto fn_fail;
     }
 
