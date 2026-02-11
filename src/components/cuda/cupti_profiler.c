@@ -817,7 +817,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         }
 
         LOGDBG("Device num %d: event_count %d, rmr count %d\n", dev_id, gpu_ctl->added_events->count, gpu_ctl->numberOfRawMetricRequests);
-        papi_errno = cuptic_device_acquire(state->gpu_ctl[dev_id].added_events);
+        papi_errno = cuptic_device_acquire(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
         if (papi_errno != PAPI_OK) {
             ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
             return papi_errno;
@@ -1134,7 +1134,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
             return papi_errno;
         }
 
-        papi_errno = cuptic_device_release(state->gpu_ctl[dev_id].added_events);
+        papi_errno = cuptic_device_release(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }

@@ -807,7 +807,7 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
             CUcontext internalContext; 
             cudaArtCheckErrors( cudaSetDevicePtr(native_event_info.device), return PAPI_EMISC );
             cudaArtCheckErrors( cudaFreePtr(NULL), return PAPI_EMISC );  
-            cudaCheckErrors( cuCtxGetCurrentPtr(&internalContext), return PAPI_EMISC); 
+            cudaCheckErrors( cuCtxGetCurrentPtr(&internalContext), return PAPI_EMISC);
             thr_info[native_event_info.device].ctx = internalContext;
             // Pop the context off so verify_user_added_event_or_metric functions properly
             cudaCheckErrors( cuCtxPopCurrentPtr(&internalContext), return PAPI_EMISC );
@@ -867,12 +867,25 @@ int cuptie_ctx_start(cuptie_control_t state)
 {
     SUBDBG("ENTERING: Setting up profiling for the Event and Metric APIs.\n");
 
+    CUcontext currentUserContext;
+    cudaCheckErrors( cuCtxGetCurrentPtr(&currentUserContext), return PAPI_EMISC);
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC );
+    }
+
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
         cuptie_gpu_state_t *gpu_ctl = &(state->gpu_ctl[deviceIdx]);
         if (gpu_ctl->added_events->totalNumberOfUserAddedNativeEvents == 0) {
             continue;
         }
+
+        int papi_errno = cuptic_device_acquire(gpu_ctl->added_events, API_LEGACY);
+        if (papi_errno != PAPI_OK) {
+            SUBDBG("Profiling the same gpu from multiple event sets is not allowed.\n");
+            return papi_errno;
+        }
+
 
         cudaCheckErrors( cuCtxSetCurrentPtr(state->info[deviceIdx].ctx), return PAPI_EMISC );
 
@@ -924,6 +937,10 @@ int cuptie_ctx_start(cuptie_control_t state)
         cuptiCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
     }
 
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPushCurrentPtr(currentUserContext), return PAPI_EMISC );
+    }
+
     SUBDBG("EXITING: Profiling setup completed.\n");
     return PAPI_OK;
 }
@@ -940,6 +957,12 @@ int cuptie_ctx_start(cuptie_control_t state)
 int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
 {
     SUBDBG("ENTERING: Reading values for the Event and Metric APIs.\n");
+
+    CUcontext currentUserContext;
+    cudaCheckErrors( cuCtxGetCurrentPtr(&currentUserContext), return PAPI_EMISC);
+    if (currentUserContext != NULL) {
+        cuptiCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC );
+    }
 
     int numCountersRead = 0;
     long long *readCounterValues = state->counters;
@@ -1117,6 +1140,10 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
     state->read_count = numCountersRead;
     *counterValues = readCounterValues;
 
+    if (currentUserContext != NULL) {
+        cuptiCheckErrors( cuCtxPushCurrentPtr(currentUserContext), return PAPI_EMISC );
+    }
+
     SUBDBG("EXITING: Reading values completed.\n");
     return PAPI_OK;
 }
@@ -1130,6 +1157,12 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
 int cuptie_ctx_stop(cuptie_control_t state)
 {
     SUBDBG("ENTERING: Disabling and destroying the event group sets created. Collection of events will be stopped.\n");
+
+    CUcontext currentUserContext;
+    cudaCheckErrors( cuCtxGetCurrentPtr(&currentUserContext), return PAPI_EMISC);
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC );
+    }
 
     int deviceIdx;
     for (deviceIdx = 0; deviceIdx < numDevicesOnMachine; deviceIdx++) {
@@ -1146,7 +1179,16 @@ int cuptie_ctx_stop(cuptie_control_t state)
         cuptiCheckErrors( cuptiEventGroupSetDisablePtr(eventGroupSet), return PAPI_EMISC );
         cuptiCheckErrors( cuptiEventGroupSetsDestroyPtr(eventGroupSets), return PAPI_EMISC );
 
+        int papi_errno = cuptic_device_release(gpu_ctl->added_events, API_LEGACY);
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
+
         cudaCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
+    }
+
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPushCurrentPtr(currentUserContext), return PAPI_EMISC );
     }
 
     SUBDBG("EXITING: Disabling event group sets completed.\n");
@@ -1163,6 +1205,12 @@ int cuptie_ctx_stop(cuptie_control_t state)
 int cuptie_ctx_reset(cuptie_control_t state)
 {
     SUBDBG("ENTERING: Resetting counter values.\n");
+
+    CUcontext currentUserContext;
+    cudaCheckErrors( cuCtxGetCurrentPtr(&currentUserContext), return PAPI_EMISC);
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC );
+    }
 
     int counterIdx;
     for (counterIdx = 0; counterIdx < state->read_count; counterIdx++) {
@@ -1190,6 +1238,10 @@ int cuptie_ctx_reset(cuptie_control_t state)
         }
 
         cudaCheckErrors( cuCtxPopCurrentPtr(&state->info[deviceIdx].ctx), return PAPI_EMISC );
+    }
+
+    if (currentUserContext != NULL) {
+        cudaCheckErrors( cuCtxPushCurrentPtr(currentUserContext), return PAPI_EMISC );
     }
 
     SUBDBG("EXITING: Resetting counter values completed.\n");
@@ -1425,10 +1477,15 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
         }
         totalNumberOfUserAddedEvents++;
         state->gpu_ctl[native_event_info.device].added_events->totalNumberOfUserAddedNativeEvents = totalNumberOfUserAddedEvents;
+        // For a specific device table, get the current event index
+        int idx = state->gpu_ctl[native_event_info.device].added_events->count;
+        state->gpu_ctl[native_event_info.device].added_events->cuda_devs[idx] = native_event_info.device;
+        state->gpu_ctl[native_event_info.device].added_events->count++;
 
         // Pop off the set context
         cudaCheckErrors( cuCtxPopCurrentPtr(&thr_info[native_event_info.device].ctx), return PAPI_EMISC );
     }
+
 
     SUBDBG("EXITING: Checking user added a valid event completed.\n");
     return PAPI_OK;
@@ -1491,6 +1548,7 @@ static int create_event_and_metric_table(int totalNumberOfEntries, cuptiu_event_
         goto fn_fail;
     }
 
+    eventTable->count = 0;
     eventTable->capacity = totalNumberOfEntries;
     eventTable->startTimeStampNs = 0;
     eventTable->totalNumberOfUserAddedNativeEvents = 0;
