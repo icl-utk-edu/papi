@@ -19,7 +19,7 @@ GAUDI2_LIBDIR = $(PAPI_GAUDI2_ROOT)/lib/habanalabs
 
 # Compiler flags
 # -I$(GAUDI2_INCDIR) for hlthunk.h and habanalabs_accel.h
-CFLAGS += -I$(GAUDI2_INCDIR) -g
+CFLAGS += -I$(GAUDI2_INCDIR) -I$(PAPI_GAUDI2_ROOT)/include/drm -g
 
 # Linker flags
 # Use dlopen for hlthunk library (no direct linking)
