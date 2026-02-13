@@ -253,24 +253,6 @@ typedef enum {
 #define GAUDI2_PDMA0_SPMU_BASE          0x1000007FFC4A1000ULL
 #define GAUDI2_PDMA1_SPMU_BASE          0x1000007FFC4E1000ULL
 
-/* Debug Operation Codes (from habanalabs_accel.h) */
-#define HL_DEBUG_OP_ETR             0
-#define HL_DEBUG_OP_ETF             1
-#define HL_DEBUG_OP_STM             2
-#define HL_DEBUG_OP_FUNNEL          3
-#define HL_DEBUG_OP_BMON            4
-#define HL_DEBUG_OP_SPMU            5
-#define HL_DEBUG_OP_TIMESTAMP       6
-#define HL_DEBUG_OP_SET_MODE        7
-#define HL_DEBUG_OP_FETCH_TRACE     8
-#define HL_DEBUG_OP_DIO             9
-#define HL_DEBUG_OP_READMEM         1024
-#define HL_DEBUG_OP_MEMCPY          1025
-#define HL_DEBUG_OP_SCHED_SUBMIT_BUF 1031
-#define HL_DEBUG_OP_READBLOCK       1032
-
-#define HL_DEBUG_MAX_AUX_VALUES     10
-
 /* Event Info Structure */
 typedef struct {
     const char *name;           /* Event name (e.g., "TPC_KERNEL_EXECUTED") */

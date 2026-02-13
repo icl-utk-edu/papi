@@ -35,105 +35,98 @@
 #include "gaudi2_events.h"
 
 #define GAUDI2_MAX_COUNTERS 32
+#define GAUDI2_MAX_DEVICES  16  /* Max supported devices per node */
 
 /* Eventset status flags */
 #define GAUDI2_EVENTS_STOPPED   (0x0)
 #define GAUDI2_EVENTS_RUNNING   (0x2)
 
-#define HLTHUNK_DEVICE_DONT_CARE 4
-#define HLTHUNK_DEVICE_GAUDI2    5
-#define HLTHUNK_DEVICE_GAUDI2B   8
-#define HLTHUNK_DEVICE_GAUDI2C   10
-#define HLTHUNK_DEVICE_GAUDI2D   11
+/* Event code encoding:
+ * Bits 0-7:   name ID (base event index in catalog)
+ * Bits 8-15:  device index (0-255)
+ * Bits 16-23: flags (DEVICE_FLAG for device qualifier display)
+ *
+ * When flags=0: base event (for PAPI_ENUM_EVENTS enumeration)
+ * When flags=DEVICE_FLAG: device qualifier entry (for PAPI_NTV_ENUM_UMASKS)
+ */
+#define GAUDI2_NAMEID_SHIFT   0
+#define GAUDI2_NAMEID_WIDTH   8
+#define GAUDI2_DEVICE_SHIFT   8
+#define GAUDI2_DEVICE_WIDTH   8
+#define GAUDI2_FLAGS_SHIFT    16
+#define GAUDI2_FLAGS_WIDTH    8
 
-/* hlthunk structures */
-struct hl_debug_args {
-    __u64 input_ptr;
-    __u64 output_ptr;
-    __u32 input_size;
-    __u32 output_size;
-    __u32 op;
-    __u32 reg_idx;
-    __u32 enable;
-    __u32 ctx_id;
-};
+#define GAUDI2_NAMEID_MASK   ((0xFF) << GAUDI2_NAMEID_SHIFT)
+#define GAUDI2_DEVICE_MASK   ((0xFF) << GAUDI2_DEVICE_SHIFT)
+#define GAUDI2_FLAGS_MASK    ((0xFF) << GAUDI2_FLAGS_SHIFT)
 
-struct hl_debug_params_spmu {
-    __u64 event_types[HL_DEBUG_MAX_AUX_VALUES];
-    __u32 event_types_num;
-    __u32 pmtrc_val;
-    __u32 trc_ctrl_host_val;
-    __u32 trc_en_host_val;
-};
+/* Flag definitions */
+#define GAUDI2_DEVICE_FLAG   0x1  /* Device qualifier entry */
 
-struct hl_debug_params_read_block {
-    __u64 cfg_address;
-    __u64 user_address;
-    __u32 size;
-    __u32 flags;
-};
+/* Event info structure for encoding/decoding */
+typedef struct {
+    int nameid;   /* Index in catalog */
+    int device;   /* Device index */
+    int flags;    /* GAUDI2_DEVICE_FLAG or 0 */
+} gaudi2_event_info_t;
 
-/* hlthunk function pointers */
-static void *hlthunk_handle = NULL;
+static int gaudi2_evt_id_create(gaudi2_event_info_t *info, unsigned int *event_code)
+{
+    *event_code  = (unsigned int)(info->nameid << GAUDI2_NAMEID_SHIFT);
+    *event_code |= (unsigned int)(info->device << GAUDI2_DEVICE_SHIFT);
+    *event_code |= (unsigned int)(info->flags  << GAUDI2_FLAGS_SHIFT);
+    return PAPI_OK;
+}
 
-typedef int (*hlthunk_open_fn)(int device_type, const char *busid);
+static int gaudi2_evt_id_to_info(unsigned int event_code, gaudi2_event_info_t *info)
+{
+    info->nameid = (event_code & GAUDI2_NAMEID_MASK) >> GAUDI2_NAMEID_SHIFT;
+    info->device = (event_code & GAUDI2_DEVICE_MASK) >> GAUDI2_DEVICE_SHIFT;
+    info->flags  = (event_code & GAUDI2_FLAGS_MASK)  >> GAUDI2_FLAGS_SHIFT;
+    return PAPI_OK;
+}
+
+/* hlthunk library header - provides:
+ *   struct hl_debug_args, hl_debug_params_spmu, hlthunk_hw_ip_info
+ *   enum hlthunk_device_name (HLTHUNK_DEVICE_GAUDI2, etc.)
+ *   HLTHUNK_NODE_PRIMARY, HLTHUNK_NODE_CONTROL, HLTHUNK_MAX_MINOR
+ *   HL_DEBUG_OP_*, HL_DEBUG_MAX_AUX_VALUES
+ *   Function declarations for hlthunk_open, hlthunk_debug, etc.
+ */
+#include "hlthunk.h"
+
+/* Function pointer types for dlsym */
+typedef int (*hlthunk_open_fn)(enum hlthunk_device_name device_name, const char *busid);
 typedef int (*hlthunk_close_fn)(int fd);
 typedef int (*hlthunk_debug_fn)(int fd, struct hl_debug_args *debug);
-typedef int (*hlthunk_get_device_name_from_fd_fn)(int fd);
-
-/* hlthunk_hw_ip_info - hardware IP information structure */
-#define HL_INFO_VERSION_MAX_LEN_LOCAL  128
-#define HL_INFO_CARD_NAME_MAX_LEN_LOCAL 16
-
-struct hlthunk_hw_ip_info {
-    uint64_t sram_base_address;
-    uint64_t dram_base_address;
-    uint64_t dram_size;
-    uint32_t sram_size;
-    uint32_t num_of_events;
-    uint32_t device_id;
-    uint32_t cpld_version;
-    uint32_t psoc_pci_pll_nr;
-    uint32_t psoc_pci_pll_nf;
-    uint32_t psoc_pci_pll_od;
-    uint32_t psoc_pci_pll_div_factor;
-    uint16_t tpc_enabled_mask;
-    uint8_t dram_enabled;
-    uint8_t cpucp_version[HL_INFO_VERSION_MAX_LEN_LOCAL];
-    uint32_t module_id;
-    uint8_t card_name[HL_INFO_CARD_NAME_MAX_LEN_LOCAL];
-    uint32_t decoder_enabled_mask;
-    uint8_t mme_master_slave_mode;
-    uint64_t tpc_enabled_mask_ext;
-    uint64_t dram_page_size;
-    uint16_t first_available_interrupt_id;
-    uint32_t edma_enabled_mask;
-    uint16_t server_type;
-    uint64_t pdma_user_owned_ch_mask;
-    uint16_t number_of_user_interrupts;
-    uint64_t device_mem_alloc_default_page_size;
-    uint64_t nic_ports_mask;
-    uint8_t interposer_version;
-    uint8_t substrate_version;
-    uint64_t nic_ports_external_mask;
-    uint32_t mme_enabled_mask;
-    uint8_t odp_supported;
-    uint8_t security_enabled;
-    uint8_t revision_id;
-    uint16_t tpc_interrupt_id;
-    uint64_t engine_core_interrupt_reg_addr;
-    uint32_t rotator_enabled_mask;
-    uint32_t sched_arc_enabled_mask;
-    uint64_t reserved_dram_size;
-};
-
+typedef enum hlthunk_device_name (*hlthunk_get_device_name_from_fd_fn)(int fd);
 typedef int (*hlthunk_get_hw_ip_info_fn)(int fd, struct hlthunk_hw_ip_info *hw_ip);
+typedef int (*hlthunk_get_device_count_fn)(enum hlthunk_device_name device_name);
+
+static void *hlthunk_handle = NULL;
 
 static hlthunk_open_fn  p_hlthunk_open  = NULL;
 static hlthunk_close_fn p_hlthunk_close = NULL;
 static hlthunk_debug_fn p_hlthunk_debug = NULL;
 static hlthunk_get_device_name_from_fd_fn p_hlthunk_get_device_name_from_fd = NULL;
 static hlthunk_get_hw_ip_info_fn p_hlthunk_get_hw_ip_info = NULL;
+static hlthunk_get_device_count_fn p_hlthunk_get_device_count = NULL;
+
+/* Per-device state */
+typedef struct {
+    int device_idx;                      /* Index in device array (0 to num_devices-1) */
+    int device_fd;                       /* File descriptor for this device */
+    int device_type;                     /* HLTHUNK_DEVICE_GAUDI2/2B/2C/2D */
+    struct hlthunk_hw_ip_info hw_ip;     /* Hardware IP info */
+    int tpc_avail;                       /* TPC engine available */
+    int edma_avail;                      /* EDMA engine available */
+    int mme_avail;                       /* MME engine available */
+    int pdma_avail;                      /* PDMA engine available */
+} gaudi2_device_t;
+
+/* Device table - populated during init */
+static gaudi2_device_t *gaudi2_devices = NULL;
+static int gaudi2_num_devices = 0;
 
 /** 
 * Event Catalog
@@ -205,18 +198,28 @@ static gaudi2_native_event_t gaudi2_event_catalog[] = {
     {NULL, NULL, 0, 0}
 };
 
-/* Filtered event table - populated during init with only events
- * whose engine type is enabled on the actual hardware. */
-static gaudi2_native_event_t *gaudi2_native_events = NULL;
+/* Number of base events in catalog (computed at init) */
+static int gaudi2_num_catalog_events = 0;
 
-/* Per-event tracking */
+/* Per-event tracking for an eventset */
 typedef struct {
-    unsigned int event_idx;
-    unsigned int counter_idx;
-    uint64_t spmu_base;
+    unsigned int event_code;       /* Encoded event code (device + index) */
+    int device_idx;                /* Device index */
+    int catalog_idx;               /* Catalog event index */
+    unsigned int counter_idx;      /* Counter slot (0-5 per SPMU) */
+    uint64_t spmu_base;            /* SPMU base address */
     long long last_value;
     long long accumulated;
 } gaudi2_counter_t;
+
+/* Per-device tracking within an eventset */
+typedef struct {
+    int device_idx;
+    int num_events;                           /* Events for this device */
+    int event_indices[GAUDI2_MAX_COUNTERS];   /* Indices into counters[] */
+    int debug_mode_enabled;
+    int spmu_enabled;
+} gaudi2_device_ctl_t;
 
 /* Per-eventset state */
 typedef struct {
@@ -224,16 +227,16 @@ typedef struct {
     int num_counters;
     long long values[GAUDI2_MAX_COUNTERS];
     int running;
+    /* Per-device control within this eventset */
+    gaudi2_device_ctl_t device_ctl[GAUDI2_MAX_DEVICES];
+    uint32_t active_device_mask;  /* Bitmap of devices with events */
+    int num_active_devices;
 } gaudi2_control_t;
 
-/* Per-thread context */
+/* Per-thread context - tracks debug mode per device */
 typedef struct {
-    int device_fd;
-    int debug_mode_enabled;
-    int spmu_enabled;
+    int debug_mode_enabled[GAUDI2_MAX_DEVICES];
 } gaudi2_context_t;
-
-static int gaudi2_device_fd = -1;
 static unsigned int gaudi2_lock;
 
 papi_vector_t _gaudi2_vector;
@@ -241,7 +244,7 @@ papi_vector_t _gaudi2_vector;
 /* Load hlthunk library */
 static int load_hlthunk_library(void)
 {
-    char root_lib_path[PAPI_MAX_STR_LEN];
+    char root_lib_path[PAPI_HUGE_STR_LEN];
     const char *gaudi2_root;
     int strLen;
 
@@ -287,9 +290,12 @@ static int load_hlthunk_library(void)
         dlsym(hlthunk_handle, "hlthunk_get_device_name_from_fd");
     p_hlthunk_get_hw_ip_info = (hlthunk_get_hw_ip_info_fn)
         dlsym(hlthunk_handle, "hlthunk_get_hw_ip_info");
+    p_hlthunk_get_device_count = (hlthunk_get_device_count_fn)
+        dlsym(hlthunk_handle, "hlthunk_get_device_count");
 
     if (!p_hlthunk_open || !p_hlthunk_close || !p_hlthunk_debug ||
-        !p_hlthunk_get_device_name_from_fd || !p_hlthunk_get_hw_ip_info) {
+        !p_hlthunk_get_device_name_from_fd || !p_hlthunk_get_hw_ip_info ||
+        !p_hlthunk_get_device_count) {
         SUBDBG("Failed to find required hlthunk symbols\n");
         dlclose(hlthunk_handle);
         hlthunk_handle = NULL;
@@ -299,16 +305,43 @@ static int load_hlthunk_library(void)
     return PAPI_OK;
 }
 
+/* Open a device by minor number */
+static int open_device_by_minor(int minor, int node_type)
+{
+    char path[64];
+    const char *fmt;
+    int strLen;
+
+    if (node_type == HLTHUNK_NODE_PRIMARY)
+        fmt = "/dev/accel/accel%d";
+    else
+        fmt = "/dev/accel/accel_controlD%d";
+
+    strLen = snprintf(path, sizeof(path), fmt, minor);
+    if (strLen < 0 || strLen >= (int)sizeof(path))
+        return -1;
+    return open(path, O_RDWR | O_CLOEXEC, 0);
+}
+
+/* Check if a device type is a Gaudi2 variant */
+static int is_gaudi2_device(int device_type)
+{
+    return (device_type == HLTHUNK_DEVICE_GAUDI2  ||
+            device_type == HLTHUNK_DEVICE_GAUDI2B ||
+            device_type == HLTHUNK_DEVICE_GAUDI2C ||
+            device_type == HLTHUNK_DEVICE_GAUDI2D);
+}
+
 /**
  * Find existing Gaudi2 device fd from /proc/self/fd
- * TODO: For multi-device support, extend to return an array of fds
+ * Returns fd for the first found device, or -1 if none found.
  */
 static int find_gaudi2_device_fd(void)
 {
     DIR *dir;
     struct dirent *entry;
     char link_path[PAPI_MIN_STR_LEN];
-    char target[PAPI_MAX_STR_LEN];
+    char target[PAPI_HUGE_STR_LEN];
     ssize_t len;
     int found_fd = -1;
     int strLen;
@@ -335,7 +368,6 @@ static int find_gaudi2_device_fd(void)
             continue;
         target[len] = '\0';
 
-        /* Look for /dev/accel/accel* (not control device) */
         if (strstr(target, "/dev/accel/accel") != NULL &&
             strstr(target, "control") == NULL) {
             found_fd = atoi(entry->d_name);
@@ -520,135 +552,154 @@ static uint64_t get_spmu_base_address(gaudi2_engine_type_t engine, int dcore, in
  * PAPI component interface
  */
 
+/* Enumerate all Gaudi2 devices and populate device table */
+static int enumerate_gaudi2_devices(void)
+{
+    int minor, ctrl_fd, dev_fd, device_type;
+    int num_found = 0;
+
+    /* First pass: count Gaudi2 devices */
+    for (minor = 0; minor < HLTHUNK_MAX_MINOR && num_found < GAUDI2_MAX_DEVICES; minor++) {
+        ctrl_fd = open_device_by_minor(minor, HLTHUNK_NODE_CONTROL);
+        if (ctrl_fd < 0)
+            continue;
+
+        device_type = p_hlthunk_get_device_name_from_fd(ctrl_fd);
+        close(ctrl_fd);
+
+        if (is_gaudi2_device(device_type))
+            num_found++;
+    }
+
+    if (num_found == 0) {
+        SUBDBG("No Gaudi2 devices found\n");
+        return 0;
+    }
+
+    /* Allocate device table */
+    gaudi2_devices = (gaudi2_device_t *)papi_calloc(num_found, sizeof(gaudi2_device_t));
+    if (!gaudi2_devices) {
+        SUBDBG("Failed to allocate device table\n");
+        return -1;
+    }
+
+    /* Second pass: populate device table */
+    gaudi2_num_devices = 0;
+    for (minor = 0; minor < HLTHUNK_MAX_MINOR && gaudi2_num_devices < num_found; minor++) {
+        ctrl_fd = open_device_by_minor(minor, HLTHUNK_NODE_CONTROL);
+        if (ctrl_fd < 0)
+            continue;
+
+        device_type = p_hlthunk_get_device_name_from_fd(ctrl_fd);
+        if (!is_gaudi2_device(device_type)) {
+            close(ctrl_fd);
+            continue;
+        }
+
+        /* Open primary device */
+        dev_fd = open_device_by_minor(minor, HLTHUNK_NODE_PRIMARY);
+        close(ctrl_fd);
+
+        if (dev_fd < 0) {
+            SUBDBG("Failed to open primary device for minor %d\n", minor);
+            continue;
+        }
+
+        gaudi2_device_t *dev = &gaudi2_devices[gaudi2_num_devices];
+        dev->device_idx = gaudi2_num_devices;
+        dev->device_fd = dev_fd;
+        dev->device_type = device_type;
+
+        /* Query hardware IP info */
+        memset(&dev->hw_ip, 0, sizeof(dev->hw_ip));
+        if (p_hlthunk_get_hw_ip_info(dev_fd, &dev->hw_ip) != 0) {
+            SUBDBG("Failed to get hw_ip_info for device %d\n", gaudi2_num_devices);
+            close(dev_fd);
+            continue;
+        }
+
+        /* Determine engine availability */
+        dev->tpc_avail = (dev->hw_ip.tpc_enabled_mask_ext != 0);
+        dev->edma_avail = (dev->hw_ip.edma_enabled_mask != 0);
+        dev->mme_avail = 1;  /* Always present on Gaudi2 */
+        dev->pdma_avail = 1; /* Always present on Gaudi2 */
+
+        SUBDBG("Device %d: fd=%d type=%d TPC=%d EDMA=%d MME=%d PDMA=%d\n",
+               gaudi2_num_devices, dev_fd, device_type,
+               dev->tpc_avail, dev->edma_avail, dev->mme_avail, dev->pdma_avail);
+
+        gaudi2_num_devices++;
+    }
+
+    return gaudi2_num_devices;
+}
+
+/* Check if an event is available on a specific device */
+static int event_available_on_device(gaudi2_native_event_t *event, gaudi2_device_t *dev)
+{
+    switch (event->engine) {
+        case GAUDI2_ENGINE_TPC:  return dev->tpc_avail;
+        case GAUDI2_ENGINE_EDMA: return dev->edma_avail;
+        case GAUDI2_ENGINE_MME:  return dev->mme_avail;
+        case GAUDI2_ENGINE_PDMA: return dev->pdma_avail;
+        default: return 0;
+    }
+}
+
 static int gaudi2_init_component(int cidx)
 {
     int papi_errno = PAPI_OK;
-    int num_events;
 
     SUBDBG("Initializing Gaudi2 component (cidx=%d)\n", cidx);
 
     _gaudi2_vector.cmp_info.CmpIdx = cidx;
 
+    /* Load hlthunk library */
     papi_errno = load_hlthunk_library();
     if (papi_errno != PAPI_OK) {
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN, "Failed to load libhl-thunk.so");
+        int strLen = snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_HUGE_STR_LEN, "Failed to load libhl-thunk.so");
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN)
+            _gaudi2_vector.cmp_info.disabled_reason[0] = '\0';
         _gaudi2_vector.cmp_info.disabled = papi_errno;
         return papi_errno;
     }
 
-    /* Try to find existing fd from PyTorch */
-    gaudi2_device_fd = find_gaudi2_device_fd();
-    if (gaudi2_device_fd < 0)
-        gaudi2_device_fd = p_hlthunk_open(HLTHUNK_DEVICE_DONT_CARE, NULL);
-
-    if (gaudi2_device_fd < 0) {
+    /* Enumerate all Gaudi2 devices */
+    int num_devices = enumerate_gaudi2_devices();
+    if (num_devices <= 0) {
         papi_errno = PAPI_ENOSUPP;
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN, "No Gaudi2 device found");
+        int strLen = snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_HUGE_STR_LEN, "No Gaudi2 devices found");
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN)
+            _gaudi2_vector.cmp_info.disabled_reason[0] = '\0';
         _gaudi2_vector.cmp_info.disabled = papi_errno;
         return papi_errno;
     }
 
-    /* Verify the device is actually Gaudi2 */
-    int device_type = p_hlthunk_get_device_name_from_fd(gaudi2_device_fd);
-    if (device_type != HLTHUNK_DEVICE_GAUDI2  &&
-        device_type != HLTHUNK_DEVICE_GAUDI2B &&
-        device_type != HLTHUNK_DEVICE_GAUDI2C &&
-        device_type != HLTHUNK_DEVICE_GAUDI2D) {
+    SUBDBG("Found %d Gaudi2 device(s)\n", num_devices);
+
+    /* Count catalog events */
+    gaudi2_num_catalog_events = 0;
+    while (gaudi2_event_catalog[gaudi2_num_catalog_events].name != NULL)
+        gaudi2_num_catalog_events++;
+
+    if (gaudi2_num_catalog_events == 0) {
         papi_errno = PAPI_ENOSUPP;
-        SUBDBG("Device type %d is not Gaudi2\n", device_type);
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN,
-                 "Device is not Gaudi2 (type=%d)", device_type);
+        SUBDBG("No events in catalog\n");
+        int strLen = snprintf(_gaudi2_vector.cmp_info.disabled_reason,
+                 PAPI_HUGE_STR_LEN, "No events defined in catalog");
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN)
+            _gaudi2_vector.cmp_info.disabled_reason[0] = '\0';
         _gaudi2_vector.cmp_info.disabled = papi_errno;
         return papi_errno;
     }
 
-    /* Query hardware IP info to determine which engines are enabled.
-     * Only expose events for engine types that 
-     * have at least one enabled instance */
-    struct hlthunk_hw_ip_info hw_ip;
-    memset(&hw_ip, 0, sizeof(hw_ip));
+    SUBDBG("Catalog has %d base events, %d devices available\n",
+           gaudi2_num_catalog_events, gaudi2_num_devices);
 
-    if (p_hlthunk_get_hw_ip_info(gaudi2_device_fd, &hw_ip) != 0) {
-        papi_errno = PAPI_ESYS;
-        SUBDBG("Failed to get hw_ip_info from device\n");
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN, "Failed to query device hw_ip_info");
-        _gaudi2_vector.cmp_info.disabled = papi_errno;
-        return papi_errno;
-    }
-
-    int tpc_avail  = (hw_ip.tpc_enabled_mask_ext != 0);
-    int edma_avail = (hw_ip.edma_enabled_mask != 0);
-    /* MME and PDMA should be always present on Gaudi2 */
-    int mme_avail  = (hw_ip.mme_enabled_mask != 0) ? 1 : 1;
-    int pdma_avail = 1;
-
-    SUBDBG("Engine availability: TPC=%d (mask=0x%lx) EDMA=%d (mask=0x%x) "
-           "MME=%d (mask=0x%x) PDMA=%d\n",
-           tpc_avail, (unsigned long)hw_ip.tpc_enabled_mask_ext,
-           edma_avail, hw_ip.edma_enabled_mask,
-           mme_avail, hw_ip.mme_enabled_mask, pdma_avail);
-
-    /* First pass: count how many catalog events are available */
-    int catalog_size = 0;
-    while (gaudi2_event_catalog[catalog_size].name != NULL)
-        catalog_size++;
-
-    num_events = 0;
-    for (int i = 0; i < catalog_size; i++) {
-        switch (gaudi2_event_catalog[i].engine) {
-            case GAUDI2_ENGINE_TPC:  if (tpc_avail)  num_events++; break;
-            case GAUDI2_ENGINE_EDMA: if (edma_avail) num_events++; break;
-            case GAUDI2_ENGINE_MME:  if (mme_avail)  num_events++; break;
-            case GAUDI2_ENGINE_PDMA: if (pdma_avail) num_events++; break;
-            default: break;
-        }
-    }
-
-    if (num_events == 0) {
-        papi_errno = PAPI_ENOSUPP;
-        SUBDBG("No available engine types on this device\n");
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN, "No SPMU-capable engines enabled on device");
-        _gaudi2_vector.cmp_info.disabled = papi_errno;
-        return papi_errno;
-    }
-
-    /* Allocate filtered event table */
-    gaudi2_native_events = (gaudi2_native_event_t *)
-        papi_calloc(num_events, sizeof(gaudi2_native_event_t));
-    if (!gaudi2_native_events) {
-        papi_errno = PAPI_ENOMEM;
-        SUBDBG("Failed to allocate filtered event table\n");
-        snprintf(_gaudi2_vector.cmp_info.disabled_reason,
-                 PAPI_MAX_STR_LEN, "Failed to allocate event table");
-        _gaudi2_vector.cmp_info.disabled = papi_errno;
-        return papi_errno;
-    }
-
-    /* Second pass: copy available events into filtered table */
-    int idx = 0;
-    for (int i = 0; i < catalog_size; i++) {
-        int include = 0;
-        switch (gaudi2_event_catalog[i].engine) {
-            case GAUDI2_ENGINE_TPC:  include = tpc_avail;  break;
-            case GAUDI2_ENGINE_EDMA: include = edma_avail; break;
-            case GAUDI2_ENGINE_MME:  include = mme_avail;  break;
-            case GAUDI2_ENGINE_PDMA: include = pdma_avail; break;
-            default: break;
-        }
-        if (include) {
-            gaudi2_native_events[idx] = gaudi2_event_catalog[i];
-            idx++;
-        }
-    }
-
-    SUBDBG("Filtered %d events from catalog of %d\n", num_events, catalog_size);
-
-    _gaudi2_vector.cmp_info.num_native_events = num_events;
+    /* Device qualifiers are enumerated via PAPI_NTV_ENUM_UMASKS */
+    _gaudi2_vector.cmp_info.num_native_events = gaudi2_num_catalog_events;
     _gaudi2_vector.cmp_info.num_cntrs = GAUDI2_MAX_SPMU_COUNTERS;
     _gaudi2_vector.cmp_info.num_mpx_cntrs = GAUDI2_MAX_COUNTERS;
 
@@ -660,12 +711,21 @@ static int gaudi2_init_component(int cidx)
 
 static int gaudi2_shutdown_component(void)
 {
-    gaudi2_device_fd = -1;
+    int d;
 
-    if (gaudi2_native_events) {
-        papi_free(gaudi2_native_events);
-        gaudi2_native_events = NULL;
+    /* Close all device file descriptors */
+    if (gaudi2_devices) {
+        for (d = 0; d < gaudi2_num_devices; d++) {
+            if (gaudi2_devices[d].device_fd >= 0) {
+                close(gaudi2_devices[d].device_fd);
+                gaudi2_devices[d].device_fd = -1;
+            }
+        }
+        papi_free(gaudi2_devices);
+        gaudi2_devices = NULL;
     }
+    gaudi2_num_devices = 0;
+    gaudi2_num_catalog_events = 0;
 
     if (hlthunk_handle) {
         dlclose(hlthunk_handle);
@@ -681,19 +741,21 @@ static int gaudi2_init_thread(hwd_context_t *ctx)
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
 
     memset(gaudi2_ctx, 0, sizeof(gaudi2_context_t));
-    gaudi2_ctx->device_fd = gaudi2_device_fd;
     return PAPI_OK;
 }
 
 static int gaudi2_shutdown_thread(hwd_context_t *ctx)
 {
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
+    int d;
 
-    if (gaudi2_ctx->spmu_enabled)
-        disable_spmu(gaudi2_ctx->device_fd, 0);
-
-    if (gaudi2_ctx->debug_mode_enabled)
-        disable_debug_mode(gaudi2_ctx->device_fd);
+    /* Disable debug mode on all devices where we enabled it */
+    for (d = 0; d < gaudi2_num_devices; d++) {
+        if (gaudi2_ctx->debug_mode_enabled[d] && gaudi2_devices[d].device_fd >= 0) {
+            disable_debug_mode(gaudi2_devices[d].device_fd);
+            gaudi2_ctx->debug_mode_enabled[d] = 0;
+        }
+    }
 
     return PAPI_OK;
 }
@@ -716,7 +778,8 @@ static int gaudi2_update_control_state(hwd_control_state_t *ctl,
                                        hwd_context_t *ctx)
 {
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    gaudi2_event_info_t evt_info;
+    int i, d, papi_errno;
     (void)ctx;
 
     if (count > GAUDI2_MAX_COUNTERS) {
@@ -724,26 +787,66 @@ static int gaudi2_update_control_state(hwd_control_state_t *ctl,
         return PAPI_ECOUNT;
     }
 
+    /* Reset control state */
+    memset(gaudi2_ctl->device_ctl, 0, sizeof(gaudi2_ctl->device_ctl));
+    gaudi2_ctl->active_device_mask = 0;
+    gaudi2_ctl->num_active_devices = 0;
     gaudi2_ctl->num_counters = count;
 
-    for (int i = 0; i < count; i++) {
-        int event_idx = native[i].ni_event;
+    /* Process each event and organize by device */
+    for (i = 0; i < count; i++) {
+        unsigned int event_code = native[i].ni_event;
 
-        if (event_idx < 0 || event_idx >= num_events) {
-            SUBDBG("Invalid event index %d (max %d)\n", event_idx, num_events);
+        /* Decode event code to get nameid, device, and flags */
+        papi_errno = gaudi2_evt_id_to_info(event_code, &evt_info);
+        if (papi_errno != PAPI_OK) {
+            SUBDBG("Failed to decode event code %u\n", event_code);
+            return papi_errno;
+        }
+
+        if (evt_info.nameid < 0 || evt_info.nameid >= gaudi2_num_catalog_events) {
+            SUBDBG("Invalid nameid %d (max %d)\n", evt_info.nameid, gaudi2_num_catalog_events);
             return PAPI_EINVAL;
         }
 
-        gaudi2_native_event_t *event = &gaudi2_native_events[event_idx];
+        if (evt_info.device < 0 || evt_info.device >= gaudi2_num_devices) {
+            SUBDBG("Invalid device %d (max %d)\n", evt_info.device, gaudi2_num_devices);
+            return PAPI_EINVAL;
+        }
 
-        gaudi2_ctl->counters[i].event_idx = event_idx;
-        gaudi2_ctl->counters[i].counter_idx = i % GAUDI2_MAX_SPMU_COUNTERS;
-        gaudi2_ctl->counters[i].spmu_base = get_spmu_base_address(event->engine, 0, 0);
+        gaudi2_native_event_t *cat_evt = &gaudi2_event_catalog[evt_info.nameid];
+
+        /* Set up counter tracking */
+        gaudi2_ctl->counters[i].event_code = event_code;
+        gaudi2_ctl->counters[i].device_idx = evt_info.device;
+        gaudi2_ctl->counters[i].catalog_idx = evt_info.nameid;
+        gaudi2_ctl->counters[i].spmu_base = get_spmu_base_address(cat_evt->engine, 0, 0);
         gaudi2_ctl->counters[i].last_value = 0;
         gaudi2_ctl->counters[i].accumulated = 0;
 
+        /* Track this device */
+        if (!(gaudi2_ctl->active_device_mask & (1 << evt_info.device))) {
+            gaudi2_ctl->active_device_mask |= (1 << evt_info.device);
+            gaudi2_ctl->device_ctl[evt_info.device].device_idx = evt_info.device;
+        }
+
+        /* Add event to device's event list */
+        gaudi2_device_ctl_t *dev_ctl = &gaudi2_ctl->device_ctl[evt_info.device];
+        dev_ctl->event_indices[dev_ctl->num_events] = i;
+        gaudi2_ctl->counters[i].counter_idx = dev_ctl->num_events % GAUDI2_MAX_SPMU_COUNTERS;
+        dev_ctl->num_events++;
+
         native[i].ni_position = i;
     }
+
+    /* Count active devices */
+    for (d = 0; d < gaudi2_num_devices; d++) {
+        if (gaudi2_ctl->active_device_mask & (1 << d))
+            gaudi2_ctl->num_active_devices++;
+    }
+
+    SUBDBG("Configured %d events across %d devices (mask=0x%x)\n",
+           count, gaudi2_ctl->num_active_devices, gaudi2_ctl->active_device_mask);
 
     return PAPI_OK;
 }
@@ -752,31 +855,51 @@ static int gaudi2_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
-    uint64_t events[HL_DEBUG_MAX_AUX_VALUES];
-    int papi_errno;
+    int d, i, papi_errno;
 
-    if (!gaudi2_ctx->debug_mode_enabled) {
-        papi_errno = enable_debug_mode(gaudi2_ctx->device_fd);
-        if (papi_errno != PAPI_OK)
+    /* For each device with events, enable debug mode and SPMU */
+    for (d = 0; d < gaudi2_num_devices; d++) {
+        if (!(gaudi2_ctl->active_device_mask & (1 << d)))
+            continue;
+
+        gaudi2_device_ctl_t *dev_ctl = &gaudi2_ctl->device_ctl[d];
+        int dev_fd = gaudi2_devices[d].device_fd;
+
+        /* Enable debug mode on this device if not already enabled */
+        if (!gaudi2_ctx->debug_mode_enabled[d]) {
+            papi_errno = enable_debug_mode(dev_fd);
+            if (papi_errno != PAPI_OK) {
+                SUBDBG("Failed to enable debug mode on device %d\n", d);
+                return papi_errno;
+            }
+            gaudi2_ctx->debug_mode_enabled[d] = 1;
+        }
+
+        /* Build event array for this device */
+        uint64_t events[HL_DEBUG_MAX_AUX_VALUES];
+        int num_dev_events = dev_ctl->num_events;
+        if (num_dev_events > HL_DEBUG_MAX_AUX_VALUES)
+            num_dev_events = HL_DEBUG_MAX_AUX_VALUES;
+
+        for (i = 0; i < num_dev_events; i++) {
+            int counter_idx = dev_ctl->event_indices[i];
+            int catalog_idx = gaudi2_ctl->counters[counter_idx].catalog_idx;
+            events[i] = gaudi2_event_catalog[catalog_idx].event_id;
+        }
+
+        /* Enable SPMU on this device */
+        papi_errno = enable_spmu(dev_fd, 0, events, num_dev_events);
+        if (papi_errno != PAPI_OK) {
+            SUBDBG("Failed to enable SPMU on device %d\n", d);
             return papi_errno;
-        gaudi2_ctx->debug_mode_enabled = 1;
+        }
+        dev_ctl->spmu_enabled = 1;
+
+        SUBDBG("Started %d events on device %d\n", num_dev_events, d);
     }
 
-    int num_events = gaudi2_ctl->num_counters;
-    if (num_events > HL_DEBUG_MAX_AUX_VALUES)
-        num_events = HL_DEBUG_MAX_AUX_VALUES;
-
-    for (int i = 0; i < num_events; i++) {
-        int event_idx = gaudi2_ctl->counters[i].event_idx;
-        events[i] = gaudi2_native_events[event_idx].event_id;
-    }
-
-    papi_errno = enable_spmu(gaudi2_ctx->device_fd, 0, events, num_events);
-    if (papi_errno != PAPI_OK)
-        return papi_errno;
-    gaudi2_ctx->spmu_enabled = 1;
-
-    for (int i = 0; i < gaudi2_ctl->num_counters; i++) {
+    /* Reset all counter values */
+    for (i = 0; i < gaudi2_ctl->num_counters; i++) {
         gaudi2_ctl->counters[i].last_value = 0;
         gaudi2_ctl->counters[i].accumulated = 0;
     }
@@ -789,23 +912,42 @@ static int gaudi2_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
+    int d, i;
+    (void)gaudi2_ctx;
 
     if (gaudi2_ctl->running == GAUDI2_EVENTS_RUNNING) {
-        long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
-        uint64_t base = gaudi2_ctl->counters[0].spmu_base;
+        /* Read final values from each device */
+        for (d = 0; d < gaudi2_num_devices; d++) {
+            if (!(gaudi2_ctl->active_device_mask & (1 << d)))
+                continue;
 
-        if (read_spmu_counters(gaudi2_ctx->device_fd, base,
-                               gaudi2_ctl->num_counters, temp_values) == PAPI_OK) {
-            for (int i = 0; i < gaudi2_ctl->num_counters; i++) {
-                gaudi2_ctl->counters[i].accumulated += temp_values[i];
-                gaudi2_ctl->values[i] = gaudi2_ctl->counters[i].accumulated;
+            gaudi2_device_ctl_t *dev_ctl = &gaudi2_ctl->device_ctl[d];
+            int dev_fd = gaudi2_devices[d].device_fd;
+
+            /* Read counters for this device */
+            long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
+            int num_dev_events = dev_ctl->num_events;
+            if (num_dev_events > GAUDI2_MAX_SPMU_COUNTERS)
+                num_dev_events = GAUDI2_MAX_SPMU_COUNTERS;
+
+            /* Get SPMU base for first event on this device */
+            int first_counter_idx = dev_ctl->event_indices[0];
+            uint64_t base = gaudi2_ctl->counters[first_counter_idx].spmu_base;
+
+            if (read_spmu_counters(dev_fd, base, num_dev_events, temp_values) == PAPI_OK) {
+                for (i = 0; i < num_dev_events; i++) {
+                    int counter_idx = dev_ctl->event_indices[i];
+                    gaudi2_ctl->counters[counter_idx].accumulated += temp_values[i];
+                    gaudi2_ctl->values[counter_idx] = gaudi2_ctl->counters[counter_idx].accumulated;
+                }
+            }
+
+            /* Disable SPMU on this device */
+            if (dev_ctl->spmu_enabled) {
+                disable_spmu(dev_fd, 0);
+                dev_ctl->spmu_enabled = 0;
             }
         }
-    }
-
-    if (gaudi2_ctx->spmu_enabled) {
-        disable_spmu(gaudi2_ctx->device_fd, 0);
-        gaudi2_ctx->spmu_enabled = 0;
     }
 
     gaudi2_ctl->running = GAUDI2_EVENTS_STOPPED;
@@ -817,16 +959,34 @@ static int gaudi2_read(hwd_context_t *ctx, hwd_control_state_t *ctl,
 {
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
     gaudi2_control_t *gaudi2_ctl = (gaudi2_control_t *)ctl;
+    int d, i;
+    (void)gaudi2_ctx;
     (void)flags;
 
     if (gaudi2_ctl->running == GAUDI2_EVENTS_RUNNING) {
-        long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
-        uint64_t base = gaudi2_ctl->counters[0].spmu_base;
+        /* Read current values from each device */
+        for (d = 0; d < gaudi2_num_devices; d++) {
+            if (!(gaudi2_ctl->active_device_mask & (1 << d)))
+                continue;
 
-        if (read_spmu_counters(gaudi2_ctx->device_fd, base,
-                               gaudi2_ctl->num_counters, temp_values) == PAPI_OK) {
-            for (int i = 0; i < gaudi2_ctl->num_counters; i++)
-                gaudi2_ctl->values[i] = gaudi2_ctl->counters[i].accumulated + temp_values[i];
+            gaudi2_device_ctl_t *dev_ctl = &gaudi2_ctl->device_ctl[d];
+            int dev_fd = gaudi2_devices[d].device_fd;
+
+            long long temp_values[GAUDI2_MAX_SPMU_COUNTERS];
+            int num_dev_events = dev_ctl->num_events;
+            if (num_dev_events > GAUDI2_MAX_SPMU_COUNTERS)
+                num_dev_events = GAUDI2_MAX_SPMU_COUNTERS;
+
+            int first_counter_idx = dev_ctl->event_indices[0];
+            uint64_t base = gaudi2_ctl->counters[first_counter_idx].spmu_base;
+
+            if (read_spmu_counters(dev_fd, base, num_dev_events, temp_values) == PAPI_OK) {
+                for (i = 0; i < num_dev_events; i++) {
+                    int counter_idx = dev_ctl->event_indices[i];
+                    gaudi2_ctl->values[counter_idx] =
+                        gaudi2_ctl->counters[counter_idx].accumulated + temp_values[i];
+                }
+            }
         }
     }
 
@@ -850,18 +1010,47 @@ static int gaudi2_reset(hwd_context_t *ctx, hwd_control_state_t *ctl)
 
 static int gaudi2_ntv_enum_events(unsigned int *EventCode, int modifier)
 {
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    gaudi2_event_info_t info;
+    int papi_errno = PAPI_OK;
 
     switch (modifier) {
         case PAPI_ENUM_FIRST:
-            *EventCode = 0;
-            return PAPI_OK;
+            /* Return first base event */
+            if (gaudi2_num_catalog_events == 0)
+                return PAPI_ENOEVNT;
+            info.nameid = 0;
+            info.device = 0;
+            info.flags = 0;
+            papi_errno = gaudi2_evt_id_create(&info, EventCode);
+            return papi_errno;
+
         case PAPI_ENUM_EVENTS:
-            if (*EventCode + 1 < (unsigned int)num_events) {
-                *EventCode = *EventCode + 1;
-                return PAPI_OK;
+            /* Iterate through base events only */
+            papi_errno = gaudi2_evt_id_to_info(*EventCode, &info);
+            if (papi_errno != PAPI_OK)
+                return papi_errno;
+            if (info.nameid + 1 < gaudi2_num_catalog_events) {
+                info.nameid++;
+                info.device = 0;
+                info.flags = 0;
+                return gaudi2_evt_id_create(&info, EventCode);
             }
             return PAPI_ENOEVNT;
+
+        case PAPI_NTV_ENUM_UMASKS:
+            /* Enumerate device qualifier */
+            papi_errno = gaudi2_evt_id_to_info(*EventCode, &info);
+            if (papi_errno != PAPI_OK)
+                return papi_errno;
+            /* If flags=0 (base event), return device qualifier entry */
+            if (info.flags == 0) {
+                info.device = 0;
+                info.flags = GAUDI2_DEVICE_FLAG;
+                return gaudi2_evt_id_create(&info, EventCode);
+            }
+            /* Only one qualifier (device) */
+            return PAPI_ENOEVNT;
+
         default:
             return PAPI_EINVAL;
     }
@@ -869,63 +1058,185 @@ static int gaudi2_ntv_enum_events(unsigned int *EventCode, int modifier)
 
 static int gaudi2_ntv_code_to_name(unsigned int EventCode, char *name, int len)
 {
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    gaudi2_event_info_t info;
+    int papi_errno;
 
-    if (EventCode >= (unsigned int)num_events) {
-        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
+    papi_errno = gaudi2_evt_id_to_info(EventCode, &info);
+    if (papi_errno != PAPI_OK)
+        return papi_errno;
+
+    if (info.nameid < 0 || info.nameid >= gaudi2_num_catalog_events) {
+        SUBDBG("nameid %d out of range (max %d)\n", info.nameid, gaudi2_num_catalog_events);
         return PAPI_ENOEVNT;
     }
 
-    snprintf(name, len, "%s", gaudi2_native_events[EventCode].name);
+    int strLen;
+
+    switch (info.flags) {
+        case GAUDI2_DEVICE_FLAG:
+            /* Event with device qualifier */
+            strLen = snprintf(name, len, "%s:device=%d",
+                     gaudi2_event_catalog[info.nameid].name, info.device);
+            break;
+        default:
+            /* Base event (flags=0) */
+            strLen = snprintf(name, len, "%s", gaudi2_event_catalog[info.nameid].name);
+            break;
+    }
+
+    if (strLen < 0 || strLen >= len)
+        return PAPI_EINVAL;
+
     return PAPI_OK;
 }
 
-/**
- * TODO: use a hash table when all events are added
- */
+/* Parse event name and convert to event code */
 static int gaudi2_ntv_name_to_code(const char *name, unsigned int *EventCode)
 {
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    char base_name[PAPI_HUGE_STR_LEN];
+    gaudi2_event_info_t info;
+    const char *device_ptr;
+    int i;
 
-    for (int i = 0; i < num_events; i++) {
-        if (strcmp(name, gaudi2_native_events[i].name) == 0) {
-            *EventCode = i;
-            return PAPI_OK;
+    /* Copy name to extract base */
+    strncpy(base_name, name, sizeof(base_name) - 1);
+    base_name[sizeof(base_name) - 1] = '\0';
+
+    /* Default device and flags */
+    info.device = 0;
+    info.flags = GAUDI2_DEVICE_FLAG;
+
+    device_ptr = strstr(name, ":device=");
+    if (device_ptr != NULL) {
+        info.device = atoi(device_ptr + 8);
+        base_name[device_ptr - name] = '\0';
+    }
+
+    /* Validate device index */
+    if (info.device < 0 || info.device >= gaudi2_num_devices) {
+        SUBDBG("Invalid device %d in event name '%s' (max %d)\n",
+               info.device, name, gaudi2_num_devices - 1);
+        return PAPI_ENOEVNT;
+    }
+
+    /* Find base event in catalog */
+    info.nameid = -1;
+    for (i = 0; i < gaudi2_num_catalog_events; i++) {
+        if (strcmp(base_name, gaudi2_event_catalog[i].name) == 0) {
+            info.nameid = i;
+            break;
         }
     }
-    return PAPI_ENOEVNT;
+
+    if (info.nameid < 0) {
+        SUBDBG("Event '%s' (base='%s') not found in catalog\n", name, base_name);
+        return PAPI_ENOEVNT;
+    }
+
+    /* Check if event is available on specified device */
+    if (!event_available_on_device(&gaudi2_event_catalog[info.nameid],
+                                    &gaudi2_devices[info.device])) {
+        SUBDBG("Event '%s' not available on device %d\n", base_name, info.device);
+        return PAPI_ENOEVNT;
+    }
+
+    return gaudi2_evt_id_create(&info, EventCode);
 }
 
 static int gaudi2_ntv_code_to_descr(unsigned int EventCode, char *descr, int len)
 {
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    gaudi2_event_info_t info;
+    int papi_errno;
 
-    if (EventCode >= (unsigned int)num_events) {
-        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
+    papi_errno = gaudi2_evt_id_to_info(EventCode, &info);
+    if (papi_errno != PAPI_OK)
+        return papi_errno;
+
+    if (info.nameid < 0 || info.nameid >= gaudi2_num_catalog_events) {
+        SUBDBG("nameid %d out of range (max %d)\n", info.nameid, gaudi2_num_catalog_events);
         return PAPI_ENOEVNT;
     }
 
-    snprintf(descr, len, "%s", gaudi2_native_events[EventCode].description);
+    int strLen = snprintf(descr, len, "%s", gaudi2_event_catalog[info.nameid].description);
+    if (strLen < 0 || strLen >= len)
+        return PAPI_EINVAL;
     return PAPI_OK;
 }
 
 static int gaudi2_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
-    int num_events = _gaudi2_vector.cmp_info.num_native_events;
+    gaudi2_event_info_t evt_info;
+    char devices[PAPI_HUGE_STR_LEN];
+    int papi_errno;
+    int d, first_avail_device = 0;
+    int strLen;
+    size_t offset;
 
-    if (EventCode >= (unsigned int)num_events) {
-        SUBDBG("EventCode %u out of range (max %d)\n", EventCode, num_events);
+    papi_errno = gaudi2_evt_id_to_info(EventCode, &evt_info);
+    if (papi_errno != PAPI_OK)
+        return papi_errno;
+
+    if (evt_info.nameid < 0 || evt_info.nameid >= gaudi2_num_catalog_events) {
+        SUBDBG("nameid %d out of range (max %d)\n", evt_info.nameid, gaudi2_num_catalog_events);
         return PAPI_ENOEVNT;
     }
 
-    gaudi2_native_event_t *event = &gaudi2_native_events[EventCode];
+    gaudi2_native_event_t *cat_evt = &gaudi2_event_catalog[evt_info.nameid];
 
-    snprintf(info->symbol, sizeof(info->symbol), "%s", event->name);
-    snprintf(info->long_descr, sizeof(info->long_descr), "%s", event->description);
-    snprintf(info->short_descr, sizeof(info->short_descr), "%s", event->description);
+    devices[0] = '\0';
+    offset = 0;
+    for (d = 0; d < gaudi2_num_devices; d++) {
+        if (event_available_on_device(cat_evt, &gaudi2_devices[d])) {
+            if (offset == 0) {
+                first_avail_device = d;
+            }
+            if (offset > 0) {
+                strLen = snprintf(devices + offset, sizeof(devices) - offset, ",");
+                if (strLen < 0 || strLen >= (int)(sizeof(devices) - offset))
+                    return PAPI_EINVAL;
+                offset += strLen;
+            }
+            strLen = snprintf(devices + offset, sizeof(devices) - offset, "%d", d);
+            if (strLen < 0 || strLen >= (int)(sizeof(devices) - offset))
+                return PAPI_EINVAL;
+            offset += strLen;
+        }
+    }
 
+    switch (evt_info.flags) {
+        case GAUDI2_DEVICE_FLAG:
+            /* Device qualifier entry - shown when enumerating UMASKS */
+            strLen = snprintf(info->symbol, sizeof(info->symbol),
+                              "%s:device=%d", cat_evt->name, first_avail_device);
+            if (strLen < 0 || strLen >= (int)sizeof(info->symbol))
+                return PAPI_EINVAL;
+            strLen = snprintf(info->long_descr, sizeof(info->long_descr),
+                              "%s masks:Mandatory device qualifier [%s]",
+                              cat_evt->description, devices);
+            if (strLen < 0 || strLen >= (int)sizeof(info->long_descr))
+                return PAPI_EINVAL;
+            break;
+
+        default:
+            /* Base event (flags=0) - shown when enumerating events */
+            strLen = snprintf(info->symbol, sizeof(info->symbol),
+                              "%s", cat_evt->name);
+            if (strLen < 0 || strLen >= (int)sizeof(info->symbol))
+                return PAPI_EINVAL;
+            strLen = snprintf(info->long_descr, sizeof(info->long_descr),
+                              "%s", cat_evt->description);
+            if (strLen < 0 || strLen >= (int)sizeof(info->long_descr))
+                return PAPI_EINVAL;
+            break;
+    }
+
+    strLen = snprintf(info->short_descr, sizeof(info->short_descr),
+                      "%s", cat_evt->description);
+    if (strLen < 0 || strLen >= (int)sizeof(info->short_descr))
+        return PAPI_EINVAL;
     info->event_code = EventCode;
     info->component_index = _gaudi2_vector.cmp_info.CmpIdx;
+
     return PAPI_OK;
 }
 
