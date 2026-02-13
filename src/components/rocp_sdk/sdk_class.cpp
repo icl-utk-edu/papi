@@ -411,11 +411,13 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 continue;
             }
             event_instance_info_t e_inst = e_tmp->second;
+            uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
             for(int i=0; i<record_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
-                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    ( e_id_32 != r_id_32 ) ||
                     !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
                   ){
                     continue;
@@ -742,11 +744,13 @@ read_sample(){
                 continue;
             }
             event_instance_info_t e_inst = tmp->second;
+            uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
             for(int i=0; i<rec_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
-                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    ( e_id_32 != r_id_32 ) ||
                     !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
                   ){
                     continue;
