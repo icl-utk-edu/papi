@@ -94,7 +94,6 @@ Important note, in the case of machines that only have GPUs with CCs = 7.0 there
 2. [CUDA contexts](#cuda-contexts)
 3. [CUDA toolkit versions](#cuda-toolkit-versions)
 4. [Custom library paths](#custom-library-paths)
-5. [Compute capability 7.0 with CUDA toolkit version 11.0](#compute-capability-70-with-cuda-toolkit-version-110)
 
 ## Unusual installations
 Three libraries are required for the PAPI CUDA component. `libcuda.so`,
@@ -129,12 +128,3 @@ However, it is possible to load each of these libraries from custom paths by set
 - `PAPI_CUDA_RUNTIME` to point to `libcudart.so`
 - `PAPI_CUDA_CUPTI` to point to `libcupti.so`
 - `PAPI_CUDA_PERFWORKS` to point to `libnvperf_host.so`
-
-## Compute capability 7.0 with CUDA toolkit version 11.0
-NVIDIA GPUs with compute capability 7.0 support profiling on both PerfWorks API and the older Event/Metric APIs.
-
-If CUDA toolkit version > 11.0 is used, then PAPI uses the newer API, but using toolkit version 11.0, PAPI uses the events API by default.
-
-If the environment variable `PAPI_CUDA_110_CC_70_PERFWORKS_API` is set to any non-empty value, then compute capability 7.0 using toolkit version 11.0 will use the PerfWorks Metrics API. Eg:
-
-    `export PAPI_CUDA_110_CC_70_PERFWORKS_API=1`
