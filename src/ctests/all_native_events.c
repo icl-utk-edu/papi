@@ -184,7 +184,18 @@ main( int argc, char **argv )
 
             /* Enumerate all umasks */
             k = i;
-            if ( PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_UMASKS, cid )==PAPI_OK ) {
+
+            int modifier = -1;
+            // For the CPU components, we enumerate through umasks
+            if (PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_UMASKS, cid )==PAPI_OK) {
+                modifier = PAPI_NTV_ENUM_UMASKS;
+            }
+            // For the non-cpu components, we enumerate through qualifiers
+            else if (PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid)==PAPI_OK) {
+                modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+            }
+
+            if (modifier != -1) {
                 do {
                     retval = PAPI_get_event_info( k, &info1 );
                     event_code = ( int ) info1.event_code;
@@ -194,7 +205,7 @@ main( int argc, char **argv )
                     else {
                         err_count++;
                     }
-                } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
+                } while ( PAPI_enum_cmp_event( &k, modifier, cid ) == PAPI_OK );
             }
         } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
 

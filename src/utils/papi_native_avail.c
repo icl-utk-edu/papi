@@ -547,17 +547,27 @@ no_sdes:
 
 				/* if event qualifiers exist but none specified, process all */
 				if ( !strchr( ptr, ':' ) ) {
-					if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-						printf( "\nQualifiers:         Name -- Description\n" );
-						do {
-							retval = PAPI_get_event_info( i, &info );
-							if ( retval == PAPI_OK ) {
-								if ( parse_event_qualifiers( &info ) ) {
-									printf( "      Info:   %10s -- %s\n", info.symbol, info.long_descr );
-								}
-							}
-						} while ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
-					}
+                                    int modifier = -1;
+                                    // For the CPU components, we enumerate through umasks
+                                    if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+                                        modifier = PAPI_NTV_ENUM_UMASKS;
+                                    }
+                                    // For the non-cpu components, we enumerate through qualifiers
+                                    else if ( PAPI_enum_event( &i, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS ) == PAPI_OK ) {
+                                        modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+                                    }
+
+                                    if (modifier != -1) {
+                                        printf( "\nQualifiers:         Name -- Description\n" );
+                                        do {
+                                            retval = PAPI_get_event_info( i, &info );
+                                            if ( retval == PAPI_OK ) {
+                                                if ( parse_event_qualifiers( &info ) ) {
+                                                    printf( "      Info:   %10s -- %s\n", info.symbol, info.long_descr );
+                                                }
+                                            }
+                                        } while ( PAPI_enum_event( &i, modifier ) == PAPI_OK );
+                                    }
 				}
 			}
 		} else {
@@ -652,10 +662,19 @@ no_sdes:
 
 				if (flags.qualifiers || flags.check){
 					k = i;
+					int modifier = -1;
+					// For the CPU components, we enumerate through umasks
 					if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK ) {
+						modifier = PAPI_NTV_ENUM_UMASKS;
+					}
+					// For the non-cpu components, we enumerate through qualifiers
+					else if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cid) == PAPI_OK) {
+						modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+					}
+
+					if (modifier != -1) {
 						// clear event string using first mask
 						char first_event_mask_string[PAPI_HUGE_STR_LEN] = "";
-
 						do {
 							retval = PAPI_get_event_info( k, &info );
 							if ( retval == PAPI_OK ) {
@@ -673,7 +692,8 @@ no_sdes:
 										format_event_output( &info, 2);
 								}
 							}
-						} while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cid ) == PAPI_OK );
+						} while ( PAPI_enum_cmp_event( &k, modifier, cid ) == PAPI_OK );
+
 						// if we are validating events and the event_available flag is not set yet, try a few more combinations
 						if (flags.check  && (event_available == 0)) {
 							// try using the event with the first mask defined for the event and the cpu mask

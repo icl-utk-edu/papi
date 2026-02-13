@@ -469,81 +469,96 @@ main( int argc, char **argv )
       /* Code for info on just one event */
 
       if ( print_event_info ) {
+          if ( PAPI_event_name_to_code( name, &event_code ) == PAPI_OK ) {
+              if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
+                  if ( event_code & PAPI_PRESET_MASK ) {
+                      printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
+                              "Event name:", info.symbol, "Event Code:",
+                              info.event_code, "Number of Native Events:",
+                              info.count );
 
-     if ( PAPI_event_name_to_code( name, &event_code ) == PAPI_OK ) {
-        if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
+                      printf( "%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
+                              "Short Description:", info.short_descr,
+                              "Long Description:", info.long_descr,
+                              "Developer's Notes:", info.note );
 
-           if ( event_code & PAPI_PRESET_MASK ) {
-          printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
-              "Event name:", info.symbol, "Event Code:",
-              info.event_code, "Number of Native Events:",
-              info.count );
-          printf( "%-29s|%s|\n%-29s|%s|\n%-29s|%s|\n",
-              "Short Description:", info.short_descr,
-              "Long Description:", info.long_descr,
-              "Developer's Notes:", info.note );
-          printf( "%-29s|%s|\n%-29s|%s|\n", "Derived Type:",
-              info.derived, "Postfix Processing String:",
-              info.postfix );
+                      printf( "%-29s|%s|\n%-29s|%s|\n", "Derived Type:",
+                              info.derived, "Postfix Processing String:",
+                              info.postfix );
 
-          for( j = 0; j < ( int ) info.count; j++ ) {
-             printf( " Native Code[%d]: %#x |%s|\n", j,
-                 info.code[j], info.name[j] );
-             PAPI_get_event_info( (int) info.code[j], &n_info );
-             printf(" Number of Register Values: %d\n", n_info.count );
-             for( k = 0; k < ( int ) n_info.count; k++ ) {
-            printf( " Register[%2d]: %#08x |%s|\n", k,
-                n_info.code[k], n_info.name[k] );
-             }
-             printf( " Native Event Description: |%s|\n\n",
-                 n_info.long_descr );
-          }
+                     for( j = 0; j < ( int ) info.count; j++ ) {
+                         printf( " Native Code[%d]: %#x |%s|\n", j,
+                                 info.code[j], info.name[j] );
 
-          if (!is_preset_event_available(name)) {
-            printf("\nPRESET event %s is NOT available on this architecture!\n\n", name);
-          }
+                         PAPI_get_event_info( (int) info.code[j], &n_info );
 
-           } else {     /* must be a native event code */
-          printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
-              "Event name:", info.symbol, "Event Code:",
-              info.event_code, "Number of Register Values:",
-              info.count );
-          printf( "%-29s|%s|\n", "Description:", info.long_descr );
-          for ( k = 0; k < ( int ) info.count; k++ ) {
-              printf( " Register[%2d]: %#08x |%s|\n", k,
-                  info.code[k], info.name[k] );
-          }
+                         printf(" Number of Register Values: %d\n", n_info.count );
 
-          /* if unit masks exist but none are specified, process all */
-          if ( !strchr( name, ':' ) ) {
-             if ( 1 ) {
-            if ( PAPI_enum_event( &event_code, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
-               printf( "\nUnit Masks:\n" );
-               do {
-                  retval = PAPI_get_event_info(event_code, &info );
-                  if ( retval == PAPI_OK ) {
-                 if ( parse_unit_masks( &info ) ) {
-                    printf( "%-29s|%s|%s|\n",
-                        " Mask Info:", info.symbol,
-                        info.long_descr );
-                    for ( k = 0; k < ( int ) info.count;k++ ) {
-                    printf( "  Register[%2d]:  %#08x  |%s|\n",
-                        k, info.code[k], info.name[k] );
-                    }
-                 }
+                         for( k = 0; k < ( int ) n_info.count; k++ ) {
+                             printf( " Register[%2d]: %#08x |%s|\n", k,
+                                     n_info.code[k], n_info.name[k] );
+                         }
+                         printf( " Native Event Description: |%s|\n\n",
+                                 n_info.long_descr );
+                     }
+
+                     if (!is_preset_event_available(name)) {
+                         printf("\nPRESET event %s is NOT available on this architecture!\n\n", name);
+                     }
                   }
-               } while ( PAPI_enum_event( &event_code,
-                      PAPI_NTV_ENUM_UMASKS ) == PAPI_OK );
-            }
-             }
+                  else {     /* must be a native event code */
+                      printf( "%-30s%s\n%-30s%#-10x\n%-30s%d\n",
+                              "Event name:", info.symbol, "Event Code:",
+                              info.event_code, "Number of Register Values:",
+                              info.count );
+                      printf( "%-29s|%s|\n", "Description:", info.long_descr );
+
+                      for ( k = 0; k < ( int ) info.count; k++ ) {
+                          printf( " Register[%2d]: %#08x |%s|\n", k,
+                          info.code[k], info.name[k] );
+                      }
+
+                      if ( !strchr( name, ':' ) ) {
+                          if ( 1 ) {
+                              int modifier = -1;
+                              // For the CPU components, we enumerate through umasks
+                              if ( PAPI_enum_event( &event_code, PAPI_NTV_ENUM_UMASKS ) == PAPI_OK ) {
+                                   modifier = PAPI_NTV_ENUM_UMASKS;
+                              }
+                              // For the non-cpu components, we enumerate through qualifiers
+                              else if ( PAPI_enum_event( &event_code, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS ) == PAPI_OK ) {
+                                  modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+                              }
+
+                              if (modifier != -1) {
+                                  printf( "\nUnit Masks:\n" );
+                                  do {
+                                      retval = PAPI_get_event_info(event_code, &info );
+                                      if ( retval == PAPI_OK ) {
+                                          if ( parse_unit_masks( &info ) ) {
+                                              printf( "%-29s|%s|%s|\n",
+                                                      " Mask Info:", info.symbol,
+                                                      info.long_descr );
+
+                                              for ( k = 0; k < ( int ) info.count;k++ ) {
+                                                 printf( "  Register[%2d]:  %#08x  |%s|\n",
+                                                         k, info.code[k], info.name[k] );
+                                              }
+                                          }
+                                      }
+                                  } while ( PAPI_enum_event( &event_code, modifier ) == PAPI_OK );
+                              }
+                          }
+                      }
+                  }
+              }
           }
-           }
-        }
-     } else {
-        printf( "Sorry, an event by the name '%s' could not be found.\n"
-                    " Is it typed correctly?\n\n", name );
-     }
-      } else {
+          else {
+              printf( "Sorry, an event by the name '%s' could not be found.\n"
+                      " Is it typed correctly?\n\n", name );
+          }
+      }
+      else {
 
      /* Print *ALL* Events */
 
