@@ -599,10 +599,15 @@ int cuptic_init(void)
         return papi_errno;
     }
 
-    // Verify that Cuda Toolkit's >= 13 are not being used with devices that have cc's < 7.5
     int cudaRuntimeVersion;
     cudaArtCheckErrors( cudaRuntimeGetVersionPtr(&cudaRuntimeVersion), return PAPI_EMISC );
-    if (cudaRuntimeVersion >= 13000 && system_ccs != sys_gpu_ccs_all_gt_70) {
+    // Verify that a user is using Cuda Toolkit >= 11.4.0
+    if (cudaRuntimeVersion < 11040) {
+        cuptic_err_set_last("The cuda component supports Cuda Toolkits >= 11.4.\n");
+        return PAPI_ECMP;
+    }
+    // Verify that Cuda Toolkit's >= 13 are not being used with devices that have cc's < 7.5
+    else if (cudaRuntimeVersion >= 13000 && system_ccs != sys_gpu_ccs_all_gt_70) {
         cuptic_err_set_last("Cuda Toolkit's >= 13 do not support offline compilation for architectures prior to cc's < 7.5. On mixed cc machines utilize 'export CUDA_VISIBLE_DEVICES'.\n");
         return PAPI_ECMP;
     }
