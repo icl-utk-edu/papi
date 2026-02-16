@@ -849,7 +849,7 @@ get_preset_cmp( unsigned int *index ) {
 hwi_presets_t*
 get_preset( int event_code ) {
     unsigned int preset_index = ( event_code & PAPI_PRESET_AND_MASK );
-    hwi_presets_t *_papi_hwi_list;
+    hwi_presets_t *_papi_hwi_list = NULL;
 
     int i = get_preset_cmp(&preset_index);
     if( i == PAPI_EINVAL ) {
@@ -862,6 +862,7 @@ get_preset( int event_code ) {
         _papi_hwi_list = _papi_hwi_comp_presets[i];
     }
 
+    assert(_papi_hwi_list != NULL);
     return &_papi_hwi_list[preset_index];
 }
 
