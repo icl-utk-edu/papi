@@ -1614,6 +1614,7 @@ PAPI_event_name_to_code( const char *in, int *out )
        char *evt_base_name = strtok(evt_name_copy, ":");
        if( NULL == evt_base_name ) {
            PAPIERROR("Failed to allocate space for base name of native event used in preset.\n");
+           free(evt_name_copy);
 		   papi_return( PAPI_EINVAL );
        }
 

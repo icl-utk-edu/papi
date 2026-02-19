@@ -857,6 +857,9 @@ static int _pcp_init_component(int cidx)
 {
     int retval = PAPI_OK;
    char *reason = _papi_hwd[cidx]->cmp_info.disabled_reason;            // For error messages.
+   char **allNames = NULL;
+   pmID *allPMID = NULL;
+   pmResult *allFetch = NULL;                                           // result of pmFetch.
    int rLen = PAPI_HUGE_STR_LEN;                                        // Most I will print.
    reason[rLen-1]=0;                                                    // last resort terminator.
 
@@ -941,17 +944,24 @@ static int _pcp_init_component(int cidx)
    }
 
    int i,j,k;
-   char **allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names. 
+   allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names.
+   if (allNames == NULL) {
+      snprintf(reason, rLen, "memory alloc denied for allNames; "
+            "size=%i.\n", sEventCount);
+      int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allNames.", sEventCount*sizeof(allNames));
+      if (strErr > rLen) HANDLE_STRING_ERROR;
+      retval = PAPI_ENOMEM;
+      goto fn_fail;
+   }
    for (i=0; i<sEventCount; i++) {                                      // .. 
       allNames[i] = pcp_event_info[i].name;                             // copy pointer into array. 
    } // end for each event.
 
-   pmID *allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
+   allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
    if (allPMID == NULL) {                                               // If we failed,
       snprintf(reason, rLen, "memory alloc denied for allPMID; "
             "size=%i.\n", sEventCount);
       int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allPMID.", sEventCount*sizeof(pmID));
-      free(allNames);
       if (strErr > rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
@@ -1003,7 +1013,6 @@ static int _pcp_init_component(int cidx)
 
    for (i=0; i<sEventCount; i++) pcp_event_info[i].pmid = allPMID[i];   // copy all the pmid over to array.
 
-   pmResult *allFetch = NULL;                                           // result of pmFetch. 
    _time_gettimeofday(&t1, NULL);
    ret = pcp_pmFetch(sEventCount, allPMID, &allFetch);                  // Fetch (read) all the events.
    _time_gettimeofday(&t2, NULL);
@@ -1217,10 +1226,6 @@ static int _pcp_init_component(int cidx)
    // *************************************** END DEBUG REPORT INFORMATION DISCOVERED **************************************
    //-----------------------------------------------------------------------------------------------------------------------
 
-   free(allNames);                                                      // Locals allocations not needed anymore.
-   free(allPMID);                                                       // .. the pmIDs we read.
-   pcp_pmFreeResult(allFetch);                                          // .. release the results we fetched.
-
 //  For PCP, we can read any number of events at once
 //  in a single event set. Set vector elements for PAPI.
 
@@ -1230,6 +1235,9 @@ static int _pcp_init_component(int cidx)
    _pcp_vector.cmp_info.CmpIdx = cidx;                                  // export the component ID.
 
   fn_exit:
+    free(allNames);                                                     // Locals allocations not needed anymore.
+    free(allPMID);                                                      // .. the pmIDs we read.
+    pcp_pmFreeResult(allFetch);                                         // .. release the results we fetched.
     _papi_hwd[cidx]->cmp_info.disabled = retval;
     return retval;
   fn_fail:

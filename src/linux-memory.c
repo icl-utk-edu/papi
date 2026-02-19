@@ -1215,7 +1215,7 @@ generic_get_memory_info( PAPI_hw_info_t *hw_info )
 {
 
     int type=0,level,result;
-    int size,line_size,associativity,sets;
+    int size,line_size=0,associativity=0,sets=0;
     int write_policy,allocation_policy;
     DIR *dir;
     FILE *fff;

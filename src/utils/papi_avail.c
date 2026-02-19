@@ -356,8 +356,10 @@ int is_preset_event_available(char *name) {
       
       if ( info.count ) {
     if ( (check_counter && checkCounter (event_code)) || !check_counter) {
-      if (strcmp(info.symbol, basename) == 0)
+      if (strcmp(info.symbol, basename) == 0) {
+        free(localname);
         return 1;
+      }
     }
       }
     }

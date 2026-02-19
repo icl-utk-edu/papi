@@ -134,6 +134,10 @@ static char * _local_strlcpy( char *dst, const char *src, size_t size )
 static long long read_powercap_value( int index )
 {
   int sz = pread(event_fds[index], read_buff, PAPI_MAX_STR_LEN, 0);
+  if (sz == -1) {
+    perror("Error in pread(): ");
+    return (long long) 0;
+  }
   read_buff[sz] = '\0';
 
   return atoll(read_buff);
@@ -207,6 +211,7 @@ static int _powercap_init_component( int cidx )
       if (event_fd == -1) { break; }
 
       int sz = pread(event_fd, read_buff, PAPI_MAX_STR_LEN, 0);
+      if (sz == -1) { HANDLE_STRING_ERROR; }
       read_buff[sz] = '\0';
       close(event_fd);
 
@@ -254,6 +259,7 @@ static int _powercap_init_component( int cidx )
 
       if(powercap_ntv_events[num_events].type == PKG_NAME) {
         int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+        if (sz == -1) HANDLE_STRING_ERROR;
         read_buff[sz] = '\0';
         strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
         powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
@@ -262,6 +268,7 @@ static int _powercap_init_component( int cidx )
 
       if(powercap_ntv_events[num_events].type == PKG_MAX_ENERGY_RANGE) {
         int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+        if (sz == -1) HANDLE_STRING_ERROR;
         read_buff[sz] = '\0';
         max_pkg_energy_count = atoll(read_buff);
       }
@@ -302,6 +309,7 @@ static int _powercap_init_component( int cidx )
 
         if(powercap_ntv_events[num_events].type == COMPONENT_NAME) {
           int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+          if (sz == -1) HANDLE_STRING_ERROR;
           read_buff[sz] = '\0';
           strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
           powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
@@ -310,6 +318,7 @@ static int _powercap_init_component( int cidx )
 
         if(powercap_ntv_events[num_events].type == COMPONENT_MAX_ENERGY_RANGE) {
           int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+          if (sz == -1) HANDLE_STRING_ERROR;
           read_buff[sz] = '\0';
           max_component_energy_count = atoll(read_buff);
         }

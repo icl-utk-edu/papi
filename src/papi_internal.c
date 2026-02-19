@@ -373,6 +373,10 @@ _papi_hwi_add_native_event(int cidx, int ntv_event, int ntv_idx, const char *eve
   _papi_native_events[num_native_events].ntv_idx=ntv_idx;
   if (event_name != NULL) {
 	  _papi_native_events[num_native_events].evt_name=strdup(event_name);
+          if (_papi_native_events[num_native_events].evt_name == NULL) {
+              new_native_event=PAPI_ENOMEM;
+              goto native_alloc_early_out;
+          }
   } else {
 	  _papi_native_events[num_native_events].evt_name=NULL;
   }
@@ -641,6 +645,9 @@ PAPIWARN( char *format, ... )
 /* Construct fully qualified event names for the native events in a preset. */
 int
 construct_qualified_event(hwi_presets_t *prstPtr) {
+    int ret = PAPI_OK;
+    char *tmpEvent = NULL;
+    char *tmpQuals = NULL;
 
     int j;
     for(j = 0; j < prstPtr->count; j++ ) {
@@ -652,12 +659,13 @@ construct_qualified_event(hwi_presets_t *prstPtr) {
         strLenSum += baseLen;
 
         /* Allocate space for constructing fully qualified event. */
-        char *tmpEvent = (char*)malloc(strLenSum*sizeof(char));
-        char *tmpQuals = (char*)malloc(strLenSum*sizeof(char));
+        tmpEvent = (char*)malloc(strLenSum*sizeof(char));
+        tmpQuals = (char*)malloc(strLenSum*sizeof(char));
 
         if( NULL == tmpQuals || NULL == tmpEvent ) {
-            SUBDBG("EXIT: Could not allocate memory.\n");
-            return PAPI_ENOMEM;
+            PAPIERROR("Could not allocate memory for tmpQuals and tmpEvents.\n");
+            ret = PAPI_ENOMEM;
+            goto done;
         }
 
         /* Print the basename to a string. */
@@ -665,7 +673,8 @@ construct_qualified_event(hwi_presets_t *prstPtr) {
         if( status < 0 || status >= baseLen ) {
             PAPIERROR("Event basename %s was truncated to %s in derived event %s",
                        prstPtr->base_name[j], tmpEvent, prstPtr->symbol);
-            return PAPI_ENOMEM;
+            ret = PAPI_ENOMEM;
+            goto done;
         }
 
         /* Concatenate the qualifiers onto the string. */
@@ -677,41 +686,67 @@ construct_qualified_event(hwi_presets_t *prstPtr) {
         if( status < 0 || status >= strLenSum ) {
             PAPIERROR("Event %s with qualifiers was truncated to %s in derived event %s",
                       prstPtr->base_name[j], tmpEvent, prstPtr->symbol);
-            return PAPI_ENOMEM;
+            ret = PAPI_ENOMEM;
+            goto done;
         }
 
         /* Set the new name, which includes the qualifiers. */
         free(prstPtr->name[j]);
         prstPtr->name[j] = strdup(tmpEvent);
+        if (prstPtr->name[j] == NULL) {
+            PAPIERROR("Could not allocate memory for event name %s.", tmpEvent);
+            ret = PAPI_ENOMEM;
+            goto done;
+        }
 
         /* Set the corresponding new code. */
         status = _papi_hwi_native_name_to_code( tmpEvent, &(prstPtr->code[j]) );
         if( PAPI_OK != status ) {
             PAPIERROR("Failed to get code for native event %s used in derived event %s\n",
                       tmpEvent, prstPtr->symbol);
-            return PAPI_EINVAL;
+            ret = PAPI_EINVAL;
         }
-
-        /* Free dynamically allocated memory. */
-        free(tmpQuals);
-        free(tmpEvent);
     }
 
-    return PAPI_OK;
+done:
+    /* Free dynamically allocated memory. */
+    free(tmpQuals);
+    free(tmpEvent);
+    return ret;
 }
 
 /* Overwrite qualifiers in the preset struct based on those provided in the input string. */
 int
 overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
-
+    int ret = PAPI_OK;
     char *qualDelim = ":";
-    char **providedQuals = (char**)malloc(sizeof(char*)*(prstPtr->num_quals));
+    char **providedQuals = NULL;
     int numProvidedQuals = 0;
     int k;
+    char *givenName = NULL;
+
+    providedQuals = (char**)calloc(prstPtr->num_quals, sizeof(char*));
+    if (providedQuals == NULL) {
+        PAPIERROR("Could not allocate %lu bytes of memory for providedQuals.",
+                  sizeof(char*)*(prstPtr->num_quals));
+        ret = PAPI_ENOMEM;
+        goto done;
+    }
+
     for (k = 0; k < prstPtr->num_quals; k++){
         providedQuals[k] = (char*)malloc(sizeof(char)*(PAPI_MAX_STR_LEN+1));
+        PAPIERROR("Could not allocate %lu bytes of memory for providedQuals element.",
+                  sizeof(char)*(PAPI_MAX_STR_LEN+1));
+        ret = PAPI_ENOMEM;
+        goto done;
     }
-    char *givenName = strdup(in);
+
+    givenName = strdup(in);
+    if (givenName == NULL) {
+        PAPIERROR("Could not allocate memory for givenName %s.", in);
+        ret = PAPI_ENOMEM;
+        goto done;
+    }
     char *qualName  = strtok(givenName, ":");
     qualName = strtok(NULL, ":");
 
@@ -726,7 +761,8 @@ overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
         int status = snprintf(providedQuals[k], qualLen, "%s%s", qualDelim, qualName);
         if( status < 0 || status >= qualLen ) {
             PAPIERROR("Failed to make copy of qualifier %s", qualName);
-            return PAPI_ENOMEM;
+            ret = PAPI_ENOMEM;
+            goto done;
         }
         k++;
         numProvidedQuals++;
@@ -742,11 +778,24 @@ overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
     /* For each qualifier provided. */
     for (k = 0; k < numProvidedQuals; k++) {
         wholeQual1 = strdup(providedQuals[k]);
+        if (wholeQual1 == NULL) {
+            PAPIERROR("Failed to make copy of qualifier %s", providedQuals[k]);
+            ret = PAPI_ENOMEM;
+            goto done;
+        }
+
         matchQual1 = strtok(wholeQual1, "=");
 
         /* For each qualifier in the preset struct. */
         for (l = 0; l < prstPtr->num_quals; l++) {
             wholeQual2 = strdup(prstPtr->quals[l]);
+            if (wholeQual2 == NULL) {
+                PAPIERROR("Failed to make copy of qualifier %s", providedQuals[k]);
+                free(wholeQual1);
+                ret = PAPI_ENOMEM;
+                goto done;
+            }
+
             matchQual2 = strtok(wholeQual2, "=");
             if( strcmp(matchQual1, matchQual2) == 0 ) {
                 breakFlag = 1;
@@ -761,17 +810,23 @@ overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset) {
         if( breakFlag ) {
             free(prstPtr->quals[l]);
             prstPtr->quals[l] = strdup(providedQuals[k]);
+	    if (prstPtr->quals[l] == NULL) {
+                PAPIERROR("Failed to make copy of qualifier %s", providedQuals[k]);
+                ret = PAPI_ENOMEM;
+                goto done;
+            }
             breakFlag = 0;
         }
     }
 
+done:
     free(givenName);
     for (k = 0; k < prstPtr->num_quals; k++){
         free(providedQuals[k]);
     }
     free(providedQuals);
 
-    return PAPI_OK;
+    return ret;
 }
 
 /* Return index of first non-perf_event component's preset. */
@@ -815,7 +870,7 @@ get_preset_cmp( unsigned int *index ) {
 hwi_presets_t*
 get_preset( int event_code ) {
     unsigned int preset_index = ( event_code & PAPI_PRESET_AND_MASK );
-    hwi_presets_t *_papi_hwi_list;
+    hwi_presets_t *_papi_hwi_list = NULL;
 
     int i = get_preset_cmp(&preset_index);
     if( i == PAPI_EINVAL ) {
@@ -828,6 +883,7 @@ get_preset( int event_code ) {
         _papi_hwi_list = _papi_hwi_comp_presets[i];
     }
 
+    assert(_papi_hwi_list != NULL);
     return &_papi_hwi_list[preset_index];
 }
 
@@ -2752,6 +2808,10 @@ _papi_hwi_native_name_to_code( const char *in, int *out )
 	}
 
 	full_event_name = strdup(in);
+        if (full_event_name == NULL) {
+		INTDBG("EXIT: PAPI_EINVAL\n");
+		return PAPI_EINVAL;
+	}
 
 	in = _papi_hwi_strip_component_prefix(in);
 
