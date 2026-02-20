@@ -596,9 +596,16 @@ int cuptip_init(void)
    
     // Initialize the Cupti Profiler and Perfworks API's
     papi_errno = initialize_cupti_profiler_api();
-    papi_errno += initialize_perfworks_api();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to initialize CUPTI profiler libraries.");
+        cuptic_err_set_last("Failed to initialize the CUPTI Profiler API. A possible reason is a mismatched Cuda Toolkit and NVIDIA architecture."
+                            " Try setting PAPI_CUDA_ROOT to a newer Cuda Toolkit version.");
+        return PAPI_EMISC;
+    }
+
+    papi_errno = initialize_perfworks_api();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failed to initialize the PerfWorks Metrics API. A possible reason is a mismatched Cuda Toolkit and NVIDIA architecture."
+                            " Try setting PAPI_CUDA_ROOT to a newer Cuda Toolkit version.");
         return PAPI_EMISC;
     }
 

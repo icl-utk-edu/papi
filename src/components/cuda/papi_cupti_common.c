@@ -703,10 +703,17 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
     int strLen;
     char *ld_library_path = getenv("LD_LIBRARY_PATH");
     if (ld_library_path != NULL && path_to_nvcc == NULL) {
-        char ld_library_path_copy[PATH_MAX];
-        strLen = snprintf(ld_library_path_copy, sizeof(ld_library_path_copy), "%s", ld_library_path);
-        if (strLen < 0 || (size_t) strLen >= sizeof(ld_library_path_copy)) {
-            SUBDBG("Failed to store %s in the buffer variable ld_library_paths_copy.\n", ld_library_path);
+        size_t length_to_allocate = strlen(ld_library_path) + 1;
+        char *ld_library_path_copy = (char *) malloc(length_to_allocate * sizeof(char));
+        if (ld_library_path_copy == NULL) {
+            cuptic_err_set_last("Memory allocation for ld_library_path_copy failed. Set PAPI_CUDA_ROOT.");
+            return PAPI_ENOMEM;
+        }
+
+        strLen = snprintf(ld_library_path_copy, length_to_allocate, "%s", ld_library_path);
+        if (strLen < 0 || (size_t) strLen >= length_to_allocate) {
+            cuptic_err_set_last("Unable to store contents of LD_LIBRARY_PATH into the buffer ld_library_path_copy. Set PAPI_CUDA_ROOT.");
+            free(ld_library_path_copy);
             return PAPI_EBUF;
         }
 
@@ -719,16 +726,19 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
             }
             directory_path = strtok(NULL, ":");
         }
+        free(ld_library_path_copy);
     }
 
+    // By design do not hard fail if path_to_nvcc is NULL
     if (path_to_nvcc == NULL) {
-        SUBDBG("Failed to obtain path leading to bin/nvcc. Set PAPI_CUDA_ROOT.\n");
+        SUBDBG("Failed to obtain path leading to bin/nvcc. Set PAPI_CUDA_ROOT if the cuda component is not active.\n");
         return PAPI_OK;
     }
 
-    char command[PAPI_MAX_STR_LEN] = { 0 };
+    char command[PATH_MAX] = { 0 };
     strLen = snprintf(command, sizeof(command), "%s --list-gpu-arch 2>/dev/null", path_to_nvcc);
     if (strLen < 0 || (size_t) strLen >= sizeof(command)) {
+        cuptic_err_set_last("Path to bin/nvcc with --list-gpu-arch 2>/dev/null exceeds PATH_MAX.");
         free((char*) path_to_nvcc);
         return PAPI_EBUF;
     }
@@ -737,10 +747,11 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
     const char *mode = "r";
     FILE *fp_virtual_dev_arches = popen(command, mode);
     if (fp_virtual_dev_arches == NULL) {
-        SUBDBG("Failed to execute command %s with I/O mode %s.\n", command, mode);
+        cuptic_err_set_last("Call to popen to get list of virtual devices failed.");
         return PAPI_ESYS;
     }
 
+    int status;
     char all_supported_virtual_dev_arches[PAPI_HUGE_STR_LEN] = { 0 };
     char name_of_virtual_dev_arch[PAPI_MAX_STR_LEN] = { 0 };
     while (fgets(name_of_virtual_dev_arch, sizeof(name_of_virtual_dev_arch), fp_virtual_dev_arches) != NULL) {
@@ -755,21 +766,25 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
 
         strLen = snprintf(all_supported_virtual_dev_arches + current_length, remaining_length, "%s,", name_of_virtual_dev_arch);
         if (strLen < 0 || (size_t) strLen >= remaining_length) {
-            SUBDBG("Failed to fully write all supported virtual device architectures.\n");
+            cuptic_err_set_last("Unable to store all of the virtual devices in the buffer all_supported_virtual_dev_arches.");
  
-            int status = pclose(fp_virtual_dev_arches);
-            if (status == -1){
+            status = pclose(fp_virtual_dev_arches);
+            if (status != 0){
                 SUBDBG("Failed to close stream opened by popen.\n");
             }
 
             return PAPI_EBUF;
         }
     }
-    all_supported_virtual_dev_arches[strlen(all_supported_virtual_dev_arches) - 1] = '\0';
 
-    int status = pclose(fp_virtual_dev_arches);
-    if (status == -1){
+    status = pclose(fp_virtual_dev_arches);
+    if (status != 0){
         SUBDBG("Failed to close stream opened by popen.\n");
+    }
+
+    if (all_supported_virtual_dev_arches[0] == '\0') {
+        cuptic_err_set_last("No output obtained for nvcc --list-gpu-arch. This could be due to incorrect paths or NVIDIA removing --list-gpu-arch. Set PAPI_CUDA_ROOT.");
+        return PAPI_ESYS;
     }
 
     int nvidia_device_count = 0;
@@ -782,7 +797,7 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
         cudaArtCheckErrors( cudaGetDevicePropertiesPtr(&prop, dev_idx), return PAPI_EMISC );
         strLen = snprintf(compute_capability, sizeof(compute_capability), "%d%d", prop.major, prop.minor);
         if (strLen < 0 || (size_t) strLen >= sizeof(compute_capability)) {
-            SUBDBG("Failed to fully write entire compute capability.\n");
+            cuptic_err_set_last("Unable to store the major,minor compute capability obtained from cudaGetDeviceProperties in the buffer compute_capability.");
             return PAPI_EBUF;
         }
 
@@ -792,7 +807,6 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
                               " Either user a newer Cuda Toolkit version or utilize 'export CUDA_VISIBLE_DEVICES' if on a mixed cc machine.\n", dev_idx); 
             if (strLen < 0 || (size_t) strLen >= sizeof(error_message)) { // removing could be fine such that we actually make it to PAPI_ECMP.
                 SUBDBG("Failed to fully write error message for incompatible Cuda Toolkit and device.\n");
-                return PAPI_EBUF;
             }
 
             cuptic_err_set_last(error_message);
