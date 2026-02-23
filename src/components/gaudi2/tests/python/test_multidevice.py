@@ -270,10 +270,7 @@ def cleanup(papi, eventset):
 
 def test_single_device_qualifier(papi, device_id):
     """Test adding a single event with an explicit :device=N qualifier"""
-    print(f"\n{'='*70}")
     print(f"Sub-test 1: Single event with :device={device_id} qualifier")
-    print(f"{'='*70}")
-
     eventset = papi.create_eventset()
     if eventset is None:
         return False
@@ -309,10 +306,7 @@ def test_single_device_qualifier(papi, device_id):
 
 def test_same_event_multiple_devices(papi, device_ids):
     """Test monitoring the same event across all available devices"""
-    print(f"\n{'='*70}")
     print(f"Sub-test 2: Same event across {len(device_ids)} devices {device_ids}")
-    print(f"{'='*70}")
-
     eventset = papi.create_eventset()
     if eventset is None:
         return False
@@ -354,10 +348,7 @@ def test_same_event_multiple_devices(papi, device_ids):
 
 def test_mixed_events_devices(papi, device_ids):
     """Test monitoring different events on different devices"""
-    print(f"\n{'='*70}")
     print(f"Sub-test 3: Mixed events across devices {device_ids}")
-    print(f"{'='*70}")
-
     eventset = papi.create_eventset()
     if eventset is None:
         return False
@@ -419,10 +410,7 @@ def test_mixed_events_devices(papi, device_ids):
 
 def test_invalid_device(papi, num_devices):
     """Test that adding an event with an invalid device index fails gracefully"""
-    print(f"\n{'='*70}")
     print(f"Sub-test 4: Invalid device qualifier (negative test)")
-    print(f"{'='*70}")
-
     eventset = papi.create_eventset()
     if eventset is None:
         return False
@@ -446,10 +434,7 @@ def test_invalid_device(papi, num_devices):
 
 def test_read_during_workload(papi, device_id):
     """Test reading counter values during workload execution"""
-    print(f"\n{'='*70}")
     print(f"Sub-test 5: Multiple reads during workload on device={device_id}")
-    print(f"{'='*70}")
-
     eventset = papi.create_eventset()
     if eventset is None:
         return False
@@ -506,10 +491,6 @@ def test_read_during_workload(papi, device_id):
 # Main
 
 def main():
-    print("=" * 70)
-    print("PAPI Gaudi2 Multi-Device Test Suite")
-    print("=" * 70)
-
     # Initialize PyTorch FIRST (acquires device fd needed by PAPI)
     print("\n[SETUP] Initializing PyTorch HPU...")
     if not init_pytorch():
@@ -561,9 +542,6 @@ def main():
     results["Sub-test 5: Read during workload"] = test_read_during_workload(papi, 0)
 
     # Summary
-    print(f"\n{'='*70}")
-    print("TEST SUMMARY")
-    print(f"{'='*70}")
     passed = 0
     failed = 0
     skipped = 0
@@ -580,7 +558,6 @@ def main():
         print(f"  {name:<45} {status}")
 
     print(f"\n  Total: {passed} passed, {failed} failed, {skipped} skipped")
-    print(f"{'='*70}")
 
     papi.shutdown()
 

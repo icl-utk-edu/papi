@@ -49,9 +49,6 @@ def run_command(cmd):
 
 def test_component_avail():
     """Verify gaudi2 component is listed and not disabled"""
-    print("=" * 70)
-    print("Test: Component Availability (papi_component_avail)")
-    print("=" * 70)
 
     if not shutil.which("papi_component_avail"):
         print("  SKIP: papi_component_avail not found in PATH")
@@ -90,9 +87,6 @@ def test_component_avail():
 
 def test_native_events():
     """Verify gaudi2 native events are correctly enumerated"""
-    print("\n" + "=" * 70)
-    print("Test: Native Event Enumeration (papi_native_avail)")
-    print("=" * 70)
 
     if not shutil.which("papi_native_avail"):
         print("  SKIP: papi_native_avail not found in PATH")
@@ -153,20 +147,12 @@ def test_native_events():
 # Main
 
 def main():
-    print("PAPI Gaudi2 Component & Event Enumeration Test")
-    print("=" * 70)
-    print()
-
     results = {}
 
     results["Component Availability"] = test_component_avail()
     results["Native Event Enumeration"] = test_native_events()
 
     # Summary
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
-
     passed = 0
     failed = 0
     skipped = 0
@@ -184,7 +170,6 @@ def main():
         print(f"  {name:<40} {status}")
 
     print(f"\n  Total: {passed} passed, {failed} failed, {skipped} skipped")
-    print("=" * 70)
 
     if failed > 0:
         print("\nFAILED")
