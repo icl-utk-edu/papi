@@ -270,7 +270,7 @@ vendorp1_evt_enum(unsigned int *event_code, int modifier)
             ++info.nameid;
             papi_errno = evt_id_create(&info, event_code);
             break;
-        case PAPI_NTV_ENUM_UMASKS:
+        case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:
             if (info.flags == 0) {
                 info.flags = DEVICE_FLAG;
                 papi_errno = evt_id_create(&info, event_code);
