@@ -116,6 +116,7 @@ static hlthunk_get_device_count_fn p_hlthunk_get_device_count = NULL;
 typedef struct {
     int device_idx;                      /* Index in device array (0 to num_devices-1) */
     int device_fd;                       /* File descriptor for this device */
+    int owns_fd;                         /* 1 if opened fd, 0 if borrowed from runtime */
     int device_type;                     /* HLTHUNK_DEVICE_GAUDI2/2B/2C/2D */
     struct hlthunk_hw_ip_info hw_ip;     /* Hardware IP info */
     int tpc_avail;                       /* TPC engine available */
@@ -333,24 +334,31 @@ static int is_gaudi2_device(int device_type)
 }
 
 /**
- * Find existing Gaudi2 device fd from /proc/self/fd
- * Returns fd for the first found device, or -1 if none found.
+ * Find an existing fd for a specific device minor number from /proc/self/fd.
+ * This allows reusing the runtime's (e.g. PyTorch's) device context so that
+ * SPMU counters see the workload activity on that context.
+ * Returns fd number if found, or -1 if no existing fd matches.
  */
-static int find_gaudi2_device_fd(void)
+static int find_existing_fd_for_minor(int minor)
 {
     DIR *dir;
     struct dirent *entry;
     char link_path[PAPI_MIN_STR_LEN];
     char target[PAPI_HUGE_STR_LEN];
+    char expected[64];
     ssize_t len;
     int found_fd = -1;
     int strLen;
     int status;
 
+    strLen = snprintf(expected, sizeof(expected), "/dev/accel/accel%d", minor);
+    if (strLen < 0 || strLen >= (int)sizeof(expected))
+        return -1;
+
     dir = opendir("/proc/self/fd");
     if (!dir) {
         SUBDBG("Failed to open /proc/self/fd: %s\n", strerror(errno));
-        return PAPI_ESYS;
+        return -1;
     }
 
     while ((entry = readdir(dir)) != NULL) {
@@ -368,10 +376,10 @@ static int find_gaudi2_device_fd(void)
             continue;
         target[len] = '\0';
 
-        if (strstr(target, "/dev/accel/accel") != NULL &&
-            strstr(target, "control") == NULL) {
+        if (strcmp(target, expected) == 0) {
             found_fd = atoi(entry->d_name);
-            SUBDBG("Found Gaudi2 device: fd=%d -> %s\n", found_fd, target);
+            SUBDBG("Found existing fd for minor %d: fd=%d -> %s\n",
+                   minor, found_fd, target);
             break;
         }
     }
@@ -379,7 +387,6 @@ static int find_gaudi2_device_fd(void)
     status = closedir(dir);
     if (status == -1) {
         SUBDBG("closedir failed for /proc/self/fd: %s\n", strerror(errno));
-        return PAPI_ESYS;
     }
 
     return found_fd;
@@ -596,9 +603,17 @@ static int enumerate_gaudi2_devices(void)
             continue;
         }
 
-        /* Open primary device */
-        dev_fd = open_device_by_minor(minor, HLTHUNK_NODE_PRIMARY);
         close(ctrl_fd);
+
+        /* Try to find an existing fd from the runtime (e.g. PyTorch) first.
+         * This ensures SPMU counters see the workload on that context. */
+        dev_fd = find_existing_fd_for_minor(minor);
+        int borrowed = (dev_fd >= 0);
+
+        if (dev_fd < 0) {
+            /* No existing fd found, open new */
+            dev_fd = open_device_by_minor(minor, HLTHUNK_NODE_PRIMARY);
+        }
 
         if (dev_fd < 0) {
             SUBDBG("Failed to open primary device for minor %d\n", minor);
@@ -608,6 +623,7 @@ static int enumerate_gaudi2_devices(void)
         gaudi2_device_t *dev = &gaudi2_devices[gaudi2_num_devices];
         dev->device_idx = gaudi2_num_devices;
         dev->device_fd = dev_fd;
+        dev->owns_fd = borrowed ? 0 : 1;
         dev->device_type = device_type;
 
         /* Query hardware IP info */
@@ -624,9 +640,10 @@ static int enumerate_gaudi2_devices(void)
         dev->mme_avail = 1;  /* Always present on Gaudi2 */
         dev->pdma_avail = 1; /* Always present on Gaudi2 */
 
-        SUBDBG("Device %d: fd=%d type=%d TPC=%d EDMA=%d MME=%d PDMA=%d\n",
-               gaudi2_num_devices, dev_fd, device_type,
-               dev->tpc_avail, dev->edma_avail, dev->mme_avail, dev->pdma_avail);
+        SUBDBG("Device %d: fd=%d(%s) type=%d TPC=%d EDMA=%d MME=%d PDMA=%d\n",
+               gaudi2_num_devices, dev_fd, dev->owns_fd ? "owned" : "borrowed",
+               device_type, dev->tpc_avail, dev->edma_avail, dev->mme_avail,
+               dev->pdma_avail);
 
         gaudi2_num_devices++;
     }
@@ -713,10 +730,10 @@ static int gaudi2_shutdown_component(void)
 {
     int d;
 
-    /* Close all device file descriptors */
+    /* Close device file descriptors that were opened (not borrowed from runtime) */
     if (gaudi2_devices) {
         for (d = 0; d < gaudi2_num_devices; d++) {
-            if (gaudi2_devices[d].device_fd >= 0) {
+            if (gaudi2_devices[d].device_fd >= 0 && gaudi2_devices[d].owns_fd) {
                 close(gaudi2_devices[d].device_fd);
                 gaudi2_devices[d].device_fd = -1;
             }
@@ -749,7 +766,7 @@ static int gaudi2_shutdown_thread(hwd_context_t *ctx)
     gaudi2_context_t *gaudi2_ctx = (gaudi2_context_t *)ctx;
     int d;
 
-    /* Disable debug mode on all devices where we enabled it */
+    /* Disable debug mode on all devices that were enabled */
     for (d = 0; d < gaudi2_num_devices; d++) {
         if (gaudi2_ctx->debug_mode_enabled[d] && gaudi2_devices[d].device_fd >= 0) {
             disable_debug_mode(gaudi2_devices[d].device_fd);

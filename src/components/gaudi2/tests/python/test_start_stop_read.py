@@ -239,11 +239,6 @@ def run_pytorch_workload():
 # Main Test
 
 def main():
-    print("=" * 70)
-    print("PAPI Gaudi2 Start/Stop/Read Lifecycle Test")
-    print("=" * 70)
-    print()
-
     # Step 0: Initialize PyTorch FIRST to acquire the device
     print("[0] Initializing PyTorch HPU (must be done before PAPI)...")
     if not init_pytorch():
@@ -346,12 +341,10 @@ def main():
     papi.shutdown()
     print("  Done")
 
-    print("\n" + "=" * 70)
     if all_valid:
         print("PASSED")
     else:
         print("FAILED")
-    print("=" * 70)
 
     return 0 if all_valid else 1
 
