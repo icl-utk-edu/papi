@@ -134,67 +134,248 @@ static int gaudi2_num_devices = 0;
 * TODO: add all gaudi2 events 
 */
 static gaudi2_native_event_t gaudi2_event_catalog[] = {
-    /* TPC backpressure */
-    {"TPC_MEMORY2SB_BP", "Memory to SB backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_MEMORY2SB_BP},
-    {"TPC_SB2MEMORY_BP", "SB to memory backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_SB2MEMORY_BP},
-    {"TPC_PQ_NOT_EMPTY_BUT_CQ_EMPTY", "PQ not empty but CQ empty", GAUDI2_ENGINE_TPC, TPC_SPMU_PQ_NOT_EMPTY_BUT_CQ_EMPTY},
-    {"TPC_QM_PREFETCH_BUFFER_EMPTY", "QM prefetch buffer empty", GAUDI2_ENGINE_TPC, TPC_SPMU_QM_PREFETCH_BUFFER_EMPTY},
-    {"TPC_SB_2_CORE_BP", "SB to core backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP},
-    {"TPC_SB_2_CORE_BP_SB_FULL", "SB to core BP - SB full", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_FULL},
-    {"TPC_SB_2_CORE_BP_SB_MEMORY", "SB to core BP - SB memory", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_MEMORY},
-    {"TPC_SB_2_CORE_BP_SB_LD_TNSR_FIFO_FULL", "SB to core BP - LD tensor FIFO full", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_LD_TNSR_FIFO_FULL},
-    {"TPC_WB2CORE_BP", "Write buffer to core backpressure", GAUDI2_ENGINE_TPC, TPC_SPMU_WB2CORE_BP},
+    /* ===== TPC SPMU events (81 events) ===== */
 
-    /* TPC stalls */
-    {"TPC_STALL_ON_ICACHE_MISS", "Scalar pipe stall on instruction cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_ICACHE_MISS},
-    {"TPC_STALL_ON_DCACHE_MISS", "Scalar pipe stall on data cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_DCACHE_MISS},
-    {"TPC_STALL_ON_POP_FROM_SB", "Stall on pop from SB", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_POP_FROM_SB},
-    {"TPC_STALL_ON_LOOKUP_CACHE_MISS", "Stall on lookup cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_LOOKUP_CACHE_MISS},
-    {"TPC_STALL_ON_IRQ_FULL", "Stall on IRQ full", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_IRQ_FULL},
-    {"TPC_STALL_ON_MAX_COLORS", "Stall on max colors", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_MAX_COLORS},
-    {"TPC_STALL_ON_UARCH_BUBBLE", "Stall on microarchitecture bubble", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_UARCH_BUBBLE},
-    {"TPC_STALL_VPU", "Vector processing unit stall", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_VPU},
-    {"TPC_STALL_SPU_ANY", "Scalar processing unit any stall", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_SPU_ANY},
-    {"TPC_STALL_ON_TSB_FULL", "Stall on TSB full", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_TSB_FULL},
-    {"TPC_STALL_ON_ST_L_EXT", "Stall on store local external", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_ST_L_EXT},
-    {"TPC_STALL_ON_LD_L_EXT", "Stall on load local external", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_LD_L_EXT},
-    {"TPC_STALL", "Total stall cycles", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL},
+    /* TPC backpressure (IDs 0-8) */
+    {"TPC_MEMORY2SB_BP", "Back pressure from memory to TPC suspension buffer on read requests", GAUDI2_ENGINE_TPC, TPC_SPMU_MEMORY2SB_BP},
+    {"TPC_SB2MEMORY_BP", "Back pressure from TPC suspension buffer to memory on read responses", GAUDI2_ENGINE_TPC, TPC_SPMU_SB2MEMORY_BP},
+    {"TPC_PQ_NOT_EMPTY_BUT_CQ_EMPTY", "CQ FIFO pointers signal not empty but CQ buffer is empty waiting for data", GAUDI2_ENGINE_TPC, TPC_SPMU_PQ_NOT_EMPTY_BUT_CQ_EMPTY},
+    {"TPC_QM_PREFETCH_BUFFER_EMPTY", "PQ FIFO pointers signal not empty but PQ buffer is empty waiting for data", GAUDI2_ENGINE_TPC, TPC_SPMU_QM_PREFETCH_BUFFER_EMPTY},
+    {"TPC_SB_2_CORE_BP", "Internal back pressure from the suspension buffer to the core", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP},
+    {"TPC_SB_2_CORE_BP_SB_FULL", "Internal back pressure from the suspension buffer to the core due to full", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_FULL},
+    {"TPC_SB_2_CORE_BP_SB_MEMORY", "Back pressure from the suspension buffer to the core due to memory back pressure", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_MEMORY},
+    {"TPC_SB_2_CORE_BP_SB_LD_TNSR_FIFO_FULL", "Internal back pressure from VPU to TPC SB due to response fifo full", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_2_CORE_BP_SB_LD_TNSR_FIFO_FULL},
+    {"TPC_WB2CORE_BP", "Back pressure from memory to TPC write queue on store tensors", GAUDI2_ENGINE_TPC, TPC_SPMU_WB2CORE_BP},
 
-    /* TPC opcode execution */
-    {"TPC_NUM_OF_OPCODE1_EXECUTED", "Number of opcode1 executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE1_EXECUTED},
-    {"TPC_NUM_OF_OPCODE2_EXECUTED", "Number of opcode2 executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE2_EXECUTED},
-    {"TPC_NUM_OF_OPCODE3_EXECUTED", "Number of opcode3 executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE3_EXECUTED},
-    {"TPC_NUM_OF_OPCODE4_EXECUTED", "Number of opcode4 executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE4_EXECUTED},
+    /* TPC stalls (IDs 9-21) */
+    {"TPC_STALL_ON_ICACHE_MISS", "Scalar pipe stall due to instruction cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_ICACHE_MISS},
+    {"TPC_STALL_ON_DCACHE_MISS", "Scalar pipe stall due to data cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_DCACHE_MISS},
+    {"TPC_STALL_ON_POP_FROM_SB", "VPU stall on ld_tnsr", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_POP_FROM_SB},
+    {"TPC_STALL_ON_LOOKUP_CACHE_MISS", "Vector pipe stall due to lookup tables miss", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_LOOKUP_CACHE_MISS},
+    {"TPC_STALL_ON_IRQ_FULL", "Scalar pipe stall due to instruction queue full", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_IRQ_FULL},
+    {"TPC_STALL_ON_MAX_COLORS", "Vector pipe stall due to more than 4 kernels/ASOs running", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_MAX_COLORS},
+    {"TPC_STALL_ON_UARCH_BUBBLE", "Vector pipe stall due to instruction bubble during kernel", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_UARCH_BUBBLE},
+    {"TPC_STALL_VPU", "General vector pipe stall indication", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_VPU},
+    {"TPC_STALL_SPU_ANY", "General scalar pipe stall indication", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_SPU_ANY},
+    {"TPC_STALL_ON_TSB_FULL", "Scalar pipe stall due to suspension buffer request buffer full", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_TSB_FULL},
+    {"TPC_STALL_ON_ST_L_EXT", "Scalar pipe stall due to config write to external agent", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_ST_L_EXT},
+    {"TPC_STALL_ON_LD_L_EXT", "Scalar pipe stall due to config read from external agent", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_LD_L_EXT},
+    {"TPC_STALL", "TPC stall", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL},
 
-    /* TPC execution */
-    {"TPC_KERNEL_EXECUTED", "TPC kernels executed", GAUDI2_ENGINE_TPC, TPC_SPMU_KERNEL_EXECUTED},
-    {"TPC_SCALAR_PIPE_EXEC", "Scalar pipe execution cycles", GAUDI2_ENGINE_TPC, TPC_SPMU_SCALAR_PIPE_EXEC},
-    {"TPC_VECTOR_PIPE_EXEC", "Vector pipe execution cycles", GAUDI2_ENGINE_TPC, TPC_SPMU_VECTOR_PIPE_EXEC},
+    /* TPC opcode execution (IDs 22-25) */
+    {"TPC_NUM_OF_OPCODE1_EXECUTED", "How many times a pre-configured instruction opcode1 was executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE1_EXECUTED},
+    {"TPC_NUM_OF_OPCODE2_EXECUTED", "How many times a pre-configured instruction opcode2 was executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE2_EXECUTED},
+    {"TPC_NUM_OF_OPCODE3_EXECUTED", "How many times a pre-configured instruction opcode3 was executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE3_EXECUTED},
+    {"TPC_NUM_OF_OPCODE4_EXECUTED", "How many times a pre-configured instruction opcode4 was executed", GAUDI2_ENGINE_TPC, TPC_SPMU_NUM_OF_OPCODE4_EXECUTED},
 
-    /* TPC cache */
-    {"TPC_ICACHE_MISS", "Instruction cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_ICACHE_MISS},
-    {"TPC_ICACHE_HIT", "Instruction cache hit", GAUDI2_ENGINE_TPC, TPC_SPMU_ICACHE_HIT},
-    {"TPC_KILLED_INSTRUCTION", "Killed instructions", GAUDI2_ENGINE_TPC, TPC_SPMU_KILLED_INSTRUCTION},
-    {"TPC_LUT_MISS", "Lookup table miss", GAUDI2_ENGINE_TPC, TPC_SPMU_LUT_MISS},
-    {"TPC_DCACHE_MISS", "Data cache miss", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_MISS},
-    {"TPC_DCACHE_HIT", "Data cache hit", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_HIT},
+    /* TPC execution (IDs 26-28) */
+    {"TPC_KERNEL_EXECUTED", "End of kernel on the vector pipe indication", GAUDI2_ENGINE_TPC, TPC_SPMU_KERNEL_EXECUTED},
+    {"TPC_SCALAR_PIPE_EXEC", "Active status of scalar pipe (not including stalls)", GAUDI2_ENGINE_TPC, TPC_SPMU_SCALAR_PIPE_EXEC},
+    {"TPC_VECTOR_PIPE_EXEC", "Active status of vector pipe (not including stalls)", GAUDI2_ENGINE_TPC, TPC_SPMU_VECTOR_PIPE_EXEC},
 
-    /* TPC exceptions */
-    {"TPC_DIV_BY_0", "Division by zero", GAUDI2_ENGINE_TPC, TPC_SPMU_DIV_BY_0},
-    {"TPC_SPU_MAC_OVERFLOW", "SPU MAC overflow", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_MAC_OVERFLOW},
-    {"TPC_VPU_MAC_OVERFLOW", "VPU MAC overflow", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_MAC_OVERFLOW},
-    {"TPC_LUT_HIT", "Lookup table hit", GAUDI2_ENGINE_TPC, TPC_SPMU_LUT_HIT},
-    {"TPC_DCACHE_HW_PREF", "Data cache hardware prefetch", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_HW_PREF},
+    /* TPC cache (IDs 29-34) */
+    {"TPC_ICACHE_MISS", "Miss on requested instruction fetch", GAUDI2_ENGINE_TPC, TPC_SPMU_ICACHE_MISS},
+    {"TPC_ICACHE_HIT", "Hit on requested instruction fetch", GAUDI2_ENGINE_TPC, TPC_SPMU_ICACHE_HIT},
+    {"TPC_KILLED_INSTRUCTION", "Scalar pipe indication for jumping over instructions not executed", GAUDI2_ENGINE_TPC, TPC_SPMU_KILLED_INSTRUCTION},
+    {"TPC_LUT_MISS", "Miss on lookup table read instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_LUT_MISS},
+    {"TPC_DCACHE_MISS", "Miss on requested data fetch from cache", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_MISS},
+    {"TPC_DCACHE_HIT", "Hit on requested data fetch from cache", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_HIT},
 
-    /* EDMA */
+    /* TPC out of bounds (IDs 35-39) */
+    {"TPC_OUT_OF_BOUND_DIM0", "Load tensor was out of the tensor bound on dimension0", GAUDI2_ENGINE_TPC, TPC_SPMU_OUT_OF_BOUND_DIM0},
+    {"TPC_OUT_OF_BOUND_DIM1", "Load tensor was out of the tensor bound on dimension1", GAUDI2_ENGINE_TPC, TPC_SPMU_OUT_OF_BOUND_DIM1},
+    {"TPC_OUT_OF_BOUND_DIM2", "Load tensor was out of the tensor bound on dimension2", GAUDI2_ENGINE_TPC, TPC_SPMU_OUT_OF_BOUND_DIM2},
+    {"TPC_OUT_OF_BOUND_DIM3", "Load tensor was out of the tensor bound on dimension3", GAUDI2_ENGINE_TPC, TPC_SPMU_OUT_OF_BOUND_DIM3},
+    {"TPC_OUT_OF_BOUND_DIM4", "Load tensor was out of the tensor bound on dimension4", GAUDI2_ENGINE_TPC, TPC_SPMU_OUT_OF_BOUND_DIM4},
+
+    /* TPC arithmetic exceptions (IDs 40-56) */
+    {"TPC_DIV_BY_0", "Divider zero on Div instruction on the scalar pipe", GAUDI2_ENGINE_TPC, TPC_SPMU_DIV_BY_0},
+    {"TPC_SPU_MAC_OVERFLOW", "Scalar pipe overflow/underflow indication on MAC instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_MAC_OVERFLOW},
+    {"TPC_SPU_ADDSUB_OVERFLOW", "Scalar pipe overflow/underflow indication on ADD/SUB instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_ADDSUB_OVERFLOW},
+    {"TPC_SPU_ABS_OVERFLOW", "Scalar pipe overflow indication on Absolute instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_ABS_OVERFLOW},
+    {"TPC_SPU_FMA_FP_DST_NAN", "Scalar pipe floating point result is Not-a-Number", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_FMA_FP_DST_NAN},
+    {"TPC_SPU_FMA_FP_DST_INF", "Scalar pipe floating point result is infinity", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_FMA_FP_DST_INF},
+    {"TPC_SPU_CONVERT_FP_DST_NAN", "Scalar pipe convert result is Not-a-Number", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_CONVERT_FP_DST_NAN},
+    {"TPC_SPU_CONVERT_FP_DST_INF", "Scalar pipe convert result is infinity", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_CONVERT_FP_DST_INF},
+    {"TPC_SPU_FP_DST_DENORM", "Scalar pipe floating point result is a denormalized number", GAUDI2_ENGINE_TPC, TPC_SPMU_SPU_FP_DST_DENORM},
+    {"TPC_VPU_MAC_OVERFLOW", "VPU overflow/underflow indication on MAC instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_MAC_OVERFLOW},
+    {"TPC_VPU_ADDSUB_OVERFLOW", "VPU overflow/underflow indication on ADD/SUB instruction", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_ADDSUB_OVERFLOW},
+    {"TPC_VPU_ABS_OVERFLOW", "VPU floating point result is Not-a-Number or infinite", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_ABS_OVERFLOW},
+    {"TPC_VPU_CONVERT_FP_DST_NAN", "VPU convert floating point result is Not-a-Number", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_CONVERT_FP_DST_NAN},
+    {"TPC_VPU_CONVERT_FP_DST_INF", "VPU convert floating point result is infinite", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_CONVERT_FP_DST_INF},
+    {"TPC_VPU_FMA_FP_DST_NAN", "VPU FMA result is Not-a-Number", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_FMA_FP_DST_NAN},
+    {"TPC_VPU_FMA_FP_DST_INF", "VPU FMA result is infinite", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_FMA_FP_DST_INF},
+    {"TPC_VPU_FP_DST_DENORM", "VPU floating point result is a denormalized number", GAUDI2_ENGINE_TPC, TPC_SPMU_VPU_FP_DST_DENORM},
+
+    /* TPC additional events (IDs 57-66) */
+    {"TPC_STALL_ON_ST_TSNR_FULL", "Stall due to store tensor full", GAUDI2_ENGINE_TPC, TPC_SPMU_STALL_ON_ST_TSNR_FULL},
+    {"TPC_LUT_HIT", "VPE/SPE lookup table hit", GAUDI2_ENGINE_TPC, TPC_SPMU_LUT_HIT},
+    {"TPC_ADDRESS_EXCEED_VLM", "Address exceeded the local memory", GAUDI2_ENGINE_TPC, TPC_SPMU_ADDRESS_EXCEED_VLM},
+    {"TPC_LD_LOCK_RESEND", "Exclusive access - access to an already locked region", GAUDI2_ENGINE_TPC, TPC_SPMU_LD_LOCK_RESEND},
+    {"TPC_LD_L_PROT_VIO", "Exclusive access - load lock protection violation", GAUDI2_ENGINE_TPC, TPC_SPMU_LD_L_PROT_VIO},
+    {"TPC_ST_L_PROT_VIO", "Exclusive access - store unlock protection violation", GAUDI2_ENGINE_TPC, TPC_SPMU_ST_L_PROT_VIO},
+    {"TPC_DCACHE_L0CD_MISMATCH", "D$ L0CD mismatch on unaligned access", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_L0CD_MISMATCH},
+    {"TPC_STALL_ON_LD_L_INT", "Stall due to ld_l from TPC internal address space", GAUDI2_ENGINE_TPC, TPC_SPMU_TPC_STALL_ON_LD_L_INT},
+    {"TPC_SB_FIRST_RESPONSE", "SB first response received", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_FIRST_RESPONSE},
+    {"TPC_SB_LAST_RESPONSE", "SB last response received", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_LAST_RESPONSE},
+
+    /* TPC SB occupancy (IDs 67-70) */
+    {"TPC_SB_OCCUPANCY0", "SB occupancy: full > occupancy > 3/4", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_OCCUPANCY0},
+    {"TPC_SB_OCCUPANCY1", "SB occupancy: 3/4 > occupancy > 1/2", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_OCCUPANCY1},
+    {"TPC_SB_OCCUPANCY2", "SB occupancy: 1/2 > occupancy > 1/4", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_OCCUPANCY2},
+    {"TPC_SB_OCCUPANCY3", "SB occupancy: 1/4 > occupancy > empty", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_OCCUPANCY3},
+
+    /* TPC SB CAM (IDs 71-76) */
+    {"TPC_SB_DBG_CAM0_MISS", "SB debug CAM0 miss", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM0_MISS},
+    {"TPC_SB_DBG_CAM0_HIT", "SB debug CAM0 hit", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM0_HIT},
+    {"TPC_SB_DBG_CAM0_UNCACHEABLE", "SB debug CAM0 uncacheable", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM0_UNCACHEABLE},
+    {"TPC_SB_DBG_CAM1_MISS", "SB debug CAM1 miss", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM1_MISS},
+    {"TPC_SB_DBG_CAM1_HIT", "SB debug CAM1 hit", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM1_HIT},
+    {"TPC_SB_DBG_CAM1_UNCACHEABLE", "SB debug CAM1 uncacheable", GAUDI2_ENGINE_TPC, TPC_SPMU_SB_DBG_CAM1_UNCACHEABLE},
+
+    /* TPC additional cache (IDs 77-80) */
+    {"TPC_NOC_2_SB_BP", "Back pressure from NOC to TPC suspension buffer on read requests", GAUDI2_ENGINE_TPC, TPC_SPMU_NOC_2_SB_BP},
+    {"TPC_DCACHE_HW_PREF", "Hardware prefetch execution event", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_HW_PREF},
+    {"TPC_DCACHE_UC", "Uncached execution event", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_UC},
+    {"TPC_DCACHE_DEALIGN", "Unaligned execution event", GAUDI2_ENGINE_TPC, TPC_SPMU_DCACHE_DEALIGN},
+
+    /* ===== EDMA SPMU events (50 events) ===== */
+
+    /* EDMA QMAN (IDs 0-9) */
+    {"EDMA_QMAN0_PQ_BUF_PEND", "PQ (upper level) buffer QMAN0 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN0_PQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN1_PQ_BUF_PEND", "PQ (upper level) buffer QMAN1 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN1_PQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN2_PQ_BUF_PEND", "PQ (upper level) buffer QMAN2 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN2_PQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN3_PQ_BUF_PEND", "PQ (upper level) buffer QMAN3 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN3_PQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN0_CQ_BUF_PEND", "CQ (completion) buffer QMAN0 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN0_CQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN1_CQ_BUF_PEND", "CQ (completion) buffer QMAN1 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN1_CQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN2_CQ_BUF_PEND", "CQ (completion) buffer QMAN2 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN2_CQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN3_CQ_BUF_PEND", "CQ (completion) buffer QMAN3 is empty", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN3_CQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN_CMDQ_CQ_BUF_PEND", "Command queue CQ buffer pending", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN_CMDQ_CQ_BUF_PEND_CNT_EN},
+    {"EDMA_QMAN_CMDQ_ARC_CQ_BUF_PEND", "ARC command queue CQ buffer pending", GAUDI2_ENGINE_EDMA, EDMA_SPMU_QMAN_CMDQ_ARC_CQ_BUF_PEND_CNT_EN},
+
+    /* EDMA errors and trace (IDs 10-17) */
+    {"EDMA_AXI_HBW_ERR", "AXI high bandwidth error", GAUDI2_ENGINE_EDMA, EDMA_SPMU_AXI_HBW_ERR},
+    {"EDMA_AXI_LBW_ERR", "AXI low bandwidth error", GAUDI2_ENGINE_EDMA, EDMA_SPMU_AXI_LBW_ERR},
     {"EDMA_TRACE_FENCE_START", "EDMA fence start", GAUDI2_ENGINE_EDMA, EDMA_SPMU_TRACE_FENCE_START},
     {"EDMA_TRACE_FENCE_DONE", "EDMA fence done", GAUDI2_ENGINE_EDMA, EDMA_SPMU_TRACE_FENCE_DONE},
+    {"EDMA_TRACE_CP_SW_STOP", "CP software stop trace event", GAUDI2_ENGINE_EDMA, EDMA_SPMU_TRACE_CP_SW_STOP},
+    {"EDMA_CP_ERR", "Command processor error", GAUDI2_ENGINE_EDMA, EDMA_SPMU_CP_ERR},
+    {"EDMA_ARB_ERR", "Arbiter error", GAUDI2_ENGINE_EDMA, EDMA_SPMU_ARB_ERR},
     {"EDMA_DESC_PUSH", "EDMA descriptor push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_TRACE_CHOICE_WIN_PUSH},
 
-    /* MME */
-    {"MME_NUM_OUTER_PRODUCTS", "MME outer products", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_NUM_OUTER_PRODUCTS},
-    {"MME_STALL_ON_A", "MME stall waiting for A matrix", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_OUTER_PRODUCT_STALL_ON_A},
-    {"MME_STALL_ON_B", "MME stall waiting for B matrix", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_OUTER_PRODUCT_STALL_ON_B},
+    /* EDMA DMA trace (IDs 18-27) */
+    {"EDMA_DMA_TRC_DESC_PUSH", "DMA trace descriptor push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_DESC_PUSH},
+    {"EDMA_DMA_TRC_CPL_MSG_SENT", "DMA trace completion message sent", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_CPL_MSG_SENT},
+    {"EDMA_DMA_TRC_RD_FRST_ADDR_PUSH", "DMA trace read first address push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_RD_FRST_ADDR_PUSH},
+    {"EDMA_DMA_TRC_RD_LAST_ADDR_PUSH", "DMA trace read last address push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_RD_LAST_ADDR_PUSH},
+    {"EDMA_DMA_TRC_WR_FRST_ADDR_PUSH", "DMA trace write first address push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_WR_FRST_ADDR_PUSH},
+    {"EDMA_DMA_TRC_WR_LAST_ADDR_PUSH", "DMA trace write last address push", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_WR_LAST_ADDR_PUSH},
+    {"EDMA_DMA_TRC_RD_DATA_FRST", "DMA trace read data first", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_RD_DATA_FRST},
+    {"EDMA_DMA_TRC_RD_DATA_LAST", "DMA trace read data last", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_RD_DATA_LAST},
+    {"EDMA_DMA_TRC_WR_DATA_FRST", "DMA trace write data first", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_WR_DATA_FRST},
+    {"EDMA_DMA_TRC_WR_DATA_LAST", "DMA trace write data last", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_TRC_WR_DATA_LAST},
+
+    /* EDMA backpressure and context (IDs 28-36) */
+    {"EDMA_MESH2SB_BP", "Mesh to SB back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_MESH2SB_BP},
+    {"EDMA_SB2MESH_BP", "SB to mesh back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB2MESH_BP},
+    {"EDMA_MESH2WB_BP", "Mesh to WB back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_MESH2WB_BP},
+    {"EDMA_RD_CTX_END2START", "Read context end to start", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_RD_CTX_END2START},
+    {"EDMA_WR_CTX_END2START", "Write context end to start", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_WR_CTX_END2START},
+    {"EDMA_SB2AGU_BP", "SB to AGU back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB2AGU_BP},
+    {"EDMA_SB_FULL_BP", "SB full back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB_FULL_BP},
+    {"EDMA_WB2AGU_BP", "WB to AGU back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_WB2AGU_BP},
+    {"EDMA_WB2GSKT_BP", "WB to gasket back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_WB2GSKT_BP},
+
+    /* EDMA SB monitor counters (IDs 37-40) */
+    {"EDMA_SB_MON_CNT_0", "SB monitor counter 0", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_0},
+    {"EDMA_SB_MON_CNT_1", "SB monitor counter 1", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_1},
+    {"EDMA_SB_MON_CNT_2", "SB monitor counter 2", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_2},
+    {"EDMA_SB_MON_CNT_3", "SB monitor counter 3", GAUDI2_ENGINE_EDMA, EDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_3},
+
+    /* EDMA SB and CAM (IDs 41-49) */
+    {"EDMA_SB_2_INITIATOR_BP_SB_FULL", "SB to initiator back pressure due to SB full", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_2_INITIATOR_BP_SB_FULL},
+    {"EDMA_SB_2_INITIATOR_BP", "SB to initiator back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_2_INITIATOR_BP},
+    {"EDMA_SB_DBG_CAM0_MISS", "SB debug CAM0 miss", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM0_MISS},
+    {"EDMA_SB_DBG_CAM0_HIT", "SB debug CAM0 hit", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM0_HIT},
+    {"EDMA_SB_DBG_CAM0_UNCACHEABLE", "SB debug CAM0 uncacheable", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM0_UNCACHEABLE},
+    {"EDMA_SB_DBG_CAM1_MISS", "SB debug CAM1 miss", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM1_MISS},
+    {"EDMA_SB_DBG_CAM1_HIT", "SB debug CAM1 hit", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM1_HIT},
+    {"EDMA_SB_DBG_CAM1_UNCACHEABLE", "SB debug CAM1 uncacheable", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_DBG_CAM1_UNCACHEABLE},
+    {"EDMA_SB_AXI_NOC_2_SB_BP", "AXI NOC to SB back pressure", GAUDI2_ENGINE_EDMA, EDMA_SPMU_SB_AXI_NOC_2_SB_BP},
+
+    /* ===== MME CTRL SPMU events (8 events) ===== */
+    {"MME_CONV_END_STALL_DIAG", "Convolution end stall on diagonal", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_CONV_END_STALL_DIAG},
+    {"MME_CONV_END_STALL_ACC", "Convolution end stall on accumulator", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_CONV_END_STALL_ACC},
+    {"MME_CONV_END_STALL_DIAG_STALL_ACC", "Convolution end stall on both diagonal and accumulator", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_CONV_END_STALL_DIAG_STALL_ACC},
+    {"MME_STALL_ON_B", "MME outer product stall waiting for B matrix", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_OUTER_PRODUCT_STALL_ON_B},
+    {"MME_STALL_ON_A", "MME outer product stall waiting for A matrix", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_OUTER_PRODUCT_STALL_ON_A},
+    {"MME_NUM_OUTER_PRODUCTS", "MME number of outer products", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_NUM_OUTER_PRODUCTS},
+    {"MME_QM_PREFETCH_BUFFER_EMPTY", "MME QM prefetch buffer empty", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_QM_PREFETCH_BUFFER_EMPTY},
+    {"MME_PQ_NOT_EMPTY_BUT_CQ_EMPTY", "MME PQ not empty but CQ empty", GAUDI2_ENGINE_MME, MME_CTRL_SPMU_PQ_NOT_EMPTY_BUT_CQ_EMPTY},
+
+    /* ===== PDMA SPMU events (50 events) ===== */
+
+    /* PDMA QMAN (IDs 0-9) */
+    {"PDMA_QMAN0_PQ_BUF_PEND", "PQ (upper level) buffer QMAN0 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN0_PQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN1_PQ_BUF_PEND", "PQ (upper level) buffer QMAN1 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN1_PQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN2_PQ_BUF_PEND", "PQ (upper level) buffer QMAN2 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN2_PQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN3_PQ_BUF_PEND", "PQ (upper level) buffer QMAN3 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN3_PQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN0_CQ_BUF_PEND", "CQ (completion) buffer QMAN0 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN0_CQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN1_CQ_BUF_PEND", "CQ (completion) buffer QMAN1 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN1_CQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN2_CQ_BUF_PEND", "CQ (completion) buffer QMAN2 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN2_CQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN3_CQ_BUF_PEND", "CQ (completion) buffer QMAN3 is empty", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN3_CQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN_CMDQ_CQ_BUF_PEND", "Command queue CQ buffer pending", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN_CMDQ_CQ_BUF_PEND_CNT_EN},
+    {"PDMA_QMAN_CMDQ_ARC_CQ_BUF_PEND", "ARC command queue CQ buffer pending", GAUDI2_ENGINE_PDMA, PDMA_SPMU_QMAN_CMDQ_ARC_CQ_BUF_PEND_CNT_EN},
+
+    /* PDMA errors and trace (IDs 10-17) */
+    {"PDMA_AXI_HBW_ERR", "AXI high bandwidth error", GAUDI2_ENGINE_PDMA, PDMA_SPMU_AXI_HBW_ERR},
+    {"PDMA_AXI_LBW_ERR", "AXI low bandwidth error", GAUDI2_ENGINE_PDMA, PDMA_SPMU_AXI_LBW_ERR},
+    {"PDMA_TRACE_FENCE_START", "PDMA fence start", GAUDI2_ENGINE_PDMA, PDMA_SPMU_TRACE_FENCE_START},
+    {"PDMA_TRACE_FENCE_DONE", "PDMA fence done", GAUDI2_ENGINE_PDMA, PDMA_SPMU_TRACE_FENCE_DONE},
+    {"PDMA_TRACE_CP_SW_STOP", "CP software stop trace event", GAUDI2_ENGINE_PDMA, PDMA_SPMU_TRACE_CP_SW_STOP},
+    {"PDMA_CP_ERR", "Command processor error", GAUDI2_ENGINE_PDMA, PDMA_SPMU_CP_ERR},
+    {"PDMA_ARB_ERR", "Arbiter error", GAUDI2_ENGINE_PDMA, PDMA_SPMU_ARB_ERR},
+    {"PDMA_DESC_PUSH", "PDMA descriptor push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_TRACE_CHOICE_WIN_PUSH},
+
+    /* PDMA DMA trace (IDs 18-27) */
+    {"PDMA_DMA_TRC_DESC_PUSH", "DMA trace descriptor push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_DESC_PUSH},
+    {"PDMA_DMA_TRC_CPL_MSG_SENT", "DMA trace completion message sent", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_CPL_MSG_SENT},
+    {"PDMA_DMA_TRC_RD_FRST_ADDR_PUSH", "DMA trace read first address push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_RD_FRST_ADDR_PUSH},
+    {"PDMA_DMA_TRC_RD_LAST_ADDR_PUSH", "DMA trace read last address push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_RD_LAST_ADDR_PUSH},
+    {"PDMA_DMA_TRC_WR_FRST_ADDR_PUSH", "DMA trace write first address push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_WR_FRST_ADDR_PUSH},
+    {"PDMA_DMA_TRC_WR_LAST_ADDR_PUSH", "DMA trace write last address push", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_WR_LAST_ADDR_PUSH},
+    {"PDMA_DMA_TRC_RD_DATA_FRST", "DMA trace read data first", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_RD_DATA_FRST},
+    {"PDMA_DMA_TRC_RD_DATA_LAST", "DMA trace read data last", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_RD_DATA_LAST},
+    {"PDMA_DMA_TRC_WR_DATA_FRST", "DMA trace write data first", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_WR_DATA_FRST},
+    {"PDMA_DMA_TRC_WR_DATA_LAST", "DMA trace write data last", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_TRC_WR_DATA_LAST},
+
+    /* PDMA backpressure and context (IDs 28-36) */
+    {"PDMA_MESH2SB_BP", "Mesh to SB back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_MESH2SB_BP},
+    {"PDMA_SB2MESH_BP", "SB to mesh back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB2MESH_BP},
+    {"PDMA_MESH2WB_BP", "Mesh to WB back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_MESH2WB_BP},
+    {"PDMA_RD_CTX_END2START", "Read context end to start", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_RD_CTX_END2START},
+    {"PDMA_WR_CTX_END2START", "Write context end to start", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_WR_CTX_END2START},
+    {"PDMA_SB2AGU_BP", "SB to AGU back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB2AGU_BP},
+    {"PDMA_SB_FULL_BP", "SB full back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB_FULL_BP},
+    {"PDMA_WB2AGU_BP", "WB to AGU back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_WB2AGU_BP},
+    {"PDMA_WB2GSKT_BP", "WB to gasket back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_WB2GSKT_BP},
+
+    /* PDMA SB monitor counters (IDs 37-40) */
+    {"PDMA_SB_MON_CNT_0", "SB monitor counter 0", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_0},
+    {"PDMA_SB_MON_CNT_1", "SB monitor counter 1", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_1},
+    {"PDMA_SB_MON_CNT_2", "SB monitor counter 2", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_2},
+    {"PDMA_SB_MON_CNT_3", "SB monitor counter 3", GAUDI2_ENGINE_PDMA, PDMA_SPMU_DBG_DMA_SPMU_SB_MON_CNT_3},
+
+    /* PDMA SB and CAM (IDs 41-49) */
+    {"PDMA_SB_2_INITIATOR_BP_SB_FULL", "SB to initiator back pressure due to SB full", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_2_INITIATOR_BP_SB_FULL},
+    {"PDMA_SB_2_INITIATOR_BP", "SB to initiator back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_2_INITIATOR_BP},
+    {"PDMA_SB_DBG_CAM0_MISS", "SB debug CAM0 miss", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM0_MISS},
+    {"PDMA_SB_DBG_CAM0_HIT", "SB debug CAM0 hit", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM0_HIT},
+    {"PDMA_SB_DBG_CAM0_UNCACHEABLE", "SB debug CAM0 uncacheable", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM0_UNCACHEABLE},
+    {"PDMA_SB_DBG_CAM1_MISS", "SB debug CAM1 miss", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM1_MISS},
+    {"PDMA_SB_DBG_CAM1_HIT", "SB debug CAM1 hit", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM1_HIT},
+    {"PDMA_SB_DBG_CAM1_UNCACHEABLE", "SB debug CAM1 uncacheable", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_DBG_CAM1_UNCACHEABLE},
+    {"PDMA_SB_AXI_NOC_2_SB_BP", "AXI NOC to SB back pressure", GAUDI2_ENGINE_PDMA, PDMA_SPMU_SB_AXI_NOC_2_SB_BP},
 
     {NULL, NULL, 0, 0}
 };
