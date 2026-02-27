@@ -36,4 +36,10 @@ int cuptip_ctx_stop(cuptip_control_t state);
 int cuptip_ctx_read(cuptip_control_t state, long long **counters);
 int cuptip_ctx_reset(cuptip_control_t state);
 
+typedef enum {
+    METRIC_UNDEFINED = 0,
+    METRIC_NOT_SUPPORTED,
+    METRIC_SUPPORTED,
+} metric_supported_te;
+
 #endif  /* __CUPTI_PROFILER_H__ */

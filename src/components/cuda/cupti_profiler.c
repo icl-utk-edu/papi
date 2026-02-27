@@ -168,9 +168,9 @@ NVPA_Status ( *NVPW_GetSupportedChipNamesPtr ) (NVPW_GetSupportedChipNames_Param
 // Initialize
 static int initialize_perfworks_api(void);
 // Enumeration
-static int enumerate_metrics_for_unique_devices(const char *pChipName, int *totalNumMetrics, char ***arrayOfMetricNames);
-static int get_rollup_metrics(NVPW_RollupOp rollupMetric, char **strRollupMetric);
-static int get_supported_submetrics(NVPW_Submetric subMetric, char **strSubMetric);
+static int enumerate_metrics_for_unique_devices(const char *pChipName, int *totalNumMetrics, char ***arrayOfMetricNames, void *metrics_supported_htable);
+static const char *get_rollup_metrics(NVPW_RollupOp rollupMetric);
+static const char *get_supported_submetrics(NVPW_Submetric subMetric);
 static int get_metric_properties(const char *pChipName, const char *metricName, char *fullMetricDescription);
 static int get_number_of_passes_for_info(const char *pChipName, NVPW_MetricsEvaluator *pMetricsEvaluator, NVPW_MetricEvalRequest *metricEvalRequest, int *numOfPasses);
 // Configuration
@@ -1316,6 +1316,8 @@ int evt_id_to_info(uint32_t event_id, event_info_t *info)
 */
 int init_event_table(void) 
 {
+    void *metrics_supported_htable;
+    htable_init(&metrics_supported_htable);
     int dev_id, deviceRecord = 0; 
     // Loop through all available devices on the current system
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
@@ -1341,7 +1343,8 @@ int init_event_table(void)
 
             papi_errno = enumerate_metrics_for_unique_devices( cuptiu_table_p->avail_gpu_info[deviceRecord].chipName,
                                                                &cuptiu_table_p->avail_gpu_info[deviceRecord].totalMetricCount,
-                                                               &cuptiu_table_p->avail_gpu_info[deviceRecord].metricNames );
+                                                               &cuptiu_table_p->avail_gpu_info[deviceRecord].metricNames,
+                                                               metrics_supported_htable);
             if (papi_errno != PAPI_OK) {
                 return papi_errno;
             }
@@ -1360,6 +1363,8 @@ int init_event_table(void)
         }
 
     }
+
+    htable_shutdown(metrics_supported_htable);
 
     // Free memory allocated in enumerate_metrics_for_unique_devices and reset totalMetricCount to 0
     int recordIdx;
@@ -1497,7 +1502,7 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
     cuptiu_event_t *event;
     StringVector *stat_vec;
     
-    if ( htable_find(evt_table->htable, name_no_stat, (void **) &event) != HTABLE_SUCCESS ) {
+    if (htable_find(evt_table->htable, name_no_stat, (void **) &event) != HTABLE_SUCCESS ) {
         event = &events[*count];
         // Increment event count
         (*count)++;
@@ -2338,6 +2343,61 @@ static int determine_dev_cc_major(int dev_id)
     }
 }
 
+int verify_metric_is_supported(NVPW_MetricsEvaluator *pMetricsEvaluator, const char *metricName, const char *pChipName)
+{
+    NVPW_MetricEvalRequest metricEvalRequest;
+    int papi_errno = get_metric_eval_request(pMetricsEvaluator, metricName, &metricEvalRequest);
+    if (papi_errno != PAPI_OK) {
+        SUBDBG("Metric %s failed to convert to metric eval request.\n", metricName);
+        return METRIC_NOT_SUPPORTED;
+    }
+
+    int rawMetricRequestsCount = 0;
+    NVPA_RawMetricRequest *rawMetricRequests = NULL;
+    papi_errno = create_raw_metric_requests(pMetricsEvaluator, &metricEvalRequest, &rawMetricRequests, &rawMetricRequestsCount);
+    if (papi_errno != PAPI_OK) {
+        SUBDBG("Metric %s failed to create a raw metric request.\n", metricName);
+	return METRIC_NOT_SUPPORTED;
+    }
+
+    NVPW_CUDA_RawMetricsConfig_Create_V2_Params rawMetricsConfigCreateParams = {NVPW_CUDA_RawMetricsConfig_Create_V2_Params_STRUCT_SIZE};
+    rawMetricsConfigCreateParams.activityKind = NVPA_ACTIVITY_KIND_PROFILER;
+    rawMetricsConfigCreateParams.pChipName = pChipName;
+    rawMetricsConfigCreateParams.pCounterAvailabilityImage = NULL;
+    rawMetricsConfigCreateParams.pPriv = NULL;
+    nvpwCheckErrors( NVPW_CUDA_RawMetricsConfig_Create_V2Ptr(&rawMetricsConfigCreateParams), return PAPI_EMISC );
+    // Destory pRawMetricsConfig at the end; otherwise, a memory leak will occur
+    NVPA_RawMetricsConfig *pRawMetricsConfig = rawMetricsConfigCreateParams.pRawMetricsConfig;
+
+    NVPW_RawMetricsConfig_BeginPassGroup_Params beginPassGroupParams = {NVPW_RawMetricsConfig_BeginPassGroup_Params_STRUCT_SIZE};
+    beginPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    beginPassGroupParams.pPriv = NULL;
+    nvpwCheckErrors( NVPW_RawMetricsConfig_BeginPassGroupPtr(&beginPassGroupParams), return PAPI_EMISC );
+
+    NVPW_RawMetricsConfig_AddMetrics_Params addMetricsParams = {NVPW_RawMetricsConfig_AddMetrics_Params_STRUCT_SIZE};
+    addMetricsParams.pRawMetricsConfig = pRawMetricsConfig;
+    addMetricsParams.pRawMetricRequests = rawMetricRequests;
+    addMetricsParams.numMetricRequests = rawMetricRequestsCount;
+    addMetricsParams.pPriv = NULL;
+    NVPA_Status status = NVPW_RawMetricsConfig_AddMetricsPtr(&addMetricsParams);
+    if (status != NVPA_STATUS_SUCCESS) {
+        SUBDBG("The metric %s is not supported on the chip %s.\n", metricName, pChipName);
+        return METRIC_NOT_SUPPORTED;
+    }
+
+    NVPW_RawMetricsConfig_EndPassGroup_Params endPassGroupParams = {NVPW_RawMetricsConfig_EndPassGroup_Params_STRUCT_SIZE};
+    endPassGroupParams.pRawMetricsConfig = pRawMetricsConfig;
+    endPassGroupParams.pPriv = NULL;
+    nvpwCheckErrors( NVPW_RawMetricsConfig_EndPassGroupPtr(&endPassGroupParams), return PAPI_EMISC );
+
+    NVPW_RawMetricsConfig_Destroy_Params rawMetricsConfigDestroyParams = {NVPW_RawMetricsConfig_Destroy_Params_STRUCT_SIZE};
+    rawMetricsConfigDestroyParams.pRawMetricsConfig = pRawMetricsConfig;
+    rawMetricsConfigDestroyParams.pPriv = NULL;
+    nvpwCheckErrors( NVPW_RawMetricsConfig_DestroyPtr((NVPW_RawMetricsConfig_Destroy_Params *)&rawMetricsConfigDestroyParams), return PAPI_EMISC );
+
+    return METRIC_SUPPORTED;
+}
+
 /**
  *  @}
  ******************************************************************************/
@@ -2359,7 +2419,7 @@ static int determine_dev_cc_major(int dev_id)
  *    Constructured metric names. With the Metrics Evaluator API, a metric name must be
  *    reconstructured using metricName.rollup.submetric.
 */
-static int enumerate_metrics_for_unique_devices(const char *pChipName, int *totalNumMetrics, char ***arrayOfMetricNames)
+static int enumerate_metrics_for_unique_devices(const char *pChipName, int *totalNumMetrics, char ***arrayOfMetricNames, void *metrics_supported_htable)
 {
     NVPW_CUDA_MetricsEvaluator_CalculateScratchBufferSize_Params calculateScratchBufferSizeParam = {NVPW_CUDA_MetricsEvaluator_CalculateScratchBufferSize_Params_STRUCT_SIZE};
     calculateScratchBufferSizeParam.pChipName = pChipName;
@@ -2391,40 +2451,46 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
             size_t metricNameBeginIndex = getMetricNamesParams.pMetricNameBeginIndices[metricIdx];
             const char *baseMetricName = &getMetricNamesParams.pMetricNames[metricNameBeginIndex];
 
-            // CTC metrics are not supported by the Perfworks Metrics API
-            if (strstr(baseMetricName, "ctc__") || strstr(baseMetricName, "CTC")) {
-                SUBDBG("CTC metric found. The Perfworks Metrics API does not support profiling these metrics. Moving to the next metric.\n");
-                continue;
-            }
-
-            char fullMetricName[PAPI_HUGE_STR_LEN];
-            int strLen = snprintf(fullMetricName, PAPI_HUGE_STR_LEN, "%s", baseMetricName);
-            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-                SUBDBG("Failed to fully append the base metric name.\n");
-                return PAPI_EBUF;
-            }
-
+	    metric_supported_te is_metric_supported = METRIC_UNDEFINED;
             int rollupMetricIdx;
             for (rollupMetricIdx = 0; rollupMetricIdx < NVPW_ROLLUP_OP__COUNT; ++rollupMetricIdx) {
-                // Set the starting offset to be used for a metric
-                int offsetForMetricName = strlen(baseMetricName);
                 // Get the rollup metric if applicable
                 // Rollup's are required for Counter and Throughput, but does not apply to Ratio
-                char *rollupMetricName = NULL;
+                const char *rollupMetricName = NULL;
                 if (metricType != NVPW_METRIC_TYPE_RATIO) {
-                    papi_errno = get_rollup_metrics(rollupMetricIdx, &rollupMetricName);
-                    if (papi_errno != 0) {
-                        return papi_errno;
-                    }
+                    rollupMetricName = get_rollup_metrics(rollupMetricIdx);
 
-                    strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", rollupMetricName);
-                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
-                        SUBDBG("Failed to fully append rollup metric name.\n");
-                        return PAPI_EBUF;
-                    }
+                    // Verify an event is supported only if we just enumerated a new base metricname
+                    if (is_metric_supported == METRIC_UNDEFINED) {
+                        char baseMetricPlusRollup[PAPI_2MAX_STR_LEN] = { 0 };
+                        int strLen = snprintf(baseMetricPlusRollup, sizeof(baseMetricPlusRollup), "%s%s", baseMetricName, rollupMetricName);
+                        if (strLen < 0 || (size_t) strLen >= sizeof(baseMetricPlusRollup)) {
+                            SUBDBG("Failed to fully write the base metricname (%s) and rollup metricname (%s) into buffer.\n", baseMetricName, rollupMetricName);
+                            return PAPI_EBUF;
+                        }
 
-                    // Update the offset as a rollup metric was found
-                    offsetForMetricName += strlen(rollupMetricName);
+                        void *event_entry;
+                        int htable_errno = htable_find(metrics_supported_htable, baseMetricPlusRollup, (void **) &event_entry);
+                        // Base metricname + rollup metricname has already been verified to be supported
+                        if (htable_errno == HTABLE_SUCCESS) {
+                            is_metric_supported = METRIC_SUPPORTED;
+                        }
+                        // Base metricname + rollup metricname has not yet been verfieid to be supported
+                        else {
+                            // Note: From testing on an NVIDIA RTX 5080 IF the first base metricname + rollup metricname
+                            // (always avg) is not supported then the following base metricname + rollup metricnames
+                            // (max, min, sum) will not be as well. Therefore, we can continue to the next base metricname.
+                            is_metric_supported = verify_metric_is_supported(pMetricsEvaluator, baseMetricPlusRollup, pChipName);
+                            // Base metricname + rollup metricname is supported on the current chip
+                            if (is_metric_supported == METRIC_SUPPORTED) {
+                                htable_insert(metrics_supported_htable, baseMetricPlusRollup, (void **) &event_entry);
+                            }
+                            // Base metricname + rollup metricname is not supported on the current chip
+                            else {
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 // Get the list of submetrics 
@@ -2437,35 +2503,23 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
 
                 size_t subMetricIdx;
                 for (subMetricIdx = 0; subMetricIdx < supportedSubMetrics.numSupportedSubmetrics; ++subMetricIdx) {
-                    char *subMetricName;
-                    papi_errno = get_supported_submetrics(supportedSubMetrics.pSupportedSubmetrics[subMetricIdx], &subMetricName);
-                    if (papi_errno != 0) {
-                        return papi_errno;
-                    }
-
-                    if (supportedSubMetrics.pSupportedSubmetrics[subMetricIdx] != NVPW_SUBMETRIC_NONE) {
-                        strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", subMetricName);
-                        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
-                            SUBDBG("Failed to fully append submetric names.\n");
-                            return PAPI_EBUF;
-                        }
-                    }
+                    const char *subMetricName = get_supported_submetrics(supportedSubMetrics.pSupportedSubmetrics[subMetricIdx]);
 
                     metricNames = (char **) realloc(metricNames, (metricCount + 1) * sizeof(char *));
                     if (metricNames == NULL) {
                         SUBDBG("Failed to allocate memory for metricNames.\n");
                         return PAPI_ENOMEM;
                     }
-                    metricNames[metricCount] = (char *) malloc(PAPI_HUGE_STR_LEN * sizeof(char));
+                    metricNames[metricCount] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
                     if (metricNames[metricCount] == NULL) {
                         SUBDBG("Failed to allocate memory for the index %d in the array metricNames.\n", metricCount);
                         return PAPI_ENOMEM;
                     }
 
                     // Store the constructed metric name
-                    strLen = snprintf(metricNames[metricCount], PAPI_HUGE_STR_LEN, "%s", fullMetricName);
-                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-                        SUBDBG("Failed to fully write constructued metric name: %s\n", fullMetricName);
+                    int strLen = snprintf(metricNames[metricCount], PAPI_2MAX_STR_LEN, "%s%s%s", baseMetricName, rollupMetricName, subMetricName);
+                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                        SUBDBG("Failed to fully write the metric name: %s%s%s\n", baseMetricName, rollupMetricName,subMetricName);
                         return PAPI_EBUF;
                     }
                     metricCount++;
@@ -2495,29 +2549,22 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
   *        does not apply to Ratio.
   * @param rollupMetric
   *   A member of the enum NVPW_RollupOp. See nvperf_host.h for a full list.
-  * @param **strRollupMetric
-  *   String rollup metric to store based on the rollupMetric parameter.
 */
-static int get_rollup_metrics(NVPW_RollupOp rollupMetric, char **strRollupMetric)
+static const char *get_rollup_metrics(NVPW_RollupOp rollupMetric)
 {
     switch(rollupMetric)
     {
         case NVPW_ROLLUP_OP_AVG:
-            *strRollupMetric = ".avg";
-            return PAPI_OK;
+            return ".avg";
         case NVPW_ROLLUP_OP_MAX:
-            *strRollupMetric = ".max";
-            return PAPI_OK;
+            return ".max";
         case NVPW_ROLLUP_OP_MIN:
-            *strRollupMetric = ".min";
-            return PAPI_OK;
+            return ".min";
         case NVPW_ROLLUP_OP_SUM:
-            *strRollupMetric = ".sum";
-            return PAPI_OK;
+            return ".sum";
         default:
             SUBDBG("Rollup metric was not one of avg, max, min, or sum.\n");
-            *strRollupMetric = "";
-            return PAPI_OK;
+            return "";
     } 
 }
 
@@ -2527,10 +2574,8 @@ static int get_rollup_metrics(NVPW_RollupOp rollupMetric, char **strRollupMetric
   *        for Counter.
   * @param subMetric
   *   A member of the enum NVPW_Submetric. See nvperf_host.h for a full list.
-  * @param **strSubMetric
-  *   String submetric to store based on the subMetric parameter.
 */
-static int get_supported_submetrics(NVPW_Submetric subMetric, char **strSubMetric)
+static const char *get_supported_submetrics(NVPW_Submetric subMetric)
 {
     // NOTE: The following submetrics are not supported in CUPTI 11.3 and onwards:
     //       - Burst submetrics: .peak_burst, .pct_of_peak_burst_active, .pct_of_peak_burst_active
@@ -2541,72 +2586,50 @@ static int get_supported_submetrics(NVPW_Submetric subMetric, char **strSubMetri
     switch (subMetric)
     {
         case NVPW_SUBMETRIC_PEAK_SUSTAINED:
-            *strSubMetric = ".peak_sustained";
-            return PAPI_OK;
+            return ".peak_sustained";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_ACTIVE:
-            *strSubMetric = ".peak_sustained_active";
-            return PAPI_OK;
+            return ".peak_sustained_active";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_ACTIVE_PER_SECOND:
-            *strSubMetric = ".peak_sustained_active.per_second";
-            return PAPI_OK;
+            return ".peak_sustained_active.per_second";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_ELAPSED:
-            *strSubMetric = ".peak_sustained_elapsed";
-            return PAPI_OK;
+            return ".peak_sustained_elapsed";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_ELAPSED_PER_SECOND:
-            *strSubMetric = ".peak_sustained_elapsed.per_second";
-            return PAPI_OK;
+            return ".peak_sustained_elapsed.per_second";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_FRAME:
-            *strSubMetric = ".peak_sustained_frame";
-            return PAPI_OK;
+            return ".peak_sustained_frame";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_FRAME_PER_SECOND:
-            *strSubMetric = ".peak_sustained_frame.per_second";
-            return PAPI_OK;
+            return ".peak_sustained_frame.per_second";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_REGION:
-            *strSubMetric = ".peak_sustained_region";
-            return PAPI_OK;
+            return ".peak_sustained_region";
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_REGION_PER_SECOND:
-            *strSubMetric = ".peak_sustained_region.per_second";
-            return PAPI_OK;
+            return ".peak_sustained_region.per_second";
         case NVPW_SUBMETRIC_PER_CYCLE_ACTIVE:
-            *strSubMetric = ".per_cycle_active";
-            return PAPI_OK;
+            return ".per_cycle_active";
         case NVPW_SUBMETRIC_PER_CYCLE_ELAPSED:
-            *strSubMetric = ".per_cycle_elapsed";
-            return PAPI_OK;
+            return ".per_cycle_elapsed";
         case NVPW_SUBMETRIC_PER_CYCLE_IN_FRAME:
-            *strSubMetric = ".per_cycle_in_frame";
-            return PAPI_OK;
+            return ".per_cycle_in_frame";
         case NVPW_SUBMETRIC_PER_CYCLE_IN_REGION:
-            *strSubMetric = ".per_cycle_in_region";
-            return PAPI_OK;
+            return  ".per_cycle_in_region";
         case NVPW_SUBMETRIC_PER_SECOND:
-            *strSubMetric = ".per_second";
-            return PAPI_OK;
+            return ".per_second";
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_ACTIVE:
-            *strSubMetric = ".pct_of_peak_sustained_active";
-            return PAPI_OK;
+            return  ".pct_of_peak_sustained_active";
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_ELAPSED:
-            *strSubMetric = ".pct_of_peak_sustained_elapsed";
-            return PAPI_OK;
+            return  ".pct_of_peak_sustained_elapsed";
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_FRAME:
-            *strSubMetric = ".pct_of_peak_sustained_frame";
-            return PAPI_OK;
+            return  ".pct_of_peak_sustained_frame";
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_REGION:
-            *strSubMetric = ".pct_of_peak_sustained_region";
-            return PAPI_OK;
+            return  ".pct_of_peak_sustained_region";
         case NVPW_SUBMETRIC_MAX_RATE:
-            *strSubMetric = ".max_rate";
-            return PAPI_OK;
+            return ".max_rate";
         case NVPW_SUBMETRIC_PCT:
-            *strSubMetric = ".pct";
-             return PAPI_OK;
+            return ".pct";
         case NVPW_SUBMETRIC_RATIO:
-            *strSubMetric = ".ratio";
-            return PAPI_OK;
+            return ".ratio";
         case NVPW_SUBMETRIC_NONE:
         default:
-           *strSubMetric = "";
-           return PAPI_OK;
+           return "";
     }
 }
 
@@ -2843,7 +2866,6 @@ static int get_number_of_passes_for_eventsets(const char *pChipName, const char 
     return PAPI_OK;
 
 }
-
 
 /** @class get_number_of_passes_for_info
  *  @brief For a metric, get the number of passes. Function is specifically
