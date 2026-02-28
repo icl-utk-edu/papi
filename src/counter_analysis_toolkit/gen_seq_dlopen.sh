@@ -1,8 +1,13 @@
 #!/bin/bash
 
-DRV_F=icache_seq.c
-KRN_F=icache_seq_kernel.c
-HEAD_F=icache_seq.h
+if [ $# -lt 1 ]
+then
+    echo -e "gen_seq_dlopen.sh: Must supply output dir for generated source!"
+    exit
+fi
+DRV_F=$1/icache_seq.c
+KRN_F=$1/icache_seq_kernel.c
+HEAD_F=$1/icache_seq.h
 
 TRUE_IF=1
 FALSE_IF=0
