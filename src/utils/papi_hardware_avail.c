@@ -197,7 +197,7 @@ main( int argc, char **argv )
 #define MAX_NUMA_NODES  (16)
 #define MAX_CPU_THREADS (512)
                 unsigned int j;
-                unsigned int affinity[MAX_CPU_THREADS];
+                int affinity[MAX_CPU_THREADS];
                 unsigned int numa_threads_count[MAX_NUMA_NODES] = { 0 };
                 unsigned int numa_threads[MAX_NUMA_NODES][MAX_CPU_THREADS];
                 for (j = 0; j < threads; ++j) {
