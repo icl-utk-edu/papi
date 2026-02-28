@@ -50,7 +50,12 @@ endif
 endif
 
 
-sde_tests: $(TESTS)
+sde_tests: create_dir $(TESTS)
+
+create_dir: lib
+
+lib:
+	mkdir -p $@
 
 ################################################################################
 ## Minimal test
@@ -173,4 +178,4 @@ sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) lib/libXandria.so 
 ## Cleaning
 
 clean:
-	rm -f *.o *.mod lib/*.so lib/*.a $(TESTS)
+	rm -rf *.o *.mod lib $(TESTS)
