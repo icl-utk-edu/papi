@@ -1,280 +1,327 @@
 /**
- * @file    pthreads.cu
- * @author  Anustuv Pal
- *          anustuv@icl.utk.edu
- */
+* @file pthreads.cu
+* @brief For each enabled NVIDIA device detected on the machine a matching thread will be created
+*        using pthread_create. For each thread, cuCtxCreate will be called which will
+*        create a Cuda context.
+*
+*        Note: The cuda component supports being partially disabled, meaning that certain devices
+*        will not be "enabled" to profile on. If PAPI_CUDA_API is not set, then devices with
+*        CC's >= 7.0 will be used and if PAPI_CUDA_API is set to LEGACY then devices with
+*        CC's <= 7.0 will be used.
+*
+*        For each enabled device, their matching thread will have a workflow of:
+*            1. Creating an EventSet
+*            2. Adding events to the EventSet
+*            3. Starting the EventSet
+*            4. Stopping the EventSet
+*/
 
+// Standard library headers
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+// Cuda Toolkit headers
+#include <cuda.h>
+
+// Internal headers
+#include "cuda_tests_helper.h"
 #include "gpu_work.h"
-
-#ifdef PAPI
-#include <papi.h>
+#include "papi.h"
 #include "papi_test.h"
-
-#define PAPI_CALL(apiFuncCall)                                          \
-do {                                                                           \
-    int _status = apiFuncCall;                                         \
-    if (_status != PAPI_OK) {                                              \
-        fprintf(stderr, "error: function %s failed.", #apiFuncCall);  \
-        test_fail(__FILE__, __LINE__, "", _status);  \
-    }                                                                          \
-} while (0)
-#endif
-
-#define PRINT(quiet, format, args...) {if (!quiet) {fprintf(stderr, format, ## args);}}
-int quiet;
-
-#define RUNTIME_API_CALL(apiFuncCall)                                          \
-do {                                                                           \
-    cudaError_t _status = apiFuncCall;                                         \
-    if (_status != cudaSuccess) {                                              \
-        fprintf(stderr, "%s:%d: error: function %s failed with error %s.\n",   \
-                __FILE__, __LINE__, #apiFuncCall, cudaGetErrorString(_status));\
-        exit(EXIT_FAILURE);                                                    \
-    }                                                                          \
-} while (0)
-
-#define DRIVER_API_CALL(apiFuncCall)                                           \
-do {                                                                           \
-    CUresult _status = apiFuncCall;                                            \
-    if (_status != CUDA_SUCCESS) {                                             \
-        fprintf(stderr, "%s:%d: error: function %s failed with error %d.\n",   \
-                __FILE__, __LINE__, #apiFuncCall, _status);                    \
-        exit(EXIT_FAILURE);                                                    \
-    }                                                                          \
-} while (0)
 
 #define MAX_THREADS (32)
 
-int numGPUs;
-int g_event_count;
-char **g_evt_names;
+int global_suppress_output;
+int global_total_event_count;
+char **global_cuda_native_event_names = NULL;
+int global_num_multipass_events;
 
-static volatile int global_thread_count = 0;
-pthread_mutex_t global_mutex;
-pthread_t tidarr[MAX_THREADS];
-CUcontext cuCtx[MAX_THREADS];
-pthread_mutex_t lock;
-
-// Globals for multiple pass events
-int numMultipassEvents = 0;
-
-/** @class add_events_from_command_line
-  * @brief Try and add each event provided on the command line by the user.
-  *
-  * @param EventSet
-  *   A PAPI eventset.
-  * @param totalEventCount
-  *   Number of events from the command line.
-  * @param **eventNamesFromCommandLine
-  *   Events provided on the command line.
-  * @param gpu_id
-  *   NVIDIA device index.
-  * @param *numEventsSuccessfullyAdded
-  *   Total number of successfully added events.
-  * @param **eventsSuccessfullyAdded
-  *   Events that we are able to add to the EventSet.
-  * @param *numMultipassEvents
-  *   Counter to see if a multiple pass event was provided on the command line.
-*/
-static void add_events_from_command_line(int EventSet, int totalEventCount, char **eventNamesFromCommandLine, int gpu_id, int *numEventsSuccessfullyAdded, char **eventsSuccessfullyAdded, int *numMultipassEvents)
+static void print_help_message(void)
 {
-    int i;
-    for (i = 0; i < totalEventCount; i++) {
-        char tmpEventName[PAPI_MAX_STR_LEN];
-        int strLen = snprintf(tmpEventName, PAPI_MAX_STR_LEN, "%s:device=%d", eventNamesFromCommandLine[i], gpu_id);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-
-        int papi_errno = PAPI_add_named_event(EventSet, tmpEventName);
-        if (papi_errno != PAPI_OK) {
-            if (papi_errno != PAPI_EMULPASS) {
-                fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", tmpEventName, papi_errno);
-                test_skip(__FILE__, __LINE__, "", 0);
-            }
-
-            // Handle multiple pass events
-            (*numMultipassEvents)++;
-            continue;
-        }
-
-        // Handle successfully added events
-        strLen = snprintf(eventsSuccessfullyAdded[(*numEventsSuccessfullyAdded)], PAPI_MAX_STR_LEN, "%s", tmpEventName);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            fprintf(stderr, "Failed to fully write successfully added event.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-        (*numEventsSuccessfullyAdded)++;
-    }
-
-    return;
+    printf("./pthreads --cuda-native-event-names [list of cuda native event names separated by a comma].\n"
+           "Notes:\n"
+           "1. Native event names must not have the device qualifier appended.\n");
 }
 
-void *thread_gpu(void * idx)
+static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_event_names, int *total_event_count)
 {
-    int tid = *((int*) idx);
-    unsigned long gettid = (unsigned long) pthread_self();
-
-#ifdef PAPI
-    int gpuid = tid % numGPUs;
     int i;
+    for (i = 1; i < argc; ++i)
+    {   
+        char *arg = argv[i];
+        if (strcmp(arg, "--help") == 0)
+        {   
+            print_help_message();
+            exit(EXIT_SUCCESS);
+        }   
+        else if (strcmp(arg, "--cuda-native-event-names") == 0)
+        {   
+            if (!argv[i + 1]) 
+            {   
+                printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
+                exit(EXIT_FAILURE);
+            }   
 
-    int EventSet = PAPI_NULL;
-    long long values[MAX_THREADS];
-    PAPI_CALL(PAPI_create_eventset(&EventSet));
+            char **cmd_line_native_event_names = NULL;
+            const char *cuda_native_event_name = strtok(argv[i+1], ",");
+            while (cuda_native_event_name != NULL)
+            {   
+                if (strstr(cuda_native_event_name, ":device")) {
+                    fprintf(stderr, "Cuda native event name must not have a device qualifier appended for this test, i.e. no :device=#.\n");
+                    print_help_message();
+                    exit(EXIT_FAILURE);
+                }   
 
-    DRIVER_API_CALL(cuCtxSetCurrent(cuCtx[tid]));
-    PRINT(quiet, "This is idx %d thread %lu - using GPU %d context %p!\n",
-            tid, gettid, gpuid, cuCtx[tid]);
+                cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
+                check_memory_allocation_call(cmd_line_native_event_names);
 
-    int numEventsSuccessfullyAdded = 0;
-    char **eventsSuccessfullyAdded;
-    eventsSuccessfullyAdded = (char **) malloc(g_event_count * sizeof(char *));
-    if (eventsSuccessfullyAdded == NULL) {
-        fprintf(stderr, "Failed to allocate memory for successfully added events.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
-    }
-    for (i = 0; i < g_event_count; i++) {
-        eventsSuccessfullyAdded[i] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
-        if (eventsSuccessfullyAdded[i] == NULL) {
-            fprintf(stderr, "Failed to allocate memory for command line argument.\n");
-            test_skip(__FILE__, __LINE__, "", 0);
-        }
-    }
+                cmd_line_native_event_names[(*total_event_count)] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+                check_memory_allocation_call(cmd_line_native_event_names[(*total_event_count)]);
 
-    pthread_mutex_lock(&global_mutex);
+                int strLen = snprintf(cmd_line_native_event_names[(*total_event_count)], PAPI_2MAX_STR_LEN, "%s", cuda_native_event_name);
+                if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    fprintf(stderr, "Failed to fully write cuda native event name.\n");
+                    exit(EXIT_FAILURE);
+                }   
 
-    add_events_from_command_line(EventSet, g_event_count, g_evt_names, gpuid, &numEventsSuccessfullyAdded, eventsSuccessfullyAdded, &numMultipassEvents);
+                (*total_event_count)++;
+                cuda_native_event_name = strtok(NULL, ",");
+            }   
+            i++;
+            *cuda_native_event_names = cmd_line_native_event_names;
+        }   
+        else
+        {   
+            print_help_message();
+            exit(EXIT_FAILURE);
+        }   
+    }   
+}
 
-    // Only multiple pass events were provided on the command line
-    if (numEventsSuccessfullyAdded == 0) {
-        fprintf(stderr, "Events provided on the command line could not be added to an EventSet as they require multiple passes.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
-    }
-
-    ++global_thread_count;
-    pthread_mutex_unlock(&global_mutex);
-
-    while(global_thread_count < numGPUs);
-
-    PAPI_CALL(PAPI_start(EventSet));
+void *thread_gpu(void *thread_and_dev_idx)
+{
+    int curr_thread_and_dev_idx = *(int *) thread_and_dev_idx;
+    // Create a Cuda context for the current thread
+    CUcontext ctx;
+    int flags = 0;
+    CUdevice device = curr_thread_and_dev_idx;
+#if defined(CUDA_TOOLKIT_GE_13)
+    check_cuda_driver_api_call( cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device) );
+#else
+    check_cuda_driver_api_call( cuCtxCreate(&ctx, flags, device) );
 #endif
 
-    VectorAddSubtract(50000*(tid+1), quiet);  // gpu work
+    int EventSet = PAPI_NULL;
+    check_papi_api_call( PAPI_create_eventset(&EventSet) );
 
-#ifdef PAPI
-    PAPI_CALL(PAPI_stop(EventSet, values));
+    int num_events_successfully_added = 0;
+    char **events_successfully_added = (char **) malloc(global_total_event_count * sizeof(char *));
+    check_memory_allocation_call(events_successfully_added);
 
-    PRINT(quiet, "User measured values in thread id %d.\n", tid);
-    for (i = 0; i < numEventsSuccessfullyAdded; i++) {
-        PRINT(quiet, "%s\t\t%lld\n", eventsSuccessfullyAdded[i], values[i]);
+    int event_idx;
+    for (event_idx = 0; event_idx < global_total_event_count; event_idx++) {
+        char tmp_event_name[PAPI_MAX_STR_LEN];
+        int strLen = snprintf(tmp_event_name, PAPI_MAX_STR_LEN, "%s:device=%d", global_cuda_native_event_names[event_idx], curr_thread_and_dev_idx);
+        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+            fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
+            exit(EXIT_FAILURE);
+        }   
+
+        events_successfully_added[event_idx] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
+        check_memory_allocation_call(events_successfully_added[event_idx]);
+
+        add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &global_num_multipass_events);
+    }
+
+    // Only multiple pass events were provided on the command line
+    if (num_events_successfully_added == 0) {
+        fprintf(stderr, "Events provided on the command line could not be added to an EventSet as they require multiple passes.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    check_papi_api_call( PAPI_start(EventSet) );
+
+    // Work for the device
+    VectorAddSubtract(50000 * (curr_thread_and_dev_idx + 1), global_suppress_output);
+
+    long long cuda_counter_values[MAX_THREADS];
+    check_papi_api_call( PAPI_stop(EventSet, cuda_counter_values) );
+
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
+        PRINT(global_suppress_output, "Event %s on thread and device id %d produced the value:\t\t%lld\n", events_successfully_added[event_idx], curr_thread_and_dev_idx, cuda_counter_values[event_idx]);
     }
 
     // Free allocated memory
-    for (i = 0; i < g_event_count; i++) {
-        free(eventsSuccessfullyAdded[i]);
+    for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
+        free(events_successfully_added[event_idx]);
     }
-    free(eventsSuccessfullyAdded);
+    free(events_successfully_added);
 
-    PAPI_CALL(PAPI_cleanup_eventset(EventSet));
-    PAPI_CALL(PAPI_destroy_eventset(&EventSet));
-#endif
+    check_papi_api_call( PAPI_cleanup_eventset(EventSet) );
+
+    check_papi_api_call( PAPI_destroy_eventset(&EventSet) );
+
+    check_cuda_driver_api_call( cuCtxDestroy(ctx) );
+
     return NULL;
 }
 
 int main(int argc, char **argv)
 {
-    quiet = 0;
-#ifdef PAPI
-    char *test_quiet = getenv("PAPI_CUDA_TEST_QUIET");
-    if (test_quiet)
-        quiet = (int) strtol(test_quiet, (char**) NULL, 10);
+    // Determine the number of Cuda capable devices
+    int num_devices = 0;
+    check_cuda_runtime_api_call( cudaGetDeviceCount(&num_devices) );
 
-    g_event_count = argc - 1;
-    /* if no events passed at command line, just report test skipped. */
-    if (g_event_count == 0) {
-        fprintf(stderr, "No eventnames specified at command line.\n");
-        test_skip(__FILE__, __LINE__, "", 0);
+    // No devices detected on the machine, exit
+    if (num_devices < 1) {
+        fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
+        exit(EXIT_FAILURE);
+    }   
+
+    global_suppress_output = 0;
+    char *global_user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
+    if (global_user_defined_suppress_output) {
+        global_suppress_output = (int) strtol(global_user_defined_suppress_output, (char**) NULL, 10);
     }
-    g_evt_names = argv + 1;
-#endif
-    int rc, i;
-    int tid[MAX_THREADS];
+    PRINT(global_suppress_output, "Running the cuda component test pthreads.cu\n"); 
 
-    RUNTIME_API_CALL(cudaGetDeviceCount(&numGPUs));
-    PRINT(quiet, "No. of GPUs = %d\n", numGPUs);
-    if (numGPUs < 1) {
-        fprintf(stderr, "No GPUs found on system.\n");
-#ifdef PAPI
-        test_skip(__FILE__, __LINE__, "", 0);
-#endif
-        return 0;
+    // If command line arguments are provided then get their values.
+    global_total_event_count = 0;
+    if (argc > 1) {
+        parse_and_assign_args(argc, argv, &global_cuda_native_event_names, &global_total_event_count);
     }
-    if (numGPUs > MAX_THREADS)
-        numGPUs = MAX_THREADS;
-    PRINT(quiet, "No. of threads to launch = %d\n", numGPUs);
 
-#ifdef PAPI
-    pthread_mutex_init(&global_mutex, NULL);
-    int papi_errno = PAPI_library_init( PAPI_VER_CURRENT );
+    // Initialize the PAPI library
+    int papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
     if( papi_errno != PAPI_VER_CURRENT ) {
-        test_fail(__FILE__, __LINE__, "PAPI_library_init failed.", 0);
+        test_fail(__FILE__, __LINE__, "PAPI_library_init()", papi_errno);
     }
-    // Point PAPI to function that gets the thread id
-    PAPI_CALL(PAPI_thread_init((unsigned long (*)(void)) pthread_self));
-#endif
-    // Launch the threads
-    for(i = 0; i < numGPUs; i++)
+    PRINT(global_suppress_output, "PAPI version being used for this test: %d.%d.%d\n",
+          PAPI_VERSION_MAJOR(PAPI_VERSION),
+          PAPI_VERSION_MINOR(PAPI_VERSION),
+          PAPI_VERSION_REVISION(PAPI_VERSION));
+
+    // Initialize thread support in PAPI
+    check_papi_api_call( PAPI_thread_init((unsigned long (*)(void)) pthread_self) );
+
+    // Verify that the cuda component is compiled in
+    int cuda_cmp_idx = PAPI_get_component_index("cuda");
+    if (cuda_cmp_idx < 0) {
+        test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
+    }
+    PRINT(global_suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx); 
+
+    // Initialize the Cuda component
+    int cuda_eventcode = 0 | PAPI_NATIVE_MASK;
+    check_papi_api_call( PAPI_enum_cmp_event(&cuda_eventcode, PAPI_ENUM_FIRST, cuda_cmp_idx) );
+
+    // If we have not gotten an event via the command line, use the event obtained from PAPI_enum_cmp_event
+    if (global_total_event_count == 0) {
+        int num_spaces_to_allocate = 1;
+        global_cuda_native_event_names = (char **) malloc(num_spaces_to_allocate * sizeof(char *));
+        check_memory_allocation_call( global_cuda_native_event_names );
+
+        global_cuda_native_event_names[global_total_event_count] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+        check_memory_allocation_call( global_cuda_native_event_names[global_total_event_count] );
+
+        check_papi_api_call( PAPI_event_code_to_name(cuda_eventcode, global_cuda_native_event_names[global_total_event_count++]) );
+    }
+
+    const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
+    if (cmpInfo == NULL) {
+        fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
+        exit(EXIT_FAILURE);
+    }   
+
+    // Check to see if the Cuda component is partially disabled
+    if (cmpInfo->partially_disabled) {
+        const char *cc_support = (getenv("PAPI_CUDA_API") != NULL) ? "<=7.0" : ">=7.0";
+        PRINT(global_suppress_output, "\033[33mThe cuda component is partially disabled. Only support for CC's %s are enabled.\033[0m\n", cc_support);
+    }   
+
+    // Cap the number of devices to the max allowed number of threads
+    if (num_devices > MAX_THREADS) {
+        num_devices = MAX_THREADS;
+    }
+
+    // Allocate memory for all the gpus found on the machine to keep track of threads and thread args
+    pthread_t *tinfo = (pthread_t *) calloc(num_devices, sizeof(pthread_t));
+    check_memory_allocation_call(tinfo);
+
+    int *thread_args = (int *) calloc(num_devices, sizeof(int));
+    check_memory_allocation_call(thread_args);
+
+    PRINT(global_suppress_output, "Total number of threads to be launched: %d\n", num_devices);
+    // For the number of devices detected on the machine, launch a thread
+    int thread_and_dev_idx, thread_errno, global_num_multipass_events = 0;
+    for(thread_and_dev_idx = 0; thread_and_dev_idx < num_devices; thread_and_dev_idx++)
     {
-        tid[i] = i;
-
-        int flags = 0;
-        CUdevice device = i % numGPUs;
-#if defined(CUDA_TOOLKIT_GE_13)
-        DRIVER_API_CALL( cuCtxCreate(&(cuCtx[i]), (CUctxCreateParams*)0, flags, device) );
-#else
-        DRIVER_API_CALL( cuCtxCreate(&(cuCtx[i]), flags, device) );
-#endif
-        DRIVER_API_CALL(cuCtxPopCurrent(&(cuCtx[i])));
-
-        rc = pthread_create(&tidarr[i], NULL, thread_gpu, &(tid[i]));
-        if(rc)
-        {
-            fprintf(stderr, "\n ERROR: return code from pthread_create is %d \n", rc);
-            exit(1);
+        const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
+        if (cmpInfo == NULL) {
+            fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
+            exit(EXIT_FAILURE);
         }
 
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
+                continue;
+            }   
+        } 
 
-        PRINT(quiet, "\n Main thread %lu. Created new thread (%lu) in iteration %d ...\n",
-                (unsigned long)pthread_self(), (unsigned long)tidarr[i], i);
+        // Store thread information to later use pthread_join
+        tinfo[thread_and_dev_idx] = thread_and_dev_idx;
+        // Store thread args so we do not increment the looping variable while in thread_gpu
+        thread_args[thread_and_dev_idx] = thread_and_dev_idx;
+
+        thread_errno = pthread_create(&tinfo[thread_and_dev_idx], NULL, thread_gpu, &thread_args[thread_and_dev_idx]);
+        if(thread_errno != 0) {
+            fprintf(stderr, "Call to pthread_create failed for thread %d with error code %d.\n", thread_and_dev_idx, thread_errno);
+            exit(EXIT_FAILURE);
+        }
     }
 
-    // Join all threads when complete
-    for (i = 0; i < numGPUs; i++) {
-        pthread_join(tidarr[i], NULL);
-        PRINT(quiet, "IDX: %d: TID: %lu: Done! Joined main thread.\n", i, (unsigned long)tidarr[i]);
-    }
+    // Now join with each thread
+    for (thread_and_dev_idx = 0; thread_and_dev_idx < num_devices; thread_and_dev_idx++) {
+        const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
+        if (cmpInfo == NULL) {
+            fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
+            exit(EXIT_FAILURE);
+        }   
 
-    // Destroy all CUDA contexts for all threads/GPUs
-    for (i = 0; i < numGPUs; i++) {
-        DRIVER_API_CALL(cuCtxDestroy(cuCtx[i]));
-    }
-#ifdef PAPI
-    PAPI_shutdown();
+        if (cmpInfo->partially_disabled) {
+            // Device is not enabled continue
+            if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
+                continue;
+            }   
+        } 
 
-    PRINT(quiet, "Main thread exit!\n");
+        thread_errno = pthread_join(tinfo[thread_and_dev_idx], NULL);
+        if (thread_errno != 0) {
+            fprintf(stderr, "Call to pthread_join failed for thread %d with error code %d.\n", thread_and_dev_idx, thread_errno);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     // Output a note that a multiple pass event was provided on the command line
-    if (numMultipassEvents > 0) {
-        PRINT(quiet, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
+    if (global_num_multipass_events > 0) {
+        PRINT(global_suppress_output, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
     }
 
+    // Free allocated memory
+    int event_idx;
+    for (event_idx = 0; event_idx < global_total_event_count; event_idx++) {
+        free(global_cuda_native_event_names[event_idx]);
+    }
+    free(global_cuda_native_event_names);
+    free(tinfo);
+    free(thread_args);
+
+    PAPI_shutdown();
+
     test_pass(__FILE__);
-#endif
+
     return 0;
 }
