@@ -198,7 +198,8 @@ int cuptie_init(void)
     // Initialize cupti profiler api such that we can get chip names
     papi_errno = initialize_cupti_profiler_api();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Failure to initialize the CUPTI Profiler API.\n");
+        cuptic_err_set_last("Failed to initialize the CUPTI Profiler API. A possible reason is a mismatched Cuda Toolkit and NVIDIA architecture."
+                            " Try setting PAPI_CUDA_ROOT to an earlier Cuda Toolkit version.");
         return PAPI_EMISC;
     }
 
