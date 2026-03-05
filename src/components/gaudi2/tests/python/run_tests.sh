@@ -36,6 +36,7 @@ TESTS=(
     "test_component_and_events.py"
     "test_start_stop_read.py"
     "test_multidevice.py"
+    "test_mme_events.py"
 )
 
 # Run tests
