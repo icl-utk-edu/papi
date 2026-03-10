@@ -1248,6 +1248,33 @@ int access_amdsmi_gpu_metrics(int mode, void *arg) {
   case 10:
     event->value = metrics.pcie_nak_rcvd_count_acc;
     break;
+  case 11:
+    event->value = metrics.accumulation_counter;
+    break;
+  case 12:
+    event->value = metrics.prochot_residency_acc;
+    break;
+  case 13:
+    event->value = metrics.ppt_residency_acc;
+    break;
+  case 14:
+    event->value = metrics.socket_thm_residency_acc;
+    break;
+  case 15:
+    event->value = metrics.vr_thm_residency_acc;
+    break;
+  case 16:
+    event->value = metrics.hbm_thm_residency_acc;
+    break;
+  case 17:
+    event->value = metrics.gfx_activity_acc;
+    break;
+  case 18:
+    event->value = metrics.mem_activity_acc;
+    break;
+  case 19:
+    event->value = metrics.num_partition;
+    break;
   default:
     return PAPI_ENOSUPP;
   }

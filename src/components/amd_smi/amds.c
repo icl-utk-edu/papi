@@ -3032,18 +3032,15 @@ static int init_event_table(void) {
         /* Register throttle status */
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d throttle status", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d current throttle status bitmask", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         /* Register independent throttle status */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "gpu_indep_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d independent throttle status", d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_indep_throttle_status:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC independent throttle status bitmask", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3051,8 +3048,7 @@ static int init_event_table(void) {
         /* Register PCIe link width */
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe link width (lanes)", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe link width (lanes)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3060,8 +3056,7 @@ static int init_event_table(void) {
         /* Register PCIe link speed */
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe link speed (0.1 GT/s)", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe link speed (0.1 GT/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3069,61 +3064,113 @@ static int init_event_table(void) {
         /* Register PCIe bandwidth and replay counters */
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe accumulated bandwidth (GB/s)", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe accumulated bandwidth (GB/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
         CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_inst:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe instantaneous bandwidth (GB/s)", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe instantaneous bandwidth (GB/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_l0_to_recovery_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe L0->recovery count", d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_l0_to_recovery_count_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe L0 to recovery transition accumulated count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_count_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay accumulated count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_rollover_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe replay rollover count", d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_rollover_count_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay rollover accumulated count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_nak_sent_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent count",
-                 d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_sent_count_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent accumulated count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_nak_rcvd_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe NAK received count", d);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_rcvd_count_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK received accumulated count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "accumulation_counter:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulation cycle counter", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 11, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "prochot_residency_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated PROCHOT thermal throttler residency", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 12, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ppt_residency_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated package power tracking throttler residency", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 13, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "socket_thm_residency_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated socket thermal throttler residency", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 14, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vr_thm_residency_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated voltage regulator thermal throttler residency", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 15, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "hbm_thm_residency_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated high bandwidth memory thermal throttler residency", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 16, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfx_activity_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d graphics activity accumulated counter (percent)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 17, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_activity_acc:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d memory activity accumulated counter (percent)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 18, 0, PAPI_MODE_READ,
+                      access_amdsmi_gpu_metrics) != PAPI_OK)
+          return PAPI_ENOMEM;
+
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "num_partition:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d number of current partitions", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 19, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
       }
