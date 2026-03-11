@@ -346,7 +346,57 @@ getDeviceFieldValue(nvmlDevice_t dev, int value_count, nvmlFieldValue_t* field_v
         SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
         return (unsigned long long) - 1;
     }
-    return field_value->value.ullVal;
+
+    if (NVML_SUCCESS != field_value->nvmlReturn) {
+        SUBDBG("Failed to obtain value for fieldId %d: %s\n",
+               field_value->fieldId, (*nvmlErrorStringPtr) (field_value->nvmlReturn));
+        return (unsigned long long) - 1;
+    }
+
+    unsigned long long counter_value = 0;
+    switch(field_value->valueType) {
+        case NVML_VALUE_TYPE_DOUBLE:
+            if (field_value->value.dVal >= 0.0) {
+                counter_value = (unsigned long long) field_value->value.dVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_DOUBLE clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_INT:
+            counter_value = (unsigned long long) field_value->value.uiVal;
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_LONG:
+            counter_value = (unsigned long long) field_value->value.ulVal;
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_LONG_LONG:
+            counter_value = field_value->value.ullVal;
+            break;
+        case NVML_VALUE_TYPE_SIGNED_LONG_LONG:
+            if (field_value->value.sllVal >= 0) {
+                counter_value = (unsigned long long) field_value->value.sllVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_SIGNED_LONG_LONG clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_SIGNED_INT:
+            if (field_value->value.siVal >= 0) {
+                counter_value = (unsigned long long) field_value->value.siVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_SIGNED_INT clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_SHORT:
+            counter_value = (unsigned long long) field_value->value.usVal;
+            break;
+        default:
+            SUBDBG("Unsupported valueType %d for fieldId %d\n", field_value->valueType, field_value->fieldId);
+            counter_value = (unsigned long long) - 1;
+    }
+
+    return counter_value;
 }
 
 unsigned long long
