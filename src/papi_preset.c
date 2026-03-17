@@ -989,9 +989,7 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 	int get_events = 0; /* only process derived events after CPU type they apply to is identified      */
 	int found_events = 0; /* flag to track if event definitions (PRESETS) are found since last CPU declaration */
     int breakAfter = 0; /* flag to break parsing events file if component 'arch' has already been parsed */
-#ifdef PAPI_DATADIR
-		char path[PATH_MAX];
-#endif
+	char path[PATH_MAX];
 
 
 	if (preset_flag) {
@@ -1007,10 +1005,11 @@ papi_load_derived_events (char *pmu_str, int pmu_type, int cidx, int preset_flag
 		else {
 #ifdef PAPI_DATADIR
 			sprintf( path, "%s/%s", PAPI_DATADIR, PAPI_EVENT_FILE );
-			event_file_path = path;
 #else
-			event_file_path = PAPI_EVENT_FILE;
+			sprintf( path, "%s", PAPI_EVENT_FILE );
 #endif
+
+			event_file_path = path;
 		}
 		event_type_bits = PAPI_PRESET_MASK;
 		results = &_papi_hwi_presets[0];
@@ -1350,9 +1349,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 	int found_events = 0; /* flag to track if event definitions (PRESETS) are found since last CPU declaration */
     int breakAfter = 0; /* flag to break parsing events file if component 'arch' has already been parsed */
     int status = 0;
-#ifdef PAPI_DATADIR
-		char path[PATH_MAX];
-#endif
+	char path[PATH_MAX];
 
 
 	/* try the environment variable first */
@@ -1367,10 +1364,10 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
 	else {
 #ifdef PAPI_DATADIR
 		sprintf( path, "%s/%s", PAPI_DATADIR, PAPI_EVENT_FILE );
-		event_file_path = path;
 #else
-		event_file_path = PAPI_EVENT_FILE;
+		sprintf( path, "%s", PAPI_EVENT_FILE );
 #endif
+		event_file_path = path;
 	}
 	event_type_bits = PAPI_PRESET_MASK;
 	results = &_papi_hwi_comp_presets[cidx][0];
