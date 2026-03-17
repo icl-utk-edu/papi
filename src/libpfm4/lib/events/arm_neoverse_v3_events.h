@@ -20,10 +20,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * ARM Neoverse V3
+ * ARM Neoverse V3/V3AE
  * References:
  *  - Arm Neoverse V3 Core TRM: https://developer.arm.com/documentation/107734/
  *  - https://github.com/ARM-software/data/blob/master/pmu/neoverse-v3.json
+ *  - https://github.com/ARM-software/data/blob/master/pmu/neoverse-v3ae.json
  */
 static const arm_entry_t arm_neoverse_v3_pe[]={
 	{.name = "SW_INCR",

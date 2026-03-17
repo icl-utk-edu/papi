@@ -19,10 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * ARM Cortex X4
+ * ARM Cortex X4/X925
  * References:
  *  - Arm Cortex X4 TRM: https://developer.arm.com/documentation/102484/0003/Performance-Monitors-Extension-support-?lang=en
  *  - https://github.com/ARM-software/data/blob/master/pmu/cortex-x4.json
+ *  - https://github.com/ARM-software/data/blob/master/pmu/cortex-x925.json
  */
 static const arm_entry_t arm_cortex_x4_pe[]={
 	{.name = "SW_INCR",
