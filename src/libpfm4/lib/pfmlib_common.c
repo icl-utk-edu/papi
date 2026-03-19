@@ -1888,7 +1888,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	/*
 	 * support only one event at a time.
 	 */
-	p = strpbrk(event, PFMLIB_EVENT_DELIM);
+	p = (char *)strpbrk(event, PFMLIB_EVENT_DELIM);
 	if (p)
 		return PFM_ERR_INVAL;
 	/*
