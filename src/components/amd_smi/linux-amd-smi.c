@@ -57,7 +57,7 @@ static int _amd_smi_init_component(int cidx) {
     _amd_smi_vector.cmp_info.num_mpx_cntrs = -1;
     _amd_smi_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-    CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+    CHECK_SNPRINTF(doNotAllowTruncation, _amd_smi_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
              "Not initialized. Access an AMD SMI event to initialize.");
     _amd_smi_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
 
@@ -92,7 +92,7 @@ static int _amd_smi_init_private(void) {
         amds_err_get_last(&error_str);
         if (!error_str || !error_str[0])
             error_str = "AMD SMI component initialization failed";
-        CHECK_SNPRINTF(_amd_smi_vector.cmp_info.disabled_reason,
+        CHECK_SNPRINTF(doNotAllowTruncation, _amd_smi_vector.cmp_info.disabled_reason,
                  sizeof _amd_smi_vector.cmp_info.disabled_reason, "%s",
                  error_str);
         goto fn_fail;

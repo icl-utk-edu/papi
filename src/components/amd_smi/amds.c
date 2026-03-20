@@ -127,7 +127,7 @@ amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_ha
   
 #define REQ(sym) do { \
   if (!(sym)) { \
-    CHECK_SNPRINTF(error_string, sizeof(error_string), "Missing required symbol: %s", #sym); \
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string), "Missing required symbol: %s", #sym); \
     return PAPI_ENOSUPP; \
   } \
 } while (0)
@@ -412,14 +412,14 @@ static int load_amdsmi_sym(void) {
   const char *root = getenv("PAPI_AMDSMI_ROOT");
   char so_path[PATH_MAX] = {0};
   if (!root) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "PAPI_AMDSMI_ROOT not set; cannot find libamd_smi.so");
     return PAPI_ENOSUPP;
   }
-  CHECK_SNPRINTF(so_path, sizeof(so_path), "%s/lib/libamd_smi.so", root);
+  CHECK_SNPRINTF(doNotAllowTruncation, so_path, sizeof(so_path), "%s/lib/libamd_smi.so", root);
   amds_dlp = dlopen(so_path, RTLD_NOW | RTLD_GLOBAL);
   if (!amds_dlp) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string), "dlopen(\"%s\"): %s", so_path,
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string), "dlopen(\"%s\"): %s", so_path,
              dlerror());
     return PAPI_ENOSUPP;
   }
@@ -720,7 +720,7 @@ int amds_init(void) {
   // AMDSMI_INIT_AMD_GPUS
   amdsmi_status_t status = amdsmi_init_p(AMDSMI_INIT_AMD_GPUS);
   if (status != AMDSMI_STATUS_SUCCESS) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "Call to amdsmi_init failed; most likely no AMD devices are present on this system.");
     return PAPI_ENOSUPP;
   }
@@ -736,7 +736,7 @@ int amds_init(void) {
   uint32_t socket_count = 0;
   status = amdsmi_get_socket_handles_p(&socket_count, NULL);
   if (status != AMDSMI_STATUS_SUCCESS || socket_count == 0) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "Error discovering sockets or no AMD socket found.");
     papi_errno = PAPI_ENOEVNT;
     goto fn_fail;
@@ -749,7 +749,7 @@ int amds_init(void) {
   }
   status = amdsmi_get_socket_handles_p(&socket_count, sockets);
   if (status != AMDSMI_STATUS_SUCCESS) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "Error getting socket handles.");
     papi_free(sockets);
     papi_errno = PAPI_ENOSUPP;
@@ -773,7 +773,7 @@ int amds_init(void) {
     total_cpu_count = 0;
 #endif
   if (total_gpu_count == 0 && total_cpu_count == 0) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "No AMD GPU or CPU devices found.");
     papi_errno = PAPI_ENOEVNT;
     papi_free(sockets);
@@ -783,7 +783,7 @@ int amds_init(void) {
       total_gpu_count + total_cpu_count, sizeof(*device_handles));
   if (!device_handles) {
     papi_errno = PAPI_ENOMEM;
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "Memory allocation error for device handles.");
     papi_free(sockets);
     goto fn_fail;
@@ -815,7 +815,7 @@ int amds_init(void) {
         total_cpu_count, sizeof(amdsmi_processor_handle));
     if (!cpu_handles) {
       papi_errno = PAPI_ENOMEM;
-      CHECK_SNPRINTF(error_string, sizeof(error_string),
+      CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
                "Memory allocation error for CPU handles.");
       goto fn_fail;
     }
@@ -844,7 +844,7 @@ int amds_init(void) {
     cores_per_socket = (uint32_t *)papi_calloc(cpu_count, sizeof(uint32_t));
     if (!cpu_core_handles || !cores_per_socket) {
       papi_errno = PAPI_ENOMEM;
-      CHECK_SNPRINTF(error_string, sizeof(error_string),
+      CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
                "Memory allocation error for CPU core handles.");
       if (cpu_core_handles)
         papi_free(cpu_core_handles);
@@ -866,7 +866,7 @@ int amds_init(void) {
           core_count, sizeof(amdsmi_processor_handle));
       if (!cpu_core_handles[s]) {
         papi_errno = PAPI_ENOMEM;
-        CHECK_SNPRINTF(error_string, sizeof(error_string),
+        CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
                  "Memory allocation error for CPU core handles on socket %u.",
                  s);
         uint32_t t;
@@ -893,7 +893,7 @@ int amds_init(void) {
   // Initialize the native event table for all discovered metrics
   papi_errno = init_event_table();
   if (papi_errno != PAPI_OK) {
-    CHECK_SNPRINTF(error_string, sizeof(error_string),
+    CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string),
              "Error while initializing the native event table.");
     goto fn_fail;
   }
@@ -1158,7 +1158,7 @@ static int init_event_table(void) {
   if (!ntv_table.events)
     return PAPI_ENOMEM;
   char name_buf[PAPI_MAX_STR_LEN];
-  char descr_buf[PAPI_MAX_STR_LEN];
+  char descr_buf[PAPI_HUGE_STR_LEN];
   // Define sensor arrays first
   amdsmi_temperature_type_t temp_sensors[] = {
       AMDSMI_TEMPERATURE_TYPE_EDGE,  AMDSMI_TEMPERATURE_TYPE_JUNCTION,
@@ -1207,9 +1207,9 @@ static int init_event_table(void) {
           }
     
           // Lx <type> size
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "L%u_%s_size_type_%u:device=%d", level, type_str, i, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d L%u %s size (bytes)", d, level,
                    (strcmp(type_str, "cache") == 0 ? "cache"
                     : (strcmp(type_str, "icache") == 0 ? "instruction cache"
@@ -1220,9 +1220,9 @@ static int init_event_table(void) {
     
           CHECK_EVENT_IDX(idx);
           // Lx <type> CU sharing
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "L%u_%s_cu_shared_type_%u:device=%d", level, type_str, i, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d L%u %s max CUs sharing", d, level, type_str);
           if (add_event(&idx, name_buf, descr_buf, d, 1, i, PAPI_MODE_READ,
                         access_amdsmi_cache_stat) != PAPI_OK)
@@ -1230,9 +1230,9 @@ static int init_event_table(void) {
     
           CHECK_EVENT_IDX(idx);
           // Lx <type> instances
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "L%u_%s_instances_type_%u:device=%d", level, type_str, i, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d L%u %s instances", d, level, type_str);
           if (add_event(&idx, name_buf, descr_buf, d, 2, i, PAPI_MODE_READ,
                         access_amdsmi_cache_stat) != PAPI_OK)
@@ -1246,31 +1246,31 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_vram_info_p(device_handles[d], &vram_info) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_bus_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_bus_width:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d VRAM bus width (bits)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_width) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_size_bytes:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_size_bytes:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d VRAM size (bytes)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_size) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_type:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VRAM type id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_type:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d VRAM type id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_type) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_vendor_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VRAM vendor id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_vendor_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d VRAM vendor id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_vendor) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -1282,33 +1282,33 @@ static int init_event_table(void) {
       if (amdsmi_get_pcie_info_p(device_handles[d], &pcie_info) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_max_width:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d maximum PCIe link width (lanes)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_max_speed:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d maximum PCIe link speed (GT/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_interface_version:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_interface_version:device=%d",
                  d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe interface version", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_slot_type:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_slot_type:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe slot type", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
@@ -1317,9 +1317,9 @@ static int init_event_table(void) {
 #if AMDSMI_LIB_VERSION_MAJOR >= 25
         if (amdsmi_lib_major >= 25) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "pcie_max_interface_version:device=%d", d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d maximum PCIe interface version", d);
           if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                         access_amdsmi_pcie_info) != PAPI_OK)
@@ -1328,75 +1328,75 @@ static int init_event_table(void) {
 #endif
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_width:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current PCIe link width (lanes)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_speed:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current PCIe link speed (MT/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_bandwidth:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d instantaneous PCIe bandwidth (Mb/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_replay_count:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_l0_to_recovery_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe L0->recovery count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_replay_rollover_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe replay rollover count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_sent_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_nak_sent_count:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe NAK sent count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 11, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_nak_received_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe NAK received count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 12, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_other_end_recovery_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe other-end recovery count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 13, 0, PAPI_MODE_READ,
                       access_amdsmi_pcie_info) != PAPI_OK)
@@ -1409,8 +1409,8 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_overdrive_level_p(device_handles[d], &od_val) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_overdrive_percent:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_overdrive_percent:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d GPU core clock overdrive (%%)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_overdrive_level) != PAPI_OK)
@@ -1422,9 +1422,9 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_mem_overdrive_level_p(device_handles[d], &od_val) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_mem_overdrive_percent:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_mem_overdrive_percent:device=%d",
                  d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d GPU memory clock overdrive (%%)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_mem_overdrive_level) != PAPI_OK)
@@ -1437,8 +1437,8 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_perf_level_p(device_handles[d], &perf) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "perf_level:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "perf_level:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current performance level", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_perf_level) != PAPI_OK)
@@ -1461,8 +1461,8 @@ static int init_event_table(void) {
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count && metrics)
           free(metrics);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pm_metrics_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pm_metrics_count:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d number of PM metrics available", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_pm_metrics_count) != PAPI_OK) {
@@ -1478,8 +1478,8 @@ static int init_event_table(void) {
           }
           char metric_name[PAPI_2MAX_STR_LEN];
           sanitize_name(metrics[i].name, metric_name, sizeof(metric_name));
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pm_%s:device=%d", metric_name, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PM metric %s", d,
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pm_%s:device=%d", metric_name, d);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d PM metric %s", d,
                    metrics[i].name);
           if (add_event(&idx, name_buf, descr_buf, d, i, 0, PAPI_MODE_READ,
                         access_amdsmi_pm_metric_value) != PAPI_OK) {
@@ -1497,8 +1497,8 @@ static int init_event_table(void) {
       if (amdsmi_is_gpu_power_management_enabled_p(device_handles[d], &enabled) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pm_enabled:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pm_enabled:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power management enabled", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_pm_enabled) != PAPI_OK)
@@ -1511,16 +1511,16 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_ras_feature_info_p(device_handles[d], &ras) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ecc_correction_mask:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ecc_correction_mask:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d ECC correction features mask", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_ras_ecc_schema) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ras_eeprom_version:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d RAS EEPROM version", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ras_eeprom_version:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d RAS EEPROM version", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_ras_eeprom_version) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -1528,8 +1528,8 @@ static int init_event_table(void) {
     }
     if (amdsmi_gpu_validate_ras_eeprom_p) {
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ras_eeprom_valid:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ras_eeprom_valid:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d RAS EEPROM validation status", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_ras_eeprom_validate) != PAPI_OK)
@@ -1554,9 +1554,9 @@ static int init_event_table(void) {
         if (amdsmi_get_gpu_ras_block_features_enabled_p(
                 device_handles[d], blocks[bi], &st) == AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ras_block_%s_state:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ras_block_%s_state:device=%d",
                    block_names[bi], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d RAS state for %s block", d, block_names[bi]);
           if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)blocks[bi], 0,
                         PAPI_MODE_READ, access_amdsmi_ras_block_state) != PAPI_OK)
@@ -1571,25 +1571,25 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_total_ecc_count_p(device_handles[d], &ec) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "ecc_total_correctable:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d total correctable ECC errors", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_ecc_total) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "ecc_total_uncorrectable:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d total uncorrectable ECC errors", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_ecc_total) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "ecc_total_deferred:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d total deferred ECC errors", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_ecc_total) != PAPI_OK)
@@ -1602,8 +1602,8 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_ecc_enabled_p(device_handles[d], &mask) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ecc_enabled_mask:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ecc_enabled_mask:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d ECC enabled block mask", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_ecc_enabled_mask) != PAPI_OK)
@@ -1634,9 +1634,9 @@ static int init_event_table(void) {
             CHECK_EVENT_IDX(idx);
             const char *suf =
                 (v == 0) ? "correctable" : (v == 1) ? "uncorrectable" : "deferred";
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                      "ecc_%s_%s:device=%d", eblock_names[bi], suf, d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Device %d %s %s ECC errors", d, eblock_names[bi], suf);
             if (add_event(&idx, name_buf, descr_buf, d, v,
                           (uint32_t)eblocks[bi], PAPI_MODE_READ,
@@ -1666,9 +1666,9 @@ static int init_event_table(void) {
         if (amdsmi_get_gpu_ecc_status_p(device_handles[d], eblocks[bi], &st) ==
             AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ecc_%s_status:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ecc_%s_status:device=%d",
                    eblock_names[bi], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d ECC status for %s block", d, eblock_names[bi]);
           if (add_event(&idx, name_buf, descr_buf, d, 0,
                         (uint32_t)eblocks[bi], PAPI_MODE_READ,
@@ -1711,12 +1711,12 @@ static int init_event_table(void) {
                   : "sensor";
           char sensor_buf[32];
           if (strcmp(sname, "sensor") == 0) {
-            CHECK_SNPRINTF(sensor_buf, sizeof(sensor_buf), "sensor%u", s);
+            CHECK_SNPRINTF(doNotAllowTruncation, sensor_buf, sizeof(sensor_buf), "sensor%u", s);
             sname = sensor_buf;
           }
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "voltage_%s_%s:device=%d", sname,
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "voltage_%s_%s:device=%d", sname,
                    metric_names[m], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s %s voltage (mV)",
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s %s voltage (mV)",
                    d, sname, metric_names[m]);
           if (add_event(&idx, name_buf, descr_buf, d, metrics[m], s, PAPI_MODE_READ,
                         access_amdsmi_voltage) != PAPI_OK)
@@ -1740,9 +1740,9 @@ static int init_event_table(void) {
             if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
               papi_free(regs);
             CHECK_EVENT_IDX(idx);
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "volt_curve_regions:device=%d",
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "volt_curve_regions:device=%d",
                      d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Device %d number of voltage curve regions", d);
             if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                           access_amdsmi_od_volt_regions_count) != PAPI_OK) {
@@ -1756,9 +1756,9 @@ static int init_event_table(void) {
                 papi_free(regs);
               CHECK_EVENT_IDX(idx + 4);
 
-              CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+              CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                        "volt_curve_freq_min_region=%u:device=%d", r, d);
-              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+              CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                        "Device %d voltage curve region %u frequency lower bound",
                        d, r);
               if (add_event(&idx, name_buf, descr_buf, d, 0, r, PAPI_MODE_READ,
@@ -1767,9 +1767,9 @@ static int init_event_table(void) {
                 return PAPI_ENOMEM;
               }
 
-              CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+              CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                        "volt_curve_freq_max_region=%u:device=%d", r, d);
-              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+              CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                        "Device %d voltage curve region %u frequency upper bound",
                        d, r);
               if (add_event(&idx, name_buf, descr_buf, d, 1, r, PAPI_MODE_READ,
@@ -1778,9 +1778,9 @@ static int init_event_table(void) {
                 return PAPI_ENOMEM;
               }
 
-              CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+              CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                        "volt_curve_volt_min_region=%u:device=%d", r, d);
-              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+              CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                        "Device %d voltage curve region %u voltage lower bound",
                        d, r);
               if (add_event(&idx, name_buf, descr_buf, d, 2, r, PAPI_MODE_READ,
@@ -1789,9 +1789,9 @@ static int init_event_table(void) {
                 return PAPI_ENOMEM;
               }
 
-              CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+              CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                        "volt_curve_volt_max_region=%u:device=%d", r, d);
-              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+              CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                        "Device %d voltage curve region %u voltage upper bound",
                        d, r);
               if (add_event(&idx, name_buf, descr_buf, d, 3, r, PAPI_MODE_READ,
@@ -1812,57 +1812,57 @@ static int init_event_table(void) {
         if (idx + 8 + 2 * AMDSMI_NUM_VOLTAGE_CURVE_POINTS >
             MAX_EVENTS_PER_DEVICE * device_count)
           CHECK_EVENT_IDX(idx + 8 + 2 * AMDSMI_NUM_VOLTAGE_CURVE_POINTS);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_curr_sclk_min:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_curr_sclk_min:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current SCLK frequency lower bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_curr_sclk_max:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_curr_sclk_max:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current SCLK frequency upper bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_curr_mclk_min:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_curr_mclk_min:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current MCLK frequency lower bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_curr_mclk_max:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_curr_mclk_max:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current MCLK frequency upper bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_sclk_limit_min:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_sclk_limit_min:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d SCLK frequency limit lower bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_sclk_limit_max:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_sclk_limit_max:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d SCLK frequency limit upper bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_mclk_limit_min:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_mclk_limit_min:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d MCLK frequency limit lower bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
           return PAPI_ENOMEM;
 
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "od_mclk_limit_max:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "od_mclk_limit_max:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d MCLK frequency limit upper bound", d);
         if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
                       access_amdsmi_od_volt_info) != PAPI_OK)
@@ -1871,17 +1871,17 @@ static int init_event_table(void) {
         uint32_t p;
         for (p = 0; p < AMDSMI_NUM_VOLTAGE_CURVE_POINTS; ++p) {
           CHECK_EVENT_IDX(idx + 2);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "volt_curve_point_freq_point=%u:device=%d", p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d voltage curve point %u frequency", d, p);
           if (add_event(&idx, name_buf, descr_buf, d, 8, p, PAPI_MODE_READ,
                         access_amdsmi_od_volt_info) != PAPI_OK)
             return PAPI_ENOMEM;
 
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "volt_curve_point_volt_point=%u:device=%d", p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d voltage curve point %u voltage", d, p);
           if (add_event(&idx, name_buf, descr_buf, d, 9, p, PAPI_MODE_READ,
                         access_amdsmi_od_volt_info) != PAPI_OK)
@@ -1896,15 +1896,15 @@ static int init_event_table(void) {
               AMDSMI_STATUS_SUCCESS &&
           policy.num_supported > 0) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "soc_pstate_policy:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "soc_pstate_policy:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current SoC P-state policy id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_soc_pstate_id) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "soc_pstate_supported:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "soc_pstate_supported:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d supported SoC P-state count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_soc_pstate_supported) != PAPI_OK)
@@ -1918,15 +1918,15 @@ static int init_event_table(void) {
               AMDSMI_STATUS_SUCCESS &&
           policy.num_supported > 0) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_plpd:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xgmi_plpd:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current XGMI PLPD policy id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_xgmi_plpd_id) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_plpd_supported:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xgmi_plpd_supported:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d supported XGMI PLPD policy count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_xgmi_plpd_supported) != PAPI_OK)
@@ -1956,9 +1956,9 @@ static int init_event_table(void) {
               free(reg_metrics);
             CHECK_EVENT_IDX(idx);
           }
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "reg_%s_count:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "reg_%s_count:device=%d",
                    reg_names[rt], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d number of %s register metrics", d, reg_names[rt]);
           if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)reg_types[rt], 0,
                         PAPI_MODE_READ, access_amdsmi_reg_count) != PAPI_OK) {
@@ -1976,9 +1976,9 @@ static int init_event_table(void) {
             char reg_metric_name[PAPI_2MAX_STR_LEN];
             sanitize_name(reg_metrics[i].name, reg_metric_name,
                           sizeof(reg_metric_name));
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "reg_%s_%s:device=%d",
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "reg_%s_%s:device=%d",
                      reg_names[rt], reg_metric_name, d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s register %s",
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s register %s",
                      d, reg_names[rt], reg_metrics[i].name);
             if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)reg_types[rt],
                           i, PAPI_MODE_READ, access_amdsmi_reg_value) != PAPI_OK) {
@@ -2014,9 +2014,9 @@ static int init_event_table(void) {
             != AMDSMI_STATUS_SUCCESS)
           continue; /* skip this specific metric if not supported */
     
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s_sensor=%d:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s_sensor=%d:device=%d",
                  temp_metric_names[mi], (int)temp_sensors[si], d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d", d,
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d", d,
                  temp_metric_names[mi], (int)temp_sensors[si]);
         if (add_event(&idx, name_buf, descr_buf, d, temp_metrics[mi],
                       temp_sensors[si], PAPI_MODE_READ,
@@ -2037,8 +2037,8 @@ static int init_event_table(void) {
             AMDSMI_STATUS_SUCCESS) {
       if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
         return PAPI_ENOSUPP;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fan_rpms_sensor=0:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d fan speed in RPM", d);
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fan_rpms_sensor=0:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d fan speed in RPM", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_fan_rpms) != PAPI_OK)
         return PAPI_ENOMEM;
@@ -2050,8 +2050,8 @@ static int init_event_table(void) {
             AMDSMI_STATUS_SUCCESS) {
       if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
         return PAPI_ENOSUPP;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fan_speed_sensor=0:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fan_speed_sensor=0:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d fan speed (0-255 relative)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_fan_speed) != PAPI_OK)
@@ -2064,8 +2064,8 @@ static int init_event_table(void) {
             AMDSMI_STATUS_SUCCESS) {
       if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
         return PAPI_ENOSUPP;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fan_rpms_max_sensor=0:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fan_rpms_max_sensor=0:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d fan maximum speed in RPM", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_fan_speed_max) != PAPI_OK)
@@ -2098,9 +2098,9 @@ static int init_event_table(void) {
           continue;
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
           return PAPI_ENOSUPP;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_total_%s:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "mem_total_%s:device=%d",
                  mem_total_descs[mt].suffix, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d total %s (bytes)", d, mem_total_descs[mt].descr);
         if (add_event(&idx, name_buf, descr_buf, d, mem_total_descs[mt].type, 0,
                       PAPI_MODE_READ, access_amdsmi_mem_total) != PAPI_OK)
@@ -2128,9 +2128,9 @@ static int init_event_table(void) {
           continue;
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
           return PAPI_ENOSUPP;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_usage_%s:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "mem_usage_%s:device=%d",
                  mem_usage_descs[mt].suffix, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d %s usage (bytes)", d, mem_usage_descs[mt].descr);
         if (add_event(&idx, name_buf, descr_buf, d, mem_usage_descs[mt].type, 0,
                       PAPI_MODE_READ, access_amdsmi_mem_usage) != PAPI_OK)
@@ -2143,15 +2143,15 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
           return PAPI_ENOSUPP;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_total_mb:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d total VRAM (MB)", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_total_mb:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d total VRAM (MB)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_usage) != PAPI_OK)
           return PAPI_ENOMEM;
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
           return PAPI_ENOSUPP;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_used_mb:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d used VRAM (MB)", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_used_mb:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d used VRAM (MB)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_vram_usage) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -2169,24 +2169,24 @@ static int init_event_table(void) {
         amdsmi_get_power_info_p(device_handles[d], &dummy_power) ==
             AMDSMI_STATUS_SUCCESS) {
       // Average power consumption (W)
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_average:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_average:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d average power consumption (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_power_average) != PAPI_OK)
         return PAPI_ENOMEM;
       // Instantaneous socket power (W)
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_current:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_current:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d current socket power (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_power_average) != PAPI_OK)
         return PAPI_ENOMEM;
       // Power limit (W)
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_limit:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_limit:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d configured power limit (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_power_average) != PAPI_OK)
@@ -2198,8 +2198,8 @@ static int init_event_table(void) {
         amdsmi_get_power_cap_info_p(device_handles[d], 0, &dummy_cap_info) ==
             AMDSMI_STATUS_SUCCESS) {
       // Current power cap limit
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d current power cap (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d,
                     0, 0, PAPI_MODE_READ | PAPI_MODE_WRITE,
@@ -2207,32 +2207,32 @@ static int init_event_table(void) {
         return PAPI_ENOMEM;
       // Minimum allowed power cap
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_range_min:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_range_min:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d minimum allowed power cap (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_power_cap_range) != PAPI_OK)
         return PAPI_ENOMEM;
       // Maximum allowed power cap
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_range_max:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_range_max:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d maximum allowed power cap (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_power_cap_range) != PAPI_OK)
         return PAPI_ENOMEM;
       // Default power cap
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_default:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_default:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d default power cap (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                     access_amdsmi_power_cap_range) != PAPI_OK)
         return PAPI_ENOMEM;
       // DPM power cap
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_dpm:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_dpm:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d DPM power cap (W)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                     access_amdsmi_power_cap_range) != PAPI_OK)
@@ -2247,23 +2247,23 @@ static int init_event_table(void) {
   for (int d = 0; d < gpu_count; ++d) {
     if (st_thr == AMDSMI_STATUS_SUCCESS) {
       /* bytes sent per second */
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pci_throughput_sent:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pci_throughput_sent:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d PCIe bytes sent per second", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_pci_throughput) != PAPI_OK)
         return PAPI_ENOMEM;
       /* bytes received per second */
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pci_throughput_received:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pci_throughput_received:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d PCIe bytes received per second", d);
       if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_pci_throughput) != PAPI_OK)
         return PAPI_ENOMEM;
       /* max packet size */
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                "pci_throughput_max_packet:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d PCIe max packet size (bytes)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_pci_throughput) != PAPI_OK)
@@ -2272,8 +2272,8 @@ static int init_event_table(void) {
     uint64_t replay = 0;
     if (amdsmi_get_gpu_pci_replay_counter_p(device_handles[d], &replay) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pci_replay_counter:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pci_replay_counter:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d PCIe replay (NAK) counter", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_pci_replay_counter) != PAPI_OK)
@@ -2285,25 +2285,25 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_pci_bandwidth_p(device_handles[d], &bw) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pci_bandwidth_supported:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d number of supported PCIe transfer rates", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_pci_bandwidth) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pci_bandwidth_current:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current PCIe transfer rate (MT/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_pci_bandwidth) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pci_bandwidth_lanes:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d current PCIe lane count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_pci_bandwidth) != PAPI_OK)
@@ -2322,20 +2322,20 @@ static int init_event_table(void) {
     if (amdsmi_get_gpu_activity_p &&
         amdsmi_get_gpu_activity_p(device_handles[d], &dummy_usage) ==
             AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d GFX engine activity (%%)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_activity) != PAPI_OK)
         return PAPI_ENOMEM;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "umc_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "umc_activity:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d UMC engine activity (%%)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_activity) != PAPI_OK)
         return PAPI_ENOMEM;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mm_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "mm_activity:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d MM engine activity (%%)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_activity) != PAPI_OK)
@@ -2351,9 +2351,9 @@ static int init_event_table(void) {
       if (amdsmi_get_utilization_count_p(device_handles[d], &uc, 1, &ts) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "util_counter_gfx:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d coarse grain GFX activity counter", d);
         if (add_event(&idx, name_buf, descr_buf, d,
                       AMDSMI_COARSE_GRAIN_GFX_ACTIVITY, 0, PAPI_MODE_READ,
@@ -2364,9 +2364,9 @@ static int init_event_table(void) {
       if (amdsmi_get_utilization_count_p(device_handles[d], &uc, 1, &ts) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "util_counter_mem:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d coarse grain memory activity counter", d);
         if (add_event(&idx, name_buf, descr_buf, d,
                       AMDSMI_COARSE_GRAIN_MEM_ACTIVITY, 0, PAPI_MODE_READ,
@@ -2377,9 +2377,9 @@ static int init_event_table(void) {
       if (amdsmi_get_utilization_count_p(device_handles[d], &uc, 1, &ts) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "util_counter_dec:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d coarse grain decoder activity counter", d);
         if (add_event(&idx, name_buf, descr_buf, d,
                       AMDSMI_COARSE_DECODER_ACTIVITY, 0, PAPI_MODE_READ,
@@ -2407,18 +2407,18 @@ static int init_event_table(void) {
           f.num_supported == 0)
         continue;
       // Number of supported frequencies for this clock domain
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_freq_%s_count:device=%d",
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "clk_freq_%s_count:device=%d",
                clk_names[t], d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d number of supported %s clock frequencies", d,
                clk_names[t]);
       if (add_event(&idx, name_buf, descr_buf, d, variant, 0, PAPI_MODE_READ,
                     access_amdsmi_clk_freq) != PAPI_OK)
         return PAPI_ENOMEM;
       // Current clock frequency for this domain
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_freq_%s_current:device=%d",
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "clk_freq_%s_current:device=%d",
                clk_names[t], d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d current %s clock frequency (MHz)", d, clk_names[t]);
       if (add_event(&idx, name_buf, descr_buf, d, variant, 1, PAPI_MODE_READ,
                     access_amdsmi_clk_freq) != PAPI_OK)
@@ -2426,9 +2426,9 @@ static int init_event_table(void) {
       // Supported frequency levels for this domain
       uint32_t fi;
       for (fi = 0; fi < f.num_supported; ++fi) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_freq_%s_level_%u:device=%d",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "clk_freq_%s_level_%u:device=%d",
                  clk_names[t], fi, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d supported %s clock frequency level %u (MHz)", d,
                clk_names[t], fi);
         if (add_event(&idx, name_buf, descr_buf, d, variant, fi + 2, PAPI_MODE_READ,
@@ -2454,9 +2454,9 @@ static int init_event_table(void) {
           continue;
         for (int f = 0; f < 5; ++f) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_%s_%s:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "clk_%s_%s:device=%d",
                    clk_names[t], field_names[f], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s %s", d,
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s %s", d,
                    clk_names[t], field_descr[f]);
           if (add_event(&idx, name_buf, descr_buf, d, t, f, PAPI_MODE_READ,
                         access_amdsmi_clock_info) != PAPI_OK)
@@ -2473,8 +2473,8 @@ static int init_event_table(void) {
     // GPU ID
     if (amdsmi_get_gpu_id_p(device_handles[d], &id16) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_id:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_id:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d GPU identifier (Device ID)", d);
       if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
@@ -2483,8 +2483,8 @@ static int init_event_table(void) {
     // GPU Revision
     if (amdsmi_get_gpu_revision_p(device_handles[d], &id16) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_revision:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GPU revision ID", d);
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_revision:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d GPU revision ID", d);
       if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
         return PAPI_ENOMEM;
@@ -2492,8 +2492,8 @@ static int init_event_table(void) {
     // GPU Subsystem ID
     if (amdsmi_get_gpu_subsystem_id_p(device_handles[d], &id16) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_subsystem_id:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GPU subsystem ID", d);
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_subsystem_id:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d GPU subsystem ID", d);
       if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
         return PAPI_ENOMEM;
@@ -2501,8 +2501,8 @@ static int init_event_table(void) {
     // GPU BDF ID
     if (amdsmi_get_gpu_bdf_id_p(device_handles[d], &id64) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_bdfid:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_bdfid:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d GPU PCI BDF identifier", d);
       if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
@@ -2521,9 +2521,9 @@ static int init_event_table(void) {
         uint32_t v;
         for (v = 0; v < 4; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d",
                    bdf_names[v], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s", d,
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s", d,
                    bdf_descr[v]);
           if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                         access_amdsmi_device_bdf) != PAPI_OK)
@@ -2543,8 +2543,8 @@ static int init_event_table(void) {
         uint32_t v;
         for (v = 0; v < 4; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", xinames[v], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), xidescr[v], d);
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d", xinames[v], d);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), xidescr[v], d);
           if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                         access_amdsmi_xgmi_info) != PAPI_OK)
             return PAPI_ENOMEM;
@@ -2563,8 +2563,8 @@ static int init_event_table(void) {
         uint32_t v;
         for (v = 0; v < 3; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", knames[v], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), kdescr[v], d);
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d", knames[v], d);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), kdescr[v], d);
           if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                         access_amdsmi_kfd_info) != PAPI_OK)
             return PAPI_ENOMEM;
@@ -2577,8 +2577,8 @@ static int init_event_table(void) {
       if (amdsmi_topo_get_numa_node_number_p(device_handles[d], &node) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "topo_numa_node:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "topo_numa_node:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d NUMA node number", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_topo_numa) != PAPI_OK)
@@ -2591,9 +2591,9 @@ static int init_event_table(void) {
     if (amdsmi_lib_major >= 25 && amdsmi_get_gpu_virtualization_mode_p &&
         amdsmi_get_gpu_virtualization_mode_p(device_handles[d], &vmode) ==
             AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_virtualization_mode:device=%d",
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_virtualization_mode:device=%d",
                d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d GPU virtualization mode", d);
       if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
@@ -2603,8 +2603,8 @@ static int init_event_table(void) {
     // GPU NUMA Node
     if (amdsmi_get_gpu_topo_numa_affinity_p(device_handles[d], &numa) ==
         AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "numa_node:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d NUMA node", d);
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "numa_node:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d NUMA node", d);
       if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                     access_amdsmi_gpu_info) != PAPI_OK)
         return PAPI_ENOMEM;
@@ -2628,9 +2628,9 @@ static int init_event_table(void) {
           uint32_t v;
           for (v = 0; v < 8; ++v) {
             CHECK_EVENT_IDX(idx);
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                      "process_%s_proc=%u:device=%d", pmetric_names[v], p, d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Device %d process %u %s", d, p, pmetric_descr[v]);
             if (add_event(&idx, name_buf, descr_buf, d, v, p, PAPI_MODE_READ,
                           access_amdsmi_process_info) != PAPI_OK)
@@ -2638,8 +2638,8 @@ static int init_event_table(void) {
           }
         }
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "process_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "process_count:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d total active processes", d);
         if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
                       access_amdsmi_process_info) != PAPI_OK)
@@ -2651,8 +2651,8 @@ static int init_event_table(void) {
       uint32_t pis = 0;
       if (amdsmi_get_gpu_process_isolation_p(device_handles[d], &pis) ==
           AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "process_isolation:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "process_isolation:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d process isolation status", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_process_isolation) != PAPI_OK)
@@ -2664,8 +2664,8 @@ static int init_event_table(void) {
       uint16_t xcd = 0;
       if (amdsmi_get_gpu_xcd_counter_p(device_handles[d], &xcd) ==
           AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcd_counter:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCD counter", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xcd_counter:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d XCD counter", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_xcd_counter) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -2681,17 +2681,17 @@ static int init_event_table(void) {
                 device_handles[d], device_handles[r], &min_bw, &max_bw) ==
             AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "xgmi_min_bandwidth_dst=%d:device=%d", r, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Min XGMI bandwidth from device %d to %d (MB/s)", d, r);
           if (add_event(&idx, name_buf, descr_buf, d, 0, r, PAPI_MODE_READ,
                         access_amdsmi_xgmi_bandwidth) != PAPI_OK)
             return PAPI_ENOMEM;
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "xgmi_max_bandwidth_dst=%d:device=%d", r, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Max XGMI bandwidth from device %d to %d (MB/s)", d, r);
           if (add_event(&idx, name_buf, descr_buf, d, 1, r, PAPI_MODE_READ,
                         access_amdsmi_xgmi_bandwidth) != PAPI_OK)
@@ -2732,9 +2732,9 @@ static int init_event_table(void) {
             for (size_t m = 0; m < sizeof(xgmi_desc) / sizeof(xgmi_desc[0]);
                  ++m) {
               CHECK_EVENT_IDX(idx);
-              CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+              CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                        "xgmi_%s_link=%d:device=%d", xgmi_desc[m].suffix, link, d);
-              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+              CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                        "Device %d XGMI %s on link %d", d, xgmi_desc[m].suffix,
                        link);
               if (add_counter_event(&idx, name_buf, descr_buf, d,
@@ -2760,14 +2760,14 @@ static int init_event_table(void) {
           if (fw_suffix) {
             char fw_label[64];
             format_fw_block_descr(fw_suffix, fw_label, sizeof(fw_label));
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fw_version_%s:device=%d",
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fw_version_%s:device=%d",
                      fw_suffix, d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Device %d %s firmware version", d, fw_label);
           } else {
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fw_version_id%u:device=%d",
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fw_version_id%u:device=%d",
                      (uint32_t)fw_id, d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Device %d firmware id %u version", d, (uint32_t)fw_id);
           }
           if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)fw_id, 0, PAPI_MODE_READ,
@@ -2811,9 +2811,9 @@ static int init_event_table(void) {
           if (!board_fields[bf].value || !board_fields[bf].value[0])
             continue;
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d",
                    board_fields[bf].event_name, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), board_fields[bf].descr_fmt, d,
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), board_fields[bf].descr_fmt, d,
                    display_or_empty(board_fields[bf].value));
           int papi_errno = add_event_with_perdev_descr(
               &idx, name_buf, descr_buf, d, board_fields[bf].variant, 0,
@@ -2832,9 +2832,9 @@ static int init_event_table(void) {
         if (amdsmi_get_gpu_vram_info_p(device_handles[d], &vinfo) ==
             AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "vram_max_bandwidth:device=%d", d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d VRAM max bandwidth (GB/s)", d);
           if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                         access_amdsmi_vram_max_bandwidth) != PAPI_OK)
@@ -2849,9 +2849,9 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_memory_reserved_pages_p(device_handles[d], &nump,
                                                  NULL) == AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "memory_reserved_pages:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d reserved memory pages", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_memory_reserved_pages) != PAPI_OK)
@@ -2864,8 +2864,8 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_bad_page_info_p(device_handles[d], &nump, NULL) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "bad_page_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d retired page count",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "bad_page_count:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d retired page count",
                  d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_bad_page_count) != PAPI_OK)
@@ -2873,25 +2873,25 @@ static int init_event_table(void) {
         uint32_t p;
         for (p = 0; p < nump; ++p) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "bad_page_address_page=%u:device=%d", p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d retired page %u address", d, p);
           if (add_event(&idx, name_buf, descr_buf, d, 0, p, PAPI_MODE_READ,
                         access_amdsmi_bad_page_record) != PAPI_OK)
             return PAPI_ENOMEM;
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "bad_page_size_page=%u:device=%d", p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d retired page %u size", d, p);
           if (add_event(&idx, name_buf, descr_buf, d, 1, p, PAPI_MODE_READ,
                         access_amdsmi_bad_page_record) != PAPI_OK)
             return PAPI_ENOMEM;
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "bad_page_status_page=%u:device=%d", p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d retired page %u status", d, p);
           if (add_event(&idx, name_buf, descr_buf, d, 2, p, PAPI_MODE_READ,
                         access_amdsmi_bad_page_record) != PAPI_OK)
@@ -2905,8 +2905,8 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_bad_page_threshold_p(device_handles[d], &thr) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "bad_page_threshold:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d bad page threshold",
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "bad_page_threshold:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d bad page threshold",
                  d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_bad_page_threshold) != PAPI_OK)
@@ -2925,9 +2925,9 @@ static int init_event_table(void) {
 
         /* Register current socket power in Watts */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_current_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u current socket power (W)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 0, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -2935,9 +2935,9 @@ static int init_event_table(void) {
 
         /* Register average socket power in Watts */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_average_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u average socket power (W)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 1, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -2947,9 +2947,9 @@ static int init_event_table(void) {
 #if AMDSMI_LIB_VERSION_MAJOR >= 25
         if (amdsmi_lib_major >= 25) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "power_sensor_socket_microwatts_sensor=%u:device=%d", s, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d power sensor %u socket power (uW)", d, s);
           if (add_event(&idx, name_buf, descr_buf, d, 2, s, PAPI_MODE_READ,
                         access_amdsmi_power_sensor) != PAPI_OK)
@@ -2959,9 +2959,9 @@ static int init_event_table(void) {
 
         /* Register GFX voltage */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_gfx_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u GFX voltage (mV)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 3, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -2969,9 +2969,9 @@ static int init_event_table(void) {
 
         /* Register SOC voltage */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_soc_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u SOC voltage (mV)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 4, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -2979,9 +2979,9 @@ static int init_event_table(void) {
 
         /* Register MEM voltage */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_mem_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u MEM voltage (mV)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 5, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -2989,9 +2989,9 @@ static int init_event_table(void) {
 
         /* Register power limit */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "power_sensor_limit_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d power sensor %u power limit (W)", d, s);
         if (add_event(&idx, name_buf, descr_buf, d, 6, s, PAPI_MODE_READ,
                       access_amdsmi_power_sensor) != PAPI_OK)
@@ -3016,8 +3016,8 @@ static int init_event_table(void) {
         uint32_t v;
         for (v = 0; v < 3; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", hnames[v], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), hdescr[v], d);
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d", hnames[v], d);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), hdescr[v], d);
           if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                         access_amdsmi_metrics_header_info) != PAPI_OK)
             return PAPI_ENOMEM;
@@ -3031,8 +3031,8 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         /* Register throttle status */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "gpu_throttle_status:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d throttle status", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
@@ -3040,9 +3040,9 @@ static int init_event_table(void) {
 
         /* Register independent throttle status */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "gpu_indep_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d independent throttle status", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
@@ -3050,8 +3050,8 @@ static int init_event_table(void) {
 
         /* Register PCIe link width */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_link_width:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe link width (lanes)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
@@ -3059,8 +3059,8 @@ static int init_event_table(void) {
 
         /* Register PCIe link speed */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_link_speed:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe link speed (0.1 GT/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
@@ -3068,60 +3068,60 @@ static int init_event_table(void) {
 
         /* Register PCIe bandwidth and replay counters */
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_bandwidth_acc:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe accumulated bandwidth (GB/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_inst:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "pcie_bandwidth_inst:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe instantaneous bandwidth (GB/s)", d);
         if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_l0_to_recovery_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe L0->recovery count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_replay_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_replay_rollover_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe replay rollover count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_nak_sent_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent count",
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent count",
                  d);
         if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
           return PAPI_ENOMEM;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "pcie_nak_rcvd_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d PCIe NAK received count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
                       access_amdsmi_gpu_metrics) != PAPI_OK)
@@ -3134,8 +3134,8 @@ static int init_event_table(void) {
         amdsmi_get_gpu_event_notification_p &&
         amdsmi_stop_gpu_event_notification_p) {
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "thermal_throttle_events:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "thermal_throttle_events:device=%d", d);
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "Device %d thermal throttle event notifications", d);
       if (add_event(&idx, name_buf, descr_buf, d, AMDSMI_EVT_NOTIF_THERMAL_THROTTLE,
                     0, PAPI_MODE_READ, access_amdsmi_event_notification) != PAPI_OK)
@@ -3150,22 +3150,22 @@ static int init_event_table(void) {
     if (amdsmi_get_energy_count_p(device_handles[d], &energy, &resolution,
                                   &timestamp) != AMDSMI_STATUS_SUCCESS)
       continue;
-    CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_consumed:device=%d", d);
-    CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+    CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "energy_consumed:device=%d", d);
+    CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
              "Device %d energy consumed (microJoules)", d);
     if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                   access_amdsmi_energy_count) != PAPI_OK)
       return PAPI_ENOMEM;
 
-    CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_resolution:device=%d", d);
-    CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+    CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "energy_resolution:device=%d", d);
+    CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
              "Device %d energy counter resolution (microJoules)", d);
     if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                   access_amdsmi_energy_count) != PAPI_OK)
       return PAPI_ENOMEM;
 
-    CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_timestamp:device=%d", d);
-    CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+    CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "energy_timestamp:device=%d", d);
+    CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
              "Device %d energy counter timestamp (ns)", d);
     if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                   access_amdsmi_energy_count) != PAPI_OK)
@@ -3177,14 +3177,14 @@ static int init_event_table(void) {
     if (amdsmi_get_gpu_power_profile_presets_p(
             device_handles[d], 0, &profile_status) != AMDSMI_STATUS_SUCCESS)
       continue;
-    CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_profiles_count:device=%d", d);
-    CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+    CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_profiles_count:device=%d", d);
+    CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
              "Device %d number of supported power profiles", d);
     if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                   access_amdsmi_power_profile_status) != PAPI_OK)
       return PAPI_ENOMEM;
-    CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_profile_current:device=%d", d);
-    CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+    CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_profile_current:device=%d", d);
+    CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
              "Device %d current power profile mask", d);
     if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                   access_amdsmi_power_profile_status) != PAPI_OK)
@@ -3215,8 +3215,8 @@ static int init_event_table(void) {
           "Voltage regulator thermal violation active flag"};
       for (int v = 0; v < 9; ++v) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", names[v], d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s", d, descr[v]);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d", names[v], d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s", d, descr[v]);
         if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                       access_amdsmi_violation_status) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3232,8 +3232,8 @@ static int init_event_table(void) {
       uint32_t pwr;
       if (amdsmi_get_cpu_socket_power_p(device_handles[dev], &pwr) ==
           AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Socket %d power (W)", s);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Socket %d power (W)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_socket_power) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3241,8 +3241,8 @@ static int init_event_table(void) {
       uint64_t sock_energy;
       if (amdsmi_get_cpu_socket_energy_p(device_handles[dev], &sock_energy) ==
           AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "energy_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d energy consumed (uJ)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_socket_energy) != PAPI_OK)
@@ -3251,14 +3251,14 @@ static int init_event_table(void) {
       uint16_t fmax, fmin;
       if (amdsmi_get_cpu_socket_freq_range_p(device_handles[dev], &fmax,
                                              &fmin) == AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "freq_max_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "freq_max_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d maximum frequency (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_socket_freq_range) != PAPI_OK)
           return PAPI_ENOMEM;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "freq_min_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "freq_min_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d minimum frequency (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_socket_freq_range) != PAPI_OK)
@@ -3273,16 +3273,16 @@ static int init_event_table(void) {
       if (st_cap == AMDSMI_STATUS_SUCCESS ||
           st_capmax == AMDSMI_STATUS_SUCCESS) {
         if (st_cap == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_socket=%d", s);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_socket=%d", s);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d current power cap (W)", s);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                         access_amdsmi_cpu_power_cap) != PAPI_OK)
             return PAPI_ENOMEM;
         }
         if (st_capmax == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_cap_max_socket=%d", s);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "power_cap_max_socket=%d", s);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d max power cap (W)", s);
           if (add_event(&idx, name_buf, descr_buf, dev, 1, 0, PAPI_MODE_READ,
                         access_amdsmi_cpu_power_cap) != PAPI_OK)
@@ -3295,8 +3295,8 @@ static int init_event_table(void) {
               device_handles[dev], &freq, &src_type) == AMDSMI_STATUS_SUCCESS) {
         if (src_type)
           free(src_type);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "freq_limit_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "freq_limit_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d current frequency limit (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_socket_freq_limit) != PAPI_OK)
@@ -3306,8 +3306,8 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_cclk_limit_p &&
           amdsmi_get_cpu_cclk_limit_p(device_handles[dev], &cclk) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "cclk_limit_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "cclk_limit_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d core clock limit (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_cclk_limit) != PAPI_OK)
@@ -3317,14 +3317,14 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_fclk_mclk_p &&
           amdsmi_get_cpu_fclk_mclk_p(device_handles[dev], &fclk, &mclk) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "fclk_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "fclk_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d fclk (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_fclk_mclk) != PAPI_OK)
           return PAPI_ENOMEM;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mclk_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "mclk_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d mclk (MHz)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_fclk_mclk) != PAPI_OK)
@@ -3334,21 +3334,21 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_ddr_bw_p &&
           amdsmi_get_cpu_ddr_bw_p(device_handles[dev], &ddr_bw) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ddr_bw_max_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ddr_bw_max_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d DDR max bandwidth (GB/s)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_ddr_bw) != PAPI_OK)
           return PAPI_ENOMEM;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ddr_bw_utilized_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "ddr_bw_utilized_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d DDR utilized bandwidth (GB/s)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_ddr_bw) != PAPI_OK)
           return PAPI_ENOMEM;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "ddr_bw_utilized_pct_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d DDR bandwidth utilization (pct)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_ddr_bw) != PAPI_OK)
@@ -3358,16 +3358,16 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_hsmp_driver_version_p &&
           amdsmi_get_cpu_hsmp_driver_version_p(device_handles[dev], &dver) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "hsmp_driver_major_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d HSMP driver major version", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_hsmp_driver_version) != PAPI_OK)
           return PAPI_ENOMEM;
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "hsmp_driver_minor_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d HSMP driver minor version", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_hsmp_driver_version) != PAPI_OK)
@@ -3377,9 +3377,9 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_hsmp_proto_ver_p &&
           amdsmi_get_cpu_hsmp_proto_ver_p(device_handles[dev], &proto) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "hsmp_proto_ver_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d HSMP protocol version", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_hsmp_proto_ver) != PAPI_OK)
@@ -3389,9 +3389,9 @@ static int init_event_table(void) {
       if (amdsmi_get_cpu_prochot_status_p &&
           amdsmi_get_cpu_prochot_status_p(device_handles[dev], &prochot) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "prochot_status_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d PROCHOT status", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_prochot_status) != PAPI_OK)
@@ -3402,8 +3402,8 @@ static int init_event_table(void) {
           amdsmi_get_cpu_pwr_svi_telemetry_all_rails_p(device_handles[dev],
                                                        &svi_power) ==
               AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "svi_power_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "svi_power_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d SVI power (all rails, W)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_cpu_svi_power) != PAPI_OK)
@@ -3412,8 +3412,8 @@ static int init_event_table(void) {
       amdsmi_smu_fw_version_t fw;
       if (amdsmi_get_cpu_smu_fw_version_p(device_handles[dev], &fw) ==
           AMDSMI_STATUS_SUCCESS) {
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "smu_fw_version_socket=%d", s);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "smu_fw_version_socket=%d", s);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Socket %d SMU firmware version (encoded)", s);
         if (add_event(&idx, name_buf, descr_buf, dev, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_smu_fw_version) != PAPI_OK)
@@ -3432,9 +3432,9 @@ static int init_event_table(void) {
                 AMDSMI_STATUS_SUCCESS)
               continue;
             CHECK_EVENT_IDX(idx);
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                      "io_bw_%s_%s_socket=%d", links[l], bwnames[t], s);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Socket %d IO link %s %s bandwidth (MB/s)", s,
                      links[l], bwnames[t]);
             if (add_event(&idx, name_buf, descr_buf, dev, l, t, PAPI_MODE_READ,
@@ -3457,9 +3457,9 @@ static int init_event_table(void) {
                 AMDSMI_STATUS_SUCCESS)
               continue;
             CHECK_EVENT_IDX(idx);
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                      "xgmi_bw_%s_%s_socket=%d", links[l], bwnames[t], s);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                      "Socket %d XGMI link %s %s bandwidth (MB/s)", s,
                      links[l], bwnames[t]);
             if (add_event(&idx, name_buf, descr_buf, dev, l, t, PAPI_MODE_READ,
@@ -3477,8 +3477,8 @@ static int init_event_table(void) {
         uint64_t energy;
         if (amdsmi_get_cpu_core_energy_p(cpu_core_handles[s][c], &energy) ==
             AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_socket=%d_core=%d", s, c);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "energy_socket=%d_core=%d", s, c);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d Core %d energy (uJ)", s, c);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, c, PAPI_MODE_READ,
                         access_amdsmi_cpu_core_energy) != PAPI_OK)
@@ -3487,9 +3487,9 @@ static int init_event_table(void) {
         uint32_t freq;
         if (amdsmi_get_cpu_core_current_freq_limit_p(
                 cpu_core_handles[s][c], &freq) == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "freq_limit_socket=%d_core=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "freq_limit_socket=%d_core=%d",
                    s, c);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d Core %d frequency limit (MHz)", s, c);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, c, PAPI_MODE_READ,
                         access_amdsmi_cpu_core_freq_limit) != PAPI_OK)
@@ -3498,9 +3498,9 @@ static int init_event_table(void) {
         uint32_t boost;
         if (amdsmi_get_cpu_core_boostlimit_p(cpu_core_handles[s][c], &boost) ==
             AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "boostlimit_socket=%d_core=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "boostlimit_socket=%d_core=%d",
                    s, c);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d Core %d boost limit (MHz)", s, c);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, c, PAPI_MODE_READ,
                         access_amdsmi_cpu_core_boostlimit) != PAPI_OK)
@@ -3527,34 +3527,34 @@ static int init_event_table(void) {
             st_range != AMDSMI_STATUS_SUCCESS)
           continue;
         if (st_temp == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "dimm_temp_socket=%d_dimm=%d", s,
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "dimm_temp_socket=%d_dimm=%d", s,
                    dimm);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d DIMM %d temperature (C)", s, dimm);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, dimm, PAPI_MODE_READ,
                         access_amdsmi_dimm_temp) != PAPI_OK)
             return PAPI_ENOMEM;
         }
         if (st_power == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "dimm_power_socket=%d_dimm=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "dimm_power_socket=%d_dimm=%d",
                    s, dimm);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Socket %d DIMM %d power (mW)",
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Socket %d DIMM %d power (mW)",
                    s, dimm);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, dimm, PAPI_MODE_READ,
                         access_amdsmi_dimm_power) != PAPI_OK)
             return PAPI_ENOMEM;
         }
         if (st_range == AMDSMI_STATUS_SUCCESS) {
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "dimm_temp_range_socket=%d_dimm=%d", s, dimm);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d DIMM %d temperature range", s, dimm);
           if (add_event(&idx, name_buf, descr_buf, dev, 0, dimm, PAPI_MODE_READ,
                         access_amdsmi_dimm_range_refresh) != PAPI_OK)
             return PAPI_ENOMEM;
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "dimm_refresh_rate_socket=%d_dimm=%d", s, dimm);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Socket %d DIMM %d refresh rate mode", s, dimm);
           if (add_event(&idx, name_buf, descr_buf, dev, 1, dimm, PAPI_MODE_READ,
                         access_amdsmi_dimm_range_refresh) != PAPI_OK)
@@ -3565,24 +3565,24 @@ static int init_event_table(void) {
     // System-wide CPU events
     uint32_t threads;
     if (amdsmi_get_threads_per_core_p(&threads) == AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "threads_per_core");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "SMT threads per core");
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "threads_per_core");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "SMT threads per core");
       if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_threads_per_core) != PAPI_OK)
         return PAPI_ENOMEM;
     }
     uint32_t family;
     if (amdsmi_get_cpu_family_p(&family) == AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "cpu_family");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "CPU family ID");
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "cpu_family");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "CPU family ID");
       if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_cpu_family) != PAPI_OK)
         return PAPI_ENOMEM;
     }
     uint32_t model;
     if (amdsmi_get_cpu_model_p(&model) == AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "cpu_model");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "CPU model ID");
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "cpu_model");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "CPU model ID");
       if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_cpu_model) != PAPI_OK)
         return PAPI_ENOMEM;
@@ -3593,8 +3593,8 @@ static int init_event_table(void) {
   /* -------- Additional GPU discovery & version info (read-only) -------- */
   /* Device count (global) */
   CHECK_EVENT_IDX(idx);
-  CHECK_SNPRINTF(name_buf, sizeof(name_buf), "NUMDevices");
-  CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+  CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "NUMDevices");
+  CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
            "Number of AMD SMI GPU devices detected");
   if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
                 access_amdsmi_num_devices) != PAPI_OK)
@@ -3604,20 +3604,20 @@ static int init_event_table(void) {
     amdsmi_version_t vinfo;
     if (amdsmi_get_lib_version_p(&vinfo) == AMDSMI_STATUS_SUCCESS) {
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "lib_version_major");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "AMD SMI library major version");
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "lib_version_major");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "AMD SMI library major version");
       if (add_event(&idx, name_buf, descr_buf, -1, 0, 0, PAPI_MODE_READ,
                     access_amdsmi_lib_version) != PAPI_OK)
         return PAPI_ENOMEM;
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "lib_version_minor");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "AMD SMI library minor version");
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "lib_version_minor");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "AMD SMI library minor version");
       if (add_event(&idx, name_buf, descr_buf, -1, 1, 0, PAPI_MODE_READ,
                     access_amdsmi_lib_version) != PAPI_OK)
         return PAPI_ENOMEM;
       CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "lib_version_release");
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+      CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "lib_version_release");
+      CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                "AMD SMI library release/patch version");
       if (add_event(&idx, name_buf, descr_buf, -1, 2, 0, PAPI_MODE_READ,
                     access_amdsmi_lib_version) != PAPI_OK)
@@ -3640,8 +3640,8 @@ static int init_event_table(void) {
         uuid_buf[sizeof(uuid_buf) - 1] = '\0';
         sanitize_description_text(uuid_buf);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "uuid_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "uuid_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d UUID string '%s'", d,
                  display_or_empty(uuid_buf));
         int papi_errno = add_event_with_perdev_descr(
@@ -3650,8 +3650,8 @@ static int init_event_table(void) {
         if (papi_errno != PAPI_OK)
           return papi_errno;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "uuid_length:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d UUID length", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "uuid_length:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d UUID length", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_uuid_hash) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3664,8 +3664,8 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         sanitize_description_text(tmp);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vendor_name_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vendor_name_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d vendor name string '%s'", d,
                  display_or_empty(tmp));
         int papi_errno = add_event_with_perdev_descr(
@@ -3683,8 +3683,8 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         sanitize_description_text(tmp);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vram_vendor_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "vram_vendor_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d VRAM vendor string '%s'", d,
                  display_or_empty(tmp));
         int papi_errno = add_event_with_perdev_descr(
@@ -3701,8 +3701,8 @@ static int init_event_table(void) {
           AMDSMI_STATUS_SUCCESS) {
         sanitize_description_text(tmp);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "subsystem_name_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "subsystem_name_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d subsystem name string '%s'", d,
                  display_or_empty(tmp));
         int papi_errno = add_event_with_perdev_descr(
@@ -3720,26 +3720,26 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_enumeration_info_p(device_handles[d], &einfo) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "enum_drm_render:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d DRM render node", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "enum_drm_render:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d DRM render node", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_enumeration_info) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "enum_drm_card:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d DRM card index", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "enum_drm_card:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d DRM card index", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_enumeration_info) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "enum_hsa_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d HSA ID", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "enum_hsa_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d HSA ID", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_enumeration_info) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "enum_hip_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d HIP ID", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "enum_hip_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d HIP ID", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_enumeration_info) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3752,45 +3752,45 @@ static int init_event_table(void) {
       if (amdsmi_get_gpu_asic_info_p(device_handles[d], &ainfo) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "asic_vendor_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC vendor id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "asic_vendor_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d ASIC vendor id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
           return PAPI_ENOSUPP;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "asic_device_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC device id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "asic_device_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d ASIC device id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
           return PAPI_ENOSUPP;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "asic_subsystem_vendor_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d ASIC subsystem vendor id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
           return PAPI_ENOSUPP;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "asic_subsystem_id:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC subsystem id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "asic_subsystem_id:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d ASIC subsystem id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
           return PAPI_ENOSUPP;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "asic_revision:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC revision id", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "asic_revision:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d ASIC revision id", d);
         if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
           return PAPI_ENOSUPP;
 
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "compute_units:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "compute_units:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Device %d number of compute units", d);
         if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
                       access_amdsmi_asic_info) != PAPI_OK)
@@ -3805,9 +3805,9 @@ static int init_event_table(void) {
         part[sizeof(part) - 1] = '\0';
         sanitize_description_text(part);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "compute_partition_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d compute partition string '%s'", d,
                  display_or_empty(part));
         int papi_errno = add_event_with_perdev_descr(
@@ -3827,8 +3827,8 @@ static int init_event_table(void) {
       if (status == AMDSMI_STATUS_SUCCESS && part[0] != '\0') {
         sanitize_description_text(part);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "memory_partition_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "memory_partition_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d memory partition string '%s'", d,
                  display_or_empty(part));
         int papi_errno = add_event_with_perdev_descr(
@@ -3855,8 +3855,8 @@ static int init_event_table(void) {
         uint32_t v;
         for (v = 0; v < 3; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", mpc_names[v], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), mpc_descr[v], d);
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s:device=%d", mpc_names[v], d);
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), mpc_descr[v], d);
           if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
                         access_amdsmi_memory_partition_config) != PAPI_OK)
             return PAPI_ENOMEM;
@@ -3873,8 +3873,8 @@ static int init_event_table(void) {
           prof.num_partitions > 0 &&
           prof.num_partitions <= AMDSMI_MAX_ACCELERATOR_PARTITIONS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "accelerator_num_partitions:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accelerator partition count", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "accelerator_num_partitions:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d accelerator partition count", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_accelerator_num_partitions) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -3890,8 +3890,8 @@ static int init_event_table(void) {
         sanitize_description_text(dinfo.driver_date);
         sanitize_description_text(dinfo.driver_version);
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_name_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "driver_name_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d driver name string '%s'", d,
                  display_or_empty(dinfo.driver_name));
         int papi_errno = add_event_with_perdev_descr(
@@ -3900,8 +3900,8 @@ static int init_event_table(void) {
         if (papi_errno != PAPI_OK)
           return papi_errno;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_date_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "driver_date_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d driver date string '%s'", d,
                  display_or_empty(dinfo.driver_date));
         papi_errno = add_event_with_perdev_descr(
@@ -3910,8 +3910,8 @@ static int init_event_table(void) {
         if (papi_errno != PAPI_OK)
           return papi_errno;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "driver_version_hash:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "driver_version_hash:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hash of Device %d driver version string '%s'", d,
                  display_or_empty(dinfo.driver_version));
         papi_errno = add_event_with_perdev_descr(
@@ -3958,9 +3958,9 @@ static int init_event_table(void) {
                                   "max bandwidth (Gb/s)"};
           for (uint32_t v = 0; v < 4; ++v) {
             CHECK_EVENT_IDX(idx);
-            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s_%s:device=%d",
+            CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s_%s:device=%d",
                      type_names[ti], mnames[v], d);
-            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s %s", d,
+            CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s %s", d,
                      type_names[ti], mdescr[v]);
             if (add_event(&idx, name_buf, descr_buf, d, v, sv, PAPI_MODE_READ,
                           access_amdsmi_link_metrics) != PAPI_OK)
@@ -3980,9 +3980,9 @@ static int init_event_table(void) {
         uint32_t li;
         for (li = 0; li < n; ++li) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "xgmi_link_status_link=%u:device=%d", li, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d XGMI link %u status", d, li);
           if (add_event(&idx, name_buf, descr_buf, d, 0, li, PAPI_MODE_READ,
                         access_amdsmi_xgmi_link_status) != PAPI_OK)
@@ -3996,8 +3996,8 @@ static int init_event_table(void) {
       if (amdsmi_gpu_xgmi_error_status_p(device_handles[d], &st) ==
           AMDSMI_STATUS_SUCCESS) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_error_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XGMI error status", d);
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xgmi_error_status:device=%d", d);
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d XGMI error status", d);
         if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
                       access_amdsmi_xgmi_error_status) != PAPI_OK)
           return PAPI_ENOMEM;
@@ -4017,9 +4017,9 @@ static int init_event_table(void) {
         if (amdsmi_get_link_topology_nearest_p(device_handles[d], lt_types[ti],
                                                &info) == AMDSMI_STATUS_SUCCESS) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s_nearest_count:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s_nearest_count:device=%d",
                    lt_names[ti], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                    "Device %d %s nearest GPU count", d, lt_names[ti]);
           if (add_event(&idx, name_buf, descr_buf, d, (uint32_t)lt_types[ti], 0,
                         PAPI_MODE_READ, access_amdsmi_link_topology_nearest) !=
@@ -4033,9 +4033,9 @@ static int init_event_table(void) {
         continue;
       if (amdsmi_topo_get_link_weight_p) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "link_weight_peer=%d:device=%d", p, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Link weight between device %d and %d", d, p);
         if (add_event(&idx, name_buf, descr_buf, d, 0, p, PAPI_MODE_READ,
                       access_amdsmi_link_weight) != PAPI_OK)
@@ -4043,17 +4043,17 @@ static int init_event_table(void) {
       }
       if (amdsmi_topo_get_link_type_p) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "link_hops_peer=%d:device=%d", p, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "Hops between device %d and %d", d, p);
         if (add_event(&idx, name_buf, descr_buf, d, 0, p, PAPI_MODE_READ,
                       access_amdsmi_link_type) != PAPI_OK)
           return PAPI_ENOMEM;
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "link_type_peer=%d:device=%d", p, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "IO link type between device %d and %d", d, p);
         if (add_event(&idx, name_buf, descr_buf, d, 1, p, PAPI_MODE_READ,
                       access_amdsmi_link_type) != PAPI_OK)
@@ -4070,9 +4070,9 @@ static int init_event_table(void) {
             "P2P DMA support",      "P2P bidirectional support"};
         for (int v = 0; v < 6; ++v) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s_peer=%d:device=%d",
+          CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s_peer=%d:device=%d",
                    p2p_names[v], p, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d vs %d %s", d, p,
+          CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d vs %d %s", d, p,
                    p2p_desc[v]);
           if (add_event(&idx, name_buf, descr_buf, d, v, p, PAPI_MODE_READ,
                         access_amdsmi_p2p_status) != PAPI_OK)
@@ -4081,9 +4081,9 @@ static int init_event_table(void) {
       }
       if (amdsmi_is_P2P_accessible_p) {
         CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
+        CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                  "p2p_accessible_peer=%d:device=%d", p, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
+        CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf),
                  "P2P accessibility between device %d and %d", d, p);
         if (add_event(&idx, name_buf, descr_buf, d, 0, p, PAPI_MODE_READ,
                       access_amdsmi_p2p_accessible) != PAPI_OK)

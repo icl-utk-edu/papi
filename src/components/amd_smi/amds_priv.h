@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "papi_debug.h"
+
 #ifndef AMDSMI_LIB_VERSION_MAJOR
 #define AMDSMI_LIB_VERSION_MAJOR 0
 #endif
@@ -81,13 +83,30 @@ typedef struct {
   int nameid;
 } amds_event_info_t;
 
+typedef enum
+{
+    doNotAllowTruncation = 0,
+    allowTruncation,
+} snprintf_truncation;
+
 #ifndef CHECK_SNPRINTF
-#define CHECK_SNPRINTF(buffer, size, ...)                                      \
-  do {                                                                        \
-    int strLen  = snprintf(buffer, size, __VA_ARGS__);             \
-    if (strLen  < 0 || (size_t)strLen  >= (size))       \
-      return PAPI_EBUF;                                                       \
-  } while (0)
+#define CHECK_SNPRINTF(truncation, buffer, size, ...) \
+    do { \
+        int strLen = snprintf(buffer, size, __VA_ARGS__); \
+        if (strLen < 0 || (size_t)strLen >= size) { \
+            if (truncation == allowTruncation) { \
+                SUBDBG("Failed to fully store string into buffer. Proceeding, but the string has been truncated.\n"); \
+            } \
+            else if (truncation == doNotAllowTruncation) { \
+                SUBDBG("Failed to fully store string into buffer. Not proceeding."); \
+                return PAPI_EBUF; \
+            } \
+            else { \
+                SUBDBG("The truncation %d is not accounted for in the enum snprintf_truncation.\n", truncation); \
+                return PAPI_EBUG; \
+            } \
+        } \
+    } while(0)
 #endif
 
 int amds_dev_set(uint64_t *bitmap, int device);
