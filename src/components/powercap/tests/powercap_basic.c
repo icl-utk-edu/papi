@@ -195,11 +195,16 @@ int main ( int argc, char **argv )
     if ( !TESTS_QUIET ) {
         printf( "\nStopping measurements, took %.3fs, gathering results...\n\n", elapsed_time );
 
-        printf( "\n" );
-        printf( "scaled energy measurements:\n" );
+        int print_format_header = 1;
+        // Scaled energy measurements
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"ENERGY_UJ" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf( "scaled energy measurements:\n" );
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%4.6f J (Average Power %.1fW)\n",
                             event_names[i], event_descrs[i],
                             ( double )values[i]/1.0e6,
@@ -208,11 +213,16 @@ int main ( int argc, char **argv )
             }
         }
 
-        printf( "\n" );
-        printf( "energy counts:\n" );
+        print_format_header = 1;
+        // Energy counts
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"ENERGY_UJ" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf("energy counts:\n");
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%12lld\t%#08llx\n", event_names[i],
                             event_descrs[i],
                             values[i], values[i] );
@@ -220,11 +230,16 @@ int main ( int argc, char **argv )
             }
         }
 
-        printf( "\n" );
-        printf( "long term time window values:\n" );
+        print_format_header = 1;
+        // Long term time window values
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"TIME_WINDOW_A_US" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf( "long term time window values:\n" );
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%4f (secs)\n",
                             event_names[i], event_descrs[i],
                             ( double )values[i]/1.0e6 );
@@ -232,11 +247,16 @@ int main ( int argc, char **argv )
             }
         }
 
-        printf( "\n" );
-        printf( "short term time window values:\n" );
+        print_format_header = 1;
+        // Short term time window values
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"TIME_WINDOW_B_US" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf( "short term time window values:\n" );
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%4f (secs)\n",
                             event_names[i], event_descrs[i],
                             ( double )values[i]/1.0e6 );
@@ -244,11 +264,16 @@ int main ( int argc, char **argv )
             }
         }
 
-        printf( "\n" );
-        printf( "long term power limit:\n" );
+        print_format_header = 1;
+        // Long term power limit
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"POWER_LIMIT_A_UW" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf( "long term power limit:\n" );
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%4f (watts)\n",
                             event_names[i], event_descrs[i],
                             ( double )values[i]/1.0e6 );
@@ -256,11 +281,16 @@ int main ( int argc, char **argv )
             }
         }
 
-        printf( "\n" );
-        printf( "short term power limit:\n" );
+        print_format_header = 1;
+        // Short term power limit
         for( i=0; i<num_events; i++ ) {
             if ( strstr( event_names[i],"POWER_LIMIT_B_UW" ) ) {
                 if ( data_type[i] == PAPI_DATATYPE_UINT64 ) {
+                    if (print_format_header) {
+                        printf( "\n" );
+                        printf( "short term power limit:\n" );
+                        print_format_header = 0;
+                    }
                     printf( "%-45s%-20s%4f (watts)\n",
                             event_names[i], event_descrs[i],
                             ( double )values[i]/1.0e6 );
