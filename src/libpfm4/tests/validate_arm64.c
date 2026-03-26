@@ -510,7 +510,7 @@ static const test_event_t arm64_test_events[]={
 	  .fstr = "arm_x4::CPU_CYCLES:k=1:u=1:hv=0",
 	},
 	{ SRC_LINE,
-	  .name = "arm_x4::BR_RET_SPEC",
+	  .name = "arm_x4::BR_RETURN_SPEC",
 	  .ret  = PFM_SUCCESS,
 	  .count = 1,
 	  .codes[0] = 0x8000079,
