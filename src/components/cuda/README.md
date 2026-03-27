@@ -48,6 +48,7 @@ For the `cuda` component to be operational, the following dynamic libraries must
 libcuda.so
 libcudart.so
 libcupti.so
+libnvidia-ml.so
 ```
 
 For the PerfWorks Metrics API, the following dynamic library must also be found:
@@ -111,6 +112,11 @@ If the dynamic libraries `libcupti`, `libnvperf_host`, and `libcudart` cannot be
    Note, that if using this option:
      * Make sure to separate the dynamic libraries by a colon (`:`).
      * This option serves as a final fallback if either `PAPI_CUDA_ROOT` is not set or is unable to load one of the dynamic libraries (`libcupti`, `libnvperf_host`, and `libcudart`).
+
+For the dynamic library `libnvidia-ml`, it is commonly found in `/lib` or `/usr/lib` rather than the Cuda Toolkit installation. Therefore, by default `dlopen` is used to search `/lib` and `/usr/lib` for the dynamic shared library. If not found, the logic for option 1 and option 2 listed above still hold. In the case of option 1, set the corresponding environment variable:
+```
+export PAPI_NVML_MAIN=/your/path/to/libnvidia-ml.so
+```
 
 * If CUDA libraries are installed on your system, such that the OS can find `nvcc`, the header files, and the shared libraries, then `PAPI_CUDA_ROOT` and `LD_LIBRARY_PATH` may not be necessary.
 
