@@ -4,8 +4,9 @@
  * Copyright (c) 2014 Google Inc. All rights reserved
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
- * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
  * Contributed by John Linford <jlinford@nvidia.com>
+ * Contributed by Thomas Makin <tmakin@nvidia.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +40,7 @@
 #include "events/arm_neoverse_v3_events.h"	/* Arm Neoverse V3 table */
 #include "events/arm_fujitsu_monaka_events.h"	/* Fujitsu FUJITSU-MONAKA PMU tables */
 #include "events/arm_cortex_x4_events.h"	/* Arm Cortex X4 table */
+#include "events/arm_nvidia_olympus_events.h"	/* NVIDIA Olympus table */
 
 static int
 pfm_arm_detect_n2(void *this)
@@ -90,6 +92,15 @@ pfm_arm_detect_cortex_x4(void *this)
 {
 	/* ARM Cortex X4 */
 	arm_cpuid_t attr = { .impl = 0x41, .arch = 9, .part = 0xd82 };
+
+	return pfm_arm_detect(&attr, NULL);
+}
+
+static int
+pfm_arm_detect_nvidia_olympus(void *this)
+{
+	/* NVIDIA Olympus */
+	arm_cpuid_t attr = { .impl = 0x4e, .arch = 0xf, .part = 0x10 };
 
 	return pfm_arm_detect(&attr, NULL);
 }
@@ -244,4 +255,30 @@ pfmlib_pmu_t arm_cortex_x4_support={
 	.get_event_attr_info	= pfm_arm_get_event_attr_info,
 	 PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
 	.get_event_nattrs	= pfm_arm_get_event_nattrs,
+};
+
+/* NVIDIA Olympus core support */
+pfmlib_pmu_t arm_nvidia_olympus_support={
+	.desc           = "NVIDIA Olympus",
+	.name           = "arm_olympus",
+	.pmu            = PFM_PMU_ARM_OLYMPUS,
+	.pme_count      = LIBPFM_ARRAY_SIZE(arm_olympus_pe),
+	.type           = PFM_PMU_TYPE_CORE,
+	.supported_plm  = ARMV9_PLM,
+	.pe             = arm_olympus_pe,
+
+	.pmu_detect     = pfm_arm_detect_nvidia_olympus,
+	.max_encoding		= 1,
+	.num_cntrs		= 6,
+
+	.get_event_encoding[PFM_OS_NONE] = pfm_arm_get_encoding,
+	PFMLIB_ENCODE_PERF(pfm_arm_get_perf_encoding),
+	.get_event_first        = pfm_arm_get_event_first,
+	.get_event_next         = pfm_arm_get_event_next,
+	.event_is_valid         = pfm_arm_event_is_valid,
+	.validate_table         = pfm_arm_validate_table,
+	.get_event_info         = pfm_arm_get_event_info,
+	.get_event_attr_info    = pfm_arm_get_event_attr_info,
+	PFMLIB_VALID_PERF_PATTRS(pfm_arm_perf_validate_pattrs),
+	.get_event_nattrs       = pfm_arm_get_event_nattrs,
 };

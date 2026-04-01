@@ -2,8 +2,9 @@
  * Copyright (c) 2009 Google, Inc
  * Contributed by Stephane Eranian <eranian@gmail.com>
  *
- * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
  * Contributed by John Linford <jlinford@nvidia.com>
+ * Contributed by Thomas Makin <tmakin@nvidia.com>
  *
  * Based on:
  * Copyright (c) 2001-2007 Hewlett-Packard Development Company, L.P.
@@ -837,6 +838,8 @@ typedef enum {
 	PFM_PMU_INTEL_GNR_UNC_IMC11,	/* Intel GraniteRapids IMC channel 10 */
 
 	PFM_PMU_ARM_CORTEX_X4,		/* ARM Cortex X4 (ARMv9) */
+
+	PFM_PMU_ARM_OLYMPUS,		/* NVIDIA Olympus (ARMv9) */
 	/* MUST ADD NEW PMU MODELS HERE */
 
 	PFM_PMU_MAX			/* end marker */

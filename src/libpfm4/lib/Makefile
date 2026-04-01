@@ -2,8 +2,9 @@
 # Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
-# Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+# Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
 # Contributed by John Linford <jlinford@nvidia.com>
+# Contributed by Thomas Makin <tmakin@nvidia.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -431,7 +432,8 @@ INC_ARM=pfmlib_arm_priv.h			\
 	events/arm_neoverse_v2_events.h		\
 	events/arm_neoverse_v3_events.h		\
 	events/arm_hisilicon_kunpeng_events.h \
-	events/arm_hisilicon_kunpeng_unc_events.h
+	events/arm_hisilicon_kunpeng_unc_events.h \
+	events/arm_nvidia_olympus_events.h
 
 INC_ARM64=pfmlib_arm_priv.h			\
 	events/arm_cortex_a57_events.h		\
@@ -447,7 +449,8 @@ INC_ARM64=pfmlib_arm_priv.h			\
 	events/arm_neoverse_v2_events.h		\
 	events/arm_neoverse_v3_events.h		\
 	events/arm_hisilicon_kunpeng_events.h \
-	events/arm_hisilicon_kunpeng_unc_events.h
+	events/arm_hisilicon_kunpeng_unc_events.h \
+	events/arm_nvidia_olympus_events.h
 
 INCDEP=$(INC_COMMON) $(INCARCH)
 
