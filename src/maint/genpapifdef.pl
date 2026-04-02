@@ -367,7 +367,7 @@ sub write_presets_defs_fort {
     printf STDOUT "C PAPI preset defines\n";
     printf STDOUT "C\n\n";
 
-    foreach my $key (keys %presets_defs) {
+    foreach my $key (sort keys %presets_defs) {
         printf STDOUT "#define %-18s %s\n", $key, $papi_presets_defs{$key};
     }
 }
@@ -380,7 +380,7 @@ sub write_presets_defs_f77 {
     printf STDOUT "! PAPI preset defines\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %presets_defs) {
+    foreach my $key (sort keys %presets_defs) {
         printf STDOUT "INTEGER %-18s\nPARAMETER(%s=%s)\n", $key, $key, $papi_presets_defs{$key};
     }
 }
@@ -393,7 +393,7 @@ sub write_presets_defs_f90 {
     printf STDOUT "! PAPI preset defines\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %presets_defs) {
+    foreach my $key (sort keys %presets_defs) {
         printf STDOUT "INTEGER, PARAMETER :: %-18s = %s\n", $key, $papi_presets_defs{$key};
     }
 }
