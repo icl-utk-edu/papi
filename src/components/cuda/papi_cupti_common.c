@@ -432,15 +432,25 @@ int unload_cupti_common_sym(void)
 
 int util_load_cuda_sym(void)
 {
-    int papi_errno;
-    papi_errno = load_cuda_sym();
-    papi_errno += load_cudart_sym();
-    papi_errno += load_cupti_common_sym();
+    int papi_errno = load_cuda_sym();
     if (papi_errno != PAPI_OK) {
-        return PAPI_EMISC;
+        cuptic_err_set_last("Unable to load the Cuda Driver API's. Try setting PAPI_CUDA_ROOT.");
+        return papi_errno;
     }
-    else
-        return PAPI_OK;
+
+    papi_errno = load_cudart_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the Cuda Runtime API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_RUNTIME.");
+        return papi_errno;
+    }
+
+    papi_errno = load_cupti_common_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the CUPTI API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_CUPTI.");
+        return papi_errno;
+    }
+
+    return papi_errno;
 }
 
 int cuptic_shutdown(void)
@@ -821,7 +831,6 @@ int cuptic_init(void)
 {
     int papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to load CUDA library functions.");
         return papi_errno;
     }
 
