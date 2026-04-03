@@ -2,8 +2,9 @@
  * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
- * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
  * Contributed by John Linford <jlinford@nvidia.com>
+ * Contributed by Thomas Makin <tmakin@nvidia.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -858,6 +859,8 @@ extern pfmlib_pmu_t arm_n3_support;
 extern pfmlib_pmu_t arm_v1_support;
 extern pfmlib_pmu_t arm_v2_support;
 extern pfmlib_pmu_t arm_v3_support;
+
+extern pfmlib_pmu_t arm_nvidia_olympus_support;
 
 extern pfmlib_pmu_t arm_thunderx2_support;
 extern pfmlib_pmu_t arm_thunderx2_dmc0_support;
