@@ -115,9 +115,9 @@ int load_cuda_sym(void)
     const char *soNamesToSearchFor[] = {"libcuda.so", "libcuda.so.1", "libcuda"};
 
     dl_drv = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-    if (!dl_drv) {
-        ERRDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
-        goto fn_fail;
+    if (dl_drv == NULL) {
+        SUBDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
+        return PAPI_ESYS;
     }
 
     cuCtxSetCurrentPtr           = DLSYM_AND_CHECK(dl_drv, "cuCtxSetCurrent");
@@ -136,12 +136,7 @@ int load_cuda_sym(void)
     cuCtxSynchronizePtr          = DLSYM_AND_CHECK(dl_drv, "cuCtxSynchronize");
     cuDeviceGetAttributePtr      = DLSYM_AND_CHECK(dl_drv, "cuDeviceGetAttribute");
 
-    Dl_info info;
-    dladdr(cuCtxSetCurrentPtr, &info);
-    LOGDBG("CUDA driver library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 static int unload_cuda_sym(void)
@@ -183,9 +178,20 @@ static int unload_cuda_sym(void)
  */
 void *search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount)
 {
+    char pathToSharedLibrary[PAPI_HUGE_STR_LEN];
     const char *standardSubPaths[3];
+    // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
+    // and we do not want to search subpaths
+    if (soMainName == NULL) {
+        int strLen = snprintf(pathToSharedLibrary, sizeof(pathToSharedLibrary), "%s", parentPath);
+        if (strLen < 0 || (size_t) strLen >= sizeof(pathToSharedLibrary)) {
+            SUBDBG("Failed to fully write path %s into the buffer.\n", parentPath);
+            return NULL;
+        }
+        goto open;
+    }
     // Case for when we want to search explicit subpaths for a shared object
-    if (soMainName != NULL) {
+    else {
         if (strcmp(soMainName, "libcudart") == 0) {
             standardSubPaths[0] = "%s/lib64/";
             standardSubPaths[1] = NULL;
@@ -201,14 +207,8 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
             standardSubPaths[2] = NULL;
         }
     }
-    // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
-    // and we do not want to search subpaths
-    else{
-        standardSubPaths[0] = "%s/";
-        standardSubPaths[1] = NULL;     
-    }
 
-    char pathToSharedLibrary[PAPI_HUGE_STR_LEN], directoryPathToSearch[PAPI_HUGE_STR_LEN];
+    char directoryPathToSearch[PAPI_HUGE_STR_LEN];
     void *so = NULL;
     char *soNameFound;
     int i, strLen;
@@ -243,7 +243,15 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
                 if (result == 0) {
                     soNameFound = dirEntry->d_name;
-                    goto found;
+
+                    // Construct path to shared library
+                    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                        ERRDBG("Failed to fully write constructed path to shared library.\n");
+                        return NULL;
+                    }
+
+                    goto open;
                 }
             }
             // Reset the position of the directory stream
@@ -253,15 +261,8 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
   exit:
     return so;
-  found:
-    // Construct path to shared library
-    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
-    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-        ERRDBG("Failed to fully write constructed path to shared library.\n");
-        return NULL;
-    }
+  open:
     so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
-   
     goto exit; 
 }
 
@@ -293,43 +294,62 @@ void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int so
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_RUNTIME, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libcudart from PAPI_CUDA_RUNTIME or it is not set,
- *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libcudart from steps 1 and 2, then we will search the linux
- *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
- *    advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libcudart.
- *    If this fails, then we failed to find a variation of the shared object
- *    libcudart.
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_RUNTIME is not set, we will search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_RUNTIME is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libcudart shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 int load_cudart_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char *soNamesToSearchFor[] = {"libcudart.so", "libcudart.so.1", "libcudart"};
 
-    // If a user set PAPI_CUDA_RUNTIME with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
+    // If a user set PAPI_CUDA_RUNTIME with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_runtime) {
-        dl_rt = search_and_load_shared_objects(papi_cuda_runtime, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_rt = search_and_load_shared_objects(papi_cuda_runtime, NULL, NULL, 0);
+        if (dl_rt != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_RUNTIME was set, but did not result in successfully loading the libcudart shared object."
+                   " Set PAPI_CUDA_RUNTIME to a valid libcudart shared object.\n", papi_cuda_runtime);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_RUNTIME was not set. Falling back to PAPI_CUDA_ROOT to search for the libcudart shared object.\n");
     }
 
     char *soMainName = "libcudart";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_rt) {
+    // If a user did not set PAPI_CUDA_RUNTIME, but did set PAPI_CUDA_ROOT then search it for the libcudart shared object
+    if (papi_cuda_root) {
         dl_rt = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libcudart, see dlopen manpages for how search occurs
-    if (!dl_rt) {
-        dl_rt = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_rt) {
-            ERRDBG("Loading libcudart shared library failed. Try setting PAPI_CUDA_ROOT\n");
-            goto fn_fail;
+        if (dl_rt != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libcudart shared object."
+                   " Falling back to dlopen to search for the libcudart shared object.\n");
         }
     }
+    else {
+        SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libcudart shared object.\n");
+    }
 
+    // If PAPI_CUDA_RUNTIME was not set and PAPI_CUDA_ROOT was either not set or did not result in the libcudart shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_rt = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_rt == NULL) {
+        SUBDBG("Failed to load a libcudart shared object. Try setting PAPI_CUDA_RUNTIME or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     cudaGetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaGetDevice");
     cudaGetDeviceCountPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceCount");
     cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceProperties");
@@ -340,12 +360,7 @@ int load_cudart_sym(void)
     cudaDriverGetVersionPtr    = DLSYM_AND_CHECK(dl_rt, "cudaDriverGetVersion");
     cudaRuntimeGetVersionPtr   = DLSYM_AND_CHECK(dl_rt, "cudaRuntimeGetVersion");
 
-    Dl_info info;
-    dladdr(cudaGetDevicePtr, &info);
-    LOGDBG("CUDA runtime library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 int unload_cudart_sym(void)
@@ -371,52 +386,66 @@ int unload_cudart_sym(void)
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_CUPTI, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libcupti from PAPI_CUDA_CUPTI or it is not set,
- *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libcupti from steps 1 and 2, then we will search the linux
- *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
- *    advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libcupti.
- *    If this fails, then we failed to find a variation of the shared object
- *    libcupti.
+ *    the options listed below to be searched. Note, if a user set this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_CUPTI is not set, we will search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_CUPTI is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libcupti shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 int load_cupti_common_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char  *soNamesToSearchFor[] = {"libcupti.so", "libcupti.so.1", "libcupti"};
 
-    // If a user set PAPI_CUDA_CUPTI with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
+    // If a user set PAPI_CUDA_CUPTI with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_cupti) {
-        dl_cupti = search_and_load_shared_objects(papi_cuda_cupti, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_cupti = search_and_load_shared_objects(papi_cuda_cupti, NULL, NULL, 0);
+        if (dl_cupti != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_CUPTI was set, but did not result in successfully loading the libcupti shared object."
+                   " Set PAPI_CUDA_CUPTI to a valid libcupti shared object.\n", papi_cuda_cupti);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_CUPTI was not set. Falling back to PAPI_CUDA_ROOT to search for the libcupti shared object.\n");
     }
 
     char *soMainName = "libcupti";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_cupti) {
+    // If a user did not set PAPI_CUDA_CUPTI, but did set PAPI_CUDA_ROOT then search it for the libcupti shared object
+    if (papi_cuda_root) {
         dl_cupti = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libcupti, see dlopen manpages for how search occurs
-    if (!dl_cupti) {
-        dl_cupti = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_cupti) {
-            ERRDBG("Loading libcupti.so failed. Try setting PAPI_CUDA_ROOT\n");
-            goto fn_fail;
+        if (dl_cupti != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libcupti shared object."
+                   " Falling back to dlopen to search for the libcupti shared object.\n");
         }
     }
+    else {
+        SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libcupti shared object.\n");
+    }
 
+    // If PAPI_CUDA_CUPTI was not set and PAPI_CUDA_ROOT was either not set or did not result in the libcupti shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_cupti = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_cupti == NULL) {
+        SUBDBG("Failed to load a libcupti shared object. Try setting PAPI_CUDA_CUPTI or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     cuptiGetVersionPtr = DLSYM_AND_CHECK(dl_cupti, "cuptiGetVersion");
     cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
 
-    Dl_info info;
-    dladdr(cuptiGetVersionPtr, &info);
-    LOGDBG("CUPTI library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 int unload_cupti_common_sym(void)

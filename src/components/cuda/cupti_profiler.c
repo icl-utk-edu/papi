@@ -298,43 +298,62 @@ static int unload_cupti_perf_sym(void)
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_PERFWORKS, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libnvperf_host from
- *    PAPI_CUDA_PERFWORKS or it is not set, we will search the path defined with PAPI_CUDA_ROOT;
- *    as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libnvperf_host from steps 1 and 2,
- *    then we will search the linux default directories listed by /etc/ld.so.conf. As a note,
- *    updating the LD_LIBRARY_PATH is advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libnvperf_host.
- *    If this fails, then we failed to find a variation of the shared object libnvperf_host.
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_PERFWORKS is not set, we wil search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_PERFWORKS is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libnvperf_host shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 static int load_nvpw_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char *soNamesToSearchFor[] = {"libnvperf_host.so", "libnvperf_host.so.1", "libnvperf_host"};
 
-    // If a user set PAPI_CUDA_PERFWORKS with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_perfworks = getenv("PAPI_CUDA_PERFWORKS");
+    // If a user set PAPI_CUDA_PERFWORKS with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_perfworks) {
-        dl_nvpw = search_and_load_shared_objects(papi_cuda_perfworks, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_nvpw = search_and_load_shared_objects(papi_cuda_perfworks, NULL, NULL, 0);
+        if (dl_nvpw != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_PERFWORKS was set, but did not result in successfully loading the libnvperf_host shared object."
+                   " Set PAPI_CUDA_PERFWORKS to a valid libnvperf_host shared object.\n", papi_cuda_perfworks);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_PERFWORKS was not set. Falling back to PAPI_CUDA_ROOT to search for the libnvperf_host shared object.\n");
     }
 
     char *soMainName = "libnvperf_host";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_nvpw) {
-          dl_nvpw = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libnvperf_host, see dlopen manpages for how search occurs
-    if (!dl_nvpw) {
-        dl_nvpw = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_nvpw) {
-            ERRDBG("Loading libnvperf_host.so failed.\n");
-            goto fn_fail;
+    // If a user did not set PAPI_CUDA_PERFWORKS, but did set PAPI_CUDA_ROOT then search it for the libnvperf_host shared object
+    if (papi_cuda_root) {
+        dl_nvpw = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
+        if (dl_nvpw != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libnvperf_host shared object."
+                   " Falling back to dlopen to search for the libnvperf_host shared object.\n");
         }
     }
+    else {
+          SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libnvperf_host shared object.\n");
+    }
 
+    // If PAPI_CUDA_PERFWORKS was not set and PAPI_CUDA_ROOT was either not set or did not result in the libnvperf_host shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_nvpw = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_nvpw == NULL) {
+        SUBDBG("Failed to load a libnvperf_host shared object. Try setting PAPI_CUDA_PERFWORKS or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     // Initialize
     NVPW_InitializeHostPtr = DLSYM_AND_CHECK(dl_nvpw, "NVPW_InitializeHost");
     // Enumeration
@@ -373,12 +392,7 @@ static int load_nvpw_sym(void)
     // Misc.
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl_nvpw, "NVPW_GetSupportedChipNames");
 
-    Dl_info info;
-    dladdr(NVPW_GetSupportedChipNamesPtr, &info);
-    LOGDBG("NVPW library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 /** @class unload_nvpw_sym

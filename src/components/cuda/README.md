@@ -50,16 +50,11 @@ libcudart.so
 libcupti.so
 ```
 
-For the PerfWorks Metrics API, the dynamic library `libnvperf_host.so` must also be found.
-
-If those libraries cannot be found or some of those are stub libraries in the
-standard `PAPI_CUDA_ROOT` subdirectories, you must add the correct paths,
-e.g. `/usr/lib64` or `/usr/lib` to `LD_LIBRARY_PATH`, separated by colons `:`.
-This can be set using export; e.g. 
-
+For the PerfWorks Metrics API, the following dynamic library must also be found:
 ```
-export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$LD_LIBRARY_PATH
+libnvperf_host.so
 ```
+
 ## Hardware and Software Support
 
 To see the `cuda` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component).
@@ -93,24 +88,29 @@ Important note, in the case of machines that only have GPUs with CCs = 7.0 there
 1. [Unusual installations](#unusual-installations)
 2. [CUDA contexts](#cuda-contexts)
 3. [CUDA toolkit versions](#cuda-toolkit-versions)
-4. [Custom library paths](#custom-library-paths)
 
 ## Unusual installations
-Three libraries are required for the PAPI CUDA component. `libcuda.so`,
-`libcudart.so` (The CUDA run-time library), and `libcupti.so`. For CUpti_11,
-`libnvperf_host.so` is also necessary. 
+If the dynamic libraries `libcupti`, `libnvperf_host`, and `libcudart` cannot be found by setting `PAPI_CUDA_ROOT` then two other options remain to find them:
 
-For the CUDA component to be operational, it must find the dynamic libraries
-mentioned above. If they are not found anywhere in the standard `PAPI_CUDA_ROOT`
-subdirectories mentioned above, or `PAPI_CUDA_ROOT` does not exist at runtime, the component looks in the Linux default directories listed by `/etc/ld.so.conf`, 
-usually `/usr/lib64`, `/lib64`, `/usr/lib` and `/lib`. 
+1. Setting the dynamic libraries corresponding environment variable:
+   ```
+   export PAPI_CUDA_CUPTI=/your/path/to/libcupti.so
+   export PAPI_CUDA_PERFWORKS=/your/path/to/libnvperf_host.so
+   export PAPI_CUDA_RUNTIME=/your/path/to/libcudart.so
+   ```
 
-The system will also search the directories listed in `LD_LIBRARY_PATH`,
-separated by colons `:`. This can be set using export; e.g.
+   Note, that if using this option:
+     * You must set the enviornment variable directly to the dynamic library as shown above.
+     * If the set path fails to open a dynamic library, the `cuda` component will be disabled.
 
-```
-export LD_LIBRARY_PATH=/WhereLib1CanBeFound:WhereLib2CanBeFound:$LD_LIBRARY_PATH
-```
+2. Using `dlopen` and following the search logic used by the dynamic linker. For this option, it is advised to set `LD_LIBRARY_PATH` to the directories containing your `libcupti`, `libnvperf_host`, and `libcudart` dynamic libraries, i.e.
+   ```
+   export LD_LIBRARY_PATH=/your/path/to/WhereLib1CanBeFound:/your/path/to/WhereLib2CanBeFound:$LD_LIBRARY_PATH
+   ```
+
+   Note, that if using this option:
+     * Make sure to separate the dynamic libraries by a colon (`:`).
+     * This option serves as a final fallback if either `PAPI_CUDA_ROOT` is not set or is unable to load one of the dynamic libraries (`libcupti`, `libnvperf_host`, and `libcudart`).
 
 * If CUDA libraries are installed on your system, such that the OS can find `nvcc`, the header files, and the shared libraries, then `PAPI_CUDA_ROOT` and `LD_LIBRARY_PATH` may not be necessary.
 
@@ -119,12 +119,3 @@ The CUDA component can profile using contexts created by `cuCtxCreate` or primar
 
 ## CUDA toolkit versions
 Once your binaries are compiled, it is possible to swap the CUDA toolkit versions without needing to recompile the source. Simply update `PAPI_CUDA_ROOT` to point to the path where the cuda toolkit version can be found. You might need to update `LD_LIBRARY_PATH` as well.
-
-## Custom library paths
-PAPI CUDA component loads the CUDA driver library from the system installed path. It loads the other libraries from `$PAPI_CUDA_ROOT`. If that is not set, then it tries to load them from system paths.
-
-However, it is possible to load each of these libraries from custom paths by setting each of the following environment variables to point to the desired files. These are,
-
-- `PAPI_CUDA_RUNTIME` to point to `libcudart.so`
-- `PAPI_CUDA_CUPTI` to point to `libcupti.so`
-- `PAPI_CUDA_PERFWORKS` to point to `libnvperf_host.so`
