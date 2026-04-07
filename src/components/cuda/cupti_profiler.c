@@ -577,9 +577,14 @@ int cuptip_init(void)
     COMPDBG("Entering.\n");
 
     int papi_errno = load_cupti_perf_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the CUPTI profiling API's. Try setting PAPI_CUDA_ROOT.");
+        return papi_errno;
+    }
+
     papi_errno += load_nvpw_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to load CUDA library functions.");
+        cuptic_err_set_last("Unable to load the CUPTI PerfWorks Metrics API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_PERFWORKS.");
         return papi_errno;
     }
 

@@ -172,14 +172,14 @@ int cuptie_init(void)
     // Load Event and Metric API
     papi_errno = load_event_and_metric_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Failure to load Event and Metric API functions.\n");
+        cuptic_err_set_last("Unable to load the CUPTI Event and Metric API's. Try setting PAPI_CUDA_ROOT.");
         return papi_errno;
     }
 
     // Load CUPTI Profiler API
     papi_errno = load_cupti_profiler_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Failure to load CUPTI Profiler API functions.\n");
+        cuptic_err_set_last("Unable to load the CUPTI profiling API's. Try setting PAPI_CUDA_ROOT.");
         return papi_errno;
     }
 
