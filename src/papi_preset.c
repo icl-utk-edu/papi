@@ -1636,11 +1636,22 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                     firstTerm = 0;
                 }
 
-                char *localname = strdup(t);
-                char *basename  = strtok(localname, ":");
-                basename = strtok(NULL, ":");
-                if( NULL == basename ) {
-                    basename = t;
+                char *basename = strdup(t);
+                if (basename == NULL) {
+                    SUBDBG("Failed to allocate memory for the variable basename using strdup.\n");
+                    return PAPI_ENOMEM;
+                }
+
+                int component_prefix_offset = strlen(comp_str) + strlen(":::");
+                int pos;
+                // Walk the string until we hit the first qualifier
+                for (pos = component_prefix_offset; pos < strlen(basename); pos++) {
+                    // If we hit the first qualifier of the event name
+                    // proceed to chop it off
+                    if (basename[pos] == ':') {
+                        basename[pos] = '\0';
+                        break;
+                    }
                 }
 
                 /* Keep track of all qualifiers provided in the papi_events.csv file. */
@@ -1707,7 +1718,7 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                 /* Free dynamically allocated strings. */
                 free(tmpQuals);
                 free(tmpEvent);
-                free(localname);
+                free(basename);
 
 				i++;
 
