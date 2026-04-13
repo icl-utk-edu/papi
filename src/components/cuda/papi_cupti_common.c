@@ -13,11 +13,13 @@
 #include <papi.h>
 #include <cupti_target.h>
 #include "papi_memory.h"
+#include <nvml.h>
+
 
 #include "cupti_config.h"
 #include "papi_cupti_common.h"
 
-static void *dl_drv, *dl_rt;
+static void *dl_drv, *dl_rt, *dl_nvml_for_cuda;
 
 static char cuda_error_string[PAPI_HUGE_STR_LEN];
 
@@ -55,6 +57,12 @@ static int unload_cudart_sym(void);
 static int unload_cupti_common_sym(void);
 static void unload_linked_cudart_path(void);
 
+// Load necessary nvml functions
+static int load_nvml_for_cuda_sym(void);
+
+// Unload necessary nvml functions
+static int unload_nvml_for_cuda_sym(void);
+
 // Functions to get library versions 
 static int util_dylib_cu_runtime_version(void);
 static int util_dylib_cupti_version(void);
@@ -72,6 +80,7 @@ static int get_enabled_devices(void);
 // misc.
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask);
 static int verify_cuda_toolkit_supports_architectures_on_machine(void);
+static int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_system);
 static const char *find_path_to_nvcc(char *path_from_env);
 
 /* cuda driver function pointers */
@@ -105,6 +114,10 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 /* cupti function pointer */
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
+
+nvmlReturn_t ( *nvmlInitForCudaPtr ) (void);
+nvmlReturn_t ( *nvmlSystemGetDriverVersionForCudaPtr ) (char *, unsigned int);
+nvmlReturn_t ( *nvmlShutdownForCudaPtr ) (void);
 
 /**@class load_cuda_sym
  * @brief Search for a variation of the shared object libcuda.
@@ -160,6 +173,70 @@ static int unload_cuda_sym(void)
     cuCtxPushCurrentPtr          = NULL;
     cuCtxSynchronizePtr          = NULL;
     cuDeviceGetAttributePtr      = NULL;
+    return PAPI_OK;
+}
+
+/**@class load_nvml_for_cuda_sym
+ * @brief Search for a variation of the shared object libnvidia-ml.
+ *        Order of search is outlined below.
+ *
+ * 1. If a user sets PAPI_NVML_MAIN, this will take precedent over
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_NVML_MAIN is not set then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
+ */
+int load_nvml_for_cuda_sym(void)
+{
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libnvidia-ml.so", "libnvidia-ml.so.1", "libnvidia"};
+
+    char *papi_nvml_main = getenv("PAPI_NVML_MAIN");
+    if (papi_nvml_main) {
+        dl_nvml_for_cuda = search_and_load_shared_objects(papi_nvml_main, NULL, NULL, 0);
+        if (dl_nvml_for_cuda != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_NVML_MAIN was set, but did not result in successfully loading the libnvidia-ml shared object."
+                   " Set PAPI_NVML_MAIN to a valid libnvidia-ml shared object.\n");
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_NVML_MAIN was not set. Falling back to dlopen to search for the libnvidia-ml shared object.\n");
+    }
+
+    // If PAPI_NVML_MAIN was not set then use dlopen and follow the search logic used by the dynamic linker
+    dl_nvml_for_cuda = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_nvml_for_cuda == NULL) {
+        SUBDBG("Failed to load a libnvidia-ml shared object. Try setting PAPI_NVML_MAIN.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
+    nvmlInitForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlInit");
+    nvmlSystemGetDriverVersionForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlSystemGetDriverVersion");
+    nvmlShutdownForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlShutdown");
+
+    return PAPI_OK;
+}
+
+/**@class unload_nvml_for_cuda_sym
+ * @brief Close the dlopen object opened in load_nvml_for_cuda_sym and set the nvml function
+ *        pointers equal to NULL.
+ */
+int unload_nvml_for_cuda_sym(void)
+{
+    if (dl_nvml_for_cuda) {
+        dlclose(dl_nvml_for_cuda);
+        dl_nvml_for_cuda = NULL;
+    }
+
+    nvmlInitForCudaPtr = NULL;
+    nvmlSystemGetDriverVersionForCudaPtr = NULL;
+    nvmlShutdownForCudaPtr = NULL;
+
     return PAPI_OK;
 }
 
@@ -222,7 +299,7 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
         DIR *dir = opendir(directoryPathToSearch);
         if (dir == NULL) {
-            ERRDBG("Directory path could not be opened.\n");
+            ERRDBG("Directory path %s could not be opened.\n", directoryPathToSearch);
             continue;
         }
 
@@ -461,7 +538,13 @@ int unload_cupti_common_sym(void)
 
 int util_load_cuda_sym(void)
 {
-    int papi_errno = load_cuda_sym();
+    int papi_errno = load_nvml_for_cuda_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the NVIDIA Management API's. Try setting PAPI_NVML_MAIN.");
+        return papi_errno;
+    }
+
+    papi_errno = load_cuda_sym();
     if (papi_errno != PAPI_OK) {
         cuptic_err_set_last("Unable to load the Cuda Driver API's. Try setting PAPI_CUDA_ROOT.");
         return papi_errno;
@@ -487,6 +570,7 @@ int cuptic_shutdown(void)
     unload_cuda_sym();
     unload_cudart_sym();
     unload_cupti_common_sym();
+    unload_nvml_for_cuda_sym();
     return PAPI_OK;
 }
 
@@ -856,6 +940,60 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
     return PAPI_OK;
 }
 
+/** @class verify_driver_branch_supports_legacy_apis
+  * @brief Driver branchs >= 580 do not support use of the Legacy APIs (Event and Metric).
+  *        This function verifies that the Legacy APIs are not being used with a driver branch
+  *        >= 580.
+  * @param ccs_on_system
+  *     A named integer constant from the enum sys_compute_capabilities_e.
+*/
+int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_system)
+{
+    // Increases the reference count of the number of initializations
+    nvmlCheckErrors( nvmlInitForCudaPtr(), return PAPI_EMISC );
+
+    char driverVersion[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
+    nvmlCheckErrors( nvmlSystemGetDriverVersionForCudaPtr(driverVersion, sizeof(driverVersion)), return PAPI_EMISC );
+
+    int papi_errno = PAPI_OK, base = 10;
+    char *driverBranch = strtok(driverVersion, ".");
+    long int driverBranchDecimal = strtol(driverBranch, NULL, base);
+    if (driverBranchDecimal >= 580) {
+        char errorMessage[PAPI_HUGE_STR_LEN] = { 0 };
+        int strLen = snprintf(errorMessage, sizeof(errorMessage), "The Legacy APIs (Event and Metric) are not supported with driver branchs >= 580 (detected driver branch is %d)."
+                             " To use the Legacy APIs you must use a driver branch <= 575.", driverBranchDecimal);
+        if (strLen < 0 || (size_t) strLen >= sizeof(errorMessage)) {
+            SUBDBG("Failed to fully store string into buffer. Proceeding, but the sring has been truncated.\n");
+        }
+
+        switch (ccs_on_system) {
+            case sys_gpu_ccs_all_lt_70:
+                cuptic_err_set_last(errorMessage);
+                papi_errno = PAPI_ECMP;
+                break;
+            case sys_gpu_ccs_mixed:
+            case sys_gpu_ccs_all_eq_70:
+            case sys_gpu_ccs_all_lte_70:
+            case sys_gpu_ccs_all_gte_70:
+                if (getenv("PAPI_CUDA_API") != NULL) {
+                    cuptic_err_set_last(errorMessage);
+                    papi_errno = PAPI_ECMP;
+                }
+                break;
+           case sys_gpu_ccs_all_gt_70:
+           default:
+               papi_errno = PAPI_OK;
+               break;
+        }
+    }
+
+    // Decreases the refernce count of the number of initializations
+    nvmlCheckErrors( nvmlShutdownForCudaPtr(), return PAPI_EMISC );
+
+    return papi_errno;
+}
+
+
 int cuptic_init(void)
 {
     int papi_errno = util_load_cuda_sym();
@@ -863,13 +1001,18 @@ int cuptic_init(void)
         return papi_errno;
     }
 
-    papi_errno = verify_cuda_toolkit_supports_architectures_on_machine();
+    sys_compute_capabilities_e system_ccs;
+    papi_errno = compute_capabilities_on_system(&system_ccs);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
-    sys_compute_capabilities_e system_ccs;
-    papi_errno = compute_capabilities_on_system(&system_ccs);
+    papi_errno = verify_driver_branch_supports_legacy_apis(system_ccs);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    papi_errno = verify_cuda_toolkit_supports_architectures_on_machine();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }

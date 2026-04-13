@@ -143,4 +143,15 @@ int get_chip_name(int dev_num, char* chipName);
         }  \
     } while (0);
 
+#define nvmlCheckErrors( call, handleerror ) \
+    do {  \
+        nvmlReturn_t _status = (call);  \
+        LOGNVMLCALL("\t" #call "\n");  \
+        if (_status != NVML_SUCCESS) {  \
+            ERRDBG("NVML Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
 #endif /* __CUPTI_COMMON_H__ */
