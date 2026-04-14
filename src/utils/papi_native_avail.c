@@ -51,7 +51,7 @@
 #include <dlfcn.h>
 
 #include "papi.h"
-#include "print_header.h"
+#include "utils_helper.h"
 #if SDE
 #include "sde_lib/sde_lib.h"
 #endif
@@ -581,6 +581,9 @@ no_sdes:
 
 		/* Skip disabled components */
 		if (component->disabled && component->disabled != PAPI_EDELAY_INIT) continue;
+
+		int is_utility_cmp = check_for_utility_components(component->name);
+		if (is_utility_cmp) continue;
 
 		printf( "===============================================================================\n" );
 		printf( " Native Events in Component: %s\n",component->name);
