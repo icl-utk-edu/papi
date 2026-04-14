@@ -6891,8 +6891,13 @@ if test "$with_sysdetect" = "yes"; then
     fi
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5
+if test "x$components" != "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5
 $as_echo "$components" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: No components configured" >&5
+$as_echo "No components configured" >&6; }
+fi
 
 # Check whether rocm and rocp_sdk were configured together
 rocm_found=0
