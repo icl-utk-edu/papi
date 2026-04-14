@@ -33,11 +33,10 @@ export PATH="$PAPI_DIR/bin:$PATH"
 
 # Test list
 TESTS=(
-    "test_component_and_events.py"
-    "test_start_stop_read.py"
-    "test_multidevice.py"
-    "test_mme_events.py"
-    "test_edma_events.py"
+    "test_start_stop_read_cypapi.py"
+    "test_multidevice_cypapi.py"
+    "test_mme_events_cypapi.py"
+    "test_edma_events_cypapi.py"
 )
 
 # Run tests
