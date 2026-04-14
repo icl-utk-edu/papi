@@ -803,7 +803,7 @@ enable_perf_event_uncore
 with_perf_events
 enable_perfevent_rdpmc
 with_pe_incdir
-with_sysdetect
+enable_sysdetect
 with_components
 enable_fortran
 '
@@ -1446,6 +1446,7 @@ Optional Features:
   --enable-perfevent-rdpmc
                           Enable userspace rdpmc instruction on perf_event,
                           default: yes
+  --disable-sysdetect     Disable the sysdetect component
   --disable-fortran       Whether to disable fortran bindings
 
 Optional Packages:
@@ -1508,8 +1509,6 @@ Optional Packages:
   --with-perf-events      Specify use of Linux Performance Event (requires
                           kernel 2.6.32 or greater)
   --with-pe-incdir=<path> Specify path to the correct perf header file
-  --with-sysdetect=<yes,no>
-                          Build the sysdetect component (default: yes)
   --with-components=<"component1 component2">
                           Specify which components to build
 
@@ -6843,20 +6842,19 @@ if test "$CC_COMMON_NAME" = "icc"; then
     OMPCFLGS=-qopenmp
 fi
 
-## By default we want the sysdetect component built, so if the user does not
-## give an option we will add it to the list.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building sysdetect" >&5
-$as_echo_n "checking for building sysdetect... " >&6; }
-
-# Check whether --with-sysdetect was given.
-if test "${with_sysdetect+set}" = set; then :
-  withval=$with_sysdetect;
+# By default we want the sysdetect component built, so if the user does not
+# give an option we will add it to the list of components to compile in.
+# Check whether --enable-sysdetect was given.
+if test "${enable_sysdetect+set}" = set; then :
+  enableval=$enable_sysdetect;
 else
-  with_sysdetect=yes
+  enable_sysdetect=yes
 fi
 
-# Enable sysdetect unless the user has explicitly told us not to.
-if test "$with_sysdetect" = "yes"; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for building sysdetect" >&5
+$as_echo_n "checking for building sysdetect... " >&6; }
+if test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -6884,11 +6882,8 @@ if test "${with_components+set}" = set; then :
 fi
 
 
-# Enable sysdetect unless the user has explicitly told us not to.
-if test "$with_sysdetect" = "yes"; then
-  if test "$perf_events" != "no"; then
-    components="$components sysdetect"
-    fi
+if test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"; then :
+  components="$components sysdetect"
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $components" >&5

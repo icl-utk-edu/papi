@@ -1844,20 +1844,16 @@ if test "$CC_COMMON_NAME" = "icc"; then
     OMPCFLGS=-qopenmp
 fi
 
-## By default we want the sysdetect component built, so if the user does not
-## give an option we will add it to the list.
+# By default we want the sysdetect component built, so if the user does not
+# give an option we will add it to the list of components to compile in.
+AC_ARG_ENABLE(sysdetect,
+              [AS_HELP_STRING([--disable-sysdetect],
+                              [Disable the sysdetect component])],
+              [],
+              [enable_sysdetect=yes])
+
 AC_MSG_CHECKING(for building sysdetect)
-AC_ARG_WITH(sysdetect,
-            [AS_HELP_STRING([--with-sysdetect=<yes,no>],
-                            [Build the sysdetect component (default: yes)])],
-            [],
-            [with_sysdetect=yes])
-# Enable sysdetect unless the user has explicitly told us not to.
-if test "$with_sysdetect" = "yes"; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
+AS_IF([test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING(for components to build)
 COMPONENT_RULES=components/Rules.components
@@ -1876,12 +1872,7 @@ AC_ARG_WITH([components],
     ]
 )
 
-# Enable sysdetect unless the user has explicitly told us not to.
-if test "$with_sysdetect" = "yes"; then
-  if test "$perf_events" != "no"; then
-    components="$components sysdetect"
-    fi
-fi
+AS_IF([test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"], [components="$components sysdetect"], [])
 
 AC_MSG_RESULT($components)
 
