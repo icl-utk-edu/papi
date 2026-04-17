@@ -1,0 +1,3 @@
+example-job:
+  script:
+    - echo "This job does something!"
