@@ -226,7 +226,7 @@ rocp_evt_enum(uint64_t *event_code, int modifier)
             }
             papi_errno = PAPI_ENOEVNT;
             break;
-        case PAPI_NTV_ENUM_UMASKS:
+        case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS:
             papi_errno = evt_id_to_info(*event_code, &info);
             if (papi_errno != PAPI_OK) {
                 break;
