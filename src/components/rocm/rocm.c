@@ -30,6 +30,7 @@ static int rocm_shutdown_component(void);
 static int rocm_shutdown_thread(hwd_context_t *ctx);
 static int rocm_cleanup_eventset(hwd_control_state_t *ctl);
 static void rocm_dispatch_timer(int n, hwd_siginfo_t *info, void *uc);
+static int rocm_init_comp_presets(void);
 
 /* set and update component state */
 static int rocm_update_control_state(hwd_control_state_t *ctl,
@@ -343,6 +344,32 @@ rocm_dispatch_timer(int n __attribute__((unused)), hwd_siginfo_t *info, void *uc
   fn_exit:
     _papi_hwi_unlock(_rocm_lock);
     return;
+}
+
+static int rocm_init_comp_presets(void) {
+    SUBDBG("ENTER: Init ROCm component presets.\n");
+    int cidx = _rocm_vector.cmp_info.CmpIdx;
+    char *cname = _rocm_vector.cmp_info.name;
+
+    /* Setup presets. */
+    char arch_name[PAPI_2MAX_STR_LEN];
+
+    /* Load preset table for every device type available on the system.
+     * As long as one of the cards has presets defined, then they should
+     * be available. */
+    int retval = rocd_get_chip_name(arch_name);
+    if ( retval != PAPI_OK ) {
+        SUBDBG("EXIT: Failed to get ROCm device name.\n");
+        return retval;
+    }
+
+    retval = _papi_load_preset_table_component( cname, arch_name, cidx );
+    if ( retval != PAPI_OK ) {
+        SUBDBG("EXIT: Failed to init ROCm component presets.\n");
+        return retval;
+    }
+
+    return PAPI_OK;
 }
 
 static int update_native_events(rocm_control_t *, NativeInfo_t *, int);
@@ -688,7 +715,22 @@ int
 check_n_initialize(void)
 {
     if (!_rocm_vector.cmp_info.initialized) {
-        return rocm_init_private();
+        int papi_errno = rocm_init_private();
+        if( PAPI_OK != papi_errno ) {
+            return papi_errno;
+        }
+
+        // Setup the presets.
+        papi_errno = rocm_init_comp_presets();
+        if (papi_errno != PAPI_OK) {
+            if (papi_errno == PAPI_ENOIMPL) {
+                papi_errno = PAPI_OK;
+            }
+
+            return papi_errno;
+        }
+
+        return papi_errno;
     }
     return _rocm_vector.cmp_info.disabled;
 }
