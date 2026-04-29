@@ -168,6 +168,7 @@ NVPA_Status ( *NVPW_GetSupportedChipNamesPtr ) (NVPW_GetSupportedChipNames_Param
 // Initialize
 static int initialize_perfworks_api(void);
 // Enumeration
+static int verify_metric_is_supported(NVPW_MetricsEvaluator *pMetricsEvaluator, const char *metricName, const char *pChipName);
 static int enumerate_metrics_for_unique_devices(const char *pChipName, int *totalNumMetrics, char ***arrayOfMetricNames, void *metrics_supported_htable);
 static const char *get_rollup_metrics(NVPW_RollupOp rollupMetric);
 static const char *get_supported_submetrics(NVPW_Submetric subMetric);
@@ -2348,7 +2349,7 @@ int verify_metric_is_supported(NVPW_MetricsEvaluator *pMetricsEvaluator, const c
     NVPW_MetricEvalRequest metricEvalRequest;
     int papi_errno = get_metric_eval_request(pMetricsEvaluator, metricName, &metricEvalRequest);
     if (papi_errno != PAPI_OK) {
-        SUBDBG("Metric %s failed to convert to metric eval request.\n", metricName);
+        SUBDBG("Metric (%s) failed to convert to metric eval request.\n", metricName);
         return METRIC_NOT_SUPPORTED;
     }
 
@@ -2356,7 +2357,7 @@ int verify_metric_is_supported(NVPW_MetricsEvaluator *pMetricsEvaluator, const c
     NVPA_RawMetricRequest *rawMetricRequests = NULL;
     papi_errno = create_raw_metric_requests(pMetricsEvaluator, &metricEvalRequest, &rawMetricRequests, &rawMetricRequestsCount);
     if (papi_errno != PAPI_OK) {
-        SUBDBG("Metric %s failed to create a raw metric request.\n", metricName);
+        SUBDBG("Metric (%s) failed to create a raw metric request.\n", metricName);
 	return METRIC_NOT_SUPPORTED;
     }
 
@@ -2381,7 +2382,7 @@ int verify_metric_is_supported(NVPW_MetricsEvaluator *pMetricsEvaluator, const c
     addMetricsParams.pPriv = NULL;
     NVPA_Status status = NVPW_RawMetricsConfig_AddMetricsPtr(&addMetricsParams);
     if (status != NVPA_STATUS_SUCCESS) {
-        SUBDBG("The metric %s is not supported on the chip %s.\n", metricName, pChipName);
+        SUBDBG("The metric (%s) is not supported on the chip (%s).\n", metricName, pChipName);
         return METRIC_NOT_SUPPORTED;
     }
 
@@ -2522,7 +2523,7 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                     // Store the constructed metric name
                     int strLen = snprintf(metricNames[metricCount], PAPI_2MAX_STR_LEN, "%s%s%s", baseMetricName, rollupMetricName, subMetricName);
                     if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
-                        SUBDBG("Failed to fully write the metric name: %s%s%s\n", baseMetricName, rollupMetricName,subMetricName);
+                        SUBDBG("Failed to fully write the metric name: %s%s%s\n", baseMetricName, rollupMetricName, subMetricName);
                         return PAPI_EBUF;
                     }
                     metricCount++;
