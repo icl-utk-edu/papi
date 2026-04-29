@@ -2492,6 +2492,9 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                         }
                     }
                 }
+                else {
+                    rollupMetricName = "";
+                }
 
                 // Get the list of submetrics 
                 // Submetrics are required for Ratio and Throughput, optional for Counter (here we do collect for Counter as well)
