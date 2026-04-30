@@ -1,3 +1,9 @@
+cuda-component-job:
+  script:
+    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - make && make install
+    - utils/papi_component_avail
+
 example-job:
   script:
     - echo "This job does something!"
