@@ -7,4 +7,4 @@ cuda-component-job:
 
 example-job:
   script:
-    - module avail
+    - ls /packages/
