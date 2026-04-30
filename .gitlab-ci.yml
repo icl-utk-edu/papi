@@ -1,3 +1,9 @@
+cuda-component-job:
+  script:
+    - cd src
+    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - utils/papi_component_avail
+
 example-job:
   script:
     - ls -l
