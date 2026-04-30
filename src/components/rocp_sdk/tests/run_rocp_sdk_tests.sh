@@ -94,3 +94,23 @@ else
     echo "Running: ./two_eventsets"
     ./two_eventsets
 fi
+echo "-------------------------------------"
+
+roctx_pause_resume_desired_events="rocp_sdk:::SQ_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=3,\
+rocp_sdk:::TCC_CYCLE:device=0:DIMENSION_INSTANCE=2,\
+rocp_sdk:::SQ_INSTS:device=0:DIMENSION_INSTANCE=0,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=0,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=1,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0"
+
+echo "make roctx_pause_resume:"
+make roctx_pause_resume
+if [ "$1" = "--with-desired-events" ]; then
+    echo "Running: ./roctx_pause_resume --rocp-sdk-native-event-names ${roctx_pause_resume_desired_events[@]}"
+    ./roctx_pause_resume --rocp-sdk-native-event-names "${roctx_pause_resume_desired_events[@]} --pause"
+else
+    echo "Running ./roctx_pause_resume --pause"
+    ./roctx_pause_resume --pause
+fi
+echo -e "-------------------------------------"
