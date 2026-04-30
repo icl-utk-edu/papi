@@ -1,9 +1,10 @@
 cuda-component-job:
   script:
     - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
+    - make && make install
     - utils/papi_component_avail
 
 example-job:
   script:
-    - ls -l
+    - module avail
