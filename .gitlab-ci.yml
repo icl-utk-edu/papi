@@ -11,4 +11,4 @@ cuda-component-job:
   rules:
     - changes:
         paths:
-          'src/components/cuda/**'
+          - 'src/components/cuda/**'
