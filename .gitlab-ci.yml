@@ -1,22 +1,16 @@
 
 
-#cuda-component-job:
-#  script:
-#    - cd src
-#    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
-#    - make && make install
-#    - utils/papi_component_avail
-
-default:
-  - tags: [picard]
-
-topdown-component-job:
+cuda-component-job:
+  tags: [nvidia-gh200]
+  image: nvidia/cuda:12.8.2-devel-ubuntu24.04
   script:
+    - /usr/local/cuda/bin/nvcc --version
     - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="topdown" --with-debug=yes
+    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
     - make && make install
-    - utils/papi_component
+    - utils/papi_component_avail
 
 example-job:
+  tags: [amd-mi100]
   script:
-    - ls /packages/
+    - ls /opt
