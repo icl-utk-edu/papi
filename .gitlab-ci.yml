@@ -4,9 +4,9 @@ cuda-component-job:
   tags: [nvidia-gh200]
   image: nvidia/cuda:12.8.2-devel-ubuntu24.04
   script:
-    - /usr/local/cuda/bin/nvcc --version
+    - export PAPI_CUDA_ROOT=/usr/local/cuda
     - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
+    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
     - make && make install
     - utils/papi_component_avail
 
