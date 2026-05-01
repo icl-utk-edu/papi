@@ -17,4 +17,5 @@ rocp-sdk-component-job:
     - export PAPI_ROCP_SDK_ROOT=/opt/rocm
     - cd src
     - ./configure --prefix=$PWD/test-install --with-components="rocp_sdk" --with-debug=yes
+    - make && make install
     - utils/papi_component_avail
