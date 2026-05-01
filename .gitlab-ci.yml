@@ -11,9 +11,12 @@ cuda-component-job:
     - utils/papi_component_avail
 
 rocp-sdk-component-job:
-  tags: [amd-mi300]
+  tags: [x86_64-amdgpu]
   image: rocm/dev-ubuntu-24.04:7.2.2-complete
   script:
+    - ls
+    - ls /opt/
+    - ls /usr/
     - export PAPI_ROCP_SDK_ROOT=/opt/rocm
     - cd src
     - ./configure --prefix=$PWD/test-install --with-components="rocp_sdk" --with-debug=yes
