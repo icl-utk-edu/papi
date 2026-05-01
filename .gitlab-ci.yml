@@ -1,5 +1,3 @@
-
-
 cuda-component-job:
   tags: [nvidia-gh200]
   image: nvidia/cuda:12.8.2-devel-ubuntu24.04
@@ -9,16 +7,16 @@ cuda-component-job:
     - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
     - make && make install
     - utils/papi_component_avail
+    - sh components/cuda/tests/run_cuda_tests.sh
 
 rocp-sdk-component-job:
   tags: [x86_64-amdgpu]
   image: rocm/dev-ubuntu-24.04:7.2.2-complete
   script:
-    - ls
-    - ls /opt/
-    - ls /usr/
-    - export PAPI_ROCP_SDK_ROOT=/opt/rocm
+    - ls /opt/rocm-7.2.2/lib
+    - export PAPI_ROCP_SDK_ROOT=/opt/rocm-7.2.2
     - cd src
     - ./configure --prefix=$PWD/test-install --with-components="rocp_sdk" --with-debug=yes
     - make && make install
     - utils/papi_component_avail
+    - sh components/rocp_sdk/tests/run_rocp_sdk_tests.sh
