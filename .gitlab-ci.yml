@@ -8,7 +8,7 @@
 #    - utils/papi_component_avail
 
 default:
-  - tags: picard
+  - tags: [picard]
 
 topdown-component-job:
   script:
