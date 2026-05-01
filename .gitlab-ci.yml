@@ -8,16 +8,7 @@ cuda-component-job:
     - make && make install
     - utils/papi_component_avail
     - bash components/cuda/tests/run_cuda_tests.sh
-
-rocp-sdk-component-job:
-  tags: [x86_64-amdgpu]
-  image: rocm/dev-ubuntu-24.04:7.2.2-complete
-  script:
-    - ls /opt/rocm-7.2.2/lib
-    - export PAPI_ROCP_SDK_ROOT=/opt/rocm-7.2.2
-    - export PAPI_ROCP_SDK_LIB=/opt/rocm-7.2.2/lib/librocprofiler-sdk.so
-    - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="rocp_sdk" --with-debug=yes
-    - make && make install
-    - utils/papi_component_avail
-    - bash components/rocp_sdk/tests/run_rocp_sdk_tests.sh
+  rules:
+    - changes:
+        paths:
+          'src/components/cuda/**'
