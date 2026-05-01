@@ -1316,6 +1316,7 @@ int evt_id_to_info(uint32_t event_id, event_info_t *info)
 */
 int init_event_table(void) 
 {
+    printf("Testing path rule.\n");
     int dev_id, deviceRecord = 0; 
     // Loop through all available devices on the current system
     for (dev_id = 0; dev_id < numDevicesOnMachine; dev_id++) {
