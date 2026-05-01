@@ -1,9 +1,21 @@
-cuda-component-job:
+
+
+#cuda-component-job:
+#  script:
+#    - cd src
+#    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
+#    - make && make install
+#    - utils/papi_component_avail
+
+default:
+  - tags: picard
+
+topdown-component-job:
   script:
     - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="stealtime" --with-debug=yes
+    - ./configure --prefix=$PWD/test-install --with-components="topdown" --with-debug=yes
     - make && make install
-    - utils/papi_component_avail
+    - utils/papi_component
 
 example-job:
   script:
