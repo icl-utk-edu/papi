@@ -320,7 +320,7 @@ static int load_nvpw_sym(void)
         }
         else {
             SUBDBG("PAPI_CUDA_PERFWORKS was set, but did not result in successfully loading the libnvperf_host shared object."
-                   " Set PAPI_CUDA_PERFWORKS to a valid libnvperf_host shared object.\n", papi_cuda_perfworks);
+                   " Set PAPI_CUDA_PERFWORKS to a valid libnvperf_host shared object.\n");
             return PAPI_ESYS;
         }
     }
