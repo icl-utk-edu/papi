@@ -204,7 +204,7 @@
 #include <string.h>
 
 #include "papi.h"
-#include "print_header.h"
+#include "utils_helper.h"
 
 static char *
 is_derived( PAPI_event_info_t * info )
