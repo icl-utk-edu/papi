@@ -1279,128 +1279,121 @@ static int init_event_table(void) {
     // PCIe information events
     if (amdsmi_get_pcie_info_p) {
       amdsmi_pcie_info_t pcie_info;
-      if (amdsmi_get_pcie_info_p(device_handles[d], &pcie_info) ==
-          AMDSMI_STATUS_SUCCESS) {
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d maximum PCIe link width (lanes)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+      memset(&pcie_info, 0, sizeof(pcie_info));
+      if (amdsmi_get_pcie_info_p(device_handles[d], &pcie_info) == AMDSMI_STATUS_SUCCESS) {
+        if (pcie_info.pcie_static.max_pcie_width != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_width:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d maximum PCIe link width (lanes)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d maximum PCIe link speed (GT/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_static.max_pcie_speed != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_speed:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d maximum PCIe link speed (GT/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_interface_version:device=%d",
-                 d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe interface version", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_static.pcie_interface_version != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_interface_version:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe interface version", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_slot_type:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe slot type", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_static.slot_type >= AMDSMI_CARD_FORM_FACTOR_PCIE && pcie_info.pcie_static.slot_type <= AMDSMI_CARD_FORM_FACTOR_UNKNOWN) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_slot_type:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe slot type", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
 #if AMDSMI_LIB_VERSION_MAJOR >= 25
-        if (amdsmi_lib_major >= 25) {
+        if (amdsmi_lib_major >= 25 && pcie_info.pcie_static.max_pcie_interface_version != UINT32_MAX) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                   "pcie_max_interface_version:device=%d", d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                   "Device %d maximum PCIe interface version", d);
-          if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
-                        access_amdsmi_pcie_info) != PAPI_OK)
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_max_interface_version:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d maximum PCIe interface version", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
             return PAPI_ENOMEM;
         }
 #endif
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d current PCIe link width (lanes)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_width != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_width:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d current PCIe link width (lanes)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d current PCIe link speed (MT/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_speed != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_speed:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d current PCIe link speed (MT/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d instantaneous PCIe bandwidth (Mb/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_bandwidth != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d instantaneous PCIe bandwidth (Mb/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_replay_count != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_l0_to_recovery_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe L0->recovery count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_l0_to_recovery_count != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_l0_to_recovery_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe L0->recovery count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_rollover_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe replay rollover count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_replay_roll_over_count != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_rollover_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay rollover count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_sent_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe NAK sent count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 11, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_nak_sent_count != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_sent_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 11, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_nak_received_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe NAK received count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 12, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_nak_received_count != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_received_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK received count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 12, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_other_end_recovery_count:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe other-end recovery count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 13, 0, PAPI_MODE_READ,
-                      access_amdsmi_pcie_info) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pcie_info.pcie_metric.pcie_lc_perf_other_end_recovery_count != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_other_end_recovery_count:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe other-end recovery count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 13, 0, PAPI_MODE_READ, access_amdsmi_pcie_info) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
       }
     }
     // GPU Overdrive level events
@@ -2165,32 +2158,31 @@ static int init_event_table(void) {
       continue;
     // Register power average event - test directly
     amdsmi_power_info_t dummy_power;
-    if (amdsmi_get_power_info_p &&
-        amdsmi_get_power_info_p(device_handles[d], &dummy_power) ==
-            AMDSMI_STATUS_SUCCESS) {
+    memset(&dummy_power, 0, sizeof(dummy_power));
+    if (amdsmi_get_power_info_p && amdsmi_get_power_info_p(device_handles[d], &dummy_power) == AMDSMI_STATUS_SUCCESS) {
       // Average power consumption (W)
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_average:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d average power consumption (W)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                    access_amdsmi_power_average) != PAPI_OK)
-        return PAPI_ENOMEM;
+      if (dummy_power.average_socket_power != UINT32_MAX && dummy_power.average_socket_power != UINT16_MAX) {
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_average:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average power consumption (W)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ, access_amdsmi_power_average) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
       // Instantaneous socket power (W)
-      CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_current:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d current socket power (W)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
-                    access_amdsmi_power_average) != PAPI_OK)
-        return PAPI_ENOMEM;
+      if (dummy_power.current_socket_power != UINT32_MAX && dummy_power.current_socket_power != UINT16_MAX) {
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_current:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d current socket power (W)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ, access_amdsmi_power_average) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
       // Power limit (W)
-      CHECK_EVENT_IDX(idx);
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_limit:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d configured power limit (W)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
-                    access_amdsmi_power_average) != PAPI_OK)
-        return PAPI_ENOMEM;
+      if (dummy_power.power_limit != UINT32_MAX && dummy_power.power_limit != UINT16_MAX) {
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_limit:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d configured power limit (W)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ, access_amdsmi_power_average) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
     }
     // Register power cap events (if available) - test directly
     amdsmi_power_cap_info_t dummy_cap_info;
@@ -2319,27 +2311,29 @@ static int init_event_table(void) {
       continue;
     // Register GFX activity event - test directly
     amdsmi_engine_usage_t dummy_usage;
-    if (amdsmi_get_gpu_activity_p &&
-        amdsmi_get_gpu_activity_p(device_handles[d], &dummy_usage) ==
-            AMDSMI_STATUS_SUCCESS) {
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d GFX engine activity (%%)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                    access_amdsmi_gpu_activity) != PAPI_OK)
-        return PAPI_ENOMEM;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "umc_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d UMC engine activity (%%)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
-                    access_amdsmi_gpu_activity) != PAPI_OK)
-        return PAPI_ENOMEM;
-      CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mm_activity:device=%d", d);
-      CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-               "Device %d MM engine activity (%%)", d);
-      if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
-                    access_amdsmi_gpu_activity) != PAPI_OK)
-        return PAPI_ENOMEM;
+    memset(&dummy_usage, 0, sizeof(dummy_usage));
+    if (amdsmi_get_gpu_activity_p && amdsmi_get_gpu_activity_p(device_handles[d], &dummy_usage) == AMDSMI_STATUS_SUCCESS) {
+      if (dummy_usage.gfx_activity != UINT32_MAX && dummy_usage.gfx_activity != UINT16_MAX) {
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfx_activity:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GFX engine activity (%%)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ, access_amdsmi_gpu_activity) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
+      if (dummy_usage.umc_activity != UINT32_MAX && dummy_usage.umc_activity != UINT16_MAX) {
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "umc_activity:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d UMC engine activity (%%)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ, access_amdsmi_gpu_activity) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
+      if (dummy_usage.mm_activity != UINT32_MAX && dummy_usage.mm_activity != UINT16_MAX) {
+        CHECK_EVENT_IDX(idx);
+        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mm_activity:device=%d", d);
+        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d MM engine activity (%%)", d);
+        if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ, access_amdsmi_gpu_activity) != PAPI_OK)
+          return PAPI_ENOMEM;
+      }
     }
   }
   /* GPU utilization counters */
@@ -2449,17 +2443,16 @@ static int init_event_table(void) {
           "deep sleep frequency (MHz)"};
       for (int t = 0; t < 2; ++t) {
         amdsmi_clk_info_t info;
-        if (amdsmi_get_clock_info_p(device_handles[d], clk_types[t], &info) !=
-            AMDSMI_STATUS_SUCCESS)
+        memset(&info, 0, sizeof(info));
+        if (amdsmi_get_clock_info_p(device_handles[d], clk_types[t], &info) != AMDSMI_STATUS_SUCCESS)
           continue;
         for (int f = 0; f < 5; ++f) {
+          if (f == 4 && info.clk_deep_sleep == UINT8_MAX)
+            continue;
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_%s_%s:device=%d",
-                   clk_names[t], field_names[f], d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s %s", d,
-                   clk_names[t], field_descr[f]);
-          if (add_event(&idx, name_buf, descr_buf, d, t, f, PAPI_MODE_READ,
-                        access_amdsmi_clock_info) != PAPI_OK)
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "clk_%s_%s:device=%d", clk_names[t], field_names[f], d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d %s %s", d, clk_names[t], field_descr[f]);
+          if (add_event(&idx, name_buf, descr_buf, d, t, f, PAPI_MODE_READ, access_amdsmi_clock_info) != PAPI_OK)
             return PAPI_ENOMEM;
         }
       }
@@ -2919,83 +2912,74 @@ static int init_event_table(void) {
       uint32_t s;
       for (s = 0; s < 2; ++s) {
         amdsmi_power_info_t pinfo;
-        if (amdsmi_get_power_info_v2_p(device_handles[d], s, &pinfo) !=
-            AMDSMI_STATUS_SUCCESS)
+        memset(&pinfo, 0, sizeof(pinfo));
+        if (amdsmi_get_power_info_v2_p(device_handles[d], s, &pinfo) != AMDSMI_STATUS_SUCCESS)
           break;
 
         /* Register current socket power in Watts */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_current_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u current socket power (W)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 0, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.current_socket_power != UINT32_MAX && pinfo.current_socket_power != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_current_watts_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u current socket power (W)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 0, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
         /* Register average socket power in Watts */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_average_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u average socket power (W)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 1, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.average_socket_power != UINT32_MAX && pinfo.average_socket_power != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_average_watts_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u average socket power (W)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 1, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
         /* Register socket power in microwatts */
 #if AMDSMI_LIB_VERSION_MAJOR >= 25
-        if (amdsmi_lib_major >= 25) {
+        if (amdsmi_lib_major >= 25 && pinfo.socket_power != UINT64_MAX) {
           CHECK_EVENT_IDX(idx);
-          CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                   "power_sensor_socket_microwatts_sensor=%u:device=%d", s, d);
-          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                   "Device %d power sensor %u socket power (uW)", d, s);
-          if (add_event(&idx, name_buf, descr_buf, d, 2, s, PAPI_MODE_READ,
-                        access_amdsmi_power_sensor) != PAPI_OK)
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_socket_microwatts_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u socket power (uW)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 2, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
             return PAPI_ENOMEM;
         }
 #endif
 
         /* Register GFX voltage */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_gfx_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u GFX voltage (mV)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 3, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.gfx_voltage != UINT32_MAX && pinfo.gfx_voltage != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_gfx_voltage_mv_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u GFX voltage (mV)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 3, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
         /* Register SOC voltage */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_soc_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u SOC voltage (mV)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 4, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.soc_voltage != UINT32_MAX && pinfo.soc_voltage != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_soc_voltage_mv_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u SOC voltage (mV)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 4, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
         /* Register MEM voltage */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_mem_voltage_mv_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u MEM voltage (mV)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 5, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.mem_voltage != UINT32_MAX && pinfo.mem_voltage != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_mem_voltage_mv_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u MEM voltage (mV)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 5, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
         /* Register power limit */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "power_sensor_limit_watts_sensor=%u:device=%d", s, d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d power sensor %u power limit (W)", d, s);
-        if (add_event(&idx, name_buf, descr_buf, d, 6, s, PAPI_MODE_READ,
-                      access_amdsmi_power_sensor) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (pinfo.power_limit != UINT32_MAX && pinfo.power_limit != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "power_sensor_limit_watts_sensor=%u:device=%d", s, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d power sensor %u power limit (W)", d, s);
+          if (add_event(&idx, name_buf, descr_buf, d, 6, s, PAPI_MODE_READ, access_amdsmi_power_sensor) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
       }
     }
 
@@ -3005,8 +2989,7 @@ static int init_event_table(void) {
       // If the API defines a size/version field, set it before the call:
       // hdr.metrics_header_size = sizeof(hdr);   // uncomment if such a field exists
     
-      if (amdsmi_get_gpu_metrics_header_info_p(device_handles[d], &hdr)
-          == AMDSMI_STATUS_SUCCESS) {
+      if (amdsmi_get_gpu_metrics_header_info_p(device_handles[d], &hdr) == AMDSMI_STATUS_SUCCESS) {
         const char *hnames[] = {"metrics_header_size",
                                 "metrics_header_format_rev",
                                 "metrics_header_content_rev"};
@@ -3018,8 +3001,7 @@ static int init_event_table(void) {
           CHECK_EVENT_IDX(idx);
           CHECK_SNPRINTF(name_buf, sizeof(name_buf), "%s:device=%d", hnames[v], d);
           CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), hdescr[v], d);
-          if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ,
-                        access_amdsmi_metrics_header_info) != PAPI_OK)
+          if (add_event(&idx, name_buf, descr_buf, d, v, 0, PAPI_MODE_READ, access_amdsmi_metrics_header_info) != PAPI_OK)
             return PAPI_ENOMEM;
         }
       }
@@ -3027,105 +3009,450 @@ static int init_event_table(void) {
 
     if (amdsmi_get_gpu_metrics_info_p) {
       amdsmi_gpu_metrics_t metrics;
-      if (amdsmi_get_gpu_metrics_info_p(device_handles[d], &metrics) ==
-          AMDSMI_STATUS_SUCCESS) {
-        /* Register throttle status */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d throttle status", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+      memset(&metrics, 0, sizeof(metrics));
+      if (amdsmi_get_gpu_metrics_info_p(device_handles[d], &metrics) == AMDSMI_STATUS_SUCCESS) {
+        uint32_t gpu_metrics_xgmi_links = AMDSMI_MAX_NUM_XGMI_LINKS;
+        uint32_t xcp_count = 0;
 
-        /* Register independent throttle status */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "gpu_indep_throttle_status:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d independent throttle status", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.throttle_status != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_throttle_status:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d current throttle status bitmask", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 0, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        /* Register PCIe link width */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_width:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe link width (lanes)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.indep_throttle_status != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gpu_indep_throttle_status:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d ASIC independent throttle status bitmask", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 1, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        /* Register PCIe link speed */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_speed:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe link speed (0.1 GT/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_link_width != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_width:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe link width (lanes)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 2, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        /* Register PCIe bandwidth and replay counters */
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe accumulated bandwidth (GB/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_link_speed != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_link_speed:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe link speed (0.1 GT/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 3, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_inst:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe instantaneous bandwidth (GB/s)", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_bandwidth_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe accumulated bandwidth (GB/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 4, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_l0_to_recovery_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe L0->recovery count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_bandwidth_inst != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_bandwidth_inst:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe instantaneous bandwidth (GB/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 5, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_l0_to_recov_count_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_l0_to_recovery_count_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe L0 to recovery transition accumulated count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 6, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_replay_rollover_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe replay rollover count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_replay_count_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_count_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay accumulated count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 7, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_nak_sent_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent count",
-                 d);
-        if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_replay_rover_count_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_replay_rollover_count_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe replay rollover accumulated count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 8, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
 
-        CHECK_EVENT_IDX(idx);
-        CHECK_SNPRINTF(name_buf, sizeof(name_buf),
-                 "pcie_nak_rcvd_count_acc:device=%d", d);
-        CHECK_SNPRINTF(descr_buf, sizeof(descr_buf),
-                 "Device %d PCIe NAK received count", d);
-        if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
-                      access_amdsmi_gpu_metrics) != PAPI_OK)
-          return PAPI_ENOMEM;
+        if (metrics.pcie_nak_sent_count_acc != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_sent_count_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK sent accumulated count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 9, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.pcie_nak_rcvd_count_acc != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "pcie_nak_rcvd_count_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PCIe NAK received accumulated count", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 10, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.accumulation_counter != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "accumulation_counter:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulation cycle counter", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 11, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.prochot_residency_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "prochot_residency_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated PROCHOT thermal throttler residency", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 12, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.ppt_residency_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "ppt_residency_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated package power tracking throttler residency", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 13, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.socket_thm_residency_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "socket_thm_residency_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated socket thermal throttler residency", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 14, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.vr_thm_residency_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vr_thm_residency_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated voltage regulator thermal throttler residency", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 15, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.hbm_thm_residency_acc != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "hbm_thm_residency_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d accumulated high bandwidth memory thermal throttler residency", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 16, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.gfx_activity_acc != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfx_activity_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d graphics activity accumulated counter (percent)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 17, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.mem_activity_acc != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "mem_activity_acc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d memory activity accumulated counter (percent)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 18, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.num_partition != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "num_partition:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d number of current partitions", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 19, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+          xcp_count = metrics.num_partition;
+          if (xcp_count > AMDSMI_MAX_NUM_XCP)
+            xcp_count = AMDSMI_MAX_NUM_XCP;
+        }
+
+        if (metrics.temperature_vrgfx != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "temperature_vrgfx:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VR GFX temperature (C)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 20, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.temperature_vrsoc != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "temperature_vrsoc:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VR SOC temperature (C)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 21, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.temperature_vrmem != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "temperature_vrmem:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VR memory temperature (C)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 22, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.energy_accumulator != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "energy_accumulator:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GPU metrics energy accumulator", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 23, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.system_clock_counter != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "system_clock_counter:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GPU metrics system clock counter (ns)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 24, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_gfxclk_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_gfxclk_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average GFX clock frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 25, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_socclk_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_socclk_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average SOC clock frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 26, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_uclk_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_uclk_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average UCLK frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 27, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_vclk0_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_vclk0_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average VCLK0 frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 28, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_dclk0_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_dclk0_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average DCLK0 frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 29, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_vclk1_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_vclk1_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average VCLK1 frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 30, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.average_dclk1_frequency != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "average_dclk1_frequency:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d average DCLK1 frequency (MHz)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 31, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.firmware_timestamp != UINT64_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "firmware_timestamp:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d PMFW firmware timestamp (10ns resolution)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 32, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        for (uint32_t vcn = 0; vcn < AMDSMI_MAX_NUM_VCN; ++vcn) {
+          if (metrics.vcn_activity[vcn] == UINT16_MAX)
+            continue;
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "vcn_activity_vcn=%u:device=%d", vcn, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d VCN activity instance %u (percent)", d, vcn);
+          if (add_event(&idx, name_buf, descr_buf, d, 33, vcn, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.gfxclk_lock_status != UINT32_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "gfxclk_lock_status:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d GFX clock lock status bitmask", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 34, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.xgmi_link_width != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_link_width:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XGMI link width (GB/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 35, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        if (metrics.xgmi_link_speed != UINT16_MAX) {
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_link_speed:device=%d", d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XGMI link speed (GB/s)", d);
+          if (add_event(&idx, name_buf, descr_buf, d, 36, 0, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+#if AMDSMI_LIB_VERSION_MAJOR >= 25
+        if (amdsmi_get_gpu_xgmi_link_status_p) {
+          amdsmi_xgmi_link_status_t link_status;
+          memset(&link_status, 0, sizeof(link_status));
+          if (amdsmi_get_gpu_xgmi_link_status_p(device_handles[d], &link_status) == AMDSMI_STATUS_SUCCESS) {
+            gpu_metrics_xgmi_links = link_status.total_links;
+            if (gpu_metrics_xgmi_links > AMDSMI_MAX_NUM_XGMI_LINKS)
+              gpu_metrics_xgmi_links = AMDSMI_MAX_NUM_XGMI_LINKS;
+          }
+        }
+#endif
+
+        for (uint32_t link = 0; link < gpu_metrics_xgmi_links; ++link) {
+          if (metrics.xgmi_read_data_acc[link] == UINT64_MAX)
+            continue;
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_read_data_acc_link=%u:device=%d", link, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XGMI link %u accumulated read data (KB)", d, link);
+          if (add_event(&idx, name_buf, descr_buf, d, 37, link, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        for (uint32_t link = 0; link < gpu_metrics_xgmi_links; ++link) {
+          if (metrics.xgmi_write_data_acc[link] == UINT64_MAX)
+            continue;
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xgmi_write_data_acc_link=%u:device=%d", link, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XGMI link %u accumulated write data (KB)", d, link);
+          if (add_event(&idx, name_buf, descr_buf, d, 38, link, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        for (uint32_t jpeg = 0; jpeg < AMDSMI_MAX_NUM_JPEG; ++jpeg) {
+          if (metrics.jpeg_activity[jpeg] == UINT16_MAX)
+            continue;
+          CHECK_EVENT_IDX(idx);
+          CHECK_SNPRINTF(name_buf, sizeof(name_buf), "jpeg_activity_jpeg=%u:device=%d", jpeg, d);
+          CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d JPEG activity instance %u (percent)", d, jpeg);
+          if (add_event(&idx, name_buf, descr_buf, d, 39, jpeg, PAPI_MODE_READ,
+                        access_amdsmi_gpu_metrics) != PAPI_OK)
+            return PAPI_ENOMEM;
+        }
+
+        for (uint32_t xcp = 0; xcp < xcp_count; ++xcp) {
+          for (uint32_t xcc = 0; xcc < AMDSMI_MAX_NUM_XCC; ++xcc) {
+            uint32_t subvariant = (xcp << 16) | xcc;
+            if (metrics.xcp_stats[xcp].gfx_busy_inst[xcc] != UINT32_MAX) {
+              CHECK_EVENT_IDX(idx);
+              CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcp_gfx_busy_inst_xcp=%u_xcc=%u:device=%d", xcp, xcc, d);
+              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCP %u XCC %u instantaneous GFX busy (percent)", d, xcp, xcc);
+              if (add_event(&idx, name_buf, descr_buf, d, 40, subvariant, PAPI_MODE_READ,
+                            access_amdsmi_gpu_metrics) != PAPI_OK)
+                return PAPI_ENOMEM;
+            }
+
+            if (metrics.xcp_stats[xcp].gfx_busy_acc[xcc] != UINT64_MAX) {
+              CHECK_EVENT_IDX(idx);
+              CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcp_gfx_busy_acc_xcp=%u_xcc=%u:device=%d", xcp, xcc, d);
+              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCP %u XCC %u accumulated GFX busy (percent)", d, xcp, xcc);
+              if (add_event(&idx, name_buf, descr_buf, d, 43, subvariant, PAPI_MODE_READ,
+                            access_amdsmi_gpu_metrics) != PAPI_OK)
+                return PAPI_ENOMEM;
+            }
+
+            if (metrics.xcp_stats[xcp].gfx_below_host_limit_acc[xcc] != UINT64_MAX) {
+              CHECK_EVENT_IDX(idx);
+              CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcp_gfx_below_host_limit_acc_xcp=%u_xcc=%u:device=%d", xcp, xcc, d);
+              CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCP %u XCC %u accumulated GFX below host limit counter", d, xcp, xcc);
+              if (add_event(&idx, name_buf, descr_buf, d, 44, subvariant, PAPI_MODE_READ,
+                            access_amdsmi_gpu_metrics) != PAPI_OK)
+                return PAPI_ENOMEM;
+            }
+          }
+
+          for (uint32_t jpeg = 0; jpeg < AMDSMI_MAX_NUM_JPEG; ++jpeg) {
+            uint32_t subvariant = (xcp << 16) | jpeg;
+            if (metrics.xcp_stats[xcp].jpeg_busy[jpeg] == UINT16_MAX)
+              continue;
+            CHECK_EVENT_IDX(idx);
+            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcp_jpeg_busy_xcp=%u_jpeg=%u:device=%d", xcp, jpeg, d);
+            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCP %u JPEG %u instantaneous busy (percent)", d, xcp, jpeg);
+            if (add_event(&idx, name_buf, descr_buf, d, 41, subvariant, PAPI_MODE_READ,
+                          access_amdsmi_gpu_metrics) != PAPI_OK)
+              return PAPI_ENOMEM;
+          }
+
+          for (uint32_t vcn = 0; vcn < AMDSMI_MAX_NUM_VCN; ++vcn) {
+            uint32_t subvariant = (xcp << 16) | vcn;
+            if (metrics.xcp_stats[xcp].vcn_busy[vcn] == UINT16_MAX)
+              continue;
+            CHECK_EVENT_IDX(idx);
+            CHECK_SNPRINTF(name_buf, sizeof(name_buf), "xcp_vcn_busy_xcp=%u_vcn=%u:device=%d", xcp, vcn, d);
+            CHECK_SNPRINTF(descr_buf, sizeof(descr_buf), "Device %d XCP %u VCN %u instantaneous busy (percent)", d, xcp, vcn);
+            if (add_event(&idx, name_buf, descr_buf, d, 42, subvariant, PAPI_MODE_READ,
+                          access_amdsmi_gpu_metrics) != PAPI_OK)
+              return PAPI_ENOMEM;
+          }
+        }
+
       }
     }
 
