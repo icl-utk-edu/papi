@@ -6,6 +6,7 @@
 void add_cuda_native_events(int EventSet, const char *cuda_native_event_name, int *num_events_successfully_added, char **events_successfully_added, int *numMultipassEvents);
 int determine_if_device_is_enabled(int device_idx);
 void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int *total_event_count, int *cuda_device_index);
+int  verify_event_is_without_submetric(const char *eventName);
 
 // Define to handle suppress print output for the cuda component tests
 #define PRINT(global_suppress_output, format, args...)                          \
