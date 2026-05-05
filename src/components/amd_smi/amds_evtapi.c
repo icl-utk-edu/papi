@@ -130,7 +130,7 @@ static int fill_event_description(const native_event_t *event, int device,
         src = pd->descrs[device];
       }
     }
-    CHECK_SNPRINTF(buf, len, "%s", src);
+    CHECK_SNPRINTF(allowTruncation, buf, len, "%s", src);
     return PAPI_OK;
   }
 
@@ -140,12 +140,12 @@ static int fill_event_description(const native_event_t *event, int device,
    * device descr onto its own output line.
    */
   if (!(event->evtinfo_flags & AMDS_EVTINFO_FLAG_PER_DEVICE_DESCR)) {
-    CHECK_SNPRINTF(buf, len, "%s", fallback);
+    CHECK_SNPRINTF(allowTruncation, buf, len, "%s", fallback);
     return PAPI_OK;
   }
 
   if (!event->device_map) {
-    CHECK_SNPRINTF(buf, len, "%s", fallback);
+    CHECK_SNPRINTF(allowTruncation, buf, len, "%s", fallback);
     return PAPI_OK;
   }
 
@@ -265,7 +265,7 @@ static int fill_event_description(const native_event_t *event, int device,
   }
 
   if (buf[0] == '\0')
-    CHECK_SNPRINTF(buf, len, "%s", fallback);
+    CHECK_SNPRINTF(allowTruncation, buf, len, "%s", fallback);
 
   return PAPI_OK;
 }
@@ -386,9 +386,9 @@ int amds_evt_code_to_name(unsigned int EventCode, char *name, int len) {
 
   native_event_t *event = &ntv_table_p->events[info.nameid];
   if (info.flags & AMDS_DEVICE_FLAG)
-    CHECK_SNPRINTF(name, (size_t)len, "%s:device=%d", event->name, info.device);
+    CHECK_SNPRINTF(doNotAllowTruncation, name, (size_t)len, "%s:device=%d", event->name, info.device);
   else
-    CHECK_SNPRINTF(name, (size_t)len, "%s", event->name);
+    CHECK_SNPRINTF(doNotAllowTruncation, name, (size_t)len, "%s", event->name);
   return PAPI_OK;
 }
 
@@ -488,8 +488,8 @@ int amds_evt_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) {
     papi_errno = format_device_bitmap(event->device_map, devices, sizeof(devices));
     if (papi_errno != PAPI_OK)
       return papi_errno;
-    CHECK_SNPRINTF(info->quals[0], sizeof(info->quals[0]), ":device=");
-    CHECK_SNPRINTF(info->quals_descrs[0], sizeof(info->quals_descrs[0]),
+    CHECK_SNPRINTF(doNotAllowTruncation, info->quals[0], sizeof(info->quals[0]), ":device=");
+    CHECK_SNPRINTF(doNotAllowTruncation, info->quals_descrs[0], sizeof(info->quals_descrs[0]),
              "Mandatory device qualifier [%s]", devices);
   }
 
@@ -502,7 +502,7 @@ int amds_evt_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) {
 
   switch (device_flag) {
     case 0:
-      CHECK_SNPRINTF(info->symbol, sizeof(info->symbol), "%s", event->name);
+      CHECK_SNPRINTF(doNotAllowTruncation, info->symbol, sizeof(info->symbol), "%s", event->name);
       CHECK_FILL_EVENT_DESCRIPTION(event, -1, info->long_descr,
                                    sizeof(info->long_descr));
       break;
@@ -510,17 +510,17 @@ int amds_evt_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) {
       if (code_info.device != canonical_device) {
         // Suppress duplicate qualifier dumps for non-canonical variants so
         // tools like papi_native_avail match the legacy CUDA-style output.
-        CHECK_SNPRINTF(info->symbol, sizeof(info->symbol), "%s", event->name);
+        CHECK_SNPRINTF(doNotAllowTruncation, info->symbol, sizeof(info->symbol), "%s", event->name);
         CHECK_FILL_EVENT_DESCRIPTION(event, code_info.device, info->long_descr,
                                      sizeof(info->long_descr));
         quals_to_report = 0;
       } else {
-        CHECK_SNPRINTF(info->symbol, sizeof(info->symbol), "%s:device=%d", event->name,
+        CHECK_SNPRINTF(doNotAllowTruncation, info->symbol, sizeof(info->symbol), "%s:device=%d", event->name,
                  canonical_device);
         char event_descr[PAPI_HUGE_STR_LEN];
         CHECK_FILL_EVENT_DESCRIPTION(event, canonical_device, event_descr,
                                      sizeof(event_descr));
-        CHECK_SNPRINTF(info->long_descr, sizeof(info->long_descr),
+        CHECK_SNPRINTF(allowTruncation, info->long_descr, sizeof(info->long_descr),
                  "%s, masks:Mandatory device qualifier [%s]",
                  event_descr,
                  devices);

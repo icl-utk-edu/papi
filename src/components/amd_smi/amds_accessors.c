@@ -118,11 +118,11 @@ int access_amdsmi_gpu_string_hash(int mode, void *arg) {
       st = amdsmi_get_gpu_driver_info_p(device_handles[event->device], &dinfo);
       if (st == AMDSMI_STATUS_SUCCESS) {
         if (event->variant == 3)
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_name);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", dinfo.driver_name);
         else if (event->variant == 4)
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_date);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", dinfo.driver_date);
         else
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", dinfo.driver_version);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", dinfo.driver_version);
       }
     }
     break;
@@ -137,11 +137,11 @@ int access_amdsmi_gpu_string_hash(int mode, void *arg) {
       st = amdsmi_get_gpu_vbios_info_p(device_handles[event->device], &vb);
       if (st == AMDSMI_STATUS_SUCCESS) {
         if (event->variant == 5)
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", vb.version);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", vb.version);
         else if (event->variant == 6)
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", vb.part_number);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", vb.part_number);
         else
-          CHECK_SNPRINTF(buf, sizeof(buf), "%s", vb.build_date);
+          CHECK_SNPRINTF(doNotAllowTruncation, buf, sizeof(buf), "%s", vb.build_date);
       }
     }
     break;
