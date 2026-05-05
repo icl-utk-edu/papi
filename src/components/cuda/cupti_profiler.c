@@ -2288,8 +2288,7 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
         }
         int i;
         for (i = 0; i < NUM_STATS_QUALS; i++) {
-          size_t token_len = strlen(stats[i]);
-          if (strncmp(event->stat->arrayMetricStatistics[0], stats[i], token_len) == 0) {
+          if (strcmp(event->stat->arrayMetricStatistics[0], stats[i]) == 0) {
                 *stat = i;
                 return PAPI_OK;
           }
