@@ -115,6 +115,7 @@ do {                                                               \
 #define RPSDK_AES_STOPPED (0x0)
 #define RPSDK_AES_OPEN    (0x1)
 #define RPSDK_AES_RUNNING (0x2)
+#define RPSDK_AES_PAUSED  (0x4)
 
 typedef struct {
     char name[PAPI_MAX_STR_LEN];
