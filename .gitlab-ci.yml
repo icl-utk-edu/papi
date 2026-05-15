@@ -12,6 +12,7 @@ cuda-component-job:
     - changes:
         paths:
           - 'src/components/cuda/**'
+
 amd-smi-component-job:
   tags: [odyssey]
   image: rocm/dev-ubuntu-24.04:7.2.2-complete
@@ -21,4 +22,26 @@ amd-smi-component-job:
     - ./configure --prefix=$PWD/test-install --with-components="amd_smi" --with-debug=yes
     - make && make install
     - utils/papi_component_avail
-    - bash runtest.sh
+    - bash components/amd_smi/tests/runtest.sh
+
+disable-cpu-job:
+  tags: [hpsf-x86_64]
+  script:
+    - cd src
+    - ./configure --prefix=$PWD/test-install --disable-cpu
+    - utils/papi_component_avail
+
+disable-perf-event-job:
+  tags: [hpsf-x86_64]
+  script:
+    - cd src 
+    - ./configure --prefix=$PWD/test-install --disable-cpu
+    - utils/papi_component_avail
+
+disable-perf-event-uncore-job:
+  tags: [hpsf-x86_64]
+  script:
+    - cd src 
+    - ./configure --prefix=$PWD/test-install --disable-cpu
+    - utils/papi_component_avail
+    
