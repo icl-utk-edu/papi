@@ -18,7 +18,7 @@ amd-smi-component-job:
   script:
     - export PAPI_AMDSMI_ROOT=/opt/rocm-7.2.2
     - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - ./configure --prefix=$PWD/test-install --with-components="amd_smi" --with-debug=yes
     - make && make install
     - utils/papi_component_avail
     - bash runtest.sh
