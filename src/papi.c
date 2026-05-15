@@ -1494,13 +1494,14 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	if ( out == NULL )
 		papi_return( PAPI_EINVAL );
 
+	int compIdx;
 	if ( IS_PRESET(EventCode) ) {
 		EventCode &= PAPI_PRESET_AND_MASK;
 		if ( EventCode < 0 || EventCode >= num_all_presets )
 			papi_return( PAPI_ENOTPRESET );
 
         int preset_index = EventCode;
-        int compIdx = get_preset_cmp(&preset_index);
+        compIdx = get_preset_cmp(&preset_index);
         if( compIdx < 0 ) {
             return PAPI_ENOEVNT;
         }
@@ -1519,8 +1520,18 @@ PAPI_event_code_to_name( int EventCode, char *out )
 	}
 
 	if ( IS_NATIVE(EventCode) ) {
+		compIdx = _papi_hwi_component_index(EventCode);
+		if (compIdx < 0 ) {
+			return PAPI_ENOCMP;
+		}
+
+		int stringLength = PAPI_MAX_STR_LEN;
+		if (strcmp(_papi_hwd[compIdx]->cmp_info.name, "cuda") == 0) {
+			stringLength = PAPI_2MAX_STR_LEN;
+		}
+
 		return ( _papi_hwi_native_code_to_name
-				 ( ( unsigned int ) EventCode, out, PAPI_MAX_STR_LEN ) );
+				 ( ( unsigned int ) EventCode, out, stringLength ) );
 	}
 
 	if ( IS_USER_DEFINED(EventCode) ) {

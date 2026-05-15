@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 
             // Convert the first cuda native event code to a name, the name will
             // be in the format of cuda:::basename with no qualifiers appended.
-            char basename[PAPI_MAX_STR_LEN];
+            char basename[PAPI_2MAX_STR_LEN];
             check_papi_api_call( PAPI_event_code_to_name(cuda_eventcode, basename) );
 
             // Begin reconstructing the Cuda native event name with qualifiers
