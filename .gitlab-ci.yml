@@ -29,6 +29,7 @@ disable-cpu-job:
   script:
     - cd src
     - ./configure --prefix=$PWD/test-install --disable-cpu
+    - make && make install
     - utils/papi_component_avail
 
 disable-perf-event-job:
@@ -36,6 +37,7 @@ disable-perf-event-job:
   script:
     - cd src 
     - ./configure --prefix=$PWD/test-install --disable-perf-event
+    - make && make install
     - utils/papi_component_avail
 
 disable-perf-event-uncore-job:
@@ -43,5 +45,6 @@ disable-perf-event-uncore-job:
   script:
     - cd src 
     - ./configure --prefix=$PWD/test-install --disable-perf-event-uncore
+    - make && make install
     - utils/papi_component_avail
     
