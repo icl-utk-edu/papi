@@ -12,3 +12,13 @@ cuda-component-job:
     - changes:
         paths:
           - 'src/components/cuda/**'
+amd-smi-component-job:
+  tags: [odyssey]
+  image: rocm/dev-ubuntu-24.04:7.2.2-complete
+  script:
+    - export PAPI_AMDSMI_ROOT=/opt/rocm-7.2.2
+    - cd src
+    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - make && make install
+    - utils/papi_component_avail
+    - bash runtest.sh
