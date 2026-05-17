@@ -1883,7 +1883,7 @@ if test "$with_sysdetect" = "yes"; then
     fi
 fi
 
-AC_MSG_RESULT($components)
+AS_IF([test "x$components" != "x"], [AC_MSG_RESULT($components)], [AC_MSG_RESULT(No components configured)])
 
 # Check whether rocm and rocp_sdk were configured together
 rocm_found=0
