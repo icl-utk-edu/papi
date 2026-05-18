@@ -1247,6 +1247,12 @@ int cuptip_shutdown(void)
         return papi_errno;
     }
 
+    int runtimeVersion = 0;
+    cudaArtCheckErrors( cudaRuntimeGetVersionPtr(&runtimeVersion), return PAPI_EMISC );
+    if (runtimeVersion >= 13000 && runtimeVersion < 13020) {
+       cuptiCheckErrors( cuptiFinalizePtr(), return PAPI_EMISC );
+    }
+
     papi_errno = unload_nvpw_sym();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
