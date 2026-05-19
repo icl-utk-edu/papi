@@ -4,20 +4,18 @@ stages:
   - make
   - test
 
-variables:
-  component_name: ""
-
-
 job1:
   stage: pre
-  variables:
-    component_name: "cuda"
   script:
-    - echo "$component_name"
+    - echo "TAG=hpsf-x86_64" >> job.env
+    - echo "COMPONENT_NAME" >> job.env
+  artifacts:
+    reports:
+      dotenv: job.env
 
 job2:
   stage: configure
   script:
-    - echo "$component_name"
+    - echo "Tag is $TAG and component is $COMPONENT_NAME"
 
     
