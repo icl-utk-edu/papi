@@ -31,6 +31,8 @@ disable-cpu-job:
     - ./configure --prefix=$PWD/test-install --disable-cpu
     - make && make install
     - utils/papi_component_avail
+  rules:
+    - if: $CPU == "True"
 
 disable-perf-event-job:
   tags: [hpsf-x86_64]
@@ -39,6 +41,8 @@ disable-perf-event-job:
     - ./configure --prefix=$PWD/test-install --disable-perf-event
     - make && make install
     - utils/papi_component_avail
+  rules:
+    - if: $CPU == "True"
 
 disable-perf-event-uncore-job:
   tags: [hpsf-x86_64]
@@ -47,4 +51,6 @@ disable-perf-event-uncore-job:
     - ./configure --prefix=$PWD/test-install --disable-perf-event-uncore
     - make && make install
     - utils/papi_component_avail
+  rules:
+    - if: $CPU == "True"
     
