@@ -72,6 +72,9 @@ typedef struct cuptip_gpu_state_s {
     cuptiu_event_table_t  *added_events;
     int                   numberOfRawMetricRequests;
     NVPA_RawMetricRequest *rawMetricRequests;
+    CUpti_Profiler_CounterDataImageOptions counterDataImageOptionsParams;
+    CUpti_Profiler_CounterDataImage_Initialize_Params counterDataImageInitializeParams;
+    CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initializeScratchBufferParams;
     byte_array_t          counterDataPrefixImage;
     byte_array_t          configImage;
     byte_array_t          counterDataImage;
@@ -187,7 +190,7 @@ static int start_profiling_session(byte_array_t counterDataImage, byte_array_t c
 static int end_profiling_session(void);
 static int get_config_image(const char *chipName, const uint8_t *pCounterAvailabilityImageData, NVPA_RawMetricRequest *rawMetricRequests, int rmr_count, byte_array_t *configImage);
 static int get_counter_data_prefix_image(const char *chipName, NVPA_RawMetricRequest *rawMetricRequests, int rmr_count, byte_array_t *counterDataPrefixImage);
-static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_array_t *counterDataScratchBuffer, byte_array_t *counterDataImage);
+static int get_counter_data_image(cuptip_gpu_state_t *gpu_ctl);
 static int get_event_collection_method(const char *evt_name);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static void free_and_reset_configuration_images(cuptip_gpu_state_t *gpu_ctl);
@@ -906,7 +909,13 @@ int cuptip_ctx_start(cuptip_control_t state)
             return papi_errno;
         }
 
-        papi_errno = get_counter_data_image(gpu_ctl->counterDataPrefixImage, &gpu_ctl->counterDataScratchBuffer, &gpu_ctl->counterDataImage);
+        gpu_ctl->counterDataImageOptionsParams.pCounterDataPrefix = gpu_ctl->counterDataPrefixImage.data;
+        gpu_ctl->counterDataImageOptionsParams.counterDataPrefixSize = gpu_ctl->counterDataPrefixImage.size;
+        gpu_ctl->counterDataImageOptionsParams.maxNumRanges = 1;
+        gpu_ctl->counterDataImageOptionsParams.maxNumRangeTreeNodes = 1;
+        gpu_ctl->counterDataImageOptionsParams.maxRangeNameLength = PAPI_MIN_STR_LEN;
+
+        papi_errno = get_counter_data_image(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -1065,10 +1074,15 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         free(metricValues);
         *counters = counter_vals;
 
+        // Per NVIDIA cuptiProfilerCounterDataImageInitialize resets the counter data image so that we can reuse
+        // the same allocated memory for new data
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->counterDataImageInitializeParams), return PAPI_EMISC );
+        // Per NVIDIA the scratch buffer must also be reset
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initializeScratchBufferParams), return PAPI_EMISC);
+
         papi_errno = begin_pass();
         if (papi_errno != PAPI_OK) {
             return papi_errno;
-
         }
 
         char rangeName[PAPI_MIN_STR_LEN];
@@ -3194,7 +3208,6 @@ static int get_config_image(const char *chipName, const uint8_t *pCounterAvailab
     return PAPI_OK;
 }
 
-
 /** @class get_counter_data_prefix_image
  *  @brief Generate the counterDataPrefix binary configuration image 
  *         (file format in memory).
@@ -3251,77 +3264,58 @@ static int get_counter_data_prefix_image(const char *chipName, NVPA_RawMetricReq
 }
 
 /** @class get_counter_data_image
- *  @brief Create a counterDataImage to be used for metric evaluation. 
+ *  @brief Create a counterDataImage to be used for metric evaluation.
  *
- *  @param counterDataPrefixImage
- *    Struct containing the size and data of the counterDataPrefix
- *    binary configuration image.
- *  @param counterDataScratchBuffer
- *    Struct to store the size and data of the scratch buffer.
- *  @param counterDataImage
- *    Struct to store the size and data of the counterDataImage.
+ *  @param cuptip_gpu_state_t *gpu_ctl
+ *    Struct containing the size and data of configuration images and CUPTI Profiling API structures.
 */
-static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_array_t *counterDataScratchBuffer, byte_array_t *counterDataImage)
+static int get_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
 {
-    CUpti_Profiler_CounterDataImageOptions counterDataImageOptions;
-    counterDataImageOptions.pCounterDataPrefix = counterDataPrefixImage.data;
-    counterDataImageOptions.counterDataPrefixSize = counterDataPrefixImage.size;
-    counterDataImageOptions.maxNumRanges = 1;
-    counterDataImageOptions.maxNumRangeTreeNodes = 1; // Why do we do this?
-    counterDataImageOptions.maxRangeNameLength = 64; 
-
     // Calculate size of counterDataImage based on counterDataPrefixImage and options.
     CUpti_Profiler_CounterDataImage_CalculateSize_Params calculateSizeParams = {CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE};
-    calculateSizeParams.pOptions = &counterDataImageOptions;
+    calculateSizeParams.pOptions = &gpu_ctl->counterDataImageOptionsParams;
     calculateSizeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
     calculateSizeParams.pPriv = NULL;
     cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateSizePtr(&calculateSizeParams), return PAPI_EMISC );
 
-   // Initialize counterDataImage.
-    CUpti_Profiler_CounterDataImage_Initialize_Params initializeParams = {CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE};
-    initializeParams.pOptions = &counterDataImageOptions;
-    initializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
-    initializeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    initializeParams.pPriv = NULL;
-
-    byte_array_t *tmpCounterDataImage;
-    tmpCounterDataImage = counterDataImage;
-
-    tmpCounterDataImage->size = calculateSizeParams.counterDataImageSize;
-    tmpCounterDataImage->data = (uint8_t *) calloc(tmpCounterDataImage->size, sizeof(uint8_t));
-    if (counterDataImage->data  == NULL) {
-        SUBDBG("Failed to allocate memory for counterDataImage->data.\n");
+    gpu_ctl->counterDataImage.size = calculateSizeParams.counterDataImageSize;
+    gpu_ctl->counterDataImage.data = (uint8_t *) calloc(gpu_ctl->counterDataImage.size, sizeof(uint8_t));
+    if (gpu_ctl->counterDataImage.data == NULL) {
+        SUBDBG("Failed to allocate memory for gpu_ctl->counterDataImage.data.\n");
         return PAPI_ENOMEM;
     }
 
-    initializeParams.pCounterDataImage = counterDataImage->data;
-    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&initializeParams), return PAPI_EMISC );
+    // Initialize counterDataImage.
+    gpu_ctl->counterDataImageInitializeParams.structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE;
+    gpu_ctl->counterDataImageInitializeParams.pOptions = &gpu_ctl->counterDataImageOptionsParams;
+    gpu_ctl->counterDataImageInitializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
+    gpu_ctl->counterDataImageInitializeParams.counterDataImageSize = gpu_ctl->counterDataImage.size;
+    gpu_ctl->counterDataImageInitializeParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
+    gpu_ctl->counterDataImageInitializeParams.pPriv = NULL;
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->counterDataImageInitializeParams), return PAPI_EMISC );
 
     // Calculate scratchBuffer size based on counterDataImage size and counterDataImage.
     CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params scratchBufferSizeParams = {CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE};
-    scratchBufferSizeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    scratchBufferSizeParams.pCounterDataImage = counterDataImage->data;
+    scratchBufferSizeParams.counterDataImageSize = gpu_ctl->counterDataImage.size;
+    scratchBufferSizeParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
     scratchBufferSizeParams.pPriv = NULL;
     cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr(&scratchBufferSizeParams), return PAPI_EMISC );
 
-    // Create counterDataScratchBuffer.
-    byte_array_t *tmpCounterDataScratchBuffer;
-    tmpCounterDataScratchBuffer = counterDataScratchBuffer;
-    tmpCounterDataScratchBuffer->size = scratchBufferSizeParams.counterDataScratchBufferSize;
-    tmpCounterDataScratchBuffer->data = (uint8_t *) calloc(tmpCounterDataScratchBuffer->size, sizeof(uint8_t));
-    if (counterDataScratchBuffer->data == NULL) {
-        SUBDBG("Failed to allocate memory for counterDataScratchBuffer->data.\n");
+    gpu_ctl->counterDataScratchBuffer.size = scratchBufferSizeParams.counterDataScratchBufferSize;
+    gpu_ctl->counterDataScratchBuffer.data = (uint8_t *) calloc(gpu_ctl->counterDataScratchBuffer.size, sizeof(uint8_t));
+    if (gpu_ctl->counterDataScratchBuffer.data == NULL) {
+        SUBDBG("Failed to allocate memory for gpu_ctl->counterDataScratchBuffer.data");
         return PAPI_ENOMEM;
-    }   
+    }
 
     // Initialize counterDataScratchBuffer.
-    CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initScratchBufferParams = { CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE };
-    initScratchBufferParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    initScratchBufferParams.pCounterDataImage = counterDataImage->data; //uint8_t* pCounterDataImage
-    initScratchBufferParams.counterDataScratchBufferSize = counterDataScratchBuffer->size;
-    initScratchBufferParams.pCounterDataScratchBuffer = counterDataScratchBuffer->data;
-    initScratchBufferParams.pPriv = NULL;
-    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&initScratchBufferParams), return PAPI_EMISC );
+    gpu_ctl->initializeScratchBufferParams.structSize = CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE;
+    gpu_ctl->initializeScratchBufferParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
+    gpu_ctl->initializeScratchBufferParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
+    gpu_ctl->initializeScratchBufferParams.counterDataScratchBufferSize = gpu_ctl->counterDataScratchBuffer.size;
+    gpu_ctl->initializeScratchBufferParams.pCounterDataScratchBuffer = gpu_ctl->counterDataScratchBuffer.data;
+    gpu_ctl->initializeScratchBufferParams.pPriv = NULL;
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initializeScratchBufferParams), return PAPI_EMISC );
 
     return PAPI_OK;
 }
@@ -3331,12 +3325,17 @@ static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_arra
 */
 static int end_profiling_session(void)
 {
-    int papi_errno = disable_profiling();
+    int papi_errno = pop_range();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
-    papi_errno = pop_range();
+    papi_errno = disable_profiling();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    papi_errno = end_pass();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
