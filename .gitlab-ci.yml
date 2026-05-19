@@ -15,7 +15,8 @@ job1:
 
 job2:
   stage: configure
-  tags: ${TAG}
+  tags:
+    - "${TAG}"
   script:
     - ./configure --prefix=$PWD/test-install --with-components="$COMPONENT_NAME"
 
