@@ -8,14 +8,15 @@ job1:
   stage: pre
   script:
     - echo "TAG=hpsf-x86_64" >> job.env
-    - echo "COMPONENT_NAME=cuda" >> job.env
+    - echo "COMPONENT_NAME=powercap" >> job.env
   artifacts:
     reports:
       dotenv: job.env
 
 job2:
   stage: configure
+  tags: [$TAG]
   script:
-    - echo "Tag is $TAG and component is $COMPONENT_NAME"
+    - ./configure --prefix=$PWD/test-install --with-components="$COMPONENT_NAME"
 
     
