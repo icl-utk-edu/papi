@@ -12,6 +12,8 @@ job1:
   stage: pre
   variables:
     component_name: "cuda"
+  script:
+    - echo "$component_name"
 
 job2:
   stage: configure
