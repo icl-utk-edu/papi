@@ -1,3 +1,8 @@
+# Stages
+# 1. Set current working directory i.e. cd src
+# 2. install i.e. install papi
+# 3. Test
+
 cuda-component-job:
   before_script:
     - cd src
@@ -10,7 +15,7 @@ cuda-component-job:
   parallel:
     matrix:
       - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04, nvidia/cuda:12.9.1-devel-ubuntu22.04]
-      - ARCH: [nvidia-gh200, nvidia-rtx6000]
+        ARCH: [nvidia-gh200, nvidia-rtx6000]
   image: ${IMAGE}
   tags:
     - ${ARCH}
