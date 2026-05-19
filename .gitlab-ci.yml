@@ -1,56 +1,21 @@
-cuda-component-job:
-  tags: [nvidia-gh200]
-  image: nvidia/cuda:12.8.2-devel-ubuntu24.04
-  script:
-    - export PAPI_CUDA_ROOT=/usr/local/cuda
-    - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
-    - make && make install
-    - utils/papi_component_avail
-    - bash components/cuda/tests/run_cuda_tests.sh
-  rules:
-    - changes:
-        paths:
-          - 'src/components/cuda/**'
+stages:
+  - pre
+  - configure
+  - make
+  - test
 
-amd-smi-component-job:
-  tags: [odyssey]
-  image: rocm/dev-ubuntu-24.04:7.2.2-complete
-  script:
-    - export PAPI_AMDSMI_ROOT=/opt/rocm-7.2.2
-    - cd src
-    - ./configure --prefix=$PWD/test-install --with-components="amd_smi" --with-debug=yes
-    - make && make install
-    - utils/papi_component_avail
-    - bash components/amd_smi/tests/runtest.sh
+variables:
+  - component_name: ""
 
-disable-cpu-job:
-  tags: [hpsf-x86_64]
-  script:
-    - cd src
-    - ./configure --prefix=$PWD/test-install --disable-cpu
-    - make && make install
-    - utils/papi_component_avail
-  rules:
-    - if: $CPU == "True"
 
-disable-perf-event-job:
-  tags: [hpsf-x86_64]
-  script:
-    - cd src 
-    - ./configure --prefix=$PWD/test-install --disable-perf-event
-    - make && make install
-    - utils/papi_component_avail
-  rules:
-    - if: $CPU == "True"
+job1:
+  stage: pre
+  variables:
+    component_name: "cuda"
 
-disable-perf-event-uncore-job:
-  tags: [hpsf-x86_64]
+job2:
+  stage: configure
   script:
-    - cd src 
-    - ./configure --prefix=$PWD/test-install --disable-perf-event-uncore
-    - make && make install
-    - utils/papi_component_avail
-  rules:
-    - if: $CPU == "True"
+    - echo "$component_name"
+
     
