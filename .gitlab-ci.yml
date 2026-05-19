@@ -11,5 +11,7 @@ cuda-component-job:
     matrix:
       - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04]
       - ARCH: [nvidia-gh200, nvidia-rtx6000]
+  image:
+    - ${IMAGE}
   tags:
     - ${ARCH}
