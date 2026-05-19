@@ -1,23 +1,15 @@
-stages:
-  - pre
-  - configure
-  - make
-  - test
-
-job1:
-  stage: pre
+cuda-component-job:
+  before_script:
+    - cd src
+    - export PAPI_CUDA_ROOT=/usr/local/cuda
   script:
-    - echo "TAG=hpsf-x86_64" >> job.env
-    - echo "COMPONENT_NAME=powercap" >> job.env
-  artifacts:
-    reports:
-      dotenv: job.env
-
-job2:
-  stage: configure
+    - ./configure --prefix=$PWD/test-install --with-components="cuda" --with-debug=yes
+    - make && make install
+    - utils/papi_component_avail
+    - bash components/cuda/tests/run_cuda_tests.sh
+  parallel:
+    matrix:
+      - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04]
+      - ARCH: [nvidia-gh200, nvidia-rtx6000]
   tags:
-    - "${TAG}"
-  script:
-    - ./configure --prefix=$PWD/test-install --with-components="$COMPONENT_NAME"
-
-    
+    - ${ARCH}
