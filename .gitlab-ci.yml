@@ -5,7 +5,7 @@ stages:
   - test
 
 variables:
-  - component_name: ""
+  component_name: ""
 
 
 job1:
