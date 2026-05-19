@@ -8,7 +8,7 @@ job1:
   stage: pre
   script:
     - echo "TAG=hpsf-x86_64" >> job.env
-    - echo "COMPONENT_NAME" >> job.env
+    - echo "COMPONENT_NAME=cuda" >> job.env
   artifacts:
     reports:
       dotenv: job.env
