@@ -26,7 +26,7 @@ jobs:
     runs-on: [self-hosted, cpu_intel, gpu_nvidia]
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: comprehensive component tests 
         run: .github/workflows_scripts/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with rocp_sdk and amd_smi components, as they will not be active in the above comprehensive job
@@ -41,7 +41,7 @@ jobs:
     runs-on: [self-hosted, gpu_amd]
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: rocp_sdk and amd_smi component tests
         run: .github/workflows_scripts/ci_papi_framework.sh "${{matrix.components}}" ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   # build PAPI only with the infiniband component, as it will not always be active in the above comrehensive job
@@ -56,24 +56,24 @@ jobs:
     runs-on: [self-hosted, infiniband]
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: infiniband component tests
         run: .github/workflows_scripts/ci_papi_framework.sh ${{matrix.components}} ${{matrix.debug}} ${{matrix.shlib}} ${{matrix.hardware}}
   papi_spack:
     runs-on: cpu
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Build/Test/Install via Spack
         run: .github/workflows_scripts/spack.sh
   papi_clang_analysis:
     runs-on: cpu
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Run static analysis
         run: .github/workflows_scripts/clang_analysis.sh clang-analysis-output
       - name: Archive analysis results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: clang-analysis-output
