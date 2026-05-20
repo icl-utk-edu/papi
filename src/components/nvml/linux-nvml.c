@@ -115,9 +115,7 @@ static nvmlReturn_t (*nvmlDeviceGetPowerManagementLimitConstraintsPtr)(nvmlDevic
 // file handles used to access NVML libraries with dlopen
 static void* dl3 = NULL;
 
-static char nvml_main[]=PAPI_NVML_MAIN;
-
-static int linkCudaLibraries();
+static int load_nvml_sym(void);
 
 /* Declare our vector in advance */
 papi_vector_t _nvml_vector;
@@ -1246,7 +1244,7 @@ int _papi_nvml_init_private(void)
 
     SUBDBG("Private init with component idx: %d\n", _nvml_vector.cmp_info.CmpIdx);
     /* link in the NVML libraries and resolve the symbols we need to use */
-    if (linkCudaLibraries() != PAPI_OK) {
+    if (load_nvml_sym() != PAPI_OK) {
         SUBDBG("Dynamic link of CUDA libraries failed, component will be disabled.\n");
         SUBDBG("See disable reason in papi_component_avail output for more details.\n");
         _papi_nvml_shutdown_component();                          // clean up any open dynLibs, mallocs, etc.
@@ -1353,94 +1351,6 @@ nvml_init_private_exit:
     return err;
 }
 
-/**@class nvml_search_and_load_shared_objects
- * @brief Search and load Cuda shared objects.
- *
- * @param *parentPath
- *   The main path we will use to search for the shared objects. 
- * @param *soMainName
- *   The name of the shared object e.g. libnvidia. This is used
- *   to select the standardSubPaths to use.
- * @param *soNamesToSearchFor[]
- *   Varying names of the shared object we want to search for.
- * @param soNamesToSearchCount
- *   Total number of names in soNamesToSearchFor.
- */
-static void *nvml_search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount)
-{
-    const char *standardSubPaths[3];
-    // Case for when we want to search explicit subpaths for a shared object 
-    if (soMainName != NULL) {
-        if (strcmp(soMainName, "libnvidia-ml") == 0) {
-            standardSubPaths[0] = "%s/lib64/";
-            standardSubPaths[1] = "%s/";
-            standardSubPaths[2] = NULL;
-        }
-    }
-    // Case for when a user provides an exact path e.g. PAPI_NVML_MAIN
-    // and we do not want to search subpaths
-    else{
-        standardSubPaths[0] = "%s/";
-        standardSubPaths[1] = NULL;
-    }
-
-    char pathToSharedLibrary[PAPI_HUGE_STR_LEN], directoryPathToSearch[PAPI_HUGE_STR_LEN];
-    void *so = NULL;
-    char *soNameFound;
-    int i, strLen;
-    for (i = 0; standardSubPaths[i] != NULL; i++) {
-        // Create path to search for dl names
-        int strLen = snprintf(directoryPathToSearch, PAPI_HUGE_STR_LEN, standardSubPaths[i], parentPath);
-        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-            SUBDBG("Failed to fully write path to search for dlnames.\n");
-            return NULL;
-        }
-
-        DIR *dir = opendir(directoryPathToSearch);
-        if (dir == NULL) {
-            SUBDBG("Directory path could not be opened.\n");
-            continue;
-        }
-
-        int j;
-        for (j = 0; j < soNamesToSearchCount; j++) {
-            struct dirent *dirEntry;
-            while( ( dirEntry = readdir(dir) ) != NULL ) {
-                int result;
-                char *p = strstr(soNamesToSearchFor[j], "so");
-                // Check for an exact match of a shared object name (.so and .so.1 case)
-                if (p) {
-                    result = strcmp(dirEntry->d_name, soNamesToSearchFor[j]);
-                }
-                // Check for any match of a shared object name (we could not find .so and .so.1)
-                else {
-                    result = strncmp(dirEntry->d_name, soNamesToSearchFor[j], strlen(soNamesToSearchFor[j]));
-                }
-
-                if (result == 0) {
-                    soNameFound = dirEntry->d_name;
-                    goto found;
-                }
-            }
-            // Reset the position of the directory stream
-            rewinddir(dir);
-        }
-    }
-
-  exit:
-    return so;
-  found:
-    // Construct path to shared library
-    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
-    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-        SUBDBG("Failed to fully write constructed path to shared library.\n");
-        return NULL;
-    }
-    so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
-
-    goto exit;
-}
-
 /**@class nvml_search_and_load_from_system_paths
  * @brief A simple wrapper to try and search and load
  *        Cuda shared objects from system paths.
@@ -1464,59 +1374,62 @@ static void *nvml_search_and_load_from_system_paths(const char *soNamesToSearchF
     return so;
 }
 
-/*
- * Link the necessary CUDA libraries to use the NVML component.  If any of them can not be found, then
- * the NVML component will just be disabled.  This is done at runtime so that a version of PAPI built
- * with the NVML component can be installed and used on systems which have the CUDA libraries installed
- * and on systems where these libraries are not installed.
- */
-static int
-linkCudaLibraries()
+/**@class load nvml_sym
+ * @brief Search for a variation of the shared object libnvidia-ml and once found
+ *        load the function pointers.
+ *        Order of search is outlined below.
+ *
+ * 1. If a user sets PAPI_NVML_MAIN, this will take precedent over
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_NVML_MAIN is not set then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised
+ *    for this option.
+ * */
+
+static int load_nvml_sym(void)
 {
-    char path_lib[1024];
     /* Attempt to guess if we were statically linked to libc, if so bail */
     if (_dl_non_dynamic_init != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML component does not support statically linking of libc.", PAPI_MAX_STR_LEN);
         return PAPI_ENOSUPP;
     }
 
-    // Need to link in the NVML libraries, if any not found disable the component.
-    // getenv returns NULL if environment variable is not found.
-    char *cuda_root = getenv("PAPI_CUDA_ROOT");
-
-    // We need the NVML main library, normally libnvidia-ml.so or libnvidia-ml.so.1.
-    dl3 = NULL;                                                 // Ensure reset to NULL.
-
-    int soNamesToSearchCount = 3; 
-    const char *soNamesToSearchFor[] = {"libnvidia-ml.so", "libnvidia-ml.so.1", "libnvidia"};
-    // Step 1: Process override if given.   
-    if (strlen(nvml_main) > 0) {                                        // If override given, it MUST work.
-        dl3 = nvml_search_and_load_shared_objects(nvml_main, NULL, soNamesToSearchFor, soNamesToSearchCount); // Try to open that path
-        if (dl3 == NULL) {
-            snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_NVML_MAIN override '%s' given in Rules.nvml not found.", nvml_main);
-            return(PAPI_ENOSUPP);   // Override given but not found.
+    int strLen;
+    char *papi_nvml_main = getenv("PAPI_NVML_MAIN");
+    if (papi_nvml_main) {
+        dl3 = dlopen(papi_nvml_main, RTLD_NOW | RTLD_GLOBAL);
+        if (dl3 != NULL) {
+            goto load_functions;
+        }
+        else {
+            strLen = snprintf(_nvml_vector.cmp_info.disabled_reason, sizeof(_nvml_vector.cmp_info.disabled_reason), "%s",
+                              "PAPI_NVML_MAIN was set, but did not result in successfully loading the libnvidia-ml shared object."
+                              " Set PAPI_NVML_MAIN to a valid libnvidia-ml shared object.");
+            if (strLen < 0 || (size_t) strLen >= sizeof(_nvml_vector.cmp_info.disabled_reason)) {
+                SUBDBG("The NVML disabled reason has been truncated. Proceeding.\n");
+            }
+            return PAPI_ESYS;
         }
     }
-
-    char *soMainName = "libnvidia-ml";
-    // Step 2: Try the explicit install default. 
-    if (dl3 == NULL && cuda_root != NULL) {                                         // If ROOT given, it doesn't HAVE to work.
-        dl3 = nvml_search_and_load_shared_objects(cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount); // Try to open that path.
-    } 
-
-    // Step 3: Try system paths, will work with Spack, LD_LIBRARY_PATH, default paths.
-    if (dl3 == NULL) {                                              // If no override,
-        dl3 = nvml_search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount); // Try system paths.
+    else {
+        SUBDBG("PAPI_NVML_MAIN was not set. Falling back to dlopen to search for the libnvidia-ml shared object.\n");
     }
 
-    // Check for failure.
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libnvidia-ml.so", "libnvidia-ml.so.1", "libnvidia"};
+    // If PAPI_NVML_MAIN was not set then use dlopen and follow the search logic used by the dynamic linker
+    dl3 = nvml_search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
     if (dl3 == NULL) {
-        snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libnvidia-ml.so not found.");
-        return(PAPI_ENOSUPP);   // Not found on default paths.
+        strLen = snprintf(_nvml_vector.cmp_info.disabled_reason, sizeof(_nvml_vector.cmp_info.disabled_reason), "%s",
+                          "The shared object libnvidia-ml was unable to be found. Try setting PAPI_NVML_MAIN.");
+        if (strLen < 0 || (size_t) strLen >= sizeof(_nvml_vector.cmp_info.disabled_reason)) {
+            SUBDBG("The NVML disabled reason has been truncated. Proceeding.\n");
+        }
+        return PAPI_ESYS;
     }
 
-    // We have a dl3. (libnvidia-ml.so).
-
+  load_functions:
     nvmlDeviceGetClockInfoPtr = dlsym(dl3, "nvmlDeviceGetClockInfo");
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetClockInfo not found.", PAPI_MAX_STR_LEN);
