@@ -102,13 +102,13 @@ int main(int argc, char **argv)
 
 	/* Add the level 2 topdown metrics */
 	/* if we can't, just skip because not all processors support level 2 */
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_HEAVY_OPS_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_HEAVY_OPS_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_skip(__FILE__, __LINE__,
 			"Error adding TOPDOWN_HEAVY_OPS_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_LIGHT_OPS_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_LIGHT_OPS_PERC");
 	if (retval != PAPI_OK)
 	{
 		/* if the first L2 event was successfully added though, */
@@ -116,37 +116,37 @@ int main(int argc, char **argv)
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_LIGHT_OPS_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_BR_MISPREDICT_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_BR_MISPREDICT_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_BR_MISPREDICT_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_MACHINE_CLEARS_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_MACHINE_CLEARS_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_MACHINE_CLEARS_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_FETCH_LAT_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_FETCH_LAT_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_FETCH_LAT_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_FETCH_BAND_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_FETCH_BAND_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_FETCH_BAND_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_MEM_BOUND_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_MEM_BOUND_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_MEM_BOUND_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_CORE_BOUND_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_CORE_BOUND_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
