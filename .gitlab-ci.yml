@@ -1,5 +1,6 @@
 cuda-component-job:
-  PAPI_CONFIGURE_OPTIONS: "--with-components='cuda' --enable-warnings --with-debug=yes"
+  variables:
+    PAPI_CONFIGURE_OPTIONS: "--with-components='cuda' --enable-warnings --with-debug=yes"
   before_script:
     - cd src
     - export PAPI_CUDA_ROOT=/usr/local/cuda
