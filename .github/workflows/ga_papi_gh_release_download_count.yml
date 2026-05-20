@@ -1,0 +1,94 @@
+name: Download Counts for PAPI GitHub Releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      starting_release:
+        type: string
+        description: The release you want to begin plotting from. 0 corresponds to the first PAPI GitHub Release.
+        default: 0
+        required: false
+      figsize:
+        type: string
+        description: The size of the generated figures. Must be in the format width_size,height_size.
+        default: '12,7'
+        required: false
+      color:
+        type: string
+        description: The color to be used in the bars (barplot) or points (lineplot + scatterplot). You can pass a colormap or list of colors. In the case of a list of colors, they must be comma separated and the number provided must match the number of releases you wish to plot.
+        default: viridis
+        required: false
+      fontsize:
+        type: string
+        description: Fontsizes for the plots x and y ticks/labels and title.
+        default: 14
+      barplot_kwargs:
+        type: string
+        description: Keyword arguments for the generated barplot.
+        default: '{"edgecolor": "black", "linewidth": 1.5}'
+        required: false
+      lineplot_kwargs:
+        type: string
+        description: Keyword arguments for the generated lineplot.
+        default: '{"linewidth": 3, "color": "black"}' 
+        required: false
+      scatterplot_kwargs:
+        type: string
+        description: Keyword arguments for the generated scatterplot
+        default: '{"marker": "o", "s": 200, "linewidth": 2}'
+        required: false
+      filename_barplot_download_count:
+          type: string
+          description: 'The filename for the generated barplot.'
+          default: 'papi_gh_release_download_count_barplot'
+          required: false
+      filename_lineplot_download_count:
+          type: string
+          description: The filename for the generated lineplot.
+          default: 'papi_gh_release_download_count_lineplot'
+          required: false
+
+jobs:
+  get_papi_github_statistics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python Dependency
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 #v6
+        with:
+          python-version: '3.14'
+
+      - name: Install Matplotlib
+        run: |
+          pip install matplotlib
+
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6 
+
+      - name: Plot PAPI's GitHub Release Download Counts
+        run: >
+          python3 .github/workflows_scripts/ga_papi_github_download_count_and_unique_clones.py
+          --starting-release ${{ inputs.starting_release }} 
+          --figsize ${{ inputs.figsize }} 
+          --color ${{ inputs.color }} 
+          --fontsize ${{ inputs.fontsize }} 
+          --barplot-kwargs '${{ inputs.barplot_kwargs }}'
+          --lineplot-kwargs '${{ inputs.lineplot_kwargs }}'
+          --scatterplot-kwargs '${{ inputs.scatterplot_kwargs }}'
+          --filename-barplot-download-count ${{ inputs.filename_barplot_download_count }}
+          --filename-lineplot-download-count ${{ inputs.filename_lineplot_download_count }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Barplot
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6
+        with:
+          name: ${{ inputs.filename_barplot_download_count }}.svg
+          path: ${{ github.workspace }}/${{ inputs.filename_barplot_download_count }}.svg
+          retention-days: 1
+
+      - name: Upload Lineplot
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6
+        with:
+          name: ${{ inputs.filename_lineplot_download_count }}.svg
+          path: ${{ github.workspace }}/${{ inputs.filename_lineplot_download_count }}.svg
+          retention-days: 1
