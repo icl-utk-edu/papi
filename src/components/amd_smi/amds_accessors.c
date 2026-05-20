@@ -1219,7 +1219,7 @@ int access_amdsmi_gpu_metrics(int mode, void *arg) {
     event->value = metrics.throttle_status;
     break;
   case 1:
-    event->value = (int64_t)metrics.indep_throttle_status;
+    event->value = metrics.indep_throttle_status;
     break;
   case 2:
     event->value = metrics.pcie_link_width;
@@ -1228,19 +1228,19 @@ int access_amdsmi_gpu_metrics(int mode, void *arg) {
     event->value = metrics.pcie_link_speed;
     break;
   case 4:
-    event->value = (int64_t)metrics.pcie_bandwidth_acc;
+    event->value = metrics.pcie_bandwidth_acc;
     break;
   case 5:
-    event->value = (int64_t)metrics.pcie_bandwidth_inst;
+    event->value = metrics.pcie_bandwidth_inst;
     break;
   case 6:
-    event->value = (int64_t)metrics.pcie_l0_to_recov_count_acc;
+    event->value = metrics.pcie_l0_to_recov_count_acc;
     break;
   case 7:
-    event->value = (int64_t)metrics.pcie_replay_count_acc;
+    event->value = metrics.pcie_replay_count_acc;
     break;
   case 8:
-    event->value = (int64_t)metrics.pcie_replay_rover_count_acc;
+    event->value = metrics.pcie_replay_rover_count_acc;
     break;
   case 9:
     event->value = metrics.pcie_nak_sent_count_acc;
@@ -1248,6 +1248,141 @@ int access_amdsmi_gpu_metrics(int mode, void *arg) {
   case 10:
     event->value = metrics.pcie_nak_rcvd_count_acc;
     break;
+  case 11:
+    event->value = metrics.accumulation_counter;
+    break;
+  case 12:
+    event->value = metrics.prochot_residency_acc;
+    break;
+  case 13:
+    event->value = metrics.ppt_residency_acc;
+    break;
+  case 14:
+    event->value = metrics.socket_thm_residency_acc;
+    break;
+  case 15:
+    event->value = metrics.vr_thm_residency_acc;
+    break;
+  case 16:
+    event->value = metrics.hbm_thm_residency_acc;
+    break;
+  case 17:
+    event->value = metrics.gfx_activity_acc;
+    break;
+  case 18:
+    event->value = metrics.mem_activity_acc;
+    break;
+  case 19:
+    event->value = metrics.num_partition;
+    break;
+  case 20:
+    event->value = metrics.temperature_vrgfx;
+    break;
+  case 21:
+    event->value = metrics.temperature_vrsoc;
+    break;
+  case 22:
+    event->value = metrics.temperature_vrmem;
+    break;
+  case 23:
+    event->value = metrics.energy_accumulator;
+    break;
+  case 24:
+    event->value = metrics.system_clock_counter;
+    break;
+  case 25:
+    event->value = metrics.average_gfxclk_frequency;
+    break;
+  case 26:
+    event->value = metrics.average_socclk_frequency;
+    break;
+  case 27:
+    event->value = metrics.average_uclk_frequency;
+    break;
+  case 28:
+    event->value = metrics.average_vclk0_frequency;
+    break;
+  case 29:
+    event->value = metrics.average_dclk0_frequency;
+    break;
+  case 30:
+    event->value = metrics.average_vclk1_frequency;
+    break;
+  case 31:
+    event->value = metrics.average_dclk1_frequency;
+    break;
+  case 32:
+    event->value = metrics.firmware_timestamp;
+    break;
+  case 33:
+    if (event->subvariant >= AMDSMI_MAX_NUM_VCN)
+      return PAPI_ENOSUPP;
+    event->value = metrics.vcn_activity[event->subvariant];
+    break;
+  case 34:
+    event->value = metrics.gfxclk_lock_status;
+    break;
+  case 35:
+    event->value = metrics.xgmi_link_width;
+    break;
+  case 36:
+    event->value = metrics.xgmi_link_speed;
+    break;
+  case 37:
+    if (event->subvariant >= AMDSMI_MAX_NUM_XGMI_LINKS)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xgmi_read_data_acc[event->subvariant];
+    break;
+  case 38:
+    if (event->subvariant >= AMDSMI_MAX_NUM_XGMI_LINKS)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xgmi_write_data_acc[event->subvariant];
+    break;
+  case 39:
+    if (event->subvariant >= AMDSMI_MAX_NUM_JPEG)
+      return PAPI_ENOSUPP;
+    event->value = metrics.jpeg_activity[event->subvariant];
+    break;
+  case 40: {
+    uint32_t xcp_index = event->subvariant >> 16;
+    uint32_t xcc_index = event->subvariant & 0xFFFF;
+    if (xcp_index >= AMDSMI_MAX_NUM_XCP || xcc_index >= AMDSMI_MAX_NUM_XCC)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xcp_stats[xcp_index].gfx_busy_inst[xcc_index];
+    break;
+  }
+  case 41: {
+    uint32_t xcp_index = event->subvariant >> 16;
+    uint32_t jpeg_index = event->subvariant & 0xFFFF;
+    if (xcp_index >= AMDSMI_MAX_NUM_XCP || jpeg_index >= AMDSMI_MAX_NUM_JPEG)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xcp_stats[xcp_index].jpeg_busy[jpeg_index];
+    break;
+  }
+  case 42: {
+    uint32_t xcp_index = event->subvariant >> 16;
+    uint32_t vcn_index = event->subvariant & 0xFFFF;
+    if (xcp_index >= AMDSMI_MAX_NUM_XCP || vcn_index >= AMDSMI_MAX_NUM_VCN)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xcp_stats[xcp_index].vcn_busy[vcn_index];
+    break;
+  }
+  case 43: {
+    uint32_t xcp_index = event->subvariant >> 16;
+    uint32_t xcc_index = event->subvariant & 0xFFFF;
+    if (xcp_index >= AMDSMI_MAX_NUM_XCP || xcc_index >= AMDSMI_MAX_NUM_XCC)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xcp_stats[xcp_index].gfx_busy_acc[xcc_index];
+    break;
+  }
+  case 44: {
+    uint32_t xcp_index = event->subvariant >> 16;
+    uint32_t xcc_index = event->subvariant & 0xFFFF;
+    if (xcp_index >= AMDSMI_MAX_NUM_XCP || xcc_index >= AMDSMI_MAX_NUM_XCC)
+      return PAPI_ENOSUPP;
+    event->value = metrics.xcp_stats[xcp_index].gfx_below_host_limit_acc[xcc_index];
+    break;
+  }
   default:
     return PAPI_ENOSUPP;
   }
