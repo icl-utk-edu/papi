@@ -24,7 +24,7 @@ amd-smi-component-job:
     - export PAPI_AMDSMI_ROOT=/opt/rocm/
     - cat /opt/rocm/.info/version
   script:
-    - bash ../instal_papi.sh --with-components="amd_smi"
+    - bash ../install_papi.sh --with-components="amd_smi"
     - bash components/amd_smi/tests/runtest.sh
   parallel:
     matrix:
