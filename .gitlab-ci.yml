@@ -33,3 +33,17 @@ amd-smi-component-job:
   image: ${IMAGE}
   tags:
     - ${ARCH}
+
+topdown-component-job:
+  before_script:
+    - cd src
+  script:
+    - bash ../install_papi.sh --with-components="topdown"
+    - utils/papi_component_avail
+  parallel:
+    matrix:
+      # Headroom corresponds to an Intel Xeon 4410T (Sapphire Rapids) and Saturn corresponds to an Intel Xeon
+      # Platinum 8367HC (IcdeLake)
+      - MACHINE: [headroom, saturn]
+  tags:
+    - ${MACHINE}
