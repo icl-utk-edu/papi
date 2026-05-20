@@ -101,25 +101,25 @@ int main(int argc, char **argv)
 	}
 
 	/* Add the level 1 topdown metrics */
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_RETIRING_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_RETIRING_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_RETIRING_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_BAD_SPEC_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_BAD_SPEC_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_BAD_SPEC_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_FE_BOUND_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_FE_BOUND_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
 			"Error adding TOPDOWN_FE_BOUND_PERC", retval);
 	}
-	retval = PAPI_add_named_event(EventSet, "TOPDOWN_BE_BOUND_PERC");
+	retval = PAPI_add_named_event(EventSet, "topdown:::TOPDOWN_BE_BOUND_PERC");
 	if (retval != PAPI_OK)
 	{
 		test_fail(__FILE__, __LINE__,
