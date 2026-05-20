@@ -8,7 +8,7 @@ cuda-component-job:
     - cd src
     - export PAPI_CUDA_ROOT=/usr/local/cuda
   script:
-    - bash ../.gitlab/workflow_scripts/install_papi.sh
+    - bash ../install_papi.sh
     - bash components/cuda/tests/run_cuda_tests.sh
   parallel:
     matrix:
