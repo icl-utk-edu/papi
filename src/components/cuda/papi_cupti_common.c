@@ -961,7 +961,7 @@ int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_
     long int driverBranchDecimal = strtol(driverBranch, NULL, base);
     if (driverBranchDecimal >= 580) {
         char errorMessage[PAPI_HUGE_STR_LEN] = { 0 };
-        int strLen = snprintf(errorMessage, sizeof(errorMessage), "The Legacy APIs (Event and Metric) are not supported with driver branchs >= 580 (detected driver branch is %d)."
+        int strLen = snprintf(errorMessage, sizeof(errorMessage), "The Legacy APIs (Event and Metric) are not supported with driver branchs >= 580 (detected driver branch is %ld)."
                              " To use the Legacy APIs you must use a driver branch <= 575.", driverBranchDecimal);
         if (strLen < 0 || (size_t) strLen >= sizeof(errorMessage)) {
             SUBDBG("Failed to fully store string into buffer. Proceeding, but the sring has been truncated.\n");
