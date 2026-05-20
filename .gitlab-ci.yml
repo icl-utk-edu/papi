@@ -1,14 +1,10 @@
-# Stages
-# 1. Set current working directory i.e. cd src
-# 2. install i.e. install papi
-# 3. Test
-
 cuda-component-job:
+  PAPI_CONFIGURE_OPTIONS: "--with-components='cuda' --enable-warnings --with-debug=yes"
   before_script:
     - cd src
     - export PAPI_CUDA_ROOT=/usr/local/cuda
   script:
-    - bash ../install_papi.sh --with-components="cuda"
+    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
     - bash components/cuda/tests/run_cuda_tests.sh
   parallel:
     matrix:
@@ -19,12 +15,13 @@ cuda-component-job:
     - ${ARCH}
 
 amd-smi-component-job:
+  variables:
+    PAPI_CONFIGURE_OPTIONS: "--with-components='amd_smi' --enable-warnings --with-debug=yes"
   before_script:
     - cd src
     - export PAPI_AMDSMI_ROOT=/opt/rocm/
-    - cat /opt/rocm/.info/version
   script:
-    - bash ../install_papi.sh --with-components="amd_smi"
+    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
     - bash components/amd_smi/tests/runtest.sh
   parallel:
     matrix:
@@ -35,15 +32,17 @@ amd-smi-component-job:
     - ${ARCH}
 
 topdown-component-job:
+  variables:
+    PAPI_CONFIGURE_OPTIONS: "--with-components='topdown' --enable-warnings --with-debug=yes"
   before_script:
     - cd src
   script:
-    - bash ../install_papi.sh --with-components="topdown"
+    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
     - utils/papi_component_avail
   parallel:
     matrix:
-      # Headroom corresponds to an Intel Xeon 4410T (Sapphire Rapids) and Saturn corresponds to an Intel Xeon
-      # Platinum 8367HC (IcdeLake)
+      # Headroom corresponds to an Intel Xeon Silver 4410T (Sapphire Rapids)
+      # Saturn corresponds to an Intel Xeon Platinum 8367HC (IceLake)
       - MACHINE: [headroom, saturn]
   tags:
     - ${MACHINE}
