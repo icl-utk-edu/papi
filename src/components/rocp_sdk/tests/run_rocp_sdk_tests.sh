@@ -114,3 +114,22 @@ else
     ./roctx_pause_resume --pause
 fi
 echo -e "-------------------------------------"
+
+multi_pthreads_desired_events="rocp_sdk:::SQ_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=3,\
+rocp_sdk:::TCC_CYCLE:device=0:DIMENSION_INSTANCE=2,\
+rocp_sdk:::SQ_INSTS:device=0:DIMENSION_INSTANCE=0,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=0,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=1,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0:DIMENSION_SHADER_ENGINE=2,\
+rocp_sdk:::SQ_BUSY_CYCLES:device=0:DIMENSION_INSTANCE=0"
+
+echo "make multi_pthreads:"
+make multi_pthreads
+if [ "$1" = "--with-desired-events" ]; then
+    echo "Running: ./multi_pthreads --rocp-sdk-native-event-names ${multi_pthreads_desired_events[@]}"
+    ./multi_pthreads --rocp-sdk-native-event-names "${multi_pthreads_desired_events[@]}"
+else
+    echo "Running ./multi_pthreads"
+    ./multi_pthreads
+fi
+echo -e "-------------------------------------"
