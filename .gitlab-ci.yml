@@ -6,8 +6,8 @@ cuda-component-job:
     - cd src
     - export PAPI_CUDA_ROOT=/usr/local/cuda
   script:
-    - bash install_papi $PAPI_CONFIGURE_OPTIONS
-    - bash test_papi_installation cuda
+    - install_papi $PAPI_CONFIGURE_OPTIONS
+    - test_papi_installation cuda
   parallel:
     matrix:
       - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04, nvidia/cuda:12.9.1-devel-ubuntu22.04]
@@ -20,11 +20,12 @@ amd-smi-component-job:
   variables:
     PAPI_CONFIGURE_OPTIONS: "--with-components='amd_smi' --enable-warnings --with-debug=yes"
   before_script:
+    - source papi_ci_on_franks.sh
     - cd src
     - export PAPI_AMDSMI_ROOT=/opt/rocm/
   script:
-    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
-    - bash components/amd_smi/tests/runtest.sh
+    - install_papi $PAPI_CONFIGURE_OPTIONS
+    - test_papi_installation amd_smi
   parallel:
     matrix:
       - IMAGE: [rocm/dev-ubuntu-24.04:7.0.2-complete, rocm/dev-ubuntu-24.04:7.2.2-complete]
@@ -37,9 +38,10 @@ topdown-component-job:
   variables:
     PAPI_CONFIGURE_OPTIONS: "--with-components='topdown' --enable-warnings --with-debug=yes"
   before_script:
+    - source papi_ci_on_franks.sh
     - cd src
   script:
-    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
+    - install_papi $PAPI_CONFIGURE_OPTIONS
     - utils/papi_component_avail
   parallel:
     matrix:
