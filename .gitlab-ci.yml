@@ -2,11 +2,12 @@ cuda-component-job:
   variables:
     PAPI_CONFIGURE_OPTIONS: "--with-components='cuda' --enable-warnings --with-debug=yes"
   before_script:
+    - source papi_ci_on_franks.sh
     - cd src
     - export PAPI_CUDA_ROOT=/usr/local/cuda
   script:
-    - bash ../install_papi.sh $PAPI_CONFIGURE_OPTIONS
-    - bash components/cuda/tests/run_cuda_tests.sh
+    - bash install_papi $PAPI_CONFIGURE_OPTIONS
+    - bash test_papi_installation cuda
   parallel:
     matrix:
       - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04, nvidia/cuda:12.9.1-devel-ubuntu22.04]
