@@ -27,8 +27,11 @@ TESTS = HelloWorld nvml_power_limiting_test
 
 nvml_tests: $(TESTS) 
 
-HelloWorld: HelloWorld.o $(UTILOBJS) 
-	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
+nvml_tests_helper.o: nvml_tests_helper.c
+	$(CXX) $(CFLAGS) $(INCLUDE) -o $@ -c $^
+
+HelloWorld: HelloWorld.o nvml_tests_helper.o $(UTILOBJS) 
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o nvml_tests_helper.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
 
 nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS) 
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limiting_test nvml_power_limiting_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
