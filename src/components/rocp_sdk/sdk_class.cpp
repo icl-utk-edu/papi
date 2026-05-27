@@ -453,6 +453,8 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
     _papi_hwi_unlock(_rocp_sdk_lock);
 
+    agent_mutex.unlock();
+
     return;
 }
 
@@ -464,6 +466,7 @@ dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                   rocprofiler_user_data_t *,
                   void * )
 {
+    agent_mutex.lock();
 
     // All threads get a shared lock because if they are only reading the
     // existing config from the cache they can all do this at the same
@@ -476,7 +479,6 @@ dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         *config = pos->second;
     }
     return;
-
 }
 
 /* ** */
@@ -1292,17 +1294,22 @@ rocprofiler_sdk_ctx_read(vendorp_ctx_t ctx, long long **counters)
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
+    } else if( RPSDK_MODE_DISPATCH == papi_rocpsdk::get_profiling_mode() ) {
+        papi_rocpsdk::agent_mutex.lock();
     }
 
     // If the mode is not sampling the counter data should already be in
     // "ctx->counters", because record_callback() should have placed it there
     // asynchronously.
-    // However, we don't use any synchronization mechanisms to guarantee that
-    // record_callback() has indeed completed before this function returns.
-    // Therefore, we recomend that the user code adds a small delay between
-    // the completion of a GPU kernel and the call of PAPI_read().
+    // We use a lock to guarantee that record_callback() has indeed completed
+    // before this function returns.
 
     *counters = ctx->counters;
+
+    if( RPSDK_MODE_DISPATCH == papi_rocpsdk::get_profiling_mode() ){
+        papi_rocpsdk::agent_mutex.unlock();
+    }
+
     return papi_errno;
 }
 
