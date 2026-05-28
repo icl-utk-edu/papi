@@ -127,7 +127,7 @@ static void add_cuda_native_events_concurrent(int EventSet, string cuda_native_e
    int papi_errno = PAPI_add_named_event(EventSet, cuda_native_event_name.c_str());
    if (papi_errno != PAPI_OK) {
        if (papi_errno != PAPI_EMULPASS) {
-           fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", cuda_native_event_name, papi_errno);
+           fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", cuda_native_event_name.c_str(), papi_errno);
            exit(EXIT_FAILURE);
        }   
     
@@ -393,13 +393,13 @@ int main(int argc, char **argv)
     profileKernels(device_data[0], base_cuda_native_event_names_with_stat_qual, "single_device_serial", true);
 
     auto end_time = ::std::chrono::high_resolution_clock::now();
-    auto elapsed_serial_ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end_time - begin_time).count();
+    long elapsed_serial_ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end_time - begin_time).count();
     int numBlocks = 0;
     for (i = 1; i <= numKernels; i++)
     {   
         numBlocks += i;
     }   
-    PRINT(global_suppress_output, "It took %d ms on the host to profile %d kernels in serial.\n", elapsed_serial_ms, numKernels);
+    PRINT(global_suppress_output, "It took %ld ms on the host to profile %d kernels in serial.\n", elapsed_serial_ms, numKernels);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Second version - same kernel calls as before on the same device, but now using separate streams for concurrency, //
@@ -413,8 +413,8 @@ int main(int argc, char **argv)
     profileKernels(device_data[0], base_cuda_native_event_names_with_stat_qual, "single_device_async", false);
 
     end_time = ::std::chrono::high_resolution_clock::now();
-    int elapsed_single_device_ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end_time - begin_time).count();
-    PRINT(global_suppress_output, "It took %d ms on the host to profile %d kernels on a single device on separate streams.\n", elapsed_single_device_ms, numKernels);
+    long elapsed_single_device_ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end_time - begin_time).count();
+    PRINT(global_suppress_output, "It took %ld ms on the host to profile %d kernels on a single device on separate streams.\n", elapsed_single_device_ms, numKernels);
     PRINT(global_suppress_output, "--> If the separate stream wallclock time is less than the serial version, the streams were profiling concurrently.\n");
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
 
     for (i = 1; i < num_devices; i++)
     {   
-        PRINT(global_suppress_output, "\nMetrics for device #%d:\n", i); 
+        PRINT(global_suppress_output, "\nMetrics for device #%zu:\n", i);
         print_measured_values(device_data[i]);
     }   
 
