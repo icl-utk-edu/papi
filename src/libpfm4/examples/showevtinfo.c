@@ -48,6 +48,7 @@ static struct {
 	uint8_t combo_lim;
 	uint8_t name_only;
 	uint8_t desc;
+	uint8_t json_output;
 	char *csv_sep;
 	pfm_event_info_t efilter;
 	pfm_event_attr_info_t ufilter;
@@ -432,6 +433,60 @@ print_attr_flags(pfm_event_attr_info_t *info)
 		printf("None ");
 }
 
+/*
+ * simple JSON output
+ * Does not handle complex encoding with extra modifiers
+ */
+static void
+show_event_info_json(pfm_event_info_t *info)
+{
+	pfm_event_attr_info_t ainfo;
+	pfm_pmu_info_t pinfo;
+	int i, ret;
+	int first_event;
+
+	memset(&ainfo, 0, sizeof(ainfo));
+	memset(&pinfo, 0, sizeof(pinfo));
+
+	pinfo.size = sizeof(pinfo);
+	ainfo.size = sizeof(ainfo);
+
+	ret = pfm_get_pmu_info(info->pmu, &pinfo);
+	if (ret != PFM_SUCCESS)
+		errx(1, "cannot get pmu info: %s", pfm_strerror(ret));
+
+	first_event = 1;
+	pfm_for_each_event_attr(i, info) {
+
+		ret = pfm_get_event_attr_info(info->idx, i, options.os, &ainfo);
+		if (ret != PFM_SUCCESS)
+			errx(1, "cannot get attribute info: %s", pfm_strerror(ret));
+
+		if (ainfo.type != PFM_ATTR_UMASK)
+			continue;
+
+		if (!match_ufilters(&ainfo))
+			continue;
+
+		if (!first_event)
+			printf(",\n");
+
+		printf("  {\n    \"EventName\": \"%s.%s\",\n", info->name, ainfo.name);
+		printf("    \"EventCode\": \"0x%" PRIx64 "\",\n", info->code);
+		printf("    \"BriefDescription\": \"%s. %s\",\n", info->desc, ainfo.desc);
+		printf("    \"UMask\": \"0x%" PRIx64 "\",\n", ainfo.code);
+		printf("  }");
+		first_event = 0;
+	}
+	/* no umask support */
+	if (first_event) {
+		printf("  {\n    \"EventName\": \"%s\",\n", info->name);
+		printf("    \"EventCode\": \"0x%" PRIx64 "\",\n", info->code);
+		printf("    \"BriefDescription\": \"%s\",\n", info->desc);
+		printf("  }");
+	}
+}
+
 
 static void
 show_event_info(pfm_event_info_t *info)
@@ -532,6 +587,7 @@ show_info(char *event, regex_t *preg)
 	pfm_event_info_t info;
 	pfm_pmu_t j;
 	int i, ret, match = 0, pname;
+	int first_event;
 	size_t len, l = 0;
 	char *fullname = NULL;
 
@@ -556,6 +612,7 @@ show_info(char *event, regex_t *preg)
 		/* no pmu prefix, just look for detected PMU models */
 		if (!pname && !pinfo.is_present)
 			continue;
+		first_event = 1;
 
 		for (i = pinfo.first_event; i != -1; i = pfm_get_event_next(i)) {
 			ret = pfm_get_event_info(i, options.os, &info);
@@ -572,7 +629,14 @@ show_info(char *event, regex_t *preg)
 			sprintf(fullname, "%s::%s", pinfo.name, info.name);
 
 			if (regexec(preg, fullname, 0, NULL, 0) == 0) {
-				 if (options.compact)
+				if (options.json_output) {
+					if (first_event) {
+						printf("[\n");
+						first_event = 0;
+					}
+					show_event_info_json(&info);
+				}
+				else if (options.compact)
 					if (options.combo)
 						show_event_info_combo(&info);
 					else
@@ -582,6 +646,8 @@ show_info(char *event, regex_t *preg)
 				match++;
 			}
 		}
+		if (!first_event && options.json_output)
+			printf("\n]\n");
 	}
 	if (fullname)
 		free(fullname);
@@ -596,6 +662,7 @@ show_info_sorted(char *event, regex_t *preg)
 	pfm_event_info_t info;
 	pfm_pmu_t j;
 	int i, ret, n, match = 0;
+	int first_event;
 	size_t len, l = 0;
 	char *fullname = NULL;
 	code_info_t *codes;
@@ -616,6 +683,7 @@ show_info_sorted(char *event, regex_t *preg)
 		if (!codes)
 			err(1, "cannot allocate memory\n");
 
+		first_event = 1;
 		/* scans all supported events */
 		n = 0;
 		for (i = pinfo.first_event; i != -1; i = pfm_get_event_next(i)) {
@@ -647,12 +715,20 @@ show_info_sorted(char *event, regex_t *preg)
 			sprintf(fullname, "%s::%s", pinfo.name, info.name);
 
 			if (regexec(preg, fullname, 0, NULL, 0) == 0) {
-				if (options.compact)
+				if (options.json_output) {
+					if (first_event) {
+						printf("[\n");
+						first_event = 0;
+					}
+					show_event_info_json(&info);
+				} else if (options.compact)
 					show_event_info_compact(&info);
 				else
 					show_event_info(&info);
 				match++;
 			}
+		if (!first_event && options.json_output)
+			printf("\n]\n");
 		}
 		free(codes);
 	}
@@ -676,7 +752,8 @@ usage(void)
 			"-m mask\t\thexadecimal event code mask, bits to match when sorting\n"
 			"-x sep\t\tuse sep as field separator in compact mode\n"
 			"-D\t\t\tprint event description in compact mode\n"
-			"-O os\t\tshow attributes for the specific operating system\n",
+			"-O os\t\tshow attributes for the specific operating system\n"
+			"-j\t\toutput event information in JSON format (simple encodings)\n",
 			COMBO_MAX);
 }
 
@@ -819,7 +896,7 @@ main(int argc, char **argv)
 
 	pinfo.size = sizeof(pinfo);
 
-	while ((c=getopt(argc, argv,"hELsm:MNl:F:x:DO:")) != -1) {
+	while ((c=getopt(argc, argv,"hELsm:MNl:F:x:DO:j")) != -1) {
 		switch(c) {
 			case 'L':
 				options.compact = 1;
@@ -860,6 +937,9 @@ main(int argc, char **argv)
 			case 'h':
 				usage();
 				exit(0);
+			case 'j':
+				options.json_output = 1;
+				break;
 			default:
 				errx(1, "unknown option error");
 		}
