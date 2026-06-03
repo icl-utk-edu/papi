@@ -58,29 +58,31 @@ int main()
       ERROR_RETURN(retval);
 
    poorly_tuned_function();
- 
-   /* Stop counting */
-   if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
-      ERROR_RETURN(retval);
 
+   /* Perform first read */
+   if((retval=PAPI_read(EventSet, values)) != PAPI_OK)
+      ERROR_RETURN(retval);
 
    printf("The first time read value is %lld\n",values[0]);
 
+   poorly_tuned_function();
+
+   /* Perform second read */
+   if((retval=PAPI_read(EventSet, values)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   printf("The second time read value is %lld\n",values[0]);
+
+   printf("---Resetting the counter values---\n");
    /* This zeroes out the counters on the eventset that was created */
    if((retval=PAPI_reset(EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-      /* Start counting */
-   if((retval=PAPI_start(EventSet)) != PAPI_OK)
-      ERROR_RETURN(retval);
-
-   poorly_tuned_function();
- 
    /* Stop counting */
    if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   printf("The second time read value is %lld\n",values[0]);
+   printf("The final read value (via PAPI_stop) after PAPI_reset is %lld\n",values[0]);
    
    /* free the resources used by PAPI */
    PAPI_shutdown();
