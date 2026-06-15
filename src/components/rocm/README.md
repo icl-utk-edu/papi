@@ -79,6 +79,9 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
   Please instead use the [`rocp_sdk`](https://github.com/icl-utk-edu/papi/blob/master/src/components/rocp_sdk/README.md) component.
 
 * For AMD devices older than the AMD Instinct MI300A, PAPI should not be configured with both `rocm` and `rocp_sdk`.
+  If both components are configured, then `rocm` will be active by default for ROCm < 6.3.2; `rocp_sdk` will be active by default for ROCm >= 6.3.2.
+  Users can override this when running an application by setting `export PAPI_DISABLE_COMPONENTS=rocm` when `rocm` is active by default, or
+  `export PAPI_DISABLE_COMPONENTS=rocp_sdk` when `rocp_sdk` is active by default.
 
 * For ROCm >= 6.2.0, the environment variable `AQLPROFILE_READ_API` should be set to 0 for intercept mode and 1 (or unset) for sampling mode.
   Otherwise, counter values in intercept mode will return 0. See PAPI Issue #457 for more details.
