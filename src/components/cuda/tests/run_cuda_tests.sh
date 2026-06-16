@@ -31,6 +31,7 @@ make_cuda_test_targets=(
     "simpleMultiGPU"
     "simpleMultiGPU_noCuCtx"
     "test_cuda_floating_point_operations"
+    "test_cuda_presets"
 )
 
 for cuda_test in ${make_cuda_test_targets[@]}; do
