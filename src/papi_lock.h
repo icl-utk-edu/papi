@@ -12,9 +12,10 @@
 #define GLOBAL_LOCK             PAPI_NUM_LOCK+6 /* papi.c for global variable (static and non) initialization/shutdown */
 #define CPUS_LOCK               PAPI_NUM_LOCK+7 /* cpus.c */
 #define NAMELIB_LOCK            PAPI_NUM_LOCK+8 /* papi_pfm4_events.c */
+#define PRESET_LOCK             PAPI_NUM_LOCK+9 /* papi.c preset name resolution */
 
 
-#define NUM_INNER_LOCK  9
+#define NUM_INNER_LOCK  10
 #define PAPI_MAX_LOCK   (NUM_INNER_LOCK + PAPI_NUM_LOCK + PAPI_NUM_COMP)
 
 #include OSLOCK

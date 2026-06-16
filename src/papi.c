@@ -1675,19 +1675,27 @@ PAPI_event_name_to_code( const char *in, int *out )
        /* User may have provided an invalid event name. */
        if( NULL != _papi_hwi_list ) {
 
-           /* Keep track of all qualifiers provided by the user. */
+           /* Keep track of all qualifiers provided by the user.
+            *
+            * overwrite_qualifiers() and construct_qualified_event() free() and
+            * strdup() the quals[] and name[] of the shared global preset entry,
+            * so concurrent resolution of the same preset would double-free.
+            * Serialize under PRESET_LOCK; INTERNAL_LOCK cannot be used because
+            * construct_qualified_event() reaches _papi_hwi_add_native_event(),
+            * which already takes it, and PAPI locks are not recursive. */
            hwi_presets_t *prstPtr = &_papi_hwi_list[preset_idx];
-           int status = overwrite_qualifiers(prstPtr, in, 1);
-           if( status < 0 ) {
-               papi_return( PAPI_ENOMEM );
-           }
+           int status;
 
-           status = construct_qualified_event(prstPtr);
+           _papi_hwi_lock( PRESET_LOCK );
+           status = overwrite_qualifiers(prstPtr, in, 1);
            if( status < 0 ) {
-               papi_return( status );
+               status = PAPI_ENOMEM;
+           } else {
+               status = construct_qualified_event(prstPtr);
            }
+           _papi_hwi_unlock( PRESET_LOCK );
 
-           papi_return( PAPI_OK );
+           papi_return( ( status < 0 ) ? status : PAPI_OK );
        }
     }
 
