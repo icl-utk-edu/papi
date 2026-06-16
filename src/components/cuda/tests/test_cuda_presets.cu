@@ -2,7 +2,6 @@
 * @file test_cuda_presets.cu
 * @brief This test attempts to add, start, and stop cuda component presets for the GA100
 *        and GH200. Note that this test only works with the Perfworks Metrics API.
-*
 */
 
 
@@ -27,7 +26,7 @@ static void print_help_message(void)
 {
     printf("./test_cuda_presets\n"
            "Notes:\n"
-           "1. This test attempts to add the cuda component presets for the GA100 and GH200. If neither are present on the system"
+           "1. This test attempts to add the cuda component presets for the GA100 and GH200. If neither are present on the machine"
            " the test will be skipped.\n"
            "2. Only the first occurrence for the GA100 and GH200 will be profiled with their respective presets.\n"
            "3. Must be using the Perfworks Metrics API.\n");
@@ -66,7 +65,7 @@ int main(int argc, char **argv)
     profilerInitializeParams.pPriv = NULL;
     check_cupti_api_call( cuptiProfilerInitialize(&profilerInitializeParams) );
 
-    PRINT(suppressOutput, "\nSearching for the first occurrences of GA100 and GH200 on the system...\n");
+    PRINT(suppressOutput, "\nSearching for the first occurrences of GA100 and GH200 on the machine...\n");
     std::map<std::string, int> deviceMap;
     std::vector<std::string> devicesSupportingCudaPresets = {"GA100", "GH100"};
     int devIdx;
@@ -87,7 +86,7 @@ int main(int argc, char **argv)
     }
 
     if (deviceMap.empty() == true) {
-        fprintf(stderr, "Neither a GA100 or GH200 were detected on the system. Skipping test.\n");
+        fprintf(stderr, "Neither a GA100 or GH200 were detected on the machine. Skipping test.\n");
         test_skip(__FILE__, __LINE__, "", 0); 
     }
 
