@@ -42,7 +42,7 @@ run `papi_component_avail` (available in `utils/papi_component_avail`). This
 utility will display the components configured in your PAPI build and whether they are active or disabled. If a component is disabled a message on why the component
 has been disabled will be directly below it.
 
-For the `cuda` component to be operational, the following dynamic libraries must be found at runtime for both the Event/Metric APIs and the PerfWorks Metrics API:
+For the `cuda` component to be operational, the following dynamic libraries must be found at runtime for both the Event/Metric APIs and the Perfworks Metrics API:
 
 ```
 libcuda.so
@@ -51,7 +51,7 @@ libcupti.so
 libnvidia-ml.so
 ```
 
-For the PerfWorks Metrics API, the following dynamic library must also be found:
+For the Perfworks Metrics API, the following dynamic library must also be found:
 ```
 libnvperf_host.so
 ```
@@ -64,7 +64,7 @@ To see the `cuda` component's current supported hardware and software please vis
 As shown on the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component) the `cuda` component supports a total of three primary APIs
 to expose counters and controls for NVIDIA GPUs.
 
-The Event/Metric APIs (Legacy) only overlaps with the PerfWorks Metrics API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
+The Event/Metric APIs (Legacy) only overlaps with the Perfworks Metrics API at CC 7.0 (V100). Meaning in the case of machines with NVIDIA GPUs with mixed compute capabilities e.g. P100 - CC 6.0 and A100 - CC 8.0 a choice must be made for which CCs the counters and controls will be exposed for.
 
 To allow for this choice to be made the `cuda` component supports being ***Partially Disabled***. Which means:
 
@@ -78,10 +78,17 @@ set `PAPI_CUDA_API` equal to `LEGACY`, e.g:
 export PAPI_CUDA_API=LEGACY
 ```
 
-Important note, in the case of machines that only have GPUs with CCs = 7.0 there will be no partially disabled Cuda component. Counter and controls will be exposed via the PerfWorks Metrics API; however, if you would like to expose counters and controls via the Legacy APIs please see the aforementioned environment variable.
+Important note, in the case of machines that only have GPUs with CCs = 7.0 there will be no partially disabled Cuda component. Counter and controls will be exposed via the Perfworks Metrics API; however, if you would like to expose counters and controls via the Legacy APIs please see the aforementioned environment variable.
 
 ## Known Limitations
-* Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Pefworks API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` may take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
+* Cuda Toolkit 13.0.0 removes support for offline compilation of the GPU architectures with compute capabilities <= 7.5 (i.e. P100 and V100).
+  * Additionally, the R580 branch of the NVIDIA Driver will be the last driver branch to support these architectures.
+
+* Cuda Toolkit 13.0.0 sees the Legacy APIs (Event and Metric) dropped.
+
+* Driver branches >= 580 are not compatible with the Legacy APIs (Event and Metric).
+
+* Exposing counters on machines that have NVIDIA GPUs with CCS >= 7.0 is done via the Perfworks Metrics API. This API vastly expands the number of possible counters from roughly a few hundred to over 140,000 per GPU. Due to this, the PAPI utility `utils/papi_native_avail` may take a few minutes to run (as much as 2 minutes per GPU). If the output from `utils/papi_native_avail` is redirected to a file, it may appear as if it has "hung"; however, give it time and it will complete.
 ***
 
 ## FAQ
