@@ -1,6 +1,6 @@
 PAPIINC = ..
 PAPILIB = ../libpapi.a
-CC = gcc
+CC ?= gcc
 CFLAGS += -I$(PAPIINC)
 OS = $(shell uname)
 
