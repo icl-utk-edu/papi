@@ -107,25 +107,6 @@ static const amd64_umask_t amd64_fam1ah_zen5_retired_sse_avx_flops[]={
   },
 };
 
-static const amd64_umask_t amd64_fam1ah_zen5_retired_serializing_ops[]={
-  { .uname  = "X87_CTRL_RET",
-    .udesc  = "x87 control word mispredict traps due to mispredictions in RC or PC, or changes in Exception Mask bits",
-    .ucode  = 0x1,
-  },
-  { .uname  = "X87_BOT_RET",
-    .udesc  = "x87 bottom-executing ops retired",
-    .ucode  = 0x2,
-  },
-  { .uname  = "SSE_CTRL_RET",
-    .udesc  = "SSE/AVX control word mispredict traps",
-    .ucode  = 0x4,
-  },
-  { .uname  = "SSE_BOT_RET",
-    .udesc  = "SSE/AVX bottom-executing ops retired",
-    .ucode  = 0x8,
-  },
-};
-
 static const amd64_umask_t amd64_fam1ah_zen5_retired_fp_ops_by_width[]={
   { .uname  = "X87_UOPS_RETIRED",
     .udesc  = "X87 uops retired",

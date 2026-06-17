@@ -80,6 +80,9 @@ setting the ROCP\_TOOL\_LIB to the PAPI library as follows:
 
 * For AMD devices older than the AMD Instinct MI300A, PAPI should not be configured with both `rocm` and `rocp_sdk`.
 
+* For ROCm >= 6.2.0, the environment variable `AQLPROFILE_READ_API` should be set to 0 for intercept mode and 1 (or unset) for sampling mode.
+  Otherwise, counter values in intercept mode will return 0. See PAPI Issue #457 for more details.
+
 * PAPI may read zeros for many events if rocprofiler environment variables are
   not exported and HIP functions are executed by the user before the user
   executes PAPI\_library\_init().

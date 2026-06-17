@@ -57,6 +57,8 @@ static std::condition_variable agent_cond_var = {};
 static bool data_is_ready = false;
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
+static long long int *_counter_values_savestate = NULL;
+static int _num_events_internal = 0;
 static int rpsdk_profiling_mode = RPSDK_MODE_DEVICE_SAMPLING;
 
 static agent_map_t gpu_agents = agent_map_t{};
@@ -74,13 +76,33 @@ static std::unordered_map<std::string, unsigned int> event_instance_name_to_papi
 /* *** */
 typedef rocprofiler_status_t (* rocprofiler_flush_buffer_t) (rocprofiler_buffer_id_t buffer_id);
 
-typedef rocprofiler_status_t (* rocprofiler_sample_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_user_data_t user_data, rocprofiler_counter_flag_t flags, rocprofiler_record_counter_t* output_records, size_t* rec_count);
+#if defined(ROCPROFILER_VERSION_MAJOR) && ROCPROFILER_VERSION_MAJOR >= 1
+    // ROCm 7.0+ (ROCprofiler SDK 1.x) - use new types
+    typedef rocprofiler_status_t (*rocprofiler_sample_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_user_data_t, rocprofiler_counter_flag_t,
+        rocprofiler_counter_record_t *output_records, size_t *rec_count);
+    typedef rocprofiler_status_t (*rocprofiler_configure_callback_dispatch_counting_service_t)(
+        rocprofiler_context_id_t,
+        rocprofiler_dispatch_counting_service_cb_t dispatch_callback, void *dispatch_callback_args,
+        rocprofiler_dispatch_counting_record_cb_t record_callback, void *record_callback_args);
+    typedef rocprofiler_status_t (*rocprofiler_configure_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_buffer_id_t, rocprofiler_agent_id_t,
+        rocprofiler_device_counting_service_cb_t cb, void *user_data);
+#else
+    // Pre-7.0 ROCm - use old types
+    typedef rocprofiler_status_t (*rocprofiler_sample_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_user_data_t, rocprofiler_counter_flag_t,
+        rocprofiler_record_counter_t *output_records, size_t *rec_count);
+    typedef rocprofiler_status_t (*rocprofiler_configure_callback_dispatch_counting_service_t)(
+        rocprofiler_context_id_t,
+        rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args,
+        rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
+    typedef rocprofiler_status_t (*rocprofiler_configure_device_counting_service_t)(
+        rocprofiler_context_id_t, rocprofiler_buffer_id_t, rocprofiler_agent_id_t,
+        rocprofiler_device_counting_service_callback_t cb, void *user_data);
+#endif
 
-typedef rocprofiler_status_t (* rocprofiler_configure_callback_dispatch_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_dispatch_counting_service_callback_t dispatch_callback, void *dispatch_callback_args, rocprofiler_profile_counting_record_callback_t record_callback, void *record_callback_args);
-
-typedef rocprofiler_status_t (* rocprofiler_configure_device_counting_service_t) (rocprofiler_context_id_t context_id, rocprofiler_buffer_id_t buffer_id, rocprofiler_agent_id_t agent_id, rocprofiler_device_counting_service_callback_t cb, void *user_data);
-
-
+typedef rocprofiler_status_t (*rocprofiler_configure_callback_tracing_service_t)(rocprofiler_context_id_t, rocprofiler_callback_tracing_kind_t kind, rocprofiler_tracing_operation_t* operations, size_t operations_count, rocprofiler_callback_tracing_cb_t callback, void* callback_args);
 
 typedef rocprofiler_status_t (* rocprofiler_create_buffer_t) (rocprofiler_context_id_t context, unsigned long size, unsigned long watermark, rocprofiler_buffer_policy_t policy, rocprofiler_buffer_tracing_cb_t callback, void *callback_data, rocprofiler_buffer_id_t *buffer_id);
 
@@ -125,6 +147,7 @@ typedef rocprofiler_status_t (* rocprofiler_query_record_dimension_position_t) (
 rocprofiler_flush_buffer_t rocprofiler_flush_buffer_FPTR;
 rocprofiler_sample_device_counting_service_t rocprofiler_sample_device_counting_service_FPTR;
 rocprofiler_configure_callback_dispatch_counting_service_t rocprofiler_configure_callback_dispatch_counting_service_FPTR;
+rocprofiler_configure_callback_tracing_service_t rocprofiler_configure_callback_tracing_service_FPTR;
 rocprofiler_configure_device_counting_service_t rocprofiler_configure_device_counting_service_FPTR;
 rocprofiler_create_buffer_t rocprofiler_create_buffer_FPTR;
 rocprofiler_create_context_t rocprofiler_create_context_FPTR;
@@ -133,6 +156,7 @@ rocprofiler_stop_context_t rocprofiler_stop_context_FPTR;
 rocprofiler_context_is_active_t rocprofiler_context_is_active_FPTR;
 rocprofiler_context_is_valid_t rocprofiler_context_is_valid_FPTR;
 rocprofiler_create_profile_config_t rocprofiler_create_profile_config_FPTR;
+rocprofiler_destroy_profile_config_t rocprofiler_destroy_profile_config_FPTR;
 rocprofiler_force_configure_t rocprofiler_force_configure_FPTR;
 rocprofiler_get_status_string_t rocprofiler_get_status_string_FPTR;
 rocprofiler_get_thread_id_t rocprofiler_get_thread_id_FPTR;
@@ -244,6 +268,7 @@ obtain_function_pointers()
     DLL_SYM_CHECK(rocprofiler_flush_buffer, rocprofiler_flush_buffer_t);
     DLL_SYM_CHECK(rocprofiler_sample_device_counting_service, rocprofiler_sample_device_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_configure_callback_dispatch_counting_service, rocprofiler_configure_callback_dispatch_counting_service_t);
+    DLL_SYM_CHECK(rocprofiler_configure_callback_tracing_service, rocprofiler_configure_callback_tracing_service_t);
     DLL_SYM_CHECK(rocprofiler_configure_device_counting_service, rocprofiler_configure_device_counting_service_t);
     DLL_SYM_CHECK(rocprofiler_create_context, rocprofiler_create_context_t);
     DLL_SYM_CHECK(rocprofiler_create_buffer, rocprofiler_create_buffer_t);
@@ -251,7 +276,13 @@ obtain_function_pointers()
     DLL_SYM_CHECK(rocprofiler_stop_context, rocprofiler_stop_context_t);
     DLL_SYM_CHECK(rocprofiler_context_is_valid, rocprofiler_context_is_valid_t);
     DLL_SYM_CHECK(rocprofiler_context_is_active, rocprofiler_context_is_active_t);
-    DLL_SYM_CHECK(rocprofiler_create_profile_config, rocprofiler_create_profile_config_t);
+    DLL_SYM_CHECK(rocprofiler_create_profile_config,
+                     "rocprofiler_create_counter_config",
+                     rocprofiler_create_profile_config_t);
+
+    DLL_SYM_CHECK(rocprofiler_destroy_profile_config,
+                   "rocprofiler_destroy_counter_config",
+                     rocprofiler_destroy_profile_config_t);
     DLL_SYM_CHECK(rocprofiler_force_configure, rocprofiler_force_configure_t);
     DLL_SYM_CHECK(rocprofiler_get_status_string, rocprofiler_get_status_string_t);
     DLL_SYM_CHECK(rocprofiler_get_thread_id, rocprofiler_get_thread_id_t);
@@ -385,11 +416,13 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 continue;
             }
             event_instance_info_t e_inst = e_tmp->second;
+            uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
             for(int i=0; i<record_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
-                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    ( e_id_32 != r_id_32 ) ||
                     !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
                   ){
                     continue;
@@ -415,10 +448,12 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         // PAPI semantics dictate that counter values are only reset by
         // PAPI_reset(), etc, not by kernel invocations. Therefore, we must
         // accumulate the counter values (+=), not overwrite the previous one.
-	_counter_values[ei] += counter_value_sum;
+        _counter_values[ei] += counter_value_sum;
     }
 
     _papi_hwi_unlock(_rocp_sdk_lock);
+
+    agent_mutex.unlock();
 
     return;
 }
@@ -431,6 +466,7 @@ dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                   rocprofiler_user_data_t *,
                   void * )
 {
+    agent_mutex.lock();
 
     // All threads get a shared lock because if they are only reading the
     // existing config from the cache they can all do this at the same
@@ -443,7 +479,6 @@ dispatch_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
         *config = pos->second;
     }
     return;
-
 }
 
 /* ** */
@@ -502,7 +537,39 @@ buffered_callback(rocprofiler_context_id_t,
                   void*                         user_data,
                   uint64_t)
 {
-	return;
+    return;
+}
+
+/* ** */
+// Only listen for the ROCTX Pause and Resume calls.
+void
+tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
+                      rocprofiler_user_data_t*,
+                      void* client_data) {
+    rocprofiler_context_id_t *ctx = static_cast<rocprofiler_context_id_t*>(client_data);
+
+    if(record.phase == ROCPROFILER_CALLBACK_PHASE_ENTER &&
+       record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
+       record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerPause)
+    {
+        for(int i = 0; i < _num_events_internal; ++i) {
+            _counter_values_savestate[i] = _counter_values[i];
+        }
+        ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(*ctx), "pausing profiling context");
+        SUBDBG("Received ROCTX call to pause context.\n");
+        active_event_set_ctx->state = RPSDK_AES_PAUSED;
+    }
+    else if(record.phase == ROCPROFILER_CALLBACK_PHASE_EXIT &&
+            record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
+            record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerResume)
+    {
+        ROCPROFILER_CALL(rocprofiler_start_context_FPTR(*ctx), "resuming profiling context");
+        SUBDBG("Received ROCTX call to resume context.\n");
+        active_event_set_ctx->state = RPSDK_AES_RUNNING;
+        for(int i = 0; i < _num_events_internal; ++i) {
+            _counter_values[i] = _counter_values_savestate[i];
+        }
+    }
 }
 
 /* ** */
@@ -542,6 +609,22 @@ tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
                          "Could not setup callback dispatch");
     }
 
+    // Configure tracing service.
+    rocprofiler_context_id_t _control_ctx_;
+    ROCPROFILER_CALL(rocprofiler_create_context_FPTR(&_control_ctx_), "control context creation");
+
+    ROCPROFILER_CALL(rocprofiler_configure_callback_tracing_service_FPTR(
+                         _control_ctx_,
+                         ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API,
+                         nullptr,
+                         0,
+                         &tool_tracing_callback,
+                         &get_client_ctx()),
+                     "Could not setup callback tracing");
+
+    // start the context so that it is always active
+    ROCPROFILER_CALL(rocprofiler_start_context_FPTR(_control_ctx_), "start control context");
+
     return 0;
 }
 
@@ -556,7 +639,7 @@ static int
 assign_id_to_event(std::string event_name, event_instance_info_t ev_inst_info){
     int papi_event_id = -1;
 
-    // Note: _global_papi_event_count is std::atomic, so the followign line is thread safe.
+    // Note: _global_papi_event_count is std::atomic, so the following line is thread safe.
     papi_event_id = _global_papi_event_count++;
     papi_id_to_event_instance[ papi_event_id ] = ev_inst_info;
     event_instance_name_to_papi_id[ event_name ] = papi_event_id;
@@ -638,6 +721,8 @@ void stop_counting(void){
         return;
     }
     ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(get_client_ctx()), "stop context");
+    free(_counter_values_savestate);
+    _counter_values_savestate = NULL;
 }
 
 /* ** */
@@ -660,18 +745,22 @@ read_sample(){
     size_t rec_count = 1024;
     rocprofiler_record_counter_t output_records[1024];
 
-    if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
+    if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || \
+        (0 == (active_event_set_ctx->state & (RPSDK_AES_RUNNING|RPSDK_AES_PAUSED))) ){
         papi_errno = PAPI_ENOTRUN;
         goto fn_fail;
     }
 
-    ret_val = rocprofiler_sample_device_counting_service_FPTR(
+    // Only update the counters if the profiling context is running, not paused.
+    if( 0 != (active_event_set_ctx->state & RPSDK_AES_RUNNING) ){
+        ret_val = rocprofiler_sample_device_counting_service_FPTR(
                 get_client_ctx(), {}, ROCPROFILER_COUNTER_FLAG_NONE,
                 output_records, &rec_count);
 
-    if( ret_val != ROCPROFILER_STATUS_SUCCESS ){
-        papi_errno = PAPI_ECMP;
-        goto fn_fail;
+        if( ret_val != ROCPROFILER_STATUS_SUCCESS ){
+            papi_errno = PAPI_ECMP;
+            goto fn_fail;
+        }
     }
 
     // Create the mapping from events in the eventset (passed by the user) to entries (samples) in the "output_records" array.
@@ -716,11 +805,13 @@ read_sample(){
                 continue;
             }
             event_instance_info_t e_inst = tmp->second;
+            uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
             for(int i=0; i<rec_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
+                uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
-                    ( e_inst.counter_info.id.handle != rec_info.counter_id.handle ) ||
+                    ( e_id_32 != r_id_32 ) ||
                     !dimensions_match(e_inst.dim_instances, rec_info.recorded_dims)
                   ){
                     continue;
@@ -733,13 +824,15 @@ read_sample(){
 
     // Traverse all events in the active event set and find which entry in the sample matches each one of them.
     for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-        double counter_value_sum = 0.0;
+        double counter_value_sum = _counter_values_savestate[ei];
 
-        for(int i=0; i<rec_count; ++i){
-            // All counters in the sample whose dimemsions match the qualifers of the event instance
-            // will be added. This means that if a qualifier is missing, we will get the sum.
-            if( true == index_mapping[ei*rec_count+i] ){
-                counter_value_sum += output_records[i].counter_value;
+        if( 0 != (active_event_set_ctx->state & RPSDK_AES_RUNNING) ){
+            for(int i=0; i<rec_count; ++i){
+                // All counters in the sample whose dimemsions match the qualifers of the event instance
+                // will be added. This means that if a qualifier is missing, we will get the sum.
+                if( true == index_mapping[ei*rec_count+i] ){
+                    counter_value_sum += output_records[i].counter_value;
+                }
             }
         }
         _counter_values[ei] = counter_value_sum;
@@ -814,7 +907,7 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
         // All qualifiers must have the form "qual_name=qual_value".
         pos=qual.find('=');
         if( pos == qual.npos){
-            return PAPI_EINVAL;
+            return PAPI_ENOEVNT;
         }
 
         std::string qual_name = qual.substr(0, pos-0);
@@ -833,7 +926,7 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
                 if( qual_name.compare(dim.name) == 0 ){
                     // Make sure that the qualifier value is within the proper range.
                     if( qual_val >= dim.instance_size ){
-                        return PAPI_EINVAL;
+                        return PAPI_ENOEVNT;
                     }
                     dim_instances.emplace_back( std::make_pair(dim.id, qual_val) );
                     // Mark which qualifiers we have found based on the order in which they appear in
@@ -1164,6 +1257,12 @@ rocprofiler_sdk_ctx_open(int *event_ids, int num_events, vendorp_ctx_t *ctx)
         return PAPI_ENOMEM;
     }
 
+    // Dynamically allocate and init to zero
+    size_t savestate_size = num_events*sizeof(long long);
+    papi_rocpsdk::_num_events_internal = num_events;
+    papi_rocpsdk::_counter_values_savestate = (long long *)papi_realloc(papi_rocpsdk::_counter_values_savestate, savestate_size);
+    memset(papi_rocpsdk::_counter_values_savestate, 0, savestate_size);
+
     _papi_hwi_lock(_rocp_sdk_lock);
 
     papi_rocpsdk::empty_active_event_set();
@@ -1192,17 +1291,25 @@ rocprofiler_sdk_ctx_read(vendorp_ctx_t ctx, long long **counters)
     // If the collection mode is DEVICE_SAMPLING get an explicit sample.
     if( RPSDK_MODE_DEVICE_SAMPLING == papi_rocpsdk::get_profiling_mode() ){
         papi_errno = papi_rocpsdk::read_sample();
+        if (papi_errno != PAPI_OK) {
+            return papi_errno;
+        }
+    } else if( RPSDK_MODE_DISPATCH == papi_rocpsdk::get_profiling_mode() ) {
+        papi_rocpsdk::agent_mutex.lock();
     }
 
     // If the mode is not sampling the counter data should already be in
     // "ctx->counters", because record_callback() should have placed it there
     // asynchronously.
-    // However, we don't use any synchronization mechanisms to guarantee that
-    // record_callback() has indeed completed before this function returns.
-    // Therefore, we recomend that the user code adds a small delay between
-    // the completion of a GPU kernel and the call of PAPI_read().
+    // We use a lock to guarantee that record_callback() has indeed completed
+    // before this function returns.
 
     *counters = ctx->counters;
+
+    if( RPSDK_MODE_DISPATCH == papi_rocpsdk::get_profiling_mode() ){
+        papi_rocpsdk::agent_mutex.unlock();
+    }
+
     return papi_errno;
 }
 

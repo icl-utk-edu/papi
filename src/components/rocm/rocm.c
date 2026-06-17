@@ -135,7 +135,7 @@ rocm_init_component(int cid)
 
     int papi_errno = rocd_init_environment();
     if (papi_errno != PAPI_OK) {
-        _rocm_vector.cmp_info.initialized = 1;
+        _rocm_vector.cmp_info.initialized = 0;
         _rocm_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocd_err_get_last(&err_string);

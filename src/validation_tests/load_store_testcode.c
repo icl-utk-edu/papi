@@ -24,6 +24,7 @@ int execute_stores(int n) {
 	return 0;
 
 #endif
+	(void) n;
 	return CODE_UNIMPLEMENTED;
 
 }
@@ -52,6 +53,7 @@ int execute_loads(int n) {
 	return 0;
 
 #endif
+	(void) n;
 	return CODE_UNIMPLEMENTED;
 
 }

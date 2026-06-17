@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ##
 ## Copyright (C) by Innovative Computing Laboratory
@@ -17,9 +17,11 @@ my ($header, $value, $operator, $trailer) = ("[-+() ]*", "[A-Za-z_0-9]+", "[<>|&
 &parse_script_args(@ARGV);
 
 my %papi_defs = &parse_papi_defs($papi_h);
+my %papi_presets_defs = &parse_papi_presets_defs($events_h);
 my %papi_presets = &parse_papi_presets($events_h);
 
 &write_defs(%papi_defs);
+&write_presets_defs(%papi_presets_defs);
 &write_presets(%papi_presets);
 
 
@@ -138,6 +140,73 @@ sub parse_papi_defs {
     return %papi_defs;
 }
 
+sub parse_papi_presets_defs {
+
+    my $filename = $_[0];
+    my %papi_presets_defs = ();
+
+    open(my $fh_in, "<$filename") || die "Unable to open $filename\n";
+
+    # FIXME: this implementation is not generic enough
+    while (my $line = <$fh_in>) {
+
+        # Check to see if we have hit the first enum, if we have break out of while loop
+        # as we are done collecting
+        if ($line =~ /^enum/) {
+            last;
+        }
+
+        # Check to see if the line starts with /*, if it does eat until matching */ found
+        if ($line =~ /^\/\*/) {
+            # Move to the next line
+            my $enum_line = <$fh_in>;
+            # Continue moving to the next line until end brace found
+            while (! ($enum_line =~ /\*\//)) {
+                $enum_line = <$fh_in>;
+            }
+            # Set new line starting point after eating through C comment
+            $line = <$fh_in>;
+        }
+
+        # Cleanup comments
+        $line =~ s/\/\*(.*)//;
+
+        # Handle #define PAPI_* or USER_EVENT_OPERATION_LEN
+        if ($line =~ /\s*(#define PAPI_[A-Z_0-9]+)(.*)/ || $line =~ /\s*(#define USER_EVENT)/) {
+            my ($trash, $name, $value) = split " ", $line;
+
+            # In papiStdEventDefs.h this is: #define PAPI_PRESET_MASK     ((int)0x80000000)
+            if ($name eq "PAPI_PRESET_MASK") {
+                $value = "((-2147483647) - 1)";
+            }
+            # In papiStdEventDefs.h this is: #define PAPI_NATIVE_MASK     ((int)0x40000000)
+            elsif ($name eq "PAPI_NATIVE_MASK") {
+                $value = 1073741824;
+            }
+            # In papiStdEventDefs.h this is: #define PAPI_UE_MASK         ((int)0xC0000000)
+            elsif ($name eq "PAPI_UE_MASK") {
+                $value = -1073741824;
+            }
+            # In papiStdEventDefs.h this is: #define PAPI_PRESET_AND_MASK 0x7FFFFFFF
+            elsif ($name eq "PAPI_PRESET_AND_MASK") {
+                $value = 2147483647;
+            }
+            # In papiStdEventDefs.h this is: #define PAPI_NATIVE_AND_MASK 0xBFFFFFFF
+            elsif ($name eq "PAPI_NATIVE_AND_MASK") {
+                $value = -1073741825;
+            }
+            # In papiStdEventDefs.h this is: #define PAPI_UE_AND_MASK     0x3FFFFFFF
+            elsif ($name eq "PAPI_UE_AND_MASK") {
+                $value = 1073741823;
+            }
+            $papi_presets_defs{$name} = $value;
+        }
+    }
+
+    close($fh_in);
+    return %papi_presets_defs;
+}
+
 sub parse_papi_presets {
 
     my $filename = $_[0];
@@ -197,6 +266,18 @@ sub write_defs {
     }
 }
 
+sub write_presets_defs {
+    my %presets_defs = @_;
+
+    if ("$compiler" eq "fort") {
+        &write_presets_defs_fort(%presets_defs);
+    } elsif ("$compiler" eq "f77") {
+        &write_presets_defs_f77(%presets_defs);
+    } else {
+        &write_presets_defs_f90(%presets_defs);
+    }
+}
+
 sub write_presets {
     my %presets = @_;
 
@@ -225,7 +306,7 @@ sub write_defs_fort {
     printf STDOUT "C General purpose defines\n";
     printf STDOUT "C\n\n";
 
-    foreach my $key (keys %defs) {
+    foreach my $key (sort keys %defs) {
         # skip unneeded definition
         if ($key =~ /PAPI_MH_/ || $key =~ /PAPI_PRESET_/ || $key =~ /PAPI_DEF_ITIMER/) { next; }
         printf STDOUT "#define %-18s %s\n", $key, ($papi_defs{$key} == 0x80000000) ? "((-2147483647) - 1)" : $papi_defs{$key};
@@ -248,7 +329,7 @@ sub write_defs_f77 {
     printf STDOUT "! General purpose defines\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %defs) {
+    foreach my $key (sort keys %defs) {
         # skip unneeded definition
         if ($key =~ /PAPI_MH_/ || $key =~ /PAPI_PRESET_/ || $key =~ /PAPI_DEF_ITIMER/) { next; }
         printf STDOUT "INTEGER %-18s\nPARAMETER(%s=%s)\n", $key, $key, ($papi_defs{$key} == 0x80000000) ? "((-2147483647) - 1)" : $papi_defs{$key};
@@ -271,10 +352,49 @@ sub write_defs_f90 {
     printf STDOUT "! General purpose defines\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %defs) {
+    foreach my $key (sort keys %defs) {
         # skip unneeded definition
         if ($key =~ /PAPI_MH_/ || $key =~ /PAPI_PRESET_/ || $key =~ /PAPI_DEF_ITIMER/) { next; }
         printf STDOUT "INTEGER, PARAMETER :: %-18s = %s\n", $key, ($papi_defs{$key} == 0x80000000) ? "((-2147483647) - 1)" : $papi_defs{$key};
+    }
+}
+
+sub write_presets_defs_fort {
+    my %presets_defs = @_;
+
+    printf STDOUT "\n";
+    printf STDOUT "C\n";
+    printf STDOUT "C PAPI preset defines\n";
+    printf STDOUT "C\n\n";
+
+    foreach my $key (sort keys %presets_defs) {
+        printf STDOUT "#define %-18s %s\n", $key, $papi_presets_defs{$key};
+    }
+}
+
+sub write_presets_defs_f77 {
+    my %presets_defs = @_;
+
+    printf STDOUT "\n";
+    printf STDOUT "!\n";
+    printf STDOUT "! PAPI preset defines\n";
+    printf STDOUT "!\n\n";
+
+    foreach my $key (sort keys %presets_defs) {
+        printf STDOUT "INTEGER %-18s\nPARAMETER(%s=%s)\n", $key, $key, $papi_presets_defs{$key};
+    }
+}
+
+sub write_presets_defs_f90 {
+    my %presets_defs = @_;
+
+    printf STDOUT "\n";
+    printf STDOUT "!\n";
+    printf STDOUT "! PAPI preset defines\n";
+    printf STDOUT "!\n\n";
+
+    foreach my $key (sort keys %presets_defs) {
+        printf STDOUT "INTEGER, PARAMETER :: %-18s = %s\n", $key, $papi_presets_defs{$key};
     }
 }
 
@@ -286,7 +406,7 @@ sub write_presets_fort {
     printf STDOUT "C PAPI preset event values\n";
     printf STDOUT "C\n\n";
 
-    foreach my $key (keys %presets) {
+    foreach my $key (sort keys %presets) {
         if ($papi_presets{$key} == -2147483648) {
             printf STDOUT "#define %-18s ((-2147483647) - 1)\n", $key;
         } else {
@@ -303,7 +423,7 @@ sub write_presets_f77 {
     printf STDOUT "! PAPI preset event values\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %presets) {
+    foreach my $key (sort keys %presets) {
         if ($papi_presets{$key} == -2147483648) {
             printf STDOUT "INTEGER %-18s\nPARAMETER(%s=(-2147483647) - 1)\n", $key, $key;
         } else {
@@ -320,7 +440,7 @@ sub write_presets_f90 {
     printf STDOUT "! PAPI preset event values\n";
     printf STDOUT "!\n\n";
 
-    foreach my $key (keys %presets) {
+    foreach my $key (sort keys %presets) {
         if ($papi_presets{$key} == -2147483648) {
             printf STDOUT "INTEGER, PARAMETER :: %-18s = ((-2147483647) - 1)\n", $key;
         } else {

@@ -2,8 +2,9 @@
  * Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
- * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
  * Contributed by John Linford <jlinford@nvidia.com>
+ * Contributed by Thomas Makin <tmakin@nvidia.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -273,6 +274,8 @@ extern pfmlib_pmu_t amd64_fam19h_zen4_support;
 extern pfmlib_pmu_t amd64_fam19h_zen3_l3_support;
 extern pfmlib_pmu_t amd64_fam1ah_zen5_support;
 extern pfmlib_pmu_t amd64_fam1ah_zen5_l3_support;
+extern pfmlib_pmu_t amd64_fam1ah_zen6_support;
+extern pfmlib_pmu_t amd64_fam1ah_zen6_l3_support;
 extern pfmlib_pmu_t amd64_rapl_support;
 extern pfmlib_pmu_t intel_p6_support;
 extern pfmlib_pmu_t intel_ppro_support;
@@ -850,6 +853,7 @@ extern pfmlib_pmu_t arm_cortex_a53_support;
 extern pfmlib_pmu_t arm_cortex_a55_support;
 extern pfmlib_pmu_t arm_cortex_a72_support;
 extern pfmlib_pmu_t arm_cortex_a76_support;
+extern pfmlib_pmu_t arm_cortex_x4_support;
 extern pfmlib_pmu_t arm_xgene_support;
 extern pfmlib_pmu_t arm_n1_support;
 extern pfmlib_pmu_t arm_n2_support;
@@ -857,6 +861,8 @@ extern pfmlib_pmu_t arm_n3_support;
 extern pfmlib_pmu_t arm_v1_support;
 extern pfmlib_pmu_t arm_v2_support;
 extern pfmlib_pmu_t arm_v3_support;
+
+extern pfmlib_pmu_t arm_nvidia_olympus_support;
 
 extern pfmlib_pmu_t arm_thunderx2_support;
 extern pfmlib_pmu_t arm_thunderx2_dmc0_support;

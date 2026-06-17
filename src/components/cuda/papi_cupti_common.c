@@ -9,14 +9,18 @@
 #include <link.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <papi.h>
 #include <cupti_target.h>
 #include "papi_memory.h"
+#include <nvml.h>
+
 
 #include "cupti_config.h"
 #include "papi_cupti_common.h"
+#include "cupti_event_and_metric.h"
 
-static void *dl_drv, *dl_rt;
+static void *dl_drv, *dl_rt, *dl_nvml_for_cuda;
 
 static char cuda_error_string[PAPI_HUGE_STR_LEN];
 
@@ -43,10 +47,6 @@ typedef enum
     sys_gpu_ccs_all_gte_70
 } sys_compute_capabilities_e;
 
-struct cuptic_info {
-    CUcontext ctx;
-};
-
 // Load necessary functions from Cuda toolkit e.g. cupti or runtime 
 static int util_load_cuda_sym(void);
 static int load_cuda_sym(void);
@@ -57,6 +57,12 @@ static int load_cupti_common_sym(void);
 static int unload_cudart_sym(void);
 static int unload_cupti_common_sym(void);
 static void unload_linked_cudart_path(void);
+
+// Load necessary nvml functions
+static int load_nvml_for_cuda_sym(void);
+
+// Unload necessary nvml functions
+static int unload_nvml_for_cuda_sym(void);
 
 // Functions to get library versions 
 static int util_dylib_cu_runtime_version(void);
@@ -74,12 +80,14 @@ static int get_enabled_devices(void);
 
 // misc.
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask);
+static int verify_cuda_toolkit_supports_architectures_on_machine(void);
+static int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_system);
+static const char *find_path_to_nvcc(char *path_from_env);
 
 /* cuda driver function pointers */
 CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 CUresult ( *cuCtxDestroyPtr ) (CUcontext);
-CUresult ( *cuCtxCreatePtr ) (CUcontext *pctx, unsigned int flags, CUdevice dev);
 CUresult ( *cuCtxGetDevicePtr ) (CUdevice *);
 CUresult ( *cuDeviceGetPtr ) (CUdevice *, int);
 CUresult ( *cuDeviceGetCountPtr ) (int *);
@@ -108,6 +116,10 @@ cudaError_t ( *cudaRuntimeGetVersionPtr ) (int *);
 CUptiResult ( *cuptiGetVersionPtr ) (uint32_t* );
 CUptiResult ( *cuptiDeviceGetChipNamePtr ) (CUpti_Device_GetChipName_Params* params);
 
+nvmlReturn_t ( *nvmlInitForCudaPtr ) (void);
+nvmlReturn_t ( *nvmlSystemGetDriverVersionForCudaPtr ) (char *, unsigned int);
+nvmlReturn_t ( *nvmlShutdownForCudaPtr ) (void);
+
 /**@class load_cuda_sym
  * @brief Search for a variation of the shared object libcuda.
  */
@@ -117,15 +129,14 @@ int load_cuda_sym(void)
     const char *soNamesToSearchFor[] = {"libcuda.so", "libcuda.so.1", "libcuda"};
 
     dl_drv = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-    if (!dl_drv) {
-        ERRDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
-        goto fn_fail;
+    if (dl_drv == NULL) {
+        SUBDBG("Loading installed libcuda.so failed. Check that cuda drivers are installed.\n");
+        return PAPI_ESYS;
     }
 
     cuCtxSetCurrentPtr           = DLSYM_AND_CHECK(dl_drv, "cuCtxSetCurrent");
     cuCtxGetCurrentPtr           = DLSYM_AND_CHECK(dl_drv, "cuCtxGetCurrent");
     cuCtxDestroyPtr              = DLSYM_AND_CHECK(dl_drv, "cuCtxDestroy");
-    cuCtxCreatePtr               = DLSYM_AND_CHECK(dl_drv, "cuCtxCreate");
     cuCtxGetDevicePtr            = DLSYM_AND_CHECK(dl_drv, "cuCtxGetDevice");
     cuDeviceGetPtr               = DLSYM_AND_CHECK(dl_drv, "cuDeviceGet");
     cuDeviceGetCountPtr          = DLSYM_AND_CHECK(dl_drv, "cuDeviceGetCount");
@@ -139,12 +150,7 @@ int load_cuda_sym(void)
     cuCtxSynchronizePtr          = DLSYM_AND_CHECK(dl_drv, "cuCtxSynchronize");
     cuDeviceGetAttributePtr      = DLSYM_AND_CHECK(dl_drv, "cuDeviceGetAttribute");
 
-    Dl_info info;
-    dladdr(cuCtxSetCurrentPtr, &info);
-    LOGDBG("CUDA driver library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 static int unload_cuda_sym(void)
@@ -156,7 +162,6 @@ static int unload_cuda_sym(void)
     cuCtxSetCurrentPtr           = NULL;
     cuCtxGetCurrentPtr           = NULL;
     cuCtxDestroyPtr              = NULL;
-    cuCtxCreatePtr               = NULL;
     cuCtxGetDevicePtr            = NULL;
     cuDeviceGetPtr               = NULL;
     cuDeviceGetCountPtr          = NULL;
@@ -169,6 +174,70 @@ static int unload_cuda_sym(void)
     cuCtxPushCurrentPtr          = NULL;
     cuCtxSynchronizePtr          = NULL;
     cuDeviceGetAttributePtr      = NULL;
+    return PAPI_OK;
+}
+
+/**@class load_nvml_for_cuda_sym
+ * @brief Search for a variation of the shared object libnvidia-ml.
+ *        Order of search is outlined below.
+ *
+ * 1. If a user sets PAPI_NVML_MAIN, this will take precedent over
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_NVML_MAIN is not set then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
+ */
+int load_nvml_for_cuda_sym(void)
+{
+    int soNamesToSearchCount = 3;
+    const char *soNamesToSearchFor[] = {"libnvidia-ml.so", "libnvidia-ml.so.1", "libnvidia"};
+
+    char *papi_nvml_main = getenv("PAPI_NVML_MAIN");
+    if (papi_nvml_main) {
+        dl_nvml_for_cuda = search_and_load_shared_objects(papi_nvml_main, NULL, NULL, 0);
+        if (dl_nvml_for_cuda != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_NVML_MAIN was set, but did not result in successfully loading the libnvidia-ml shared object."
+                   " Set PAPI_NVML_MAIN to a valid libnvidia-ml shared object.\n");
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_NVML_MAIN was not set. Falling back to dlopen to search for the libnvidia-ml shared object.\n");
+    }
+
+    // If PAPI_NVML_MAIN was not set then use dlopen and follow the search logic used by the dynamic linker
+    dl_nvml_for_cuda = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_nvml_for_cuda == NULL) {
+        SUBDBG("Failed to load a libnvidia-ml shared object. Try setting PAPI_NVML_MAIN.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
+    nvmlInitForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlInit");
+    nvmlSystemGetDriverVersionForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlSystemGetDriverVersion");
+    nvmlShutdownForCudaPtr = DLSYM_AND_CHECK(dl_nvml_for_cuda, "nvmlShutdown");
+
+    return PAPI_OK;
+}
+
+/**@class unload_nvml_for_cuda_sym
+ * @brief Close the dlopen object opened in load_nvml_for_cuda_sym and set the nvml function
+ *        pointers equal to NULL.
+ */
+int unload_nvml_for_cuda_sym(void)
+{
+    if (dl_nvml_for_cuda) {
+        dlclose(dl_nvml_for_cuda);
+        dl_nvml_for_cuda = NULL;
+    }
+
+    nvmlInitForCudaPtr = NULL;
+    nvmlSystemGetDriverVersionForCudaPtr = NULL;
+    nvmlShutdownForCudaPtr = NULL;
+
     return PAPI_OK;
 }
 
@@ -187,9 +256,20 @@ static int unload_cuda_sym(void)
  */
 void *search_and_load_shared_objects(const char *parentPath, const char *soMainName, const char *soNamesToSearchFor[], int soNamesToSearchCount)
 {
+    char pathToSharedLibrary[PAPI_HUGE_STR_LEN];
     const char *standardSubPaths[3];
+    // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
+    // and we do not want to search subpaths
+    if (soMainName == NULL) {
+        int strLen = snprintf(pathToSharedLibrary, sizeof(pathToSharedLibrary), "%s", parentPath);
+        if (strLen < 0 || (size_t) strLen >= sizeof(pathToSharedLibrary)) {
+            SUBDBG("Failed to fully write path %s into the buffer.\n", parentPath);
+            return NULL;
+        }
+        goto open;
+    }
     // Case for when we want to search explicit subpaths for a shared object
-    if (soMainName != NULL) {
+    else {
         if (strcmp(soMainName, "libcudart") == 0) {
             standardSubPaths[0] = "%s/lib64/";
             standardSubPaths[1] = NULL;
@@ -205,14 +285,8 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
             standardSubPaths[2] = NULL;
         }
     }
-    // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
-    // and we do not want to search subpaths
-    else{
-        standardSubPaths[0] = "%s/";
-        standardSubPaths[1] = NULL;     
-    }
 
-    char pathToSharedLibrary[PAPI_HUGE_STR_LEN], directoryPathToSearch[PAPI_HUGE_STR_LEN];
+    char directoryPathToSearch[PAPI_HUGE_STR_LEN];
     void *so = NULL;
     char *soNameFound;
     int i, strLen;
@@ -226,7 +300,7 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
         DIR *dir = opendir(directoryPathToSearch);
         if (dir == NULL) {
-            ERRDBG("Directory path could not be opened.\n");
+            ERRDBG("Directory path %s could not be opened.\n", directoryPathToSearch);
             continue;
         }
 
@@ -247,7 +321,15 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
                 if (result == 0) {
                     soNameFound = dirEntry->d_name;
-                    goto found;
+
+                    // Construct path to shared library
+                    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+                        ERRDBG("Failed to fully write constructed path to shared library.\n");
+                        return NULL;
+                    }
+
+                    goto open;
                 }
             }
             // Reset the position of the directory stream
@@ -257,15 +339,8 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 
   exit:
     return so;
-  found:
-    // Construct path to shared library
-    strLen = snprintf(pathToSharedLibrary, PAPI_HUGE_STR_LEN, "%s%s", directoryPathToSearch, soNameFound);
-    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-        ERRDBG("Failed to fully write constructed path to shared library.\n");
-        return NULL;
-    }
+  open:
     so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
-   
     goto exit; 
 }
 
@@ -297,43 +372,62 @@ void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int so
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_RUNTIME, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libcudart from PAPI_CUDA_RUNTIME or it is not set,
- *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libcudart from steps 1 and 2, then we will search the linux
- *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
- *    advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libcudart.
- *    If this fails, then we failed to find a variation of the shared object
- *    libcudart.
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_RUNTIME is not set, we will search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_RUNTIME is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libcudart shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 int load_cudart_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char *soNamesToSearchFor[] = {"libcudart.so", "libcudart.so.1", "libcudart"};
 
-    // If a user set PAPI_CUDA_RUNTIME with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
+    // If a user set PAPI_CUDA_RUNTIME with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_runtime) {
-        dl_rt = search_and_load_shared_objects(papi_cuda_runtime, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_rt = search_and_load_shared_objects(papi_cuda_runtime, NULL, NULL, 0);
+        if (dl_rt != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_RUNTIME was set, but did not result in successfully loading the libcudart shared object."
+                   " Set PAPI_CUDA_RUNTIME to a valid libcudart shared object.\n", papi_cuda_runtime);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_RUNTIME was not set. Falling back to PAPI_CUDA_ROOT to search for the libcudart shared object.\n");
     }
 
     char *soMainName = "libcudart";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_rt) {
+    // If a user did not set PAPI_CUDA_RUNTIME, but did set PAPI_CUDA_ROOT then search it for the libcudart shared object
+    if (papi_cuda_root) {
         dl_rt = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libcudart, see dlopen manpages for how search occurs
-    if (!dl_rt) {
-        dl_rt = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_rt) {
-            ERRDBG("Loading libcudart shared library failed. Try setting PAPI_CUDA_ROOT\n");
-            goto fn_fail;
+        if (dl_rt != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libcudart shared object."
+                   " Falling back to dlopen to search for the libcudart shared object.\n");
         }
     }
+    else {
+        SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libcudart shared object.\n");
+    }
 
+    // If PAPI_CUDA_RUNTIME was not set and PAPI_CUDA_ROOT was either not set or did not result in the libcudart shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_rt = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_rt == NULL) {
+        SUBDBG("Failed to load a libcudart shared object. Try setting PAPI_CUDA_RUNTIME or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     cudaGetDevicePtr           = DLSYM_AND_CHECK(dl_rt, "cudaGetDevice");
     cudaGetDeviceCountPtr      = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceCount");
     cudaGetDevicePropertiesPtr = DLSYM_AND_CHECK(dl_rt, "cudaGetDeviceProperties");
@@ -344,12 +438,7 @@ int load_cudart_sym(void)
     cudaDriverGetVersionPtr    = DLSYM_AND_CHECK(dl_rt, "cudaDriverGetVersion");
     cudaRuntimeGetVersionPtr   = DLSYM_AND_CHECK(dl_rt, "cudaRuntimeGetVersion");
 
-    Dl_info info;
-    dladdr(cudaGetDevicePtr, &info);
-    LOGDBG("CUDA runtime library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 int unload_cudart_sym(void)
@@ -375,52 +464,66 @@ int unload_cudart_sym(void)
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_CUPTI, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libcupti from PAPI_CUDA_CUPTI or it is not set,
- *    we will search the path defined with PAPI_CUDA_ROOT; as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libcupti from steps 1 and 2, then we will search the linux
- *    default directories listed by /etc/ld.so.conf. As a note, updating the LD_LIBRARY_PATH is
- *    advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libcupti.
- *    If this fails, then we failed to find a variation of the shared object
- *    libcupti.
+ *    the options listed below to be searched. Note, if a user set this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_CUPTI is not set, we will search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_CUPTI is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libcupti shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 int load_cupti_common_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char  *soNamesToSearchFor[] = {"libcupti.so", "libcupti.so.1", "libcupti"};
 
-    // If a user set PAPI_CUDA_CUPTI with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
+    // If a user set PAPI_CUDA_CUPTI with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_cupti) {
-        dl_cupti = search_and_load_shared_objects(papi_cuda_cupti, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_cupti = search_and_load_shared_objects(papi_cuda_cupti, NULL, NULL, 0);
+        if (dl_cupti != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_CUPTI was set, but did not result in successfully loading the libcupti shared object."
+                   " Set PAPI_CUDA_CUPTI to a valid libcupti shared object.\n", papi_cuda_cupti);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_CUPTI was not set. Falling back to PAPI_CUDA_ROOT to search for the libcupti shared object.\n");
     }
 
     char *soMainName = "libcupti";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_cupti) {
+    // If a user did not set PAPI_CUDA_CUPTI, but did set PAPI_CUDA_ROOT then search it for the libcupti shared object
+    if (papi_cuda_root) {
         dl_cupti = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libcupti, see dlopen manpages for how search occurs
-    if (!dl_cupti) {
-        dl_cupti = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_cupti) {
-            ERRDBG("Loading libcupti.so failed. Try setting PAPI_CUDA_ROOT\n");
-            goto fn_fail;
+        if (dl_cupti != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libcupti shared object."
+                   " Falling back to dlopen to search for the libcupti shared object.\n");
         }
     }
+    else {
+        SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libcupti shared object.\n");
+    }
 
+    // If PAPI_CUDA_CUPTI was not set and PAPI_CUDA_ROOT was either not set or did not result in the libcupti shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_cupti = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_cupti == NULL) {
+        SUBDBG("Failed to load a libcupti shared object. Try setting PAPI_CUDA_CUPTI or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     cuptiGetVersionPtr = DLSYM_AND_CHECK(dl_cupti, "cuptiGetVersion");
     cuptiDeviceGetChipNamePtr = DLSYM_AND_CHECK(dl_cupti, "cuptiDeviceGetChipName");
 
-    Dl_info info;
-    dladdr(cuptiGetVersionPtr, &info);
-    LOGDBG("CUPTI library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 int unload_cupti_common_sym(void)
@@ -436,15 +539,31 @@ int unload_cupti_common_sym(void)
 
 int util_load_cuda_sym(void)
 {
-    int papi_errno;
-    papi_errno = load_cuda_sym();
-    papi_errno += load_cudart_sym();
-    papi_errno += load_cupti_common_sym();
+    int papi_errno = load_nvml_for_cuda_sym();
     if (papi_errno != PAPI_OK) {
-        return PAPI_EMISC;
+        cuptic_err_set_last("Unable to load the NVIDIA Management API's. Try setting PAPI_NVML_MAIN.");
+        return papi_errno;
     }
-    else
-        return PAPI_OK;
+
+    papi_errno = load_cuda_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the Cuda Driver API's. Try setting PAPI_CUDA_ROOT.");
+        return papi_errno;
+    }
+
+    papi_errno = load_cudart_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the Cuda Runtime API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_RUNTIME.");
+        return papi_errno;
+    }
+
+    papi_errno = load_cupti_common_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the CUPTI API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_CUPTI.");
+        return papi_errno;
+    }
+
+    return papi_errno;
 }
 
 int cuptic_shutdown(void)
@@ -452,6 +571,7 @@ int cuptic_shutdown(void)
     unload_cuda_sym();
     unload_cudart_sym();
     unload_cupti_common_sym();
+    unload_nvml_for_cuda_sym();
     return PAPI_OK;
 }
 
@@ -592,16 +712,308 @@ int cuptic_err_get_last(const char **error_str)
     return PAPI_OK;
 }
 
+/** @class find_path_to_nvcc
+  * @brief Attempt to reconstruct a path to bin/nvcc.
+  * @param *path_from_env
+  *   Path we want to use to help reconstruction to bin/nvcc.
+  *
+*/
+const char *find_path_to_nvcc(char *path_from_env)
+{
+    if (path_from_env == NULL || strstr(path_from_env, "cuda") == NULL) {
+        return NULL;
+    }
+
+    // Create a copy to work off of
+    char path_from_env_copy[PATH_MAX] = { 0 };
+    int strLen = snprintf(path_from_env_copy, sizeof(path_from_env_copy), "%s", path_from_env);
+    if (strLen < 0 || (size_t) strLen >= sizeof(path_from_env_copy)) {
+        SUBDBG("Failed to store %s in the buffer variable path_from_env_copy.\n", path_from_env);
+        return NULL;
+    }
+
+    // If the path starts with a forward slash go ahead and capture it and move forward
+    // in the string
+    char basepath[PATH_MAX] = { 0 };
+    if (path_from_env_copy[0] == '/') {
+        strLen = snprintf(basepath, sizeof(basepath), "%c", path_from_env_copy[0]);
+        if (strLen < 0 || (size_t) strLen >= sizeof(basepath)) {
+            SUBDBG("Failed to store %c in the buffer variable path.\n", path_from_env_copy[0]);
+            return NULL;
+        }
+        memmove(path_from_env_copy, path_from_env_copy + 1, strlen(path_from_env_copy) + 1);
+    }
+
+    char *reconstructed_path_to_nvcc = (char *) malloc(PATH_MAX * sizeof(char));
+    if (reconstructed_path_to_nvcc == NULL) {
+        SUBDBG("Failed to allocate memory for the variable reconstructed_path_to_nvcc.\n");
+        return NULL;
+    }
+
+    // Begin to reconstruct paths such that we can find path/to/bin/nvcc
+    char *cuda_directory_path = strtok(path_from_env_copy, "/");
+    while(cuda_directory_path) {
+        size_t current_length = strlen(basepath);
+        size_t remaining_length = sizeof(basepath) - current_length;
+
+        strLen = snprintf(basepath + current_length, remaining_length, "%s/", cuda_directory_path);
+        if (strLen < 0 || (size_t) strLen >= remaining_length) {
+            SUBDBG("Failed to store %s/ in the buffer variable basepath.\n", cuda_directory_path);
+            free(reconstructed_path_to_nvcc);
+            return NULL;
+        }
+
+        strLen = snprintf(reconstructed_path_to_nvcc, PATH_MAX, "%sbin/nvcc", basepath);
+        if (strLen < 0 || strLen >= PATH_MAX) {
+            SUBDBG("Failed to store %s/bin/nvcc in buffer variable reconstructed_path_to_nvcc.\n", basepath);
+            free(reconstructed_path_to_nvcc);
+            return NULL;
+        }
+
+        // Check current reconstructed path
+        struct stat buf;
+        int status = stat(reconstructed_path_to_nvcc, &buf);
+        if (status == 0) {
+            return reconstructed_path_to_nvcc;
+        }
+        cuda_directory_path = strtok(NULL, "/");
+    }
+    free(reconstructed_path_to_nvcc);
+
+    return NULL;
+}
+
+/** @class verify_cuda_toolkit_supports_architecture_on_machine
+  * @brief Cuda Toolkits have specific architectures that they support.
+  *        This function gets the list of supported architectures for a
+  *        Cuda Toolkit and compares that list to the devices on the machine.
+  *
+  *        To get the list of supported architectures we must have a path to
+  *        bin/nvcc. Due to this, we reconstruct paths via the below environment variables
+  *        in order of how they appear until we recreate an existing path to bin/nvcc.
+  *
+  *        1. PAPI_CUDA_RUNTIME
+  *        2. PAPI_CUDA_CUPTI
+  *        3. PAPI_CUDA_PERFWORKS
+  *        4. PAPI_CUDA_ROOT
+  *        5. LD_LIBRARY_PATH
+  *
+  *        We prioritize PAPI_CUDA_RUNTIME, PAPI_CUDA_CUPTI,and PAPI_CUDA_PERFWORKS
+  *        as they are prioritized for their respective library checks.
+*/
+int verify_cuda_toolkit_supports_architectures_on_machine(void)
+{
+    const char *path_to_nvcc = NULL;
+    char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
+    if (papi_cuda_runtime != NULL) {
+        path_to_nvcc = find_path_to_nvcc(papi_cuda_runtime); 
+    }
+
+    char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
+    if (papi_cuda_cupti != NULL && path_to_nvcc == NULL) {
+        path_to_nvcc = find_path_to_nvcc(papi_cuda_cupti);
+    }
+
+    char *papi_cuda_perfworks = getenv("PAPI_CUDA_PERFWORKS");
+    if (papi_cuda_perfworks != NULL && path_to_nvcc == NULL) {
+        path_to_nvcc = find_path_to_nvcc(papi_cuda_perfworks);
+    }
+
+    char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
+    if (papi_cuda_root != NULL && path_to_nvcc == NULL) {
+        path_to_nvcc = find_path_to_nvcc(papi_cuda_root);
+    }
+
+    int strLen;
+    char *ld_library_path = getenv("LD_LIBRARY_PATH");
+    if (ld_library_path != NULL && path_to_nvcc == NULL) {
+        size_t length_to_allocate = strlen(ld_library_path) + 1;
+        char *ld_library_path_copy = (char *) malloc(length_to_allocate * sizeof(char));
+        if (ld_library_path_copy == NULL) {
+            cuptic_err_set_last("Memory allocation for ld_library_path_copy failed. Set PAPI_CUDA_ROOT.");
+            return PAPI_ENOMEM;
+        }
+
+        strLen = snprintf(ld_library_path_copy, length_to_allocate, "%s", ld_library_path);
+        if (strLen < 0 || (size_t) strLen >= length_to_allocate) {
+            cuptic_err_set_last("Unable to store contents of LD_LIBRARY_PATH into the buffer ld_library_path_copy. Set PAPI_CUDA_ROOT.");
+            free(ld_library_path_copy);
+            return PAPI_EBUF;
+        }
+
+        const char *delims = ":";
+        char *directory_path = strtok(ld_library_path_copy, delims);
+        while(directory_path) {
+            path_to_nvcc = find_path_to_nvcc(directory_path);
+            if (path_to_nvcc != NULL) {
+                break;
+            }
+            directory_path = strtok(NULL, ":");
+        }
+        free(ld_library_path_copy);
+    }
+
+    // By design do not hard fail if path_to_nvcc is NULL
+    if (path_to_nvcc == NULL) {
+        SUBDBG("Failed to obtain path leading to bin/nvcc. Set PAPI_CUDA_ROOT if the cuda component is not active.\n");
+        return PAPI_OK;
+    }
+
+    char command[PATH_MAX] = { 0 };
+    strLen = snprintf(command, sizeof(command), "%s --list-gpu-arch 2>/dev/null", path_to_nvcc);
+    if (strLen < 0 || (size_t) strLen >= sizeof(command)) {
+        cuptic_err_set_last("Path to bin/nvcc with --list-gpu-arch 2>/dev/null exceeds PATH_MAX.");
+        free((char*) path_to_nvcc);
+        return PAPI_EBUF;
+    }
+    free((char*) path_to_nvcc);
+
+    const char *mode = "r";
+    FILE *fp_virtual_dev_arches = popen(command, mode);
+    if (fp_virtual_dev_arches == NULL) {
+        cuptic_err_set_last("Call to popen to get list of virtual devices failed.");
+        return PAPI_ESYS;
+    }
+
+    int status;
+    char all_supported_virtual_dev_arches[PAPI_HUGE_STR_LEN] = { 0 };
+    char name_of_virtual_dev_arch[PAPI_MAX_STR_LEN] = { 0 };
+    while (fgets(name_of_virtual_dev_arch, sizeof(name_of_virtual_dev_arch), fp_virtual_dev_arches) != NULL) {
+        size_t current_length = strlen(all_supported_virtual_dev_arches);
+        size_t remaining_length = sizeof(all_supported_virtual_dev_arches) - current_length;
+
+        // Strip the newline if applicable
+        size_t virtual_arch_len = strlen(name_of_virtual_dev_arch);
+        if (virtual_arch_len > 0 && name_of_virtual_dev_arch[virtual_arch_len - 1] == '\n') {
+            name_of_virtual_dev_arch[virtual_arch_len - 1] = '\0';
+        }
+
+        strLen = snprintf(all_supported_virtual_dev_arches + current_length, remaining_length, "%s,", name_of_virtual_dev_arch);
+        if (strLen < 0 || (size_t) strLen >= remaining_length) {
+            cuptic_err_set_last("Unable to store all of the virtual devices in the buffer all_supported_virtual_dev_arches.");
+ 
+            status = pclose(fp_virtual_dev_arches);
+            if (status != 0){
+                SUBDBG("Failed to close stream opened by popen.\n");
+            }
+
+            return PAPI_EBUF;
+        }
+    }
+
+    status = pclose(fp_virtual_dev_arches);
+    if (status != 0){
+        SUBDBG("Failed to close stream opened by popen.\n");
+    }
+
+    if (all_supported_virtual_dev_arches[0] == '\0') {
+        cuptic_err_set_last("No output obtained for nvcc --list-gpu-arch. This could be due to incorrect paths or NVIDIA removing --list-gpu-arch. Set PAPI_CUDA_ROOT.");
+        return PAPI_ESYS;
+    }
+
+    int nvidia_device_count = 0;
+    cudaArtCheckErrors( cudaGetDeviceCountPtr(&nvidia_device_count), return PAPI_EMISC );
+
+    char compute_capability[PAPI_MAX_STR_LEN] = { 0 };
+    int dev_idx;
+    for (dev_idx = 0; dev_idx < nvidia_device_count; dev_idx++) {
+        struct cudaDeviceProp prop = { { 0 } };
+        cudaArtCheckErrors( cudaGetDevicePropertiesPtr(&prop, dev_idx), return PAPI_EMISC );
+        strLen = snprintf(compute_capability, sizeof(compute_capability), "%d%d", prop.major, prop.minor);
+        if (strLen < 0 || (size_t) strLen >= sizeof(compute_capability)) {
+            cuptic_err_set_last("Unable to store the major,minor compute capability obtained from cudaGetDeviceProperties in the buffer compute_capability.");
+            return PAPI_EBUF;
+        }
+
+        if (strstr(all_supported_virtual_dev_arches, compute_capability) == NULL) {
+            char error_message[PAPI_HUGE_STR_LEN] = { 0 };
+            strLen = snprintf(error_message, sizeof(error_message), "Your current Cuda Toolkit version cannot be used with device %d."
+                              " Either user a newer Cuda Toolkit version or utilize 'export CUDA_VISIBLE_DEVICES' if on a mixed cc machine.\n", dev_idx); 
+            if (strLen < 0 || (size_t) strLen >= sizeof(error_message)) { // removing could be fine such that we actually make it to PAPI_ECMP.
+                SUBDBG("Failed to fully write error message for incompatible Cuda Toolkit and device.\n");
+            }
+
+            cuptic_err_set_last(error_message);
+            return PAPI_ECMP;
+        }
+    }
+
+    return PAPI_OK;
+}
+
+/** @class verify_driver_branch_supports_legacy_apis
+  * @brief Driver branchs >= 580 do not support use of the Legacy APIs (Event and Metric).
+  *        This function verifies that the Legacy APIs are not being used with a driver branch
+  *        >= 580.
+  * @param ccs_on_system
+  *     A named integer constant from the enum sys_compute_capabilities_e.
+*/
+int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_system)
+{
+    // Increases the reference count of the number of initializations
+    nvmlCheckErrors( nvmlInitForCudaPtr(), return PAPI_EMISC );
+
+    char driverVersion[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
+    nvmlCheckErrors( nvmlSystemGetDriverVersionForCudaPtr(driverVersion, sizeof(driverVersion)), return PAPI_EMISC );
+
+    int papi_errno = PAPI_OK, base = 10;
+    char *driverBranch = strtok(driverVersion, ".");
+    long int driverBranchDecimal = strtol(driverBranch, NULL, base);
+    if (driverBranchDecimal >= 580) {
+        char errorMessage[PAPI_HUGE_STR_LEN] = { 0 };
+        int strLen = snprintf(errorMessage, sizeof(errorMessage), "The Legacy APIs (Event and Metric) are not supported with driver branchs >= 580 (detected driver branch is %ld)."
+                             " To use the Legacy APIs you must use a driver branch <= 575.", driverBranchDecimal);
+        if (strLen < 0 || (size_t) strLen >= sizeof(errorMessage)) {
+            SUBDBG("Failed to fully store string into buffer. Proceeding, but the sring has been truncated.\n");
+        }
+
+        switch (ccs_on_system) {
+            case sys_gpu_ccs_all_lt_70:
+                cuptic_err_set_last(errorMessage);
+                papi_errno = PAPI_ECMP;
+                break;
+            case sys_gpu_ccs_mixed:
+            case sys_gpu_ccs_all_eq_70:
+            case sys_gpu_ccs_all_lte_70:
+            case sys_gpu_ccs_all_gte_70:
+                if (getenv("PAPI_CUDA_API") != NULL) {
+                    cuptic_err_set_last(errorMessage);
+                    papi_errno = PAPI_ECMP;
+                }
+                break;
+           case sys_gpu_ccs_all_gt_70:
+           default:
+               papi_errno = PAPI_OK;
+               break;
+        }
+    }
+
+    // Decreases the refernce count of the number of initializations
+    nvmlCheckErrors( nvmlShutdownForCudaPtr(), return PAPI_EMISC );
+
+    return papi_errno;
+}
+
+
 int cuptic_init(void)
 {
     int papi_errno = util_load_cuda_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to load CUDA library functions.");
         return papi_errno;
     }
 
     sys_compute_capabilities_e system_ccs;
     papi_errno = compute_capabilities_on_system(&system_ccs);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    papi_errno = verify_driver_branch_supports_legacy_apis(system_ccs);
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    papi_errno = verify_cuda_toolkit_supports_architectures_on_machine();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
@@ -613,24 +1025,18 @@ int cuptic_init(void)
     }
 
     // Handle a partially disabled Cuda component
-    // TODO: Once the Events API is added back, this conditional will need to be updated for Issue #297 section 2
-    if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70) {
+    if (system_ccs == sys_gpu_ccs_mixed || system_ccs == sys_gpu_ccs_all_lte_70 || system_ccs == sys_gpu_ccs_all_gte_70) {
         char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
-        char *cc_support = ">=7.0";
-        if (PAPI_CUDA_API != NULL) {
-            int result = strcasecmp(PAPI_CUDA_API, "EVENTS");
-            if (result == 0) {
-                cc_support = "<=7.0";
-            }
-        }
+        char *cc_support = (PAPI_CUDA_API != NULL) ? "<=7.0" : ">=7.0";
+        char *helpMsg  = (PAPI_CUDA_API != NULL) ? "To enable support for CCs >= 7.0 run 'unset PAPI_CUDA_API'" : "To enable support for CCs <= 7.0 run 'export PAPI_CUDA_API=LEGACY'";
 
         char errMsg[PAPI_HUGE_STR_LEN];
         int strLen = snprintf(errMsg, PAPI_HUGE_STR_LEN,
                               "System includes multiple compute capabilities: <7.0, =7.0, >7.0."
-                              " Only support for CC %s enabled.", cc_support);
+                              " Only support for CC %s enabled. %s.", cc_support, helpMsg);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
             SUBDBG("Failed to fully write the partially disabled error message.\n");
-            return PAPI_ENOMEM;
+            return PAPI_EBUF;
         }
         cuptic_err_set_last(errMsg);
 
@@ -652,16 +1058,20 @@ void cuptic_partial(int *isCmpPartial, int **cudaEnabledDeviceIds, size_t *total
 
 int cuptic_determine_runtime_api(void) 
 {
-    int cupti_api = -1;
-    char *PAPI_CUDA_API = getenv("PAPI_CUDA_API");
+    char *PAPI_CUDA_API = (getenv("PAPI_CUDA_API") != NULL) ? "LEGACY" : "PERFWORKS";
 
+    unsigned int cuptiVersion = util_dylib_cupti_version();
+    // For the Event and Metric API to be operational in the Cuda component,
+    // users must link with a Cuda toolkit version that has a CUPTI version < 13000.
+    if (cuptiVersion >= CUPTI_EVENT_AND_METRIC_MAX_SUPPORTED_VERSION && strcasecmp(PAPI_CUDA_API, "LEGACY") == 0) {
+        cuptic_err_set_last("Cannot use Event and Metric APIs with Cuda Toolkit versions >= 13.0 as support was removed.\n");
+        return PAPI_EINVAL;
+    }
     // For the Perfworks API to be operational in the Cuda component,
     // users must link with a Cuda toolkit version that has a CUPTI version >= 13.
-    // TODO: Once the Events API is added back into the Cuda component. Add a similar
-    // check as the one shown below.
-    unsigned int cuptiVersion = util_dylib_cupti_version();
-    if (!(cuptiVersion >= CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION) && PAPI_CUDA_API == NULL) {
-        return cupti_api; 
+    else if (cuptiVersion < CUPTI_PROFILER_API_MIN_SUPPORTED_VERSION && strcasecmp(PAPI_CUDA_API, "PERFWORKS")) {
+        cuptic_err_set_last("CUPTI version >= 13 is required for Perfworks API functionality.\n");
+        return PAPI_EINVAL;
     }
 
     // Determine the compute capabilities on the system
@@ -671,18 +1081,25 @@ int cuptic_determine_runtime_api(void)
         return papi_errno;
     }
 
+    // Check to make sure a user has not tried to set PAPI_CUDA_API with only devices
+    // with CCs > 7.0
+    if (system_ccs == sys_gpu_ccs_all_gt_70 && strcasecmp(PAPI_CUDA_API, "LEGACY") == 0) {
+        cuptic_err_set_last("Devices detected have CCs > 7.0; therefore, only the Perfworks Metric API is supported. Unset PAPI_CUDA_API.\n");
+        return  PAPI_EINVAL;
+    }
+
+    int cupti_api = -1;
     // Determine which CUPTI API will be in use
     switch (system_ccs) {
         // All devices have CCs < 7.0
         case sys_gpu_ccs_all_lt_70:
-            cupti_api = API_EVENTS;
+            cupti_api = API_LEGACY;
             break;
         // All devices have CCs > 7.0
         case sys_gpu_ccs_all_gt_70:
             cupti_api = API_PERFWORKS;
             break;
         // All devices have CCs <= 7.0
-        // TODO: Once the Events API is added back, this case will default to use the Events API
         case sys_gpu_ccs_all_lte_70:
         // All devices have CCs >= 7.0
         case sys_gpu_ccs_all_gte_70:
@@ -693,9 +1110,9 @@ int cuptic_determine_runtime_api(void)
             // Default will be to use Perfworks API, user can change this by setting PAPI_CUDA_API.
             cupti_api = API_PERFWORKS;
             if (PAPI_CUDA_API != NULL) {
-                int result = strcasecmp(PAPI_CUDA_API, "EVENTS");
+                int result = strcasecmp(PAPI_CUDA_API, "LEGACY");
                 if (result == 0)
-                    cupti_api = API_EVENTS;
+                    cupti_api = API_LEGACY;
             }
             break;
         default:
@@ -730,7 +1147,7 @@ int get_enabled_devices(void)
         if (cupti_api == API_PERFWORKS && cc >= 70) {
             collectCudaDevice = 1;    
         }
-        else if (cupti_api == API_EVENTS && cc <= 70) {
+        else if (cupti_api == API_LEGACY && cc <= 70) {
             collectCudaDevice = 1;
         }
 
@@ -842,47 +1259,77 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
     return PAPI_OK;
 }
 
-int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask)
+int cuptic_device_acquire(void *evt_table, int flag)
 {
-    gpu_occupancy_t acq_mask = 0;
-    long i;
-    for (i = 0; i < evt_table->count; i++) {
-        acq_mask |= (1 << evt_table->cuda_devs[i]);
+    int i;
+    gpu_occupancy_t bitmask = 0;
+    switch(flag) {
+        case API_LEGACY:
+        {
+            cuptiu_event_and_metric_table_t *legacy_evt_table = (cuptiu_event_and_metric_table_t *) evt_table;
+            for (i = 0; i < legacy_evt_table->count; i++) {
+                bitmask |= (1 << legacy_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        case API_PERFWORKS:
+        {
+            cuptiu_event_table_t *perfworks_evt_table = (cuptiu_event_table_t *) evt_table;
+            for (i = 0; i < perfworks_evt_table->count; i++) {
+                bitmask |= (1 << perfworks_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        default:
+            SUBDBG("Provided flag is not accounted for in this switch statement. Code needs to be updated.\n");
+            return PAPI_EBUG;
     }
-    *bitmask = acq_mask;
 
-    return PAPI_OK;
-}
-
-int cuptic_device_acquire(cuptiu_event_table_t *evt_table)
-{
-    gpu_occupancy_t bitmask;
-    int papi_errno = _devmask_events_get(evt_table, &bitmask);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
-    }
     if (bitmask & global_gpu_bitmask) {
         return PAPI_ECNFLCT;
     }
+
     _papi_hwi_lock(_cuda_lock);
     global_gpu_bitmask |= bitmask;
     _papi_hwi_unlock(_cuda_lock);
+
     return PAPI_OK;
 }
 
-int cuptic_device_release(cuptiu_event_table_t *evt_table)
+int cuptic_device_release(void *evt_table, int flag)
 {
-    gpu_occupancy_t bitmask;
-    int papi_errno = _devmask_events_get(evt_table, &bitmask);
-    if (papi_errno != PAPI_OK) {
-        return papi_errno;
+    int i;
+    gpu_occupancy_t bitmask = 0;
+    switch(flag) {
+        case API_LEGACY:
+        {
+            cuptiu_event_and_metric_table_t *legacy_evt_table = (cuptiu_event_and_metric_table_t *) evt_table;
+            for (i = 0; i < legacy_evt_table->count; i++) {
+                bitmask |= (1 << legacy_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        case API_PERFWORKS:
+        {
+            cuptiu_event_table_t *perfworks_evt_table = (cuptiu_event_table_t *) evt_table;
+            for (i = 0; i < perfworks_evt_table->count; i++) {
+                bitmask |= (1 << perfworks_evt_table->cuda_devs[i]);
+            }
+            break;
+        }
+        default:
+            SUBDBG("Provided flag is not accounted for in this switch statement. Code needs to be updated.\n");
+            return PAPI_EBUG;
     }
+
     if ((bitmask & global_gpu_bitmask) != bitmask) {
         return PAPI_EMISC;
     }
+
     _papi_hwi_lock(_cuda_lock);
     global_gpu_bitmask ^= bitmask;
     _papi_hwi_unlock(_cuda_lock);
+
     return PAPI_OK;
 }
 

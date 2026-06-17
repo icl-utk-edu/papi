@@ -110,9 +110,31 @@
  *
  * <br>
  *    @subsection notes Notes:
- *        The PRESET command has traditionally been used in the PAPI provided preset definition file.
- *        The EVENT command is intended to be used in user defined event definition files.  The code treats them
- *        the same so they are interchangeable and they can both be used in either event definition file.<br>
+ *        The PRESET command has traditionally been used in the PAPI-provided preset event definition file titled papi_events.csv.
+ *        While the EVENT command is intended to be used in user-defined event definition files i.e. my_user_defined_event.csv.
+ *        An important note is that the code treats them the same so they are interchangeable and both can be used in either definition file.
+ *
+ *        To override the existing preset event definitions defined in papi_events.csv, you must export PAPI_CSV_EVENT_FILE to a .csv file
+ *        containing your list of preset event definitions. As an example:
+ *        @code
+ *        edit my_preset_events.csv
+ *        CPU,skx
+ *        PRESET,PAPI_TOT_CYC,NOT_DERIVED,CPU_CLK_THREAD_UNHALTED:THREAD_P
+ *        PRESET,PAPI_TOT_INS,NOT_DERIVED,INST_RETIRED:ANY_P
+ *        PRESET,PAPI_REF_CYC,NOT_DERIVED,UNHALTED_REFERENCE_CYCLES
+ *        close my_preset_events.csv
+ *        export PAPI_CSV_EVENT_FILE=$PWD/my_preset_events.csv
+ *        @endcode
+ *
+ *        To add your own user-defined event definitions, you must export PAPI_USER_EVENTS_FILE to a .csv file containing your list of event definitions.
+ *        As an example:
+ *        @code
+ *        edit my_user_defined_events.csv
+ *        CPU,skx
+ *        EVENT,USER_TOT_CYC,NOT_DERIVED,PAPI_TOT_CYC
+ *        close my_user_defined_events.csv
+ *        export PAPI_USER_EVENTS_FILE=$PWD/my_user_defined_events.csv
+ *        @endcode
  *
  * <br>
  *    @subsection types Derived Types:
@@ -334,8 +356,10 @@ int is_preset_event_available(char *name) {
       
       if ( info.count ) {
     if ( (check_counter && checkCounter (event_code)) || !check_counter) {
-      if (strcmp(info.symbol, basename) == 0)
+      if (strcmp(info.symbol, basename) == 0) {
+        free(localname);
         return 1;
+      }
     }
       }
     }
@@ -788,9 +812,6 @@ main( int argc, char **argv )
               }
             }
           } while (PAPI_enum_event( &event_code, print_avail_only ) == PAPI_OK);
-
-        printf( "================================================================================\n" );
-
     }
 
 
@@ -798,6 +819,7 @@ main( int argc, char **argv )
   }
       }
 
+    printf( "================================================================================\n" );
     if ( !print_event_info ) {
         if ( print_avail_only == PAPI_PRESET_ENUM_CPU_AVAIL || print_avail_only == PAPI_PRESET_ENUM_AVAIL ) {
             printf( "Of %d available events, %d ", avail_count, deriv_count );

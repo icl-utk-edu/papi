@@ -4,6 +4,11 @@ The ROCM_SMI (System Management Interface) component exposes hardware management
 counters and controls for AMD GPUs, such as power consumption, fan speed and
 temperature readings; it also allows capping of power consumption.
 
+> **Configure note.** When both `rocm_smi` and the newer `amd_smi` component
+> are requested, configure now inspects the installed ROCm release and enables
+> only the backend that matches it. `rocm_smi` is selected for ROCm versions
+> earlier than 6.4.0; newer stacks default to `amd_smi`.
+
 * [Enabling the ROCM_SMI Component](#enabling-the-rocm_smi-component)
 * [Environment Variables](#environment-variables)
 * [Known Limitations](#known-limitations)

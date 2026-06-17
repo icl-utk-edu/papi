@@ -34,6 +34,7 @@ template.
 #include <inttypes.h>
 #include <string.h>
 #include <dirent.h>
+#include <limits.h>
 /* Headers required by PAPI */
 #include "papi.h"
 #include "papi_internal.h"
@@ -70,6 +71,8 @@ nvmlReturn_t DECLDIR nvmlDeviceGetFanSpeed(nvmlDevice_t, unsigned int *);
 nvmlReturn_t DECLDIR nvmlDeviceGetMemoryInfo(nvmlDevice_t, nvmlMemory_t *);
 nvmlReturn_t DECLDIR nvmlDeviceGetPerformanceState(nvmlDevice_t, nvmlPstates_t *);
 nvmlReturn_t DECLDIR nvmlDeviceGetPowerUsage(nvmlDevice_t, unsigned int *);
+nvmlReturn_t DECLDIR nvmlDeviceGetTotalEnergyConsumption(nvmlDevice_t, unsigned long long *);
+nvmlReturn_t DECLDIR nvmlDeviceGetFieldValues(nvmlDevice_t,int, nvmlFieldValue_t *);
 nvmlReturn_t DECLDIR nvmlDeviceGetTemperature(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
 nvmlReturn_t DECLDIR nvmlDeviceGetTotalEccErrors(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
 nvmlReturn_t DECLDIR nvmlDeviceGetUtilizationRates(nvmlDevice_t, nvmlUtilization_t *);
@@ -92,6 +95,8 @@ static nvmlReturn_t (*nvmlDeviceGetFanSpeedPtr)(nvmlDevice_t, unsigned int *);
 static nvmlReturn_t (*nvmlDeviceGetMemoryInfoPtr)(nvmlDevice_t, nvmlMemory_t *);
 static nvmlReturn_t (*nvmlDeviceGetPerformanceStatePtr)(nvmlDevice_t, nvmlPstates_t *);
 static nvmlReturn_t (*nvmlDeviceGetPowerUsagePtr)(nvmlDevice_t, unsigned int *);
+static nvmlReturn_t (*nvmlDeviceGetTotalEnergyConsumptionPtr)(nvmlDevice_t, unsigned long long *);
+static nvmlReturn_t (*nvmlDeviceGetFieldValuesPtr)(nvmlDevice_t,int, nvmlFieldValue_t *);
 static nvmlReturn_t (*nvmlDeviceGetTemperaturePtr)(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *);
 static nvmlReturn_t (*nvmlDeviceGetTotalEccErrorsPtr)(nvmlDevice_t, nvmlEccBitType_t, nvmlEccCounterType_t, unsigned long long *);
 static nvmlReturn_t (*nvmlDeviceGetUtilizationRatesPtr)(nvmlDevice_t, nvmlUtilization_t *);
@@ -316,6 +321,85 @@ getPState(nvmlDevice_t dev)
 }
 
 unsigned long long
+getTotalEnergyConsumption(nvmlDevice_t dev)
+{
+    unsigned long long energy = 0;
+    nvmlReturn_t bad;
+    bad = (*nvmlDeviceGetTotalEnergyConsumptionPtr)(dev, &energy);
+
+    if (NVML_SUCCESS != bad) {
+        SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
+    }
+    if (energy > ULLONG_MAX) {
+        energy = ULLONG_MAX;
+    }
+    return energy;
+}
+
+unsigned long long
+getDeviceFieldValue(nvmlDevice_t dev, int value_count, nvmlFieldValue_t* field_value)
+{
+    nvmlReturn_t bad;
+    bad = (*nvmlDeviceGetFieldValuesPtr)(dev, value_count,field_value);
+    if (NVML_SUCCESS != bad) {
+        SUBDBG("something went wrong %s\n", (*nvmlErrorStringPtr)(bad));
+        return (unsigned long long) - 1;
+    }
+
+    if (NVML_SUCCESS != field_value->nvmlReturn) {
+        SUBDBG("Failed to obtain value for fieldId %d: %s\n",
+               field_value->fieldId, (*nvmlErrorStringPtr) (field_value->nvmlReturn));
+        return (unsigned long long) - 1;
+    }
+
+    unsigned long long counter_value = 0;
+    switch(field_value->valueType) {
+        case NVML_VALUE_TYPE_DOUBLE:
+            if (field_value->value.dVal >= 0.0) {
+                counter_value = (unsigned long long) field_value->value.dVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_DOUBLE clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_INT:
+            counter_value = (unsigned long long) field_value->value.uiVal;
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_LONG:
+            counter_value = (unsigned long long) field_value->value.ulVal;
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_LONG_LONG:
+            counter_value = field_value->value.ullVal;
+            break;
+        case NVML_VALUE_TYPE_SIGNED_LONG_LONG:
+            if (field_value->value.sllVal >= 0) {
+                counter_value = (unsigned long long) field_value->value.sllVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_SIGNED_LONG_LONG clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_SIGNED_INT:
+            if (field_value->value.siVal >= 0) {
+                counter_value = (unsigned long long) field_value->value.siVal;
+            }
+            else {
+                SUBDBG("Detected negative value for NVML_VALUE_TYPE_SIGNED_INT clamping at zero.\n");
+            }
+            break;
+        case NVML_VALUE_TYPE_UNSIGNED_SHORT:
+            counter_value = (unsigned long long) field_value->value.usVal;
+            break;
+        default:
+            SUBDBG("Unsupported valueType %d for fieldId %d\n", field_value->valueType, field_value->fieldId);
+            counter_value = (unsigned long long) - 1;
+    }
+
+    return counter_value;
+}
+
+unsigned long long
 getPowerUsage(nvmlDevice_t dev)
 {
     unsigned int power;
@@ -454,6 +538,8 @@ nvml_hardware_read(long long *value, int which_one)
     nvml_native_event_entry_t *entry;
     nvmlDevice_t handle;
     int cudaIdx = -1;
+    int value_count = 1;
+    nvmlFieldValue_t field_value[value_count];
 
     entry = &nvml_native_table[which_one];
     *value = (long long) - 1;
@@ -495,6 +581,23 @@ nvml_hardware_read(long long *value, int which_one)
     case FEATURE_POWER:
         *value = getPowerUsage(handle);
         break;
+    case FEATURE_TOTAL_ENERGY_CONSUMPTION:
+        *value = getTotalEnergyConsumption(handle);
+        break;
+    #if defined(NVML_FI_DEV_POWER_INSTANT) && defined(NVML_POWER_SCOPE_GPU)
+    case FEATURE_GPU_INST:
+        field_value->fieldId = NVML_FI_DEV_POWER_INSTANT;
+        field_value->scopeId = NVML_POWER_SCOPE_GPU;
+        *value = getDeviceFieldValue(handle, value_count, field_value);
+        break;
+    #endif
+    #if defined(NVML_FI_DEV_POWER_AVERAGE) && defined(NVML_POWER_SCOPE_MEMORY)
+    case FEATURE_GPU_MEMORY_AVG:
+        field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
+        field_value->scopeId = NVML_POWER_SCOPE_MEMORY;
+        *value = getDeviceFieldValue(handle, value_count, field_value);
+	break;
+    #endif
     case FEATURE_TEMP:
         *value = getTemperature(handle);
         break;
@@ -693,6 +796,36 @@ detectDevices()
             SUBDBG("nvmlDeviceGetPowerUsage does not appear to be supported on this card. (nvml return code %d)\n", ret);
         }
 
+        /*Check if energy consumption data are available  */
+        if (getTotalEnergyConsumption(devices[i]) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_TOTAL_ENERGY_CONSUMPTION;
+            num_events++;
+        }
+
+
+        int value_count=1;
+        nvmlFieldValue_t field_value[value_count];
+
+        #if defined(NVML_FI_DEV_POWER_INSTANT) && defined(NVML_POWER_SCOPE_GPU)
+        // GPU instant power
+        field_value->fieldId = NVML_FI_DEV_POWER_INSTANT;
+        field_value->scopeId = NVML_POWER_SCOPE_GPU;
+        /* Check if the device field for gpu instant power data are available */
+        if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_GPU_INST;
+            num_events++;
+        }
+        #endif
+        #if defined(NVML_FI_DEV_POWER_AVERAGE) && defined(NVML_POWER_SCOPE_MEMORY)
+        // GPU Memory average power
+        field_value->fieldId = NVML_FI_DEV_POWER_AVERAGE;
+        field_value->scopeId = NVML_POWER_SCOPE_MEMORY;
+        /* Check if the device field for gpu memory data are available */
+        if (getDeviceFieldValue(devices[i],value_count, field_value) != (unsigned long long) - 1) {
+            features[i] |= FEATURE_GPU_MEMORY_AVG;
+            num_events++;
+        }
+        #endif
         /* Check if temperature data are available */
         if (getTemperature(devices[i]) != (unsigned long long) - 1) {
             features[i] |= FEATURE_TEMP;
@@ -981,6 +1114,35 @@ createNativeEvents()
             strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
             strncpy(entry->description, "Power usage reading for the device, in miliwatts. This is the power draw (+/-5 watts) for the entire board: GPU, memory, etc.", PAPI_MAX_STR_LEN);
             entry->type = FEATURE_POWER;
+            entry++;
+            nvml_dev_id_table[devTableIdx] = i;
+            devTableIdx++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_TOTAL_ENERGY_CONSUMPTION)) {
+            sprintf(entry->name, "%s:total_energy_consumption", sanitized_name);
+            strncpy(entry->description, "Total energy consumption of the GPU in millijoules since the driver was last reloaded.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_TOTAL_ENERGY_CONSUMPTION;
+            entry++;
+            nvml_dev_id_table[devTableIdx] = i;
+            devTableIdx++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_GPU_INST)) {
+            sprintf(entry->name, "%s:gpu_inst_power", sanitized_name);
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "Instantaneous power usage for GPU.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_GPU_INST;
+            entry++;
+            nvml_dev_id_table[devTableIdx] = i;
+            devTableIdx++;
+        }
+
+        if (HAS_FEATURE(features[i], FEATURE_GPU_MEMORY_AVG)) {
+            sprintf(entry->name, "%s:gpu_memory_avg_power", sanitized_name);
+            strncpy(entry->units, "mW", PAPI_MIN_STR_LEN);
+            strncpy(entry->description, "Average power usage for GPU Memory.", PAPI_MAX_STR_LEN);
+            entry->type = FEATURE_GPU_MEMORY_AVG;
             entry++;
             nvml_dev_id_table[devTableIdx] = i;
             devTableIdx++;
@@ -1439,6 +1601,16 @@ linkCudaLibraries()
     if (dlerror() != NULL) {
         strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetPowerUsage not found.", PAPI_MAX_STR_LEN);
         return (PAPI_ENOSUPP);
+    }
+    nvmlDeviceGetTotalEnergyConsumptionPtr = dlsym(dl3, "nvmlDeviceGetTotalEnergyConsumption");
+    if (dlerror() != NULL) {
+    	strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetTotalEnergyConsumption not found.", PAPI_MAX_STR_LEN);
+    	return (PAPI_ENOSUPP);
+    }
+    nvmlDeviceGetFieldValuesPtr = dlsym(dl3, "nvmlDeviceGetFieldValues");
+    if (dlerror() != NULL) {
+    	strncpy(_nvml_vector.cmp_info.disabled_reason, "NVML function nvmlDeviceGetFieldValues not found.", PAPI_MAX_STR_LEN);
+    	return (PAPI_ENOSUPP);
     }
     nvmlDeviceGetTemperaturePtr = dlsym(dl3, "nvmlDeviceGetTemperature");
     if (dlerror() != NULL) {

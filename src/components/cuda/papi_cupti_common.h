@@ -21,6 +21,10 @@
 
 typedef struct cuptic_info *cuptic_info_t;
 
+struct cuptic_info {
+    CUcontext ctx;
+};
+
 extern void *dl_cupti;
 
 extern unsigned int _cuda_lock;
@@ -29,7 +33,6 @@ extern unsigned int _cuda_lock;
 extern CUresult ( *cuCtxGetCurrentPtr ) (CUcontext *);
 extern CUresult ( *cuCtxSetCurrentPtr ) (CUcontext);
 extern CUresult ( *cuCtxDestroyPtr ) (CUcontext);
-extern CUresult ( *cuCtxCreatePtr ) (CUcontext *pctx, unsigned int flags, CUdevice dev);
 extern CUresult ( *cuCtxGetDevicePtr ) (CUdevice *);
 extern CUresult ( *cuDeviceGetPtr ) (CUdevice *, int);
 extern CUresult ( *cuDeviceGetCountPtr ) (int *);
@@ -73,8 +76,8 @@ int cuptic_ctxarr_get_ctx(cuptic_info_t info, int dev_id, CUcontext *ctx);
 int cuptic_ctxarr_destroy(cuptic_info_t *pinfo);
 
 /* functions to track the occupancy of gpu counters in event sets */
-int cuptic_device_acquire(cuptiu_event_table_t *evt_table);
-int cuptic_device_release(cuptiu_event_table_t *evt_table);
+int cuptic_device_acquire(void *evt_table, int flag);
+int cuptic_device_release(void *evt_table, int flag);
 
 /* device qualifier interfaces */
 int cuptiu_dev_set(cuptiu_bitmap_t *bitmap, int i);
@@ -135,6 +138,17 @@ int get_chip_name(int dev_num, char* chipName);
         LOGPERFWORKSCALL("\t" #call "\n");  \
         if (_status != NVPA_STATUS_SUCCESS) {  \
             ERRDBG("NVPA Error %d: Error in call to " #call "\n", _status);  \
+            EXIT_OR_NOT; \
+            handleerror;  \
+        }  \
+    } while (0);
+
+#define nvmlCheckErrors( call, handleerror ) \
+    do {  \
+        nvmlReturn_t _status = (call);  \
+        LOGNVMLCALL("\t" #call "\n");  \
+        if (_status != NVML_SUCCESS) {  \
+            ERRDBG("NVML Error %d: Error in call to " #call "\n", _status);  \
             EXIT_OR_NOT; \
             handleerror;  \
         }  \

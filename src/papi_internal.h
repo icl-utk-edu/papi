@@ -97,7 +97,7 @@ extern char **_papi_errlist;
 #define NEED_CONTEXT		1
 #define DONT_NEED_CONTEXT 	0
 
-#define PAPI_EVENTS_IN_DERIVED_EVENT	8
+#define PAPI_EVENTS_IN_DERIVED_EVENT	12
 #define PAPI_MAX_COMP_QUALS	8
 
 
@@ -448,7 +448,7 @@ void _papi_hwi_free_papi_event_string();
 void _papi_hwi_set_papi_event_code (unsigned int event_code, int update_flag);
 unsigned int _papi_hwi_get_papi_event_code (void);
 int _papi_hwi_get_ntv_idx (unsigned int papi_evt_code);
-const char *_papi_hwi_strip_component_prefix(const char *event_name);
+void _papi_hwi_obtain_prefix(const char *full_event_name, char *prefix);
 int _papi_hwi_is_sw_multiplex( EventSetInfo_t * ESI );
 hwd_context_t *_papi_hwi_get_context( EventSetInfo_t * ESI, int *is_dirty );
 
@@ -528,7 +528,7 @@ int _papi_hwi_get_dev_attr(void *handle, int id, PAPI_dev_attr_e attr, void *val
 int construct_qualified_event(hwi_presets_t *prstPtr);
 int overwrite_qualifiers(hwi_presets_t *prstPtr, const char *in, int is_preset);
 int get_first_cmp_preset_idx( void );
-int get_preset_cmp( unsigned int *index );
+int get_preset_cmp( int *index );
 hwi_presets_t* get_preset( int event_code );
 
 #endif /* PAPI_INTERNAL_H */

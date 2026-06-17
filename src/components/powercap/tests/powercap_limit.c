@@ -22,10 +22,9 @@ int main ( int argc, char **argv )
   int retval,cid,powercap_cid=-1,numcmp;
   int EventSet = PAPI_NULL;
   long long values[MAX_powercap_EVENTS];
-  int limit_map[MAX_powercap_EVENTS];
-  int num_events=0, num_limits=0;
+  int num_limits=0;
   int code;
-  char event_names[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
+  char power_limit_eventnames[MAX_powercap_EVENTS][PAPI_MAX_STR_LEN];
   int r,i;
 
   const PAPI_component_info_t *cmpinfo = NULL;
@@ -75,86 +74,92 @@ int main ( int argc, char **argv )
   code = PAPI_NATIVE_MASK;
   r = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, powercap_cid );
 
-
-  /* find all package power events */
-  while ( r == PAPI_OK ) {
-    retval = PAPI_event_code_to_name( code, event_names[num_events] );
+  /* Find all package power limit events */
+  while (r == PAPI_OK) {
+    char powercap_eventname[PAPI_MAX_STR_LEN] = { 0 };
+    retval = PAPI_event_code_to_name( code, powercap_eventname );
     if ( retval != PAPI_OK ) 
       test_fail( __FILE__, __LINE__,"PAPI_event_code_to_name()", retval );
 
-    retval = PAPI_add_event(EventSet, code);
-    if (retval != PAPI_OK)
-      break; /* We've hit an event limit */
+    if (!(strstr(powercap_eventname, "SUBZONE")) && (strstr(powercap_eventname, "POWER_LIMIT"))) {
+      retval = PAPI_add_named_event(EventSet, powercap_eventname);
+      if (retval != PAPI_OK)
+        break; /* We've hit an event limit */
 
-    if (!(strstr(event_names[num_events],"SUBZONE")) && (strstr(event_names[num_events],"POWER_LIMIT"))) {
-
-      limit_map[num_limits] = num_events;
+      int strLen = snprintf(power_limit_eventnames[num_limits], sizeof(power_limit_eventnames[num_limits]), "%s", powercap_eventname);
+      if (strLen < 0 || (size_t) strLen >= sizeof(power_limit_eventnames[num_limits])) {
+          fprintf(stderr, "Failed to fully write event name %s into buffer at index %d.\n", powercap_eventname, num_limits);
+          exit(EXIT_FAILURE);
+      }
       num_limits++;
     }
-    num_events++;
+
     r = PAPI_enum_cmp_event( &code, PAPI_ENUM_EVENTS, powercap_cid );
   }
 
+  if (num_limits == 0) {
+    fprintf(stderr, "No power limit events detected.\n");
+    test_skip( __FILE__, __LINE__, "", 0 );
+  }
 
   /* start collecting power data */
   retval = PAPI_start( EventSet );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_start()",retval );
 
   /* initial read of package limits */
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
-
+      test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
 
   printf("\nCURRENT LIMITS\n");
   for( i=0; i<num_limits; i++ ) {
-    printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", event_names[limit_map[i]], ((double)values[limit_map[i]]*1e-6));
-    values[limit_map[i]] = values[limit_map[i]] - (10 * 1e6); //minus 10 Watts
+      printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", power_limit_eventnames[i], ((double)values[i]*1e-6));
+      values[i] = values[i] - (10 * 1e6); //minus 10 Watts
   }
   usleep(10000);
 
   printf("\nSETTING LIMITS 10 WATTS BELOW CURRENT LIMITS\n");
   retval = PAPI_write( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
 
   usleep(10000);
 
   printf("\nREADING LIMITS TO MAKE SURE THEY ARE SET\n");
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
   usleep(10000);
 
   printf("\nNEW LIMITS\n");
   for( i=0; i<num_limits; i++ ) {
-    printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", event_names[limit_map[i]], ((double)values[limit_map[i]]*1e-6));
-    values[limit_map[i]] = values[limit_map[i]] + (10 * 1e6); //plus 10 Watts
+      printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", power_limit_eventnames[i], ((double)values[i]*1e-6));
+      values[i] = values[i] + (10 * 1e6); //plus 10 Watts
   }
 
   printf("\nRESET LIMITS BEFORE EXITING...");
   retval = PAPI_write( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_write()",retval );
   usleep(10000);
 
   printf("\nREADING RESET LIMITS TO MAKE SURE THEY ARE SET\n");
   retval = PAPI_read( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
   usleep(10000);
 
   printf("\nRESET LIMITS\n");
   for( i=0; i<num_limits; i++ ) {
-    printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", event_names[limit_map[i]], ((double)values[limit_map[i]]*1e-6));
+      printf("EVENT: %s\tLIMIT: %0.2lf Watts\n", power_limit_eventnames[i], ((double)values[i]*1e-6));
   }
 
   printf("done\n");
 
   retval = PAPI_stop( EventSet, values );
   if ( retval != PAPI_OK )
-    test_fail( __FILE__, __LINE__, "PAPI_stop()",retval );
+      test_fail( __FILE__, __LINE__, "PAPI_stop()",retval );
 
   /* Done, clean up */
   retval = PAPI_cleanup_eventset( EventSet );

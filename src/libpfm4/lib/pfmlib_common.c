@@ -8,8 +8,9 @@
  * Copyright (c) 2001-2006 Hewlett-Packard Development Company, L.P.
  * Contributed by Stephane Eranian <eranian@hpl.hp.com>
  *
- * Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
  * Contributed by John Linford <jlinford@nvidia.com>
+ * Contributed by Thomas Makin <tmakin@nvidia.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -90,6 +91,8 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&amd64_fam19h_zen3_l3_support,
 	&amd64_fam1ah_zen5_support,
 	&amd64_fam1ah_zen5_l3_support,
+	&amd64_fam1ah_zen6_support,
+	&amd64_fam1ah_zen6_l3_support,
 	&amd64_rapl_support,
 	&intel_core_support,
 	&intel_atom_support,
@@ -673,6 +676,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a55_support,
 	&arm_cortex_a72_support,
 	&arm_cortex_a76_support,
+	&arm_cortex_x4_support,
 	&arm_xgene_support,
 	&arm_thunderx2_support,
 	&arm_thunderx2_dmc0_support,
@@ -744,6 +748,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_hisilicon_kunpeng_sccl7_l3c21_support,
 	&arm_hisilicon_kunpeng_sccl7_l3c22_support,
 	&arm_hisilicon_kunpeng_sccl7_l3c23_support,
+	&arm_nvidia_olympus_support,
 #endif
 #ifdef CONFIG_PFMLIB_ARCH_ARM64
 	&arm_cortex_a57_support,
@@ -751,6 +756,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_cortex_a55_support,
 	&arm_cortex_a72_support,
 	&arm_cortex_a76_support,
+	&arm_cortex_x4_support,
 	&arm_xgene_support,
 	&arm_thunderx2_support,
 	&arm_thunderx2_dmc0_support,
@@ -824,6 +830,7 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&arm_v2_support,
 	&arm_v3_support,
 	&arm_hisilicon_kunpeng_support,
+	&arm_nvidia_olympus_support,
 #endif
 
 #ifdef CONFIG_PFMLIB_ARCH_S390X

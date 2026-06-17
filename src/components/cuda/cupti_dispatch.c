@@ -7,6 +7,7 @@
 
 #include "cupti_config.h"
 #include "papi_cupti_common.h"
+#include "cupti_event_and_metric.h"
 #include "cupti_dispatch.h"
 #include "lcuda_debug.h"
 
@@ -14,7 +15,7 @@
 #   include "cupti_profiler.h"
 #endif
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
 #   include "cupti_events.h"
 #endif
 
@@ -31,9 +32,9 @@ int cuptid_shutdown(void)
         }
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         papi_errno = cuptie_shutdown();
         if (papi_errno != PAPI_OK) {
             return papi_errno;
@@ -85,15 +86,19 @@ int cuptid_init(void)
         goto fn_exit;
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
-        // TODO: When the Events API is added back, add a similar check
-        // as above
+#if defined(API_LEGACY)
         papi_errno = cuptie_init();
+        if (papi_errno == PAPI_OK) {
+            if (init_errno == PAPI_PARTIAL) {
+                papi_errno = init_errno;
+            }
+        }
 #else
-        cuptic_err_set_last("Unknown events API problem.");
+        cuptic_err_set_last("Unknown Event and Metric API issue.");
         papi_errno = PAPI_ECMP;
+        goto fn_exit;
 #endif
 
     } else {
@@ -123,10 +128,10 @@ int cuptid_ctx_create(cuptid_info_t info,  cuptip_control_t *pcupti_ctl, uint32_
         return cuptip_ctx_create((cuptic_info_t) info, pcupti_ctl, events_id, num_events);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined (API_EVENTS)
-        return cuptie_ctx_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl);
+#if defined (API_LEGACY)
+        return cuptie_ctx_create((cuptic_info_t) info, (cuptie_control_t *) pcupti_ctl, events_id, num_events);
 #endif
 
     }
@@ -142,9 +147,9 @@ int cuptid_ctx_start(cuptip_control_t cupti_ctl)
         return cuptip_ctx_start(cupti_ctl);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_ctx_start((cuptie_control_t) cupti_ctl);
 #endif
 
@@ -161,9 +166,9 @@ int cuptid_ctx_read(cuptip_control_t cupti_ctl, long long **counters)
         return cuptip_ctx_read(cupti_ctl, counters);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_ctx_read((cuptie_control_t) cupti_ctl, counters);
 #endif
 
@@ -179,9 +184,9 @@ int cuptid_ctx_reset(cuptip_control_t cupti_ctl)
 #if defined(API_PERFWORKS)
         return cuptip_ctx_reset(cupti_ctl);
 #endif
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_ctx_reset((cuptie_control_t) cupti_ctl);
 #endif
     }
@@ -197,9 +202,9 @@ int cuptid_ctx_stop(cuptip_control_t cupti_ctl)
         return cuptip_ctx_stop(cupti_ctl);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_ctx_stop((cuptie_control_t) cupti_ctl);
 #endif
 
@@ -216,9 +221,9 @@ int cuptid_ctx_destroy(cuptip_control_t *pcupti_ctl)
         return cuptip_ctx_destroy(pcupti_ctl);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_ctx_destroy((cuptie_control_t *) pcupti_ctl);
 #endif
 
@@ -235,9 +240,9 @@ int cuptid_evt_enum(uint32_t *event_code, int modifier)
         return cuptip_evt_enum(event_code, modifier);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_evt_enum(event_code, modifier);
 #endif
 
@@ -254,9 +259,9 @@ int cuptid_evt_code_to_descr(uint32_t event_code, char *descr, int len)
         return cuptip_evt_code_to_descr(event_code, descr, len);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_evt_code_to_descr(event_code, descr, len);
 #endif
 
@@ -273,9 +278,9 @@ int cuptid_evt_name_to_code(const char *name, uint32_t *event_code)
         return cuptip_evt_name_to_code(name, event_code);
 #endif
 
-    } else if (cupti_api == API_EVENTS) {
+    } else if (cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_evt_name_to_code(name, event_code);
 #endif
 
@@ -292,9 +297,9 @@ int cuptid_evt_code_to_name(uint32_t event_code, char *name, int len)
         return cuptip_evt_code_to_name(event_code, name, len);
 #endif
 
-    } else if(cupti_api == API_EVENTS) {
+    } else if(cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_evt_code_to_name(event_code, name, len);
 #endif
 
@@ -311,9 +316,9 @@ int cuptid_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         return cuptip_evt_code_to_info(event_code, info);
 #endif
 
-    } else if(cupti_api == API_EVENTS) {
+    } else if(cupti_api == API_LEGACY) {
 
-#if defined(API_EVENTS)
+#if defined(API_LEGACY)
         return cuptie_evt_code_to_info(event_code, info);
 #endif
 

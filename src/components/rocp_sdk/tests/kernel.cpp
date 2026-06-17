@@ -1,18 +1,19 @@
-#include <iostream>
-#include <hip/hip_runtime.h>
+#include "kernel.h"
 
 extern "C" int launch_kernel(int device_id);
 
-#define HIP_CALL(call)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        hipError_t err = call;                                                                     \
-        if(err != hipSuccess)                                                                      \
-        {                                                                                          \
-            std::cerr << hipGetErrorString(err) << std::endl;                                      \
-            return(-1);                                                                            \
-        }                                                                                          \
-    } while(0)
+__global__ void
+gemm(double *A, double *B, double *C, int N)
+{
+    int colIdx = blockDim.x*blockIdx.x + threadIdx.x;
+    int rowIdx = blockDim.y*blockIdx.y + threadIdx.y;
+
+    if( rowIdx < N && colIdx < N ) {
+        for(int k = 0; k < N; ++k) {
+            C[rowIdx*N + colIdx] += A[rowIdx*N + k] * B[k*N + colIdx];
+        }
+    }
+}
 
 __global__ void
 kernelA(int x, int y)

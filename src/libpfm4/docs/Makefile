@@ -2,8 +2,9 @@
 # Copyright (c) 2002-2006 Hewlett-Packard Development Company, L.P.
 # Contributed by Stephane Eranian <eranian@hpl.hp.com>
 #
-# Copyright (c) 2022, NVIDIA CORPORATION & AFFILIATES.
+# Copyright (c) 2022-2026, NVIDIA CORPORATION & AFFILIATES.
 # Contributed by John Linford <jlinford@nvidia.com>
+# Contributed by Thomas Makin <tmakin@nvidia.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy 
 # of this software and associated documentation files (the "Software"), to deal 
@@ -49,6 +50,8 @@ ARCH_MAN=libpfm_intel_core.3	\
 	 libpfm_amd64_fam19h_zen3_l3.3 \
 	 libpfm_amd64_fam1ah_zen5.3  \
 	 libpfm_amd64_fam1ah_zen5_l3.3 \
+	 libpfm_amd64_fam1ah_zen6.3  \
+	 libpfm_amd64_fam1ah_zen6_l3.3  \
 	 libpfm_intel_atom.3	\
 	 libpfm_intel_nhm.3	\
 	 libpfm_intel_nhm_unc.3 \
@@ -150,6 +153,7 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_ac55.3 \
 	    libpfm_arm_ac72.3 \
 	    libpfm_arm_ac76.3 \
+	    libpfm_arm_x4.3 \
 	    libpfm_arm_ac15.3 \
 	    libpfm_arm_ac8.3 \
 	    libpfm_arm_ac9.3 \
@@ -159,7 +163,8 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_neoverse_n3.3 \
 	    libpfm_arm_neoverse_v1.3 \
 	    libpfm_arm_neoverse_v2.3 \
-	    libpfm_arm_neoverse_v3.3
+	    libpfm_arm_neoverse_v3.3 \
+	    libpfm_arm_nvidia_olympus.3
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_ARM64),y)
@@ -169,6 +174,7 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_ac55.3 \
 	    libpfm_arm_ac72.3 \
 	    libpfm_arm_ac76.3 \
+	    libpfm_arm_x4.3 \
 	    libpfm_arm_a64fx.3 \
 	    libpfm_arm_monaka.3 \
 	    libpfm_arm_neoverse_n1.3 \
@@ -176,7 +182,8 @@ ARCH_MAN += libpfm_arm_xgene.3 \
 	    libpfm_arm_neoverse_n3.3 \
 	    libpfm_arm_neoverse_v1.3 \
 	    libpfm_arm_neoverse_v2.3 \
-	    libpfm_arm_neoverse_v3.3
+	    libpfm_arm_neoverse_v3.3 \
+	    libpfm_arm_nvidia_olympus.3
 endif
 
 ifeq ($(CONFIG_PFMLIB_ARCH_MIPS),y)

@@ -7,6 +7,7 @@
  */
 
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <papi.h>
 #include "papi_memory.h"
 
@@ -71,6 +72,9 @@ typedef struct cuptip_gpu_state_s {
     cuptiu_event_table_t  *added_events;
     int                   numberOfRawMetricRequests;
     NVPA_RawMetricRequest *rawMetricRequests;
+    CUpti_Profiler_CounterDataImageOptions counterDataImageOptionsParams;
+    CUpti_Profiler_CounterDataImage_Initialize_Params counterDataImageInitializeParams;
+    CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initializeScratchBufferParams;
     byte_array_t          counterDataPrefixImage;
     byte_array_t          configImage;
     byte_array_t          counterDataImage;
@@ -186,7 +190,7 @@ static int start_profiling_session(byte_array_t counterDataImage, byte_array_t c
 static int end_profiling_session(void);
 static int get_config_image(const char *chipName, const uint8_t *pCounterAvailabilityImageData, NVPA_RawMetricRequest *rawMetricRequests, int rmr_count, byte_array_t *configImage);
 static int get_counter_data_prefix_image(const char *chipName, NVPA_RawMetricRequest *rawMetricRequests, int rmr_count, byte_array_t *counterDataPrefixImage);
-static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_array_t *counterDataScratchBuffer, byte_array_t *counterDataImage);
+static int get_counter_data_image(cuptip_gpu_state_t *gpu_ctl);
 static int get_event_collection_method(const char *evt_name);
 static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl);
 static void free_and_reset_configuration_images(cuptip_gpu_state_t *gpu_ctl);
@@ -210,8 +214,9 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len);
 static int evt_name_to_basename(const char *name, char *base, int len);
 static int evt_name_to_device(const char *name, int *device, const char *base);
 static int evt_name_to_stat(const char *name, int *stat, const char *base);
-static int cuda_verify_no_repeated_qualifiers(const char *eventName);
-static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue);
+static int cuda_verify_qualifiers_are_not_repeated(const char *eventName);
+static int cuda_verify_qualifiers_are_valid(const char *qualifiers);
+static int cuda_verify_qualifiers_do_not_contain_junk(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue);
 
 // Functions related to the stats qualifier
 static int restructure_event_name(const char *input, char *output, char *base, char *stat);
@@ -296,43 +301,62 @@ static int unload_cupti_perf_sym(void)
  *        Order of search is outlined below.
  *
  * 1. If a user sets PAPI_CUDA_PERFWORKS, this will take precedent over
- *    the options listed below to be searched.
- * 2. If we fail to collect a variation of the shared object libnvperf_host from
- *    PAPI_CUDA_PERFWORKS or it is not set, we will search the path defined with PAPI_CUDA_ROOT;
- *    as this is supposed to always be set.
- * 3. If we fail to collect a variation of the shared object libnvperf_host from steps 1 and 2,
- *    then we will search the linux default directories listed by /etc/ld.so.conf. As a note,
- *    updating the LD_LIBRARY_PATH is advised for this option.
- * 4. We use dlopen to search for a variation of the shared object libnvperf_host.
- *    If this fails, then we failed to find a variation of the shared object libnvperf_host.
+ *    the options listed below to be searched. Note, if a user sets this environment
+ *    variable and we do not successfully load the shared object then we error.
+ * 2. If PAPI_CUDA_PERFWORKS is not set, we wil search the path defined with PAPI_CUDA_ROOT as it is
+ *    supposed to always be set.
+ * 3. If PAPI_CUDA_PERFWORKS is not set and PAPI_CUDA_ROOT was either not set or did not result in the
+ *    libnvperf_host shared object being successfully loaded then we use dlopen and follow the search logic
+ *    used by the dynamic linker. As a note, updating the LD_LIBRARY_PATH is advised for this option.
  */
 static int load_nvpw_sym(void)
 {
     int soNamesToSearchCount = 3;
     const char *soNamesToSearchFor[] = {"libnvperf_host.so", "libnvperf_host.so.1", "libnvperf_host"};
 
-    // If a user set PAPI_CUDA_PERFWORKS with a path, then search it for the shared object (takes precedent over PAPI_CUDA_ROOT)
     char *papi_cuda_perfworks = getenv("PAPI_CUDA_PERFWORKS");
+    // If a user set PAPI_CUDA_PERFWORKS with a path to a shared object, attempt to load it (takes precedent over PAPI_CUDA_ROOT)
     if (papi_cuda_perfworks) {
-        dl_nvpw = search_and_load_shared_objects(papi_cuda_perfworks, NULL, soNamesToSearchFor, soNamesToSearchCount);
+        dl_nvpw = search_and_load_shared_objects(papi_cuda_perfworks, NULL, NULL, 0);
+        if (dl_nvpw != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_PERFWORKS was set, but did not result in successfully loading the libnvperf_host shared object."
+                   " Set PAPI_CUDA_PERFWORKS to a valid libnvperf_host shared object.\n", papi_cuda_perfworks);
+            return PAPI_ESYS;
+        }
+    }
+    else {
+        SUBDBG("PAPI_CUDA_PERFWORKS was not set. Falling back to PAPI_CUDA_ROOT to search for the libnvperf_host shared object.\n");
     }
 
     char *soMainName = "libnvperf_host";
-    // If a user set PAPI_CUDA_ROOT with a path and we did not already find the shared object, then search it for the shared object
     char *papi_cuda_root = getenv("PAPI_CUDA_ROOT");
-    if (papi_cuda_root && !dl_nvpw) {
-          dl_nvpw = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
-    }
-
-    // Last ditch effort to find a variation of libnvperf_host, see dlopen manpages for how search occurs
-    if (!dl_nvpw) {
-        dl_nvpw = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
-        if (!dl_nvpw) {
-            ERRDBG("Loading libnvperf_host.so failed.\n");
-            goto fn_fail;
+    // If a user did not set PAPI_CUDA_PERFWORKS, but did set PAPI_CUDA_ROOT then search it for the libnvperf_host shared object
+    if (papi_cuda_root) {
+        dl_nvpw = search_and_load_shared_objects(papi_cuda_root, soMainName, soNamesToSearchFor, soNamesToSearchCount);
+        if (dl_nvpw != NULL) {
+            goto load_functions;
+        }
+        else {
+            SUBDBG("PAPI_CUDA_ROOT was set, but did not result in successfully loading the libnvperf_host shared object."
+                   " Falling back to dlopen to search for the libnvperf_host shared object.\n");
         }
     }
+    else {
+          SUBDBG("PAPI_CUDA_ROOT was not set. Falling back to dlopen to search for the libnvperf_host shared object.\n");
+    }
 
+    // If PAPI_CUDA_PERFWORKS was not set and PAPI_CUDA_ROOT was either not set or did not result in the libnvperf_host shared object
+    // being successfully loaded then use dlopen and follow the search logic used by the dynamic linker
+    dl_nvpw = search_and_load_from_system_paths(soNamesToSearchFor, soNamesToSearchCount);
+    if (dl_nvpw == NULL) {
+        SUBDBG("Failed to load a libnvperf_host shared object. Try setting PAPI_CUDA_PERFWORKS or PAPI_CUDA_ROOT.\n");
+        return PAPI_ESYS;
+    }
+
+  load_functions:
     // Initialize
     NVPW_InitializeHostPtr = DLSYM_AND_CHECK(dl_nvpw, "NVPW_InitializeHost");
     // Enumeration
@@ -371,12 +395,7 @@ static int load_nvpw_sym(void)
     // Misc.
     NVPW_GetSupportedChipNamesPtr = DLSYM_AND_CHECK(dl_nvpw, "NVPW_GetSupportedChipNames");
 
-    Dl_info info;
-    dladdr(NVPW_GetSupportedChipNamesPtr, &info);
-    LOGDBG("NVPW library loaded from %s\n", info.dli_fname);
     return PAPI_OK;
-fn_fail:
-    return PAPI_EMISC;
 }
 
 /** @class unload_nvpw_sym
@@ -575,9 +594,14 @@ int cuptip_init(void)
     COMPDBG("Entering.\n");
 
     int papi_errno = load_cupti_perf_sym();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Unable to load the CUPTI profiling API's. Try setting PAPI_CUDA_ROOT.");
+        return papi_errno;
+    }
+
     papi_errno += load_nvpw_sym();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to load CUDA library functions.");
+        cuptic_err_set_last("Unable to load the CUPTI PerfWorks Metrics API's. Try setting PAPI_CUDA_ROOT or PAPI_CUDA_PERFWORKS.");
         return papi_errno;
     }
 
@@ -594,9 +618,16 @@ int cuptip_init(void)
    
     // Initialize the Cupti Profiler and Perfworks API's
     papi_errno = initialize_cupti_profiler_api();
-    papi_errno += initialize_perfworks_api();
     if (papi_errno != PAPI_OK) {
-        cuptic_err_set_last("Unable to initialize CUPTI profiler libraries.");
+        cuptic_err_set_last("Failed to initialize the CUPTI Profiler API. A possible reason is a mismatched Cuda Toolkit and NVIDIA architecture."
+                            " Try setting PAPI_CUDA_ROOT to a newer Cuda Toolkit version.");
+        return PAPI_EMISC;
+    }
+
+    papi_errno = initialize_perfworks_api();
+    if (papi_errno != PAPI_OK) {
+        cuptic_err_set_last("Failed to initialize the PerfWorks Metrics API. A possible reason is a mismatched Cuda Toolkit and NVIDIA architecture."
+                            " Try setting PAPI_CUDA_ROOT to a newer Cuda Toolkit version.");
         return PAPI_EMISC;
     }
 
@@ -680,13 +711,13 @@ int verify_user_added_events(uint32_t *events_id, int num_events, cuptip_control
         // Reconstructing event name. Append the basename, stat, and sub-metric.
         size_t basename_len = stat_position - cuptiu_table_p->events[info.nameid].basenameWithStatReplaced; 
         char reconstructedEventName[PAPI_HUGE_STR_LEN]="";
-        strLen = snprintf(reconstructedEventName, PAPI_MAX_STR_LEN, "%.*s%s%s",
+        strLen = snprintf(reconstructedEventName, PAPI_HUGE_STR_LEN, "%.*s%s%s",
                    (int)basename_len,
                    cuptiu_table_p->events[info.nameid].basenameWithStatReplaced,
                    stat,
                    stat_position + 4);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Failed to fully write reconstructed event name.\n");
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to add the CUPTI metric name as reconstruction of the basename and stat exceeded the buffer size.\n");
             return PAPI_EBUF;
         }
 
@@ -704,9 +735,9 @@ int verify_user_added_events(uint32_t *events_id, int num_events, cuptip_control
         int idx = state->gpu_ctl[info.device].added_events->count;
         // Store metadata
         strLen = snprintf(state->gpu_ctl[info.device].added_events->cuda_evts[idx],
-                         PAPI_MAX_STR_LEN, "%s", reconstructedEventName);
-        if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Failed to fully write reconstructed Cuda event name to array of added events.\n");
+                         PAPI_HUGE_STR_LEN, "%s", reconstructedEventName);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to fully write the reconstructed CUPTI metric name to array of added events.\n");
             return PAPI_EBUF;
         }
         state->gpu_ctl[info.device].added_events->cuda_devs[idx] = info.device;
@@ -802,7 +833,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -816,7 +847,7 @@ int cuptip_ctx_start(cuptip_control_t state)
         }
 
         LOGDBG("Device num %d: event_count %d, rmr count %d\n", dev_id, gpu_ctl->added_events->count, gpu_ctl->numberOfRawMetricRequests);
-        papi_errno = cuptic_device_acquire(state->gpu_ctl[dev_id].added_events);
+        papi_errno = cuptic_device_acquire(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
         if (papi_errno != PAPI_OK) {
             ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
             return papi_errno;
@@ -878,7 +909,13 @@ int cuptip_ctx_start(cuptip_control_t state)
             return papi_errno;
         }
 
-        papi_errno = get_counter_data_image(gpu_ctl->counterDataPrefixImage, &gpu_ctl->counterDataScratchBuffer, &gpu_ctl->counterDataImage);
+        gpu_ctl->counterDataImageOptionsParams.pCounterDataPrefix = gpu_ctl->counterDataPrefixImage.data;
+        gpu_ctl->counterDataImageOptionsParams.counterDataPrefixSize = gpu_ctl->counterDataPrefixImage.size;
+        gpu_ctl->counterDataImageOptionsParams.maxNumRanges = 1;
+        gpu_ctl->counterDataImageOptionsParams.maxNumRangeTreeNodes = 1;
+        gpu_ctl->counterDataImageOptionsParams.maxRangeNameLength = PAPI_MIN_STR_LEN;
+
+        papi_errno = get_counter_data_image(gpu_ctl);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -944,7 +981,7 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -1037,10 +1074,15 @@ int cuptip_ctx_read(cuptip_control_t state, long long **counters)
         free(metricValues);
         *counters = counter_vals;
 
+        // Per NVIDIA cuptiProfilerCounterDataImageInitialize resets the counter data image so that we can reuse
+        // the same allocated memory for new data
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->counterDataImageInitializeParams), return PAPI_EMISC );
+        // Per NVIDIA the scratch buffer must also be reset
+        cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initializeScratchBufferParams), return PAPI_EMISC);
+
         papi_errno = begin_pass();
         if (papi_errno != PAPI_OK) {
             return papi_errno;
-
         }
 
         char rangeName[PAPI_MIN_STR_LEN];
@@ -1106,7 +1148,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -1133,7 +1175,7 @@ int cuptip_ctx_stop(cuptip_control_t state)
             return papi_errno;
         }
 
-        papi_errno = cuptic_device_release(state->gpu_ctl[dev_id].added_events);
+        papi_errno = cuptic_device_release(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -1294,7 +1336,7 @@ int init_event_table(void)
         // Skip devices that will require the Events API to be profiled
         int cupti_api = determine_dev_cc_major(dev_id);
         if (cupti_api != API_PERFWORKS) {
-            if (cupti_api == API_EVENTS) {
+            if (cupti_api == API_LEGACY) {
                 continue;
             }
             else {
@@ -1474,15 +1516,15 @@ static int get_ntv_events(cuptiu_event_table_t *evt_table, const char *evt_name,
         // Increment event count
         (*count)++;
 
-        strLen = snprintf(event->name, PAPI_2MAX_STR_LEN, "%s", name_no_stat);
-        if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
-            ERRDBG("Failed to fully write name with no stat.\n");
+        strLen = snprintf(event->name, PAPI_HUGE_STR_LEN, "%s", name_no_stat);
+        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+            ERRDBG("Failed to fully write CUPTI metric name with no 'stat'.\n");
             return PAPI_EBUF;
         }
 
-        strLen = snprintf(event->basenameWithStatReplaced, sizeof(event->basenameWithStatReplaced), "%s", name_restruct);
+        strLen = snprintf(event->basenameWithStatReplaced, PAPI_HUGE_STR_LEN, "%s", name_restruct);
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
-            ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+            ERRDBG("Failed to fully write CUPTI metric name with the stat value replaced with 'stat'.\n");
             return PAPI_EBUF;
         }
 
@@ -1658,24 +1700,37 @@ int cuptip_evt_name_to_code(const char *name, uint32_t *event_code)
 {
     int htable_errno, device, stat, flags, nameid, papi_errno = PAPI_OK;
     cuptiu_event_t *event;
-    char base[PAPI_MAX_STR_LEN] = { 0 };
+    char base[PAPI_HUGE_STR_LEN] = { 0 };
     SUBDBG("ENTER: name: %s, event_code: %p\n", name, event_code);
 
-    papi_errno = cuda_verify_no_repeated_qualifiers(name);
+    papi_errno = evt_name_to_basename(name, base, PAPI_HUGE_STR_LEN);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
 
-    papi_errno = evt_name_to_basename(name, base, PAPI_MAX_STR_LEN);
-    if (papi_errno != PAPI_OK) {
-        goto fn_exit;
+    char *userAddedQualifiers = strstr(name, ":");
+    // Detected user added qualifiers, verify their validity
+    // If no qualifiers are added, we handle default cases in
+    // evt_name_to_device and evt_name_to_stat respectively.
+    if (userAddedQualifiers != NULL) {
+        papi_errno = cuda_verify_qualifiers_are_valid(userAddedQualifiers);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
+
+        papi_errno = cuda_verify_qualifiers_are_not_repeated(userAddedQualifiers);
+        if (papi_errno != PAPI_OK) {
+            goto fn_exit;
+        }
     }
 
+    // Handle device qualifier case
     papi_errno = evt_name_to_device(name, &device, base);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
     }
     
+    // Handle stat qualifier case
     papi_errno = evt_name_to_stat(name, &stat, base);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -1761,11 +1816,11 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len)
     }
 
     int str_len;
-    char stat[PAPI_HUGE_STR_LEN] = ""; 
+    char stat[PAPI_MIN_STR_LEN] = ""; 
     if (info.stat < NUM_STATS_QUALS){
-        str_len = snprintf(stat, sizeof(stat), "%s", stats[info.stat]);
-        if (str_len < 0 || str_len >= PAPI_HUGE_STR_LEN) {
-            ERRDBG("String larger than PAPI_HUGE_STR_LEN");
+        str_len = snprintf(stat, PAPI_MIN_STR_LEN, "%s", stats[info.stat]);
+        if (str_len < 0 || str_len >= PAPI_MIN_STR_LEN) {
+            ERRDBG("Failed to fully write statistic qualifier name.\n");
             return PAPI_EBUF;
         }
     }
@@ -1780,7 +1835,7 @@ static int evt_code_to_name(uint32_t event_code, char *name, int len)
             break;
         case (STAT_FLAG):    
             str_len = snprintf(name, len, "%s:stat=%s", cuptiu_table_p->events[info.nameid].name, stat);
-            if (str_len < 0 || str_len >= PAPI_HUGE_STR_LEN) {
+            if (str_len < 0 || str_len >= len) {
                 ERRDBG("String formatting exceeded max string length.\n");
                 return PAPI_EBUF;
             }
@@ -1827,11 +1882,15 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
     }
     size_t basename_len = stat_position - cuptiu_table_p->events[inf.nameid].basenameWithStatReplaced;
     char reconstructedEventName[PAPI_HUGE_STR_LEN]="";
-    int strLen = snprintf(reconstructedEventName, PAPI_MAX_STR_LEN, "%.*s%s%s",
+    int strLen = snprintf(reconstructedEventName, PAPI_HUGE_STR_LEN, "%.*s%s%s",
                (int)basename_len,
                cuptiu_table_p->events[inf.nameid].basenameWithStatReplaced,
                cuptiu_table_p->events[inf.nameid].stat->arrayMetricStatistics[0],
                stat_position + 4);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to reconstruct CUPTI metric name with the basename and stat.\n");
+        return PAPI_EBUF;
+    }
 
     int i;
     // For a Cuda event collect the description, units, and number of passes
@@ -1876,7 +1935,7 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         }
         case DEVICE_FLAG:
         {
-            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            char devices[PAPI_2MAX_STR_LEN] = { 0 };
             int init_metric_dev_id;
             for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
@@ -1886,9 +1945,10 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                         init_metric_dev_id = i;
 
                     }
-                    int strLen = snprintf(devices + strlen(devices), PAPI_MAX_STR_LEN, "%i,", i);
-                    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
-                        ERRDBG("Failed to fully write device qualifiers.\n");
+                    int strLen = snprintf(devices + strlen(devices), PAPI_2MAX_STR_LEN - strlen(devices), "%i,", i);
+                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN - strlen(devices)) {
+                        SUBDBG("Failed to write device %d into devices in DEVICE_FLAG case.\n", i);
+                        return PAPI_EBUF;
                     }
                     
                 }
@@ -1950,7 +2010,7 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         case (STAT_FLAG | DEVICE_FLAG):
         {
             int init_metric_dev_id;
-            char devices[PAPI_MAX_STR_LEN] = { 0 };
+            char devices[PAPI_2MAX_STR_LEN] = { 0 };
             for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
                     /* for an event, store the first device found to use with :device=#, 
@@ -1959,7 +2019,11 @@ int cuptip_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                         init_metric_dev_id = i;
                     }
 
-                    sprintf(devices + strlen(devices), "%i,", i);
+                    strLen = snprintf(devices + strlen(devices), PAPI_2MAX_STR_LEN - strlen(devices), "%i,", i);
+                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN - strlen(devices)) {
+                        SUBDBG("Failed to write device %d into devices in STAT_FLAG | DEVICE_FLAG case.\n", i);
+                        return PAPI_EBUF;
+                    }
                 }
             }
             *(devices + strlen(devices) - 1) = 0;
@@ -2036,23 +2100,23 @@ static int evt_name_to_basename(const char *name, char *base, int len)
     return PAPI_OK;
 }
 
-/** @class cuda_verify_no_repeated_qualifiers
+/** @class cuda_verify_qualifiers_are_not_repeated
   * @brief Verify that a user has not added multiple device or stats qualifiers
   *        to an event name.
   *
   * @param *eventName
   *   User provided event name we need to verify.
 */
-static int cuda_verify_no_repeated_qualifiers(const char *eventName)
+static int cuda_verify_qualifiers_are_not_repeated(const char *qualifiers)
 {
     int numDeviceQualifiers = 0, numStatsQualifiers = 0;
-    char tmpEventName[PAPI_2MAX_STR_LEN];
-    int strLen = snprintf(tmpEventName, PAPI_2MAX_STR_LEN, "%s", eventName);
-    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
-        ERRDBG("Failed to fully write eventName into tmpEventName.\n");
+    char tmpQualifiers[PAPI_HUGE_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_HUGE_STR_LEN, "%s", qualifiers);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
         return PAPI_EBUF;
     }
-    char *token = strtok(tmpEventName, ":");
+    char *token = strtok(tmpQualifiers, ":");
     while(token != NULL) {
         if (strncmp(token, "device", 6) == 0) {
             numDeviceQualifiers++;
@@ -2065,16 +2129,46 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
     }
 
     if (numDeviceQualifiers > 1 || numStatsQualifiers > 1) {
-        ERRDBG("Provided Cuda event has multiple device or stats qualifiers appended.\n");
+        SUBDBG("Provided Cuda event has multiple device or stats qualifiers appended.\n");
         return PAPI_ENOEVNT;
     }
 
     return PAPI_OK;
 }
 
-/** @class cuda_verify_qualifiers
+/** @class cuda_verify_qualifiers_are_valid
+  * @brief Verify that a user has added valid qualifiers i.e. stat or device.
+  *
+  * @param *qualifiers
+  *   String of user added qualifiers.
+*/
+static int cuda_verify_qualifiers_are_valid(const char *qualifiers)
+{
+    char tmpQualifiers[PAPI_HUGE_STR_LEN];
+    int strLen = snprintf(tmpQualifiers, PAPI_HUGE_STR_LEN, "%s", qualifiers);
+    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+        SUBDBG("Failed to fully write qualifiers into tmpQualifiers.\n");
+        return PAPI_EBUF;
+    }
+
+    char *token = strtok(tmpQualifiers, ":");
+    while (token != NULL) {
+        if (strncmp(token, "device", 6) != 0 &&
+            strncmp(token, "stat", 4) != 0) {
+            SUBDBG("The appended qualifier is not supported: %s\n", token);
+            return PAPI_ENOEVNT;
+        }
+
+        token = strtok(NULL, ":");
+    }
+
+    return PAPI_OK;
+}
+
+/** @class cuda_verify_qualifiers_do_not_contain_junk
   * @brief Verify that the device and/or stats qualifier provided by the user
-  *        is valid. E.g. :device=# or :stat=avg.
+  *        does not contain excess characters or does not have the proper
+  *        equals sign.
   *
   * @param flag
   *   Device or stats flag define. Allows us to determine the case to enter for
@@ -2087,7 +2181,7 @@ static int cuda_verify_no_repeated_qualifiers(const char *eventName)
   *   Upon verifying the provided qualifier is valid. Store either a device index
   *   or a statistic index.
 */
-static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
+static int cuda_verify_qualifiers_do_not_contain_junk(int flag, char *qualifierName, int equalitySignPosition, int *qualifierValue)
 {
     int pos = equalitySignPosition;
     // Verify that an equal sign was provided where it was suppose to be
@@ -2108,7 +2202,7 @@ static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySig
                 return PAPI_ENOEVNT;
             }
 
-            // Verify that only qualifiers have been appended
+            // Verify that no junk has been appended after the device qualifier
             char *endPtr;
             *qualifierValue = (int) strtol(qualifierName + strlen(":device="), &endPtr, 10);
             // Check to make sure only qualifiers have been appended
@@ -2126,7 +2220,7 @@ static int cuda_verify_qualifiers(int flag, char *qualifierName, int equalitySig
             for (i = 0; i < NUM_STATS_QUALS; i++) {
                 size_t token_len = strlen(stats[i]);
                 if (strncmp(qualifierName, stats[i], token_len) == 0) {
-                    // Check to make sure only qualifiers have been appended
+                    // Verify that no junk has been appended after the stats qualifier
                     char *no_excess_chars = qualifierName + token_len;
                     if (strlen(no_excess_chars) == 0 || strncmp(no_excess_chars, ":device", 7) == 0) {
                         *qualifierValue = i;
@@ -2157,7 +2251,7 @@ static int evt_name_to_device(const char *name, int *device, const char *base)
     // User did provide :device=# qualifier
     if (p != NULL) {
         int equalitySignPos = 7;
-        int papi_errno = cuda_verify_qualifiers(DEVICE_FLAG, p, equalitySignPos, device);
+        int papi_errno = cuda_verify_qualifiers_do_not_contain_junk(DEVICE_FLAG, p, equalitySignPos, device);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -2196,7 +2290,7 @@ static int evt_name_to_stat(const char *name, int *stat, const char *base)
     char *p = strstr(name, ":stat");
     if (p != NULL) {
         int equalitySignPos = 5;
-        int papi_errno = cuda_verify_qualifiers(STAT_FLAG, p, equalitySignPos, stat);
+        int papi_errno = cuda_verify_qualifiers_do_not_contain_junk(STAT_FLAG, p, equalitySignPos, stat);
         if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
@@ -2254,7 +2348,7 @@ static int determine_dev_cc_major(int dev_id)
     // TODO: Once the Events API is added back, move this to either cupti_utils or papi_cupti_common
     //       with updated logic.
     else {
-        return API_EVENTS;
+        return API_LEGACY;
     }
 }
 
@@ -2311,9 +2405,15 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
             size_t metricNameBeginIndex = getMetricNamesParams.pMetricNameBeginIndices[metricIdx];
             const char *baseMetricName = &getMetricNamesParams.pMetricNames[metricNameBeginIndex];
 
-            char fullMetricName[PAPI_2MAX_STR_LEN];
-            int strLen = snprintf(fullMetricName, PAPI_2MAX_STR_LEN, "%s", baseMetricName);
-            if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+            // CTC metrics are not supported by the Perfworks Metrics API
+            if (strstr(baseMetricName, "ctc__") || strstr(baseMetricName, "CTC")) {
+                SUBDBG("CTC metric found. The Perfworks Metrics API does not support profiling these metrics. Moving to the next metric.\n");
+                continue;
+            }
+
+            char fullMetricName[PAPI_HUGE_STR_LEN];
+            int strLen = snprintf(fullMetricName, PAPI_HUGE_STR_LEN, "%s", baseMetricName);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                 SUBDBG("Failed to fully append the base metric name.\n");
                 return PAPI_EBUF;
             }
@@ -2331,8 +2431,8 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                         return papi_errno;
                     }
 
-                    strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_2MAX_STR_LEN - offsetForMetricName, "%s", rollupMetricName);
-                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", rollupMetricName);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
                         SUBDBG("Failed to fully append rollup metric name.\n");
                         return PAPI_EBUF;
                     }
@@ -2358,8 +2458,8 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                     }
 
                     if (supportedSubMetrics.pSupportedSubmetrics[subMetricIdx] != NVPW_SUBMETRIC_NONE) {
-                        strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_2MAX_STR_LEN - offsetForMetricName, "%s", subMetricName);
-                        if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                        strLen = snprintf(fullMetricName + offsetForMetricName, PAPI_HUGE_STR_LEN - offsetForMetricName, "%s", subMetricName);
+                        if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetForMetricName) {
                             SUBDBG("Failed to fully append submetric names.\n");
                             return PAPI_EBUF;
                         }
@@ -2370,15 +2470,15 @@ static int enumerate_metrics_for_unique_devices(const char *pChipName, int *tota
                         SUBDBG("Failed to allocate memory for metricNames.\n");
                         return PAPI_ENOMEM;
                     }
-                    metricNames[metricCount] = (char *) malloc(PAPI_2MAX_STR_LEN * sizeof(char));
+                    metricNames[metricCount] = (char *) malloc(PAPI_HUGE_STR_LEN * sizeof(char));
                     if (metricNames[metricCount] == NULL) {
                         SUBDBG("Failed to allocate memory for the index %d in the array metricNames.\n", metricCount);
                         return PAPI_ENOMEM;
                     }
 
                     // Store the constructed metric name
-                    strLen = snprintf(metricNames[metricCount], PAPI_2MAX_STR_LEN, "%s", fullMetricName);
-                    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
+                    strLen = snprintf(metricNames[metricCount], PAPI_HUGE_STR_LEN, "%s", fullMetricName);
+                    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                         SUBDBG("Failed to fully write constructued metric name: %s\n", fullMetricName);
                         return PAPI_EBUF;
                     }
@@ -2611,8 +2711,8 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
         dimUnitsParams.pDimUnits = dimUnitsFactor;
         nvpwCheckErrors( NVPW_MetricsEvaluator_GetMetricDimUnitsPtr(&dimUnitsParams), return PAPI_EMISC );
 
-        char tmpMetricUnits[PAPI_MAX_STR_LEN] = { 0 };
-        int i;
+        char tmpMetricUnits[PAPI_HUGE_STR_LEN] = { 0 };
+        int i, offsetMetricUnits = 0;
         for (i = 0; i < dimUnitsParams.numDimUnits; i++) {
             NVPW_MetricsEvaluator_DimUnitToString_Params dimUnitToStringParams = {NVPW_MetricsEvaluator_DimUnitToString_Params_STRUCT_SIZE};
             dimUnitToStringParams.pMetricsEvaluator = pMetricsEvaluator;
@@ -2621,11 +2721,12 @@ static int get_metric_properties(const char *pChipName, const char *metricName, 
             nvpwCheckErrors( NVPW_MetricsEvaluator_DimUnitToStringPtr(&dimUnitToStringParams), return PAPI_EMISC );
 
             char *unitsFormat = (i == 0) ? "%s" : "/%s";
-            strLen = snprintf(tmpMetricUnits + strlen(tmpMetricUnits), PAPI_MAX_STR_LEN - strlen(tmpMetricUnits), unitsFormat, dimUnitToStringParams.pPluralName);
-            if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+            strLen = snprintf(tmpMetricUnits + offsetMetricUnits, PAPI_HUGE_STR_LEN - offsetMetricUnits, unitsFormat, dimUnitToStringParams.pPluralName);
+            if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - offsetMetricUnits) {
                 SUBDBG("Failed to fully write dimensional units for a metric.\n");
                 return PAPI_EBUF;
             }
+            offsetMetricUnits = strlen(tmpMetricUnits);
         }
         free(dimUnitsFactor);
         metricUnits = tmpMetricUnits;
@@ -2875,7 +2976,9 @@ static int create_raw_metric_requests(NVPW_MetricsEvaluator *pMetricsEvaluator, 
     getMetricRawDependenciesParams.metricEvalRequestStructSize = NVPW_MetricEvalRequest_STRUCT_SIZE;
     getMetricRawDependenciesParams.metricEvalRequestStrideSize = sizeof(NVPW_MetricEvalRequest);
     getMetricRawDependenciesParams.ppRawDependencies = NULL;
+    #if CUDA_VERSION >= 11050
     getMetricRawDependenciesParams.ppOptionalRawDependencies = NULL;
+    #endif
     getMetricRawDependenciesParams.pPriv = NULL;
     nvpwCheckErrors( NVPW_MetricsEvaluator_GetMetricRawDependenciesPtr(&getMetricRawDependenciesParams), return PAPI_EMISC );
 
@@ -3105,7 +3208,6 @@ static int get_config_image(const char *chipName, const uint8_t *pCounterAvailab
     return PAPI_OK;
 }
 
-
 /** @class get_counter_data_prefix_image
  *  @brief Generate the counterDataPrefix binary configuration image 
  *         (file format in memory).
@@ -3162,77 +3264,58 @@ static int get_counter_data_prefix_image(const char *chipName, NVPA_RawMetricReq
 }
 
 /** @class get_counter_data_image
- *  @brief Create a counterDataImage to be used for metric evaluation. 
+ *  @brief Create a counterDataImage to be used for metric evaluation.
  *
- *  @param counterDataPrefixImage
- *    Struct containing the size and data of the counterDataPrefix
- *    binary configuration image.
- *  @param counterDataScratchBuffer
- *    Struct to store the size and data of the scratch buffer.
- *  @param counterDataImage
- *    Struct to store the size and data of the counterDataImage.
+ *  @param cuptip_gpu_state_t *gpu_ctl
+ *    Struct containing the size and data of configuration images and CUPTI Profiling API structures.
 */
-static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_array_t *counterDataScratchBuffer, byte_array_t *counterDataImage)
+static int get_counter_data_image(cuptip_gpu_state_t *gpu_ctl)
 {
-    CUpti_Profiler_CounterDataImageOptions counterDataImageOptions;
-    counterDataImageOptions.pCounterDataPrefix = counterDataPrefixImage.data;
-    counterDataImageOptions.counterDataPrefixSize = counterDataPrefixImage.size;
-    counterDataImageOptions.maxNumRanges = 1;
-    counterDataImageOptions.maxNumRangeTreeNodes = 1; // Why do we do this?
-    counterDataImageOptions.maxRangeNameLength = 64; 
-
     // Calculate size of counterDataImage based on counterDataPrefixImage and options.
     CUpti_Profiler_CounterDataImage_CalculateSize_Params calculateSizeParams = {CUpti_Profiler_CounterDataImage_CalculateSize_Params_STRUCT_SIZE};
-    calculateSizeParams.pOptions = &counterDataImageOptions;
+    calculateSizeParams.pOptions = &gpu_ctl->counterDataImageOptionsParams;
     calculateSizeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
     calculateSizeParams.pPriv = NULL;
     cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateSizePtr(&calculateSizeParams), return PAPI_EMISC );
 
-   // Initialize counterDataImage.
-    CUpti_Profiler_CounterDataImage_Initialize_Params initializeParams = {CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE};
-    initializeParams.pOptions = &counterDataImageOptions;
-    initializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
-    initializeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    initializeParams.pPriv = NULL;
-
-    byte_array_t *tmpCounterDataImage;
-    tmpCounterDataImage = counterDataImage;
-
-    tmpCounterDataImage->size = calculateSizeParams.counterDataImageSize;
-    tmpCounterDataImage->data = (uint8_t *) calloc(tmpCounterDataImage->size, sizeof(uint8_t));
-    if (counterDataImage->data  == NULL) {
-        SUBDBG("Failed to allocate memory for counterDataImage->data.\n");
+    gpu_ctl->counterDataImage.size = calculateSizeParams.counterDataImageSize;
+    gpu_ctl->counterDataImage.data = (uint8_t *) calloc(gpu_ctl->counterDataImage.size, sizeof(uint8_t));
+    if (gpu_ctl->counterDataImage.data == NULL) {
+        SUBDBG("Failed to allocate memory for gpu_ctl->counterDataImage.data.\n");
         return PAPI_ENOMEM;
     }
 
-    initializeParams.pCounterDataImage = counterDataImage->data;
-    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&initializeParams), return PAPI_EMISC );
+    // Initialize counterDataImage.
+    gpu_ctl->counterDataImageInitializeParams.structSize = CUpti_Profiler_CounterDataImage_Initialize_Params_STRUCT_SIZE;
+    gpu_ctl->counterDataImageInitializeParams.pOptions = &gpu_ctl->counterDataImageOptionsParams;
+    gpu_ctl->counterDataImageInitializeParams.sizeofCounterDataImageOptions = CUpti_Profiler_CounterDataImageOptions_STRUCT_SIZE;
+    gpu_ctl->counterDataImageInitializeParams.counterDataImageSize = gpu_ctl->counterDataImage.size;
+    gpu_ctl->counterDataImageInitializeParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
+    gpu_ctl->counterDataImageInitializeParams.pPriv = NULL;
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializePtr(&gpu_ctl->counterDataImageInitializeParams), return PAPI_EMISC );
 
     // Calculate scratchBuffer size based on counterDataImage size and counterDataImage.
     CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params scratchBufferSizeParams = {CUpti_Profiler_CounterDataImage_CalculateScratchBufferSize_Params_STRUCT_SIZE};
-    scratchBufferSizeParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    scratchBufferSizeParams.pCounterDataImage = counterDataImage->data;
+    scratchBufferSizeParams.counterDataImageSize = gpu_ctl->counterDataImage.size;
+    scratchBufferSizeParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
     scratchBufferSizeParams.pPriv = NULL;
     cuptiCheckErrors( cuptiProfilerCounterDataImageCalculateScratchBufferSizePtr(&scratchBufferSizeParams), return PAPI_EMISC );
 
-    // Create counterDataScratchBuffer.
-    byte_array_t *tmpCounterDataScratchBuffer;
-    tmpCounterDataScratchBuffer = counterDataScratchBuffer;
-    tmpCounterDataScratchBuffer->size = scratchBufferSizeParams.counterDataScratchBufferSize;
-    tmpCounterDataScratchBuffer->data = (uint8_t *) calloc(tmpCounterDataScratchBuffer->size, sizeof(uint8_t));
-    if (counterDataScratchBuffer->data == NULL) {
-        SUBDBG("Failed to allocate memory for counterDataScratchBuffer->data.\n");
+    gpu_ctl->counterDataScratchBuffer.size = scratchBufferSizeParams.counterDataScratchBufferSize;
+    gpu_ctl->counterDataScratchBuffer.data = (uint8_t *) calloc(gpu_ctl->counterDataScratchBuffer.size, sizeof(uint8_t));
+    if (gpu_ctl->counterDataScratchBuffer.data == NULL) {
+        SUBDBG("Failed to allocate memory for gpu_ctl->counterDataScratchBuffer.data");
         return PAPI_ENOMEM;
-    }   
+    }
 
     // Initialize counterDataScratchBuffer.
-    CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params initScratchBufferParams = { CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE };
-    initScratchBufferParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
-    initScratchBufferParams.pCounterDataImage = counterDataImage->data; //uint8_t* pCounterDataImage
-    initScratchBufferParams.counterDataScratchBufferSize = counterDataScratchBuffer->size;
-    initScratchBufferParams.pCounterDataScratchBuffer = counterDataScratchBuffer->data;
-    initScratchBufferParams.pPriv = NULL;
-    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&initScratchBufferParams), return PAPI_EMISC );
+    gpu_ctl->initializeScratchBufferParams.structSize = CUpti_Profiler_CounterDataImage_InitializeScratchBuffer_Params_STRUCT_SIZE;
+    gpu_ctl->initializeScratchBufferParams.counterDataImageSize = calculateSizeParams.counterDataImageSize;
+    gpu_ctl->initializeScratchBufferParams.pCounterDataImage = gpu_ctl->counterDataImage.data;
+    gpu_ctl->initializeScratchBufferParams.counterDataScratchBufferSize = gpu_ctl->counterDataScratchBuffer.size;
+    gpu_ctl->initializeScratchBufferParams.pCounterDataScratchBuffer = gpu_ctl->counterDataScratchBuffer.data;
+    gpu_ctl->initializeScratchBufferParams.pPriv = NULL;
+    cuptiCheckErrors( cuptiProfilerCounterDataImageInitializeScratchBufferPtr(&gpu_ctl->initializeScratchBufferParams), return PAPI_EMISC );
 
     return PAPI_OK;
 }
@@ -3242,12 +3325,17 @@ static int get_counter_data_image(byte_array_t counterDataPrefixImage, byte_arra
 */
 static int end_profiling_session(void)
 {
-    int papi_errno = disable_profiling();
+    int papi_errno = pop_range();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
 
-    papi_errno = pop_range();
+    papi_errno = disable_profiling();
+    if (papi_errno != PAPI_OK) {
+        return papi_errno;
+    }
+
+    papi_errno = end_pass();
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }

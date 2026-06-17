@@ -134,6 +134,10 @@ static char * _local_strlcpy( char *dst, const char *src, size_t size )
 static long long read_powercap_value( int index )
 {
   int sz = pread(event_fds[index], read_buff, PAPI_MAX_STR_LEN, 0);
+  if (sz == -1) {
+    perror("Error in pread(): ");
+    return (long long) 0;
+  }
   read_buff[sz] = '\0';
 
   return atoll(read_buff);
@@ -207,6 +211,7 @@ static int _powercap_init_component( int cidx )
       if (event_fd == -1) { break; }
 
       int sz = pread(event_fd, read_buff, PAPI_MAX_STR_LEN, 0);
+      if (sz == -1) HANDLE_STRING_ERROR;
       read_buff[sz] = '\0';
       close(event_fd);
 
@@ -238,7 +243,12 @@ static int _powercap_init_component( int cidx )
       if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
       // not a valid pkg event path so continue
 
-      if (access(event_path, R_OK) == -1) { continue; }
+      int file_descriptor = open(event_path, O_SYNC|pkg_sys_flags[e]);
+      if (file_descriptor == -1) {
+          SUBDBG("Call to open failed (%s) for the path %s and flags O_SYNC|%d.\n", strerror(errno), event_path, component_sys_flags[e]);
+          continue;
+      }
+      event_fds[num_events] = file_descriptor;
 
       strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d", pkg_event_names[e], s);
       powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
@@ -250,10 +260,9 @@ static int _powercap_init_component( int cidx )
 
       powercap_ntv_events[num_events].resources.selector = num_events + 1;
 
-      event_fds[num_events] = open(event_path, O_SYNC|pkg_sys_flags[e]);
-
       if(powercap_ntv_events[num_events].type == PKG_NAME) {
         int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+        if (sz == -1) HANDLE_STRING_ERROR;
         read_buff[sz] = '\0';
         strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
         powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
@@ -262,6 +271,7 @@ static int _powercap_init_component( int cidx )
 
       if(powercap_ntv_events[num_events].type == PKG_MAX_ENERGY_RANGE) {
         int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+        if (sz == -1) HANDLE_STRING_ERROR;
         read_buff[sz] = '\0';
         max_pkg_energy_count = atoll(read_buff);
       }
@@ -285,8 +295,12 @@ static int _powercap_init_component( int cidx )
         event_path[sizeof(event_path)-1]=0;
         if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
 
-        // not a valid pkg event path so continue
-        if (access(event_path, R_OK) == -1) { continue; }
+        int file_descriptor = open(event_path, O_SYNC|component_sys_flags[e]);
+        if (file_descriptor == -1) {
+            SUBDBG("Call to open failed (%s) for the path %s and flags O_SYNC|%d.\n", strerror(errno), event_path, component_sys_flags[e]);
+            continue;
+        }
+        event_fds[num_events] = file_descriptor;
 
         strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d_SUBZONE%d", component_event_names[e], s, c);
         powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
@@ -298,10 +312,9 @@ static int _powercap_init_component( int cidx )
 
         powercap_ntv_events[num_events].resources.selector = num_events + 1;
 
-        event_fds[num_events] = open(event_path, O_SYNC|component_sys_flags[e]);
-
         if(powercap_ntv_events[num_events].type == COMPONENT_NAME) {
           int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+          if (sz == -1) HANDLE_STRING_ERROR;
           read_buff[sz] = '\0';
           strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
           powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
@@ -310,6 +323,7 @@ static int _powercap_init_component( int cidx )
 
         if(powercap_ntv_events[num_events].type == COMPONENT_MAX_ENERGY_RANGE) {
           int sz = pread(event_fds[num_events], read_buff, PAPI_MAX_STR_LEN, 0);
+          if (sz == -1) HANDLE_STRING_ERROR;
           read_buff[sz] = '\0';
           max_component_energy_count = atoll(read_buff);
         }

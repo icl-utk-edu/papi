@@ -166,6 +166,8 @@ enum
 	PAPI_VEC_SP_idx,		 /* Single precision vector/SIMD instructions */
 	PAPI_VEC_DP_idx,		 /* Double precision vector/SIMD instructions */
 	PAPI_REF_CYC_idx,		 /* Reference clock cycles */
+	PAPI_HP_OPS_idx,		 /* Floating point operations executed; optimized to count scaled half precision vector operations */
+	PAPI_VEC_HP_idx,		 /* Half precision vector/SIMD instructions */
 	PAPI_END_idx			 /*This should always be last! */
 };
 
@@ -277,6 +279,8 @@ enum
 #define PAPI_VEC_SP  (PAPI_VEC_SP_idx  | PAPI_PRESET_MASK)	/* Single precision vector/SIMD instructions */
 #define PAPI_VEC_DP  (PAPI_VEC_DP_idx  | PAPI_PRESET_MASK)	/* Double precision vector/SIMD instructions */
 #define PAPI_REF_CYC (PAPI_REF_CYC_idx  | PAPI_PRESET_MASK)	/* Reference clock cycles */
+#define PAPI_HP_OPS  (PAPI_HP_OPS_idx  | PAPI_PRESET_MASK)	/* Floating point operations executed; optimized to count scaled half precision vector operations */
+#define PAPI_VEC_HP  (PAPI_VEC_HP_idx  | PAPI_PRESET_MASK)	/* Half precision vector/SIMD instructions */
 
 #define PAPI_END     (PAPI_END_idx  | PAPI_PRESET_MASK)	/*This should always be last! */
 
