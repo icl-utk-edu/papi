@@ -189,13 +189,17 @@ amd64_get_revision(pfm_amd64_config_t *cfg)
 		else
 			rev = PFM_PMU_AMD64_FAM17H_ZEN1;
 	} else if (cfg->family == 25) { /* family 19h */
-		if (cfg->model >= 0x60 || (cfg->model >= 0x10 && cfg->model <= 0x1f)) {
+		if ((cfg->model >= 0x60) || (cfg->model >= 0x10 && cfg->model <= 0x1f)) {
 			rev = PFM_PMU_AMD64_FAM19H_ZEN4;
 		} else {
 			rev = PFM_PMU_AMD64_FAM19H_ZEN3;
 		}
 	} else if (cfg->family == 26) { /* family 1ah */
-		rev = PFM_PMU_AMD64_FAM1AH_ZEN5;
+		if ((cfg->model <= 0x4F) || (cfg->model >= 0x60 && cfg->model <= 0x7F)) {
+			rev = PFM_PMU_AMD64_FAM1AH_ZEN5;
+		} else {
+			rev = PFM_PMU_AMD64_FAM1AH_ZEN6;
+		}
 	}
 
 	cfg->revision = rev;

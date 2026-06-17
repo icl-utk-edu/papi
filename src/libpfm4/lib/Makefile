@@ -297,6 +297,8 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/amd64_events_fam16h.h	\
 	events/amd64_events_fam1ah_zen5.h    \
 	events/amd64_events_fam1ah_zen5_l3.h \
+	events/amd64_events_fam1ah_zen6.h    \
+	events/amd64_events_fam1ah_zen6_l3.h \
 	events/intel_p6_events.h	\
 	events/intel_netburst_events.h	\
 	events//intel_x86_arch_events.h \
