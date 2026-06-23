@@ -4062,7 +4062,6 @@ PAPI_set_multiplex( int EventSet )
 	PAPI_option_t mpx;
 	EventSetInfo_t *ESI;
 	int cidx;
-	int ret;
 
 	/* Is the EventSet already in existence? */
 

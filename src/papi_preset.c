@@ -1642,8 +1642,8 @@ papi_load_derived_events_component (char *comp_str, char *arch_str, int cidx) {
                     return PAPI_ENOMEM;
                 }
 
-                int component_prefix_offset = strlen(comp_str) + strlen(":::");
-                int pos;
+                size_t component_prefix_offset = strlen(comp_str) + strlen(":::");
+                size_t pos;
                 // Walk the string until we hit the first qualifier
                 for (pos = component_prefix_offset; pos < strlen(basename); pos++) {
                     // If we hit the first qualifier of the event name
