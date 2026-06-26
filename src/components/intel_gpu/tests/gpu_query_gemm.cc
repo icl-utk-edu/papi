@@ -354,7 +354,9 @@ int
 main(int argc, char* argv[]) {
     int retVal;
     InParams param;
+#if !defined(ENABLE_PAPI)
     ze_result_t status = ZE_RESULT_SUCCESS;
+#endif
     int size = 1024;
 
     int i = 1;

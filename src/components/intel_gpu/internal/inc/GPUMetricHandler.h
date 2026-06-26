@@ -40,6 +40,8 @@
 #include <level_zero/zet_api.h>
 #include <level_zero/layers/zel_tracing_api.h>
 
+#include "papi_debug.h"
+
 #include "GPUMetricInterface.h"
 
 /* collection status */
