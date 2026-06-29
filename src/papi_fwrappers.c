@@ -459,6 +459,30 @@ PAPI_FCALL( papif_get_virt_usec, PAPIF_GET_VIRT_USEC, ( long long *time ) )
 	*time = PAPI_get_virt_usec(  );
 }
 
+/** @class PAPIF_get_component_index
+ *      @ingroup PAPIF
+ *      @brief Return the component index for the named component.
+ *
+ *      @par Fortran Interface:
+ *      \#include "fpapi.h" @n
+ *      PAPIF_get_component_index( C_STRING component_name, C_INT component_index )
+ *
+ * @see PAPI_get_component_index
+ */
+#if defined(_FORTRAN_STRLEN_AT_END)
+PAPI_FCALL( papif_get_component_index, PAPIF_GET_COMPONENT_INDEX, ( char *component_name, int *component_index, int name_len) )
+{
+        char tmp[PAPI_MAX_STR_LEN];
+        Fortran2cstring( tmp, component_name, PAPI_MAX_STR_LEN, name_len );
+        *component_index = PAPI_get_component_index( tmp );
+}
+#else
+PAPI_FCALL( papif_get_component_index, PAPIF_GET_COMPONENT_INDEX, ( char *component_name, int *component_index ) )
+{
+        *component_index = PAPI_get_component_index( component_name );
+}
+#endif
+
 /** @class PAPIF_is_initialized
  *	@ingroup PAPIF
  *	@brief Check for initialization.
