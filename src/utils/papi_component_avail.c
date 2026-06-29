@@ -116,7 +116,13 @@ main( int argc, char **argv )
 	for ( cid = 0; cid < numcmp; cid++ ) {
 	  cmpinfo = PAPI_get_component_info( cid );
 
-	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+	  if (strcasecmp(cmpinfo->name, "No Components Configured. ") != 0) {
+		printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+	  }
+	  else {
+                printf( "Name:   %-23s\n", cmpinfo->name);
+                continue;
+	  }
 
 	  if (cmpinfo->disabled == PAPI_EDELAY_INIT) {
 	      force_cmp_init(cid);
@@ -144,9 +150,15 @@ main( int argc, char **argv )
 	  cmpinfo = PAPI_get_component_info( cid );
 	  if (cmpinfo->disabled) continue;
 
-	  printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
-	  printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
-		  " ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
+          if (strcasecmp(cmpinfo->name, "No Components Configured. ") != 0) {
+		printf( "Name:   %-23s %s\n", cmpinfo->name ,cmpinfo->description);
+		printf( "        %-23s Native: %d, Preset: %d, Counters: %d\n",
+			" ", cmpinfo->num_native_events, cmpinfo->num_preset_events, cmpinfo->num_cntrs);
+          }
+          else {
+                printf( "Name:   %-23s\n", cmpinfo->name);
+                continue;
+          }
 
      int pmus=0;
      for (i=0; i<PAPI_PMU_MAX; i++) {                          // Count pmus to print.
