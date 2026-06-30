@@ -55,6 +55,16 @@ int main()
    if ((retval=PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
+   /* NOTE: For some options, PAPI_set_opt requires the EventSet be bound to a
+      component */
+   /* Add Total Instructions Executed event to the EventSet */
+   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
+   /* Add Total Cycles Executed event to the EventSet */
+   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
+      ERROR_RETURN(retval);
+
    /* Set the domain of this EventSet to counter user and 
       kernel modes for this process.                      */
         
@@ -65,13 +75,6 @@ int main()
    options.domain.domain = PAPI_DOM_ALL;
    /* this sets the options for the domain */
    if ((retval=PAPI_set_opt(PAPI_DOMAIN, &options)) != PAPI_OK)
-      ERROR_RETURN(retval);
-   /* Add Total Instructions Executed event to the EventSet */
-   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
-      ERROR_RETURN(retval);
-
-   /* Add Total Cycles Executed event to the EventSet */
-   if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    /* Start counting */

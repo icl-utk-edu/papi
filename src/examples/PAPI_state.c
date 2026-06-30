@@ -11,6 +11,24 @@
 
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
+int printstate(int status)
+{
+   if(status & PAPI_STOPPED)
+      printf("Eventset is currently stopped or inactive \n");
+   if(status & PAPI_RUNNING)
+      printf("Eventset is currently running \n");
+   if(status & PAPI_PAUSED)
+      printf("Eventset is currently Paused \n");
+   if(status & PAPI_NOT_INIT)
+      printf(" Eventset defined but not initialized \n");
+   if(status & PAPI_OVERFLOWING)
+      printf(" Eventset has overflowing enabled \n");
+   if(status & PAPI_PROFILING)
+      printf(" Eventset has profiling enabled \n");
+   if(status & PAPI_MULTIPLEXING)
+      printf(" Eventset has multiplexing enabled \n");
+   return 0;
+}
 
 int main()
 {
@@ -58,23 +76,4 @@ int main()
    PAPI_shutdown();
 
    exit(0);
-}
-
-int printstate(int status)
-{
-   if(status & PAPI_STOPPED)
-      printf("Eventset is currently stopped or inactive \n");
-   if(status & PAPI_RUNNING)
-      printf("Eventset is currently running \n");
-   if(status & PAPI_PAUSED)
-      printf("Eventset is currently Paused \n");
-   if(status & PAPI_NOT_INIT) 
-      printf(" Eventset defined but not initialized \n");
-   if(status & PAPI_OVERFLOWING)
-      printf(" Eventset has overflowing enabled \n");
-   if(status & PAPI_PROFILING)
-      printf(" Eventset has profiling enabled \n"); 
-   if(status & PAPI_MULTIPLEXING)
-      printf(" Eventset has multiplexing enabled \n"); 
-   return 0;
 }

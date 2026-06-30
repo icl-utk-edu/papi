@@ -56,16 +56,23 @@ int multiplex(void)
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
 
+   const char *component_name = "perf_event";
+   int cidx = PAPI_get_component_index(component_name);
+   if (cidx < 0) {
+       printf("PAPI_get_component_index failed (%d) to get the component index for %s", component_name);
+       exit(1);
+   }
+
+   /* EventSet must be bound to a component before calling PAPI_set_multiplex( ... ) */
+   retval = PAPI_assign_eventset_component(EventSet, cidx);
+   if (retval != PAPI_OK) {
+       ERROR_RETURN(retval);
+   }
+
    /* convert the event set to a multiplex event set */
    retval = PAPI_set_multiplex(EventSet);
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
-/*
-   retval = PAPI_add_event(EventSet, PAPI_TOT_INS);
-   if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
-      ERROR_RETURN(retval);
-   printf("Adding %s\n", "PAPI_TOT_INS");
-*/
 
    for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) 
    {
