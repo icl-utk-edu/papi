@@ -7,7 +7,8 @@ TESTS = HelloWorld simpleMultiGPU \
 		pthreads cudaOpenMP concurrent_profiling \
 		test_multi_read_and_reset test_multipass_event_fail \
 		test_2thr_1gpu_not_allowed \
-		test_cuda_floating_point_operations
+		test_cuda_floating_point_operations \
+		test_cuda_presets
 
 TESTS_NOCTX = concurrent_profiling_noCuCtx pthreads_noCuCtx \
 			  cudaOpenMP_noCuCtx HelloWorld_noCuCtx \
@@ -39,7 +40,7 @@ ifeq ($(BUILD_SHARED_LIB),yes)
 endif
 CFLAGS += -g $(PAPI_FLAG)
 INCLUDE += -I$(PAPI_CUDA_ROOT)/include -I$(PAPI_CUDA_ROOT)/extras/CUPTI/include
-CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -lcuda
+CUDALIBS = -L$(PAPI_CUDA_ROOT)/lib64 -lcudart -L$(PAPI_CUDA_ROOT)/extras/CUPTI/lib64 -lcupti -lcuda
 
 cuda_tests: $(TESTS) $(TESTS_NOCTX)
 
@@ -93,6 +94,9 @@ simpleMultiGPU_noCuCtx: simpleMultiGPU_noCuCtx.o cuda_tests_helper.o $(UTILOBJS)
 
 test_cuda_floating_point_operations: test_cuda_floating_point_operations.o cuda_tests_helper.o $(UTILOBJS)
 	$(CXX) $(CFLAGS) -o test_cuda_floating_point_operations test_cuda_floating_point_operations.o cuda_tests_helper.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
+
+test_cuda_presets: test_cuda_presets.o $(UTILOBJS)
+	$(CXX) $(CFLAGS) -o test_cuda_presets test_cuda_presets.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TESTS) $(TESTS_NOCTX)

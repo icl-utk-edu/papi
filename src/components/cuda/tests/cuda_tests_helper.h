@@ -54,4 +54,15 @@ do {                                                                           \
         exit(EXIT_FAILURE);                                                    \
     }                                                                          \
 } while (0)
+
+#define check_cupti_api_call(apiFuncCall)                                      \
+do {                                                                           \
+    CUptiResult _status = apiFuncCall;                                         \
+    if (_status != CUPTI_SUCCESS) {                                            \
+        fprintf(stderr, "Call to %s on line %d failed with error code %d.\n",  \
+                #apiFuncCall, __LINE__, _status);                              \
+        exit(EXIT_FAILURE);                                                    \
+    }                                                                          \
+} while (0)
+
 #endif // CUDA_TESTS_HELPER_H
