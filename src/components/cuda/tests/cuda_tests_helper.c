@@ -121,7 +121,7 @@ void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int
 
     // Convert the first cuda native event code to a name, the name will
     // be in the format of cuda:::basename with no qualifiers appended.
-    char basename[PAPI_MAX_STR_LEN];
+    char basename[PAPI_2MAX_STR_LEN];
     papi_errno = PAPI_event_code_to_name(cuda_eventcode, basename);
     if (papi_errno != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_event_code_to_name", papi_errno);
