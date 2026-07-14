@@ -1,0 +1,30 @@
+# Rules for the Gaudi2 component
+# Environment variables (REQUIRED):
+#   PAPI_GAUDI2_ROOT - Path to Habana installation root
+#                      Example: /usr (for container builds with headers in /usr/include/habanalabs
+#                                     and libraries in /usr/lib/habanalabs)
+# Expected directory structure under PAPI_GAUDI2_ROOT:
+#   $(PAPI_GAUDI2_ROOT)/include/habanalabs/hlthunk.h
+#   $(PAPI_GAUDI2_ROOT)/lib/habanalabs/libhl-thunk.so
+
+# Component source files
+COMPSRCS += components/gaudi2/linux-gaudi2.c
+COMPOBJS += linux-gaudi2.o
+
+# Default to /usr if not set
+PAPI_GAUDI2_ROOT ?= /usr
+
+GAUDI2_INCDIR = $(PAPI_GAUDI2_ROOT)/include/habanalabs
+GAUDI2_LIBDIR = $(PAPI_GAUDI2_ROOT)/lib/habanalabs
+
+# Compiler flags
+# -I$(GAUDI2_INCDIR) for hlthunk.h and habanalabs_accel.h
+CFLAGS += -I$(GAUDI2_INCDIR) -I$(PAPI_GAUDI2_ROOT)/include/drm -g
+
+# Linker flags
+# Use dlopen for hlthunk library (no direct linking)
+LDFLAGS += $(LDL)
+
+# Compilation rule
+linux-gaudi2.o: components/gaudi2/linux-gaudi2.c components/gaudi2/gaudi2_events.h $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/gaudi2/linux-gaudi2.c -o linux-gaudi2.o
