@@ -479,6 +479,7 @@ _rapl_init_component( int cidx )
 			break;
 			
 		case 143:      /* Sapphire Rapids-SP */
+		case 173:      /* Granite Rapids */
 		case 207:      /* Emerald Rapids */
 		        package_avail=1;
 			pp0_avail=0;
