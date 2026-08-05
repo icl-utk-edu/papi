@@ -378,7 +378,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, cat_par
 
         cnt=0;
         for(j=0; j<len; j++){
-            char symbol[4] = "|/-\\";
+            char symbol[4] = {'|','/','-','\\'};
             active_buf_len = bufSizes[j]/sizeof(uintptr_t);
             if( params.show_progress ){
                 printf("%c\b",symbol[j%4]);
