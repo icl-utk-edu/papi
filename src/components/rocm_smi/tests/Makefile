@@ -24,6 +24,7 @@ else
     path_to_rocblas := $(PAPI_ROCMSMI_ROOT)/..
 endif
 ROCM_SMI_LDFLAGS := $(LDFLAGS) -ldl -g -pthread
+GPUFLAGS=-no-pie
 
 %.o:%.c
 	@echo "INCLUDE=" $(INCLUDE)
@@ -44,34 +45,34 @@ rocm_smi_tests_long: $(TESTS_LONG)
 #       have trouble managing libraries if we try to do both in a single step.
 
 rocm_command_line.o: rocm_command_line.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@ 
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -c $< -o $@ 
 
 rocm_command_line: rocm_command_line.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 rocm_smi_all.o: rocm_smi_all.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -c $< -o $@
 
 rocm_smi_all: rocm_smi_all.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 power_monitor_rocm.o: power_monitor_rocm.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -c $< -o $@
 
 power_monitor_rocm: power_monitor_rocm.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 rocmsmi_example.o: rocmsmi_example.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -c $< -o $@
 
 rocmsmi_example: rocmsmi_example.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS) -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS) -L$(PAPI_ROCM_ROOT)/lib/rocblas -lrocblas
 
 rocm_smi_writeTests.o: rocm_smi_writeTests.cpp $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -c $< -o $@
 
 rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
+	$(HIPCC) $(CFLAGS) $(GPUFLAGS) $(INCLUDE) -o $@ $< $(UTILOBJS) $(PAPILIB) $(ROCM_SMI_LDFLAGS)
 
 clean:
 	rm -f $(TESTS) $(TESTS_LONG) *.o
@@ -83,4 +84,5 @@ checkpath:
 	echo INCLUDE = $(INCLUDE)
 	echo ROCM_SMI_LDFLAGS = $(ROCM_SMI_LDFLAGS)
 	echo CFLAGS = $(CFLAGS)
+	echo GPUFLAGS = $(GPUFLAGS)
 
