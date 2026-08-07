@@ -68,11 +68,45 @@ _rocm_smi_init_component(int cidx)
     _rocm_smi_vector.cmp_info.num_cntrs = -1;
     _rocm_smi_lock = PAPI_NUM_LOCK + NUM_INNER_LOCK + cidx;
 
-    sprintf(_rocm_smi_vector.cmp_info.disabled_reason,
-            "Not initialized. Access component events to initialize it.");
-    _rocm_smi_vector.cmp_info.disabled = PAPI_EDELAY_INIT;
+    /* Manage contension between rocm_smi and amd_smi components. */
+    int use_rocm_smi = 0;
+    #if defined(DEFAULT_TO_ROCM_SMI)
+    use_rocm_smi = 1;
+    #endif
+    #if defined(DEFAULT_TO_AMD_SMI)
+        char *disabledComps = getenv("PAPI_DISABLE_COMPONENTS");
+        if (disabledComps != NULL) {
+            char *penv = strdup(disabledComps);
+            char *p;
+            for (p = strtok (penv, ",:"); p != NULL; p = strtok (NULL, ",:")) {
+                if(!strcmp(p, "amd_smi")) use_rocm_smi = 1;
+            }
+            free(penv);
+        } else {
+            SUBDBG("rocm_smi: getenv(PAPI_DISABLE_COMPONENTS) was not set.\n");
+        }
+    #endif
 
-    return PAPI_EDELAY_INIT;
+    int papi_errno, expect;
+    if (use_rocm_smi) {
+        expect = snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s",
+                          "Not initialized. Access component events to initialize it.");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+        papi_errno = PAPI_EDELAY_INIT;
+        _rocm_smi_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    } else {
+        expect = snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s",
+                          "Not active while amd_smi component is active. Set 'export PAPI_DISABLE_COMPONENTS=amd_smi' to override.");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+        papi_errno = PAPI_ECOMBO;
+        _rocm_smi_vector.cmp_info.disabled = papi_errno;
+        return papi_errno;
+    }
 }
 
 static int
@@ -108,7 +142,10 @@ _rocm_smi_init_private(void)
         _rocm_smi_vector.cmp_info.disabled = papi_errno;
         const char *error_str;
         rocs_err_get_last(&error_str);
-        sprintf(_rocm_smi_vector.cmp_info.disabled_reason, "%s", error_str);
+        int expect = snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", error_str);
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
         goto fn_fail;
     }
 
@@ -125,6 +162,12 @@ _rocm_smi_init_private(void)
 
   fn_exit:
     _rocm_smi_vector.cmp_info.disabled = papi_errno;
+    if(PAPI_OK == papi_errno) {
+        int expect = snprintf(_rocm_smi_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", "");
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("disabled_reason truncated");
+        }
+    }
     PAPI_unlock(COMPONENT_LOCK);
     return papi_errno;
   fn_fail:

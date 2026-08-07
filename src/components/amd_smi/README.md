@@ -107,3 +107,10 @@ After changing `PAPI_AMDSMI_ROOT` or related library paths, rerun make clobber &
 
 ## Hardware and Software Support
 To see the `amd_smi` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - AMD\_SMI Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-AMD_SMI-Component).
+
+## Known Limitations
+
+* For AMD devices older than the AMD Instinct MI300A, PAPI should not be configured with both `rocm_smi` and `amd_smi`.
+  If both components are configured, then `rocm_smi` will be active by default for ROCm < 6.4.0; `amd_smi` will be active by default for ROCm >= 6.4.0.
+  Users can override this when running an application by setting `export PAPI_DISABLE_COMPONENTS=rocm_smi` when `rocm_smi` is active by default, or
+  `export PAPI_DISABLE_COMPONENTS=amd_smi` when `amd_smi` is active by default.
