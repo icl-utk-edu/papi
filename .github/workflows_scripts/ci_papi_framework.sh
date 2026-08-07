@@ -51,6 +51,7 @@ case "$COMPONENTS" in
     ;;
 esac
 
+export CFLAGS="-Werror"
 # --- Configure and Build PAPI ---
 ## Configure without --with-shlib-tools
 if [ "$SHLIB" = "without" ]; then
