@@ -353,7 +353,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, cat_par
              * All other upper bounds are set to the capacity of the cache, as observed per core.
              */
             if( llc_idx+1 == j ) {
-                nextCacheSize = 16LL*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
+                nextCacheSize = FACTOR*(hw_desc->dcache_size[llc_idx])/hw_desc->mmsplit;
                 ptsToNextCache = hw_desc->pts_per_mm+1;
             } else {
                 nextCacheSize = hw_desc->dcache_size[j]/hw_desc->split[j];
@@ -378,7 +378,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, cat_par
 
         cnt=0;
         for(j=0; j<len; j++){
-            char symbol[4] = "|/-\\";
+            char symbol[4] = {'|','/','-','\\'};
             active_buf_len = bufSizes[j]/sizeof(uintptr_t);
             if( params.show_progress ){
                 printf("%c\b",symbol[j%4]);
