@@ -42,20 +42,16 @@
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
+#include <level_zero/layers/zel_tracing_api.h>
 #include <level_zero/ze_ddi.h>
 #include <level_zero/zet_ddi.h>
+#include <level_zero/layers/zel_tracing_ddi.h>
 
 #include "GPUMetricHandler.h"
 
 #define  DebugPrintError(format, args...)	 fprintf(stderr, format, ## args)
 
 //#define _DEBUG 1
-
-#if defined(_DEBUG)
-#define DebugPrint(format, args...)		   fprintf(stderr, format, ## args)
-#else 
-#define DebugPrint(format, args...)		   {do {} while(0); }
-#endif
 
 #define MAX_REPORTS		 32768
 #define MAX_KERNELS	 	 1024
@@ -108,6 +104,12 @@ zet_pfnTracerExpSetEnabled_t				zetTracerExpSetEnabledFunc;
 zet_pfnCommandListAppendMetricQueryBegin_t  zetCommandListAppendMetricQueryBeginFunc;
 zet_pfnCommandListAppendMetricQueryEnd_t	zetCommandListAppendMetricQueryEndFunc;
 
+zel_pfnTracerCreate_t					    zelTracerCreateFunc;
+zel_pfnTracerDestroy_t  					zelTracerDestroyFunc;
+zel_pfnTracerSetPrologues_t				    zelTracerSetProloguesFunc;
+zel_pfnTracerSetEpilogues_t				    zelTracerSetEpiloguesFunc;
+zel_pfnTracerSetEnabled_t   				zelTracerSetEnabledFunc;
+
 #define DLL_SYM_CHECK(handle, name, type)				\
 	do {												\
 		name##Func = (type) dlsym(handle, #name);		\
@@ -138,6 +140,7 @@ functionInit(void *dllHandle)
 	DLL_SYM_CHECK(dllHandle, zeEventCreate, ze_pfnEventCreate_t);
 	DLL_SYM_CHECK(dllHandle, zeEventDestroy, ze_pfnEventDestroy_t);
 	DLL_SYM_CHECK(dllHandle, zeEventHostSynchronize, ze_pfnEventHostSynchronize_t);
+
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerOpen, zet_pfnMetricStreamerOpen_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerClose, zet_pfnMetricStreamerClose_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerReadData, zet_pfnMetricStreamerReadData_t);
@@ -159,6 +162,12 @@ functionInit(void *dllHandle)
 				zet_pfnCommandListAppendMetricQueryBegin_t);
 	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryEnd, 
 				zet_pfnCommandListAppendMetricQueryEnd_t);
+
+	DLL_SYM_CHECK(dllHandle, zelTracerCreate, zel_pfnTracerCreate_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerDestroy, zel_pfnTracerDestroy_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetPrologues, zel_pfnTracerSetPrologues_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetEpilogues, zel_pfnTracerSetEpilogues_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetEnabled, zel_pfnTracerSetEnabled_t);
 	return ret;
 }
 
@@ -399,7 +408,6 @@ typedValue2Value(zet_typed_value_t data, std::fstream *foutstream, int outflag, 
 {
 	 *dtype = 0;
 
-	static int count = 0;
 	switch( data.type )
 	{
 		case ZET_VALUE_TYPE_UINT32:
@@ -444,7 +452,6 @@ typedValue2Value(zet_typed_value_t data, std::fstream *foutstream, int outflag, 
 		default:
 			 break;
 	}
-	count++;
 	if (isLast) {
 		if (foutstream->is_open()) {
 			*foutstream << endl;
@@ -624,6 +631,7 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 			ze_device_properties_t props;
 			status = zeDeviceGetPropertiesFunc(deviceList[j], &props);
 			CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), 1);
+
 			if ((props.type != ZE_DEVICE_TYPE_GPU) || (strstr(props.name, "Intel") == nullptr)) {
 				continue;
 			}
@@ -657,7 +665,7 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 			uint32_t key = CreateDeviceCode((i+1), (j+1), 0);
 			g_metricHandlerMap[key] = handler;
 			dcount++;
-			DebugPrint("detected device: <drv:%d, dev:%d>, [%s], subdevCount %d, m_dev %p\n",
+			SUBDBG("detected device: <drv:%d, dev:%d>, [%s], subdevCount %d, m_dev %p\n",
 				 i, j,  props.name, subdeviceCount, handler->m_device);
 			if (subdeviceCount) {
 				vector<ze_device_handle_t> subdeviceList(subdeviceCount, nullptr);
@@ -674,9 +682,9 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 					handler->m_device = subdeviceList.at(k);
 					handler->m_numDevices = 1;
 					uint32_t key = CreateDeviceCode((i+1), (j+1), (k+1));
-					DebugPrint("detected subdevice: <drv:%d, dev:%d, subdev:%d>, "
-							"key 0x%x, name %s, m_device %p\n",
-							i, j, k, key,  props.name, handler->m_device);
+					SUBDBG("detected subdevice: <drv:%d, dev:%d, subdev:%d>, "
+						   "key 0x%x, name %s, m_device %p\n",
+						   i, j, k, key,  props.name, handler->m_device);
 					g_metricHandlerMap[key] = handler;
 					handler->m_groupInfo = mgroups;
 					dcount++;
@@ -690,8 +698,8 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 #if defined(_DEBUG)
 	for (uint32_t i=0; i<*numDevices; i++) {
 		DeviceInfo node = g_deviceInfo.at(i);
-		DebugPrint("dev[%d]: drv %d, dev %d subdev %d\n", 
-				i, node.driverId, node.deviceId, node.subdeviceId);
+		SUBDBG("dev[%d]: drv %d, dev %d subdev %d\n",
+			   i, node.driverId, node.deviceId, node.subdeviceId);
 	}
 #endif
 
@@ -712,7 +720,7 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
  */
 void GPUMetricHandler::DestroyMetricDevice()
 {
-	DebugPrint("DestroyMetricDevice\n");
+	SUBDBG("DestroyMetricDevice\n");
 
 	m_device = nullptr;
 	m_groupInfo = nullptr;
@@ -738,7 +746,11 @@ void GPUMetricHandler::DestroyMetricDevice()
 		zetMetricStreamerCloseFunc(m_metricStreamer);
 	}
 	if (m_tracer) {
-		zetTracerExpDestroyFunc(m_tracer);
+        #if defined(PAPI_USE_ZET_EXP_API)
+        zetTracerExpDestroyFunc(m_tracer);
+        #else
+        zelTracerDestroyFunc(m_tracer);
+        #endif
 	}
 	if (m_queryPool) {
 		zetMetricQueryPoolDestroyFunc(m_queryPool);
@@ -778,8 +790,10 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 	ze_result_t status	 = ZE_RESULT_SUCCESS;
 	uint32_t   groupCount = 0;
 	uint32_t   numMetrics = 0;
+    #if defined(_DEBUG)
 	uint32_t   eventBasedCount	= 0;
 	uint32_t   timeBasedCount	 = 0;
+    #endif
 	uint32_t   maxMetricsPerGroup = 0;
 	TMetricGroupNode *groupList = nullptr;
 
@@ -810,7 +824,7 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 		groupList[gid].metricList = new TMetricNode[metricCount];
 		CHECK_N_RETURN_STATUS(( groupList[gid].metricList ==nullptr), 1);
 
-		DebugPrint("group[%d]: name %s, desc %s\n", gid, groupProps.name, groupProps.description);
+		SUBDBG("group[%d]: name %s, desc %s\n", gid, groupProps.name, groupProps.description);
 
 		zet_metric_handle_t*  metricHandles = new zet_metric_handle_t[metricCount];
 		CHECK_N_RETURN_STATUS((metricHandles ==nullptr), 1);
@@ -828,20 +842,24 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 			groupList[gid].metricList[mid].metricId = mid;
 			groupList[gid].metricList[mid].metricType =
 			getMetricType(metricProps.description, metricProps.metricType);
-			DebugPrint("   metric[%d][%d] name %s, desc %s, metric_type %d\n", 
-					gid, mid, metricProps.name, metricProps.description,
-					metricProps.metricType);
+			SUBDBG("   metric[%d][%d] name %s, desc %s, metric_type %d\n",
+				   gid, mid, metricProps.name, metricProps.description,
+				   metricProps.metricType);
 		}
 		numMetrics += metricCount;
+        #if defined(_DEBUG)
 		if (groupList[gid].props.samplingType & ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED) {
 			eventBasedCount += metricCount;
 		} else {
 			timeBasedCount += metricCount;
 		}			
+        #endif
 		delete [] metricHandles;
 	}
-	DebugPrint("init metric groups return:  groupCount %d, metric %d, TBS %d, EBS %d\n",
-			groupCount, numMetrics, timeBasedCount, eventBasedCount);
+    #if defined(_DEBUG)
+	SUBDBG("init metric groups return:  groupCount %d, metric %d, TBS %d, EBS %d\n",
+		   groupCount, numMetrics, timeBasedCount, eventBasedCount);
+    #endif
 	delete [] groupHandles;
 	mgroups->metricGroupList	= groupList;
 	mgroups->numMetricGroups	= groupCount;
@@ -1019,7 +1037,7 @@ int GPUMetricHandler::GetMetricCode(
 	int ret	   = 0;
 	int retError  = 1;
 
-	DebugPrint( "GetMetricCode: metricGroup %s, metric %s == ", mGroupName, metricName);
+	SUBDBG( "GetMetricCode: metricGroup %s, metric %s == ", mGroupName, metricName);
 
 	int metricType = (mtype)?ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED
 				: ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
@@ -1030,13 +1048,13 @@ int GPUMetricHandler::GetMetricCode(
 			(strncmp(mGroupName,  groupList[i].props.name, MAX_STR_LEN) == 0 )) {
 			 *mGroupCode = groupList[i].code;
 			if (!metricName || (strlen(metricName)==0) || !metricCode) {
-				DebugPrint( " mGroupCode 0x%x \n", *mGroupCode);
+				SUBDBG( " mGroupCode 0x%x \n", *mGroupCode);
 				return ret;
 			}
 			for (uint32_t j=0; j< groupList[i].props.metricCount; j++) {
 				if (strncmp(metricName, groupList[i].metricList[j].props.name,MAX_STR_LEN)==0) {
 					*metricCode = groupList[i].metricList[j].code;
-					DebugPrint( "  mGroupCode 0x%x , metricCode 0x%x\n", *mGroupCode, *metricCode);
+					SUBDBG( "  mGroupCode 0x%x , metricCode 0x%x\n", *mGroupCode, *metricCode);
 					return ret;
 				}
 			}
@@ -1100,7 +1118,7 @@ GPUMetricHandler::EnableMetricGroup(uint32_t groupCode, uint32_t mtype, int *ena
 
 	m_lock.lock();
 	if ( m_status == COLLECTION_CONFIGED) {
-		DebugPrint( "EnableMetricGroup: already in enable status\n");
+		SUBDBG( "EnableMetricGroup: already in enable status\n");
 		*enableSt = 1;
 		m_lock.unlock();
 		return ret;
@@ -1112,7 +1130,7 @@ GPUMetricHandler::EnableMetricGroup(uint32_t groupCode, uint32_t mtype, int *ena
 	} else {
 		m_groupType	= ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
 	}
-	DebugPrint("EnableMetricGroup: code 0x%x, type 0x%x\n", groupCode, m_groupType);
+	SUBDBG("EnableMetricGroup: code 0x%x, type 0x%x\n", groupCode, m_groupType);
 
 	TMetricGroupNode  *groupList =  m_groupInfo->metricGroupList;
 	uint32_t metricCount = groupList[m_groupId].props.metricCount;
@@ -1189,7 +1207,7 @@ int GPUMetricHandler::EnableTimeBasedStream(uint32_t timePeriod, uint32_t numRep
 	}
 	m_lock.lock();
 	if (m_status  == COLLECTION_ENABLED) {
-		DebugPrint( "EnableTimeBasedStream: already enabled\n");
+		SUBDBG( "EnableTimeBasedStream: already enabled\n");
 		m_lock.unlock();
 		return ret;
 	}
@@ -1258,7 +1276,7 @@ int GPUMetricHandler::EnableEventBasedQuery()
 	}
 	m_lock.lock(); 
 	if (m_status  == COLLECTION_ENABLED) {
-		DebugPrint( "EnableEventBasedQuery: already enabled\n");
+		SUBDBG( "EnableEventBasedQuery: already enabled\n");
 		m_lock.unlock();
 		return ret;
 	}
@@ -1289,13 +1307,22 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		// create event to wait
 		status = zeEventPoolCreateFunc(m_context, &eventPoolDesc, 1, &m_device, &m_eventPool);
 	}
-	zet_tracer_exp_desc_t tracerDesc;
-	tracerDesc.stype = ZET_STRUCTURE_TYPE_TRACER_EXP_DESC;
+    #if defined(PAPI_USE_ZET_EXP_API)
+    zet_tracer_exp_desc_t tracerDesc;
+    tracerDesc.stype = ZET_STRUCTURE_TYPE_TRACER_EXP_DESC;
+    #else
+    zel_tracer_desc_t tracerDesc;
+    tracerDesc.stype = ZEL_STRUCTURE_TYPE_TRACER_DESC;
+    #endif
 	if (status == ZE_RESULT_SUCCESS) {
 		m_queryState->eventPool = m_eventPool;
 		m_queryState->handle = this;
 		tracerDesc.pUserData = m_queryState;
-		status = zetTracerExpCreateFunc(m_context, &tracerDesc, &m_tracer);
+        #if defined(PAPI_USE_ZET_EXP_API)
+        status = zetTracerExpCreateFunc(m_context, &tracerDesc, &m_tracer);
+        #else
+        status = zelTracerCreateFunc(&tracerDesc, &m_tracer);
+        #endif
 	}
 	zet_core_callbacks_t prologCB = {};
 	zet_core_callbacks_t epilogCB = {};
@@ -1306,13 +1333,25 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		prologCB.CommandList.pfnAppendLaunchKernelCb = metricQueryBeginCB;
 		epilogCB.CommandList.pfnAppendLaunchKernelCb = metricQueryEndCB;
 
-		status = zetTracerExpSetProloguesFunc(m_tracer, &prologCB);
+        #if defined(PAPI_USE_ZET_EXP_API)
+        status = zetTracerExpSetProloguesFunc(m_tracer, &prologCB);
+        #else
+        status = zelTracerSetProloguesFunc(m_tracer, &prologCB);
+        #endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
-		status = zetTracerExpSetEpiloguesFunc(m_tracer, &epilogCB);
+        #if defined(PAPI_USE_ZET_EXP_API)
+        status = zetTracerExpSetEpiloguesFunc(m_tracer, &epilogCB);
+        #else
+        status = zelTracerSetEpiloguesFunc(m_tracer, &epilogCB);
+        #endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
-		status = zetTracerExpSetEnabledFunc(m_tracer, true);
+        #if defined(PAPI_USE_ZET_EXP_API)
+        status = zetTracerExpSetEnabledFunc(m_tracer, true);
+        #else
+        status = zelTracerSetEnabledFunc(m_tracer, true);
+        #endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
 		m_status = COLLECTION_ENABLED;
@@ -1338,7 +1377,7 @@ int GPUMetricHandler::EnableEventBasedQuery()
 void
 GPUMetricHandler::DisableMetricGroup()
 {
-	DebugPrint("enter DisableMetricGroup()\n");
+	SUBDBG("enter DisableMetricGroup()\n");
 
 	m_lock.lock();
 	if ((m_status != COLLECTION_ENABLED) && (m_status != COLLECTION_CONFIGED)) {
@@ -1548,7 +1587,7 @@ GPUMetricHandler::GenerateMetricData(
 			&numSets, &numValues, nullptr,  nullptr);
 
 	if ((status != ZE_RESULT_SUCCESS) || !numSets || !numValues) {
-		DebugPrint("Metrics calculation,  failed on allocating memory space.\n");
+		SUBDBG("Metrics calculation,  failed on allocating memory space.\n");
 		return;
 	}
 	std::vector<uint32_t> metricSetCounts(numSets);
@@ -1620,8 +1659,8 @@ GPUMetricHandler::ProcessMetricDataSet(
 		m_reportCount[dataSetId] = 0;
 	}
 
-	DebugPrint("data[%d], metricDataSize %d, reportCounts %d, metricCount %d\n", 
-		(int)dataSetId, (int)metricDataSize, (int)reportCounts, (int)metricCount);
+	SUBDBG("data[%d], metricDataSize %d, reportCounts %d, metricCount %d\n",
+		   (int)dataSetId, (int)metricDataSize, (int)reportCounts, (int)metricCount);
 
 	// log metric names
 	if (g_stdout) {
@@ -1708,9 +1747,9 @@ GPUMetricHandler::ReadStreamData(size_t *rawDataSize)
 		return nullptr;
 	}
 	if (!rawSize)  {
-		// thi may not be an error, especially in multi-thread case.
-		DebugPrint("No Raw Data available. This could be collection time too short "
-				"or buffer overflow. Please increase the sampling period\n");
+		// this may not be an error, especially in multi-thread case.
+		SUBDBG("No Raw Data available. This could be collection time too short "
+			   "or buffer overflow. Please increase the sampling period\n");
 	}
 
    *rawDataSize = rawSize;
