@@ -1,4 +1,4 @@
-CC = gcc
+CC ?= gcc
 CFLAGS = -O2 -Wall
 LFLAGS = 
 PAPI_INCLUDE = ../../..
