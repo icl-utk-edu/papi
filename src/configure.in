@@ -1715,7 +1715,7 @@ AC_ARG_WITH([components],
 
 AS_IF([test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"], [components="$components sysdetect"], [])
 
-AC_MSG_RESULT($components)
+AS_IF([test "x$components" != "x"], [AC_MSG_RESULT($components)], [AC_MSG_RESULT(No components configured)])
 
 # Check whether rocm and rocp_sdk were configured together
 rocm_found=0
