@@ -1185,6 +1185,13 @@ rocprofiler_sdk_init(void)
         goto fn_fail;
     }
 
+    if( papi_rocpsdk::gpu_agents.empty() ) {
+        if( papi_rocpsdk::get_error_string().empty() ){
+            papi_rocpsdk::set_error_string("No compatible devices detected. Please ensure that the driver is active.");
+        }
+        papi_errno = PAPI_ECMP;
+        goto fn_fail;
+    }
     papi_rocpsdk::populate_event_list();
 
   fn_exit:
