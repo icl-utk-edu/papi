@@ -15,7 +15,7 @@ To enable intel_gpu component, the PAPI library is built with configure option a
 * [oneAPI Level Zero loader (libze_loader.so)](https://github.com/oneapi-src/level-zero)
 * [Intel(R) Metrics Discovery Application Programming Interface (libigdmd.so)](https://github.com/intel/metrics-discovery)
 * [Intel(R) Metrics Library Application Programming Interface (libigdml.so)](https://github.com/intel/metrics-library)
-* /proc/sys/dev/i915/perf_stream_paranoid is set to `0`
+* `/proc/sys/dev/i915/perf_stream_paranoid` or `/proc/sys/dev/xe/observation_paranoid` is set to `0`
 * User needs to be added into Linux render/video groups
 
 ## Environment Variables
