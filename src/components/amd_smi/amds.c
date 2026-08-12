@@ -35,7 +35,7 @@ AMD_SMI_CPU_FUNCTIONS(DEFINE_AMDSMI)
 static int32_t device_count = 0;
 static amdsmi_processor_handle *device_handles = NULL;
 static int32_t gpu_count = 0;
-static int32_t cpu_count = 0;
+static uint32_t cpu_count = 0;
 static amdsmi_processor_handle **cpu_core_handles = NULL;
 static uint32_t *cores_per_socket = NULL;
 static void *amds_dlp = NULL;
@@ -45,7 +45,6 @@ static uint32_t amdsmi_lib_major = 0;
 static uint32_t amdsmi_lib_minor = 0;
 // Forward declarations for internal helpers
 static int load_amdsmi_sym(void);
-static int init_device_table(void);
 static int shutdown_device_table(void);
 static int init_event_table(void);
 static int shutdown_event_table(void);
@@ -681,18 +680,13 @@ static int shutdown_event_table(void) {
   return PAPI_OK;
 }
 
-static int init_device_table(void) {
-  // Nothing to do (device_handles and device_count already set in amds_init)
-  return PAPI_OK;
-}
-
 static int shutdown_device_table(void) {
   if (device_handles) {
     papi_free(device_handles);
     device_handles = NULL;
   }
   if (cpu_core_handles) {
-    int s;
+    uint32_t s;
     for (s = 0; s < cpu_count; ++s) {
       if (cpu_core_handles[s])
         papi_free(cpu_core_handles[s]);
@@ -908,7 +902,7 @@ fn_fail:
   }
   // sockets already freed if allocated
   if (cpu_core_handles) {
-    for (int s = 0; s < cpu_count; ++s) {
+    for (s = 0; s < cpu_count; ++s) {
       if (cpu_core_handles[s])
         papi_free(cpu_core_handles[s]);
     }

@@ -186,7 +186,6 @@ static int create_table(uint64_t capacity, struct hash_table **table)
     if (capacity < 1 || table == NULL) {
         return HTABLE_EINVAL;
     }
-    int htable_errno = HTABLE_SUCCESS;
     struct hash_table *t = papi_calloc(1, sizeof(struct hash_table));
     if (t == NULL) {
         return HTABLE_ENOMEM;
