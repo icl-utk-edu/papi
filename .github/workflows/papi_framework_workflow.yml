@@ -14,6 +14,13 @@ permissions:
   contents: read
 
 jobs:
+  list_gcc:
+    runs-on: [self-hosted, cpu_intel]
+    steps:
+      - name: List GCC Installs
+        run: |
+          sudo apt-get update
+          sudo apt list --installed gcc
   # build PAPI with multiple components to simulate a users' workflow
   papi_components_comprehensive:
     strategy:
