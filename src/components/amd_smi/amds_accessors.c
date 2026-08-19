@@ -893,7 +893,7 @@ int access_amdsmi_fan_speed(int mode, void *arg) {
 
   if (mode == PAPI_MODE_WRITE) {
 
-    if (event->value < 0)
+    if ((int32_t)event->value < 0)
       return PAPI_EINVAL;
 
     uint64_t new_speed = (uint64_t)event->value;
@@ -1149,7 +1149,7 @@ int access_amdsmi_clock_info(int mode, void *arg) {
     return PAPI_ENOSUPP;
 
   amdsmi_clk_type_t clk_types[] = {AMDSMI_CLK_TYPE_SYS, AMDSMI_CLK_TYPE_MEM};
-  if (event->variant < 0 || event->variant >= 2)
+  if ((int32_t)event->variant < 0 || event->variant >= 2)
     return PAPI_EMISC;
 
   amdsmi_clk_info_t info;
@@ -1444,7 +1444,7 @@ int access_amdsmi_xgmi_bandwidth(int mode, void *arg) {
   if (event->device < 0 || event->device >= gpu_count || !device_handles ||
       !device_handles[event->device])
     return PAPI_EMISC;
-  if (event->subvariant < 0 || event->subvariant >= gpu_count ||
+  if ((int32_t)event->subvariant < 0 || (int32_t)event->subvariant >= gpu_count ||
       !device_handles[event->subvariant])
     return PAPI_EMISC;
 

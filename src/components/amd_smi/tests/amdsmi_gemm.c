@@ -454,7 +454,8 @@ static void destroy_rocblas_handles(rocblas_handle *handles, int count) {
 /* ------------------------------- Test body -------------------------------- */
 
 static int real_main(const HarnessOpts *opts) {
-    struct sample_buffer sample_buf = {0};
+    struct sample_buffer sample_buf;
+    memset(&sample_buf, 0, sizeof(sample_buf));
     bool sample_buf_initialized = false;
     /* Gracefully skip if the PAPI AMD SMI component isn't available. */
     const char* root = getenv("PAPI_AMDSMI_ROOT");
