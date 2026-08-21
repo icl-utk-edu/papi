@@ -394,7 +394,7 @@ int load_cudart_sym(void)
         }
         else {
             SUBDBG("PAPI_CUDA_RUNTIME was set, but did not result in successfully loading the libcudart shared object."
-                   " Set PAPI_CUDA_RUNTIME to a valid libcudart shared object.\n", papi_cuda_runtime);
+                   " Set PAPI_CUDA_RUNTIME to a valid libcudart shared object.\n");
             return PAPI_ESYS;
         }
     }
@@ -486,7 +486,7 @@ int load_cupti_common_sym(void)
         }
         else {
             SUBDBG("PAPI_CUDA_CUPTI was set, but did not result in successfully loading the libcupti shared object."
-                   " Set PAPI_CUDA_CUPTI to a valid libcupti shared object.\n", papi_cuda_cupti);
+                   " Set PAPI_CUDA_CUPTI to a valid libcupti shared object.\n");
             return PAPI_ESYS;
         }
     }
