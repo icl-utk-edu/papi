@@ -1,0 +1,22 @@
+.amd-test-systems:
+  parallel:
+    matrix:
+      - IMAGE: [rocm/dev-ubuntu-24.04:7.14.0-full]
+        ARCH: [amd-mi210, amd-mi300]
+  image: ${IMAGE}
+  tags:
+    - ${ARCH}
+
+.nvidia-test-systems:
+  parallel:
+    matrix:
+      - IMAGE: [nvidia/cuda:12.8.2-devel-ubuntu24.04, nvidia/cuda:12.9.1-devel-ubuntu22.04]
+        ARCH: [nvidia-gh200, nvidia-rtx6000]
+  image: ${IMAGE}
+  tags:
+    - ${ARCH}
+
+.install-papi:
+  - export "${PAPI_ENV_ROOT}"
+  - ./configure "${PAPI_CONFIGURE_OPTIONS}"
+  - make && make install
