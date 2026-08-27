@@ -44,6 +44,10 @@
 #include <level_zero/zet_api.h>
 #include <level_zero/ze_ddi.h>
 #include <level_zero/zet_ddi.h>
+#if !defined(USE_ZET_EXP_API)
+#include <level_zero/layers/zel_tracing_api.h>
+#include <level_zero/layers/zel_tracing_ddi.h>
+#endif
 
 #include "GPUMetricHandler.h"
 
@@ -108,6 +112,14 @@ zet_pfnTracerExpSetEnabled_t				zetTracerExpSetEnabledFunc;
 zet_pfnCommandListAppendMetricQueryBegin_t  zetCommandListAppendMetricQueryBeginFunc;
 zet_pfnCommandListAppendMetricQueryEnd_t	zetCommandListAppendMetricQueryEndFunc;
 
+#if !defined(USE_ZET_EXP_API)
+zel_pfnTracerCreate_t					    zelTracerCreateFunc;
+zel_pfnTracerDestroy_t  					zelTracerDestroyFunc;
+zel_pfnTracerSetPrologues_t				    zelTracerSetProloguesFunc;
+zel_pfnTracerSetEpilogues_t				    zelTracerSetEpiloguesFunc;
+zel_pfnTracerSetEnabled_t   				zelTracerSetEnabledFunc;
+#endif
+
 #define DLL_SYM_CHECK(handle, name, type)				\
 	do {												\
 		name##Func = (type) dlsym(handle, #name);		\
@@ -138,6 +150,7 @@ functionInit(void *dllHandle)
 	DLL_SYM_CHECK(dllHandle, zeEventCreate, ze_pfnEventCreate_t);
 	DLL_SYM_CHECK(dllHandle, zeEventDestroy, ze_pfnEventDestroy_t);
 	DLL_SYM_CHECK(dllHandle, zeEventHostSynchronize, ze_pfnEventHostSynchronize_t);
+
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerOpen, zet_pfnMetricStreamerOpen_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerClose, zet_pfnMetricStreamerClose_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricStreamerReadData, zet_pfnMetricStreamerReadData_t);
@@ -159,6 +172,14 @@ functionInit(void *dllHandle)
 				zet_pfnCommandListAppendMetricQueryBegin_t);
 	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryEnd, 
 				zet_pfnCommandListAppendMetricQueryEnd_t);
+
+	#if !defined(USE_ZET_EXP_API)
+	DLL_SYM_CHECK(dllHandle, zelTracerCreate, zel_pfnTracerCreate_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerDestroy, zel_pfnTracerDestroy_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetPrologues, zel_pfnTracerSetPrologues_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetEpilogues, zel_pfnTracerSetEpilogues_t);
+	DLL_SYM_CHECK(dllHandle, zelTracerSetEnabled, zel_pfnTracerSetEnabled_t);
+	#endif
 	return ret;
 }
 
@@ -624,6 +645,7 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 			ze_device_properties_t props;
 			status = zeDeviceGetPropertiesFunc(deviceList[j], &props);
 			CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), 1);
+
 			if ((props.type != ZE_DEVICE_TYPE_GPU) || (strstr(props.name, "Intel") == nullptr)) {
 				continue;
 			}
@@ -738,7 +760,11 @@ void GPUMetricHandler::DestroyMetricDevice()
 		zetMetricStreamerCloseFunc(m_metricStreamer);
 	}
 	if (m_tracer) {
+		#if defined(USE_ZET_EXP_API)
 		zetTracerExpDestroyFunc(m_tracer);
+		#else
+		zelTracerDestroyFunc(m_tracer);
+		#endif
 	}
 	if (m_queryPool) {
 		zetMetricQueryPoolDestroyFunc(m_queryPool);
@@ -1289,13 +1315,22 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		// create event to wait
 		status = zeEventPoolCreateFunc(m_context, &eventPoolDesc, 1, &m_device, &m_eventPool);
 	}
+	#if defined(USE_ZET_EXP_API)
 	zet_tracer_exp_desc_t tracerDesc;
 	tracerDesc.stype = ZET_STRUCTURE_TYPE_TRACER_EXP_DESC;
+	#else
+	zel_tracer_desc_t tracerDesc;
+	tracerDesc.stype = ZEL_STRUCTURE_TYPE_TRACER_DESC;
+	#endif
 	if (status == ZE_RESULT_SUCCESS) {
 		m_queryState->eventPool = m_eventPool;
 		m_queryState->handle = this;
 		tracerDesc.pUserData = m_queryState;
+		#if defined(USE_ZET_EXP_API)
 		status = zetTracerExpCreateFunc(m_context, &tracerDesc, &m_tracer);
+		#else
+		status = zelTracerCreateFunc(&tracerDesc, &m_tracer);
+		#endif
 	}
 	zet_core_callbacks_t prologCB = {};
 	zet_core_callbacks_t epilogCB = {};
@@ -1306,13 +1341,25 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		prologCB.CommandList.pfnAppendLaunchKernelCb = metricQueryBeginCB;
 		epilogCB.CommandList.pfnAppendLaunchKernelCb = metricQueryEndCB;
 
+		#if defined(USE_ZET_EXP_API)
 		status = zetTracerExpSetProloguesFunc(m_tracer, &prologCB);
+		#else
+		status = zelTracerSetProloguesFunc(m_tracer, &prologCB);
+		#endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
+		#if defined(USE_ZET_EXP_API)
 		status = zetTracerExpSetEpiloguesFunc(m_tracer, &epilogCB);
+		#else
+		status = zelTracerSetEpiloguesFunc(m_tracer, &epilogCB);
+		#endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
+		#if defined(USE_ZET_EXP_API)
 		status = zetTracerExpSetEnabledFunc(m_tracer, true);
+		#else
+		status = zelTracerSetEnabledFunc(m_tracer, true);
+		#endif
 	}
 	if (status == ZE_RESULT_SUCCESS) {
 		m_status = COLLECTION_ENABLED;
