@@ -405,9 +405,9 @@ static struct native_event_t *allocate_native_event(
 
 			/* See if we had a mask that wasn't found */
 			if (!mask_found) {
+            SUBDBG("EXIT: error libpfm4 find event: Mask not found: %s.\n", ptr);
             free(msk_ptr);
             free(pmu_name);
-            SUBDBG("EXIT: error libpfm4 find event: Mask not found: %s.\n", ptr);
             _papi_hwi_unlock( NAMELIB_LOCK );
 				return NULL;
 			}
