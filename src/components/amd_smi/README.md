@@ -107,3 +107,7 @@ After changing `PAPI_AMDSMI_ROOT` or related library paths, rerun make clobber &
 
 ## Hardware and Software Support
 To see the `amd_smi` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - AMD\_SMI Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-AMD_SMI-Component).
+
+## Known Limitations
+
+* If the `amd_smi` and `rocm_smi` components are both configured, then `amd_smi` will be built for ROCm versions >= 6.4.0.

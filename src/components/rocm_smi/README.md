@@ -48,6 +48,8 @@ In both cases, the directory specified by `PAPI_ROCMSMI_ROOT` **must contain** t
 
 ## Known Limitations
 
+* If the `amd_smi` and `rocm_smi` components are both configured, then `rocm_smi` will be built for ROCm versions < 6.4.0.
+
 * Only sets of metrics and events that can be gathered in a single pass are supported.
 
 * Although AMD metrics may be floating point, all values are recast and returned as long long integers.
