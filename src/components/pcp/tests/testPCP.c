@@ -300,7 +300,7 @@ int main(int argc, char **argv) {                                       // args 
 
          firstTime = 0;                                              // Don't test the one-time functions again.
 
-      } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_UMASKS,cid)==PAPI_OK);  // Get next umask entry (bits different) (should return PAPI_NOEVNT).
+      } while(PAPI_enum_cmp_event(&k,PAPI_NTV_ENUM_DEFAULT_QUALIFIERS,cid)==PAPI_OK);  // Get next qualifier entry (bits different) (should return PAPI_NOEVNT).
    } while(PAPI_enum_cmp_event(&m,PAPI_ENUM_EVENTS,cid)==PAPI_OK);         // Get next event code.
 
    // Round 2: Try to load all events into one Event Set.
