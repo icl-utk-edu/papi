@@ -14,7 +14,7 @@ by querying the AMD SMI library at runtime (ROCm ≥ 6.4.0).
 
 - [Environment Variables](#environment-variables)
 - [Enabling the AMD_SMI Component](#enabling-the-amd_smi-component)
-- [Hardware and Software Support](#hardware-and-software-support)
+- [Supported Architectures](#supported-architectures)
 
 ---
 
@@ -105,8 +105,8 @@ After changing `PAPI_AMDSMI_ROOT` or related library paths, rerun make clobber &
 ---
 
 
-## Hardware and Software Support
-To see the `amd_smi` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - AMD\_SMI Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-AMD_SMI-Component).
+## Supported Architectures
+To see the `amd_smi` component's latest supported hardware and software please visit the [Supported Architectures](https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures#amd) GitHub Wiki page.
 
 ## Known Limitations
 

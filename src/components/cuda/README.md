@@ -3,7 +3,7 @@
 The `cuda` component exposes counters and controls for NVIDIA GPUs.
 
 * [Enabling the Cuda Component](#enabling-the-cuda-component)
-* [Hardware and Software Support](#hardware-and-software-support)
+* [Supported Architectures](#supported-architectures)
 * [Partially Disabled Cuda Component](#partially-disabled-cuda-component)
 * [Known Limitations](#known-limitations)
 * [FAQ](#faq)
@@ -56,9 +56,8 @@ For the Perfworks Metrics API, the following dynamic library must also be found:
 libnvperf_host.so
 ```
 
-## Hardware and Software Support
-
-To see the `cuda` component's current supported hardware and software please visit the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component).
+## Supported Architectures
+To see the `cuda` component's latest supported hardware and software please visit the [Supported Architectures](https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures#nvidia) GitHub Wiki page.
 
 ## Partially Disabled Cuda Component
 As shown on the GitHub wiki page [Hardware and Software Support - Cuda Component](https://github.com/icl-utk-edu/papi/wiki/Hardware-and-Software-Support-%E2%80%90-Cuda-Component) the `cuda` component supports a total of three primary APIs
