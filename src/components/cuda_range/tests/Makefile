@@ -47,4 +47,4 @@ test_cuda_range_multiple_pass_events: test_cuda_range_multiple_pass_events.cu cu
 	$(nvcc) $(NVCCFLAGS) -Xcompiler $(INCLUDE) cuda_range_tests_helper.o $< -o $@ $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
 clean:
-	rm -f $(list_of_cuda_range_tests)
+	rm -f $(list_of_cuda_range_tests) *.o
