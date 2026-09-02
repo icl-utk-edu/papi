@@ -4,7 +4,8 @@
  Additionally, the Range Profiler API is utilized to gather the profiling data.
 
 * [Enabling the CUDA_RANGE Component](#enabling-the-cuda_range-component)
-* [Hardware and Software Support](#hardware-and-software-support)
+* [Supported Architectures](#supported-architectures)
+* [Multiple Pass Events](#multiple-pass-events)
 * [Known Limitations](#known-limitations)
 * [FAQ](#faq)
 
@@ -48,10 +49,41 @@ Name:   cuda_range              Profiling of NVIDIA GPU's via CUPTI Profiler Hos
 ```
 Remedy the disabled reason and the `cuda_range` component will then become active.
 
-## Hardware and Software Support
+## Supported Architectures
 
-To see the `cuda_range` components current supported hardware and software please visit the GitHub wiki page
-[Hardware and Software Support - NVIDIA](placeholder).
+To see the `cuda_range` component's latest supported hardware and software please visit the [Supported Architectures](https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures#nvidia) GitHub Wiki page.
+
+## Multiple Pass Events 
+The `cuda_range` component supports event's that require multiple passes to be submitted to the GPU for collection. Although the `cuda_range` component supports multiple pass events, they are not supported by default and attempting to add one to a PAPI eventset results in the error code `PAPI_EMULPASS` being returned. Therefore, to signal the desire to profile with multiple pass events and to avoid `PAPI_EMULPASS` being returned the environment variable `PAPI_CUDA_RANGE_ENABLE_MULTIPASSES` must be set:
+```
+export PAPI_CUDA_RANGE_ENABLE_MULTIPASSES=1
+setenv("PAPI_CUDA_RANGE_ENABLE_MULTIPASSES", 1, 1)
+```
+
+To see the available `cuda_range` multiple pass events simply run `utils/papi_native_avail` and parse the output descriptions for `PAPI_CUDA_RANGE_ENABLE_MULTIPASSES`:
+```
+--------------------------------------------------------------------------------
+| cuda_range:::l1tex__throughput
+|            L1TEX Throughput. The number of passes required for collection is 3.
+|            To profile, set the environment variable PAPI_CUDA_RANGE_ENABLE_MULTIPASSES
+|            equal to 1.
+```
+
+Furthermore, in application code you can query the required number of passes for collection for a `cuda_range` native event through `PAPI_get_event_info`:
+```c
+int component_index = PAPI_get_component_index("cuda_range");
+int modifier = PAPI_ENUM_FIRST;
+int eventcode = 0 | PAPI_NATIVE_MASK;
+PAPI_enum_cmp_event(&eventcode, modifier, component_index);
+
+PAPI_event_info_t event_info;
+PAPI_get_event_info(eventcode, &event_info);
+printf("Number of passes: %d\n", event_info.num_passes_for_collection);
+```
+
+To see an example of how to profile `cuda_range` multiple pass events, please see `components/cuda_range/tests/test_cuda_range_multiple_pass_events.cu`.
+
+Lastly, if a PAPI eventset is created with both a single pass and a mutiple pass `cuda_range` native event then the eventset will require multiple passes for collection.
 
 ## Known Limitations
 * Cuda Toolkit 13.0.0 removed support for offline compilation of the NVIDIA GPU architectures with compute capabilities <= 7.5 (i.e. P100 and V100).
