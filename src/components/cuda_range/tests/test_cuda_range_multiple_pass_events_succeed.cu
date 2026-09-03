@@ -1,5 +1,5 @@
 /**
-* @file  test_cuda_range_multiple_pass_events.cu.
+* @file  test_cuda_range_multiple_pass_events_succeed.cu.
 * @brief This test verifies that multiple pass event support is functional.
 */
 
@@ -84,7 +84,7 @@ static void parse_and_assign_args(int argc, char *argv[], int &device_index)
 
 int main(int argc, char **argv)
 {
-    std::cout << "Running the cuda_range component test -- test_cuda_range_multiple_pass_events." << std::endl;
+    std::cout << "Running the cuda_range component test -- test_cuda_range_multiple_pass_events_succeed." << std::endl;
     CHECK_CUDA_DRIVER_API_CALL( cuInit(0) );
 
     CUpti_Profiler_Initialize_Params profiler_initialize_params {}; 
@@ -133,6 +133,13 @@ int main(int argc, char **argv)
     CHECK_CUPTI_API_CALL( cuptiDeviceGetChipName(&get_chip_name_params) );
     std::cout << "Proceeding to test multiple pass event support for device " << device_index
               << " (" << get_chip_name_params.pChipName << ")" << "." << std::endl;
+
+    // Enable multiple pass support.
+    int status = setenv("PAPI_CUDA_RANGE_ENABLE_MULTIPASSES", "1", 1);
+    if (status != 0) {
+        std::cout << "Failed to set PAPI_CUDA_RANGE_ENABLE_MULTIPASSES equal to 1." << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     // Create a PAPI event set.
     int event_set = PAPI_NULL;

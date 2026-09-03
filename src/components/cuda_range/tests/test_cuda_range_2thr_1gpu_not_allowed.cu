@@ -54,14 +54,22 @@ void *thread_start(void *arg)
     CHECK_PAPI_API_CALL( PAPI_create_eventset(&event_set) );
 
     // Add cuda_range native event names to the event set.
-    CHECK_PAPI_API_CALL( PAPI_add_named_event(event_set, tinfo->cuda_range_native_event_name) );
+    tinfo->papi_errno = PAPI_add_named_event(event_set, tinfo->cuda_range_native_event_name);
+    if (tinfo->papi_errno != PAPI_OK) {
+        // PAPI_ECNFLCT correctly returned.
+        if (tinfo->papi_errno == PAPI_ECNFLCT) {
+            std::cout << "Thread " << tinfo->thread_num << ": Not allowed to profile." << std::endl;
+            return NULL;
+        }
+        // PAPI_ENCFLCT not correctly returned.
+        else {
+            std::cout << "Thread " << tinfo->thread_num << ": Not allowed to profile. However, PAPI_ECNFLCT not returned." << std::endl;
+            return NULL;
+        }
+    }
 
     // Start profiling.
-    tinfo->papi_errno = PAPI_start(event_set);
-    if (tinfo->papi_errno == PAPI_ECNFLCT) {
-        std::cout << "Thread " << tinfo->thread_num << ": Not allowed to profile." << std::endl;
-        return NULL;
-    }
+    CHECK_PAPI_API_CALL( PAPI_start(event_set) );
 
     // Launch kernel.
     int number_of_iterations = 50000;

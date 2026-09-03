@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+// CTK headers.
+#include <cuda.h>
+
 // Define to handle memory allocation checks.
 #define CHECK_MEMORY_ALLOCATION_CALL(var)                                             \
 do {                                                                                  \

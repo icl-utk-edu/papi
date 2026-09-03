@@ -1021,6 +1021,8 @@ enum {
      int  num_quals;                                       /**< number of qualifiers */
      char quals[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];   /**< qualifiers */
      char quals_descrs[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];  /**< qualifier descriptions */
+     size_t num_passes_for_collection;                           /**< number of passes required to be
+                                                                 submitted to the GPU for collection */
    } PAPI_event_info_t;
 
 

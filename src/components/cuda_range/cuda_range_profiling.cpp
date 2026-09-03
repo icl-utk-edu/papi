@@ -1264,13 +1264,23 @@ inline int CuptiProfile::counter_availability(void)
     #if CUDART_VERSION >= 13010
     get_counter_availability_params.bAllowDeviceLevelCounters = 1;
     #endif
+    CUptiResult cupti_result = cuptiProfilerGetCounterAvailabilityPtr(&get_counter_availability_params);
+    if (cupti_result != CUPTI_SUCCESS) {
+        SUBDBG("The call to cuptiProfilerGetCounterAvailability failed with error code %d\n.", cupti_result);
+        return cupti_result;
+    }
+
     CHECK_CUPTI_API_CALL( cuptiProfilerGetCounterAvailabilityPtr(&get_counter_availability_params) );
     m_counter_availability_image.resize(get_counter_availability_params.counterAvailabilityImageSize);
     /// [in]
     get_counter_availability_params.pCounterAvailabilityImage = m_counter_availability_image.data();
     /// [in/out]
     get_counter_availability_params.counterAvailabilityImageSize = m_counter_availability_image.size();
-    CHECK_CUPTI_API_CALL( cuptiProfilerGetCounterAvailabilityPtr(&get_counter_availability_params) );
+    cupti_result = cuptiProfilerGetCounterAvailabilityPtr(&get_counter_availability_params);
+    if (cupti_result != CUPTI_SUCCESS) {
+        SUBDBG("The call to cuptiProfilerGetCounterAvailability failed with error code %d\n.", cupti_result);
+        return cupti_result;
+    }
 
     return PAPI_OK;
 }
@@ -1930,57 +1940,6 @@ int native_event_code_to_native_event_name(unsigned int native_event_code, std::
     return PAPI_OK;
 }
 
-/**
-  * @brief Reserve an NVIDIA device.
-  *
-  *        The cuda_range component only allows an NVIDIA device
-  *        to be used on a single thread. Therefore, internally
-  *        the NVIDIA device will be "reserved" for use. 
-  *
-  * @param device_index
-  *   The index of the device to be reserved.
-*/
-int cuda_range_reserve_device(int device_index)
-{
-    uint64_t local_bitmask = 0; 
-    local_bitmask |= (1 << device_index);
-
-    if (local_bitmask & device_bitmask) {
-        SUBDBG("The cuda_range component only supports one thread per device and device %d is already in use.\n", device_index);
-        return PAPI_ECNFLCT;
-    }    
-
-    _papi_hwi_lock(_cuda_range_lock);
-    device_bitmask |= local_bitmask;
-    _papi_hwi_unlock(_cuda_range_lock);
-
-    return PAPI_OK;
-}
-
-/**
-  * @brief Un-reserve the NVIDIA device reserved by the call
-  *        cuda_range_reserve_device.
-  *
-  * @param device_index
-  *   The index of the device to be un-reserved.
-*/
-int cuda_range_unreserve_device(int device_index)
-{
-    uint64_t local_bitmask = 0; 
-    local_bitmask |= (1 << device_index);
-
-    if ((local_bitmask & device_bitmask) != local_bitmask) {
-        SUBDBG("Device %d is not reserved and should be.\n", device_index);
-        return PAPI_EBUG;
-    }    
-
-    _papi_hwi_lock(_cuda_range_lock);
-    device_bitmask ^= local_bitmask;
-    _papi_hwi_unlock(_cuda_range_lock);
-
-    return PAPI_OK;
-}
-
 typedef struct added_native_events_data_t
 {
     std::vector<std::string> cupti_metric_names;
@@ -2411,13 +2370,15 @@ extern "C" int cuda_range_event_code_to_info(uint32_t native_event_code, PAPI_ev
 
         CHECK_INTERNAL_FUNC_CALL( cupti_profile_metric_descriptions.at(device_id_int).create_config_image() );
 
-        size_t number_of_passes = 0;
-        CHECK_INTERNAL_FUNC_CALL( cupti_profile_metric_descriptions.at(device_id_int).number_of_passes(number_of_passes) );
-        description += " The number of passes required for collection is " + std::to_string(number_of_passes) + ".";
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_metric_descriptions.at(device_id_int).number_of_passes(cupti_metric_info.num_passes_for_collection) );
+        description += " The number of passes required for collection is " + std::to_string(cupti_metric_info.num_passes_for_collection) + ".";
+        if (cupti_metric_info.num_passes_for_collection > 1) {
+            description += " To profile, set the environment variable PAPI_CUDA_RANGE_ENABLE_MULTIPASSES equal to 1.";
+        }
         cupti_metric_info.description = description;
 
         // Avoid continously adding metrics to the current CUpti_Profiler_Host_Object by destroying it.
-        CHECK_INTERNAL_FUNC_CALL( cupti_profile_metric_descriptions.at(device_id_int).host_deinitialize() ); 
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_metric_descriptions.at(device_id_int).host_deinitialize() );
     }
 
     int string_length;
@@ -2496,6 +2457,7 @@ extern "C" int cuda_range_event_code_to_info(uint32_t native_event_code, PAPI_ev
         default:
             break;
     }
+    info->num_passes_for_collection = cupti_metric_info.num_passes_for_collection;
 
     // Push the user's context back onto the calling CPU thread.
     if (context != nullptr) {
@@ -2576,6 +2538,36 @@ extern "C" int cuda_range_store_added_native_events(uint32_t *event_codes, int n
         }
 
         cupti_profile_per_device.at(pair.first).set_cupti_metric_names(pair.second.cupti_metric_names);
+
+        int cupti_error = cupti_profile_per_device.at(pair.first).counter_availability();
+        if (cupti_error != CUPTI_SUCCESS) {
+            // Handle attempt to profile 2 threads with a single device.
+            if (cupti_error == CUPTI_ERROR_HARDWARE_BUSY) {
+                return PAPI_ECNFLCT;
+            }
+            // Handle all other cases.
+            else {
+                return PAPI_ESYS;
+            }
+        }
+
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(pair.first).chip_name(pair.first) );
+
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(pair.first).host_initialize() );
+
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(pair.first).create_config_image() );
+
+        size_t number_of_passes_for_collection = 0;
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(pair.first).number_of_passes(number_of_passes_for_collection) );
+        if (getenv("PAPI_CUDA_RANGE_ENABLE_MULTIPASSES") == nullptr &&
+            number_of_passes_for_collection > 1) {
+            SUBDBG("The added cuda_range native events require multiple passes for collection."
+                   " To profile, set the environment variable PAPI_CUDA_RANGE_ENABLE_MULTIPASSES equal to 1.\n");
+            return PAPI_EMULPASS;
+        }
+
+        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(pair.first).host_deinitialize() );
+
         cupti_profile_per_device.at(pair.first).set_event_insertion_order(pair.second.event_insertion_order);
     }
 
@@ -2605,15 +2597,7 @@ extern "C" int cuda_range_start_profiling(void)
         }
         SUBDBG("Entry detected for device %d. Proceeding to start profiling.\n", device_index);
 
-        CHECK_INTERNAL_FUNC_CALL( cuda_range_reserve_device(device_index) );
-
-        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).counter_availability() );
-
-        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).chip_name(device_index) );
-
         CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).host_initialize() );
-
-        CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).create_config_image() );
 
         CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).enable_range_profiler() );
 
@@ -2730,8 +2714,6 @@ extern "C" int cuda_range_stop_profiling(void)
         CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).disable_range_profiler() );
 
         CHECK_INTERNAL_FUNC_CALL( cupti_profile_per_device.at(device_index).host_deinitialize() );
-
-        CHECK_INTERNAL_FUNC_CALL( cuda_range_unreserve_device(device_index) );
     }
 
     return PAPI_OK;
