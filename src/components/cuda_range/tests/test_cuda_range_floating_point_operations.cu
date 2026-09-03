@@ -161,7 +161,7 @@ static void print_help_message(void)
 {
     std::cout << "./cuda_floating_point_operations --device [NVIDIA device index] --number-of-iterations [list of iterations to perform (must be exactly 3) separated by a comma]"
               << " --precision [options include single (default) or double]"
-              << " --operation [options include add (default), multiply, fused_add_multiply]." << std::endl
+              << " --operation [options include add (default), multiply, fused_multiply_add]." << std::endl
               << "Notes:" << std::endl
               << "1. The default precision is single and the default operation is add." << std::endl
               << "2. If the number of iterations listed is greater than 3 then the iteration value will not be stored, BUT the test will proceed." << std::endl;
@@ -280,6 +280,15 @@ int main(int argc, char **argv)
 {
     std::cout << "Running the cuda_range component test -- test_cuda_range_floating_point_operations.cu." << std::endl;
     CHECK_CUDA_DRIVER_API_CALL( cuInit(0) );
+
+    // Cuda Toolkits 13.2.0 - 13.4.0 cannot be used with this test.
+    int cuda_runtime_version = 0;
+    CHECK_CUDA_RUNTIME_API_CALL( cudaRuntimeGetVersion(&cuda_runtime_version) );
+    if (cuda_runtime_version >= 13020 && cuda_runtime_version <= 13040) {
+        std::cout << "Cuda Toolkits 13.2.0 - 13.4.0 produce zero values for cuda_range:::smsp__sass_thread_inst_executed_op_*_pred_on native events."
+                  << " NVIDIA is aware of this issue and Cuda Toolkit 13.4 update 1 will contain the fix." << std::endl;
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
 
     int device_index = 0;
     precision_e precision = SINGLE;
