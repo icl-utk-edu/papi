@@ -256,16 +256,20 @@ __ 19a. Check that the proper link where folks can download the tarball
         ---- final steps are done by the programmer, after these are completed.
 
 __ 20.  Create a link with supporting text on the PAPI software web page.
-        Create an entry on the PAPI wiki:
-        https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases 
-        announcing the new release with details about the changes.
+        On the "PAPI Releases" GitHub Wiki page (https://github.com/icl-utk-edu/papi/wiki/PAPI-Releases)
+        create an entry underneath the section titled "PAPI Releases". This entry MUST link
+        to the corresponding PAPI GitHub release. For an example, see the
+        PAPI 7.2.0 Release June 25, 2025 entry.
 
-__ 21.  Create a News item on the PAPI Web page.
+__ 21.  Update the Supported Architectures GitHub Wiki page (https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures)
+        to reflect newly supported architectures such as CPUs, GPUs, or AI accelerators.
+
+__ 22.  Create a News item on the PAPI Web page.
 
         ---- The following steps are typically done by the PAPI PIs or management. 
-        ---- At this writing, Heike Jagode and Anthony Danalis.
+        ---- At this writing, Heike Jagode is the sole PI.
 
-__ 22.  Email the papi developer and discussion lists with an announcement (see emails below).
+__ 23.  Email the papi developer and discussion lists with an announcement (see emails below).
         1. perfapi-devel@icl.utk.edu
         2. ptools-perfapi@icl.utk.edu
 
@@ -274,10 +278,10 @@ __ 22.  Email the papi developer and discussion lists with an announcement (see 
         ---- worked!) This is to ensure more development commits (that may not 
         ---- be fully tested) will not be in the release version of the repository.
 
-__ 23.  Using steps 0b and 0c make ANOTHER fork of the repository, clone it,
+__ 24.  Using steps 0b and 0c make ANOTHER fork of the repository, clone it,
         and change to that directory. Example, papi-6-0-1.
 
-__ 24.  Repeat Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in 
+__ 25.  Repeat Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in 
         the repository AFTER the release changing Z to Z+1. Example:
         papi-6-0-0 to papi-6-0-1. The following files must be edited:
         papi.spec,
@@ -286,19 +290,19 @@ __ 24.  Repeat Step 2 (ONLY Step 2, not 2a, etc) to bump the version number in
         src/Makefile.in, 
         doc/Doxyfile-common (PROJECT_NUMBER)
  
-__ 25.  Repeat Step 3, to create a new configure. Upon the new configure being generated
+__ 26.  Repeat Step 3, to create a new configure. Upon the new configure being generated
         verify that existing `runstatedir` lines were not removed. If NEW `runstatedir`
         lines were generated then remove them from the configure.
 
-__ 25a. If these 'release_procedure.txt' instructions need to be updated, fix them now.
+__ 27a. If these 'release_procedure.txt' instructions need to be updated, fix them now.
 
-__ 26.  Add changed files, Commit and Push.
+__ 27.  Add changed files, Commit and Push.
         (use 'git status -uno' to see files that need to be added with 'git add filepath').
 
         'git commit -m "Updated version to 6.0.1 after the release' 
         'git push'.
 
-__ 27.  Repeat step 9, to create a pull request for review.
+__ 28.  Repeat step 9, to create a pull request for review.
 
 ================================================================================
 
