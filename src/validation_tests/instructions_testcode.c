@@ -77,7 +77,7 @@ int instructions_million(void) {
 		"	bne	55b		// repeat till zero\n"
 		: /* no output registers */
 		: /* no inputs */
-		: "cc", "r2" /* clobbered */
+		: "cc", "x2" /* clobbered */
 	);
 	return 0;
 #endif
