@@ -89,6 +89,8 @@ typedef struct cupti_metric_info_t
     std::vector<std::string> device_ids;
     /// [in] The description of the metric.
     std::string description;
+    /// [in] The number of passes required for collection.
+    size_t num_passes_for_collection;
 } cupti_metric_info_t;
 
 /**
