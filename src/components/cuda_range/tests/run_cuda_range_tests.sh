@@ -12,7 +12,8 @@ make_cuda_range_test_targets=(
     "test_cuda_range_2thr_1gpu_not_allowed"
     "test_cuda_range_no_user_context"
     "test_cuda_range_pthreads"
-    "test_cuda_range_multiple_pass_events"
+    "test_cuda_range_multiple_pass_events_succeed"
+    "test_cuda_range_multiple_pass_events_fail"
 )
 
 for cuda_range_test in ${make_cuda_range_test_targets[@]}; do
