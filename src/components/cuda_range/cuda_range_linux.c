@@ -265,6 +265,11 @@ int cuda_range_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_
         return papi_errno;
     }
 
+    // This check is required such that PAPI_EMULPASS error codes are caught.
+    if (ntv_count == 0) {
+        return PAPI_OK;
+    }
+
     cuda_range_control_t *cuda_range_ctl = (cuda_range_control_t *) ctl;
 
     papi_errno = update_native_events(cuda_range_ctl, ntv_info, ntv_count);
