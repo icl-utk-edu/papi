@@ -10,11 +10,27 @@ do {                                                                           \
     }                                                                          \
 } while (0)
 
+#define PAPI_CALL_THD(call)                                                    \
+do {                                                                           \
+    int _status = call;                                                        \
+    if (_status != PAPI_OK) {                                                  \
+        status[id] = _status;                                                  \
+    }                                                                          \
+} while (0)
+
 #define HIP_CALL(call)                                                         \
 do {                                                                           \
     hipError_t err = call;                                                     \
     if(err != hipSuccess) {                                                    \
         test_fail(__FILE__, __LINE__, hipGetErrorString(err), PAPI_EMISC);     \
+    }                                                                          \
+} while(0)
+
+#define HIP_CALL_THD(call)                                                     \
+do {                                                                           \
+    hipError_t err = call;                                                     \
+    if(err != hipSuccess) {                                                    \
+        status[id] = PAPI_EMISC;                                               \
     }                                                                          \
 } while(0)
 
