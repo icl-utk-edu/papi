@@ -2177,7 +2177,7 @@ for comp in $components; do
   fi
 
   # check for intel_gpu or rocp_sdk component to determine if we need -lstdc++ in LDFLAGS
-  if (test "x$comp" = "xintel_gpu" || test "x$comp" = "xrocp_sdk"); then
+  if (test "x$comp" = "xintel_gpu" || test "x$comp" = "xrocp_sdk" || test "x$comp" = "xcuda_range"); then
     LDFLAGS="$LDFLAGS -lstdc++ -pthread"
   fi
 

@@ -281,7 +281,8 @@ failure.
 #define PAPI_EDELAY_INIT -26   /**< Delayed initialization component */
 #define PAPI_EMULPASS   -27    /**< Event exists, but cannot be counted due to multiple passes required by hardware */
 #define PAPI_PARTIAL    -28    /**< Component is partially disabled */
-#define PAPI_NUM_ERRORS	 29    /**< Number of error messages specified in this API */
+#define PAPI_EALLPASSES_NOT_SUBMITTED -29 /**< Native event requires more than a single pass for profiling. */
+#define PAPI_NUM_ERRORS	 30    /**< Number of error messages specified in this API */
 
 #define PAPI_NOT_INITED		0
 #define PAPI_LOW_LEVEL_INITED 	1       /* Low level has called library init */
@@ -1020,6 +1021,8 @@ enum {
      int  num_quals;                                       /**< number of qualifiers */
      char quals[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];   /**< qualifiers */
      char quals_descrs[PAPI_MAX_COMP_QUALS][PAPI_HUGE_STR_LEN];  /**< qualifier descriptions */
+     size_t num_passes_for_collection;                           /**< number of passes required to be
+                                                                 submitted to the GPU for collection */
    } PAPI_event_info_t;
 
 
