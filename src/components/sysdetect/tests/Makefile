@@ -24,7 +24,7 @@ nvidia_compilers := nvfortran
 
 gfortran_variants := $(shell echo "$(F77)" | grep --ignore-case --fixed-strings --silent gfortran; echo $$?)
 ifeq ($(gfortran_variants), 0)
-    F90FLAGS += $(FFLAGS) -free-form -ffree-line-length-none
+    F90FLAGS += $(FFLAGS) -ffree-form -ffree-line-length-none
 else ifeq ($(patsubst %flang,,$(notdir $(F77))),)  # compiler name ends with flang
     F90FLAGS += $(FFLAGS) -ffree-form
 else ifneq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
