@@ -20,17 +20,21 @@ endif
 
 intel_compilers := ifort ifx
 cray_compilers := ftn crayftn
+nvidia_compilers := nvfortran
 
 gfortran_variants := $(shell echo "$(F77)" | grep --ignore-case --fixed-strings --silent gfortran; echo $$?)
 ifeq ($(gfortran_variants), 0)
-    FFLAGS +=-ffree-form -ffree-line-length-none
+    F90FLAGS += $(FFLAGS) -free-form -ffree-line-length-none
 else ifeq ($(patsubst %flang,,$(notdir $(F77))),)  # compiler name ends with flang
-    FFLAGS +=-ffree-form
+    F90FLAGS += $(FFLAGS) -ffree-form
 else ifneq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
-    FFLAGS +=-free
+    F90FLAGS += $(FFLAGS) -free
 else ifneq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
-    FFLAGS +=-ffree
+    F90FLAGS += $(FFLAGS) -ffree
+else ifneq ($(findstring $(notdir $(F77)), $(nvidia_compilers)),)
+    F90FLAGS += $(FFLAGS) -Mfree
 endif
+F90 ?= $(F77)
 
 TESTS = query_device_simple \
         $(FTESTS)           \
@@ -48,7 +52,7 @@ query_device_mpi.o: query_device_mpi.c
 	$(MPICC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c -o $@ $<
 
 query_device_simple_f: query_device_simple_f.F
-	$(F77) $(FFLAGS) -I../../.. -o $@ $< $(PAPILIB) $(LDFLAGS)
+	$(F90) $(F90FLAGS) -I../../.. -o $@ $< $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o
