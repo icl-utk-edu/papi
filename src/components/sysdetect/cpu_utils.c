@@ -34,8 +34,9 @@ cpu_get_vendor( char *vendor )
     return powerpc_cpu_get_vendor(vendor);
 #elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_vendor(vendor);
-#endif
+#else
     return os_cpu_get_vendor(vendor);
+#endif
 }
 
 int
@@ -47,8 +48,9 @@ cpu_get_name( char *name )
     return powerpc_cpu_get_name(name);
 #elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_name(name);
-#endif
+#else
     return os_cpu_get_name(name);
+#endif
 }
 
 int
@@ -60,8 +62,9 @@ cpu_get_attribute( CPU_attr_e attr, int *value )
     return powerpc_cpu_get_attribute(attr, value);
 #elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_attribute(attr, value);
-#endif
+#else
     return os_cpu_get_attribute(attr, value);
+#endif
 }
 
 int
@@ -73,8 +76,9 @@ cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value )
     return powerpc_cpu_get_attribute_at(attr, loc, value);
 #elif defined(__arm__) || defined(__aarch64__)
     return arm_cpu_get_attribute_at(attr, loc, value);
-#endif
+#else
     return os_cpu_get_attribute_at(attr, loc, value);
+#endif
 }
 
 static int

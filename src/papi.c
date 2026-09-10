@@ -5114,7 +5114,6 @@ PAPI_get_cmp_opt( int option, PAPI_option_t * ptr, int cidx )
 	default:
 	  papi_return( PAPI_EINVAL );
 	}
-	return PAPI_OK;
 }
 
 /** @class PAPI_num_components
