@@ -46,6 +46,12 @@ at runtime (for libraries).
     ```sh
     METRICS_SAMPLING_PERIOD=value
     ```
+* The Experimental API Tracing has been deprecated and is no longer supported in the Level Zero drivers.
+  It has been replaced with the Loader Tracing Layer. To use the Experimental API Tracing, you must set the environment variable **PAPI\_USE\_ZET\_EXP\_API**.
+  For example:
+    ```sh
+    PAPI_USE_ZET_EXP_API=1
+    ```
 
 ## Counter Collection Modes
 
@@ -54,9 +60,14 @@ Two metrics collection modes are supported.
     ```sh
     ZE_ENABLE_TRACING_LAYER=0
     ```
-* Query-based sampling. In this mode, PAPI_start() must be called before kernel launch and PAPI_stop() must be called after kernel execution completes. To enable query-based event monitoring:
+* Query-based sampling. In this mode, PAPI_start() must be called before kernel launch and PAPI_stop() must be called after kernel execution completes.
+  To enable query-based event monitoring:
     ```sh
     ZE_ENABLE_TRACING_LAYER=1
+    ```
+  If you are using the deprecated Experimental API Tracing, then you must set:
+    ```sh
+    ZET_ENABLE_API_TRACING_EXP=1
     ```
 
 ## Metrics:
