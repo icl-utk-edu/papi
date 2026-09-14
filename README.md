@@ -69,7 +69,41 @@ If PAPI is used in a project or publication, please cite the following paper:
 ***
 
 
-# Contributing
+# PAPI's Merge Model
+
+PAPI adopts the git merge model. This means that new features get integrated into the history through merge commits. A clean history would look as follows:
+```
+*   185dcb38b Merge pull request #xxx from neo/rocm_feature_branch
+|\
+| * efdcf6512 rocm: add tests for introduced changes
+| * 55ebf1416 rocm: make changes to rocm component
+|/
+*   b2b142317 Merge pull request #yyy from morpheus/cuda_feature_branch
+|\
+| * 2e7a0bbe4 cuda: add matrix multiplication test
+|/
+*   220b0f28e Merge pull request #zzz from trinity/libpfm4_udpate_branch
+|\
+| * 42df8d271 libpfm4: update to latest master
+|/
+*   2cac08381 Merge pull request #xyz ...
+```
+
+The above history is the result of rebasing feature branches onto the PAPI master branch before merging. To do this, please follow the steps below:
+
+1. From your local repository, add the PAPI repository as a remote (i.e. `git remote add upstream https://www.github.com/icl-utk-edu/papi.git`).
+
+2. Switch to your local master branch and then run `git fetch upstream master && git reset --hard FETCH_HEAD`.
+
+3. Switch back to your feature branch and then run `git rebase master`.
+
+4. If conflicts are detected during the rebase then resolve them. Once resolved, add the changes to the staging area (i.e. `git add -u`) and continue rebasing (i.e. `git rebase --continue`).
+
+5. Lastly, push your rebased feature branch to the remote (i.e. `git push -f origin feature_branch`).
+
+***
+
+# Contributing as a Developer
 
 The PAPI project welcomes contributions from new developers. Contributions can
 be offered through the standard GitHub pull request model. We strongly
@@ -82,16 +116,80 @@ one (1) pull request per feature / bug fix.**
 In order to create a pull request on a public read-only repo, 
 you will need to do the following:
 
-1. Fork the PAPI repo (click "+" on the left and "Fork this repository").
+1. Fork the PAPI repository:
+    - Go to https://github.com/icl-utk-edu/papi.
+    - Click **Fork** in the upper right corner.
+    - Provide an optional repository name.
+    - Click **Create fork** in the bottom right corner.
 
-2. Clone it.
+2. Clone it (i.e. `git clone https://github.com/$USERNAME/$FORKNAME.git` where `$USERNAME` is your GitHub username and `$FORKNAME` is the name of your created fork).
 
-3. Make your changes and push them.
+3. Create a feature branch for every feature regardless of how small (from branch `master` run `git checkout -b feature_branch`).
 
-4. Click "create pull request" from your repo (not the PAPI repo).
+4. Make your changes locally and push them to remote (i.e. `git push -u origin feature_branch`).
+
+5. Go to https://github.com/icl-utk-edu/papi and create a pull request. As a push was just made a yellow banner will appear right above the green **Code** dropdown button. If this is not the case then follow the steps outlined below:
+    - Click on the **Pull requests** button located in the top left corner.
+    - Click on the green **New pull request** button located in the middle right corner.
+    - Click on the blue **compare across forks** button located below the **Compare changes** heading.
+    - For the head repository select your PAPI fork and then for compare select the branch that you have made changes on.
+    - Lastly, review the changes and if everything looks correct click **Create pull request**.
 
 ***
 
+# Contributing as a Reviewer
+
+A PAPI team member may ask you to review/test a pull request if one of the below conditions are met:
+1. The pull request addresses an issue you opened in the PAPI [repository](https://github.com/icl-utk-edu/papi/issues).
+2. The pull request addresses an email you sent to either the PAPI [developers](https://groups.google.com/a/icl.utk.edu/g/perfapi-devel) or [users](https://groups.google.com/a/icl.utk.edu/g/ptools-perfapi) mailing lists.
+
+Testing the PR can be done via [GitHub CLI](#using-github-cli) or [Git CLI](#using-git-cli), see below for steps.
+
+## Using GitHub CLI
+
+Two options exist to test a PR via GitHub CLI:
+
+Option 1: You are already in a GitHub repository
+```
+# In a PAPI repository (i.e. git clone https://github.com/icl-utk-edu/papi.git).
+gh pr checkout $NUMBER (where $NUMBER is the PR number)
+# Not in a PAPI repository.
+gh pr checkout $NUMBER (where $NUMBER is the PR number) --repo https://github.com/icl-utk-edu/papi.git
+```
+
+Option 2: You are not already in a GitHub repository
+```
+git clone https://github.com/icl-utk-edu/papi.git
+cd papi
+gh pr checkout $NUMBER (where $NUMBER is the PR number)
+```
+
+If your system does not have GitHub CLI available and this is your preferred method of reviewing a PR
+then see the [installation options](https://github.com/cli/cli#installation) provided by GitHub.
+
+## Using Git CLI
+
+Two options exist to test a PR via Git CLI:
+
+Option 1: You are already in a GitHub repository
+```
+# In a PAPI repository (i.e. git clone https://github.com/icl-utk-edu/papi.git).
+git fetch origin/$NUMBER/head (where $NUMBER is the PR number)
+git checkout FETCH_HEAD
+# Not in a PAPI repository.
+git remote add papi https://github.com/icl-utk-edu/papi.git
+git fetch papi/$NUMBER/head (where $NUMBER is the PR number)
+git checkout FETCH_HEAD
+```
+
+Option 2: You are not already in a GitHub repository
+```
+git clone https://github.com/icl-utk-edu/papi.git
+cd papi
+git fetch origin pull/$NUMBER/head (where $NUMBER is the PR number)
+git checkout FETCH_HEAD
+```
+***
 
 # Resources
 
