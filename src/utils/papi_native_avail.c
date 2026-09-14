@@ -575,7 +575,11 @@ no_sdes:
 
 	num_events = 0;
 
+    int perf_event_found = 0;
 	for ( cid = 0; cid < numcmp; cid++ ) {
+        int is_perf_event = 0;
+        int can_be_perf = 1;
+        int was_perf_once = 0;
 		const PAPI_component_info_t *component;
 		component=PAPI_get_component_info(cid);
 
@@ -592,6 +596,24 @@ no_sdes:
 		// show this component has not found any events yet
 		num_cmp_events = 0;
 
+        // Check whether or not we are enumerating the perf_event component.
+        // This component contains kernel-mapped events prefixed with "perf::".
+        // However, multiple such events are often not present, so we should
+        // not display them to the user by default.
+        if( !perf_event_found && !strcmp(component->name, "perf_event") ) {
+            // Setting this variable short-circuits the string-comparison for
+            // the component name. This guarantees that we do not attempt to
+            // perform this particular string-comparison operation more than
+            // the once for the singular perf_event component.
+            perf_event_found = 1;
+
+            // This variable short-circuits the string-comparison for the
+            // prefix "perf::". This guarantees that we do not attempt to
+            // perform this particular string-comparison operation for
+            // non-perf_event component events.
+            is_perf_event = 1;
+        }
+
 		/* Always ASK FOR the first event */
 		/* Don't just assume it'll be the first numeric value */
 		i = 0 | PAPI_NATIVE_MASK;
@@ -605,6 +627,27 @@ no_sdes:
 
                 /* This event may not exist */
 				if ( retval != PAPI_OK ) continue;
+
+                /* This event may "exist", but not be mapped at the kernel level. */
+                if ( is_perf_event ) {
+                    if( can_be_perf ) {
+                        if( !strncmp("perf::", info.symbol, 6) ) {
+                            was_perf_once = 1;
+                            check_event(&info);
+                            if( event_available == 0 ) {
+                                continue;
+                            }
+                            // Reset for proper function of the remainder of the loop iteration.
+                            event_available = 0;
+                        // Since the perf_event component loops through the events of a single
+                        // PMU before moving to the next PMU, after we fail to enumerate an
+                        // event from the "perf" PMU, we will never hit another event prefixed
+                        // with "perf::". This prevents unnecessary string-comparison operations.
+                        } else if (was_perf_once) {
+                            can_be_perf = 0;
+                        }
+                    }
+                }
 
 				/* Bail if event name doesn't contain include string */
 				if ( flags.include && !strstr( info.symbol, flags.istr ) ) continue;
