@@ -1,7 +1,7 @@
 #include "testcode.h"
 
 /* Execute n stores */
-int execute_stores(int n) {
+int execute_stores(long long n) {
 
 #if defined(__aarch64__)
 
@@ -30,7 +30,7 @@ int execute_stores(int n) {
 }
 
 /* Execute n loads */
-int execute_loads(int n) {
+int execute_loads(long long n) {
 
 #if defined(__aarch64__)
 
