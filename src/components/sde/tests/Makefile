@@ -2,19 +2,9 @@ NAME=sde
 include ../../Makefile_comp_tests.target
 INCLUDE += -I$(datadir)/sde_lib -I..
 
-intel_compilers := ifort ifx
-cray_compilers := ftn crayftn
+F90FLAGS += $(FFLAGS) $(call PAPI_DEFAULT_FREEFORM_F90FLAGS)
+F90 ?= $(F77)
 
-ifeq ($(notdir $(F77)),gfortran)
-	FFLAGS +=-ffree-form -ffree-line-length-none
-else ifeq ($(notdir $(F77)),flang)
-	FFLAGS +=-ffree-form
-else ifeq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
-    FFLAGS +=-free
-else ifeq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
-    FFLAGS +=-ffree
-endif
-FFLAGS +=-g
 CFLAGS +=-g
 CXXFLAGS +=-g -std=c++11
 
@@ -52,6 +42,7 @@ endif
 sde_tests: \
 	$(shell mkdir -p lib) \
 	$(TESTS)
+
 
 ################################################################################
 ## Minimal test
@@ -162,13 +153,13 @@ prfx=Advanced_C+FORTRAN
 rcrd_prfx=Recorder
 
 lib/libXandria.so: $(prfx)/Xandria.F90
-	$(F77) -shared -Wall -fPIC $(FFLAGS) $(INCLUDE) -o $@ $(SDE_F08_API) $<
+	$(F90) -shared -Wall -fPIC $(F90FLAGS) $(INCLUDE) -o $@ $(SDE_F08_API) $<
 
 lib/libGamum.so: $(prfx)/Gamum.c
 	$(CC) -shared -Wall -fPIC $(CFLAGS) $(INCLUDE) -o $@ $^
 
 sde_test_f08: $(prfx)/sde_test_f08.F90 $(UTILOBJS) $(PAPILIB) lib/libXandria.so lib/libGamum.so lib/libRecorder.so
-	$(F77) $< -o $@ $(INCLUDE) $(FFLAGS) $(UTILOBJS) -lXandria -lGamum -lRecorder $(sdeLDFLAGS)
+	$(F90) $< -o $@ $(INCLUDE) $(F90FLAGS) $(UTILOBJS) -lXandria -lGamum -lRecorder $(sdeLDFLAGS)
 
 ################################################################################
 ## Cleaning
