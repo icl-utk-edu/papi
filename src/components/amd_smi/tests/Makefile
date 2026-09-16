@@ -14,6 +14,7 @@ CFLAGS   ?= -DPAPI_NUM_COMP=3
 CSTD     ?= -std=c11
 HIPFLAGS ?= $(CFLAGS) -std=c++17
 OPTFLAGS ?= -O2
+GPUFLAGS=-no-pie
 
 # Libraries in the PAPI tree (override if your layout differs)
 UTILOBJS ?= ../../../testlib/libtestlib.a
@@ -55,7 +56,7 @@ amd_smi_tests: $(TESTS)
 
 # amdsmi_gemm.c is compiled as HIP
 amdsmi_gemm.o: amdsmi_gemm.c
-	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_HIP) -x hip -c $< -o $@
+	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_HIP) -x hip -c $< -o $@
 
 # ------------------------
 # Link rules
@@ -63,28 +64,28 @@ amdsmi_gemm.o: amdsmi_gemm.c
 
 # amdsmi_hello replaces the older amdsmi_example
 amdsmi_hello: amdsmi_hello.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
 
 # Back-compat alias: allow 'make amdsmi_example' to build amdsmi_hello
 amdsmi_example: amdsmi_hello
 	@true
 
 amdsmi_basics: amdsmi_basics.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
 
 # GEMM sample linked against rocBLAS
 amdsmi_gemm: amdsmi_gemm.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_HIP) -o $@ amdsmi_gemm.o $(LDFLAGS_GEMM)
+	$(HIPCC) $(HIPFLAGS) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_HIP) -o $@ amdsmi_gemm.o $(LDFLAGS_GEMM)
 
 # Tests
 amdsmi_energy_monotonic: amdsmi_energy_monotonic.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_energy_monotonic.o $(LDFLAGS_AMDSMI)
 
 amdsmi_ctx_conflict: amdsmi_ctx_conflict.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_ctx_conflict.o $(LDFLAGS_AMDSMI)
 
 amdsmi_set_test: amdsmi_set_test.o $(UTILOBJS) $(PAPILIB)
-	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
+	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(GPUFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_set_test.o $(LDFLAGS_AMDSMI)
 
 $(UTILOBJS):
 	$(MAKE) -C ../../../testlib libtestlib.a
@@ -121,6 +122,7 @@ checkpath:
 	@echo "CSTD = $(CSTD)"
 	@echo "HIPFLAGS = $(HIPFLAGS)"
 	@echo "OPTFLAGS = $(OPTFLAGS)"
+	@echo "GPUFLAGS = $(GPUFLAGS)"
 	@echo "UTILOBJS = $(UTILOBJS)"
 	@echo "PAPILIB = $(PAPILIB)"
 	@echo "LDFLAGS = $(LDFLAGS)"

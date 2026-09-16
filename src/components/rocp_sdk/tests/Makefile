@@ -27,7 +27,7 @@ GPUARCH = $(shell rocm_agent_enumerator 2>/dev/null | grep -v "gfx000" | head -1
 ifneq ($(GPUARCH),)
     ARCHFLAG=--offload-arch=$(GPUARCH)
 endif
-GPUFLAGS=$(ARCHFLAG) --hip-link --rtlib=compiler-rt -unwindlib=libgcc
+GPUFLAGS=$(ARCHFLAG) --hip-link --rtlib=compiler-rt -unwindlib=libgcc -no-pie
 
 TESTS = simple advanced two_eventsets simple_sampling roctx_pause_resume
 template_tests: $(TESTS)
