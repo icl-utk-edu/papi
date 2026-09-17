@@ -1,8 +1,6 @@
 name: Download Counts for PAPI GitHub Releases
 
 on:
-  pull_request:
-
   workflow_dispatch:
     inputs:
       starting_release:
@@ -70,9 +68,9 @@ jobs:
         run: >
           python3 .github/workflows_scripts/generate_plots_for_papi_gh_release_download_count.py
           --starting-release ${{ inputs.starting_release }} 
-          --figsize ${{ inputs.figsize }} 
-          --color ${{ inputs.color }} 
-          --fontsize ${{ inputs.fontsize }} 
+          --figsize ${{ inputs.figsize }}
+          --color ${{ inputs.color }}
+          --fontsize ${{ inputs.fontsize }}
           --barplot-kwargs '${{ inputs.barplot_kwargs }}'
           --lineplot-kwargs '${{ inputs.lineplot_kwargs }}'
           --scatterplot-kwargs '${{ inputs.scatterplot_kwargs }}'
@@ -84,13 +82,13 @@ jobs:
       - name: Upload Barplot
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6
         with:
-          name: ${{ inputs.filename_barplot_download_count }}.svg
-          path: ${{ github.workspace }}/${{ inputs.filename_barplot_download_count }}.svg
+          name: ${{ inputs.filename_barplot_download_count }}.png
+          path: ${{ github.workspace }}/${{ inputs.filename_barplot_download_count }}.png
           retention-days: 1
 
       - name: Upload Lineplot
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6
         with:
-          name: ${{ inputs.filename_lineplot_download_count }}.svg
-          path: ${{ github.workspace }}/${{ inputs.filename_lineplot_download_count }}.svg
+          name: ${{ inputs.filename_lineplot_download_count }}.png
+          path: ${{ github.workspace }}/${{ inputs.filename_lineplot_download_count }}.png
           retention-days: 1

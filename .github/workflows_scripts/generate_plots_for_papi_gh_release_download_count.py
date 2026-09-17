@@ -105,7 +105,7 @@ def plot_download_count_for_papi_gh_releases(names_of_gh_papi_releases_arg: list
 
         # Save the figure
         fig.tight_layout()
-        fig.savefig(f"{filename}.svg", format='svg', dpi=1200)
+        fig.savefig(f"{filename}.png", format="png", dpi=1200)
 
 def parse_command_line_args(cmd_line_args: argparse.Namespace, number_of_gh_papi_releases_arg: int):
     """Parse the command line interface args.
