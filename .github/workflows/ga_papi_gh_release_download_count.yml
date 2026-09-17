@@ -68,7 +68,7 @@ jobs:
 
       - name: Plot PAPI's GitHub Release Download Counts
         run: >
-          python3 .github/workflows_scripts/ga_papi_github_download_count_and_unique_clones.py
+          python3 .github/workflows_scripts/generate_plots_for_papi_gh_release_download_count.py
           --starting-release ${{ inputs.starting_release }} 
           --figsize ${{ inputs.figsize }} 
           --color ${{ inputs.color }} 
