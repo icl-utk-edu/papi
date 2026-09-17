@@ -1,6 +1,8 @@
 name: Download Counts for PAPI GitHub Releases
 
 on:
+  pull_request:
+
   workflow_dispatch:
     inputs:
       starting_release:
