@@ -18,11 +18,11 @@
 #include "sysdetect.h"
 #include "amd_gpu.h"
 
-#ifdef HAVE_ROCM
+#ifdef HAVE_HSA
 #include "hsa.h"
 #include "hsa_ext_amd.h"
 
-static void *rocm_dlp = NULL;
+static void *hsa_dlp = NULL;
 
 static hsa_status_t (*hsa_initPtr)( void ) = NULL;
 static hsa_status_t (*hsa_shut_downPtr)( void ) = NULL;
@@ -42,7 +42,7 @@ static hsa_status_t (*hsa_amd_memory_pool_get_infoPtr)( hsa_amd_memory_pool_t po
 static hsa_status_t (*hsa_status_stringPtr)( hsa_status_t status,
                                              const char **string ) = NULL;
 
-#define ROCM_CALL(call, err_handle) do {   \
+#define CHECK_HSA_API_CALL(call, err_handle) do {    \
     hsa_status_t _status = (call);         \
     if (_status == HSA_STATUS_SUCCESS ||   \
         _status == HSA_STATUS_INFO_BREAK)  \
@@ -59,7 +59,7 @@ static void fill_dev_info( _sysdetect_gpu_info_u *dev_info );
 static int hsa_is_enabled( void );
 static int load_hsa_sym( char *status );
 static int unload_hsa_sym( void );
-#endif /* HAVE_ROCM */
+#endif /* HAVE_HSA */
 
 #ifdef HAVE_ROCM_SMI
 #include "rocm_smi.h"
@@ -83,15 +83,15 @@ static int load_rsmi_sym( char *status );
 static int unload_rsmi_sym( void );
 #endif /* HAVE_ROCM_SMI */
 
-#ifdef HAVE_ROCM
+#ifdef HAVE_HSA
 hsa_status_t
 count_devices( hsa_agent_t agent, void *data )
 {
     int *count = (int *) data;
 
     hsa_device_type_t type;
-    ROCM_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
-              return _status);
+    CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
+                       return _status);
 
     if (type == HSA_DEVICE_TYPE_GPU) {
         ++(*count);
@@ -105,8 +105,8 @@ get_device_count( int *count )
 {
     *count = 0;
 
-    ROCM_CALL((*hsa_iterate_agentsPtr)(&count_devices, count),
-              return _status);
+    CHECK_HSA_API_CALL((*hsa_iterate_agentsPtr)(&count_devices, count),
+                       return _status);
 
     return HSA_STATUS_SUCCESS;
 }
@@ -117,16 +117,16 @@ get_device_memory( hsa_amd_memory_pool_t pool, void *info )
     hsa_region_segment_t seg_info;
     _sysdetect_gpu_info_u *dev_info = info;
 
-    ROCM_CALL((*hsa_amd_memory_pool_get_infoPtr)(pool,
-                                                 HSA_AMD_MEMORY_POOL_INFO_SEGMENT,
-                                                 &seg_info),
-              return _status);
+    CHECK_HSA_API_CALL((*hsa_amd_memory_pool_get_infoPtr)(pool,
+                                                         HSA_AMD_MEMORY_POOL_INFO_SEGMENT,
+                                                         &seg_info),
+                                                         return _status);
 
     if (seg_info == HSA_REGION_SEGMENT_GROUP) {
-        ROCM_CALL((*hsa_amd_memory_pool_get_infoPtr)(pool,
-                                                     HSA_AMD_MEMORY_POOL_INFO_SIZE,
-                                                     &dev_info->amd.max_shmmem_per_workgroup),
-                  return _status);
+        CHECK_HSA_API_CALL((*hsa_amd_memory_pool_get_infoPtr)(pool,
+                                                              HSA_AMD_MEMORY_POOL_INFO_SIZE,
+                                                              &dev_info->amd.max_shmmem_per_workgroup),
+                                                              return _status);
         return HSA_STATUS_INFO_BREAK;
     }
 
@@ -139,59 +139,59 @@ get_device_properties( hsa_agent_t agent, void *info )
     static int count;
 
     hsa_device_type_t type;
-    ROCM_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
-              return _status);
+    CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent, HSA_AGENT_INFO_DEVICE, &type),
+                       return _status);
 
     if (type == HSA_DEVICE_TYPE_GPU) {
         /* query attributes for this device */
         _sysdetect_gpu_info_u *dev_info = &((_sysdetect_gpu_info_u *) info)[count];
 
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_NAME,
-                                           dev_info->amd.name),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_WAVEFRONT_SIZE,
-                                           &dev_info->amd.wavefront_size),
-                  return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_NAME,
+                                                    dev_info->amd.name),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_WAVEFRONT_SIZE,
+                                                    &dev_info->amd.wavefront_size),
+                                                    return _status);
         unsigned short wg_dims[3];
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_WORKGROUP_MAX_DIM,
-                                           wg_dims),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_WORKGROUP_MAX_SIZE,
-                                           &dev_info->amd.max_threads_per_workgroup),
-                  return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_WORKGROUP_MAX_DIM,
+                                                    wg_dims),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_WORKGROUP_MAX_SIZE,
+                                                    &dev_info->amd.max_threads_per_workgroup),
+                                                    return _status);
         hsa_dim3_t gr_dims;
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_GRID_MAX_DIM,
-                                           &gr_dims),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_VERSION_MAJOR,
-                                           &dev_info->amd.major),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent,
-                                           HSA_AGENT_INFO_VERSION_MINOR,
-                                           &dev_info->amd.minor),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
-                                           HSA_AMD_AGENT_INFO_NUM_SIMDS_PER_CU,
-                                           &dev_info->amd.simd_per_compute_unit),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
-                                           HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
-                                           &dev_info->amd.compute_unit_count),
-                  return _status);
-        ROCM_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
-                                           HSA_AMD_AGENT_INFO_MAX_WAVES_PER_CU,
-                                           &dev_info->amd.max_waves_per_compute_unit),
-                  return _status);
-        ROCM_CALL((*hsa_amd_agent_iterate_memory_poolsPtr)(agent,
-                                                           &get_device_memory,
-                                                           dev_info),
-                  return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_GRID_MAX_DIM,
+                                                    &gr_dims),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_VERSION_MAJOR,
+                                                    &dev_info->amd.major),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent,
+                                                    HSA_AGENT_INFO_VERSION_MINOR,
+                                                    &dev_info->amd.minor),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
+                                                    HSA_AMD_AGENT_INFO_NUM_SIMDS_PER_CU,
+                                                    &dev_info->amd.simd_per_compute_unit),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
+                                                    HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
+                                                    &dev_info->amd.compute_unit_count),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_agent_get_infoPtr)(agent, (hsa_agent_info_t)
+                                                    HSA_AMD_AGENT_INFO_MAX_WAVES_PER_CU,
+                                                    &dev_info->amd.max_waves_per_compute_unit),
+                                                    return _status);
+        CHECK_HSA_API_CALL((*hsa_amd_agent_iterate_memory_poolsPtr)(agent,
+                                                                    &get_device_memory,
+                                                                    dev_info),
+                                                                    return _status);
 
         dev_info->amd.max_workgroup_dim_x = wg_dims[0];
         dev_info->amd.max_workgroup_dim_y = wg_dims[1];
@@ -212,8 +212,8 @@ fill_dev_info( _sysdetect_gpu_info_u *dev_info )
     hsa_status_t status = HSA_STATUS_SUCCESS;
     const char *string = NULL;
 
-    ROCM_CALL((*hsa_iterate_agentsPtr)(&get_device_properties, dev_info),
-             status = _status);
+    CHECK_HSA_API_CALL((*hsa_iterate_agentsPtr)(&get_device_properties, dev_info),
+                       status = _status);
 
     if (status != HSA_STATUS_SUCCESS) {
         (*hsa_status_stringPtr)(status, &string);
@@ -237,13 +237,18 @@ int
 load_hsa_sym( char *status )
 {
     char pathname[PATH_MAX] = "libhsa-runtime64.so";
-    char *rocm_root = getenv("PAPI_ROCM_ROOT");
-    if (rocm_root != NULL) {
-        sprintf(pathname, "%s/lib/libhsa-runtime64.so", rocm_root);
+    char *hsa_root = NULL;
+    // Default to use PAPI_ROCP_SDK_ROOT env.
+    if ((hsa_root = getenv("PAPI_ROCP_SDK_ROOT")) != NULL) {
+        sprintf(pathname, "%s/lib/libhsa-runtime64.so", hsa_root);
+    }
+    // Fallback to use PAPI_ROCM_ROOT env.
+    else if ((hsa_root = getenv("PAPI_ROCM_ROOT")) != NULL) {
+        sprintf(pathname, "%s/lib/libhsa-runtime64.so", hsa_root);
     }
 
-    rocm_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
-    if (rocm_dlp == NULL) {
+    hsa_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
+    if (hsa_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
         if (count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
@@ -251,13 +256,13 @@ load_hsa_sym( char *status )
         return -1;
     }
 
-    hsa_initPtr                           = dlsym(rocm_dlp, "hsa_init");
-    hsa_shut_downPtr                      = dlsym(rocm_dlp, "hsa_shut_down");
-    hsa_iterate_agentsPtr                 = dlsym(rocm_dlp, "hsa_iterate_agents");
-    hsa_agent_get_infoPtr                 = dlsym(rocm_dlp, "hsa_agent_get_info");
-    hsa_amd_agent_iterate_memory_poolsPtr = dlsym(rocm_dlp, "hsa_amd_agent_iterate_memory_pools");
-    hsa_amd_memory_pool_get_infoPtr       = dlsym(rocm_dlp, "hsa_amd_memory_pool_get_info");
-    hsa_status_stringPtr                  = dlsym(rocm_dlp, "hsa_status_string");
+    hsa_initPtr                           = dlsym(hsa_dlp, "hsa_init");
+    hsa_shut_downPtr                      = dlsym(hsa_dlp, "hsa_shut_down");
+    hsa_iterate_agentsPtr                 = dlsym(hsa_dlp, "hsa_iterate_agents");
+    hsa_agent_get_infoPtr                 = dlsym(hsa_dlp, "hsa_agent_get_info");
+    hsa_amd_agent_iterate_memory_poolsPtr = dlsym(hsa_dlp, "hsa_amd_agent_iterate_memory_pools");
+    hsa_amd_memory_pool_get_infoPtr       = dlsym(hsa_dlp, "hsa_amd_memory_pool_get_info");
+    hsa_status_stringPtr                  = dlsym(hsa_dlp, "hsa_status_string");
 
     if (!hsa_is_enabled() || (*hsa_initPtr)()) {
         const char *message = "dlsym() of HSA symbols failed or hsa_init() "
@@ -275,9 +280,9 @@ load_hsa_sym( char *status )
 int
 unload_hsa_sym( void )
 {
-    if (rocm_dlp != NULL) {
+    if (hsa_dlp != NULL) {
         (*hsa_shut_downPtr)();
-        dlclose(rocm_dlp);
+        dlclose(hsa_dlp);
     }
 
     hsa_initPtr                           = NULL;
@@ -290,7 +295,7 @@ unload_hsa_sym( void )
 
     return hsa_is_enabled();
 }
-#endif /* HAVE_ROCM */
+#endif /* HAVE_HSA */
 
 #ifdef HAVE_ROCM_SMI
 void
@@ -318,9 +323,14 @@ int
 load_rsmi_sym( char *status )
 {
     char pathname[PATH_MAX] = "librocm_smi64.so";
-    char *rsmi_root = getenv("PAPI_ROCM_ROOT");
-    if (rsmi_root != NULL) {
-        sprintf(pathname, "%s/lib/librocm_smi64.so", rsmi_root);
+    char *smi_root = NULL;
+    // Default to use PAPI_ROCP_SDK_ROOT env.
+    if ((smi_root = getenv("PAPI_ROCP_SDK_ROOT")) != NULL) {
+        sprintf(pathname, "%s/lib/librocm_smi64.so", smi_root);
+    }
+    // Fallback to use PAPI_ROCM_ROOT env.
+    else if ((smi_root = getenv("PAPI_ROCM_ROOT")) != NULL) {
+        sprintf(pathname, "%s/lib/librocm_smi64.so", smi_root);
     }
 
     rsmi_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
@@ -373,7 +383,7 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     strcpy(dev_type_info->vendor, "AMD/ATI");
     strcpy(dev_type_info->status, "Device Initialized");
 
-#ifdef HAVE_ROCM
+#ifdef HAVE_HSA
     if (load_hsa_sym(dev_type_info->status)) {
         return;
     }
@@ -409,12 +419,13 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     unload_hsa_sym();
     dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
 #else
-    const char *message = "ROCm not configured, no ROCm device available";
+    const char *message = "rocm nor rocp_sdk configured. Set PAPI_ROCP_SDK_ROOT for ROCm versions >= 6.3.2 or"
+                          " PAPI_ROCM_ROOT for ROCm versions < 6.3.2.";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Error message truncated.");
     }
-#endif /* HAVE_ROCM */
+#endif /* HAVE_HSA */
 }
 
 void
