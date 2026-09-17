@@ -29,7 +29,7 @@ ifneq ($(GPUARCH),)
 endif
 GPUFLAGS=$(ARCHFLAG) --hip-link --rtlib=compiler-rt -unwindlib=libgcc
 
-TESTS = simple advanced two_eventsets simple_sampling roctx_pause_resume
+TESTS = simple advanced two_eventsets simple_sampling roctx_pause_resume multi_pthreads
 template_tests: $(TESTS)
 
 %.o: %.c
@@ -58,6 +58,12 @@ roctx_pause_resume.o: roctx_pause_resume.cpp
 
 roctx_pause_resume: roctx_pause_resume.o kernel.o helper_rocp_sdk.o
 	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) roctx_pause_resume.o kernel.o helper_rocp_sdk.o -o roctx_pause_resume $(LDFLAGS)
+
+multi_pthreads.o: multi_pthreads.cpp
+	$(AMDCXX) -O2 -g -DNDEBUG $(INCFLAGS) -x hip -D__HIP_PLATFORM_AMD__ -c multi_pthreads.cpp
+
+multi_pthreads: multi_pthreads.o kernel.o helper_rocp_sdk.o
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) multi_pthreads.o kernel.o helper_rocp_sdk.o -o multi_pthreads $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o
