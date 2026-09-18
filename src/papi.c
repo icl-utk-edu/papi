@@ -1537,13 +1537,13 @@ PAPI_event_code_to_name( int EventCode, char *out )
 			return PAPI_ENOCMP;
 		}
 
-		int stringLength = PAPI_MAX_STR_LEN;
-		if (strcmp(_papi_hwd[compIdx]->cmp_info.name, "cuda") == 0) {
-			stringLength = PAPI_2MAX_STR_LEN;
+		int string_length = PAPI_MAX_STR_LEN;
+		if (strcmp(_papi_hwd[compIdx]->cmp_info.name, "cuda") == 0 ||
+                    strcmp(_papi_hwd[compIdx]->cmp_info.name, "cuda_range") == 0) {
+			string_length = PAPI_2MAX_STR_LEN;
 		}
-
 		return ( _papi_hwi_native_code_to_name
-				 ( ( unsigned int ) EventCode, out, stringLength ) );
+				 ( ( unsigned int ) EventCode, out, string_length ) );
 	}
 
 	if ( IS_USER_DEFINED(EventCode) ) {
@@ -3096,8 +3096,16 @@ PAPI_stop( int EventSet, long long *values )
 	context = _papi_hwi_get_context( ESI, NULL );
 	/* Read the current counter values into the EventSet */
 	retval = _papi_hwi_read( context, ESI, ESI->sw_stop );
-	if ( retval != PAPI_OK )
-		papi_return( retval );
+	if (retval != PAPI_OK) {
+		/* Multiple pass events. */
+		if (retval == PAPI_EALLPASSES_NOT_SUBMITTED) {
+			APIDBG("Acknowledging all passes were not submitted; however, continuing.");
+		}
+		/* Catch all. */
+		else {
+			papi_return( retval );
+		}
+	}
 
 	/* Remove the control bits from the active counter config. */
 	retval = _papi_hwd[cidx]->stop( context, ESI->ctl_state );
