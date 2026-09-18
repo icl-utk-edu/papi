@@ -1,4 +1,4 @@
-NAME=template
+NAME=rocp_sdk
 include ../../Makefile_comp_tests.target
 
 ROCP_SDK_INCL=-I$(PAPI_ROCP_SDK_ROOT)/include     \
@@ -30,7 +30,7 @@ endif
 GPUFLAGS=$(ARCHFLAG) --hip-link --rtlib=compiler-rt -unwindlib=libgcc
 
 TESTS = simple advanced two_eventsets simple_sampling roctx_pause_resume
-template_tests: $(TESTS)
+rocp_sdk_tests: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(OPTFLAGS) -D__HIP_PLATFORM_AMD__ -c -o $@ $<
