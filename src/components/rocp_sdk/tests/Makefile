@@ -51,7 +51,7 @@ two_eventsets: two_eventsets.o kernel.o helper_rocp_sdk.o
 	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) two_eventsets.o kernel.o helper_rocp_sdk.o -o two_eventsets $(LDFLAGS)
 
 simple_sampling: simple_sampling.o kernel.o helper_rocp_sdk.o
-	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple_sampling.o kernel.o helper_rocp_sdk.o -o simple_sampling $(LDFLAGS) -pthread
+	$(AMDCXX) -O2 -g -DNDEBUG $(GPUFLAGS) simple_sampling.o kernel.o helper_rocp_sdk.o -o simple_sampling $(LDFLAGS)
 
 roctx_pause_resume.o: roctx_pause_resume.cpp
 	$(AMDCXX) -O2 -g -DNDEBUG $(INCFLAGS) -x hip -D__HIP_PLATFORM_AMD__ -c roctx_pause_resume.cpp

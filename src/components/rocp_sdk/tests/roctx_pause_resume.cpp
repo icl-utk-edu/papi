@@ -110,10 +110,16 @@ int main(int argc, char *argv[]) {
 
     int EventSet = PAPI_NULL;
     long long *values = (long long*)malloc(total_event_count*sizeof(long long));
-    long long *prevValues = (long long*)malloc(total_event_count*sizeof(long long));
-    if( NULL == values || NULL == prevValues ) {
-        test_fail(__FILE__, __LINE__, "Failed to allocate memory for counter values.", PAPI_ENOMEM);
+    if( NULL == values ) {
+        fprintf(stderr, "%s:%d: Error: Failed to allocate memory for counter values array 'values'.\n", __FILE__, __LINE__);
+        exit(EXIT_FAILURE);
     }
+    long long *prevValues = (long long*)malloc(total_event_count*sizeof(long long));
+    if( NULL == prevValues ) {
+        fprintf(stderr, "%s:%d: Error: Failed to allocate memory for counter values array 'prevValues'.\n", __FILE__, __LINE__);
+        exit(EXIT_FAILURE);
+    }
+
     PAPI_CALL(PAPI_create_eventset(&EventSet));
     add_rocp_sdk_native_events(EventSet, total_event_count, rocp_sdk_native_event_names);
     PAPI_CALL(PAPI_start(EventSet));
@@ -187,7 +193,8 @@ int main(int argc, char *argv[]) {
         for(i = 0; i < total_event_count; ++i) {
             fprintf(stdout, "%s : %lld (expected %lld)\n", rocp_sdk_native_event_names[i], values[i], prevValues[i]);
             if( values[i] != prevValues[i] ) {
-                test_fail(__FILE__, __LINE__, "Counting did not stop after roctxProfilerPause()!", PAPI_EMISC);
+                fprintf(stderr, "%s:%d: Error: Counting did not stop after roctxProfilerPause()!\n", __FILE__, __LINE__);
+                exit(EXIT_FAILURE);
             }
         }
     } else {
@@ -233,7 +240,8 @@ int main(int argc, char *argv[]) {
         for(i = 0; i < total_event_count; ++i) {
             fprintf(stdout, "%s : %lld (expected %lld)\n", rocp_sdk_native_event_names[i], values[i], prevValues[i]);
             if( values[i] != prevValues[i] ) {
-                test_fail(__FILE__, __LINE__, "Counting did not stop after roctxProfilerPause()!", PAPI_EMISC);
+                fprintf(stderr, "%s:%d: Error: Counting did not stop after roctxProfilerPause()!\n", __FILE__, __LINE__);
+                exit(EXIT_FAILURE);
             }
         }
     } else {
