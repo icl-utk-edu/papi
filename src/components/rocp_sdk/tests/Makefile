@@ -6,7 +6,21 @@ ROCP_SDK_INCL=-I$(PAPI_ROCP_SDK_ROOT)/include     \
               -I$(PAPI_ROCP_SDK_ROOT)/hsa/include \
 			  -I$(PAPI_ROCP_SDK_ROOT)/include/rocprofiler-sdk
 
-AMDCXX   ?= $(PAPI_ROCP_SDK_ROOT)/lib/llvm/bin/amdclang++
+# Look for amdclang++ in the locations within PAPI_ROCP_SDK_ROOT.
+AMDCXX_DIRS=
+
+ifneq ($(PAPI_ROCP_SDK_ROOT),)
+AMDCXX_DIRS+=$(PAPI_ROCP_SDK_ROOT)/bin/amdclang++ \
+             $(PAPI_ROCP_SDK_ROOT)/lib/llvm/bin/amdclang++
+endif
+
+AMDCXX := $(shell \
+            for path in $(AMDCXX_DIRS); do \
+                if [ -e $$path ]; then \
+                    echo $$path; break; \
+                fi; \
+            done)
+AMDCXX ?= amdclang++
 CFLAGS    = $(OPTFLAGS)
 INCFLAGS += $(INCLUDE) $(ROCP_SDK_INCL)
 CPPFLAGS += $(INCFLAGS)
