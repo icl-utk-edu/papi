@@ -4,7 +4,7 @@ include ../../Makefile_comp_tests.target
 ROCP_SDK_INCL=-I$(PAPI_ROCP_SDK_ROOT)/include     \
               -I$(PAPI_ROCP_SDK_ROOT)/include/hsa \
               -I$(PAPI_ROCP_SDK_ROOT)/hsa/include \
-			  -I$(PAPI_ROCP_SDK_ROOT)/include/rocprofiler-sdk
+              -I$(PAPI_ROCP_SDK_ROOT)/include/rocprofiler-sdk
 
 # If ROCprofiler_SDK is installed at a different
 # path than the rest of ROCm, then the path to
