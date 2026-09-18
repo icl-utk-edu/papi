@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-# Python standard library packages
+# Python standard library packages.
 import argparse
 import json
 import subprocess
 
-# Plotting packages
+# Plotting packages.
 import matplotlib as mpl 
 import matplotlib.pyplot as plt
 
-# Misc. packages
+# Misc. packages.
 import numpy as np
 
 def setup_args() -> argparse.ArgumentParser:
@@ -21,13 +21,10 @@ def setup_args() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--starting-release", help = "The release you want to begin plotting from. Default is 0 and correponds to the first PAPI GitHub release.")
     parser.add_argument("--figsize", help = "The size of the generated figures. Must be in the format width_size,height_size.")
-    parser.add_argument("--color", help = "The color to be used in bars (barplot) or points (lineplot + scatterpot). You can pass a colormap or list of colors. In the case of a list of colors, they must be comma separated and the number provided must match the number of releases you wish to plot.")
+    parser.add_argument("--color", help = "The color to be used in the bars. You can pass a colormap or list of colors. In the case of a list of colors, they must be comma separated and the number provided must match the number of releases you wish to plot.")
     parser.add_argument("--fontsize", help = "Fontsizes for the plots x and y ticks/labels and title.")
     parser.add_argument("--barplot-kwargs", help = "Keyword arguments for the generated barplot.")
-    parser.add_argument("--lineplot-kwargs", help = "Keyword arguments for the generated lineplot.")
-    parser.add_argument("--scatterplot-kwargs", help = "Keyword arguments for the generated scatterplot.")
-    parser.add_argument("--filename-barplot-download-count", help = "The filename for the generated barplot.")
-    parser.add_argument("--filename-lineplot-download-count", help = "The filename for the generated lineplot.")
+    parser.add_argument("--filename", help = "The filename for the generated barplot.")
 
     return parser
 
@@ -52,8 +49,8 @@ def get_papi_release_download_count(starting_release_arg: int) -> tuple[int, lis
 
     return len(names_of_releases), names_of_releases, number_of_downloads_per_release
 
-def plot_download_count_for_papi_gh_releases(names_of_gh_papi_releases_arg: list, number_of_gh_download_counts_per_papi_release_arg: list,  parsed_command_line_args: tuple) -> None:
-    """Plot the PAPI GitHub release download count as a barplot and lineplot.
+def plot_download_count_per_papi_gh_release(names_of_gh_papi_releases_arg: list, number_of_gh_download_counts_per_papi_release_arg: list,  parsed_command_line_args: tuple) -> None:
+    """Plot the PAPI GitHub release download count as a barplot.
 
     :param names_of_gh_papi_releases_arg: A list of PAPI GitHub release names.
     :type names_of_gh_papi_releases_arg: list
@@ -62,50 +59,38 @@ def plot_download_count_for_papi_gh_releases(names_of_gh_papi_releases_arg: list
     :param parsed_command_line_args: A tuple containing the parsed arguments from the command line interface.
     :type parsed_command_line_args: tuple
     """
-    # Unpack the tuple of arguments that were created in parse_command_line_args
-    plots_figsize, plots_color, plots_fontsize, plots_barplot_kwargs, plots_lineplot_kwargs, plots_scatterplot_kwargs, plots_filenames = parsed_command_line_args
+    # Unpack the tuple of arguments that were created in parse_command_line_args.
+    plots_figsize, plots_color, plots_fontsize, plots_barplot_kwargs, filename = parsed_command_line_args
 
-    plots_to_generate = ["bar", "line"]
-    for plot,filename in zip(plots_to_generate, plots_filenames):
-        fig, ax = plt.subplots(figsize = plots_figsize)
-        # Showcase the PAPI GitHub download count via a barplot
-        if plot == "bar":
-            bars = ax.bar(x = names_of_gh_papi_releases_arg, height = number_of_gh_download_counts_per_papi_release_arg, color = plots_color, **plots_barplot_kwargs)
-            ax.bar_label(bars, padding = 3, fontsize = plots_fontsize)
-        # Showcase the PAPI GitHub download count via a lineplot
-        elif plot == "line":
-            ax.plot(names_of_gh_papi_releases_arg, number_of_gh_download_counts_per_papi_release_arg, zorder = 0, **plots_lineplot_kwargs)
-            ax.scatter(x = names_of_gh_papi_releases_arg, y = number_of_gh_download_counts_per_papi_release_arg, zorder = 1, color = plots_color, **plots_scatterplot_kwargs)
-            # Add annotations
-            for name, count in zip(names_of_gh_papi_releases_arg, number_of_gh_download_counts_per_papi_release_arg):
-                ax.annotate(f"{count}", xy=(name, count + 70), ha = "center", fontsize = plots_fontsize)
-        # Plot option has yet to be implemented
-        else:
-            raise NotImplementedError
+    fig, ax = plt.subplots(figsize = plots_figsize)
 
-        # Handle the figures title
-        plots_title = "The Number of Downloads per PAPI Release via GitHub"
-        ax.set_title(plots_title, fontsize = plots_fontsize)
+    bars = ax.bar(x = names_of_gh_papi_releases_arg, height = number_of_gh_download_counts_per_papi_release_arg, color = plots_color, **plots_barplot_kwargs)
+    padding = 3
+    ax.bar_label(bars, padding = padding, fontsize = plots_fontsize)
 
-        # Handle the figures y-axis
-        plots_ylabel = "Number of Downloads"
-        yaxis_stepsize = 300
-        yaxis_current_max = max(number_of_gh_download_counts_per_papi_release_arg)
-        ## The y-axis max is updated to be + yaxis_stepsize such that
-        ## a value is placed at the top left corner of the plot
-        yaxis_updated_max = yaxis_current_max + yaxis_stepsize
-        ax.set_yticks(np.arange(0, yaxis_updated_max, yaxis_stepsize))
-        ax.tick_params(axis = "y", labelsize = plots_fontsize)
-        ax.set_ylabel(plots_ylabel, fontsize = plots_fontsize)
+    # Handle the figures title.
+    plots_title = "The Number of Downloads per PAPI Release via GitHub"
+    ax.set_title(plots_title, fontsize = plots_fontsize)
 
-        # Handle the figures x-axis
-        plots_xlabel = "PAPI Releases"
-        ax.set_xlabel(plots_xlabel, fontsize = plots_fontsize)
-        ax.tick_params(axis = "x", labelsize = plots_fontsize)
+    # Handle the figures y-axis.
+    plots_ylabel = "Number of Downloads"
+    yaxis_stepsize = 300
+    yaxis_current_max = max(number_of_gh_download_counts_per_papi_release_arg)
+    ## The y-axis max is updated to be + yaxis_stepsize such that
+    ## a value is placed at the top left corner of the plot.
+    yaxis_updated_max = yaxis_current_max + yaxis_stepsize
+    ax.set_yticks(np.arange(0, yaxis_updated_max, yaxis_stepsize))
+    ax.tick_params(axis = "y", labelsize = plots_fontsize)
+    ax.set_ylabel(plots_ylabel, fontsize = plots_fontsize)
 
-        # Save the figure
-        fig.tight_layout()
-        fig.savefig(f"{filename}.png", format="png", dpi=1200)
+    # Handle the figures x-axis.
+    plots_xlabel = "PAPI Releases"
+    ax.set_xlabel(plots_xlabel, fontsize = plots_fontsize)
+    ax.tick_params(axis = "x", labelsize = plots_fontsize)
+
+    # Save the figure.
+    fig.tight_layout()
+    fig.savefig(f"{filename}.png", format="png", dpi=1200)
 
 def parse_command_line_args(cmd_line_args: argparse.Namespace, number_of_gh_papi_releases_arg: int):
     """Parse the command line interface args.
@@ -114,14 +99,10 @@ def parse_command_line_args(cmd_line_args: argparse.Namespace, number_of_gh_papi
     :type cmd_line_args: argparse.Namespace
     :param number_of_gh_papi_releases_arg: Number of GitHub PAPI releases to plot.
     :type int
-    :returns: A tuple containing the parsed arguments which will be used to generate the barplot and lineplot.
+    :returns: A tuple containing the parsed arguments which will be used to generate the barplot.
     :rtype: tuple
     """
-    # Group the filenames into a list
-    filenames = [cmd_line_args.filename_barplot_download_count,
-                 cmd_line_args.filename_lineplot_download_count]
-
-    # Determine the figure size
+    # Determine the figure size.
     seperator = ","
     try:
         width, height = cmd_line_args.figsize.split(seperator)
@@ -130,7 +111,7 @@ def parse_command_line_args(cmd_line_args: argparse.Namespace, number_of_gh_papi
         raise
     figsize = (int(width), int(height))
 
-    # Determine the colors for the bars (barplot) or points (lineplot + scatterplot)
+    # Determine the colors for the bars.
     color = None
     if "," in cmd_line_args.color:
         seperator = ","
@@ -146,18 +127,10 @@ def parse_command_line_args(cmd_line_args: argparse.Namespace, number_of_gh_papi
         color = cmp(np.linspace(0, 1, number_of_gh_papi_releases_arg))
 
     # Convert the argument JSON format for --barplot-kwargs
-    # to a Python dictionary
+    # to a Python dictionary.
     barplot_kwargs = json.loads(cmd_line_args.barplot_kwargs)
 
-    # Convert the argument JSON format for --lineplot-kwargs
-    # to a Python dictionary
-    lineplot_kwargs = json.loads(cmd_line_args.lineplot_kwargs)
-
-    # Convert the argument JSON format for --scatterplot-kwargs
-    # to a Python dictionary
-    scatterplot_kwargs = json.loads(cmd_line_args.scatterplot_kwargs)
-
-    return figsize, color, cmd_line_args.fontsize, barplot_kwargs, lineplot_kwargs, scatterplot_kwargs, filenames
+    return figsize, color, cmd_line_args.fontsize, barplot_kwargs, cmd_line_args.filename
      
 if __name__ == "__main__":
     parser = setup_args()
@@ -167,4 +140,4 @@ if __name__ == "__main__":
 
     command_line_arguments_parsed = parse_command_line_args(args, number_of_gh_papi_releases)
 
-    plot_download_count_for_papi_gh_releases(names_of_gh_papi_releases, number_of_gh_download_counts_per_papi_release, command_line_arguments_parsed)
+    plot_download_count_per_papi_gh_release(names_of_gh_papi_releases, number_of_gh_download_counts_per_papi_release, command_line_arguments_parsed)
