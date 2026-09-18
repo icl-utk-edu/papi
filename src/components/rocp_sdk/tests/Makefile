@@ -16,7 +16,13 @@ ROCP_SDK_INCL+=-I$(PAPI_ROCM_ROOT)/include     \
               -I$(PAPI_ROCM_ROOT)/include/rocprofiler-sdk
 endif
 
+ifeq ($(shell ls $(PAPI_ROCP_SDK_ROOT)/bin/amdclang++ &>/dev/null && echo $$?),0)
+AMDCXX   ?= $(PAPI_ROCP_SDK_ROOT)/bin/amdclang++
+else ifeq ($(shell ls $(PAPI_ROCP_SDK_ROOT)/lib/llvm/bin/amdclang++ &>/dev/null && echo $$?),0)
 AMDCXX   ?= $(PAPI_ROCP_SDK_ROOT)/lib/llvm/bin/amdclang++
+else
+AMDCXX   ?= amdclang++
+endif
 CFLAGS    = $(OPTFLAGS)
 INCFLAGS += $(INCLUDE) $(ROCP_SDK_INCL)
 CPPFLAGS += $(INCFLAGS)
