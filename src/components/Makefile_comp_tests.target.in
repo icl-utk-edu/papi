@@ -29,6 +29,21 @@ NVPPC64LEFLAGS = @NVPPC64LEFLAGS@
 ENABLE_FORTRAN_TESTS = @ENABLE_FORTRAN_TESTS@
 CPU_ENABLED = @CPU_ENABLED@
 
+cray_compilers := ftn% crayftn%
+flang_compilers := flang% armflang% amdflang%
+gnu_compilers := gfortran%
+intel_compilers := ifort% ifx%
+nvidia_compilers := nvfortran% pgi77%
+
+define PAPI_DEFAULT_FREEFORM_F90FLAGS
+$(strip\
+$(if $(filter $(cray_compilers), $(notdir $(F77))),-ffree,\
+$(if $(filter $(flang_compilers), $(notdir $(F77))),-ffree-form,\
+$(if $(filter $(gnu_compilers), $(notdir $(F77))),-ffree-form -ffree-line-length-none,\
+$(if $(filter $(intel_compilers), $(notdir $(F77))),-free,\
+$(if $(filter $(nvidia_compilers), $(notdir $(F77))),-Mfree,))))))
+endef
+
 tests: $(NAME)_tests
 
 install:
