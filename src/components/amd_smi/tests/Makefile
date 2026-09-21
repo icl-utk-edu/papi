@@ -61,13 +61,8 @@ amdsmi_gemm.o: amdsmi_gemm.c
 # Link rules
 # ------------------------
 
-# amdsmi_hello replaces the older amdsmi_example
 amdsmi_hello: amdsmi_hello.o $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_hello.o $(LDFLAGS_AMDSMI)
-
-# Back-compat alias: allow 'make amdsmi_example' to build amdsmi_hello
-amdsmi_example: amdsmi_hello
-	@true
 
 amdsmi_basics: amdsmi_basics.o $(UTILOBJS) $(PAPILIB)
 	$(HIPCC) $(CFLAGS) $(CSTD) $(OPTFLAGS) $(EFFECTIVE_INCLUDE_C) -o $@ amdsmi_basics.o $(LDFLAGS_AMDSMI)
@@ -130,5 +125,5 @@ checkpath:
 	@echo "TESTS_AMDSMI = $(TESTS_AMDSMI)"
 
 .PHONY: all clean checkpath tests \
-	amdsmi_hello amdsmi_example amdsmi_basics amdsmi_gemm \
+	amdsmi_hello amdsmi_basics amdsmi_gemm \
 	amdsmi_energy_monotonic amdsmi_ctx_conflict amdsmi_set_test
