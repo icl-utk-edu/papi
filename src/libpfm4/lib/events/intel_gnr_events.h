@@ -1217,6 +1217,15 @@ static const intel_x86_umask_t intel_gnr_l2_trans[]={
   },
 };
 
+static const intel_x86_umask_t intel_gnr_lbr_inserts[]={
+  { .uname   = "ANY",
+    .udesc   = "Increments whenever there is an update to the LBR array",
+    .ucode   = 0x2000ull,
+    .uflags  = INTEL_X86_DFL,
+  },
+};
+
+
 static const intel_x86_umask_t intel_gnr_ld_blocks[]={
   { .uname   = "ADDRESS_ALIAS",
     .udesc   = "False dependencies in MOB due to partial compare on address.",
@@ -2600,7 +2609,7 @@ static const intel_x86_entry_t intel_gnr_pe[]={
     .modmsk = INTEL_V5_ATTRS,
     .cntmsk = 0xffull,
     .ngrp   = 1,
-    .flags  = INTEL_X86_SPEC,
+    .flags  = INTEL_X86_SPEC | INTEL_X86_DEPRECATED,
     .numasks= LIBPFM_ARRAY_SIZE(intel_gnr_idq_uops_not_delivered),
     .umasks = intel_gnr_idq_uops_not_delivered,
   },
@@ -2712,6 +2721,16 @@ static const intel_x86_entry_t intel_gnr_pe[]={
     .flags  = INTEL_X86_SPEC,
     .numasks= LIBPFM_ARRAY_SIZE(intel_gnr_l2_trans),
     .umasks = intel_gnr_l2_trans,
+  },
+  { .name   = "LBR_INSERTS",
+    .desc   = "LBR operations.",
+    .code   = 0x00cc,
+    .modmsk = INTEL_V5_ATTRS,
+    .cntmsk = 0xffull,
+    .ngrp   = 1,
+    .flags  = INTEL_X86_DEPRECATED,
+    .numasks= LIBPFM_ARRAY_SIZE(intel_gnr_lbr_inserts),
+    .umasks = intel_gnr_lbr_inserts,
   },
   { .name   = "LD_BLOCKS",
     .desc   = "Blocking loads.",
