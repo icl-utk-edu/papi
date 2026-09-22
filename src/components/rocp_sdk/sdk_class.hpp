@@ -27,7 +27,6 @@ extern "C"
 #include <cxxabi.h>
 #include <atomic>
 #include <cassert>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
