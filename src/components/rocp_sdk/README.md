@@ -64,5 +64,6 @@ To see the ROCP\_SDK component's latest supported hardware and software please v
 
 ## Known Limitations
 
+* If using ROCm >= 10.0.0, then you must use GCC >= 11.
 * If the `rocm` and `rocp_sdk` components are both configured, then `rocp_sdk` will be built for ROCm versions >= 6.3.2.
 * If an application is linked against the static PAPI library libpapi.a, then the application must call PAPI_library_init() through PAPI_add_named_event()/PAPI_add_event()/PAPI_enum_cmp_event() before calling any hip routines (e.g. hipInit(), hipGetDeviceCount(), hipLaunchKernelGGL(), etc). If the application is linked against the dynamic library libpapi.so, then the order of operations does not matter.
