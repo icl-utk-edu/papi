@@ -318,7 +318,7 @@ static const intel_x86_entry_t intel_gnr_unc_imc_pe[]={
   },
   { .name   = "UNC_M_CLOCKTICKS",
     .desc   = "Number of DRAM DCLK clock cycles while the event is enabled.  DCLK is 1/4 of DRAM data rate.",
-    .code   = 0x0001,
+    .code   = 0x0101,
     .modmsk = GNR_UNC_IMC_ATTRS,
     .cntmsk = 0xfull,
   },

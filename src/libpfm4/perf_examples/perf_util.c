@@ -208,6 +208,11 @@ perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 	tail = hdr->data_tail & pgmsk;
 
 	/*
+	 * Read memory barrier to ensure data_head is read after kernel writes
+	 */
+	__atomic_thread_fence(__ATOMIC_ACQUIRE);
+
+	/*
 	 * size of what is available
 	 *
 	 * data_head, data_tail never wrap around
@@ -241,6 +246,11 @@ perf_read_buffer(perf_event_desc_t *hw, void *buf, size_t sz)
 	 */
 	if (sz > m)
 		memcpy((void*)(((uintptr_t)buf)+m), data, sz - m);
+
+	/*
+	 * Write barrier before committing new tail to ring buffer
+	 */
+	__atomic_thread_fence(__ATOMIC_RELEASE);
 
 	//printf("\nhead=%lx tail=%lx new_tail=%lx sz=%zu\n", hdr->data_head, hdr->data_tail, hdr->data_tail+sz, sz);
 	hdr->data_tail += sz;
