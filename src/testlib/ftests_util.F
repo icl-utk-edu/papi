@@ -75,7 +75,7 @@ C     And also to make the test code read cleaner
       write(*,100) test_str,' PASSED'
       call PAPIF_shutdown()
       call pause()
-      stop
+      return
  100  format(a,t41,a)
       end
 
@@ -124,7 +124,7 @@ C Just printing the error number because of difficulty getting error string.
      *       ': ', retval
       end if
       call pause()
-      stop
+      return
  100  format(a,t41,a)
       end
 
@@ -155,7 +155,7 @@ C Just printing the error number because of difficulty getting error string.
         end if
       end if
       call pause()
-      stop
+      return
  100  format(a,t41,a)
       end
 
