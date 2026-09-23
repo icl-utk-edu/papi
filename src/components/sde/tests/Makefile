@@ -2,7 +2,23 @@ NAME=sde
 include ../../Makefile_comp_tests.target
 INCLUDE += -I$(datadir)/sde_lib -I..
 
-F90FLAGS += $(FFLAGS) $(call PAPI_DEFAULT_FREEFORM_F90FLAGS)
+cray_compilers := ftn% crayftn%
+flang_compilers := flang% armflang% amdflang%
+gnu_compilers := gfortran%
+intel_compilers := ifort% ifx%
+nvidia_compilers := nvfortran% pgi77%
+
+ifneq ($(filter $(cray_compilers), $(notdir $(F77))),)
+    F90FLAGS += $(FFLAGS) -ffree
+else ifneq ($(filter $(flang_compilers), $(notdir $(F77))),)
+    F90FLAGS += $(FFLAGS) -ffree-form
+else ifneq ($(filter $(gnu_compilers), $(notdir $(F77))),)
+    F90FLAGS += $(FFLAGS) -ffree-form -ffree-line-length-none
+else ifneq ($(filter $(intel_compilers), $(notdir $(F77))),)
+    F90FLAGS += $(FFLAGS) -free
+else ifneq ($(filter $(nvidia_compilers), $(notdir $(F77))),)
+    F90FLAGS += $(FFLAGS) -Mfree
+endif
 F90 ?= $(F77)
 
 CFLAGS +=-g
