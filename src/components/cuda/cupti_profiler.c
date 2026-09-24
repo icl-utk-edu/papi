@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <papi.h>
+#include <math.h>
 #include "papi_memory.h"
 
 #include <cupti_target.h>
@@ -3049,7 +3050,12 @@ static int get_evaluated_metric_values(NVPW_MetricsEvaluator *pMetricsEvaluator,
         evaluateToGpuValuesParams.pMetricValues = &metricValue;
         nvpwCheckErrors( NVPW_MetricsEvaluator_EvaluateToGpuValuesPtr(&evaluateToGpuValuesParams), return PAPI_EMISC );
 
-        evaluatedMetricValues[i] = metricValue;
+        if (isnan(metricValue) || isinf(metricValue)) {
+            SUBDBG("nan or inf detected; setting metric value to 0 to prevent casting nan/inf to long long type\n");
+            evaluatedMetricValues[i] = 0;
+        } else {
+            evaluatedMetricValues[i] = (long long)metricValue;
+        }
     }
 
     return PAPI_OK;
