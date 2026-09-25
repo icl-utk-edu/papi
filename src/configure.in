@@ -1821,6 +1821,30 @@ if (test $rocm_found -eq 1 || test $rocp_sdk_found -eq 1); then
     fi
 fi
 
+# Filter-out rocm component if ROCm version > 7.2.4 because of ROCProfiler's end of life.
+if (test $rocm_found -eq 1); then
+    if test "x$rocm_version_value" != "x"; then
+        if test $rocm_version_value -gt 70204; then
+            if test "x$rocm_version_clean" != "x"; then
+                info_roc_choice=`echo "
+            Component rocm cannot be built. ROCm version $rocm_version_clean detected; therefore, the rocm component will not be
+            in the build due to end of life. Configure with the rocp_sdk component instead. See components/rocm/README or
+            components/rocp_sdk/README for more details."`
+            fi
+
+            filtered_components=""
+            for comp in $components
+            do
+                if test "$comp" = "rocm"; then
+                    continue
+                fi
+                filtered_components="$filtered_components $comp"
+            done
+            components=`echo $filtered_components`
+        fi
+    fi
+fi
+
 if (test $rocm_found -eq 1 && test $rocp_sdk_found -eq 1); then
     selected_roc="rocp_sdk"
     if test "x$rocm_version_value" != "x"; then
