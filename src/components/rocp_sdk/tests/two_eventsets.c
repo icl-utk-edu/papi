@@ -5,8 +5,7 @@
 #include <unistd.h>
 
 // Internal headers
-#include <papi.h>
-#include <papi_test.h>
+#include <kernel.h>
 
 extern int launch_kernel(int device_id);
 extern void enumerate_and_store_rocp_sdk_native_events(char ***rocp_sdk_native_event_names, int *total_event_count);
@@ -14,7 +13,9 @@ extern void add_rocp_sdk_native_events(int eventSet, int maxNativeEventsToAdd, c
 
 static void print_help_message(void)
 {
-    printf("./two_eventsets --first-eventset-native-eventnames [list of rocp_sdk native event names separated by a comma] --second-eventset-native-eventnames [list of rocp_sdk native event names separated by a comma].\n");
+    printf("./two_eventsets --first-eventset-native-eventnames [list of rocp_sdk native event names separated by a comma] --second-eventset-native-eventnames [list of rocp_sdk native event names separated by a comma].\n"
+           "Notes:\n"
+           "1. Requires >= 2 AMD devices to run.\n");
 }
 
 static void parse_and_assign_args(int argc, char *argv[], char ***rocp_sdk_native_event_names_eventset1, int *total_event_count_eventset1, char ***rocp_sdk_native_event_names_eventset2, int *total_event_count_eventset2)
@@ -142,6 +143,13 @@ int main(int argc, char *argv[])
 
     // Add the native events via command line or enumeration to evnetset1
     add_rocp_sdk_native_events(eventset1, total_event_count_eventset1, rocp_sdk_native_event_names_eventset1);
+
+    int device_count = 0;
+    HIP_CALL(hipGetDeviceCount(&device_count));
+    if (device_count < 2) {
+        fprintf(stderr, "two_eventsets.c requires >= 2 AMD devices and only %d detected.\n", device_count);
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
 
     /* ---------- Setup for eventset2 ---------- */
     int eventset2 = PAPI_NULL;
