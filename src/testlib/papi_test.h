@@ -1,7 +1,8 @@
 /* Standard headers for PAPI test applications.
 	This file is customized to hide Windows / Unix differences.
 */
-
+#ifndef _PAPI_TEST_H
+#define _PAPI_TEST_H
 
 #ifdef __cplusplus
 extern "C"
@@ -112,3 +113,4 @@ extern int TESTS_QUIET;         /* Declared in test_utils.c */
 }
 #endif
 
+#endif // _PAPI_TEST_H
