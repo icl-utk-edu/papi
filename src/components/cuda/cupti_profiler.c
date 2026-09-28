@@ -2545,14 +2545,12 @@ static int get_rollup_metrics(NVPW_RollupOp rollupMetric, char **strRollupMetric
 */
 static int get_supported_submetrics(NVPW_Submetric subMetric, char **strSubMetric)
 {
-    // NOTE: The following submetrics are not supported in CUPTI 11.3 and onwards:
-    //       - Burst submetrics: .peak_burst, .pct_of_peak_burst_active, .pct_of_peak_burst_active
-    //                           .pct_of_peak_burst_elapsed, .pct_of_peak_burst_region,
-    //                           .pct_of_peak_burst_frame.
-    //       - Throughput submetrics: .pct_of_peak_burst_active, .pct_of_peak_burst_elapsed
-    //                                .pct_of_peak_burst_region, .pct_of_peak_burst_frame.
+    // Submetrics supported for the MetricsEvaluator API.
+    // Note: Frame and region metrics were not supported in the MetricsEvaluator API
+    // as they are not associated with the CUDA (compute work).
     switch (subMetric)
     {
+        // Submetrics supported for counter metrics.
         case NVPW_SUBMETRIC_PEAK_SUSTAINED:
             *strSubMetric = ".peak_sustained";
             return PAPI_OK;
@@ -2568,45 +2566,23 @@ static int get_supported_submetrics(NVPW_Submetric subMetric, char **strSubMetri
         case NVPW_SUBMETRIC_PEAK_SUSTAINED_ELAPSED_PER_SECOND:
             *strSubMetric = ".peak_sustained_elapsed.per_second";
             return PAPI_OK;
-        case NVPW_SUBMETRIC_PEAK_SUSTAINED_FRAME:
-            *strSubMetric = ".peak_sustained_frame";
-            return PAPI_OK;
-        case NVPW_SUBMETRIC_PEAK_SUSTAINED_FRAME_PER_SECOND:
-            *strSubMetric = ".peak_sustained_frame.per_second";
-            return PAPI_OK;
-        case NVPW_SUBMETRIC_PEAK_SUSTAINED_REGION:
-            *strSubMetric = ".peak_sustained_region";
-            return PAPI_OK;
-        case NVPW_SUBMETRIC_PEAK_SUSTAINED_REGION_PER_SECOND:
-            *strSubMetric = ".peak_sustained_region.per_second";
-            return PAPI_OK;
         case NVPW_SUBMETRIC_PER_CYCLE_ACTIVE:
             *strSubMetric = ".per_cycle_active";
             return PAPI_OK;
         case NVPW_SUBMETRIC_PER_CYCLE_ELAPSED:
             *strSubMetric = ".per_cycle_elapsed";
             return PAPI_OK;
-        case NVPW_SUBMETRIC_PER_CYCLE_IN_FRAME:
-            *strSubMetric = ".per_cycle_in_frame";
-            return PAPI_OK;
-        case NVPW_SUBMETRIC_PER_CYCLE_IN_REGION:
-            *strSubMetric = ".per_cycle_in_region";
-            return PAPI_OK;
         case NVPW_SUBMETRIC_PER_SECOND:
             *strSubMetric = ".per_second";
             return PAPI_OK;
+        // Submetrics supported for counter and throughput metrics.
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_ACTIVE:
             *strSubMetric = ".pct_of_peak_sustained_active";
             return PAPI_OK;
         case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_ELAPSED:
             *strSubMetric = ".pct_of_peak_sustained_elapsed";
             return PAPI_OK;
-        case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_FRAME:
-            *strSubMetric = ".pct_of_peak_sustained_frame";
-            return PAPI_OK;
-        case NVPW_SUBMETRIC_PCT_OF_PEAK_SUSTAINED_REGION:
-            *strSubMetric = ".pct_of_peak_sustained_region";
-            return PAPI_OK;
+        // Submetrics supported for ratio metrics.
         case NVPW_SUBMETRIC_MAX_RATE:
             *strSubMetric = ".max_rate";
             return PAPI_OK;
