@@ -33,7 +33,11 @@
 
 /* environment varaiable for changing the control */
 #define METRICS_SAMPLING_PERIOD   "METRICS_SAMPLING_PERIOD"	   // setting sampling period
-#define ENABLE_API_TRACING		"ZE_ENABLE_TRACING_LAYER"	// for oneAPI Level0 V1.0 +
+#if defined(USE_ZET_EXP_API)
+#define ACTIVE_L0_API			"ZET_ENABLE_API_TRACING_EXP"	// for oneAPI Level0 < V1.0
+#else
+#define ACTIVE_L0_API			"ZE_ENABLE_TRACING_LAYER"		// for oneAPI Level0 V1.0 +
+#endif
 #define ENABLE_SUB_DEVICE		 "ENABLE_SUB_DEVICE"
 
 #define MINIMUM_SAMPLING_PERIOD  100000

@@ -60,12 +60,11 @@ main(int argc, char ** argv) {
         return 0;
     }
 
-    retVal = putenv("ZE_ENABLE_TRACING_LAYER=0");
-    if (retVal) {
-        fprintf(stderr, "Failed to set ZE_ENABLE_TRACING_LAYER=0.\n");
-        fprintf(stderr, "Unset variable ZE_ENABLE_TRACING_LAYER to enable time-based collection.\n");
-        return 1;
-    }
+	retVal = setenv("PAPI_INTEL_GPU_SAMPLING_MODE", "TIME", 1);
+	if (retVal) {
+		fprintf(stderr, "Failed to set variable PAPI_INTEL_GPU_SAMPLING_MODE=TIME to enable time-based collection.\n");
+		return 1;
+	}
 
     retVal = parseInputParam(argc, argv, &param);
     if (retVal) {
