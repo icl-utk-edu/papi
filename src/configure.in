@@ -1817,6 +1817,30 @@ if (test $rocm_found -eq 1 || test $rocp_sdk_found -eq 1); then
             rocm_patch=0
         fi
         rocm_version_value=$((10#$rocm_major * 10000 + 10#$rocm_minor * 100 + 10#$rocm_patch))
+    else
+        info_roc_version=`echo "
+        The ROCm version could not be detected. Configured components include: $components. Verify the components' respective environment variables (e.g., PAPI_ROCM_ROOT or PAPI_ROCP_SDK_ROOT) are set."`
+    fi
+fi
+
+# Filter-out rocm component if ROCm version > 7.2.4 because of ROCProfiler's end of life.
+if (test $rocm_found -eq 1 && test "x$rocm_version_value" != "x"); then
+    if test $rocm_version_value -gt 70204; then
+        if test "x$rocm_version_clean" != "x"; then
+            info_roc_choice=`echo "
+        The rocm component requires ROCm versions <= 7.2.4, as the ROCProfiler API has been removed in later versions (see components/rocm/README.md for details).
+        Therefore, the rocm component will not be built as $rocm_version_clean detected. Configure with the rocp_sdk component to access the latest ROCm features."`
+        fi
+
+        filtered_components=""
+        for comp in $components
+        do
+            if test "$comp" = "rocm"; then
+                continue
+            fi
+            filtered_components="$filtered_components $comp"
+        done
+        components=`echo $filtered_components`
     fi
 fi
 
@@ -1937,6 +1961,9 @@ if (test $amd_smi_found -eq 1 || test $rocm_smi_found -eq 1); then
             rocm_patch=0
         fi
         rocm_version_value=$((10#$rocm_major * 10000 + 10#$rocm_minor * 100 + 10#$rocm_patch))
+    else
+        info_smi_version=`echo "
+        The ROCm version could not be detected. Configured components include: $components. Verify the components' respective environment variables (e.g., PAPI_ROCMSMI_ROOT or PAPI_AMDSMI_ROOT) are set."`
     fi
 fi
 
@@ -2352,8 +2379,11 @@ if test "x$warn_inconsistent_rocm" != "x"; then
   AC_MSG_WARN($warn_inconsistent_rocm)
 fi
 
-if test "x$info_version" != "x"; then
-  AC_MSG_WARN($info_version)
+if test "x$info_roc_version" != "x"; then
+  AC_MSG_WARN($info_roc_version)
+fi
+if test "x$info_smi_version" != "x"; then
+  AC_MSG_WARN($info_smi_version)
 fi
 if test "x$info_smi_choice" != "x"; then
   AC_MSG_WARN($info_smi_choice)
