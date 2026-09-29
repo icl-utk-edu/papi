@@ -1,8 +1,8 @@
 #include "vec_scalar_verify.h"
 
-static float test_sp_mac_VEC_FMA_12( int EventSet, FILE *fp );
-static float test_sp_mac_VEC_FMA_24( int EventSet, FILE *fp );
-static float test_sp_mac_VEC_FMA_48( int EventSet, FILE *fp );
+static float test_sp_mac_VEC_FMA_12( int instr_per_loop, int EventSet, FILE *fp );
+static float test_sp_mac_VEC_FMA_24( int instr_per_loop, int EventSet, FILE *fp );
+static float test_sp_mac_VEC_FMA_48( int instr_per_loop, int EventSet, FILE *fp );
 static void  test_sp_VEC_FMA( int instr_per_loop, int EventSet, FILE *fp );
 
 /* Wrapper functions of different vector widths. */
@@ -32,65 +32,72 @@ void test_sp_power_VEC_FMA( int instr_per_loop, int EventSet, FILE *fp ) {
 /* Loop unrolling:  12 instructions */
 /************************************/
 static
-float test_sp_mac_VEC_FMA_12( int EventSet, FILE *fp ){
+float test_sp_mac_VEC_FMA_12( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PS(0.01);
-    r1 = SET_VEC_PS(0.02);
-    r2 = SET_VEC_PS(0.03);
-    r3 = SET_VEC_PS(0.04);
-    r4 = SET_VEC_PS(0.05);
-    r5 = SET_VEC_PS(0.06);
-    r6 = SET_VEC_PS(0.07);
-    r7 = SET_VEC_PS(0.08);
-    r8 = SET_VEC_PS(0.09);
-    r9 = SET_VEC_PS(0.10);
-    rA = SET_VEC_PS(0.11);
-    rB = SET_VEC_PS(0.12);
-    rC = SET_VEC_PS(0.13);
-    rD = SET_VEC_PS(0.14);
-    rE = SET_VEC_PS(0.15);
-    rF = SET_VEC_PS(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PS(0.01);
+        r1 = SET_VEC_PS(0.02);
+        r2 = SET_VEC_PS(0.03);
+        r3 = SET_VEC_PS(0.04);
+        r4 = SET_VEC_PS(0.05);
+        r5 = SET_VEC_PS(0.06);
+        r6 = SET_VEC_PS(0.07);
+        r7 = SET_VEC_PS(0.08);
+        r8 = SET_VEC_PS(0.09);
+        r9 = SET_VEC_PS(0.10);
+        rA = SET_VEC_PS(0.11);
+        rB = SET_VEC_PS(0.12);
+        rC = SET_VEC_PS(0.13);
+        rD = SET_VEC_PS(0.14);
+        rE = SET_VEC_PS(0.15);
+        rF = SET_VEC_PS(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        /* The performance critical part */
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(12, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -117,79 +124,86 @@ float test_sp_mac_VEC_FMA_12( int EventSet, FILE *fp ){
 /* Loop unrolling:  24 instructions */
 /************************************/
 static
-float test_sp_mac_VEC_FMA_24( int EventSet, FILE *fp ){
+float test_sp_mac_VEC_FMA_24( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PS(0.01);
-    r1 = SET_VEC_PS(0.02);
-    r2 = SET_VEC_PS(0.03);
-    r3 = SET_VEC_PS(0.04);
-    r4 = SET_VEC_PS(0.05);
-    r5 = SET_VEC_PS(0.06);
-    r6 = SET_VEC_PS(0.07);
-    r7 = SET_VEC_PS(0.08);
-    r8 = SET_VEC_PS(0.09);
-    r9 = SET_VEC_PS(0.10);
-    rA = SET_VEC_PS(0.11);
-    rB = SET_VEC_PS(0.12);
-    rC = SET_VEC_PS(0.13);
-    rD = SET_VEC_PS(0.14);
-    rE = SET_VEC_PS(0.15);
-    rF = SET_VEC_PS(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PS(0.01);
+        r1 = SET_VEC_PS(0.02);
+        r2 = SET_VEC_PS(0.03);
+        r3 = SET_VEC_PS(0.04);
+        r4 = SET_VEC_PS(0.05);
+        r5 = SET_VEC_PS(0.06);
+        r6 = SET_VEC_PS(0.07);
+        r7 = SET_VEC_PS(0.08);
+        r8 = SET_VEC_PS(0.09);
+        r9 = SET_VEC_PS(0.10);
+        rA = SET_VEC_PS(0.11);
+        rB = SET_VEC_PS(0.12);
+        rC = SET_VEC_PS(0.13);
+        rD = SET_VEC_PS(0.14);
+        rE = SET_VEC_PS(0.15);
+        rF = SET_VEC_PS(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        /* The performance critical part */
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(24, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -216,107 +230,114 @@ float test_sp_mac_VEC_FMA_24( int EventSet, FILE *fp ){
 /* Loop unrolling:  48 instructions */
 /************************************/
 static
-float test_sp_mac_VEC_FMA_48( int EventSet, FILE *fp ){
+float test_sp_mac_VEC_FMA_48( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b32();
+    #endif
     volatile SP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PS(0.01);
-    r1 = SET_VEC_PS(0.02);
-    r2 = SET_VEC_PS(0.03);
-    r3 = SET_VEC_PS(0.04);
-    r4 = SET_VEC_PS(0.05);
-    r5 = SET_VEC_PS(0.06);
-    r6 = SET_VEC_PS(0.07);
-    r7 = SET_VEC_PS(0.08);
-    r8 = SET_VEC_PS(0.09);
-    r9 = SET_VEC_PS(0.10);
-    rA = SET_VEC_PS(0.11);
-    rB = SET_VEC_PS(0.12);
-    rC = SET_VEC_PS(0.13);
-    rD = SET_VEC_PS(0.14);
-    rE = SET_VEC_PS(0.15);
-    rF = SET_VEC_PS(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PS(0.01);
+        r1 = SET_VEC_PS(0.02);
+        r2 = SET_VEC_PS(0.03);
+        r3 = SET_VEC_PS(0.04);
+        r4 = SET_VEC_PS(0.05);
+        r5 = SET_VEC_PS(0.06);
+        r6 = SET_VEC_PS(0.07);
+        r7 = SET_VEC_PS(0.08);
+        r8 = SET_VEC_PS(0.09);
+        r9 = SET_VEC_PS(0.10);
+        rA = SET_VEC_PS(0.11);
+        rB = SET_VEC_PS(0.12);
+        rC = SET_VEC_PS(0.13);
+        rD = SET_VEC_PS(0.14);
+        rE = SET_VEC_PS(0.15);
+        rF = SET_VEC_PS(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        /* The performance critical part */
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-            r0 = FMA_VEC_PS(r0,r7,r9);
-            r1 = FMA_VEC_PS(r1,r8,rA);
-            r2 = FMA_VEC_PS(r2,r9,rB);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,rB,rD);
-            r5 = FMA_VEC_PS(r5,rC,rE);
+        r0 = FMA_VEC_PS(r0,r7,r9);
+        r1 = FMA_VEC_PS(r1,r8,rA);
+        r2 = FMA_VEC_PS(r2,r9,rB);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,rB,rD);
+        r5 = FMA_VEC_PS(r5,rC,rE);
 
-            r0 = FMA_VEC_PS(r0,rD,rF);
-            r1 = FMA_VEC_PS(r1,rC,rE);
-            r2 = FMA_VEC_PS(r2,rB,rD);
-            r3 = FMA_VEC_PS(r3,rA,rC);
-            r4 = FMA_VEC_PS(r4,r9,rB);
-            r5 = FMA_VEC_PS(r5,r8,rA);
+        r0 = FMA_VEC_PS(r0,rD,rF);
+        r1 = FMA_VEC_PS(r1,rC,rE);
+        r2 = FMA_VEC_PS(r2,rB,rD);
+        r3 = FMA_VEC_PS(r3,rA,rC);
+        r4 = FMA_VEC_PS(r4,r9,rB);
+        r5 = FMA_VEC_PS(r5,r8,rA);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("SP FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(48, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -346,19 +367,19 @@ void test_sp_VEC_FMA( int instr_per_loop, int EventSet, FILE *fp )
     float scalar_sum = 0.0;
 
     if ( instr_per_loop == 12 ) {
-        sum += test_sp_mac_VEC_FMA_12( EventSet, fp );
-        scalar_sum += test_sp_scalar_VEC_FMA_12( EventSet, NULL );
+        sum += test_sp_mac_VEC_FMA_12( instr_per_loop, EventSet, fp );
+        scalar_sum += test_sp_scalar_VEC_FMA_12( instr_per_loop, EventSet, NULL );
     }
     else if ( instr_per_loop == 24 ) {
-        sum += test_sp_mac_VEC_FMA_24( EventSet, fp );
-        scalar_sum += test_sp_scalar_VEC_FMA_24( EventSet, NULL );
+        sum += test_sp_mac_VEC_FMA_24( instr_per_loop, EventSet, fp );
+        scalar_sum += test_sp_scalar_VEC_FMA_24( instr_per_loop, EventSet, NULL );
     }
     else if ( instr_per_loop == 48 ) {
-        sum += test_sp_mac_VEC_FMA_48( EventSet, fp );
-        scalar_sum += test_sp_scalar_VEC_FMA_48( EventSet, NULL );
+        sum += test_sp_mac_VEC_FMA_48( instr_per_loop, EventSet, fp );
+        scalar_sum += test_sp_scalar_VEC_FMA_48( instr_per_loop, EventSet, NULL );
     }
 
     if( sum/4.0 != scalar_sum ) {
-        fprintf(stderr, "FMA: Inconsistent FLOP results detected! %f vs %f\n", sum/4.0, scalar_sum);
+        SUBDBG("SP FMA: Inconsistent FLOP results detected!\n");
     }
 }
