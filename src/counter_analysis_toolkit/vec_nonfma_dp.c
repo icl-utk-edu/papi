@@ -1,8 +1,8 @@
 #include "vec_scalar_verify.h"
 
-static double test_dp_mac_VEC_24( int EventSet, FILE *fp );
-static double test_dp_mac_VEC_48( int EventSet, FILE *fp );
-static double test_dp_mac_VEC_96( int EventSet, FILE *fp );
+static double test_dp_mac_VEC_24( int instr_per_loop, int EventSet, FILE *fp );
+static double test_dp_mac_VEC_48( int instr_per_loop, int EventSet, FILE *fp );
+static double test_dp_mac_VEC_96( int instr_per_loop, int EventSet, FILE *fp );
 static void   test_dp_VEC( int instr_per_loop, int EventSet, FILE *fp );
 
 /* Wrapper functions of different vector widths. */
@@ -32,77 +32,84 @@ void test_dp_power_VEC( int instr_per_loop, int EventSet, FILE *fp ) {
 /* Loop unrolling:  24 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_24( int EventSet, FILE *fp ){
+double test_dp_mac_VEC_24( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b64();
+    #endif
     volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PD(0.01);
-    r1 = SET_VEC_PD(0.02);
-    r2 = SET_VEC_PD(0.03);
-    r3 = SET_VEC_PD(0.04);
-    r4 = SET_VEC_PD(0.05);
-    r5 = SET_VEC_PD(0.06);
-    r6 = SET_VEC_PD(0.07);
-    r7 = SET_VEC_PD(0.08);
-    r8 = SET_VEC_PD(0.09);
-    r9 = SET_VEC_PD(0.10);
-    rA = SET_VEC_PD(0.11);
-    rB = SET_VEC_PD(0.12);
-    rC = SET_VEC_PD(0.13);
-    rD = SET_VEC_PD(0.14);
-    rE = SET_VEC_PD(0.15);
-    rF = SET_VEC_PD(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PD(0.01);
+        r1 = SET_VEC_PD(0.02);
+        r2 = SET_VEC_PD(0.03);
+        r3 = SET_VEC_PD(0.04);
+        r4 = SET_VEC_PD(0.05);
+        r5 = SET_VEC_PD(0.06);
+        r6 = SET_VEC_PD(0.07);
+        r7 = SET_VEC_PD(0.08);
+        r8 = SET_VEC_PD(0.09);
+        r9 = SET_VEC_PD(0.10);
+        rA = SET_VEC_PD(0.11);
+        rB = SET_VEC_PD(0.12);
+        rC = SET_VEC_PD(0.13);
+        rD = SET_VEC_PD(0.14);
+        rE = SET_VEC_PD(0.15);
+        rF = SET_VEC_PD(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        /* The performance critical part */
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(24, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -132,103 +139,110 @@ double test_dp_mac_VEC_24( int EventSet, FILE *fp ){
 /* Loop unrolling:  48 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_48( int EventSet, FILE *fp ){
+double test_dp_mac_VEC_48( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b64();
+    #endif
     volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PD(0.01);
-    r1 = SET_VEC_PD(0.02);
-    r2 = SET_VEC_PD(0.03);
-    r3 = SET_VEC_PD(0.04);
-    r4 = SET_VEC_PD(0.05);
-    r5 = SET_VEC_PD(0.06);
-    r6 = SET_VEC_PD(0.07);
-    r7 = SET_VEC_PD(0.08);
-    r8 = SET_VEC_PD(0.09);
-    r9 = SET_VEC_PD(0.10);
-    rA = SET_VEC_PD(0.11);
-    rB = SET_VEC_PD(0.12);
-    rC = SET_VEC_PD(0.13);
-    rD = SET_VEC_PD(0.14);
-    rE = SET_VEC_PD(0.15);
-    rF = SET_VEC_PD(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PD(0.01);
+        r1 = SET_VEC_PD(0.02);
+        r2 = SET_VEC_PD(0.03);
+        r3 = SET_VEC_PD(0.04);
+        r4 = SET_VEC_PD(0.05);
+        r5 = SET_VEC_PD(0.06);
+        r6 = SET_VEC_PD(0.07);
+        r7 = SET_VEC_PD(0.08);
+        r8 = SET_VEC_PD(0.09);
+        r9 = SET_VEC_PD(0.10);
+        rA = SET_VEC_PD(0.11);
+        rB = SET_VEC_PD(0.12);
+        rC = SET_VEC_PD(0.13);
+        rD = SET_VEC_PD(0.14);
+        rE = SET_VEC_PD(0.15);
+        rF = SET_VEC_PD(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        /* The performance critical part */
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(48, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -258,155 +272,162 @@ double test_dp_mac_VEC_48( int EventSet, FILE *fp ){
 /* Loop unrolling:  96 instructions */
 /************************************/
 static
-double test_dp_mac_VEC_96( int EventSet, FILE *fp ){
+double test_dp_mac_VEC_96( int instr_per_loop, int EventSet, FILE *fp ){
 
+    #if defined(ARM) && defined(CAT_DEV_SVE)
+        svbool_t pg = svptrue_b64();
+    #endif
     volatile DP_VEC_TYPE r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,rA,rB,rC,rD,rE,rF;
     double values = 0.0;
-    long long iterValues[1]; iterValues[0] = 0;
+    long long iterValues = 0;
     int iter;
     for (iter=0; iter<ITERS; ++iter) {
 
-    /* Generate starting data */
-    r0 = SET_VEC_PD(0.01);
-    r1 = SET_VEC_PD(0.02);
-    r2 = SET_VEC_PD(0.03);
-    r3 = SET_VEC_PD(0.04);
-    r4 = SET_VEC_PD(0.05);
-    r5 = SET_VEC_PD(0.06);
-    r6 = SET_VEC_PD(0.07);
-    r7 = SET_VEC_PD(0.08);
-    r8 = SET_VEC_PD(0.09);
-    r9 = SET_VEC_PD(0.10);
-    rA = SET_VEC_PD(0.11);
-    rB = SET_VEC_PD(0.12);
-    rC = SET_VEC_PD(0.13);
-    rD = SET_VEC_PD(0.14);
-    rE = SET_VEC_PD(0.15);
-    rF = SET_VEC_PD(0.16);
+        /* Generate starting data */
+        r0 = SET_VEC_PD(0.01);
+        r1 = SET_VEC_PD(0.02);
+        r2 = SET_VEC_PD(0.03);
+        r3 = SET_VEC_PD(0.04);
+        r4 = SET_VEC_PD(0.05);
+        r5 = SET_VEC_PD(0.06);
+        r6 = SET_VEC_PD(0.07);
+        r7 = SET_VEC_PD(0.08);
+        r8 = SET_VEC_PD(0.09);
+        r9 = SET_VEC_PD(0.10);
+        rA = SET_VEC_PD(0.11);
+        rB = SET_VEC_PD(0.12);
+        rC = SET_VEC_PD(0.13);
+        rD = SET_VEC_PD(0.14);
+        rE = SET_VEC_PD(0.15);
+        rF = SET_VEC_PD(0.16);
 
-    /* Start PAPI counters */
-    if ( PAPI_start( EventSet ) != PAPI_OK ) {
-        return -1;
-    }
+        /* Start PAPI counters */
+        int retval = PAPI_start( EventSet );
+        if ( PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_start() failed: %d.\n", retval);
+            return -1;
+        }
 
-            /* The performance critical part */
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        /* The performance critical part */
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-            r0 = MUL_VEC_PD(r0,rC);
-            r1 = ADD_VEC_PD(r1,rD);
-            r2 = MUL_VEC_PD(r2,rE);
-            r3 = ADD_VEC_PD(r3,rF);
-            r4 = MUL_VEC_PD(r4,rC);
-            r5 = ADD_VEC_PD(r5,rD);
-            r6 = MUL_VEC_PD(r6,rE);
-            r7 = ADD_VEC_PD(r7,rF);
-            r8 = MUL_VEC_PD(r8,rC);
-            r9 = ADD_VEC_PD(r9,rD);
-            rA = MUL_VEC_PD(rA,rE);
-            rB = ADD_VEC_PD(rB,rF);
+        r0 = MUL_VEC_PD(r0,rC);
+        r1 = ADD_VEC_PD(r1,rD);
+        r2 = MUL_VEC_PD(r2,rE);
+        r3 = ADD_VEC_PD(r3,rF);
+        r4 = MUL_VEC_PD(r4,rC);
+        r5 = ADD_VEC_PD(r5,rD);
+        r6 = MUL_VEC_PD(r6,rE);
+        r7 = ADD_VEC_PD(r7,rF);
+        r8 = MUL_VEC_PD(r8,rC);
+        r9 = ADD_VEC_PD(r9,rD);
+        rA = MUL_VEC_PD(rA,rE);
+        rB = ADD_VEC_PD(rB,rF);
 
-            r0 = ADD_VEC_PD(r0,rF);
-            r1 = MUL_VEC_PD(r1,rE);
-            r2 = ADD_VEC_PD(r2,rD);
-            r3 = MUL_VEC_PD(r3,rC);
-            r4 = ADD_VEC_PD(r4,rF);
-            r5 = MUL_VEC_PD(r5,rE);
-            r6 = ADD_VEC_PD(r6,rD);
-            r7 = MUL_VEC_PD(r7,rC);
-            r8 = ADD_VEC_PD(r8,rF);
-            r9 = MUL_VEC_PD(r9,rE);
-            rA = ADD_VEC_PD(rA,rD);
-            rB = MUL_VEC_PD(rB,rC);
+        r0 = ADD_VEC_PD(r0,rF);
+        r1 = MUL_VEC_PD(r1,rE);
+        r2 = ADD_VEC_PD(r2,rD);
+        r3 = MUL_VEC_PD(r3,rC);
+        r4 = ADD_VEC_PD(r4,rF);
+        r5 = MUL_VEC_PD(r5,rE);
+        r6 = ADD_VEC_PD(r6,rD);
+        r7 = MUL_VEC_PD(r7,rC);
+        r8 = ADD_VEC_PD(r8,rF);
+        r9 = MUL_VEC_PD(r9,rE);
+        rA = ADD_VEC_PD(rA,rD);
+        rB = MUL_VEC_PD(rB,rC);
 
-    /* Stop PAPI counters */
-    if ( NULL != fp && PAPI_stop(EventSet, iterValues) != PAPI_OK ) {
-      return -1;
-    }
+        /* Stop PAPI counters */
+        retval = PAPI_stop(EventSet, &iterValues);
+        if ( NULL != fp && PAPI_OK != retval ) {
+            SUBDBG("DP non-FMA: PAPI_stop() failed: %d.\n", retval);
+            return -1;
+        }
 
-    values += iterValues[0];
+        values += iterValues;
 
-} // end of ITERS
+    } // end of ITERS
 
     values /= ITERS;
 
     if ( NULL != fp ) {
-      papi_print(96, fp, values);
+        papi_print(instr_per_loop, fp, values);
     }
 
     /* Use data so that compiler does not eliminate it when using -O2 */
@@ -439,19 +460,19 @@ void test_dp_VEC( int instr_per_loop, int EventSet, FILE *fp )
     double scalar_sum = 0.0;
 
     if ( instr_per_loop == 24 ) {
-        sum += test_dp_mac_VEC_24( EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_24( EventSet, NULL );
+        sum += test_dp_mac_VEC_24( instr_per_loop, EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_24( instr_per_loop, EventSet, NULL );
     }
     else if ( instr_per_loop == 48 ) {
-        sum += test_dp_mac_VEC_48( EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_48( EventSet, NULL );
+        sum += test_dp_mac_VEC_48( instr_per_loop, EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_48( instr_per_loop, EventSet, NULL );
     }
     else if ( instr_per_loop == 96 ) {
-        sum += test_dp_mac_VEC_96( EventSet, fp );
-        scalar_sum += test_dp_scalar_VEC_96( EventSet, NULL );
+        sum += test_dp_mac_VEC_96( instr_per_loop, EventSet, fp );
+        scalar_sum += test_dp_scalar_VEC_96( instr_per_loop, EventSet, NULL );
     }
 
     if( sum/2.0 != scalar_sum ) {
-        fprintf(stderr, "Inconsistent FLOP results detected!\n");
+        SUBDBG("DP: Inconsistent FLOP results detected!\n");
     }
 }
