@@ -51,6 +51,9 @@ case "$COMPONENTS" in
     ;;
 esac
 
+# --- Enable the make command to stop on errors ---
+export PAPI_IGNORE_TESTS=FALSE
+
 # --- Configure and Build PAPI ---
 ## Configure without --with-shlib-tools
 if [ "$SHLIB" = "without" ]; then
