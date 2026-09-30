@@ -68,6 +68,9 @@ if [ "$COMPONENT" = "intel_gpu" ]; then
     export ZET_ENABLE_METRICS=1
 fi
 
+# --- Enable the make command to stop on errors ---
+export PAPI_IGNORE_TESTS=FALSE
+
 # --- Configure and Build PAPI ---
 ## Configure without --with-shlib-tools
 if [ "$SHLIB" = "without" ]; then
