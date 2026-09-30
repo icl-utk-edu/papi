@@ -25,6 +25,15 @@ FHEADERS = $(FORT_HEADERS)
 # pkgconfig directory
 LIBPC = $(LIBDIR)/pkgconfig
 
+# Prevent the make command from stopping on errors for PAPI's initial installation.
+# Notes:
+# 1. For CI, export PAPI_IGNORE_TESTS=FALSE.
+# 2. If (cd components/component_name/tests && make clean && make) then the make
+#    command will error as .IGNORE is no longer honored.
+ifeq ($(PAPI_IGNORE_TESTS),)
+.IGNORE: comp_tests ctests ftests validation_tests
+endif
+
 all: $(SHOW_CONF) $(LIBS) libsde utils tests 
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests validation_tests null
 

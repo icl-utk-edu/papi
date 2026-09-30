@@ -201,6 +201,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    printf(
+
     papi_errno = PAPI_cleanup_eventset(eventset);
     if (papi_errno != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", papi_errno);
