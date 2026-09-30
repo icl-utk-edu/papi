@@ -2818,8 +2818,8 @@ _papi_hwi_native_name_to_code( const char *in, int *out )
 		retval = _papi_hwd[cidx]->ntv_name_to_code( event_name_to_code_input, ( unsigned * ) out );
 		if (retval == PAPI_OK) {
 			*out = _papi_hwi_native_to_eventcode(cidx, *out, -1, event_name_to_code_input);
-			free (full_event_name);
 			INTDBG("EXIT: PAPI_OK  event: %s code: %#x\n", event_name_to_code_input, *out);
+			free (full_event_name);
 			return PAPI_OK;
 		}
 	}
@@ -2849,8 +2849,8 @@ _papi_hwi_native_name_to_code( const char *in, int *out )
 			if ( retval == PAPI_OK && event_name_to_code_input != NULL) {
 				if ( strcasecmp( name, event_name_to_code_input ) == 0 ) {
 					*out = _papi_hwi_native_to_eventcode(cidx, i, -1, name);
-					free (full_event_name);
 					INTDBG("EXIT: PAPI_OK, event: %s, code: %#x\n", event_name_to_code_input, *out);
+					free (full_event_name);
 					return PAPI_OK;
 				}
 				retval = PAPI_ENOEVNT;
