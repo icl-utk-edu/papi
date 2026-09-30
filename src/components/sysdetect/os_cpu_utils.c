@@ -10,8 +10,9 @@ os_cpu_get_vendor( char *vendor )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -22,8 +23,9 @@ os_cpu_get_name( char *name )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -34,8 +36,9 @@ os_cpu_get_attribute( CPU_attr_e attr, int *value )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -46,8 +49,9 @@ os_cpu_get_attribute_at( CPU_attr_e attr, int loc, int *value )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -58,8 +62,9 @@ os_cpu_set_affinity( int cpu )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -70,8 +75,9 @@ os_cpu_get_num_supported( void )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -82,8 +88,9 @@ os_cpu_store_affinity( void )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
 
 int
@@ -94,6 +101,7 @@ os_cpu_load_affinity( void )
 #elif defined(__APPLE__) || defined(__MACH__)
     #warning "WARNING! Darwin support of " __func__ " not yet implemented."
     return CPU_ERROR;
-#endif
+#else
     return CPU_ERROR;
+#endif
 }
