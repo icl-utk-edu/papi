@@ -664,7 +664,7 @@ static int nvml_hardware_write(long long *value, int which_one)
         }
         if ((nvret = (*nvmlDeviceSetPowerManagementLimitPtr)(handle, setToPower)) != NVML_SUCCESS) {
             SUBDBG("Error: %s\n", (*nvmlErrorStringPtr)(nvret));
-            return PAPI_EINVAL;
+            return nvret == NVML_ERROR_NO_PERMISSION ? PAPI_EPERM : PAPI_EINVAL;
         }
     }
     break;

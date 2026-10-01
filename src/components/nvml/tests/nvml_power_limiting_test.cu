@@ -166,12 +166,18 @@ int main( int argc, char** argv )
         long long int newPower=initial_power_management_limit-30;
         retval = PAPI_write( EventSet, &newPower);
         if ( retval!=PAPI_OK ) {
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            fprintf(stderr, "PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__,__LINE__,"Attempted PAPI_write of power_management_limit failed:  Possible reasons: Insufficient permissions; Power management unavailable;. Outside min/max limits; failed to run with sudo.", retval );
+            if ( retval==PAPI_EPERM ) {
+                fprintf(stderr, "Call to PAPI_write failed due to insufficient permissions. Run with sudo i.e. sudo ./nvml_power_limiting_test.\n");
+                test_skip(__FILE__, __LINE__, "", 0);
+            }
+            else {
+                for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
+                PAPI_stop(EventSet, values);                                // Must be stopped.
+                PAPI_cleanup_eventset(EventSet);                            // Empty it.
+                PAPI_destroy_eventset(&EventSet);                           // Release memory.
+                fprintf(stderr, "PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
+                test_fail( __FILE__,__LINE__,"Attempted PAPI_write of power_management_limit failed:  Possible reasons: Power management unavailable or outside min/max limits.", retval );
+            }
         } else {
             printf("Call succeeded to set power_management_limit to %llu milliWatts\n", newPower);
         }
@@ -195,12 +201,18 @@ int main( int argc, char** argv )
 
         retval = PAPI_write( EventSet, &initial_power_management_limit);    // Try to write the original value.
         if ( retval!=PAPI_OK ) {
-            for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
-            PAPI_stop(EventSet, values);                                // Must be stopped.
-            PAPI_cleanup_eventset(EventSet);                            // Empty it.
-            PAPI_destroy_eventset(&EventSet);                           // Release memory.
-            fprintf(stderr, "Restoring value, PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
-            test_fail( __FILE__,__LINE__,"Attempted PAPI_write to restore power_management_limit failed:  Possible reasons: Insufficient permissions; Power management unavailable;. Outside min/max limits; failed to run with sudo.", retval );
+            if ( retval==PAPI_EPERM ) {
+                fprintf(stderr, "Call to PAPI_write failed due to insufficient permissions. Run with sudo i.e. sudo ./nvml_power_limiting_test.\n");
+                test_skip(__FILE__, __LINE__, "", 0);
+            }
+            else {
+                for (j=0; j<eventCount; j++) free(EventName[j]);            // clean up memory.
+                PAPI_stop(EventSet, values);                                // Must be stopped.
+                PAPI_cleanup_eventset(EventSet);                            // Empty it.
+                PAPI_destroy_eventset(&EventSet);                           // Release memory.
+                fprintf(stderr, "Restoring value, PAPI_write failure returned %i, = %s.\n", retval, PAPI_strerror(retval));
+                test_fail( __FILE__,__LINE__,"Attempted PAPI_write to restore power_management_limit failed:  Possible reasons: Power management unavailable or outside min/max limits.", retval );
+            }
         }
 
         retval = PAPI_read( EventSet, values+i );                           // Now read it back.
