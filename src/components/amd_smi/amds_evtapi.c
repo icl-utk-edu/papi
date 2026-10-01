@@ -346,7 +346,7 @@ int amds_evt_enum(unsigned int *EventCode, int modifier) {
     info.device = 0;
     info.flags = 0;
     return amds_evt_id_create(&info, EventCode);
-  case PAPI_NTV_ENUM_UMASKS: {
+  case PAPI_NTV_ENUM_DEFAULT_QUALIFIERS: {
     papi_errno = amds_evt_id_to_info(*EventCode, &info);
     if (papi_errno != PAPI_OK)
       return papi_errno;

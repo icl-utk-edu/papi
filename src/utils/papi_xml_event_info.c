@@ -204,52 +204,58 @@ enum_preset_events( FILE * f, int cidx)
 static void
 enum_native_events( FILE * f, int cidx)
 {
-	int i, k, num;
-	int retval;
-	PAPI_event_info_t info;
+    int i = PAPI_NATIVE_MASK;
+    fprintf( f, "  <eventset type=\"NATIVE\">\n" );
+    int num = -1;
+    int retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
 
-	i = PAPI_NATIVE_MASK;
-	fprintf( f, "  <eventset type=\"NATIVE\">\n" );
-	num = -1;
-	retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cidx );
+    while ( retval == PAPI_OK ) {
+        num++;
+        PAPI_event_info_t info;
+        retval = PAPI_get_event_info( i, &info );
+        if ( retval != PAPI_OK ) {
+            retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
+            continue;
+        }
 
-	while ( retval == PAPI_OK ) {
+        // Enumerate any default qualifiers or umasks
+        int modifier = -1;
+        int k = i;
+        // For the CPU components, we enumerate through umasks
+        if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK ) {
+            modifier = PAPI_NTV_ENUM_UMASKS;
+        }
+        // For the non-cpu components, we enumerate through qualifiers
+        else if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_DEFAULT_QUALIFIERS, cidx ) == PAPI_OK ) {
+            modifier = PAPI_NTV_ENUM_DEFAULT_QUALIFIERS;
+        }
 
-	   num++;
-	   retval = PAPI_get_event_info( i, &info );
-	   if ( retval != PAPI_OK ) {
-	      retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
-	      continue;
-	   }
+        if (modifier != -1) {
+            // Add the event
+            xmlize_event( f, &info, num );
 
-	   /* enumerate any umasks */
-	   k = i;
-	   if ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK ) {
-
-		 /* add the event */
-		 xmlize_event( f, &info, num );
-
-		 /* add the event's unit masks */
-		 do {
-		    retval = PAPI_get_event_info( k, &info );
-		    if ( retval == PAPI_OK ) {
-		       if ( test_event( k )!=PAPI_OK ) {
-			   continue;
-		       }
-		       xmlize_event( f, &info, -1 );
-		    }
-		 } while ( PAPI_enum_cmp_event( &k, PAPI_NTV_ENUM_UMASKS, cidx ) == PAPI_OK);
-		 fprintf( f, "    </event>\n" );
-	   } else {
-              /* this event has no unit masks; test & write the event */
-	      if ( test_event( i ) == PAPI_OK ) {
-		 xmlize_event( f, &info, num );
-		 fprintf( f, "    </event>\n" );
-	      }
-	   }
-	   retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
-	}
-	fprintf( f, "  </eventset>\n" );
+            // Add the event's default qualifiers or umasks add the event's unit masks
+            do {
+                retval = PAPI_get_event_info( k, &info );
+                if ( retval == PAPI_OK ) {
+                    if ( test_event( k )!=PAPI_OK ) {
+                        continue;
+                    }
+                    xmlize_event( f, &info, -1 );
+                 }
+            } while ( PAPI_enum_cmp_event( &k, modifier, cidx ) == PAPI_OK);
+            fprintf( f, "    </event>\n" );
+         }
+         else {
+             // This event has no default qualifiers or umasks
+             if ( test_event( i ) == PAPI_OK ) {
+                 xmlize_event( f, &info, num );
+                 fprintf( f, "    </event>\n" );
+             }
+         }
+         retval = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cidx );
+    }
+    fprintf( f, "  </eventset>\n" );
 }
 
 /****************************************/
