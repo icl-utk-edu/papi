@@ -53,12 +53,6 @@ Example:
 
 Note that this variable takes precedence over PAPI\_ROCP\_SDK\_ROOT.
 
-Additionally, the component supports installations where ROCprofiler-SDK does not reside inside the ROCm installation. For example, if installed from source (https://github.com/ROCm/rocprofiler-sdk). In such a case, the PAPI user must set PAPI_ROCP_SDK_ROOT to point to the ROCprofiler-SDK installation and PAPI_ROCM_ROOT to point to the ROCm installation.
-
-Example:
-    export PAPI_ROCP_SDK_ROOT=${HOME}/my_packages
-    export PAPI_ROCM_ROOT=/opt/rocm
-
 ## Supported Architectures
 To see the ROCP\_SDK component's latest supported hardware and software please visit the [Supported Architectures](https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures#amd) GitHub Wiki page.
 
