@@ -80,10 +80,9 @@ int instructions_million(void) {
 		: "cc", "x2" /* clobbered */
 	);
 	return 0;
-#endif
-
+#else
 	return CODE_UNIMPLEMENTED;
-
+#endif
 }
 
 
