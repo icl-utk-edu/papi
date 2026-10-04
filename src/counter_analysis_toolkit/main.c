@@ -951,10 +951,10 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         if(params.show_progress) print_progress2(100);
     }
 
-    /* Benchmark VI - Vector FLOPS*/
+    /* Benchmark VI - Vector-FLOPs*/
     if( params.bench_type & BENCH_VEC )
     {
-        if(params.show_progress) printf("Vector FLOP Benchmarks: ");
+        if(params.show_progress) printf("Vector-FLOPs Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
@@ -1163,7 +1163,7 @@ void print_usage(char* name)
     fprintf(stdout, "  -dcw              Data cache writing kernels.\n");
     fprintf(stdout, "  -flops            Floating point operations kernels.\n");
     fprintf(stdout, "  -ic               Instruction cache kernels.\n");
-    fprintf(stdout, "  -vec              Vector FLOPs kernels.\n");
+    fprintf(stdout, "  -vec              Vector-FLOPs kernels.\n");
     fprintf(stdout, "  -instr            Instructions kernels.\n");
 
     fprintf(stdout, "\n");
