@@ -1,13 +1,15 @@
 # Set default if the root environment variable is not already set.
-# Note PAPI_CUDA_ROOT is an environment variable that must be set.
+# Note PAPI_NVML_ROOT is an environment variable that must be set.
 # It is the ONLY environment variable that must be set, all other
 # settings are optional.
-PAPI_CUDA_ROOT ?= /opt/cuda
+PAPI_NVML_ROOT ?= $(shell dirname $(shell dirname $(shell which nvcc)))
+
+NVCC = $(PAPI_NVML_ROOT)/bin/nvcc
 
 COMPSRCS += components/nvml/linux-nvml.c
 COMPOBJS += linux-nvml.o
 # CFLAGS specifies compile flags; need include files here
-CFLAGS += -I$(PAPI_CUDA_ROOT)/include -g
+CFLAGS += -I$(PAPI_NVML_ROOT)/include -g
 LDFLAGS += $(LDL) -g
 
 linux-nvml.o: components/nvml/linux-nvml.c $(HEADERS)

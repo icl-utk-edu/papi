@@ -44,8 +44,8 @@ edited if needed.
 
 Be sure to configure PAPI with --with-components="nvml".
 
-To compile, you must have a valid PAPI_CUDA_ROOT environment variable.
+To compile, you must have a valid PAPI_NVML_ROOT environment variable.
 Typically, we do
 > module load cuda
-> export PAPI_CUDA_ROOT=$CUDA_ROOT
+> export PAPI_NVML_ROOT=$CUDA_ROOT
 

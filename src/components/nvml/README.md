@@ -16,15 +16,15 @@ against a PAPI library that was configured with the `nvml` component. As an exam
 ./configure --with-components="nvml"
 ```
 
-For the component to be active, PAPI requires one environment variable to be set: `PAPI_CUDA_ROOT` (exact same environment variable as the `cuda` component). This environment variable **must** be set to the root of the
+For the component to be active, PAPI requires one environment variable to be set: `PAPI_NVML_ROOT`. This environment variable **must** be set to the root of the
 Cuda Toolkit that is desired to be used. As as example:
 ```
-export PAPI_CUDA_ROOT=/packages/cuda/#.#.#
+export PAPI_NVML_ROOT=/packages/cuda/#.#.#
 ```
 
-Within `PAPI_CUDA_ROOT`, we expect the following standard directory for building:
+Within `PAPI_NVML_ROOT`, we expect the following standard directory for building:
 ```
-PAPI_CUDA_ROOT/include
+PAPI_NVML_ROOT/include
 ```
 
 For the `nvml` component to be operational at runtime it must find the following dynamic shared library:
