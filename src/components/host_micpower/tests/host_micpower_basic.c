@@ -66,7 +66,7 @@ int main (int argc, char **argv)
 					retval = PAPI_event_code_to_name( code, event_name );
 					if ( retval != PAPI_OK ) {
 							printf("Error translating %#x\n",code);
-							test_fail( __FILE__, __LINE__, 
+							test_fail( __FILE__, __LINE__,
 											"PAPI_event_code_to_name", retval );
 					}
 
@@ -76,13 +76,13 @@ int main (int argc, char **argv)
 
 					retval = PAPI_create_eventset( &EventSet );
 					if (retval != PAPI_OK) {
-							test_fail(__FILE__, __LINE__, 
+							test_fail(__FILE__, __LINE__,
 											"PAPI_create_eventset()",retval);
 					}
 
 					retval = PAPI_add_event( EventSet, code );
 					if (retval != PAPI_OK) {
-							test_fail(__FILE__, __LINE__, 
+							test_fail(__FILE__, __LINE__,
 											"PAPI_add_event()",retval);
 					}
 
@@ -100,13 +100,13 @@ int main (int argc, char **argv)
 
 					retval = PAPI_cleanup_eventset( EventSet );
 					if (retval != PAPI_OK) {
-							test_fail(__FILE__, __LINE__, 
+							test_fail(__FILE__, __LINE__,
 											"PAPI_cleanup_eventset()",retval);
 					}
 
 					retval = PAPI_destroy_eventset( &EventSet );
 					if (retval != PAPI_OK) {
-							test_fail(__FILE__, __LINE__, 
+							test_fail(__FILE__, __LINE__,
 											"PAPI_destroy_eventset()",retval);
 					}
 

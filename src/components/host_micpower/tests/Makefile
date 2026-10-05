@@ -10,7 +10,7 @@ host_micpower_tests : $(TESTS)
 micpower_tests: $(TESTS)
 
 host_micpower_basic: host_micpower_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o host_micpower_basic host_micpower_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o host_micpower_basic host_micpower_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o

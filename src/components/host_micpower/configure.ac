@@ -2,8 +2,8 @@ AC_INIT(host_micpower, version-0.1)
 
 AC_PROG_CC
 
-AC_ARG_WITH([sysmgmt-include-path], 
-			[AS_HELP_STRING([--with-sysmgmt-include-path], 
+AC_ARG_WITH([sysmgmt-include-path],
+			[AS_HELP_STRING([--with-sysmgmt-include-path],
 				[location of the MPSS sysmgmt api headers, defaults to /opt/intel/mic/sysmgmt/sdk/include])],
 			[SYSMGMT_CFLAGS="-I$withval"],
 			[SYSMGMT_CFLAGS="-I/opt/intel/mic/sysmgmt/sdk/include"] )
