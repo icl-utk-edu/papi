@@ -1,6 +1,6 @@
 # BGPM Component
 
-Five components have been added to PAPI to support hardware performance monitoring for the BG/Q platform; in particular the BG/Q network, the I/O system, the Compute Node Kernel in addition to the processing core. 
+Five components have been added to PAPI to support hardware performance monitoring for the BG/Q platform; in particular the BG/Q network, the I/O system, the Compute Node Kernel in addition to the processing core.
 
 * [Enabling the BGPM Component](#enabling-the-bgpm-component)
 
