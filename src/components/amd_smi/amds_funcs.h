@@ -1,6 +1,6 @@
 /**
  * @file    amds_funcs.h
- * @author  Dong Jun Woun 
+ * @author  Dong Jun Woun
  *          djwoun@gmail.com
  *
  */

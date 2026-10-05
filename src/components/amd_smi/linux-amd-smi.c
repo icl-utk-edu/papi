@@ -1,6 +1,6 @@
 /**
  * @file    linux-amd-smi.c
- * @author  Dong Jun Woun 
+ * @author  Dong Jun Woun
  *          djwoun@gmail.com
  *
  */
