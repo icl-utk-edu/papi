@@ -1,5 +1,10 @@
 # ROCM Component
 
+> AMD has marked the end of life for the ROCProfiler API for ROCm releases > 7.2.4. As a result, the rocm component will require ROCm
+versions <= 7.2.4 to successfully be configured and built.
+To utilize the latest ROCm versions and features, please use the
+[`rocp_sdk`](https://github.com/icl-utk-edu/papi/blob/master/src/components/rocp_sdk/README.md) component.
+
 The ROCM component exposes numerous performance events on AMD GPUs.
 The component is an adapter to the ROCm profiling library (ROC-profiler) which is included in a standard ROCM release.
 
