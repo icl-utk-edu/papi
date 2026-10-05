@@ -153,7 +153,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
@@ -205,7 +205,7 @@ int main (int argc, char **argv)
 
 	retval = PAPI_start( EventSet );
 	if ( retval != PAPI_OK ) {
-	   test_fail( __FILE__, __LINE__, 
+	   test_fail( __FILE__, __LINE__,
 		      "PAPI_start failed\n",retval );
 	}
 
