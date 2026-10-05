@@ -33,20 +33,20 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
 {
     int i;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
@@ -66,15 +66,15 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
 
                 (*total_event_count)++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
+        }
     }
 }
 
@@ -93,7 +93,7 @@ helloWorld(char* str)
 int main(int argc, char** argv)
 {
     check_cuda_driver_api_call( cuInit(0) );
-    
+
     // Determine the number of Cuda capable devices
     int num_devices = 0;
     check_cuda_runtime_api_call( cudaGetDeviceCount(&num_devices) );
@@ -102,14 +102,14 @@ int main(int argc, char** argv)
         fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     int suppress_output = 0;
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    }   
+    }
     PRINT(suppress_output, "Running the cuda component test HelloWorld_noCuCtx.cu\n");
-    
+
     int cuda_device_index = -1;
     char **cuda_native_event_names = NULL;
     // If command line arguments are provided then get their values.
@@ -131,13 +131,13 @@ int main(int argc, char** argv)
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
-    }   
-    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx); 
+    }
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
 
     // If a user does not provide an event or events, then we go get an event to add
     if (total_event_count == 0) {
         enumerate_and_store_cuda_native_events(&cuda_native_event_names, &total_event_count, &cuda_device_index);
-    } 
+    }
 
     int EventSet = PAPI_NULL;
     check_papi_api_call( PAPI_create_eventset(&EventSet) );
@@ -150,10 +150,10 @@ int main(int argc, char** argv)
     int event_idx;
     for (event_idx = 0; event_idx < total_event_count; event_idx++) {
         events_successfully_added[event_idx] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
-        check_memory_allocation_call( events_successfully_added[event_idx] );  
+        check_memory_allocation_call( events_successfully_added[event_idx] );
 
         add_cuda_native_events(EventSet, cuda_native_event_names[event_idx], &num_events_successfully_added, events_successfully_added, &numMultipassEvents);
-    } 
+    }
 
     // Only multiple pass events were provided on the command line
     if (num_events_successfully_added == 0) {
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 
     for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
         PRINT(suppress_output, "After PAPI_stop, the event %s produced the value: \t\t%lld\n", events_successfully_added[event_idx], cuda_counter_values[event_idx]);
-    } 
+    }
 
     check_papi_api_call( PAPI_cleanup_eventset(EventSet) );
 

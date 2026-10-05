@@ -2,7 +2,7 @@
 * @file test_multi_read_and_reset.cu
 * @brief This test has three function calls that will be executed:
 *        1. multi_reset - Performs multiple PAPI_reset's.
-*        2. multi_read - Performs multiple PAPI_read's. 
+*        2. multi_read - Performs multiple PAPI_read's.
 *        3. single_read - Performs a single PAPI_stop, which internally calls PAPI_read.
 *
 *        Note: The cuda component supports being partially disabled, meaning that certain devices
@@ -37,41 +37,41 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
     int num_device_indices = 0, *event_device_indices = NULL;
     int i, device_arg_found = 0, cuda_native_event_name_arg_found = 0;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--device") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! Add a nvidia device index.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
             *device_index = atoi(argv[i + 1]);
             device_arg_found++;
             i++;
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
             while (cuda_native_event_name != NULL)
-            {   
+            {
                 const char *device_substring = strstr(cuda_native_event_name, ":device=");
                 if (device_substring != NULL) {
                     event_device_indices = (int *) realloc(event_device_indices, (num_device_indices + 1) *  sizeof(int));
-                    event_device_indices[num_device_indices++] = atoi(device_substring + strlen(":device=")); 
-                }   
+                    event_device_indices[num_device_indices++] = atoi(device_substring + strlen(":device="));
+                }
 
                 cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
                 check_memory_allocation_call(cmd_line_native_event_names);
@@ -83,26 +83,26 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write cuda native event name.\n");
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
-                cuda_native_event_name_arg_found++; 
+                cuda_native_event_name_arg_found++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
-    }   
+        }
+    }
 
     if (device_arg_found == 0 || cuda_native_event_name_arg_found == 0) {
         fprintf(stderr, "You must use both the --device arg and --cuda-native-event-names arg in conjunction.\n");
         exit(EXIT_FAILURE);
-    }   
+    }
 
     for (i = 0; i < num_device_indices; i++) {
         if ((*device_index) != event_device_indices[i]) {
@@ -131,7 +131,7 @@ void multi_reset(int total_event_count, char **cuda_native_event_names, long lon
     int flags = 0;
     CUdevice device = cuda_device_index;
 #if defined(CUDA_TOOLKIT_GE_13)
-    check_cuda_driver_api_call( cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device) ); 
+    check_cuda_driver_api_call( cuCtxCreate(&ctx, (CUctxCreateParams*)0, flags, device) );
 #else
     check_cuda_driver_api_call( cuCtxCreate(&ctx, flags, device) );
 #endif
@@ -164,7 +164,7 @@ void multi_reset(int total_event_count, char **cuda_native_event_names, long lon
     int iter;
     for (iter = 0; iter < 10; iter++) {
         VectorAddSubtract(100000, suppress_output);
-       
+
         check_papi_api_call( PAPI_read(EventSet, cuda_counter_values) );
 
         for (event_idx = 0; event_idx < global_num_events_successfully_added; event_idx++) {
@@ -324,10 +324,10 @@ int main(int argc, char **argv)
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    } 
+    }
     PRINT(suppress_output, "Running the cuda component test test_multi_read_and_reset.cu\n");
 
-    int cuda_device_index = -1; 
+    int cuda_device_index = -1;
     char **cuda_native_event_names = NULL;
     // If command line arguments are provided then get their values.
     int total_event_count = 0;
@@ -349,8 +349,8 @@ int main(int argc, char **argv)
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
-    } 
-    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx); 
+    }
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
 
     // If a user does not provide an event or events, then we go get an event to add
     if (total_event_count == 0) {

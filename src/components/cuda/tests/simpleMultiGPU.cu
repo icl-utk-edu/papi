@@ -1,7 +1,7 @@
 /**
 * @file simpleMultiGPU.cu
 * @brief For all enabled NVIDIA devices detected on the machine a matching Cuda context
-*        will be created and work will be done on that device. 
+*        will be created and work will be done on that device.
 *
 *        Note: The cuda component supports being partially disabled, meaning that certain devices
 *        will not be "enabled" to profile on. If PAPI_CUDA_API is not set, then devices with
@@ -61,30 +61,30 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
 {
     int i;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
             while (cuda_native_event_name != NULL)
-            {   
+            {
                 if (strstr(cuda_native_event_name, ":device")) {
                     fprintf(stderr, "Cuda native event name must not have a device qualifier appended for this test, i.e. no :device=#.\n");
                     print_help_message();
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
                 check_memory_allocation_call(cmd_line_native_event_names);
@@ -96,20 +96,20 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write cuda native event name.\n");
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
-    }   
+        }
+    }
 }
 
 int main(int argc, char **argv)
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     // No devices detected on the machine, exit
     if (num_devices < 1) {
         fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
+        test_skip(__FILE__, __LINE__, "", 0);
     }
 
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
     }
-    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);  
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
 
     // Initialize the Cuda component
     int cuda_eventcode = 0 | PAPI_NATIVE_MASK;
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         check_memory_allocation_call( cuda_native_event_names[total_event_count] );
 
         check_papi_api_call( PAPI_event_code_to_name(cuda_eventcode, cuda_native_event_names[total_event_count++]) );
-    }   
+    }
 
     const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
     if (cmpInfo == NULL) {
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     float h_SumGPU[MAX_GPU_COUNT];
     int gpuBase = 0;
     CUcontext ctx[MAX_GPU_COUNT], poppedCtx;
-    const int BLOCK_N = 32; 
+    const int BLOCK_N = 32;
     const int THREAD_N = 256;
     const int ACCUM_N = BLOCK_N * THREAD_N;
     // Create streams for issuing GPU command asynchronously and allocate memory (GPU and System page-locked)
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 
             // We must change contexts to the appropriate device to add events to inform PAPI of the context that will run the kernels
             check_cuda_driver_api_call( cuCtxSetCurrent(ctx[dev_idx]) );
-            add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &numMultipassEvents); 
+            add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &numMultipassEvents);
         }
     }
 
@@ -432,7 +432,7 @@ int main(int argc, char **argv)
 
     for (event_idx = 0; event_idx < num_events_successfully_added; event_idx++) {
         free(events_successfully_added[event_idx]);
-    }   
+    }
     free(events_successfully_added);
 
     if (diff < 1e-5) {

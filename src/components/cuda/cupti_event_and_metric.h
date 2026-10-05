@@ -14,7 +14,7 @@ int cuptie_init(void);
 int cuptie_shutdown(void);
 
 // Interfaces to handle native events //
-int cuptie_evt_enum(uint32_t *event_code, int modifier); 
+int cuptie_evt_enum(uint32_t *event_code, int modifier);
 int cuptie_evt_code_to_descr(uint32_t event_code, char *descr, int len);
 int cuptie_evt_name_to_code(const char *name, uint32_t *event_code);
 int cuptie_evt_code_to_name(uint32_t event_code, char *name, int len);
@@ -35,7 +35,7 @@ typedef enum
     PERFWORKS_API,
 } required_api_for_a_cuda_device;
 
-typedef enum 
+typedef enum
 {
    EVENT = 0,
    METRIC,
