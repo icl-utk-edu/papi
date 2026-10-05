@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 // rocmsmi_example.cpp is a minimal example of using PAPI with rocm_smi. SMI
-// is for "System Management Interface", it provide information on hardware 
+// is for "System Management Interface", it provide information on hardware
 // sensors such as fan speed, temperature, and power consumption.
 //
 // Unfortunately, the power consumption is a "spot" reading, and most users
@@ -36,12 +36,12 @@
 // calls either cuBlas or rocBlas. This would be an unnecessary complication
 // for this example.
 //
-// The corresponding Makefile is also instructional. 
+// The corresponding Makefile is also instructional.
 
 // An advantage of rocblas is it is also a "switch", automatically detecting
 // the hardware and using the appropriate tuned code for it.
 
-// > make rocmsmi_example 
+// > make rocmsmi_example
 
 // This code is intentionally heavily commented to be instructional.  We use
 // the library code to exercise the GPU with a realistic workload instead of a
@@ -53,11 +53,11 @@
 // at a rocm directory. No other environment variables are necessary, but if
 // you wish to use ROCM events or events from other components, check the
 // appropriate README.md files for instructions. These will be found in
-// papi/src/components/COMPONENT_NAME/README.md files. 
+// papi/src/components/COMPONENT_NAME/README.md files.
 
 // Because this program uses AMD HIP functions to manage memory on the GPU, it
 // must be compiled with the hipcc compiler. Typically this is found in:
-// $PAPI_ROCM_ROOT/bin/hipcc 
+// $PAPI_ROCM_ROOT/bin/hipcc
 
 // hipcc is a c++ compiler, so c++ conventions for strings must be followed.
 // (PAPI does not require c++; it is simple C; but PAPI++ will require c++).
@@ -67,7 +67,7 @@
 // actually run on a batch node (e.g. using SLURM and srun). Ensure when
 // running code that must access a GPU, including our utilities like
 // papi_component_avail and papi_native_avail, and this example code, that the
-// code is run on a batch node, not the head node. 
+// code is run on a batch node, not the head node.
 //-----------------------------------------------------------------------------
 
 // Necessary to specify a platform for the hipcc compiler.
@@ -138,7 +138,7 @@ void FinishWork(rb_sgemm_parms_t *myParms);
 // Used to initialize arrays.
 #define SRAND48_SEED 1001
 
-// Select GPU to test [0,1,...] 
+// Select GPU to test [0,1,...]
 #define GPU_TO_TEST 0
 #define MS_SAMPLE_INTERVAL 5
 #define VERBOSE 0 /* 1 prints action-by-action report for debugging. */
@@ -146,10 +146,10 @@ void FinishWork(rb_sgemm_parms_t *myParms);
 
 //-----------------------------------------------------------------------------
 // This is the timer pthread; note that time intervals of 2ms or less may be
-// a problem for some operating systems. The operation here is simple, we 
+// a problem for some operating systems. The operation here is simple, we
 // sample, store the value read in an array, increment our index, and sleep.
-// but we also check our passed in structure to look for an exit signal. If 
-// we run out of room in the provided array, we stop sampling. This is an 
+// but we also check our passed in structure to look for an exit signal. If
+// we run out of room in the provided array, we stop sampling. This is an
 // example, programmers can get more sophisticated if they like.
 // The PAPI EventSet must already be initialized, built, and started; all this
 // thread does is PAPI_read().
@@ -168,22 +168,22 @@ void* sampler(void* vMyOrders) {
     req.tv_nsec = MS_SAMPLE_INTERVAL*(1000000);
     myOrders->sampleIdx = 0;
     myOrders->eventsRead[0]=0;
-    
+
     // Sleep for time given in req. If interrupted by a signal, time remaining in rem.
-    while (myOrders->command != samplingCommand_exit) {  // run until instructed to exit. 
+    while (myOrders->command != samplingCommand_exit) {  // run until instructed to exit.
         ret = nanosleep(&req, &rem);        // sleep.
         while (ret != 0) {                  // If interrupted by a signal (almost never happens),
-            countInterrupts++; 
+            countInterrupts++;
             cont = rem;                     // Set up continuation.
-            ret = nanosleep(&cont, &rem);   // try again.  
+            ret = nanosleep(&cont, &rem);   // try again.
         }
-        
+
         // We have completed a sleep cycle. If we need to sample, do that.
-        if (myOrders->command == samplingCommand_record && 
-            myOrders->sampleIdx < myOrders->maxSamples) {   
+        if (myOrders->command == samplingCommand_record &&
+            myOrders->sampleIdx < myOrders->maxSamples) {
             long long nsElapsed=0;
             int x2 = myOrders->sampleIdx<<1;            // compute double the sample index.
-            long long tstamp = PAPI_get_real_nsec();    // PAPI function returns 
+            long long tstamp = PAPI_get_real_nsec();    // PAPI function returns
             ret = PAPI_read(myOrders->EventSet, myOrders->eventsRead);
             if (x2 > 0) nsElapsed=tstamp - myOrders->samples[x2-2];
             if (VERBOSE) fprintf(stderr, "reading sample %d elapsed=%llu.\n", myOrders->sampleIdx, nsElapsed);
@@ -197,7 +197,7 @@ void* sampler(void* vMyOrders) {
             }
         }
     } // end while.
-                
+
     // We are exiting the thread. The data is contained in the passed in structure.
     if (VERBOSE) fprintf(stderr, "exiting sampler.\n");
     pthread_exit(NULL);
@@ -216,10 +216,10 @@ int main( int argc, char **argv )
 
     // Step 1: Initialize the PAPI library. The library returns its version,
     // and we compare that to the include file version to ensure compatibility.
-    // if for some reason the PAPI_libary_init() fails, it will not return 
+    // if for some reason the PAPI_libary_init() fails, it will not return
     // its version but an error code.
     // Note that PAPI_strerror(retcode) will return a pointer to a string that
-    // describes the error. 
+    // describes the error.
 
     retval = PAPI_library_init( PAPI_VER_CURRENT );
     if (retval != PAPI_VER_CURRENT ) {
@@ -228,10 +228,10 @@ int main( int argc, char **argv )
         exit(retval);
     }
 
-    // Step 2: Create an event set. A PAPI event set is a collection of 
+    // Step 2: Create an event set. A PAPI event set is a collection of
     // events we wish to read. We can add new events, delete events, and
     // so on. Upon creation the event set is empty.
-    // Note that the EventSet is just an integer, an index into an internal 
+    // Note that the EventSet is just an integer, an index into an internal
     // array of event sets. We pass the address so PAPI can populate the
     // integer with the correct index.
 
@@ -253,7 +253,7 @@ int main( int argc, char **argv )
     // found in the papi/src/utils directory. The following is an excerpt of a
     // few such such events reported by PAPI_native_avail (out of hundreds).
     // Note: Be sure to use the events for the device you are testing; defined
-    //       above as 'GPU_TO_TEST'. 
+    //       above as 'GPU_TO_TEST'.
 
     //--------------------------------------------------------------------------------
     //| rocm_smi:::power_average:device=0:sensor=0                                   |
@@ -267,7 +267,7 @@ int main( int argc, char **argv )
 
     long long values[1]={0};  // declare a single event value.
 
-    // We define a string for the event we choose to monitor. 
+    // We define a string for the event we choose to monitor.
     char eventname[]="rocm_smi:::power_average:device=0:sensor=0";
 
     // Now we add the named event to the event set. It is also possible to add
@@ -277,7 +277,7 @@ int main( int argc, char **argv )
     // what we have done thus far is all setup, we have not tried to
     // communicate with the GPU yet.
 
-    retval = PAPI_add_named_event(EventSet, eventname); // Note we pass pointer to string. 
+    retval = PAPI_add_named_event(EventSet, eventname); // Note we pass pointer to string.
     if (retval != PAPI_OK) {
         fprintf(stderr, "Failed PAPI_add_named_event(EventSet, %s), retcode=%d ->'%s'\n", eventname, retval, PAPI_strerror(retval));
         exit(retval);
@@ -312,10 +312,10 @@ int main( int argc, char **argv )
         fprintf(stderr, "pthread_create() failed, retcode=%d. Aborting.\n", retval);
         exit(-1);
     }
-    
+
     if (VERBOSE) fprintf(stderr, "Launched Sampler.\n");
     // Do Some Work: This is a subroutine do just make the GPU do something to
-    // run up counters so we have something to report. We do this in three 
+    // run up counters so we have something to report. We do this in three
     // parts. Information for the run is contained in 'myParms'.
     rb_sgemm_parms_t *myParms = PrepWork(16384); // set up, param is M,N,K.
 
@@ -324,7 +324,7 @@ int main( int argc, char **argv )
 
     // Start sampling.
     myOrders.command = samplingCommand_record;
-    while (myOrders.sampleIdx < 1); 
+    while (myOrders.sampleIdx < 1);
 
     // Call rocblas and do an SGEMM.
     long long timeDoWork = PAPI_get_real_nsec();
@@ -342,7 +342,7 @@ int main( int argc, char **argv )
     myOrders.command = samplingCommand_exit;       // Tell the sampling thread to exit.
 
     // Wait for the sampler thread to finish.
-    retval = pthread_join(samplingThread, NULL); 
+    retval = pthread_join(samplingThread, NULL);
     if (retval != 0) {
         fprintf(stderr, "Failed to join the sampling thread, ret=%d.\n", retval);
         exit(retval);
@@ -373,7 +373,7 @@ int main( int argc, char **argv )
             printf("%.6f\n", (w*s));
         }
     }
-   
+
     x2 = (myOrders.sampleIdx-1)<<1; // Final index.
     duration = (float) (myOrders.samples[x2]-myOrders.samples[0]);
     duration *= 1.e-6;  // compute milliseconds from nano seconds.
@@ -381,7 +381,7 @@ int main( int argc, char **argv )
     printf("ms Duration=%.3f\n", duration);
     printf("ms AvgInterval=%.3f\n", duration/(myOrders.sampleIdx-1));
     printf("avg Watts=%.3f, minWatts=%.3f, maxWatts=%.3f\n", avgWatts, (minWatts*1.e-6), (maxWatts*1.e-6));
-    printf("total Joules=%.3f\n", totJoules); 
+    printf("total Joules=%.3f\n", totJoules);
 
     // Now we clean up. First, we stop the event set. This will re-do the read;
     // we could prevent that by passing a NULL pointer for the 'values'.
@@ -397,7 +397,7 @@ int main( int argc, char **argv )
     // example. We can remove events, add other events, do more work and read
     // those. Of course you should allow room in the 'values[]' array for the
     // maximum number of events you might read.
-    
+
     retval = PAPI_remove_named_event(EventSet, eventname); // remove the event we added.
     if (retval != PAPI_OK) {
         fprintf(stderr, "Failed PAPI_remove_named_event(EventSet, eventname), retcode=%d ->'%s'\n", retval, PAPI_strerror(retval));
@@ -423,7 +423,7 @@ int main( int argc, char **argv )
 
 
 //-----------------------------------------------------------------------------
-// The following are dedicated to rocblas; the PAPI examples are above. 
+// The following are dedicated to rocblas; the PAPI examples are above.
 // rocblas_handle is a structure holding the rocblas library context.
 // It must be created using rocblas_create_handle(), passed to all function
 // calls, and destroyed using rocblas_destroy_handle().
@@ -454,7 +454,7 @@ void rb_report_error(int ret) {
         if (ret >=0 && ret<=12) {
             fprintf(stderr, "%s.\n", rocblas_return_strings[ret]);
         } else {
-            fprintf(stderr, "Meaning Unknown.\n"); 
+            fprintf(stderr, "Meaning Unknown.\n");
         }
 } // end rb_report_error.
 
@@ -467,7 +467,7 @@ void hip_report_error(hipError_t ret) {
 } // end rb_report_error.
 
 rb_sgemm_parms_t* PrepWork(int MNK) {
-    // We use calloc to ensure all pointers are NULL. 
+    // We use calloc to ensure all pointers are NULL.
     rb_sgemm_parms_t *myParms = (rb_sgemm_parms_t*) calloc(1, sizeof(rb_sgemm_parms_t));
 
     // Check that we successfully allocated memory.
@@ -477,15 +477,15 @@ rb_sgemm_parms_t* PrepWork(int MNK) {
     }
 
     hipError_t hipret;
-   
+
     // GPU_TO_TEST is defined at top of file; [0,1,...]
     hipret = hipSetDevice(GPU_TO_TEST);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipSetDevice(%d) ", __FILE__, __func__, __LINE__, GPU_TO_TEST);
         hip_report_error(hipret);
         exit(-1);
-    }        
- 
+    }
+
     // initialize rocblas.
     rocblas_initialize();
 
@@ -545,14 +545,14 @@ rb_sgemm_parms_t* PrepWork(int MNK) {
     myParms->beta[0] = 1.0;
 
     srand48(SRAND48_SEED);
-    
+
     // Init square arrays, uniform distribution; values [0.0,1.0).
     int i;
     for (i=0; i<(MNK*MNK); i++) {
         myParms->A[i] = (float) drand48();
         myParms->B[i] = (float) drand48();
         myParms->C[i] = (float) drand48();
-    } 
+    }
 
     int thisDevice;
     hipret = hipGetDevice(&thisDevice);
@@ -560,23 +560,23 @@ rb_sgemm_parms_t* PrepWork(int MNK) {
         fprintf(stderr, "%s:%s:%i hipGetDevice(&thisDevice) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     if (thisDevice != 0) {
         fprintf(stderr, "%s:%s:%i Unexpected result, thisDevice = %d.\n", __FILE__, __func__, __LINE__, thisDevice);
-    }        
+    }
 
     // Not used here, but useful for debug.
     hipDeviceProp_t devProps;
-    hipret = hipGetDeviceProperties(&devProps, thisDevice); 
+    hipret = hipGetDeviceProperties(&devProps, thisDevice);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipGetDeviceProperties(&devProps) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
-    
+    }
+
     if (0) {
-        fprintf(stderr, "info: device=%i name=%s.\n", thisDevice, devProps.name); 
+        fprintf(stderr, "info: device=%i name=%s.\n", thisDevice, devProps.name);
     }
 
     // Allocate memory on the GPU for three arrays.
@@ -585,21 +585,21 @@ rb_sgemm_parms_t* PrepWork(int MNK) {
         fprintf(stderr, "%s:%s:%i hipMalloc((&myParms->A_d, %lu) ", __FILE__, __func__, __LINE__, sizeof(float)*MNK*MNK);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     hipret = hipMalloc(&myParms->B_d, sizeof(float)*MNK*MNK);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipMalloc((&myParms->B_d, %lu) ", __FILE__, __func__, __LINE__, sizeof(float)*MNK*MNK);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     hipret = hipMalloc(&myParms->C_d, sizeof(float)*MNK*MNK);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipMalloc((&myParms->C_d, %lu) ", __FILE__, __func__, __LINE__, sizeof(float)*MNK*MNK);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     // Copy each array from Host to Device. Note args for
     // hipMemcpy(*dest, *source, count, type of copy)
@@ -608,21 +608,21 @@ rb_sgemm_parms_t* PrepWork(int MNK) {
         fprintf(stderr, "%s:%s:%i hipMemcpy(A) HostToDevice) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     hipret = hipMemcpy(myParms->B_d, myParms->B, sizeof(float)*MNK*MNK, hipMemcpyHostToDevice);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipMemcpy(B) HostToDevice) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     hipret = hipMemcpy(myParms->C_d, myParms->C, sizeof(float)*MNK*MNK, hipMemcpyHostToDevice);
     if (hipret != hipSuccess) {
         fprintf(stderr, "%s:%s:%i hipMemcpy(C) HostToDevice) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     return (myParms);
 } // end PrepWork.
@@ -663,7 +663,7 @@ void DoWork(rb_sgemm_parms_t *myParms) {
         fprintf(stderr, "%s:%s:%i hipMemcpy(C) HostToDevice) ", __FILE__, __func__, __LINE__);
         hip_report_error(hipret);
         exit(-1);
-    }        
+    }
 
     // AMD GPU "Streams" are command queues for the device.
     // hipDeviceSynchronize() blocks until all streams are empty. Failing to
@@ -677,7 +677,7 @@ void DoWork(rb_sgemm_parms_t *myParms) {
 
     // Example of timing:
     // elapsed = PAPI_get_real_nsec();
-    // ... do something ... 
+    // ... do something ...
     // elapsed = PAPI_get_real_nsec() - elapsed;
     // fprintf(stderr, "Elapsed time %llu ns.\n", elapsed);
 
@@ -687,10 +687,10 @@ void DoWork(rb_sgemm_parms_t *myParms) {
         hip_report_error(hipret);
         exit(-1);
     }
-        
+
     if (VERBOSE) fprintf(stderr, "Successful rocblas_sgemm with M,N,K=%d,%d,%d.\n", myParms->m, myParms->n, myParms->k);
     return;
-} // end DoWork. 
+} // end DoWork.
 
 void FinishWork(rb_sgemm_parms_t *myParms) {
 
@@ -710,7 +710,7 @@ void FinishWork(rb_sgemm_parms_t *myParms) {
             fprintf(stderr, "%s:%s:%i hipFree(myParms->A_d) ", __FILE__, __func__, __LINE__);
             hip_report_error(hipret);
             exit(-1);
-        }        
+        }
         myParms->A_d = NULL;
     }
 
@@ -720,7 +720,7 @@ void FinishWork(rb_sgemm_parms_t *myParms) {
             fprintf(stderr, "%s:%s:%i hipFree(myParms->B_d) ", __FILE__, __func__, __LINE__);
             hip_report_error(hipret);
             exit(-1);
-        }        
+        }
         myParms->B_d = NULL;
     }
 
@@ -730,7 +730,7 @@ void FinishWork(rb_sgemm_parms_t *myParms) {
             fprintf(stderr, "%s:%s:%i hipFree(myParms->C_d) ", __FILE__, __func__, __LINE__);
             hip_report_error(hipret);
             exit(-1);
-        }        
+        }
         myParms->C_d = NULL;
     }
 
@@ -741,15 +741,15 @@ void FinishWork(rb_sgemm_parms_t *myParms) {
         hip_report_error(hipret);
         exit(-1);
     }
-        
-    // Tell rocblas to clean up the handle. 
+
+    // Tell rocblas to clean up the handle.
     myParms->rb_ret = rocblas_destroy_handle(myParms->handle);
     if (myParms->rb_ret != rocblas_status_success) {
         fprintf(stderr, "rocblas_destroy_handle ");
         rb_report_error(myParms->rb_ret);
     }
 
-    // free our parameter structure.    
+    // free our parameter structure.
     if (myParms != NULL) {free(myParms); myParms = NULL;}
     return;
 } // end FinishWork.

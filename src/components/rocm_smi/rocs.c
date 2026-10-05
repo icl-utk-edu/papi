@@ -1046,9 +1046,9 @@ init_device_table(void)
 
     for (i = 0; i < device_count; ++i) {
         status = rsmi_dev_pci_bandwidth_get_p(i, &pcie_table[i]);
-        /* 
+        /*
           Retrieve available PCIe bandwidths. This function is not supported on newer hardware (i.e., MI250 and MI300), but
-           supported on some hardware. Ignore statuses indicating lack of support or 
+           supported on some hardware. Ignore statuses indicating lack of support or
            unimplemented functionality.
         */
         if (status != RSMI_STATUS_SUCCESS && status != RSMI_STATUS_NOT_YET_IMPLEMENTED && status != RSMI_STATUS_NOT_SUPPORTED) {
@@ -3595,14 +3595,14 @@ access_rsmi_dev_fan_speed(rocs_access_mode_e mode, void *arg)
 {
     ntv_event_t *event = (ntv_event_t *) arg;
     rsmi_status_t status;
-    
+
     if (!(mode & event->mode)) {
         /* Return error code as counter value to distinguish
          * this case from a successful read */
         event->value = PAPI_ENOSUPP;
         return PAPI_OK;
     }
-    
+
     if (mode == ROCS_ACCESS_MODE__READ) {
         status = rsmi_dev_fan_speed_get_p(event->device, event->subvariant, &event->value);
         if (status != RSMI_STATUS_SUCCESS) {

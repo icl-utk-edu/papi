@@ -15,10 +15,10 @@
 // Helper Function
 void write_papi_event(int cid, const char* event_name, long long value_to_write);
 void read_and_print_current_values(int cid,
-                                   const char* perf_name, 
-                                   const char* pcap_name, 
+                                   const char* perf_name,
+                                   const char* pcap_name,
                                    const char* fan_name,
-                                   const char* pcap_max_name, 
+                                   const char* pcap_max_name,
                                    const char* fan_max_name,
                                    const char* stage_label);
 
@@ -92,9 +92,9 @@ int main(int argc, char *argv[])
                 ret, PAPI_strerror(ret));
         exit(-1);
     }
-    printf("PAPI version: %d.%d.%d\n", 
-           PAPI_VERSION_MAJOR(PAPI_VERSION), 
-           PAPI_VERSION_MINOR(PAPI_VERSION), 
+    printf("PAPI version: %d.%d.%d\n",
+           PAPI_VERSION_MAJOR(PAPI_VERSION),
+           PAPI_VERSION_MINOR(PAPI_VERSION),
            PAPI_VERSION_REVISION(PAPI_VERSION));
     fflush(stdout);
 
@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
     }
     // Handle no devices
     if (devices < 1) {
-        fprintf(stderr, "No ROCm devices found.\n"); 
-        PAPI_shutdown(); 
+        fprintf(stderr, "No ROCm devices found.\n");
+        PAPI_shutdown();
         exit(0);
     }
 
@@ -181,11 +181,11 @@ int main(int argc, char *argv[])
     r = PAPI_enum_cmp_event(&event_code, PAPI_ENUM_FIRST, cid);
     while (r == PAPI_OK) {
         ret = PAPI_event_code_to_name(event_code, current_event_name);
-        if (ret != PAPI_OK) { 
-            fprintf(stderr, "Warning: PAPI_event_code_to_name failed for code %#x: %s\n", 
-                   event_code, PAPI_strerror(ret)); 
-            r = PAPI_enum_cmp_event(&event_code, PAPI_ENUM_EVENTS, cid); 
-            continue; 
+        if (ret != PAPI_OK) {
+            fprintf(stderr, "Warning: PAPI_event_code_to_name failed for code %#x: %s\n",
+                   event_code, PAPI_strerror(ret));
+            r = PAPI_enum_cmp_event(&event_code, PAPI_ENUM_EVENTS, cid);
+            continue;
         }
 
         bool is_target = false;
@@ -194,25 +194,25 @@ int main(int argc, char *argv[])
             if (strstr(current_event_name, target_substrings[i]) != NULL) {
                 bool device_match = (strstr(current_event_name, ":device=0") != NULL);
                 if (strcmp(target_substrings[i],"perf_level") == 0) {
-                    if (device_match) { 
-                        is_target = true; 
-                        matched_substring = target_substrings[i]; 
-                        break; 
+                    if (device_match) {
+                        is_target = true;
+                        matched_substring = target_substrings[i];
+                        break;
                     }
                 } else {
                     bool sensor_match = (strstr(current_event_name, ":sensor=0") != NULL);
-                    if (device_match && sensor_match) { 
-                        is_target = true; 
-                        matched_substring = target_substrings[i]; 
-                        break; 
+                    if (device_match && sensor_match) {
+                        is_target = true;
+                        matched_substring = target_substrings[i];
+                        break;
                     }
                     else if (device_match && strstr(current_event_name, ":sensor=") == NULL){
-                         if (strcmp(target_substrings[i],"power_cap:")==0 || 
+                         if (strcmp(target_substrings[i],"power_cap:")==0 ||
                              strcmp(target_substrings[i],"fan_speed:")==0) {
-                              printf("  Warning: Matched '%s' for device 0 but no sensor specified: %s\n", 
+                              printf("  Warning: Matched '%s' for device 0 but no sensor specified: %s\n",
                                      target_substrings[i], current_event_name);
-                              is_target = true; 
-                              matched_substring = target_substrings[i]; 
+                              is_target = true;
+                              matched_substring = target_substrings[i];
                               break;
                          }
                     }
@@ -228,14 +228,14 @@ int main(int argc, char *argv[])
                     strncpy(event_names[num_rocm_events], current_event_name, PAPI_MAX_STR_LEN - 1);
                     event_names[num_rocm_events][PAPI_MAX_STR_LEN - 1] = '\0';
                     num_rocm_events++;
-                } else { 
-                    fprintf(stderr, "  Warning: Failed to add event %s: %s\n", 
-                            current_event_name, PAPI_strerror(ret)); 
+                } else {
+                    fprintf(stderr, "  Warning: Failed to add event %s: %s\n",
+                            current_event_name, PAPI_strerror(ret));
                     if(ret==PAPI_ENOMEM) break;
                 }
-            } else { 
-                fprintf(stderr, "Error: Exceeded MAX_ROCM_EVENTS.\n"); 
-                break; 
+            } else {
+                fprintf(stderr, "Error: Exceeded MAX_ROCM_EVENTS.\n");
+                break;
             }
         }
         r = PAPI_enum_cmp_event(&event_code, PAPI_ENUM_EVENTS, cid);
@@ -252,29 +252,29 @@ int main(int argc, char *argv[])
         printf("\n--- Extracting Initial Values and Event Names ---\n");
         for (i = 0; i < num_rocm_events; ++i) {
             printf("  Read Event %d: %-60s = %lld\n", i, event_names[i], rocm_values[i]);
-            if (strstr(event_names[i], "power_cap_range_max") != NULL && 
+            if (strstr(event_names[i], "power_cap_range_max") != NULL &&
                 strstr(event_names[i], ":device=0") != NULL) {
                 power_cap_range_max_val = rocm_values[i];
                 strncpy(power_cap_range_max_event_name, event_names[i], PAPI_MAX_STR_LEN - 1);
                 power_cap_range_max_event_name[PAPI_MAX_STR_LEN - 1] = '\0';
-            } else if (strstr(event_names[i], "fan_speed_max") != NULL && 
+            } else if (strstr(event_names[i], "fan_speed_max") != NULL &&
                        strstr(event_names[i], ":device=0") != NULL) {
                 fan_speed_max_val = rocm_values[i];
                 strncpy(fan_speed_max_event_name, event_names[i], PAPI_MAX_STR_LEN - 1);
                 fan_speed_max_event_name[PAPI_MAX_STR_LEN - 1] = '\0';
-            } else if (strstr(event_names[i], "perf_level") != NULL && 
+            } else if (strstr(event_names[i], "perf_level") != NULL &&
                        strstr(event_names[i], ":device=0") != NULL) {
                 initial_perf_level = rocm_values[i];
                 strncpy(perf_level_event_name, event_names[i], PAPI_MAX_STR_LEN - 1);
                 perf_level_event_name[PAPI_MAX_STR_LEN - 1] = '\0';
-            } else if (strstr(event_names[i], "power_cap:") != NULL && 
-                       strstr(event_names[i], "power_cap_range_max") == NULL && 
+            } else if (strstr(event_names[i], "power_cap:") != NULL &&
+                       strstr(event_names[i], "power_cap_range_max") == NULL &&
                        strstr(event_names[i], ":device=0") != NULL) {
                 initial_power_cap = rocm_values[i];
                 strncpy(power_cap_event_name, event_names[i], PAPI_MAX_STR_LEN - 1);
                 power_cap_event_name[PAPI_MAX_STR_LEN - 1] = '\0';
-            } else if (strstr(event_names[i], "fan_speed:") != NULL && 
-                       strstr(event_names[i], "fan_speed_max") == NULL && 
+            } else if (strstr(event_names[i], "fan_speed:") != NULL &&
+                       strstr(event_names[i], "fan_speed_max") == NULL &&
                        strstr(event_names[i], ":device=0") != NULL) {
                 initial_fan_speed = rocm_values[i];
                 strncpy(fan_speed_event_name, event_names[i], PAPI_MAX_STR_LEN - 1);
@@ -304,18 +304,18 @@ int main(int argc, char *argv[])
         new_perf_level = initial_perf_level + 1; // Example: Increment perf level
         printf("    Calculating new perf_level: %lld + 1 = %lld\n", initial_perf_level, new_perf_level);
         write_papi_event(cid, perf_level_event_name, new_perf_level);
-    } else { 
-        printf("Skipping perf_level write (initial value/name not found or invalid).\n"); 
+    } else {
+        printf("Skipping perf_level write (initial value/name not found or invalid).\n");
     }
 
     if (can_write_pcap) {
         new_power_cap = power_cap_range_max_val - 1000000; // Example: 1W below max
         if (new_power_cap < 0) { new_power_cap = initial_power_cap; } // Basic sanity check
-        printf("    Calculating new power_cap: %lld uW - 1000000 uW = %lld uW\n", 
+        printf("    Calculating new power_cap: %lld uW - 1000000 uW = %lld uW\n",
                power_cap_range_max_val, new_power_cap);
         write_papi_event(cid, power_cap_event_name, new_power_cap);
-    } else { 
-        printf("Skipping power_cap write (initial value/name/max not found or invalid).\n"); 
+    } else {
+        printf("Skipping power_cap write (initial value/name/max not found or invalid).\n");
     }
 
     if (can_write_fan) {
@@ -323,47 +323,47 @@ int main(int argc, char *argv[])
         if (new_fan_speed < 0) { new_fan_speed = 0; } // Basic sanity check (min speed 0?)
         printf("    Calculating new fan_speed: %lld - 1 = %lld\n", fan_speed_max_val, new_fan_speed);
         write_papi_event(cid, fan_speed_event_name, new_fan_speed);
-    } else { 
-        printf("Skipping fan_speed write (initial value/name not found or invalid).\n"); 
+    } else {
+        printf("Skipping fan_speed write (initial value/name not found or invalid).\n");
     }
 
     // ---- Stage 2: Read values AFTER writing NEW ones ----
     printf("\n=== Stage 2: Verifying NEW Values ===\n");
-    read_and_print_current_values(cid, 
-                                  perf_level_event_name, 
-                                  power_cap_event_name, 
+    read_and_print_current_values(cid,
+                                  perf_level_event_name,
+                                  power_cap_event_name,
                                   fan_speed_event_name,
-                                  power_cap_range_max_event_name, 
+                                  power_cap_range_max_event_name,
                                   fan_speed_max_event_name,
                                   "After Writing New Values");
 
     // ---- Stage 3: Write INITIAL values back (Revert) ----
     printf("\n=== Stage 3: Reverting to INITIAL Values ===\n");
-    if (can_write_perf) { 
-        write_papi_event(cid, perf_level_event_name, initial_perf_level); 
-    } else { 
-        printf("Skipping perf_level revert.\n"); 
+    if (can_write_perf) {
+        write_papi_event(cid, perf_level_event_name, initial_perf_level);
+    } else {
+        printf("Skipping perf_level revert.\n");
     }
-    
-    if (can_write_pcap) { 
-        write_papi_event(cid, power_cap_event_name, initial_power_cap); 
-    } else { 
-        printf("Skipping power_cap revert.\n"); 
+
+    if (can_write_pcap) {
+        write_papi_event(cid, power_cap_event_name, initial_power_cap);
+    } else {
+        printf("Skipping power_cap revert.\n");
     }
-    
-    if (can_write_fan) { 
-        write_papi_event(cid, fan_speed_event_name, initial_fan_speed); 
-    } else { 
-        printf("Skipping fan_speed revert.\n"); 
+
+    if (can_write_fan) {
+        write_papi_event(cid, fan_speed_event_name, initial_fan_speed);
+    } else {
+        printf("Skipping fan_speed revert.\n");
     }
 
     // ---- Stage 4: Read values AFTER reverting ----
     printf("\n=== Stage 4: Verifying REVERTED Values ===\n");
-    read_and_print_current_values(cid, 
-                                  perf_level_event_name, 
-                                  power_cap_event_name, 
+    read_and_print_current_values(cid,
+                                  perf_level_event_name,
+                                  power_cap_event_name,
                                   fan_speed_event_name,
-                                  power_cap_range_max_event_name, 
+                                  power_cap_range_max_event_name,
                                   fan_speed_max_event_name,
                                   "After Reverting to Initial Values");
 
@@ -402,7 +402,7 @@ void write_papi_event(int cid, const char* event_name, long long value_to_write)
 
     ret = PAPI_add_named_event(writeEventSet, event_name);
     if (ret != PAPI_OK) {
-        fprintf(stderr, "    Error: FAILED to add event '%s' for writing, ret=%d [%s]. Skipping write.\n", 
+        fprintf(stderr, "    Error: FAILED to add event '%s' for writing, ret=%d [%s]. Skipping write.\n",
                 event_name, ret, PAPI_strerror(ret));
         CALL_PAPI_OK(PAPI_cleanup_eventset(writeEventSet));
         CALL_PAPI_OK(PAPI_destroy_eventset(&writeEventSet)); // Pass address
@@ -413,20 +413,20 @@ void write_papi_event(int cid, const char* event_name, long long value_to_write)
 
     ret = PAPI_write(writeEventSet, write_buffer);
     if (ret != PAPI_OK) {
-        fprintf(stderr, "    Error: PAPI_write FAILED for event '%s' with value %lld, ret=%d [%s].\n", 
+        fprintf(stderr, "    Error: PAPI_write FAILED for event '%s' with value %lld, ret=%d [%s].\n",
                 event_name, value_to_write, ret, PAPI_strerror(ret));
         int stop_ret = PAPI_stop(writeEventSet, &read_back_value);
-        if (stop_ret != PAPI_OK) { 
-            fprintf(stderr, "    Warning: PAPI_stop after failed PAPI_write also failed: %s\n", 
-                    PAPI_strerror(stop_ret)); 
+        if (stop_ret != PAPI_OK) {
+            fprintf(stderr, "    Warning: PAPI_stop after failed PAPI_write also failed: %s\n",
+                    PAPI_strerror(stop_ret));
         }
     } else {
         printf("    PAPI_write call succeeded for '%s' = %lld.\n", event_name, value_to_write);
         CALL_PAPI_OK(PAPI_stop(writeEventSet, &read_back_value));
         printf("    Read back value immediately after write: %lld\n", read_back_value);
-        if (read_back_value != value_to_write) { 
-            printf("    Warning: Read-back value (%lld) does not match written value (%lld).\n", 
-                   read_back_value, value_to_write); 
+        if (read_back_value != value_to_write) {
+            printf("    Warning: Read-back value (%lld) does not match written value (%lld).\n",
+                   read_back_value, value_to_write);
         }
     }
 
@@ -441,10 +441,10 @@ void write_papi_event(int cid, const char* event_name, long long value_to_write)
 #define MAX_EVENTS_TO_READ 10 // Max number of events this function will read at once
 
 void read_and_print_current_values(int cid,
-                                   const char* perf_name, 
-                                   const char* pcap_name, 
+                                   const char* perf_name,
+                                   const char* pcap_name,
                                    const char* fan_name,
-                                   const char* pcap_max_name, 
+                                   const char* pcap_max_name,
                                    const char* fan_max_name,
                                    const char* stage_label)
 {
@@ -462,46 +462,46 @@ void read_and_print_current_values(int cid,
     memset(event_short_names, 0, sizeof(event_short_names));
     for(i=0; i<MAX_EVENTS_TO_READ; ++i) added_flags[i] = false;
 
-    if (perf_name && strcmp(perf_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) { 
-        strncpy(events_to_read[read_count], perf_name, PAPI_MAX_STR_LEN - 1); 
-        strncpy(event_short_names[read_count], "Perf Level", 49); 
-        read_count++; 
+    if (perf_name && strcmp(perf_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) {
+        strncpy(events_to_read[read_count], perf_name, PAPI_MAX_STR_LEN - 1);
+        strncpy(event_short_names[read_count], "Perf Level", 49);
+        read_count++;
     }
-    if (pcap_name && strcmp(pcap_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) { 
-        strncpy(events_to_read[read_count], pcap_name, PAPI_MAX_STR_LEN - 1); 
-        strncpy(event_short_names[read_count], "Power Cap (uW)", 49); 
-        read_count++; 
+    if (pcap_name && strcmp(pcap_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) {
+        strncpy(events_to_read[read_count], pcap_name, PAPI_MAX_STR_LEN - 1);
+        strncpy(event_short_names[read_count], "Power Cap (uW)", 49);
+        read_count++;
     }
-    if (fan_name && strcmp(fan_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) { 
-        strncpy(events_to_read[read_count], fan_name, PAPI_MAX_STR_LEN - 1); 
-        strncpy(event_short_names[read_count], "Fan Speed", 49); 
-        read_count++; 
+    if (fan_name && strcmp(fan_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) {
+        strncpy(events_to_read[read_count], fan_name, PAPI_MAX_STR_LEN - 1);
+        strncpy(event_short_names[read_count], "Fan Speed", 49);
+        read_count++;
     }
-    if (pcap_max_name && strcmp(pcap_max_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) { 
-        strncpy(events_to_read[read_count], pcap_max_name, PAPI_MAX_STR_LEN - 1); 
-        strncpy(event_short_names[read_count], "Power Cap Max (uW)", 49); 
-        read_count++; 
+    if (pcap_max_name && strcmp(pcap_max_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) {
+        strncpy(events_to_read[read_count], pcap_max_name, PAPI_MAX_STR_LEN - 1);
+        strncpy(event_short_names[read_count], "Power Cap Max (uW)", 49);
+        read_count++;
     }
-    if (fan_max_name && strcmp(fan_max_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) { 
-        strncpy(events_to_read[read_count], fan_max_name, PAPI_MAX_STR_LEN - 1); 
-        strncpy(event_short_names[read_count], "Fan Speed Max", 49); 
-        read_count++; 
+    if (fan_max_name && strcmp(fan_max_name, "") != 0 && read_count < MAX_EVENTS_TO_READ) {
+        strncpy(events_to_read[read_count], fan_max_name, PAPI_MAX_STR_LEN - 1);
+        strncpy(event_short_names[read_count], "Fan Speed Max", 49);
+        read_count++;
     }
-    for(i=0; i<read_count; ++i) { 
-        events_to_read[i][PAPI_MAX_STR_LEN - 1] = '\0'; 
-        event_short_names[i][49] = '\0'; 
+    for(i=0; i<read_count; ++i) {
+        events_to_read[i][PAPI_MAX_STR_LEN - 1] = '\0';
+        event_short_names[i][49] = '\0';
     }
 
 
-    if (read_count == 0) { 
-        fprintf(stderr, "    Error: No valid event names provided for reading.\n"); 
-        return; 
+    if (read_count == 0) {
+        fprintf(stderr, "    Error: No valid event names provided for reading.\n");
+        return;
     }
 
     long long* values = (long long*)calloc(read_count, sizeof(long long));
-    if (!values) { 
-        fprintf(stderr, "    Error: Failed to allocate memory for reading values.\n"); 
-        return; 
+    if (!values) {
+        fprintf(stderr, "    Error: Failed to allocate memory for reading values.\n");
+        return;
     }
 
     CALL_PAPI_OK(PAPI_create_eventset(&readSet));
@@ -510,16 +510,16 @@ void read_and_print_current_values(int cid,
     int added_count = 0;
     for (i = 0; i < read_count; ++i) {
         ret = PAPI_add_named_event(readSet, events_to_read[i]);
-        if (ret == PAPI_OK) { 
-            added_count++; 
-            added_flags[i] = true; 
+        if (ret == PAPI_OK) {
+            added_count++;
+            added_flags[i] = true;
         }
-        else { 
-            fprintf(stderr, "    Warning: Failed to add event '%s' for reading: %s\n", 
-                    events_to_read[i], PAPI_strerror(ret)); 
-            if(ret == PAPI_ENOMEM){ 
-                break; 
-            } 
+        else {
+            fprintf(stderr, "    Warning: Failed to add event '%s' for reading: %s\n",
+                    events_to_read[i], PAPI_strerror(ret));
+            if(ret == PAPI_ENOMEM){
+                break;
+            }
         }
     }
 

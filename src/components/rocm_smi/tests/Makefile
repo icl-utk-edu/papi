@@ -77,7 +77,7 @@ rocm_smi_writeTests: rocm_smi_writeTests.o $(UTILOBJS) $(PAPILIB)
 clean:
 	rm -f $(TESTS) $(TESTS_LONG) *.o
 
-checkpath: 
+checkpath:
 	echo PAPI_ROCM_ROOT = $(PAPI_ROCM_ROOT)
 	echo HIP_PATH = $(HIP_PATH)
 	echo HIPCC = $(HIPCC)
