@@ -41,7 +41,7 @@ main( int argc, char **argv )
 	}
 
 /* Elapsed microseconds and elapsed cycles are not as unambiguous as they appear.
-   On Pentium III and 4, for example, cycles is a measured value, while useconds 
+   On Pentium III and 4, for example, cycles is a measured value, while useconds
    is computed from cycles and mhz. MHz is read from /proc/cpuinfo (on linux).
    Thus, any error in MHz is propagated to useconds.
    Conversely, on ultrasparc useconds are extracted from a system call (gethrtime())

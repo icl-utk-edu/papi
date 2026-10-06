@@ -161,7 +161,7 @@ main( int argc, char **argv )
 		/* Note that the second run prints output on stdout. On some systems
 		 * this is costly. PAPI_TOT_INS or PAPI_TOT_CYC are likely to be _very_
 		 * different between the two runs.
-		 * printf("Column 1 approximately equals column 2\n"); 
+		 * printf("Column 1 approximately equals column 2\n");
 		 */
 		printf( "Row 3 approximately equals %u +- %u %%\n",
 				( unsigned ) ( ( values[0] )[0] / ( long long ) mythreshold ),

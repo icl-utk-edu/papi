@@ -14,7 +14,7 @@
 
 #define ITERS 100
 
-/* This file performs the following test: start, stop and timer functionality for 
+/* This file performs the following test: start, stop and timer functionality for
    PAPI_L1_TCM derived event
 
    - They are counted in the default counting domain and default
@@ -188,7 +188,7 @@ main( int argc, char **argv )
 		printf( "Repeated 10 times\n" );
 		printf
 			( "-------------------------------------------------------------------------\n" );
-/* 
+/*
       for (i=0;i<10;i++) {
          printf("Test type   : %12s%13s%13s\n", "1", "2", "3");
          printf(TAB3, EVT1_STR, values[(i*3)+0][0], (long long)0, (long long)0);

@@ -112,7 +112,7 @@ main( int argc, char **argv )
                 printf("%d %d %s\n",cid,our_cid,info.symbol);
             }
 
-	  
+
         } while ( PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid ) == PAPI_OK );
 
     }

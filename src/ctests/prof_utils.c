@@ -150,7 +150,7 @@ prof_alloc( int num, unsigned long blength )
 	}
 }
 
-/* Given the profiling type (16, 32, or 64) this function returns the 
+/* Given the profiling type (16, 32, or 64) this function returns the
    bucket size in bytes. NOTE: the bucket size does not ALWAYS correspond
    to the expected value, esp on architectures like Cray with weird data types.
    This is necessary because the posix_profile routine in extras.c relies on
