@@ -18,7 +18,7 @@ The following five flags specify the corresponding benchmarks:
   -vec     Vector FLOPs kernels.
   -instr   Instrution kernels.
 
-Each line in the event-list file should contain ether the name of a base 
+Each line in the event-list file should contain ether the name of a base
 event followed by the number of qualifiers to be appended, or a
 fully expanded event with qualifiers followed by the number zero, as in
 the following example:

@@ -22,7 +22,7 @@ void i_cache_driver(char* papi_event_name, int junk, hw_desc_t *hw_desc, char* o
     int l = strlen(outdir)+strlen(papi_event_name)+strlen(sufx);
     if (NULL == (papiFileName = (char *)calloc( 1+l, sizeof(char) ))) {
         fprintf(stderr, "Failed to allocate papiFileName.\n");
-        return; 
+        return;
     }
     if (l != (sprintf(papiFileName, "%s%s%s", outdir, papi_event_name, sufx))) {
         fprintf(stderr, "sprintf failed to copy into papiFileName.\n");

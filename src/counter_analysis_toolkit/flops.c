@@ -457,7 +457,7 @@ void keep_double_vec_res( int n, double *xd ) {
     for( i = 0; i < n; ++i ) {
         sum += xd[i];
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -472,7 +472,7 @@ void keep_double_mat_res( int n, double *ld ) {
             sum += ld[i * n + j];
         }
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -622,7 +622,7 @@ void keep_single_vec_res( int n, float *xs ) {
     for( i = 0; i < n; ++i ) {
         sum += xs[i];
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -637,7 +637,7 @@ void keep_single_mat_res( int n, float *ls ) {
             sum += ls[i * n + j];
         }
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -788,7 +788,7 @@ void keep_half_vec_res( int n, half *xh ) {
     for( i = 0; i < n; ++i ) {
         sum += xh[i];
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -803,7 +803,7 @@ void keep_half_mat_res( int n, half *lh ) {
             sum += lh[i * n + j];
         }
     }
-    
+
     if( 1.2345 == sum ) {
         fprintf(stderr, "Side-effect to disable dead code elimination by the compiler. Please ignore.\n");
     }
@@ -858,7 +858,7 @@ void flops_driver( char* papi_event_name, hw_desc_t *hw_desc, char* outdir ) {
         fprintf(stderr, "Failed to open file %s.\n", papiFileName);
         goto error0;
     }
-  
+
     retval = PAPI_create_eventset( &EventSet );
     if (retval != PAPI_OK ){
         goto error1;
