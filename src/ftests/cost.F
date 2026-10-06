@@ -2,7 +2,7 @@
 
       program cost
       implicit integer (p)
-      
+
       integer es
       integer*8 values(10)
       integer*8 ototcyc, ntotcyc
@@ -45,7 +45,7 @@
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -78,12 +78,12 @@
       end if
 
       call PAPIf_get_real_cyc(ototcyc)
-      
+
       do i=0, 50000
          call PAPIf_start(es, retval)
          call PAPIf_stop(es, values(1), retval)
       end do
-      
+
       call PAPIf_get_real_cyc(ntotcyc)
       ntotcyc=ntotcyc-ototcyc
 
@@ -96,9 +96,9 @@
       write (*, 200) REAL(ntotcyc)/50001.0, "cyc/call pair"
       print *
       print *
-      
+
 C     Start the read val
-      
+
       print *, "Performing read test..."
       end if
 
@@ -113,7 +113,7 @@ C     Start the read val
       do i=0, 50000
          call PAPIf_read(es, values(1), retval)
       end do
-      
+
       call PAPIf_stop(es, values(1), retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

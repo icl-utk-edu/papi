@@ -36,7 +36,7 @@
       end do
 
       do i=2,ITERS
-         if ((elapsed_cyc(i)-elapsed_cyc(i-1)).LT.0 ) stop 
+         if ((elapsed_cyc(i)-elapsed_cyc(i-1)).LT.0 ) stop
          total_cyc =total_cyc+(elapsed_cyc(i) - elapsed_cyc(i-1))
       end do
 
@@ -48,7 +48,7 @@
         if ((elapsed_usec(i) - elapsed_usec(i-1)).LT.0) stop
         total_usec=total_usec+(elapsed_usec(i) - elapsed_usec(i-1))
       end do
- 
+
       if (tests_quiet .EQ. 0) then
       print *,'PAPIf_get_real_cyc : ',(total_cyc/(ITERS-1))
       print *,'PAPIf_get_real_usec: ',(total_usec/(ITERS-1))

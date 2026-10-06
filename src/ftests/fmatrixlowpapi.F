@@ -1,7 +1,7 @@
 C ****************************************************************************
 C
 C matrixpapi.f
-C An example of matrix-matrix multiplication and using PAPI low level to 
+C An example of matrix-matrix multiplication and using PAPI low level to
 C look at the performance. written by Kevin London
 C March 2000
 C ****************************************************************************
@@ -40,35 +40,35 @@ C   Setup default values
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init( retval )
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPI_library_init', retval)
       end if
 
 C     Create the eventset
       call PAPIf_create_eventset(EventSet,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_create_eventset', retval)
       end if
 
 C   Total cycles
       call PAPIf_add_event(EventSet,PAPI_TOT_CYC,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_add_event PAPI_TOT_CYC', retval)
       end if
 
 C   Total [floating point] instructions
         call PAPIf_query_event(PAPI_FP_INS, retval)
         if (retval .NE. PAPI_OK) then
-        event = PAPI_TOT_INS 
+        event = PAPI_TOT_INS
         else
-        event = PAPI_FP_INS 
+        event = PAPI_FP_INS
         end if
 
       call PAPIf_add_event(EventSet,event,retval)
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_add_event PAPI_TOT_INS', retval)
       end if
 
@@ -78,7 +78,7 @@ C   Grab the hardware info
       do i=len(mstring),1,-1
         if(mstring(i:i).NE.' ') goto 10
       end do
- 10   if(i.LT.1)then 
+ 10   if(i.LT.1)then
         nchr=1
       else
         nchr=i
@@ -118,16 +118,16 @@ C   matrix 2: read in the matrix values
          end do
       end do
 
-C  Initialize the result matrix 
+C  Initialize the result matrix
       do i=1,nrows1
          do j=1, ncols2
             r(i,j) = i*j*1.0
          end do
       end do
-      
+
 C  Grab the beginning time
       call PAPIf_get_real_usec( starttime )
- 
+
 C  Start the event counters
       call PAPIf_start( EventSet, retval )
       if ( retval .NE. PAPI_OK ) then
@@ -136,15 +136,15 @@ C  Start the event counters
       end if
 
 C  Compute the matrix-matrix multiplication
-      do i=1,nrows1 
-       do j=1,ncols2 
-         do k=1,ncols1 
+      do i=1,nrows1
+       do j=1,ncols2
+         do k=1,ncols1
           r(i,j)=r(i,j) + p(i,k)*q(k,j)
          end do
        end do
       end do
 
-C  Stop the counters and put the results in the array values 
+C  Stop the counters and put the results in the array values
       call PAPIf_stop(EventSet,values,retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

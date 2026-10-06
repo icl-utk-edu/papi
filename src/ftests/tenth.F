@@ -144,7 +144,7 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_stop', retval)
       end if
-      
+
       call PAPIf_start(es3, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -185,7 +185,7 @@
       print *, "Test case 10: start, stop for derived event ",
      *"PAPI_L1_TCM."
 #endif
- 
+
       print *, "------------------------------------------------------"
       end if
       call PAPIf_get_domain(es1, domain, PAPI_DEFDOM, retval)
@@ -200,11 +200,11 @@
  900  format(a20, i3, " ", a70)
       end if
 
-      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 
+      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN,
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_get_granularity', 
+     . 'PAPIf_get_granularity',
      *retval)
       end if
 
@@ -214,7 +214,7 @@
  800  format(a25, i3, " ", a20)
       print *, "Using", NUM_FLOPS, " iterations of c += b*c"
       print *, "------------------------------------------------------"
-      
+
       write (*,500) "Test type", 1, 2, 3
 #if (defined(sun) && defined(sparc))
       write (*,500) EVT1_STR, values(1), 0, 0
@@ -222,17 +222,17 @@
       write (*,500) EVT3_STR, 0, 0, values(5)
       print *, "------------------------------------------------",
      *"------"
- 
+
       print *, "Verification:"
-      print *, "First number row 1 approximately equals (2,2) - (3,3) ", 
+      print *, "First number row 1 approximately equals (2,2) - (3,3) ",
      *"or ",(values(3)-values(5))
 #else
       write (*,500) EVT1_STR, values(1), 0, 0
-      write (*,500) EVT2_STR, 0, values(3), 0 
-      write (*,500) EVT3_STR, 0, 0, values(5) 
+      write (*,500) EVT2_STR, 0, values(3), 0
+      write (*,500) EVT3_STR, 0, 0, values(5)
       print *, "------------------------------------------------",
      *"------"
- 
+
       print *, "Verification:"
       print *, "First number row 1 approximately equals (2,2) + (3,3) ",
      *"or ", (values(3)+values(5))

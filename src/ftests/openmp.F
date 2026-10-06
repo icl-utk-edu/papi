@@ -1,7 +1,7 @@
 #include "fpapi_test.h"
 
       program openmp
-      
+
       use omp_lib
 
       integer*8 values(10)
@@ -31,17 +31,17 @@
       call PAPIf_query_event(PAPI_TOT_CYC, retval)
       if (retval .NE. PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .       'PAPIf_query_event', 
+     .       'PAPIf_query_event',
      *       retval)
       end if
 
       call PAPIf_create_eventset(es, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .       'PAPIf_create_eventset', 
+     .       'PAPIf_create_eventset',
      *       retval)
       end if
-      
+
       call PAPIf_add_event( es, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -76,7 +76,7 @@
       end if
 
 
-      
+
       call ftests_pass(__FILE__)
       end
 

@@ -1,32 +1,32 @@
 C  Strtest - Perform some basic tests of the functionality of the
-C  string passing to and from the PAPI Fortran interface. 
+C  string passing to and from the PAPI Fortran interface.
 C
 C    Test 1: Look up an event name from an event code. Use this name
 C            to try and locate the event code using the name received.
 C            Long, short and too short strings are used in the tests
 C
-C    Test 2: Look up a PAPI error string. Use long, short and too 
+C    Test 2: Look up a PAPI error string. Use long, short and too
 C            short strings to store the result.
 C
-C    Test 3: Look up and display event descriptions 
+C    Test 3: Look up and display event descriptions
 C            using PAPIf_get_event_info.
 C
 C    Comments:
 C    When using the Fortran interface it may not always be possible to
 C    use the PAPI predefined constants as actual arguments. Due to the
 C    values in these compilers might occasionally cast these into the
-C    wrong type. In the code below the line code=MSGCODE is used to 
+C    wrong type. In the code below the line code=MSGCODE is used to
 C    make sure that the event code get the right type.
 C
 #include "fpapi_test.h"
 C Set MSGLEN to the number of characters in the named event in MSGCODE
 #define MSGLEN 11
-#define MSGCODE PAPI_L1_DCM 
+#define MSGCODE PAPI_L1_DCM
 #define ERRCODE PAPI_EINVAL
-       
+
       program strtest
       implicit integer (p)
-      
+
       CHARACTER*(PAPI_MAX_STR_LEN) papistr
       CHARACTER*(PAPI_MAX_STR_LEN*2) papidblstr
 
@@ -71,7 +71,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       lastchar=PAPI_MAX_STR_LEN
       call checkstr(code,ckstr,check,lastchar,tests_quiet)
       lastchar=getstrlen(ckstr)
- 
+
       call checkstr(code,invstr1,check,lastchar,tests_quiet)
 
       call checkstr(code,invstr2,check,lastchar,tests_quiet)
@@ -181,7 +181,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
          print *,'    compiler reference manual.'
       end if
 
-      call ftests_pass(__FILE__)      
+      call ftests_pass(__FILE__)
       end
 
       subroutine checkstr(incode,string,check,lastchar,quiet)
@@ -237,7 +237,7 @@ C Set MSGLEN to the number of characters in the named event in MSGCODE
       end if
       end if
       end if
-      
+
       call findnull(string,quiet)
 
       if (quiet .EQ. 0) then
@@ -291,7 +291,7 @@ C      call PAPIF_describe_event(name,code,string,check)
       integer i
 
       do i=len(string),1,-1
-        if(string(i:i).ne.' ') then 
+        if(string(i:i).ne.' ') then
           goto 20
         end if
       end do
