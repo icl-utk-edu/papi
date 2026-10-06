@@ -10,7 +10,7 @@
   *    papi_avail [-adht] [-e event]
   *
   *    @section Description
-  *    papi_avail is a PAPI utility program that reports information about the 
+  *    papi_avail is a PAPI utility program that reports information about the
   *    current PAPI installation and supported preset and user defined events.
   *
   *    @section Options
@@ -19,13 +19,13 @@
   *        <li>-a    Display only the available PAPI events.
   *     <li>-c  Display only the available PAPI events after a check.
   *        <li>-d    Display PAPI event information in a more detailed format.
-  *        <li>-e < event >    Display detailed event information for the named event. 
+  *        <li>-e < event >    Display detailed event information for the named event.
   *            This event can be a preset event, a user defined event, or a native event.
   *            If the event is a preset or a user defined event the output shows a list of native
   *            events the event is based on and the formula that is used to compute the events final value.\n
   *    </ul>
   *
-  * Event filtering options 
+  * Event filtering options
   * <ul>
   *     <li>--br        Display branch related PAPI preset events
   *     <li>--cache     Display cache related PAPI preset events
@@ -353,7 +353,7 @@ int is_preset_event_available(char *name) {
   /* Iterate over all the available preset events and compare them by names. */
   do {
     if ( PAPI_get_event_info( event_code, &info ) == PAPI_OK ) {
-      
+
       if ( info.count ) {
     if ( (check_counter && checkCounter (event_code)) || !check_counter) {
       if (strcmp(info.symbol, basename) == 0) {

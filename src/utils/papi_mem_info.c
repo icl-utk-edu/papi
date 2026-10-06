@@ -8,14 +8,14 @@
   * @brief papi_mem_info utility.
   *	@page papi_mem_info
   *	@section NAME
-  *		papi_mem_info - provides information on the memory architecture of the current processor. 
+  *		papi_mem_info - provides information on the memory architecture of the current processor.
   *
   *	@section Synopsis
   *
   *	@section Description
-  *		papi_mem_info is a PAPI utility program that reports information about 
-  *		the cache memory architecture of the current processor, including number, 
-  *		types, sizes and associativities of instruction and data caches and 
+  *		papi_mem_info is a PAPI utility program that reports information about
+  *		the cache memory architecture of the current processor, including number,
+  *		types, sizes and associativities of instruction and data caches and
   *		Translation Lookaside Buffers.
   *
   *	@section Options

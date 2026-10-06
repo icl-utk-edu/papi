@@ -9,7 +9,7 @@
   *		papi_event_chooser NATIVE | PRESET < event > < event > ...
   *
   *	@section Description
-  *		papi_event_chooser is a PAPI utility program that reports information 
+  *		papi_event_chooser is a PAPI utility program that reports information
   *		about the current PAPI installation and supported preset events.
   *
   *	@section Options
@@ -72,7 +72,7 @@ show_event_info( int evt )
 
        for( k = 0; k < ( int ) info.count; k++ ) {
 	  if ( strlen( info.name[k] ) ) {
-	     printf( " |Register Value[%d]: %#-10x  %s|\n", 
+	     printf( " |Register Value[%d]: %#-10x  %s|\n",
                      k, info.code[k], info.name[k] );
 	  }
        }
