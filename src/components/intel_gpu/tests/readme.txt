@@ -15,11 +15,11 @@ gpu_metric_list:
 gpu_metric_read:
 	collect metrics in a certain time interval (second).
 	usage: usage: gpu_metric_read -d <duration> [ -l <loops>][-s][-m metric[:device=0][:tile=0]]
-	option: 
+	option:
 		-d <duration>   collect {duration} second, independent on workload execution.
 		-l <loops>      collect {loops} time, each with {duration} second.
 		-s              reset after each collection, and get delta between collections.
-		-m <metric1,metric2,...,>   metrics list. 
+		-m <metric1,metric2,...,>   metrics list.
                         Using modify ":device=<n>" for selecting a device in a multi-devices system
                         Using modify ":tile=<m>" for selecting a tile(subdevice) in a multi-tiles device
 	example:

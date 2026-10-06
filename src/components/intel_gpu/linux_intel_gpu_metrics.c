@@ -48,7 +48,7 @@ static uint32_t num_active_devices = 0;
 DeviceContext *active_devices;
 
 static MetricInfo	metricInfoList;
-static int		   total_metrics		= 0;		  
+static int		   total_metrics		= 0;
 static int		   global_metrics_type  = TIME_BASED; // default type
 
 papi_vector_t _intel_gpu_vector;
@@ -179,7 +179,7 @@ intel_gpu_init_thread(hwd_context_t *ctx)
 }
 
 
-static int 
+static int
 intel_gpu_init_component(int cidx)
 {
 	int retval = PAPI_OK;
@@ -232,7 +232,7 @@ intel_gpu_init_component(int cidx)
 		GPUFreeDevice(handle);
 		retval = PAPI_ENOSUPP;
 		goto fn_fail;
-	}; 
+	};
 	total_metrics = metricInfoList.numEntries;
 	GPUDEBUG("total metrics %d\n", total_metrics);
 
@@ -331,8 +331,8 @@ intel_gpu_update_control_state( hwd_control_state_t *ctl,
 
 #if defined(_DEBUG)
 	for (int i=0; i<count; i++) {
-		 GPUDEBUG("\t i=%d, ni_event 0x%x,  ni_papi_code 0x%x, ni_position %d, ni_owners %d   \n", 
-				i, native[i].ni_event, native[i].ni_papi_code, 
+		 GPUDEBUG("\t i=%d, ni_event 0x%x,  ni_papi_code 0x%x, ni_position %d, ni_owners %d   \n",
+				i, native[i].ni_event, native[i].ni_papi_code,
 				native[i].ni_position, native[i].ni_owners);
 	}
 #endif
@@ -345,7 +345,7 @@ intel_gpu_update_control_state( hwd_control_state_t *ctl,
 	   // check whether this metric is in the list
 	   for (midx=0; midx<nmetrics; midx++) {
 		   if (mContext->metric_idx[midx] == index) {
-			   GPUDEBUG("metric code %d: already in the list, ignore\n", index); 
+			   GPUDEBUG("metric code %d: already in the list, ignore\n", index);
 			   break;
 		   }
 	   }
@@ -391,7 +391,7 @@ intel_gpu_update_control_state( hwd_control_state_t *ctl,
 }
 
 
-static int 
+static int
 intel_gpu_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 {
 	GPUDEBUG("Entering intel_gpu_start\n");
@@ -434,7 +434,7 @@ intel_gpu_start( hwd_context_t * ctx, hwd_control_state_t * ctl )
 	return ret;
 }
 
-static int 
+static int
 intel_gpu_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
 	GPUDEBUG("Entering intel_gpu_stop\n");
@@ -457,7 +457,7 @@ intel_gpu_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 	return ret;
 }
 
-static int 
+static int
 intel_gpu_read( hwd_context_t *ctx, hwd_control_state_t *ctl, long long **events, int flags )
 {
 	GPUDEBUG("Entering intel_gpu_read\n");
@@ -559,10 +559,10 @@ intel_gpu_shutdown_component(void)
 	return PAPI_OK;
 }
 
-/* 
+/*
  * reset function will reset the global accumualted metrics values
  */
-static int 
+static int
 intel_gpu_reset( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
 
@@ -601,7 +601,7 @@ intel_gpu_set_domain( hwd_control_state_t * ctl, int domain )
 
 }
 
-static int 
+static int
 intel_gpu_ntv_enum_events(uint32_t *EventCode, int modifier )
 {
 	GPUDEBUG("Entering intel_gpu_ntv_enum_events\n");
@@ -624,11 +624,11 @@ intel_gpu_ntv_enum_events(uint32_t *EventCode, int modifier )
 			break;
 		default:
 			return PAPI_EINVAL;
-	} 
+	}
 	return PAPI_OK;
 }
 
-static int 
+static int
 intel_gpu_ntv_code_to_name( uint32_t EventCode, char *name, int len )
 {
 	GPUDEBUG("Entering intel_gpu_ntv_code_to_name\n");
@@ -639,12 +639,12 @@ intel_gpu_ntv_code_to_name( uint32_t EventCode, char *name, int len )
 	}
 
 	memset(name, 0, len);
-	strncpy_se(name,  len, metricInfoList.infoEntries[index].name, 
+	strncpy_se(name,  len, metricInfoList.infoEntries[index].name,
 		   strlen(metricInfoList.infoEntries[index].name));
 	return PAPI_OK;
 }
 
-static int 
+static int
 intel_gpu_ntv_code_to_descr( uint32_t EventCode, char *desc, int len )
 {
 	GPUDEBUG("Entering intel_gpu_ntv_code_to_descr\n");
@@ -668,7 +668,7 @@ intel_gpu_ntv_name_to_code( const char *name, uint32_t *event_code)
 	}
 
    for (int i=0; i<total_metrics; i++) {
-		if (strncmp(metricInfoList.infoEntries[i].name, name, 
+		if (strncmp(metricInfoList.infoEntries[i].name, name,
 			 strlen(metricInfoList.infoEntries[i].name)) == 0) {
 		   int devnum   = 0;
 		   int tilenum = 0;
@@ -717,7 +717,7 @@ papi_vector_t _intel_gpu_vector = {
 		.default_granularity = PAPI_GRN_SYS,
 		.available_granularities = PAPI_GRN_SYS,
 		.num_mpx_cntrs = GPU_MAX_COUNTERS,
-		
+
 		/* component specific cmp_info initializations */
 		.fast_virtual_timer = 0,
 		.attach = 0,

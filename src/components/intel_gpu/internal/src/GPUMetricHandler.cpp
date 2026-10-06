@@ -53,7 +53,7 @@
 
 #if defined(_DEBUG)
 #define DebugPrint(format, args...)		   fprintf(stderr, format, ## args)
-#else 
+#else
 #define DebugPrint(format, args...)		   {do {} while(0); }
 #endif
 
@@ -146,18 +146,18 @@ functionInit(void *dllHandle)
 	DLL_SYM_CHECK(dllHandle, zetMetricQueryCreate, zet_pfnMetricQueryCreate_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricQueryDestroy, zet_pfnMetricQueryDestroy_t);
 	DLL_SYM_CHECK(dllHandle, zetMetricQueryGetData, zet_pfnMetricQueryGetData_t);
-	DLL_SYM_CHECK(dllHandle, zetMetricGroupCalculateMetricValues, 
+	DLL_SYM_CHECK(dllHandle, zetMetricGroupCalculateMetricValues,
 				zet_pfnMetricGroupCalculateMetricValues_t);
-	DLL_SYM_CHECK(dllHandle, zetMetricGroupCalculateMultipleMetricValuesExp, 
+	DLL_SYM_CHECK(dllHandle, zetMetricGroupCalculateMultipleMetricValuesExp,
 				zet_pfnMetricGroupCalculateMultipleMetricValuesExp_t);
 	DLL_SYM_CHECK(dllHandle, zetTracerExpCreate, zet_pfnTracerExpCreate_t);
 	DLL_SYM_CHECK(dllHandle, zetTracerExpDestroy, zet_pfnTracerExpDestroy_t);
 	DLL_SYM_CHECK(dllHandle, zetTracerExpSetPrologues, zet_pfnTracerExpSetPrologues_t);
 	DLL_SYM_CHECK(dllHandle, zetTracerExpSetEpilogues, zet_pfnTracerExpSetEpilogues_t);
 	DLL_SYM_CHECK(dllHandle, zetTracerExpSetEnabled, zet_pfnTracerExpSetEnabled_t);
-	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryBegin, 
+	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryBegin,
 				zet_pfnCommandListAppendMetricQueryBegin_t);
-	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryEnd, 
+	DLL_SYM_CHECK(dllHandle, zetCommandListAppendMetricQueryEnd,
 				zet_pfnCommandListAppendMetricQueryEnd_t);
 	return ret;
 }
@@ -345,7 +345,7 @@ metricQueryEndCB(
 /*!
  * @fn	   int getMetricType(const char *desc, zet_metric_type_t type )
  *
- * @brief	Find the metric type for report (accumulate, average or raw) 
+ * @brief	Find the metric type for report (accumulate, average or raw)
  *			based on metric type and description.
  *
  * @param	IN desc  -- metric description
@@ -379,8 +379,8 @@ getMetricType(char *desc, zet_metric_type_t metric_type) {
 
 /*------------------------------------------------------------------------------*/
 /*!
- * @fn		 void * typedValue2Value(zet_typed_value_t data, std::fstream *foutstream, 
- *									 int outflag, int *dtype, long long *iVal,  
+ * @fn		 void * typedValue2Value(zet_typed_value_t data, std::fstream *foutstream,
+ *									 int outflag, int *dtype, long long *iVal,
  *									 double *fpVal, int isLast)
  *
  *  @brief	Convert typed value to long long or double.  if foutstream is open, log the data
@@ -510,9 +510,9 @@ GPUMetricHandler::~GPUMetricHandler()
 
 /*-------------------------------------------------------------------------------------------*/
 /*!
- * fn	  GPUMetricHandler * GPUMetricHandler::GetInstance(uint32_t driverId, 
+ * fn	  GPUMetricHandler * GPUMetricHandler::GetInstance(uint32_t driverId,
  *										uint32_t deviceId, uint32_t subdeviceId)
- * 
+ *
  * @brief  Get an instance of GPUMetrichander object
  *
  * @param  IN deviceId    - given driver id
@@ -535,7 +535,7 @@ GPUMetricHandler::GetInstance(uint32_t driverId, uint32_t deviceId, uint32_t sub
 	uint32_t key = CreateDeviceCode(driverId, deviceId, subdeviceId);
 	auto it = g_metricHandlerMap.find(key);
 	if (it == g_metricHandlerMap.end()) {
-		DebugPrintError("Device <%d, %d, %d> is not a valid metrics device\n", 
+		DebugPrintError("Device <%d, %d, %d> is not a valid metrics device\n",
 				driverId, deviceId, subdeviceId);
 	} else {
 		 handler = (GPUMetricHandler *)it->second;
@@ -548,16 +548,16 @@ GPUMetricHandler::GetInstance(uint32_t driverId, uint32_t deviceId, uint32_t sub
 /*!
  * fn	  int GPUMetricHandler::InitMetricDevice((DeviceInfo **deviceInfo, uint32_t *numDevices,
  *                                 uint32_t *totalDevices)
- * 
+ *
  * @brief  Discover and initiate GPU Metric Device
  *
  * @param  OUT deviceInfo   -- a list of DeviceInfo objects for devices
  * @param  OUT numDevice    -- number of DeviceInfo objects for devices
  * @param  OUT totalDevice  -- total available devices including root devices and subdevices.
  *
- * @return Status.  0 for success, otherwise 1. 
+ * @return Status.  0 for success, otherwise 1.
  */
-int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numDevices, 
+int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numDevices,
 					uint32_t *totalDevices)
 {
 	uint32_t driverCount = 0;
@@ -690,7 +690,7 @@ int GPUMetricHandler::InitMetricDevices(DeviceInfo **deviceInfo,  uint32_t *numD
 #if defined(_DEBUG)
 	for (uint32_t i=0; i<*numDevices; i++) {
 		DeviceInfo node = g_deviceInfo.at(i);
-		DebugPrint("dev[%d]: drv %d, dev %d subdev %d\n", 
+		DebugPrint("dev[%d]: drv %d, dev %d subdev %d\n",
 				i, node.driverId, node.deviceId, node.subdeviceId);
 	}
 #endif
@@ -764,7 +764,7 @@ void GPUMetricHandler::DestroyMetricDevice()
  * @param	 IN device  -- device handle
  * @param	 INOUT mgroups -- metric group info to fill out
  *
- * @return	Status.  0 for success, otherwise 1. 
+ * @return	Status.  0 for success, otherwise 1.
  */
 int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupInfo *mgroups)
 {
@@ -828,7 +828,7 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 			groupList[gid].metricList[mid].metricId = mid;
 			groupList[gid].metricList[mid].metricType =
 			getMetricType(metricProps.description, metricProps.metricType);
-			DebugPrint("   metric[%d][%d] name %s, desc %s, metric_type %d\n", 
+			DebugPrint("   metric[%d][%d] name %s, desc %s, metric_type %d\n",
 					gid, mid, metricProps.name, metricProps.description,
 					metricProps.metricType);
 		}
@@ -837,7 +837,7 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 			eventBasedCount += metricCount;
 		} else {
 			timeBasedCount += metricCount;
-		}			
+		}
 		delete [] metricHandles;
 	}
 	DebugPrint("init metric groups return:  groupCount %d, metric %d, TBS %d, EBS %d\n",
@@ -854,13 +854,13 @@ int GPUMetricHandler::InitMetricGroups(ze_device_handle_t device, TMetricGroupIn
 /*------------------------------------------------------------------------------*/
 /*!
  * @fn	 int GPUMetricHandler::GetMetricInfo(int type, MetricInfo *data)
- * 
+ *
  * @brief  Get available metric info
  *
  * @param  IN  type    - metric group type,  0 for timed-based,  1 for query based
  * @param  INOUT data  - pointer to the MetricInfo data contains a list of metrics
  *
- * @reutrn		   - 0 if success. 
+ * @reutrn		   - 0 if success.
  */
 int GPUMetricHandler::GetMetricInfo(int type, MetricInfo *data)
 {
@@ -910,14 +910,14 @@ int GPUMetricHandler::GetMetricInfo(int type, MetricInfo *data)
 /**
  * @fn	 int GPUMetricHandler::GetMetricInfo(const char *name, int type, MetricInfo *data)
  *
- * @brief  Get available metrics in a certain metrics group. 
+ * @brief  Get available metrics in a certain metrics group.
  *		 If metric group is not specified, get all available metrics from all metric groups.
  *
  * @param  IN  name  -- metric group name.  If nullptr or empty, means all metric groups
  * @param  IN  type  -- metric group type,  0 for timed-based,  1 for query based
  * @param  INOUT data  -- pointer to the MetricInfo data contains a list of metrics
  *
- * @reutrn		   -- 0 if success. 
+ * @reutrn		   -- 0 if success.
  */
 int GPUMetricHandler::GetMetricInfo(const char *name, int type, MetricInfo *data)
 {
@@ -925,7 +925,7 @@ int GPUMetricHandler::GetMetricInfo(const char *name, int type, MetricInfo *data
 	uint32_t numMetrics = 0;
 	int ret	 = 0;
 	int retError = 1;
-	 uint32_t  stype = (type)? ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED 
+	 uint32_t  stype = (type)? ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED
 					: ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
 	if(!m_device) {
 		DebugPrintError("MetricsDevice not opened\n");
@@ -989,7 +989,7 @@ int GPUMetricHandler::GetMetricInfo(const char *name, int type, MetricInfo *data
 	if ( !selectedAll && (i == m_groupInfo->numMetricGroups)) {
 		DebugPrintError( "GetMetricInfo: metricGroup %s is not found, abort\n", name);
 		return retError;
-	} 
+	}
 	data->numEntries = index;
 	return ret;
 }
@@ -1000,12 +1000,12 @@ int GPUMetricHandler::GetMetricInfo(const char *name, int type, MetricInfo *data
  * @fn	   int GPUMetricHandler::GetMetricCode(
  *					   const char *mGroupName, const char *metricName, uint32_t mtype,
  *						uint32_t *mGroupCode,  uint32_t *metricCode)
- * 
- * @ brief   Get metric code and metric group code for a given valid metric group name and 
+ *
+ * @ brief   Get metric code and metric group code for a given valid metric group name and
  *           metric name.
  *
  * @param	IN  mGroupName  - Metric group name
- * @param	IN  metricName  - metric name in the 
+ * @param	IN  metricName  - metric name in the
  * @param	IN  mtype	    - metric type:  < time_based,  event_based>
  * @param	OUT mGroupCode  - metric group code,  0 if the metric group dose not exist
  * @param	OUT metricCode  - metric code,  0 if the metric dose not exist
@@ -1124,9 +1124,9 @@ GPUMetricHandler::EnableMetricGroup(uint32_t groupCode, uint32_t mtype, int *ena
 	if (!m_context) {
 		ze_context_desc_t ctxtDesc = {
 			ZE_STRUCTURE_TYPE_CONTEXT_DESC,
-			nullptr, 
+			nullptr,
 			0
-		}; 
+		};
 		zeContextCreateFunc(m_driver, &ctxtDesc, &m_context);
 	}
 
@@ -1228,7 +1228,7 @@ int GPUMetricHandler::EnableTimeBasedStream(uint32_t timePeriod, uint32_t numRep
 		ret = 0;
 		m_status = COLLECTION_ENABLED;
 	} else {
-		DebugPrintError("EnableTimeBasedStream: failed on device [%p], status 0x%x\n", 
+		DebugPrintError("EnableTimeBasedStream: failed on device [%p], status 0x%x\n",
 						m_device, status);
 		status = zetContextActivateMetricGroupsFunc(m_context, m_device, 0, nullptr);
 		m_status = COLLECTION_INIT;
@@ -1256,7 +1256,7 @@ int GPUMetricHandler::EnableEventBasedQuery()
 		DebugPrintError("No metrics enabled. Data collection abort\n");
 		return retError;
 	}
-	m_lock.lock(); 
+	m_lock.lock();
 	if (m_status  == COLLECTION_ENABLED) {
 		DebugPrint( "EnableEventBasedQuery: already enabled\n");
 		m_lock.unlock();
@@ -1333,7 +1333,7 @@ int GPUMetricHandler::EnableEventBasedQuery()
  * @fn		 void GPUMetricHandler::DisableMetricGroup()
  * @brief	  Disable current metric group
  *			 After metric group disabled, cannot read data anymore
- * 
+ *
  */
 void
 GPUMetricHandler::DisableMetricGroup()
@@ -1394,16 +1394,16 @@ GPUMetricHandler::GetMetricData(uint32_t mode, uint32_t *numReports)
 			}
 			if (status == ZE_RESULT_NOT_READY) {
 				qList.push_back(query);
-			} 
+			}
 			if ((status == ZE_RESULT_SUCCESS) && rawBuffer) {
 				GenerateMetricData(rawBuffer, rawDataSize,  mode);
 				delete [] rawBuffer;
-			} 
+			}
 		}
 		m_queryState->queryList.clear();
 		for (auto query : qList) {
 			 m_queryState->queryList.push_back(query);
-		}		
+		}
 		m_queryState->lock.unlock();
 	}
 
@@ -1466,8 +1466,8 @@ GPUMetricHandler::GetCurGroupCode() {
 /*------------------------------------------------------------------------------*/
 /*!
  * @fn	int GPUMetricHandler::SetControl(uint32_t mode)
- * 
- * @brief Set control 
+ *
+ * @brief Set control
  *
  * @param IN mode  -- control mode to set
  */
@@ -1494,7 +1494,7 @@ GPUMetricHandler::SetControl(uint32_t mode) {
 /*------------------------------------------------------------------------------*/
 /*!
  * fn	   string  GPUMetricHandler::GetDeviceName(ze_device_handle_t device)
- * 
+ *
  * @brief   Get metric device name
  *
  * @parapm  In device   Device handler
@@ -1515,7 +1515,7 @@ string  GPUMetricHandler::GetDeviceName(ze_device_handle_t device)
 /*------------------------------------------------------------------------------*/
 /*!
  * @fn	void GPUMetricHandler::GenerateMetricData(
- *					   uint8_t *rawBuffer, size_t rawDataSize, uint32_t mode) 
+ *					   uint8_t *rawBuffer, size_t rawDataSize, uint32_t mode)
  *
  * @brief Calculate metric data from raw event data, the result will be aggrated into global data
  *
@@ -1580,7 +1580,7 @@ GPUMetricHandler::GenerateMetricData(
 
 /*------------------------------------------------------------------------------*/
 /*!
- * @fn	void GPUMetricHandler::ProcessMetricDataSet(uint32_t dataSetId, 
+ * @fn	void GPUMetricHandler::ProcessMetricDataSet(uint32_t dataSetId,
  *				zet_typed_value_t *typedData, uint32_t startIdx, uint32_t metricDataSize,
  *				uint32_t metricCount, uint32_t mode)
  *
@@ -1620,7 +1620,7 @@ GPUMetricHandler::ProcessMetricDataSet(
 		m_reportCount[dataSetId] = 0;
 	}
 
-	DebugPrint("data[%d], metricDataSize %d, reportCounts %d, metricCount %d\n", 
+	DebugPrint("data[%d], metricDataSize %d, reportCounts %d, metricCount %d\n",
 		(int)dataSetId, (int)metricDataSize, (int)reportCounts, (int)metricCount);
 
 	// log metric names
@@ -1636,8 +1636,8 @@ GPUMetricHandler::ProcessMetricDataSet(
 	for (uint32_t i=0; i < reportCounts; i++, sidx+= metricCount) {
 		for (uint32_t j=0; j<metricCount; j++) {
 			 int dtype = 0;
-			 long long iVal = 0; 
-			 double fpVal = 0.0; 
+			 long long iVal = 0;
+			 double fpVal = 0.0;
 
 			 typedValue2Value(typedData[sidx + j],
 							 &m_dataDump, g_stdout, &dtype, &iVal, &fpVal, (j==(metricCount-1)));
@@ -1685,7 +1685,7 @@ GPUMetricHandler::ReadStreamData(size_t *rawDataSize)
    *rawDataSize = 0;
 	//read raw data
 	status = zeEventHostSynchronizeFunc(m_event, 50000 /* wait delay in nanoseconds */);
- 
+
 	status = zetMetricStreamerReadDataFunc(m_metricStreamer, UINT32_MAX,
 										  &rawSize, nullptr);
 	if (status !=  ZE_RESULT_SUCCESS) {
@@ -1763,7 +1763,7 @@ GPUMetricHandler::ReadQueryData(QueryData &data, size_t *rawDataSize, ze_result_
 	CHECK_N_RETURN_STATUS((status!=ZE_RESULT_SUCCESS), nullptr);
 
 	*rawDataSize = rawSize;
-	
+
 	return rawBuffer;
 }
 

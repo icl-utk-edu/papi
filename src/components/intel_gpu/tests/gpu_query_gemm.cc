@@ -44,7 +44,7 @@
 #include "gpu_common_utils.h"
 
 #if defined(ENABLE_PAPI)
-#include "papi.h" 
+#include "papi.h"
 const char *env_str = "ZE_ENABLE_TRACING_LAYER=1";
 #endif
 
@@ -77,7 +77,7 @@ inline string GetExecutablePath() {
     return path.substr(0, path.find_last_of("/\\") + 1);
 }
 
-inline 
+inline
 vector<uint8_t> LoadBinaryFile(const string& path) {
     vector<uint8_t> binary;
     ifstream stream(path, ios::in | ios::binary);
@@ -110,7 +110,7 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
                                     ze_device_handle_t& device,
                                     ze_driver_handle_t& driver) {
     ze_result_t status = ZE_RESULT_SUCCESS;
-  
+
     uint32_t driver_count = 0;
     status = zeDriverGet(&driver_count, nullptr);
     if (status != ZE_RESULT_SUCCESS || driver_count == 0) {
@@ -119,7 +119,7 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
     vector<ze_driver_handle_t> driver_list(driver_count, nullptr);
     status = zeDriverGet(&driver_count, driver_list.data());
     assert(status == ZE_RESULT_SUCCESS);
-  
+
     for (uint32_t i = 0; i < driver_count; ++i) {
         uint32_t device_count = 0;
         status = zeDeviceGet(driver_list[i], &device_count, nullptr);
@@ -129,12 +129,12 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
         vector<ze_device_handle_t> device_list(device_count, nullptr);
         status = zeDeviceGet(driver_list[i], &device_count, device_list.data());
         assert(status == ZE_RESULT_SUCCESS);
- 
+
         for (uint32_t j = 0; j < device_count; ++j) {
             ze_device_properties_t props;
             status = zeDeviceGetProperties(device_list[j], &props);
             assert(status == ZE_RESULT_SUCCESS);
-  
+
             if (props.type == type && strstr(props.name, "Intel") != nullptr) {
                 if (dev_idx != j) {
                     continue;
@@ -158,19 +158,19 @@ inline void GetIntelDeviceAndDriver(ze_device_type_t type,
     return;
 }
 
-static void 
+static void
 RunKernel(ze_kernel_handle_t kernel,
                          ze_device_handle_t device,
-                         ze_context_handle_t context, 
+                         ze_context_handle_t context,
                          const vector<float>& a,
                          const vector<float>& b,
                          vector<float>& c,
-                         int size) 
+                         int size)
 {
     assert(kernel != nullptr);
     assert(device != nullptr);
     assert(context != nullptr);
-    
+
     assert(size > 0);
     int array_size = size * size;
     assert(a.size() == static_cast<size_t>(array_size));
@@ -201,7 +201,7 @@ RunKernel(ze_kernel_handle_t kernel,
     void* dev_c = nullptr;
     status = zeMemAllocDevice(context, &alloc_desc, size * size * sizeof(float),
                               ALIGN, device, &dev_c);
-    assert(status == ZE_RESULT_SUCCESS);        
+    assert(status == ZE_RESULT_SUCCESS);
 
     status = zeKernelSetGroupSize(kernel, group_size[0],
                                   group_size[1], group_size[2]);
@@ -350,7 +350,7 @@ static void Compute(ze_device_handle_t device,
     assert(status == ZE_RESULT_SUCCESS);
 }
 
-int 
+int
 main(int argc, char* argv[]) {
     int retVal;
     InParams param;
@@ -433,7 +433,7 @@ main(int argc, char* argv[]) {
 
 
 #if defined(ENABLE_PAPI)
-    // enable tracing before offload start 
+    // enable tracing before offload start
     auto start_all = chrono::steady_clock::now();
     long long *metric_values = (long long *)calloc(num_metrics, sizeof(long long));
     CHECK_N_MSG_EXIT((metric_values == NULL), "Error on allocating memory.", PAPI_ENOMEM);
