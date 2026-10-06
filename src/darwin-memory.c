@@ -38,7 +38,7 @@ _darwin_get_dmem_info( PAPI_dmem_info_t * d )
 }
 
 /*
- * Architecture-specific cache detection code 
+ * Architecture-specific cache detection code
  */
 
 

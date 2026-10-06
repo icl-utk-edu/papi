@@ -145,11 +145,11 @@ export LIBPATH
 
 
 if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
-  
+
   echo ""
   echo "Running Event Validation Tests";
   echo ""
-  
+
   for i in $VTESTS;
   do
     for xtest in $EXCLUDE;
@@ -164,21 +164,21 @@ if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
         RAN="$i $RAN"
         printf "Running %-50s %s" $i:
         $VALGRIND ./$i $TESTS_QUIET
-        
+
         #delete output folder for high-level tests
         case "$i" in
           *"_hl"*) rm -r papi_hl_output ;;
         esac
-  
+
       fi;
     fi;
     MATCH=0
   done
-  
+
   echo ""
   echo "Running C Tests";
   echo ""
-  
+
   for i in $CTESTS;
   do
     for xtest in $EXCLUDE;
@@ -200,21 +200,21 @@ if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
         else
           $VALGRIND ./$i $TESTS_QUIET
         fi
-  
+
         #delete output folder for high-level tests
         case "$i" in
           *"_hl"*) rm -r papi_hl_output ;;
         esac
-  
+
       fi;
     fi;
     MATCH=0
   done
-  
+
   echo ""
   echo "Running Fortran Tests";
   echo ""
-  
+
   for i in $FTESTS;
   do
     for xtest in $EXCLUDE;
@@ -229,12 +229,12 @@ if [ "$PERF_EVENT_ACTIVE" = "true" ]; then
         RAN="$i $RAN"
         printf "Running $i:\n"
         $VALGRIND ./$i $TESTS_QUIET
-  
+
         #delete output folder for high-level tests
         case "$i" in
           *"_hl"*) rm -r papi_hl_output ;;
         esac
-  
+
       fi;
     fi;
     MATCH=0
@@ -270,6 +270,6 @@ do
   MATCH=0
 done
 
-if [ "$RAN" = "" ]; then 
+if [ "$RAN" = "" ]; then
 	echo "FAILED to run any tests. (you can safely ignore this if this was expected behavior)"
 fi;

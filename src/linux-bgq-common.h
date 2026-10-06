@@ -2,19 +2,19 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-bgq-common.h
  * CVS:     $Id$
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	< your name here >
  *			< your email address >
- * BGPM component 
- * 
+ * BGPM component
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file is part of the source code for a component that enables PAPI-C to 
+ *  This file is part of the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
@@ -43,7 +43,7 @@ int         _check_BGPM_error( int err, char* bgpmfunc );
 long_long	_common_getEventValue( unsigned event_id, int EventGroup );
 int 		_common_deleteRecreate( int *EventGroup_ptr );
 int 		_common_rebuildEventgroup( int count, int *EventGroup_local, int *EventGroup_ptr );
-int 		_common_set_overflow_BGPM( int EventGroup, 
+int 		_common_set_overflow_BGPM( int EventGroup,
 									   int evt_idx,
-									   int threshold, 
+									   int threshold,
 									   void (*handler)(int, uint64_t, uint64_t, const ucontext_t *) );

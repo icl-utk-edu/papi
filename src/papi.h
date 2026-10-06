@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
 * @file    papi.h
 *
 * @author  Philip Mucci
@@ -26,64 +26,64 @@
 
 /**
  * @mainpage PAPI
- *  
+ *
  * @section papi_intro Introduction
- * The PAPI Performance Application Programming Interface provides machine and 
- * operating system independent access to hardware performance counters found 
- * on most modern processors. 
- * Any of over 100 preset events can be counted through either a simple high 
- * level programming interface or a more complete low level interface from 
- * either C or Fortran. 
- * A list of the function calls in these interfaces is given below, 
- * with references to other pages for more complete details. 
+ * The PAPI Performance Application Programming Interface provides machine and
+ * operating system independent access to hardware performance counters found
+ * on most modern processors.
+ * Any of over 100 preset events can be counted through either a simple high
+ * level programming interface or a more complete low level interface from
+ * either C or Fortran.
+ * A list of the function calls in these interfaces is given below,
+ * with references to other pages for more complete details.
  *
  * @section papi_high_api High Level Functions
- * A simple interface for instrumenting end-user applications. 
+ * A simple interface for instrumenting end-user applications.
  * Fully supported on both C and Fortran.
  * See individual functions for details on usage.
- * 
+ *
  *	@ref high_api
- * 
- * Note that the high-level interface is self-initializing. 
- * You can mix high and low level calls, but you @b must call either 
+ *
+ * Note that the high-level interface is self-initializing.
+ * You can mix high and low level calls, but you @b must call either
  * @ref PAPI_library_init() or a high level routine before calling a low level routine.
  *
  * @section papi_low_api Low Level Functions
  * Advanced interface for all applications and performance tools.
  * Some functions may be implemented only for C or Fortran.
  * See individual functions for details on usage and support.
- * 
+ *
  * @ref low_api
  *
  * @section papi_Fortran Fortran API
  * The Fortran interface has some unique features and entry points.
  * See individual functions for details.
- * 
+ *
  * @ref PAPIF
  *
  * @ref PAPIF-HL
  *
- * @section Components 
+ * @section Components
  *
  *	Components provide access to hardware information on specific subsystems.
  *
  *	Components can be found under the components directory or @ref papi_components "here"
  *	and included in a build as an argument to configure,\n
  *	'--with-components=< comma_seperated_list_of_components_to_build >'.
- * 
+ *
  * @section papi_util PAPI Utility Commands
- * <ul> 
+ * <ul>
  *		<li> @ref papi_avail - provides availability and detail information for PAPI preset events
  *		<li> @ref papi_clockres - provides availability and detail information for PAPI preset events
  *		<li> @ref papi_cost - provides availability and detail information for PAPI preset events
  *		<li> @ref papi_command_line - executes PAPI preset or native events from the command line
- *		<li> @ref papi_decode -	decodes PAPI preset events into a csv format suitable for 
+ *		<li> @ref papi_decode -	decodes PAPI preset events into a csv format suitable for
  *							PAPI_encode_events
- *		<li> @ref papi_event_chooser -	given a list of named events, lists other events 
+ *		<li> @ref papi_event_chooser -	given a list of named events, lists other events
  *										that can be counted with them
- *		<li> @ref papi_mem_info -	provides information on the memory architecture 
+ *		<li> @ref papi_mem_info -	provides information on the memory architecture
 									of the current processor
- *		<li> @ref papi_native_avail - provides detailed information for PAPI native events 
+ *		<li> @ref papi_native_avail - provides detailed information for PAPI native events
  * </ul>
  * @see The PAPI Website http://icl.cs.utk.edu/papi
  */
@@ -91,70 +91,70 @@
 /** \htmlonly
   * @page CDI PAPI Component Development Interface
   * @par \em Introduction
-  *		PAPI-C consists of a Framework and between 1 and 16 Components. 
-  *		The Framework is platform independent and exposes the PAPI API to end users. 
-  *		The Components provide access to hardware information on specific subsystems. 
-  *		By convention, Component 0 is always a CPU Component. 
-  *		This allows default behavior for legacy code, and provides a universal 
-  *		place to define system-wide operations and parameters, 
-  *		like clock rates and interrupt structures. 
-  *		Currently only a single CPU Component can exist at a time. 
+  *		PAPI-C consists of a Framework and between 1 and 16 Components.
+  *		The Framework is platform independent and exposes the PAPI API to end users.
+  *		The Components provide access to hardware information on specific subsystems.
+  *		By convention, Component 0 is always a CPU Component.
+  *		This allows default behavior for legacy code, and provides a universal
+  *		place to define system-wide operations and parameters,
+  *		like clock rates and interrupt structures.
+  *		Currently only a single CPU Component can exist at a time.
   *
   * @par No CPU
-  *		In certain cases it can be desirable to use a generic CPU component for 
-  *		testing instrumentation or for operation on systems that don't provide 
-  *		the proper patches for accessing cpu counters. 
-  *		For such a case, the configure option: 
+  *		In certain cases it can be desirable to use a generic CPU component for
+  *		testing instrumentation or for operation on systems that don't provide
+  *		the proper patches for accessing cpu counters.
+  *		For such a case, the configure option:
   *	@code
   *		configure --with-no-cpu-counters = yes
-  *	@endcode 
+  *	@endcode
   *	is provided to build PAPI with an "empty" cpu component.
   *
   *	@par Exposed Interface
-  *		A Component for PAPI-C typically consists of a single header file and a 
-  *		single (or small number of) source file(s). 
-  *		All of the information for a Component needed by PAPI-C is exposed through 
-  *		a single data structure that is declared and initialized at the bottom 
-  *		of the main source file. 
+  *		A Component for PAPI-C typically consists of a single header file and a
+  *		single (or small number of) source file(s).
+  *		All of the information for a Component needed by PAPI-C is exposed through
+  *		a single data structure that is declared and initialized at the bottom
+  *		of the main source file.
   *		This structure, @ref papi_vector_t , is defined in @ref papi_vector.h .
-  *	
-  *	@par Compiling With an Existing Component 
-  *		Components provided with the PAPI source distribution all appear in the 
-  *		src/components directory. 
-  *		Each component exists in its own directory, named the same as the component itself. 
+  *
+  *	@par Compiling With an Existing Component
+  *		Components provided with the PAPI source distribution all appear in the
+  *		src/components directory.
+  *		Each component exists in its own directory, named the same as the component itself.
   *		To include a component in a PAPI build, use the configure command line as shown:
-  *	
+  *
   *	@code
   *		configure --with-components="component list"
   *	@endcode
-  *	
-  * Replace the "component list" argument with either the name of a specific 
-  *	component directory or multiple component names separated by spaces and 
+  *
+  * Replace the "component list" argument with either the name of a specific
+  *	component directory or multiple component names separated by spaces and
   *	enclosed in quotes as shown below:
   *
   *	\c configure --with-components="acpi lustre infiniband"
   *
-  *	In some cases components themselves require additional configuration. 
-  *	In these cases an error message will be produced when you run @code make @endcode . 
+  *	In some cases components themselves require additional configuration.
+  *	In these cases an error message will be produced when you run @code make @endcode .
   *	To fix this, run the configure script found in the component directory.
-  * 
-  *	@par Adding a New Component 
+  *
+  *	@par Adding a New Component
   *	The mechanics of adding a new component to the PAPI 4.1 build are relatively straight-forward.
-  *	Add a directory to the papi/src/components directory that is named with 
-  *	the base name of the component. 
-  *	This directory will contain the source files and build files for the new component. 
-  *	If configuration of the component is necessary, 
-  *	additional configure and make files will be needed. 
-  *	The /example directory can be cloned and renamed as a starting point. 
-  *	Other components can be used as examples. 
+  *	Add a directory to the papi/src/components directory that is named with
+  *	the base name of the component.
+  *	This directory will contain the source files and build files for the new component.
+  *	If configuration of the component is necessary,
+  *	additional configure and make files will be needed.
+  *	The /example directory can be cloned and renamed as a starting point.
+  *	Other components can be used as examples.
   *	This is described in more detail in /components/README.
   *
-  *	@par Developing a New Component 
-  *		A PAPI-C component generally consists of a header file and one or a 
-  *		small number of source files. 
-  *		The source file must contain a @ref papi_vector_t structure that 
-  *		exposes the internal data and entry points of the component to the PAPI-C Framework. 
-  *		This structure must have a unique name that is exposed externally and 
+  *	@par Developing a New Component
+  *		A PAPI-C component generally consists of a header file and one or a
+  *		small number of source files.
+  *		The source file must contain a @ref papi_vector_t structure that
+  *		exposes the internal data and entry points of the component to the PAPI-C Framework.
+  *		This structure must have a unique name that is exposed externally and
   *		contains the name of the directory containing the component source code.
   *
   *	Three types of information are exposed in the @ref papi_vector_t structure:
@@ -162,20 +162,20 @@
   *		Sizes of opaque data structures necessary for memory management are in the @ref cmp_struct_sizes_t structure;
   *		An array of function entry points which, if implemented, provide access to the functionality of the component.
   *
-  *	If a function is not implemented in a given component its value in the structure can be left unset. 
+  *	If a function is not implemented in a given component its value in the structure can be left unset.
   *	In this case it will be initialized to NULL, and result (generally) in benign, although unproductive, behavior.
   *
-  *	During the development of a component, functions can be implemented and tested in blocks. 
-  *	Further information about an appropriate order for developing these functions 
+  *	During the development of a component, functions can be implemented and tested in blocks.
+  *	Further information about an appropriate order for developing these functions
   *	can be found in the Component Development Cookbook .
   *
   * @par PAPI-C Open Research Issues:
   *	<ul>
-  *	<li> Support for non-standard data types: 
-  *		Currently PAPI supports returned data values expressed as unsigned 64-bit integers. 
-  *		This is appropriate for counting events, but may not be as appropriate 
-  *		for expressing other values. 
-  *		Examples of some other possible data types are shown below. 
+  *	<li> Support for non-standard data types:
+  *		Currently PAPI supports returned data values expressed as unsigned 64-bit integers.
+  *		This is appropriate for counting events, but may not be as appropriate
+  *		for expressing other values.
+  *		Examples of some other possible data types are shown below.
   *		Data type might be expressed as a flag in the event definition.
   *	<li> Signed Integer
   *		<ul>
@@ -184,35 +184,35 @@
   *		<li>Ratios: 32 bit numerator and 32 bit denominator
   *		</ul>
   *	<li> Synchronization:
-  *		Components might report values with widely different time scales and 
-  *		remote measurements may be significantly skewed in time from local measurements. 
+  *		Components might report values with widely different time scales and
+  *		remote measurements may be significantly skewed in time from local measurements.
   *		It would be desirable to have a mechanism to synchronize these values in time.
   *	<li> Dynamic Component Discovery:
-  *		Components currently must be included statically in the PAPI library build. 
-  *		This minimizes startup disruption and time lag, particularly for large parallel systems. 
-  *		In some instances it would also be desirable to support a run-time 
-  *		discovery process for components, possibly by searching a specific 
+  *		Components currently must be included statically in the PAPI library build.
+  *		This minimizes startup disruption and time lag, particularly for large parallel systems.
+  *		In some instances it would also be desirable to support a run-time
+  *		discovery process for components, possibly by searching a specific
   *		location for dynamic libraries.
   *	<li> Component Repository:
-  *		A small collection of components are currently maintained and 
-  *		supported inside the PAPI source distribution. 
-  *		It would be desirable to create a public component repository where 3rd 
+  *		A small collection of components are currently maintained and
+  *		supported inside the PAPI source distribution.
+  *		It would be desirable to create a public component repository where 3rd
   *		parties could submit components for the use and benefit of the larger community.
   *	<li> Multiple CPU Components:
-  *		With the rise in popularity of heterogeneous computing systems, it may 
-  *		become desirable to have more than one CPU component. 
-  *		Issues must then be resolved relating to which cpu time-base is used, 
-  *		how are interrupts handled, etc. 
+  *		With the rise in popularity of heterogeneous computing systems, it may
+  *		become desirable to have more than one CPU component.
+  *		Issues must then be resolved relating to which cpu time-base is used,
+  *		how are interrupts handled, etc.
   *	</ul>
   * \endhtmlonly
   */
 
-/* Definition of PAPI_VERSION format.  Note that each of the four 
+/* Definition of PAPI_VERSION format.  Note that each of the four
  * components _must_ be less than 256.  Also, the PAPI_VER_CURRENT
- * masks out the revision and increment.  Any revision change is supposed 
- * to be binary compatible between the user application code and the 
- * run-time library. Any modification that breaks this compatibility 
- * _should_ modify the minor version number as to force user applications 
+ * masks out the revision and increment.  Any revision change is supposed
+ * to be binary compatible between the user application code and the
+ * run-time library. Any modification that breaks this compatibility
+ * _should_ modify the minor version number as to force user applications
  * to re-compile.
  */
 #define PAPI_VERSION_NUMBER(maj,min,rev,inc) (((maj)<<24) | ((min)<<16) | ((rev)<<8) | (inc))
@@ -242,12 +242,12 @@ extern "C"
 #include <limits.h>
 #include "papiStdEventDefs.h"
 
-/** \internal 
+/** \internal
 @defgroup ret_codes Return Codes
 Return Codes
 All of the functions contained in the PerfAPI return standardized error codes.
 Values greater than or equal to zero indicate success, less than zero indicates
-failure. 
+failure.
 @{
 */
 
@@ -290,7 +290,7 @@ failure.
 
 /** @} */
 
-/** @internal 
+/** @internal
 @defgroup consts Constants
 All of the functions in the PerfAPI should use the following set of constants.
 @{
@@ -298,8 +298,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 
 #define PAPI_NULL       -1      /**<A nonexistent hardware event used as a placeholder */
 
-/** @internal  
-	@defgroup domain_defns Domain definitions 
+/** @internal
+	@defgroup domain_defns Domain definitions
  	@{ */
 
 #define PAPI_DOM_USER    0x1    /**< User context counted */
@@ -315,8 +315,8 @@ All of the functions in the PerfAPI should use the following set of constants.
                                            meaningful. i.e. SGI HUB counters */
 /** @} */
 
-/** @internal 
- *	@defgroup thread_defns Thread Definitions 
+/** @internal
+ *	@defgroup thread_defns Thread Definitions
  *		We define other levels in papi_internal.h
  *		for internal PAPI use, so if you change anything
  *		make sure to look at both places -KSL
@@ -331,8 +331,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_TLS_ALL_THREADS	0x10
 /** @} */
 
-/** @internal 
- *	@defgroup locking_defns Locking Mechanisms defines 
+/** @internal
+ *	@defgroup locking_defns Locking Mechanisms defines
  *	@{ */
 #define PAPI_USR1_LOCK          	0x0    /**< User controlled locks */
 #define PAPI_USR2_LOCK          	0x1    /**< User controlled locks */
@@ -345,8 +345,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 /* Remove this!  If it breaks userspace we might have to add it back :( */
 /* #define PAPI_MPX_DEF_DEG 32			                        */
 
-/**	@internal 
-	@defgroup papi_vendors  Vendor definitions 
+/**	@internal
+	@defgroup papi_vendors  Vendor definitions
 	@{ */
 #define PAPI_VENDOR_UNKNOWN 0
 #define PAPI_VENDOR_INTEL   1
@@ -366,8 +366,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_VENDOR_ARM_QUALCOMM  0x51
 /** @} */
 
-/** @internal 
- *	@defgroup granularity_defns Granularity definitions 
+/** @internal
+ *	@defgroup granularity_defns Granularity definitions
  *	@{ */
 
 #define PAPI_GRN_THR     0x1    /**< PAPI counters for each individual thread */
@@ -379,8 +379,8 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_GRN_MAX     PAPI_GRN_SYS_CPU
 /** @} */
 
-/** @internal 
-	@defgroup evt_states States of an EventSet 
+/** @internal
+	@defgroup evt_states States of an EventSet
 	@{ */
 #define PAPI_STOPPED      0x01  /**< EventSet stopped */
 #define PAPI_RUNNING      0x02  /**< EventSet running */
@@ -393,16 +393,16 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_CPU_ATTACHED 0x100 /**< EventSet is attached to a specific cpu (not counting thread of execution) */
 /** @} */
 
-/** @internal 
-	@defgroup error_predef Error predefines 
+/** @internal
+	@defgroup error_predef Error predefines
 	@{ */
 #define PAPI_QUIET       0      /**< Option to turn off automatic reporting of return codes < 0 to stderr. */
 #define PAPI_VERB_ECONT  1      /**< Option to automatically report any return codes < 0 to stderr and continue. */
 #define PAPI_VERB_ESTOP  2      /**< Option to automatically report any return codes < 0 to stderr and exit. */
 /** @} */
 
-/** @internal 
-	@defgroup profile_defns Profile definitions 
+/** @internal
+	@defgroup profile_defns Profile definitions
 	@{ */
 #define PAPI_PROFIL_POSIX     0x0        /**< Default type of profiling, similar to 'man profil'. */
 #define PAPI_PROFIL_RANDOM    0x1        /**< Drop a random 25% of the samples. */
@@ -417,21 +417,21 @@ All of the functions in the PerfAPI should use the following set of constants.
 #define PAPI_PROFIL_BUCKETS   (PAPI_PROFIL_BUCKET_16 | PAPI_PROFIL_BUCKET_32 | PAPI_PROFIL_BUCKET_64)
 /** @} */
 
-/* @defgroup overflow_defns Overflow definitions 
+/* @defgroup overflow_defns Overflow definitions
    @{ */
 #define PAPI_OVERFLOW_FORCE_SW 0x40	/**< Force using Software */
 #define PAPI_OVERFLOW_HARDWARE 0x80	/**< Using Hardware */
 /** @} */
 
-/** @internal 
-  *	@defgroup mpx_defns Multiplex flags definitions 
+/** @internal
+  *	@defgroup mpx_defns Multiplex flags definitions
   * @{ */
 #define PAPI_MULTIPLEX_DEFAULT	0x0	/**< Use whatever method is available, prefer kernel of course. */
 #define PAPI_MULTIPLEX_FORCE_SW 0x1	/**< Force PAPI multiplexing instead of kernel */
 /** @} */
 
-/** @internal 
-	@defgroup option_defns Option definitions 
+/** @internal
+	@defgroup option_defns Option definitions
 	@{ */
 #define PAPI_INHERIT_ALL  1     /**< The flag to this to inherit all children's counters */
 #define PAPI_INHERIT_NONE 0     /**< The flag to this to inherit none of the children's counters */
@@ -480,10 +480,10 @@ All of the functions in the PerfAPI should use the following set of constants.
 /** @} */
 
 /** Possible values for the 'modifier' parameter of the PAPI_enum_event call.
-   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL 
+   A value of 0 (PAPI_ENUM_EVENTS) is always assumed to enumerate ALL
    events on every platform.
    PAPI PRESET events are broken into related event categories.
-   Each supported component can have optional values to determine how 
+   Each supported component can have optional values to determine how
    native events on that component are enumerated.
 */
 enum {
@@ -539,7 +539,7 @@ enum {
 #define PAPI_NTV_GROUP_SHIFT		16			/* bit shift to encode group number */
 /** @} */
 
-/* 
+/*
 The Low Level API
 
 The following functions represent the low level portion of the
@@ -586,7 +586,7 @@ typedef void *vptr_t;
       void *pr_base;          /**< buffer base */
       unsigned pr_size;       /**< buffer size */
       vptr_t pr_off;         /**< pc start address (offset) */
-      unsigned pr_scale;      /**< pc scaling factor: 
+      unsigned pr_scale;      /**< pc scaling factor:
                                  fixed point fraction
                                  0xffff ~= 1, 0x8000 == .5, 0x4000 == .25, etc.
                                  also, two extensions 0x1000 == 1, 0x2000 == 2 */
@@ -622,7 +622,7 @@ typedef void *vptr_t;
 
 /** @ingroup papi_data_structures */
    typedef struct _papi_preload_option {
-      char lib_preload_env[PAPI_MAX_STR_LEN];   
+      char lib_preload_env[PAPI_MAX_STR_LEN];
       char lib_preload_sep;
       char lib_dir_env[PAPI_MAX_STR_LEN];
       char lib_dir_sep;
@@ -648,7 +648,7 @@ typedef void *vptr_t;
      int num_preset_events;       /**< Number of preset events the component supports */
      int num_native_events;       /**< Number of native events the component supports */
      int default_domain;          /**< The default domain when this component is used */
-     int available_domains;       /**< Available domains */ 
+     int available_domains;       /**< Available domains */
      int default_granularity;     /**< The default granularity when this component is used */
      int available_granularities; /**< Available granularities */
      int hardware_intr_sig;       /**< Signal used by hardware to deliver PMC events */
@@ -772,7 +772,7 @@ typedef char* PAPI_user_defined_events_file_t;
 
 /**  @ingroup papi_data_structures
   *	 @brief mh for mem hierarchy maybe? */
-   typedef struct _papi_mh_info { 
+   typedef struct _papi_mh_info {
       int levels;
       PAPI_mh_level_t level[PAPI_MAX_MEM_HIERARCHY_LEVELS];
    } PAPI_mh_info_t;
@@ -800,7 +800,7 @@ typedef char* PAPI_user_defined_events_file_t;
 
       PAPI_mh_info_t mem_hierarchy; /**< PAPI memory hierarchy description */
       int virtualized;              /**< Running in virtual machine */
-      char virtual_vendor_string[PAPI_MAX_STR_LEN]; 
+      char virtual_vendor_string[PAPI_MAX_STR_LEN];
                                     /**< Vendor for virtual machine */
       char virtual_vendor_version[PAPI_MAX_STR_LEN];
                                     /**< Version of virtual machine */
@@ -833,9 +833,9 @@ typedef char* PAPI_user_defined_events_file_t;
       int flags;
    } PAPI_multiplex_option_t;
 
-   /** @ingroup papi_data_structures 
+   /** @ingroup papi_data_structures
 	 *  @brief address range specification for range restricted counting if both are zero, range is disabled  */
-   typedef struct _papi_addr_range_option { 
+   typedef struct _papi_addr_range_option {
       int eventset;           /**< eventset to restrict */
       vptr_t start;          /**< user requested start address of an address range */
       vptr_t end;            /**< user requested end address of an address range */
@@ -843,7 +843,7 @@ typedef char* PAPI_user_defined_events_file_t;
       int end_off;            /**< hardware specified offset from end address */
    } PAPI_addr_range_option_t;
 
-/** @ingroup papi_data_structures 
+/** @ingroup papi_data_structures
   *	@union PAPI_option_t
   *	@brief A pointer to the following is passed to PAPI_set/get_opt() */
 
@@ -905,7 +905,7 @@ typedef char* PAPI_user_defined_events_file_t;
 #define PAPI_MAX_COMP_QUALS  8
 
 
-/** @ingroup papi_data_structures 
+/** @ingroup papi_data_structures
   *	@brief This structure is the event information that is exposed to the user through the API.
 
    The same structure is used to describe both preset and native events.
@@ -964,10 +964,10 @@ enum {
 
 
    typedef struct event_info {
-      unsigned int event_code;             /**< preset (0x8xxxxxxx) or 
+      unsigned int event_code;             /**< preset (0x8xxxxxxx) or
                                                 native (0x4xxxxxxx) event code */
       char symbol[PAPI_HUGE_STR_LEN];      /**< name of the event */
-      char short_descr[PAPI_MIN_STR_LEN];  /**< a short description suitable for 
+      char short_descr[PAPI_MIN_STR_LEN];  /**< a short description suitable for
                                                 use as a label */
       char long_descr[PAPI_HUGE_STR_LEN];  /**< a longer description:
                                                 typically a sentence for presets,
@@ -987,35 +987,35 @@ enum {
 
 
 
-      unsigned int count;                /**< number of terms (usually 1) 
-                                              in the code and name fields 
+      unsigned int count;                /**< number of terms (usually 1)
+                                              in the code and name fields
                                               - presets: these are native events
                                               - native: these are unused */
 
-      unsigned int event_type;           /**< event type or category 
+      unsigned int event_type;           /**< event type or category
                                               for preset events only */
 
       char derived[PAPI_MIN_STR_LEN];    /**< name of the derived type
                                               - presets: usually NOT_DERIVED
                                               - native: empty string */
-      char postfix[PAPI_2MAX_STR_LEN];   /**< string containing postfix 
-                                              operations; only defined for 
-                                              preset events of derived type 
+      char postfix[PAPI_2MAX_STR_LEN];   /**< string containing postfix
+                                              operations; only defined for
+                                              preset events of derived type
                                               DERIVED_POSTFIX */
 
-      unsigned int code[PAPI_MAX_INFO_TERMS]; /**< array of values that further 
+      unsigned int code[PAPI_MAX_INFO_TERMS]; /**< array of values that further
                                               describe the event:
                                               - presets: native event_code values
                                               - native:, register values(?) */
 
       char name[PAPI_MAX_INFO_TERMS]         /**< names of code terms: */
                [PAPI_2MAX_STR_LEN];          /**< - presets: native event names,
-                                                  - native: descriptive strings 
+                                                  - native: descriptive strings
 						  for each register value(?) */
 
-     char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note 
+     char note[PAPI_HUGE_STR_LEN];          /**< an optional developer note
                                                 supplied with a preset event
-                                                to delineate platform specific 
+                                                to delineate platform specific
 						anomalies or restrictions */
 
      int  num_quals;                                       /**< number of qualifiers */
@@ -1146,7 +1146,7 @@ typedef enum {
 
 
 /** \internal
-  * @defgroup low_api The Low Level API 
+  * @defgroup low_api The Low Level API
   @{ */
    int   PAPI_accum(int EventSet, long long * values); /**< accumulate and reset hardware events from an event set */
    int   PAPI_add_event(int EventSet, int Event); /**< add single PAPI preset or native hardware event to an event set */
@@ -1241,7 +1241,7 @@ typedef enum {
    /** @} */
 
 /** \internal
-  @defgroup high_api  The High Level API 
+  @defgroup high_api  The High Level API
 
    The simple interface implemented by the following routines allows the user to record hardware events inside instrumented regions from both C and Fortran.
    @{ */

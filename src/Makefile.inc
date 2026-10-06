@@ -25,23 +25,23 @@ FHEADERS = $(FORT_HEADERS)
 # pkgconfig directory
 LIBPC = $(LIBDIR)/pkgconfig
 
-all: $(SHOW_CONF) $(LIBS) libsde utils tests 
+all: $(SHOW_CONF) $(LIBS) libsde utils tests
 .PHONY : all test fulltest tests testlib utils ctests ftests comp_tests validation_tests null
 
 include $(COMPONENT_RULES)
 
 showconf:
 		@echo "Host architecture   : $(DESCR)";
-		@echo "Host CPU component  : $(CPUCOMPONENT_NAME)"; 
-		@echo "Installation DESTDIR: $(DESTDIR)"; 
-		@echo "Installation PREFIX : $(PREFIX)"; 
-		@echo "Installation EPREFIX: $(EPREFIX)"; 
-		@echo "Installation INCDIR : $(INCDIR)"; 
-		@echo "Installation LIBDIR : $(LIBDIR)"; 
-		@echo "Installation BINDIR : $(BINDIR)"; 
-		@echo "Installation MANDIR : $(MANDIR)"; 
-		@echo "Installation DOCDIR : $(DOCDIR)"; 
-		@echo "Installation DATADIR: $(DATADIR)"; 
+		@echo "Host CPU component  : $(CPUCOMPONENT_NAME)";
+		@echo "Installation DESTDIR: $(DESTDIR)";
+		@echo "Installation PREFIX : $(PREFIX)";
+		@echo "Installation EPREFIX: $(EPREFIX)";
+		@echo "Installation INCDIR : $(INCDIR)";
+		@echo "Installation LIBDIR : $(LIBDIR)";
+		@echo "Installation BINDIR : $(BINDIR)";
+		@echo "Installation MANDIR : $(MANDIR)";
+		@echo "Installation DOCDIR : $(DOCDIR)";
+		@echo "Installation DATADIR: $(DATADIR)";
 		@echo
 
 show_bgp_conf:
@@ -94,7 +94,7 @@ papi_fwrappers.o: papi_fwrappers.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers.c -o papi_fwrappers.o
 
 papi_fwrappers_.o: papi_fwrappers_.c $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers_.c -o papi_fwrappers_.o
 
 papi_fwrappers__.o: papi_fwrappers__.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c papi_fwrappers__.c -o papi_fwrappers__.o
@@ -163,7 +163,7 @@ sw_multiplex.o: sw_multiplex.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c sw_multiplex.c -o sw_multiplex.o
 
 $(CPUCOMPONENT_OBJ): $(CPUCOMPONENT_C) $(HEADERS)
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT_C) -o $(CPUCOMPONENT_OBJ) 
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $(CPUCOMPONENT_C) -o $(CPUCOMPONENT_OBJ)
 
 x86_cpuid_info.o: x86_cpuid_info.c x86_cpuid_info.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c x86_cpuid_info.c -o x86_cpuid_info.o
@@ -181,7 +181,7 @@ $(ARCH_EVENTS)_map.o: $(ARCH_EVENTS)_map.c $(HEADERS)
 
 bgp_tests:$(LIBRARY) null
 	$(SETPATH) $(MAKE) -C ctests/bgp CC="$(CC)" CC_R="$(CC_R)" MPICC="$(MPICC)" CFLAGS="-I.. -I../.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../../$(LINKLIB)" bgp_tests
- 
+
 #Required for freebsd
 freebsd-memory.o: freebsd-memory.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) -c $< -o $@
@@ -282,10 +282,10 @@ comp_tests_clean:
 ifneq (${COMPONENTS},)
 	@set -ex; for comp in ${COMPONENTS} ; do \
 		$(MAKE) -C components/$$comp/tests clean ; \
-	done 
+	done
 endif
 
-clobber distclean: clean native_clobber 
+clobber distclean: clean native_clobber
 	$(MAKE) -C ../doc distclean
 	$(MAKE) -C ctests distclean
 	$(MAKE) -C ftests distclean
@@ -307,7 +307,7 @@ dist-targz:
 	cd $(PAPI_SRCDIR)/..; git status | grep working.directory.clean || (echo "You should commit your changes before 'make dist-targz'.")
 	(cd $(PAPI_SRCDIR)/..; git archive --prefix=papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE)/ --format=tar HEAD) | gzip > papi-$(PAPIVER).$(PAPIREV).$(PAPIAGE).tar.gz
 
-dist: 
+dist:
 	$(MAKE) install-all PREFIX=`pwd`/papi-$(CPUCOMPONENT_NAME)
 	tar cfv ./papi-$(CPUCOMPONENT_NAME).tar ./papi-$(CPUCOMPONENT_NAME)
 	gzip ./papi-$(CPUCOMPONENT_NAME).tar
@@ -323,7 +323,7 @@ install-hl-scripts:
 	cp high-level/scripts/papi_hl_output_writer.py $(DESTDIR)$(BINDIR)
 
 install-lib: native_install
-	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\""; 
+	@echo "Headers (INCDIR) being installed in: \"$(DESTDIR)$(INCDIR)\"";
 	-mkdir -p $(DESTDIR)$(INCDIR)
 	-chmod go+rx $(DESTDIR)$(INCDIR)
 	cp $(FHEADERS) papi.h papiStdEventDefs.h papi_components_config_event_defs.h $(DESTDIR)$(INCDIR)
@@ -335,7 +335,7 @@ install-lib: native_install
 		done)
 	cp sde_lib/sde_lib.h sde_lib/sde_lib.hpp $(DESTDIR)$(INCDIR)
 	cd $(DESTDIR)$(INCDIR) && chmod go+r $(FHEADERS) papi.h papiStdEventDefs.h papi_components_config_event_defs.h sde_lib.h sde_lib.hpp
-	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\""; 
+	@echo "Libraries (LIBDIR) being installed in: \"$(DESTDIR)$(LIBDIR)\"";
 	-mkdir -p $(DESTDIR)$(LIBDIR)
 	-chmod go+rx $(DESTDIR)$(LIBDIR)
 	@set -ex; if test -r $(LIBRARY) ; then \
@@ -361,10 +361,10 @@ install-lib: native_install
         chmod go+r $(DESTDIR)$(LIBDIR)/libsde.a; \
 	fi
 
-install-man:  
+install-man:
 	$(MAKE) -C ../man DOCDIR=$(DESTDIR)$(DOCDIR) MANDIR=$(DESTDIR)$(MANDIR) install
 
-install-utils: 
+install-utils:
 	$(SETPATH) $(MAKE) -C utils BINDIR="$(DESTDIR)$(BINDIR)" CC="$(CC)" CC_R="$(CC_R)" CFLAGS="-I.. $(CFLAGS)" TOPTFLAGS="$(TOPTFLAGS)" SMPCFLGS="$(SMPCFLGS)" OMPCFLGS="$(OMPCFLGS)" NOOPT="$(NOOPT)" LDFLAGS="$(LDFLAGS) $(STATIC)" LIBRARY="../$(LINKLIB)" install
 
 install-tests:  install-comp_tests

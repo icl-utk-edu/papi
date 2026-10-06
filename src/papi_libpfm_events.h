@@ -3,7 +3,7 @@
 #include "papi.h" /* For PAPI_event_info_t */
 #include "papi_vector.h" /* For papi_vector_t */
 
-/* 
+/*
 * File:    papi_libpfm_events.h
 */
 
@@ -28,7 +28,7 @@ int _pfm_decode_native_event( unsigned int EventCode, unsigned int *event,
 			      unsigned int *umask );
 unsigned int _pfm_convert_umask( unsigned int event, unsigned int umask );
 int prepare_umask( unsigned int foo, unsigned int *values );
-int _papi_libpfm_ntv_code_to_info(unsigned int EventCode, 
+int _papi_libpfm_ntv_code_to_info(unsigned int EventCode,
                                   PAPI_event_info_t *info);
 
 
@@ -47,7 +47,7 @@ struct perf_event_attr {
 #endif /* !__PERFMON_PERF_EVENT_H__ */
 
 
-extern int _papi_libpfm_setup_counters( struct perf_event_attr *attr, 
+extern int _papi_libpfm_setup_counters( struct perf_event_attr *attr,
 				      hwd_register_t *ni_bits );
 
 #endif // _PAPI_LIBPFM_EVENTS_H

@@ -6,10 +6,10 @@
  * allocated through this interface. Implemented as a series of wrappers around
  * standard C memory allocation routines, _papi_malloc and associated functions
  * add a prolog and optional epilog to each malloc'd pointer.
- * The prolog, sized to preserve memory alignment, contains a pointer to a 
- * linked list of pmem_t structures that describe every block of memory 
+ * The prolog, sized to preserve memory alignment, contains a pointer to a
+ * linked list of pmem_t structures that describe every block of memory
  * allocated through these calls.
- * The optional epilog is enabled if DEBUG is defined, and contains 
+ * The optional epilog is enabled if DEBUG is defined, and contains
  * a distinctive pattern that allows checking for pointer overflow.
  */
 
@@ -185,7 +185,7 @@ _papi_strdup( const char *file, int line, const char *s )
 	return ( ptr );
 }
 
-/** Only frees the memory if PAPI malloced it 
+/** Only frees the memory if PAPI malloced it
   * returns 1 if pointer was valid; 0 if not */
 int
 _papi_valid_free( const char *file, int line, void *ptr )
@@ -322,13 +322,13 @@ _papi_mem_cleanup_all(  )
 	}
 	_papi_hwi_unlock( MEMORY_LOCK );
 #ifdef DEBUG
-	if ( 0 != cnt ) { 
+	if ( 0 != cnt ) {
 		LEAKDBG( "TOTAL MEMORY LEAK: %d bytes.\n", cnt );
 	}
 #endif
 }
 
-/* Loop through memory structures and look for buffer overflows 
+/* Loop through memory structures and look for buffer overflows
  * returns the number of overflows detected
  */
 
@@ -376,7 +376,7 @@ init_mem_ptr( void *ptr, int size, const char *file, int line )
 	return ( mem_ptr );
 }
 
-/* Insert the memory information 
+/* Insert the memory information
  * Do not lock these routines, but lock in routines using these
  */
 static void
@@ -397,8 +397,8 @@ insert_mem_ptr( pmem_t * ptr )
 	return;
 }
 
-/* Remove the memory information pointer and free the memory 
- * Do not using locking in this routine, instead lock around 
+/* Remove the memory information pointer and free the memory
+ * Do not using locking in this routine, instead lock around
  * the sections of code that use this call.
  */
 static void
