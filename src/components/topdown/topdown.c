@@ -138,8 +138,8 @@ void handle_affinity_error(int allowed_type)
 	char allowed_name[PAPI_MIN_STR_LEN];
 
 	core_type_to_name(allowed_type, allowed_name);
-	fprintf(stderr, 
-		"Error: Process was moved to an unsupported core type. To use the PAPI topdown component, process affinity must be limited to cores of type '%s' on this architecture.\n", 
+	fprintf(stderr,
+		"Error: Process was moved to an unsupported core type. To use the PAPI topdown component, process affinity must be limited to cores of type '%s' on this architecture.\n",
 		allowed_name);
 
 	exit(127);
@@ -185,7 +185,7 @@ int link_librseq()
 	}
 
     return 0;
-} 
+}
 
 /* This function assumes some properties of the system have been verified. */
 /* 1. Must be an Intel x86 processor */
@@ -203,10 +203,10 @@ restart_sequence:
 	__asm__ __volatile__ goto (
 		/* set up critical section of restartable sequence */
 		".pushsection __rseq_cs, \"aw\"\n\t" ".balign 32\n\t" "3:\n\t" ".long 0x0\n\t" ".long 0x0\n\t" ".quad 1f\n\t" ".quad (2f) - (1f)\n\t" ".quad 4f\n\t" ".long 0x0\n\t" ".long 0x0\n\t" ".quad 1f\n\t" ".quad (2f) - (1f)\n\t" ".quad 4f\n\t" ".popsection\n\t" ".pushsection __rseq_cs_ptr_array, \"aw\"\n\t" ".quad 3b\n\t" ".popsection\n\t"
-		
+
 		/* start rseq by storing table entry pointer into rseq_cs. */
-		"leaq 3b(%%rip), %%rax\n\t" 
-		"movq %%rax, %%fs:8(%[rseq_offset])\n\t" 
+		"leaq 3b(%%rip), %%rax\n\t"
+		"movq %%rax, %%fs:8(%[rseq_offset])\n\t"
 		"1:\n\t"
 
 		/* check if core type is valid */
@@ -247,8 +247,8 @@ abort:
 		handle_affinity_error(allowed_core_type);
 		return PAPI_EBUG; /* should never return, handle_affinity_error exits */
 	}
-	
-	/* if the critical section aborted, but not because the core type is */ 
+
+	/* if the critical section aborted, but not because the core type is */
 	/* invalid, then give it another shot */
 	/* while theoretically possible, this has never been observed to restart */
 	/* more than once before either succeeding or failing the check */
@@ -371,7 +371,7 @@ _topdown_init_component(int cidx)
 		case 0xbf:	/* RaptorLake 13th gen Core hybrid */
 			required_core_type = INTEL_CORE_TYPE_PERFORMANCE;
 			supports_l2 = 1;
-			
+
 			/* if we are on a heterogeneous processor, try and load librseq */
 			if (link_librseq() == PAPI_OK) {
         		librseq_loaded = 1;
@@ -719,7 +719,7 @@ _topdown_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
 					metrics_after) * 100.0;
 			}
 
-			/* sometimes the percentage will be a very small negative value */ 
+			/* sometimes the percentage will be a very small negative value */
 			/* instead of 0 due to floating point error. tidy that up: */
 			if (perc < 0.0) {
 				perc = 0.0;
@@ -740,7 +740,7 @@ fn_exit:
 	control->slots_fd = -1;
 	close(control->metrics_fd);
 	control->metrics_fd = -1;
-	
+
 	return retval;
 }
 
@@ -874,15 +874,15 @@ _topdown_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 	if ((index < 0) || (index >= num_events))
 		return PAPI_ENOEVNT;
 
-	strncpy(info->symbol, topdown_native_events[index].name, 
+	strncpy(info->symbol, topdown_native_events[index].name,
 			sizeof(info->symbol) - 1);
 	info->symbol[sizeof(info->symbol) - 1] = '\0';
 
-	strncpy(info->long_descr, topdown_native_events[index].description, 
+	strncpy(info->long_descr, topdown_native_events[index].description,
 			sizeof(info->long_descr) - 1);
 	info->long_descr[sizeof(info->long_descr) - 1] = '\0';
 
-	strncpy(info->units, topdown_native_events[index].units, 
+	strncpy(info->units, topdown_native_events[index].units,
 			sizeof(info->units) - 1);
 	info->units[sizeof(info->units) - 1] = '\0';
 

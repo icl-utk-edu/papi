@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 	PAPI_stop(EventSet, values);
 
 	/* run some sanity checks: */
-	
+
 	/* first, the sum of all level 2 metric percentages should be 100% */
 	tmp = 0;
 	for (i=0; i<NUM_EVENTS; i++) {

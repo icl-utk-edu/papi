@@ -9,13 +9,13 @@ TESTS = topdown_basic topdown_L1 topdown_L2
 topdown_tests: $(TESTS)
 
 topdown_basic: topdown_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_basic topdown_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_basic topdown_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 topdown_L1: topdown_L1.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_L1 topdown_L1.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_L1 topdown_L1.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 topdown_L2: topdown_L2.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_L2 topdown_L2.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o topdown_L2 topdown_L2.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 clean:
