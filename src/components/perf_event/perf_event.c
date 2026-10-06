@@ -17,8 +17,8 @@
 *          Modified the perf_event component to use PFM_OS_PERF_EVENT_EXT mode in libpfm4.
 *          This adds several new event masks, including cpu=, u=, and k= which give the user
 *          the ability to set cpu number to use or control the domain (user, kernel, or both)
-*          in which the counter should be incremented.  These are event masks so it is now 
-*          possible to have multiple events in the same event set that count activity from 
+*          in which the counter should be incremented.  These are event masks so it is now
+*          possible to have multiple events in the same event set that count activity from
 *          differennt cpu's or count activity in different domains.
 */
 
@@ -65,8 +65,8 @@
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -290,7 +290,7 @@ check_exclude_guest( void )
 
 	ev_fd = sys_perf_event_open( &attr, 0, -1, -1, 0 );
 	if ( ev_fd == -1 ) {
-		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test. " 
+		PAPIERROR("Couldn't open hw_instructions in exclude_guest=0 test. "
 			      "Set /proc/sys/kernel/perf_event_paranoid to 2 (or less) or run as root.");
 		return;
 	}
@@ -485,7 +485,7 @@ check_permissions( unsigned long tid,
 
    ev_fd = sys_perf_event_open( &attr, pid, cpu_num, -1, 0 );
    if ( ev_fd == -1 ) {
-      SUBDBG("sys_perf_event_open returned error.  Linux says, %s", 
+      SUBDBG("sys_perf_event_open returned error.  Linux says, %s",
 	     strerror( errno ) );
       return map_perf_event_errors_to_papi(errno);
    }
@@ -1069,13 +1069,13 @@ _pe_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	/* We need to reset all of the events, not just the group leaders */
 	for( i = 0; i < pe_ctl->num_events; i++ ) {
 		if (_perf_event_vector.cmp_info.fast_counter_read) {
-			ret = ioctl( pe_ctl->events[i].event_fd, 
+			ret = ioctl( pe_ctl->events[i].event_fd,
 					PERF_EVENT_IOC_RESET, NULL );
 			pe_ctl->reset_counts[i] = mmap_read_reset_count(
 					pe_ctl->events[i].mmap_buf);
 			pe_ctl->reset_flag = 1;
 		} else {
-			ret = ioctl( pe_ctl->events[i].event_fd, 
+			ret = ioctl( pe_ctl->events[i].event_fd,
 					PERF_EVENT_IOC_RESET, NULL );
 		}
 		if ( ret == -1 ) {
@@ -2489,7 +2489,7 @@ _pe_handle_permissions(papi_vector_t *component) {
 	// The above cap_data variable can be split into index 0 which consists of the 32 bit
 	// capabilities while index 1 consists of the 64 bit capabilities. CAP_SYS_ADMIN is in the
 	// 32 bit capabilities while CAP_PERFMON is in the 64 bit capabilities. 32 is subtracted
-	// from CAP_PERFMON (value of 38) as there are only 32 bits per entry for __user_cap_data_struct. 
+	// from CAP_PERFMON (value of 38) as there are only 32 bits per entry for __user_cap_data_struct.
 	#ifdef CAP_PERFMON
 		perfmon_capabilities = (cap_data[0].effective & (1 << CAP_SYS_ADMIN)) ||
 				       (cap_data[1].effective & (1 << (CAP_PERFMON - 32)));
@@ -2582,7 +2582,7 @@ _pe_init_component( int cidx )
 
 	/* Update component behavior based on paranoid setting */
 	retval=_pe_handle_permissions(_papi_hwd[cidx]);
-   
+
 	if (retval!=PAPI_OK) goto fn_fail; // disabled_reason handled by _pe_handle_permissions.
 
 #if (OBSOLETE_WORKAROUNDS==1)
