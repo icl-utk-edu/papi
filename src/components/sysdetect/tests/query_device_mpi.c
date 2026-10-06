@@ -64,7 +64,7 @@ print_cuda_affinity( MPI_Comm comm, void *handle )
                     curr_uid = sorted_uids[j];
                     uniq_sorted_uids[uniq_uids++] = curr_uid;
                 }
-            } 
+            }
 
             int k, l, list[MAX_LOCAL_RANKS] = { 0 };
             for (j = 0, l = 0; j < uniq_uids; ++j) {

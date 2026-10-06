@@ -40,7 +40,7 @@ ifneq ($(PAPI_CUDA_ROOT),)
 CFLAGS += -I$(PAPI_CUDA_ROOT)/include
 endif
 
-sysdetect.o: components/sysdetect/sysdetect.c components/sysdetect/sysdetect.h $(HEADERS) 
+sysdetect.o: components/sysdetect/sysdetect.c components/sysdetect/sysdetect.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/sysdetect.c -o $@
 
 nvidia_gpu.o: components/sysdetect/nvidia_gpu.c components/sysdetect/sysdetect.h $(HEADERS)
