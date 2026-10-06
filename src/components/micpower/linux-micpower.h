@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-micpower.h
  * @author  James Ralph
  *			ralph@eecs.utk.edu
@@ -11,11 +11,11 @@
  *
  * @brief Mic power component
  *  This file has the source code for a component that enables PAPI-C to access
- *  hardware monitoring sensors through a sysfs interface. This code 
- *  will dynamically create a native events table for all the sensors that can 
+ *  hardware monitoring sensors through a sysfs interface. This code
+ *  will dynamically create a native events table for all the sensors that can
  *  be found under /sys/class/hwmon/hwmon[0-9]+.
  *
- * Notes: 
+ * Notes:
  *  - Based heavily upon the lm-sensors component by Heike Jagode.
  */
 
