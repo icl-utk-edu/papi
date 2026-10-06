@@ -9,7 +9,7 @@ TESTS = vmware_basic
 vmware_tests: $(TESTS)
 
 vmware_basic: vmware_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o vmware_basic vmware_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o vmware_basic vmware_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 clean:
 	rm -f $(TESTS) *.o

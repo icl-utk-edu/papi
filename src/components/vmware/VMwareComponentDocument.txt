@@ -5,14 +5,14 @@ John Nelson <jnelso37@utk.edu>
 Revised: 23 January 2012
 
 
-This document is intended to detail the features of the PAPI-V VMware component, and more specifically the installation, usage, and pseudo performance counters available. In order to make this component possible, extensive research into the actual counters available, as well as the leveraging of the VMware Guest API1, was needed. As this is the first of the PAPI-V components, we seem to be stepping into a new realm of performance measurements that, previously, has been a new frontier, or unexplored all-together. 
+This document is intended to detail the features of the PAPI-V VMware component, and more specifically the installation, usage, and pseudo performance counters available. In order to make this component possible, extensive research into the actual counters available, as well as the leveraging of the VMware Guest API1, was needed. As this is the first of the PAPI-V components, we seem to be stepping into a new realm of performance measurements that, previously, has been a new frontier, or unexplored all-together.
 
 
 Installation:
 
 To make PAPI with the VMware component you must go to the PAPI_ROOT/papi/src/components/vmware directory and configure with the flag: --with-vmware_incdir=<path>, where <path> is the path to the VMware Guest SDK for your machine.
 
-NOTE: The VMware Guest SDK is normally found in the following default vmware-tools path: 
+NOTE: The VMware Guest SDK is normally found in the following default vmware-tools path:
 
 	/usr/lib/vmware-tools/GuestSDK
 
@@ -29,7 +29,7 @@ After running configure in the vmware directory, go to PAPI_CVS_ROOT/papi/src an
 
 	e.g.: ./configure --with-components=vmware
 
-After running the main configure script you can then type make, the Makefiles have been automatically generated. If at any point you would like to uninstall PAPI and the VMware comonent, from the PAPI_ROOT/papi/src directory, just type: 
+After running the main configure script you can then type make, the Makefiles have been automatically generated. If at any point you would like to uninstall PAPI and the VMware comonent, from the PAPI_ROOT/papi/src directory, just type:
 
 	make clean clobber
 
@@ -37,19 +37,19 @@ To make use of VMWare timekeeping pseudo-performance counters, the following con
 
         monitor_control.pseudo_perfctr = TRUE
 
-As well as adding the 
+As well as adding the
 
 	--with-vmware_pseudo_perfctr
-	
-		WARNING: If you do not enable the monitor_control.pseudo_perfctr on the host side, and give configure the --with-vmware_pseudo_perfctr, you will get a segmentation fault upon readpmc trying to access protected memory wiothout priveledged access. This is expected behavior. 
-	
+
+		WARNING: If you do not enable the monitor_control.pseudo_perfctr on the host side, and give configure the --with-vmware_pseudo_perfctr, you will get a segmentation fault upon readpmc trying to access protected memory wiothout priveledged access. This is expected behavior.
+
 flag during component configure in the vmware component directory.
 
 Available Performance Counters:
 
 Below is the list of available performance metrics available to PAPI through the VMware component. If at any time you would like to see a full list of counters available to PAPI type ./papi_native_avail from within the utils directory.
 
-It is important to know that the counters VMWARE_HOST_TSC, VMWARE_ELAPSED_TIME, and VMWARE_ELAPSED_APPARENT are currently the only true to name register counters available from withing a VMware virtual machine. Any Guest OS running on a VMware host must have the access enabled from within the VMware vSphere client managing the system for each virtual machine that wishes to use the VMware component, this exposes the counters to the virtual machine. All other counters you will see in the following lost are software counters that are being exposed through the use of the VMware API1. 
+It is important to know that the counters VMWARE_HOST_TSC, VMWARE_ELAPSED_TIME, and VMWARE_ELAPSED_APPARENT are currently the only true to name register counters available from withing a VMware virtual machine. Any Guest OS running on a VMware host must have the access enabled from within the VMware vSphere client managing the system for each virtual machine that wishes to use the VMware component, this exposes the counters to the virtual machine. All other counters you will see in the following lost are software counters that are being exposed through the use of the VMware API1.
 
 
 
@@ -142,7 +142,7 @@ Event Code | Symbol  | Long Description |
 Timekeeping Counters:
 
 
-        The pseudo-performance counter feature uses a trap to catch a privileged machine instruction issued by software running in the virtual machine and therefore has more overhead than reading a performance counter or the TSC on physical hardware. The feature will only trap correctly if the configuration setting is applied as described in Installation. 
+        The pseudo-performance counter feature uses a trap to catch a privileged machine instruction issued by software running in the virtual machine and therefore has more overhead than reading a performance counter or the TSC on physical hardware. The feature will only trap correctly if the configuration setting is applied as described in Installation.
 
 
 The timekeeping counters behave as follows:
