@@ -67,7 +67,7 @@ C     And also to make the test code read cleaner
  100  format(t3,'Line # ',i5,':: ',a)
 
       end
-      
+
       subroutine ftests_pass(test_str)
       implicit integer (p)
       character*(*) test_str
@@ -160,11 +160,11 @@ C Just printing the error number because of difficulty getting error string.
       end
 
       subroutine stringify_domain(domain, str)
-      implicit integer (p)      
+      implicit integer (p)
       integer domain
       character*(PAPI_MAX_STR_LEN) str
       integer idx
-      
+
       if (domain .EQ. PAPI_DOM_ALL) then
         str = "PAPI_DOM_ALL"
       else
@@ -200,7 +200,7 @@ C         Blank-fill the rest of the string so last_char works correctly
       end
 
       subroutine stringify_granularity(granularity, str)
-      implicit integer (p)      
+      implicit integer (p)
       integer granularity
       character*(PAPI_MAX_STR_LEN) str
 
@@ -227,7 +227,7 @@ C     For Windows, it links to a simple C routine
 C     that prompts the user for a keypress
 C     For every other platform it is a nop.
       subroutine pause()
-      implicit integer (p)      
+      implicit integer (p)
       integer quiet
       common quiet
 
