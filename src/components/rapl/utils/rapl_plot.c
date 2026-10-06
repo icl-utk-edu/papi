@@ -1,4 +1,4 @@
-/** 
+/**
  * @author  Vince Weaver
  */
 
@@ -186,27 +186,27 @@ int main (int argc, char **argv)
 
 					fprintf(fff[i],"%.4f  %.3f  (* %s in (%s) *)\n",
 							total_time,
-							result.fp, 
+							result.fp,
 							events[i], units[i] );
 
-				} 
+				}
 				/* Fixed value counts */
 				else if (data_type[i] == PAPI_DATATYPE_UINT64) {
 
 					fprintf(fff[i],"%.4f  %lld  (* %s *)\n",
 							total_time,
-							values[i], 
+							values[i],
 							events[i] );
 
 				}
 			}
 
 			/* Energy measurement counts */
-			else if (strstr(events[i],"ENERGY_CNT")) {  
+			else if (strstr(events[i],"ENERGY_CNT")) {
 
 				fprintf(fff[i],"%.4f  %lld  (* %s *)\n",
 						total_time,
-						values[i], 
+						values[i],
 						events[i] );
 
 			}
@@ -216,7 +216,7 @@ int main (int argc, char **argv)
 				fprintf(fff[i],"%.4f  %.3f %s  %.3f %s  (* Average Power for %s *)\n",
 						total_time,
 						((double)values[i]/1.0e9), "J",
-						((double)values[i]/1.0e9)/elapsed_time, "W", 
+						((double)values[i]/1.0e9)/elapsed_time, "W",
 						events[i] );
 			};
 
