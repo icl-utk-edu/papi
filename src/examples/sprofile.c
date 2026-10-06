@@ -40,7 +40,7 @@ void do_both(int n)
    const int flops2 = NUM_FLOPS / n;
    const int flops1 = NUM_FLOPS / n;
 
-   for (i = 0; i < n; i++) 
+   for (i = 0; i < n; i++)
    {
       do_flops1(flops1);
       do_flops2(flops2);
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
       exit(1);
    }
 
-   if ((prginfo = PAPI_get_executable_info()) == NULL) 
+   if ((prginfo = PAPI_get_executable_info()) == NULL)
       ERROR_RETURN(1);
 
    start = prginfo->address_info.text_start;
@@ -77,19 +77,19 @@ int main(int argc, char **argv)
    printf("start= %p  end =%p \n", start, end);
 
    profbuf = (unsigned short *) malloc(length);
-   if (profbuf == NULL) 
+   if (profbuf == NULL)
       ERROR_RETURN(PAPI_ESYS);
 
    memset(profbuf, 0x00, length );
 
    profbuf2 = (unsigned short *) malloc(length);
-   if (profbuf2 == NULL) 
+   if (profbuf2 == NULL)
       ERROR_RETURN(PAPI_ESYS);
 
    memset(profbuf2, 0x00, length );
 
    profbuf3 = (unsigned short *) malloc(1 * sizeof(unsigned short));
-   if (profbuf3 == NULL) 
+   if (profbuf3 == NULL)
       ERROR_RETURN(PAPI_ESYS);
 
    memset(profbuf3, 0x00, 1 * sizeof(unsigned short));
@@ -150,13 +150,13 @@ int main(int argc, char **argv)
 
    printf("Test case: PAPI_sprofil()\n");
    printf("---------Buffer 1--------\n");
-   for (i = 0; i < length / 2; i++) 
+   for (i = 0; i < length / 2; i++)
    {
       if (profbuf[i])
 	printf("%#lx\t%d\n", strtoul(DO_FLOPS2,NULL,0) + 2 * i, profbuf[i]);
    }
    printf("---------Buffer 2--------\n");
-   for (i = 0; i < length / 2; i++) 
+   for (i = 0; i < length / 2; i++)
    {
       if (profbuf2[i])
 	printf("%#lx\t%d\n", strtoul(DO_FLOPS1,NULL,0) + 2 * i, profbuf2[i]);
@@ -176,7 +176,7 @@ void do_flops2(int n)
    int i;
    double c = 0.11;
 
-   for (i = 0; i < n; i++) 
+   for (i = 0; i < n; i++)
       c += a * b;
 }
 

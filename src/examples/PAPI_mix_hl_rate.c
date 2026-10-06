@@ -8,7 +8,7 @@
  * ../high-level/scripts/papi_hl_output_writer.py --type=accumulate          *
  *****************************************************************************/
 
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h"
@@ -19,7 +19,7 @@
 int your_slow_code();
 
 int main()
-{ 
+{
   float real_time, proc_time,ipc;
   long long ins;
   int retval;
@@ -32,7 +32,7 @@ int main()
   if ( (retval = PAPI_ipc( &real_time, &proc_time, &ins, &ipc)) < PAPI_OK )
     ERROR_RETURN(retval);
 
-  printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n", 
+  printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n",
          real_time, proc_time,ins,ipc);
 
 
@@ -53,7 +53,7 @@ int main()
   if ( (retval = PAPI_ipc( &real_time, &proc_time, &ins, &ipc)) < PAPI_OK )
     ERROR_RETURN(retval);
 
-  printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n", 
+  printf("Real_time: %f Proc_time: %f Instructions: %lld IPC: %f\n",
          real_time, proc_time,ins,ipc);
 
   if ( (retval = PAPI_rate_stop()) < PAPI_OK )
@@ -68,7 +68,7 @@ int your_slow_code()
   double  tmp=1.1;
 
   for(i=1; i<2000; i++)
-  { 
+  {
     tmp=(tmp+100)/i;
   }
   return 0;

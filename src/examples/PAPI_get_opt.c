@@ -27,7 +27,7 @@ int main()
 {
 
    int num, retval, EventSet = PAPI_NULL;
-   PAPI_option_t options;    
+   PAPI_option_t options;
    long long values[2];
 
    /****************************************************************************
@@ -65,11 +65,11 @@ int main()
    if ( (retval = PAPI_add_event(EventSet, PAPI_TOT_CYC)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* Set the domain of this EventSet to counter user and 
+   /* Set the domain of this EventSet to counter user and
       kernel modes for this process.                      */
-        
+
    memset(&options,0x0,sizeof(options));
-   
+
    options.domain.eventset = EventSet;
    /* Default domain is PAPI_DOM_USER */
    options.domain.domain = PAPI_DOM_ALL;
@@ -89,7 +89,7 @@ int main()
 
    printf(" Total instructions: %lld   Total Cycles: %lld \n", values[0],
             values[1]);
-   
+
    /* clean up */
    PAPI_shutdown();
 

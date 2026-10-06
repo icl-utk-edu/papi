@@ -19,7 +19,7 @@ int main()
    int retval;
    int EventSet = PAPI_NULL;
    char error_str[PAPI_MAX_STR_LEN];
-        
+
    /****************************************************************************
    *  This part initializes the library and compares the version number of the *
    * header file, to the version of the library, if these don't match then it  *
@@ -31,12 +31,12 @@ int main()
    {
       exit(1);
    }
-  
+
    if ((retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
    {
       fprintf(stderr, "PAPI error %d: %s\n",retval,PAPI_strerror(retval));
       exit(1);
-   }     
+   }
 
    /* Add Total Instructions Executed to our EventSet */
 
@@ -54,28 +54,28 @@ int main()
       exit(1);
    }
 
-  /* We are trying to start the  counter which has already been started, 
-     and this will give an error which will be passed to PAPI_perror via 
-     retval and the function will then display the error string on the 
+  /* We are trying to start the  counter which has already been started,
+     and this will give an error which will be passed to PAPI_perror via
+     retval and the function will then display the error string on the
      screen.
-   */ 
+   */
 
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
    {
       PAPI_perror( "PAPI_start" );
    }
 
-   /* The function PAPI_strerror returns the corresponding error string 
-      from the error code */ 
+   /* The function PAPI_strerror returns the corresponding error string
+      from the error code */
    if ((retval = PAPI_start(EventSet)) != PAPI_OK)
    {
       printf("%s\n",PAPI_strerror(retval));
    }
 
-   /* finish using PAPI and free all related resources 
-     (this is optional, you don't have to use it 
+   /* finish using PAPI and free all related resources
+     (this is optional, you don't have to use it
    */
-   PAPI_shutdown (); 
+   PAPI_shutdown ();
 
    exit(0);
 }

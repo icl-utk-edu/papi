@@ -36,15 +36,15 @@ int main()
       printf("Library initialization error! \n");
       exit(1);
    }
-        
+
    /* Here you get initial cycles and time */
-   /* No error checking is done here because this function call is always 
+   /* No error checking is done here because this function call is always
       successful */
 
    s = PAPI_get_real_cyc();
 
    your_slow_code();
-  
+
    /*Here you get final cycles and time    */
    e = PAPI_get_real_cyc();
 
@@ -62,5 +62,5 @@ int main()
    exit(0);
 }
 
- 
+
 

@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h" /* This needs to be included every time you use PAPI */
@@ -33,7 +33,7 @@ int printstate(int status)
 int main()
 {
 
-   int retval; 
+   int retval;
    int status = 0;
    int EventSet = PAPI_NULL;
 
@@ -69,9 +69,9 @@ int main()
 
    if (PAPI_state(EventSet, &status) != PAPI_OK)
       ERROR_RETURN(retval);
-     
-   printstate(status);       
- 
+
+   printstate(status);
+
    /* free the resources used by PAPI */
    PAPI_shutdown();
 

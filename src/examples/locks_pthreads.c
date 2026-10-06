@@ -31,7 +31,7 @@ void *Master(void *arg)
    /* register the thread */
    if ( (retval=PAPI_register_thread())!= PAPI_OK )
       ERROR_RETURN(retval);
-   
+
    /* save the pointer for late use */
    if ( (retval=PAPI_set_thr_specific(1,pointer))!= PAPI_OK )
       ERROR_RETURN(retval);
@@ -52,7 +52,7 @@ void *Master(void *arg)
 
    /* the output value should be 15 */
    printf("Thread specific data is %d \n", *pointer2);
-   
+
    pthread_exit(NULL);
 }
 

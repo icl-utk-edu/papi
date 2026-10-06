@@ -9,7 +9,7 @@
 #include <pthread.h>
 
 #define OVER_FMT    "handler(%d ) Overflow at %p! bit=%#llx \n"
-#define THRESHOLD 100000 
+#define THRESHOLD 100000
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 int total = 0;	/* we use total to track the amount of overflows that occurred */
@@ -25,7 +25,7 @@ handler(int EventSet, void *address, long long overflow_vector, void *context)
 
 int main ()
 {
-   int EventSet = PAPI_NULL;	
+   int EventSet = PAPI_NULL;
    /* must be set to null before calling PAPI_create_eventset */
 
    char errstring[PAPI_MAX_STR_LEN];
@@ -69,7 +69,7 @@ int main ()
    }
 
 
-   /* PAPI_event_code_to_name is used to convert a PAPI preset from 
+   /* PAPI_event_code_to_name is used to convert a PAPI preset from
      its integer value to its string name. */
    if ((retval = PAPI_event_code_to_name (PAPI_event, event_name)) != PAPI_OK)
       ERROR_RETURN(retval);
@@ -122,7 +122,7 @@ int main ()
    if ( (retval=PAPI_destroy_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
-   /* free the resources used by PAPI */ 
+   /* free the resources used by PAPI */
    PAPI_shutdown();
 
    exit(0);
