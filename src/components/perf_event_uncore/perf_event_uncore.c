@@ -61,8 +61,8 @@ static int our_cidx;
 #define PERF_EVENTS_OPENED  0x01
 #define PERF_EVENTS_RUNNING 0x02
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -326,26 +326,26 @@ open_pe_events( pe_context_t *ctx, pe_control_t *ctl )
       /* as some have already been set up previously.                */
 
 /*
- * The following code controls how the uncore component interfaces with the 
- * kernel for uncore events.  The code inside the ifdef will use grouping of 
+ * The following code controls how the uncore component interfaces with the
+ * kernel for uncore events.  The code inside the ifdef will use grouping of
  * uncore events which can make the cost of reading the results more efficient.
- * The problem with it is that the uncore component supports 20 different uncore 
+ * The problem with it is that the uncore component supports 20 different uncore
  * PMU's.  The kernel requires that all events in a group must be for the same PMU.
  * This means that with grouping enabled papi applications can count events on only
  * one of the 20 PMU's during a run.
- * 
- * The code inside the else clause treats each event in the event set as 
- * independent.  When running in this mode the kernel allows the papi multiple 
+ *
+ * The code inside the else clause treats each event in the event set as
+ * independent.  When running in this mode the kernel allows the papi multiple
  * uncore PMU's at the same time.
- * 
+ *
  * Example:
  *  An application wants to measure all the L3 cache write requests.
  *  The event to do this is part of a cbox pmu (there are 8 cbox pmu's).
- *  When built with the code in the ifdef, the application would have to be 
+ *  When built with the code in the ifdef, the application would have to be
  *    run 8 times and count write requests from one pmu at a time.
- *  When built with the code in the else, the write requests in all 8 cbox 
+ *  When built with the code in the else, the write requests in all 8 cbox
  *    pmu's could be counted in the same run.
- * 
+ *
  */
 // #define GROUPIT 1       // remove the comment on this line to force event grouping
 #ifdef GROUPIT
@@ -944,7 +944,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 
    ( void ) flags;			 /*unused */
    int i, ret = -1;
-   /* pe_context_t *pe_ctx = ( pe_context_t *) ctx; */ 
+   /* pe_context_t *pe_ctx = ( pe_context_t *) ctx; */
    (void) ctx; /*unused*/
    pe_control_t *pe_ctl = ( pe_control_t *) ctl;
    long long papi_pe_buffer[READ_BUFFER_SIZE];
@@ -1016,7 +1016,7 @@ _peu_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
       /* we must read each counter individually */
       for ( i = 0; i < pe_ctl->num_events; i++ ) {
 
-         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer, 
+         ret = read( pe_ctl->events[i].event_fd, papi_pe_buffer,
 		    sizeof ( papi_pe_buffer ) );
          if ( ret == -1 ) {
 	    PAPIERROR("read returned an error: %s", strerror( errno ));
@@ -1120,7 +1120,7 @@ _peu_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
    for( i = 0; i < pe_ctl->num_events; i++ ) {
       if (pe_ctl->events[i].group_leader_fd == -1) {
 	 SUBDBG("ioctl(enable): fd: %d\n", pe_ctl->events[i].event_fd);
-	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ; 
+	 ret=ioctl( pe_ctl->events[i].event_fd, PERF_EVENT_IOC_ENABLE, NULL) ;
 
 	 /* ioctls always return -1 on failure */
          if (ret == -1) {
@@ -1129,7 +1129,7 @@ _peu_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	 }
 
 	 did_something++;
-      } 
+      }
    }
 
    if (!did_something) {
@@ -1314,7 +1314,7 @@ _peu_ntv_code_to_name(unsigned int EventCode,
    if (_perf_event_uncore_vector.cmp_info.disabled) return PAPI_ENOEVNT;
 
    return _pe_libpfm4_ntv_code_to_name(EventCode,
-                                         ntv_name, len, 
+                                         ntv_name, len,
 					 &uncore_native_event_table);
 }
 
