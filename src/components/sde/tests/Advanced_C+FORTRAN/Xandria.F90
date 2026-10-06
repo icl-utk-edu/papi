@@ -96,7 +96,7 @@
           cntr_i20 = 0
           cntr_i30 = 0
           cntr_iL = 0
-       
+
 
           cntr_mode = PAPI_SDE_RO+PAPI_SDE_DELTA
           rw_mode = PAPI_SDE_RW+PAPI_SDE_INSTANT

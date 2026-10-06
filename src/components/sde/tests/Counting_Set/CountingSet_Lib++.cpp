@@ -27,7 +27,7 @@ void CSetLib::do_simple_work(){
     int i;
     test_type_t element;
 
-    for(i=0; i<22390; i++){ 
+    for(i=0; i<22390; i++){
         int j = i%5222;
         element.id = j;
         element.x = (float)j*1.037/((float)j+32.1);
@@ -41,7 +41,7 @@ void CSetLib::do_simple_work(){
 void CSetLib::do_memory_allocations(){
     int i, iter;
     void *ptrs[128];
-    
+
     for(iter=0; iter<8; iter++){
         mem_type_t alloc_elem;
 
