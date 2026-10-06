@@ -1,10 +1,10 @@
 
-/****************************/                                                                                                     
-/* THIS IS OPEN SOURCE CODE */                                                                                                     
-/****************************/                                                                                                     
-                                                                                                                                   
-/**                                                                                                                                
-  * @file:    PAPI_Matlab.c   
+/****************************/
+/* THIS IS OPEN SOURCE CODE */
+/****************************/
+
+/**
+  * @file:    PAPI_Matlab.c
   * @author   Frank Winkler <frank.winkler@icl.utk.edu>
   *
   *	@brief PAPI Matlab integration.
@@ -209,9 +209,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(nlhs > number_of_counters ) {
       mexErrMsgTxt(one_output);
     }
-  if (nlhs == 0) 
+  if (nlhs == 0)
     values = (long long*)mxCalloc(number_of_counters, sizeof(long long));
-  else 
+  else
     values = (long long *)mxCalloc(nlhs, sizeof(long long) + 1);
 
   result = PAPI_OK;
