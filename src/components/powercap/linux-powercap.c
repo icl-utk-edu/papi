@@ -23,8 +23,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -582,18 +582,18 @@ static int _powercap_ntv_code_to_name( unsigned int EventCode, char *name, int l
     if ( index >= 0 && index < num_events ) {
         _local_strlcpy( name, powercap_ntv_events[index].name, len );
         return PAPI_OK;
-    } 
+    }
     return PAPI_ENOEVNT;
 }
 
-/* 
+/*
  *
  */
 static int _powercap_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
     int index = EventCode;
 
-    if ( index < 0 && index >= num_events ) 
+    if ( index < 0 && index >= num_events )
         return PAPI_ENOEVNT;
     _local_strlcpy( name, powercap_ntv_events[index].description, len );
     return PAPI_OK;
@@ -603,7 +603,7 @@ static int _powercap_ntv_code_to_info( unsigned int EventCode, PAPI_event_info_t
 {
     int index = EventCode;
 
-    if ( index < 0 || index >= num_events ) 
+    if ( index < 0 || index >= num_events )
         return PAPI_ENOEVNT;
 
     _local_strlcpy( info->symbol, powercap_ntv_events[index].name, PAPI_MAX_STR_LEN );
