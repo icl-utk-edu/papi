@@ -5,16 +5,11 @@ management counters (and selected controls) for AMD GPUs — e.g., power usage,
 temperatures, clocks, PCIe link metrics, VRAM information, and RAS/ECC status —
 by querying the AMD SMI library at runtime (ROCm ≥ 6.4.0).
 
-> **Configure note.** When both `amd_smi` and `rocm_smi` are requested,
-> PAPI’s configure script now inspects the ROCm stack and enables only the
-> appropriate SMI backend. We select `amd_smi` for ROCm 6.4.0 and newer, and
-> keep `rocm_smi` for older releases. This cutoff is based on internal testing
-> that showed AMD SMI becoming stable and feature-complete beginning with ROCm
-> 6.4.0.
-
 - [Environment Variables](#environment-variables)
 - [Enabling the AMD_SMI Component](#enabling-the-amd_smi-component)
 - [Supported Architectures](#supported-architectures)
+- [Running as Super User](#running-as-super-user)
+- [Known Limitations](#known-limitations)
 
 ---
 
@@ -108,6 +103,26 @@ After changing `PAPI_AMDSMI_ROOT` or related library paths, rerun make clobber &
 ## Supported Architectures
 To see the `amd_smi` component's latest supported hardware and software please visit the [Supported Architectures](https://github.com/icl-utk-edu/papi/wiki/Supported-Architectures#amd) GitHub Wiki page.
 
+---
+
+## Running as Super User
+
+The `amd_smi` component allows users to set hardware limits such as fan speed/power capping and oftentimes elevated privileges are required. `amd_smi`'s component test `amdsmi_set_test.c` can be used to verify the necessary privileges
+are in place. If running `amdsmi_set_test.c` results in lack of permissions then running with `sudo` is advised; however, the `PAPI_AMDSMI_ROOT` must be inherited into the new minimal environment. This can be done by:
+```
+sudo PAPI_AMDSMI_ROOT=/opt/rocm ./amdsmi_set_test (or the name of your application code's executable)
+
+or
+
+sudo --preserve-env ./amdsmi_set_test (or the name of your application code's executable)
+```
+
+Note: If `sudo` has the `env_reset` flag disabled then any variables not explicitly denied by `env_check` and `env_delete` are inherited from the invoking process.
+
+---
+
 ## Known Limitations
 
 * If the `amd_smi` and `rocm_smi` components are both configured, then `amd_smi` will be built for ROCm versions >= 6.4.0.
+
+
