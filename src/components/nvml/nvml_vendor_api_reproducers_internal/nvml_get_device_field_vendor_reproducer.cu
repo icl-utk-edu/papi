@@ -3,12 +3,12 @@
  *
  * @brief This vendor sample code will get the values for the fieldId NVML_FI_DEV_POWER_INSTANT
  *        and the scopeId NVML_POWER_SCOPE_GPU for each GPU detected on the machine.
- * 
+ *
  *        This file also can serves as a starting point as a reproducer if a bug report needs to be
  *        sent to NVIDIA for the nvml component.
  *
  *        Tested on:
- *        - Methane at ICL - 1 * A100 
+ *        - Methane at ICL - 1 * A100
  *        - Athena at Oregon - 4 * A100
  */
 

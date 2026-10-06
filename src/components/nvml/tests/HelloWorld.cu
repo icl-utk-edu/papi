@@ -73,12 +73,12 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index_arg,
                 // Count the number of decimals after needle
                 int c, num_decimals = 0;
                 for (c = 0; device_and_state_substring[c] != '\0'; c++) {
-                    // We have hit state 
+                    // We have hit state
                     if (device_and_state_substring[c] == ':') {
                         break;
                     }
-       
-                    num_decimals++; 
+
+                    num_decimals++;
                 }
 
                 char device_index[PAPI_MAX_STR_LEN] = { 0 };
@@ -151,14 +151,14 @@ int main(int argc, char **argv)
     	fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
     	exit(EXIT_FAILURE);
     }
-    
+
     int suppress_output = 0;
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
     	suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
     }
     PRINT(suppress_output, "Running the nvml component test HelloWorld.cu\n");
-    
+
     int nvidia_device_index = -1;
     char **nvml_native_event_names = NULL;
     // If command line arguments are provided then get their values.
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
     	  PAPI_VERSION_MAJOR(PAPI_VERSION),
     	  PAPI_VERSION_MINOR(PAPI_VERSION),
     	  PAPI_VERSION_REVISION(PAPI_VERSION));
-    
+
     int nvml_cmp_idx = PAPI_get_component_index("nvml");
     if (nvml_cmp_idx < 0) {
     	test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", nvml_cmp_idx);
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     if (total_event_count == 0) {
         enumerate_and_store_nvml_native_events(&nvml_native_event_names, &total_event_count, &nvidia_device_index);
     }
-    
+
     int EventSet = PAPI_NULL;
     check_papi_api_call( PAPI_create_eventset( &EventSet ) );
 
@@ -195,14 +195,14 @@ int main(int argc, char **argv)
     for (event_idx = 0; event_idx < total_event_count; event_idx++) {
         check_papi_api_call( PAPI_add_named_event(EventSet, nvml_native_event_names[event_idx]) );
     }
- 
+
     check_cuda_runtime_api_call( cudaSetDevice(nvidia_device_index) );
-    
+
     check_papi_api_call( PAPI_start(EventSet) );
-    
+
     char str[] = "Hello World!";
     PRINT(suppress_output, "\033[0;33m\nStarting string:\n\033[0m%s\n\n", str);
-    
+
     // Mangle contents of output
     // The null character is left intact for simplicity
     PRINT(suppress_output, "\033[0;33mProceeding to mangle the starting string.\n\033[0m");
@@ -211,15 +211,15 @@ int main(int argc, char **argv)
     	str[i] -= i;
     }
     PRINT(suppress_output, "The mangled string is: %s\n\n", str);
-    
+
     // Allocate memory on the device
     char *d_str;
     size_t size = sizeof(str);
     check_cuda_runtime_api_call( cudaMalloc((void**)&d_str, size) );
-    
+
     // Copy the string to the device
     check_cuda_runtime_api_call( cudaMemcpy(d_str, str, size, cudaMemcpyHostToDevice) );
-    
+
     // Set the grid and block sizes
     dim3 dimGrid(2); // One block per word
     dim3 dimBlock(6); // One thread per character
@@ -228,12 +228,12 @@ int main(int argc, char **argv)
     // Invoke the kernel
     helloWorld<<< dimGrid, dimBlock >>>(d_str);
     check_cuda_runtime_api_call( cudaGetLastError() );
-    
+
     // Retrieve the results from the device
     check_cuda_runtime_api_call( cudaMemcpy(str, d_str, size, cudaMemcpyDeviceToHost) );
-    
+
     printf("The unmangled string is: %s\n\n", str);
-    
+
     long long *counter_values = (long long *) malloc(total_event_count * sizeof(long long));
     check_memory_allocation_call(counter_values);
     check_papi_api_call( PAPI_stop(EventSet, counter_values) );
