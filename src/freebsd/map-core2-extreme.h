@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-core2.h
 * CVS:     $Id$
 * Author:  George Neville-Neil

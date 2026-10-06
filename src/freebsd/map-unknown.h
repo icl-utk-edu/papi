@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-unknown.h
 * CVS:     $Id$
 * Author:  Harald Servat
@@ -15,7 +15,7 @@
 enum NativeEvent_Value_UnknownProcessor {
 	PNE_UNK_BRANCHES = PAPI_NATIVE_MASK,
 	PNE_UNK_BRANCH_MISPREDICTS,
-	/* PNE_UNK_CYCLES, -- libpmc only supports cycles in system wide mode and this 
+	/* PNE_UNK_CYCLES, -- libpmc only supports cycles in system wide mode and this
 	requires root privileges */
 	PNE_UNK_DC_MISSES,
 	PNE_UNK_IC_MISSES,

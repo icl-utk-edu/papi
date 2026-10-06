@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-core.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -13,15 +13,15 @@
 #include "map.h"
 
 /****************************************************************************
- CORE SUBSTRATE 
- CORE SUBSTRATE 
+ CORE SUBSTRATE
+ CORE SUBSTRATE
  CORE SUBSTRATE
  CORE SUBSTRATE
  CORE SUBSTRATE
 ****************************************************************************/
 
 /*
-        NativeEvent_Value_CoreProcessor must match CoreProcessor_info 
+        NativeEvent_Value_CoreProcessor must match CoreProcessor_info
 */
 
 Native_Event_LabelDescription_t CoreProcessor_info[] =

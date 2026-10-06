@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-unknown.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -20,7 +20,7 @@
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_UnknownProcessor must match UnkProcessor_info 
+	NativeEvent_Value_UnknownProcessor must match UnkProcessor_info
 */
 
 Native_Event_LabelDescription_t UnkProcessor_info[] =

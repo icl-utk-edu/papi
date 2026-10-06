@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p6-3.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -13,15 +13,15 @@
 #include "map.h"
 
 /****************************************************************************
- P6_3 SUBSTRATE 
- P6_3 SUBSTRATE 
+ P6_3 SUBSTRATE
+ P6_3 SUBSTRATE
  P6_3 SUBSTRATE (aka Pentium III)
  P6_3 SUBSTRATE
  P6_3 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6_3_Processor must match P6_3_Processor_info 
+	NativeEvent_Value_P6_3_Processor must match P6_3_Processor_info
 */
 
 Native_Event_LabelDescription_t P6_3_Processor_info[] =

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-westmere.c
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
@@ -16,15 +16,15 @@
 
 
  /****************************************************************************
- Westmere SUBSTRATE 
- Westmere SUBSTRATE 
+ Westmere SUBSTRATE
+ Westmere SUBSTRATE
  Westmere SUBSTRATE
  Westmere SUBSTRATE
  Westmere SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_Westmere must match Westmere_info 
+	NativeEvent_Value_Westmere must match Westmere_info
 */
 
 Native_Event_LabelDescription_t WestmereProcessor_info[] =
@@ -519,6 +519,6 @@ Native_Event_LabelDescription_t WestmereProcessor_info[] =
 	{"TURBO_MODE.CORE_3", "Uncore cycles that core 3 is operating in turbo mode."},
 	{"CYCLES_UNHALTED_L3_FLL_ENABLE", "Uncore cycles that at least one core is unhalted and all L3 ways are enabled."},
 	{"CYCLES_UNHALTED_L3_FLL_DISABLE", "Uncore cycles that at least one core is unhalted and all L3 ways are disabled."},
-	{ NULL, NULL } 
+	{ NULL, NULL }
 };
 

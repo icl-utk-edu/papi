@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-core2-extreme.c
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
@@ -16,15 +16,15 @@
 
 
 /****************************************************************************
- CORE2_EXTREME SUBSTRATE 
- CORE2_EXTREME SUBSTRATE 
+ CORE2_EXTREME SUBSTRATE
+ CORE2_EXTREME SUBSTRATE
  CORE2_EXTREME SUBSTRATE
  CORE2_EXTREME SUBSTRATE
  CORE2_EXTREME SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_Core2ExtremeProcessor must match Core2ExtremeProcessor_info 
+	NativeEvent_Value_Core2ExtremeProcessor must match Core2ExtremeProcessor_info
 */
 
 Native_Event_LabelDescription_t Core2ExtremeProcessor_info[] =
@@ -236,6 +236,6 @@ Native_Event_LabelDescription_t Core2ExtremeProcessor_info[] =
 	{"UOPS_RETIRED.STD_STA", "The number of store address calculations that fused into one micro-op."},
 	{"X87_OPS_RETIRED.ANY", "The number of floating point computational instructions retired."},
 	{"X87_OPS_RETIRED.FXCH", "The number of FXCH instructions retired."},
-	{ NULL, NULL } 
+	{ NULL, NULL }
 };
 
