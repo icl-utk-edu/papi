@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 // benchStats: Reads a CSV file of three columns; and produces various stats
-// for each column. 
+// for each column.
 //-----------------------------------------------------------------------------
 
 
@@ -9,14 +9,14 @@
 #include <string.h>
 #include <math.h>
 #include <papi.h>
-#include "papi_test.h" 
+#include "papi_test.h"
 #include <sys/time.h>
 
 typedef struct {
    double init;
    double pcpVal;
 } BenchData_t;
-   
+
 //-----------------------------------------------------------------------------
 // qsort comparison to sort benchData array into ascending order of Init.
 //-----------------------------------------------------------------------------
@@ -28,7 +28,7 @@ int sortAscBDInit(const void *vA, const void *vB) {
    if (sA->init > sB->init) return( 1);      // move cA toward end of list.
    return(0);                                // equality.
 } // end routine.
-               
+
 
 //-----------------------------------------------------------------------------
 // qsort comparison to sort benchData array into ascending order of pcpVal.
@@ -41,32 +41,32 @@ int sortAscBDPCP(const void *vA, const void *vB) {
    if (sA->pcpVal > sB->pcpVal) return( 1); // move cA toward end of list.
    return(0);                               // equality.
 } // end routine.
-               
+
 
 //-----------------------------------------------------------------------------
 // median of sorted fRec init value array, for count elements.
 // if count is odd, median is at (count/2).  e.g. count=7, 7/2=3, a[3] is it.
-// if count is even, median is average of (count/2)-1 and (count/2). e.g. 
+// if count is even, median is average of (count/2)-1 and (count/2). e.g.
 // count=8, a[3]+a[4] are two center values.
 //-----------------------------------------------------------------------------
 double median_BDInit(BenchData_t* fRec, int count) {
    if ((count&1)) return fRec[(count>>1)].init;          // median if count is odd.
    return ( (fRec[(count>>1)-1].init +
              fRec[(count>>1)].init)/2.0 );               // median if count is even.
-} // end routine.   
+} // end routine.
 
 
 //-----------------------------------------------------------------------------
 // median of sorted fRec pcp value array, for count elements.
 // if count is odd, median is at (count/2).  e.g. count=7, 7/2=3, a[3] is it.
-// if count is even, median is average of (count/2)-1 and (count/2). e.g. 
+// if count is even, median is average of (count/2)-1 and (count/2). e.g.
 // count=8, a[3]+a[4] are two center values.
 //-----------------------------------------------------------------------------
 double median_BDPCP(BenchData_t* fRec, int count) {
    if ((count&1)) return fRec[(count>>1)].pcpVal;        // median if count is odd.
    return ( (fRec[(count>>1)-1].pcpVal +
              fRec[(count>>1)].pcpVal)/2.0 );             // median if count is even.
-} // end routine.   
+} // end routine.
 
 
 //-----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {                                       // args 
    char title1[128], title2[128];
    int count=0, size=Block;                                             // records we have, size of malloc.
 
-   if (argc != 2) {                                                     // progname inpfile 
+   if (argc != 2) {                                                     // progname inpfile
       fprintf(stderr, "You must specify a CSV file on the command line.\n");
       exit(-1);
    }
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {                                       // args 
    }
 
    ret = fscanf(Inp, "%128[^,],%128[^\n]", title1, title2);  // Read the three titles.
-   if (ret !=2) {                                                             // If we did not get 3, 
+   if (ret !=2) {                                                             // If we did not get 3,
       fprintf(stderr, "File Format Error, read %i of 2 expected column titles in file '%s'.\n", ret, argv[1]);
       fclose(Inp);
       exit(-1);
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {                                       // args 
          }
       } // end if realloc needed.
    } // end of all reading.
-  
+
    fclose(Inp);                                                         // Done with this file.
    fprintf(stderr, "Read a total of %i data lines.\n", count);
 
@@ -143,13 +143,13 @@ int main(int argc, char **argv) {                                       // args 
    double minInit=fRec[0].init;
    double maxInit=minInit;
    double firstInit=minInit;
-   double avgInit=minInit; 
+   double avgInit=minInit;
    double maxBut1Init = fRec[1].init;                                  // start this at second value.
 
    double minPCP=fRec[0].pcpVal;
    double maxPCP=minPCP;
    double firstPCP=minPCP;
-   double avgPCP=minPCP; 
+   double avgPCP=minPCP;
    double maxBut1PCP = fRec[1].pcpVal;                                  // start this at second value.
 
    for (i=1; i<count; i++) {                                            // check the rest.
@@ -173,17 +173,17 @@ int main(int argc, char **argv) {                                       // args 
 
    // The mode: This is the highest value in a histogram of values;
    // but that can be quite arbitary in picking the window size. We
-   // use as our # of bins the square root of the count; and make 
+   // use as our # of bins the square root of the count; and make
    // the bin size the (max-min)/#bins.
 
    int maxBin, *InitBins=NULL, *ReadBins=NULL;                          // counters for compute.
    int bins = ceil(sqrtf((double) count));
    int expCount = round(((count+0.0) / (bins+0.0)));                    // expected count per bin.
 
-   // Mode for Init. 
+   // Mode for Init.
    qsort(fRec, count, sizeof(BenchData_t), sortAscBDInit);              // put in ascending order of Init time.
-   
-   double medInit = median_BDInit(fRec, count);                         // get the overall median. 
+
+   double medInit = median_BDInit(fRec, count);                         // get the overall median.
    double Initrange=(maxInit-minInit);                                  // compute the range.
    double Initbin=ceil(Initrange/bins);                                 // bin size.
    if (Initbin == 0.0) Initbin=1.0;                                     // If all the same, just one bin.
@@ -207,9 +207,9 @@ int main(int argc, char **argv) {                                       // args 
    int actInitCount = InitBins[maxBin];                                 // actual init count.
 
 
-   // Mode for PCP. 
+   // Mode for PCP.
    qsort(fRec, count, sizeof(BenchData_t), sortAscBDPCP);               // put in ascending order of pcpVal.
-   double medPCP = median_BDPCP(fRec, count);                           // get the overall median. 
+   double medPCP = median_BDPCP(fRec, count);                           // get the overall median.
    double PCPrange=(maxPCP-minPCP);                                     // compute the range.
    double PCPbin=ceil(PCPrange/bins);                                 // bin size.
    if (PCPbin == 0.0) PCPbin=1.0;                                       // If all the same, just one bin.
