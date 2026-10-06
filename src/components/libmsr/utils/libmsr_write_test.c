@@ -1,4 +1,4 @@
-/** 
+/**
  * @author Asim YarKhan (updated)
  * @author Vince Weaver (original version)
  */
@@ -17,16 +17,16 @@
 char events[MAX_EVENTS][BUFSIZ];
 char filenames[MAX_EVENTS][BUFSIZ];
 
-int ompcpuloadprimes( int limit ) 
+int ompcpuloadprimes( int limit )
 {
     int num, primes=0;
 #pragma omp parallel for schedule(dynamic) reduction(+ : primes)
-    for (num = 1; num <= limit; num++) { 
-        int i = 2; 
-        while(i <= num) { 
+    for (num = 1; num <= limit; num++) {
+        int i = 2;
+        while(i <= num) {
             if(num % i == 0)
                 break;
-            i++; 
+            i++;
         }
         if(i == num)
             primes++;
@@ -47,14 +47,14 @@ int main (int argc, char **argv)
     union { long long ll; double dbl; } event_value_union;
     static int num_events=0;
     FILE *fileout;
-    
+
     /* PAPI Initialization */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
     if ( retval != PAPI_VER_CURRENT ) {
         fprintf(stderr,"PAPI_library_init failed\n");
 	exit(1);
     }
-    
+
     /* Find the libmsr component */
     numcmp = PAPI_num_components();
     for(cid=0; cid<numcmp; cid++) {
@@ -73,12 +73,12 @@ int main (int argc, char **argv)
 	}
     }
 
-    /* Component not found */    
+    /* Component not found */
     if (cid==numcmp) {
         fprintf(stderr,"No libmsr component found\n");
         exit(1);
     }
-    
+
     /* Find events in the component */
     code = PAPI_NATIVE_MASK;
     enum_retval = PAPI_enum_cmp_event( &code, PAPI_ENUM_FIRST, cid );
@@ -102,7 +102,7 @@ int main (int argc, char **argv)
         printf("Error!  No libmsr events found!\n");
 	exit(1);
     }
-    
+
     /* Open output file */
     char fileoutname[]="libmsr_write_test_output.txt";
     fileout=fopen( fileoutname ,"w" );
@@ -113,14 +113,14 @@ int main (int argc, char **argv)
     if (retval != PAPI_OK) {
         fprintf(stderr,"Error creating eventset!\n");
     }
-    
+
     for(i=0;i<num_events;i++) {
         retval = PAPI_add_named_event( EventSet, events[i] );
-        if (retval != PAPI_OK) fprintf(stderr,"Error adding event %s\n",events[i]); 
+        if (retval != PAPI_OK) fprintf(stderr,"Error adding event %s\n",events[i]);
     }
-    
+
     start_time=PAPI_get_real_nsec();
-    
+
     /* Grab the initial values for the events */
     retval = PAPI_start( EventSet);
     if (retval != PAPI_OK) { fprintf(stderr,"PAPI_start() failed\n"); exit(1); }
@@ -130,7 +130,7 @@ int main (int argc, char **argv)
 
     /* Write a header line */
     fprintf( fileout, "ACTION TIME-STAMP TIME-FOR-UNIT-WORK TIME-OVERHEAD-RW\t" );
-    for(i=0; i<num_events; i++) 
+    for(i=0; i<num_events; i++)
         fprintf( fileout, "%s ", events[i]+9 );
     fprintf( fileout, "\n" );
 
@@ -150,7 +150,7 @@ int main (int argc, char **argv)
     int limit2base=10;
     while(rpt++<200) {
         //printf("rpt %d\n", rpt);
-        
+
         if ( rpt % 10 == 0 )  {
             for (i=0; i<num_events; i++) {
                 event_value_union.ll = values[i];
@@ -179,14 +179,14 @@ int main (int argc, char **argv)
             }
             fprintf( fileout, "\n" );
         }
-        
+
         /* DO SOME WORK TO USE ENERGY */
         //usleep(100000);
         double work_start_time=PAPI_get_real_nsec();
         ompcpuloadprimes( 100000 );
         double work_time=PAPI_get_real_nsec()-work_start_time;
         //printf("primescount %d\n", primescount);
-        
+
         /* Read and output the values */
         read_start_time=PAPI_get_real_nsec();
         retval = PAPI_read( EventSet, values );

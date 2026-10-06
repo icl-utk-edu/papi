@@ -44,7 +44,7 @@ void run_test( int quiet )
 {
     double s;
     int i,j,k;
-    if ( !quiet ) 
+    if ( !quiet )
         printf( "Doing a naive %dx%d MMM...\n",MATRIX_SIZE,MATRIX_SIZE );
     for( i=0; i<MATRIX_SIZE; i++ ) {
         for( j=0; j<MATRIX_SIZE; j++ ) {
@@ -99,19 +99,19 @@ int main ( int argc, char **argv )
 
     /* PAPI Initialization */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
-    if ( retval != PAPI_VER_CURRENT ) 
+    if ( retval != PAPI_VER_CURRENT )
         test_fail( __FILE__, __LINE__,"PAPI_library_init failed\n",retval );
-    
-    if ( !TESTS_QUIET ) 
+
+    if ( !TESTS_QUIET )
         printf( "Trying all LIBMSR events\n" );
 
     numcmp = PAPI_num_components();
 
     for( cid=0; cid<numcmp; cid++ ) {
 
-        if ( ( cmpinfo = PAPI_get_component_info( cid ) ) == NULL ) 
+        if ( ( cmpinfo = PAPI_get_component_info( cid ) ) == NULL )
             test_fail( __FILE__, __LINE__,"PAPI_get_component_info failed\n", 0 );
-        
+
         if ( strstr( cmpinfo->name,"libmsr" ) ) {
             libmsr_cid=cid;
             if ( !TESTS_QUIET ) printf( "Found libmsr component at cid %d\n",libmsr_cid );
@@ -122,14 +122,14 @@ int main ( int argc, char **argv )
             break;
         }
     }
-    
+
     /* Component not found */
-    if ( cid==numcmp ) 
+    if ( cid==numcmp )
         test_skip( __FILE__,__LINE__,"No libmsr component found\n",0 );
 
     /* Create EventSet */
     retval = PAPI_create_eventset( &EventSet );
-    if ( retval != PAPI_OK ) 
+    if ( retval != PAPI_OK )
         test_fail( __FILE__, __LINE__, "PAPI_create_eventset()",retval );
 
     /* Add all events */
@@ -147,7 +147,7 @@ int main ( int argc, char **argv )
         data_type[num_events] = evinfo.data_type;
 
         retval = PAPI_add_event( EventSet, code );
-        if ( retval != PAPI_OK ) 
+        if ( retval != PAPI_OK )
             break; /* We've hit an event limit */
         num_events++;
 
@@ -155,9 +155,9 @@ int main ( int argc, char **argv )
     }
 
     values=calloc( num_events,sizeof( long long ) );
-    if ( values==NULL ) 
+    if ( values==NULL )
         test_fail( __FILE__, __LINE__,"No memory - calloc failed",retval );
-    
+
     if ( !TESTS_QUIET ) printf( "Starting measurements...\n" );
 
     /* Start Counting */
@@ -169,14 +169,14 @@ int main ( int argc, char **argv )
 
         /* Run test */
         run_test( TESTS_QUIET );
-        
+
         /* Stop Counting */
         after_time=PAPI_get_real_nsec();
         retval = PAPI_read( EventSet, values );
         if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_read()",retval );
-        
+
         elapsed_time=( ( double )( after_time-before_time ) )/1.0e9;
-        
+
         if ( !TESTS_QUIET ) {
             printf( "Stopping measurements, took %.3fs, gathering results...\n", elapsed_time );
             for( i=0; i<num_events; i++ ) {
@@ -186,14 +186,14 @@ int main ( int argc, char **argv )
                 } else if ( data_type[i]==PAPI_DATATYPE_UINT64 ) {
                     printf( "%-40s %12lld %s\n", event_names[i], tmp_ll_dbl.ll, units[i] );
                 }
-            }            
+            }
             printf( "\n" );
         }
     }
 
     retval = PAPI_stop( EventSet, values );
     if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_stop()",retval );
-     
+
     retval = PAPI_cleanup_eventset( EventSet );
     if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset()",retval );
 

@@ -76,8 +76,8 @@ typedef struct _libmsr_reg_alloc {
 #define LIBMSR_MAX_COUNTERS 64
 #define LIBMSR_MAX_PACKAGES 64
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -166,10 +166,10 @@ static int _local_linkDynamicLibraries()
     }
 
     char path_name[1024];
-    char *libmsr_root = getenv("PAPI_LIBMSR_ROOT"); 
+    char *libmsr_root = getenv("PAPI_LIBMSR_ROOT");
 
     dl1 = NULL;
-    // Step 1: Process override if given.   
+    // Step 1: Process override if given.
     if (strlen(libmsr_main) > 0) {                                  // If override given, it has to work.
         dl1 = dlopen(libmsr_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
         if (dl1 == NULL) {
@@ -185,7 +185,7 @@ static int _local_linkDynamicLibraries()
         dl1 = dlopen("libmsr.so", RTLD_NOW | RTLD_GLOBAL);        // Try system paths.
     }
 
-    // Step 3: Try the explicit install default. 
+    // Step 3: Try the explicit install default.
     if (dl1 == NULL && libmsr_root != NULL) {                          // if root given, try it.
         int strErr=snprintf(path_name, 1024-2, "%s/lib/libmsr.so", libmsr_root);   // PAPI Root check.
         path_name[1023]=0;
@@ -313,7 +313,7 @@ int _libmsr_init_component( int cidx )
 
     /* initialize libmsr */
     if ( libmsr_init_msr() != 0 ) {
-        SUBDBG( "init_msr (libmsr) returned error. Possible permission problem accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr"); 
+        SUBDBG( "init_msr (libmsr) returned error. Possible permission problem accessing /dev/cpu/<n>/msr_safe or /dev/cpu/<n>/msr");
         char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr init failed; possible permission issue accessing /dev/cpu/<n>/msr)", PAPI_MAX_STR_LEN);
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
         if (strCpy == NULL) HANDLE_STRING_ERROR;
@@ -324,7 +324,7 @@ int _libmsr_init_component( int cidx )
     /* Initialize libmsr RAPL */
     if ( already_called_libmsr_rapl_initialized_global==0 ) {
         if ( libmsr_rapl_init( &libmsr_rapl_data, &libmsr_rapl_flags ) < 0 ) {
-            SUBDBG( "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)"); 
+            SUBDBG( "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)");
             char* strCpy=strncpy( _libmsr_vector.cmp_info.disabled_reason, "Library libmsr could not initialize RAPL (libmsr/rapl_init failed)", PAPI_MAX_STR_LEN);
             _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
             if (strCpy == NULL) HANDLE_STRING_ERROR;
