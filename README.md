@@ -46,10 +46,10 @@ performance counters in a system, including the new software-defined events.
 
 If PAPI is used in a project or publication, please cite the following paper:
 
-> Jagode H, Danalis A, Congiu G, Barry D, Castaldo A, Dongarra J. 
+> Jagode H, Danalis A, Congiu G, Barry D, Castaldo A, Dongarra J.
 > **Advancements of PAPI for the exascale generation.**
-> *The International Journal of High Performance Computing Applications.* 
-> 2024;39(2):251-268. 
+> *The International Journal of High Performance Computing Applications.*
+> 2024;39(2):251-268.
 > [doi:10.1177/10943420241303884](https://journals.sagepub.com/doi/10.1177/10943420241303884)
 
 **This helps us track the impact of the project and supports ongoing development. Thank you!**
@@ -59,11 +59,11 @@ If PAPI is used in a project or publication, please cite the following paper:
 
 # Getting Help
 
-* Visit our FAQ at: <https://icl-utk-edu.github.io/papi/PAPI_FAQ.html> 
+* Visit our FAQ at: <https://icl-utk-edu.github.io/papi/PAPI_FAQ.html>
   or read a snapshot of the FAQ in papi/PAPI_FAQ.html
 * For assistance with PAPI, email ptools-perfapi@icl.utk.edu.
 * You can also join the PAPI User Google group by going to
-  <https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi> 
+  <https://groups.google.com/a/icl.utk.edu/forum/#!forum/ptools-perfapi>
   to read historical postings to the list.
 
 ***
@@ -76,10 +76,10 @@ be offered through the standard GitHub pull request model. We strongly
 encourage you to coordinate large contributions with the PAPI development team
 early in the process.
 
-**For timely pull request reviews and feedback, it is important to submit 
+**For timely pull request reviews and feedback, it is important to submit
 one (1) pull request per feature / bug fix.**
 
-In order to create a pull request on a public read-only repo, 
+In order to create a pull request on a public read-only repo,
 you will need to do the following:
 
 1. Fork the PAPI repo (click "+" on the left and "Fork this repository").
