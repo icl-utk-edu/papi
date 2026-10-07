@@ -251,6 +251,7 @@ int main(int argc, char **argv)
     }
     free(nvml_native_event_names);
 
+    test_pass( __FILE__);
     return 0;
 }
 
