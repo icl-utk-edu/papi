@@ -12,4 +12,4 @@ testPCP: testPCP.o $(UTILOBJS) $(PAPILIB)
 	$(CC) $(INCLUDE) -o testPCP testPCP.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) -Xlinker -Map=testPCP_link.map
 
 clean:
-	rm -f $(TESTS) *.o *~
+	rm -f $(TESTS) *.o *~ *.s *.map
