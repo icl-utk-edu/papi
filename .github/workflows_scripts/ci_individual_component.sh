@@ -53,13 +53,22 @@ if [ "$COMPONENT" = "amd_smi" ]; then
     export PAPI_AMDSMI_ROOT=$ROCM_PATH
 fi
 
-## Set the cuda component or the nvml component environment variable
-if [ "$COMPONENT" = "cuda" ] || [ "$COMPONENT" = "nvml" ]; then
+## Set the cuda component environment variable
+if [ "$COMPONENT" = "cuda" ]; then
     module unload glibc
     export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
     module load  cuda/12.8.0
     export PAPI_CUDA_ROOT=$ICL_CUDA_ROOT
     export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$PAPI_CUDA_ROOT/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+fi
+
+## Set the nvml component environment variable
+if [ "$COMPONENT" = "nvml" ]; then
+    module unload glibc
+    export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
+    module load  cuda/12.8.0
+    export PAPI_NVML_ROOT=$ICL_CUDA_ROOT
+    export LD_LIBRARY_PATH=$PAPI_NVML_ROOT/lib64:$LD_LIBRARY_PATH
 fi
 
 ## Set the intel_gpu component environment variables

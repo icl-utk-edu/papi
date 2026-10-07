@@ -40,14 +40,25 @@ case "$COMPONENTS" in
     ;;
 esac
 
-## Set the cuda component and the nvml component environment variables
+## Set the cuda component environment variable
 case "$COMPONENTS" in
-  *"cuda"* | *"nvml"*)
+  *"cuda"*)
     module unload glibc
     export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
     module load cuda/12.8.0
     export PAPI_CUDA_ROOT=$ICL_CUDA_ROOT
     export LD_LIBRARY_PATH=$PAPI_CUDA_ROOT/lib64:$PAPI_CUDA_ROOT/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+    ;;
+esac
+
+## Set the nvml component environment variable
+case "$COMPONENTS" in
+  *"nvml"*)
+    module unload glibc
+    export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
+    module load cuda/12.8.0
+    export PAPI_NVML_ROOT=$ICL_CUDA_ROOT
+    export LD_LIBRARY_PATH=$PAPI_NVML_ROOT/lib64:$LD_LIBRARY_PATH
     ;;
 esac
 
