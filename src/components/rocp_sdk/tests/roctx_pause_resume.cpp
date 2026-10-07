@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
         for( j = 0; j < N; j++ ) {
             hostA[i*N + j] = ((double)random())/RAND_MAX + 1.1;
             hostB[i*N + j] = ((double)random())/RAND_MAX + 1.1;
-            devC[i*N + j] = 0.0;
+            hostC[i*N + j] = 0.0;
         }
     }
 
