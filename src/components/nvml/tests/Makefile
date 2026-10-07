@@ -45,6 +45,5 @@ benchSANVML: benchSANVML.o $(UTILOBJS)
 clean:
 	rm -f $(TESTS) *.o
 	rm -f benchSANVML
-	rm -f nvmlcap_plot results*
 
 FORCE:
