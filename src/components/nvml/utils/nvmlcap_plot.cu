@@ -122,26 +122,32 @@ int main( int argc, char** argv )
 
     int numcmp = PAPI_num_components();
 
-   // Search for the NVML component. 
-   int cid = 0;
-    for (cid=0; cid<numcmp; cid++) {
-        cmpinfo = PAPI_get_component_info(cid);
-        if (cmpinfo == NULL) {                                  // NULL?
-            fprintf(stderr, "PAPI error: PAPI reports %d components, but PAPI_get_component_info(%d) returns NULL pointer.\n", numcmp, cid); 
-            test_fail( __FILE__, __LINE__,"PAPI_get_component_info failed\n",-1 );
-        } else {
-            if ( strstr( cmpinfo->name, "nvml" ) ) break;       // If we found it, 
-        }
+    // Verify the nvml component has been configured into the PAPI build.
+    const char *component_name = "nvml";
+    int cidx = PAPI_get_component_index(component_name);
+    if (cidx < 0) {
+        fprintf(stderr, "The nvml component does not exist. This is often due to the nvml component not"
+                " being configured into the PAPI build (i.e ./configure --with-components=nvml).\n");
+        exit(-1);
     }
+    printf("The nvml component was found at component index: %d.\n", cidx);
 
-    if ( cid==numcmp ) {                                        // If true we looped through all without finding nvml.
-        fprintf(stderr, "NVML PAPI Component was not found.\n");       
+    // Initialize the NVML component as it is a PAPI_EDELAY_INIT component.
+    int code = 0 | PAPI_NATIVE_MASK;
+    int modifier = PAPI_ENUM_FIRST;
+    retval = PAPI_enum_cmp_event(&code, modifier, cidx);
+    if (retval != PAPI_OK) {
+        fprintf(stderr, "Failed to initialize the nvml component.\n");
         exit(-1);
     }
 
-    printf( "NVML found as Component %d of %d: %s: %d events\n", (1+cmpinfo->CmpIdx), numcmp, cmpinfo->name, cmpinfo->num_native_events );
-    if (cmpinfo->disabled) {                                    // If disabled,
-        fprintf(stderr, "NVML PAPI Component is disabled.\n");
+    cmpinfo = PAPI_get_component_info(cidx);
+    if (cmpinfo == NULL) {
+        fprintf(stderr, "PAPI_get_component_info failure for the nvml component.\n");
+        exit(-1);
+    }
+    if (cmpinfo->disabled) {
+        fprintf(stderr, "The nvml component is disabled and the reason is -- %s.\n", cmpinfo->disabled_reason);
         exit(-1);
     }
 
@@ -152,67 +158,58 @@ int main( int argc, char** argv )
         exit(-1);
     } 
 
-    FILE *myOut = fopen("PowerReadGPU.tsv", "w");               // Open the file.
-    if (myOut == NULL) {                                        // If that failed,
-        fprintf(stderr, "Failed to open output file PowerReadGPU.csv.\n");
-        exit(-1);
-    }
-
-    FILE *myGnuplot = fopen("PowerReadGPU.gnuplot", "w");
-    if (myGnuplot == NULL) {
-        fprintf(stderr, "Failed to open gnuplot output file PowerReadGPU.gnuplot.\n");
-        exit(-1);
-    }
- 
     // Scan events to find nvml power events.
-    int code = PAPI_NATIVE_MASK;
+    code = PAPI_NATIVE_MASK;
     int ii=0;
     int event_modifier = PAPI_ENUM_FIRST;
     for ( ii=0; ii<cmpinfo->num_native_events; ii++ ) {
-        retval = PAPI_enum_cmp_event( &code, event_modifier, cid );
+        retval = PAPI_enum_cmp_event( &code, event_modifier, cidx );
         event_modifier = PAPI_ENUM_EVENTS;
         if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
         retval = PAPI_event_code_to_name( code, event_name );
-        char *ss; 
 
-        ss = strstr(event_name, "device_");                             // Look for the device id.
-        if (ss == NULL) continue;                                       // Not a valid name.
-        int did = atoi(ss+7);                                           // convert it.
+        char *device_ss = strstr(event_name, "device_");                // Look for the device id.
+        if (device_ss == NULL) continue;                                // Not a valid name.
+        int did = atoi(device_ss+7);                                    // convert it.
         if (did >= device_count) continue;                              // Invalid device count.
 
-        // Have some event, anyway.
-        ss = strstr(event_name, "power");                                       // First, see if we have power.
-        if (ss != NULL && ss[5] == 0) {                                         // If found and the last thing on the line, 
-            PowerEventName[did] = strdup(event_name);                           // .. remember the name, in device order.
-            dprintf("Found powerEvent '%s' for device %i.\n", event_name, did);
-            PowerEventCount++;                                                  // .. bump total power events.
-            continue;                                                           // .. done with this event.
+        char *qualifier_ss = strstr(device_ss, ":");                    // Look for qualifier.
+        if (qualifier_ss == NULL) continue;                             // Qualifier not present.
+
+        const char *power_qualifier = ":power";                                                                // First, see if we have power.
+        if (strlen(qualifier_ss) == strlen(power_qualifier) && strcmp(qualifier_ss, power_qualifier) == 0) {   // If string length and characters match.
+             PowerEventName[did] = strdup(event_name);                                                         // .. Remember the name, in device order.
+             dprintf("Found powerEvent '%s' for device %i.\n", event_name, did);                               // .. Report what we found.
+             PowerEventCount++;                                                                                // .. Bump total power events.
+             continue;                                                                                         // .. Done with this event.
         }
 
-        ss = strstr(event_name, "power_management_limit");                      // get position of this string.
-        if (ss != NULL && ss[22] == 0) {                                        // If found and last thing on the line, 
-            LimitEventName[did] = strdup(event_name);                           // Valid! Remember the name.
-            dprintf("Found limitEvent '%s' for device %i.\n", event_name, did); // Report what we found.
-            LimitEventCount++;                                                  // Add to the number of events found.
-            continue;                                                           // Done with it.
+        const char *power_management_limit_qualifier = ":power_management_limit";                              // Second, see if we have power_management_limit.
+        if (strlen(qualifier_ss) == strlen(power_management_limit_qualifier) &&                                // If string length and
+            strcmp(qualifier_ss, power_management_limit_qualifier) == 0) {                                     // characters match.
+            LimitEventName[did] = strdup(event_name);                                                          // .. Remember the name, in device order.
+            dprintf("Found limitEvent '%s' for device %i.\n", event_name, did);                                 // .. Report what we found.
+            LimitEventCount++;                                                                                 // .. Bump total limit events.
+            continue;                                                                                          // .. Done with this event.
         }
 
-        ss = strstr(event_name, "power_management_limit_constraint_min");       // get position of this string.
-        if (ss != NULL && ss[37] == 0) {                                        // If found and last thing on the line, 
-            minEventName[did] = strdup(event_name);                             // Valid! Remember the name.
-            dprintf("Found minEvent '%s' for device %i.\n", event_name, did);   // Report what we found.
-            minEventCount++;                                                    // Add to the number of events found.
-            continue;                                                           // Done with it.
+        const char *power_management_min_qualifier = ":power_management_limit_constraint_min";                 // Third, see if we have power_management_limit_constraint_min.
+        if (strlen(qualifier_ss) == strlen(power_management_min_qualifier) &&                                  // If string length and
+            strcmp(qualifier_ss, power_management_min_qualifier) == 0) {                                       // characters match.
+            minEventName[did] = strdup(event_name);                                                            // .. Remember the name, in device order.
+            dprintf("Found minEvent '%s' for device %i.\n", event_name, did);                                  // .. Report what we found.
+            minEventCount++;                                                                                   // .. Bump total limit min events.
+            continue;                                                                                          // .. Done with this event.
         }
 
-        ss = strstr(event_name, "power_management_limit_constraint_max");       // get position of this string.
-        if (ss != NULL && ss[37] == 0) {                                        // If found and last thing on the line, 
-            maxEventName[did] = strdup(event_name);                             // Valid! Remember the name.
-            dprintf("Found maxEvent '%s' for device %i.\n", event_name, did);   // Report what we found.
-            maxEventCount++;                                                    // Add to the number of events found.
-            continue;                                                           // Done with it.
+        const char *power_management_max_qualifier = ":power_management_limit_constraint_max";                 // Fourth, see if we have power_management_limit_constraint_max.
+        if (strlen(qualifier_ss) == strlen(power_management_max_qualifier) &&                                  // If string length and
+            strcmp(qualifier_ss, power_management_max_qualifier) == 0) {                                       // characters match.
+            maxEventName[did] = strdup(event_name);                                                            // .. Remember the name, in device order.
+            dprintf("Found maxEvent '%s' for device %i.\n", event_name, did);                                  // .. Report what we found.
+            maxEventCount++;                                                                                   // .. Bump total limit max events.
+            continue;                                                                                          // .. Done with this event.
         }
-
     } // end of for each event. 
 
 
@@ -229,6 +226,18 @@ int main( int argc, char** argv )
             free(  maxEventName[j]);
         }
         helpText();
+        exit(-1);
+    }
+
+    FILE *myOut = fopen("PowerReadGPU.tsv", "w");               // Open the file.
+    if (myOut == NULL) {                                        // If that failed,
+        fprintf(stderr, "Failed to open output file PowerReadGPU.csv.\n");
+        exit(-1);
+    }
+
+    FILE *myGnuplot = fopen("PowerReadGPU.gnuplot", "w");
+    if (myGnuplot == NULL) {
+        fprintf(stderr, "Failed to open gnuplot output file PowerReadGPU.gnuplot.\n");
         exit(-1);
     }
 
@@ -648,7 +657,7 @@ int main( int argc, char** argv )
     //--------------------------------------------------------------------------
     fprintf(myGnuplot, "set xlabel 'Time (sec)'\n");                // label for x axis.
     fprintf(myGnuplot, "set nokey\n");                              // no key needed.
-    fprintf(myGnuplot, "set terminal png\n");                       // generate png output when plotting.
+    fprintf(myGnuplot, "set terminal png noenhanced\n");            // generate png output when plotting.
     fprintf(myGnuplot, "set title 'Spot MW Usage During Run'\n");   // Title of graph.
     fprintf(myGnuplot, "set yrange [0:300000]\n");                  // Force the y range.
 
