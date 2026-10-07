@@ -23,7 +23,7 @@ endif
 %.o:%.cu
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -c -o $@ $<
 
-TESTS = HelloWorld nvml_power_limiting_test
+TESTS = HelloWorld nvml_power_limiting_test nvml_power_limit_read_test
 
 nvml_tests: $(TESTS) 
 
@@ -45,6 +45,5 @@ benchSANVML: benchSANVML.o $(UTILOBJS)
 clean:
 	rm -f $(TESTS) *.o
 	rm -f benchSANVML
-	rm -f nvmlcap_plot results*
 
 FORCE:
