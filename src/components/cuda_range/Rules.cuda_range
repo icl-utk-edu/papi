@@ -1,0 +1,15 @@
+COMPSRCS += components/cuda_range/cuda_range_linux.c \
+            components/cuda_range/cuda_range_profiling.cpp \
+
+COMPOBJS += cuda_range_linux.o cuda_range_profiling.o
+
+cuda_range_cflags = -I$(PAPI_CUDA_RANGE_ROOT)/extras/CUPTI/include -I$(PAPI_CUDA_RANGE_ROOT)/include
+CFLAGS  += -g $(cuda_range_cflags)
+
+LDFLAGS += $(LDL)
+
+cuda_range_linux.o: components/cuda_range/cuda_range_linux.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
+
+cuda_range_profiling.o: components/cuda_range/cuda_range_profiling.cpp $(HEADERS)
+	$(CXX) $(LIBCFLAGS) $(OPTFLAGS) -c $< -o $@
