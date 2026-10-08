@@ -713,7 +713,7 @@ detectDevices()
     /* So for each card, check whats querable */
     for (i = 0; i < device_count; i++) {
         features[i] = 0;
-        
+
         ret = (*nvmlDeviceGetHandleByIndexPtr)(i, &devices[i]);
         if (NVML_SUCCESS != ret) {
             SUBDBG("nvmlDeviceGetHandleByIndex(%d, &devices[%d]) failed.\n", i, i);
@@ -1233,7 +1233,7 @@ createNativeEvents()
 // Triggered by PAPI_shutdown(), but also if init fails to complete; for example due
 // to a missing library. We still need to clean up. The dynamic libs (dlxxx routines)
 // may have open mallocs that need to be free()d.
- 
+
 int _papi_nvml_shutdown_component()
 {
     SUBDBG("Enter:\n");
@@ -1324,7 +1324,7 @@ int _papi_nvml_init_private(void)
 
     /* A per device representation of what events are present */
     features = (int*)papi_malloc(sizeof(int) * device_count);
-    if (features == NULL) { 
+    if (features == NULL) {
         snprintf(_nvml_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
                     "%s failed to alloc %lu bytes for features.", __func__, sizeof(int)*device_count);
                     _nvml_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
@@ -1417,9 +1417,9 @@ static void *nvml_search_and_load_from_system_paths(const char *soNamesToSearchF
     for (i = 0; i < soNamesToSearchCount; i++) {
         so = dlopen(soNamesToSearchFor[i], RTLD_NOW | RTLD_GLOBAL);
         if (so) {
-            return so; 
-        }   
-    }   
+            return so;
+        }
+    }
 
     return so;
 }

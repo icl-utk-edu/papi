@@ -89,7 +89,7 @@ int mmtimer_setup(void) {
 	  // don't know for sure, but I think this ratio is inverted
 	  //     mmdev_ratio = (freq/1000000) / (unsigned long)_papi_hwi_system_info.hw_info.mhz;
           mmdev_ratio =
-		  ( unsigned long ) _papi_hwi_system_info.hw_info.cpu_max_mhz / 
+		  ( unsigned long ) _papi_hwi_system_info.hw_info.cpu_max_mhz /
 	                      ( freq / 1000000 );
           SUBDBG( "MMTIMER has a ratio of %ld to the CPU's clock, getting resolution\n",
 		    mmdev_ratio );
@@ -273,7 +273,7 @@ static inline long long get_cycles()
 	int64_t retval;
 #ifdef _ARCH_PPC64
     /*
-        This reads timebase in one 64bit go.  Does *not* include a workaround for the cell (see 
+        This reads timebase in one 64bit go.  Does *not* include a workaround for the cell (see
         http://ozlabs.org/pipermail/linuxppc-dev/2006-October/027052.html)
     */
     __asm__ volatile(

@@ -1,8 +1,8 @@
-/* 
+/*
  * Test case for appio
  * Author: Tushar Mohan
  *         tusharmohan@gmail.com
- * 
+ *
  * Description: This test case does a strided read of /etc/group
  *              and writes the output to  stdout.
  */
@@ -17,11 +17,11 @@
 
 #include "papi.h"
 #include "papi_test.h"
- 
+
 #define NUM_EVENTS 7
- 
+
 int main(int argc, char** argv) {
-  int EventSet = PAPI_NULL; 
+  int EventSet = PAPI_NULL;
   const char* names[NUM_EVENTS] = {"appio:::READ_CALLS", "appio:::READ_BYTES", "appio:::READ_BLOCK_SIZE", "appio:::READ_USEC", "appio:::SEEK_CALLS", "appio:::SEEK_USEC", "appio:::SEEK_ABS_STRIDE_SIZE"};
   long long values[NUM_EVENTS];
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
   int bytes = 0;
   char buf[1024];
 
- 
+
 //if (PAPI_read(EventSet, values) != PAPI_OK)
 //   handle_error(1);
 //printf("After reading the counters: %lld\n",values[0]);
@@ -91,10 +91,10 @@ int main(int argc, char** argv) {
   if (PAPI_stop(EventSet, values) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop\n");
   }
- 
-  if (!TESTS_QUIET) { 
+
+  if (!TESTS_QUIET) {
     printf("----\n");
-    for (e=0; e<NUM_EVENTS; e++)  
+    for (e=0; e<NUM_EVENTS; e++)
       printf("%s: %lld\n", names[e], values[e]);
   }
   test_pass( __FILE__ );

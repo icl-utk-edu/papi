@@ -7,19 +7,19 @@
  * thus reports as possible race conditions reads/writes by
  * different threads that are actually fine (surrounded by locks).
  *
- * This was written particularly for krentel_pthreads_race.c 
+ * This was written particularly for krentel_pthreads_race.c
  * when processed by the above valgrind. We produce a line per
  * condition, in the form:
  * OP@file:line OP@file:line
  * where OP is R or W. The first file:line code occurred
  * after the second file:line code, and on a different thread.
- * 
+ *
  * We print the results to stdout. It is useful to filter this
- * through the standard utility 'uniq', each occurrence only 
+ * through the standard utility 'uniq', each occurrence only
  * needs to be investigated once. Just insure there are
  * MATCHING locks around each operation within the code.
  *
- * An example run (using uniq): The options -uc will print 
+ * An example run (using uniq): The options -uc will print
  * only unique lines, preceeded by a count of how many times
  * it occurs.
  *
@@ -27,14 +27,14 @@
  *
  * An example output line (piped through uniq as above):
  *       1 R@threads.c:190                    W@threads.c:206
- * An investigation shows threads.c:190 is protected by 
+ * An investigation shows threads.c:190 is protected by
  * _papi_hwi_lock(THREADS_LOCK); and threads.c:206 is
- * protected by the same lock. Thus no data race can 
+ * protected by the same lock. Thus no data race can
  * occur for this instance.
  *
  * Compilation within the papi/src/ctests directory:
  * make filter_helgrind
- * 
+ *
  */
 
 #include <stdio.h>
@@ -67,7 +67,7 @@ int main(int argc, char** args) {
    // State 0: We are looking for a line with PDRR or PDRW.
    //          We don't exit until we find it, or run out of lines.
    //          if we find it, we remember which and go to state 1.
-   // State 1: Looking for "   at " in column 11. 
+   // State 1: Looking for "   at " in column 11.
    //          When found, we extract the string betweeen '(' and ')'
    //          which is program name:line. go to state 2.
    // State 2: We are searching for TCWW, TCWR, PDRW, PDRR.
@@ -80,12 +80,12 @@ int main(int argc, char** args) {
    //          OUTPUT LINE for an investigation.
    //          Go to State 0.
 
-   state = 0;        // looking for PDRR, PDRW. 
+   state = 0;        // looking for PDRR, PDRW.
    while (fgets(myLine, 16384, HELOUT) != NULL) {
       if (strlen(myLine) < 20) continue;
       switch (state) {
          case 0:  // Looking for PDRR or PRDW.
-            if (strstr(myLine, PDRR) != NULL) { 
+            if (strstr(myLine, PDRR) != NULL) {
                type1='R';
                state=1;
                continue;
@@ -96,7 +96,7 @@ int main(int argc, char** args) {
                state=1;
                continue;
             }
-      
+
             continue;
             break;
 
@@ -124,13 +124,13 @@ int main(int argc, char** args) {
                continue;
             }
 
-            if (strstr(myLine, TCWW) != NULL) { 
+            if (strstr(myLine, TCWW) != NULL) {
                type2='W';
                state=3;
                continue;
             }
 
-            if (strstr(myLine, PDRR) != NULL) { 
+            if (strstr(myLine, PDRR) != NULL) {
                type1='R';
                state=1;
                continue;
@@ -164,7 +164,8 @@ int main(int argc, char** args) {
             break;
       } // end switch.
    } // end while.
-   
+
    fclose(HELOUT);
    exit(0);
-}  
+}
+

@@ -49,7 +49,7 @@ static int _darwin_init_locks(void) {
    return PAPI_OK;
 }
 
-	
+
 int
 _darwin_detect_hypervisor(char *virtual_vendor_name) {
 
@@ -60,7 +60,7 @@ _darwin_detect_hypervisor(char *virtual_vendor_name) {
 #else
 	(void) virtual_vendor_name;
 #endif
-	
+
 	return retval;
 }
 
@@ -113,7 +113,7 @@ _darwin_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
      return PAPI_ESYS;
   }
   strncpy( hwinfo->vendor_string,buffer,len);
-   
+
   hwinfo->vendor = PAPI_VENDOR_INTEL;
 
 
@@ -169,7 +169,7 @@ _darwin_get_cpu_info( PAPI_hw_info_t *hwinfo, int *cpuinfo_mhz )
 
   hwinfo->cpuid_model=buffer[0];
   hwinfo->model=hwinfo->cpuid_model;
-   
+
   /*************/
   /* Frequency */
   /*************/
@@ -289,8 +289,8 @@ _darwin_get_system_info( papi_mdi_t *mdi ) {
 	SUBDBG( "Found %d %s(%d) %s(%d) CPUs at %d Mhz.\n",
 			mdi->hw_info.totalcpus,
 			mdi->hw_info.vendor_string,
-			mdi->hw_info.vendor, 
-		        mdi->hw_info.model_string, 
+			mdi->hw_info.vendor,
+		        mdi->hw_info.model_string,
 		        mdi->hw_info.model,
 		        mdi->hw_info.cpu_max_mhz);
 
@@ -300,7 +300,7 @@ _darwin_get_system_info( papi_mdi_t *mdi ) {
 	return PAPI_OK;
 }
 
-int 
+int
 _papi_hwi_init_os(void) {
 
     int major=0,minor=0,sub=0;
@@ -374,14 +374,14 @@ _darwin_get_real_cycles( void )
 long long
 _darwin_get_real_usec_gettimeofday( void )
 {
-	
+
    long long retval;
 
    struct timeval buffer;
    gettimeofday( &buffer, NULL );
    retval = ( long long ) buffer.tv_sec * ( long long ) 1000000;
    retval += ( long long ) ( buffer.tv_usec );
-	
+
    return retval;
 }
 
@@ -398,11 +398,11 @@ _darwin_get_virt_usec_times( void )
 
    SUBDBG( "user %d system %d\n", ( int ) buffer.tms_utime,
 				( int ) buffer.tms_stime );
-   retval = ( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) * 
+   retval = ( long long ) ( ( buffer.tms_utime + buffer.tms_stime ) *
 			    1000000 / sysconf( _SC_CLK_TCK ));
 
    /* NOT CLOCKS_PER_SEC as in the headers! */
-	
+
    return retval;
 }
 

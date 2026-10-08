@@ -4,7 +4,7 @@
 
 /**
  * @brief
- *   For each net event that is available add it to an EventSet by its name 
+ *   For each net event that is available add it to an EventSet by its name
  *   e.g. net:::lo:rx:byte. Then run through a start - stop workflow.
  */
 
@@ -45,7 +45,7 @@ int main (int argc, char **argv)
     retval = PAPI_create_eventset(&EventSet);
     if (retval != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_create_eventset", retval);
-    }  
+    }
 
     int numEventsAdded = 0;
     char **eventNames = NULL;

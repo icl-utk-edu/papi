@@ -49,25 +49,25 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
 {
     int i;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
             while (cuda_native_event_name != NULL)
-            {   
+            {
                 if (strstr(cuda_native_event_name, ":device")) {
                     fprintf(stderr, "Cuda native event name must not have a device qualifier appended for this test, i.e. no :device=#.\n");
                     print_help_message();
@@ -84,20 +84,20 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write cuda native event name.\n");
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
-    }   
+        }
+    }
 }
 
 void *thread_gpu(void *thread_and_dev_idx)
@@ -122,10 +122,10 @@ void *thread_gpu(void *thread_and_dev_idx)
             fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
             exit(EXIT_FAILURE);
         }
-        
+
         events_successfully_added[event_idx] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
         check_memory_allocation_call(events_successfully_added[event_idx]);
-        
+
         add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &global_num_multipass_events);
     }
 
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
     char *global_user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (global_user_defined_suppress_output) {
         global_suppress_output = (int) strtol(global_user_defined_suppress_output, (char**) NULL, 10);
-    } 
+    }
     PRINT(global_suppress_output, "Running the cuda component test pthreads_noCuCtx.cu\n");
 
     // If command line arguments are provided then get their values.
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
     // Cap the number of devices to the max allowed number of threads
     if (num_devices > MAX_THREADS) {
         num_devices = MAX_THREADS;
-    } 
+    }
 
     // Allocate memory for all the gpus found on the machine to keep track of threads and thread args
     pthread_t *tinfo = (pthread_t *) calloc(num_devices, sizeof(pthread_t));
@@ -260,8 +260,8 @@ int main(int argc, char **argv)
             // Device is not enabled continue
             if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
                 continue;
-            }   
-        } 
+            }
+        }
 
         // Store thread information to later use pthread_join
         tinfo[thread_and_dev_idx] = thread_and_dev_idx;
@@ -281,14 +281,14 @@ int main(int argc, char **argv)
         if (cmpInfo == NULL) {
             fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
             exit(EXIT_FAILURE);
-        } 
+        }
 
         if (cmpInfo->partially_disabled) {
             // Device is not enabled continue
             if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
                 continue;
-            }   
-        } 
+            }
+        }
 
         thread_errno = pthread_join(tinfo[thread_and_dev_idx], NULL);
         if (thread_errno != 0) {

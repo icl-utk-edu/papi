@@ -5,15 +5,15 @@
 /**
  * @file    nvml_power_limiting_test.cu
  * CVS:     $Id$
- * @author Tony Castaldo (tonycastaldon@icl.utk.edu) removed extraneous code and fixed a bug on multiple GPU setups. (Sept 2018). 
- * @author Asim YarKhan (yarkhan@icl.utk.edu) HelloWorld altered to test power capping (October 2017) 
+ * @author Tony Castaldo (tonycastaldon@icl.utk.edu) removed extraneous code and fixed a bug on multiple GPU setups. (Sept 2018).
+ * @author Asim YarKhan (yarkhan@icl.utk.edu) HelloWorld altered to test power capping (October 2017)
  * @author Heike Jagode (jagode@icl.utk.edu)
  * Mods:  <your name here> <your email address>
  *
  * @brief
 
  * This file tests the ability to read power limits using NVML.
- * It does not write. 
+ * It does not write.
 
  * The papi configure and papi Makefile will take care of the
  * compilation of the component tests (if all tests are added to a
@@ -57,20 +57,20 @@ int main( int argc, char** argv )
 
     int numcmp = PAPI_num_components();
 
-   // Search for the NVML component. 
+   // Search for the NVML component.
    int cid = 0;
     for (cid=0; cid<numcmp; cid++) {
         cmpinfo = PAPI_get_component_info(cid);
         if (cmpinfo == NULL) {                                  // NULL?
-            fprintf(stderr, "PAPI error: PAPI reports %d components, but PAPI_get_component_info(%d) returns NULL pointer.\n", numcmp, cid); 
+            fprintf(stderr, "PAPI error: PAPI reports %d components, but PAPI_get_component_info(%d) returns NULL pointer.\n", numcmp, cid);
             test_fail( __FILE__, __LINE__,"PAPI_get_component_info failed\n",-1 );
         } else {
-            if ( strstr( cmpinfo->name, "nvml" ) ) break;       // If we found it, 
+            if ( strstr( cmpinfo->name, "nvml" ) ) break;       // If we found it,
         }
     }
 
     if ( cid==numcmp ) {                                        // If true we looped through all without finding nvml.
-        fprintf(stderr, "NVML PAPI Component was not found.\n");       
+        fprintf(stderr, "NVML PAPI Component was not found.\n");
         test_skip( __FILE__, __LINE__,"Component nvml is not present\n",-1 );
     }
 
@@ -92,9 +92,9 @@ int main( int argc, char** argv )
         event_modifier = PAPI_ENUM_EVENTS;
         if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
         retval = PAPI_event_code_to_name( code, event_name );
-        char *ss; 
-        // We need events that END in power_management_limit; and must 
-        // exclude those that end in power_management_limit_min or _max, 
+        char *ss;
+        // We need events that END in power_management_limit; and must
+        // exclude those that end in power_management_limit_min or _max,
         // and correspond to an existing cuda device.
         ss = strstr(event_name, "power_management_limit");              // get position of this string.
         if (ss == NULL) continue;                                       // skip if not present.
@@ -104,13 +104,13 @@ int main( int argc, char** argv )
         int did = atoi(ss+7);                                           // convert it.
         if (did >= device_count) continue;                              // Invalid device count.
         EventName[eventCount] = strdup(event_name);                     // Valid! Remember the name.
-        device_id[eventCount] = did;                                    // Remember the device id.  
+        device_id[eventCount] = did;                                    // Remember the device id.
         printf("Found event '%s' for device %i.\n", event_name, did);   // Report what we found.
         eventCount++;                                                   // Add to the number of events found.
     }
 
 
-    if (eventCount == 0) {                // If we found nothing, 
+    if (eventCount == 0) {                // If we found nothing,
         fprintf(stderr, "No NVML events found. Skipping Test.\n");
         test_skip( __FILE__,__LINE__,"Component nvml does not have a power_management_limit event.", 0 );
     }

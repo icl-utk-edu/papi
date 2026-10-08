@@ -2,8 +2,8 @@
 
 The PCP component interfaces PAPI and the Performance Co-Pilot, for the
 Performance Metrics Domain Agent (PMDA) perfevent. This allows monitoring
-of IBM Power 9 'nest' events via PCP without elevated privileges. This 
-component was developed and tested using PCP version 3.12.2. 
+of IBM Power 9 'nest' events via PCP without elevated privileges. This
+component was developed and tested using PCP version 3.12.2.
 
 * [Enabling the PCP Component](#enabling-the-pcp-component)
 * [Environment Variables](#environment-variables)
@@ -64,9 +64,9 @@ or with a job script:
 The dutycycle events return instantaneous double precision floating point
 values (between 0.0 and 1.0) that cannot be 'reset'. A PAPI_get_event_info() on
 these events will return, in PAPI_event_info_t, a 'timescope' of
-PAPI_TIMESCOPE_POINT. Counters will have a PAPI_TIMESCOPE_SINCE_START.  
+PAPI_TIMESCOPE_POINT. Counters will have a PAPI_TIMESCOPE_SINCE_START.
 
-* PAPI may not report any "help text" for the counters (for example, using the 
+* PAPI may not report any "help text" for the counters (for example, using the
 `papi/src/utils/papi_native_avail` utility). PAPI relies on the the PCP daemon
 to provide those descriptions, and it is possible for a sysadmin to install the
 daemon without the file containing the descriptions.
@@ -111,9 +111,9 @@ of the Linux default directories listed by `/etc/ld.so.conf`, usually
 `/usr/lib64`, `/lib64`, `/usr/lib` and `/lib`. If the library is not found (or
 is not functional) then the component will be listed as "disabled" with a
 reason explaining the problem. If library was not found, it is not in the
-expected places. 
+expected places.
 
 The system will search the directories listed in **LD\_LIBRARY\_PATH**. You can
-add an additional path with a colon e.g. 
+add an additional path with a colon e.g.
 
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/WhereALibraryCanBeFound

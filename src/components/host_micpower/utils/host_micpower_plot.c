@@ -1,5 +1,5 @@
-/** 
- * @author  Vince Weaver, Heike McCraw 
+/**
+ * @author  Vince Weaver, Heike McCraw
  */
 
 #include <stdio.h>
@@ -86,7 +86,7 @@ int main (int argc, char **argv)
        strncpy(events[num_events],event_name,BUFSIZ);
        sprintf(filenames[num_events],"results.%s",event_name);
        num_events++;
-       
+
        if (num_events==MAX_EVENTS) {
 	  printf("Too many events! %d\n",num_events);
 	  exit(1);
@@ -109,7 +109,7 @@ int main (int argc, char **argv)
 	   exit(1);
 	}
      }
-				   
+
 
      /* Create EventSet */
      retval = PAPI_create_eventset( &EventSet );
@@ -118,14 +118,14 @@ int main (int argc, char **argv)
      }
 
      for(i=0;i<num_events;i++) {
-	
+
         retval = PAPI_add_named_event( EventSet, events[i] );
         if (retval != PAPI_OK) {
 	   fprintf(stderr,"Error adding event %s\n",events[i]);
 	}
      }
 
-  
+
 
      start_time=PAPI_get_real_nsec();
 
@@ -153,8 +153,8 @@ int main (int argc, char **argv)
         elapsed_time=((double)(after_time-before_time))/1.0e9;
 
         for(i=0;i<num_events;i++) {
-		if( (strstr(events[i],"vccp") != NULL) || 
-			(strstr(events[i],"vddg") != NULL) || 
+		if( (strstr(events[i],"vccp") != NULL) ||
+			(strstr(events[i],"vddg") != NULL) ||
 			(strstr(events[i],"vddq") != NULL) ) {
 
 		   fprintf(fff[i],"%.4f %.1f (* Average Voltage (Volt) for %s *)\n",

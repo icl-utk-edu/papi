@@ -1,10 +1,10 @@
 #define __HIP_PLATFORM_HCC__
 
 /* file rocm_command_line.c
- * Nearly identical to "papi/src/utils/papi_command_line.c". 
+ * Nearly identical to "papi/src/utils/papi_command_line.c".
  * This simply tries to add the events listed on the command line,
  * all into a single event set. It will then conduct a test using
- * the HIP interface to the AMD GPUs. It must be compiled with 
+ * the HIP interface to the AMD GPUs. It must be compiled with
  * hipcc; see tests/ROCM_Makefile.
 */
 
@@ -16,9 +16,9 @@
   *        papi_command_line < event > < event > ...
   *
   *    @section Description
-  *        papi_command_line is a PAPI utility program that adds named events from the 
-  *        command line to a PAPI EventSet and does some work with that EventSet. 
-  *        This serves as a handy way to see if events can be counted together, 
+  *        papi_command_line is a PAPI utility program that adds named events from the
+  *        command line to a PAPI EventSet and does some work with that EventSet.
+  *        This serves as a handy way to see if events can be counted together,
   *        and if they give reasonable results for known work.
   *
   *    @section Options
@@ -82,7 +82,7 @@ void conductTest(int device) {
 
     HIPCHECK(hipSetDevice(device));                      // Set device requested.
     HIPCHECK(hipGetDevice(&thisDev));                    // Double check.
-    hipDeviceProp_t props;                         
+    hipDeviceProp_t props;
     HIPCHECK(hipGetDeviceProperties(&props, thisDev));   // Get properties (for name).
     if (verbose) printf ("info: Requested Device=%i, running on device %i=%s\n", device, thisDev, props.name);
 
@@ -93,9 +93,9 @@ void conductTest(int device) {
     HIPCHECK(C_h == NULL ? hipErrorMemoryAllocation : hipSuccess );
 
     // Fill with Phi + i
-    for (size_t i=0; i<N; i++) 
+    for (size_t i=0; i<N; i++)
     {
-        A_h[i] = 1.618f + i; 
+        A_h[i] = 1.618f + i;
     }
 
     if (verbose) printf ("info: allocate device mem (%6.2f MB)\n", 2*Nbytes/1024.0/1024.0);
@@ -174,20 +174,20 @@ main( int argc, char **argv )
     }
 
     retval = PAPI_add_named_event(EventSet, "rocm_smi:::NUMDevices");   // Number of devices.
- 
+
     if ( retval != PAPI_OK ) {
         printf("Failed adding rocm_smi:::NUMDevices, error='%s'.\n", PAPI_strerror(retval));
-        printf("Perhaps no rocm_smi component is available.\n"); 
-        printf("Use papi/src/utils/papi_component_avail to check.\n"); 
+        printf("Perhaps no rocm_smi component is available.\n");
+        printf("Use papi/src/utils/papi_component_avail to check.\n");
         exit(-1);
     }
 
     retval = PAPI_add_named_event(EventSet, "rocm_smi:::rsmi_version");   // Version of Library.
- 
+
     if ( retval != PAPI_OK ) {
         printf("Failed adding rocm_smi:::rsmi_version, error='%s'.\n", PAPI_strerror(retval));
-        printf("Perhaps no rocm_smi component is available.\n"); 
-        printf("Use papi/src/utils/papi_component_avail to check.\n"); 
+        printf("Perhaps no rocm_smi component is available.\n");
+        printf("Use papi/src/utils/papi_component_avail to check.\n");
         exit(-1);
     }
 
@@ -203,7 +203,7 @@ main( int argc, char **argv )
         fprintf(stderr,"Error! PAPI_read, retval=%i [%s].\n", retval, PAPI_strerror(retval) );
         exit( retval );
     }
-    
+
     PAPI_cleanup_eventset(EventSet);                        // get rid of this set.
 
     int NUMDevices, major, minor, patch;
@@ -211,9 +211,9 @@ main( int argc, char **argv )
     patch = startupValues[1] & 0x000000000000ffff;          // Extract patch from packed major:minor:patch.
     minor = (startupValues[1]>>4) & 0x000000000000ffff;     // Extract minor.
     major = (startupValues[1]>>8) & 0x000000000000ffff;     // Extract major.
-    printf("%i AMD rocm_smi capable devices found. Library version %i:%i:%i.\n", 
+    printf("%i AMD rocm_smi capable devices found. Library version %i:%i:%i.\n",
         NUMDevices, major, minor, patch);
-    
+
     values = ( long long * ) malloc( sizeof ( long long ) * ( size_t ) argc );  // create reading space.
     success = ( char * ) malloc( ( size_t ) argc );
 
@@ -232,7 +232,7 @@ main( int argc, char **argv )
             hex_format = 1;
         } else {
             if ( ( retval = PAPI_add_named_event( EventSet, argv[i] ) ) != PAPI_OK ) {
-                printf( "Failed adding: %s\nbecause: %s\n", argv[i], 
+                printf( "Failed adding: %s\nbecause: %s\n", argv[i],
                     PAPI_strerror(retval));
             } else {
                 success[num_events++] = i;
@@ -270,7 +270,7 @@ main( int argc, char **argv )
                 exit( retval );
             }
         printf( "\n----------------------------------\n" );
-        
+
             for ( j = 0; j < num_events; j++ ) {      // Back to original papi_command_line...
                 i = success[j];
                 if (! (u_format || hex_format) ) {

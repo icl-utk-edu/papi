@@ -63,7 +63,7 @@ thread( void *arg )
 
 	ret = PAPI_set_multiplex( eventset );
       if ( ret == PAPI_ENOSUPP) {
-         free(values);       
+         free(values);
 	      test_skip( __FILE__, __LINE__, "Multiplexing not supported", 1 );
 	}
 	else if ( ret != PAPI_OK ) {
@@ -192,7 +192,7 @@ main( int argc, char **argv )
 		retval = pthread_create( &threads[i], NULL, thread, NULL );
 		if ( retval != 0 ) {
          free(events);
-         free(threads); 
+         free(threads);
 			test_fail( __FILE__, __LINE__, "pthread_create", PAPI_ESYS );
 		}
 	}
@@ -202,7 +202,7 @@ main( int argc, char **argv )
 		retval = pthread_join( threads[i], NULL );
 		if ( retval != 0 ) {
          free(events);
-         free(threads); 
+         free(threads);
 			test_fail( __FILE__, __LINE__, "pthread_join", PAPI_ESYS );
 		}
 	}
@@ -210,7 +210,7 @@ main( int argc, char **argv )
 	if (!quiet) printf( "Done." );
 
    free(events);
-   free(threads); 
+   free(threads);
 	test_pass( __FILE__ );
 
 	pthread_exit( NULL );

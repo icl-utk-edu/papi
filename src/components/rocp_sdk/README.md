@@ -9,7 +9,7 @@ The component is an adapter to the ROCm profiling library ROCprofiler-SDK which 
 * [Known Limitations](#known-limitations)
 ***
 ## Enabling the ROCP\_SDK Component
-    
+
 To enable reading ROCP\_SDK events the user needs to link against a PAPI library that was configured with the ROCP\_SDK component enabled. As an example the following command: `./configure --with-components="rocp_sdk"` is sufficient to enable the component.
 
 Typically, the utility `papi_component_avail` (available in `papi/src/utils/papi_component_avail`) will display the components available to the user, and whether they are disabled, and when they are disabled why.
@@ -21,12 +21,12 @@ AMD ROCprofiler-SDK released before rocm-6.3.2 has known bugs.
 
 PAPI requires the location of the ROCM install directory. This can be
 specified by one environment variable: **PAPI\_ROCP\_SDK\_ROOT**.
-    
+
 Access to the rocm main directory is required at both compile (for include
 files) and at runtime (for libraries).
-            
+
 Example:
- 
+
     export PAPI_ROCP_SDK_ROOT=/opt/rocm
 
 Within PAPI\_ROCP\_SDK\_ROOT, we expect the following standard directories:

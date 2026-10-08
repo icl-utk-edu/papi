@@ -29,20 +29,20 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
 {
     int i;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
@@ -58,22 +58,22 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write event name %s.\n", cuda_native_event_name);
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-            
-        }   
+
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
+        }
 
-    }   
+    }
 }
 
 int main(int argc, char **argv)
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    }   
+    }
     PRINT(suppress_output, "Running the cuda component test test_multipass_event_fail.cu\n");
 
     char **cuda_native_event_names = NULL;
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 
     // Verify the cuda component has been compiled in
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
-    if (cuda_cmp_idx < 0 ) { 
+    if (cuda_cmp_idx < 0 ) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
     }
     PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);

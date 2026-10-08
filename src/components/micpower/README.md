@@ -30,13 +30,13 @@ The values are reported in /sys/class/micras/power
 	0 0 1501000
 	0 0 1000000
 
-This corresponds to the reading portions of the following MrRspPower structure. 
+This corresponds to the reading portions of the following MrRspPower structure.
 
 	typedef struct mr_rsp_pws {	/* Power status */
 	  uint32_t	prr;				/* Current reading, in uW */
 	  uint8_t p_val;                /* Valid bits, power */
 	} MrRspPws;
-	
+
 	typedef struct mr_rsp_vrr {	/* Voltage regulator status */
 	  uint32_t pwr;                 /* Power reading, in uW */
 	  uint32_t cur;                 /* Current, in uA */
@@ -45,7 +45,7 @@ This corresponds to the reading portions of the following MrRspPower structure.
 	  uint8_t c_val;                /* Valid bits, current */
 	  uint8_t v_val;                /* Valid bits, voltage */
 	} MrRspVrr;
-	
+
 	typedef struct mr_rsp_power {
 	  MrRspPws tot0;                /* Total power, win 0 */
 	  MrRspPws tot1;                /* Total power, win 1 */

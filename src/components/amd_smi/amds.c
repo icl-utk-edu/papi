@@ -1,6 +1,6 @@
 /**
  * @file    amds.c
- * @author  Dong Jun Woun 
+ * @author  Dong Jun Woun
  *          djwoun@gmail.com
  *
  */
@@ -123,7 +123,7 @@ amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_ha
       return PAPI_ENOSUPP;                                                     \
     }                                                                         \
   } while (0)
-  
+
 #define REQ(sym) do { \
   if (!(sym)) { \
     CHECK_SNPRINTF(allowTruncation, error_string, sizeof(error_string), "Missing required symbol: %s", #sym); \
@@ -639,7 +639,7 @@ static int load_amdsmi_sym(void) {
       sym("amdsmi_get_cpu_dimm_thermal_sensor", NULL);
 #endif
 
-// Validate required symbols we call unconditionally later 
+// Validate required symbols we call unconditionally later
 REQ(amdsmi_init_p);
 REQ(amdsmi_shut_down_p);
 REQ(amdsmi_get_socket_handles_p);
@@ -1199,7 +1199,7 @@ static int init_event_table(void) {
           } else {
             strcpy(type_str, "cache");
           }
-    
+
           // Lx <type> size
           CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
                    "L%u_%s_size_type_%u:device=%d", level, type_str, i, d);
@@ -1211,7 +1211,7 @@ static int init_event_table(void) {
           if (add_event(&idx, name_buf, descr_buf, d, 0, i, PAPI_MODE_READ,
                         access_amdsmi_cache_stat) != PAPI_OK)
             return PAPI_ENOMEM;
-    
+
           CHECK_EVENT_IDX(idx);
           // Lx <type> CU sharing
           CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
@@ -1221,7 +1221,7 @@ static int init_event_table(void) {
           if (add_event(&idx, name_buf, descr_buf, d, 1, i, PAPI_MODE_READ,
                         access_amdsmi_cache_stat) != PAPI_OK)
             return PAPI_ENOMEM;
-    
+
           CHECK_EVENT_IDX(idx);
           // Lx <type> instances
           CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf),
@@ -1995,19 +1995,19 @@ static int init_event_table(void) {
                                    AMDSMI_TEMP_CURRENT,
                                    &sensor_test_val) != AMDSMI_STATUS_SUCCESS)
         continue; // Skip this specific sensor if it doesn't work
-    
+
       // Register metrics for this working sensor, testing each metric individually
       for (size_t mi = 0; mi < sizeof(temp_metrics) / sizeof(temp_metrics[0]); ++mi) {
         // Bounds check to prevent buffer overflow
         if (idx >= MAX_EVENTS_PER_DEVICE * device_count)
           return PAPI_ENOSUPP; // Too many events
-    
+
         int64_t metric_val = 0;  // <= init
         if (amdsmi_get_temp_metric_p(device_handles[d], temp_sensors[si],
                                      temp_metrics[mi], &metric_val)
             != AMDSMI_STATUS_SUCCESS)
           continue; /* skip this specific metric if not supported */
-    
+
         CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "%s_sensor=%d:device=%d",
                  temp_metric_names[mi], (int)temp_sensors[si], d);
         CHECK_SNPRINTF(allowTruncation, descr_buf, sizeof(descr_buf), "Device %d %s for sensor %d", d,
@@ -2995,10 +2995,10 @@ static int init_event_table(void) {
 
     if (amdsmi_get_gpu_metrics_header_info_p) {
       amd_metrics_table_header_t hdr = {0};   // <= zero-init
-    
+
       // If the API defines a size/version field, set it before the call:
       // hdr.metrics_header_size = sizeof(hdr);   // uncomment if such a field exists
-    
+
       if (amdsmi_get_gpu_metrics_header_info_p(device_handles[d], &hdr)
           == AMDSMI_STATUS_SUCCESS) {
         const char *hnames[] = {"metrics_header_size",
@@ -3837,7 +3837,7 @@ static int init_event_table(void) {
 #if AMDSMI_LIB_VERSION_MAJOR >= 25
     if (amdsmi_get_gpu_memory_partition_config_p) {
       amdsmi_memory_partition_config_t cfg = {0};
-      // Probe memory partition configuration 
+      // Probe memory partition configuration
       if (amdsmi_get_gpu_memory_partition_config_p(device_handles[d], &cfg) ==
           AMDSMI_STATUS_SUCCESS) {
         const char *mpc_names[] = {"memory_partition_caps",

@@ -361,11 +361,11 @@ int main(int argc, char **argv)
     check_papi_api_call( PAPI_read(eventSet, &counterValue) );
     if (counterValue == expectedCounterValue) {
         printf("Final PAPI_read: Correct count -- expected was %lld and actual is %lld.\n", expectedCounterValue, counterValue);
-    }   
+    }
     else {
         fprintf(stderr, "\033[0;31mFinal PAPI_read: Incorrect count -- expected was %lld and actual is %lld.\n\033[0m", expectedCounterValue, counterValue);
         exit(EXIT_FAILURE);
-    }  
+    }
 
     // No work is occurring; therefore, PAPI_stop here SHOULD give back the counter value obtained in the 3rd PAPI_read
     check_papi_api_call( PAPI_stop(eventSet, &counterValue) );

@@ -13,8 +13,8 @@ int main()
 {
    const PAPI_hw_info_t *hwinfo = NULL;
    int retval;
-  
-   /*************************************************************************** 
+
+   /***************************************************************************
    *  This part initializes the library and compares the version number of the*
    * header file, to the version of the library, if these don't match then it *
    * is likely that PAPI won't work correctly.If there is an error, retval    *
@@ -27,8 +27,8 @@ int main()
       printf("Library initialization error! \n");
       exit(1);
    }
-     
-   /* Get hardware info*/      
+
+   /* Get hardware info*/
    if ((hwinfo = PAPI_get_hardware_info()) == NULL)
    {
       printf("PAPI_get_hardware_info error! \n");
@@ -40,7 +40,7 @@ int main()
    printf("%d CPU  at %f Mhz.\n",hwinfo->totalcpus,hwinfo->mhz);
    printf(" model string is %s \n", hwinfo->model_string);
 
-   /* clean up */ 
+   /* clean up */
    PAPI_shutdown();
 
    exit(0);

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-westmere.h
 * Author:  George Neville-Neil
 *          gnn@freebsd.org

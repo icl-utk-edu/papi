@@ -52,8 +52,8 @@ static long long NET_REFRESH_LATENCY = 1000000;
 #define NET_INVALID_RESULT     -1
 
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -314,7 +314,7 @@ _net_init_thread( hwd_context_t *ctx )
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 static int
@@ -329,7 +329,7 @@ _net_init_component( int cidx  )
 
     memset(_net_register_start, 0,
     		NET_MAX_COUNTERS*sizeof(_net_register_start[0]));
-    memset(_net_register_current, 0, 
+    memset(_net_register_current, 0,
     		NET_MAX_COUNTERS*sizeof(_net_register_current[0]));
 
     is_initialized = 1;
@@ -421,7 +421,7 @@ _net_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
     /* set initial values to 0 */
     memset(net_ctl->values, 0, NET_MAX_COUNTERS*sizeof(net_ctl->values[0]));
-    
+
     /* Set last access time for caching purposes */
     net_ctl->lastupdate = now;
 

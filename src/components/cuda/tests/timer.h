@@ -1,9 +1,9 @@
 /*
  * This software contains source code provided by NVIDIA Corporation
- * 
+ *
  * According to the Nvidia EULA (compute 5.5 version)
  * http://developer.download.nvidia.com/compute/cuda/5_5/rel/docs/EULA.pdf
- * 
+ *
  * Chapter 2. NVIDIA CORPORATION CUDA SAMPLES END USER LICENSE AGREEMENT
  * 2.1.1. Source Code
  * Developer shall have the right to modify and create derivative works with the Source

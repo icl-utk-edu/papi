@@ -1,4 +1,4 @@
-/* This file was taken from the tacc_stats utility, which is distributed 
+/* This file was taken from the tacc_stats utility, which is distributed
  * under a GPL license.
  */
 #ifndef _PSCANF_H_

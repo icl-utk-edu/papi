@@ -105,7 +105,7 @@ int main (int argc, char **argv)
             test_fail(__FILE__, __LINE__, "PAPI_start()", retval);
         }
 
-        /* XXX figure out a general method to  generate some traffic 
+        /* XXX figure out a general method to  generate some traffic
          * for infiniband
          * the operation should take more than one second in order
          * to guarantee that the network counters are updated */

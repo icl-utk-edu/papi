@@ -16,7 +16,7 @@ nvml_utils_tests: $(NVML_UTILS)
 %.o:%.cu
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -c -o $@ $<
 
-nvmlcap_plot: nvmlcap_plot.o $(UTILOBJS) 
+nvmlcap_plot: nvmlcap_plot.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvmlcap_plot nvmlcap_plot.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
 clean:

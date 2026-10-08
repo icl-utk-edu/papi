@@ -21,7 +21,7 @@
       call PAPIf_event_name_to_code( 'PAPI_FP_INS',preset,retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_event_name_to_code', 
+     . 'PAPIf_event_name_to_code',
      *retval)
       end if
 

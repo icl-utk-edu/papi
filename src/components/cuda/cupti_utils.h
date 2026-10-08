@@ -10,7 +10,7 @@
 
 #include <papi.h>
 
-#include <nvperf_cuda_host.h> 
+#include <nvperf_cuda_host.h>
 #include <cuda.h>
 
 #include <stdint.h>
@@ -25,8 +25,8 @@ typedef struct gpu_record_s {
 } gpu_record_t;
 
 typedef struct {
-    char **arrayMetricStatistics ;   
-    size_t size;   
+    char **arrayMetricStatistics ;
+    size_t size;
     size_t capacity;
 } StringVector;
 

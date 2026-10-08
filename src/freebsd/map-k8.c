@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-k8.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -14,15 +14,15 @@
 
 
 /****************************************************************************
- K8 SUBSTRATE 
- K8 SUBSTRATE 
+ K8 SUBSTRATE
+ K8 SUBSTRATE
  K8 SUBSTRATE (aka Athlon64)
  K8 SUBSTRATE
  K8 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_K8Processor must match K8Processor_info 
+	NativeEvent_Value_K8Processor must match K8Processor_info
 */
 
 Native_Event_LabelDescription_t K8Processor_info[] =

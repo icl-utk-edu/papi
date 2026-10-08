@@ -2,18 +2,18 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-IOunit.h
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	< your name here >
  *			< your email address >
- * BGPM / IOunit component 
- * 
+ * BGPM / IOunit component
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 

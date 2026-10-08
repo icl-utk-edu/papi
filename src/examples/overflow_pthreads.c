@@ -1,14 +1,14 @@
 /* This file performs the following test: overflow dispatch with pthreads
 
    - This example  tests the dispatch of overflow calls from PAPI. The event
-     set is counted in the default counting domain and default granularity, 
-     depending on the platform. Usually this is the user domain 
+     set is counted in the default counting domain and default granularity,
+     depending on the platform. Usually this is the user domain
     (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
 
      The Eventset contains:
      + PAPI_TOT_INS (overflow monitor)
      + PAPI_TOT_CYC
-   
+
    Each thread will do the followings :
    - enable overflow
    - Start eventset 1
@@ -35,12 +35,12 @@ void do_flops(int n)
     double a = 0.5;
     double b = 6.2;
 
-    for (i=0; i < n; i++) 
+    for (i=0; i < n; i++)
         c += a * b;
 }
 
 /* overflow handler */
-void 
+void
 handler(int EventSet, void *address, long long overflow_vector, void *context)
 {
    fprintf(stderr, OVER_FMT, EventSet, address, overflow_vector);
@@ -53,7 +53,7 @@ void *Thread(void *arg)
 	int EventSet1=PAPI_NULL;
 	long long values[2];
 	long long elapsed_us, elapsed_cyc;
-  
+
 	fprintf(stderr,"Thread %lx running PAPI\n",PAPI_thread_id());
 
 	/* create the event set */
@@ -61,9 +61,9 @@ void *Thread(void *arg)
     	ERROR_RETURN(retval);
 
  	/* query whether the event exists */
-	if ((retval=PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK) 
+	if ((retval=PAPI_query_event(PAPI_TOT_INS)) != PAPI_OK)
     	ERROR_RETURN(retval);
-	if ((retval=PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK) 
+	if ((retval=PAPI_query_event(PAPI_TOT_CYC)) != PAPI_OK)
     	ERROR_RETURN(retval);
 
 	/* add events to the event set */
@@ -86,7 +86,7 @@ void *Thread(void *arg)
     	ERROR_RETURN(retval);
 
     do_flops(*(int *)arg);
-  
+
     if ((retval = PAPI_stop(EventSet1, values))!=PAPI_OK)
     	ERROR_RETURN(retval);
 
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
 	/* wait for the threads to finish */
     pthread_attr_destroy(&attr);
-    pthread_join(thread_one, NULL); 
+    pthread_join(thread_one, NULL);
     pthread_join(thread_two, NULL);
 
 	/* compute the elapsed cycles and microseconds */

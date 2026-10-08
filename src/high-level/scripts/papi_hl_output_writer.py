@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-## 
+##
 # @file papi_hl_output_writer.py
-# @brief Converts HL output to be more comprehensible. 
+# @brief Converts HL output to be more comprehensible.
 # Output is enhanced by creating derived metrics like IPC,
 # MFlop/s, and MFlips/s. As well as real and processor time.
 
@@ -47,8 +47,8 @@ def merge_json_files(source_dir):
 
     @param source_dir A directory containing one or more .json files from PAPI
                       HL function calls
-  
-    @returns An ordered dictionary containing measurements from recorded events 
+
+    @returns An ordered dictionary containing measurements from recorded events
              for one or more .json files generated from PAPI HL function calls.
     """
     json_object = {}
@@ -59,7 +59,7 @@ def merge_json_files(source_dir):
     file_list.sort()
     rank_cnt = 0
     json_rank = OrderedDict()
-  
+
     for item in file_list:
         #determine mpi rank based on file name (rank_#)
         rank = item.split('_', 1)[1]
@@ -91,7 +91,7 @@ def merge_json_files(source_dir):
         json_rank[str(rank)]['threads'] = data['threads']
 
         rank_cnt = rank_cnt + 1
-  
+
     json_object['ranks'] = json_rank
 
     return json_object
@@ -104,7 +104,7 @@ def parse_source_file(source_file):
 
     @param source_file .json file generated from PAPI HL function calls.
 
-    @returns An ordered dictionary containing measurements from recorded events 
+    @returns An ordered dictionary containing measurements from recorded events
              for a single .json file, generated from PAPI HL function calls.
     """
     json_data = {}
@@ -131,7 +131,7 @@ def parse_source_file(source_file):
     json_rank[str(rank)] = OrderedDict()
     json_rank[str(rank)]['threads'] = data['threads']
 
-    json_data['ranks'] = json_rank 
+    json_data['ranks'] = json_rank
 
     return json_data
 
@@ -139,7 +139,7 @@ class Sum_Counter(object):
     """!
     Sum_Counter class defintion.
 
-    Calculates the min, max, median or sum for the measurements of a 
+    Calculates the min, max, median or sum for the measurements of a
     recorded events.
     """
     def __init__(self):
@@ -175,7 +175,7 @@ class Sum_Counter(object):
     def get_min(self):
         """!
         Method definition for get_min.
- 
+
         Calculates the minimum for a set of measurements for a recorded event.
 
         @returns The minimum for a set of measurement values for a recorded event.
@@ -190,7 +190,7 @@ class Sum_Counter(object):
         Calculates the median for a set of measurements for a recorded event.
 
         @returns The median for a set of measurement values for a recorded event.
-                 E.g. PAPI_TOT_INS. 
+                 E.g. PAPI_TOT_INS.
         """
         n = len(self.all_values)
         s = sorted(self.all_values)
@@ -225,7 +225,7 @@ class Sum_Counters(object):
     """!
     Sum_Counters class defintion.
 
-    Gathers summary output for a region (e.g. computation) and accompanying 
+    Gathers summary output for a region (e.g. computation) and accompanying
     measurements for a recorded event (e.g. PAPI_TOT_INS).
     """
 
@@ -248,7 +248,7 @@ class Sum_Counters(object):
         Adds the region (e.g. computation) and accompanying measurements for a recorded event (e.g. PAPI_TOT_INS) to summary output.
 
         @param rank_id MPI rank, if no MPI rank is present this value will be random.
-        @param thread_id Thread identifier containing performance events. E.g. 0. 
+        @param thread_id Thread identifier containing performance events. E.g. 0.
         @param events An ordered dictionary containing measurements for recorded events obtained through PAPI HL function calls. E.g. PAPI_TOT_INS.
         """
         #remove all read values caused by PAPI_hl_read
@@ -301,10 +301,10 @@ class Sum_Counters(object):
         """!
         Method definition for get_json.
 
-        Calculates the min, max, median, or sum for a set of measurements for a 
+        Calculates the min, max, median, or sum for a set of measurements for a
         recorded event. E.g. PAPI_TOT_INS.
 
-        @returns An ordered dictionary containing summary measurements for recorded 
+        @returns An ordered dictionary containing summary measurements for recorded
                  events. E.g. PAPI_TOT_INS.
         """
         sum_json = OrderedDict()
@@ -358,15 +358,15 @@ def derive_sum_json_object(data):
     """!
     Function definition for derive_sum_json_object.
 
-    Calculates the derived event measurements (IPC) from the recorded events 
+    Calculates the derived event measurements (IPC) from the recorded events
     obtained through PAPI HL function calls.
 
-    @param data An ordered dictionary containing the number of threads and  
+    @param data An ordered dictionary containing the number of threads and
                 measurements for the recorded events. E.g. PAPI_TOT_INS.
-  
+
     @returns An ordered dicitonary filled with formatted measurements for derived
              events.
-    """    
+    """
     json_object = OrderedDict()
 
     for region_key,region_value in data.items():
@@ -416,7 +416,7 @@ def derive_sum_json_object(data):
             event_name = 'IPC'
             metric = 'total'
             try:
-                if region_cnt > 1: 
+                if region_cnt > 1:
                     ipc = float(format(float(int(events['PAPI_TOT_INS'][metric]) / int(events['PAPI_TOT_CYC'][metric])), '.2f'))
                 else:
                     ipc = float(format(float(int(events['PAPI_TOT_INS']) / int(events['PAPI_TOT_CYC'])), '.2f'))
@@ -426,7 +426,7 @@ def derive_sum_json_object(data):
 
             del events['PAPI_TOT_INS']
             del events['PAPI_TOT_CYC']
-    
+
         #Rates
         global event_rate_names
         for rate_event in event_rate_names:
@@ -458,13 +458,13 @@ def sum_json_object(data, derived = False):
     """!
     Function definition for sum_json_object.
 
-    Converts the user supplied .json file containing measurements from PAPI HL 
+    Converts the user supplied .json file containing measurements from PAPI HL
     function calls to summary format.
 
     @param data A dictionary containing ranks, threads, and regions.
     @param derived Type of notation. If set to true then the notation is derived.
 
-    @returns An ordered dictionary containing measurements for recorded events. 
+    @returns An ordered dictionary containing measurements for recorded events.
              E.g. PAPI_TOT_INS.
     """
 
@@ -506,7 +506,7 @@ def get_ops_dict(ops, rt):
 
     Calculates OPS.
 
-    @param ops An ordered dictionary containing measurements for rate recorded 
+    @param ops An ordered dictionary containing measurements for rate recorded
                events. E.g. PAPI_FP_INS.
     @param rt  An ordered dictionary containing measurements for real time.
                E.g. real_time_nsec.
@@ -527,7 +527,7 @@ def convert_value(value, event_type = 'Other'):
     Function definition for convert_value.
 
     Converts current measurement precision from a recorded event to a new precision.
-  
+
     @param value Measurement from a recorded event. E.g. PAPI_TOT_INS.
     @param event_type Type of event recorded. E.g. cycles or runtime.
 
@@ -553,11 +553,11 @@ def derive_read_events(events, event_type = 'Other'):
 
     Format derived event values to a specific precision.
 
-    @param events An ordered dictionary filled with measurements from recorded 
+    @param events An ordered dictionary filled with measurements from recorded
                   events. E.g. PAPI_TOT_INS.
     @param event_type Type of event recorded. E.g. cycles or runtime.
 
-    @returns An ordered dictionary with values formatted to a specific precision 
+    @returns An ordered dictionary with values formatted to a specific precision
              (int or float).
     """
     format_read_dict = OrderedDict()
@@ -571,9 +571,9 @@ def derive_events(events):
 
     Parses an ordered dictionary that contains derived events.
 
-    @param events An ordered dictionary filled with measurements from recorded 
+    @param events An ordered dictionary filled with measurements from recorded
                   events. E.g. PAPI_TOT_INS.
-  
+
     @returns An ordered dictionary filled with formatted measurements for derived
              events.
     """
@@ -626,7 +626,7 @@ def derive_events(events):
 
         del events['PAPI_TOT_INS']
         del events['PAPI_TOT_CYC']
-  
+
     #Rates
     global event_rate_names
     for rate_event in event_rate_names:
@@ -661,7 +661,7 @@ def derive_json_object(data):
 
     @param data Data obtained from PAPI HL function calls.
 
-    @returns An ordered dictionary containing values for ranks, threads, regions, name, 
+    @returns An ordered dictionary containing values for ranks, threads, regions, name,
              real time, and IPC in .json format.
     """
     for rank, rank_value in data['ranks'].items():
@@ -673,7 +673,7 @@ def derive_json_object(data):
 def write_json_file(data, file_name):
     """!
     Function definition for write_json_file.
-  
+
     Write enhanced output to output file.
 
     @param data Data obtained from PAPI HL function calls.
@@ -731,13 +731,13 @@ def parse_args():
                         help='Measurement directory of raw data.')
     parser.add_argument('--source_file', type=str, required=False,
                         help='Individual file containing measurements of raw data.')
-    parser.add_argument('--format', type=str, required=False, default='json', 
+    parser.add_argument('--format', type=str, required=False, default='json',
                         help='Output format, e.g. json.')
-    parser.add_argument('--type', type=str, required=False, default='summary', 
+    parser.add_argument('--type', type=str, required=False, default='summary',
                         help='Output type: detail or summary.')
-    parser.add_argument('--notation', type=str, required=False, default='derived', 
+    parser.add_argument('--notation', type=str, required=False, default='derived',
                         help='Output notation: raw or derived.')
-  
+
     # check to make sure a value has not been passed for both filename and source
     if (parser.parse_args().source_dir != None and
         parser.parse_args().source_file != None):
@@ -763,11 +763,11 @@ def parse_args():
             parser.exit()
     # output if neither source_file or source_dir are supplied
     else:
-        print("Path to either a JSON file (--source_file) or a" 
+        print("Path to either a JSON file (--source_file) or a"
               " dictionary (--source_dir) which contains a JSON file is required.")
         parser.print_help()
         parser.exit()
-    
+
     # check format
     output_format = str(parser.parse_args().format)
     if output_format != "json":
@@ -788,7 +788,7 @@ def parse_args():
         print("Output notation '{}' is not supported!\n".format(output_notation))
         parser.print_help()
         parser.exit()
-  
+
 
     return parser.parse_args()
 

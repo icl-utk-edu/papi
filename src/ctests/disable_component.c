@@ -51,7 +51,7 @@ main( int argc, char **argv )
    /* Try to disable after init, should fail */
    retval=PAPI_disable_component( 0 );
    if (retval==PAPI_OK) {
-      test_fail( __FILE__, __LINE__, "PAPI_disable_component should fail", 
+      test_fail( __FILE__, __LINE__, "PAPI_disable_component should fail",
 		 retval );
    }
 

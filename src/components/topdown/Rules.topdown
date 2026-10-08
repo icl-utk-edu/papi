@@ -3,5 +3,5 @@ COMPOBJS += topdown.o
 
 LDFLAGS+=-ldl
 
-topdown.o: components/topdown/topdown.c components/topdown/topdown.h $(HEADERS) 
+topdown.o: components/topdown/topdown.c components/topdown/topdown.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/topdown/topdown.c -o topdown.o $(LDFLAGS)

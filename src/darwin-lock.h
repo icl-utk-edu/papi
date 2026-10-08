@@ -44,5 +44,5 @@ do                                              \
    __asm__ __volatile__ ("xchg %0,%1" : "=r"(res) : "m"(_papi_hwd_lock_data[lck]), "0"(MUTEX_OPEN) : "memory");                                \
 } while(0)
 
-#endif 
+#endif
 #endif

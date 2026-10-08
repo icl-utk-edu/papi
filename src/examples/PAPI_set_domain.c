@@ -1,5 +1,5 @@
 /*****************************************************************************
- * This example shows how to use PAPI_set_domain                             * 
+ * This example shows how to use PAPI_set_domain                             *
  *****************************************************************************/
 
 #include <stdio.h>
@@ -30,9 +30,9 @@ int main()
 
    int num, retval, EventSet = PAPI_NULL;
    long long values[2];
-   PAPI_option_t options;    
+   PAPI_option_t options;
    int fd;
-   
+
 
    /****************************************************************************
    *  This part initializes the library and compares the version number of the *
@@ -48,8 +48,8 @@ int main()
    }
 
    /* Set the domain of this EventSet to counter user mode. The domain
-      will be valid for all the eventset created after this function call 
-      unless you call PAPI_set_domain again */ 
+      will be valid for all the eventset created after this function call
+      unless you call PAPI_set_domain again */
    if ((retval=PAPI_set_domain(PAPI_DOM_USER)) != PAPI_OK)
       ERROR_RETURN(retval);
 
@@ -82,11 +82,11 @@ int main()
    /* Stop counting */
    if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
       ERROR_RETURN(retval);
-        
+
    printf(" Total instructions: %lld   Total Cycles: %lld \n", values[0],
             values[1]);
 
-   /* Set the domain of this EventSet to counter user and kernel modes */ 
+   /* Set the domain of this EventSet to counter user and kernel modes */
    if ((retval=PAPI_set_domain(PAPI_DOM_ALL)) != PAPI_OK)
       ERROR_RETURN(retval);
 
@@ -118,7 +118,7 @@ int main()
    /* Stop counting */
    if((retval=PAPI_stop(EventSet, values)) != PAPI_OK)
       ERROR_RETURN(retval);
-        
+
    printf(" Total instructions: %lld   Total Cycles: %lld \n", values[0],
             values[1]);
 

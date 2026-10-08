@@ -64,49 +64,49 @@ int main (int argc, char **argv)
 	if (cmpinfo->num_native_events<=0) {
 	   test_skip(__FILE__, __LINE__,"MX component not found\n", 0);
 	}
-  
-     
+
+
 	EventSet = PAPI_NULL;
 
 	retval = PAPI_create_eventset( &EventSet );
 	if (retval != PAPI_OK) {
-	   test_fail(__FILE__, __LINE__, 
+	   test_fail(__FILE__, __LINE__,
                               "PAPI_create_eventset()",retval);
 	}
 
 	retval=PAPI_event_name_to_code("mx:::COUNTERS_UPTIME",&code);
 	if (retval!=PAPI_OK) {
-           test_fail(__FILE__, __LINE__, 
+           test_fail(__FILE__, __LINE__,
                               "could not add event COUNTERS_UPTIME",retval);
 	}
 
 	retval = PAPI_add_event( EventSet, code );
 	if (retval != PAPI_OK) {
-	   test_fail(__FILE__, __LINE__, 
+	   test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	}
 
 	retval=PAPI_event_name_to_code("mx:::PUSH_OBSOLETE",&code);
 	if (retval!=PAPI_OK) {
-           test_fail(__FILE__, __LINE__, 
+           test_fail(__FILE__, __LINE__,
                               "could not add event PUSH_OBSOLETE",retval);
 	}
 
 	retval = PAPI_add_event( EventSet, code );
 	if (retval != PAPI_OK) {
-	   test_fail(__FILE__, __LINE__, 
+	   test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	}
 
 	retval=PAPI_event_name_to_code("mx:::PKT_MISROUTED",&code);
 	if (retval!=PAPI_OK) {
-           test_fail(__FILE__, __LINE__, 
+           test_fail(__FILE__, __LINE__,
                               "could not add event PKT_MISROUTED",retval);
 	}
 
 	retval = PAPI_add_event( EventSet, code );
 	if (retval != PAPI_OK) {
-	   test_fail(__FILE__, __LINE__, 
+	   test_fail(__FILE__, __LINE__,
                                  "PAPI_add_event()",retval);
 	}
 

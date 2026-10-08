@@ -81,7 +81,7 @@ int main (int argc, char **argv)
             if ( retval != PAPI_OK ) {
                 test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
             }
-            
+
             if (!TESTS_QUIET) {
               printf("Added event %s (code=%#x)\n", event_names[total_events], code);
             }

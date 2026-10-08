@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-i7.h
 * CVS:     $Id: map-i7.h,v 1.1.2.2 2010/03/06 16:12:08 servat Exp $
 * Author:  George Neville-Neil

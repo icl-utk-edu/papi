@@ -154,7 +154,7 @@ allocate_thread( int tid )
 	  thread->tid=tid;
 	}
 
-	THRDBG( "Allocated thread %ld at %p, allocator: %ld\n", thread->tid, 
+	THRDBG( "Allocated thread %ld at %p, allocator: %ld\n", thread->tid,
 		thread,
 		thread->allocator_tid );
 
@@ -337,7 +337,7 @@ _papi_hwi_broadcast_signal( unsigned int mytid )
 				   See papi_internal.h for details. The multiplex_timer_sig value is now part of that structure */
 			  THRDBG("Thread %ld sending signal %d to thread %ld\n",mytid,foo->tid,
 				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_os_info.itimer_sig));
-			  retval = (*_papi_hwi_thread_kill_fn)(foo->tid, 
+			  retval = (*_papi_hwi_thread_kill_fn)(foo->tid,
 				  (foo->running_eventset[i]->state & PAPI_OVERFLOWING ? _papi_hwd[i]->cmp_info.hardware_intr_sig : _papi_os_info.itimer_sig));
 			  if (retval != 0)
 				return(PAPI_EMISC);
@@ -364,7 +364,7 @@ _papi_hwi_set_thread_id_fn( unsigned long ( *id_fn ) ( void ) )
 	if ( _papi_hwi_thread_head->next != _papi_hwi_thread_head )
 		return ( PAPI_EINVAL );
 
-	/* We can't change the thread id function from one to another, 
+	/* We can't change the thread id function from one to another,
 	   only NULL to non-NULL and vice versa. */
 
 	if ( ( id_fn != NULL ) && ( _papi_hwi_thread_id_fn != NULL ) )
@@ -616,7 +616,7 @@ _papi_hwi_gather_all_thrspec_data( int tag, PAPI_all_thr_spec_t * where )
   unsigned long _papi_gettid(void)
   {
     return (unsigned long)(syscall(__NR_gettid));
-  } 
+  }
 #elif defined(HAVE_GETTID)
   #include <sys/types.h>
   unsigned long _papi_gettid(void)

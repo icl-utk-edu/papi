@@ -1,6 +1,6 @@
-/** 
+/**
  * @file    linux-infiniband.c
- * @author  Heike Jagode 
+ * @author  Heike Jagode
  *          jagode@icl.utk.edu
  * @author  Gabriel Marin
  *          gmarin@eecs.utk.edu
@@ -8,14 +8,14 @@
  * @ingroup papi_components
  *
  *
- * Infiniband component 
- * 
+ * Infiniband component
  *
- * @brief 
+ *
+ * @brief
  *  This file has the source code for a component that enables PAPI-C to access
  *  the infiniband performance monitor through the Linux sysfs interface.
- *  This code will dynamically create a native events table for all the events 
- *  that can be accesed through the sysfs interface. The counters exported by 
+ *  This code will dynamically create a native events table for all the events
+ *  that can be accesed through the sysfs interface. The counters exported by
  *  this component cannot be reset programatically.
  */
 
@@ -360,7 +360,7 @@ find_ib_device_events(ib_device_t *dev, int extended)
 
     if ( extended ) {
         /* mofed driver version <4.0 */
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters_ext", 
+        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters_ext",
                 ib_dir_path, dev->dev_name, dev->dev_port);
 
         cnt_dir = opendir(counters_path);
@@ -369,14 +369,14 @@ find_ib_device_events(ib_device_t *dev, int extended)
             /* in 4.0 version of mofed driver */
             SUBDBG("cannot open counters directory `%s'\n", counters_path);
 
-            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters", 
+            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
                     ib_dir_path, dev->dev_name, dev->dev_port, "hw_");
 
             cnt_dir = opendir(counters_path);
         }
     }
     else {
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters", 
+        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
                 ib_dir_path, dev->dev_name, dev->dev_port);
         cnt_dir = opendir(counters_path);
     }
@@ -415,7 +415,7 @@ find_ib_device_events(ib_device_t *dev, int extended)
             fixed_extended = 3-extended; // higher bit, location is wrong, mark it, and flip the size, 2 + (1-extended)
 
         /* Create new counter */
-        snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
+        snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s",
                 dev->dev_name, dev->dev_port, (fixed_extended?"_ext":""), ev_name);
         if (add_ib_counter(counter_name, ev_name, fixed_extended, dev))
         {
@@ -431,8 +431,8 @@ out:
     return (nevents);
 }
 
-    static int 
-find_ib_devices() 
+    static int
+find_ib_devices()
 {
     DIR *ib_dir = NULL;
     int result = PAPI_OK;
@@ -524,7 +524,7 @@ next_hca:
             infiniband_native_events[i].device = iter->ev_device;
             infiniband_native_events[i].extended = iter->extended;
             infiniband_native_events[i].resources.selector = i + 1;
-            infiniband_native_events[i].description = 
+            infiniband_native_events[i].description =
                 make_ib_event_description(iter->ev_file_name, iter->extended);
 
             ib_counter_t *tmp = iter;
@@ -610,7 +610,7 @@ deallocate_infiniband_resources()
     }
 
     ib_device_t *iter = root_device;
-    while (iter != 0) 
+    while (iter != 0)
     {
         if (iter->dev_name)
             papi_free(iter->dev_name);
@@ -638,7 +638,7 @@ _infiniband_init_thread( hwd_context_t *ctx )
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
     static int
@@ -723,15 +723,15 @@ _infiniband_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
         {
             temp = read_ib_counter_value(i);
             if (context->start_value[i] && control->need_difference[i]) {
-                /* Must subtract values, but check for wraparound. 
+                /* Must subtract values, but check for wraparound.
                  * We cannot even detect all wraparound cases. Using the short,
                  * auto-resetting IB counters is error prone.
                  */
                 if (temp < context->start_value[i]) {
                     SUBDBG("Wraparound!\nstart:\t%#016x\ttemp:\t%#016x",
                             (unsigned)context->start_value[i], (unsigned)temp);
-                    /* The counters auto-reset. I cannot even adjust them to 
-                     * account for a simple wraparound. 
+                    /* The counters auto-reset. I cannot even adjust them to
+                     * account for a simple wraparound.
                      * Just use the current reading of the counter, which is useless.
                      */
                 } else
@@ -798,7 +798,7 @@ _infiniband_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 
     static int
 _infiniband_update_control_state( hwd_control_state_t *ctl,
-        NativeInfo_t * native, 
+        NativeInfo_t * native,
         int count,
         hwd_context_t *ctx )
 {
@@ -932,7 +932,7 @@ _infiniband_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
     int index = EventCode;
 
-    if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT; 
+    if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
     if (infiniband_native_events[index].name)
     {

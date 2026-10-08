@@ -1,11 +1,11 @@
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // This bench interacts directly with NVML from a main(). The objective here is
-// to test reading and setting of a power limit without PAPI, to determine if 
+// to test reading and setting of a power limit without PAPI, to determine if
 // errors are PAPI related or not. It can be modified to test other NVML
 // events.
 //
-// Much of this code is scavenged from linux-nvml.c. 
+// Much of this code is scavenged from linux-nvml.c.
 // Author: Tony Castaldo (tonycastaldo@icl.utk.edu).
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -119,7 +119,7 @@ static struct timeval t1, t2;                                        // used in 
 //-----------------------------------------------------------------------------
 // Union to convert pointers and avoid warnings. Plug in one, pull out the other.
 //-----------------------------------------------------------------------------
-typedef union  
+typedef union
 {
    void                 *vPtr;
    int                  *iPtr;
@@ -173,7 +173,7 @@ static unsigned int *power_management_limit_constraint_min = NULL;
 static unsigned int *power_management_limit_constraint_max = NULL;
 
 //-----------------------------------------------------------------------------
-// Get all needed function pointers from the Dynamic Link Library. 
+// Get all needed function pointers from the Dynamic Link Library.
 //-----------------------------------------------------------------------------
 
 // MACRO checks for Dynamic Lib failure, reports, returns Not Supported.
@@ -185,18 +185,18 @@ static unsigned int *power_management_limit_constraint_max = NULL;
    }
 
 // keys for above: Init, InitThrd, InitCtlSt, Stop, ShutdownThrd, ShutdownCmp, Start,
-// UpdateCtl, Read, Ctl, SetDom, Reset, Enum, EnumFirst, EnumNext, EnumUmasks, 
+// UpdateCtl, Read, Ctl, SetDom, Reset, Enum, EnumFirst, EnumNext, EnumUmasks,
 // NameToCode, CodeToName, CodeToDesc, CodeToInfo.
 
 // Simplify routine below; relies on ptr names being same as func tags.
-#define STRINGIFY(x) #x 
+#define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #define mGet_DL_FPtr(libPtr, Name)                                         \
    Name##Ptr = dlsym(libPtr, TOSTRING(Name));                              \
    mCheck_DL_Status(dlerror()!=NULL, TOSTRING(libPtr) " Library function " \
                   TOSTRING(Name) " not found.");
 
-int _local_linkDynamicLibraries(void) 
+int _local_linkDynamicLibraries(void)
 {
    if (_dl_non_dynamic_init != NULL) {    // If weak var is present, we are statically linked instead of dynamically.
       fprintf(stderr, "NVML component does not support statically linked libc.");
@@ -260,13 +260,13 @@ int _local_linkDynamicLibraries(void)
    mGet_DL_FPtr(dl3, nvmlDeviceSetPowerManagementLimit);
    mGet_DL_FPtr(dl3, nvmlDeviceGetPowerManagementLimitConstraints);
 
-   return 0;         // If we get here, all above succeeded. 
+   return 0;         // If we get here, all above succeeded.
 } // end routine.
 
 //----------------------------------------------------------------------------
-// main(). intialize the lib, then work on reading the value. 
+// main(). intialize the lib, then work on reading the value.
 //---------------------------------------------------------------------------
-int main (int argc, char **argv) 
+int main (int argc, char **argv)
 {
    (void) argc; (void) argv;                                            // Prevent not used warning.
    #define hostnameLen 512 /* constant used multiple times. */
@@ -284,11 +284,11 @@ int main (int argc, char **argv)
    ret = _local_linkDynamicLibraries();
    if ( ret != 0) {                                                     // Failure to get lib.
       fprintf(stderr, "Failed attempt to link to CUDA and NVML libraries.");
-      exit(-1); 
+      exit(-1);
    }
 
    _prog_fprintf(stderr, "Linked to CUDA and NVML libraries\n");        // debug only; turn off if timing.
-   
+
    nvret = nvmlInit();                                                  // Initialize the library.
    if (nvret != NVML_SUCCESS) {
       fprintf(stderr, "Failed nvmlInit(), ret=%i [%s].\n", nvret, nvmlErrorString(nvret));
@@ -315,7 +315,7 @@ int main (int argc, char **argv)
 
 
    ret = gethostname(hostname, hostnameLen);                            // Try to get the host hame.
-   if( gethostname(hostname, hostnameLen) != 0) {                       // If we can't get the hostname, 
+   if( gethostname(hostname, hostnameLen) != 0) {                       // If we can't get the hostname,
       fprintf(stderr, "Failed system call, gethostname() "
             "returned %i.", ret);
    exit(-1);
@@ -336,10 +336,10 @@ int main (int argc, char **argv)
       nvret = nvmlDeviceGetHandleByIndex(i, &handle[i]);                // Read the handle.
       if (nvret != NVML_SUCCESS) {
          fprintf(stderr, "nvmlDeviceGetHandleByIndex %i failed; nvret=%i [%s].\n", i, nvret, nvmlErrorString(nvret));
-         handle[i]=NULL;                                                // Set to bad value. 
+         handle[i]=NULL;                                                // Set to bad value.
          continue;                                                      // skip trying this one.
       }
- 
+
       fprintf(stderr, "Handle %i: %016lX\n", i, handle[i]);             // Show the handles.
 
       nvret = nvmlDeviceGetName(handle[i], name, sizeof(name)-1);       // Get the name.
@@ -401,10 +401,10 @@ int main (int argc, char **argv)
 
 
    } // end of loop through devices.
- 
-   
-   
-   
+
+
+
+
    //-------------------------------------------------------------------
    // Cleanup, and shutdown.
    //-------------------------------------------------------------------

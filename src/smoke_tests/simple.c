@@ -11,7 +11,7 @@ int main( int argc, char **argv )
     int             EventSet = PAPI_NULL;
     int             events[NUM_EVENTS];
     char            *EventName[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" };
-    
+
     retval = PAPI_library_init( PAPI_VER_CURRENT );
     if ( retval != PAPI_VER_CURRENT ) {
         printf("ERROR: PAPI_library_init: %d: %s\n", retval, PAPI_strerror(retval));
@@ -36,7 +36,7 @@ int main( int argc, char **argv )
             exit(EXIT_FAILURE);
         }
     }
-    
+
     retval = PAPI_add_events ( EventSet, events, NUM_EVENTS );
     if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_add_events: %d: %s\n", retval, PAPI_strerror(retval));
@@ -51,14 +51,14 @@ int main( int argc, char **argv )
 
     // do work
     sleep(3);
-                
+
     retval = PAPI_stop( EventSet, values );
     if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_stop: %d: %s\n", retval, PAPI_strerror(retval));
         exit(EXIT_FAILURE);
     }
-                
-    for( i = 0; i < NUM_EVENTS; i++ ) {           
+
+    for( i = 0; i < NUM_EVENTS; i++ ) {
         printf( "%12lld \t\t --> %s  \n", values[i],
                 EventName[i] );
     }

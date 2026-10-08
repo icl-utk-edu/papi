@@ -1,4 +1,4 @@
-/** 
+/**
 * @file    papi_preset.h
 * @author  Haihang You
 *          you@cs.utk.edu
@@ -7,9 +7,9 @@
 #ifndef _PAPI_PRESET		 /* _PAPI_PRESET */
 #define _PAPI_PRESET
 
-/** search element for preset events defined for each platform 
+/** search element for preset events defined for each platform
  *	@internal */
-typedef struct hwi_search {   
+typedef struct hwi_search {
   /* eventcode should have a more specific name, like papi_preset! -pjm */
    unsigned int event_code;   /**< Preset code that keys back to sparse preset array */
    int derived;                          /**< Derived type code */
@@ -18,9 +18,9 @@ typedef struct hwi_search {
    char *note;                          /**< optional developer notes for this event */
 } hwi_search_t;
 
-/** collected text and data info for all preset events 
+/** collected text and data info for all preset events
  *	@internal */
-typedef struct hwi_presets {  
+typedef struct hwi_presets {
    char *symbol;      /**< name of the preset event; i.e. PAPI_TOT_INS, etc. */
    char *short_descr; /**< short description of the event for labels, etc. */
    char *long_descr;  /**< long description (full sentence) */
@@ -42,8 +42,8 @@ typedef struct hwi_presets {
 } hwi_presets_t;
 
 
-/** This is a general description structure definition for various parameter lists 
- *	@internal */   
+/** This is a general description structure definition for various parameter lists
+ *	@internal */
 typedef struct hwi_describe {
    int value;                 /**< numeric value (from papi.h) */
    char *name;                /**< name of the element */

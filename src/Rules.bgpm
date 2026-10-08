@@ -15,7 +15,7 @@ MISCOBJS = $(BGPM_OBJS) $(MISCSRCS:.c=.o)
 include Makefile.inc
 
 CFLAGS += -I$(BGPM_INSTALL_DIR) -I$(BGPM_INSTALL_DIR)/spi/include/kernel/cnk $(DEBUG_BGPM)
-LDFLAGS += $(BGPM_INSTALL_DIR)/bgpm/lib/lib$(BGPM_LIBNAME).a -lrt -lstdc++ 
+LDFLAGS += $(BGPM_INSTALL_DIR)/bgpm/lib/lib$(BGPM_LIBNAME).a -lrt -lstdc++
 
 
 $(BGPM_OBJS):

@@ -3,7 +3,7 @@
 
    - It attempts to use the following two counters. It may use less depending on
      hardware counter resource limitations. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is 
+     domain and default granularity, depending on the platform. Usually this is
      the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
      + PAPI_FP_INS
      + PAPI_TOT_CYC
@@ -70,7 +70,7 @@ main( int argc, char **argv )
 	}
 
 	if ( cmpinfo->attach == 0 ) {
-	   test_skip( __FILE__, __LINE__, 
+	   test_skip( __FILE__, __LINE__,
 		      "Platform does not support attaching", 0 );
 	}
 
@@ -82,9 +82,9 @@ main( int argc, char **argv )
 	   exit( wait_for_attach_and_loop(  ) );
 	}
 
-	/* add PAPI_TOT_CYC and one of the events in 
-	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS, 
-	   depending on the availability of the event 
+	/* add PAPI_TOT_CYC and one of the events in
+	   PAPI_FP_INS, PAPI_FP_OPS or PAPI_TOT_INS,
+	   depending on the availability of the event
 	   on the platform                            */
 	EventSet1 = add_two_events( &num_events1, &PAPI_event, &mask1 );
 

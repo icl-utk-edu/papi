@@ -11,7 +11,7 @@
  * @author  Tushar Mohan
  *          tusharmohan@gmail.com
  *
- * Credit to: 
+ * Credit to:
  *          Jose Pedro Oliveira
  *          jpo@di.uminho.pt
  * whose code in the linux net component was used as a template for
@@ -166,8 +166,8 @@ static const struct appio_counters {
     { "SEEK_USEC",       "Real microseconds spent in seek calls"}
 };
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -241,8 +241,8 @@ __attribute__ ((visibility ("default"))) ssize_t read(int fd, void *buf, size_t 
   FD_SET(fd, &readfds);
   int ready = __select(fd+1, &readfds, NULL, NULL, &zerotv);
   if (ready == 0) {
-     _appio_register_current[READ_WOULD_BLOCK]++; 
-     if (issocket) _appio_register_current[SOCK_READ_WOULD_BLOCK]++; 
+     _appio_register_current[READ_WOULD_BLOCK]++;
+     if (issocket) _appio_register_current[SOCK_READ_WOULD_BLOCK]++;
   }
 
   long long start_ts = PAPI_get_real_usec();
@@ -261,7 +261,7 @@ __attribute__ ((visibility ("default"))) ssize_t read(int fd, void *buf, size_t 
     _appio_register_current[READ_USEC] += duration;
     if (issocket) _appio_register_current[SOCK_READ_USEC] += duration;
   }
-  if (retval < 0) { 
+  if (retval < 0) {
     _appio_register_current[READ_ERR]++; // read err
     if (issocket) _appio_register_current[SOCK_READ_ERR]++; // read err
     if (EINTR == errno)
@@ -314,8 +314,8 @@ __attribute__ ((visibility ("default"))) ssize_t write(int fd, const void *buf, 
   FD_SET(fd, &writefds);
   int ready = __select(fd+1, NULL, &writefds, NULL, &zerotv);
   if (ready == 0) {
-    _appio_register_current[WRITE_WOULD_BLOCK]++; 
-    if (issocket) _appio_register_current[SOCK_WRITE_WOULD_BLOCK]++; 
+    _appio_register_current[WRITE_WOULD_BLOCK]++;
+    if (issocket) _appio_register_current[SOCK_WRITE_WOULD_BLOCK]++;
   }
 
   long long start_ts = PAPI_get_real_usec();
@@ -329,7 +329,7 @@ __attribute__ ((visibility ("default"))) ssize_t write(int fd, const void *buf, 
     if (issocket) _appio_register_current[SOCK_WRITE_BYTES] += retval;
     if (retval < (int)count) {
       _appio_register_current[WRITE_SHORT]++; // short write
-      if (issocket) _appio_register_current[SOCK_WRITE_SHORT]++; 
+      if (issocket) _appio_register_current[SOCK_WRITE_SHORT]++;
     }
     _appio_register_current[WRITE_USEC] += duration;
     if (issocket) _appio_register_current[SOCK_WRITE_USEC] += duration;
@@ -363,7 +363,7 @@ __attribute__ ((visibility ("default"))) ssize_t recv(int sockfd, void *buf, siz
   FD_ZERO(&readfds);
   FD_SET(sockfd, &readfds);
   int ready = __select(sockfd+1, &readfds, NULL, NULL, &zerotv);
-  if (ready == 0) _appio_register_current[RECV_WOULD_BLOCK]++; 
+  if (ready == 0) _appio_register_current[RECV_WOULD_BLOCK]++;
 
   long long start_ts = PAPI_get_real_usec();
   retval = __recv(sockfd, buf, len, flags);
@@ -375,11 +375,11 @@ __attribute__ ((visibility ("default"))) ssize_t recv(int sockfd, void *buf, siz
     if (retval < (int)len) _appio_register_current[RECV_SHORT]++; // read short
     _appio_register_current[RECV_USEC] += duration;
   }
-  if (retval < 0) { 
+  if (retval < 0) {
     _appio_register_current[RECV_ERR]++; // read err
     if (EINTR == errno)
       _appio_register_current[RECV_INTERRUPTED]++; // signal interrupted the read
-    if ((EAGAIN == errno) || (EWOULDBLOCK == errno)) 
+    if ((EAGAIN == errno) || (EWOULDBLOCK == errno))
       _appio_register_current[RECV_WOULD_BLOCK]++; //read would block on descriptor marked as non-blocking
   }
   if (retval == 0) _appio_register_current[RECV_EOF]++; // read eof
@@ -423,7 +423,7 @@ _appio_init_thread( hwd_context_t *ctx )
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 
@@ -449,7 +449,7 @@ _appio_init_component( int cidx  )
       _appio_native_events[i].description = _appio_counter_info[i].description;
       _appio_native_events[i].resources.selector = i + 1;
     }
-  
+
     /* Export the total number of events available */
     _appio_vector.cmp_info.num_native_events = APPIO_MAX_COUNTERS;;
 
@@ -490,7 +490,7 @@ _appio_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
     /* set initial values to 0 */
     memset(appio_ctl->values, 0, APPIO_MAX_COUNTERS*sizeof(appio_ctl->values[0]));
-    
+
     return PAPI_OK;
 }
 

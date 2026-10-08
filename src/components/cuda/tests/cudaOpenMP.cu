@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    }   
+    }
     PRINT(suppress_output, "Running the cuda component test cudaOpenMP.cu\n");
 
     char **cuda_native_event_names = NULL;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
     }
-    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);  
+    PRINT(suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
 
     // Initialize the Cuda component
     int cuda_eventcode = 0 | PAPI_NATIVE_MASK;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
     if (cmpInfo == NULL) {
         fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
         exit(EXIT_FAILURE);
-    }   
+    }
 
     // Check to see if the Cuda component is partially disabled
     if (cmpInfo->partially_disabled) {
@@ -184,8 +184,8 @@ int main(int argc, char *argv[])
             // Device is not enabled continue
             if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
                 continue;
-            }   
-        } 
+            }
+        }
 
         CUcontext ctx;
         int flags = 0;
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
 
     PAPI_shutdown();
 
-    test_pass(__FILE__); 
+    test_pass(__FILE__);
 
     return 0;
 }

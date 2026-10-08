@@ -160,7 +160,7 @@
               print *,'Error at papif_stop'
               stop
           endif
-    
+
           call recorder_do_work()
 
           if( be_verbose .eq. 1 ) print '(A29,I4)',   '  TESTLIB::TESTEVENT (100) = ', values(1)
@@ -932,7 +932,7 @@
               if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
-          
+
           call c_f_pointer(transfer(values(17), quantile), quantile_f)
           if( be_verbose .eq. 1 ) print '(A54,I6)',     '  Lib_With_Recorder::simple_recording:MIN (     >0) = ', quantile_f
 
@@ -985,7 +985,7 @@
               if( be_verbose .eq. 1 ) print *,'^^^^^^^^^^^^^^^^^^^'
               all_tests_passed = 0
           endif
-          
+
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------

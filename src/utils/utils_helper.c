@@ -121,8 +121,8 @@ int check_for_utility_components(const char *component_name)
     for (entry = 0; array_of_utility_cmps[entry] != NULL; entry++) {
         if (strcasecmp(array_of_utility_cmps[entry], component_name) == 0) {
             return 1;
-        }   
-    }   
+        }
+    }
 
     return 0;
 }

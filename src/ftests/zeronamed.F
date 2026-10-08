@@ -1,5 +1,5 @@
 #include "fpapi_test.h"
-      
+
       program zero
 
       integer*8 values(10)
@@ -48,7 +48,7 @@
         call ftest_fail(__FILE__, __LINE__,
      .       'PAPIf_add_event: PAPI_TOT_CYC', retval)
       end if
-      
+
       call PAPIf_add_named_event( es, 'PAPI_TOT_INS', retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -92,7 +92,7 @@
         write (*,800) "Default domain is     :", domain, domainstr
       end if
 
-      call PAPIf_get_granularity(es, granularity, PAPI_DEFGRN, 
+      call PAPIf_get_granularity(es, granularity, PAPI_DEFGRN,
      *     retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -111,7 +111,7 @@
 
         print *, "-----------------------------------------------",
      *       "--------------------------"
-        
+
         write (*,100) "Test type", 1
         write (*,100) "PAPI_TOT_CYC", values(1)
         write (*,100) "PAPI_TOT_INS", values(2)
@@ -120,11 +120,11 @@
  100    format(a13, ":", i12)
         print *, "-----------------------------------------------",
      *       "--------------------------"
-        
+
         print *, "Verification: PAPI_TOT_CYC should be roughly ",
      *       "real_cycles"
       endif
-      
+
       call ftests_pass(__FILE__)
       end
 

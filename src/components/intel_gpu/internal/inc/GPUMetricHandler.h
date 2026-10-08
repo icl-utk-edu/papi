@@ -52,7 +52,7 @@
 using namespace std;
 class GPUMetricHandler;
 
-typedef struct TMetricNode_S 
+typedef struct TMetricNode_S
 {
 	uint32_t code;		   // 0 mean invalid
 	uint32_t metricId;
@@ -109,9 +109,9 @@ typedef struct InstanceData {
 class GPUMetricHandler
 {
 public:
-	static int InitMetricDevices(DeviceInfo **deviceInfoList, uint32_t *numDeviceInfo, 
+	static int InitMetricDevices(DeviceInfo **deviceInfoList, uint32_t *numDeviceInfo,
                      uint32_t *totalDevices);
-	static GPUMetricHandler* GetInstance(uint32_t driverId, uint32_t deviceId, 
+	static GPUMetricHandler* GetInstance(uint32_t driverId, uint32_t deviceId,
                      uint32_t subdeviceId);
 	~GPUMetricHandler();
 	void DestroyMetricDevice();
@@ -122,7 +122,7 @@ public:
 	void DisableMetricGroup();
 	int	 GetMetricInfo(int type, MetricInfo *data);
 	int	 GetMetricInfo(const char * name, int type, MetricInfo *data);
-	int  GetMetricCode(const char *mGroupName, const char *metricName,	uint32_t mtype, 
+	int  GetMetricCode(const char *mGroupName, const char *metricName,	uint32_t mtype,
 						uint32_t *mGroupCode, uint32_t *metricCode);
 	MetricData   *GetMetricData(uint32_t  mode, uint32_t *numReports);
 	int	 SetControl(uint32_t mode);

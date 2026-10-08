@@ -14,7 +14,7 @@
       if (tests_quiet .EQ. 0) then
         write (*, 100) NUM_ITERS
  100    FORMAT ("multiplex2: Using ", I3, " iterations")
-        write (*,*) "case1: Does PAPI_multiplex_init() handle", 
+        write (*,*) "case1: Does PAPI_multiplex_init() handle",
      *       " lots of events?"
       end if
       call case1(tests_quiet, retval)
@@ -84,10 +84,10 @@
          avail_flag=0
          do while ((avail_flag.EQ.0).AND.
      *        (EventCode.LT.PAPI_MAX_PRESET_EVENTS))
-              mask1 = ((PAPI_L1_DCM)+EventCode) 
+              mask1 = ((PAPI_L1_DCM)+EventCode)
           if (mask1.NE.PAPI_TOT_CYC) then
-              call papif_get_event_info(mask1, 
-     *          event_name, event_descr, event_label, avail_flag, 
+              call papif_get_event_info(mask1,
+     *          event_name, event_descr, event_label, avail_flag,
      *          event_note, flags, check)
           end if
           EventCode = EventCode + 1
@@ -100,11 +100,11 @@
          end if
 
          if (tests_quiet .EQ. 0) then
-            write (*, 200) "  Adding Event ", event_name 
+            write (*, 200) "  Adding Event ", event_name
  200        FORMAT(A22, A12)
          end if
 
-         mask1 = ((PAPI_L1_DCM)+EventCode) 
+         mask1 = ((PAPI_L1_DCM)+EventCode)
          mask1 = mask1 - 1
          call PAPIf_add_event( EventSet, mask1, retval )
          if ( retval .NE. PAPI_OK .AND. retval .NE. PAPI_ECNFLCT) then
@@ -120,12 +120,12 @@
              write (*, 200) "  Could not add Event ", event_name
            end if
          end if
-      
+
        if (retval .EQ. PAPI_OK) then
          i = i + 1
        end if
       end do
-      
+
       call PAPIf_start(EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,

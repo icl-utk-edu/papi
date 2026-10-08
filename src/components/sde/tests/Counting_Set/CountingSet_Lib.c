@@ -26,7 +26,7 @@ void libCSet_do_simple_work(void){
     handle = papi_sde_init("CSET_LIB");
     papi_sde_create_counting_set( handle, "test counting set", &test_set );
 
-    for(i=0; i<22390; i++){ 
+    for(i=0; i<22390; i++){
         int j = i%5222;
         long r = random();
         if ( r%23 == 0 ){

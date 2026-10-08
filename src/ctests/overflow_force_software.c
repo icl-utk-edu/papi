@@ -86,7 +86,7 @@ main( int argc, char **argv )
 	if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
 		if ( PAPI_query_event( PAPI_FP_INS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_FP_INS, &info );
-			if ( info.count == 1 || 
+			if ( info.count == 1 ||
                              !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_FP_INS;
 		}
@@ -94,7 +94,7 @@ main( int argc, char **argv )
 	if ( PAPI_event == 0 ) {
 		if ( PAPI_query_event( PAPI_FP_OPS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_FP_OPS, &info );
-			if ( info.count == 1 || 
+			if ( info.count == 1 ||
                              !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_FP_OPS;
 		}
@@ -102,7 +102,7 @@ main( int argc, char **argv )
 	if ( PAPI_event == 0 ) {
 		if ( PAPI_query_event( PAPI_TOT_INS ) == PAPI_OK ) {
 			PAPI_get_event_info( PAPI_TOT_INS, &info );
-			if ( info.count == 1 || 
+			if ( info.count == 1 ||
                              !strcmp( info.derived, "DERIVED_CMPD" ) )
 				PAPI_event = PAPI_TOT_INS;
 		}
@@ -303,7 +303,7 @@ main( int argc, char **argv )
 	soft_max =
 		( long long ) ( ( ( double ) values[0] * ( 1.0 + SOFT_TOLERANCE ) ) /
 						( double ) mythreshold );
-	
+
 	if ( total[1] > hard_max || total[1] < hard_min )
 		test_fail( __FILE__, __LINE__, "Hardware Overflows outside limits", 1 );
 

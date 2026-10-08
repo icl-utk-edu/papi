@@ -1,6 +1,6 @@
 /**
  * @file    linux-powercap.c
- * @author  PAPI team UTK/ICL 
+ * @author  PAPI team UTK/ICL
  * @ingroup papi_components
  * @brief powercap component
  *
@@ -21,8 +21,8 @@
 
 #include "linux-powercap-ppc.h"
 
-// The following macro exit if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro exit if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -255,7 +255,7 @@ _powercap_ppc_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
     return PAPI_OK;
 }
 
-/* 
+/*
  * Shutdown a thread
  * */
 static int

@@ -1,25 +1,25 @@
 //-----------------------------------------------------------------------------
-// There are four files involved in bench testing. These are 
-// Makefile2                     To build executables benchPCP and benchTest. 
+// There are four files involved in bench testing. These are
+// Makefile2                     To build executables benchPCP and benchTest.
 // benchPCP_script.sh            To run benchPCP repeatedly, and output a file
 //                               of many runs for statistical analysis.
 // benchPCP.c                    A program that times the reading of events.
 // benchStats.c                  A program to compose statistics on the output
-//                               of benchPCP_script.h and output them. 
+//                               of benchPCP_script.h and output them.
 //
-// Usage: 
+// Usage:
 // You must have installed PAPI with PCP, and have a system with the PCP
-// daemon present. 
-// 
+// daemon present.
+//
 // In our test system we run on a cluster that uses job-scheduling software;
 // specifically 'bsub' and 'jsrun' to request resources then submit a job to be
 // run on the cluster. Users may have other methods. The largest distinction
 // for us is that we can compile and run shell scripts and code without using
 // jsrun; but jsrun is required to run on a node supporting PCP.
-// 
+//
 // In the file papi/src/component/pcp/linux-pcp.c, we restrict the PCP events
 // to a subset; but this can be modified and papi reinstalled to give greater
-// access. 
+// access.
 
 //-----------------------------------------------------------------------------
 // benchPCP will time an event (PCP or otherwise) and the time it takes to do
@@ -32,10 +32,10 @@
 // benchPCP produces a heading if invoked with no arguments, or times the
 // intialization and the reads and reports those. It takes two arguments; the
 // first is an integer for how many reads to average to get an accurate
-// per-read timing (100 is typical), and the second is the event name to read.  
+// per-read timing (100 is typical), and the second is the event name to read.
 //
 // Although benchPCP reads the events, it does nothing with the results. The
-// only point is to time the reads.  
+// only point is to time the reads.
 
 //-----------------------------------------------------------------------------
 // The shell script benchPCP_script.sh SHOULD BE EDITED. It contains its own
@@ -44,13 +44,13 @@
 // READS=100 # Number of times to read the value.
 // EVENT_NAME="perfevent.active"
 // OUTFILE="benchPCP_test_peactive.csv"
-// 
+//
 // This instructs the script to execute ./benchPCP 'COUNT' times (500 above),
 // and put all the output if these runs into 'OUTFILE', which will be a CSV
 // formatted file, with a title row. Each data line of this file will hold
 // two timing values, in microseconds (uS): The time required to initialize
 // the PAPI system (and all components present), and then the average time
-// required to collect a value for the event 'EVENT_NAME' (above this is 
+// required to collect a value for the event 'EVENT_NAME' (above this is
 // "perfevent.active"), 'READS' times in a row (above this is 100).
 //
 // Thus the following plan:
@@ -59,15 +59,15 @@
 // 3) stop microsecond timer.
 // 4) compute and report (timeElapsed / READS).
 //
-// An example output: 
+// An example output:
 // Initialize, Event Read Avg uS
 // 177544.0,   1094.5
 // 168264.0,   1099.9
 // etc, 'COUNT' data lines, each a single run of benchPCP
-// 
-// The first line says PAPI_library_init() took 177,544 us (177.5 ms), and 
-// the reads of EVENT_NAME took ON AVERAGE 1094.5 us per read. 
-// 
+//
+// The first line says PAPI_library_init() took 177,544 us (177.5 ms), and
+// the reads of EVENT_NAME took ON AVERAGE 1094.5 us per read.
+//
 // The user can visually inspect the file, or read it into a spreadsheet for
 // statistical manipulations, sorting, or graphing. Outlier data lines can be
 // deleted from the file without harm. This is the format expected by
@@ -77,14 +77,14 @@
 // benchStats will produce a display of statistics on statistics the authors
 // find useful in characterizing the performance of PAPI and PCP. One report
 // for each column is reported.
-// 
+//
 // Usage: ./benchStats filename.csv
 // It requires only one argument, the output of benchPCP_script.sh.  It will
 // produce the following statistics, once for each column; the following are
 // redirected stdout to a file (it will not include the '// ' leader).
-// 
+//
 //-----------------------------------------------------------------------------
-//  
+//
 // Stats for Initialization time in file 'benchPCP_test_perfevent.csv'.
 // Sample Values                  ,     500
 // Minimum uS                     ,160156.0
@@ -99,7 +99,7 @@
 // Mode (center highest Bin Count),178356.0
 // Mode Bin Count                 ,     121
 // Bin Expected Count             ,      22
-// 
+//
 // Initialization Histogram:
 // binCenter, Count, % of Count
 // 160884.0,       30, = 6.00%
@@ -125,7 +125,7 @@
 // 190004.0,        3, = 0.60%
 // 191460.0,        1, = 0.20%
 // 192916.0,        2, = 0.40%
-// 
+//
 // Stats for PCP event read time in file 'benchPCP_test_perfevent.csv'.
 // Sample Values                  ,     500
 // Minimum uS                     ,  1042.5
@@ -140,7 +140,7 @@
 // Mode (center highest Bin Count),  1419.5
 // Mode Bin Count                 ,     218
 // Bin Expected Count             ,      22
-// 
+//
 // Read Event Histogram:
 // binCenter, Count, % of Count
 //   1071.5,       51, =10.20%
@@ -166,29 +166,29 @@
 //   2231.5,        0, = 0.00%
 //   2289.5,        0, = 0.00%
 //   2347.5,        1, = 0.20%
-// 
+//
 //-----------------------------------------------------------------------------
 // Discussion.
 // All of these measures are prone to distortion by "weather" in the computing
 // environment; meaning the particular mix of other code running, their
 // priorities and use of common resources. Such noise can produce outliers,
 // particularly on the high end. In general for computing environments, the
-// Minimum (barring program failure) has the smallest noise component. 
-// 
+// Minimum (barring program failure) has the smallest noise component.
+//
 // Minimum and Maximum are self-explanatory.  The difference between them is
 // computed as the Range (reported); a particularly wide range (e.g. more than
 // half the Minimum) indicates either an extreme Maximum, or a general high
 // noise environment, which may happen on a heavily used cluster.
-// 
+//
 // Average and Median. These are two measures of centrality. If the
 // distribution of values is not skewed, they are the same. The median is the
 // most statistically robust measure, it is the 50/50 point; there is a 50%
-// chance a measure falls beneath it, and 50% chance it exceeds it. 
+// chance a measure falls beneath it, and 50% chance it exceeds it.
 //
 // However, most distributions ARE skewed. If the Average is LESS than the
 // Median, this indicates a skew left, which in turn means the left tail of the
 // distribution is more drawn out than the right tail.
-// 
+//
 // If the Average is MORE than the Median, this means the opposite, the left
 // tail is less drawn out than the right tail. That can be caused by a few
 // extreme high end samples, or even just one outlier. Unlike the median, if we
@@ -197,7 +197,7 @@
 // Given 500 samples, that (1,000,000 / 500)=2000 added to the average all by
 // itself. This is why the median is called "robust", it is completely immune
 // to the magnitude of outliers.
-// 
+//
 // First, Max w/o First: This lets us isolate system-wide one-time costs. In
 // particular, when PAPI is configured with the PCP component, the execution of
 // PAPI_library_init() must also initialize communications with PCP. This
@@ -215,10 +215,10 @@
 // First, if positive and large, can provide an estimated cost of finding,
 // loading and caching the PCP DLL. If that difference is not significant, the
 // DLL was likely already cached when the first benchPCP executed.
-// 
+//
 // Histogram: Internally we construct a histogram to identify an empirical
-// major mode. We show the numeric version of that here. 
-// 
+// major mode. We show the numeric version of that here.
+//
 // Histogram Bins chosen: The number of bins. This is set as the square root of
 // the count, rounded up to the next integer. Above, sqrt(500) ~ 22.36, so the
 // number of bins is 23.0.
@@ -227,7 +227,7 @@
 // same count. Since the number of bins is the sqrt(Count), the number per bin
 // is Count/sqrt(Count) = sqrt(Count), also. That is in Bin Expected Count; in
 // the both cases above it is one less than the number of bins due to rounding.
-// 
+//
 // If we made many MORE bins, they would be narrower and the expected count
 // would be lower. Too many, and it becomes difficult to see the shape of the
 // distribution; eventually each sample is likely the only resident in its bin
@@ -259,7 +259,7 @@
 // 'modes', i.e. the environment changes periodically so the histogram
 // represents a mashup of multiple normal distributions. That could be other
 // user code running, OS functions running, task switching, code migration,
-// swapping, paging, etc.  
+// swapping, paging, etc.
 //
 // How to use all this info: You will pay the one-time cost of initializing PCP
 // to use PCP, and the Read Event costs each time you read an event. If you are

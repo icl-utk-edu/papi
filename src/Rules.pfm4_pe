@@ -40,7 +40,7 @@ ifeq ("$(CC_COMMON_NAME)","icc")
 else
 ifeq (1,$(HAVE_NO_OVERRIDE_INIT))
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS) -Wno-override-init" $(FORCE_PFM_ARCH) lib
-else 
+else
 	$(MAKE) -C $(PFM_ROOT) ARCH="$(ARCH)" CC="$(CC) $(BITFLAGS)" $(FORCE_PFM_ARCH) lib
 endif
 endif

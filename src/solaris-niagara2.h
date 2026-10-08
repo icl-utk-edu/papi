@@ -12,7 +12,7 @@
  * File:   solaris-niagara2.c
  * Author: fg215045
  *
- * Description: Data structures used for the communication between PAPI and the 
+ * Description: Data structures used for the communication between PAPI and the
  * component. Additionally some macros are defined here. See solaris-niagara2.c.
  *
  *      ***** Feel free to convert this header to the PAPI default *****
@@ -57,7 +57,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 /* DESCRIPTION:
  * -----------------------------------------------------------------------------
- * The following lines are taken from the old Solaris port of PAPI. If changes 
+ * The following lines are taken from the old Solaris port of PAPI. If changes
  * have been made there are (additional) comments.
  *
  ******************************************************************************/

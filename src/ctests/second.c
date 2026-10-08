@@ -152,7 +152,7 @@ case1( int num )
 		test_fail( __FILE__, __LINE__, "PAPI_library_init", retval );
 
 	/* get info from cpu component */
-	cmpinfo = PAPI_get_component_info( 0 );	
+	cmpinfo = PAPI_get_component_info( 0 );
 	if ( cmpinfo == NULL ) {
 	   test_fail( __FILE__, __LINE__,"PAPI_get_component_info", PAPI_ECMP);
 	}

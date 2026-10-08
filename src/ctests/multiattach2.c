@@ -3,7 +3,7 @@
 
    - It attempts to use the following two counters. It may use less depending on
      hardware counter resource limitations. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is 
+     domain and default granularity, depending on the platform. Usually this is
      the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
      + PAPI_FP_INS
      + PAPI_TOT_CYC
@@ -75,7 +75,7 @@ main( int argc, char **argv )
 
 	/* see if we support attach */
 	if ( cmpinfo->attach == 0 ) {
-	   test_skip( __FILE__, __LINE__, 
+	   test_skip( __FILE__, __LINE__,
 		      "Platform does not support attaching",0 );
 	}
 

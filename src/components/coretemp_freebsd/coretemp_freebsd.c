@@ -14,7 +14,7 @@
  * @ingroup papi_components
  *
  * @brief
- *   This component is intended to access CPU On-Die Thermal Sensors in 
+ *   This component is intended to access CPU On-Die Thermal Sensors in
  *   the Intel Core architecture in a FreeBSD machine using the coretemp.ko
  *   kernel module.
  */
@@ -44,7 +44,7 @@ typedef struct coretemp_register
 {
 	int mib[4];
 	/* Access to registers through these MIBs + sysctl (3) call */
-	
+
 	unsigned int selector;
 	/**< Signifies which counter slot is being used */
 	/**< Indexed from 1 as 0 has a special meaning  */
@@ -58,8 +58,8 @@ typedef struct coretemp_native_event_entry
 	char description[PAPI_MAX_STR_LEN];      /**< Description of the counter  */
 } coretemp_native_event_entry_t;
 
-/* This structure is used when doing register allocation 
-   it possibly is not necessary when there are no 
+/* This structure is used when doing register allocation
+   it possibly is not necessary when there are no
    register constraints */
 typedef struct coretemp_reg_alloc
 {
@@ -200,7 +200,7 @@ int coretemp_init_control_state (hwd_control_state_t * ctrl)
 }
 
 
-/** Enumerate Native Events 
+/** Enumerate Native Events
    @param EventCode is the event of interest
    @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
 */
@@ -237,7 +237,7 @@ int coretemp_ntv_enum_events (unsigned int *EventCode, int modifier)
 	return PAPI_EINVAL;
 }
 
-/** Takes a native event code and passes back the name 
+/** Takes a native event code and passes back the name
  @param EventCode is the native event code
  @param name is a pointer for the name to be copied to
  @param len is the size of the string
@@ -347,7 +347,7 @@ int coretemp_read (hwd_context_t * ctx, hwd_control_state_t * ctrl,
 				c->counters[i] = 0;
 			else
 				c->counters[i] = tmp/10;
-				/* Coretemp module returns temperature in tenths of kelvin 
+				/* Coretemp module returns temperature in tenths of kelvin
 				   Kelvin are useful to avoid negative values... but will have
 				   negative temperatures ??? */
 		}
