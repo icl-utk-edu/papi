@@ -6,9 +6,13 @@
 
 **University of Tennessee, Knoxville (UTK)**
 
+# Table of Contents
+* [About](#About)
+* [Preferred Citation](#preferred-citation)
+* [Getting Help](#getting-help)
+* [Resources](#resources)
+* [License](#license)
 
-***
-[TOC]
 ***
 
 # About
@@ -39,7 +43,6 @@ consistent PAPI interface. Third-party tools and application developers will
 have to handle only a single hook to PAPI in order to access all hardware
 performance counters in a system, including the new software-defined events.
 
-
 ***
 
 # Preferred Citation
@@ -54,7 +57,6 @@ If PAPI is used in a project or publication, please cite the following paper:
 
 **This helps us track the impact of the project and supports ongoing development. Thank you!**
 
-
 ***
 
 # Getting Help
@@ -67,31 +69,6 @@ If PAPI is used in a project or publication, please cite the following paper:
   to read historical postings to the list.
 
 ***
-
-
-# Contributing
-
-The PAPI project welcomes contributions from new developers. Contributions can
-be offered through the standard GitHub pull request model. We strongly
-encourage you to coordinate large contributions with the PAPI development team
-early in the process.
-
-**For timely pull request reviews and feedback, it is important to submit 
-one (1) pull request per feature / bug fix.**
-
-In order to create a pull request on a public read-only repo, 
-you will need to do the following:
-
-1. Fork the PAPI repo (click "+" on the left and "Fork this repository").
-
-2. Clone it.
-
-3. Make your changes and push them.
-
-4. Click "create pull request" from your repo (not the PAPI repo).
-
-***
-
 
 # Resources
 
@@ -106,7 +83,6 @@ you will need to do the following:
 * Visit the [PAPI Papers and Presentations](https://www.icl.utk.edu/view/biblio/project/papi?items_per_page=All) to find out more about PAPI papers and presentations.
 
 ***
-
 
 # License
 
