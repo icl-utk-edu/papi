@@ -1439,8 +1439,10 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-warnings       Enable build with -Wall -Wextra (default: disabled)
-  --disable-cpu           Disable cpu component
-  --disable-perf-event    Disable perf_event component
+  --disable-cpu           Disable cpu components (i.e. perf_event,
+                          perf_event_uncore, and sysdetect)
+  --disable-perf-event    Disable perf_event component (Consequently disables
+                          perf_event_uncore and sysdetect)
   --disable-perf-event-uncore
                           Disable perf_event_uncore component
   --enable-perfevent-rdpmc

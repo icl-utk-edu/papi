@@ -1166,7 +1166,7 @@ mv "t_Makefile.inc" "Makefile.inc"
 
 AC_ARG_ENABLE(cpu,
               [AS_HELP_STRING([--disable-cpu],
-              [Disable cpu component])])
+              [Disable cpu components (i.e. perf_event, perf_event_uncore, and sysdetect)])])
 
 AS_IF([test "x$enable_cpu" = "xno"],[
 	CPU_ENABLED="no"
@@ -1192,7 +1192,7 @@ AS_IF([test "x$enable_cpu" = "xno"],[
 
 AC_ARG_ENABLE(perf_event,
               [AS_HELP_STRING([--disable-perf-event],
-              [Disable perf_event component])])
+              [Disable perf_event component (Consequently disables perf_event_uncore and sysdetect)])])
 
 AS_IF([test "x$enable_perf_event" = "xno"],[
 	CPU_ENABLED="no"
