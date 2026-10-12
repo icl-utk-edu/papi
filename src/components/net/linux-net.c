@@ -117,14 +117,17 @@ generateNetEventList( void )
     int count = 0;
     struct temp_event *temp;
     struct temp_event *last = NULL;
-    int i, j;
+    int i, j, expect;
 
     fin = fopen(NET_PROC_FILE, "r");
     if (fin == NULL) {
         SUBDBG("Can't find %s, are you sure the /proc file-system is mounted?\n",
            NET_PROC_FILE);
-        snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+        expect = snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
         "Failed to find /proc file-system.");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN-2) {
+            SUBDBG("Failed to fully write the disabled reason.\n");
+        }
         _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
         return 0;
     }
@@ -135,8 +138,11 @@ generateNetEventList( void )
         if (retval == NULL) {
         	fclose(fin);
             SUBDBG("Not enough lines in %s\n", NET_PROC_FILE);
-            snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+            expect = snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
             "Not enough lines in '%s'.", NET_PROC_FILE);
+            if (expect < 0 || expect >= PAPI_MAX_STR_LEN-2) {
+                SUBDBG("Failed to fully write the disabled reason.\n");
+            }
             _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
             return 0;
         }
@@ -162,8 +168,11 @@ generateNetEventList( void )
             if (!temp) {
                 PAPIERROR("out of memory!");
                 fclose(fin);
-                snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                expect = snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
                 "%s failed to allocate %lu bytes for temp_event.", __func__, sizeof(struct temp_event));
+                if (expect < 0 || expect >= PAPI_MAX_STR_LEN-2) {
+                    SUBDBG("Failed to fully write the disabled reason.\n");
+                }
                 _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 return PAPI_ENOMEM;
             }
@@ -177,8 +186,11 @@ generateNetEventList( void )
                 papi_free(temp);
                 fclose(fin);
                 PAPIERROR("This shouldn't be possible\n");
-                snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
+                expect = snprintf(_net_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN-2,
                 "%s Error navigating linked list.", __func__);
+                if (expect < 0 || expect >= PAPI_MAX_STR_LEN-2) {
+                    SUBDBG("Failed to fully write the disabled reason.\n");
+                }
                 _net_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
                 return PAPI_ECMP;
             }
@@ -186,12 +198,18 @@ generateNetEventList( void )
 
             size_t str_len = strlen(ifname) + strlen(_net_counter_info[j].name) + 1;
             str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
-            snprintf(temp->name, str_len, "%s:%s",
+            expect = snprintf(temp->name, str_len, "%s:%s",
                     ifname, _net_counter_info[j].name);
+            if (expect < 0 || (size_t)expect >= str_len) {
+                SUBDBG("Failed to fully write the event name.\n");
+            }
             str_len = strlen(ifname) + strlen(_net_counter_info[j].description) + 1;
             str_len = (str_len > PAPI_MAX_STR_LEN - 1) ? PAPI_MAX_STR_LEN - 1 : str_len;
-            snprintf(temp->description, str_len, "%s %s",
+            expect = snprintf(temp->description, str_len, "%s %s",
                     ifname, _net_counter_info[j].description);
+            if (expect < 0 || (size_t)expect >= str_len) {
+                SUBDBG("Failed to fully write the event description.\n");
+            }
 
             count++;
         }
@@ -351,9 +369,9 @@ _net_init_component( int cidx  )
     do {
         int retlen;
         retlen = snprintf(_net_native_events[i].name, PAPI_MAX_STR_LEN, "%s", t->name);
-        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (retlen < 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         retlen = snprintf(_net_native_events[i].description, PAPI_MAX_STR_LEN, "%s", t->description);
-        if (retlen <= 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (retlen < 0 || retlen >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         _net_native_events[i].resources.selector = i + 1;
         last    = t;
         t       = t->next;
