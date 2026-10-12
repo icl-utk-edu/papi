@@ -115,7 +115,7 @@ int main (int argc, char **argv)
     if (!TESTS_QUIET) {
         printf("Net events by name:\n");
         for (i = 0; i < numEventsAdded; i++) {
-            printf("%s has a counter value of %d\n", eventNames[i], counterValues[i]);
+            printf("%s has a counter value of %lld\n", eventNames[i], counterValues[i]);
         }
     }
 
