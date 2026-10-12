@@ -175,7 +175,7 @@ static int _local_linkDynamicLibraries()
         if (dl1 == NULL) {
             int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LIBMSR_MAIN override '%s' given in Rules.libmsr not found.", libmsr_main);
             _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return(PAPI_ENOSUPP);   // Override given but not found.
         }
     }
@@ -187,9 +187,9 @@ static int _local_linkDynamicLibraries()
 
     // Step 3: Try the explicit install default. 
     if (dl1 == NULL && libmsr_root != NULL) {                          // if root given, try it.
-        int strErr=snprintf(path_name, 1024-2, "%s/lib/libmsr.so", libmsr_root);   // PAPI Root check.
-        path_name[1023]=0;
-        if (strErr > 1024-2) HANDLE_STRING_ERROR;
+        int strErr=snprintf(path_name, PAPI_HUGE_STR_LEN-2, "%s/lib/libmsr.so", libmsr_root);   // PAPI Root check.
+        path_name[PAPI_HUGE_STR_LEN-1]=0;
+        if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN-2) HANDLE_STRING_ERROR;
         dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
     }
 
@@ -197,7 +197,7 @@ static int _local_linkDynamicLibraries()
     if (dl1 == NULL) {
         int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", dlerror());
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return(PAPI_ENOSUPP);
     }
 
@@ -388,7 +388,7 @@ int _libmsr_init_component( int cidx )
         int strErr=snprintf(_libmsr_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "Could not allocate %lu bytes of memory for libmsr native event array.", max_num_events*sizeof(_libmsr_native_event_entry_t));
         _libmsr_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         SUBDBG("Could not allocate memory\n" );
         retval = PAPI_ENOMEM;
         goto fn_fail;
