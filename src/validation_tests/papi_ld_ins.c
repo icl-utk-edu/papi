@@ -177,6 +177,10 @@ int main(int argc, char **argv) {
 	}
 
 	expected=mmm_count*REPITITIONS;
+	if( expected <= 0 ) {
+		fprintf(stderr, "%s:%d: Error: Expected event counts must be positive!\n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
 
 	error=  100.0 * (double)(count-expected) / (double)expected;
 
