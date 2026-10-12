@@ -250,7 +250,7 @@ load_hsa_sym( char *status )
     hsa_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (hsa_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -268,7 +268,7 @@ load_hsa_sym( char *status )
         const char *message = "dlsym() of HSA symbols failed or hsa_init() "
                               "failed";
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -336,7 +336,7 @@ load_rsmi_sym( char *status )
     rsmi_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (rsmi_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -350,7 +350,7 @@ load_rsmi_sym( char *status )
         const char *message = "dlsym() of RSMI symbols failed or rsmi_init() "
                               "failed";
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -411,7 +411,7 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 #else
     const char *message = "RSMI not configured, no device affinity available";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
+    if (count < 0 || count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Error message truncated.");
     }
 #endif /* HAVE_ROCM_SMI */
@@ -422,7 +422,7 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     const char *message = "rocm nor rocp_sdk configured. Set PAPI_ROCP_SDK_ROOT for ROCm versions >= 6.3.2 or"
                           " PAPI_ROCM_ROOT for ROCm versions < 6.3.2.";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
+    if (count < 0 || count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Error message truncated.");
     }
 #endif /* HAVE_HSA */
