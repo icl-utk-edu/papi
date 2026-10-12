@@ -1,4 +1,4 @@
-/* This file performs the following test: 
+/* This file performs the following test:
 
    - make an event set with PAPI_TOT_INS and PAPI_TOT_CYC.
    - enable per node counting

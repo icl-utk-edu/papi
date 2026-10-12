@@ -89,7 +89,7 @@ typedef struct DataEntry_S {
  */
 typedef struct MetricData_S {
 	int		 id;
-	uint32_t	grpCode; 
+	uint32_t	grpCode;
 	uint32_t	numDataSets;		 // num of data set per device
 	uint32_t	metricCount;		 // metrics per data set
 	uint32_t	numEntries;		  // total data entries allocated
@@ -220,7 +220,7 @@ int GPUGetMetricGroups(DEVICE_HANDLE handle, uint32_t mtype, MetricInfo *data);
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn		  int GPUGetMetricList(DEVICE_HANDLE handle, 
+ * @fn		  int GPUGetMetricList(DEVICE_HANDLE handle,
  *								   char *groupName, uint32_t mtype, MetricInfo *data);
  *
  * @brief	   list available metrics in the named group.
@@ -251,7 +251,7 @@ int GPUGetMetricList(DEVICE_HANDLE handle, char *groupName, uint32_t mtype, Metr
  *
  * @return	  0 -- success,  otherwise, error code
  */
-int GPUEnableMetricGroup(DEVICE_HANDLE handle, 
+int GPUEnableMetricGroup(DEVICE_HANDLE handle,
 		char *metricGroupName, uint32_t metricGroupCode, uint32_t mtype,
 				uint32_t period, uint32_t numReports);
 

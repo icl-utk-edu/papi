@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    freebsd-map.h
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -15,7 +15,7 @@
 #include "../papi_internal.h"
 #include "../papi_vector.h"
 
-enum 
+enum
 {
 	CPU_UNKNOWN = 0,
 	CPU_P6,
@@ -35,7 +35,7 @@ enum
 	CPU_LAST
 };
 
-typedef struct Native_Event_LabelDescription 
+typedef struct Native_Event_LabelDescription
 {
 	char *name;
 	char *description;

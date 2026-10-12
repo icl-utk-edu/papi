@@ -1,6 +1,6 @@
 /*
  * This example shows how to use PAPI_library_init, PAPI_create_eventset,
- * PAPI_add_event, * PAPI_start and PAPI_stop.  These 5 functions 
+ * PAPI_add_event, * PAPI_start and PAPI_stop.  These 5 functions
  * will allow a user to do most of the performance information gathering
  * that they would need. PAPI_read could also be used if you don't want
  * to stop the EventSet from running but only check the counts.
@@ -8,7 +8,7 @@
  * Also, we will use PAPI_perror for * error information.
  *
  * In addition, a new call was created called PAPI_add_env_event
- * that allows a user to setup environment variable to read 
+ * that allows a user to setup environment variable to read
  * which event should be monitored this allows different events
  * to be monitored at runtime without recompiling, the syntax
  * is as follows:
@@ -22,13 +22,13 @@
  *       PAPI_L1_DCM could be defined in the environment variable as
  *       all of the following:  PAPI_L1_DCM, 0x80000000, or -2147483648
  *
- * To use only add_event you would change the calls to 
+ * To use only add_event you would change the calls to
  * PAPI_add_env_event(int *EventSet, int *Event, char *env_variable);
  * to PAPI_add_event(int *EventSet, int Event);
  *
  * We will also use PAPI_event_code_to_name since the event may have
  * changed.
- * Author: Kevin London 
+ * Author: Kevin London
  * email:  london@cs.utk.edu
  */
 #include <stdio.h>
@@ -50,10 +50,10 @@ int main(){
 
   /* This initializes the library and checks the version number of the
    * header file, to the version of the library, if these don't match
-   * then it is likely that PAPI won't work correctly.  
+   * then it is likely that PAPI won't work correctly.
    */
   if ((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT ){
-	/* This call loads up what the error means into errstring 
+	/* This call loads up what the error means into errstring
 	 * if retval == PAPI_ESYS then it might be beneficial
  	 * to call perror as well to see what system call failed
 	 */
@@ -93,7 +93,7 @@ int main(){
   }
 
   if ( (retval=PAPI_event_code_to_name( event_code, event_name))!=PAPI_OK){
-        PAPI_perror("PAPI_event_code_to_name");   
+        PAPI_perror("PAPI_event_code_to_name");
         exit(-1);
   }
 
@@ -112,7 +112,7 @@ int PAPI_add_env_event(int *EventSet, int *EventCode, char *env_variable){
   int real_event=*EventCode;
   char *eventname;
   int retval;
- 
+
   if ( env_variable != NULL ){
     if ( (eventname=getenv(env_variable)) ) {
         if ( eventname[0] == 'P' ) {  /* Use the PAPI name */

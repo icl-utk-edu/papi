@@ -24,7 +24,7 @@
 #include <string.h>
 #include <math.h>
 #include <papi.h>
-#include "papi_test.h" 
+#include "papi_test.h"
 #include <sys/time.h>
 
 #define mConvertUsec(timeval_) ((double) (timeval_.tv_sec*1000000+timeval_.tv_usec))     /* avoid typos, make it a double. */
@@ -44,7 +44,7 @@ typedef union
 // MAIN.
 //-----------------------------------------------------------------------------
 
-int main(int argc, char **argv) {                                       // args to set two events. 
+int main(int argc, char **argv) {                                       // args to set two events.
    int i,ret;
    int EventSet = PAPI_NULL;
    char errMsg[1024];                                                   // space for an error message with more info.
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {                                       // args 
    EVENTREADS = atoi(argv[1]);                                          // get event reads.
    if (EVENTREADS < 1) {
       fprintf(stderr, "%s:%i ERROR readsToAvg must be > 0.\n", __FILE__, __LINE__); // report.
-      fprintf(stderr, "%s readsToAvg Event-Name\n", argv[0]); 
+      fprintf(stderr, "%s readsToAvg Event-Name\n", argv[0]);
       exit(-1);
    }
 
@@ -73,13 +73,13 @@ int main(int argc, char **argv) {                                       // args 
    gettimeofday(&t1, NULL);
    ret = PAPI_library_init( PAPI_VER_CURRENT );
    gettimeofday(&t2, NULL);
- 
+
    if (ret != PAPI_VER_CURRENT) {                                       // if we failed,
-      printf("ERROR PAPI library init failed.\n");                      // Show abort in file. 
+      printf("ERROR PAPI library init failed.\n");                      // Show abort in file.
       test_fail(__FILE__, __LINE__, "PAPI_library_init failed\n", ret); // report.
    }
 
-   printf("%9.1f,", (mConvertUsec(t2)-mConvertUsec(t1)));               // OUTPUT PAPI library init time. 
+   printf("%9.1f,", (mConvertUsec(t2)-mConvertUsec(t1)));               // OUTPUT PAPI library init time.
 
 // fprintf(stderr, "Benching Event Read with PAPI %d.%d.%d\n",
 //    PAPI_VERSION_MAJOR( PAPI_VERSION ),
@@ -87,12 +87,12 @@ int main(int argc, char **argv) {                                       // args 
 //    PAPI_VERSION_REVISION( PAPI_VERSION ) );
 
    // Library is initialized.
-   ret = PAPI_create_eventset(&EventSet);                               // Create an event. 
+   ret = PAPI_create_eventset(&EventSet);                               // Create an event.
    if (ret != PAPI_OK) {                                                // If that failed, report and exit.
       fprintf(stderr, "ERROR PAPI_create_eventset failed.\n");
       test_fail(__FILE__, __LINE__, "PAPI_create_eventset failed.\n", ret);
    }
-  
+
    ret=PAPI_add_named_event(EventSet,pcpName);                       // Try to add it for counting.
    if (ret != PAPI_OK) {                                             // If that failed, report it.
       sprintf(errMsg, "PAPI_add_named_event('%s') failed.\n", pcpName);
@@ -110,23 +110,23 @@ int main(int argc, char **argv) {                                       // args 
    // Begin event timing.
    ret = PAPI_start(EventSet);                                       // start counting.
    if (ret != PAPI_OK) {                                             // If that failed, report it.
-      printf("ERROR PAPI_start EventSet failed.\n");                 // Show abort in file. 
+      printf("ERROR PAPI_start EventSet failed.\n");                 // Show abort in file.
       test_fail( __FILE__, __LINE__, "PAPI_start_event(EventSet) failed.\n", ret);  // report and exit.
-   }                                                                 
+   }
 
    gettimeofday(&t1, NULL);
-   for (i=0; i<EVENTREADS; i++) {                                    // For all the PCP iterations, 
+   for (i=0; i<EVENTREADS; i++) {                                    // For all the PCP iterations,
       ret = PAPI_read(EventSet, &pcpValue);                          // .. read without a stop.
       if (ret != PAPI_OK) {                                          // .. If that failed, report it.
-         printf("ERROR PAPI_read EventSet failed.\n");               // Show abort in file. 
+         printf("ERROR PAPI_read EventSet failed.\n");               // Show abort in file.
          test_fail( __FILE__, __LINE__, "PAPI_read(EventSet) failed.\n", ret);
-      }                                                              
-   } 
+      }
+   }
    gettimeofday(&t2, NULL);
-      
+
    ret = PAPI_stop(EventSet, &pcpValue);                             // stop counting, get final value.
    if (ret != PAPI_OK) {                                             // If that failed, report it.
-      printf("ERROR PAPI_stop EventSet failed.\n");                  // Show abort in file. 
+      printf("ERROR PAPI_stop EventSet failed.\n");                  // Show abort in file.
       test_fail( __FILE__, __LINE__, "PAPI_stop_event(PAPIEventSet, &papiValues[FINAL]) failed.\n", ret);
    }
 
@@ -134,13 +134,13 @@ int main(int argc, char **argv) {                                       // args 
 
    ret = PAPI_cleanup_eventset(EventSet);                            // Try a cleanup.
    if (ret != PAPI_OK) {                                             // If that failed, report it.
-      printf("ERROR PAPI_cleanup_eventset failed.\n");               // Show abort in file. 
+      printf("ERROR PAPI_cleanup_eventset failed.\n");               // Show abort in file.
       test_fail( __FILE__, __LINE__, "PAPI_cleanup_eventset(EventSet) failed.\n", ret);
    }
 
    ret = PAPI_destroy_eventset(&EventSet);                           // Deallocate. No memory leaks!
    if (ret != PAPI_OK) {                                             // If that failed, report it.
-      printf("ERROR PAPI_destroy_eventset failed.\n");               // Show abort in file. 
+      printf("ERROR PAPI_destroy_eventset failed.\n");               // Show abort in file.
       test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset(EventSet) failed.\n", ret);
    }
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {                                       // args 
    // Done. cleanup.
    //----------------------------------------------------------------------------------------------
    PAPI_shutdown();                                                  // get out of papi.
-// fprintf(stderr, "PAPI Shutdown completed.\n");                    // If we are verbose, 
-// test_pass( __FILE__ );                                            // Note the test passed. 
+// fprintf(stderr, "PAPI Shutdown completed.\n");                    // If we are verbose,
+// test_pass( __FILE__ );                                            // Note the test passed.
    return 0;                                                         // Exit with all okay.
 } // END main.

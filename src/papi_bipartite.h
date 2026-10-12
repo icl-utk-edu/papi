@@ -2,8 +2,8 @@
 * File:    papi_bipartite.h
 * Author:  Dan Terpstra
 *          terpstra@eecs.utk.edu
-* Mods:    
-*          
+* Mods:
+*
 */
 /* This file contains one function: _papi_bipartite_alloc()
    Its role is to act as an execution harness for implementing a recursive
@@ -11,10 +11,10 @@
    platforms that don't have built-in smart counter allocation.
    It is intended to be #included in the cpu component source to minimize
    other disruption to the build process.
-   
-   This routine presumes the existence of a half dozen "bpt_" helper routines. 
+
+   This routine presumes the existence of a half dozen "bpt_" helper routines.
    Prototypes for these routines are given below.
- 
+
     success  return 1
     fail     return 0
 */
@@ -66,7 +66,7 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 	int head, tail;
 	int size = _papi_hwd[cidx]->size.reg_alloc;
 
-	/* build a queue of indexes to all events 
+	/* build a queue of indexes to all events
 	   that live on one counter only (rank == 1) */
 	head = 0;				 /* points to top of queue */
 	tail = 0;				 /* points to bottom of queue */
@@ -78,7 +78,7 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 	/* scan the single counter queue looking for events that share counters.
 	   If two events can live only on one counter, return failure.
 	   If the second event lives on more than one counter, remove shared counter
-	   from its selector and reduce its rank. 
+	   from its selector and reduce its rank.
 	   Mark first event as mapped to its counter. */
 	while ( head < tail ) {
 		for ( i = 0; i < count; i++ ) {
@@ -115,7 +115,7 @@ _papi_bipartite_alloc( hwd_reg_alloc_t * event_list, int count, int cidx )
 		int remainder;
 
 		rest_event_list =
-			papi_calloc(  _papi_hwd[cidx]->cmp_info.num_cntrs, 
+			papi_calloc(  _papi_hwd[cidx]->cmp_info.num_cntrs,
 				      size );
 
 		copy_rest_event_list =

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-bgq.h
  * CVS:     $Id$
  * @author  Heike Jagode
@@ -10,11 +10,11 @@
  * Mods:	< your name here >
  *			< your email address >
  * Blue Gene/Q CPU component: BGPM / Punit
- * 
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the BGPM library.
  */
 
@@ -42,11 +42,11 @@
 #include "linux-context.h"
 
 /* this number assumes that there will never be more events than indicated */
-#define BGQ_PUNIT_MAX_COUNTERS UPC_P_NUM_COUNTERS 
+#define BGQ_PUNIT_MAX_COUNTERS UPC_P_NUM_COUNTERS
 #define BGQ_PUNIT_MAX_EVENTS PEVT_PUNIT_LAST_EVENT
 #define MAX_COUNTER_TERMS BGQ_PUNIT_MAX_COUNTERS
 // keep a large enough gap between actual BGPM events and our local opcode events
-#define OPCODE_BUF ( MAX_COUNTERS + MAX_COUNTERS ) 
+#define OPCODE_BUF ( MAX_COUNTERS + MAX_COUNTERS )
 
 
 #include "papi.h"

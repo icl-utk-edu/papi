@@ -14,7 +14,7 @@
 #define NUM_EVENTS 6
 
 main(int argc, char *argv[]) {
-  int EventSet = PAPI_NULL; 
+  int EventSet = PAPI_NULL;
   const char* names[NUM_EVENTS] = {"appio:::RECV_CALLS", "appio:::RECV_BYTES", "appio:::RECV_USEC", "appio:::RECV_ERR", "appio:::RECV_INTERRUPTED", "appio:::RECV_WOULD_BLOCK"};
   long long values[NUM_EVENTS];
 
@@ -93,10 +93,10 @@ main(int argc, char *argv[]) {
   if (PAPI_stop(EventSet, values) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop\n");
   }
- 
-  if (!TESTS_QUIET) { 
+
+  if (!TESTS_QUIET) {
     printf("----\n");
-    for (e=0; e<NUM_EVENTS; e++)  
+    for (e=0; e<NUM_EVENTS; e++)
       printf("%s: %lld\n", names[e], values[e]);
   }
   test_pass( __FILE__ );

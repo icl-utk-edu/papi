@@ -2,18 +2,18 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-L2unit.h
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	< your name here >
  *			< your email address >
- * BGPM / L2unit component 
- * 
+ * BGPM / L2unit component
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 

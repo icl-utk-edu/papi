@@ -6,7 +6,7 @@
 // Internal headers
 #include "papi.h"
 #include "papi_test.h"
-#include "nvml_tests_helper.h" 
+#include "nvml_tests_helper.h"
 
 /** @class enumerate_and_store_nvml_native_events
   * @brief For the case users do not add an event on the command line, enumerate through
@@ -25,7 +25,7 @@ void enumerate_and_store_nvml_native_events(char ***nvml_native_event_names_arg,
     if (nvml_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", nvml_cmp_idx);
     }
- 
+
     int modifier = PAPI_ENUM_FIRST;
     int nvml_eventcode = 0 | PAPI_NATIVE_MASK;
     int papi_errno = PAPI_enum_cmp_event(&nvml_eventcode, modifier, nvml_cmp_idx);
@@ -56,13 +56,13 @@ void enumerate_and_store_nvml_native_events(char ***nvml_native_event_names_arg,
     // Count the number of decimals after needle
     int c, num_decimals = 0;
     for (c = 0; device_and_state_substring[c] != '\0'; c++) {
-        // We have hit state 
+        // We have hit state
         if (device_and_state_substring[c] == ':') {
             break;
-        }   
-    
-        num_decimals++; 
-    }   
+        }
+
+        num_decimals++;
+    }
 
     char device_index[PAPI_MAX_STR_LEN] = { 0 };
     int strLen = snprintf(device_index, sizeof(device_index), "%.*s", num_decimals, device_and_state_substring);

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-k7.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -14,15 +14,15 @@
 
 
 /****************************************************************************
- K7 SUBSTRATE 
- K7 SUBSTRATE 
+ K7 SUBSTRATE
+ K7 SUBSTRATE
  K7 SUBSTRATE (aka Athlon)
  K7 SUBSTRATE
  K7 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_K7Processor must match K7Processor_info 
+	NativeEvent_Value_K7Processor must match K7Processor_info
 */
 
 Native_Event_LabelDescription_t K7Processor_info[] =

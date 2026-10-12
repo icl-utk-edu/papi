@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS = -O2 -Wall
-LFLAGS = 
+LFLAGS =
 PAPI_INCLUDE = ../../..
 PAPI_LIBRARY = ../../../libpapi.a
 
@@ -12,5 +12,5 @@ host_micpower_plot:	host_micpower_plot.o
 host_micpower_plot.o:	host_micpower_plot.c
 	$(CC) $(CFLAGS) -I$(PAPI_INCLUDE) -c host_micpower_plot.c
 
-clean:	
+clean:
 	rm -f *~ *.o host_micpower_plot results.*

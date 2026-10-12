@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 #define MAX_NUM_METRICS    40
-#define MAX_STRLEN         128 
+#define MAX_STRLEN         128
 
 #define COMP_NAME       "intel_gpu"
 

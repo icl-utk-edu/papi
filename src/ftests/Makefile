@@ -12,7 +12,7 @@ ifeq ($(ENABLE_FORTRAN_TESTS),yes)
 include Makefile.recipies
 
 install: default
-	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	@echo "Fortran tests (DATADIR) being installed in: \"$(DATADIR)\"";
 	-mkdir -p $(DATADIR)/ftests
 	-chmod go+rx $(DATADIR)
 	-chmod go+rx $(DATADIR)/ftests

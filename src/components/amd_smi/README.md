@@ -19,7 +19,7 @@ For AMD_SMI, PAPI requires the environment variable `PAPI_AMDSMI_ROOT` to be set
 so that the AMD SMI shared library and headers can be found. This variable is
 required at both **compile** and **run** time.
 
-**Setting PAPI_AMDSMI_ROOT**  
+**Setting PAPI_AMDSMI_ROOT**
 Set `PAPI_AMDSMI_ROOT` to the top-level ROCm directory. For example:
 
    ```bash

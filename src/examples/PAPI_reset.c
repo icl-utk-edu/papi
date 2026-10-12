@@ -9,7 +9,7 @@
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
 int poorly_tuned_function()
-{  
+{
    float tmp;
    int i;
 
@@ -17,14 +17,14 @@ int poorly_tuned_function()
    {
       tmp=(tmp+100)/i;
    }
-   return 0;  
+   return 0;
 }
 
 int main()
 {
     int EventSet = PAPI_NULL;
     /*must be initialized to PAPI_NULL before calling PAPI_create_event*/
-    
+
     int retval;
     unsigned  int event_code=PAPI_TOT_INS;
     /* By default monitor total instructions */
@@ -38,15 +38,15 @@ int main()
    * is likely that PAPI won't work correctly.If there is an error, retval     *
    * keeps track of the version number.                                        *
    ****************************************************************************/
-    
+
    if((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT )
    {
       printf("Library initialization error! \n");
       exit(1);
    }
 
-   /* Creating the eventset */   
-   if ( (retval=PAPI_create_eventset(&EventSet)) != PAPI_OK)   
+   /* Creating the eventset */
+   if ( (retval=PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    /* Add Total Instructions Executed to our EventSet */
@@ -83,7 +83,7 @@ int main()
       ERROR_RETURN(retval);
 
    printf("The final read value (via PAPI_stop) after PAPI_reset is %lld\n",values[0]);
-   
+
    /* free the resources used by PAPI */
    PAPI_shutdown();
 

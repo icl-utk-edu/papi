@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <papi.h>
 #define NUM_PTHREADS 2
-#define NUM_EVENTS 2 
+#define NUM_EVENTS 2
 
 void *
 Thread(void *arg)
@@ -14,10 +14,10 @@ Thread(void *arg)
     int             EventSet = PAPI_NULL;
     int             events[NUM_EVENTS];
     char            *EventName[] = { "PAPI_TOT_CYC", "PAPI_TOT_INS" };
-    
+
     int thread;
     thread = *(int *) arg;
- 
+
     retval = PAPI_register_thread(  );
     if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_register_thread: %d: %s\n", retval, PAPI_strerror(retval));
@@ -48,18 +48,18 @@ Thread(void *arg)
     if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_start: %d: %s\n", retval, PAPI_strerror(retval));
         exit(EXIT_FAILURE);
-    }        
+    }
 
     // do work
     sleep(3);
-                
+
     retval = PAPI_stop( EventSet, values );
     if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_stop: %d: %s\n", retval, PAPI_strerror(retval));
         exit(EXIT_FAILURE);
     }
-                
-    for( i = 0; i < NUM_EVENTS; i++ ) {           
+
+    for( i = 0; i < NUM_EVENTS; i++ ) {
         printf( "%12lld \t\t --> %s  (thread %d) \n", values[i],
                 EventName[i], thread );
     }
@@ -80,10 +80,10 @@ int main( int argc, char **argv )
     int i, vals[NUM_PTHREADS];
     int retval, rc;
     void* retval2;
-        
+
     /* Init PAPI library */
     retval = PAPI_library_init( PAPI_VER_CURRENT );
-    if ( retval != PAPI_VER_CURRENT ) { 
+    if ( retval != PAPI_VER_CURRENT ) {
         printf("ERROR: PAPI_library_init: %d: %s\n", retval, PAPI_strerror(retval) );
         exit(EXIT_FAILURE);
     } else {
@@ -92,13 +92,13 @@ int main( int argc, char **argv )
                  PAPI_VERSION_MINOR ( PAPI_VERSION ),
                  PAPI_VERSION_REVISION ( PAPI_VERSION ) );
     }
-            
+
     retval = PAPI_thread_init( ( unsigned long ( * )( void ) )( pthread_self ) );
-    if ( retval != PAPI_OK ) { 
+    if ( retval != PAPI_OK ) {
         printf("ERROR: PAPI_thread_init: %d: %s\n", retval, PAPI_strerror(retval) );
         exit(EXIT_FAILURE);
     }
-    
+
     for ( i = 0; i < NUM_PTHREADS; i++) {
         vals[i] = i;
         retval = pthread_create( &tids[i], NULL, Thread, &vals[i] );
@@ -118,7 +118,7 @@ int main( int argc, char **argv )
             printf("Joined with tid %d\n", i);
         }
     }
-    
+
     PAPI_shutdown();
     return EXIT_SUCCESS;
 }

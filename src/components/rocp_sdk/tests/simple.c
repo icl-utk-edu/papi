@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < total_event_count; ++i) {
         printf("%s: %.2lfM\n", rocp_sdk_native_event_names[i], (double)counters[i]/1e6);
     }
-    
+
     papi_errno = PAPI_cleanup_eventset(eventset);
     if (papi_errno != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", papi_errno);

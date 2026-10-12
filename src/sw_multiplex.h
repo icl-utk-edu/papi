@@ -3,13 +3,13 @@
 
 #define PAPI_MAX_SW_MPX_EVENTS 32
 
-/* Structure contained in the EventSet structure that 
+/* Structure contained in the EventSet structure that
    holds information about multiplexing. */
 
 typedef enum
   { MPX_STOPPED, MPX_RUNNING } MPX_status;
 
-/** Structure contained in the EventSet structure that 
+/** Structure contained in the EventSet structure that
     holds information about multiplexing.
     @internal */
 

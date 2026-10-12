@@ -17,7 +17,7 @@ Typically, the utility `papi_components_avail` (available in `papi/src/utils/pap
 
 For LIBMSR, PAPI requires one environment variable: **PAPI\_LIBMSR\_ROOT**.
 
-This is required for both compiling, and at runtime. 
+This is required for both compiling, and at runtime.
 
 Example:
 
@@ -74,35 +74,35 @@ may have security and performance consequences, so please make sure
 you know what you are doing.
 
 ### OPTION 1: Enable MSR access using msr-safe
-Install the msr-safe module from LLNL. 
-       
+Install the msr-safe module from LLNL.
+
     lsmod | grep msr        (should show msr_safe)
 
-Use chmod to set site-appropriate access permissions (e.g. 766) for 
-       
+Use chmod to set site-appropriate access permissions (e.g. 766) for
+
 /dev/cpu/*/msr_safe /dev/cpu/msr_batch /dev/cpu/msr_whitelist
 
-Load a whitelist appropriate for your machine, e.g. for SandyBridge: 
-         
+Load a whitelist appropriate for your machine, e.g. for SandyBridge:
+
     cat msr-safe/whitelists/wl_062D > /dev/cpu/msr_whitelist
-    
+
 ### OPTION 2: Enable MSR access via the filesystem and elevated permissions
 Or, enable access to the standard MSRs filesystem
-    
+
 For Linux kernel version < 3.7, using only file system checks
-         
+
     chmod 666 /dev/cpu/*/msr
-    
+
 For Linux kernel version >= 3.7, using capabilities
-         
+
     chmod 666 /dev/cpu/*/msr
 
 The final executable needs `CAP_SYS_RWIO` to open MSR device files [1]
-         
+
     setcap cap_sys_rawio=ep <user_executable>
-         
+
 The final executable cannot be on a shared network partition.
-    
+
 The dynamic linker on most operating systems will remove variables
 that control dynamic linking from the environment of executables
 with extended rights, such as setuid executables or executables
@@ -110,7 +110,7 @@ with raised capabilities. One such variable is
 `LD_LIBRARY_PATH`. Therefore, executables that have the RAWIO
 capability can only load shared libraries from default system
 directories.
-    
+
 One can work around this restriction by either installing the
 shared libraries in system directories, linking statically against
 those libraries, or using the -rpath linker option to specify the
@@ -147,7 +147,7 @@ From papi/src:
 
     utils/papi_native_avail | grep -i libmsr
 
-## Use the PAPI LIBMSR Component 
+## Use the PAPI LIBMSR Component
 
 See the components/libmsr/utils/README file for instructions.  This
 test demonstrates how to write power constraints, and gives an

@@ -8,10 +8,10 @@ It works by using PAPI to poll the RAPL stats every 100ms.
 It will dump each statistic to different files, which then
 can be plotted.
 
-The measurements (in nJ) are dumped every 100ms.  
+The measurements (in nJ) are dumped every 100ms.
 You can adjust the frequency by changing the source code.
 
-You can then take those files and put them into your favorite plotting 
+You can then take those files and put them into your favorite plotting
 program.  You might want to edit the source to remove the extra
 commentary from the data, the plotting program I use ignores things
 surrounded by (* brackets.

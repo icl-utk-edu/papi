@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    extras.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -109,7 +109,7 @@ posix_profil( vptr_t address, PAPI_sprofil_t * prof,
 		/* compute the profile buffer offset by:
 		   - subtracting the profiling base address from the pc address
 		   - multiplying by the scaling factor
-		   - dividing by max scale (65536, or 2^^16) 
+		   - dividing by max scale (65536, or 2^^16)
 		   - dividing by implicit 2 (2^^1 for a total of 2^^17), for even addresses
 		   NOTE: 131072 is a valid scale value. It produces byte resolution of addresses
 		 */
@@ -194,7 +194,7 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, vptr_t pc,
 }
 
 /* if isHardware is true, then the processor is using hardware overflow,
-   else it is using software overflow. Use this parameter instead of 
+   else it is using software overflow. Use this parameter instead of
    _papi_hwi_system_info.supports_hw_overflow is in CRAY some processors
    may use hardware overflow, some may use software overflow.
 
@@ -203,12 +203,12 @@ _papi_hwi_dispatch_profile( EventSetInfo_t * ESI, vptr_t pc,
 
    If both genOverflowBit and isHardwareSupport are true, that means
      the component doesn't know how to get the overflow bit from the
-     kernel directly, so we generate the overflow bit in this function 
+     kernel directly, so we generate the overflow bit in this function
     since this function can access the ESI->overflow struct;
    (The component can only set genOverflowBit parameter to true if the
      hardware doesn't support multiple hardware overflow. If the
-     component supports multiple hardware overflow and you don't know how 
-     to get the overflow bit, then I don't know how to deal with this 
+     component supports multiple hardware overflow and you don't know how
+     to get the overflow bit, then I don't know how to deal with this
      situation).
 */
 
@@ -298,7 +298,7 @@ _papi_hwi_dispatch_overflow_signal( void *papiContext, vptr_t address,
 			papi_index = ESI->overflow.EventIndex[0];
 
 			/* suppose the pos is the same as the counter number
-			 * (this is not true in Itanium, but itanium doesn't 
+			 * (this is not true in Itanium, but itanium doesn't
 			 * need us to generate the overflow bit
 			 */
 			pos = ESI->EventInfoArray[papi_index].pos[0];

@@ -33,7 +33,7 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 	count = 0;
 	t_index = 0;
 	while ( fread( &newp, sizeof ( prmap_t ), 1, map_f ) > 0 ) {
-		vaddr = ( void * ) ( 1 + ( newp.pr_vaddr ) );	// map base address 
+		vaddr = ( void * ) ( 1 + ( newp.pr_vaddr ) );	// map base address
 		if ( dladdr( vaddr, &dlip ) > 0 ) {
 			count++;
 			if ( ( newp.pr_mflags & MA_EXEC ) && ( newp.pr_mflags & MA_READ ) ) {
@@ -445,7 +445,7 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 	   structure. The information is important for the profiling functions of
 	   PAPI. */
 
-/* This variant would pass the addresses of all text and data segments 
+/* This variant would pass the addresses of all text and data segments
   _papi_hwi_system_info.exe_info.address_info.text_start = t_min;
   _papi_hwi_system_info.exe_info.address_info.text_end = t_max;
   _papi_hwi_system_info.exe_info.address_info.data_start = d_min;
@@ -701,7 +701,7 @@ _solaris_get_system_info( papi_mdi_t *mdi )
 		strncpy( _papi_hwi_system_info.exe_info.fullname, psi.pr_psargs,
 				 PAPI_HUGE_STR_LEN );
 
-	/* please don't use pr_fname here, because it can only store less that 
+	/* please don't use pr_fname here, because it can only store less that
 	   16 characters */
 	strcpy( _papi_hwi_system_info.exe_info.address_info.name,
 			basename( _papi_hwi_system_info.exe_info.fullname ) );

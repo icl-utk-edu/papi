@@ -13,7 +13,7 @@
       integer tests_quiet, get_quiet
       external get_quiet
 #if (defined(sgi) && defined(host_mips))
-      integer id 
+      integer id
       integer*4 getuid
 #endif
 
@@ -41,7 +41,7 @@
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -50,7 +50,7 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
       end if
-      
+
       call PAPIf_add_event( es1, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -60,7 +60,7 @@
       call PAPIf_create_eventset(es2, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -69,7 +69,7 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
       end if
-      
+
       call PAPIf_add_event( es2, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -79,7 +79,7 @@
       call PAPIf_create_eventset(es3, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -88,7 +88,7 @@
         call ftest_fail(__FILE__, __LINE__,
      . 'PAPIf_add_event', retval)
       end if
-      
+
       call PAPIf_add_event( es3, PAPI_TOT_CYC, retval )
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
@@ -205,11 +205,11 @@
       end if
  900  format(a20, i3, ' ', a70)
 
-      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN, 
+      call PAPIf_get_granularity(es1, granularity, PAPI_DEFGRN,
      *retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_get_granularity', 
+     . 'PAPIf_get_granularity',
      *retval)
       end if
 
@@ -260,13 +260,13 @@
          if ((values(1) .lt. min) .OR. (values(1) .gt. max)) then
             call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_FP_INS', 1)
-         end if            
+         end if
          min = values(2)*0.9
          max = values(2)*1.1
-         if (((values(4)+values(6)) .lt. min) .OR. 
+         if (((values(4)+values(6)) .lt. min) .OR.
      *       ((values(4)+values(6)) .gt. max)) then
             call ftest_fail(__FILE__, __LINE__, 'PAPI_TOT_CYC', 1)
-         end if            
+         end if
       endif
 #else
       min = INT(REAL(values(5))*0.9)
@@ -274,15 +274,15 @@
       if ((values(1) .lt. min) .OR. (values(1) .gt. max)) then
          call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_FP_INS', 1)
-      end if            
+      end if
 
       min = INT(REAL(values(2))*0.8)
       max = INT(REAL(values(2))*1.2)
-      if (((values(4)+values(6)) .lt. min) .OR. 
+      if (((values(4)+values(6)) .lt. min) .OR.
      *    ((values(4)+values(6)) .gt. max)) then
          call ftest_fail(__FILE__, __LINE__,
      . 'PAPI_TOT_CYC', 1)
-      end if            
+      end if
 #endif
 
       call ftests_pass(__FILE__)

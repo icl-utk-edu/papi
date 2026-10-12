@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p6.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -14,15 +14,15 @@
 
 
 /****************************************************************************
- P6 SUBSTRATE 
- P6 SUBSTRATE 
+ P6 SUBSTRATE
+ P6 SUBSTRATE
  P6 SUBSTRATE (aka Pentium Pro)
  P6 SUBSTRATE
  P6 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6Processor must match P6Processor_info 
+	NativeEvent_Value_P6Processor must match P6Processor_info
 */
 
 Native_Event_LabelDescription_t P6Processor_info[] =

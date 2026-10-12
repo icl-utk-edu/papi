@@ -49,7 +49,7 @@
 int numDevice = 0;
 
 #define MAX_NUM_METRICS	40
-#define MAX_STRLEN		 128 
+#define MAX_STRLEN		 128
 
 long long metric_values[MAX_NUM_METRICS];
 
@@ -82,18 +82,18 @@ main(int argc, char ** argv) {
 					metricGroupName = NULL;
 				}
 				break;
-			case 'h': 
+			case 'h':
 				printf("usage:  %s [-a] [-g <metricGroupName>] [-m <metricName>]\n", argv[0]);
 				return 0;
-			case 'm': 
+			case 'm':
 				metricName = optarg;
 				selectedAll = 0;
 				break;
-			case 'g': 
+			case 'g':
 				if (!listGroupOnly) {
 					metricGroupName = optarg;
 				} else {
-					printf("list all groups, ignore group name\n"); 
+					printf("list all groups, ignore group name\n");
 				}
 				break;
 			default:
@@ -121,17 +121,17 @@ main(int argc, char ** argv) {
 		printf("Component %s is not supported\n", aComp->name);
 		return 1;
 	}
- 
+
 	printf("Name:  %s\n", aComp->name);
 	printf("Description: %s\n", aComp->description);
 
 	if (selectedAll || listGroupOnly) {
-		i = 0 | PAPI_NATIVE_MASK; 
+		i = 0 | PAPI_NATIVE_MASK;
 		retVal=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 		numMetrics = 0;
 		do {
 			memset( &info, 0, sizeof ( info ) );
-			retVal =  PAPI_get_event_info( i, &info );	
+			retVal =  PAPI_get_event_info( i, &info );
 			if (retVal == PAPI_OK) {
 				if (listGroupOnly) {
 					if (!metricGroupName || !strstr(info.symbol, metricGroupName)) {
@@ -153,8 +153,8 @@ main(int argc, char ** argv) {
 			}
 			retVal = PAPI_enum_cmp_event( &i, PAPI_ENUM_EVENTS, cid );
 		} while (retVal == PAPI_OK);
-   
-		retVal = PAPI_OK;	
+
+		retVal = PAPI_OK;
 		if (!numMetrics && !numGroups) {
 			fprintf(stderr, "Error on enum_cmp_event, abort.\n");
 			retVal = PAPI_ENOEVNT;
@@ -172,7 +172,7 @@ main(int argc, char ** argv) {
 		metricName = TEST_METRIC;
 	}
 	printf("Query metric by name %s --  ", metricName);
-	
+
 	retVal = PAPI_query_named_event(metricName);
 	if (retVal != PAPI_OK) {
 		printf("does not exist, abort.\n");

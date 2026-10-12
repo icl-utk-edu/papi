@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p6.h
 * CVS:     $Id$
 * Author:  Harald Servat

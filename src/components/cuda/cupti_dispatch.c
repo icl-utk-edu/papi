@@ -303,7 +303,7 @@ int cuptid_evt_code_to_name(uint32_t event_code, char *name, int len)
         return cuptie_evt_code_to_name(event_code, name, len);
 #endif
 
-    }   
+    }
     return PAPI_ECMP;
 }
 

@@ -17,7 +17,7 @@ Typically, the utility `papi_components_avail` (available in `papi/src/utils/pap
 
 For LMSENSORS, PAPI requires one environment variable: **PAPI\_LMSENSORS\_ROOT**.
 
-This is required for both compiling, and at runtime. 
+This is required for both compiling, and at runtime.
 
 Example:
 
@@ -44,4 +44,4 @@ listed as "disabled" with a reason explaining the problem. If library was not fo
 From papi/src:
 
     utils/papi_native_avail | grep -i sensors
-    
+

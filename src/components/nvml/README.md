@@ -38,7 +38,7 @@ reason will be provided.
 
 ## Known Limitations
 
-* Some systems require `sudo` (superuser) status in order to set or read 
+* Some systems require `sudo` (superuser) status in order to set or read
 power limits; such permissions are typically granted by your sysadmin.
 ***
 

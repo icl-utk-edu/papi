@@ -30,14 +30,14 @@
       retval = PAPI_VER_CURRENT
       call PAPIf_library_init(retval)
       if ( retval.NE.PAPI_VER_CURRENT) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPI_library_init', retval)
       end if
 
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -45,22 +45,22 @@
 
       call PAPIf_query_event(PAPI_FP_INS, retval)
        if (retval .NE. PAPI_OK) then
-        events(1) = PAPI_TOT_INS 
+        events(1) = PAPI_TOT_INS
        else
-        events(1) = PAPI_FP_INS 
+        events(1) = PAPI_FP_INS
        end if
       events(2) = PAPI_TOT_CYC
 
       call PAPIf_add_events( es1, events, number, retval )
       if ( retval.LT.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_add_event', retval)
       end if
 
       eventtotal=5
       call PAPIf_list_events(es1, eventlist, eventtotal, retval)
       if ( retval.NE.PAPI_OK) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_list_events', retval)
       end if
 
@@ -74,7 +74,7 @@
       do i = 1, eventtotal
          call PAPIf_event_code_to_name (eventlist(i), name, retval)
          if ( retval.NE.PAPI_OK) then
-            call ftest_fail(__FILE__, __LINE__, 
+            call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_event_code_to_name', retval)
          end if
          if (tests_quiet .EQ. 0) then
@@ -86,7 +86,7 @@
       print *, "---------------------------------------",
      *"---------------------------"
       end if
-      
+
       call PAPIf_state(es1, status, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
@@ -152,14 +152,14 @@
 
       call PAPIf_remove_events( es1, events, number, retval )
       if ( retval .NE. PAPI_OK ) then
-        call ftest_fail(__FILE__, __LINE__, 
+        call ftest_fail(__FILE__, __LINE__,
      *'PAPIf_remove_events', retval)
       end if
 
       if (tests_quiet .EQ. 0) then
         call PAPIf_event_code_to_name (eventlist(1), name, retval)
         if ( retval.NE.PAPI_OK) then
-          call ftest_fail(__FILE__, __LINE__, 
+          call ftest_fail(__FILE__, __LINE__,
      *      'PAPIf_event_code_to_name', retval)
         end if
         print *, " "

@@ -28,8 +28,8 @@
 #define EXAMPLE_MAX_SIMULTANEOUS_COUNTERS 3
 #define EXAMPLE_MAX_MULTIPLEX_COUNTERS 4
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -58,18 +58,18 @@ typedef struct example_native_event_entry
 	/* any other counter parameters go here */
 } example_native_event_entry_t;
 
-/** This structure is used when doing register allocation 
-    it possibly is not necessary when there are no 
+/** This structure is used when doing register allocation
+    it possibly is not necessary when there are no
     register constraints */
 typedef struct example_reg_alloc
 {
 	example_register_t ra_bits;
 } example_reg_alloc_t;
 
-/** Holds control flags.  
+/** Holds control flags.
  *    There's one of these per event-set.
  *    Use this to hold data specific to the EventSet, either hardware
- *      counter settings or things like counter start values 
+ *      counter settings or things like counter start values
  */
 typedef struct example_control_state
 {
@@ -78,7 +78,7 @@ typedef struct example_control_state
   int multiplexed;
   int overflow;
   int inherit;
-  int which_counter[EXAMPLE_MAX_SIMULTANEOUS_COUNTERS]; 
+  int which_counter[EXAMPLE_MAX_SIMULTANEOUS_COUNTERS];
   long long counter[EXAMPLE_MAX_MULTIPLEX_COUNTERS];   /**< Copy of counts, holds results when stopped */
 } example_control_state_t;
 
@@ -150,7 +150,7 @@ example_hardware_read( int which_one, example_context_t *ctx )
 
 /** Code that writes event values.                        */
 static int
-example_hardware_write( int which_one, 
+example_hardware_write( int which_one,
 			example_context_t *ctx,
 			long long value)
 {
@@ -175,7 +175,7 @@ example_hardware_write( int which_one,
 
 static int
 detect_example(void) {
- 
+
    return PAPI_OK;
 }
 
@@ -194,7 +194,7 @@ _example_init_component( int cidx )
     int retval = PAPI_OK;
 
 	SUBDBG( "_example_init_component..." );
-   
+
    /* First, detect that our hardware is available */
    if (detect_example()!=PAPI_OK) {
       int strErr=snprintf(_example_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -204,7 +204,7 @@ _example_init_component( int cidx )
       retval = PAPI_ENOSUPP;
       goto fn_fail;
    }
-   
+
 	/* we know in advance how many events we want                       */
 	/* for actual hardware this might have to be determined dynamically */
 	num_events = EXAMPLE_TOTAL_EVENTS;
@@ -267,7 +267,7 @@ _example_init_thread( hwd_context_t *ctx )
         example_context_t *example_context = (example_context_t *)ctx;
 
         example_context->autoinc_value=0;
-   
+
 	SUBDBG( "_example_init_thread %p...", ctx );
 
 	return PAPI_OK;
@@ -294,16 +294,16 @@ _example_init_control_state( hwd_control_state_t * ctl )
 
 /** Triggered by eventset operations like add or remove */
 static int
-_example_update_control_state( hwd_control_state_t *ctl, 
+_example_update_control_state( hwd_control_state_t *ctl,
 				    NativeInfo_t *native,
-				    int count, 
+				    int count,
 				    hwd_context_t *ctx )
 {
-   
+
    (void) ctx;
    int i, index;
 
-   example_control_state_t *example_ctl = ( example_control_state_t * ) ctl;   
+   example_control_state_t *example_ctl = ( example_control_state_t * ) ctl;
 
    SUBDBG( "_example_update_control_state %p %p...", ctl, ctx );
 
@@ -312,7 +312,7 @@ _example_update_control_state( hwd_control_state_t *ctl,
 
    for( i = 0; i < count; i++ ) {
       index = native[i].ni_event;
-      
+
       /* Map counter #i to Measure Event "index" */
       example_ctl->which_counter[i]=index;
 
@@ -341,7 +341,7 @@ _example_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	/* reset counters? */
         /* For hardware that cannot reset counters, store initial        */
         /*     counter state to the ctl and subtract it off at read time */
-	 
+
 	/* start the counting ?*/
 
 	return PAPI_OK;
@@ -360,7 +360,7 @@ _example_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 	/* anything that would need to be done at counter stop time */
 
-	
+
 
 	return PAPI_OK;
 }
@@ -376,7 +376,7 @@ _example_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    (void) flags;
 
    example_context_t *example_ctx = (example_context_t *) ctx;
-   example_control_state_t *example_ctl = ( example_control_state_t *) ctl;   
+   example_control_state_t *example_ctl = ( example_control_state_t *) ctl;
 
    SUBDBG( "example_read... %p %d", ctx, flags );
 
@@ -385,7 +385,7 @@ _example_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
    /* Read counters into expected slot */
    for(i=0;i<example_ctl->num_events;i++) {
       example_ctl->counter[i] =
-		example_hardware_read( example_ctl->which_counter[i], 
+		example_hardware_read( example_ctl->which_counter[i],
 				       example_ctx );
    }
 
@@ -403,10 +403,10 @@ _example_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 {
 
         example_context_t *example_ctx = (example_context_t *) ctx;
-        example_control_state_t *example_ctl = ( example_control_state_t *) ctl;   
-   
+        example_control_state_t *example_ctl = ( example_control_state_t *) ctl;
+
         int i;
-   
+
 	SUBDBG( "example_write... %p %p", ctx, ctl );
 
         /* Write counters into expected slot */
@@ -415,7 +415,7 @@ _example_write( hwd_context_t *ctx, hwd_control_state_t *ctl,
 				   example_ctx,
 				   events[i] );
 	}
-   
+
 	return PAPI_OK;
 }
 
@@ -445,7 +445,7 @@ _example_shutdown_component(void)
 	SUBDBG( "example_shutdown_component..." );
 
         /* Free anything we allocated */
-   
+
 	papi_free(example_native_table);
 
 	return PAPI_OK;
@@ -469,7 +469,7 @@ _example_shutdown_thread( hwd_context_t *ctx )
 
 /** This function sets various options in the component
   @param[in] ctx -- hardware context
-  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
+  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN,
                         PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param[in] option -- options to be set
  */
@@ -566,7 +566,7 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
 	      return PAPI_ENOEVNT;
 	   }
 	   break;
-	
+
 	default:
 	   return PAPI_EINVAL;
   }
@@ -574,7 +574,7 @@ _example_ntv_enum_events( unsigned int *EventCode, int modifier )
   return PAPI_EINVAL;
 }
 
-/** Takes a native event code and passes back the name 
+/** Takes a native event code and passes back the name
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
@@ -588,10 +588,10 @@ _example_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 
   /* Make sure we are in range */
   if (index >= 0 && index < num_events) {
-     strncpy( name, example_native_table[index].name, len );  
+     strncpy( name, example_native_table[index].name, len );
      return PAPI_OK;
   }
-   
+
   return PAPI_ENOEVNT;
 }
 
@@ -611,7 +611,7 @@ _example_ntv_code_to_descr( unsigned int EventCode, char *descr, int len )
      strncpy( descr, example_native_table[index].description, len );
      return PAPI_OK;
   }
-  
+
   return PAPI_ENOEVNT;
 }
 
@@ -629,7 +629,7 @@ papi_vector_t _example_vector = {
 		.version = "1.15",
 		.support_version = "n/a",
 		.kernel_version = "n/a",
-		.num_cntrs =               EXAMPLE_MAX_SIMULTANEOUS_COUNTERS, 
+		.num_cntrs =               EXAMPLE_MAX_SIMULTANEOUS_COUNTERS,
 		.num_mpx_cntrs =           EXAMPLE_MAX_SIMULTANEOUS_COUNTERS,
 		.default_domain =          PAPI_DOM_USER,
 		.available_domains =       PAPI_DOM_USER,
@@ -654,18 +654,18 @@ papi_vector_t _example_vector = {
 
 	/* function pointers */
         /* by default they are set to NULL */
-   
+
 	/* Used for general PAPI interactions */
 	.start =                _example_start,
 	.stop =                 _example_stop,
 	.read =                 _example_read,
-	.reset =                _example_reset,	
+	.reset =                _example_reset,
 	.write =                _example_write,
-	.init_component =       _example_init_component,	
+	.init_component =       _example_init_component,
 	.init_thread =          _example_init_thread,
 	.init_control_state =   _example_init_control_state,
-	.update_control_state = _example_update_control_state,	
-	.ctl =                  _example_ctl,	
+	.update_control_state = _example_update_control_state,
+	.ctl =                  _example_ctl,
 	.shutdown_thread =      _example_shutdown_thread,
 	.shutdown_component =   _example_shutdown_component,
 	.set_domain =           _example_set_domain,
@@ -691,7 +691,7 @@ papi_vector_t _example_vector = {
         /* it by enumerating all events and looking manually  */
    	.ntv_name_to_code  = NULL,
 
-   
+
 	/* These are only used by _papi_hwi_get_native_event_info() */
 	/* Which currently only uses the info for printing native   */
 	/* event info, not for any sort of internal use.            */

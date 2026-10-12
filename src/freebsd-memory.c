@@ -6,7 +6,7 @@
 * File:		freebsd-memory.c
 * Author:	Harald Servat
 *			redcrash@gmail.com
-* Mod:		James Ralph 
+* Mod:		James Ralph
 *			ralph@cs.utk.edu
 */
 
@@ -38,7 +38,7 @@ x86_get_memory_info( PAPI_hw_info_t *hw_info )
 #endif
 
 
-int 
+int
 _freebsd_get_memory_info( PAPI_hw_info_t *hw_info, int id)
 {
 	UNREFERENCED(id);
@@ -57,4 +57,5 @@ int _papi_freebsd_get_dmem_info(PAPI_dmem_info_t *d)
 	d->pagesize = getpagesize();
 	return PAPI_OK;
 }
- 
+
+

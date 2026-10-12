@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     char *user_defined_suppressOutput = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppressOutput) {
         suppressOutput = (int) strtol(user_defined_suppressOutput, (char**) NULL, 10);
-    }   
+    }
     PRINT(suppressOutput, "Running the cuda component test test_cuda_presets.cu\n");
 
     if (argc > 1) {
@@ -49,8 +49,8 @@ int main(int argc, char **argv)
     char *papi_cuda_api = getenv("PAPI_CUDA_API");
     if (papi_cuda_api != NULL) {
         fprintf(stderr, "The test test_cuda_presets only works with the Perfworks Metrics API. Unset the environment variable PAPI_CUDA_API.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
-    } 
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
 
     // Determine the number of Cuda capable devices
     int numDevicesOnMachine = 0;
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 
     if (deviceMap.empty() == true) {
         fprintf(stderr, "Neither a GA100 or GH200 were detected on the machine. Skipping test.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
+        test_skip(__FILE__, __LINE__, "", 0);
     }
 
     // Initialize the PAPI library
@@ -98,11 +98,11 @@ int main(int argc, char **argv)
     PRINT(suppressOutput, "\nPAPI version being used for this test: %d.%d.%d\n",
           PAPI_VERSION_MAJOR(PAPI_VERSION),
           PAPI_VERSION_MINOR(PAPI_VERSION),
-          PAPI_VERSION_REVISION(PAPI_VERSION)); 
+          PAPI_VERSION_REVISION(PAPI_VERSION));
 
 
     int EventSet = PAPI_NULL;
-    check_papi_api_call( PAPI_create_eventset(&EventSet) ); 
+    check_papi_api_call( PAPI_create_eventset(&EventSet) );
     for (auto pair = deviceMap.begin(); pair != deviceMap.end(); pair++) {
         CUcontext sessionCtx = NULL;
         int flags = 0;
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
         std::vector<std::string> presets;
         // GA100 presets
         if (pair->first.compare("GA100") == 0) {
-            presets = {"PAPI_CUDA_FP16_FMA", "PAPI_CUDA_BF16_FMA", "PAPI_CUDA_FP32_FMA", "PAPI_CUDA_FP64_FMA", "PAPI_CUDA_FP_FMA"}; 
+            presets = {"PAPI_CUDA_FP16_FMA", "PAPI_CUDA_BF16_FMA", "PAPI_CUDA_FP32_FMA", "PAPI_CUDA_FP64_FMA", "PAPI_CUDA_FP_FMA"};
         }
         // GH200 presets
         else {
@@ -152,5 +152,5 @@ int main(int argc, char **argv)
 
     test_pass(__FILE__);
 
-    return 0; 
+    return 0;
 }

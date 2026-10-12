@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-k7.h
 * CVS:     $Id$
 * Author:  Harald Servat

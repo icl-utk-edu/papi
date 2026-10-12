@@ -20,7 +20,7 @@ include Makefile.recipies
 .PHONY : install
 
 install: default
-	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\""; 
+	@echo "C tests (DATADIR) being installed in: \"$(DATADIR)\"";
 	-mkdir -p $(DATADIR)/ctests
 	-chmod go+rx $(DATADIR)
 	-chmod go+rx $(DATADIR)/ctests

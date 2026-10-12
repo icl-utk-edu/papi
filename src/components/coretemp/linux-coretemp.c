@@ -8,7 +8,7 @@
 
 #include "linux-coretemp.h"
 
-/* this is what I found on my core2 machine 
+/* this is what I found on my core2 machine
  * but I have not explored this widely yet*/
 #define REFRESH_LAT 4000
 
@@ -28,8 +28,8 @@ struct temp_event {
   struct temp_event *next;
 };
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -91,7 +91,7 @@ insert_in_list(char *name, char *units,
 /*
  * find all coretemp information reported by the kernel
  */
-static int 
+static int
 generateEventList(char *base_dir)
 {
     char path[PATH_MAX],filename[PATH_MAX];
@@ -116,7 +116,7 @@ generateEventList(char *base_dir)
     /* Open "/sys/class/hwmon" */
     dir = opendir(base_dir);
     if ( dir == NULL ) {
-       SUBDBG("Can't find %s, are you sure the coretemp module is loaded?\n", 
+       SUBDBG("Can't find %s, are you sure the coretemp module is loaded?\n",
 	       base_dir);
        return 0;
     }
@@ -171,7 +171,7 @@ generateEventList(char *base_dir)
 	    /* arbitrary maximum */
 	    /* the problem is the numbering can be sparse */
 	    /* should probably go back to dirent listing  */
-	    
+
 	  for(i=0;i<32;i++) {
 
 	     /* Try looking for a location label */
@@ -367,7 +367,7 @@ done_error:
 }
 
 static long long
-getEventValue( int index ) 
+getEventValue( int index )
 {
     char buf[PAPI_MAX_STR_LEN];
     FILE* fp;
@@ -410,7 +410,7 @@ _coretemp_init_thread( hwd_context_t *ctx )
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 static int
@@ -427,7 +427,7 @@ _coretemp_init_component( int cidx )
 
      /* This is the prefered method, all coretemp sensors are symlinked here
       * see $(kernel_src)/Documentation/hwmon/sysfs-interface */
-  
+
      num_events = generateEventList("/sys/class/hwmon");
 
      if ( num_events < 0 ) {
@@ -450,7 +450,7 @@ _coretemp_init_component( int cidx )
      }
 
      t = root;
-  
+
      _coretemp_native_events = (CORETEMP_native_event_entry_t*)
           papi_calloc(num_events, sizeof(CORETEMP_native_event_entry_t));
      if (_coretemp_native_events == NULL) {
@@ -585,7 +585,7 @@ _coretemp_shutdown_thread( hwd_context_t * ctx )
  * Clean up what was setup in  coretemp_init_component().
  */
 static int
-_coretemp_shutdown_component( ) 
+_coretemp_shutdown_component( )
 {
     if ( is_initialized ) {
        is_initialized = 0;
@@ -654,7 +654,7 @@ _coretemp_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
     ( void ) ctx;
     ( void ) ctl;
-	
+
     return PAPI_OK;
 }
 
@@ -678,10 +678,10 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	   *EventCode = 0;
 
 	   return PAPI_OK;
-		
+
 
 	case PAPI_ENUM_EVENTS:
-	
+
 	   index = *EventCode;
 
 	   if ( index < num_events - 1 ) {
@@ -691,7 +691,7 @@ _coretemp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	      return PAPI_ENOEVNT;
 	   }
 	   break;
-	
+
 	default:
 		return PAPI_EINVAL;
 	}
@@ -729,7 +729,7 @@ _coretemp_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 }
 
 static int
-_coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+_coretemp_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
   int index = EventCode;

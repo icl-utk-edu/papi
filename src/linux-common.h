@@ -28,11 +28,11 @@ mygettid( void )
 #ifndef F_SETOWN_EX
    #define F_SETOWN_EX     15
    #define F_GETOWN_EX     16
-   
+
    #define F_OWNER_TID     0
    #define F_OWNER_PID     1
    #define F_OWNER_PGRP    2
-   
+
    struct f_owner_ex {
               int     type;
               pid_t   pid;

@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     int papi_errno;
 
-    quiet = tests_quiet(argc, argv); 
+    quiet = tests_quiet(argc, argv);
 
     papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
     if (papi_errno != PAPI_VER_CURRENT) {
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
      for (int i = 0; i < NUM_EVENTS && !quiet; ++i) {
          fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
      }
-      
+
      papi_errno = PAPI_read(eventset, counters);
      if (papi_errno != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_read", papi_errno);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
      for (int i = 0; i < NUM_EVENTS && !quiet; ++i) {
          fprintf(stdout, "%s: %lli\n", events[i], counters[i]);
      }
-     
+
      papi_errno = PAPI_cleanup_eventset(eventset);
      if (papi_errno != PAPI_OK) {
          test_fail(__FILE__, __LINE__, "PAPI_cleanup_eventset", papi_errno);

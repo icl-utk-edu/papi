@@ -188,7 +188,7 @@ main( int argc, char **argv )
 	if ( !quiet ) {
 
 	   printf("\nResults in Matrix-view:\n");
-	   printf( "Test Overflow on %d counters with %d events.\n", 
+	   printf( "Test Overflow on %d counters with %d events.\n",
 		   num_events,num_events );
 	   printf( "-----------------------------------------------\n" );
 	   printf( "Threshold for overflow is: %d\n", mythreshold );

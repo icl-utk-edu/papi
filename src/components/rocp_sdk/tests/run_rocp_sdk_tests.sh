@@ -1,6 +1,6 @@
 #!/bin/bash
-#Note: It is possible that the listed desired events for each test 
-# may not exist on the architecture you are running on or with the 
+#Note: It is possible that the listed desired events for each test
+# may not exist on the architecture you are running on or with the
 # ROCm version you are using. If you run with the option --with-desired-events
 # and the test fails, verify with utils/papi_native_avail the desired event exists with
 # the appended qualifiers.

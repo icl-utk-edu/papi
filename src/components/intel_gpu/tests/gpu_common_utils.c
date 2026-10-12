@@ -102,7 +102,7 @@ parseInputParam(int argc, char **argv, InParams *param) {
 			case 'm':
 				metric_list = strdup(optarg);
 				break;
-			default: 
+			default:
 				return 1;
 		}
 	}
@@ -122,7 +122,7 @@ parseInputParam(int argc, char **argv, InParams *param) {
 		}
 		if ((str[i] != '\0') && (str[i] == 't') && (str[i+1] != '\0')) {
 			param->app_tile = atoi(&str[i+1])+1;
-		} 
+		}
 	}
 	parseMetricList(metric_list, param);
 	return 0;
@@ -145,7 +145,7 @@ initPAPIGPUComp() {
 	int i = 0;
 	for (i=0; i<numComponents && cid<0; i++) {
 		// get the component info.
-		aComponent = (PAPI_component_info_t*) PAPI_get_component_info(i);   
+		aComponent = (PAPI_component_info_t*) PAPI_get_component_info(i);
 		if (aComponent == NULL) {
 			continue;
 		}
@@ -154,7 +154,7 @@ initPAPIGPUComp() {
 		} // end search components.
 	}
 	if (cid < 0) {
-		fprintf(stderr, "Failed to find component [%s] in total %i supported components.\n", 
+		fprintf(stderr, "Failed to find component [%s] in total %i supported components.\n",
 			COMP_NAME, numComponents);
 		 PAPI_shutdown();
 		 return -1;
@@ -164,7 +164,7 @@ initPAPIGPUComp() {
 
 int
 initMetricSet(char **metric_names, int num_metrics, int *eventSet) {
- 
+
 	int retVal = PAPI_create_eventset(eventSet);
 	if (retVal != PAPI_OK) {
 		fprintf(stderr, "Error on PAPI_create_eventset, retVal %d\n", retVal);
@@ -175,7 +175,7 @@ initMetricSet(char **metric_names, int num_metrics, int *eventSet) {
 	for (int i=0; i<num_metrics; i++) {
 		retVal = PAPI_add_named_event(*eventSet, metric_names[i]);
 		if (retVal < 0) {
-			fprintf(stderr, "Error on PAPI_add_named_event %s,  retVal %d\n", 
+			fprintf(stderr, "Error on PAPI_add_named_event %s,  retVal %d\n",
 					metric_names[i], retVal);
 			break;
 		}

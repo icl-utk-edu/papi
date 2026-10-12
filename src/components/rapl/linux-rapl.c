@@ -29,8 +29,8 @@
 #include "papi_vector.h"
 #include "papi_memory.h"
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -196,7 +196,7 @@ static long long read_msr(int fd, unsigned int which) {
 }
 
 static int open_fd(int offset) {
-  
+
   int fd=-1;
   char filename[BUFSIZ];
 
@@ -210,7 +210,7 @@ static int open_fd(int offset) {
 	  if (fd>=0) {
 		  fd_array[offset].fd=fd;
 	      fd_array[offset].open=1;
-      } 
+      }
   }
   else {
     fd=fd_array[offset].fd;
@@ -477,7 +477,7 @@ _rapl_init_component( int cidx )
 			psys_avail=0;
 			different_units=1;
 			break;
-			
+
 		case 143:      /* Sapphire Rapids-SP */
 		case 173:      /* Granite Rapids */
 		case 207:      /* Emerald Rapids */
@@ -546,7 +546,7 @@ _rapl_init_component( int cidx )
      while(1) {
        int num_read;
 
-       strErr=snprintf(filename, BUFSIZ, 
+       strErr=snprintf(filename, BUFSIZ,
 	       "/sys/devices/system/cpu/cpu%d/topology/physical_package_id",j);
        filename[BUFSIZ-1]=0;
        if (strErr > BUFSIZ) HANDLE_STRING_ERROR;
@@ -683,7 +683,7 @@ _rapl_init_component( int cidx )
 
 	if (hw_info->vendor==PAPI_VENDOR_INTEL)
      for(j=0;j<num_packages;j++) {
-        strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN, 
+        strErr=snprintf(rapl_native_events[i].name, PAPI_MAX_STR_LEN,
 			"THERMAL_SPEC_CNT:PACKAGE%d",j);
         rapl_native_events[i].name[PAPI_MAX_STR_LEN-1]=0;
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
@@ -1069,7 +1069,7 @@ _rapl_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
   long long now = PAPI_get_real_usec();
   int i;
 
-  
+
   for( i = 0; i < RAPL_MAX_COUNTERS; i++ ) {
      if ((control->being_measured[i]) && (control->need_difference[i])) {
         context->start_value[i]=(read_rapl_value(i) & 0xFFFFFFFF);
@@ -1318,7 +1318,7 @@ _rapl_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 }
 
 static int
-_rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+_rapl_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
   int index = EventCode;

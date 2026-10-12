@@ -2,7 +2,7 @@
 * This example shows how to use PAPI_add_event, PAPI_start, PAPI_read,       *
 *  PAPI_stop and PAPI_remove_event.                                          *
 ******************************************************************************/
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h" /* This needs to be included every time you use PAPI */
@@ -18,13 +18,13 @@ int main()
 
    long long values[NUM_EVENTS];
    /*This is where we store the values we read from the eventset */
-    
-   /* We use number to keep track of the number of events in the EventSet */ 
+
+   /* We use number to keep track of the number of events in the EventSet */
    int retval, number;
-   
+
    char errstring[PAPI_MAX_STR_LEN];
-  
-   /*************************************************************************** 
+
+   /***************************************************************************
    *  This part initializes the library and compares the version number of the*
    * header file, to the version of the library, if these don't match then it *
    * is likely that PAPI won't work correctly.If there is an error, retval    *
@@ -34,9 +34,9 @@ int main()
 
    if((retval = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT )
       ERROR_RETURN(retval);
-     
-     
-   /* Creating the eventset */              
+
+
+   /* Creating the eventset */
    if ( (retval = PAPI_create_eventset(&EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
 
@@ -59,7 +59,7 @@ int main()
 
    if ( (retval = PAPI_start(EventSet)) != PAPI_OK)
       ERROR_RETURN(retval);
-   
+
    /* you can replace your code here */
    tmp=0;
    for (i = 0; i < 2000000; i++)
@@ -67,14 +67,14 @@ int main()
       tmp = i + tmp;
    }
 
-  
+
    /* read the counter values and store them in the values array */
    if ( (retval=PAPI_read(EventSet, values)) != PAPI_OK)
       ERROR_RETURN(retval);
 
    printf("The total instructions executed for the first loop are %lld \n", values[0] );
    printf("The total cycles executed for the first loop are %lld \n",values[1]);
-  
+
    /* our slow code again */
    tmp=0;
    for (i = 0; i < 2000000; i++)
@@ -92,7 +92,7 @@ int main()
    /* Remove event: We are going to take the PAPI_TOT_INS from the eventset */
    if( (retval = PAPI_remove_event(EventSet, PAPI_TOT_INS)) != PAPI_OK)
       ERROR_RETURN(retval);
-   printf("Removing PAPI_TOT_INS from the eventset\n"); 
+   printf("Removing PAPI_TOT_INS from the eventset\n");
 
    /* Now we list how many events are left on the event set */
    number = 0;
@@ -103,7 +103,7 @@ int main()
 
    /* free the resources used by PAPI */
    PAPI_shutdown();
- 
+
    exit(0);
 }
 

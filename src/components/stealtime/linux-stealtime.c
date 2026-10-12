@@ -83,7 +83,7 @@ read_stealtime( struct STEALTIME_context *context, int starting) {
 
   fff=fopen("/proc/stat","r");
   if (fff==NULL) {
-     return PAPI_ESYS; 
+     return PAPI_ESYS;
   }
 
   for(i=0;i<num_events;i++) {
@@ -114,7 +114,7 @@ read_stealtime( struct STEALTIME_context *context, int starting) {
     context->value[i]=(context->current_count[i]-context->start_count[i])*
       (1000000/hz);
   }
-  
+
 
   fclose(fff);
 
@@ -187,7 +187,7 @@ _stealtime_init_component( int cidx )
         goto fn_fail;
 	}
 
-	
+
 	sysconf(_SC_CLK_TCK);
 	event_info[0].name=strdup("TOTAL");
 	event_info[0].description=strdup("Total amount of steal time");
@@ -284,7 +284,7 @@ static int
 _stealtime_init_control_state( hwd_control_state_t *ctl )
 {
 
-    struct STEALTIME_control_state *control = 
+    struct STEALTIME_control_state *control =
       (struct STEALTIME_control_state *)ctl;
 
     control->values=NULL;
@@ -299,9 +299,9 @@ _stealtime_init_control_state( hwd_control_state_t *ctl )
  *
  */
 static int
-_stealtime_update_control_state( hwd_control_state_t *ctl, 
+_stealtime_update_control_state( hwd_control_state_t *ctl,
 			      NativeInfo_t *native,
-			      int count, 
+			      int count,
 			      hwd_context_t *ctx )
 {
 
@@ -318,7 +318,7 @@ _stealtime_update_control_state( hwd_control_state_t *ctl,
 				      count*sizeof(int));
        control->values=realloc(control->values,
 			       count*sizeof(long long));
-       
+
     }
 
 
@@ -345,7 +345,7 @@ _stealtime_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
   //    struct STEALTIME_control_state *control;
     struct STEALTIME_context *context;
-    
+
     //control = (struct STEALTIME_control_state *)ctl;
     context = (struct STEALTIME_context *)ctx;
 
@@ -370,7 +370,7 @@ _stealtime_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
   //    struct STEALTIME_control_state *control;
     struct STEALTIME_context *context;
-    
+
     //control = (struct STEALTIME_control_state *)ctl;
     context = (struct STEALTIME_context *)ctx;
 
@@ -395,7 +395,7 @@ _stealtime_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     struct STEALTIME_context *context;
 
     int i;
-    
+
     control = (struct STEALTIME_control_state *)ctl;
     context = (struct STEALTIME_context *)ctx;
 
@@ -579,8 +579,8 @@ _stealtime_ntv_enum_events( unsigned int *EventCode, int modifier )
 	} else {
 	   return PAPI_ENOEVNT;
 	}
-     } 
-		
+     }
+
      return PAPI_EINVAL;
 }
 

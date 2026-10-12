@@ -216,7 +216,7 @@ read_mx_counters( long long *counters )
  */
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 static int
@@ -299,7 +299,7 @@ _mx_init_thread( hwd_context_t * ctx )
 
 
 static int
-_mx_shutdown_component(void) 
+_mx_shutdown_component(void)
 {
   return PAPI_OK;
 }
@@ -331,14 +331,14 @@ _mx_update_control_state( hwd_control_state_t *ctl, NativeInfo_t *native,
 {
 	( void ) ctx;			 /*unused */
 	int i, index;
-	
+
 	MX_control_state_t *mx_ctl = (MX_control_state_t *)ctl;
 
 	for(i=0; i<count; i++ ) {
 	    index = native[i].ni_event;
 	    mx_ctl->which_counter[i]=index;
 	    //	    printf("Mapping event# %d to HW counter %d (count=%d)\n",
-	    //	   i,index,count); 
+	    //	   i,index,count);
 	    native[i].ni_position = i;
 	}
 
@@ -525,7 +525,7 @@ _mx_ntv_enum_events( unsigned int *EventCode, int modifier )
 			return PAPI_ENOEVNT;
 		}
 	}
-		
+
         return PAPI_EINVAL;
 }
 

@@ -1,4 +1,4 @@
-/** 
+/**
  * @author  Vince Weaver
  */
 
@@ -169,13 +169,13 @@ int main (int argc, char **argv)
 		elapsed_time=((double)(after_time-before_time))/1.0e9;
 
 		for(i=0;i<num_events;i++) {
-			
+
 			/* Scaled energy measurements */
 			if (strstr(events[i],"ENERGY")) {
 				fprintf(fff[i],"%.4f  %.3f %s  %.3f %s  (* Average Power for %s *)\n",
 						total_time,
 						((double)values[i]/1.0e6), "J",
-						((double)values[i]/1.0e6)/elapsed_time, "W", 
+						((double)values[i]/1.0e6)/elapsed_time, "W",
 						events[i] );
 			}
 			else if (strstr(events[i],"POWER")) {
@@ -193,7 +193,7 @@ int main (int argc, char **argv)
 			else {
                                 fprintf(fff[i],"%.4f  %lld  (* %s *)\n",
 				        total_time,
-					values[i], 
+					values[i],
 					events[i] );
 			}
 

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    x86_cpuid_info.c
 * Author:  Dan Terpstra
 *          terpstra@eecs.utk.edu
@@ -343,7 +343,7 @@ init_amd( PAPI_mh_info_t * mh_info, int *num_levels )
     * The data from this table now comes from figure 3-17 in
     *  the Intel Architectures Software Reference Manual 2A
     *  (cpuid instruction section)
-    * 
+    *
     * Pretviously the information was provided by
     * "Intel® Processor Identification and the CPUID Instruction",
     * Application Note, AP-485, Nov 2008, 241618-033
@@ -449,7 +449,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size[0] = 4096,
 	 .associativity = 4,
 	 .entries = 4,
-	 },   
+	 },
 // 0x0C
 	{.descriptor = 0x0C,
 	 .level = 1,
@@ -473,7 +473,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size[0] = 24,
 	 .associativity = 6,
 	 .line_size = 64,
-	 },   
+	 },
 // 0x21
 	{.descriptor = 0x21,
 	 .level = 2,
@@ -764,7 +764,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size[0] = 4,
 	 .associativity = SHRT_MAX,
 	 .entries = 16,
-	 },   
+	 },
 // 0x5A
 	{.descriptor = 0x5A,
 	 .level = 1,
@@ -928,7 +928,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size[0] = 512,
 	 .associativity = 8,
 	 .line_size = 64,
-	 },   
+	 },
 // 0x82
 	{.descriptor = 0x82,
 	 .level = 2,
@@ -1027,7 +1027,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size[0] = 4,
 	 .associativity = 4,
 	 .entries = 64,
-	 },   
+	 },
 // 0xC0
 	{.descriptor = 0xBA,
 	 .level = 1,
@@ -1035,7 +1035,7 @@ static struct _intel_cache_info intel_cache[] = {
 	 .size = {4,4096},
 	 .associativity = 4,
 	 .entries = 8,
-	 },      
+	 },
 // 0xCA
 	{.descriptor = 0xCA,
 	 .level = 2,
@@ -1269,8 +1269,8 @@ cpuid2( unsigned int*eax, unsigned int* ebx,
 }
 #else
 static inline void
-cpuid2 ( unsigned int* eax, unsigned int* ebx, 
-                    unsigned int* ecx, unsigned int* edx, 
+cpuid2 ( unsigned int* eax, unsigned int* ebx,
+                    unsigned int* ecx, unsigned int* edx,
                     unsigned int index, unsigned int ecx_in )
 {
   unsigned int a,b,c,d;
@@ -1299,7 +1299,7 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
 
   cpuid2(&eax,&ebx,&ecx,&edx, 0, 0);
   maxidx = eax;
-  
+
   if (maxidx<4) {
     MEMDBG("Warning!  CPUID Index 4 not supported!\n");
     return PAPI_ENOSUPP;
@@ -1310,12 +1310,12 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     cpuid2(&eax,&ebx,&ecx,&edx, 4, ecx_in);
 
 
-    
+
     /* decoded as per table 3-12 in Intel Software Developer's Manual Volume 2A */
-     
+
     cache_type=eax&0x1f;
-    if (cache_type==0) break;     
-     
+    if (cache_type==0) break;
+
     cache_level=(eax>>5)&0x3;
     cache_selfinit=(eax>>8)&0x1;
     cache_fullyassoc=(eax>>9)&0x1;
@@ -1323,14 +1323,14 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     cache_linesize=(ebx&0xfff)+1;
     cache_partitions=((ebx>>12)&0x3ff)+1;
     cache_ways=((ebx>>22)&0x3ff)+1;
-       
+
     cache_sets=(ecx)+1;
 
     /* should we export this info?
 
     cache_maxshare=((eax>>14)&0xfff)+1;
     cache_maxpackage=((eax>>26)&0x3f)+1;
-     
+
     cache_wb=(edx)&1;
     cache_inclusive=(edx>>1)&1;
     cache_indexing=(edx>>2)&1;
@@ -1346,23 +1346,23 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     c=&(mh_info->level[cache_level-1].cache[next]);
 
     switch(cache_type) {
-      case 1: MEMDBG("L%d Data Cache\n",cache_level); 
+      case 1: MEMDBG("L%d Data Cache\n",cache_level);
 	c->type=PAPI_MH_TYPE_DATA;
 	break;
-      case 2: MEMDBG("L%d Instruction Cache\n",cache_level); 
+      case 2: MEMDBG("L%d Instruction Cache\n",cache_level);
 	c->type=PAPI_MH_TYPE_INST;
 	break;
-      case 3: MEMDBG("L%d Unified Cache\n",cache_level); 
+      case 3: MEMDBG("L%d Unified Cache\n",cache_level);
 	c->type=PAPI_MH_TYPE_UNIFIED;
 	break;
     }
-     
+
     if (cache_selfinit) { MEMDBG("\tSelf-init\n"); }
     if (cache_fullyassoc) { MEMDBG("\tFully Associtative\n"); }
-     
+
     //MEMDBG("\tMax logical processors sharing cache: %d\n",cache_maxshare);
     //MEMDBG("\tMax logical processors sharing package: %d\n",cache_maxpackage);
-     
+
     MEMDBG("\tCache linesize: %d\n",cache_linesize);
 
     MEMDBG("\tCache partitions: %d\n",cache_partitions);
@@ -1385,7 +1385,7 @@ init_intel_leaf4( PAPI_mh_info_t * mh_info, int *num_levels )
     }
     c->size=(cache_ways*cache_partitions*cache_linesize*cache_sets);
     c->num_lines=cache_ways*cache_partitions*cache_sets;
-     
+
     ecx_in++;
   }
   return PAPI_OK;
@@ -1461,7 +1461,7 @@ init_intel_leaf2( PAPI_mh_info_t * mh_info , int *num_levels)
 				      /* in order to get TLB info  */
 				      /* continue;                 */
 				   }
-					for ( t = 0; t < size; t++ ) {	/* walk the descriptor table */					   
+					for ( t = 0; t < size; t++ ) {	/* walk the descriptor table */
 						if ( reg.descrip[i] == intel_cache[t].descriptor ) {	/* find match */
 							if ( intel_cache[t].level > last_level )
 								last_level = intel_cache[t].level;
@@ -1489,7 +1489,7 @@ init_intel( PAPI_mh_info_t * mh_info, int *levels )
 
   /* try using the oldest leaf2 method first */
   result=init_intel_leaf2(mh_info, &num_levels);
-  
+
   if (result!=PAPI_OK) {
      /* All Core2 and newer also support leaf4 detection */
      /* Starting with Westmere *only* leaf4 is supported */
@@ -1503,7 +1503,7 @@ init_intel( PAPI_mh_info_t * mh_info, int *levels )
 
 /* Returns 1 if hypervisor detected */
 /* Returns 0 if none found.         */
-int 
+int
 _x86_detect_hypervisor(char *vendor_name)
 {
   unsigned int eax, ebx, ecx, edx;

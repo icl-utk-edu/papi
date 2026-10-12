@@ -8,7 +8,7 @@
  * this limitation by the usage of the counters over timesharing.           *
  * This is an example demonstrating how to use PAPI_set_multiplex to        *
  * convert a standard event set to a multiplexed event set.                 *
- ****************************************************************************/ 
+ ****************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -74,13 +74,13 @@ int multiplex(void)
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
 
-   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++) 
+   for (i = 0; i < PAPI_MAX_PRESET_EVENTS; i++)
    {
       retval = PAPI_get_event_info(i | PAPI_PRESET_MASK, &pset);
       if (retval != PAPI_OK)
          ERROR_RETURN(retval);
 
-      if ((pset.count) && (pset.event_code != PAPI_TOT_CYC)) 
+      if ((pset.count) && (pset.event_code != PAPI_TOT_CYC))
       {
          printf("Adding %s\n", pset.symbol);
 
@@ -88,13 +88,13 @@ int multiplex(void)
          if ((retval != PAPI_OK) && (retval != PAPI_ECNFLCT))
             ERROR_RETURN(retval);
 
-	     if (retval == PAPI_OK) 
+	     if (retval == PAPI_OK)
             printf("Added %s\n", pset.symbol);
-	     else 
-            printf("Could not add %s due to resource limitation.\n", 
+	     else
+            printf("Could not add %s due to resource limitation.\n",
                   pset.symbol);
 
-         if (retval == PAPI_OK) 
+         if (retval == PAPI_OK)
          {
             if (++j >= MAX_TO_ADD)
                 break;
@@ -124,7 +124,7 @@ int multiplex(void)
       ERROR_RETURN(retval);
 
    /* print the read result */
-   for (i = 0; i < MAX_TO_ADD; i++) 
+   for (i = 0; i < MAX_TO_ADD; i++)
    {
       retval = PAPI_get_event_info(events[i], &pset);
       if (retval != PAPI_OK)
@@ -132,14 +132,14 @@ int multiplex(void)
       printf("Event name: %s  value: %lld \n", pset.symbol, values[i]);
    }
 
-   retval = PAPI_cleanup_eventset(EventSet); 
+   retval = PAPI_cleanup_eventset(EventSet);
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
 
    retval = PAPI_destroy_eventset(&EventSet);
    if (retval != PAPI_OK)
       ERROR_RETURN(retval);
-   
+
    /* free the resources used by PAPI */
    PAPI_shutdown();
 

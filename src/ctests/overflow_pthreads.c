@@ -63,7 +63,7 @@ Thread( void *arg )
 		test_fail( __FILE__, __LINE__, "PAPI_register_thread", retval );
 
 	/* add PAPI_TOT_CYC and one of the events in PAPI_FP_INS, PAPI_FP_OPS or
-	   PAPI_TOT_INS, depends on the availability of the event on the 
+	   PAPI_TOT_INS, depends on the availability of the event on the
 	   platform */
 	EventSet1 =
 		add_two_nonderived_events( &num_events1, &papi_event, &mask1 );
@@ -81,7 +81,7 @@ Thread( void *arg )
 
 	elapsed_cyc = PAPI_get_real_cyc(  );
 
-	if ((retval = PAPI_overflow( EventSet1, papi_event, 
+	if ((retval = PAPI_overflow( EventSet1, papi_event,
 				     mythreshold, 0, handler ) ) != PAPI_OK ) {
 	   test_fail( __FILE__, __LINE__, "PAPI_overflow", retval );
 	}

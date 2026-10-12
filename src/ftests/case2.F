@@ -1,4 +1,4 @@
-C From Dave McNamara at PSRV. Thanks! 
+C From Dave McNamara at PSRV. Thanks!
 C Ported to fortran by Kevin London
 C If an event is countable but you've exhausted the counter resources
 C and you try to add an event, it seems subsequent PAPI_start and/or
@@ -8,7 +8,7 @@ C  I got around this by calling PAPI to get the # of countable events,
 C then making sure that I didn't try to add more than these number of
 C events. I still have a problem if someone adds Level 2 cache misses
 C and then adds FLOPS 'cause I didn't count FLOPS as actually requiring
-C 2 counters. 
+C 2 counters.
 
 #include "fpapi_test.h"
 
@@ -19,7 +19,7 @@ C 2 counters.
       INTEGER n
       INTEGER EventSet
       INTEGER retval
-      INTEGER I,j 
+      INTEGER I,j
       INTEGER*8 gl(3)
 
       INTEGER last_char
@@ -47,7 +47,7 @@ C 2 counters.
       call PAPIf_create_eventset( EventSet, retval)
       if ( retval .NE. PAPI_OK ) then
         call ftest_fail(__FILE__, __LINE__,
-     . 'PAPIf_create_eventset', 
+     . 'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -75,10 +75,10 @@ C 2 counters.
          if ( retval .NE. PAPI_OK )then
             if (tests_quiet .EQ. 0) then
                 call PAPIf_perror( 'PAPIf_add_event' )
-            end if 
+            end if
          end if
       end if
- 
+
       i = j
       call PAPIf_query_event(PAPI_FP_INS, retval)
       if (retval .EQ. PAPI_OK) then
@@ -114,6 +114,6 @@ C 2 counters.
      .        'PAPIf_stop', retval)
          end if
       end if
-      
+
       call ftests_pass(__FILE__)
       end

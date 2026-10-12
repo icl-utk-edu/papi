@@ -13,7 +13,7 @@
  *****************************************************************************/
 
 
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "papi.h"
@@ -21,7 +21,7 @@
 int your_slow_code();
 
 int main()
-{ 
+{
   float real_time, proc_time, epc;
   long long ref, core, evt;
   float real_time_i, proc_time_i, epc_i;
@@ -29,7 +29,7 @@ int main()
   int retval;
 
   if((retval=PAPI_epc(PAPI_TOT_INS, &real_time_i, &proc_time_i, &ref_i, &core_i, &evt_i, &epc_i)) < PAPI_OK)
-  { 
+  {
     printf("Could not initialise PAPI_epc \n");
     printf("retval: %d\n", retval);
     exit(1);
@@ -37,9 +37,9 @@ int main()
 
   your_slow_code();
 
-  
+
   if((retval=PAPI_epc(PAPI_TOT_INS, &real_time, &proc_time, &ref, &core, &evt, &epc))<PAPI_OK)
-  {    
+  {
     printf("retval: %d\n", retval);
     exit(1);
   }
@@ -59,7 +59,7 @@ int your_slow_code()
   double  tmp=1.1;
 
   for(i=1; i<2000; i++)
-  { 
+  {
     tmp=(tmp+100)/i;
   }
   return 0;

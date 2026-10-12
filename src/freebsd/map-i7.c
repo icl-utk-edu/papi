@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-i7.c
 * Author:  George Neville-Neil
 *          gnn@freebsd.org
@@ -16,15 +16,15 @@
 
 
  /****************************************************************************
- i7 SUBSTRATE 
- i7 SUBSTRATE 
+ i7 SUBSTRATE
+ i7 SUBSTRATE
  i7 SUBSTRATE
  i7 SUBSTRATE
  i7 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_i7 must match i7_info 
+	NativeEvent_Value_i7 must match i7_info
 */
 
 Native_Event_LabelDescription_t i7Processor_info[] =
@@ -505,5 +505,5 @@ Native_Event_LabelDescription_t i7Processor_info[] =
 	{"DRAM_PRE_ALL.CH0", "Counts number of DRAM Channel 0 precharge- all (PREALL) commands that close all open pages in a rank. PREALL is issued when the DRAM needs to be refreshed or needs to go into a power down mode."},
 	{"DRAM_PRE_ALL.CH1", "Counts number of DRAM Channel 1 precharge- all (PREALL) commands that close all open pages in a rank. PREALL is issued when the DRAM needs to be refreshed or needs to go into a power down mode."},
 	{"DRAM_PRE_ALL.CH2", "Counts number of DRAM Channel 2 precharge- all (PREALL) commands that close all open pages in a rank. PREALL is issued when the DRAM needs to be refreshed or needs to go into a power down mode."},
-	{ NULL, NULL } 
+	{ NULL, NULL }
 };

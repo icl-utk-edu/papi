@@ -1,6 +1,6 @@
 /**
  * @file    amds_accessors.c
- * @author  Dong Jun Woun 
+ * @author  Dong Jun Woun
  *          djwoun@gmail.com
  *
  */
@@ -2110,7 +2110,7 @@ int access_amdsmi_od_volt_info(int mode, void *arg) {
   }
 
   amdsmi_od_volt_freq_data_t info;
-  memset(&info, 0, sizeof(info));  
+  memset(&info, 0, sizeof(info));
 
   amdsmi_status_t st =
       amdsmi_get_gpu_od_volt_info_p(device_handles[event->device], &info);

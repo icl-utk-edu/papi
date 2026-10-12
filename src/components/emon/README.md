@@ -1,6 +1,6 @@
 # EMON Component
 
-The EMON component provide access to Evniromental MONitoring power data on BG/Q systems. 
+The EMON component provide access to Evniromental MONitoring power data on BG/Q systems.
 
 * [Enabling the EMON Component](#enabling-the-emon-component)
 

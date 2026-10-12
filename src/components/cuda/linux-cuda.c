@@ -172,7 +172,7 @@ static int cuda_init_private(void)
     if (_cuda_vector.cmp_info.initialized) {
         SUBDBG("Skipping cuda_init_private, as the Cuda event table has already been initialized.\n");
         goto fn_exit;
-    } 
+    }
 
     int strLen = snprintf(_cuda_vector.cmp_info.disabled_reason, PAPI_MIN_STR_LEN, "%s", "");
     if (strLen < 0 || strLen >= PAPI_MIN_STR_LEN) {
@@ -197,7 +197,7 @@ static int cuda_init_private(void)
                 SUBDBG("Failed to fully write the partially disabled reason.\n");
             }
             // Reset variable that holds error code
-            papi_errno = PAPI_OK; 
+            papi_errno = PAPI_OK;
         }
         // Cuda component is disabled
         else {
@@ -269,7 +269,7 @@ static int cuda_ntv_enum_events(unsigned int *event_code, int modifier)
     uint32_t code = *(uint32_t *) event_code;
     papi_errno = cuptid_evt_enum(&code, modifier);
     *event_code = (unsigned int) code;
-    
+
 fn_exit:
     SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
     return papi_errno;
@@ -359,7 +359,7 @@ static int cuda_shutdown_thread(hwd_context_t *ctx)
 {
     cuda_context_t *cuda_ctx = (cuda_context_t *) ctx;
     cuda_ctx->initialized = 0;
-    cuda_ctx->state = 0; 
+    cuda_ctx->state = 0;
 
     return PAPI_OK;
 }
@@ -496,7 +496,7 @@ static int update_native_events(cuda_control_t *, NativeInfo_t *, int);
 static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv_info,
                               int ntv_count,
                               hwd_context_t *ctx __attribute__((unused)))
-{  
+{
     SUBDBG("ENTER: ctl: %p, ntv_info: %p, ntv_count: %d, ctx: %p\n", ctl, ntv_info, ntv_count, ctx);
     int papi_errno = check_n_initialize();
     if (papi_errno != PAPI_OK) {
@@ -515,9 +515,9 @@ static int cuda_update_control_state(hwd_control_state_t *ctl, NativeInfo_t *ntv
         papi_errno = cuptid_thread_info_create(&(cuda_ctl->info));
         if (papi_errno != PAPI_OK) {
             goto fn_exit;
-        }   
+        }
     }
-   
+
     papi_errno = update_native_events(cuda_ctl, ntv_info, ntv_count);
     if (papi_errno != PAPI_OK) {
         goto fn_exit;
@@ -608,7 +608,7 @@ static int cuda_start(hwd_context_t *ctx, hwd_control_state_t *ctl)
     /* start profiling */
     papi_errno = cuptid_ctx_start( (void *) cuda_ctl->cuptid_ctx);
     if (papi_errno != PAPI_OK)
-        goto fn_fail;   
+        goto fn_fail;
 
     /* update the EventSet state to running */
     cuda_ctx->state = CUDA_EVENTS_RUNNING;
@@ -644,7 +644,7 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
     }
 
     papi_errno = cuptid_ctx_read( cuda_ctl->cuptid_ctx, val );
-  
+
   fn_exit:
       SUBDBG("EXIT: %s\n", PAPI_strerror(papi_errno));
       return papi_errno;
@@ -656,7 +656,7 @@ static int cuda_read(hwd_context_t __attribute__((unused)) *ctx, hwd_control_sta
   * @brief Reset the Cuda hardware event counts.
   *
   * @param *ctl
-  *   Contains the encoding's necessary for the hardware to set the counters 
+  *   Contains the encoding's necessary for the hardware to set the counters
   *   to the appropriate conditions.
 */
 static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_state_t *ctl)
@@ -670,7 +670,7 @@ static int cuda_reset(hwd_context_t __attribute__((unused)) *ctx, hwd_control_st
     }
 
     papi_errno = cuptid_ctx_reset(cuda_ctl->cuptid_ctx);
-     
+
     return papi_errno;
 }
 
@@ -708,7 +708,7 @@ int cuda_stop(hwd_context_t *ctx, hwd_control_state_t *ctl)
     /* free memory that was used */
     papi_errno = cuptid_ctx_destroy( &(cuda_ctl->cuptid_ctx) );
     if (papi_errno != PAPI_OK) {
-    } 
+    }
 
     /* update EventSet state to stopped  */
     cuda_ctx->state = CUDA_EVENTS_STOPPED;
@@ -749,7 +749,7 @@ static int cuda_cleanup_eventset(hwd_control_state_t *ctl)
 }
 
 /** @class cuda_get_evt_count
-  * @brief Helper function to count the number of Cuda base event names. 
+  * @brief Helper function to count the number of Cuda base event names.
   *        This count is shown in the util papi_component_avail.
   *
   * @param *count
@@ -761,7 +761,7 @@ static int cuda_get_evt_count(int *count)
 
     if (cuptid_evt_enum(&event_code, PAPI_ENUM_FIRST) == PAPI_OK) {
         ++(*count);
-         
+
     }
     while (cuptid_evt_enum(&event_code, PAPI_ENUM_EVENTS) == PAPI_OK) {
         ++(*count);

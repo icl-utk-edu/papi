@@ -11,7 +11,7 @@
 *        Thus w/4 kernels, the concurrent : consecutive time ration should be 4:10.
 *        On test hardware this does simplify to 3.998:10. As the test is affected by memory layout, this
 *        may not hold for certain architectures where, for example, cache sizes may optimize certain kernel
-*        calls. 
+*        calls.
 *
 *        After demonstrating concurrent usign multiple streams, this test then demonstrates using multiple devices.
 *        In this 3rd configuration, the same concurrent workflow with streams is then duplicated and run
@@ -51,7 +51,7 @@ extern "C" {
     #include "papi_test.h"
 }
 
-// Currently we are only adding cuda:::sm__cycles_active:stat=sum and cuda:::sm__cycles_elapsed:stat=max 
+// Currently we are only adding cuda:::sm__cycles_active:stat=sum and cuda:::sm__cycles_elapsed:stat=max
 #define MAX_EVENTS_TO_ADD 2
 
 int global_suppress_output;
@@ -123,23 +123,23 @@ int global_num_multipass_events = 0;
   *   Counter to see if a multiple pass event was provided on the command line.
 */
 static void add_cuda_native_events_concurrent(int EventSet, string cuda_native_event_name, perDeviceData &device_data, int *numMultipassEvents)
-{  
+{
    int papi_errno = PAPI_add_named_event(EventSet, cuda_native_event_name.c_str());
    if (papi_errno != PAPI_OK) {
        if (papi_errno != PAPI_EMULPASS) {
            fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", cuda_native_event_name.c_str(), papi_errno);
            exit(EXIT_FAILURE);
-       }   
-    
+       }
+
        // Handle multiple pass events
        (*numMultipassEvents)++;
-   }   
+   }
 
    // Handle successfully added events
    if (find(device_data.events_successfully_added.begin(), device_data.events_successfully_added.end(), cuda_native_event_name.c_str()) == device_data.events_successfully_added.end()) {
        device_data.events_successfully_added.push_back(cuda_native_event_name.c_str());
-   }   
-    
+   }
+
     return;
 }
 
@@ -161,36 +161,36 @@ void profileKernels(perDeviceData &d,
     for (event_idx = 0; event_idx < base_cuda_native_event_names_with_stat_qual.size(); event_idx++) {
         string tmp_event_name = base_cuda_native_event_names_with_stat_qual[event_idx] + ":device=" + std::to_string(d.config.device);
         add_cuda_native_events_concurrent(EventSet, tmp_event_name, d, &global_num_multipass_events);
-    } 
+    }
 
     // Only multiple pass events were provided on the command line
     if (d.events_successfully_added.size() == 0) {
         fprintf(stderr, "Both cuda:::sm__cycles_active:stat=sum and cuda:::sm__cycles_elapsed:stat=max were unable to be added. This may be due to the architecture you are running on.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
-    }   
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
 
     // Internally at PAPI_start we push a range; therefore, users do not push a range
     check_papi_api_call( PAPI_start(EventSet) );
 
     unsigned int stream;
     for (stream = 0; stream < d.streams.size(); stream++)
-    {   
+    {
         cudaStream_t streamId = (serial ? 0 : d.streams[stream]);
         daxpyKernel <<<threadBlocks, threadsPerBlock, 0, streamId>>> (elements[stream], a, d.d_x[stream], d.d_y[stream]);
-    }   
+    }
 
     // After launching all work, synchronize all streams
     if (serial == false)
-    {   
+    {
         for (stream = 0; stream < d.streams.size(); stream++)
-        {   
+        {
             check_cuda_runtime_api_call( cudaStreamSynchronize(d.streams[stream]) );
-        }   
-    }   
+        }
+    }
     else
-    {   
+    {
         check_cuda_runtime_api_call( cudaStreamSynchronize(0) );
-    }   
+    }
 
     // Internally at PAPI_stop we pop the range; therefore, users do not pop a range
     long long values[MAX_EVENTS_TO_ADD];
@@ -198,7 +198,7 @@ void profileKernels(perDeviceData &d,
 
     for (event_idx = 0; event_idx < d.events_successfully_added.size(); event_idx++) {
         d.cuda_counter_values[event_idx].push_back(values[event_idx]);
-    }   
+    }
 
     check_papi_api_call( PAPI_cleanup_eventset(EventSet) );
 
@@ -217,7 +217,7 @@ void print_measured_values(perDeviceData &d)
         int range_idx;
         for (range_idx = 0; range_idx < d.range_name.size(); range_idx++) {
             PRINT(global_suppress_output, "Range %s with event %s produced the value:\t\t%lld\n", d.range_name[range_idx].c_str(), d.events_successfully_added[event_idx].c_str(), d.cuda_counter_values[event_idx][range_idx]);
-        }   
+        }
     }
 }
 
@@ -235,8 +235,8 @@ int main(int argc, char **argv)
     char *papi_cuda_api = getenv("PAPI_CUDA_API");
     if (papi_cuda_api != NULL) {
         fprintf(stderr, "The concurrent_profiling test only works with the Perfworks Metrics API. Unset the environment variable PAPI_CUDA_API.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
-    }    
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
 
     // Determine the number of Cuda capable devices
     int num_devices = 0;
@@ -245,7 +245,7 @@ int main(int argc, char **argv)
     // No devices detected on the machine, exit
     if (num_devices < 1) {
         fprintf(stderr, "No NVIDIA devices found on the machine. This is required for the test to run.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
+        test_skip(__FILE__, __LINE__, "", 0);
     }
 
     global_suppress_output = 0;
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
     if (argc > 1) {
         print_help_message();
         exit(EXIT_SUCCESS);
-    }  
+    }
 
     // Initialize the PAPI library
     int papi_errno = PAPI_library_init(PAPI_VER_CURRENT);
@@ -274,8 +274,8 @@ int main(int argc, char **argv)
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
-    }   
-    PRINT(global_suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);  
+    }
+    PRINT(global_suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
 
     // Per-device information
     vector<int> device_ids;
@@ -289,13 +289,13 @@ int main(int argc, char **argv)
         if (major >= 7) {
             PRINT(global_suppress_output, "--> Device %d is compatible with the concurrent_profiling_noCuCtx test\n", dev_idx);
             device_ids.push_back(dev_idx);
-        }   
-    }   
+        }
+    }
     if (device_ids.size() == 0) {
         fprintf(stderr, "No devices on the machine detected that have CC >= 7.0 and support CUPTI Profiling.\n");
-        test_skip(__FILE__, __LINE__, "", 0); 
-    }   
-    
+        test_skip(__FILE__, __LINE__, "", 0);
+    }
+
     // Overwrite num_devices with the number of devices this test actually supports
     num_devices = device_ids.size();
 
@@ -385,7 +385,7 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////////
     // First Version - single device, kernel calls serialized on default stream. //
     //////////////////////////////////////////////////////////////////////////////
-    
+
     // Use wallclock time to measure performance
     auto begin_time = ::std::chrono::high_resolution_clock::now();
 
@@ -396,9 +396,9 @@ int main(int argc, char **argv)
     long elapsed_serial_ms = ::std::chrono::duration_cast<::std::chrono::milliseconds>(end_time - begin_time).count();
     int numBlocks = 0;
     for (i = 1; i <= numKernels; i++)
-    {   
+    {
         numBlocks += i;
-    }   
+    }
     PRINT(global_suppress_output, "It took %ld ms on the host to profile %d kernels in serial.\n", elapsed_serial_ms, numKernels);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -425,11 +425,11 @@ int main(int argc, char **argv)
 
     // The third version can only be ran if we have more than one compatible device found
     if (device_ids.size() == 1)
-    {   
+    {
         PRINT(global_suppress_output, "Only one compatible device found; skipping the multi-threaded test.\n");
-    }   
+    }
     else
-    {   
+    {
         // Initialize PAPI thread support
         check_papi_api_call( PAPI_thread_init((unsigned long (*)(void)) std::this_thread::get_id) );
 
@@ -444,15 +444,15 @@ int main(int argc, char **argv)
         // Now launch parallel thread work, duplicated on one thread per device
         int thread;
         for (thread = 0; thread < num_devices; thread++)
-        {   
+        {
             threads.push_back(::std::thread(profileKernels, ::std::ref(device_data[thread]), base_cuda_native_event_names_with_stat_qual, "multi_device_async", false));
-        }   
+        }
 
         // Wait for all threads to finish
         for (auto &t: threads)
-        {   
+        {
             t.join();
-        }   
+        }
 
         // Record time used when launching on multiple devices
         end_time = ::std::chrono::high_resolution_clock::now();
@@ -461,18 +461,18 @@ int main(int argc, char **argv)
         PRINT(global_suppress_output, "--> Wallclock ratio of parallel device launch to single device launch is %f\n", elapsed_multiple_device_ms / (double) elapsed_single_device_ms);
         PRINT(global_suppress_output, "--> If the ratio is close to 1, that means there was little overhead to profile in parallel on multiple devices compared to profiling on a single device.\n");
         PRINT(global_suppress_output, "--> If the devices have different performance, the ratio may not be close to one, and this should be limited by the slowest device.\n");
-    }   
+    }
 
     // Free stream memory for each device
     for (i = 0; i < num_devices; i++)
-    {   
+    {
         int j;
         for (j = 0; j < numKernels; j++)
-        {   
+        {
             check_cuda_runtime_api_call( cudaFree(device_data[i].d_x[j]) );
             check_cuda_runtime_api_call( cudaFree(device_data[i].d_y[j]) );
-        }   
-    }   
+        }
+    }
 
     // Display metric values
     PRINT(global_suppress_output, "\nMetrics for device #0:\n");
@@ -482,21 +482,21 @@ int main(int argc, char **argv)
 
     // Only display next device info if needed
     if (num_devices > 1)
-    {   
+    {
         PRINT(global_suppress_output, "\nMetrics for the remaining devices only display the multi device async case and should all be similar to the first device's values if the device has similar performance characteristics.\n");
         PRINT(global_suppress_output, "If devices have different performance characteristics, the runtime cycles calculation may vary by device.\n");
-    }   
+    }
 
     for (i = 1; i < num_devices; i++)
-    {   
+    {
         PRINT(global_suppress_output, "\nMetrics for device #%zu:\n", i);
         print_measured_values(device_data[i]);
-    }   
+    }
 
     // Output a note that a multiple pass event was provided on the command line
     if (global_num_multipass_events > 0) {
         PRINT(global_suppress_output, "\033[0;33mNOTE: From the events provided on the command line, an event or events requiring multiple passes was detected and not added to the EventSet. Check your events with utils/papi_native_avail.\n\033[0m");
-    }   
+    }
 
     PAPI_shutdown();
 

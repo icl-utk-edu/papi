@@ -91,7 +91,7 @@ Thread( int t, int n )
 	if ( !TESTS_QUIET ) {
 		printf( "Thread %#x %-12s : \t%lld\n", t, event_name,
 				values[0][1] );
-		printf( "Thread %#x PAPI_TOT_CYC : \t%lld\n", t, 
+		printf( "Thread %#x PAPI_TOT_CYC : \t%lld\n", t,
 			values[0][0] );
 	}
 

@@ -26,7 +26,7 @@ perf_event_uncore_attach:	perf_event_uncore_attach.o $(UTILOBJS) $(DOLOOPS) $(PA
 	$(CC) $(CFLAGS) -o perf_event_uncore_attach perf_event_uncore_attach.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS)
 
 perf_event_uncore_multiple:	perf_event_uncore_multiple.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_multiple perf_event_uncore_multiple.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_multiple perf_event_uncore_multiple.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS)
 
 perf_event_uncore_cbox:	perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB)
 	$(CC) $(CFLAGS) $(INCLUDE) -o perf_event_uncore_cbox perf_event_uncore_cbox.o perf_event_uncore_lib.o $(UTILOBJS) $(DOLOOPS) $(PAPILIB) $(LDFLAGS)

@@ -503,7 +503,7 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
     char *line = NULL, *place;
     FILE *input;
     int evnt_count = 256;
-  
+
     char **names = (char **)calloc(evnt_count, sizeof(char *));
     int *cards = (int *)calloc(evnt_count, sizeof(int));
 
@@ -597,7 +597,7 @@ void combine_qualifiers(int n, int pk, int ct, char** list, char* name, char** a
     for(i = 0; i < n; ++i)
     {
         counter += bitmap[i];
-    }    
+    }
 
     // Cannot use more qualifiers than are available.
     if(ct+1 < n)
@@ -607,7 +607,7 @@ void combine_qualifiers(int n, int pk, int ct, char** list, char* name, char** a
         // the user.
         if(counter < pk)
         {
-            combine_qualifiers(n, pk, ct+1, list, name, allevts, track, 1, bitmap); 
+            combine_qualifiers(n, pk, ct+1, list, name, allevts, track, 1, bitmap);
         }
         combine_qualifiers(n, pk, ct+1, list, name, allevts, track, 0, bitmap);
     }
@@ -694,8 +694,8 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
             if(cards[i] > 0)
             {
                 chosen = (char**)malloc(n*sizeof(char*));
-                bitmap = (int*)calloc(n, sizeof(int));    
-                
+                bitmap = (int*)calloc(n, sizeof(int));
+
                 if (NULL == chosen || NULL == bitmap) {
                     fprintf(stderr, "Failed to allocate memory.\n");
                     return;
@@ -746,7 +746,7 @@ void trav_evts(evstock* stock, int pk, int* cards, int nevts, int selexnsize, in
 
             // Create a list to contain the qualifiers.
             chosen = (char**)malloc(n*sizeof(char*));
-            bitmap = (int*)calloc(n, sizeof(int));    
+            bitmap = (int*)calloc(n, sizeof(int));
 
             if (NULL == chosen || NULL == bitmap) {
                 fprintf(stderr, "Failed to allocate memory.\n");
@@ -1152,7 +1152,7 @@ void print_usage(char* name)
     fprintf(stdout, "  -in  <file>   Events and cardinalities file.\n");
     fprintf(stdout, "  -k   <value>  Cardinality of subsets.\n");
     fprintf(stdout, "  Parameters \"-k\" and \"-in\" are mutually exclusive.\n");
-    
+
     fprintf(stdout, "\nOptional:\n");
     fprintf(stdout, "  -conf    <path>   Configuration file location.\n");
     fprintf(stdout, "  -verbose          Show benchmark progress in the standard output.\n");

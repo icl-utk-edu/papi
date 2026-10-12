@@ -1,7 +1,7 @@
 /**
  * @file    cupti_profiler.h
  *
- * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.) 
+ * @author  Treece Burgess tburgess@icl.utk.edu (updated in 2024, redesigned to add device qualifier support.)
  * @author  Anustuv Pal    anustuv@icl.utk.edu
  */
 

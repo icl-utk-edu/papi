@@ -3,20 +3,20 @@
   * @brief papi_decode utility.
   *	@page papi_decode
   *	@section  NAME
-  *		papi_decode - provides availability and detail information for PAPI preset events. 
+  *		papi_decode - provides availability and detail information for PAPI preset events.
   *
   *	@section Synopsis
   *		papi_decode [-ah]
   *
   *	@section Description
-  *		papi_decode is a PAPI utility program that converts the PAPI presets 
-  *		for the existing library into a comma separated value format that can 
+  *		papi_decode is a PAPI utility program that converts the PAPI presets
+  *		for the existing library into a comma separated value format that can
   *		then be viewed or modified in spreadsheet applications or text editors,
-  *		and can be supplied to PAPI_encode_events (3) as a way of adding or 
-  *		modifying event definitions for specialized applications. 
-  *		The format for the csv output consists of a line of field names, followed 
-  *		by a blank line, followed by one line of comma separated values for each 
-  *		event contained in the preset table. 
+  *		and can be supplied to PAPI_encode_events (3) as a way of adding or
+  *		modifying event definitions for specialized applications.
+  *		The format for the csv output consists of a line of field names, followed
+  *		by a blank line, followed by one line of comma separated values for each
+  *		event contained in the preset table.
   *		A portion of this output (for Pentium 4) is shown below:
   *		@code
   *		name,derived,postfix,short_descr,long_descr,note,[native,...]

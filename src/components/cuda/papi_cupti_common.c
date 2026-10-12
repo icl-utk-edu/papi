@@ -47,7 +47,7 @@ typedef enum
     sys_gpu_ccs_all_gte_70
 } sys_compute_capabilities_e;
 
-// Load necessary functions from Cuda toolkit e.g. cupti or runtime 
+// Load necessary functions from Cuda toolkit e.g. cupti or runtime
 static int util_load_cuda_sym(void);
 static int load_cuda_sym(void);
 static int load_cudart_sym(void);
@@ -64,7 +64,7 @@ static int load_nvml_for_cuda_sym(void);
 // Unload necessary nvml functions
 static int unload_nvml_for_cuda_sym(void);
 
-// Functions to get library versions 
+// Functions to get library versions
 static int util_dylib_cu_runtime_version(void);
 static int util_dylib_cupti_version(void);
 
@@ -76,7 +76,7 @@ static int get_user_cudart_path(void);
 static int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs);
 
 // Functions to handle a partially disabled Cuda component
-static int get_enabled_devices(void); 
+static int get_enabled_devices(void);
 
 // misc.
 static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask);
@@ -245,7 +245,7 @@ int unload_nvml_for_cuda_sym(void)
  * @brief Search and load Cuda shared objects.
  *
  * @param *parentPath
- *   The main path we will use to search for the shared objects. 
+ *   The main path we will use to search for the shared objects.
  * @param *soMainName
  *   The name of the shared object e.g. libcudart. This is used
  *   to select the standardSubPaths to use.
@@ -296,7 +296,7 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
         if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
             ERRDBG("Failed to fully write path to search for dlnames.\n");
             return NULL;
-        }   
+        }
 
         DIR *dir = opendir(directoryPathToSearch);
         if (dir == NULL) {
@@ -341,7 +341,7 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
     return so;
   open:
     so = dlopen(pathToSharedLibrary, RTLD_NOW | RTLD_GLOBAL);
-    goto exit; 
+    goto exit;
 }
 
 /**@class search_and_load_from_system_paths
@@ -361,10 +361,10 @@ void *search_and_load_from_system_paths(const char *soNamesToSearchFor[], int so
         so = dlopen(soNamesToSearchFor[i], RTLD_NOW | RTLD_GLOBAL);
         if (so) {
             return so;
-        }   
+        }
     }
 
-    return so; 
+    return so;
 }
 
 /**@class load_cudart_sym
@@ -593,7 +593,7 @@ int util_dylib_cupti_version(void)
 /** @class cuptic_device_get_count
   * @brief Get total number of gpus on the machine that are compute
   *        capable..
-  * @param *num_gpus 
+  * @param *num_gpus
   *    Collect the total number of gpus.
 */
 int cuptic_device_get_count(int *num_gpus)
@@ -675,7 +675,7 @@ int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs)
         if (all_ccs_gte_cc70 == total_gpus) {
             sys_ccs = sys_gpu_ccs_all_gte_70;
         }
- 
+
         int all_ccs_lte_cc70 = num_gpus_with_ccs_eq_cc70 + num_gpus_with_ccs_lt_cc70;
         if (all_ccs_lte_cc70 == total_gpus) {
             sys_ccs = sys_gpu_ccs_all_lte_70;
@@ -697,7 +697,7 @@ int cuptic_err_set_last(const char *error_str)
     if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
         SUBDBG("Last set error message not fully written.\n");
     }
-    
+
     return PAPI_OK;
 }
 
@@ -806,7 +806,7 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
     const char *path_to_nvcc = NULL;
     char *papi_cuda_runtime = getenv("PAPI_CUDA_RUNTIME");
     if (papi_cuda_runtime != NULL) {
-        path_to_nvcc = find_path_to_nvcc(papi_cuda_runtime); 
+        path_to_nvcc = find_path_to_nvcc(papi_cuda_runtime);
     }
 
     char *papi_cuda_cupti = getenv("PAPI_CUDA_CUPTI");
@@ -891,7 +891,7 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
         strLen = snprintf(all_supported_virtual_dev_arches + current_length, remaining_length, "%s,", name_of_virtual_dev_arch);
         if (strLen < 0 || (size_t) strLen >= remaining_length) {
             cuptic_err_set_last("Unable to store all of the virtual devices in the buffer all_supported_virtual_dev_arches.");
- 
+
             status = pclose(fp_virtual_dev_arches);
             if (status != 0){
                 SUBDBG("Failed to close stream opened by popen.\n");
@@ -928,7 +928,7 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
         if (strstr(all_supported_virtual_dev_arches, compute_capability) == NULL) {
             char error_message[PAPI_HUGE_STR_LEN] = { 0 };
             strLen = snprintf(error_message, sizeof(error_message), "Your current Cuda Toolkit version cannot be used with device %d."
-                              " Either user a newer Cuda Toolkit version or utilize 'export CUDA_VISIBLE_DEVICES' if on a mixed cc machine.\n", dev_idx); 
+                              " Either user a newer Cuda Toolkit version or utilize 'export CUDA_VISIBLE_DEVICES' if on a mixed cc machine.\n", dev_idx);
             if (strLen < 0 || (size_t) strLen >= sizeof(error_message)) { // removing could be fine such that we actually make it to PAPI_ECMP.
                 SUBDBG("Failed to fully write error message for incompatible Cuda Toolkit and device.\n");
             }
@@ -1056,7 +1056,7 @@ void cuptic_partial(int *isCmpPartial, int **cudaEnabledDeviceIds, size_t *total
     return;
 }
 
-int cuptic_determine_runtime_api(void) 
+int cuptic_determine_runtime_api(void)
 {
     char *PAPI_CUDA_API = (getenv("PAPI_CUDA_API") != NULL) ? "LEGACY" : "PERFWORKS";
 
@@ -1125,16 +1125,16 @@ int cuptic_determine_runtime_api(void)
 
 int get_enabled_devices(void)
 {
-    int total_gpus; 
+    int total_gpus;
     int papi_errno = cuptic_device_get_count(&total_gpus);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
-    }   
+    }
 
     int cupti_api = cuptic_determine_runtime_api();
     if (cupti_api < 0) {
         return PAPI_ECMP;
-    }   
+    }
 
     int i, cc, collectCudaDevice;
     for (i = 0; i < total_gpus; i++) {
@@ -1145,7 +1145,7 @@ int get_enabled_devices(void)
         }
 
         if (cupti_api == API_PERFWORKS && cc >= 70) {
-            collectCudaDevice = 1;    
+            collectCudaDevice = 1;
         }
         else if (cupti_api == API_LEGACY && cc <= 70) {
             collectCudaDevice = 1;
@@ -1153,7 +1153,7 @@ int get_enabled_devices(void)
 
         if (collectCudaDevice) {
             enabledDeviceIds[enabledDevicesCnt] = i;
-            enabledDevicesCnt++; 
+            enabledDevicesCnt++;
         }
     }
 
@@ -1176,8 +1176,8 @@ int cuptic_ctxarr_create(cuptic_info_t *pinfo)
     if (papi_errno != PAPI_OK) {
         return PAPI_EMISC;
     }
-  
-    /* allocate memory */ 
+
+    /* allocate memory */
     *pinfo = (cuptic_info_t) calloc (total_gpus, sizeof(*pinfo));
     if (*pinfo == NULL) {
         return PAPI_ENOMEM;

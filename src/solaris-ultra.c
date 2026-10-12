@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    solaris-ultra.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -6,11 +6,11 @@
 *          london@cs.utk.edu
 * Mods:    Min Zhou
 *          min@cs.utk.edu
-* Mods:    Larry Meadows(helped us to build the native table dynamically) 
+* Mods:    Larry Meadows(helped us to build the native table dynamically)
 * Mods:    Brian Sheely
-*          bsheely@eecs.utk.edu 
+*          bsheely@eecs.utk.edu
 * Mods:    Vince Weaver
-*          vweaver1@eecs.utk.edu 
+*          vweaver1@eecs.utk.edu
 */
 
 /* to understand this program, first you should read the user's manual
@@ -163,7 +163,7 @@ dispatch_emt( int signal, siginfo_t * sip, void *arg )
 		event_counter = ESI->overflow.event_counter;
 		sample = &( ESI->ctl_state->counter_cmd );
 
-		/* GROSS! This is a hack to 'push' the correct values 
+		/* GROSS! This is a hack to 'push' the correct values
 		   back into the hardware, such that when PAPI handles
 		   the overflow and reads the values, it gets the correct ones.
 		 */

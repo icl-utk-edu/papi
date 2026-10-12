@@ -221,21 +221,21 @@ LoadFunctions(void)
 	dlHandle = dlopen(filename, RTLD_NOW);
 	if (!dlHandle) {
 	   dlErrStr = dlerror();
-	   fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+	   fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename,
 		   dlErrStr);
 
 	   sprintf(filename,"%s/lib/lib64/libvmGuestLib.so",VMWARE_INCDIR);
 	   dlHandle = dlopen(filename, RTLD_NOW);
 	   if (!dlHandle) {
 	      dlErrStr = dlerror();
-	      fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+	      fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename,
 		   dlErrStr);
 
 	      sprintf(filename,"%s/lib/lib32/libvmGuestLib.so",VMWARE_INCDIR);
 	      dlHandle = dlopen(filename, RTLD_NOW);
 	      if (!dlHandle) {
 	         dlErrStr = dlerror();
-	         fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename, 
+	         fprintf(stderr, "dlopen of %s failed: \'%s\'\n", filename,
 		      dlErrStr);
 		 return PAPI_ECMP;
 	      }
@@ -322,7 +322,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 
 	glError = GuestLib_UpdateInfo(context->glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"UpdateInfo failed: %s\n", 
+	   fprintf(stderr,"UpdateInfo failed: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   	   return PAPI_ECMP;
 	}
@@ -330,7 +330,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	/* Retrieve and check the session ID */
 	glError = GuestLib_GetSessionId(context->glHandle, &tmpSession);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get session ID: %s\n", 
+	   fprintf(stderr, "Failed to get session ID: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -349,23 +349,23 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	glError = GuestLib_GetCpuLimitMHz(context->glHandle,&temp32);
 	context->values[VMWARE_CPU_LIMIT_MHZ]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"Failed to get CPU limit: %s\n", 
+	   fprintf(stderr,"Failed to get CPU limit: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
 
-	glError = GuestLib_GetCpuReservationMHz(context->glHandle,&temp32); 
+	glError = GuestLib_GetCpuReservationMHz(context->glHandle,&temp32);
 	context->values[VMWARE_CPU_RESERVATION_MHZ]=temp32;
         if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"Failed to get CPU reservation: %s\n", 
+	   fprintf(stderr,"Failed to get CPU reservation: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
-	
+
 	glError = GuestLib_GetCpuShares(context->glHandle,&temp32);
 	context->values[VMWARE_CPU_SHARES]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"Failed to get cpu shares: %s\n", 
+	   fprintf(stderr,"Failed to get cpu shares: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -377,7 +377,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	      context->values[VMWARE_CPU_STOLEN_MS]=0;
 	      fprintf(stderr, "Skipping CPU stolen, not supported...\n");
 	   } else {
-	      fprintf(stderr, "Failed to get CPU stolen: %s\n", 
+	      fprintf(stderr, "Failed to get CPU stolen: %s\n",
 		      GuestLib_GetErrorText(glError));
 	      return PAPI_ECMP;
 	   }
@@ -386,11 +386,11 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	glError = GuestLib_GetCpuUsedMs(context->glHandle,&temp64);
 	context->values[VMWARE_CPU_USED_MS]=temp64;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get used ms: %s\n", 
+	   fprintf(stderr, "Failed to get used ms: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
-	
+
 	glError = GuestLib_GetElapsedMs(context->glHandle, &temp64);
 	context->values[VMWARE_ELAPSED_MS]=temp64;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
@@ -402,23 +402,23 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	glError = GuestLib_GetMemActiveMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_ACTIVE_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get active mem: %s\n", 
+	   fprintf(stderr, "Failed to get active mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
-	
+
 	glError = GuestLib_GetMemBalloonedMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_BALLOONED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get ballooned mem: %s\n", 
+	   fprintf(stderr, "Failed to get ballooned mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
-	
+
 	glError = GuestLib_GetMemLimitMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_LIMIT_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"Failed to get mem limit: %s\n", 
+	   fprintf(stderr,"Failed to get mem limit: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -426,7 +426,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
         glError = GuestLib_GetMemMappedMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_MAPPED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get mapped mem: %s\n", 
+	   fprintf(stderr, "Failed to get mapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -434,7 +434,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	glError = GuestLib_GetMemOverheadMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_OVERHEAD_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get overhead mem: %s\n", 
+	   fprintf(stderr, "Failed to get overhead mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -442,7 +442,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	glError = GuestLib_GetMemReservationMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_RESERVATION_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get mem reservation: %s\n", 
+	   fprintf(stderr, "Failed to get mem reservation: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -450,7 +450,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
         glError = GuestLib_GetMemSharedMB(context->glHandle, &temp32);
 	context->values[VMWARE_MEM_SHARED_MB]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get swapped mem: %s\n", 
+	   fprintf(stderr, "Failed to get swapped mem: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -462,7 +462,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	      context->values[VMWARE_MEM_SHARES]=0;
 	      fprintf(stderr, "Skipping mem shares, not supported...\n");
 	   } else {
-	      fprintf(stderr, "Failed to get mem shares: %s\n", 
+	      fprintf(stderr, "Failed to get mem shares: %s\n",
 		      GuestLib_GetErrorText(glError));
 	      return PAPI_ECMP;
 	   }
@@ -475,7 +475,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
-	
+
 	glError = GuestLib_GetMemTargetSizeMB(context->glHandle, &temp64);
 	context->values[VMWARE_MEM_TARGET_SIZE_MB]=temp64;
         if (glError != VMGUESTLIB_ERROR_SUCCESS) {
@@ -483,7 +483,7 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	      context->values[VMWARE_MEM_TARGET_SIZE_MB]=0;
 	      fprintf(stderr, "Skipping target mem size, not supported...\n");
 	   } else {
-	      fprintf(stderr, "Failed to get target mem size: %s\n", 
+	      fprintf(stderr, "Failed to get target mem size: %s\n",
 		      GuestLib_GetErrorText(glError));
 	      return PAPI_ECMP;
 	   }
@@ -497,10 +497,10 @@ _vmware_hardware_read( struct _vmware_context *context, int starting)
 	   return PAPI_ECMP;
 	}
 
-        glError = GuestLib_GetHostProcessorSpeed(context->glHandle, &temp32); 
+        glError = GuestLib_GetHostProcessorSpeed(context->glHandle, &temp32);
 	context->values[VMWARE_HOST_CPU_MHZ]=temp32;
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr, "Failed to get host proc speed: %s\n", 
+	   fprintf(stderr, "Failed to get host proc speed: %s\n",
 		   GuestLib_GetErrorText(glError));
 	   return PAPI_ECMP;
 	}
@@ -540,7 +540,7 @@ _vmware_init_thread( hwd_context_t *ctx )
 	if (use_guestlib) {
 	   glError = GuestLib_OpenHandle(&(context->glHandle));
 	   if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	      fprintf(stderr,"OpenHandle failed: %s\n", 
+	      fprintf(stderr,"OpenHandle failed: %s\n",
 		   GuestLib_GetErrorText(glError));
 	      return PAPI_ECMP;
 	   }
@@ -603,14 +603,14 @@ _vmware_init_component( int cidx )
 	/* try to open */
 	glError = GuestLib_OpenHandle(&glHandle);
 	if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	   fprintf(stderr,"OpenHandle failed: %s\n", 
+	   fprintf(stderr,"OpenHandle failed: %s\n",
 		   GuestLib_GetErrorText(glError));
 	}
 	else {
 	   /* open worked, try to update */
 	   glError = GuestLib_UpdateInfo(glHandle);
 	   if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-	      fprintf(stderr,"UpdateInfo failed: %s\n", 
+	      fprintf(stderr,"UpdateInfo failed: %s\n",
 		      GuestLib_GetErrorText(glError));
 	   }
 	   else {
@@ -935,7 +935,7 @@ _vmware_init_control_state( hwd_control_state_t *ctl )
 	return PAPI_OK;
 }
 
-/** Enumerate Native Events 
+/** Enumerate Native Events
  @param EventCode is the event of interest
  @param modifier is one of PAPI_ENUM_FIRST, PAPI_ENUM_EVENTS
  */
@@ -969,27 +969,27 @@ _vmware_ntv_enum_events( unsigned int *EventCode, int modifier )
 }
 
 int
-_vmware_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+_vmware_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
   int index = EventCode;
 
   if ( ( index < 0) || (index >= num_events )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, _vmware_native_table[index].name, 
+  strncpy( info->symbol, _vmware_native_table[index].name,
            sizeof(info->symbol));
 
-  strncpy( info->long_descr, _vmware_native_table[index].description, 
+  strncpy( info->long_descr, _vmware_native_table[index].description,
            sizeof(info->symbol));
 
-  strncpy( info->units, _vmware_native_table[index].units, 
+  strncpy( info->units, _vmware_native_table[index].units,
            sizeof(info->units));
 
   return PAPI_OK;
 }
 
 
-/** Takes a native event code and passes back the name 
+/** Takes a native event code and passes back the name
  @param EventCode is the native event code
  @param name is a pointer for the name to be copied to
  @param len is the size of the string
@@ -1023,9 +1023,9 @@ _vmware_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 
 /** Triggered by eventset operations like add or remove */
 int
-_vmware_update_control_state( hwd_control_state_t *ctl, 
-			      NativeInfo_t *native, 
-			      int count, 
+_vmware_update_control_state( hwd_control_state_t *ctl,
+			      NativeInfo_t *native,
+			      int count,
 			      hwd_context_t *ctx )
 {
 	(void) ctx;
@@ -1070,14 +1070,14 @@ _vmware_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 
 	context=(struct _vmware_context *)ctx;
 
-	_vmware_hardware_read( context, 0 );	
+	_vmware_hardware_read( context, 0 );
 
 	return PAPI_OK;
 }
 
 /** Triggered by PAPI_read() */
 int
-_vmware_read( hwd_context_t *ctx, 
+_vmware_read( hwd_context_t *ctx,
 	      hwd_control_state_t *ctl,
 	      long_long **events, int flags )
 {
@@ -1094,7 +1094,7 @@ _vmware_read( hwd_context_t *ctx,
 	_vmware_hardware_read( context, 0 );
 
 	for (i=0; i<control->num_events; i++) {
-	  
+
 	  if (_vmware_native_table[
               _vmware_native_table[control->which_counter[i]].which_counter].
              report_difference) {
@@ -1155,7 +1155,7 @@ _vmware_shutdown_thread( hwd_context_t *ctx )
 	if (use_guestlib) {
            glError = GuestLib_CloseHandle(context->glHandle);
            if (glError != VMGUESTLIB_ERROR_SUCCESS) {
-               fprintf(stderr, "Failed to CloseHandle: %s\n", 
+               fprintf(stderr, "Failed to CloseHandle: %s\n",
 		       GuestLib_GetErrorText(glError));
                return PAPI_ECMP;
 	   }

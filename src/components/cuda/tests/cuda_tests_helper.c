@@ -32,18 +32,18 @@ void add_cuda_native_events(int EventSet, const char *cuda_native_event_name, in
        if (papi_errno != PAPI_EMULPASS) {
            fprintf(stderr, "Unable to add event %s to the EventSet with error code %d.\n", cuda_native_event_name, papi_errno);
            exit(EXIT_FAILURE);
-       }   
+       }
        // Handle multiple pass events
        (*numMultipassEvents)++;
        return;
-   }   
+   }
 
    // Handle successfully added events
    int strLen = snprintf(events_successfully_added[(*num_events_successfully_added)], PAPI_MAX_STR_LEN, "%s", cuda_native_event_name);
    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
        fprintf(stderr, "Failed to fully write successfully added event.\n");
        exit(EXIT_FAILURE);
-   }   
+   }
    (*num_events_successfully_added)++;
 
     return;
@@ -56,14 +56,14 @@ void add_cuda_native_events(int EventSet, const char *cuda_native_event_name, in
   * @param device_idx
   *   Index of the device on the machine.
 */
-int determine_if_device_is_enabled(int device_idx) 
+int determine_if_device_is_enabled(int device_idx)
 {
     cudaDeviceProp device_prop;
-    cudaError_t cudaError = cudaGetDeviceProperties(&device_prop, device_idx); 
+    cudaError_t cudaError = cudaGetDeviceProperties(&device_prop, device_idx);
     if (cudaError != cudaSuccess) {
         fprintf(stderr, "Call to cudaGetDeviceProperties failed with error code: %d.\n", cudaError);
         exit(EXIT_FAILURE);
-    }   
+    }
 
     int device_enabled = 1;
     char *cudaApi = getenv("PAPI_CUDA_API");
@@ -72,15 +72,15 @@ int determine_if_device_is_enabled(int device_idx)
         // Perfworks Metrics API supports CC's >= 7
         if (device_prop.major < 7) {
             device_enabled = 0;
-        }   
-    }   
+        }
+    }
     // Legacy API is enabled
     else {
         // Legacy API supports CC's <= 7
         if (device_prop.major > 7) {
             device_enabled = 0;
-        }   
-    }   
+        }
+    }
 
     return device_enabled;
 
@@ -95,7 +95,7 @@ int determine_if_device_is_enabled(int device_idx)
   * @param *total_event_count
   *   Number of events that were stored.
   * @param *cuda_device_index
-  *  Device index that will be used to create a cuda context. 
+  *  Device index that will be used to create a cuda context.
 */
 void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int *total_event_count, int *cuda_device_index)
 {
@@ -104,7 +104,7 @@ void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index", cuda_cmp_idx);
     }
- 
+
     int modifier = PAPI_ENUM_FIRST;
     int cuda_eventcode = 0 | PAPI_NATIVE_MASK;
     int papi_errno = PAPI_enum_cmp_event(&cuda_eventcode, modifier, cuda_cmp_idx);

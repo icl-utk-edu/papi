@@ -35,7 +35,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 //#define _DEBUG 1
 
@@ -82,7 +82,7 @@ GPUMetricHandler *getHandler(DEVICE_HANDLE handle) {
 /*
  * wrapper function for safe strncpy
  */
-void 
+void
 strncpy_se(char *dest, size_t destSize,  char *src, size_t count)  {
 	if (dest && src) {
 		size_t toCopy = (count <= strlen(src))? count:strlen(src);
@@ -146,7 +146,7 @@ int GPUDetectDevice(DEVICE_HANDLE **handles, uint32_t *numDevices)
 			for (uint32_t j=0; j<gDeviceInfo[i].numSubdevices; j++)  {
 				dcode = CreateDeviceCode(gDeviceInfo[i].driverId, gDeviceInfo[i].deviceId, (j+1));
 				dcode = CreateIdxCode(dcode, index);
-				gHandlerTable[index] = GPUMetricHandler::GetInstance(gDeviceInfo[i].driverId, 
+				gHandlerTable[index] = GPUMetricHandler::GetInstance(gDeviceInfo[i].driverId,
 				gDeviceInfo[i].deviceId, j+1);
 				gHandles[index++] = dcode;
 			}
@@ -156,7 +156,7 @@ int GPUDetectDevice(DEVICE_HANDLE **handles, uint32_t *numDevices)
 	*numDevices = gNumHandles;
 
 	infLock.unlock();
-	return ret;	
+	return ret;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -311,7 +311,7 @@ int GPUSetMetricControl(DEVICE_HANDLE handle, unsigned int mode)
 
 /* ----------------------------------------------------------------------------------------- */
 /*!
- * @fn		 MetricData *GPUReadMetricData(DEVICE_HANDLE handle, 
+ * @fn		 MetricData *GPUReadMetricData(DEVICE_HANDLE handle,
  *								int mode, unsigned int *reportCounts);
  *
  * @brief	   read metric data
@@ -376,7 +376,7 @@ MetricData *GPUReadMetricData(DEVICE_HANDLE handle, unsigned int mode, unsigned 
 /*!
  * @fn		  int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *data);
  *
- * @brief	   list all available metric groups for the selected type 
+ * @brief	   list all available metric groups for the selected type
  * @param	   IN   handle - handle to the selected device
  * @param	   IN   mtype  - metric group type
  * @param	   OUT  data   - metric data
@@ -395,7 +395,7 @@ int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *dat
 	infLock.lock();
 	ret = getHandler(handle)->GetMetricInfo(mtype, data);
 	infLock.unlock();
-	if (ret) { 
+	if (ret) {
 		DebugPrintError("GPUGetMetricGroups failed, return %d\n", ret);
 	}
 #if defined(_DEBUG)
@@ -415,7 +415,7 @@ int GPUGetMetricGroups(DEVICE_HANDLE handle, unsigned int mtype, MetricInfo *dat
  * @fn		  int GPUGetMetricList(DEVICE_HANDLE handle,
  *								   char *groupName, unsigned int mtype, MetricInfo *data);
  *
- * @brief	   list available metrics in the named group. 
+ * @brief	   list available metrics in the named group.
  *			  If name is "", list all available metrics in all groups
  *
  * @param	   IN   handle	  - handle to the selected device
@@ -492,7 +492,7 @@ GPUFreeMetricInfo(MetricInfo *info, uint32_t count) {
 
 /* ------------------------------------------------------------------------- */
 /*!
- * @fn		  MetricData * GPUAllocMetricData(uint32_t count, 
+ * @fn		  MetricData * GPUAllocMetricData(uint32_t count,
  *									uint32_t numSets, uint32_t numMetrics) {
  *
  * @brief	   allocate memory space for metrics data

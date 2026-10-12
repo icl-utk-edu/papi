@@ -42,30 +42,30 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
 {
     int i;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
-        }   
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
             while (cuda_native_event_name != NULL)
-            {   
+            {
                 if (strstr(cuda_native_event_name, ":device")) {
                     fprintf(stderr, "Cuda native event name must not have a device qualifier appended for this test, i.e. no :device=#.\n");
                     print_help_message();
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 cmd_line_native_event_names = (char **) realloc(cmd_line_native_event_names, ((*total_event_count) + 1) * sizeof(char *));
                 check_memory_allocation_call(cmd_line_native_event_names);
@@ -77,20 +77,20 @@ static void parse_and_assign_args(int argc, char *argv[], char ***cuda_native_ev
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write cuda native event name.\n");
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
-        }   
-    }   
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    }   
+    }
     PRINT(suppress_output, "Running the cuda component test cudaOpenMP_noCuCtx.cu\n");
 
     char **cuda_native_event_names = NULL;
@@ -131,8 +131,8 @@ int main(int argc, char *argv[])
 
     // Initialize thread support in PAPI
     check_papi_api_call( PAPI_thread_init((unsigned long (*)(void)) omp_get_thread_num) );
-  
-    // Verify the cuda component was compiled in 
+
+    // Verify the cuda component was compiled in
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
     if (cuda_cmp_idx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
@@ -153,19 +153,19 @@ int main(int argc, char *argv[])
         check_memory_allocation_call( cuda_native_event_names[total_event_count] );
 
         check_papi_api_call( PAPI_event_code_to_name(cuda_eventcode, cuda_native_event_names[total_event_count++]) );
-    }   
+    }
 
     const PAPI_component_info_t *cmpInfo = PAPI_get_component_info(cuda_cmp_idx);
     if (cmpInfo == NULL) {
         fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
         exit(EXIT_FAILURE);
-    }   
+    }
 
     // Check to see if the Cuda component is partially disabled
     if (cmpInfo->partially_disabled) {
         const char *cc_support = (getenv("PAPI_CUDA_API") != NULL) ? "<=7.0" : ">=7.0";
         PRINT(suppress_output, "\033[33mThe cuda component is partially disabled. Only support for CC's %s are enabled.\033[0m\n", cc_support);
-    } 
+    }
 
     // Determine the number of threads we will launch based off the number of
     // Cuda devices on the machine (max of 32).
@@ -179,14 +179,14 @@ int main(int argc, char *argv[])
         if (cmpInfo == NULL) {
             fprintf(stderr, "Call to PAPI_get_component_info failed.\n");
             exit(EXIT_FAILURE);
-        }   
+        }
 
         if (cmpInfo->partially_disabled) {
             // Device is not enabled continue
             if (determine_if_device_is_enabled(thread_and_dev_idx) == 0) {
                 continue;
-            }   
-        } 
+            }
+        }
 
         check_cuda_runtime_api_call( cudaSetDevice(thread_and_dev_idx) );
 
@@ -203,10 +203,10 @@ int main(int argc, char *argv[])
             if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
                 fprintf(stderr, "Failed to fully write event name with appended device qualifier.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             events_successfully_added[event_idx] = (char *) malloc(PAPI_MAX_STR_LEN * sizeof(char));
-            check_memory_allocation_call(events_successfully_added[event_idx]); 
+            check_memory_allocation_call(events_successfully_added[event_idx]);
 
 
             add_cuda_native_events(EventSet, tmp_event_name, &num_events_successfully_added, events_successfully_added, &numMultipassEvents);
@@ -249,8 +249,8 @@ int main(int argc, char *argv[])
     // Free allocated memory
     for (event_idx = 0; event_idx < total_event_count; event_idx++) {
         free(cuda_native_event_names[event_idx]);
-    }   
-    free(cuda_native_event_names); 
+    }
+    free(cuda_native_event_names);
 
     PAPI_shutdown();
 

@@ -7,7 +7,7 @@
   *	@section Synopsis
   *
   *	@section Description
-  *		papi_component_avail is a PAPI utility program that reports information 
+  *		papi_component_avail is a PAPI utility program that reports information
   *		about the components papi was built with.
   *
   *	@section Options

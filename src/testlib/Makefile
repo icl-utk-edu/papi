@@ -27,7 +27,7 @@ clockcore.o: clockcore.c
 test_utils.o: test_utils.c
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c test_utils.c
 
-ftests_util.o: ftests_util.F fpapi_test.h 
+ftests_util.o: ftests_util.F fpapi_test.h
 	$(F77) $(INCLUDE) $(FFLAGS) $(FTOPTFLAGS) -c ftests_util.F
 
 clean:
@@ -36,8 +36,8 @@ clean:
 distclean: clean
 	rm -f Makefile.target
 
-install: 
-	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\""; 
+install:
+	@echo "Papi testlib (DATADIR) being installed in: \"$(DATADIR)\"";
 	-mkdir -p $(DATADIR)/testlib
 	-chmod go+rx $(DATADIR)
 	-chmod go+rx $(DATADIR)/testlib

@@ -21,7 +21,7 @@ endif
 endif
 
 OPTIM := $(CFLAGS)
-CFLAGS-3.y := -DPFM30 
+CFLAGS-3.y := -DPFM30
 CFLAGS += -I$(PFM_INC_PATH) $(ALTIX) $(CFLAGS-$(VERSION))
 MISCHDRS += linux-lock.h mb.h
 SHLIBDEPS = -Bdynamic -L$(PFM_LIB_PATH) -lpfm
@@ -47,11 +47,11 @@ include Makefile.inc
 config.h:
 	@echo 'Please clobber your build and run ./configure."
 
-$(PFM_OBJS): 
+$(PFM_OBJS):
 	$(AR) xv $(PFM_LIB_PATH)/libpfm.a
 
 native_clean:
-	-rm -f $(MISCOBJS) 
+	-rm -f $(MISCOBJS)
 ifneq (,${PFM_ROOT})
 	$(MAKE) -C $(PFM_ROOT) clean
 endif

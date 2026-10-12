@@ -18,21 +18,21 @@ rapl_basic.o:	rapl_basic.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c rapl_basic.c -o rapl_basic.o -DBASIC_TEST=1
 
 rapl_basic: rapl_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o rapl_basic rapl_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(INCLUDE) -o rapl_basic rapl_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 rapl_busy.o:	rapl_basic.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c rapl_basic.c -o rapl_busy.o -DBUSY_TEST=1
 
 rapl_busy: rapl_busy.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o rapl_busy rapl_busy.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(INCLUDE) -o rapl_busy rapl_busy.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 rapl_wraparound.o:	rapl_basic.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c rapl_basic.c -o rapl_wraparound.o -DWRAP_TEST=1
 
 rapl_wraparound: rapl_wraparound.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o rapl_wraparound rapl_wraparound.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(INCLUDE) -o rapl_wraparound rapl_wraparound.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 clean:

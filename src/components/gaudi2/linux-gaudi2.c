@@ -129,9 +129,9 @@ typedef struct {
 static gaudi2_device_t *gaudi2_devices = NULL;
 static int gaudi2_num_devices = 0;
 
-/** 
+/**
 * Event Catalog
-* TODO: add all gaudi2 events 
+* TODO: add all gaudi2 events
 */
 static gaudi2_native_event_t gaudi2_event_catalog[] = {
     /* ===== TPC SPMU events (81 events) ===== */

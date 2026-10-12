@@ -1,8 +1,8 @@
 function PAPIMatrixMatrix
 
-% Compute a Matrix Matrix multiply 
+% Compute a Matrix Matrix multiply
 % on square arrays sized from 50 to 500,
-% in steps of 50. 
+% in steps of 50.
 %
 % Use the PAPI mex function with two different methods:
 % - The PAPI flops call

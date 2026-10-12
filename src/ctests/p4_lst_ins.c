@@ -1,6 +1,6 @@
 /* This code demonstrates the behavior of PAPI_LD_INS, PAPI_SR_INS and PAPI_LST_INS
 	on a Pentium 4 processor. Because of the way these events are implemented in
-	hardware, LD and SR cannot be counted in the presence of either of the other 
+	hardware, LD and SR cannot be counted in the presence of either of the other
 	two events.
 */
 
@@ -37,7 +37,7 @@ main( int argc, char **argv )
 			"This test is intended only for Pentium 4.", 1 );
 	    }
 	} else {
-	    test_skip( __FILE__, __LINE__, 
+	    test_skip( __FILE__, __LINE__,
 		    "This test is intended only for Pentium 4.", 1 );
 	}
 

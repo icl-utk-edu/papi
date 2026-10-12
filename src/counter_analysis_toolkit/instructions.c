@@ -2352,7 +2352,7 @@ void instr_driver(char* papi_event_name, hw_desc_t *hw_desc, char* outdir)
         fprintf(stderr, "Failed to open file %s.\n", papiFileName);
         goto error0;
     }
-  
+
     retval = PAPI_create_eventset( &EventSet );
     if (retval != PAPI_OK ){
         goto error1;

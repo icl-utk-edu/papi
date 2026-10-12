@@ -8,12 +8,12 @@
  * Test case for the lmsensors component.
  * For GitHub CI and terminal use.
  *
- * Tested on Leconte at ICL in winter 2024 with an 
+ * Tested on Leconte at ICL in winter 2024 with an
  * Intel(R) Xeon(R) CPU E5-2698.
  *
  * @brief
  *   Creating a PAPI EventSet with lmsensor events
- *   to add, start, read, and stop. 
+ *   to add, start, read, and stop.
  */
 
 #include <stdio.h>
@@ -46,8 +46,8 @@ int main(int argc, char **argv)
     if (cidx < 0) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index, failed for lmsensors", cidx);
     }
-    
-    if (!TESTS_QUIET) { 
+
+    if (!TESTS_QUIET) {
         printf("Component index for lmsensors: %d\n", cidx);
     }
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     retval = PAPI_enum_cmp_event(&EventCode, modifier, cidx);
     if (retval != PAPI_OK) {
         test_fail(__FILE__, __LINE__, "PAPI_enum_cmp_event", retval);
-    }   
+    }
 
     /* enumerate through the available lmsensors events and add a maximum of three */
     modifier = PAPI_ENUM_EVENTS;
@@ -114,8 +114,8 @@ int main(int argc, char **argv)
         for (i = 0; i < event_cnt; i++) {
             printf("Event: %s, Counter Value: %lld\n", lm_events[i], values[i]);
         }
-    } 
-   
+    }
+
     /* cleanup for PAPI */
     retval = PAPI_cleanup_eventset(EventSet);
     if (retval != PAPI_OK) {

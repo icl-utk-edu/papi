@@ -66,7 +66,7 @@ module papi_sde_fortran_wrappers
     integer(kind=C_int) function papif_sde_register_counter_cb_F08(handle, event_name_C_str, cntr_mode, cntr_type, func_ptr, param) result(error) bind(C, name="papi_sde_register_counter_cb")
       use, intrinsic :: ISO_C_BINDING, only : C_ptr, C_funptr, C_int
       type(C_ptr), value, intent(in)    :: handle
-      type(C_ptr), value, intent(in)    :: event_name_C_str 
+      type(C_ptr), value, intent(in)    :: event_name_C_str
       integer(kind=C_int), value, intent(in) :: cntr_type
       integer(kind=C_int), value, intent(in) :: cntr_mode
       type(C_funptr), value, intent(in) :: func_ptr

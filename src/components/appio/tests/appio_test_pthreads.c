@@ -1,8 +1,8 @@
-/* 
+/*
  * Test case for appio
  * Author: Tushar Mohan
  *         tusharmohan@gmail.com
- * 
+ *
  * Description: This test case reads from standard linux /etc files in
  *              four separate threads and copies the output to /dev/null
  *              READ and WRITE statistics for each of the threads is
@@ -60,7 +60,7 @@ void *ThreadIO(void *arg) {
     fprintf(stderr, "Error in PAPI_start\n");
     exit(1);
   }
- 
+
 //if (PAPI_read_counters(EventSet, values) != PAPI_OK)
 //   handle_error(1);
 //printf("After reading the counters: %lld\n",values[0]);
@@ -84,7 +84,7 @@ void *ThreadIO(void *arg) {
   }
 
   if (!TESTS_QUIET) {
-    for (e=0; e<NUM_EVENTS; e++)  
+    for (e=0; e<NUM_EVENTS; e++)
       printf("Thread %#lx: %s: %lld\n", tid, names[e], values[e]);
   }
   return(NULL);

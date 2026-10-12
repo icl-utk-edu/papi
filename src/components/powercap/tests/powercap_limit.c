@@ -78,7 +78,7 @@ int main ( int argc, char **argv )
   while (r == PAPI_OK) {
     char powercap_eventname[PAPI_MAX_STR_LEN] = { 0 };
     retval = PAPI_event_code_to_name( code, powercap_eventname );
-    if ( retval != PAPI_OK ) 
+    if ( retval != PAPI_OK )
       test_fail( __FILE__, __LINE__,"PAPI_event_code_to_name()", retval );
 
     if (!(strstr(powercap_eventname, "SUBZONE")) && (strstr(powercap_eventname, "POWER_LIMIT"))) {

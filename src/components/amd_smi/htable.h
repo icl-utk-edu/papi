@@ -2,7 +2,7 @@
  * @file    htable.c
  * @author  Giuseppe Congiu
  *          gcongiu@icl.utk.edu
- * @author  Dong Jun Woun 
+ * @author  Dong Jun Woun
  *          djwoun@gmail.com
  *
  */
@@ -151,7 +151,7 @@ static inline int htable_delete(void *handle, const char *key)
     return htable_errno;
 }
 
-/* Find an entry by key in the hash table. 
+/* Find an entry by key in the hash table.
  * Returns HTABLE_SUCCESS and sets *out if found, else HTABLE_ENOVAL. */
 static inline int htable_find(void *handle, const char *key, void **out)
 {
@@ -226,8 +226,8 @@ static int rehash_table(struct hash_table *old_table, struct hash_table *new_tab
             return HTABLE_SUCCESS;  /* no resizing needed */
         }
         /* Determine new capacity (double or half) */
-        uint64_t new_capacity = (resize & 0x2) ? 
-            (uint64_t)old_table->capacity * 2 
+        uint64_t new_capacity = (resize & 0x2) ?
+            (uint64_t)old_table->capacity * 2
             : (uint64_t)old_table->capacity / 2;
         if (new_capacity < HTABLE_MIN_SIZE) {
             new_capacity = HTABLE_MIN_SIZE;

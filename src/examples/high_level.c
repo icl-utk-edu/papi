@@ -1,5 +1,5 @@
 /*****************************************************************************
-*  This example code shows how to use PAPI's High level functions.           * 
+*  This example code shows how to use PAPI's High level functions.           *
 *  Events to be recorded are determined via an environment variable          *
 *  PAPI_EVENTS that lists comma separated events for any component.          *
 *  If events are not specified via the environment variable PAPI_EVENTS, an  *
@@ -10,7 +10,7 @@
 *      PAPI_TOT_CYC                                                          *
 *      PAPI_FP_INS                                                           *
 *      PAPI_FP_OPS or PAPI_DP_OPS or PAPI_SP_OPS                             *
-******************************************************************************/ 
+******************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +19,7 @@
 #define THRESHOLD 10000
 #define ERROR_RETURN(retval) { fprintf(stderr, "Error %d %s:line %d: \n", retval,__FILE__,__LINE__);  exit(retval); }
 
-/* stupid codes to be monitored */ 
+/* stupid codes to be monitored */
 void computation_mult()
 {
    double tmp=1.0;
@@ -30,7 +30,7 @@ void computation_mult()
    }
 }
 
-/* stupid codes to be monitored */ 
+/* stupid codes to be monitored */
 void computation_add()
 {
    int tmp = 0;
@@ -71,7 +71,7 @@ int main()
    retval = PAPI_hl_region_begin("computation_mult");
    if ( retval != PAPI_OK )
       ERROR_RETURN(retval);
-   
+
    /* Your code goes here*/
    computation_mult();
 

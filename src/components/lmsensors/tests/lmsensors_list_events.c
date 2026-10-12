@@ -8,12 +8,12 @@
  * Test case for the lmsensors component.
  * For GitHub CI and terminal use.
  *
- * Tested on Leconte at ICL in winter 2024 with an 
+ * Tested on Leconte at ICL in winter 2024 with an
  * Intel(R) Xeon(R) CPU E5-2698.
  *
  * @brief
- *   List the event code and event name for all 
- *   available lmsensor events on the current 
+ *   List the event code and event name for all
+ *   available lmsensor events on the current
  *   machine.
  */
 
@@ -22,7 +22,7 @@
 #include "papi.h"
 #include "papi_test.h"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     int retval, event_cnt = 0, EventCode, cidx;
     char EventName[PAPI_2MAX_STR_LEN];
@@ -42,9 +42,9 @@ int main(int argc, char **argv)
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index failed for lmsensors", cidx);
     }
 
-    if (!TESTS_QUIET) { 
+    if (!TESTS_QUIET) {
         printf("Component index for lmsensors: %d\n", cidx);
-    }   
+    }
 
     int modifier = PAPI_ENUM_FIRST;
     EventCode = PAPI_NATIVE_MASK;
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
         test_fail(__FILE__, __LINE__, "PAPI_enum_cmp_event", retval);
     }
 
-    /* enumerate through all lmsensor events found on the current machine */ 
+    /* enumerate through all lmsensor events found on the current machine */
     modifier = PAPI_ENUM_EVENTS;
     do {
         /* print output header  */

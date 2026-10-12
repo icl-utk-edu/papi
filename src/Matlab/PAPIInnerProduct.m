@@ -1,6 +1,6 @@
 function PAPIInnerProduct
 
-% Compute an Inner Product (c = a * x) 
+% Compute an Inner Product (c = a * x)
 % on elements sized from 50 to 500,
 % in steps of 50.
 %

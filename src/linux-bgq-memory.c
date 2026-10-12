@@ -1,10 +1,10 @@
-/* 
+/*
  * File:    linux-bgq-memory.c
  * CVS:     $Id$
  * Author:  Heike Jagode
  *          jagode@eecs.utk.edu
- * Mods:    
- *          
+ * Mods:
+ *
  */
 
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * PAPI Multiple GPU example.  This example is taken from the NVIDIA
  * documentation (Copyright 1993-2013 NVIDIA Corporation) and has been
  * adapted to show the use of CUPTI and PAPI in collecting event

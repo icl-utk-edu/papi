@@ -14,7 +14,7 @@
  100     FORMAT ("multiplex1: Using ", I3, " iterations")
          write (*,*) "case1: Does PAPI_multiplex_init() not break",
      *" regular operation?"
-      end if   
+      end if
       call case1(retval, tests_quiet)
       if (tests_quiet .EQ. 0) then
          write (*,*) "case2: Does setmpx/add work?"
@@ -52,13 +52,13 @@
       end if
         call PAPIf_query_event(PAPI_TOT_INS, retval)
         if (retval .NE. PAPI_OK) then
-        event = PAPI_TOT_CYC 
+        event = PAPI_TOT_CYC
         else
-        event = PAPI_TOT_INS 
+        event = PAPI_TOT_INS
         end if
       end
 
-C     Tests that PAPI_multiplex_init does not mess with normal operation. 
+C     Tests that PAPI_multiplex_init does not mess with normal operation.
       subroutine case1(ret, tests_quiet)
       IMPLICIT integer (p)
       integer ret, tests_quiet, event
@@ -402,7 +402,7 @@ C Try alternative event if the above is not possible to use...
       end if
 
       if (tests_quiet .EQ. 0) then
-      write (*, *) "case4: ", values(1), values(2), values(3), 
+      write (*, *) "case4: ", values(1), values(2), values(3),
      *    values(4)
       end if
 

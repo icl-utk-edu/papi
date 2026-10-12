@@ -1,4 +1,4 @@
-/* 
+/*
 * File:    papi_preset.c
 * Author:  Haihang You
 *          you@cs.utk.edu
@@ -57,18 +57,18 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
 			  ( findem[pnum].event_code != 0 ); pnum++ ) {
 	   /* find the index for the event to be initialized */
 	   preset_index = ( findem[pnum].event_code & PAPI_PRESET_AND_MASK );
-	   /* count and set the number of native terms in this event, 
+	   /* count and set the number of native terms in this event,
               these items are contiguous.
 
-	      PAPI_EVENTS_IN_DERIVED_EVENT is arbitrarily defined in the high 
-              level to be a reasonable number of terms to use in a derived 
+	      PAPI_EVENTS_IN_DERIVED_EVENT is arbitrarily defined in the high
+              level to be a reasonable number of terms to use in a derived
               event linear expression, currently 8.
 
-	      This wastes space for components with less than 8 counters, 
+	      This wastes space for components with less than 8 counters,
               but keeps the framework independent of the components.
 
-	      The 'native' field below is an arbitrary opaque identifier 
-              that points to information on an actual native event. 
+	      The 'native' field below is an arbitrary opaque identifier
+              that points to information on an actual native event.
               It is not an event code itself (whatever that might mean).
 	      By definition, this value can never == PAPI_NULL.
 	      - dkt */
@@ -93,7 +93,7 @@ _papi_hwi_setup_all_presets( hwi_search_t * findem, int cidx )
        // Set the component index to that of the first native event used to define it.
        // Make sure we later check that all native events in a preset come from same comp.
 	   _papi_hwi_presets[preset_index].component_index = _papi_hwi_component_index(findem[pnum].native[0]);
- 
+
            _papi_hwi_presets[preset_index].derived_int = findem[pnum].derived;
 	   for(k=0;k<j;k++) {
               _papi_hwi_presets[preset_index].code[k] =
@@ -266,13 +266,13 @@ open_event_table( char *name )
 	SUBDBG( "Opening %s\n", name );
 	table = fopen( name, "r" );
 	if ( table == NULL ) {
-		SUBDBG( "Open %s failed, trying ./%s.\n", 
+		SUBDBG( "Open %s failed, trying ./%s.\n",
 			name, PAPI_EVENT_FILE );
 		sprintf( name, "%s", PAPI_EVENT_FILE );
 		table = fopen( name, "r" );
 	}
 	if ( table == NULL ) {
-		SUBDBG( "Open ./%s failed, trying ../%s.\n", 
+		SUBDBG( "Open ./%s failed, trying ../%s.\n",
 			name, PAPI_EVENT_FILE );
 		sprintf( name, "../%s", PAPI_EVENT_FILE );
 		table = fopen( name, "r" );
@@ -865,13 +865,13 @@ infix_to_postfix( char *infix ) {
         unsigned int index;
         int postfixlen;
         char token;
-        if ( strlen(infix) > PAPI_HUGE_STR_LEN ) 
+        if ( strlen(infix) > PAPI_HUGE_STR_LEN )
             PAPIERROR("A infix string (probably in user-defined presets) is too big (max allowed %d): %s", PAPI_HUGE_STR_LEN, infix );
 
         // initialize stack
 	memset(stack, 0, 2*PAPI_HUGE_STR_LEN);
-	stacktop = -1; 
-	push('#'); 
+	stacktop = -1;
+	push('#');
         stacktop = 0; // after initialization of stack to #
         /* initialize output string */
 	memset(postfix,0,2*PAPI_HUGE_STR_LEN);
@@ -918,7 +918,7 @@ infix_to_postfix( char *infix ) {
                 postfix[postfixlen++] = '|';
         }
         postfix[postfixlen++] = '\0';
-	stacktop = -1; 
+	stacktop = -1;
 
 	INTDBG("EXIT: postfix: %s, size: %zu\n", postfix, strlen(postfix));
 	return (postfix);

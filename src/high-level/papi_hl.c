@@ -130,7 +130,7 @@ int compar(const void *l, const void *r)
 typedef struct
 {
    void *root;             /**< Root of binary tree */
-   threads_t *find_p;      /**< Pointer that is used for finding a thread node */ 
+   threads_t *find_p;      /**< Pointer that is used for finding a thread node */
 } binary_tree_t;
 
 /**< Global binary tree that stores events from all threads */
@@ -233,7 +233,7 @@ static void _internal_hl_library_init(void)
 
    if ( ( retval = PAPI_library_init(PAPI_VER_CURRENT) ) != PAPI_VER_CURRENT )
       verbose_fprintf(stdout, "PAPI-HL Error: PAPI_library_init failed!\n");
-   
+
    /* PAPI_thread_init only suceeds if PAPI_library_init has suceeded */
    char *multi_thread = getenv("PAPI_HL_THREAD_MULTIPLE");
    if ( NULL == multi_thread || atoi(multi_thread) == 1 ) {
@@ -383,7 +383,7 @@ static int _internal_hl_determine_default_events()
          requested_event_names[num_of_requested_events++] = strdup(default_events[i]);
          if ( requested_event_names[num_of_requested_events -1] == NULL )
             return ( PAPI_ENOMEM );
-      } 
+      }
       else {
          /* if PAPI_FP_OPS is not available try PAPI_SP_OPS or PAPI_DP_OPS */
          if ( strcmp(default_events[i], "PAPI_FP_OPS") == 0 ) {
@@ -414,7 +414,7 @@ static int _internal_hl_read_user_events(const char *user_events)
    int req_event_index = 0; //index of event
    const char *position = NULL; //current position in processed string
    char *token;
-   
+
    HLDBG("User events: %s\n", user_events);
    user_events_copy = strdup(user_events);
    if ( user_events_copy == NULL )
@@ -902,7 +902,7 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
                read_node->value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;
             else //delta
                read_node->value = _local_components[i].values[j] - node->values[cmp_iter].begin;
-                 
+
             cmp_iter++;
          }
       }
@@ -917,10 +917,10 @@ static inline int _internal_hl_add_values_to_region( regions_t *node, enum regio
             if ( components[i].event_types[j] == 1 )  //instantaneous
                node->values[cmp_iter].region_value = _local_components[i].values[j];
             else if ( components[i].event_types[j] == 2 )  //region-average
-               node->values[cmp_iter].region_value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;                  
+               node->values[cmp_iter].region_value = (_local_components[i].values[j] + node->values[cmp_iter].begin)/2;
             else //delta
-               node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;               
-            
+               node->values[cmp_iter].region_value = _local_components[i].values[j] - node->values[cmp_iter].begin;
+
             cmp_iter++;
          }
    }
@@ -1044,7 +1044,7 @@ static int _internal_hl_store_counters( unsigned long tid, const char *region,
          }
          _papi_hwi_unlock( HIGHLEVEL_LOCK );
          return ( retval );
-      } 
+      }
    } else {
       /* create new node for current region in list if type is REGION_BEGIN */
       if ( ( current_region_node = _internal_hl_insert_region_node(&current_thread_node->value, region) ) == NULL ) {
@@ -1175,7 +1175,7 @@ static int _internal_hl_determine_output_path()
       if ( ( output_prefix = strdup( getcwd(NULL,0) ) ) == NULL )
          return ( PAPI_ENOMEM );
    }
-   
+
    /* generate absolute path for measurement directory */
    if ( ( absolute_output_file_path = (char *)malloc((strlen(output_prefix) + 64) * sizeof(char)) ) == NULL ) {
       free(output_prefix);
@@ -1211,7 +1211,7 @@ static int _internal_hl_determine_output_path()
 
       /* This is a workaround for MPI applications!!!
        * Only rename existing measurement directory when it is older than
-       * current timestamp. If it's not, we assume that another MPI process already created a 
+       * current timestamp. If it's not, we assume that another MPI process already created a
        * new measurement directory. */
       if ( unix_time_from_old_directory < current_unix_time ) {
 
@@ -1586,7 +1586,7 @@ static void _internal_hl_write_output()
                /* write into file */
                FILE *fp = fdopen(fd, "w");
                if ( fp != NULL ) {
-                  
+
                   /* list all threads */
                   unsigned long *tids = NULL;
                   int threads_num;
@@ -1768,7 +1768,7 @@ static int _internal_hl_check_for_clean_thread_states()
    for( i = 0; i < map->totalSlots; i++ ) {
       ESI = map->dataSlotArray[i];
       if ( ESI ) {
-         if ( ESI->state & PAPI_RUNNING ) 
+         if ( ESI->state & PAPI_RUNNING )
             return ( PAPI_EISRUN );
       }
    }
@@ -1793,8 +1793,8 @@ _internal_PAPI_hl_init()
 
 int _internal_PAPI_hl_cleanup_thread()
 {
-   if ( state == PAPIHL_ACTIVE && 
-        hl_initiated == true && 
+   if ( state == PAPIHL_ACTIVE &&
+        hl_initiated == true &&
         _local_state == PAPIHL_ACTIVE ) {
          /* do not clean local data from master thread */
          if ( master_thread_id != PAPI_thread_id() )
@@ -1856,8 +1856,8 @@ _internal_PAPI_hl_set_events(const char* events)
 void
 _internal_PAPI_hl_print_output()
 {
-   if ( state == PAPIHL_ACTIVE && 
-        hl_initiated == true && 
+   if ( state == PAPIHL_ACTIVE &&
+        hl_initiated == true &&
         output_generated == false ) {
       _internal_hl_write_output();
    }
@@ -1998,7 +1998,7 @@ PAPI_hl_region_begin( const char* region )
  * @retval PAPI_ENOMEM
  * -- Insufficient memory.
  *
- * PAPI_hl_read reads performance events inside of a region and stores the difference to the 
+ * PAPI_hl_read reads performance events inside of a region and stores the difference to the
  * corresponding beginning of the region.
  *
  * Assumes that PAPI_hl_region_begin was called before.
@@ -2081,15 +2081,15 @@ PAPI_hl_read(const char* region)
  *
  * PAPI_hl_region_end reads performance events at the end of a region and stores the
  * difference to the corresponding beginning of the region.
- * 
+ *
  * Assumes that PAPI_hl_region_begin was called before.
- * 
+ *
  * Note that PAPI_hl_region_end does not stop counting the performance events. Counting
  * continues until the application terminates. Therefore, the programmer can also create
  * nested regions if required. To stop a running high-level event set, the programmer must call
  * PAPI_hl_stop(). It should also be noted, that a marked region is thread-local and therefore
  * has to be in the same thread.
- * 
+ *
  * An output of the measured events is created automatically after the application exits.
  * In the case of a serial, or a thread-parallel application there is only one output file.
  * MPI applications would be saved in multiple files, one per MPI rank.
@@ -2098,7 +2098,7 @@ PAPI_hl_read(const char* region)
  * the environment variable PAPI_OUTPUT_DIRECTORY. In the case where measurements are performed,
  * while there are old measurements in the same directory, PAPI will not overwrite or delete the
  * old measurement directories. Instead, timestamps are added to the old directories.
- * 
+ *
  * For more convenience, the output can also be printed to stdout by setting PAPI_REPORT=1. This
  * is not recommended for MPI applications as each MPI rank tries to print the output concurrently.
  *
@@ -2107,7 +2107,7 @@ PAPI_hl_read(const char* region)
  * MFlops/s, and MFlips/s as well as real and processor time in case the corresponding PAPI events
  * have been recorded. The python script can also summarize performance events over all threads and
  * MPI ranks when using the option "accumulate" as seen below.
- * 
+ *
  * @par Example:
  *
  * @code
@@ -2143,7 +2143,7 @@ PAPI_hl_read(const char* region)
  * }
  *
  * @endcode
- * 
+ *
  * @see PAPI_hl_region_begin
  * @see PAPI_hl_read
  * @see PAPI_hl_stop
@@ -2181,17 +2181,17 @@ PAPI_hl_region_end( const char* region )
 /** @class PAPI_hl_stop
   * @brief Stop a running high-level event set.
   *
-  * @par C Interface: 
+  * @par C Interface:
   * \#include <papi.h> @n
   * int PAPI_hl_stop();
-  * 
-  * @retval PAPI_ENOEVNT 
+  *
+  * @retval PAPI_ENOEVNT
   * -- The EventSet is not started yet.
-  * @retval PAPI_ENOMEM 
-  * -- Insufficient memory to complete the operation. 
+  * @retval PAPI_ENOMEM
+  * -- Insufficient memory to complete the operation.
   *
   * PAPI_hl_stop stops a running high-level event set.
-  * 
+  *
   * This call is optional and only necessary if the programmer wants to use the low-level API in addition
   * to the high-level API. It should be noted that PAPI_hl_stop and low-level calls are not
   * allowed inside of a marked region. Furthermore, PAPI_hl_stop is thread-local and therefore

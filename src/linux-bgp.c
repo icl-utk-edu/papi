@@ -215,7 +215,7 @@ _bgp_init_global( void )
 {
 	int retval;
 	int cidx = _bgp_vectors.cmp_info.CmpIdx;
-	
+
 	/*
 	 * Fill in what we can of the papi_system_info
 	 */
@@ -325,7 +325,7 @@ _bgp_allocate_registers( EventSetInfo_t * ESI )
 					return PAPI_ECMP;
 				}
 			}
-                        /* here is if we are event 255 */ 
+                        /* here is if we are event 255 */
 			else {
 
 			}
@@ -434,7 +434,7 @@ _bgp_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 //  printf("_bgp_read:  (long_long*)&this_state->counters[0] = %p\n", (long_long*)&this_state->counters[0]);
 //  printf("_bgp_read:  (long_long*)&this_state->counters[1] = %p\n", (long_long*)&this_state->counters[1]);
 
-	
+
 	sigset_t mask_set;
 	sigset_t old_set;
 	sigemptyset( &mask_set );
@@ -581,7 +581,7 @@ user_signal_handler( int signum, hwd_siginfo_t * siginfo, void *mycontext )
 			}
 		}
 		overflow_bit ^= 1 << xEventId;
-		//ESI->overflow.handler(ESI->EventSetIndex, pc, 0, (void *) &ctx); 
+		//ESI->overflow.handler(ESI->EventSetIndex, pc, 0, (void *) &ctx);
 		_papi_hwi_dispatch_overflow_signal( ( void * ) &ctx, pc, &isHardware,
 											overflow_bit, 0, &thread, 0 );
 		//thresh = (int)(*ESI->overflow.threshold + BGP_UPC_Read_Counter_Value(xEventId, 1)); //(int)BGP_UPC_Get_Counter_Threshold_Value(xEventId));
@@ -755,7 +755,7 @@ _bgp_init_component( int cidx )
 
 	_bgp_vectors.cmp_info.CmpIdx = cidx;
 	retval = _bgp_init_global(  );
-	
+
 	return ( retval );
 }
 
@@ -886,7 +886,7 @@ _bgp_ntv_enum_events( unsigned int *EventCode, int modifier )
 	}
 }
 
-int 
+int
 _papi_hwi_init_os(void) {
 
     struct utsname uname_buffer;

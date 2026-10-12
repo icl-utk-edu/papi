@@ -140,13 +140,13 @@ my_thread( void *v )
 	if ( retval != PAPI_OK )
             test_fail( __FILE__, __LINE__, "PAPI_overflow failed to reset the overflow handler", retval );
 
-	if ( PAPI_remove_event( EventSet, EVENT ) != PAPI_OK ) 
+	if ( PAPI_remove_event( EventSet, EVENT ) != PAPI_OK )
 	    test_fail( __FILE__, __LINE__, "PAPI_remove_event", 1 );
 
-	if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK ) 
+	if ( PAPI_destroy_eventset( &EventSet ) != PAPI_OK )
 	    test_fail( __FILE__, __LINE__, "PAPI_destroy_eventset", 1 );
 
-	if ( PAPI_unregister_thread( ) != PAPI_OK ) 
+	if ( PAPI_unregister_thread( ) != PAPI_OK )
             test_fail( __FILE__, __LINE__, "PAPI_unregister_thread", 1 );
 
 	return ( NULL );

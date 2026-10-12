@@ -26,22 +26,22 @@ endif
 
 TESTS = HelloWorld nvml_power_limiting_test nvml_power_limit_read_test
 
-nvml_tests: $(TESTS) 
+nvml_tests: $(TESTS)
 
 nvml_tests_helper.o: nvml_tests_helper.c
 	$(CXX) $(CFLAGS) $(INCLUDE) -o $@ -c $^
 
-HelloWorld: HelloWorld.o nvml_tests_helper.o $(UTILOBJS) 
-	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o nvml_tests_helper.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
+HelloWorld: HelloWorld.o nvml_tests_helper.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o HelloWorld HelloWorld.o nvml_tests_helper.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
-nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS) 
+nvml_power_limiting_test: nvml_power_limiting_test.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limiting_test nvml_power_limiting_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
-nvml_power_limit_read_test: nvml_power_limit_read_test.o $(UTILOBJS) 
+nvml_power_limit_read_test: nvml_power_limit_read_test.o $(UTILOBJS)
 	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o nvml_power_limit_read_test nvml_power_limit_read_test.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
-benchSANVML: benchSANVML.o $(UTILOBJS) 
-	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o benchSANVML benchSANVML.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS) 
+benchSANVML: benchSANVML.o $(UTILOBJS)
+	$(NVCC) $(NVCFLAGS) $(INCLUDE) -o benchSANVML benchSANVML.o $(UTILOBJS) $(PAPILIB) $(CUDALIBS)
 
 clean:
 	rm -f $(TESTS) *.o

@@ -4,7 +4,7 @@
 #ifndef _PAPI_VECTOR_H
 #define _PAPI_VECTOR_H
 
-/** Sizes of structure private to each component 
+/** Sizes of structure private to each component
   */
 typedef struct cmp_struct_sizes {
     int		context;
@@ -13,7 +13,7 @@ typedef struct cmp_struct_sizes {
     int		reg_alloc;
 } cmp_struct_sizes_t;
 
-/** Vector Table Stuff 
+/** Vector Table Stuff
  *	@internal */
 typedef struct papi_vectors {
 /** Component specific data structure @see papi.h */

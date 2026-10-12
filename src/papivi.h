@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    papivi.h
 * CVS:     $Id$
 * Author:  dan terpstra
@@ -97,7 +97,7 @@
 #define PAPI_FP_OPS PAPI_FP_INS
 
 /*
-* Two new data structures are introduced in PAPI 3 that are 
+* Two new data structures are introduced in PAPI 3 that are
 * required to support the functionality of:
 * PAPI_get_event_info() and
 * PAPI_get_executable_info()
@@ -159,7 +159,7 @@ typedef struct _papi_address_map
 /*
  * PAPI 3 beta 3 introduces new structures for static memory description.
  * These include structures for tlb and cache description, a structure
- * to describe a level in the memory hierarchy, and a structure 
+ * to describe a level in the memory hierarchy, and a structure
  * to describe all levels of the hierarchy.
  * These structures, and the requisite data types are defined below.
  */
@@ -203,7 +203,7 @@ typedef struct _papi_mh_info
 
 /*
 * Three data structures are modified in PAPI 3
-* These modifications are 
+* These modifications are
 * required to support the functionality of:
 * PAPI_get_hardware_info() and
 * PAPI_get_executable_info()
@@ -222,7 +222,7 @@ typedef struct _papi3_hw_info
 	int model;						   /* Model number of CPU */
 	char model_string[PAPI_MAX_STR_LEN];	/* Model string of CPU */
 	float revision;					   /* Revision of CPU */
-	float mhz;						   /* Cycle time of this CPU, *may* be estimated at 
+	float mhz;						   /* Cycle time of this CPU, *may* be estimated at
 									      init time with a quick timing routine */
 
 	PAPI_mh_info_t mem_hierarchy;
@@ -525,7 +525,7 @@ static int PAPI_get_multiplex(int EventSet)
 /*
 * Over half of the functions in the Low Level API remain unchanged
 * These are included in the macro list in case they do change in future
-* revisions, and to simplify the naming conventions for writing 
+* revisions, and to simplify the naming conventions for writing
 * version independent PAPI code.
 */
 
@@ -650,7 +650,7 @@ int PAPI_save(void);
 /*******************************************************************************
 * If PAPI_VERSION is defined, and the MAJOR version number is 3,
 * then papi.h is for PAPI 3.
-* The preprocessor block below contains definitions and macros needed to 
+* The preprocessor block below contains definitions and macros needed to
 * allow version independent linking to the PAPI 3 library.
 * Other than a handful of definitions to support calls to PAPI_{get,set}_opt(),
 * this layer simply converts version independent names to PAPI 3 library calls.
@@ -658,9 +658,9 @@ int PAPI_save(void);
 #elif (PAPI_VERSION_MAJOR(PAPI_VERSION) == 3)
 
 /*
-* The following option definitions reflect the fact that PAPI 2 had separate 
+* The following option definitions reflect the fact that PAPI 2 had separate
 * definitions for options to PAPI_set_opt and PAPI_get_opt, while PAPI 3 has
-* only a single set for both. By using the older naming convention, you can 
+* only a single set for both. By using the older naming convention, you can
 * create platform independent code for these calls.
 */
 
@@ -831,7 +831,7 @@ int PAPI_save(void);
 /*******************************************************************************
 * If PAPI_VERSION is defined, and the MAJOR version number is not 3, then we
 * generate an error message.
-* This block allows us to support future version with a 
+* This block allows us to support future version with a
 * version independent syntax.
 ********************************************************************************/
 #else

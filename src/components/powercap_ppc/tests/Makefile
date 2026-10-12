@@ -9,7 +9,7 @@ powercap_basic.o:	powercap_basic.c
 	$(CC) $(CFLAGS) $(OPTFLAGS) $(INCLUDE) -c powercap_basic.c -o powercap_basic.o
 
 powercap_basic: powercap_basic.o $(UTILOBJS) $(PAPILIB)
-	$(CC) $(INCLUDE) -o powercap_basic powercap_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS) 
+	$(CC) $(INCLUDE) -o powercap_basic powercap_basic.o $(UTILOBJS) $(PAPILIB) $(LDFLAGS)
 
 
 powercap_limit.o:	powercap_limit.c

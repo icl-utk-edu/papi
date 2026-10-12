@@ -33,7 +33,7 @@ main(int argc, char *argv[]) {
     exit(2);
   }
 
-  if (!TESTS_QUIET) 
+  if (!TESTS_QUIET)
     printf("This program will listen on port 3490, and write data received to standard output AND socket\n"
            "In the output ensure that the following identities hold:\n"
            "READ_* == SOCK_READ_*\n"
@@ -99,10 +99,10 @@ main(int argc, char *argv[]) {
   if (PAPI_stop(EventSet, values) != PAPI_OK) {
     fprintf(stderr, "Error in PAPI_stop\n");
   }
- 
-  if (!TESTS_QUIET) { 
+
+  if (!TESTS_QUIET) {
     printf("----\n");
-    for (e=0; e<NUM_EVENTS; e++)  
+    for (e=0; e<NUM_EVENTS; e++)
       printf("%s: %lld\n", names[e], values[e]);
   }
   test_pass( __FILE__ );

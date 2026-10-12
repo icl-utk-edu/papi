@@ -180,7 +180,7 @@ _papi_hwi_get_ntv_idx (unsigned int papi_evt_code) {
  * traditional PAPI 'cpu' components, opting to not prepend those.
  */
 int
-_papi_hwi_prefix_component_name( char *component_name, char *event_name, char *out, int out_len) 
+_papi_hwi_prefix_component_name( char *component_name, char *event_name, char *out, int out_len)
 {
 	int size1, size2;
 	char temp[out_len];
@@ -1641,7 +1641,7 @@ _papi_hwi_add_event( EventSetInfo_t * ESI, int EventCode )
 	  } else {
 
 	     /* Fill in the EventCode (machine independent) information */
-	     ESI->EventInfoArray[thisindex].event_code = 
+	     ESI->EventInfoArray[thisindex].event_code =
 	                                   ( unsigned int ) EventCode;
              ESI->NumberOfEvents++;
 	     _papi_hwi_map_events_to_native( ESI );
@@ -1732,7 +1732,7 @@ remove_native_events( EventSetInfo_t *ESI, int *nevt, int size )
 //	INTDBG( "nevt[%d]: %#x, cevt: %#x\n", i, nevt[i], cevt);
       for( j = 0; j < ESI->NativeCount; j++ ) {
 	 if ((native[j].ni_event == cevt)  &&  (native[j].ni_papi_code == nevt[i]) ) {
-//		INTDBG( "native[%d]: %p, ni_papi_code: %#x, ni_event: %#x, ni_position: %d, ni_owners: %d\n", 
+//		INTDBG( "native[%d]: %p, ni_papi_code: %#x, ni_event: %#x, ni_position: %d, ni_owners: %d\n",
 //			j, &(native[j]), native[j].ni_papi_code, native[j].ni_event, native[j].ni_position, native[j].ni_owners);
 	    native[j].ni_owners--;
 	    if ( native[j].ni_owners == 0 ) {
@@ -2113,7 +2113,7 @@ int papi_num_components = ( sizeof ( _papi_hwd ) / sizeof ( *_papi_hwd ) ) - 1;
  * Routine that initializes all available components.
  * A component is available if a pointer to its info vector
  * appears in the NULL terminated_papi_hwd table.
- * Modified to accept an arg: 0=do not init perf_event or 
+ * Modified to accept an arg: 0=do not init perf_event or
  * perf_event_uncore. 1=init ONLY perf_event or perf_event_uncore.
  */
 int
@@ -2239,8 +2239,8 @@ _papi_hwi_shutdown_global_internal( void )
 
     free(_papi_native_events);
     _papi_native_events = NULL;        // In case a new library init is done.
-    num_native_events=0;               // .. 
-    num_native_chunks=0;               // .. 
+    num_native_events=0;               // ..
+    num_native_chunks=0;               // ..
 
     _papi_hwi_free_papi_event_string();
 
@@ -2332,7 +2332,7 @@ handle_derived_add_ps( int *position, long long *from )
       #      as MHZ(million hz) got from  _papi_hwi_system_info.hw_info.cpu_max_mhz*1000000.0
 
   Haihang (you@cs.utk.edu)
-*/ 
+*/
  static long long
  _papi_hwi_postfix_calc( EventInfo_t * evi, long long *hw_counter )
  {
@@ -2430,7 +2430,7 @@ handle_derived( EventInfo_t * evi, long long *from )
 		return ( _papi_hwi_postfix_calc( evi, from ) );
 	case DERIVED_CMPD:		 /* This type has existed for a long time, but was never implemented.
 							    Probably because its a no-op. However, if it's in a header, it
-							    should be supported. As I found out when I implemented it in 
+							    should be supported. As I found out when I implemented it in
 							    Pentium 4 for testing...dkt */
 		return ( from[evi->pos[0]] );
 	default:
@@ -2522,8 +2522,8 @@ _papi_hwi_get_preset_event_info( int EventCode, PAPI_event_info_t * info )
     }
 
 	if ( _preset_ptr->symbol ) {	/* if the event is in the preset table */
-      // since we are setting the whole structure to zero the strncpy calls below will 
-      // be leaving NULL terminates strings as long as they copy 1 less byte than the 
+      // since we are setting the whole structure to zero the strncpy calls below will
+      // be leaving NULL terminates strings as long as they copy 1 less byte than the
       // buffer size of the field.
 
 	   INTDBG("ENTER: Configuring: %s\n", _preset_ptr->symbol);
@@ -2895,7 +2895,7 @@ _papi_hwi_native_code_to_name( unsigned int EventCode,
 	if ( (retval = _papi_hwd[cidx]->ntv_code_to_name(
 						(unsigned int)nevt_code,
 						hwi_name, len) ) == PAPI_OK ) {
-			retval = _papi_hwi_prefix_component_name( _papi_hwd[cidx]->cmp_info.short_name, 
+			retval = _papi_hwi_prefix_component_name( _papi_hwd[cidx]->cmp_info.short_name,
 											 hwi_name, hwi_name, len);
 			INTDBG("EXIT: retval: %d\n", retval);
 			return retval;
@@ -2973,7 +2973,7 @@ _papi_hwi_get_native_event_info( unsigned int EventCode,
 
        }
 	   retval = _papi_hwi_prefix_component_name(
-						_papi_hwd[cidx]->cmp_info.short_name, 
+						_papi_hwd[cidx]->cmp_info.short_name,
 						info->symbol,
 						info->symbol,
 						sizeof(info->symbol) );

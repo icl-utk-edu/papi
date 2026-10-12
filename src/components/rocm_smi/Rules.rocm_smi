@@ -10,7 +10,7 @@ PAPI_ROCMSMI_ROOT ?= /opt/rocm/rocm_smi
 # those listed in the environment variable LD_LIBRARY_PATH. If not found
 # there it looks in $(PAPI_ROCMSMI_ROOT)/lib/librocm_smi64.so
 
-# However, this can be overridden by exporting PAPI_ROCM_SMI_LIB as 
+# However, this can be overridden by exporting PAPI_ROCM_SMI_LIB as
 # something else. It would still need to be a full path and library name.
 # If it is exported, it must work or the component will be disabled. e.g.
 # export PAPI_ROCM_SMI_LIB=$(PAPI_ROCMSMI_ROOT)/lib/librocm_smi64.so
@@ -25,26 +25,26 @@ PAPI_ROCMSMI_ROOT ?= /opt/rocm/rocm_smi
 
 # The environment variable LD_LIBRARY_PATH encodes a list of paths to
 # search for libraries; separated by a colon (:). New paths can be
-# added to LD_LIBRARY_PATH. 
+# added to LD_LIBRARY_PATH.
 #
 # Warning: LD_LIBRARY_PATH often contains directories that apply to other
 # installed packages you may be using. Always add to LD_LIBRARY_PATH
 # recursively; for example:
- 
+
 # >export LD_LIBRARY_PATH=someNewLibraryDirectory:$LD_LIBRARY_PATH which would
 # append the existing LD_LIBRARY_PATH to the new directory you wish to add.
-# Alternatively, you can prepend it: 
+# Alternatively, you can prepend it:
 # >export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:someNewLibraryDirectory Which will
 # search the existing libraries first, then your new directory.
 
-# You can check on the value of LD_LIBRARY_PATH with 
+# You can check on the value of LD_LIBRARY_PATH with
 # >echo $LD_LIBRARY_PATH
 
 # There may be other package managers or utilities, for example on a system
 # with modules; the command 'module load rocm' may modify LD_LIBRARY_PATH.
 
 # A Linux system will also search for libraries by default in the directories
-# listed by /etc/ld.so.conf, and /usr/lib64, /lib64, /usr/lib, /lib. 
+# listed by /etc/ld.so.conf, and /usr/lib64, /lib64, /usr/lib, /lib.
 
 # Note:  If you change the exports, PAPI should be rebuilt from scratch; see
 # note below.
@@ -56,7 +56,7 @@ PAPI_ROCMSMI_ROOT ?= /opt/rocm/rocm_smi
 #        From within the papi/src/ director:
 #        make clobber
 #        ./configure --with-components="rocm_smi"
-#        make  
+#        make
 
 # An alternative, for both rocm and rocm_smi components:
 #        ./configure --with-components="rocm rocm_smi"
@@ -73,7 +73,7 @@ PAPI_ROCMSMI_ROOT ?= /opt/rocm/rocm_smi
 # 3) If that fails, we will try to find the library in the standard installed
 # locations listed above. If this fails, we disable the component, the reason
 # for disabling is shown using the papi utility,
-# papi/src/utils/papi_component_avail. 
+# papi/src/utils/papi_component_avail.
 
 COMPSRCS += components/rocm_smi/linux-rocm-smi.c \
             components/rocm_smi/rocs.c

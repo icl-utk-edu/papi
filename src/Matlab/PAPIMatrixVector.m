@@ -1,8 +1,8 @@
 function PAPIMatrixVector
 
-% Compute a Matrix Vector multiply 
+% Compute a Matrix Vector multiply
 % on arrays and vectors sized from 50 to 500,
-% in steps of 50. 
+% in steps of 50.
 %
 % Use the PAPI mex function with two different methods:
 % - The PAPI flops call

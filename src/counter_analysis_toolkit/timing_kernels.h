@@ -15,7 +15,7 @@
 // causes exactly one read and one write operation in memory, assuming
 // that the variable "p_prime" resides in a register. The exact steps
 // are the following:
-// 1. Reads the element pointed to by "p" into "p_prime". 
+// 1. Reads the element pointed to by "p" into "p_prime".
 //    This element is almost a pointer to the next element in the chain, but the least significant bit might be set to 1.
 // 2. Flip the least significant bit of "p_prime" and store it back into the buffer.
 // 3. Clear the least significant bit of "p_prime" and store the result in "p".

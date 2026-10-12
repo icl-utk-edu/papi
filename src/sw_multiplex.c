@@ -1,4 +1,4 @@
-/** 
+/**
  * @file    sw_multiplex.c
  * @author  Philip Mucci
  *          mucci@cs.utk.edu
@@ -7,7 +7,7 @@
  * @author  Nils Smeds
  *          smeds@pdc.kth.se
  * @author  Haihang You
- *          you@cs.utk.edu 
+ *          you@cs.utk.edu
  * @author  Kevin London
  *	        london@cs.utk.edu
  * @author  Maynard Johnson
@@ -35,7 +35,7 @@
  * sections of code by starting the event once and by comparing
  * the values returned by subsequent calls to PAPI_read. The difference
  * in counts is used as the measure of occurred events in the code
- * section between the calls. 
+ * section between the calls.
  *
  * When multiplexing is used in this fashion the time proportion used
  * for extrapolation might appear inconsistent. The time fraction used
@@ -59,31 +59,31 @@
  * to mean extrapolated start value and extrapolated stop value.
  */
 
-/* 
+/*
 Portions of the following code are
-Copyright (c) 2009, Lawrence Livermore National Security, LLC.  
-Produced at the Lawrence Livermore National Laboratory  
+Copyright (c) 2009, Lawrence Livermore National Security, LLC.
+Produced at the Lawrence Livermore National Laboratory
 Written by John May, johnmay@llnl.gov
 LLNL-CODE-421124
-All rights reserved.  
-  
+All rights reserved.
+
 Redistribution and use in source and binary forms, with or
 without modification, are permitted provided that the following
-conditions are met:  
-  
+conditions are met:
+
  • Redistributions of source code must retain the above copyright
-notice, this list of conditions and the disclaimer below. 
+notice, this list of conditions and the disclaimer below.
 
  • Redistributions in binary form must reproduce the above
 copyright notice, this list of conditions and the disclaimer (as
 noted below) in the documentation and/or other materials provided
-with the distribution. 
+with the distribution.
 
  • Neither the name of the LLNS/LLNL nor the names of its
 contributors may be used to endorse or promote products derived
-from this software without specific prior written permission.  
-  
- 
+from this software without specific prior written permission.
+
+
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -97,24 +97,24 @@ OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON  ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
-OF SUCH DAMAGE.  
-  
-  
-Additional BSD Notice  
-  
+OF SUCH DAMAGE.
+
+
+Additional BSD Notice
+
 1. This notice is required to be provided under our contract with
 the U.S.  Department of Energy (DOE).  This work was produced at
 Lawrence Livermore National Laboratory under Contract No.
-DE-AC52-07NA27344 with the DOE.  
-  
+DE-AC52-07NA27344 with the DOE.
+
 2. Neither the United States Government nor Lawrence Livermore
 National Security, LLC nor any of their employees, makes any
 warranty, express or implied, or assumes any liability or
 responsibility for the accuracy, completeness, or usefulness of
 any information, apparatus, product, or process disclosed, or
 represents that its use would not infringe privately-owned
-rights.  
-  
+rights.
+
 3.  Also, reference herein to any specific commercial products,
 process, or services by trade name, trademark, manufacturer or
 otherwise does not necessarily constitute or imply its
@@ -123,7 +123,7 @@ Government or Lawrence Livermore National Security, LLC.  The
 views and opinions of authors expressed herein do not necessarily
 state or reflect those of the United States Government or
 Lawrence Livermore National Security, LLC, and shall not be used
-for advertising or product endorsement purposes.  
+for advertising or product endorsement purposes.
  */
 
 #include "papi.h"
@@ -145,7 +145,7 @@ static unsigned int randomseed;
 #include <sys/time.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <assert.h>
 
 static sigset_t sigreset;
@@ -326,7 +326,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 			return ( PAPI_ENOMEM );
 		}
 
-		/* If we're actually threaded, fill the 
+		/* If we're actually threaded, fill the
 		 * field with the thread_id otherwise
 		 * use getpid() as a placeholder. */
 
@@ -349,7 +349,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 		/* alloced_thread = 1; */
 	} else if ( _papi_hwi_thread_id_fn ) {
 
-		/* If we are threaded, AND there exists threads in the list, 
+		/* If we are threaded, AND there exists threads in the list,
 		 *  then try to find our thread in the list. */
 
 		unsigned long tid = _papi_hwi_thread_id_fn(  );
@@ -396,7 +396,7 @@ mpx_add_event( MPX_EventSet ** mpx_events, int EventCode, int domain,
 	 * the new event set to them, add them to the master list for
 	 the thread, reset master event list for this thread */
 
-	retval = mpx_insert_events( newset, &EventCode, 1, 
+	retval = mpx_insert_events( newset, &EventCode, 1,
 				    domain, granularity );
 	if ( retval != PAPI_OK ) {
 		if ( alloced_newset ) {
@@ -466,7 +466,7 @@ mpx_handler( int signal )
 	/* This handler can be invoked either when a timer expires
 	 * or when another thread in this handler responding to the
 	 * timer signals other threads.  We have to distinguish
-	 * these two cases so that we don't get infinite loop of 
+	 * these two cases so that we don't get infinite loop of
 	 * handler calls.  To do that, we look at the value of
 	 * threads_responding.  We assume that only one thread can
 	 * be active in this signal handler at a time, since the
@@ -866,8 +866,8 @@ MPX_read( MPX_EventSet * mpx_events, long long *values, int called_by_stop )
 
                         if (called_by_stop) {
 
-			   /* Extrapolate data up to the current time 
-			    * only if it's not a rate measurement 
+			   /* Extrapolate data up to the current time
+			    * only if it's not a rate measurement
 			    */
 			   if ( !( mev->is_a_rate ) ) {
 			      if ( mev != thread_data->cur_event ) {
@@ -1020,15 +1020,15 @@ MPX_stop( MPX_EventSet * mpx_events, long long *values )
 	}
 
 	/* One event in this set is currently running, if this was the
-	 * last active event set using this event, we need to start the next 
+	 * last active event set using this event, we need to start the next
 	 * event if there still is one left in the queue
 	 */
 	if ( cur_mpx_event > -1 ) {
 		MasterEvent *tmp, *mev = mpx_events->mev[cur_mpx_event];
 
 		if ( mev->active == 0 ) {
-			/* Event is now inactive; stop it 
-			 * There is no need to update master event set 
+			/* Event is now inactive; stop it
+			 * There is no need to update master event set
 			 * counters as this is the last active user
 			 */
 			retval = PAPI_stop( mev->papi_event, dummy_value );
@@ -1111,7 +1111,7 @@ MPX_shutdown( void )
 		while(t!=NULL) {
 		   next=t->next;
 		   papi_free( t );
-		   t = next;			
+		   t = next;
 		}
 		tlist = NULL;
 	}
@@ -1137,8 +1137,8 @@ mpx_init( int interval_ns )
 	return ( PAPI_OK );
 }
 
-/** Inserts a list of events into the master event list, 
-   and adds new mev pointers to the MPX_EventSet. 
+/** Inserts a list of events into the master event list,
+   and adds new mev pointers to the MPX_EventSet.
    MUST BE CALLED WITH THE TIMER INTERRUPT DISABLED */
 
 static int
@@ -1164,7 +1164,7 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 
 		/* Look for a matching event in the master list */
 		for( mev = *head; mev != NULL; mev = mev->next ) {
-		   if ( (mev->pi.event_type == event_list[i]) && 
+		   if ( (mev->pi.event_type == event_list[i]) &&
 			(mev->pi.domain == domain) &&
 			(mev->pi.granularity == granularity ))
 				break;
@@ -1186,23 +1186,23 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 		   mev->count_estimate = 0;
 		   mev->is_a_rate = 0;
 		   mev->papi_event = PAPI_NULL;
-			
+
 		   retval = PAPI_create_eventset( &( mev->papi_event ) );
 		   if ( retval != PAPI_OK ) {
-		      MPXDBG( "Event %d could not be counted.\n", 
+		      MPXDBG( "Event %d could not be counted.\n",
 			      event_list[i] );
 		      goto bail;
 		   }
 
 		   retval = PAPI_add_event( mev->papi_event, event_list[i] );
 		   if ( retval != PAPI_OK ) {
-		      MPXDBG( "Event %d could not be counted.\n", 
+		      MPXDBG( "Event %d could not be counted.\n",
 			      event_list[i] );
 		      goto bail;
 		   }
 
 		   /* Always count total cycles so we can scale results.
-		    * If user just requested cycles, 
+		    * If user just requested cycles,
 		    * don't add that event again. */
 
 		   if ( event_list[i] != SCALE_EVENT ) {
@@ -1213,14 +1213,14 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 			 goto bail;
 		      }
 		   }
-			
+
 		   /* Set the options for the event set */
 		   memset( &options, 0x0, sizeof ( options ) );
 		   options.domain.eventset = mev->papi_event;
 		   options.domain.domain = domain;
 		   retval = PAPI_set_opt( PAPI_DOMAIN, &options );
 		   if ( retval != PAPI_OK ) {
-		      MPXDBG( "PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n", 
+		      MPXDBG( "PAPI_set_opt(PAPI_DOMAIN, ...) = %d\n",
 			      retval );
 		      goto bail;
 		   }
@@ -1233,14 +1233,14 @@ mpx_insert_events( MPX_EventSet *mpx_events, int *event_list,
 		      if ( retval != PAPI_ECMP ) {
 			 /* ignore component errors because they typically mean
 			    "not supported by the component" */
-			 MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n", 
+			 MPXDBG( "PAPI_set_opt(PAPI_GRANUL, ...) = %d\n",
 				 retval );
 			 goto bail;
 		      }
 		   }
 
 
-		   /* Chain the event set into the 
+		   /* Chain the event set into the
 		    * master list of event sets used in
 		    * multiplexing. */
 
@@ -1364,7 +1364,7 @@ mpx_delete_one_event( MPX_EventSet * mpx_events, int Event )
 
 }
 
-/** Remove events that are not used any longer from the run 
+/** Remove events that are not used any longer from the run
  * list of events to multiplex by the handler
  * MUST BE CALLED WITH THE SIGNAL HANDLER DISABLED
  */

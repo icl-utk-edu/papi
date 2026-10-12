@@ -7,7 +7,7 @@
  *     @section Synopsis
  *
  *     @section Description
- *             papi_native_avail is a PAPI utility program that reports information 
+ *             papi_native_avail is a PAPI utility program that reports information
  *             about the events available on the current platform in an XML format.
  *
  *             It will attempt to create an EventSet with each event in it, which
@@ -314,7 +314,7 @@ parse_command_line (int argc, char **argv, int numc) {
 			 break;
 
 	      default:
-			 fprintf( stderr, 
+			 fprintf( stderr,
 				     "Error: unknown option: %s\n", argv[i] );
 			 usage( argv );
 			 exit(1);
@@ -336,7 +336,7 @@ parse_command_line (int argc, char **argv, int numc) {
 
 	   retval = PAPI_add_event( EventSet, code );
 	   if ( retval != PAPI_OK ) {
-	      fprintf( stderr, 
+	      fprintf( stderr,
                        "Error: event %s cannot be counted with others\n",
 		       argv[i] );
 	      usage( argv );

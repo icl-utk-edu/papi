@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    cpus.c
 * Author:  Gary Mohr
 *          gary.mohr@bull.com
@@ -59,7 +59,7 @@ int
 _papi_hwi_lookup_or_create_cpu( CpuInfo_t **here, unsigned int cpu_num )
 {
    APIDBG("Entry: here: %p\n", here);
-	
+
    CpuInfo_t *tmp = NULL;
    int retval = PAPI_OK;
 
@@ -78,7 +78,7 @@ _papi_hwi_lookup_or_create_cpu( CpuInfo_t **here, unsigned int cpu_num )
    }
 
    _papi_hwi_unlock( CPUS_LOCK );
-	
+
    return retval;
 }
 
@@ -96,20 +96,20 @@ allocate_cpu( unsigned int cpu_num )
    if ( cpu == NULL ) {
       goto allocate_error;
    }
-	
+
    /* identify the cpu this info structure represents */
    cpu->cpu_num = cpu_num;
-   cpu->context = ( hwd_context_t ** ) 
+   cpu->context = ( hwd_context_t ** )
                   papi_calloc( ( size_t ) papi_num_components ,
 			       sizeof ( hwd_context_t * ) );
    if ( !cpu->context ) {
       goto error_free_cpu;
    }
- 
+
    /* Allocate an eventset per component per cpu?  Why? */
-	
-   cpu->running_eventset = ( EventSetInfo_t ** ) 
-                           papi_calloc(( size_t ) papi_num_components, 
+
+   cpu->running_eventset = ( EventSetInfo_t ** )
+                           papi_calloc(( size_t ) papi_num_components,
                                        sizeof ( EventSetInfo_t * ) );
    if ( !cpu->running_eventset ) {
       goto error_free_context;
@@ -145,7 +145,7 @@ static int
 remove_cpu( CpuInfo_t * entry )
 {
    APIDBG("Entry: entry: %p\n", entry);
-	
+
    CpuInfo_t *tmp = NULL, *prev = NULL;
 
    THRDBG( "_papi_hwi_cpu_head was cpu %d at %p\n",
@@ -189,9 +189,9 @@ remove_cpu( CpuInfo_t * entry )
 static void
 free_cpu( CpuInfo_t **cpu )
 {
-   APIDBG( "Entry: *cpu: %p, cpu_num: %d, cpu_users: %d\n", 
+   APIDBG( "Entry: *cpu: %p, cpu_num: %d, cpu_users: %d\n",
 	   *cpu, ( *cpu )->cpu_num, (*cpu)->num_users);
-	
+
    int i,users,retval;
 
    _papi_hwi_lock( CPUS_LOCK );
@@ -244,7 +244,7 @@ insert_cpu( CpuInfo_t * entry )
 {
    APIDBG("Entry: entry: %p\n", entry);
 
-   if ( _papi_hwi_cpu_head == NULL ) {	
+   if ( _papi_hwi_cpu_head == NULL ) {
       /* 0 elements */
       THRDBG( "_papi_hwi_cpu_head is NULL\n" );
       entry->next = entry;

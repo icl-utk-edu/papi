@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-coretemp.h
  * CVS:     $Id$
  * @author  James Ralph
@@ -12,11 +12,11 @@
  *
  * @brief coretemp component
  *  This file has the source code for a component that enables PAPI-C to access
- *  hardware monitoring sensors through the coretemp sysfs interface. This code 
- *  will dynamically create a native events table for all the sensors that can 
+ *  hardware monitoring sensors through the coretemp sysfs interface. This code
+ *  will dynamically create a native events table for all the sensors that can
  *  be found under /sys/class/hwmon/hwmon[0-9]+.
  *
- * Notes: 
+ * Notes:
  *  - Based heavily upon the lm-sensors component by Heike Jagode.
  */
 

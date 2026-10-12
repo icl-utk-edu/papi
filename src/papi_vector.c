@@ -88,7 +88,7 @@ vec_long_dummy(  )
 
 long long vec_virt_cycles(void)
 {
-  return ((long long) _papi_os_vector.get_virt_usec() * 
+  return ((long long) _papi_os_vector.get_virt_usec() *
 	  _papi_hwi_system_info.hw_info.cpu_max_mhz);
 }
 
@@ -135,7 +135,7 @@ _papi_hwi_innoculate_vector( papi_vector_t * v )
 		v->write =
 			( int ( * )( hwd_context_t *, hwd_control_state_t *, long long[] ) )
 			vec_int_dummy;
-	if ( !v->cleanup_eventset ) 
+	if ( !v->cleanup_eventset )
 		v->cleanup_eventset = ( int ( * )( hwd_control_state_t * ) ) vec_int_ok_dummy;
 	if ( !v->stop_profiling )
 		v->stop_profiling =
@@ -307,7 +307,7 @@ vector_print_table( papi_vector_t * v, int print_func )
 	vector_print_routine( ( void * ) v->read, "_papi_hwd_read", print_func );
 	vector_print_routine( ( void * ) v->reset, "_papi_hwd_reset", print_func );
 	vector_print_routine( ( void * ) v->write, "_papi_hwd_write", print_func );
-	vector_print_routine( ( void * ) v->cleanup_eventset, 
+	vector_print_routine( ( void * ) v->cleanup_eventset,
 						  "_papi_hwd_cleanup_eventset", print_func );
 
 	vector_print_routine( ( void * ) v->stop_profiling,

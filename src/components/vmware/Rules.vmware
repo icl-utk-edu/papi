@@ -6,5 +6,5 @@ COMPOBJS += vmware.o
 CFLAGS += -I$(VMWARE_INCDIR) -DVMGUESTLIB=$(VMGUESTLIB) -DVMWARE_INCDIR=\"$(VMWARE_INCDIR)\"
 LDFLAGS += $(LDL)
 
-vmware.o: components/vmware/vmware.c $(HEADERS) 
-	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/vmware/vmware.c -o vmware.o 
+vmware.o: components/vmware/vmware.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/vmware/vmware.c -o vmware.o

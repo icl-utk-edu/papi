@@ -36,17 +36,17 @@ Use chmod to set site-appropriate access permissions (e.g. 766) for /sys/class/p
 The powercap sysfs interface exposes energy counters and R/W regsiter-like
 power settings. The counters and R/W settings apply to a power domain on a system.
 
-For example, a single KNL chip exposes package power and DRAM power information. 
+For example, a single KNL chip exposes package power and DRAM power information.
 On KNL this component can be used to read package/DRAM energy counters and set package/DRAM power limits.
-There are two limits in the package domain and a single limit in the DRAM domain. The two limits 
-in the package domain correspond to long/short term limits. 
+There are two limits in the package domain and a single limit in the DRAM domain. The two limits
+in the package domain correspond to long/short term limits.
 
 For all supported processors, each package/DRAM power limit has an associated
 time window. The time window for each limit can also be changed, which changes the enforcement time window of
 that limit.
 
 These counters and settings are exposed though this PAPI component and can be accessed just like any normal PAPI
-counter. Running the "powercap\_basic" test in the test directory will list all the events on a system. There is also a 
+counter. Running the "powercap\_basic" test in the test directory will list all the events on a system. There is also a
 "powercap\_limit" test in the test directory that shows how a power limit is applied.
 
 Note: Power Limiting using powercap requires root or write permission to the files situated in the /sys/class/powercap directory.

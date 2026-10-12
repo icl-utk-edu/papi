@@ -5,7 +5,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    pmapi-ppc64.h
 * Author:  Maynard Johnson
 *          maynardj@us.ibm.com
@@ -117,9 +117,9 @@ typedef ppc64_pmapi_context_t hwd_context_t;
 
 /*
 typedef struct hwd_groups {
-  // group number from the pmapi pm_groups_t struct 
+  // group number from the pmapi pm_groups_t struct
   //int group_id;
-  // Buffer containing counter cmds for this group 
+  // Buffer containing counter cmds for this group
   unsigned char counter_cmd[POWER_MAX_COUNTERS];
 } hwd_groups_t;
 */

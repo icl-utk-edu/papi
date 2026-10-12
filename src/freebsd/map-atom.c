@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-atom.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -13,15 +13,15 @@
 #include "map.h"
 
 /****************************************************************************
- ATOM SUBSTRATE 
- ATOM SUBSTRATE 
+ ATOM SUBSTRATE
+ ATOM SUBSTRATE
  ATOM SUBSTRATE
  ATOM SUBSTRATE
  ATOM SUBSTRATE
 ****************************************************************************/
 
 /*
-        NativeEvent_Value_AtomProcessor must match AtomProcessor_info 
+        NativeEvent_Value_AtomProcessor must match AtomProcessor_info
 */
 
 Native_Event_LabelDescription_t AtomProcessor_info[] =

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    freebsd.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -43,20 +43,20 @@ static void show_counter(char *string, int id, char *name,
 #if defined(DEBUG)
      pmc_value_t tmp_value;
      int ret = pmc_read (id, &tmp_value);
-     
+
      fprintf(stderr,"%s\n",string);
      if (ret < 0) {
 	fprintf (stderr, "DEBUG: Unable to read counter %s (ID: %08x) "
-                         "on routine %s (file: %s, line: %d)\n", 
+                         "on routine %s (file: %s, line: %d)\n",
 		         name, id, function,file,line);
      } else {
 	fprintf (stderr, "DEBUG: Read counter %s (ID: %08x) - "
-		         "value %llu on routine %s (file: %s, line: %d)\n", 
-		         name, id, (long long unsigned int)tmp_value, 
+		         "value %llu on routine %s (file: %s, line: %d)\n",
+		         name, id, (long long unsigned int)tmp_value,
 		         function, file, line);
      }
 #else
-     (void) string; (void)name; 
+     (void) string; (void)name;
      (void)id; (void)function; (void)file; (void)line;
 #endif
 }
@@ -76,16 +76,16 @@ static hwd_libpmc_context_t Context;
 int init_mdi(void)
 {
 	const struct pmc_cpuinfo *info;
-   
+
 	SUBDBG("Entering\n");
 
 	/* Initialize PMC library */
 	if (pmc_init() < 0)
 		return PAPI_ESYS;
-      
+
 	if (pmc_cpuinfo (&info) != 0)
 		return PAPI_ESYS;
-   
+
 	if (info != NULL)
 	{
 		/* Get CPU clock rate from HW.CLOCKRATE sysctl value, and
@@ -94,7 +94,7 @@ int init_mdi(void)
 		size_t len;
 		int hw_clockrate;
 		char hw_model[PAPI_MAX_STR_LEN];
-     
+
 #if !defined(__i386__) && !defined(__amd64__)
 		Context.use_rdtsc = FALSE;
 #else
@@ -102,7 +102,7 @@ int init_mdi(void)
 		   module is loaded, then CPU frequency can vary and this method
 		   does not work properly! We'll use use_rdtsc to know if this
 		   method is available */
-		len = 5; 
+		len = 5;
 		Context.use_rdtsc = sysctlnametomib ("dev.cpufreq.0.%driver", mib, &len) == -1;
 #endif
 
@@ -119,7 +119,7 @@ int init_mdi(void)
 		len = PAPI_MAX_STR_LEN;
 		if (sysctl (mib, 2, &hw_model, &len, NULL, 0) == -1)
 			return PAPI_ESYS;
-		
+
 		/*strcpy (_papi_hwi_system_info.hw_info.vendor_string, pmc_name_of_cputype(info->pm_cputype));*/
 		sprintf (_papi_hwi_system_info.hw_info.vendor_string, "%s (TSC:%c)", pmc_name_of_cputype(info->pm_cputype), Context.use_rdtsc?'Y':'N');
 		strcpy (_papi_hwi_system_info.hw_info.model_string, hw_model);
@@ -207,7 +207,7 @@ int init_presets(int cidx)
  */
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int _papi_freebsd_init_component(int cidx)
@@ -220,7 +220,7 @@ int _papi_freebsd_init_component(int cidx)
 
    /* Internal function, doesn't necessarily need to be a function */
    retval=init_presets(cidx);
-   
+
    return retval;
 }
 
@@ -407,7 +407,7 @@ int _papi_freebsd_read(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long 
 
 #if defined(DEBUG)
 	for (i = 0; i < ctrl->n_counters; i++)
-		fprintf (stderr, "DEBUG: %s counter '%s' has value %lld\n", 
+		fprintf (stderr, "DEBUG: %s counter '%s' has value %lld\n",
 			 FUNC, ctrl->counters[i], (long long)ctrl->values[i]);
 #endif
 	return PAPI_OK;
@@ -546,7 +546,7 @@ int _papi_freebsd_write(hwd_context_t *ctx, hwd_control_state_t *ctrl, long long
 }
 
 /*
- * Overflow and profile functions 
+ * Overflow and profile functions
  */
 void _papi_freebsd_dispatch_timer(int signal, hwd_siginfo_t * info, void *context)
 {
@@ -600,7 +600,7 @@ int _papi_freebsd_set_profile(EventSetInfo_t *ESI, int EventIndex, int threashol
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain) 
+int _papi_freebsd_set_domain(hwd_control_state_t *cntrl, int domain)
 {
   int found = 0;
 
@@ -643,7 +643,7 @@ int _papi_freebsd_ctl (hwd_context_t *ctx, int code, _papi_int_option_t *option)
 }
 
 
-/* 
+/*
  * Timing Routines
  * These functions should return the highest resolution timers available.
  */
@@ -760,7 +760,7 @@ int _papi_freebsd_ntv_name_to_code(const char *name, unsigned int *event_code) {
    return PAPI_ENOEVNT;
 }
 
-int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name, 
+int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name,
                                    int len)
 {
     SUBDBG("Entering\n");
@@ -768,12 +768,12 @@ int _papi_freebsd_ntv_code_to_name(unsigned int EventCode, char *ntv_name,
     int nidx;
 
     nidx = EventCode & PAPI_NATIVE_AND_MASK;
-	
+
     if (nidx >= _papi_freebsd_vector.cmp_info.num_native_events) {
        return PAPI_ENOEVNT;
     }
 
-    strncpy (ntv_name, 
+    strncpy (ntv_name,
 	     _papi_hwd_native_info[Context.CPUtype].info[nidx].name, len);
     if (strlen(_papi_hwd_native_info[Context.CPUtype].info[nidx].name) > (size_t)len-1) {
 		return PAPI_EBUF;
@@ -799,13 +799,13 @@ int _papi_freebsd_ntv_code_to_descr(unsigned int EventCode, char *descr, int len
 }
 
 
-/* 
+/*
  * Counter Allocation Functions, only need to implement if
  *    the component needs smart counter allocation.
  */
 
 /* Here we'll check if PMC can provide all the counters the user want */
-int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI) 
+int _papi_freebsd_allocate_registers (EventSetInfo_t *ESI)
 {
 	char name[1024];
 	int failed, allocated_counters, i, j, ret;
@@ -872,7 +872,7 @@ _papi_freebsd_detect_hypervisor(char *virtual_vendor_name) {
 #else
   (void) virtual_vendor_name;
 #endif
-        
+
   return retval;
 }
 
@@ -888,12 +888,12 @@ _papi_freebsd_get_system_info( papi_mdi_t *mdi ) {
   /* Get virtualization info */
   mdi->hw_info.virtualized=_papi_freebsd_detect_hypervisor(mdi->hw_info.virtual_vendor_string);
 
-  
+
   return PAPI_OK;
 
 }
 
-int 
+int
 _papi_hwi_init_os(void) {
 
    struct utsname uname_buffer;
@@ -939,7 +939,7 @@ papi_vector_t _papi_freebsd_vector = {
 	.attach = 0,
 	.attach_must_ptrace = 0,
   } ,
-  .size = { 
+  .size = {
 	.context = sizeof( hwd_context_t ),
 	.control_state = sizeof( hwd_control_state_t ),
 	.reg_value = sizeof( hwd_register_t ),

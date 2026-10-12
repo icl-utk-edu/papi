@@ -11,7 +11,7 @@
 
 int main()
 {
-   int i,tmp=0;   
+   int i,tmp=0;
    int retval;
    const PAPI_exe_info_t *prginfo = NULL;
 
@@ -27,19 +27,19 @@ int main()
       printf("Library initialization error! \n");
       exit(1);
    }
-    
+
 
    for(i=0;i<1000;i++)
       tmp=tmp+i;
-    
-   /* PAPI_get_executable_info returns a NULL if there is an error */    
+
+   /* PAPI_get_executable_info returns a NULL if there is an error */
    if ((prginfo = PAPI_get_executable_info()) == NULL)
    {
       printf("PAPI_get_executable_info error! \n");
       exit(1);
    }
 
-  
+
    printf("Start text addess of user program is at %p\n",
               prginfo->address_info.text_start);
    printf("End text address of user program is at %p\n",

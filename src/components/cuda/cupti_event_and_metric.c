@@ -23,14 +23,14 @@
  * |         unused                  |  dev  | ql |   nameid   |
  * +---------------------------------+-------+----+------------+
  *
- * unused    : 34 bits 
+ * unused    : 34 bits
  * device    : 7  bits ([0 - 127] devices)
  * qlmask    : 2  bits (qualifier mask)
  * nameid    : 21: bits (roughly > 2 million event names)
  */
 #define EVENTS_WIDTH (sizeof(uint32_t) * 8)
 #define DEVICE_WIDTH ( 7)
-#define QLMASK_WIDTH ( 2) 
+#define QLMASK_WIDTH ( 2)
 #define NAMEID_WIDTH (21)
 #define UNUSED_WIDTH (EVENTS_WIDTH - DEVICE_WIDTH - QLMASK_WIDTH - NAMEID_WIDTH)
 #define DEVICE_SHIFT (EVENTS_WIDTH - UNUSED_WIDTH - DEVICE_WIDTH)
@@ -217,7 +217,7 @@ int cuptie_init(void)
         return papi_errno;
     }
 
-    // Enumerate through available devices and store the events and metrics 
+    // Enumerate through available devices and store the events and metrics
     papi_errno = init_event_and_metric_table();
     if (papi_errno != PAPI_OK) {
         cuptic_err_set_last("Failure to get the event's and metric's for each device on the system.\n");
@@ -244,7 +244,7 @@ int cuptie_init(void)
  ******************************************************************************/
 
 /***************************************************************************//**
- *  @section Helper functions related to the overall initialization of 
+ *  @section Helper functions related to the overall initialization of
  *           the Event and Metric workflow.
  *
  *  @{
@@ -302,7 +302,7 @@ static int load_event_and_metric_sym(void)
 /** @class load_cupti_profiler_sym
   * @brief Load CUPTI Profiler API functions.
 */
-static int load_cupti_profiler_sym(void) 
+static int load_cupti_profiler_sym(void)
 {
     SUBDBG("ENTERING: Loading CUPTI Profiler API functions.\n");
 
@@ -319,13 +319,13 @@ static int load_cupti_profiler_sym(void)
   *        cuptiProfilerInitialize.
 */
 static int initialize_cupti_profiler_api(void)
-{   
+{
     SUBDBG("ENTERING: Initializing CUPTI Profiler API.\n");
-    
+
     CUpti_Profiler_Initialize_Params profilerInitializeParams = {CUpti_Profiler_Initialize_Params_STRUCT_SIZE};
     profilerInitializeParams.pPriv = NULL;
     cuptiCheckErrors( cuptiProfilerInitializeEventAndMetricPtr(&profilerInitializeParams), return PAPI_EMISC );
-    
+
     SUBDBG("EXITING: Initialization of the CUPTI Profiler API completed.\n");
     return PAPI_OK;
 }
@@ -339,7 +339,7 @@ static int init_event_and_metric_main_htable(void)
 
     int i, val = 1, base = 2;
 
-    /* allocate (2 ^ NAMEID_WIDTH) metric names, this matches the 
+    /* allocate (2 ^ NAMEID_WIDTH) metric names, this matches the
        number of bits for the event encoding format */
     for (i = 0; i < NAMEID_WIDTH; i++) {
         val *= base;
@@ -432,10 +432,10 @@ static int init_event_and_metric_table(void)
             if (deviceIdx > 0)
                 tableIdx++;
 
-            // Get the handle for the current compute device 
+            // Get the handle for the current compute device
             CUdevice device;
             cudaCheckErrors( cuDeviceGetPtr(&device, deviceIdx), return PAPI_EMISC );
-            // Store the handle to be used later with 
+            // Store the handle to be used later with
             cuptiu_table_p->avail_gpu_info[tableIdx].deviceHandle = device;
         }
         // Metadata already collected for device
@@ -484,14 +484,14 @@ static int init_event_and_metric_table(void)
   *   The device index..
 */
 static int determine_required_api(int deviceIdx)
-{   
+{
     SUBDBG("ENTERING: Determing the device compute capability major.\n");
     int cc;
     int papi_errno = get_gpu_compute_capability(deviceIdx, &cc);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    
+
     if (cc > 70) {
         return PERFWORKS_API;
     }
@@ -505,7 +505,7 @@ static int determine_required_api(int deviceIdx)
 
 /** @class find_same_chipname
   * @brief Check to see if chipnames are identical.
-  * 
+  *
   * @param deviceId
   *   A device id. E.g. 0, 1, 2, etc.
 */
@@ -552,7 +552,7 @@ static int enumerate_events_for_event_api(cuptiu_event_and_metric_table_t *table
     // Go over the total number of domains found for the device
     int domainIdx;
     for (domainIdx = 0; domainIdx < numDomains; domainIdx++) {
-        // For each domain, get the total number of events 
+        // For each domain, get the total number of events
         uint32_t numEvents;
         cuptiCheckErrors( cuptiEventDomainGetNumEventsPtr(domainArray[domainIdx], &numEvents), return PAPI_EMISC );
 
@@ -727,7 +727,7 @@ static int store_event_or_metric_ntv_events(cuptiu_event_and_metric_table_t *evt
 
         if (htable_insert(evt_table->htable, evt_name, event) != HTABLE_SUCCESS) {
             return PAPI_ESYS;
-        } 
+        }
     }
     cuptiu_dev_set(&event->device_map, deviceIdx);
 
@@ -757,8 +757,8 @@ static int store_event_or_metric_ntv_events(cuptiu_event_and_metric_table_t *evt
   * @param thr_info
   *   Information for the Cuda contexts on the calling cpu threads.
   * @param *pstate
-  *   Struct that holds read count, running, cuptip_info_t, and 
-  *   cuptip_gpu_state_t. 
+  *   Struct that holds read count, running, cuptip_info_t, and
+  *   cuptip_gpu_state_t.
   * @param *eventIds
   *   User added Cuda native event ids.
   * @param num_events
@@ -771,7 +771,7 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
     cuptie_control_t state = (cuptie_control_t) calloc(1, sizeof(struct cuptie_control_s));
     if (state == NULL) {
         SUBDBG("Failed to allocate memory for state.\n");
-        return PAPI_ENOMEM; 
+        return PAPI_ENOMEM;
     }
 
     state->gpu_ctl = (cuptie_gpu_state_t *) calloc(numDevicesOnMachine, sizeof(cuptie_gpu_state_t));
@@ -806,9 +806,9 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
         // Only create a context if one has not already been stored for the appended device qualifier
         if (thr_info[native_event_info.device].ctx == NULL) {
             unsigned int contextFlags = 0;
-            CUcontext internalContext; 
+            CUcontext internalContext;
             cudaArtCheckErrors( cudaSetDevicePtr(native_event_info.device), return PAPI_EMISC );
-            cudaArtCheckErrors( cudaFreePtr(NULL), return PAPI_EMISC );  
+            cudaArtCheckErrors( cudaFreePtr(NULL), return PAPI_EMISC );
             cudaCheckErrors( cuCtxGetCurrentPtr(&internalContext), return PAPI_EMISC);
             thr_info[native_event_info.device].ctx = internalContext;
             // Pop the context off so verify_user_added_event_or_metric functions properly
@@ -828,19 +828,19 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
            }
            thr_info[deviceIdxForContext].ctx = currentUserContext;
         }
-        // Previous context store for the appended device qualifier 
+        // Previous context store for the appended device qualifier
         else {
            if (thr_info[deviceIdxForContext].ctx != currentUserContext) {
                SUBDBG("Multiple contexts found for device %d. Keeping the first context context found.\n", native_event_info.device);
-           }    
+           }
         }
         // Pop the context off so verify_user_added_event_or_metric functions properly
-        cudaCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC ); 
+        cudaCheckErrors( cuCtxPopCurrentPtr(&currentUserContext), return PAPI_EMISC );
     }
 
     papi_errno = verify_user_added_event_or_metric(eventIds, num_events, state, thr_info);
     if (papi_errno != PAPI_OK) {
-        return papi_errno;    
+        return papi_errno;
     }
 
     // For the case we found a cuda context from the user on the calling cpu thread
@@ -863,7 +863,7 @@ int cuptie_ctx_create(cuptic_info_t thr_info, cuptie_control_t *pstate, uint32_t
   *        Then enable the event group sets for profiling.
   *
   * @param state
-  *  Structure containing read_count, state of the eventset, etc. 
+  *  Structure containing read_count, state of the eventset, etc.
 */
 int cuptie_ctx_start(cuptie_control_t state)
 {
@@ -951,7 +951,7 @@ int cuptie_ctx_start(cuptie_control_t state)
   * @brief For each event group set calculate the event or metric values.
   *
   * @param state
-  *  Structure containing read_count, state of the eventset, etc. 
+  *  Structure containing read_count, state of the eventset, etc.
   * @param **counterValues
   *  Variable to store the counter values for the calculated event or metric
   *  values.
@@ -1006,7 +1006,7 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
             size_t groupDomainSize = sizeof(groupDomain);
             groupAttrib = CUPTI_EVENT_GROUP_ATTR_EVENT_DOMAIN_ID;
             cuptiCheckErrors( cuptiEventGroupGetAttributePtr(eventGroup, groupAttrib, &groupDomainSize, &groupDomain), return PAPI_EMISC );
-        
+
             // Get the total number of instances for the group domain
             uint32_t numTotalInstances;
             size_t numTotalInstancesSize = sizeof(numTotalInstances);
@@ -1017,7 +1017,7 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
             size_t numInstancesSize = sizeof(numInstances);
             domainAttrib = CUPTI_EVENT_DOMAIN_ATTR_INSTANCE_COUNT;
             cuptiCheckErrors( cuptiDeviceGetEventDomainAttributePtr(device, groupDomain, domainAttrib, &numInstancesSize, &numInstances), return PAPI_EMISC );
-  
+
             size_t sizeOfEventValueBufferInBytes = sizeof(uint64_t) * numGroupEvents * numInstances;
             uint64_t *eventValueBuffer = (uint64_t *) malloc(sizeOfEventValueBufferInBytes);
             if (eventValueBuffer == NULL) {
@@ -1051,10 +1051,10 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
                 return PAPI_ENOMEM;
             }
 
-            int eventIdx; 
+            int eventIdx;
             for (eventIdx = 0; eventIdx < numEventIdsRead; eventIdx++) {
                 int instanceIdx;
-                for (instanceIdx = 0; instanceIdx < numInstances; instanceIdx++) { 
+                for (instanceIdx = 0; instanceIdx < numInstances; instanceIdx++) {
                     accumulateEventVals[eventIdx] += eventValueBuffer[eventIdx + (numGroupEvents * instanceIdx)];
                 }
             }
@@ -1154,7 +1154,7 @@ int cuptie_ctx_read(cuptie_control_t state, long long **counterValues)
   * @brief Disable an event group set.
   *
   * @param state
-  *  Structure containing read_count, state of the eventset, etc. 
+  *  Structure containing read_count, state of the eventset, etc.
 */
 int cuptie_ctx_stop(cuptie_control_t state)
 {
@@ -1202,7 +1202,7 @@ int cuptie_ctx_stop(cuptie_control_t state)
   *        as for an event group reset all events.
   *
   * @param state
-  *  Structure containing read_count, state of the eventset, etc. 
+  *  Structure containing read_count, state of the eventset, etc.
 */
 int cuptie_ctx_reset(cuptie_control_t state)
 {
@@ -1254,7 +1254,7 @@ int cuptie_ctx_reset(cuptie_control_t state)
   * @brief Free memory and destroy the event and metric tables.
   *
   * @param state
-  *  Structure containing read_count, state of the eventset, etc. 
+  *  Structure containing read_count, state of the eventset, etc.
 */
 int cuptie_ctx_destroy(cuptie_control_t *pstate)
 {
@@ -1289,7 +1289,7 @@ int cuptie_ctx_destroy(cuptie_control_t *pstate)
  ******************************************************************************/
 
 /***************************************************************************//**
- *  @section  Helper functions specific to a PAPI profiling workflow 
+ *  @section  Helper functions specific to a PAPI profiling workflow
  *            (e.g. start - stop).
  *
  *  @{
@@ -1345,7 +1345,7 @@ static int check_if_event_or_metric_required_multiple_passes(const char *addedEv
         papi_errno = PAPI_EMULPASS;
     }
 
-    // Store the found Event or Metric ID 
+    // Store the found Event or Metric ID
     *addedNativeEventID = (cuptiApi == EVENT) ? eventId : metricId;
 
     // Cleanup
@@ -1363,8 +1363,8 @@ static int check_if_event_or_metric_required_multiple_passes(const char *addedEv
   * @param num_events
   *   Number of Cuda native events a user is wanting to count.
   * @param state
-  *   Struct that holds read count, running, cuptip_info_t, and 
-  *   cuptip_gpu_state_t. 
+  *   Struct that holds read count, running, cuptip_info_t, and
+  *   cuptip_gpu_state_t.
 */
 static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events, cuptie_control_t state, cuptic_info_t thr_info)
 {
@@ -1386,7 +1386,7 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
             return papi_errno;
         }
 
-        // Set the appropriate context for the native events appended qualifier 
+        // Set the appropriate context for the native events appended qualifier
         cudaCheckErrors( cuCtxSetCurrentPtr(thr_info[native_event_info.device].ctx), return PAPI_EMISC );
 
         // Verify the user added event exists
@@ -1494,7 +1494,7 @@ static int verify_user_added_event_or_metric(uint32_t *events_id, int num_events
 }
 
 /** @class convert_metric_value_to_long_long
-  * @brief For a metric ID, convert the value first to its 
+  * @brief For a metric ID, convert the value first to its
   *        metric value kind and then convert it to long long.
   * @param metricID
   *   A CUPTI metric ID.
@@ -1623,22 +1623,22 @@ static void destroy_event_and_metric_table(cuptiu_event_and_metric_table_t **ini
   * @param event_code
   *   Cuda native event code.
   * @param *descr
-  *   Stores the corresponding description. 
+  *   Stores the corresponding description.
   * @param len
   *   Maximum length allowed for the description.
 */
 int cuptie_evt_code_to_descr(uint32_t event_code, char *descr, int len)
 {
-    // code_to_descr should never be called as evt_code_to_info is implemented 
+    // code_to_descr should never be called as evt_code_to_info is implemented
     SUBDBG("EXITING: Code to description not supported.\n");
     return PAPI_ENOIMPL;
 }
 
 /** @class cuptie_evt_enum
   * @brief Enumerate Cuda native events.
-  * 
+  *
   * @param *event_code
-  *   Cuda native event code. 
+  *   Cuda native event code.
   * @param modifier
   *   Modifies the search logic. Three modifiers are used PAPI_ENUM_FIRST,
   *   PAPI_ENUM_EVENTS, and PAPI_NTV_ENUM_DEFAULT_QUALIFIERS.
@@ -1696,24 +1696,24 @@ int cuptie_evt_enum(uint32_t *event_code, int modifier)
 }
 
 /** @class cuptip_evt_code_to_info
-  * @brief Takes a Cuda native event code and collects info such as Cuda native 
-  *        event name, Cuda native event description, and number of devices. 
+  * @brief Takes a Cuda native event code and collects info such as Cuda native
+  *        event name, Cuda native event description, and number of devices.
   * @param event_code
-  *   Cuda native event code. 
+  *   Cuda native event code.
   * @param *info
-  *   Structure for member variables such as symbol, short description, and 
-  *   long desctiption. 
+  *   Structure for member variables such as symbol, short description, and
+  *   long desctiption.
 */
 int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
-{   
+{
     SUBDBG("ENTERING: Converting Cuda native event code to info.\n");
-    
+
     event_info_t inf;
     int papi_errno = event_and_metric_id_to_info(event_code, &inf);
     if (papi_errno != PAPI_OK) {
         return papi_errno;
     }
-    
+
     int strLen;
     switch (inf.flags) {
         case 0:
@@ -1724,7 +1724,7 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                 SUBDBG("Failed to fully write Cuda event or metric name into info->symbol.\n");
                 return PAPI_EBUF;
             }
-            
+
             strLen = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s", cuptiu_table_p->events[inf.nameid].desc );
             if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                 SUBDBG("Failed to fully write Cuda event or metric description into info->long_descr.\n");
@@ -1737,7 +1737,7 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
         {
             int init_metric_device_idx;
             char devices[PAPI_MAX_STR_LEN] = { 0 };
-            int i; 
+            int i;
             for (i = 0; i < numDevicesOnMachine; ++i) {
                 if (cuptiu_dev_check(cuptiu_table_p->events[inf.nameid].device_map, i)) {
                     // Store the first device found to use with :device=#, as on a heterogeneous
@@ -1745,7 +1745,7 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                     if (devices[0] == '\0') {
                         init_metric_device_idx = i;
                     }
-                    
+
                     strLen = snprintf(devices + strlen(devices), PAPI_HUGE_STR_LEN - strlen(devices), "%i,", i);
                     if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN - strlen(devices)) {
                         SUBDBG("Failed to fully write device qualifier into devices.\n");
@@ -1754,14 +1754,14 @@ int cuptie_evt_code_to_info(uint32_t event_code, PAPI_event_info_t *info)
                 }
             }
             *(devices + strlen(devices) - 1) = 0;
-            
+
             // Store details for the Cuda event or metric
             strLen = snprintf( info->symbol, PAPI_HUGE_STR_LEN, "%s:device=%i", cuptiu_table_p->events[inf.nameid].name, init_metric_device_idx );
             if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
                 SUBDBG("Failed to fully write Cuda event or metric name into info->symbol.\n");
                 return PAPI_EBUF;
             }
-            
+
             strLen = snprintf( info->long_descr, PAPI_HUGE_STR_LEN, "%s masks:Mandatory device qualifier [%s]",
                                cuptiu_table_p->events[inf.nameid].desc, devices );
             if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
@@ -1834,14 +1834,14 @@ int cuptie_evt_name_to_code(const char *name, uint32_t *event_code)
     if (cudaCmpPartial) {
         papi_errno = PAPI_PARTIAL;
 
-        int i; 
+        int i;
         for (i = 0; i < cudaEnabledDevicesCnt; i++) {
             if (device == enabledCudaDeviceIds[i]) {
                 papi_errno = PAPI_OK;
                 break;
             }
         }
-    } 
+    }
 
     SUBDBG("EXITING: Converting a Cuda native event name to code completed.\n");
     return papi_errno;
@@ -1935,11 +1935,11 @@ static int event_and_metric_id_to_info(uint32_t event_id, event_info_t *info)
 
     if (info->device >= numDevicesOnMachine) {
         return PAPI_ENOEVNT;
-    }    
+    }
 
     if (0 == (info->flags & DEVICE_FLAG) && info->device > 0) {
         return PAPI_ENOEVNT;
-    }    
+    }
 
     if (info->nameid >= cuptiu_table_p->count) {
         return PAPI_ENOEVNT;
@@ -1986,14 +1986,14 @@ static int evt_name_to_device(const char *name, int *device)
 }
 
 /** @class evt_name_to_basename
-  * @brief Convert a Cuda native event name with a device qualifer appended to 
+  * @brief Convert a Cuda native event name with a device qualifer appended to
   *        it, back to the base Cuda native event name provided by NVIDIA.
   * @param *name
   *   Cuda native event name with a device qualifier appended.
   * @param *base
   *   Base Cuda native event name (excludes device qualifier).
   * @param len
-  *   Maximum alloted characters for base Cuda native event name. 
+  *   Maximum alloted characters for base Cuda native event name.
 */
 static int evt_name_to_basename(const char *name, char *base, int len)
 {
@@ -2060,7 +2060,7 @@ int cuptie_shutdown(void)
  ******************************************************************************/
 
 /***************************************************************************//**
- *  @section Helper functions related to the overall deinitialization of 
+ *  @section Helper functions related to the overall deinitialization of
  *           the Event and Metric workflow.
  *
  *  @{
@@ -2070,7 +2070,7 @@ int cuptie_shutdown(void)
   * @brief A simple wrapper for the cupti profiler api call
   *        cuptiProfilerDeInitialize.
 */
-static int deinitialize_cupti_profiler_api(void)     
+static int deinitialize_cupti_profiler_api(void)
 {
     SUBDBG("ENTERING: Deinitializing CUPTI Profiler API.\n");
 
@@ -2086,15 +2086,15 @@ static int deinitialize_cupti_profiler_api(void)
   * @brief Free event and metric table allocated memory.
 */
 static void shutdown_event_table(void)
-{   
+{
     cuptiu_table_p->count = 0;
-    
+
     free(cuptiu_table_p->avail_gpu_info);
     cuptiu_table_p->avail_gpu_info = NULL;
-    
+
     free(cuptiu_table_p->events);
     cuptiu_table_p->events = NULL;
-    
+
     free(cuptiu_table_p);
     cuptiu_table_p = NULL;
 }
@@ -2152,7 +2152,7 @@ static void unload_event_and_metric_sym(void)
 /** @class unload_cupti_profiler_sym
   * @brief Unload CUPTI Profiler API functions.
 */
-static void unload_cupti_profiler_sym(void) 
+static void unload_cupti_profiler_sym(void)
 {
     SUBDBG("ENTERING: Unloading CUPTI Profiler API functions.\n");
 

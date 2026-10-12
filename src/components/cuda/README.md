@@ -38,7 +38,7 @@ PAPI_CUDA_ROOT/extras/CUPTI/lib64
 ```
 
 To verify the `cuda` component was configured with your PAPI build and is active,
-run `papi_component_avail` (available in `utils/papi_component_avail`). This 
+run `papi_component_avail` (available in `utils/papi_component_avail`). This
 utility will display the components configured in your PAPI build and whether they are active or disabled. If a component is disabled a message on why the component
 has been disabled will be directly below it.
 

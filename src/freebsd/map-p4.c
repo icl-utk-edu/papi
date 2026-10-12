@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p4.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -14,15 +14,15 @@
 
 
 /****************************************************************************
- P4 SUBSTRATE 
- P4 SUBSTRATE 
+ P4 SUBSTRATE
+ P4 SUBSTRATE
  P4 SUBSTRATE (aka Pentium IV)
  P4 SUBSTRATE
  P4 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P4Processor must match P4Processor_info 
+	NativeEvent_Value_P4Processor must match P4Processor_info
 */
 
 Native_Event_LabelDescription_t P4Processor_info[] =

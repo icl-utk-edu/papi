@@ -51,31 +51,31 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
     int num_device_indices = 0, *event_device_indices = NULL;
     int i, device_arg_found = 0, cuda_native_event_name_arg_found = 0;
     for (i = 1; i < argc; ++i)
-    {   
+    {
         char *arg = argv[i];
         if (strcmp(arg, "--help") == 0)
-        {   
+        {
             print_help_message();
             exit(EXIT_SUCCESS);
         }
         else if (strcmp(arg, "--device") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! Add a nvidia device index.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
             *device_index = atoi(argv[i + 1]);
             device_arg_found++;
             i++;
-        }  
+        }
         else if (strcmp(arg, "--cuda-native-event-names") == 0)
-        {   
-            if (!argv[i + 1]) 
-            {   
+        {
+            if (!argv[i + 1])
+            {
                 printf("ERROR!! --cuda-native-event-names given, but no events listed.\n");
                 exit(EXIT_FAILURE);
-            }   
+            }
 
             char **cmd_line_native_event_names = NULL;
             const char *cuda_native_event_name = strtok(argv[i+1], ",");
@@ -97,17 +97,17 @@ static void parse_and_assign_args(int argc, char *argv[], int *device_index, cha
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
                     fprintf(stderr, "Failed to fully write cuda native event name.\n");
                     exit(EXIT_FAILURE);
-                }   
+                }
 
                 (*total_event_count)++;
                 cuda_native_event_name_arg_found++;
                 cuda_native_event_name = strtok(NULL, ",");
-            }   
+            }
             i++;
             *cuda_native_event_names = cmd_line_native_event_names;
-        }   
+        }
         else
-        {   
+        {
             print_help_message();
             exit(EXIT_FAILURE);
         }
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     char *user_defined_suppress_output = getenv("PAPI_CUDA_TEST_QUIET");
     if (user_defined_suppress_output) {
         global_suppress_output = (int) strtol(user_defined_suppress_output, (char**) NULL, 10);
-    }   
+    }
     PRINT(global_suppress_output, "Running the cuda component test test_2thr_1gpu_not_allowed.cu\n");
 
     int cuda_device_index = -1;
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 
     // Verify the cuda component has been compiled in
     int cuda_cmp_idx = PAPI_get_component_index("cuda");
-    if (cuda_cmp_idx < 0 ) { 
+    if (cuda_cmp_idx < 0 ) {
         test_fail(__FILE__, __LINE__, "PAPI_get_component_index()", cuda_cmp_idx);
     }
     PRINT(global_suppress_output, "The cuda component is assigned to component index: %d\n", cuda_cmp_idx);
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
                 char *qualifier = strstr(info.symbol + strlen("cuda:::"), ":");
                 if (strncmp(qualifier, ":device=", 8) == 0) {
                     cuda_device_index = strtol(qualifier + strlen(":device="), NULL, 10);
-                }   
+                }
 
                 int strLen = snprintf(global_cuda_native_event_names[global_total_event_count] + strlen(global_cuda_native_event_names[global_total_event_count]), PAPI_2MAX_STR_LEN - strlen(global_cuda_native_event_names[global_total_event_count]), "%s", qualifier);
                 if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN - strlen(global_cuda_native_event_names[global_total_event_count])) {
@@ -282,15 +282,15 @@ int main(int argc, char **argv)
         if (cuda_device_index == -1) {
             fprintf(stderr, "A device qualifier is needed to continue or a device index must be provided on the command line.\n");
             exit(EXIT_FAILURE);
-        } 
+        }
 
     }
 
     // Initialize PAPI thread support
     check_papi_api_call( PAPI_thread_init((unsigned long (*)(void)) pthread_self) );
-    
+
     // Launch the threads
-    pthread_params_t data[NUM_THREADS];    
+    pthread_params_t data[NUM_THREADS];
     int thread_idx, thread_errno;
     for(thread_idx = 0; thread_idx < NUM_THREADS; thread_idx++)
     {

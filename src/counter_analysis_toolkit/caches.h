@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 // Header files for setting the affinity
-#if defined(__linux__) 
+#if defined(__linux__)
 #  define __USE_GNU 1
 #  include <sched.h>
 #elif defined (__SVR4) && defined (__sun)
@@ -52,9 +52,9 @@ static inline double getticks(void){
      return ret;
 }
 
-static inline double elapsed(double t1, double t0){ 
+static inline double elapsed(double t1, double t0){
      return (double)t1 - (double)t0;
-} 
+}
 
 extern int compar_lf(const void *a, const void *b);
 extern int compar_lld(const void *a, const void *b);

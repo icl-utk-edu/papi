@@ -26,7 +26,7 @@ if [ "x$VALGRIND" != "x" ]; then
   VALGRIND="valgrind --leak-check=full";
 fi
 
-# collect the current active components 
+# collect the current active components
 ACTIVE_COMPONENTS_PATTERN=$(utils/papi_component_avail | awk '/Active components:/{flag=1; next} flag' | grep "Name:" | sed 's/Name: //' | awk '{print $1}' | paste -sd'|' -)
 
 # collecting inactive component tests to be filtered
@@ -44,7 +44,7 @@ do
     QUERY_CMP_TEST=$(find components/$cmp/tests -perm -u+x -type f ! \( -name "*.[c|h]" -o -name "*.cu" -o -name "*.so" \) | grep -E -m 1 "components/($cmp)/")
     case $EXCLUDE_TESTS in
       *"$QUERY_CMP_TEST"*)
-         continue 
+         continue
          ;;
     esac
     # update the excluded tests
@@ -107,6 +107,6 @@ do
       LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/components/sde/sde_lib:${PWD}/components/sde/tests/lib $VALGRIND ./$cmp_test $TESTS_QUIET
     else
       $VALGRIND ./$cmp_test $TESTS_QUIET
-    fi 
-  fi 
+    fi
+  fi
 done

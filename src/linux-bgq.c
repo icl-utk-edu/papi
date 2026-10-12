@@ -2,18 +2,18 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-bgq.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	< your name here >
  *			< your email address >
  * Blue Gene/Q CPU component: BGPM / Punit
- * 
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the BGPM library.
  */
 
@@ -90,7 +90,7 @@ void user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, con
  * Lock
  */
 void
-_papi_hwd_lock( int lock ) 
+_papi_hwd_lock( int lock )
 {
 #ifdef DEBUG_BGQ
 	printf( _AT_ " _papi_hwd_lock %d\n", lock);
@@ -101,11 +101,11 @@ _papi_hwd_lock( int lock )
 #else
 	pthread_mutex_lock( &thdLocks[lock] );
 #endif
-	
+
 #ifdef DEBUG_BGQ
 	printf( _AT_ " _papi_hwd_lock got lock %d\n", lock );
 #endif
-	
+
 	return;
 }
 
@@ -124,7 +124,7 @@ _papi_hwd_unlock( int lock )
 #else
 	pthread_mutex_unlock( &thdLocks[lock] );
 #endif
-	
+
 	return;
 }
 
@@ -140,11 +140,11 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_system_info\n" );
 #endif
-	
+
 	( void ) mdi;
 	Personality_t personality;
 	int retval;
-	
+
 	/* Hardware info */
 	retval = Kernel_GetPersonality( &personality, sizeof( Personality_t ) );
 	if ( retval ) {
@@ -159,7 +159,7 @@ _bgq_get_system_info( papi_mdi_t *mdi )
 	// TODO: HJ Those values need to be fixed
 	_papi_hwi_system_info.hw_info.nnodes = Kernel_ProcessCount( );
 	_papi_hwi_system_info.hw_info.totalcpus = _papi_hwi_system_info.hw_info.ncpu;
-	
+
 	_papi_hwi_system_info.hw_info.cpu_max_mhz = personality.Kernel_Config.FreqMHz;
 	_papi_hwi_system_info.hw_info.cpu_min_mhz = personality.Kernel_Config.FreqMHz;
 
@@ -182,7 +182,7 @@ _bgq_init_control_state( hwd_control_state_t * ptr )
 	printf( "_bgq_init_control_state\n" );
 #endif
 	int retval;
-	
+
 	ptr->EventGroup = Bgpm_CreateEventSet();
 	retval = _check_BGPM_error( ptr->EventGroup, "Bgpm_CreateEventSet" );
 	if ( retval < 0 ) return retval;
@@ -194,7 +194,7 @@ _bgq_init_control_state( hwd_control_state_t * ptr )
     ptr->overflow_count = 0;
 	// initialized BGPM eventGroup flag to NOT applied yet (0)
 	ptr->bgpm_eventset_applied = 0;
-	
+
 	return PAPI_OK;
 }
 
@@ -210,19 +210,19 @@ _bgq_set_domain( hwd_control_state_t * cntrl, int domain )
 #endif
 	int found = 0;
 	( void ) cntrl;
-	
+
 	if ( PAPI_DOM_USER & domain )
 		found = 1;
-	
+
 	if ( PAPI_DOM_KERNEL & domain )
 		found = 1;
-	
+
 	if ( PAPI_DOM_OTHER & domain )
 		found = 1;
-	
+
 	if ( !found )
 		return ( PAPI_EINVAL );
-	
+
 	return ( PAPI_OK );
 }
 
@@ -245,16 +245,16 @@ _bgq_init( hwd_context_t * ctx )
 #else
 	Bgpm_PrintOnError(0);
 	// avoid bgpm default of exiting when error occurs - caller will check return code instead.
-	Bgpm_ExitOnError(0);	
+	Bgpm_ExitOnError(0);
 #endif
-	
+
 	retval = Bgpm_Init( BGPM_MODE_SWDISTRIB );
 	retval = _check_BGPM_error( retval, "Bgpm_Init" );
 	if ( retval < 0 ) return retval;
 
 	//_common_initBgpm();
-	
-	return PAPI_OK;	
+
+	return PAPI_OK;
 }
 
 
@@ -263,20 +263,20 @@ _bgq_multiplex( hwd_control_state_t * bgq_state )
 {
 	int retval;
 	uint64_t bgpm_period;
-	double Sec, Hz;	
+	double Sec, Hz;
 
 #ifdef DEBUG_BGQ
 	printf("_bgq_multiplex BEGIN: Num of Events = %d (vs %d)\n", Bgpm_NumEvents( bgq_state->EventGroup ), bgq_state->count );
 #endif
-	
+
 	// convert Mhz to Hz ( = cycles / sec )
 	Hz = (double) _papi_hwi_system_info.hw_info.cpu_max_mhz * 1000 * 1000;
 	// convert PAPI multiplex period (in ns) to BGPM period (in cycles)
 	Sec = (double) _papi_os_info.itimer_ns / ( 1000 * 1000 * 1000 );
 	bgpm_period = Hz * Sec;
 
-	// if EventGroup is not empty -- which is required by BGPM before 
-	// we can call SetMultiplex() -- then drain the events from the 
+	// if EventGroup is not empty -- which is required by BGPM before
+	// we can call SetMultiplex() -- then drain the events from the
 	// BGPM EventGroup, turn on multiplex flag, and rebuild BGPM EventGroup.
 	if ( 0 < bgq_state->count ) {
 		// Delete and re-create BGPM eventset
@@ -284,30 +284,30 @@ _bgq_multiplex( hwd_control_state_t * bgq_state )
 		if ( retval < 0 ) return retval;
 
 		// turn on multiplex for BGPM
-		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL ); 		
+		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL );
 		retval = _check_BGPM_error( retval, "Bgpm_SetMultiplex" );
 		if ( retval < 0 ) return retval;
 
 		// rebuild BGPM EventGroup
-		retval = _common_rebuildEventgroup( bgq_state->count, 
-								   bgq_state->EventGroup_local, 
-								   &bgq_state->EventGroup );	
+		retval = _common_rebuildEventgroup( bgq_state->count,
+								   bgq_state->EventGroup_local,
+								   &bgq_state->EventGroup );
 		if ( retval < 0 ) return retval;
 	}
 	else {
-		// need to pass either BGPM_NORMAL or BGPM_NOTNORMAL 
-		// BGPM_NORMAL: numbers reported by Bgpm_ReadEvent() are normalized 
+		// need to pass either BGPM_NORMAL or BGPM_NOTNORMAL
+		// BGPM_NORMAL: numbers reported by Bgpm_ReadEvent() are normalized
 		// to the maximum time spent in a multiplexed group
-		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL ); 		
+		retval = Bgpm_SetMultiplex( bgq_state->EventGroup, bgpm_period, BGPM_NORMAL );
 		retval = _check_BGPM_error( retval, "Bgpm_SetMultiplex" );
 		if ( retval < 0 ) return retval;
 	}
 
 #ifdef DEBUG_BGQ
-	printf("_bgq_multiplex END: Num of Events = %d (vs %d) --- retval = %d\n", 
+	printf("_bgq_multiplex END: Num of Events = %d (vs %d) --- retval = %d\n",
 		   Bgpm_NumEvents( bgq_state->EventGroup ), bgq_state->count, retval );
 #endif
-	
+
 	return ( retval );
 }
 
@@ -335,7 +335,7 @@ _bgq_allocate_registers( EventSetInfo_t * ESI )
 
 	for ( i = 0; i < natNum; i++ ) {
 		xEventId = ( ESI->NativeInfoArray[i].ni_event & PAPI_NATIVE_AND_MASK ) + 1;
-		ESI->NativeInfoArray[i].ni_position = i;		
+		ESI->NativeInfoArray[i].ni_position = i;
 	}
 
 	return PAPI_OK;
@@ -353,7 +353,7 @@ _bgq_cleanup_eventset( hwd_control_state_t * ctrl )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_cleanup_eventset\n" );
 #endif
-	
+
 	// set multiplexing flag to OFF (0)
 	ctrl->muxOn = 0;
 	// set overflow flag to OFF (0)
@@ -384,7 +384,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 	( void ) ctx;
 	int i, j, k, index, retval;
 	unsigned evtIdx;
-	
+
 	// Delete and re-create BGPM eventset
 	retval = _common_deleteRecreate( &ptr->EventGroup );
 	if ( retval < 0 ) return retval;
@@ -393,11 +393,11 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
     printf( _AT_ " _bgq_update_control_state: EventGroup=%d, muxOn = %d, overflow = %d\n",
 		   ptr->EventGroup, ptr->muxOn, ptr->overflow );
 #endif
-	
+
 	// add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
 		index = ( native[i].ni_event & PAPI_NATIVE_AND_MASK ) + 1;
-		
+
 		ptr->EventGroup_local[i] = index;
 
 		// we found an opcode event
@@ -419,7 +419,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 #ifdef DEBUG_BGQ
 					printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, eventId = %d\n", i, GenericEvent[j].eventId );
 #endif
-					
+
 					evtIdx = Bgpm_GetEventIndex( ptr->EventGroup,
 												 GenericEvent[j].eventId,
 												 i );
@@ -446,14 +446,14 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 						printf(_AT_ " _bgq_update_control_state: it's PEVT_INST_QFPU_GRP_MASK\n" );
 #endif
 					}
-				}	
+				}
 			}
 		}
 		else {
 #ifdef DEBUG_BGQ
 			printf(_AT_ " _bgq_update_control_state: no OPCODE\n" );
 #endif
-			
+
 			/* Add events to the BGPM eventGroup */
 			retval = Bgpm_AddEvent( ptr->EventGroup, index );
 			retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
@@ -461,20 +461,20 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 #ifdef DEBUG_BGQ
 			printf(_AT_ " _bgq_update_control_state: ADD event: i = %d, index = %d\n", i, index );
 #endif
-			
+
 		}
 	}
-	
+
 	// store how many events we added to an EventSet
 	ptr->count = count;
 
-	// if muxOn and EventGroup is not empty -- which is required by BGPM before 
-	// we can call SetMultiplex() -- then drain the events from the 
+	// if muxOn and EventGroup is not empty -- which is required by BGPM before
+	// we can call SetMultiplex() -- then drain the events from the
 	// BGPM EventGroup, turn on multiplex flag, and rebuild BGPM EventGroup.
 	if ( 1 == ptr->muxOn ) {
 		retval = _bgq_multiplex( ptr );
 	}
-		
+
     // since update_control_state trashes overflow settings, this puts things
     // back into balance for BGPM
     if ( 1 == ptr->overflow ) {
@@ -486,7 +486,7 @@ _bgq_update_control_state( hwd_control_state_t * ptr,
 			if ( retval < 0 ) return retval;
         }
     }
-		
+
 	return ( PAPI_OK );
 }
 
@@ -503,11 +503,11 @@ _bgq_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 #endif
 	( void ) ctx;
 	int retval;
-		
-	retval = Bgpm_Apply( ptr->EventGroup ); 
+
+	retval = Bgpm_Apply( ptr->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Apply" );
 	if ( retval < 0 ) return retval;
-	
+
 	// set flag to 1: BGPM eventGroup HAS BEEN applied
 	ptr->bgpm_eventset_applied = 1;
 
@@ -517,14 +517,14 @@ _bgq_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	for ( i = 0; i < numEvts; i++ ) {
 		printf("%d = %s\n", i, Bgpm_GetEventLabel( ptr->EventGroup, i) );
 	}
-#endif	
-	
-	/* Bgpm_Apply() does an implicit reset; 
+#endif
+
+	/* Bgpm_Apply() does an implicit reset;
 	 hence no need to use Bgpm_ResetStart */
 	retval = Bgpm_Start( ptr->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Start" );
 	if ( retval < 0 ) return retval;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -539,11 +539,11 @@ _bgq_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 #endif
 	( void ) ctx;
 	int retval;
-	
+
 	retval = Bgpm_Stop( ptr->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
 	if ( retval < 0 ) return retval;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -562,7 +562,7 @@ _bgq_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 	( void ) ctx;
 	( void ) flags;
 	int i, numEvts;
-	
+
 	numEvts = Bgpm_NumEvents( ptr->EventGroup );
 	if ( numEvts == 0 ) {
 #ifdef DEBUG_BGPM
@@ -570,12 +570,12 @@ _bgq_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 		//return ( EXIT_FAILURE );
 #endif
 	}
-	
-	for ( i = 0; i < numEvts; i++ ) 
+
+	for ( i = 0; i < numEvts; i++ )
 		ptr->counters[i] = _common_getEventValue( i, ptr->EventGroup );
 
 	*dp = ptr->counters;
-		
+
 	return ( PAPI_OK );
 }
 
@@ -592,15 +592,15 @@ _bgq_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 #endif
 	( void ) ctx;
 	int retval;
-	
-	/* we can't simply call Bgpm_Reset() since PAPI doesn't have the 
+
+	/* we can't simply call Bgpm_Reset() since PAPI doesn't have the
 	   restriction that an EventSet has to be stopped before resetting is
-	   possible. However, BGPM does have this restriction. 
+	   possible. However, BGPM does have this restriction.
 	   Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( ptr->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
 	if ( retval < 0 ) return retval;
-	
+
 	retval = Bgpm_ResetStart( ptr->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_ResetStart" );
 	if ( retval < 0 ) return retval;
@@ -624,8 +624,8 @@ _bgq_shutdown( hwd_context_t * ctx )
 #endif
 	( void ) ctx;
 	int retval;
-	
-	/* Disable BGPM library */	
+
+	/* Disable BGPM library */
 	retval = Bgpm_Disable();
 	retval = _check_BGPM_error( retval, "Bgpm_Disable" );
 	if ( retval < 0 ) return retval;
@@ -648,7 +648,7 @@ _bgq_write( hwd_context_t * ctx, hwd_control_state_t * cntrl, long_long * from )
 	( void ) ctx;
 	( void ) cntrl;
 	( void ) from;
-	
+
 	return PAPI_ECMP;
 }
 
@@ -668,7 +668,7 @@ _bgq_dispatch_timer( int signal, hwd_siginfo_t * info, void *uc )
 #ifdef DEBUG_BGQ
 	printf("BEGIN _bgq_dispatch_timer\n");
 #endif
-	
+
 	return;
 }
 
@@ -687,7 +687,7 @@ user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const uc
 	printf( "user_signal_handler start\n" );
 #endif
 	( void ) address;
-	int retval; 
+	int retval;
 	unsigned i;
 	int isHardware = 1;
 	int cidx = _bgq_vectors.cmp_info.CmpIdx;
@@ -696,35 +696,35 @@ user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const uc
 	_papi_hwi_context_t ctx;
 	ctx.ucontext = ( hwd_ucontext_t * ) pContext;
 	ThreadInfo_t *thread = _papi_hwi_lookup_thread( 0 );
-	
+
 	//printf(_AT_ " thread = %p\n", thread);	// <<<<<<<<<<<<<<<<<<
-	
+
 	EventSetInfo_t *ESI;
 	ESI = thread->running_eventset[cidx];
     // Get the indices of all events which have overflowed.
     unsigned ovfIdxs[BGPM_MAX_OVERFLOW_EVENTS];
     unsigned len = BGPM_MAX_OVERFLOW_EVENTS;
-	
+
     retval = Bgpm_GetOverflowEventIndices( hEvtSet, ovfVector, ovfIdxs, &len );
 
 	if ( retval < 0 ) {
 #ifdef DEBUG_BGPM
-		printf ( "Error: ret value is %d for BGPM API function Bgpm_GetOverflowEventIndices.\n", 
-				 retval ); 
+		printf ( "Error: ret value is %d for BGPM API function Bgpm_GetOverflowEventIndices.\n",
+				 retval );
 #endif
 		return;
 	}
-		
+
 	if ( thread == NULL ) {
 		PAPIERROR( "thread == NULL in user_signal_handler!" );
 		return;
 	}
-		
+
 	if ( ESI == NULL ) {
 		PAPIERROR( "ESI == NULL in user_signal_handler!");
 		return;
 	}
-		
+
 	if ( ESI->overflow.flags == 0 ) {
 		PAPIERROR( "ESI->overflow.flags == 0 in user_signal_handler!");
 		return;
@@ -737,9 +737,9 @@ user_signal_handler( int hEvtSet, uint64_t address, uint64_t ovfVector, const uc
 			overflow_bit ^= 1 << ovfIdxs[i];
 			break;
         }
-		
+
 	}
-	
+
 	if ( ESI->overflow.flags & PAPI_OVERFLOW_FORCE_SW ) {
 #ifdef DEBUG_BGQ
 		printf("OVERFLOW_SOFTWARE\n");
@@ -781,7 +781,7 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	hwd_control_state_t * this_state = ( hwd_control_state_t * ) ESI->ctl_state;
 	int retval;
 	int evt_idx;
-	
+
 	/*
 	 * In case an BGPM eventGroup HAS BEEN applied or attached before
 	 * overflow is set, delete the eventGroup and create an new empty one,
@@ -790,7 +790,7 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_set_overflow: bgpm_eventset_applied = %d, threshold = %d\n",
 		    this_state->bgpm_eventset_applied, threshold );
-#endif	
+#endif
 	if ( 1 == this_state->bgpm_eventset_applied && 0 != threshold ) {
 		retval = _common_deleteRecreate( &this_state->EventGroup );
 		if ( retval < 0 ) return retval;
@@ -800,12 +800,12 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 								   &this_state->EventGroup );
 		if ( retval < 0 ) return retval;
 
-		/* set BGPM eventGroup flag back to NOT applied yet (0) 
+		/* set BGPM eventGroup flag back to NOT applied yet (0)
 		 * because the eventGroup has been recreated from scratch */
 		this_state->bgpm_eventset_applied = 0;
 	}
-	
-	
+
+
 	evt_idx = ESI->EventInfoArray[EventIndex].pos[0];
 	//evt_id = ( ESI->NativeInfoArray[EventIndex].ni_event & PAPI_NATIVE_AND_MASK ) + 1;
 	SUBDBG( "Hardware counter %d (vs %d) used in overflow, threshold %d\n",
@@ -814,7 +814,7 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
 	printf( "Hardware counter %d (vs %d) used in overflow, threshold %d\n",
 		    evt_idx, EventIndex, threshold );
 #endif
-	
+
 	/* If this counter isn't set to overflow, it's an error */
 	if ( threshold == 0 ) {
 		/* Remove the signal handler */
@@ -827,17 +827,17 @@ _bgq_set_overflow( EventSetInfo_t * ESI, int EventIndex, int threshold )
         this_state->overflow_count++;
 		this_state->overflow_list[this_state->overflow_count-1].threshold = threshold;
 		this_state->overflow_list[this_state->overflow_count-1].EventIndex = evt_idx;
-	
+
 #ifdef DEBUG_BGQ
 		printf( "_bgq_set_overflow: Enable the signal handler\n" );
-#endif		
+#endif
 		/* Enable the signal handler */
-		retval = _papi_hwi_start_signal( _bgq_vectors.cmp_info.hardware_intr_sig, 
-										 NEED_CONTEXT, 
+		retval = _papi_hwi_start_signal( _bgq_vectors.cmp_info.hardware_intr_sig,
+										 NEED_CONTEXT,
 										 _bgq_vectors.cmp_info.CmpIdx );
 		if ( retval != PAPI_OK )
 			return ( retval );
-		
+
 		retval = _common_set_overflow_BGPM( this_state->EventGroup,
                                   this_state->overflow_list[this_state->overflow_count-1].EventIndex,
                                   this_state->overflow_list[this_state->overflow_count-1].threshold,
@@ -860,11 +860,11 @@ _bgq_set_profile( EventSetInfo_t * ESI, int EventIndex, int threshold )
 #ifdef DEBUG_BGQ
 	printf("BEGIN _bgq_set_profile\n");
 #endif
-	
+
 	( void ) ESI;
 	( void ) EventIndex;
 	( void ) threshold;
-	
+
 	return PAPI_ECMP;
 }
 
@@ -879,10 +879,10 @@ _bgq_stop_profiling( ThreadInfo_t * master, EventSetInfo_t * ESI )
 #ifdef DEBUG_BGQ
 	printf("BEGIN _bgq_stop_profiling\n");
 #endif
-	
+
 	( void ) master;
 	( void ) ESI;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -899,7 +899,7 @@ _bgq_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #endif
 	( void ) ctx;
 	int retval;
-	
+
 	switch ( code ) {
 		case PAPI_MULTIPLEX:
 		{
@@ -922,7 +922,7 @@ _bgq_get_real_usec( void )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_real_usec\n" );
 #endif
-	
+
 	/*
 	 * NOTE:  _papi_hwi_system_info.hw_info.mhz is really a representation of unit of time per cycle.
 	 *        On BG/P, it's value is 8.5e-4.  Therefore, to get cycles per sec, we have to multiply
@@ -960,7 +960,7 @@ _bgq_get_virt_usec( void )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_virt_usec\n" );
 #endif
-	
+
 	return _bgq_get_real_usec(  );
 }
 
@@ -975,7 +975,7 @@ _bgq_get_virt_cycles( void )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_get_virt_cycles\n" );
 #endif
-	
+
 	return _bgq_get_real_cycles(  );
 }
 
@@ -988,24 +988,24 @@ _bgq_get_virt_cycles( void )
  */
 int
 _bgq_init_component( int cidx )
-{	
+{
 #ifdef DEBUG_BGQ
 	printf("_bgq_init_substrate\n");
 	//printf("_bgq_init_substrate: 1. BGPM_INITIALIZED = %d \n", BGPM_INITIALIZED);
 #endif
 	int retval;
 	int i;
-		
+
 	/* allocate the opcode event structure */
 	GenericEvent = calloc( OPCODE_EVENT_CHUNK, sizeof( struct bgq_generic_events_t ) );
 	if ( NULL == GenericEvent ) {
 		return PAPI_ENOMEM;
 	}
-	
+
 	/* init opcode event stuff */
 	allocated_opcode_events = OPCODE_EVENT_CHUNK;
 	num_opcode_events = 0;
-		
+
 	_bgq_vectors.cmp_info.CmpIdx = cidx;
 
 	/*
@@ -1037,14 +1037,14 @@ _bgq_init_component( int cidx )
 		pthread_mutex_init( &thdLocks[i], NULL );
 	}
 #endif
-	
+
 	/* Setup presets */
 	retval = _papi_load_preset_table( "BGQ", 0, cidx );
 	if ( retval ) {
 		return retval;
-	}	
-	
-	
+	}
+
+
 	return ( PAPI_OK );
 }
 
@@ -1065,17 +1065,17 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 	int ret;
 #ifdef DEBUG_BGQ
 	printf( "name = ===%s===\n", name );
-#endif	
+#endif
 
 	/* Treat events differently if BGPM Opcodes are used */
-	/* Opcode group selection values are "OR"ed together to create a desired 
-	 mask of instruction group events to accumulate in the same counter */	
+	/* Opcode group selection values are "OR"ed together to create a desired
+	 mask of instruction group events to accumulate in the same counter */
 	if ( 0 == strncmp( name, "PEVT_INST_XU_GRP_MASK", strlen( "PEVT_INST_XU_GRP_MASK" ) ) ||
 		 0 == strncmp( name, "PEVT_INST_QFPU_GRP_MASK", strlen( "PEVT_INST_QFPU_GRP_MASK" ) ) ) {
 
 		char *pcolon;
 		pcolon = strchr( name, ':' );
-		
+
 		// Found colon separator
 		if ( pcolon != NULL ) {
 			int mask_len = pcolon - name;
@@ -1094,19 +1094,19 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 #endif
 				return PAPI_ENOEVNT;
 			}
-			
+
 			*event_code = GenericEvent[num_opcode_events].idx;
-			
+
 			num_opcode_events++;
-			
+
 			/* If there are too many opcode events than allocated, then allocate more room */
 			if( num_opcode_events >= allocated_opcode_events ) {
-				
+
 				SUBDBG("Allocating more room for BGPM opcode events (%d %ld)\n",
 					   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ),
 					   ( long )sizeof( struct bgq_generic_events_t ) *
 					   ( allocated_opcode_events + NATIVE_OPCODE_CHUNK ) );
-				
+
 				GenericEvent = realloc( GenericEvent, sizeof( struct bgq_generic_events_t ) *
 									   ( allocated_opcode_events + OPCODE_EVENT_CHUNK ) );
 				if ( NULL == GenericEvent ) {
@@ -1119,8 +1119,8 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 			SUBDBG( "Error: Found a generic BGPM event mask without opcode string\n" );
 			return PAPI_ENOEVNT;
 		}
-		
-		
+
+
 #ifdef DEBUG_BGQ
 		printf(_AT_ " _bgq_ntv_name_to_code: GenericEvent no. %d: \n", num_opcode_events-1 );
 		printf(	"idx         = %d\n", GenericEvent[num_opcode_events-1].idx);
@@ -1134,7 +1134,7 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 	else {
 		/* Return event id matching a given event label string */
 		ret = Bgpm_GetEventIdFromLabel ( name );
-		
+
 		if ( ret <= 0 ) {
 #ifdef DEBUG_BGPM
 			printf ("Error: ret value is %d for BGPM API function '%s'.\n",
@@ -1145,9 +1145,9 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
 		else if ( ret > BGQ_PUNIT_MAX_EVENTS ) // not a PUnit event
 			return PAPI_ENOEVNT;
 		else
-			*event_code = ( ret - 1 );		
+			*event_code = ( ret - 1 );
 	}
-	
+
 	return PAPI_OK;
 }
 
@@ -1159,17 +1159,17 @@ _bgq_ntv_name_to_code( const char *name, unsigned int *event_code )
  */
 int
 _bgq_ntv_code_to_name( unsigned int EventCode, char *name, int len )
-{	
-#ifdef DEBUG_BGQ	
+{
+#ifdef DEBUG_BGQ
 	printf( "_bgq_ntv_code_to_name\n" );
 #endif
 	int index = ( EventCode & PAPI_NATIVE_AND_MASK ) + 1;
-	
+
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
-			
+
 	strncpy( name, Bgpm_GetEventIdLabel( index ), len );
-	
+
 	if ( name == NULL ) {
 #ifdef DEBUG_BGPM
 		printf ("Error: ret value is NULL for BGPM API function Bgpm_GetEventIdLabel.\n" );
@@ -1178,8 +1178,8 @@ _bgq_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 	}
 #ifdef DEBUG_BGQ
 	printf( "name = ===%s===\n", name );
-#endif	
-	
+#endif
+
 	return ( PAPI_OK );
 }
 
@@ -1190,7 +1190,7 @@ _bgq_ntv_code_to_name( unsigned int EventCode, char *name, int len )
  */
 int
 _bgq_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
-{	
+{
 #ifdef DEBUG_BGQ
 	printf( "_bgq_ntv_code_to_descr\n" );
 #endif
@@ -1198,7 +1198,7 @@ _bgq_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	int index = ( EventCode & PAPI_NATIVE_AND_MASK ) + 1;
 
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );
 	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
@@ -1220,10 +1220,10 @@ _bgq_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_ntv_code_to_bits\n" );
 #endif
-	
+
 	( void ) EventCode;
 	( void ) bits;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -1237,50 +1237,50 @@ _bgq_ntv_enum_events( unsigned int *EventCode, int modifier )
 #ifdef DEBUG_BGQ
 	printf( "_bgq_ntv_enum_events\n" );
 #endif
-	
+
 	switch ( modifier ) {
 		case PAPI_ENUM_FIRST:
 			*EventCode = PAPI_NATIVE_MASK;
-			
+
 			return ( PAPI_OK );
 			break;
-			
+
 		case PAPI_ENUM_EVENTS:
 		{
 			int index = ( *EventCode & PAPI_NATIVE_AND_MASK ) + 1;
-			
+
 			if ( index < BGQ_PUNIT_MAX_EVENTS ) {
 				*EventCode = *EventCode + 1;
 				return ( PAPI_OK );
 			} else
 				return ( PAPI_ENOEVNT );
-			
+
 			break;
 		}
 		default:
 			return ( PAPI_EINVAL );
 	}
-	
-	return ( PAPI_EINVAL );	
+
+	return ( PAPI_EINVAL );
 }
 
 
-int 
+int
 _papi_hwi_init_os(void) {
-	
+
 	struct utsname uname_buffer;
-	
+
 	/* Get the kernel info */
     uname(&uname_buffer);
-	
+
     strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
-	
+
     strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
-	
+
     _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
     _papi_os_info.itimer_num = PAPI_INT_ITIMER;
     _papi_os_info.itimer_res_ns = 1;
-	
+
     return PAPI_OK;
 }
 
@@ -1304,7 +1304,7 @@ papi_vector_t _bgq_vectors = {
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
 				 .kernel_multiplex = 1,
-		
+
 				 /* component specific cmp_info initializations */
 				 .fast_real_timer = 1,
 				 .fast_virtual_timer = 0,

@@ -81,7 +81,7 @@ main(int argc, char ** argv) {
         return 1;
     }
 
-    i = 0 | PAPI_NATIVE_MASK; 
+    i = 0 | PAPI_NATIVE_MASK;
     retVal=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
     if (retVal != PAPI_OK) {
         fprintf(stderr, "Error on enum_cmp_event for component[ %s ],  abort.\n", COMP_NAME);

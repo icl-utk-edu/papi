@@ -63,7 +63,7 @@ _aix_get_memory_info( PAPI_hw_info_t * mem_info, int type )
 int
 _aix_get_dmem_info( PAPI_dmem_info_t * d )
 {
-	/* This function has been reimplemented 
+	/* This function has been reimplemented
 	   to conform to current interface.
 	   It has not been tested.
 	   Nor has it been confirmed for completeness.

@@ -24,12 +24,12 @@ int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu
     evt_table->capacity = capacity;
     evt_table->count = 0;
     evt_table->event_stats_count = 0;
-    
+
     if (htable_init(&(evt_table->htable)) != HTABLE_SUCCESS) {
         cuptiu_event_table_destroy(&evt_table);
         goto fn_fail;
     }
-    
+
     *pevt_table = evt_table;
     return 0;
 fn_fail:
@@ -89,12 +89,12 @@ void init_vector(StringVector *vec) {
     vec->capacity = 0;
 }
 
-// Add a string to the vector 
+// Add a string to the vector
 int push_back(StringVector *vec, const char *str) {
     size_t i;
     for (i = 0; i < vec->size; i++) {
       if (strcmp(vec->arrayMetricStatistics[i], str) == 0) {
-          return PAPI_OK;        
+          return PAPI_OK;
       }
     }
 
@@ -111,7 +111,7 @@ int push_back(StringVector *vec, const char *str) {
     }
 
     // Allocate memory for the new string and copy it
-    vec->arrayMetricStatistics[vec->size] = malloc(strlen(str) + 1); 
+    vec->arrayMetricStatistics[vec->size] = malloc(strlen(str) + 1);
     if (vec->arrayMetricStatistics[vec->size] == NULL) {
         ERRDBG ("Memory allocation failed\n");
         return PAPI_ENOMEM;
@@ -121,7 +121,7 @@ int push_back(StringVector *vec, const char *str) {
             SUBDBG("Failed to fully write added Cuda native event name.\n");
             return PAPI_ENOMEM;
     }
-    
+
     vec->size++; // Increase the size
     return PAPI_OK;
 }
@@ -129,8 +129,8 @@ int push_back(StringVector *vec, const char *str) {
 // Free the memory used by the vector
 void free_vector(StringVector *vec) {
     for (size_t i = 0; i < vec->size; i++) {
-        free(vec->arrayMetricStatistics[i]); 
+        free(vec->arrayMetricStatistics[i]);
     }
-    free(vec->arrayMetricStatistics); 
+    free(vec->arrayMetricStatistics);
     vec->arrayMetricStatistics = NULL;
 }

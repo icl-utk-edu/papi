@@ -11,12 +11,12 @@
  *
  * File:   solaris-niagara2.c
  * Author: fg215045
- * 
- * Description: This source file is the implementation of a PAPI 
- * component for the Sun Niagara 2 processor (aka UltraSPARC T2) 
- * running on Solaris 10 with libcpc 2. 
- * The machine for implementing this component was courtesy of RWTH 
- * Aachen University, Germany. Thanks to the HPC-Team at RWTH! 
+ *
+ * Description: This source file is the implementation of a PAPI
+ * component for the Sun Niagara 2 processor (aka UltraSPARC T2)
+ * running on Solaris 10 with libcpc 2.
+ * The machine for implementing this component was courtesy of RWTH
+ * Aachen University, Germany. Thanks to the HPC-Team at RWTH!
  *
  * Conventions used:
  *  - __cpc_*: Functions, variables, etc. related to libcpc handling
@@ -25,7 +25,7 @@
  *  - _niagara*: Functions, variables, etc. needed by PAPI hardware dependent
  *                 layer, i.e. the component itself
  *
- * 
+ *
  *      ***** Feel free to convert this header to the PAPI default *****
  *
  * -----------------------------------------------------------------------------
@@ -426,7 +426,7 @@ _niagara2_dispatch_timer( int signal, siginfo_t * si, void *info )
 	ESI = ( EventSetInfo_t * ) thread->running_eventset[cidx];
 
 	/* From the old component, modified */
-	// 
+	//
 	if ( ESI == NULL || ESI->master != thread || ESI->ctl_state == NULL ||
 		 ( ( ESI->state & PAPI_OVERFLOWING ) == 0 ) ) {
 #ifdef DEBUG
@@ -573,7 +573,7 @@ _niagara2_get_overflow_address( void *context )
 }
 
 
-/** Although the created set in this function will be destroyed by 
+/** Although the created set in this function will be destroyed by
  * _papi_update_control_state later, at least the functionality of the
  * underlying CPU driver will be tested completly.
  */
@@ -1497,7 +1497,7 @@ _niagara2_update_shlib_info( papi_mdi_t *mdi )
 	   structure. The information is important for the profiling functions of
 	   PAPI. */
 
-/* This variant would pass the addresses of all text and data segments 
+/* This variant would pass the addresses of all text and data segments
   _papi_hwi_system_info.exe_info.address_info.text_start = t_min;
   _papi_hwi_system_info.exe_info.address_info.text_end = t_max;
   _papi_hwi_system_info.exe_info.address_info.data_start = d_min;
@@ -2089,7 +2089,7 @@ __sol_get_proc_status( const pid_t pid )
 	return &proc;
 }
 
-/* This function handles synthetic events and returns their result. Synthetic 
+/* This function handles synthetic events and returns their result. Synthetic
  * events are events retrieved from outside of libcpc, e.g. all events which
  * can not be retrieved using cpc_set_add_request/cpc_buf_get. */
 

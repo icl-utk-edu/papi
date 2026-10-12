@@ -1,7 +1,7 @@
 Running PAPI in the MATLAB Environment
 
 If you have the desire to do this, you most likely already
-know why you want to make calls to PAPI inside of a 
+know why you want to make calls to PAPI inside of a
 MATLAB environment.
 
 This section of the PAPI user guide covers C and FORTRAN
@@ -9,7 +9,7 @@ calls, but at the moment, you can only make C calls
 from the MATLAB environment.
 
 There is one overall function to call from Matlab; from there,
-you specify which of the 6 specific functions you want to call, 
+you specify which of the 6 specific functions you want to call,
 and then the arguments to each.  Here are some examples:
 
 PAPI_num_cmp_hwctrs(0) - Returns the number of available preset
@@ -45,7 +45,7 @@ PAPI_ipc - Has 3 possibilities:
   the incremental rate of instructions per cycle
   since initialization:
     [ins, ipc] = PAPI('ipc')
-  
+
 
 PAPI_start - Specify the events to count
   (in text form or the actual numeric code; NOTE: make sure
@@ -91,17 +91,17 @@ code run in the MATLAB environment.  If you don't know
 how to use mex, you might want to acquaint yourself a bit.
 
 "mex -setup "might be needed if you encounter problems, but
-the simplest explanation might be to substitute "mex" for 
+the simplest explanation might be to substitute "mex" for
 "gcc" and you are on your way.
 
 All the other rules for compiling PAPI are the same.  mex
 compilations can de done inside or outside of the Matlab
 environment, but in this case, it is recommended that you
-compile outside of Matlab.  For some reason, compiling 
+compile outside of Matlab.  For some reason, compiling
 inside does not work on some systems.
 
 So far, the Linux environment and the Windows environment
-have been tested, but _in theory_ this code should work anywhere 
+have been tested, but _in theory_ this code should work anywhere
 PAPI and Matlab both work.
 
 The following instructions are for a Linux/Unix environment:
@@ -114,7 +114,7 @@ different for different platforms.
 
 For instance, if I want to compile and run on a linux
 machine assuming PAPI_Matlab.c is in your current working
-directory (you'll have a different compile string on a 
+directory (you'll have a different compile string on a
 different architecture):
 
 0. Define the events for flops and flips in PAPI_Matlab.c:
@@ -153,7 +153,7 @@ PAPI('flips')
 ins = PAPI('flips')
 [ins, mflips] = PAPI('flips')
 
-c.  Play with instructions per cycle - the first makes sure the 
+c.  Play with instructions per cycle - the first makes sure the
     counters are stopped and clear; the second initializes counting;
     the third returns the number of instructions
     since the first call, and the fourth line does the same as the

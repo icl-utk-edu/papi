@@ -2,18 +2,18 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-NWunit.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
  * Mods:	< your name here >
  *			< your email address >
- * BGPM / NWunit component 
- * 
+ * BGPM / NWunit component
+ *
  * Tested version of bgpm (early access)
  *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware monitoring counters for BG/Q through the bgpm library.
  */
 
@@ -35,19 +35,19 @@ NWUNIT_init_thread( hwd_context_t * ctx )
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_init_thread\n" );
 #endif
-	
+
 	( void ) ctx;
 	return PAPI_OK;
 }
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
 NWUNIT_init_component( int cidx )
-{  
+{
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_init_component\n" );
 #endif
@@ -56,7 +56,7 @@ NWUNIT_init_component( int cidx )
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_init_component cidx = %d\n", cidx );
 #endif
-	
+
 	return ( PAPI_OK );
 }
 
@@ -74,7 +74,7 @@ NWUNIT_init_control_state( hwd_control_state_t * ptr )
 	int retval;
 
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
-	
+
 	this_state->EventGroup = Bgpm_CreateEventSet();
 	retval = _check_BGPM_error( this_state->EventGroup, "Bgpm_CreateEventSet" );
 	if ( retval < 0 ) return retval;
@@ -92,12 +92,12 @@ NWUNIT_start( hwd_context_t * ctx, hwd_control_state_t * ptr )
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_start\n" );
 #endif
-	
+
 	( void ) ctx;
 	int retval;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
 
-	retval = Bgpm_Attach( this_state->EventGroup, UPC_NW_ALL_LINKS, 0); 
+	retval = Bgpm_Attach( this_state->EventGroup, UPC_NW_ALL_LINKS, 0);
 	retval = _check_BGPM_error( retval, "Bgpm_Attach" );
 	if ( retval < 0 ) return retval;
 
@@ -121,7 +121,7 @@ NWUNIT_stop( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	( void ) ctx;
 	int retval;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
-	
+
 	retval = Bgpm_Stop( this_state->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
 	if ( retval < 0 ) return retval;
@@ -144,7 +144,7 @@ NWUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 	( void ) flags;
 	int i, numEvts;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
-	
+
 	numEvts = Bgpm_NumEvents( this_state->EventGroup );
 	if ( numEvts == 0 ) {
 #ifdef DEBUG_BGPM
@@ -152,12 +152,12 @@ NWUNIT_read( hwd_context_t * ctx, hwd_control_state_t * ptr,
 #endif
 		//return ( EXIT_FAILURE );
 	}
-		
+
 	for ( i = 0; i < numEvts; i++ )
 		this_state->counts[i] = _common_getEventValue( i, this_state->EventGroup );
 
 	*events = this_state->counts;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -171,7 +171,7 @@ NWUNIT_shutdown_thread( hwd_context_t * ctx )
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_shutdown_thread\n" );
 #endif
-	
+
 	( void ) ctx;
 	return ( PAPI_OK );
 }
@@ -187,7 +187,7 @@ NWUNIT_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 #ifdef DEBUG_BGQ
 	printf( "NWUNIT_ctl\n" );
 #endif
-	
+
 	( void ) ctx;
 	( void ) code;
 	( void ) option;
@@ -212,7 +212,7 @@ NWUNIT_update_control_state( hwd_control_state_t * ptr,
 	( void ) ctx;
 	int retval, index, i;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
-	
+
 	// Delete and re-create BGPM eventset
 	retval = _common_deleteRecreate( &this_state->EventGroup );
 	if ( retval < 0 ) return retval;
@@ -220,19 +220,19 @@ NWUNIT_update_control_state( hwd_control_state_t * ptr,
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
 		index = ( native[i].ni_event ) + OFFSET;
-		
+
 		native[i].ni_position = i;
-		
+
 #ifdef DEBUG_BGQ
 		printf("NWUNIT_update_control_state: ADD event: i = %d, index = %d\n", i, index );
 #endif
-		
+
 		/* Add events to the BGPM eventGroup */
 		retval = Bgpm_AddEvent( this_state->EventGroup, index );
 		retval = _check_BGPM_error( retval, "Bgpm_AddEvent" );
-		if ( retval < 0 ) return retval; 
+		if ( retval < 0 ) return retval;
 	}
-	
+
 	return ( PAPI_OK );
 }
 
@@ -285,9 +285,9 @@ NWUNIT_reset( hwd_context_t * ctx, hwd_control_state_t * ptr )
 	int retval;
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ptr;
 
-	/* we can't simply call Bgpm_Reset() since PAPI doesn't have the 
+	/* we can't simply call Bgpm_Reset() since PAPI doesn't have the
 	 restriction that an EventSet has to be stopped before resetting is
-	 possible. However, BGPM does have this restriction. 
+	 possible. However, BGPM does have this restriction.
 	 Hence we need to stop, reset and start */
 	retval = Bgpm_Stop( this_state->EventGroup );
 	retval = _check_BGPM_error( retval, "Bgpm_Stop" );
@@ -315,9 +315,9 @@ NWUNIT_cleanup_eventset( hwd_control_state_t * ctrl )
 	int retval;
 
 	NWUNIT_control_state_t * this_state = ( NWUNIT_control_state_t * ) ctrl;
-	
+
 	// create a new empty bgpm eventset
-	// reason: bgpm doesn't permit to remove events from an eventset; 
+	// reason: bgpm doesn't permit to remove events from an eventset;
 	// hence we delete the old eventset and create a new one
 	retval = _common_deleteRecreate( &this_state->EventGroup ); // HJ try to use delete() only
 	if ( retval < 0 ) return retval;
@@ -370,10 +370,10 @@ NWUNIT_ntv_name_to_code( const char *name, unsigned int *event_code )
 	printf( "NWUNIT_ntv_name_to_code\n" );
 #endif
 	int ret;
-	
+
 	/* Return event id matching a given event label string */
 	ret = Bgpm_GetEventIdFromLabel ( name );
-	
+
 	if ( ret <= 0 ) {
 #ifdef DEBUG_BGPM
 		printf ("Error: ret value is %d for BGPM API function '%s'.\n",
@@ -385,7 +385,7 @@ NWUNIT_ntv_name_to_code( const char *name, unsigned int *event_code )
 		return PAPI_ENOEVNT;
 	else
 		*event_code = ( ret - OFFSET ) ;
-	
+
 	return PAPI_OK;
 }
 
@@ -400,21 +400,21 @@ NWUNIT_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 	//printf( "NWUNIT_ntv_code_to_name\n" );
 #endif
 	int index;
-	
+
 	index = ( EventCode ) + OFFSET;
 
 	if ( index >= MAX_COUNTERS )
 		return PAPI_ENOEVNT;
 
 	strncpy( name, Bgpm_GetEventIdLabel( index ), len );
-	
+
 	if ( name == NULL ) {
 #ifdef DEBUG_BGPM
 		printf ("Error: ret value is NULL for BGPM API function Bgpm_GetEventIdLabel.\n" );
 #endif
 		return PAPI_ENOEVNT;
 	}
-	
+
 	return ( PAPI_OK );
 }
 
@@ -429,11 +429,11 @@ NWUNIT_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	//printf( "NWUNIT_ntv_code_to_descr\n" );
 #endif
 	int retval, index;
-	
+
 	index = ( EventCode ) + OFFSET;
-	
+
 	retval = Bgpm_GetLongDesc( index, name, &len );
-	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );						 
+	retval = _check_BGPM_error( retval, "Bgpm_GetLongDesc" );
 	if ( retval < 0 ) return retval;
 
 	return ( PAPI_OK );
@@ -471,10 +471,10 @@ papi_vector_t _NWunit_vector = {
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,
 				 .available_granularities = PAPI_GRN_THR,
-		
+
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
-		
+
 				 .kernel_multiplex = 0,
 
 				 /* component specific cmp_info initializations */
@@ -482,7 +482,7 @@ papi_vector_t _NWunit_vector = {
 				 .fast_virtual_timer = 0,
 				 .attach = 0,
 				 .attach_must_ptrace = 0,
-				 
+
 				 }
 	,
 

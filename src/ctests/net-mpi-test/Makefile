@@ -18,9 +18,9 @@ LAPACKLIBS      = -llapack
 
 UTILOBJS= ../do_loops.o ../test_utils.o ../dummy.o
 INCLUDE = -I.. -I../.. -I/usr/include
-PAPILIB = -L../.. -lpapi 
-MPILIBS = 
-MPIINC = 
+PAPILIB = -L../.. -lpapi
+MPILIBS =
+MPIINC =
 
 XTRALIBS        =
 PTHRLIBS        =
@@ -46,8 +46,9 @@ tests: $(TESTS)
 cpi: cpi.c $(UTILOBJS)
 	$(MPICC) $(MPFLAGS) $(CFLAGS) $(INCLUDE) $(MPIINC) $(TOPTFLAGS) cpi.c $(UTILOBJS) $(PAPILIB) $(MPILIBS) -o cpi
 
-#cpi: cpi.c 
+#cpi: cpi.c
 #	$(MPICC)  $(FLAGS) cpi.c -o $@ $(MPIPERFLIBS) $(XTRALIBS) $(MPILIBS) -lm
 
 clean:
-	rm -f core $(TESTS)  *~ *.o 
+	rm -f core $(TESTS)  *~ *.o
+

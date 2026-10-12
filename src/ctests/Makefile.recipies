@@ -124,19 +124,19 @@ acpi: acpi.c dummy.o $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) acpi.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o acpi
 
 timer_overflow: timer_overflow.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) timer_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@ 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) timer_overflow.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
 mendes-alt: mendes-alt.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DMULTIPLEX mendes-alt.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@ 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -DMULTIPLEX mendes-alt.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
 max_multiplex: max_multiplex.c $(TESTLIB) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) max_multiplex.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@ 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) max_multiplex.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o $@
 
 multiplex1: multiplex1.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex1.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o $@ 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex1.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o $@
 
 multiplex2: multiplex2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o $@ 
+	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o $@
 
 multiplex1_pthreads: multiplex1_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiplex1_pthreads.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o $@ -lpthread
@@ -172,7 +172,7 @@ krentel_pthreads: krentel_pthreads.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) krentel_pthreads.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o krentel_pthreads -lpthread
 
 # krentel_pthreads_race is not included with the standard tests;
-# it is a modification of krentel_pthreads intended to be run with 
+# it is a modification of krentel_pthreads intended to be run with
 # "valgrind --tool=helgrind" to test for race conditions.
 krentel_pthreads_race: krentel_pthreads_race.c $(TESTLIB) $(PAPILIB)
 	$(CC_R) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) krentel_pthreads_race.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o krentel_pthreads_race -lpthread
@@ -360,10 +360,10 @@ shlib: shlib.c $(TESTLIB) $(PAPILIB)
 endif
 
 exeinfo: exeinfo.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exeinfo 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exeinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exeinfo
 
 cmpinfo: cmpinfo.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cmpinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o cmpinfo 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) cmpinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o cmpinfo
 
 hwinfo: hwinfo.c $(TESTLIB) $(PAPILIB)
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) hwinfo.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o hwinfo
@@ -384,13 +384,13 @@ multiattach2: multiattach2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) multiattach2.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o multiattach2
 
 attach3: attach3.c attach_target $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach3.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach3 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach3.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach3
 
 attach2: attach2.c attach_target $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach2 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o attach2
 
 attach_cpu: attach_cpu.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o attach_cpu 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o attach_cpu
 
 attach_cpu_validate: attach_cpu_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_cpu_validate.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o attach_cpu_validate
@@ -402,7 +402,7 @@ attach_validate: attach_validate.c attach_target $(TESTLIB) $(TESTINS) $(PAPILIB
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) attach_validate.c $(TESTLIB) $(TESTINS) $(PAPILIB) $(LDFLAGS) -o attach_validate
 
 reset: reset.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o reset 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o reset
 
 reset_multiplex: reset_multiplex.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) reset_multiplex.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o reset_multiplex
@@ -426,34 +426,34 @@ burn: burn.c $(TESTLIB) $(DOLOOPS) $(PAPILIB)
 	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) burn.c $(TESTLIB) $(DOLOOPS) $(PAPILIB) $(LDFLAGS) -o burn
 
 fork: fork.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork
 
 exec: exec.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec
 
 exec2: exec2.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec2 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) exec2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o exec2
 
 fork2: fork2.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork2 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) fork2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o fork2
 
 forkexec: forkexec.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec
 
 forkexec2: forkexec2.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec2 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec2.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec2
 
 forkexec3: forkexec3.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec3.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec3 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec3.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec3
 
 forkexec4: forkexec4.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec4.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec4 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) forkexec4.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o forkexec4
 
 prof_utils.o: prof_utils.c $(testlibdir)/papi_test.h prof_utils.h
 	$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) -c prof_utils.c
 
 filter_helgrind: filter_helgrind.c $(TESTLIB) $(PAPILIB)
-	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) filter_helgrind.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o filter_helgrind 
+	-$(CC) $(INCLUDE) $(CFLAGS) $(TOPTFLAGS) filter_helgrind.c $(TESTLIB) $(PAPILIB) $(LDFLAGS) -o filter_helgrind
 
 .PHONY : all default ctests ctest clean
 

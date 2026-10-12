@@ -9,7 +9,7 @@
 * Mods:    Vince Weaver
 *          vweaver1@eecs.utk.edu
 *
-* Mods:    Fabian Gorsler 
+* Mods:    Fabian Gorsler
 *          fabian.gorsler@smail.inf.h-bonn-rhein-sieg.de
 */
 
@@ -72,7 +72,7 @@ _solaris_get_memory_info( PAPI_hw_info_t * hw, int id )
 	   }
 
 	}
-       
+
 
         pclose(pipe);
 

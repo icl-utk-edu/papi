@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p6.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -13,15 +13,15 @@
 #include "map.h"
 
 /****************************************************************************
- P6_C SUBSTRATE 
- P6_C SUBSTRATE 
+ P6_C SUBSTRATE
+ P6_C SUBSTRATE
  P6_C SUBSTRATE (aka Celeron)
  P6_C SUBSTRATE
  P6_C SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6_C_Processor must match P6_C_Processor_info 
+	NativeEvent_Value_P6_C_Processor must match P6_C_Processor_info
 */
 
 Native_Event_LabelDescription_t P6_C_Processor_info[] =

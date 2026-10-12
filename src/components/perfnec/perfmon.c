@@ -413,7 +413,7 @@ process_smpl_buf( int num_smpl_pmds, int entry_size, ThreadInfo_t ** thr )
 }
 
 
-/* This function  used when hardware overflows ARE working 
+/* This function  used when hardware overflows ARE working
     or when software overflows are forced					*/
 
 static void
@@ -455,7 +455,7 @@ _papi_pfnec_allocate_registers( EventSetInfo_t * ESI )
 	return PAPI_OK;
 }
 
-/* This function clears the current contents of the control structure and 
+/* This function clears the current contents of the control structure and
    updates it with whatever resources are allocated for all the native events
    in the native info structure array. */
 
@@ -585,7 +585,7 @@ papi_vector_t _perfnec_vector = {
   .shutdown_thread =      _papi_pfnec_shutdown,
   .shutdown_component =   _papi_pfnec_shutdown_component,
   .ctl =                  _papi_pfnec_ctl,
-  .update_control_state = _papi_pfnec_update_control_state,	
+  .update_control_state = _papi_pfnec_update_control_state,
   .set_domain =           set_domain,
   .reset =                _papi_pfnec_reset,
   .set_overflow =         _papi_pfnec_set_overflow,

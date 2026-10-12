@@ -1,10 +1,10 @@
 #include "fpapi_test.h"
       program dmemtest
       IMPLICIT integer (p)
-      
+
       INTEGER retval
       INTEGER*8 dmeminfo(PAPIF_DMEM_MAXVAL)
-      
+
       integer tests_quiet, get_quiet
       external get_quiet
       real EventSet
@@ -24,7 +24,7 @@
       if ( retval.NE.PAPI_OK) then
          stop
       end if
-      
+
       if (tests_quiet .EQ. 0) then
           print *, "Mem Size: ", dmeminfo(PAPIF_DMEM_VMSIZE)
           print *, "Mem Resident: ", dmeminfo(PAPIF_DMEM_RESIDENT)

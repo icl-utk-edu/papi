@@ -3,16 +3,16 @@
  *	@page papi_native_avail
  * @brief papi_native_avail utility.
  *	@section  NAME
- *		papi_native_avail - provides detailed information for PAPI native events. 
+ *		papi_native_avail - provides detailed information for PAPI native events.
  *
  *	@section Synopsis
  *
  *	@section Description
- *		papi_native_avail is a PAPI utility program that reports information 
+ *		papi_native_avail is a PAPI utility program that reports information
  *		about the native events available on the current platform.
- *		A native event is an event specific to a specific hardware platform. 
- *		On many platforms, a specific native event may have a number of optional settings. 
- *		In such cases, the native event and the valid settings are presented, 
+ *		A native event is an event specific to a specific hardware platform.
+ *		On many platforms, a specific native event may have a number of optional settings.
+ *		In such cases, the native event and the valid settings are presented,
  *		rather than every possible combination of those settings.
  *		For each native event, a name, a description, and specific bit patterns are provided.
  *

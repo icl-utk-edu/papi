@@ -26,7 +26,7 @@
       call PAPIf_create_eventset(es1, retval)
       if ( retval.NE.PAPI_OK) then
         call ftest_fail(__FILE__, __LINE__,
-     .     'PAPIf_create_eventset', 
+     .     'PAPIf_create_eventset',
      *retval)
       end if
 
@@ -34,9 +34,9 @@
 
       call PAPIf_query_event(PAPI_FP_INS, retval)
       if (retval .NE. PAPI_OK) then
-        events(1) = PAPI_TOT_INS 
+        events(1) = PAPI_TOT_INS
       else
-        events(1) = PAPI_FP_INS 
+        events(1) = PAPI_FP_INS
       end if
 
       events(2) = PAPI_TOT_CYC
@@ -96,7 +96,7 @@
      .     'PAPIf_accum', retval)
       end if
 
-      call fdo_flops(NUM_FLOPS)      
+      call fdo_flops(NUM_FLOPS)
 
       call PAPIf_stop(es1, values(9), retval)
       if ( retval .NE. PAPI_OK ) then
@@ -113,7 +113,7 @@
       if (tests_quiet .EQ. 0) then
         call PAPIf_event_code_to_name (events(1), name, retval)
         if ( retval.NE.PAPI_OK) then
-            call ftest_fail(__FILE__, __LINE__, 
+            call ftest_fail(__FILE__, __LINE__,
      *        'PAPIf_event_code_to_name', retval)
         end if
         n=last_char(name)
@@ -136,6 +136,6 @@
         print *, "Column 4 approximately equals 3 * Column 1;"
         print *, "Column 5 approximately equals Column 1."
       end if
- 
+
       call ftests_pass(__FILE__)
       end

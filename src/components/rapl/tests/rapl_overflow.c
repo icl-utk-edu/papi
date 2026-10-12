@@ -18,7 +18,7 @@ int EventSet2=PAPI_NULL;
 
 int quiet=0;
 
-void handler( int EventSet, void *address, 
+void handler( int EventSet, void *address,
 	      long long overflow_vector, void *context ) {
 
 	( void ) context;
@@ -33,10 +33,10 @@ void handler( int EventSet, void *address,
 	PAPI_read(EventSet,values);
 	PAPI_read(EventSet2,rapl_values);
    after_time = PAPI_get_real_nsec();
-   double elapsed_time=((double)(after_time-before_time))/1.0e9;	
+   double elapsed_time=((double)(after_time-before_time))/1.0e9;
 
 	if (!quiet) printf("%15lld %15lld %18lld %15lld %.3fms\n",
-      values[0],values[1], 
+      values[0],values[1],
       rapl_values[0], rapl_values[1], elapsed_time*1000.);
 
 	if ((rapl_values[0]<old_rapl_values[0]) ||
@@ -141,7 +141,7 @@ main( int argc, char **argv )
 		sprintf(buffer, "%s%d", raplEventBase, i);
 		retval=PAPI_add_named_event(EventSet2,buffer);
 		++i;
-	/* protect against insane PAPI library, the value 64 is the same value as 
+	/* protect against insane PAPI library, the value 64 is the same value as
      * RAPL_MAX_COUNTERS in linux-rapl.c, and feels reasonable. */
 	} while ( 0 < retval && i < 64 );
 
@@ -172,7 +172,7 @@ main( int argc, char **argv )
 
    /* report header */
    if (!TESTS_QUIET) {
-      printf("%15s %15s %18s %15s Elapsed\n", "PAPI_TOT_CYC", "PAPI_TOT_INS", 
+      printf("%15s %15s %18s %15s Elapsed\n", "PAPI_TOT_CYC", "PAPI_TOT_INS",
          "PACKAGE_ENERGY_CNT", "--UNUSED--");
    }
 

@@ -5,7 +5,7 @@
   *	@page papi_hybrid_native_avail
   * @brief papi_hybrid_native_avail utility.
   *	@section  NAME
-  *		papi_hybrid_native_avail - provides detailed information for PAPI native events. 
+  *		papi_hybrid_native_avail - provides detailed information for PAPI native events.
   *
   *	@section Synopsis
   *
@@ -333,7 +333,7 @@ main( int argc, char **argv )
 #ifdef __INTEL_OFFLOAD
     __Offload_report(1);
 #endif
-    #pragma offload target(mic: target_idx) if(offload_mode) nocopy(hwinfo) 
+    #pragma offload target(mic: target_idx) if(offload_mode) nocopy(hwinfo)
     {
 	   retval = papi_print_header( "Available native events and hardware information.\n", &hwinfo );
 	   fflush(stdout);
@@ -345,7 +345,7 @@ main( int argc, char **argv )
 
 
 	/* Do this code if the event name option was specified on the commandline */
-	if ( flags.named ) 
+	if ( flags.named )
 	{
 	   int papi_ok = 0;
 	   char *ename = flags.name;
@@ -357,7 +357,7 @@ main( int argc, char **argv )
 #endif
        #pragma offload target(mic: target_idx) if(offload_mode) in(ename:length(elen)) out(i)
 	   papi_ok = PAPI_event_name_to_code(ename, &i);
-	   
+
 	   if (papi_ok == PAPI_OK)
 	   {
 #ifdef __INTEL_OFFLOAD
@@ -366,7 +366,7 @@ main( int argc, char **argv )
           #pragma offload target(mic: target_idx) if(offload_mode) out(info)
 	      papi_ok = PAPI_get_event_info(i, &info);
        }
-       
+
 	   if (papi_ok == PAPI_OK)
 	   {
 		  printf( "%-30s%s\n",
@@ -374,17 +374,17 @@ main( int argc, char **argv )
 		  printf( "%-29s|%s|\n", "Description:", info.long_descr );
 
           /* if unit masks exist but none specified, process all */
-		  if ( !strchr( flags.name, ':' ) ) 
+		  if ( !strchr( flags.name, ':' ) )
 		  {
 #ifdef __INTEL_OFFLOAD
             __Offload_report(1);
 #endif
             #pragma offload target(mic: target_idx) if(offload_mode) inout(i)
             papi_ok = PAPI_enum_event( &i, PAPI_NTV_ENUM_UMASKS);
-			if (papi_ok == PAPI_OK ) 
+			if (papi_ok == PAPI_OK )
 			{
 			   printf( "\nUnit Masks:\n" );
-			   do 
+			   do
 			   {
 #ifdef __INTEL_OFFLOAD
                   __Offload_report(1);
@@ -419,7 +419,7 @@ main( int argc, char **argv )
 #ifdef __INTEL_OFFLOAD
        __Offload_report(1);
 #endif
-       #pragma offload target(mic: target_idx) if(offload_mode) 
+       #pragma offload target(mic: target_idx) if(offload_mode)
 	   numcmp = PAPI_num_components(  );
 
 	   j = 0;
@@ -455,7 +455,7 @@ main( int argc, char **argv )
            #pragma offload target(mic: target_idx) if(offload_mode) inout(i)
 	       retval=PAPI_enum_cmp_event( &i, PAPI_ENUM_FIRST, cid );
 
-	       do 
+	       do
 	       {
 			  memset( &info, 0, sizeof ( info ) );
 #ifdef __INTEL_OFFLOAD
@@ -487,7 +487,7 @@ main( int argc, char **argv )
 			  print_event( &info, 0 );
 
 			  if (flags.details) {
-				if (info.units[0]) printf( "|     Units: %-67s|\n", 
+				if (info.units[0]) printf( "|     Units: %-67s|\n",
 							   info.units );
 			  }
 
@@ -506,7 +506,7 @@ main( int argc, char **argv )
 #endif
                  #pragma offload target(mic: target_idx) if(offload_mode) inout(k)
 				 papi_ok = PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_GROUPS, cid);
-				 if (papi_ok == PAPI_OK ) 
+				 if (papi_ok == PAPI_OK )
 				 {
 				    printf("Groups: ");
 				    do {
@@ -525,7 +525,7 @@ main( int argc, char **argv )
 			  /* Print umasks */
 			  /* components that don't have them can just ignore */
 
-              if ( flags.umask ) 
+              if ( flags.umask )
               {
                  int papi_ok = 0;
 				 k = i;
@@ -534,7 +534,7 @@ main( int argc, char **argv )
 #endif
                  #pragma offload target(mic: target_idx) if(offload_mode) inout(k)
 				 papi_ok = PAPI_enum_cmp_event(&k, PAPI_NTV_ENUM_UMASKS, cid);
-				 if (papi_ok == PAPI_OK ) 
+				 if (papi_ok == PAPI_OK )
 				 {
 					do {
 #ifdef __INTEL_OFFLOAD

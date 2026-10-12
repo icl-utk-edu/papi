@@ -2,7 +2,7 @@
 
    - It attempts to use the following three counters. It may use less depending on
      hardware counter resource limitations. These are counted in the default counting
-     domain and default granularity, depending on the platform. Usually this is 
+     domain and default granularity, depending on the platform. Usually this is
      the user domain (PAPI_DOM_USER) and thread context (PAPI_GRN_THR).
      + PAPI_FP_INS or PAPI_TOT_INS if PAPI_FP_INS doesn't exist
      + PAPI_TOT_CYC

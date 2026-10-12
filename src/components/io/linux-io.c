@@ -29,14 +29,14 @@ papi_vector_t _io_vector;
 
 // Maximum expected characters per line in file.
 #define FILE_LINE_SIZE 256
-// Maximum expected events in file. ARBITRARY VALUE, 
+// Maximum expected events in file. ARBITRARY VALUE,
 // set as needed, just avoiding malloc() and free().
 #define IO_COUNTERS 64
 // File name to access.
 #define IO_FILENAME "/proc/self/io"
 
-// The following macro follows if a string function has an error. It should 
-// never happen; but it is necessary to prevent compiler warnings. We print 
+// The following macro follows if a string function has an error. It should
+// never happen; but it is necessary to prevent compiler warnings. We print
 // something just in case there is programmer error in invoking the function.
 #define HANDLE_STRING_ERROR {fprintf(stderr,"%s:%i unexpected string function error.\n",__FILE__,__LINE__); exit(-1);}
 
@@ -52,7 +52,7 @@ typedef struct IO_native_event_entry
 // Holds control flags. There's one of these per event-set. Use this to hold
 // data specific to the EventSet.
 //-----------------------------------------------------------------------------
-typedef struct _io_control_state  
+typedef struct _io_control_state
 {
    int EventSetCount;
    long long EventSetVal[IO_COUNTERS];
@@ -63,11 +63,11 @@ typedef struct _io_control_state
 //-----------------------------------------------------------------------------
 // Holds per-thread information.
 //-----------------------------------------------------------------------------
-typedef struct _io_context  
+typedef struct _io_context
 {
    int  EventCount;
    FILE *pFile;
-   char line[FILE_LINE_SIZE]; 
+   char line[FILE_LINE_SIZE];
 } _io_context_t;
 
 // ----------------------- GLOBALS ----------------------------
@@ -119,7 +119,7 @@ static int io_count_events(_io_context_t *myCtx)
             return PAPI_ENOSUPP;
         }
 
-        myCtx->EventCount++; 
+        myCtx->EventCount++;
     } // END READING.
 
     // NOTE: We intentionally leave file open; up to caller to close
@@ -131,7 +131,7 @@ static int io_count_events(_io_context_t *myCtx)
 // Code to read values; returns PAPI_OK or an error.
 // We presume the number of counters and order of them
 // will not change from our initialization read.
-static int 
+static int
 io_hardware_read(_io_context_t *ctx, _io_control_state_t *ctl)
 {
     ctx->pFile = fopen(IO_FILENAME, "r");
@@ -172,7 +172,7 @@ _io_init_component( int cidx )
     _io_context_t myCtx;
     int ret, fileIdx;
     SUBDBG( "_io_init_component..." );
-   
+
     ret = io_count_events(&myCtx);
     if (ret != PAPI_OK) {
         int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
@@ -181,7 +181,7 @@ _io_init_component( int cidx )
         if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         goto fn_fail;
     }
- 
+
     rewind(myCtx.pFile);
 
     if (myCtx.EventCount > IO_COUNTERS) {
@@ -224,27 +224,27 @@ _io_init_component( int cidx )
             strcpy(io_native_table[fileIdx].desc, "Characters read.");
         }
         if (strcmp("wchar", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Characters written."); 
+            strcpy(io_native_table[fileIdx].desc, "Characters written.");
         }
         if (strcmp("syscr", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Characters read by system calls."); 
+            strcpy(io_native_table[fileIdx].desc, "Characters read by system calls.");
         }
         if (strcmp("syscw", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Characters written by system calls."); 
+            strcpy(io_native_table[fileIdx].desc, "Characters written by system calls.");
         }
         if (strcmp("read_bytes", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Binary bytes read."); 
+            strcpy(io_native_table[fileIdx].desc, "Binary bytes read.");
         }
         if (strcmp("write_bytes", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Binary bytes written."); 
+            strcpy(io_native_table[fileIdx].desc, "Binary bytes written.");
         }
         if (strcmp("cancelled_write_bytes", name) == 0) {
-            strcpy(io_native_table[fileIdx].desc, "Binary write bytes cancelled."); 
+            strcpy(io_native_table[fileIdx].desc, "Binary write bytes cancelled.");
         }
-                     
+
         // If none of the above found, generic description.
-        if (io_native_table[fileIdx].desc[0] == 0) {    
-            strcpy(io_native_table[fileIdx].desc, "No description available."); 
+        if (io_native_table[fileIdx].desc[0] == 0) {
+            strcpy(io_native_table[fileIdx].desc, "No description available.");
         }
     } // END READING.
 
@@ -265,8 +265,8 @@ _io_init_component( int cidx )
 
 // This is called whenever a thread is initialized.
 // WARNING: This can be called BEFORE init_component.
-// When it is, shutdown_thread is never called, but 
-// this is the default context used in calls. 
+// When it is, shutdown_thread is never called, but
+// this is the default context used in calls.
 static int
 _io_init_thread( hwd_context_t *ctx )
 {
@@ -300,24 +300,24 @@ _io_init_control_state( hwd_control_state_t * ctl )
 // Triggered by eventset operations like add or remove.
 // We store the order of the events, and the number.
 static int
-_io_update_control_state( hwd_control_state_t *ctl, 
+_io_update_control_state( hwd_control_state_t *ctl,
         NativeInfo_t *native,
-        int count, 
+        int count,
         hwd_context_t *ctx )
 {
     (void) ctx;
     _io_control_state_t *myCtl = (_io_control_state_t*) ctl;
-    
+
     int i, index;
 
     myCtl->EventSetCount = count;
-    
+
     /* if no events, return */
     if (count==0) return PAPI_OK;
 
     for( i = 0; i < count; i++ ) {
         index = native[i].ni_event;
-        myCtl->EventSetIdx[i] = index;    
+        myCtl->EventSetIdx[i] = index;
 
         /* We have no constraints on event position, so any event */
         /* can be in any slot.                                    */
@@ -351,7 +351,7 @@ _io_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 
-// Triggered by PAPI_read(). We read all the events, then 
+// Triggered by PAPI_read(). We read all the events, then
 // pick out the ones the user actually requested, in their
 // given order.
 static int
@@ -372,7 +372,7 @@ _io_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
     }
 
     /* return pointer to the values we read */
-    *events = myCtl->EventSetReport; 
+    *events = myCtl->EventSetReport;
 
     return PAPI_OK;
 }
@@ -412,7 +412,7 @@ _io_shutdown_component(void)
     return PAPI_OK;
 }
 
-// Shutdown thread; close files. 
+// Shutdown thread; close files.
 static int
 _io_shutdown_thread( hwd_context_t *ctx )
 {
@@ -423,7 +423,7 @@ _io_shutdown_thread( hwd_context_t *ctx )
 
 /** This function sets various options in the component
   @param[in] ctx -- hardware context
-  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN, 
+  @param[in] code valid are PAPI_SET_DEFDOM, PAPI_SET_DOMAIN,
   PAPI_SETDEFGRN, PAPI_SET_GRANUL and PAPI_SET_INHERIT
   @param[in] option -- options to be set
  */
@@ -520,7 +520,7 @@ _io_ntv_enum_events( unsigned int *EventCode, int modifier )
     return PAPI_EINVAL;
 } // END ROUTINE
 
-/** Takes a native event code and passes back the name 
+/** Takes a native event code and passes back the name
  * @param EventCode is the native event code
  * @param name is a pointer for the name to be copied to
  * @param len is the size of the name string
@@ -533,7 +533,7 @@ _io_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 
     /* Make sure we are in range */
     if (index >= 0 && index < gEventCount) {
-        strncpy(name, io_native_table[index].name, len );  
+        strncpy(name, io_native_table[index].name, len );
         return PAPI_OK;
     }
 
@@ -602,13 +602,13 @@ papi_vector_t _io_vector = {
     .start =                _io_start,
     .stop =                 _io_stop,
     .read =                 _io_read,
-    .reset =                _io_reset,    
+    .reset =                _io_reset,
     .write =                _io_write,
-    .init_component =       _io_init_component,    
+    .init_component =       _io_init_component,
     .init_thread =          _io_init_thread,
     .init_control_state =   _io_init_control_state,
-    .update_control_state = _io_update_control_state,    
-    .ctl =                  _io_ctl,    
+    .update_control_state = _io_update_control_state,
+    .ctl =                  _io_ctl,
     .shutdown_thread =      _io_shutdown_thread,
     .shutdown_component =   _io_shutdown_component,
     .set_domain =           _io_set_domain,

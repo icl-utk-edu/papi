@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    papi_fwrappers.c
 * Author:  Philip Mucci
 *          mucci@cs.utk.edu
@@ -67,8 +67,8 @@ static void Fortran2cstring( char *cstring, char *Fstring, int clen , int Flen )
 
 /**	@class PAPIF_accum
  *	@ingroup PAPIF
- *	@brief accumulate and reset counters in an event set 
- *	
+ *	@brief accumulate and reset counters in an event set
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_accum( C_INT EventSet, C_LONG_LONG(*) values, C_INT  check )
@@ -84,7 +84,7 @@ PAPI_FCALL( papif_accum, PAPIF_ACCUM,
 /**	@class PAPIF_add_event
  *	@ingroup PAPIF
  *	@brief add PAPI preset or native hardware event to an event set
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_add_event( C_INT EventSet, C_INT EventCode, C_INT check )
@@ -100,7 +100,7 @@ PAPI_FCALL( papif_add_event, PAPIF_ADD_EVENT,
 /**	@class PAPIF_add_named_event
  *	@ingroup PAPIF
  *	@brief add PAPI preset or native hardware event to an event set by name
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_add_named_event( C_INT EventSet, C_STRING EventName, C_INT check )
@@ -113,7 +113,7 @@ PAPI_FCALL( papif_add_named_event, PAPIF_ADD_NAMED_EVENT,
 {
 	char tmp[PAPI_MAX_STR_LEN];
 	Fortran2cstring( tmp, EventName, PAPI_MAX_STR_LEN, Event_len );
-	*check = PAPI_add_named_event( *EventSet, tmp );	
+	*check = PAPI_add_named_event( *EventSet, tmp );
 }
 #else
 PAPI_FCALL( papif_add_named_event, PAPIF_ADD_NAMED_EVENT,
@@ -126,7 +126,7 @@ PAPI_FCALL( papif_add_named_event, PAPIF_ADD_NAMED_EVENT,
 /**	@class PAPIF_add_events
  *	@ingroup PAPIF
  *	@brief add multiple PAPI presets or native hardware events to an event set
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_add_events( C_INT EventSet, C_INT(*) EventCodes, C_INT number, C_INT  check )
@@ -141,8 +141,8 @@ PAPI_FCALL( papif_add_events, PAPIF_ADD_EVENTS,
 
 /**	@class PAPIF_cleanup_eventset
  *	@ingroup PAPIF
- *	@brief empty and destroy an EventSet 
- *	
+ *	@brief empty and destroy an EventSet
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_cleanup_eventset( C_INT EventSet, C_INT check )
@@ -157,8 +157,8 @@ PAPI_FCALL( papif_cleanup_eventset, PAPIF_CLEANUP_EVENTSET,
 
 /**	@class PAPIF_create_eventset
  *	@ingroup PAPIF
- *	@brief create a new empty PAPI EventSet 
- *	
+ *	@brief create a new empty PAPI EventSet
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_create_eventset( C_INT EventSet, C_INT check )
@@ -173,8 +173,8 @@ PAPI_FCALL( papif_create_eventset, PAPIF_CREATE_EVENTSET,
 
 /**	@class PAPIF_assign_eventset_component
  *	@ingroup PAPIF
- *	@brief assign a component index to an existing but empty EventSet 
- *	
+ *	@brief assign a component index to an existing but empty EventSet
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_assign_eventset_component( C_INT EventSet, C_INT EventSet, C_INT check )
@@ -189,8 +189,8 @@ PAPI_FCALL( papif_assign_eventset_component, PAPIF_ASSIGN_EVENTSET_COMPONENT,
 
 /**	@class PAPIF_destroy_eventset
  *	@ingroup PAPIF
- *	@brief empty and destroy an EventSet 
- *	
+ *	@brief empty and destroy an EventSet
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_destroy_eventset( C_INT EventSet, C_INT check )
@@ -205,8 +205,8 @@ PAPI_FCALL( papif_destroy_eventset, PAPIF_DESTROY_EVENTSET,
 
 /**	@class PAPIF_get_dmem_info
  *	@ingroup PAPIF
- *	@brief get information about the dynamic memory usage of the current program 
- *	
+ *	@brief get information about the dynamic memory usage of the current program
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_get_dmem_info( C_INT EventSet, C_INT check )
@@ -222,8 +222,8 @@ PAPI_FCALL( papif_get_dmem_info, PAPIF_GET_DMEM_INFO,
 
 /**	@class PAPIF_get_exe_info
  *	@ingroup PAPIF
- *	@brief get information about the dynamic memory usage of the current program 
- *	
+ *	@brief get information about the dynamic memory usage of the current program
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_get_exe_info( C_STRING fullname, C_STRING name, @n
@@ -274,10 +274,10 @@ PAPI_FCALL( papif_get_exe_info, PAPIF_GET_EXE_INFO,
 	}
 }
 
-/**	@class PAPIF_get_hardware_info 
+/**	@class PAPIF_get_hardware_info
  *	@ingroup PAPIF
  *	@brief get information about the system hardware
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_get_hardware_info( C_INT ncpu, C_INT nnodes,  C_INT totalcpus,@n
@@ -500,7 +500,7 @@ PAPI_FCALL( papif_is_initialized, PAPIF_IS_INITIALIZED, ( int *level ) )
 
 /** @class PAPIF_library_init
  *	@ingroup PAPIF
- *	@brief Initialize the PAPI library. 
+ *	@brief Initialize the PAPI library.
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
@@ -632,7 +632,7 @@ PAPI_FCALL( papif_get_multiplex, PAPIF_GET_MULTIPLEX,
 
 /** @class PAPIF_set_multiplex
  *	@ingroup PAPIF
- *	@brief Convert a standard event set to a multiplexed event set. 
+ *	@brief Convert a standard event set to a multiplexed event set.
  *
  * @par Fortran Interface:
  * \#include "fpapi.h" @n
@@ -648,7 +648,7 @@ PAPI_FCALL( papif_set_multiplex, PAPIF_SET_MULTIPLEX,
 
 /** @class PAPIF_perror
  *	@ingroup PAPIF
- *  @brief Convert PAPI error codes to strings, and print error message to stderr. 
+ *  @brief Convert PAPI error codes to strings, and print error message to stderr.
  *
  * @par Fortran Interface:
  * \#include "fpapi.h" @n
@@ -676,7 +676,7 @@ PAPI_FCALL( papif_perror, PAPIF_PERROR,
 }
 
 /* This will not work until Fortran2000 :)
- * PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset, 
+ * PAPI_FCALL(papif_profil, PAPIF_PROFIL, (unsigned short *buf, unsigned *bufsiz, unsigned long *offset, unsigned *scale, unsigned *eventset,
  *            unsigned *eventcode, unsigned *threshold, unsigned *flags, unsigned *check))
  * {
  * *check = PAPI_profil(buf, *bufsiz, *offset, *scale, *eventset, *eventcode, *threshold, *flags);
@@ -715,7 +715,7 @@ PAPI_FCALL( papif_query_named_event, PAPIF_QUERY_NAMED_EVENT,
 {
 	char tmp[PAPI_MAX_STR_LEN];
 	Fortran2cstring( tmp, EventName, PAPI_MAX_STR_LEN, Event_len );
-	*check = PAPI_query_named_event( tmp );	
+	*check = PAPI_query_named_event( tmp );
 }
 #else
 PAPI_FCALL( papif_query_named_event, PAPIF_QUERY_NAMED_EVENT,
@@ -781,8 +781,8 @@ PAPI_FCALL( papif_get_event_info, PAPIF_GET_EVENT_INFO,
 		strncpy( long_descr, info.long_descr, PAPI_MAX_STR_LEN );
 		strncpy( short_descr, info.short_descr, PAPI_MAX_STR_LEN );
 		*count = info.count;
-		if (info.note) 
-                   strncpy( event_note, info.note, 
+		if (info.note)
+                   strncpy( event_note, info.note,
 			    PAPI_MAX_STR_LEN );
 	}
 /*  printf("Check: %d\n", *check); -KSL */
@@ -823,7 +823,7 @@ PAPI_FCALL( papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
 
 /** @class PAPIF_event_name_to_code
  *	@ingroup PAPIF
- *	@brief Convert a name to a numeric hardware event code. 
+ *	@brief Convert a name to a numeric hardware event code.
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
@@ -864,7 +864,7 @@ PAPI_FCALL( papif_event_name_to_code, PAPIF_EVENT_NAME_TO_CODE,
 
 /** @class PAPIF_num_events
  *	@ingroup PAPIF
- *	@brief Enumerate PAPI preset or native events. 
+ *	@brief Enumerate PAPI preset or native events.
  *
  * @par Fortran Interface:
  * \#include "fpapi.h" @n
@@ -927,7 +927,7 @@ PAPI_FCALL( papif_read_ts, PAPIF_READ_TS,
 
 /** @class PAPIF_remove_event
  *	@ingroup PAPIF
- *  @brief Remove a hardware event from a PAPI event set. 
+ *  @brief Remove a hardware event from a PAPI event set.
  *
  *   @par Fortran interface:
  *   \#include "fpapi.h" @n
@@ -943,7 +943,7 @@ PAPI_FCALL( papif_remove_event, PAPIF_REMOVE_EVENT,
 
 /** @class PAPIF_remove_named_event
  *	@ingroup PAPIF
- *  @brief Remove a named hardware event from a PAPI event set. 
+ *  @brief Remove a named hardware event from a PAPI event set.
  *
  *   @par Fortran interface:
  *   \#include "fpapi.h" @n
@@ -957,7 +957,7 @@ PAPI_FCALL( papif_remove_named_event, PAPIF_REMOVE_NAMED_EVENT,
 {
 	char tmp[PAPI_MAX_STR_LEN];
 	Fortran2cstring( tmp, EventName, PAPI_MAX_STR_LEN, Event_len );
-	*check = PAPI_remove_named_event( *EventSet, tmp );	
+	*check = PAPI_remove_named_event( *EventSet, tmp );
 }
 #else
 PAPI_FCALL( papif_remove_named_event, PAPIF_REMOVE_NAMED_EVENT,
@@ -974,7 +974,7 @@ PAPI_FCALL( papif_remove_named_event, PAPIF_REMOVE_NAMED_EVENT,
  *	@par Fortran Prototype:
  *		\#include "fpapi.h" @n
  *		PAPIF_remove_events( C_INT EventSet, C_INT(*) EventCode, C_INT number, C_INT check )
- * 
+ *
  * @see PAPI_remove_events
  */
 PAPI_FCALL( papif_remove_events, PAPIF_REMOVE_EVENTS,
@@ -1005,7 +1005,7 @@ PAPI_FCALL( papif_reset, PAPIF_RESET, ( int *EventSet, int *check ) )
  * @par Fortran Prototype:
  *		\#include "fpapi.h" @n
  *		PAPIF_set_debug( C_INT level, C_INT check )
- * 
+ *
  * @see PAPI_set_debug
  */
 PAPI_FCALL( papif_set_debug, PAPIF_SET_DEBUG, ( int *debug, int *check ) )
@@ -1078,7 +1078,7 @@ PAPI_FCALL( papif_set_cmp_granularity, PAPIF_SET_CMP_GRANULARITY,
 
 /** @class PAPIF_shutdown
  *	@ingroup PAPIF
- *	@brief finish using PAPI and free all related resources. 
+ *	@brief finish using PAPI and free all related resources.
  *
  *	@par Fortran Prototype:
  *		\#include "fpapi.h" @n
@@ -1352,7 +1352,7 @@ PAPI_FCALL( papif_set_inherit, PAPIF_SET_INHERIT, ( int *inherit, int *check ) )
 /** @class PAPIF_ipc
  *	@ingroup PAPIF
  *	@brief Get instructions per cycle, real and processor time.
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_ipc( C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ins, C_FLOAT ipc, C_INT check )
@@ -1369,7 +1369,7 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
 /** @class PAPIF_epc
  *	@ingroup PAPIF
  *	@brief Get named events per cycle, real and processor time, reference and core cycles.
- *	
+ *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
  *	PAPIF_epc( C_INT EventCode, C_FLOAT real_time, C_FLOAT proc_time, C_LONG_LONG ref, C_LONG_LONG core, C_LONG_LONG evt, C_FLOAT epc, C_INT check )
@@ -1377,7 +1377,7 @@ PAPI_FCALL( papif_ipc, PAPIF_IPC,
  * @see PAPI_epc
  */
 PAPI_FCALL( papif_epc, PAPIF_EPC,
-			( int *EventCode, float *rtime, float *ptime, 
+			( int *EventCode, float *rtime, float *ptime,
 			  long long *ref, long long *core, long long *evt, float *epc,
 			  int *check) )
 {
@@ -1386,7 +1386,7 @@ PAPI_FCALL( papif_epc, PAPIF_EPC,
 
 /** @class PAPIF_flips_rate
  *	@ingroup PAPIF
- *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time. 
+ *	@brief Simplified call to get Mflips/s (floating point instruction rate), real and processor time.
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n
@@ -1403,7 +1403,7 @@ PAPI_FCALL( papif_flips_rate, PAPIF_FLIPS_RATE,
 
 /** @class PAPIF_flops_rate
  *	@ingroup PAPIF
- *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time. 
+ *	@brief Simplified call to get Mflops/s (floating point instruction rate), real and processor time.
  *
  *	@par Fortran Interface:
  *	\#include "fpapi.h" @n

@@ -2,16 +2,16 @@
   * @brief papi_multiplex_cost utility.
   *	@page papi_multiplex_cost
   * @section  NAME
-  *		papi_multiplex_cost - computes execution time costs for basic PAPI operations on multiplexed EventSets. 
+  *		papi_multiplex_cost - computes execution time costs for basic PAPI operations on multiplexed EventSets.
   *
   *	@section Synopsis
   *		papi_cost [-m, --min < min >] [-x, --max < max >] [-k,-s]
   *
   *	@section Description
   *		papi_multiplex_cost is a PAPI utility program that computes the
-  *		min / max / mean / std. deviation of execution times for PAPI start/stop 
+  *		min / max / mean / std. deviation of execution times for PAPI start/stop
   *		pairs and for PAPI reads on multiplexed eventsets.
-  *		This information provides the basic operating cost to a user's program 
+  *		This information provides the basic operating cost to a user's program
   *		for collecting hardware counter data.
   *		Command line options control display capabilities.
   *
@@ -32,7 +32,7 @@
 
 /* Open Issues:
  *		Selecting events to add is very primitive right now.
- *		Output format, right now the format targets a gnuplot script I have, 
+ *		Output format, right now the format targets a gnuplot script I have,
  *			We will probably end up generating a csv per test
  */
 
@@ -73,7 +73,7 @@ do_output( char *fn, char *message, long long* array, int noc )
 	if (fp == NULL) {
 	  fprintf(stderr,"Unable to open output file, %s, output will not be saved.\n", fn);
 	  skip = 1;
-	} else 
+	} else
 	  fprintf(fp, "###%s\n#number of events\tmin cycles\tmax cycles\tmean cycles\t\
 std deviation\tsw min cycles\tsw max cycles\tsw avg cycles\tsw std dev\n", message);
 
@@ -251,7 +251,7 @@ main( int argc, char **argv )
 	}
 
 	info = PAPI_get_component_info(0);
- 
+
   if (info != NULL ) {
 	options.kernel_mpx &= info->kernel_multiplex;
   	if ( options.kernel_mpx && !info->kernel_multiplex ) {
@@ -337,7 +337,7 @@ main( int argc, char **argv )
 		  dont_loop_forever < 512);
 	}
 	if ( dont_loop_forever == 512 )
-	  fprintf(stderr,"I can't find %d events to count at once.", options.max); 
+	  fprintf(stderr,"I can't find %d events to count at once.", options.max);
 
 	Events[number_of_counters] = event;
   }
@@ -542,7 +542,7 @@ main( int argc, char **argv )
 	  }
 	  array[num_iters] -= totcyc;
 
-	} else 
+	} else
 	  memset(array+num_iters, 0, sizeof(long long) * num_iters );
 
 	do_output( "papi_read_ts.dat", "Multiplexed PAPI_read_ts()", array, number_of_counters );

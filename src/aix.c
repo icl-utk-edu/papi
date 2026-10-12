@@ -1,5 +1,5 @@
 /* This file handles the OS dependent part of the POWER5 and POWER6 architectures.
-  It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the 
+  It supports both AIX 4 and AIX 5. The switch between AIX 4 and 5 is driven by the
   system defined value _AIX_VERSION_510.
   Other routines also include minor conditionally compiled differences.
 */
@@ -24,9 +24,9 @@ papi_vector_t _aix_vector;
 volatile int lock_var[PAPI_MAX_LOCK] = { 0 };
 atomic_p lock[PAPI_MAX_LOCK];
 
-/* 
+/*
  some heap information, start_of_text, start_of_data .....
- ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV 
+ ref: http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixprggd/genprogc/sys_mem_alloc.htm#HDRA9E4A4C9921SYLV
 */
 #define START_OF_TEXT &_text
 #define END_OF_TEXT   &_etext
@@ -93,7 +93,7 @@ aix_ppc64_setup_gps( int total )
 		    if (pmgroups.event_groups[gnum].group_id >=MAX_GROUPS) {
 		       fprintf(stderr,"ERROR, group number trying to go past MAX GROUPS\n");
 		       continue;
-		    } 
+		    }
 
 			group_map[pmgroups.event_groups[gnum].group_id].counter_cmd[i] =
 				pmgroups.event_groups[gnum].events[i];
@@ -152,7 +152,7 @@ copy_value( unsigned int val, char *nam, char *names, unsigned int *values,
 }
 
 
-/* this function recusively does Modified Bipartite Graph counter allocation 
+/* this function recusively does Modified Bipartite Graph counter allocation
      success  return 1
         fail     return 0
 */
@@ -193,7 +193,7 @@ do_counter_allocation( ppc64_reg_alloc_t * event_list, int size )
 }
 
 
-/* this function will be called when there are counters available 
+/* this function will be called when there are counters available
      success  return 1
         fail     return 0
 */
@@ -209,11 +209,11 @@ _aix_allocate_registers( EventSetInfo_t * ESI )
 
 	/* not yet successfully mapped, but have enough slots for events */
 
-	/* Initialize the local structure needed 
+	/* Initialize the local structure needed
 	   for counter allocation and optimization. */
 	natNum = ESI->NativeCount;
 	for ( i = 0; i < natNum; i++ ) {
-		/* CAUTION: Since this is in the hardware layer, it's ok 
+		/* CAUTION: Since this is in the hardware layer, it's ok
 		   to access the native table directly, but in general this is a bad idea */
 		event_list[i].ra_position = -1;
 		/* calculate native event rank, which is number of counters it can live on, this is power3 specific */
@@ -587,11 +587,11 @@ _aix_get_system_info( papi_mdi_t *mdi )
 
 #ifdef _POWER7
 	/* we pass PM_POWER7 for the same reasons as below (power6 case) */
-	retval = pm_initialize( PM_INIT_FLAGS , &pminfo, &pmgroups, PM_POWER7); 
+	retval = pm_initialize( PM_INIT_FLAGS , &pminfo, &pmgroups, PM_POWER7);
 #elif defined(_POWER6)
-	/* problem with pm_initialize(): it cannot be called multiple times with 
-	   PM_CURRENT; use instead the actual proc type - here PM_POWER6 - 
-	   and multiple invocations are no longer a problem */ 
+	/* problem with pm_initialize(): it cannot be called multiple times with
+	   PM_CURRENT; use instead the actual proc type - here PM_POWER6 -
+	   and multiple invocations are no longer a problem */
 	retval = pm_initialize( PM_INIT_FLAGS, &pminfo, &pmgroups, PM_POWER6 );
 #else
 #ifdef _AIXVERSION_510
@@ -638,8 +638,8 @@ _aix_get_system_info( papi_mdi_t *mdi )
 	_aix_vector.cmp_info.num_mpx_cntrs = MAX_MPX_COUNTERS;   // pminfo.maxpmcs,
 
 	_aix_vector.cmp_info.available_granularities = PAPI_GRN_THR;
-/* This field doesn't appear to exist in the PAPI 3.0 structure 
-  _papi_hwi_system_info.cpunum = mycpu(); 
+/* This field doesn't appear to exist in the PAPI 3.0 structure
+  _papi_hwi_system_info.cpunum = mycpu();
 */
 	_aix_vector.cmp_info.available_domains = init_domain(  );
 	return PAPI_OK;
@@ -647,7 +647,7 @@ _aix_get_system_info( papi_mdi_t *mdi )
 
 /* Low level functions, should not handle errors, just return codes. */
 
-/* At init time, the higher level library should always allocate and 
+/* At init time, the higher level library should always allocate and
    reserve EventSet zero. */
 
 long long
@@ -874,14 +874,14 @@ int
 _aix_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	switch ( code ) {
-/* I don't understand what it means to set the default domain 
+/* I don't understand what it means to set the default domain
     case PAPI_DEFDOM:
       return(set_default_domain(zero, option->domain.domain));
 */
 	case PAPI_DOMAIN:
 		return ( _aix_set_domain
 				 ( option->domain.ESI->ctl_state, option->domain.domain ) );
-/* I don't understand what it means to set the default granularity 
+/* I don't understand what it means to set the default granularity
     case PAPI_DEFGRN:
       return(set_default_granularity(zero, option->granularity.granularity));
 */
@@ -1209,9 +1209,9 @@ _aix_ntv_name_to_code( const char *name, unsigned int *evtcode )
 
 PAPI_os_info_t _papi_os_info;
 
-int 
+int
 _papi_hwi_init_os(void) {
-  
+
    struct utsname uname_buffer;
 
    uname(&uname_buffer);
@@ -1219,7 +1219,7 @@ _papi_hwi_init_os(void) {
    strncpy(_papi_os_info.name,uname_buffer.sysname,PAPI_MAX_STR_LEN);
 
    strncpy(_papi_os_info.version,uname_buffer.release,PAPI_MAX_STR_LEN);
-   
+
    _papi_os_info.itimer_sig = PAPI_INT_MPX_SIGNAL;
    _papi_os_info.itimer_num = PAPI_INT_ITIMER;
    _papi_os_info.itimer_res_ns = 1;
@@ -1235,7 +1235,7 @@ papi_vector_t _aix_vector = {
 				 /* default component information (unspecified values are initialized to 0) */
 
                                  .name = "aix",
-				 .description = "AIX pmapi CPU counters", 
+				 .description = "AIX pmapi CPU counters",
 				 .default_domain = PAPI_DOM_USER,
 				 .available_domains = PAPI_DOM_USER | PAPI_DOM_KERNEL,
 				 .default_granularity = PAPI_GRN_THR,

@@ -2,14 +2,14 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/** 
+/**
  * @file    linux-emon.c
  * @author  Heike Jagode
  *          jagode@eecs.utk.edu
- * BGPM / emon component 
- * 
+ * BGPM / emon component
+ *
  * @brief
- *  This file has the source code for a component that enables PAPI-C to 
+ *  This file has the source code for a component that enables PAPI-C to
  *  access hardware power data for BG/Q through the EMON interface.
  */
 
@@ -95,12 +95,12 @@ static void _check_EMON_error( char* emon2func, int err )
 }
 
 
-/** This table contains the native events 
+/** This table contains the native events
   * So with the EMON interface, we get every domain at a time.
   */
 static EMON_native_event_entry_t EMON_native_table[] =
 {
-	{ 
+	{
 		.name = "DOMAIN1",
 		.description = "Chip core",
 		.resources.selector = 1,
@@ -163,24 +163,24 @@ int
 EMON_init_thread( hwd_context_t * ctx )
 {
 	EMONDBG( "EMON_init_thread\n" );
-	
+
 	( void ) ctx;
 	return PAPI_OK;
 }
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
 int
 EMON_init_component( int cidx )
-{ 
+{
 	int ret = 0;
 	_emon2_vector.cmp_info.CmpIdx = cidx;
 	EMONDBG( "EMON_init_component cidx = %d\n", cidx );
 	/* Setup connection with the fpga:
-	 * NOTE: any other threads attempting to call into the EMON API 
+	 * NOTE: any other threads attempting to call into the EMON API
 	 *	    will be turned away.  */
 	ret = EMON_SetupPowerMeasurement();
 	_check_EMON_error("EMON_SetupPowerMeasurement", ret );
@@ -190,7 +190,7 @@ EMON_init_component( int cidx )
 	_emon2_vector.cmp_info.num_cntrs = EMON_TOTAL_EVENTS;
 	_emon2_vector.cmp_info.num_mpx_cntrs = EMON_TOTAL_EVENTS;
 
-	
+
 	return ( PAPI_OK );
 }
 
@@ -206,12 +206,12 @@ EMON_init_control_state( hwd_control_state_t * ptr )
 
 	EMON_control_state_t * this_state = ( EMON_control_state_t * ) ptr;
 	memset( this_state, 0, sizeof ( EMON_control_state_t ) );
-	
+
 	return PAPI_OK;
 }
 
-static int 
-_emon_accessor( EMON_control_state_t * this_state ) 
+static int
+_emon_accessor( EMON_control_state_t * this_state )
 {
 	union {
 		long long ll;
@@ -227,8 +227,8 @@ _emon_accessor( EMON_control_state_t * this_state )
 	double optics 		= 0;
 	double pci		= 0;
 	double sram		= 0;
-	unsigned k_const; 
-    
+	unsigned k_const;
+
 	EMONDBG( "_emon_accessor, enter this_state = %x\n", this_state);
 	return_value.fp = EMON_GetPower_impl( volts, amps );
 	EMONDBG("_emon_accessor, after EMON_GetPower %lf \n", return_value.fp);
@@ -343,7 +343,7 @@ int
 EMON_shutdown_thread( hwd_context_t * ctx )
 {
 	EMONDBG( "EMON_shutdown_thread\n" );
-	
+
 	( void ) ctx;
 	return ( PAPI_OK );
 }
@@ -352,7 +352,7 @@ int
 EMON_shutdown_component( void )
 {
 	EMONDBG( "EMON_shutdown_component\n" );
-	
+
 	return ( PAPI_OK );
 }
 
@@ -364,7 +364,7 @@ int
 EMON_ctl( hwd_context_t * ctx, int code, _papi_int_option_t * option )
 {
 	EMONDBG( "EMON_ctl\n" );
-	
+
 	( void ) ctx;
 	( void ) code;
 	( void ) option;
@@ -379,10 +379,10 @@ int
 EMON_cleanup_eventset( hwd_control_state_t * ctrl )
 {
 	EMONDBG( "EMON_cleanup_eventset\n" );
-	
+
 	EMON_control_state_t * this_state = ( EMON_control_state_t * ) ctrl;
 	( void ) this_state;
- 	
+
 	return ( PAPI_OK );
 }
 
@@ -403,19 +403,19 @@ EMON_update_control_state( hwd_control_state_t * ptr,
 	( void ) ptr;
 
 
-	
+
 	// otherwise, add the events to the eventset
 	for ( i = 0; i < count; i++ ) {
 		index = ( native[i].ni_event ) ;
-		
+
 		native[i].ni_position = i;
-		
+
 		EMONDBG("EMON_update_control_state: ADD event: i = %d, index = %d\n", i, index );
 	}
-	
+
 	// store how many events we added to an EventSet
 	this_state->count = count;
-	
+
 	return ( PAPI_OK );
 }
 
@@ -499,7 +499,7 @@ EMON_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 	int index;
 	( void ) name;
 	( void ) len;
-	
+
 	index = ( EventCode );
 
 	if ( index >= EMON_TOTAL_EVENTS || index < 0 ) {
@@ -511,7 +511,7 @@ EMON_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 }
 
 /*
- * 
+ *
  */
 int
 EMON_ntv_name_to_code( const char *name, unsigned int *code )
@@ -533,7 +533,7 @@ EMON_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 	int index;
 	( void ) name;
 	( void ) len;
-	
+
 	index = ( EventCode ) ;
 
 	if ( index >= EMON_TOTAL_EVENTS || index < 0 ) {
@@ -558,20 +558,20 @@ EMON_ntv_code_to_bits( unsigned int EventCode, hwd_register_t * bits )
 }
 
 int
-EMON_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+EMON_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
   int index = EventCode;
 
   if ( ( index < 0) || (index >= EMON_TOTAL_EVENTS )) return PAPI_ENOEVNT;
 
-  strncpy( info->symbol, EMON_native_table[index].name, 
+  strncpy( info->symbol, EMON_native_table[index].name,
 	   sizeof(info->symbol));
 
-  strncpy( info->long_descr, EMON_native_table[index].description, 
+  strncpy( info->long_descr, EMON_native_table[index].description,
 	   sizeof(info->symbol));
 
-  //strncpy( info->units, rapl_native_events[index].units, 
+  //strncpy( info->units, rapl_native_events[index].units,
 	   //sizeof(info->units));
 
   info->data_type = EMON_native_table[index].return_type;
@@ -595,10 +595,10 @@ papi_vector_t _emon_vector = {
 				 .available_domains = PAPI_DOM_ALL,
 				 .default_granularity = PAPI_GRN_SYS,
 				 .available_granularities = PAPI_GRN_SYS,
-		
+
 				 .hardware_intr_sig = PAPI_INT_SIGNAL,
 				 .hardware_intr = 1,
-		
+
 				 .kernel_multiplex = 0,
 
 				 /* component specific cmp_info initializations */

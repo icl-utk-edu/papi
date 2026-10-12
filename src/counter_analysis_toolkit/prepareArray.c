@@ -63,7 +63,7 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
 
         for(i=0; i<maxElemCnt; i++)
             availableNumbers[i] = i;
- 
+
         currElemCnt = currSecSize/stride;
 
         taken = 0;
@@ -95,7 +95,7 @@ static void _prepareArray_sections_random(uintptr_t *array, long long len, long 
     *p = next;
 
     free(availableNumbers);
-    
+
     return;
 }
 
@@ -119,7 +119,7 @@ static void _prepareArray_sequential(uintptr_t *array, long long len, long long 
     // Close the circle by pointing the last element to the start.
     next = &array[0];
     *p = next;
-    
+
     return;
 }
 

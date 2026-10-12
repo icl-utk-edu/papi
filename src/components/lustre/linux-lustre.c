@@ -163,7 +163,7 @@ SUBDBG("EXIT: cntr: %p\n", cntr);
  */
 static int
 addLustreFS( const char *name,
-	     const char *procpath_general, 
+	     const char *procpath_general,
 	     const char *procpath_readahead )
 {
 	lustre_fs *fs, *last;
@@ -200,8 +200,8 @@ addLustreFS( const char *name,
 	fclose(fff);
 
 	sprintf( counter_name, "%s_llread", name );
-	if (NULL == (fs->read_cntr = addCounter( counter_name, 
-				    "bytes read on this lustre client", 
+	if (NULL == (fs->read_cntr = addCounter( counter_name,
+				    "bytes read on this lustre client",
 				    "bytes" ))) {
          free(fs->proc_file_readahead);                         // strdup.
          free(fs->proc_file);                                   // strdup.
@@ -210,7 +210,7 @@ addLustreFS( const char *name,
 	}
 
 	sprintf( counter_name, "%s_llwrite", name );
-	if ( NULL == (fs->write_cntr = addCounter( counter_name, 
+	if ( NULL == (fs->write_cntr = addCounter( counter_name,
 				     "bytes written on this lustre client",
 				     "bytes" ))) {
 			free(fs->read_cntr);
@@ -221,7 +221,7 @@ addLustreFS( const char *name,
 	}
 
 	sprintf( counter_name, "%s_wrong_readahead", name );
-	if ( NULL == (fs->readahead_cntr = addCounter( counter_name, 
+	if ( NULL == (fs->readahead_cntr = addCounter( counter_name,
 					 "bytes read but discarded due to readahead",
 					 "bytes" ))) {
 			free(fs->read_cntr);
@@ -355,12 +355,12 @@ read_lustre_counter( )
 	  if (fff != NULL) {
 		  while(1) {
 			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
-	
+
 			if (strstr( buffer, "write_bytes" )) {
 			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %llu",&fs->write_cntr->value);
 			  SUBDBG("Read %llu write_bytes\n",fs->write_cntr->value);
 			}
-	
+
 			if (strstr( buffer, "read_bytes" )) {
 			  sscanf(buffer,"%*s %*d %*s %*s %*d %*d %llu",&fs->read_cntr->value);
 			  SUBDBG("Read %llu read_bytes\n",fs->read_cntr->value);
@@ -373,7 +373,7 @@ read_lustre_counter( )
 	  if (fff != NULL) {
 		  while(1) {
 			if (fgets(buffer,BUFSIZ,fff)==NULL) break;
-	
+
 			if (strstr( buffer, "read but discarded")) {
 			   sscanf(buffer,"%*s %*s %*s %llu",&fs->readahead_cntr->value);
 			   SUBDBG("Read %llu discared\n",fs->readahead_cntr->value);
@@ -403,7 +403,7 @@ host_finalize( void )
 	      free( cntr->name );
 	      free( cntr->description );
 	      free( cntr->unit );
-	      free( cntr );	      
+	      free( cntr );
 	   }
 	   lustre_native_table[i]=NULL;
 	}
@@ -524,9 +524,9 @@ _lustre_init_control_state( hwd_control_state_t *ctl )
  *
  */
 static int
-_lustre_update_control_state( hwd_control_state_t *ctl, 
+_lustre_update_control_state( hwd_control_state_t *ctl,
 			      NativeInfo_t *native,
-			      int count, 
+			      int count,
 			      hwd_context_t *ctx )
 {
    SUBDBG("ENTER: ctl: %p, native: %p, count: %d, ctx: %p\n", ctl, native, count, ctx);
@@ -766,8 +766,8 @@ _lustre_ntv_enum_events( unsigned int *EventCode, int modifier )
 	    SUBDBG("EXIT: PAPI_ENOEVNT\n");
 			return PAPI_ENOEVNT;
 		}
-	} 
-		
+	}
+
 
    SUBDBG("EXIT: PAPI_EINVAL\n");
 	return PAPI_EINVAL;

@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    map-p6-2.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
@@ -13,15 +13,15 @@
 #include "map.h"
 
 /****************************************************************************
- P6_2 SUBSTRATE 
- P6_2 SUBSTRATE 
+ P6_2 SUBSTRATE
+ P6_2 SUBSTRATE
  P6_2 SUBSTRATE (aka Pentium II)
  P6_2 SUBSTRATE
  P6_2 SUBSTRATE
 ****************************************************************************/
 
 /*
-	NativeEvent_Value_P6_2_Processor must match P6_2_Processor_info 
+	NativeEvent_Value_P6_2_Processor must match P6_2_Processor_info
 */
 
 Native_Event_LabelDescription_t P6_2_Processor_info[] =

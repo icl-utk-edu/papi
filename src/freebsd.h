@@ -1,7 +1,7 @@
 /****************************/
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
-/* 
+/*
 * File:    freebsd-libpmc.c
 * Author:  Kevin London
 *          london@cs.utk.edu
@@ -60,7 +60,7 @@ typedef struct hwd_control_state {
 } hwd_control_state_t;
 
 typedef struct hwd_context {
-	int placeholder; 
+	int placeholder;
 } hwd_context_t;
 
 #include "freebsd-context.h"

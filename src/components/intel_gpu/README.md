@@ -10,7 +10,7 @@ To enable intel_gpu component, the PAPI library is built with configure option a
 ./configure --with-components="intel_gpu"
 ```
 
-## Prerequisites 
+## Prerequisites
 
 * [oneAPI Level Zero loader (libze_loader.so)](https://github.com/oneapi-src/level-zero)
 * [Intel(R) Metrics Discovery Application Programming Interface (libigdmd.so)](https://github.com/intel/metrics-discovery)
@@ -25,7 +25,7 @@ PAPI requires the location of the Level Zero install directory. This can be
 specified by one environment variable: `PAPI_INTEL_GPU_ROOT`.
 
 Default installation location is /usr.
-    
+
 Access to this directory is required at both compile (for include files) and
 at runtime (for libraries).
 

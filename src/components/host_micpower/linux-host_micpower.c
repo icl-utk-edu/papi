@@ -5,9 +5,9 @@
  *	@ingroup papi_components
  *
  *	@brief
- *		This component wraps the MicAccessAPI to provide hostside 
+ *		This component wraps the MicAccessAPI to provide hostside
  *		power information for attached Intel Xeon Phi (MIC) cards.
-*/ 
+*/
 
 /* From intel examples, see $(mic_dir)/sysmgt/sdk/Examples/Usage */
 #define MAX_DEVICES (32)
@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <dlfcn.h> 
+#include <dlfcn.h>
 
 #include "MicAccessTypes.h"
 #include "MicBasicTypes.h"
@@ -46,7 +46,7 @@ typedef struct host_micpower_reg_alloc {
 
 /** Internal structure used to build the table of events */
 typedef struct host_micpower_native_event_entry {
-	host_micpower_register_t resources; 
+	host_micpower_register_t resources;
 	char name[PAPI_MAX_STR_LEN];
 	char description[PAPI_MAX_STR_LEN];
 	char units[3];
@@ -63,7 +63,7 @@ typedef struct host_micpower_control_state {
 /** Per-thread data */
 typedef struct host_micpower_context {
 	host_micpower_control_state_t state;
-} host_micpower_context_t; 
+} host_micpower_context_t;
 
 /* Global state info */
 static MicDeviceOnSystem adapters[MAX_DEVICES];
@@ -107,12 +107,12 @@ struct powers {
 
 typedef union {
 		struct powers power;
-		int array[EVENTS_PER_DEVICE]; 
+		int array[EVENTS_PER_DEVICE];
 } power_t;
 
 static power_t cached_values[MAX_DEVICES];
 
-static int 
+static int
 loadFunctionPtrs()
 {
 	/* Attempt to guess if we were statically linked to libc, if so bail */
@@ -187,12 +187,12 @@ loadFunctionPtrs()
 
 
 /* ###############################################
- * 			Component Interface code 
+ * 			Component Interface code
  * ############################################### */
 
 
-int 
-_host_micpower_init_component( int cidx ) 
+int
+_host_micpower_init_component( int cidx )
 {
     int retval = PAPI_OK;
 	U32 ret = MIC_ACCESS_API_ERROR_UNKNOWN;
@@ -338,7 +338,7 @@ _host_micpower_shutdown_component( void ) {
 	papi_free(native_events_table);
 	return PAPI_OK;
 }
-	
+
 int
 _host_micpower_shutdown_thread( hwd_context_t *ctx ) {
     (void) ctx;
@@ -352,14 +352,14 @@ int _host_micpower_init_control_state ( hwd_control_state_t *ctl ) {
 	return PAPI_OK;
 }
 
-int _host_micpower_update_control_state(hwd_control_state_t *ctl, 
-										NativeInfo_t *info, 
+int _host_micpower_update_control_state(hwd_control_state_t *ctl,
+										NativeInfo_t *info,
 										int count,
 										hwd_context_t* ctx ) {
 
 	(void) ctx;
 	int i, index;
-	
+
 	host_micpower_control_state_t *state = (host_micpower_control_state_t*)ctl;
 
 	for (i=0; i<MAX_DEVICES*EVENTS_PER_DEVICE; i++)
@@ -383,19 +383,19 @@ _host_micpower_start( hwd_context_t *ctx, hwd_control_state_t *ctl )
 	return PAPI_OK;
 }
 
-static int 
-read_power( struct powers *pwr, int which_one ) 
+static int
+read_power( struct powers *pwr, int which_one )
 {
 	MicPwrUsage power;
 	U32 ret = MIC_ACCESS_API_ERROR_UNKNOWN;
 
 	if ( which_one < 0 || which_one > (int)nAdapters )
 		return PAPI_ENOEVNT;
-	
+
 
 	ret = MicGetPowerUsagePtr(handles[which_one], &power);
 	if (MIC_ACCESS_API_SUCCESS != ret) {
-			fprintf(stderr,"Oops MicGetPowerUsage failed: %s\n", 
+			fprintf(stderr,"Oops MicGetPowerUsage failed: %s\n",
 							MicGetErrorStringPtr(ret));
 			return PAPI_ECMP;
 	}
@@ -415,8 +415,8 @@ read_power( struct powers *pwr, int which_one )
 }
 
 int
-_host_micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl, 
-					 long long **events, int flags) 
+_host_micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
+					 long long **events, int flags)
 {
 	(void)flags;
 	(void)events;
@@ -576,8 +576,8 @@ _host_micpower_set_domain( hwd_control_state_t* ctl, int domain)
 
 papi_vector_t _host_micpower_vector = {
 	.cmp_info = {
-		.name = "host_micpower", 
-		.short_name = "host_micpower", 
+		.name = "host_micpower",
+		.short_name = "host_micpower",
 		.description = "A host-side component to read power usage on MIC guest cards.",
 		.version = "0.1",
 		.support_version = "n/a",
@@ -589,10 +589,10 @@ papi_vector_t _host_micpower_vector = {
 		.default_granularity 		= PAPI_GRN_SYS,
 		.available_granularities 	= PAPI_GRN_SYS,
 		.hardware_intr_sig 			= PAPI_INT_SIGNAL,
-	}, 
+	},
 
 	.size  = {
-		.context 		= sizeof(host_micpower_context_t), 
+		.context 		= sizeof(host_micpower_context_t),
 		.control_state	= sizeof(host_micpower_control_state_t),
 		.reg_value		= sizeof(host_micpower_register_t),
 		.reg_alloc		= sizeof(host_micpower_reg_alloc_t),
@@ -600,19 +600,19 @@ papi_vector_t _host_micpower_vector = {
 
 	.start					= _host_micpower_start,
 	.stop					= _host_micpower_start,
-	.read					= _host_micpower_read, 
+	.read					= _host_micpower_read,
 	.reset					= NULL,
 	.write					= NULL,
 	.init_component			= _host_micpower_init_component,
 	.init_thread			= _host_micpower_init_thread,
 	.init_control_state		= _host_micpower_init_control_state,
 	.update_control_state	= _host_micpower_update_control_state,
-	.ctl					= _host_micpower_ctl, 
+	.ctl					= _host_micpower_ctl,
 	.shutdown_thread		= _host_micpower_shutdown_thread,
 	.shutdown_component		= _host_micpower_shutdown_component,
 	.set_domain				= _host_micpower_set_domain,
 
-	.ntv_enum_events		= _host_micpower_ntv_enum_events, 
+	.ntv_enum_events		= _host_micpower_ntv_enum_events,
 	.ntv_code_to_name		= _host_micpower_ntv_code_to_name,
 	.ntv_code_to_descr		= _host_micpower_ntv_code_to_descr,
 	.ntv_code_to_info		= _host_micpower_ntv_code_to_info,

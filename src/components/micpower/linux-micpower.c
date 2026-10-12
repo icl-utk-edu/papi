@@ -11,97 +11,97 @@
 
 /* Intel says
 ----
-The power measurements can be obtained from the host as well as the MIC card 
-over a 50msec interval. The SMC is designed to sample power consumption only 
+The power measurements can be obtained from the host as well as the MIC card
+over a 50msec interval. The SMC is designed to sample power consumption only
 every 50mSecs.
 ----
 **/
 #define REFRESH_LAT 50000
 
 #define INVALID_RESULT -1000000L
-#define MICPOWER_NUMBER_OF_NATIVE_EVENTS 16 
+#define MICPOWER_NUMBER_OF_NATIVE_EVENTS 16
 
 papi_vector_t _micpower_vector;
 
 static MICPOWER_native_event_entry_t _micpower_native_events[] = {
 		{ 	.name 				= "tot0",
 				.units 				= "uW",
-				.description 		= "Total power, win 0", 
+				.description 		= "Total power, win 0",
 				.resources.selector	= 1
 		},
 		{ 	.name 				= "tot1",
 				.units 				= "uW",
-				.description 		= "Total power, win 1", 
+				.description 		= "Total power, win 1",
 				.resources.selector	= 2
 		},
 		{ 	.name 				= "pcie",
 				.units 				= "uW",
-				.description 		= "PCI-E connector power", 
+				.description 		= "PCI-E connector power",
 				.resources.selector	= 3
 		},
 		{ 	.name 				= "inst",
 				.units 				= "uW",
-				.description 		= "Instantaneous power", 
+				.description 		= "Instantaneous power",
 				.resources.selector	= 4
 		},
 		{ 	.name 				= "imax",
 				.units 				= "uW",
-				.description 		= "Max Instantaneous power", 
+				.description 		= "Max Instantaneous power",
 				.resources.selector	= 5
 		},
 		{ 	.name 				= "c2x3",
 				.units 				= "uW",
-				.description 		= "2x3 connector power", 
+				.description 		= "2x3 connector power",
 				.resources.selector	= 6
 		},
 		{ 	.name 				= "c2x4",
 				.units 				= "uW",
-				.description 		= "2x4 connector power", 
+				.description 		= "2x4 connector power",
 				.resources.selector	= 7
 		},
 		{ 	.name 				= "vccp:pwr",
 				.units 				= "uW",
-				.description 		= "Core rail; Power reading", 
+				.description 		= "Core rail; Power reading",
 				.resources.selector	= 8
 		},
 		{ 	.name 				= "vccp:cur",
 				.units 				= "uA",
-				.description 		= "Core rail; Current", 
+				.description 		= "Core rail; Current",
 				.resources.selector	= 9
 		},
 		{ 	.name 				= "vccp:volt",
 				.units 				= "uV",
-				.description 		= "Core rail; Voltage", 
+				.description 		= "Core rail; Voltage",
 				.resources.selector	= 10
 		},
 		{ 	.name 				= "vddg:pwr",
 				.units 				= "uW",
-				.description 		= "Uncore rail; Power reading", 
+				.description 		= "Uncore rail; Power reading",
 				.resources.selector	= 11
 		},
 		{ 	.name 				= "vddg:cur",
 				.units 				= "uA",
-				.description 		= "Uncore rail; Current", 
+				.description 		= "Uncore rail; Current",
 				.resources.selector	= 12
 		},
 		{ 	.name 				= "vddg:volt",
 				.units 				= "uV",
-				.description 		= "Uncore rail; Voltage", 
+				.description 		= "Uncore rail; Voltage",
 				.resources.selector	= 13
 		},
 		{ 	.name 				= "vddq:pwr",
 				.units 				= "uW",
-				.description 		= "Memory subsystem rail; Power reading", 
+				.description 		= "Memory subsystem rail; Power reading",
 				.resources.selector	= 14
 		},
 		{ 	.name 				= "vddq:cur",
 				.units 				= "uA",
-				.description 		= "Memory subsystem rail; Current", 
+				.description 		= "Memory subsystem rail; Current",
 				.resources.selector	= 15
 		},
 		{ 	.name 				= "vddq:volt",
 				.units 				= "uV",
-				.description 		= "Memory subsystem rail; Voltage", 
+				.description 		= "Memory subsystem rail; Voltage",
 				.resources.selector	= 16
 		}
 };
@@ -148,8 +148,8 @@ typedef struct mr_rsp_power {
 } MrRspPower;
 
 #endif
-static int 
-read_sysfs_file( long long* counts) 
+static int
+read_sysfs_file( long long* counts)
 {
 		FILE* fp = NULL;
 		int i;
@@ -176,7 +176,7 @@ read_sysfs_file( long long* counts)
 /*
  * This is called whenever a thread is initialized
  */
-static int 
+static int
 _micpower_init_thread( hwd_context_t *ctx )
 {
 		( void ) ctx;
@@ -186,10 +186,10 @@ _micpower_init_thread( hwd_context_t *ctx )
 
 
 /* Initialize hardware counters, setup the function vector table
- * and get hardware information, this routine is called when the 
+ * and get hardware information, this routine is called when the
  * PAPI process is initialized (IE PAPI_library_init)
  */
-static int 
+static int
 _micpower_init_component( int cidx )
 {
     int retval = PAPI_OK;
@@ -228,7 +228,7 @@ _micpower_init_component( int cidx )
  * Control of counters (Reading/Writing/Starting/Stopping/Setup)
  * functions
  */
-static int 
+static int
 _micpower_init_control_state( hwd_control_state_t * ctl)
 {
 		int retval = 0;
@@ -242,7 +242,7 @@ _micpower_init_control_state( hwd_control_state_t * ctl)
 		return (retval)?PAPI_OK:PAPI_ESYS;
 }
 
-static int 
+static int
 _micpower_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 {
 		( void ) ctx;
@@ -251,7 +251,7 @@ _micpower_start( hwd_context_t *ctx, hwd_control_state_t *ctl)
 		return PAPI_OK;
 }
 
-static int 
+static int
 _micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 				long long ** events, int flags)
 {
@@ -276,7 +276,7 @@ _micpower_read( hwd_context_t *ctx, hwd_control_state_t *ctl,
 		return (retval)?PAPI_OK:PAPI_ESYS;
 }
 
-static int 
+static int
 _micpower_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 		(void) ctx;
@@ -293,7 +293,7 @@ _micpower_stop( hwd_context_t *ctx, hwd_control_state_t *ctl )
 }
 
 /* Shutdown a thread */
-static int 
+static int
 _micpower_shutdown_thread( hwd_context_t * ctx )
 {
 		( void ) ctx;
@@ -304,8 +304,8 @@ _micpower_shutdown_thread( hwd_context_t * ctx )
 /*
  * Clean up what was setup in  micpower_init_component().
  */
-static int 
-_micpower_shutdown_component( ) 
+static int
+_micpower_shutdown_component( )
 {
 		if ( is_initialized ) {
 				is_initialized = 0;
@@ -319,7 +319,7 @@ _micpower_shutdown_component( )
  * The valid codes being passed in are PAPI_SET_DEFDOM,
  * PAPI_SET_DOMAIN, PAPI_SETDEFGRN, PAPI_SET_GRANUL * and PAPI_SET_INHERIT
  */
-static int 
+static int
 _micpower_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 {
 		( void ) ctx;
@@ -330,7 +330,7 @@ _micpower_ctl( hwd_context_t *ctx, int code, _papi_int_option_t *option )
 }
 
 
-static int 
+static int
 _micpower_update_control_state(	hwd_control_state_t *ptr,
 				NativeInfo_t * native, int count,
 				hwd_context_t * ctx )
@@ -357,7 +357,7 @@ _micpower_update_control_state(	hwd_control_state_t *ptr,
  * PAPI_DOM_OTHER  is Exception/transient mode (like user TLB misses)
  * PAPI_DOM_ALL   is all of the domains
  */
-static int 
+static int
 _micpower_set_domain( hwd_control_state_t * cntl, int domain )
 {
 		( void ) cntl;
@@ -369,7 +369,7 @@ _micpower_set_domain( hwd_control_state_t * cntl, int domain )
 }
 
 
-static int 
+static int
 _micpower_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 {
 		( void ) ctx;
@@ -382,7 +382,7 @@ _micpower_reset( hwd_context_t *ctx, hwd_control_state_t *ctl )
 /*
  * Native Event functions
  */
-static int 
+static int
 _micpower_ntv_enum_events( unsigned int *EventCode, int modifier )
 {
 
@@ -421,7 +421,7 @@ _micpower_ntv_enum_events( unsigned int *EventCode, int modifier )
 /*
  *
  */
-static int 
+static int
 _micpower_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 {
 		int index = EventCode&PAPI_NATIVE_AND_MASK;
@@ -436,7 +436,7 @@ _micpower_ntv_code_to_name( unsigned int EventCode, char *name, int len )
 /*
  *
  */
-static int 
+static int
 _micpower_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 {
 		int index = EventCode&PAPI_NATIVE_AND_MASK;
@@ -449,7 +449,7 @@ _micpower_ntv_code_to_descr( unsigned int EventCode, char *name, int len )
 }
 
 static int
-_micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info) 
+_micpower_ntv_code_to_info(unsigned int EventCode, PAPI_event_info_t *info)
 {
 
 		int index = EventCode&PAPI_NATIVE_AND_MASK;

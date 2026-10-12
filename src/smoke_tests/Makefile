@@ -17,7 +17,7 @@ i.SUFFIXES: .c .o
 	.c.o:
 	    $(CC) $(CFLAGS) -c $*.c
 
-simple: simple.o 
+simple: simple.o
 	$(CC) $(CFLAGS) -o simple simple.o $(LIBS)
-threads: threads.o 
+threads: threads.o
 	$(CC) $(CFLAGS) -o threads threads.o $(LIBS)

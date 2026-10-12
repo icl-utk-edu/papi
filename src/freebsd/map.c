@@ -2,7 +2,7 @@
 /* THIS IS OPEN SOURCE CODE */
 /****************************/
 
-/* 
+/*
 * File:    freebsd-map.c
 * Author:  Harald Servat
 *          redcrash@gmail.com
