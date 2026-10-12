@@ -269,7 +269,10 @@ rocp_evt_code_to_descr(uint64_t event_code, char *descr, int len)
         return papi_errno;
     }
 
-    snprintf(descr, (size_t) len, "%s", ntv_table_p->events[info.nameid].descr);
+    int expect = snprintf(descr, (size_t) len, "%s", ntv_table_p->events[info.nameid].descr);
+    if (expect < 0 || expect >= len) {
+        SUBDBG("Failed to write description.");
+    }
     return papi_errno;
 }
 
@@ -480,7 +483,10 @@ load_rocp_sym(void)
 
     char *pathname = getenv("HSA_TOOLS_LIB");
     if (pathname == NULL) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Can't load librocprofiler64.so, neither PAPI_ROCM_ROOT nor HSA_TOOLS_LIB are set.");
+        int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Can't load librocprofiler64.so, neither PAPI_ROCM_ROOT nor HSA_TOOLS_LIB are set.");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write error string.");
+        }
         goto fn_fail;
     }
 
@@ -538,7 +544,10 @@ load_rocp_sym(void)
 
     papi_errno = (rocp_not_initialized) ? PAPI_EMISC : PAPI_OK;
     if (papi_errno != PAPI_OK) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Error while loading rocprofiler symbols.");
+        int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Error while loading rocprofiler symbols.");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write error string.");
+        }
     }
 
   fn_exit:
@@ -599,7 +608,10 @@ init_rocp_env(void)
     char pathname[PATH_MAX];
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Can't set HSA_TOOLS_LIB. PAPI_ROCM_ROOT not set.");
+        int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Can't set HSA_TOOLS_LIB. PAPI_ROCM_ROOT not set.");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write error string.");
+        }
         return PAPI_EMISC;
     }
 
@@ -638,7 +650,10 @@ init_rocp_env(void)
             ++candidate;
         }
         if (!*candidate) {
-            snprintf(error_string, PAPI_MAX_STR_LEN, "Rocprofiler librocprofiler64.so file not found.");
+            int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Rocprofiler librocprofiler64.so file not found.");
+            if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                SUBDBG("Failed to write error string.");
+            }
             return PAPI_EMISC;
         }
 
@@ -665,7 +680,10 @@ init_rocp_env(void)
 
             err = stat(pathname, &stat_info);
             if (err < 0) {
-                snprintf(error_string, PAPI_MAX_STR_LEN, "Rocprofiler metrics.xml file not found.");
+                int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Rocprofiler metrics.xml file not found.");
+                if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                    SUBDBG("Failed to write error string.");
+                }
                 return PAPI_EMISC;
             }
         }
@@ -699,7 +717,10 @@ init_event_table(void)
         if (rocp_errno != HSA_STATUS_SUCCESS) {
             const char *error_string_p;
             hsa_status_string_p(rocp_errno, &error_string_p);
-            snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                SUBDBG("Failed to write error string.");
+            }
             papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
@@ -723,7 +744,10 @@ init_event_table(void)
         if (rocp_errno != HSA_STATUS_SUCCESS) {
             const char *error_string_p;
             hsa_status_string_p(rocp_errno, &error_string_p);
-            snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+            if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                SUBDBG("Failed to write error string.");
+            }
             papi_errno = PAPI_EMISC;
             goto fn_fail;
         }
@@ -746,6 +770,7 @@ int
 evt_code_to_name(uint64_t event_code, char *name, int len)
 {
     int papi_errno;
+    int expect;
 
     event_info_t info;
     papi_errno = evt_id_to_info(event_code, &info);
@@ -755,13 +780,16 @@ evt_code_to_name(uint64_t event_code, char *name, int len)
 
     switch (info.flags) {
         case (DEVICE_FLAG | INSTAN_FLAG):
-            snprintf(name, len, "%s:device=%i:instance=%i", ntv_table_p->events[info.nameid].name, info.device, info.instance);
+            expect = snprintf(name, len, "%s:device=%i:instance=%i", ntv_table_p->events[info.nameid].name, info.device, info.instance);
             break;
         case (DEVICE_FLAG):
-            snprintf(name, len, "%s:device=%i", ntv_table_p->events[info.nameid].name, info.device);
+            expect = snprintf(name, len, "%s:device=%i", ntv_table_p->events[info.nameid].name, info.device);
             break;
         default:
-            snprintf(name, len, "%s", ntv_table_p->events[info.nameid].name);
+            expect = snprintf(name, len, "%s", ntv_table_p->events[info.nameid].name);
+    }
+    if (expect < 0 || expect >= len) {
+        SUBDBG("Failed to write event name.");
     }
 
     return papi_errno;
@@ -1006,7 +1034,10 @@ get_ntv_events_cb(const rocprofiler_info_data_t info, void *ntv_arg)
     ntv_event_t *events = ntv_table.events;
 
     if (*count > capacity) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Number of events exceeds detected count.");
+        int expect = snprintf(error_string, PAPI_MAX_STR_LEN, "Number of events exceeds detected count.");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write error string.");
+        }
         return HSA_STATUS_ERROR;
     }
 
