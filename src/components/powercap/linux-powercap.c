@@ -145,7 +145,11 @@ static long long read_powercap_value( int index )
 
 static int write_powercap_value( int index, long long value )
 {
-  snprintf(write_buff, sizeof(write_buff), "%lld", value);
+  int len = sizeof(write_buff);
+  int expect = snprintf(write_buff, len, "%lld", value);
+  if (expect < 0 || expect >= len) {
+      HANDLE_STRING_ERROR;
+  }
   int sz = pwrite(event_fds[index], write_buff, PAPI_MAX_STR_LEN, 0);
   if(sz == -1) {
      perror("Error in pwrite(): ");
@@ -204,7 +208,7 @@ static int _powercap_init_component( int cidx )
     for(s_dir = 0; ; s_dir++) {
       strErr=snprintf(event_path, sizeof(event_path), "/sys/class/powercap/intel-rapl:%d/%s", s_dir, pkg_sys_names[PKG_NAME]);
       event_path[sizeof(event_path)-1]=0;
-      if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= sizeof(event_path)) HANDLE_STRING_ERROR;
 
       int event_fd;
       event_fd = open(event_path, pkg_sys_flags[PKG_NAME]);
@@ -225,7 +229,7 @@ static int _powercap_init_component( int cidx )
     // compose string of a pkg directory path
     strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d/", s_dir);
     events_dir[sizeof(events_dir)-1]=0;
-    if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
+    if (strErr < 0 || strErr >= sizeof(events_dir)) HANDLE_STRING_ERROR;
 
     // open directory to make sure it exists
     events = opendir(events_dir);
@@ -240,7 +244,7 @@ static int _powercap_init_component( int cidx )
       // compose string to individual event
       strErr=snprintf(event_path, sizeof(event_path), "%s%s", events_dir, pkg_sys_names[e]);
       event_path[sizeof(event_path)-1]=0;
-      if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= sizeof(event_path)) HANDLE_STRING_ERROR;
       // not a valid pkg event path so continue
 
       int file_descriptor = open(event_path, O_SYNC|pkg_sys_flags[e]);
@@ -252,7 +256,7 @@ static int _powercap_init_component( int cidx )
 
       strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d", pkg_event_names[e], s);
       powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
-      if (strErr > sizeof(powercap_ntv_events[num_events].name)) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= sizeof(powercap_ntv_events[num_events].name)) HANDLE_STRING_ERROR;
       //snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d", pkg_event_names[e], s);
       //snprintf(powercap_ntv_events[num_events].units, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d", pkg_event_names[e], s);
       powercap_ntv_events[num_events].return_type = PAPI_DATATYPE_UINT64;
@@ -266,7 +270,7 @@ static int _powercap_init_component( int cidx )
         read_buff[sz] = '\0';
         strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
         powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
-        if (strErr > sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
       }
 
       if(powercap_ntv_events[num_events].type == PKG_MAX_ENERGY_RANGE) {
@@ -283,7 +287,7 @@ static int _powercap_init_component( int cidx )
     c = 0;
     strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s_dir, c);
     events_dir[sizeof(events_dir)-1]=0;
-    if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
+    if (strErr < 0 || strErr >= sizeof(events_dir)) HANDLE_STRING_ERROR;
     while((events = opendir(events_dir)) != NULL) {
       closedir(events);                                                // opendir has mallocs; so clean up.
 
@@ -293,7 +297,7 @@ static int _powercap_init_component( int cidx )
         // compose string to individual event
         strErr=snprintf(event_path, sizeof(event_path), "%s%s", events_dir, component_sys_names[e]);
         event_path[sizeof(event_path)-1]=0;
-        if (strErr > sizeof(event_path)) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= sizeof(event_path)) HANDLE_STRING_ERROR;
 
         int file_descriptor = open(event_path, O_SYNC|component_sys_flags[e]);
         if (file_descriptor == -1) {
@@ -304,7 +308,7 @@ static int _powercap_init_component( int cidx )
 
         strErr=snprintf(powercap_ntv_events[num_events].name, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d_SUBZONE%d", component_event_names[e], s, c);
         powercap_ntv_events[num_events].name[sizeof(powercap_ntv_events[num_events].name)-1]=0;
-        if (strErr > sizeof(powercap_ntv_events[num_events].name)) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= sizeof(powercap_ntv_events[num_events].name)) HANDLE_STRING_ERROR;
         //snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d_SUBZONE%d", component_event_names[e], s, c);
         //snprintf(powercap_ntv_events[num_events].units, sizeof(powercap_ntv_events[num_events].name), "%s:ZONE%d_SUBZONE%d", component_event_names[e], s, c);
         powercap_ntv_events[num_events].return_type = PAPI_DATATYPE_UINT64;
@@ -318,7 +322,7 @@ static int _powercap_init_component( int cidx )
           read_buff[sz] = '\0';
           strErr=snprintf(powercap_ntv_events[num_events].description, sizeof(powercap_ntv_events[num_events].description), "%s", read_buff);
           powercap_ntv_events[num_events].description[sizeof(powercap_ntv_events[num_events].description)-1]=0;
-          if (strErr > sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
+          if (strErr < 0 || strErr >= sizeof(powercap_ntv_events[num_events].description)) HANDLE_STRING_ERROR;
         }
 
         if(powercap_ntv_events[num_events].type == COMPONENT_MAX_ENERGY_RANGE) {
@@ -337,7 +341,7 @@ static int _powercap_init_component( int cidx )
       // compose string of an pkg directory path
       strErr=snprintf(events_dir, sizeof(events_dir), "/sys/class/powercap/intel-rapl:%d:%d/", s_dir, c);
       events_dir[sizeof(events_dir)-1]=0;
-      if (strErr > sizeof(events_dir)) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= sizeof(events_dir)) HANDLE_STRING_ERROR;
     }
   }
 
