@@ -136,6 +136,9 @@ _bgp_get_system_info( papi_mdi_t *mdi )
 					sizeof _papi_hwi_system_info.hw_info.model_string,
 					"PVR=%#4.4x:%#4.4x",
 					( utmp >> ( 31 - 15 ) ) & 0xFFFF, ( utmp & 0xFFFF ) );
+    if (tmp < 0 || tmp >= sizeof(_papi_hwi_system_info.hw_info.model_string)) {
+        SUBDBG("Failed to write model string.");
+    }
 
 	BGP_Personality_getLocationString( &bgp, chipID );
 	tmp += 12 + sizeof ( chipID );

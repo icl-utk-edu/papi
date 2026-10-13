@@ -150,7 +150,10 @@ xfopen( const char *path, const char *mode )
 static FILE *
 path_vfopen( const char *mode, const char *path, va_list ap )
 {
-	vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
+	int expect = vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
+    if (expect < 0 || (size_t)expect >= sizeof(pathbuf)) {
+        SUBDBG("Failed to write path string.");
+    }
 	return xfopen( pathbuf, mode );
 }
 
@@ -188,7 +191,10 @@ path_exist( const char *path, ... )
 {
 	va_list ap;
 	va_start( ap, path );
-	vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
+	int expect = vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
+    if (expect < 0 || (size_t)expect >= sizeof(pathbuf)) {
+        SUBDBG("Failed to write path string.");
+    }
 	va_end( ap );
 	return access( pathbuf, F_OK ) == 0;
 }
