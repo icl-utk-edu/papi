@@ -1327,7 +1327,10 @@ rocprofiler_sdk_evt_code_to_name(unsigned int event_code, char *name, int len)
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
     if( PAPI_OK == papi_errno ){
-        snprintf(name, len, "%s", tmp_name);
+        int expect = snprintf(name, len, "%s", tmp_name);
+        if (expect < 0 || expect >= len) {
+            SUBDBG("Failed to write event name.");
+        }
     }
 
     return papi_errno;
@@ -1341,7 +1344,10 @@ rocprofiler_sdk_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 
     papi_errno = papi_rocpsdk::evt_id_to_descr(event_code, &tmp_descr);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(descr, len, "%s", tmp_descr);
+        int expect = snprintf(descr, len, "%s", tmp_descr);
+        if (expect < 0 || expect >= len) {
+            SUBDBG("Failed to write event description.");
+        }
     }
 
     return papi_errno;
@@ -1355,13 +1361,22 @@ rocprofiler_sdk_evt_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(info->symbol, PAPI_HUGE_STR_LEN, "%s", tmp_name);
+        int expect = snprintf(info->symbol, PAPI_HUGE_STR_LEN, "%s", tmp_name);
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
     }
 
     papi_errno = papi_rocpsdk::evt_id_to_descr(event_code, &tmp_descr);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(info->long_descr, PAPI_HUGE_STR_LEN, "%s", tmp_descr);
-        snprintf(info->short_descr, PAPI_MIN_STR_LEN, "%s", tmp_descr);
+        int expect = snprintf(info->long_descr, PAPI_HUGE_STR_LEN, "%s", tmp_descr);
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to write long event description.");
+        }
+        expect = snprintf(info->short_descr, PAPI_MIN_STR_LEN, "%s", tmp_descr);
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write short event description.");
+        }
     }
 
     return papi_errno;
@@ -1376,12 +1391,13 @@ rocprofiler_sdk_evt_name_to_code(const char *event_name, unsigned int *event_cod
     if( NULL == strstr(event_name, "device=") ){
         char *amended_event_name;
         size_t len = strlen(event_name)+strlen(":device=0")+1; // +1 for '\0'
-        if( len > 1024 ){
+        if( len > PAPI_HUGE_STR_LEN ){
             return PAPI_EMISC;
         }
         amended_event_name = (char *)calloc(len, sizeof(char));
         int ret = snprintf(amended_event_name, len, "%s:device=0", event_name);
-        if( ret >= len ){
+        if( ret < 0 || ret >= len ){
+            SUBDBG("Failed to write amended event name.");
             free(amended_event_name);
             return PAPI_EMISC;
         }
