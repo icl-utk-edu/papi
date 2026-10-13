@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 #include "papi.h"
 #include "papi_internal.h"
@@ -92,6 +93,14 @@ static int table_size = 32;
 static lustre_fs *root_lustre_fs = NULL;
 
 papi_vector_t _lustre_vector;
+
+static inline int lustre_snprintf(char *buffer, size_t size, const char *formattedStr, ...) {
+    va_list ap;
+    va_start(ap, formattedStr);
+    int count = vsnprintf(buffer, size, formattedStr, ap);
+    va_end(ap);
+    return count;
+}
 
 /******************************************************************************
  ********  BEGIN FUNCTIONS  USED INTERNALLY SPECIFIC TO THIS COMPONENT ********
@@ -278,8 +287,11 @@ init_lustre_counters( void  )
 
    while ( (entry = readdir( proc_dir )) != NULL ) {
 	   memset( path, 0, PATH_MAX );
-	   snprintf( path, PATH_MAX - 1, "%s/%s/stats", lustre_dir,
+	   int expect = lustre_snprintf( path, PATH_MAX - 1, "%s/%s/stats", lustre_dir,
 				  entry->d_name );
+       if (expect < 0 || expect >= PATH_MAX-1) {
+           SUBDBG("Failed to write path string.");
+       }
 	   SUBDBG("checking for file %s\n", path);
 
 	   if ( ( tmp_fd = open( path, O_RDONLY ) ) == -1 ) {
@@ -311,16 +323,22 @@ init_lustre_counters( void  )
 
 	  SUBDBG("found Lustre FS: %s\n", fs_name);
 
-	  snprintf( path_stats, PATH_MAX - 1,
+	  expect = lustre_snprintf( path_stats, PATH_MAX - 1,
 		"%s/%s/stats",
 		lustre_dir,
 		entry->d_name );
+      if (expect < 0 || expect >= PATH_MAX-1) {
+          SUBDBG("Failed to write path string.");
+      }
 	  SUBDBG("Found file %s\n", path_stats);
 
-	  snprintf( path_readahead, PATH_MAX - 1,
+	  expect = lustre_snprintf( path_readahead, PATH_MAX - 1,
 		"%s/%s/read_ahead_stats",
 		lustre_dir,
 		entry->d_name );
+      if (expect < 0 || expect >= PATH_MAX-1) {
+          SUBDBG("Failed to write path string.");
+      }
 	  SUBDBG("Now checking for file %s\n", path_readahead);
 
 	  strcpy( ptr, "read_ahead_stats" );
