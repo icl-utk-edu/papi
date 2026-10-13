@@ -1,9 +1,25 @@
 # File: ftests/Makefile
 
 include Makefile.target
-
 INCLUDE = -I../testlib -I. -I..
-FFLAGS	= $(CFLAGS) -ffixed-line-length-132
+
+cray_compilers := ftn% crayftn%
+flang_compilers := flang% armflang% amdflang%
+gnu_compilers := gfortran%
+intel_compilers := ifort% ifx%
+nvidia_compilers := nvfortran% pgi77%
+ifneq ($(filter $(cray_compilers), $(notdir $(F77))),)
+    FFLAGS += -N 132
+else ifneq ($(filter $(flang_compilers), $(notdir $(F77))),)
+    FFLAGS += -ffixed-line-length=132
+else ifneq ($(filter $(gnu_compilers), $(notdir $(F77))),)
+    FFLAGS += -ffixed-line-length-132
+else ifneq ($(filter $(intel_compilers), $(notdir $(F77))),)
+    FFLAGS += -extend-source 132
+else ifneq ($(filter $(nvidia_compilers), $(notdir $(F77))),)
+    FFLAGS += -Mextend
+endif
+
 testlibdir=../testlib
 TESTLIB= $(testlibdir)/libtestlib.a
 DOLOOPS= $(testlibdir)/do_loops.o
