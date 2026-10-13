@@ -297,7 +297,7 @@ make_ib_event_description(const char* input_str, int extended)
     static ib_device_t*
 add_ib_device(const char* name, int port)
 {
-    ib_device_t *new_dev = (ib_device_t*) papi_calloc(sizeof(ib_device_t), 1);
+    ib_device_t *new_dev = (ib_device_t*) papi_calloc(1, sizeof(ib_device_t));
     if (new_dev == 0) {
         PAPIERROR("cannot allocate memory for new IB device structure");
         return (0);
@@ -323,7 +323,7 @@ add_ib_device(const char* name, int port)
     static ib_counter_t*
 add_ib_counter(const char* name, const char* file_name, int extended, ib_device_t *device)
 {
-    ib_counter_t *new_cnt = (ib_counter_t*) papi_calloc(sizeof(ib_counter_t), 1);
+    ib_counter_t *new_cnt = (ib_counter_t*) papi_calloc(1, sizeof(ib_counter_t));
     if (new_cnt == 0) {
         PAPIERROR("cannot allocate memory for new IB counter structure");
         return (0);
