@@ -18,6 +18,7 @@
 
 #include "papi.h"
 #include "papi_test.h"
+#include "papi_debug.h"
 
 #define MAX_LIBMSR_EVENTS 64
 
@@ -141,7 +142,10 @@ int main ( int argc, char **argv )
         if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__, "PAPI_event_code_to_name", retval );
         retval = PAPI_get_event_info( code,&evinfo );
         if ( retval != PAPI_OK ) test_fail( __FILE__, __LINE__,"Error getting event info\n",retval );
-        strncpy( units[num_events], evinfo.units, sizeof( units[0] )-1 );
+        int strErr=snprintf(units[num_events], PAPI_MIN_STR_LEN, "%s", evinfo.units);
+        if (strErr < 0 || strErr >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write units.");
+        }
         // buffer must be null terminated to safely use strstr operation on it below
         units[num_events][sizeof( units[0] )-1] = '\0';
         data_type[num_events] = evinfo.data_type;
