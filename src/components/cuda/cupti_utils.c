@@ -56,7 +56,10 @@ int cuptiu_files_search_in_path(const char *file_name, const char *search_path, 
 {
     char path[PATH_MAX];
     char command[PATH_MAX];
-    snprintf(command, PATH_MAX, "find %s -name %s", search_path, file_name);
+    int expect = snprintf(command, PATH_MAX, "find %s -name %s", search_path, file_name);
+    if (expect < 0 || expect >= PATH_MAX) {
+        SUBDBG("Failed to write path string.");
+    }
 
     FILE *fp;
     fp = popen(command, "r");

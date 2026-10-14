@@ -147,7 +147,7 @@ int main(int argc, char **argv) {                                       // args 
          ret=PAPI_add_named_event(EventSet,info.symbol);             // Try to add it for counting.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_add_named_event('%s') failed.\n", info.symbol);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, ret);
          }
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {                                       // args 
          ret=PAPI_remove_named_event(EventSet,info.symbol);          // Try to remove it.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_remove_named_event('%s') failed.\n", info.symbol);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, ret);
          }
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {                                       // args 
          ret=PAPI_event_name_to_code(info.symbol, &code);            // Try to read the code from the name.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_event_name_to_code('%s') failed.\n", info.symbol);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, ret);
          }
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {                                       // args 
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_event_name_to_code('%s') "
                "returned code 0x%08X, expected 0x%08X. failure.\n", 
                info.symbol, code, k);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, 0);               // report and fail.  
          }
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {                                       // args 
          ret=PAPI_event_code_to_name(code, testName);                // turn code back into a name.
          if (ret != PAPI_OK) {                                       // If that failed, report it.
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_event_code_to_name(('0x%08X') failed.\n", code);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, ret);
          }
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {                                       // args 
             retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_event_code_to_name(('0x%08X') "
                "returned name=\"'%s'\", expected \"%s\". failure.\n", 
                code, testName, info.symbol);
-            if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+            if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
             test_fail( __FILE__, __LINE__, errMsg, 0);               // Report and exit.
          }
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {                                       // args 
       ret=PAPI_get_event_info(m,&info);                              // get name of k symbol.
       if (ret != PAPI_OK) {                                          // If that failed, report and exit.
          retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_get_event_info(%i) failed.\n", k);    // build message.
-         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+         if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
               continue;
          test_fail(__FILE__, __LINE__, errMsg, ret);
       }
@@ -333,7 +333,7 @@ int main(int argc, char **argv) {                                       // args 
       ret=PAPI_add_named_event(EventSet,info.symbol);                // Try to add it for counting.
       if (ret != PAPI_OK) {                                          // If that failed, report it.
          retlen = snprintf(errMsg, PAPI_MAX_STR_LEN, "PAPI_add_named_event('%s') failed.\n", info.symbol);
-         if (retlen <= 0 || PAPI_MAX_STR_LEN <= retlen)
+         if (retlen < 0 || PAPI_MAX_STR_LEN <= retlen)
             continue;
          test_fail( __FILE__, __LINE__, errMsg, ret);
       } else {

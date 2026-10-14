@@ -289,7 +289,7 @@ make_ib_event_description(const char* input_str, int extended)
                 desc[i] = ' ';
     }
     if (ret <= 0 || PAPI_MAX_STR_LEN <= ret) {
-        // nothing smart to be done about it.
+        SUBDBG("Failed to write description string.");
     }
     return desc;
 }
@@ -297,7 +297,7 @@ make_ib_event_description(const char* input_str, int extended)
     static ib_device_t*
 add_ib_device(const char* name, int port)
 {
-    ib_device_t *new_dev = (ib_device_t*) papi_calloc(sizeof(ib_device_t), 1);
+    ib_device_t *new_dev = (ib_device_t*) papi_calloc(1, sizeof(ib_device_t));
     if (new_dev == 0) {
         PAPIERROR("cannot allocate memory for new IB device structure");
         return (0);
@@ -323,7 +323,7 @@ add_ib_device(const char* name, int port)
     static ib_counter_t*
 add_ib_counter(const char* name, const char* file_name, int extended, ib_device_t *device)
 {
-    ib_counter_t *new_cnt = (ib_counter_t*) papi_calloc(sizeof(ib_counter_t), 1);
+    ib_counter_t *new_cnt = (ib_counter_t*) papi_calloc(1, sizeof(ib_counter_t));
     if (new_cnt == 0) {
         PAPIERROR("cannot allocate memory for new IB counter structure");
         return (0);
@@ -357,11 +357,16 @@ find_ib_device_events(ib_device_t *dev, int extended)
     int nevents = 0;
     DIR *cnt_dir = NULL;
     char counters_path[128];
+    int expect;
+    int len = sizeof(counters_path);
 
     if ( extended ) {
         /* mofed driver version <4.0 */
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters_ext", 
+        expect = snprintf(counters_path, len, "%s/%s/ports/%d/counters_ext", 
                 ib_dir_path, dev->dev_name, dev->dev_port);
+        if (expect < 0 || len <= expect) {
+            SUBDBG("Failed to write path string.");
+        }
 
         cnt_dir = opendir(counters_path);
         if (cnt_dir == NULL) {
@@ -369,15 +374,21 @@ find_ib_device_events(ib_device_t *dev, int extended)
             /* in 4.0 version of mofed driver */
             SUBDBG("cannot open counters directory `%s'\n", counters_path);
 
-            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters", 
+            expect = snprintf(counters_path, len, "%s/%s/ports/%d/%scounters", 
                     ib_dir_path, dev->dev_name, dev->dev_port, "hw_");
+            if (expect < 0 || len <= expect) {
+                SUBDBG("Failed to write path string.");
+            }
 
             cnt_dir = opendir(counters_path);
         }
     }
     else {
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters", 
+        expect = snprintf(counters_path, len, "%s/%s/ports/%d/counters", 
                 ib_dir_path, dev->dev_name, dev->dev_port);
+        if (expect < 0 || len <= expect) {
+            SUBDBG("Failed to write path string.");
+        }
         cnt_dir = opendir(counters_path);
     }
 
@@ -398,7 +409,10 @@ find_ib_device_events(ib_device_t *dev, int extended)
             continue;
 
         /* Check that we can read an integer from the counter file */
-        snprintf(event_path, sizeof(event_path), "%s/%s", counters_path, ev_name);
+        expect = snprintf(event_path, sizeof(event_path), "%s/%s", counters_path, ev_name);
+        if (expect < 0 || (int)sizeof(event_path) <= expect) {
+            SUBDBG("Failed to write path string.");
+        }
         if (pscanf(event_path, "%lld", &value) != 1) {
             SUBDBG("cannot read value for event '%s'\n", ev_name);
             continue;
@@ -415,8 +429,11 @@ find_ib_device_events(ib_device_t *dev, int extended)
             fixed_extended = 3-extended; // higher bit, location is wrong, mark it, and flip the size, 2 + (1-extended)
 
         /* Create new counter */
-        snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
+        expect = snprintf(counter_name, sizeof(counter_name), "%s_%d%s:%s", 
                 dev->dev_name, dev->dev_port, (fixed_extended?"_ext":""), ev_name);
+        if (expect < 0 || (int)sizeof(counter_name) <= expect) {
+            SUBDBG("Failed to write counter name string.");
+        }
         if (add_ib_counter(counter_name, ev_name, fixed_extended, dev))
         {
             SUBDBG("Added new counter `%s'\n", counter_name);
@@ -437,6 +454,7 @@ find_ib_devices()
     DIR *ib_dir = NULL;
     int result = PAPI_OK;
     num_events = 0;
+    int expect;
 
     ib_dir = opendir(ib_dir_path);
     if (ib_dir == NULL) {
@@ -456,7 +474,10 @@ find_ib_devices()
         if (hca[0] == '.')
             goto next_hca;
 
-        snprintf(ports_path, sizeof(ports_path), "%s/%s/ports", ib_dir_path, hca);
+        expect = snprintf(ports_path, sizeof(ports_path), "%s/%s/ports", ib_dir_path, hca);
+        if (expect < 0 || (int)sizeof(ports_path) <= expect) {
+            SUBDBG("Failed to write ports path string.");
+        }
         ports_dir = opendir(ports_path);
         if (ports_dir == NULL) {
             SUBDBG("cannot open `%s'\n", ports_path);
@@ -472,7 +493,10 @@ find_ib_devices()
             /* Check that port is active. .../HCA/ports/PORT/state should read "4: ACTIVE." */
             int state = -1;
             char state_path[FILENAME_MAX];
-            snprintf(state_path, sizeof(state_path), "%s/%s/ports/%d/state", ib_dir_path, hca, port);
+            expect = snprintf(state_path, sizeof(state_path), "%s/%s/ports/%d/state", ib_dir_path, hca, port);
+            if (expect < 0 || (int)sizeof(state_path) <= expect) {
+                SUBDBG("Failed to write state path string.");
+            }
             if (pscanf(state_path, "%d", &state) != 1) {
                 SUBDBG("cannot read state of IB HCA `%s' port %d\n", hca, port);
                 continue;
@@ -549,28 +573,38 @@ read_ib_counter_value(int index)
     char counters_path[FILENAME_MAX];
     DIR *cnt_dir = NULL;
     long long value = 0ll;
+    int expect;
     infiniband_native_event_entry_t *iter = &infiniband_native_events[index];
 
     if ( iter->extended == 1 || iter->extended == 2 ) {
         /* extended == 1, counter is 32b, in the 32b location || 2, counter is 64b in the 64b dir */
         /* mofed driver version <4.0 */
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
+        expect = snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters%s",
                 ib_dir_path, iter->device->dev_name, iter->device->dev_port, "_ext");
+        if (expect < 0 || (int)sizeof(counters_path) <= expect) {
+            SUBDBG("Failed to write counters path string.");
+        }
 
         cnt_dir = opendir(counters_path);
         if (cnt_dir == NULL) {
             /* directory counters_ext in sysfs fs has changed to hw_counters */
             /* in 4.0 version of mofed driver */
-            snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
+            expect = snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/%scounters",
                     ib_dir_path, iter->device->dev_name, iter->device->dev_port, "hw_");
+            if (expect < 0 || (int)sizeof(counters_path) <= expect) {
+                SUBDBG("Failed to write counters path string.");
+            }
 
             cnt_dir = opendir(counters_path);
         }
     }
     else {
         /* extended == 0, counter is 32b, in the 64b location || 3, counter is 64b in the 32b dir */
-        snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
+        expect = snprintf(counters_path, sizeof(counters_path), "%s/%s/ports/%d/counters",
                 ib_dir_path, iter->device->dev_name, iter->device->dev_port );
+        if (expect < 0 || (int)sizeof(counters_path) <= expect) {
+            SUBDBG("Failed to write counters path string.");
+        }
         cnt_dir = opendir(counters_path);
     }
 
@@ -579,8 +613,11 @@ read_ib_counter_value(int index)
         closedir(cnt_dir);
 
 
-    snprintf(ev_file, strlen(counters_path) + strlen(iter->file_name) + 2, "%s/%s",
+    expect = snprintf(ev_file, strlen(counters_path) + strlen(iter->file_name) + 2, "%s/%s",
             counters_path, iter->file_name);
+    if (expect < 0 || (int)(strlen(counters_path) + strlen(iter->file_name) + 2) <= expect) {
+        SUBDBG("Failed to write counters (full) path string.");
+    }
 
     if (pscanf(ev_file, "%lld", &value) != 1) {
         PAPIERROR("cannot read value for counter '%s'\n", iter->name);

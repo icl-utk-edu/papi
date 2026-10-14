@@ -87,7 +87,7 @@ static int io_count_events(_io_context_t *myCtx)
         int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "Failed to open target file '%s'.", IO_FILENAME);
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         return PAPI_ENOSUPP;
     }
 
@@ -103,7 +103,7 @@ static int io_count_events(_io_context_t *myCtx)
             int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "File '%s' line %i too long.", IO_FILENAME, myCtx->EventCount+1);
             _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return PAPI_ENOSUPP;
         }
 
@@ -115,7 +115,7 @@ static int io_count_events(_io_context_t *myCtx)
             int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "File '%s' line %i bad format.", IO_FILENAME, myCtx->EventCount+1);
             _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             return PAPI_ENOSUPP;
         }
 
@@ -178,7 +178,7 @@ _io_init_component( int cidx )
         int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "Failed counting events.");
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;    // force null termination.
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         goto fn_fail;
     }
  
@@ -188,7 +188,7 @@ _io_init_component( int cidx )
         int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "File '%s' has %i events, exceeds counter limit of %i.", IO_FILENAME, myCtx.EventCount, IO_COUNTERS);
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
         ret = PAPI_ENOSUPP;
         goto fn_fail;
@@ -204,7 +204,7 @@ _io_init_component( int cidx )
         int strErr=snprintf(_io_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
         "Failed to allocate %lu bytes for _io_native_table.", gEventCount*sizeof(IO_native_event_entry_t));
         _io_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         fclose(myCtx.pFile);
         ret = PAPI_ENOMEM;
         goto fn_fail;
@@ -217,7 +217,8 @@ _io_init_component( int cidx )
         // No check for error here, we would have caught it in io_count_events().
         (void) sscanf(myCtx.line, "%s %lld\n", name, &tmplong);
         name[strlen(name)-1]=0;     // null terminate over ':' we found.
-        strncpy(io_native_table[fileIdx].name, name, PAPI_MAX_STR_LEN-1);
+        int strErr=snprintf(io_native_table[fileIdx].name, FILE_LINE_SIZE, "%s", name);
+        if (strErr < 0 || strErr >= FILE_LINE_SIZE) HANDLE_STRING_ERROR;
         io_native_table[fileIdx].fileIdx=fileIdx;
         io_native_table[fileIdx].desc[0]=0;         // flag for successful copy.
         if (strcmp("rchar", name) == 0) {

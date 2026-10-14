@@ -114,19 +114,19 @@ void core_type_to_name(int core_type, char *out)
 	switch (core_type) {
 		case INTEL_CORE_TYPE_EFFICIENT:
 			err = snprintf(out, PAPI_MIN_STR_LEN, "e-core (Atom)");
-			if (err > PAPI_MAX_STR_LEN)
+			if (err < 0 || err >= PAPI_MIN_STR_LEN)
 				HANDLE_STRING_ERROR;
 			break;
 
 		case INTEL_CORE_TYPE_PERFORMANCE:
 			err = snprintf(out, PAPI_MIN_STR_LEN, "p-core (Core)");
-			if (err > PAPI_MAX_STR_LEN)
+			if (err < 0 || err >= PAPI_MIN_STR_LEN)
 				HANDLE_STRING_ERROR;
 			break;
 
 		default:
 			err = snprintf(out, PAPI_MIN_STR_LEN, "not applicable (N/A)");
-			if (err > PAPI_MAX_STR_LEN)
+			if (err < 0 || err >= PAPI_MIN_STR_LEN)
 				HANDLE_STRING_ERROR;
 			break;
 	}
@@ -309,7 +309,7 @@ _topdown_init_component(int cidx)
 		err = snprintf(_topdown_vector.cmp_info.disabled_reason,
 					   PAPI_MAX_STR_LEN, "Not a supported CPU vendor");
 		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
-		if (err > PAPI_MAX_STR_LEN)
+		if (err < 0 || err >= PAPI_MAX_STR_LEN)
 			HANDLE_STRING_ERROR;
 		retval = PAPI_ENOSUPP;
 		goto fn_fail;
@@ -317,7 +317,7 @@ _topdown_init_component(int cidx)
 
 	/* Ideally, we should check the IA32_PERF_CAPABILITIES MSR for */
 	/* PERF_METRICS support. However, since doing this requires a */
-	/* sysadmin to go through a lot of hassle, it may be better to
+	/* sysadmin to go through a lot of hassle, it may be better to */
 	/* just hardcode supported platforms instead */
 
 	if (hw_info->vendor == PAPI_VENDOR_INTEL)
@@ -379,6 +379,8 @@ _topdown_init_component(int cidx)
 				/* indicate in desc that librseq was found and is being used */
 				err = snprintf(_topdown_vector.cmp_info.description, PAPI_MAX_STR_LEN,
 				TOPDOWN_COMPONENT_DESCRIPTION " (librseq in use)");
+		        if (err < 0 || err >= PAPI_MAX_STR_LEN)
+			        HANDLE_STRING_ERROR;
 				_topdown_vector.cmp_info.description[PAPI_MAX_STR_LEN - 1] = 0;
 			}
 
@@ -400,9 +402,9 @@ _topdown_init_component(int cidx)
 		core_type_to_name(required_core_type, typeStr);
 		err = snprintf(_topdown_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 			"The PERF_EVENT MSR does not exist on this core. Limit process affinity to cores of type '%s' only.", typeStr);
-		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
-		if (err > PAPI_MAX_STR_LEN)
+		if (err < 0 || err >= PAPI_MAX_STR_LEN)
 			HANDLE_STRING_ERROR;
+		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
 		retval = PAPI_ECMP;
 		goto fn_fail;
 	}
@@ -415,9 +417,9 @@ _topdown_init_component(int cidx)
 		err = snprintf(_topdown_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 				"%s:%i topdown_native_events papi_calloc for %lu bytes failed.",
 				__FILE__, __LINE__, TOPDOWN_MAX_COUNTERS * sizeof(_topdown_native_event_entry_t));
-		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
-		if (err > PAPI_MAX_STR_LEN)
+		if (err < 0 || err >= PAPI_MAX_STR_LEN)
 			HANDLE_STRING_ERROR;
+		_topdown_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN - 1] = 0;
 		retval = PAPI_ENOMEM;
 		goto fn_fail;
 	}

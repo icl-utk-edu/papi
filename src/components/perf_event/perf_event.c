@@ -2510,7 +2510,7 @@ _pe_handle_permissions(papi_vector_t *component) {
 	if ((paranoid_level >= 3) && (getuid() !=0) && (perfmon_capabilities == 0)) {
 		const char *permissionsMsg = "Insufficient permissions for perf_event support with paranoid=%d. Set /proc/sys/kernel/perf_event_paranoid to 2 or less, run as root, or use CAP_PERFMON/CAP_SYS_ADMIN.";
 		int strLen = snprintf(component->cmp_info.disabled_reason, PAPI_2MAX_STR_LEN, permissionsMsg, paranoid_level);
-		if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+		if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
 			SUBDBG("Failed to fully write disabled reason due to paranoid level.\n");
 			return PAPI_EBUF;
 		}

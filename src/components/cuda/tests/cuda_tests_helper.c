@@ -129,7 +129,7 @@ void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int
 
     // Begin reconstructing the Cuda native event name with qualifiers
     int strLen = snprintf(enumerated_cuda_native_event_name[(*total_event_count)], PAPI_2MAX_STR_LEN, "%s", basename);
-    if (strLen < 0 || strLen >= PAPI_MAX_STR_LEN) {
+    if (strLen < 0 || strLen >= PAPI_2MAX_STR_LEN) {
         fprintf(stderr, "Failed to fully write event name.");
         exit(EXIT_FAILURE);
     }

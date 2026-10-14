@@ -794,7 +794,11 @@ xfopen( const char *path, const char *mode )
 FILE *
 path_vfopen( const char *mode, const char *path, va_list ap )
 {
-    vsnprintf( pathbuf, sizeof ( pathbuf ), path, ap );
+    int len = sizeof(pathbuf);
+    int count = vsnprintf( pathbuf, len, path, ap );
+    if (count < 0 || count >= len) {
+        SUBDBG("Path string truncated.");
+    }
     return xfopen( pathbuf, mode );
 }
 
@@ -861,7 +865,11 @@ path_exist( const char *path, ... )
 {
     va_list ap;
     va_start(ap, path);
-    vsnprintf(pathbuf, sizeof ( pathbuf ), path, ap);
+    int len = sizeof(pathbuf);
+    int count = vsnprintf(pathbuf, len, path, ap);
+    if (count < 0 || count >= len) {
+        SUBDBG("Path string truncated.");
+    }
     va_end(ap);
     return access(pathbuf, F_OK) == 0;
 }

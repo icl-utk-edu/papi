@@ -412,7 +412,7 @@ static int findNameHash(char *key)
       int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,     \
          "PCP library function %s not found in lib.", TOSTRING(Name));     \
       _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;          \
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;                  \
+      if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;                  \
       return(PAPI_ENOSUPP);                                                \
    } /* end of macro. */
 
@@ -435,7 +435,7 @@ static int _local_linkDynamicLibraries(void)
       if (dl1 == NULL) {
          int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "PAPI_PCP_MAIN override '%s' given in Rules.pcp not found.", pcp_main);
          _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;
-         if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+         if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
          return(PAPI_ENOSUPP);   // Override given but not found.
       }
    }
@@ -447,9 +447,9 @@ static int _local_linkDynamicLibraries(void)
 
    // Step 3: Try the explicit install default. 
    if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
-      int strErr=snprintf(path_name, 1024, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
-      path_name[1024-1]=0;
-      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+      int strErr=snprintf(path_name, PAPI_HUGE_STR_LEN, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
+      path_name[PAPI_HUGE_STR_LEN-1]=0;
+      if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
@@ -457,7 +457,7 @@ static int _local_linkDynamicLibraries(void)
    if (dl1 == NULL) {
       int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "libpcp.so not found.");
       _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
       return(PAPI_ENOSUPP);
    }
 
@@ -879,7 +879,7 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, "Failed system call, gethostname() "
             "returned %i.", ret);   
       reason[rLen-1]=0;
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ESYS;
       goto fn_fail;
    }
@@ -892,7 +892,7 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, "Cannot connect to PM Daemon on \"%s\".\n "
          "(Is the Performance Co-Pilot running?)\n", hostname);
       reason[rLen-1]=0;
-      if (strErr > rLen) SUBDBG("%s:%i Warning! Error's 'reason' string truncated:\n%s\n",__FILE__,__LINE__,reason);
+      if (strErr < 0 || strErr >= rLen) SUBDBG("%s:%i Warning! Error's 'reason' string truncated:\n%s\n",__FILE__,__LINE__,reason);
       retval = PAPI_ESYS;
       goto fn_fail;
    }
@@ -906,7 +906,7 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,
           "Could not allocate %lu bytes of memory for pcp_event_info.", sEventInfoSize*sizeof(_pcp_event_info_t));
       _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;    // force null termination.
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    }
@@ -917,12 +917,14 @@ static int _pcp_init_component(int cidx)
    if (ret < 0) {                                                       // Failure...
       int strErr=snprintf(reason, rLen, "pmTraversePMNS failed; ret=%i [%s]\n", 
          ret, pcp_pmErrStr(ret));
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       if (ret == PM_ERR_NAME) {                                         // We know what this one is,
          strErr=snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
             "Occurs if event filter '%s' unknown to PCP Daemon.\n", AGENT_NAME);
+         if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       }
       reason[rLen-1]=0;
-      if (strErr >rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOIMPL;
       goto fn_fail;
    }      
@@ -938,7 +940,7 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, "pmTraversePMNS returned zero events "
          "for AGENT=\"%s\".\n", AGENT_NAME);
       reason[rLen-1]=0;
-      if (strErr >rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOIMPL;
       goto fn_fail;
    }
@@ -949,7 +951,7 @@ static int _pcp_init_component(int cidx)
       snprintf(reason, rLen, "memory alloc denied for allNames; "
             "size=%i.\n", sEventCount);
       int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allNames.", sEventCount*sizeof(allNames));
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    }
@@ -962,7 +964,7 @@ static int _pcp_init_component(int cidx)
       snprintf(reason, rLen, "memory alloc denied for allPMID; "
             "size=%i.\n", sEventCount);
       int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allPMID.", sEventCount*sizeof(pmID));
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    } // end if calloc failed.
@@ -988,13 +990,13 @@ static int _pcp_init_component(int cidx)
          int strErr=snprintf(reason, rLen, "pmLookupName for %i names failed; ret=%i [%s].\n", 
             sEventCount, ret, pcp_pmErrStr(ret));
          reason[rLen-1]=0;
-         if (strErr > rLen) HANDLE_STRING_ERROR;
+         if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
 
          if (ret == PM_ERR_IPC) {                                       // .. If we know it, rewrite.
             strErr=snprintf(reason, rLen, "pmLookupName ret=PM_ERR_IPC: one known cause is a readblock too large; reduce LNBLOCK (%s:%i).\n",
                   __FILE__,k);
             reason[rLen-1]=0;
-            if (strErr > rLen) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
             retval = PAPI_EBUF;
             goto fn_fail;
          }
@@ -1019,7 +1021,7 @@ static int _pcp_init_component(int cidx)
    if (ret != 0) {
       int strErr=snprintf(reason, rLen, "pcp_pmFetch failed, retcode=%d.", ret);
       reason[rLen-1]=0;
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOSUPP;
       goto fn_fail;
    }
@@ -1069,7 +1071,7 @@ static int _pcp_init_component(int cidx)
             int strErr=snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
             reason[rLen-1]=0;
-            if( strErr > rLen) HANDLE_STRING_ERROR;
+            if(strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;
             retval = PAPI_ENOSUPP;
             goto fn_fail;
          }
@@ -1167,7 +1169,7 @@ static int _pcp_init_component(int cidx)
       int strErr=snprintf(reason, rLen, 
           "Could not reallocate %lu bytes of memory for pcp_event_info.", sEventCount*sizeof(_pcp_event_info_t));
       reason[rLen-1]=0;    // force null termination.
-      if (strErr > rLen) HANDLE_STRING_ERROR;    
+      if (strErr < 0 || strErr >= rLen) HANDLE_STRING_ERROR;    
       retval = PAPI_ENOMEM;
       goto fn_fail;
    } // end if realloc failed.

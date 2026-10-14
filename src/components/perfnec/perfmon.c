@@ -228,11 +228,11 @@ _papi_pfnec_init_component( int cidx )
         ret = snprintf(perfnec_ntv_events[num_events].name,
                        sizeof(perfnec_ntv_events[num_events].name),
                        "%s", pkg_event_names[e]);
-        if (ret <= 0 || sizeof(perfnec_ntv_events[num_events].name) <= ret) continue;
+        if (ret < 0 || sizeof(perfnec_ntv_events[num_events].name) <= ret) continue;
         ret = snprintf(perfnec_ntv_events[num_events].description,
                        sizeof(perfnec_ntv_events[num_events].description),
                        "%s", pkg_event_descs[e]);
-        if (ret <= 0 || sizeof(perfnec_ntv_events[num_events].description) <= ret) continue;
+        if (ret < 0 || sizeof(perfnec_ntv_events[num_events].description) <= ret) continue;
         ret = snprintf(perfnec_ntv_events[num_events].units,
                        sizeof(perfnec_ntv_events[num_events].name),
                        "%s", pkg_units[e]);

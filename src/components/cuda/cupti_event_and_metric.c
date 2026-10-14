@@ -1869,14 +1869,14 @@ int cuptie_evt_code_to_name(uint32_t event_code, char *name, int len)
     switch (info.flags) {
         case (DEVICE_FLAG):
             strLen = snprintf(name, len, "%s:device=%i", cuptiu_table_p->events[info.nameid].name, info.device);
-            if (strLen < 0 || strLen > len) {
+            if (strLen < 0 || strLen >= len) {
                 SUBDBG("Failed to fully write the Cuda native event name.\n");
                 return PAPI_EBUF;
             }
             break;
         default:
             strLen = snprintf(name, len, "%s", cuptiu_table_p->events[info.nameid].name);
-            if (strLen < 0 || strLen > len) {
+            if (strLen < 0 || strLen >= len) {
                 SUBDBG("Failed to fully write the Cuda native event name.\n");
                 return PAPI_EBUF;
             }

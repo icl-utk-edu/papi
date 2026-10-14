@@ -360,7 +360,10 @@ papi_sde_unregister_counter( papi_handle_t handle, const char *event_name)
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     SDEDBG("Unregistering counter: '%s' from SDE library: %s.\n", full_event_name, lib_handle->libraryName);
 
@@ -414,7 +417,10 @@ papi_sde_describe_counter( void *handle, const char *event_name, const char *eve
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
     // This function has multiple exist points. If you add more, make sure you unlock before each one of them.
@@ -468,7 +474,10 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     // After this point we will be modifying data structures, so we need to acquire a lock.
     // This function has multiple exist points. If you add more, make sure you unlock before each one of them.
@@ -488,7 +497,10 @@ papi_sde_add_counter_to_group(papi_handle_t handle, const char *event_name, cons
 
     str_len = strlen(lib_handle->libraryName)+strlen(group_name)+2+1; // +2 for "::" and +1 for '\0'
     full_group_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_group_name, str_len, "%s::%s", lib_handle->libraryName, group_name);
+    expect = snprintf(full_group_name, str_len, "%s::%s", lib_handle->libraryName, group_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write group name.");
+    }
 
     // Check to see if the group exists already. Otherwise we need to create it.
     tmp_group = ht_lookup_by_name(lib_handle->lib_counters, full_group_name);
@@ -610,7 +622,10 @@ papi_sde_create_counter( papi_handle_t handle, const char *event_name, int cntr_
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     cntr = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
     if(NULL == cntr) {
@@ -715,7 +730,10 @@ papi_sde_create_counting_set( papi_handle_t handle, const char *cset_name, void 
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(cset_name)+2+1; // +2 for "::" and +1 for '\0'
     full_cset_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_cset_name, str_len, "%s::%s", lib_handle->libraryName, cset_name);
+    int expect = snprintf(full_cset_name, str_len, "%s::%s", lib_handle->libraryName, cset_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write cset name.");
+    }
 
     tmp_cset_handle = ht_lookup_by_name(lib_handle->lib_counters, full_cset_name);
     if(NULL == tmp_cset_handle) {
@@ -834,7 +852,10 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
 
     str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     tmp_rec_handle = ht_lookup_by_name(lib_handle->lib_counters, full_event_name);
     if(NULL == tmp_rec_handle) {
@@ -861,7 +882,10 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
     str_len += strlen(event_name)+1;
     aux_event_name = (char *)calloc(str_len, sizeof(char));
 
-    snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[0]);
+    expect = snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[0]);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write aux event name.");
+    }
     SDEDBG("papi_sde_create_recorder(): Preparing to register aux counter: '%s' in SDE library: %s.\n", aux_event_name, lib_handle->libraryName);
 
     // The field that holds the number of used entries in the recorder structure will become the counter of the new auxiliary event.
@@ -882,7 +906,10 @@ papi_sde_create_recorder( papi_handle_t handle, const char *event_name, size_t t
             sorting_params->recording = tmp_rec_handle;
             sorting_params->cmpr_func_ptr = cmpr_func_ptr;
 
-            snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[i]);
+            expect = snprintf(aux_event_name, str_len, "%s%s", event_name, modifiers[i]);
+            if (expect < 0 || (size_t)expect >= str_len) {
+                SDEDBG("Failed to write aux event name.");
+            }
 
             SDEDBG("papi_sde_create_recorder(): Preparing to register aux fp counter: '%s' in SDE library: %s.\n", aux_event_name, lib_handle->libraryName);
             // clear the previous entries;
@@ -1031,7 +1058,10 @@ void
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     // After this point we will be accessing shared data structures, so we need to acquire a lock.
     sde_lock();

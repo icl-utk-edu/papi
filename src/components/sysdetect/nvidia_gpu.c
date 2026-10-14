@@ -200,7 +200,7 @@ load_cuda_sym( char *status )
     cuda_dlp = dlopen("libcuda.so", RTLD_NOW | RTLD_GLOBAL);
     if (cuda_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -216,7 +216,7 @@ load_cuda_sym( char *status )
     if (!cuda_is_enabled()) {
         const char *message = "dlsym() of CUDA symbols failed";
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -294,7 +294,7 @@ load_nvml_sym( char *status )
     nvml_dlp = dlopen("libnvidia-ml.so", RTLD_NOW | RTLD_GLOBAL);
     if (nvml_dlp == NULL) {
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", dlerror());
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -308,7 +308,7 @@ load_nvml_sym( char *status )
     if (!nvml_is_enabled()) {
         const char *message = "dlsym() of NVML symbols failed";
         int count = snprintf(status, PAPI_MAX_STR_LEN, "%s", message);
-        if (count >= PAPI_MAX_STR_LEN) {
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
             SUBDBG("Status string truncated.");
         }
         return -1;
@@ -366,7 +366,7 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 #else
     const char *message = "NVML not configured, no device affinity available";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
+    if (count < 0 || count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Status string truncated.");
     }
 #endif /* HAVE_NVML */
@@ -376,7 +376,7 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
 #else
     const char *message = "CUDA not configured, no CUDA device available";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
+    if (count < 0 || count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Status string truncated.");
     }
 #endif /* HAVE_CUDA */
