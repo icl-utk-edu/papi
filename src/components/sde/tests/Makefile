@@ -6,8 +6,7 @@ cray_compilers := ftn% crayftn%
 flang_compilers := flang% armflang% amdflang%
 gnu_compilers := gfortran%
 intel_compilers := ifort% ifx%
-nvidia_compilers := nvfortran% pgi77%
-
+nvidia_compilers := nvfortran% pgf%
 ifneq ($(filter $(cray_compilers), $(notdir $(F77))),)
     F90FLAGS += $(FFLAGS) -ffree
 else ifneq ($(filter $(flang_compilers), $(notdir $(F77))),)
