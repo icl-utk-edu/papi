@@ -239,6 +239,7 @@ int main(int argc, char *argv[])
 
                 if (!quiet) {
                     printf( "Id                                    : %d\n", i );
+                    printf( "UID                                   : %lu\n", uid );
                     printf( "Name                                  : %s\n", dev_name );
                     printf( "Wavefront size                        : %u\n", wf_size );
                     printf( "SIMD per compute unit                 : %u\n", simd_per_cu );
