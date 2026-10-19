@@ -15,23 +15,40 @@ COMPOBJS += sysdetect.o  \
 			os_cpu_utils.o    \
 			linux_cpu_utils.o
 
-ifneq ($(PAPI_ROCP_SDK_ROOT),)
-    CFLAGS += -I$(PAPI_ROCP_SDK_ROOT)/include          \
-              -I$(PAPI_ROCP_SDK_ROOT)/include/hsa      \
-              -I$(PAPI_ROCP_SDK_ROOT)/include/rocm_smi
-else ifneq ($(PAPI_ROCM_ROOT),)
-    rocm_version = $(shell cat $(PAPI_ROCM_ROOT)/.info/version | cut -d. -f1)
-    # Append paths for hsa runtime and rocm_smi apis pre Linux
-    # Filesystem Hierarchy standard adoption.
-    ifeq ($(shell test $(rocm_version) -lt 6; echo $$?),0)
-        CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa \
-                  -I$(PAPI_ROCM_ROOT)/rocm_smi/include/rocm_smi
-    # Append paths for hsa runtime and rocm_smi apis post Linux
-    # Filesystem Hierarchy standard adoption.
+get_rocm_version_major = $(firstword $(subst ., ,$(file < $(1)/.info/version)))
+compare_rocm_version_major = $(shell test $(call get_rocm_version_major,$(1)) -lt $(2) 2>/dev/null; echo $$?)
+ifneq ($(or $(PAPI_ROCP_SDK_ROOT),$(PAPI_ROCM_ROOT)),)
+    # Include paths for hsa symbols based on PAPI_ROCP_SDK_ROOT.
+    ifneq ($(PAPI_ROCP_SDK_ROOT),)
+        CFLAGS += -I$(PAPI_ROCP_SDK_ROOT)/include          \
+                  -I$(PAPI_ROCP_SDK_ROOT)/include/hsa
+    # Include paths for hsa symbols based on PAPI_ROCM_ROOT.
     else
-        CFLAGS += -I$(PAPI_ROCM_ROOT)/include      \
-                  -I$(PAPI_ROCM_ROOT)/include/hsa      \
-                  -I$(PAPI_ROCM_ROOT)/include/rocm_smi
+        # Append paths for hsa runtime pre Linux
+        # Filesystem Hierarchy standard adoption.
+        ifeq ($(call compare_rocm_version_major,$(PAPI_ROCM_ROOT),6),0)
+            CFLAGS += -I$(PAPI_ROCM_ROOT)/hsa/include/hsa
+        # Append paths for hsa runtime post Linux
+        # Filesystem Hierarchy standard adoption.
+        else
+            CFLAGS += -I$(PAPI_ROCM_ROOT)/include      \
+                      -I$(PAPI_ROCM_ROOT)/include/hsa
+        endif
+    endif
+
+    # Include paths for smi symbols.
+    ifneq ($(PAPI_AMDSMI_ROOT),)
+        CFLAGS += -I$(PAPI_AMDSMI_ROOT)/include/amd_smi
+    else ifneq ($(PAPI_ROCMSMI_ROOT),)
+        # Append paths for rocm_smi pre Linux
+        # Filesystem Hierarchy standard adoption.
+        ifeq ($(call compare_rocm_version_major,$(PAPI_ROCMSMI_ROOT),6),0)
+            CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/rocm_smi/include/rocm_smi
+        # Append paths for rocm_smi post Linux
+        # Filesystem Hierarchy standard adoption.
+        else
+            CFLAGS += -I$(PAPI_ROCMSMI_ROOT)/include/rocm_smi
+        endif
     endif
 endif
 CFLAGS += -I/opt/amdgpu/include
