@@ -184,7 +184,6 @@ papi_vector_t _pcp_vector;                         // What we expose to PAPI, ro
 
 // -------------------------- GLOBAL SECTION ---------------------------------
 
-       int  _papi_hwi_debug = DEBUG_SUBSTRATE;                          // Bit flags to enable xxxDBG; SUBDBG for Substrate. Overrides weak global in papi.c.
 static int  sEventInfoSize=0;                                           // total size of pcp_event_info.
 static int  sEventInfoBlock = ((8*1024) / sizeof(_pcp_event_info_t));   // add about 8K at a time.
 static      _pcp_event_info_t * pcp_event_info = NULL;                  // our array of created pcp events.
