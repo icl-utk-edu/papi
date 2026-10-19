@@ -425,7 +425,7 @@ static int _local_linkDynamicLibraries(void)
        return PAPI_ENOSUPP;               // EXIT not supported.
    }
 
-   char path_name[1024];
+   char path_name[PATH_MAX];
    char *pcp_root = getenv("PAPI_PCP_ROOT"); 
    
    dl1 = NULL;
@@ -446,10 +446,11 @@ static int _local_linkDynamicLibraries(void)
    }
 
    // Step 3: Try the explicit install default. 
+   size_t pathSize = sizeof(path_name);
    if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
-      int strErr=snprintf(path_name, 1024, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
-      path_name[1024-1]=0;
-      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+      int strErr=snprintf(path_name, pathSize, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
+      path_name[pathSize-1]=0;
+      if ((size_t)strErr > pathSize) HANDLE_STRING_ERROR;
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
