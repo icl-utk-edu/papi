@@ -2238,11 +2238,12 @@ for comp in $components; do
 
       if test "x`find $PAPI_ROCP_SDK_ROOT -name "hsa.h"`" != "x" ||
          test "x`find $PAPI_ROCM_ROOT -name "hsa.h"`" != "x"; then 
-         CFLAGS="$CFLAGS -DHAVE_HSA"
-      fi 
-
-      if test "x`find $PAPI_ROCMSMI_ROOT -name "rocm_smi.h"`" != "x" ; then
-          CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
+          CFLAGS="$CFLAGS -DHAVE_HSA"
+          if test "x`find $PAPI_AMDSMI_ROOT -name "amdsmi.h"`" != "x"; then 
+              CFLAGS="$CFLAGS -DHAVE_AMD_SMI"
+          elif test "x`find $PAPI_ROCMSMI_ROOT -name "rocm_smi.h"`" != "x"; then 
+              CFLAGS="$CFLAGS -DHAVE_ROCM_SMI"
+          fi   
       fi
   fi
 done
