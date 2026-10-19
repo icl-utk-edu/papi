@@ -35,7 +35,7 @@ int main(int argc, char **argv) {                                       // args 
    int cid=-1;                                                          // signal for not found.
    int EventSet = PAPI_NULL;
 	int quiet=0;
-   char errMsg[1024];                                                   // space for an error message with more info.
+   char errMsg[PAPI_HUGE_STR_LEN];                                      // space for an error message with more info.
 	quiet=tests_quiet( argc, argv );                                     // From papi_test.h.
    int firstTime = 1;                                                   // some things we want to run once.
    int retlen;

@@ -47,7 +47,7 @@ typedef union
 int main(int argc, char **argv) {                                       // args to set two events. 
    int i,ret;
    int EventSet = PAPI_NULL;
-   char errMsg[1024];                                                   // space for an error message with more info.
+   char errMsg[PAPI_HUGE_STR_LEN];                                      // space for an error message with more info.
    char *pcpName;                                                       // The pcp name.
    if (argc == 1) {                                                     // If no arguments given,
       printf("Initialize, Event Read Avg uS\n");                        // OUTPUT Header for CSV.
