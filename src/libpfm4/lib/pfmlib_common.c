@@ -915,8 +915,8 @@ pfmlib_config_t pfm_cfg;
 static inline pfmlib_pmu_t *
 pfmlib_node_to_pmu(pfmlib_node_t *n)
 {
-	void *p = (void *)n;
-	void *offs = (void *)offsetof(pfmlib_pmu_t, node);
+	unsigned char *p = (void *)n;
+	unsigned char *offs = (void *)offsetof(pfmlib_pmu_t, node);
 	return (pfmlib_pmu_t *)(p - offs);
 }
 

@@ -182,7 +182,7 @@ parent(char **arg)
 	perf_event_desc_t *fds = NULL;
 	int status, ret, i, num_fds = 0, grp, group_fd = -1;
 	int ready[2], go[2];
-	uint32_t group_pmu = -1;
+	uint32_t group_pmu = ~0U;
 	char buf;
 	pid_t pid;
 

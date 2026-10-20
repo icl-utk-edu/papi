@@ -125,7 +125,10 @@ typedef struct {
 
 static perf_event_t *perf_pe = perf_static_events;
 static perf_event_t  *perf_pe_free, *perf_pe_end;
-static perf_umask_t *perf_um, *perf_um_free, *perf_um_end;
+static perf_umask_t *perf_um, *perf_um_free;
+#ifndef CONFIG_PFMLIB_NOTRACEPOINT
+static perf_umask_t *perf_um_end;
+#endif
 static int perf_pe_count;
 
 static inline int
@@ -957,7 +960,10 @@ pfm_perf_terminate(void *this)
 			free((void *)(perf_um[i].uname));
 		free(perf_um);
 		perf_um = NULL;
-		perf_um_free = perf_um_end = NULL;
+		perf_um_free = NULL;
+#ifndef CONFIG_PFMLIB_NOTRACEPOINT
+		perf_um_end = NULL;
+#endif
 	}
 }
 
