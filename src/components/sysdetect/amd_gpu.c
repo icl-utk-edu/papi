@@ -391,11 +391,12 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     int dev_count = 0;
     hsa_status_t status = get_device_count(&dev_count);
     if (status != HSA_STATUS_SUCCESS) {
-        if (status != HSA_STATUS_ERROR_NOT_INITIALIZED) {
-            const char *string;
-            (*hsa_status_stringPtr)(status, &string);
-            printf( "error: %s\n", string );
+        const char *message = "Unable to iterate over avaiable agents.";
+        int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
+        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Error message truncated.\n");
         }
+
         return;
     }
     dev_type_info->num_devices = dev_count;
