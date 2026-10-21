@@ -1,2 +1,9 @@
-include:
-  - local: .gitlab/ci/amd.gitlab-ci.yml
+#include:
+#  - local: .gitlab/ci/amd.gitlab-ci.yml
+
+test-papi-job:
+  script:
+    - echo "Test amd_smi" component
+  image: rocm/dev-ubuntu-24.04:7.2.4-complete
+  tags:
+    - amd-mi210
