@@ -19,8 +19,8 @@ devices accessed by the component has to be enabled by exporting appropriate
 environment variables at configure time (see [Supported Environment Variables](#supported-environment-variables)). This is required so that the component
 can dlopen the needed libraries and access hardware information.
 
-Typically, the utility `papi_components_avail` (available in
-`papi/src/utils/papi_components_avail`) will display the components available
+Typically, the utility `papi_component_avail` (available in
+`papi/src/utils/papi_component_avail`) will display the components available
 to the user, and whether they are disabled, and when they are disabled why.
 
 To verify the `sysdetect` component is functioning, the PAPI utility 
