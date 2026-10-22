@@ -3388,7 +3388,10 @@ static int init_event_table(void) {
                             access_amdsmi_gpu_metrics) != PAPI_OK)
                 return PAPI_ENOMEM;
             }
+          }
 
+          for (uint32_t xcc = 0; xcc < AMDSMI_MAX_NUM_XCC; ++xcc) {
+            uint32_t subvariant = (xcp << 16) | xcc;
             if (metrics.xcp_stats[xcp].gfx_busy_acc[xcc] != UINT64_MAX) {
               CHECK_EVENT_IDX(idx);
               CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xcp_gfx_busy_acc_xcp=%u_xcc=%u:device=%d", xcp, xcc, d);
@@ -3397,7 +3400,10 @@ static int init_event_table(void) {
                             access_amdsmi_gpu_metrics) != PAPI_OK)
                 return PAPI_ENOMEM;
             }
+          }
 
+          for (uint32_t xcc = 0; xcc < AMDSMI_MAX_NUM_XCC; ++xcc) {
+            uint32_t subvariant = (xcp << 16) | xcc;
             if (metrics.xcp_stats[xcp].gfx_below_host_limit_acc[xcc] != UINT64_MAX) {
               CHECK_EVENT_IDX(idx);
               CHECK_SNPRINTF(doNotAllowTruncation, name_buf, sizeof(name_buf), "xcp_gfx_below_host_limit_acc_xcp=%u_xcc=%u:device=%d", xcp, xcc, d);
