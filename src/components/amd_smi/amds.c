@@ -2996,7 +2996,6 @@ static int init_event_table(void) {
       memset(&metrics, 0, sizeof(metrics));
       if (amdsmi_get_gpu_metrics_info_p(device_handles[d], &metrics) == AMDSMI_STATUS_SUCCESS) {
         uint32_t gpu_metrics_xgmi_links = AMDSMI_MAX_NUM_XGMI_LINKS;
-        uint32_t xcp_count = 0;
 
         if (metrics.throttle_status != UINT32_MAX) {
           CHECK_EVENT_IDX(idx);
@@ -3176,9 +3175,6 @@ static int init_event_table(void) {
           if (add_event(&idx, name_buf, descr_buf, d, 19, 0, PAPI_MODE_READ,
                         access_amdsmi_gpu_metrics) != PAPI_OK)
             return PAPI_ENOMEM;
-          xcp_count = metrics.num_partition;
-          if (xcp_count > AMDSMI_MAX_NUM_XCP)
-            xcp_count = AMDSMI_MAX_NUM_XCP;
         }
 
         if (metrics.temperature_vrgfx != UINT16_MAX) {
@@ -3381,7 +3377,7 @@ static int init_event_table(void) {
             return PAPI_ENOMEM;
         }
 
-        for (uint32_t xcp = 0; xcp < xcp_count; ++xcp) {
+        for (uint32_t xcp = 0; xcp < AMDSMI_MAX_NUM_XCP; ++xcp) {
           for (uint32_t xcc = 0; xcc < AMDSMI_MAX_NUM_XCC; ++xcc) {
             uint32_t subvariant = (xcp << 16) | xcc;
             if (metrics.xcp_stats[xcp].gfx_busy_inst[xcc] != UINT32_MAX) {
