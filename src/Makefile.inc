@@ -74,7 +74,8 @@ $(SHLIB): $(HEADERS) $(SOURCES) $(SHLIBOBJS)
 libsde:
 ifeq ($(BUILD_LIBSDE_SHARED),yes)
 		$(MAKE) CC=$(CC) -C sde_lib dynamic
-		ln -sf sde_lib/libsde.so.1.0 libsde.so
+		ln -sf sde_lib/libsde.so.1.0 libsde.so.1; \
+		ln -sf libsde.so.1 libsde.so
 endif
 ifeq ($(BUILD_LIBSDE_STATIC),yes)
 		$(MAKE) CC=$(CC) -C sde_lib static
@@ -293,7 +294,7 @@ clobber distclean: clean native_clobber
 	$(MAKE) -C utils distclean
 	$(MAKE) -C validation_tests distclean
 	$(MAKE) -C components -f Makefile_comp_tests distclean
-	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so sde_lib/libsde.so* sde_lib/libsde.a libsde.so libsde.a papi.pc components_config.h papi_components_config_event_defs.h $(PAPI_EVENTS_TABLE)
+	rm -f $(LIBRARY) $(SHLIB) $(EXTRALIBS) Makefile config.h libpapi.so sde_lib/libsde.so* sde_lib/libsde.a libsde.so* libsde.a papi.pc components_config.h papi_components_config_event_defs.h $(PAPI_EVENTS_TABLE)
 	$(if ${COMPONENTS}, \
 		set -ex; for comp in ${COMPONENTS}; do \
 		    rm -f papi_$${comp}_std_event_defs.h; \
@@ -354,7 +355,7 @@ install-lib: native_install
         chmod go+r $(DESTDIR)$(LIBDIR)/libsde.so.1.0; \
 		cd $(DESTDIR)$(LIBDIR); \
 		ln -sf libsde.so.1.0 libsde.so.1; \
-		ln -sf libsde.so.1.0 libsde.so; \
+		ln -sf libsde.so.1 libsde.so; \
 	fi
 	@set -ex; if test -r libsde.a ; then \
 		cp sde_lib/libsde.a $(DESTDIR)$(LIBDIR); \
