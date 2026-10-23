@@ -24,10 +24,10 @@ int execute_stores(long long n) {
 
 	return 0;
 
-#endif
+#else
 	(void) n;
 	return CODE_UNIMPLEMENTED;
-
+#endif
 }
 
 /* Execute n loads */
@@ -54,9 +54,8 @@ int execute_loads(long long n) {
 	);
 
 	return 0;
-
-#endif
+#else
 	(void) n;
 	return CODE_UNIMPLEMENTED;
-
+#endif
 }

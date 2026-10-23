@@ -162,7 +162,6 @@ _papi_malloc( const char *file, int line, size_t size )
 				mem_ptr->ptr, ( unsigned long ) size, file, line );
 		return ( ptr );
 	}
-	return ( NULL );
 }
 
 char *
@@ -428,8 +427,8 @@ set_epilog( pmem_t * mem_ptr )
 	return ( _papi_mem_check_all_overflow(  ) );
 #else
 	( void ) mem_ptr;		 /*unused */
-#endif
 	return ( 0 );
+#endif
 }
 
 /* Check for memory buffer overflows */
