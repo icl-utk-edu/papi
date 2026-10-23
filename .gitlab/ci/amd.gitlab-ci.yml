@@ -1,0 +1,15 @@
+amd-smi-component-job:
+  extends:
+    - .amd-test-systems
+    - .install-papi
+  variables:
+    PAPI_ENV_ROOT: "PAPI_AMDSMI_ROOT=/opt/rocm/core-7.14"
+    PAPI_COMPONENTS: "amd_smi"
+
+rocp-sdk-component-job:
+  extends:
+    - .amd-test-systems
+    - .install-papi
+  variables:
+    PAPI_ENV_ROOT: "PAPI_ROCP_SDK_ROOT=/opt/rocm/core-7.14"
+    PAPI_COMPONENTS: "rocp_sdk"
