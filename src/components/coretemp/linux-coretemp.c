@@ -80,10 +80,22 @@ insert_in_list(char *name, char *units,
 
     last = temp;
 
-    snprintf(temp->name, PAPI_MAX_STR_LEN, "%s", name);
-    snprintf(temp->units, PAPI_MIN_STR_LEN, "%s", units);
-    snprintf(temp->description, PAPI_MAX_STR_LEN, "%s", description);
-    snprintf(temp->path, PATH_MAX, "%s", filename);
+    int expect = snprintf(temp->name, PAPI_MAX_STR_LEN, "%s", name);
+    if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+        HANDLE_STRING_ERROR;
+    }
+    expect = snprintf(temp->units, PAPI_MIN_STR_LEN, "%s", units);
+    if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+        HANDLE_STRING_ERROR;
+    }
+    expect = snprintf(temp->description, PAPI_MAX_STR_LEN, "%s", description);
+    if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+        HANDLE_STRING_ERROR;
+    }
+    expect = snprintf(temp->path, PATH_MAX, "%s", filename);
+    if (expect < 0 || expect >= PATH_MAX) {
+        HANDLE_STRING_ERROR;
+    }
 
     return PAPI_OK;
 }
@@ -153,7 +165,10 @@ generateEventList(char *base_dir)
         }
 	    fff=fopen(filename,"r");
 	    if (fff==NULL) {
-	       snprintf(modulename, PAPI_MIN_STR_LEN, "Unknown");
+	       retlen = snprintf(modulename, PAPI_MIN_STR_LEN, "Unknown");
+	       if (retlen < 0 || retlen >= PAPI_MIN_STR_LEN) {
+	           HANDLE_STRING_ERROR;
+	       }
 	    } else {
 	       if (fgets(modulename,PAPI_MIN_STR_LEN,fff)!=NULL) {
 	          modulename[strlen(modulename)-1]='\0';
@@ -212,7 +227,10 @@ generateEventList(char *base_dir)
                  goto done_error;
 	     }
 
-	     snprintf(units, PAPI_MIN_STR_LEN, "V");
+	     retlen = snprintf(units, PAPI_MIN_STR_LEN, "V");
+         if (retlen < 0 || PAPI_MIN_STR_LEN <= retlen) {
+             HANDLE_STRING_ERROR;
+         }
 	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
@@ -274,7 +292,10 @@ generateEventList(char *base_dir)
                  goto done_error;
 	     }
 
-	     snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
+	     retlen = snprintf(units, PAPI_MIN_STR_LEN, "degrees C");
+         if (retlen < 0 || PAPI_MIN_STR_LEN <= retlen) {
+             HANDLE_STRING_ERROR;
+         }
 	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
@@ -335,7 +356,10 @@ generateEventList(char *base_dir)
                  goto done_error;
 	     }
 
-	     snprintf(units, PAPI_MIN_STR_LEN, "RPM");
+	     retlen = snprintf(units, PAPI_MIN_STR_LEN, "RPM");
+         if (retlen < 0 || PAPI_MIN_STR_LEN <= retlen) {
+             HANDLE_STRING_ERROR;
+         }
 	     retlen = snprintf(description, PAPI_MAX_STR_LEN, "%s, %s module, label %s",
 		      units,modulename,
 		      location);
@@ -456,7 +480,7 @@ _coretemp_init_component( int cidx )
      if (_coretemp_native_events == NULL) {
           int strErr=snprintf(_coretemp_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() of _coretemp_native_events failed for %lu bytes.", num_events*sizeof(CORETEMP_native_event_entry_t));
           _coretemp_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-          if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+          if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
           retval = PAPI_ENOMEM;
           goto fn_fail;
      }

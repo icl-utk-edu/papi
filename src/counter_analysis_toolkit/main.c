@@ -1125,7 +1125,7 @@ int parseArgs(int argc, char **argv, cat_params_t *params){
     }
 
     len = snprintf( params->outputdir, 2+dirlen, "%s/", tmp);
-    if( len < 1+dirlen )
+    if( len < 0 || len >= 2+dirlen )
     {
         fprintf(stderr, "Problem with output directory name.\n");
         return -1;

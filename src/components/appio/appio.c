@@ -439,7 +439,7 @@ _appio_init_component( int cidx  )
       PAPIERROR( "malloc():Could not get memory for events table" );
       strErr=snprintf(_appio_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "malloc() failed in %s for %lu bytes.", __func__, APPIO_MAX_COUNTERS*sizeof(APPIO_native_event_entry_t));
       _appio_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-      if (strErr>PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+      if (strErr<0 || strErr>=PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
     }

@@ -132,6 +132,7 @@ amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_ha
   } \
 } while (0)
 
+#ifdef AMDS_TMP_DISABLE
 // Temporarily redirects stderr to /dev/null; returns dup of original fd (or -1 on failure)
 static int silence_stderr_begin(void) {
   int devnull = open("/dev/null", O_WRONLY);
@@ -154,6 +155,8 @@ static void silence_stderr_end(int saved_fd) {
     close(saved_fd);
   }
 }
+#endif
+
 // Simple open/close/start/stop functions (no special handling needed for most events)
 static int open_simple(native_event_t *event) {
   (void)event;
@@ -239,6 +242,7 @@ static int access_amdsmi_gpu_counter(int mode, void *arg) {
   return PAPI_OK;
 }
 
+#ifdef AMDS_TMP_DISABLE
 // Replace any non-alphanumeric characters with '_' to build safe event names
 static void sanitize_name(const char *src, char *dst, size_t len) {
   if (len == 0) return;
@@ -254,6 +258,7 @@ static void sanitize_name(const char *src, char *dst, size_t len) {
   }
   dst[j] = '\0';
 }
+#endif
 
 static int strip_device_qualifier(const char *name, char *base, size_t len) {
   if (!name || !base || len == 0) {
@@ -1424,7 +1429,7 @@ static int init_event_table(void) {
       }
     }
 
-#if 0  // Temporarily disable PM metrics events due to AMD SMI memory issues
+#ifdef AMDS_TMP_DISABLE  // Temporarily disable PM metrics events due to AMD SMI memory issues
     // GPU PM metrics count event (available in lib version 25+)
     if (amdsmi_lib_major >= 25 && amdsmi_get_gpu_pm_metrics_info_p) {
       amdsmi_name_value_t *metrics = NULL;
@@ -1911,7 +1916,7 @@ static int init_event_table(void) {
           return PAPI_ENOMEM;
       }
     }
-#if 0  // Temporarily disable register-table metrics due to AMD SMI memory issues
+#ifdef AMDS_TMP_DISABLE  // Temporarily disable register-table metrics due to AMD SMI memory issues
     // GPU register table metrics count events (available in lib version 25+)
     if (amdsmi_lib_major >= 25 && amdsmi_lib_major < 26 &&
         amdsmi_get_gpu_reg_table_info_p) {

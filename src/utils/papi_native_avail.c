@@ -474,7 +474,7 @@ main( int argc, char **argv )
         if( NULL == cmd ) goto no_sdes;
 
         int l = snprintf(cmd, len, "ldd %s",flags.path);
-        if(l<len-1){
+        if(l<0 || l>=len){
             free(cmd);
             goto no_sdes;
         }

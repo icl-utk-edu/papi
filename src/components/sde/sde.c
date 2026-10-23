@@ -28,7 +28,7 @@ int  (*papi_sde_set_timer_for_overflow_ptr)(void) = &papi_sde_set_timer_for_over
                 PAPI_MAX_STR_LEN,                                      \
                 "Function '%s' not found in any dynamic lib",          \
                 #name);                                                \
-            if (strErr > PAPI_MAX_STR_LEN)                             \
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN)              \
                 SUBDBG("Unexpected snprintf error.\n");                \
             name##_ptr = NULL;                                         \
             SUBDBG("sde_load_sde_ti(): Unable to load symbol %s: %s\n", #name, err);\
@@ -128,7 +128,7 @@ _sde_init_component( int cidx )
         _sde_vector.cmp_info.disabled = ret_val;
         int expect = snprintf(_sde_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "libsde API not found. No SDEs exist in this executable.");
-        if (expect > PAPI_MAX_STR_LEN) {
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
     }

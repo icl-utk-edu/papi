@@ -261,12 +261,16 @@ static int parse_test_override(int *argc, char **argv) {
         g_run_config.test_mode = true;
         g_run_config.use_rocblas = request_rocblas;
         g_run_config.device_index = 0;
-        snprintf(g_run_config.csv_path, sizeof(g_run_config.csv_path),
+        int formatted_len = snprintf(g_run_config.csv_path, sizeof(g_run_config.csv_path),
                  "amdsmi_gemm_%ld_%ld_%ld%s.csv",
                  g_run_config.m_dim,
                  g_run_config.k_dim,
                  g_run_config.n_dim,
                  g_run_config.use_rocblas ? "_rocblas" : "");
+        if (formatted_len < 0 || (size_t)formatted_len >= sizeof(g_run_config.csv_path)) {
+            fprintf(stderr, "Failed to format output CSV path/filename.\n");
+            return -1;
+        }
 
         int args_to_remove = 4;
         if (i + 4 < *argc) {

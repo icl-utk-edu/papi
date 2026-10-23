@@ -170,7 +170,10 @@ int sdei_setup_counter_internals( papi_handle_t handle, const char *event_name, 
 
     size_t str_len = strlen(lib_handle->libraryName)+strlen(event_name)+2+1; // +2 for "::" and +1 for '\0'
     full_event_name = (char *)malloc(str_len*sizeof(char));
-    snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    int expect = snprintf(full_event_name, str_len, "%s::%s", lib_handle->libraryName, event_name);
+    if (expect < 0 || (size_t)expect >= str_len) {
+        SDEDBG("Failed to write event name.");
+    }
 
     SDEDBG("%s: Counter: '%s' will be added in library: %s.\n", __FILE__, full_event_name, lib_handle->libraryName);
 

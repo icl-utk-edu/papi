@@ -268,7 +268,7 @@ _sensors_ppc_init_component( int cidx )
         strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
           "%s:%i Could not open events_dir='%s'.", __FILE__, __LINE__, events_dir);
         _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         retval = PAPI_ENOSUPP;
         goto fn_fail;
     }
@@ -279,7 +279,7 @@ _sensors_ppc_init_component( int cidx )
         strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
           "%s:%i Could not access event_path='%s'.", __FILE__, __LINE__, event_path);
         _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         retval = PAPI_ENOSUPP;
         goto fn_fail;
     }
@@ -289,7 +289,7 @@ _sensors_ppc_init_component( int cidx )
         strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
           "%s:%i Could not open event_path='%s'.", __FILE__, __LINE__, event_path);
         _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-        if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+        if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
         retval = PAPI_ENOSUPP;
         goto fn_fail;
     }
@@ -302,7 +302,7 @@ _sensors_ppc_init_component( int cidx )
             strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "%s:%i Failed to alloc %i bytes for buf.", __FILE__, __LINE__, OCC_SENSOR_DATA_BLOCK_SIZE);
             _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             retval = PAPI_ENOMEM;
             goto fn_fail;
         }
@@ -344,7 +344,7 @@ _sensors_ppc_init_component( int cidx )
             strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "%s:%i Failed to alloc %i bytes for ping[%i].", __FILE__, __LINE__, buff_size, s);
             _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             retval = PAPI_ENOMEM;
             goto fn_fail;
         }
@@ -354,7 +354,7 @@ _sensors_ppc_init_component( int cidx )
             strErr=snprintf(_sensors_ppc_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
             "%s:%i Failed to alloc %i bytes for double_ping[%i].", __FILE__, __LINE__, buff_size, s);
             _sensors_ppc_vector.cmp_info.disabled_reason[PAPI_MAX_STR_LEN-1]=0;
-            if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+            if (strErr < 0 || strErr >= PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
             retval = PAPI_ENOMEM;
             goto fn_fail;
         }

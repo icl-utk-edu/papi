@@ -368,7 +368,10 @@ _solaris_update_shlib_info( papi_mdi_t *mdi )
 #endif
 			cur = &( pam[++position] );
 			strncpy( lastobject, mapping.pr_mapname, PRMAPSZ );
-			snprintf( link, PAPI_HUGE_STR_LEN, resolve_pattern, lastobject );
+			int expect = snprintf( link, PAPI_HUGE_STR_LEN, resolve_pattern, lastobject );
+            if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+                SUBDBG("Failed to write link string.");
+            }
 			memset( path, 0, PAPI_HUGE_STR_LEN );
 			readlink( link, path, PAPI_HUGE_STR_LEN );
 			strncpy( cur->name, path, PAPI_HUGE_STR_LEN );

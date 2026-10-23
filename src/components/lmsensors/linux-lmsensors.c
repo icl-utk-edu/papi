@@ -381,7 +381,10 @@ link_lmsensors_libraries ()
    if (strlen(lmsensors_main) > 0) {                                  // If override given, it has to work.
       dl1 = dlopen(lmsensors_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
       if (dl1 == NULL) {
-         snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LMSENSORS_MAIN override '%s' given in Rules.lmsensors not found.", lmsensors_main);
+         int expect = snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "PAPI_LMSENSORS_MAIN override '%s' given in Rules.lmsensors not found.", lmsensors_main);
+         if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+             SUBDBG("Failed to write disabled reason.");
+         }
          return(PAPI_ENOSUPP);   // Override given but not found.
       }
    }
@@ -393,19 +396,28 @@ link_lmsensors_libraries ()
 
    // Step 3: Try the explicit install default. 
    if (dl1 == NULL && lmsensors_root != NULL) {                          // if root given, try it.
-      snprintf(path_name, PATH_MAX, "%s/lib64/libsensors.so", lmsensors_root);   // PAPI Root check.
+      int expect = snprintf(path_name, PATH_MAX, "%s/lib64/libsensors.so", lmsensors_root);   // PAPI Root check.
+      if (expect < 0 || expect >= PATH_MAX) {
+          SUBDBG("Failed to write path string.");
+      }
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
    // Step 4: Try another explicit install default.
    if (dl1 == NULL && lmsensors_root != NULL) {                          // if root given, try it.
-      snprintf(path_name, PATH_MAX, "%s/lib/libsensors.so", lmsensors_root);   // PAPI Root check.
+      int expect = snprintf(path_name, PATH_MAX, "%s/lib/libsensors.so", lmsensors_root);   // PAPI Root check.
+      if (expect < 0 || expect >= PATH_MAX) {
+          SUBDBG("Failed to write path string.");
+      }
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
    // Check for failure.
    if (dl1 == NULL) {
-      snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found.");
+      int expect = snprintf(_lmsensors_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "libsensors.so not found.");
+      if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+          SUBDBG("Failed to write disabled reason.");
+      }
       return(PAPI_ENOSUPP);
    }
 

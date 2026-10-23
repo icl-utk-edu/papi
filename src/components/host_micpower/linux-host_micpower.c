@@ -125,16 +125,22 @@ loadFunctionPtrs()
 	scif_access = dlopen("libscif.so", RTLD_NOW | RTLD_GLOBAL);
     if (NULL == scif_access)
     {
-        snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading the SCIF library: %s\n", dlerror());
+        int expect = snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading the SCIF library: %s\n", dlerror());
 			_host_micpower_vector.cmp_info.disabled = 1;
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         return ( PAPI_ENOSUPP );
     }
 
     mic_access = dlopen("libMicAccessSDK.so", RTLD_NOW | RTLD_GLOBAL);
     if (NULL == mic_access)
     {
-        snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading libMicAccessSDK.so: %s\n", dlerror());
+        int expect = snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Problem loading libMicAccessSDK.so: %s\n", dlerror());
 			_host_micpower_vector.cmp_info.disabled = 1;
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         return ( PAPI_ENOSUPP );
     }
 
@@ -210,14 +216,20 @@ _host_micpower_init_component( int cidx )
 	memset( cached_values, 0x0, sizeof(struct powers)*MAX_DEVICES );
 	ret = MicInitAPIPtr( &accessHandle, eTARGET_SCIF_DRIVER, adapters, &nAdapters );
 	if ( MIC_ACCESS_API_SUCCESS != ret ) {
-		snprintf( _host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to init: %s", MicGetErrorStringPtr(ret));
+		int expect = snprintf( _host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Failed to init: %s", MicGetErrorStringPtr(ret));
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
 		MicCloseAPIPtr(&accessHandle);
         retval = PAPI_ENOSUPP;
 		goto fn_fail;
 	}
 	/* Sanity check on array size */
 	if ( nAdapters >= MAX_DEVICES ) {
-		snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Too many MIC cards [%d] found, bailing.", nAdapters);
+		int expect = snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "Too many MIC cards [%d] found, bailing.", nAdapters);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
 		MicCloseAPIPtr(&accessHandle);
         retval = PAPI_ENOSUPP;
 		goto fn_fail;
@@ -234,8 +246,11 @@ _host_micpower_init_component( int cidx )
 					for (adapterNum=0; adapterNum < nAdapters; adapterNum++)
 							MicCloseAdapterPtr( handles[adapterNum] );
 					MicCloseAPIPtr( &accessHandle );
-					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+					int expect = snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
+                    if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                        SUBDBG("Failed to write disabled reason.");
+                    }
                     retval = PAPI_ENOSUPP;
 					goto fn_fail;
 			}
@@ -246,8 +261,11 @@ _host_micpower_init_component( int cidx )
 					for (adapterNum=0; adapterNum < nAdapters; adapterNum++)
 							MicCloseAdapterPtr( handles[adapterNum] );
 					MicCloseAPIPtr( &accessHandle );
-					snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
+					int expect = snprintf(_host_micpower_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 						"Failed to initialize card %d's interface.", nAdapters);
+                    if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+                        SUBDBG("Failed to write disabled reason.");
+                    }
                     retval = PAPI_ENOSUPP;
 					goto fn_fail;
 			}
@@ -259,55 +277,145 @@ _host_micpower_init_component( int cidx )
         goto fn_fail;
 	}
 	for (adapterNum=0; adapterNum < nAdapters; adapterNum++) {
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].name, PAPI_MAX_STR_LEN, "mic%d:tot0", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 0 (uWatts)");
+        int expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].name, PAPI_MAX_STR_LEN, "mic%d:tot0", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 0 (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE].resources.selector = adapterNum*EVENTS_PER_DEVICE + 1;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].name, PAPI_MAX_STR_LEN, "mic%d:tot1", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 1 (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].name, PAPI_MAX_STR_LEN, "mic%d:tot1", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].description, PAPI_MAX_STR_LEN, "Total power utilization, Averaged over Time Window 1 (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].resources.selector = adapterNum*EVENTS_PER_DEVICE + 2;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 1].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].name, PAPI_MAX_STR_LEN, "mic%d:pcie", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].description, PAPI_MAX_STR_LEN, "PCI-E connector power (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].name, PAPI_MAX_STR_LEN, "mic%d:pcie", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].description, PAPI_MAX_STR_LEN, "PCI-E connector power (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].resources.selector = adapterNum*EVENTS_PER_DEVICE + 3;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 2].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].name, PAPI_MAX_STR_LEN, "mic%d:inst", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].description, PAPI_MAX_STR_LEN, "Instantaneous power (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].name, PAPI_MAX_STR_LEN, "mic%d:inst", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].description, PAPI_MAX_STR_LEN, "Instantaneous power (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].resources.selector = adapterNum*EVENTS_PER_DEVICE + 4;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 3].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].name, PAPI_MAX_STR_LEN, "mic%d:imax", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].description, PAPI_MAX_STR_LEN, "Max instantaneous power (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].name, PAPI_MAX_STR_LEN, "mic%d:imax", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].description, PAPI_MAX_STR_LEN, "Max instantaneous power (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].resources.selector = adapterNum*EVENTS_PER_DEVICE + 5;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 4].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].name, PAPI_MAX_STR_LEN, "mic%d:c2x3", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].description, PAPI_MAX_STR_LEN, "2x3 connector power (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].name, PAPI_MAX_STR_LEN, "mic%d:c2x3", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].description, PAPI_MAX_STR_LEN, "2x3 connector power (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].resources.selector = adapterNum*EVENTS_PER_DEVICE + 6;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 5].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].name, PAPI_MAX_STR_LEN, "mic%d:c2x4", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].description, PAPI_MAX_STR_LEN, "2x4 connector power (uWatts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].name, PAPI_MAX_STR_LEN, "mic%d:c2x4", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].description, PAPI_MAX_STR_LEN, "2x4 connector power (uWatts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].resources.selector = adapterNum*EVENTS_PER_DEVICE + 7;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].units, PAPI_MIN_STR_LEN, "uW");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 6].units, PAPI_MIN_STR_LEN, "uW");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].name, PAPI_MAX_STR_LEN, "mic%d:vccp", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].description, PAPI_MAX_STR_LEN, "Core rail (uVolts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].name, PAPI_MAX_STR_LEN, "mic%d:vccp", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].description, PAPI_MAX_STR_LEN, "Core rail (uVolts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].resources.selector = adapterNum*EVENTS_PER_DEVICE + 8;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].units, PAPI_MIN_STR_LEN, "uV");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 7].units, PAPI_MIN_STR_LEN, "uV");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].name, PAPI_MAX_STR_LEN, "mic%d:vddg", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].description, PAPI_MAX_STR_LEN, "Uncore rail (uVolts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].name, PAPI_MAX_STR_LEN, "mic%d:vddg", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].description, PAPI_MAX_STR_LEN, "Uncore rail (uVolts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].resources.selector = adapterNum*EVENTS_PER_DEVICE + 9;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].units, PAPI_MIN_STR_LEN, "uV");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 8].units, PAPI_MIN_STR_LEN, "uV");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].name, PAPI_MAX_STR_LEN, "mic%d:vddq", adapterNum);
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].description, PAPI_MAX_STR_LEN, "Memory subsystem rail (uVolts)");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].name, PAPI_MAX_STR_LEN, "mic%d:vddq", adapterNum);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+        }
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].description, PAPI_MAX_STR_LEN, "Memory subsystem rail (uVolts)");
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write event description.");
+        }
 		native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].resources.selector = adapterNum*EVENTS_PER_DEVICE + 10;
-        snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].units, PAPI_MIN_STR_LEN, "uV");
+        expect = snprintf(native_events_table[adapterNum*EVENTS_PER_DEVICE + 9].units, PAPI_MIN_STR_LEN, "uV");
+        if (expect < 0 || expect >= PAPI_MIN_STR_LEN) {
+            SUBDBG("Failed to write event units.");
+        }
 	}
 
   fn_exit:
