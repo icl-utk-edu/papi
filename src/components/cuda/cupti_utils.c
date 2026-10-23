@@ -52,36 +52,6 @@ void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table)
     *pevt_table = NULL;
 }
 
-int cuptiu_files_search_in_path(const char *file_name, const char *search_path, char **file_paths)
-{
-    char path[PATH_MAX];
-    char command[PATH_MAX];
-    snprintf(command, PATH_MAX, "find %s -name %s", search_path, file_name);
-
-    FILE *fp;
-    fp = popen(command, "r");
-    if (fp == NULL) {
-        ERRDBG("Failed to run system command find using popen.\n");
-        return -1;
-    }
-
-    int count = 0;
-    while (fgets(path, PATH_MAX, fp) != NULL) {
-        path[strcspn(path, "\n")] = 0;
-        file_paths[count] = strdup(path);
-        count++;
-        if (count >= CUPTIU_MAX_FILES) {
-            break;
-        }
-    }
-
-    pclose(fp);
-    if (count == 0) {
-        ERRDBG("%s not found in path PAPI_CUDA_ROOT.\n", file_name);
-    }
-    return count;
-}
-
 // Initialize the stat Stringvector
 void init_vector(StringVector *vec) {
     vec->arrayMetricStatistics = NULL;

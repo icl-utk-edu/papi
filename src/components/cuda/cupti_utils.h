@@ -59,8 +59,4 @@ void free_vector(StringVector *vec);
 int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
 void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
 
-/* Utility to locate a file in a given path */
-#define CUPTIU_MAX_FILES 100
-int cuptiu_files_search_in_path(const char *file_name, const char *search_path, char **file_paths);
-
 #endif  /* __CUPTI_UTILS_H__ */
