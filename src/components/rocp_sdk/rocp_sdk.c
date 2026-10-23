@@ -143,7 +143,10 @@ rocp_sdk_init_component(int cid)
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        int expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         return papi_errno;
     }
 
@@ -215,7 +218,10 @@ rocp_sdk_init_private(void)
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        int expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         goto fn_fail;
     }
 
