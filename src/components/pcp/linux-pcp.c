@@ -184,7 +184,6 @@ papi_vector_t _pcp_vector;                         // What we expose to PAPI, ro
 
 // -------------------------- GLOBAL SECTION ---------------------------------
 
-       int  _papi_hwi_debug = DEBUG_SUBSTRATE;                          // Bit flags to enable xxxDBG; SUBDBG for Substrate. Overrides weak global in papi.c.
 static int  sEventInfoSize=0;                                           // total size of pcp_event_info.
 static int  sEventInfoBlock = ((8*1024) / sizeof(_pcp_event_info_t));   // add about 8K at a time.
 static      _pcp_event_info_t * pcp_event_info = NULL;                  // our array of created pcp events.
@@ -425,7 +424,7 @@ static int _local_linkDynamicLibraries(void)
        return PAPI_ENOSUPP;               // EXIT not supported.
    }
 
-   char path_name[1024];
+   char path_name[PATH_MAX];
    char *pcp_root = getenv("PAPI_PCP_ROOT"); 
    
    dl1 = NULL;
@@ -446,10 +445,11 @@ static int _local_linkDynamicLibraries(void)
    }
 
    // Step 3: Try the explicit install default. 
+   size_t pathSize = sizeof(path_name);
    if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
-      int strErr=snprintf(path_name, 1024, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
-      path_name[1024-1]=0;
-      if (strErr > PAPI_MAX_STR_LEN) HANDLE_STRING_ERROR;
+      int strErr=snprintf(path_name, pathSize, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
+      path_name[pathSize-1]=0;
+      if ((size_t)strErr > pathSize) HANDLE_STRING_ERROR;
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
