@@ -18,7 +18,7 @@ typedef struct _MPX_EventSet {
   /** Pointer to this thread's structure */
   struct _threadlist *mythr;
   /** Pointers to this EventSet's MPX entries in the master list for this thread */
-  struct _masterevent *(mev[PAPI_MAX_SW_MPX_EVENTS]);
+  struct _masterevent *mev[PAPI_MAX_SW_MPX_EVENTS];
   /** Number of entries in above list */
   int num_events;
   /** Not sure... */
