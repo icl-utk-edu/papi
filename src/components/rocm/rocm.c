@@ -141,7 +141,7 @@ rocm_init_component(int cid)
         rocd_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
         goto fn_fail;
@@ -210,7 +210,7 @@ rocm_init_private(void)
         rocd_err_get_last(&err_string);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
                               PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
+        if (expect < 0 || expect >= PAPI_MAX_STR_LEN) {
             SUBDBG("disabled_reason truncated");
         }
 
