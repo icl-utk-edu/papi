@@ -56,7 +56,7 @@ int push_back(StringVector *vec, const char *str);
 void free_vector(StringVector *vec);
 
 /* These functions form a simple API to handle dynamic list of strings */
-int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table);
+int cuptiu_event_table_create_init_capacity(int capacity, cuptiu_event_table_t **pevt_table);
 void cuptiu_event_table_destroy(cuptiu_event_table_t **pevt_table);
 
 #endif  /* __CUPTI_UTILS_H__ */

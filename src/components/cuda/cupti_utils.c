@@ -14,7 +14,7 @@
 
 #define ADDED_EVENTS_INITIAL_CAPACITY 64
 
-int cuptiu_event_table_create_init_capacity(int capacity, int sizeof_rec, cuptiu_event_table_t **pevt_table)
+int cuptiu_event_table_create_init_capacity(int capacity, cuptiu_event_table_t **pevt_table)
 {
     cuptiu_event_table_t *evt_table = (cuptiu_event_table_t *) malloc(sizeof(cuptiu_event_table_t));
     if (evt_table == NULL) {
