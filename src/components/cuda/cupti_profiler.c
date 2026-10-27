@@ -475,7 +475,15 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
     getCounterAvailabilityParams.pPriv = NULL;
     getCounterAvailabilityParams.ctx = NULL; // If NULL, the current CUcontext is used
     getCounterAvailabilityParams.pCounterAvailabilityImage = NULL;
-    cuptiCheckErrors( cuptiProfilerGetCounterAvailabilityPtr(&getCounterAvailabilityParams), return PAPI_EMISC );
+    CUptiResult result = cuptiProfilerGetCounterAvailabilityPtr(&getCounterAvailabilityParams);
+    if (result != CUPTI_SUCCESS) {
+        if (result == CUPTI_ERROR_HARDWARE_BUSY) {
+            SUBDBG("Performance monitoring hardware is in use by other client. Often due to multiple threads/processes"
+                   " attempting to profile the same device/context.\n");
+            return PAPI_ECNFLCT;
+        }
+        return PAPI_ESYS;
+    }
 
     // Allocate the necessary memory for data
     gpu_ctl->counterAvailabilityImage.size = getCounterAvailabilityParams.counterAvailabilityImageSize;
@@ -486,7 +494,15 @@ static int get_counter_availability(cuptip_gpu_state_t *gpu_ctl)
     }
 
     getCounterAvailabilityParams.pCounterAvailabilityImage = gpu_ctl->counterAvailabilityImage.data;
-    cuptiCheckErrors( cuptiProfilerGetCounterAvailabilityPtr(&getCounterAvailabilityParams), return PAPI_EMISC );
+    result = cuptiProfilerGetCounterAvailabilityPtr(&getCounterAvailabilityParams);
+    if (result != CUPTI_SUCCESS) {
+        if (result == CUPTI_ERROR_HARDWARE_BUSY) {
+            SUBDBG("Performance monitoring hardware is in use by other client. Often due to multiple threads/processes"
+                   " attempting to profile the same device/context.\n");
+            return PAPI_ECNFLCT;
+        }
+        return PAPI_ESYS;
+    }
 
     return PAPI_OK;
 }
@@ -847,11 +863,6 @@ int cuptip_ctx_start(cuptip_control_t state)
         }
 
         LOGDBG("Device num %d: event_count %d, rmr count %d\n", dev_id, gpu_ctl->added_events->count, gpu_ctl->numberOfRawMetricRequests);
-        papi_errno = cuptic_device_acquire(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
-        if (papi_errno != PAPI_OK) {
-            ERRDBG("Profiling same gpu from multiple event sets not allowed.\n");
-            return papi_errno;
-        }
         // Get the cuda context
         papi_errno = cuptic_ctxarr_get_ctx(state->info, dev_id, &ctx);
         // Bind the specified CUDA context to the calling CPU thread
@@ -860,7 +871,6 @@ int cuptip_ctx_start(cuptip_control_t state)
         // Query/filter cuda native events available on host
         papi_errno = get_counter_availability(gpu_ctl);
         if (papi_errno != PAPI_OK) {
-            ERRDBG("Error getting counter availability image.\n");
             return papi_errno;
         }
 
@@ -1172,11 +1182,6 @@ int cuptip_ctx_stop(cuptip_control_t state)
         papi_errno = end_profiling_session();
         if (papi_errno != PAPI_OK) {
             SUBDBG("Failed to end profiling session.\n");
-            return papi_errno;
-        }
-
-        papi_errno = cuptic_device_release(state->gpu_ctl[dev_id].added_events, API_PERFWORKS);
-        if (papi_errno != PAPI_OK) {
             return papi_errno;
         }
 
