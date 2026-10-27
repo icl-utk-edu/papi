@@ -914,7 +914,20 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
         if( qual_name.compare("device") == 0 ){
             // We use the most significant bit to designate the presence of the "device" qualifier.
             qualifiers_present |= (1 << base_event_info.dim_info.size());
-            device_qualifier_value = qual_val;
+
+            int valid_device_id = 0;
+            for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
+                if( qual_val == g_it->second->logical_node_type_id ) {
+                    valid_device_id = 1;
+                }
+            }
+
+            // Ensure that device qualifier value corresponds to a real device.
+            if( valid_device_id ) {
+                device_qualifier_value = qual_val;
+            } else {
+                return PAPI_ENOEVNT;
+            }
         }else{
             int qual_i = 0;
             // Make sure that the qualifier name corresponds to one of the known dimensions of this event.
