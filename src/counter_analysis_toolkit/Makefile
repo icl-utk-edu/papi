@@ -1,8 +1,8 @@
 PAPIDIR?=${PAPI_DIR}
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
-INCFLAGS=-I$(PAPIDIR)/include
-CFLAGS+=-g -Wall -Wextra
+INCFLAGS=-I$(PAPIDIR)/include -I${PWD}/..
+CFLAGS+=-g -Wall -Wextra -Wpedantic
 OPT0=-O0
 OPT1=-O1
 OPT2=-O2

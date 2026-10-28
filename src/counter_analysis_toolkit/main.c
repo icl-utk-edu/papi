@@ -555,8 +555,13 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
             continue;
         }
 
-        names[cnt] = NULL;
-        status = sscanf(line, "%ms %d", &(names[cnt]), &(cards[cnt]) );
+        names[cnt] = (char*)malloc(PAPI_HUGE_STR_LEN*sizeof(char));
+        if(names[cnt] == NULL) {
+            SUBDBG("Failed to allocate memory for event name.");
+            return PAPI_ENOMEM;
+        }
+
+        status = sscanf(line, "%s %d", names[cnt], &(cards[cnt]) );
 
         // If this line was malformed, ignore it.
         if(2 != status)
