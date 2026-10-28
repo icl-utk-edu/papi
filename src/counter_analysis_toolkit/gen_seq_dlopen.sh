@@ -120,7 +120,7 @@ int seq_jumps_${basic_block_copies}x${dl_reps}(int iter_count, int eventset, int
     long long int cntr_value = 0;
     int i, j, is_zero = 13;
     int ret;
-    char fname[512];
+    char fname[PAPI_HUGE_STR_LEN];
 EOF
     echo "    void *obj[${dl_reps}];"
     echo "    void *sym_true_if[${dl_reps}];"
@@ -128,7 +128,11 @@ EOF
     echo ""
     echo "    for(j=0; j<${dl_reps}; j++){"
     echo ""
-    echo "        snprintf(fname, 512, \"icache_seq_kernel_%d.so\", j);"
+    echo "        size_t availBytes = sizeof(fname);"
+    echo "        int strLen = snprintf(fname, availBytes, \"icache_seq_kernel_%d.so\", j);"
+    echo "        if (strLen < 0 || (size_t)strLen >= availBytes ) {"
+    echo "            fprintf(stderr, \"Error writing icache kernel shared object file name to buffer.\n\");"
+    echo "        }"
     echo "        obj[j] = dlopen(fname, RTLD_NOW|RTLD_LOCAL);"
     echo "        if( NULL == obj[j] ){"
     echo "            fprintf(stderr,\"dlopen() %d failed on %s because: %s\nIs the directory containing '%s' in your LD_LIBRARY_PATH?\n\", j, fname, dlerror(), fname);"
@@ -175,7 +179,11 @@ EOF
 EOF
 
     echo "    for(j=0; j<${dl_reps}; j++){"
-    echo "        snprintf(fname, 512, \"seq_kernel_%d.so\", j);"
+    echo "        size_t availBytes = sizeof(fname);"
+    echo "        int strLen = snprintf(fname, availBytes, \"seq_kernel_%d.so\", j);"
+    echo "        if (strLen < 0 || (size_t)strLen >= availBytes) {"
+    echo "            fprintf(stderr, \"Error writing icache kernel shared object file name to buffer.\n\");"
+    echo "        }"
     echo "        if( dlclose(obj[j]) ){"
     echo "            fprintf(stderr,\"dlclose() %d failed on %s because: %s\n\", j, fname, dlerror());"
     echo "            return -1;"
