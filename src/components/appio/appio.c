@@ -188,7 +188,7 @@ __attribute__ ((visibility ("default"))) int close(int fd) {
 
 int __open(const char *pathname, int flags, ...);
 __attribute__ ((visibility ("default"))) int open(const char *pathname, int flags, ...) {
-  SUBDBG("appio: intercepted open(%s,%d,%d)\n", pathname, flags, mode);
+  SUBDBG("appio: intercepted open(%s,%d)\n", pathname, flags);
 
   mode_t mode = O_RDONLY;
   // mode is ignored if neither O_CREAT nor O_TMPFILE
