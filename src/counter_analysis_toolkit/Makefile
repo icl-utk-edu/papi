@@ -168,6 +168,9 @@ cat_collect:
 clean:
 	rm -f *.o
 
+distclean:
+	rm -f *.o
+
 realclean:
 	rm -f cat_collect *.o *.so icache_seq.c icache_seq.h icache_seq_kernel.c
 
