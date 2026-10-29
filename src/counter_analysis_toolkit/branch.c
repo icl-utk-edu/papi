@@ -61,7 +61,7 @@ void branch_driver(char *papi_event_name, int junk, hw_desc_t *hw_desc, char* ou
     BRANCH_BENCH(7);
 
     if( result == 143526 ){
-        printf("Random side effect\n");
+        fprintf(stdout, "Random side effect\n");
     }
 
     ret_val = PAPI_cleanup_eventset( papi_eventset );

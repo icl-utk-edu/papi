@@ -31,7 +31,7 @@ run_output_t probeBufferSize(long long active_buf_len, long long line_size, floa
     x = floor(1.3*x/(1.4*x+1.8));
     y = x*3.97;
     if( x > 0 || y > 0 )
-        printf("WARNING: x=%lf y=%lf\n",x,y);
+        fprintf(stdout, "WARNING: x=%lf y=%lf\n", x, y);
 
     long long countSingle = active_buf_len/line_size;
     long long threshold = 1024LL*1024LL/64LL;

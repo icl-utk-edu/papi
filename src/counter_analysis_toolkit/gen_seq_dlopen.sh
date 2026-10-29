@@ -270,7 +270,7 @@ EOF
                 basic_block_copies=$tmp
             fi
             echo "    if( show_progress ){"
-            echo "        printf(\"%3d%%\b\b\b\b\",(100*exp_cnt)/(4*$#));"
+            echo "        fprintf(stdout, \"%3d%%\b\b\b\b\", (100*exp_cnt)/(4*$#));"
             echo "        exp_cnt++;"
             echo "        fflush(stdout);"
             echo "    }"
@@ -296,7 +296,7 @@ EOF
                 basic_block_copies=$tmp
             fi
             echo "    if( show_progress ){"
-            echo "        printf(\"%3d%%\b\b\b\b\",(100*exp_cnt)/(4*$#));"
+            echo "        fprintf(stdout, \"%3d%%\b\b\b\b\", (100*exp_cnt)/(4*$#));"
             echo "        exp_cnt++;"
             echo "        fflush(stdout);"
             echo "    }"
@@ -315,13 +315,13 @@ EOF
 
     if( show_progress ){
         size_t i;
-        printf("100%%");
+        fprintf(stdout, "100%%");
         for(i=0; i<strlen("Total:100%  Current test:100%"); i++) putchar('\b');
         fflush(stdout);
     }
 
     if( 174562 == side_effect ){
-        printf("Random side-effect\n");
+        fprintf(stdout, "Random side-effect\n");
     }
 
     ret = PAPI_cleanup_eventset( eventset );

@@ -808,9 +808,9 @@ int comb(int n, int k)
 static void print_progress(int prg)
 {
     if(prg < 100)
-        printf("%3d%%\b\b\b\b",prg);
+        fprintf(stdout, "%3d%%\b\b\b\b", prg);
     else
-        printf("%3d%%\n",prg);
+        fprintf(stdout, "%3d%%\n", prg);
 
     fflush(stdout);
 }
@@ -818,9 +818,9 @@ static void print_progress(int prg)
 static void print_progress2(int prg)
 {
     if(prg < 100)
-        printf("Total:%3d%%  Current test:  0%%\b\b\b\b",prg);
+        fprintf(stdout, "Total:%3d%%  Current test:  0%%\b\b\b\b", prg);
     else
-        printf("Total:%3d%%\n",prg);
+        fprintf(stdout, "Total:%3d%%\n", prg);
 
     fflush(stdout);
 }
@@ -856,7 +856,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark I - Branch*/
     if( params.bench_type & BENCH_BRANCH )
     {
-        if(params.show_progress) printf("Branch Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "Branch Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
@@ -875,14 +875,14 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         {
             if(params.show_progress)
             {
-                printf("D-Cache Latencies:  0%%\b\b\b\b");
+                fprintf(stdout, "D-Cache Latencies:  0%%\b\b\b\b");
                 fflush(stdout);
             }
             d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
-            if(params.show_progress) printf("\n");
+            if(params.show_progress) fprintf(stdout, "\n");
         }
 
-        if(params.show_progress) printf("D-Cache Read Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "D-Cache Read Benchmarks: ");
         for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress2((100*i)/cmbtotal);
@@ -902,14 +902,14 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
         {
             if(params.show_progress)
             {
-                printf("D-Cache Latencies:  0%%\b\b\b\b");
+                fprintf(stdout, "D-Cache Latencies:  0%%\b\b\b\b");
                 fflush(stdout);
             }
             d_cache_driver("cat::latencies", params, hw_desc, 1, 0);
-            if(params.show_progress) printf("\n");
+            if(params.show_progress) fprintf(stdout, "\n");
         }
 
-        if(params.show_progress) printf("D-Cache Write Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "D-Cache Write Benchmarks: ");
         for(i = low; i < cap; ++i)
         {
             if(params.show_progress) print_progress2((100*i)/cmbtotal);
@@ -924,7 +924,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark IV - FLOPS*/
     if( params.bench_type & BENCH_FLOPS )
     {
-        if(params.show_progress) printf("FLOP Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "FLOP Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
@@ -939,7 +939,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark V - Instruction Cache*/
     if( params.bench_type & BENCH_ICACHE_READ )
     {
-        if(params.show_progress) printf("I-Cache Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "I-Cache Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
@@ -954,7 +954,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark VI - Vector-FLOPs*/
     if( params.bench_type & BENCH_VEC )
     {
-        if(params.show_progress) printf("Vector-FLOPs Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "Vector-FLOPs Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
@@ -969,7 +969,7 @@ void testbench(char** allevts, int cmbtotal, hw_desc_t *hw_desc, cat_params_t pa
     /* Benchmark VII - Instructions*/
     if( params.bench_type & BENCH_INSTR )
     {
-        if(params.show_progress) printf("Instruction Benchmarks: ");
+        if(params.show_progress) fprintf(stdout, "Instruction Benchmarks: ");
 
         for(i = low; i < cap; ++i)
         {
