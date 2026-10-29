@@ -405,36 +405,34 @@ static int findNameHash(char *key)
 // Simplify routine below; relies on ptr names being same as func tags.
 #define STRINGIFY(x) #x 
 #define TOSTRING(x) STRINGIFY(x)
-#define mGet_DL_FPtr(Name)                                                 \
-   Name##_ptr = dlsym(dl1, TOSTRING(Name));                                \
-   if (dlerror() != NULL) {  /* If we had an error, */                     \
-      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,     \
-         "PCP library function %s not found in lib.", TOSTRING(Name));     \
-      _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;          \
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;                  \
-      return(PAPI_ENOSUPP);                                                \
+#define mGet_DL_FPtr(Name)                                                        \
+   Name##_ptr = dlsym(dl1, TOSTRING(Name));                                       \
+   if (dlerror() != NULL) {  /* If we had an error, */                            \
+      int defineAvailBytes = sizeof(_pcp_vector.cmp_info.disabled_reason);        \
+      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, defineAvailBytes, \
+         "PCP library function %s not found in lib.", TOSTRING(Name));            \
+      if (strErr < 0 || (size_t)strErr >= defineAvailBytes) HANDLE_STRING_ERROR;  \
+      return(PAPI_ENOSUPP);                                                       \
    } /* end of macro. */
 
 static int _local_linkDynamicLibraries(void) 
 {
+   size_t availBytes = sizeof(_pcp_vector.cmp_info.disabled_reason);
    if ( _dl_non_dynamic_init != NULL ) {  // If weak var present, statically linked insted of dynamic.
-       char *strCpy=strncpy( _pcp_vector.cmp_info.disabled_reason, "The pcp component REQUIRES dynamic linking capabilities.", PAPI_HUGE_STR_LEN);
-       _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;
-       if (strCpy == NULL) HANDLE_STRING_ERROR;
+       int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, availBytes, "The pcp component REQUIRES dynamic linking capabilities.");
+       if (strErr < 0 || (size_t)strErr >= availBytes) HANDLE_STRING_ERROR;
        return PAPI_ENOSUPP;               // EXIT not supported.
    }
 
    char path_name[PATH_MAX];
    char *pcp_root = getenv("PAPI_PCP_ROOT"); 
-   
    dl1 = NULL;
    // Step 1: Process override if given.   
    if (strlen(pcp_main) > 0) {                                  // If override given, it has to work.
       dl1 = dlopen(pcp_main, RTLD_NOW | RTLD_GLOBAL);           // Try to open that path.
       if (dl1 == NULL) {
-         int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "PAPI_PCP_MAIN override '%s' given in Rules.pcp not found.", pcp_main);
-         _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;
-         if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+         int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, availBytes, "PAPI_PCP_MAIN override '%s' given in Rules.pcp not found.", pcp_main);
+         if (strErr < 0 || (size_t)strErr >= availBytes) HANDLE_STRING_ERROR;
          return(PAPI_ENOSUPP);   // Override given but not found.
       }
    }
@@ -448,16 +446,14 @@ static int _local_linkDynamicLibraries(void)
    size_t pathSize = sizeof(path_name);
    if (dl1 == NULL && pcp_root != NULL) {                          // if root given, try it.
       int strErr=snprintf(path_name, pathSize, "%s/lib64/libpcp.so", pcp_root);   // PAPI Root check.
-      path_name[pathSize-1]=0;
-      if ((size_t)strErr > pathSize) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= pathSize) HANDLE_STRING_ERROR;
       dl1 = dlopen(path_name, RTLD_NOW | RTLD_GLOBAL);             // Try to open that path.
    }
 
    // Check for failure.
    if (dl1 == NULL) {
-      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "libpcp.so not found.");
-      _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, availBytes, "libpcp.so not found.");
+      if (strErr < 0 || (size_t)strErr >= availBytes) HANDLE_STRING_ERROR;
       return(PAPI_ENOSUPP);
    }
 
@@ -860,8 +856,7 @@ static int _pcp_init_component(int cidx)
    char **allNames = NULL;
    pmID *allPMID = NULL;
    pmResult *allFetch = NULL;                                           // result of pmFetch.
-   int rLen = PAPI_HUGE_STR_LEN;                                        // Most I will print.
-   reason[rLen-1]=0;                                                    // last resort terminator.
+   size_t rLen = sizeof(_papi_hwd[cidx]->cmp_info.disabled_reason);     // Most I will print.
 
    mRtnCnt(_pcp_init_component);                                        // count the routine.
    #define hostnameLen 512 /* constant used multiple times. */
@@ -878,8 +873,7 @@ static int _pcp_init_component(int cidx)
    if (ret != 0) {                                                      // If we can't get the hostname, 
       int strErr=snprintf(reason, rLen, "Failed system call, gethostname() "
             "returned %i.", ret);   
-      reason[rLen-1]=0;
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ESYS;
       goto fn_fail;
    }
@@ -891,8 +885,7 @@ static int _pcp_init_component(int cidx)
    if (ctxHandle < 0) {
       int strErr=snprintf(reason, rLen, "Cannot connect to PM Daemon on \"%s\".\n "
          "(Is the Performance Co-Pilot running?)\n", hostname);
-      reason[rLen-1]=0;
-      if (strErr > rLen) SUBDBG("%s:%i Warning! Error's 'reason' string truncated:\n%s\n",__FILE__,__LINE__,reason);
+      if (strErr < 0 || (size_t)strErr >= rLen) SUBDBG("%s:%i Warning! Error's 'reason' string truncated:\n%s\n",__FILE__,__LINE__,reason);
       retval = PAPI_ESYS;
       goto fn_fail;
    }
@@ -903,10 +896,9 @@ static int _pcp_init_component(int cidx)
    pcp_event_info = (_pcp_event_info_t*) 
       calloc(sEventInfoSize, sizeof(_pcp_event_info_t));                // Make room for all events.
    if (pcp_event_info == NULL) {
-      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN,
+      int strErr=snprintf(_pcp_vector.cmp_info.disabled_reason, rLen,
           "Could not allocate %lu bytes of memory for pcp_event_info.", sEventInfoSize*sizeof(_pcp_event_info_t));
-      _pcp_vector.cmp_info.disabled_reason[PAPI_HUGE_STR_LEN-1]=0;    // force null termination.
-      if (strErr > PAPI_HUGE_STR_LEN) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    }
@@ -917,12 +909,12 @@ static int _pcp_init_component(int cidx)
    if (ret < 0) {                                                       // Failure...
       int strErr=snprintf(reason, rLen, "pmTraversePMNS failed; ret=%i [%s]\n", 
          ret, pcp_pmErrStr(ret));
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       if (ret == PM_ERR_NAME) {                                         // We know what this one is,
          strErr=snprintf(reason, rLen, "pmTraversePMNS ret=PM_ERR_NAME: "
             "Occurs if event filter '%s' unknown to PCP Daemon.\n", AGENT_NAME);
+         if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       }
-      reason[rLen-1]=0;
-      if (strErr >rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOIMPL;
       goto fn_fail;
    }      
@@ -937,8 +929,7 @@ static int _pcp_init_component(int cidx)
    if (sEventCount < 1) {                                               // Failure...
       int strErr=snprintf(reason, rLen, "pmTraversePMNS returned zero events "
          "for AGENT=\"%s\".\n", AGENT_NAME);
-      reason[rLen-1]=0;
-      if (strErr >rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOIMPL;
       goto fn_fail;
    }
@@ -946,10 +937,11 @@ static int _pcp_init_component(int cidx)
    int i,j,k;
    allNames=calloc(sEventCount, sizeof(char*));                  // Make an array for all names.
    if (allNames == NULL) {
-      snprintf(reason, rLen, "memory alloc denied for allNames; "
+      int strErr=snprintf(reason, rLen, "memory alloc denied for allNames; "
             "size=%i.\n", sEventCount);
-      int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allNames.", sEventCount*sizeof(allNames));
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
+      strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allNames.", sEventCount*sizeof(allNames));
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    }
@@ -959,10 +951,11 @@ static int _pcp_init_component(int cidx)
 
    allPMID=calloc(sEventCount, sizeof(pmID));                     // Make an array for results.
    if (allPMID == NULL) {                                               // If we failed,
-      snprintf(reason, rLen, "memory alloc denied for allPMID; "
+      int strErr=snprintf(reason, rLen, "memory alloc denied for allPMID; "
             "size=%i.\n", sEventCount);
-      int strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allPMID.", sEventCount*sizeof(pmID));
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
+      strErr=snprintf(reason, rLen, "Could not allocate %lu bytes of memory for allPMID.", sEventCount*sizeof(pmID));
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    } // end if calloc failed.
@@ -987,14 +980,12 @@ static int _pcp_init_component(int cidx)
       if (ret < 0) {                                                    // .. Failure...
          int strErr=snprintf(reason, rLen, "pmLookupName for %i names failed; ret=%i [%s].\n", 
             sEventCount, ret, pcp_pmErrStr(ret));
-         reason[rLen-1]=0;
-         if (strErr > rLen) HANDLE_STRING_ERROR;
+         if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
 
          if (ret == PM_ERR_IPC) {                                       // .. If we know it, rewrite.
             strErr=snprintf(reason, rLen, "pmLookupName ret=PM_ERR_IPC: one known cause is a readblock too large; reduce LNBLOCK (%s:%i).\n",
                   __FILE__,k);
-            reason[rLen-1]=0;
-            if (strErr > rLen) HANDLE_STRING_ERROR;
+            if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
             retval = PAPI_EBUF;
             goto fn_fail;
          }
@@ -1018,8 +1009,7 @@ static int _pcp_init_component(int cidx)
    _time_gettimeofday(&t2, NULL);
    if (ret != 0) {
       int strErr=snprintf(reason, rLen, "pcp_pmFetch failed, retcode=%d.", ret);
-      reason[rLen-1]=0;
-      if (strErr > rLen) HANDLE_STRING_ERROR;
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOSUPP;
       goto fn_fail;
    }
@@ -1068,8 +1058,7 @@ static int _pcp_init_component(int cidx)
          if (pcp_event_info[i].valType != pB->vtype) {
             int strErr=snprintf(reason, rLen, "Unexpected value type fetched for %s. %i vs %i. Possible version incompatibiity.\n", 
                pcp_event_info[i].name, pcp_event_info[i].valType, pB->vtype);
-            reason[rLen-1]=0;
-            if( strErr > rLen) HANDLE_STRING_ERROR;
+            if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
             retval = PAPI_ENOSUPP;
             goto fn_fail;
          }
@@ -1166,8 +1155,7 @@ static int _pcp_init_component(int cidx)
    if (pcp_event_info == NULL) {
       int strErr=snprintf(reason, rLen, 
           "Could not reallocate %lu bytes of memory for pcp_event_info.", sEventCount*sizeof(_pcp_event_info_t));
-      reason[rLen-1]=0;    // force null termination.
-      if (strErr > rLen) HANDLE_STRING_ERROR;    
+      if (strErr < 0 || (size_t)strErr >= rLen) HANDLE_STRING_ERROR;
       retval = PAPI_ENOMEM;
       goto fn_fail;
    } // end if realloc failed.
