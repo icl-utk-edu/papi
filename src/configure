@@ -6532,8 +6532,8 @@ $as_echo "yes" >&6; }
 $as_echo "$as_me: WARNING: The sysdetect component will not be built with AMD device affinity support. See components/sysdetect/README.md." >&2;}
         fi
     else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The sysdetect component will not be built with AMD attribute or device affinity support. See components/sysdetect/README.md." >&5
-$as_echo "$as_me: WARNING: The sysdetect component will not be built with AMD attribute or device affinity support. See components/sysdetect/README.md." >&2;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The sysdetect component will not be built with AMD device attribute or device affinity support. See components/sysdetect/README.md." >&5
+$as_echo "$as_me: WARNING: The sysdetect component will not be built with AMD device attribute or device affinity support. See components/sysdetect/README.md." >&2;}
     fi
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5

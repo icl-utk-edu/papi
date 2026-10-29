@@ -1715,7 +1715,7 @@ if test "x$enable_sysdetect" = "xyes" && test "x$perf_events" != "xno"; then
             AC_MSG_WARN([The sysdetect component will not be built with AMD device affinity support. See components/sysdetect/README.md.])
         fi
     else
-        AC_MSG_WARN([The sysdetect component will not be built with AMD attribute or device affinity support. See components/sysdetect/README.md.])
+        AC_MSG_WARN([The sysdetect component will not be built with AMD device attribute or device affinity support. See components/sysdetect/README.md.])
     fi
 else
     AC_MSG_RESULT(no)
