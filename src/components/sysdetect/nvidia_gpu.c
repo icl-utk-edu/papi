@@ -364,7 +364,7 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
         unload_nvml_sym();
     }
 #else
-    const char *message = "NVML not configured, no device affinity available";
+    const char *message = "PAPI_NVML_ROOT not set; therefore, no device affinity available.";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Status string truncated.");
@@ -374,7 +374,7 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     unload_cuda_sym();
     dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
 #else
-    const char *message = "CUDA not configured, no CUDA device available";
+    const char *message = "PAPI_CUDA_ROOT not set; therefore, no device attributes available.";
     int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
     if (count >= PAPI_MAX_STR_LEN) {
         SUBDBG("Status string truncated.");

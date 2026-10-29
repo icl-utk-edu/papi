@@ -54,7 +54,14 @@ endif
 CFLAGS += -I/opt/amdgpu/include
 
 ifneq ($(PAPI_CUDA_ROOT),)
-CFLAGS += -I$(PAPI_CUDA_ROOT)/include
+    CFLAGS += -I$(PAPI_CUDA_ROOT)/include
+    ifneq ($(PAPI_NVML_ROOT),)
+        # Append to CFLAGS if a user has an unusual installation
+        # of nvml.h.
+        ifneq ($(PAPI_NVML_ROOT),$(PAPI_CUDA_ROOT))
+            CFLAGS += -I$(PAPI_NVML_ROOT)/include
+        endif
+    endif
 endif
 
 sysdetect.o: components/sysdetect/sysdetect.c components/sysdetect/sysdetect.h $(HEADERS) 
