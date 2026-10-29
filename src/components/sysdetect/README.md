@@ -41,6 +41,7 @@ must be found.
 | Environment Variable | Targeted Devices | Necessary Header | Notes | 
 | :------------- | :------------- | :------------- | :------------- |
 | `PAPI_CUDA_ROOT` | NVIDIA GPUs | `cuda.h` | To query NVIDIA device attributes  |
+| `PAPI_NVML_ROOT` | NVIDIA GPUs | `nvml.h` | To query NVIDIA device affinity  |
 | `PAPI_ROCP_SDK_ROOT` <br> (Supersedes `PAPI_ROCM_ROOT`) | AMD GPUs | `hsa.h` | To query AMD device attributes |
 | `PAPI_AMDSMI_ROOT` <br> (Supersedes `PAPI_ROCMSMI_ROOT`) | AMD GPUs | `amdsmi.h` (`rocm_smi.h`) | To query AMD device affinity |
 
