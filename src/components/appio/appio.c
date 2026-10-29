@@ -34,6 +34,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <stdarg.h>
 
 /* Headers required by PAPI */
 #include "papi.h"
@@ -184,11 +186,21 @@ __attribute__ ((visibility ("default"))) int close(int fd) {
   return retval;
 }
 
-int __open(const char *pathname, int flags, mode_t mode);
- __attribute__ ((visibility ("default"))) int open(const char *pathname, int flags, mode_t mode) {
-  int retval;
-  SUBDBG("appio: intercepted open(%s,%d,%d)\n", pathname, flags, mode);
-  retval = __open(pathname,flags,mode);
+int __open(const char *pathname, int flags, ...);
+__attribute__ ((visibility ("default"))) int open(const char *pathname, int flags, ...) {
+  SUBDBG("appio: intercepted open(%s,%d)\n", pathname, flags);
+
+  mode_t mode = O_RDONLY;
+  // mode is ignored if neither O_CREAT nor O_TMPFILE
+  // is specified in flags.
+  if (flags & (O_CREAT | O_TMPFILE)) {
+      va_list arguments;
+      va_start(arguments, flags);
+      mode = va_arg(arguments, mode_t);
+      va_end(arguments);
+  }
+
+  int retval = __open(pathname,flags,mode);
   _appio_register_current[OPEN_CALLS]++;
   if (retval < 0) _appio_register_current[OPEN_ERR]++;
   else _appio_register_current[OPEN_FDS]++;
