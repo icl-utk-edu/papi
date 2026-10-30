@@ -1,0 +1,25 @@
+amd-smi-component-job:
+  script:
+    - echo "Test amd_smi" component
+  parallel:
+    - IMAGE: [rocm/dev-ubuntu-24.04:7.2.4-complete, rocm/dev-ubuntu-24.04:7.14.0-full]
+      ARCH: [amd-mi210, amd-mi300]
+  image: ${IMAGE}
+  tags:
+    - ${ARCH}
+#  variables:
+#    PAPI_CONFIGURE_OPTIONS: '--with-components="topdown" --enable-warnings --with-debug=yes'
+#  before_script:
+#    - source papi_ci_on_franks.sh
+#    - cd src 
+#    - export PAPI_CUDA_ROOT=/usr/local/cuda
+#  script:
+#    - install_papi $PAPI_CONFIGURE_OPTIONS
+#    - test_papi_installation cuda
+#  parallel:
+#    matrix:
+#      - IMAGE: [rocm/dev-ubuntu-24.04:7.2.4-complete, rocm/dev-ubuntu-24.04:7.14.0-full]
+#        ARCH: [amd-mi210, amd-mi300]
+#  image: ${IMAGE}
+#  tags:
+#    - ${ARCH}
