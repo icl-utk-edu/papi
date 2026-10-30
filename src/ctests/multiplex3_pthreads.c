@@ -32,7 +32,6 @@ thread_fn( void *dummy )
 	while ( 1 ) {
 		do_stuff(  );
 	}
-	return NULL;
 }
 
 /* Runs a bunch of multiplexed events */
