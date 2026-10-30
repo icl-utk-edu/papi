@@ -313,6 +313,18 @@ static struct native_event_t *allocate_native_event(
 		return NULL;
 	}
 
+	// If the event was already in the event table, then free the fields before overwriting them.
+	// Since they are pointers, this must be done to prevent unreachable memory.
+	if (event_num >= 0) {
+		free(ntv_evt->allocated_name);
+		free(ntv_evt->mask_string);
+		free(ntv_evt->pmu);
+		free(ntv_evt->base_name);
+		free(ntv_evt->pmu_plus_name);
+		free(ntv_evt->event_description);
+		free(ntv_evt->mask_description);
+		ntv_evt->mask_description = NULL;
+	}
 	ntv_evt->allocated_name=strdup(name);
 	ntv_evt->mask_string=strdup(masks);
 	ntv_evt->component=cidx;
