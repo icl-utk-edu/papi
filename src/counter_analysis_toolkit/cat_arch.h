@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <papi_debug.h>
 
 typedef unsigned long long uint64;
 

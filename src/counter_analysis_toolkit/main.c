@@ -555,8 +555,13 @@ int setup_evts(char* inputfile, char*** basenames, int** evnt_cards)
             continue;
         }
 
-        names[cnt] = NULL;
-        status = sscanf(line, "%ms %d", &(names[cnt]), &(cards[cnt]) );
+        names[cnt] = (char*)malloc(PAPI_HUGE_STR_LEN*sizeof(char));
+        if(names[cnt] == NULL) {
+            SUBDBG("Failed to allocate memory for event name.");
+            return PAPI_ENOMEM;
+        }
+
+        status = sscanf(line, "%s %d", names[cnt], &(cards[cnt]) );
 
         // If this line was malformed, ignore it.
         if(2 != status)
@@ -1125,7 +1130,7 @@ int parseArgs(int argc, char **argv, cat_params_t *params){
     }
 
     len = snprintf( params->outputdir, 2+dirlen, "%s/", tmp);
-    if( len < 1+dirlen )
+    if( len < 0 || len >= 2+dirlen )
     {
         fprintf(stderr, "Problem with output directory name.\n");
         return -1;
