@@ -26,7 +26,7 @@ typedef struct {
     rocprofiler_counter_info_v0_t counter_info;
     std::vector<rocprofiler_record_dimension_info_t> dim_info;
     dim_vector_t dim_instances;
-    int device;
+    uint64_t device;
 } event_instance_info_t;
 
 typedef struct {
@@ -54,7 +54,6 @@ static std::mutex profile_cache_mutex = {};
 #endif
 static std::mutex agent_mutex = {};
 static std::condition_variable agent_cond_var = {};
-static bool data_is_ready = false;
 static std::string _rocp_sdk_error_string;
 static long long int *_counter_values = NULL;
 static long long int *_counter_values_savestate = NULL;
@@ -362,9 +361,8 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
                 rocprofiler_record_counter_t*                record_data,
                 size_t                                       record_count,
                 rocprofiler_user_data_t,
-                void*                                        callback_data_args)
+                void*)
 {
-    rec_info_t *tmp_rec_info;
     uint64_t device;
 
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
@@ -391,7 +389,7 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
         // Traverse all the recorded entries and cache some information about them
         // that we will need further down when doing the matching.
-        for(int i=0; i<record_count; ++i){
+        for(size_t i=0; i<record_count; ++i){
             rocprofiler_counter_id_t counter_id;
             rec_info_t &rec_info = event_set_to_rec_mapping[i];
 
@@ -410,7 +408,6 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
 
         // Traverse all events in the active event set and find which recorded entry matches each one of them.
         for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-            double counter_value_sum = 0.0;
             auto e_tmp = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
             if( papi_id_to_event_instance.end() == e_tmp ){
                 continue;
@@ -418,7 +415,7 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
             event_instance_info_t e_inst = e_tmp->second;
             uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
-            for(int i=0; i<record_count; ++i){
+            for(size_t i=0; i<record_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
                 uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
@@ -436,7 +433,7 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
     for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
         double counter_value_sum = 0.0;
 
-        for(int i=0; i<record_count; ++i){
+        for(size_t i=0; i<record_count; ++i){
             // All counters in the sample whose dimemsions match the qualifers of the event instance
             // will be added. This means that if a qualifier is missing, we will get the sum.
             if( true == index_mapping[ei*record_count+i] ){
@@ -532,9 +529,9 @@ set_profile(rocprofiler_context_id_t                 context_id,
 void
 buffered_callback(rocprofiler_context_id_t,
                   rocprofiler_buffer_id_t,
-                  rocprofiler_record_header_t** headers,
-                  size_t                        num_headers,
-                  void*                         user_data,
+                  rocprofiler_record_header_t**,
+                  size_t,
+                  void*,
                   uint64_t)
 {
     return;
@@ -574,7 +571,7 @@ tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
 
 /* ** */
 int
-tool_init(rocprofiler_client_finalize_t fini_func, void* tool_data)
+tool_init(rocprofiler_client_finalize_t, void* tool_data)
 {
     assert(tool_data != nullptr);
 
@@ -772,7 +769,7 @@ read_sample(){
 
         // Traverse all the sampled entries and cache some information about them
         // that we will need further down when doing the matching.
-        for(int i=0; i<rec_count; ++i){
+        for(size_t i=0; i<rec_count; ++i){
             rocprofiler_counter_id_t counter_id;
             rec_info_t &rec_info = event_set_to_rec_mapping[i];
 
@@ -780,7 +777,7 @@ read_sample(){
             if( gpu_agents.end() != agent ){
                 rec_info.device = agent->second->logical_node_type_id;
             }else{
-                SUBDBG("agent_id of recorded sample %d does not correspond to a known gpu agent.\n", i);
+                SUBDBG("agent_id of recorded sample %zu does not correspond to a known gpu agent.\n", i);
             }
 
             ROCPROFILER_CALL(rocprofiler_query_record_counter_id_FPTR(output_records[i].id, &counter_id), "Could not retrieve counter_id");
@@ -796,7 +793,6 @@ read_sample(){
 
         // Traverse all events in the active event set and find which entries in the set of samples matches each one of them.
         for( int ei=0; ei<active_event_set_ctx->num_events; ei++ ){
-            double counter_value_sum = 0.0;
 
             // Find the internal event instance.
             auto tmp = papi_id_to_event_instance.find( active_event_set_ctx->event_ids[ei] );
@@ -807,7 +803,7 @@ read_sample(){
             event_instance_info_t e_inst = tmp->second;
             uint32_t e_id_32 = static_cast<uint32_t>(e_inst.counter_info.id.handle);
 
-            for(int i=0; i<rec_count; ++i){
+            for(size_t i=0; i<rec_count; ++i){
                 rec_info_t &rec_info = event_set_to_rec_mapping[i];
                 uint32_t r_id_32 = static_cast<uint32_t>(rec_info.counter_id.handle);
                 if( ( e_inst.device != rec_info.device ) ||
@@ -827,7 +823,7 @@ read_sample(){
         double counter_value_sum = _counter_values_savestate[ei];
 
         if( 0 != (active_event_set_ctx->state & RPSDK_AES_RUNNING) ){
-            for(int i=0; i<rec_count; ++i){
+            for(size_t i=0; i<rec_count; ++i){
                 // All counters in the sample whose dimemsions match the qualifers of the event instance
                 // will be added. This means that if a qualifier is missing, we will get the sum.
                 if( true == index_mapping[ei*rec_count+i] ){
@@ -874,7 +870,7 @@ evt_id_to_name(int papi_event_id, const char **name){
 /* ** */
 static int
 build_event_info_from_name(std::string event_name, event_instance_info_t *ev_inst_info){
-    int pos=0, ppos=0;
+    long unsigned int pos=0, ppos=0;
     std::vector<std::string> qualifiers = {};
     dim_vector_t dim_instances = {};
     std::string base_event_name;
@@ -918,14 +914,27 @@ build_event_info_from_name(std::string event_name, event_instance_info_t *ev_ins
         if( qual_name.compare("device") == 0 ){
             // We use the most significant bit to designate the presence of the "device" qualifier.
             qualifiers_present |= (1 << base_event_info.dim_info.size());
-            device_qualifier_value = qual_val;
+
+            int valid_device_id = 0;
+            for(auto g_it=gpu_agents.begin(); g_it!=gpu_agents.end(); ++g_it){
+                if( qual_val == g_it->second->logical_node_type_id ) {
+                    valid_device_id = 1;
+                }
+            }
+
+            // Ensure that device qualifier value corresponds to a real device.
+            if( valid_device_id ) {
+                device_qualifier_value = qual_val;
+            } else {
+                return PAPI_ENOEVNT;
+            }
         }else{
             int qual_i = 0;
             // Make sure that the qualifier name corresponds to one of the known dimensions of this event.
             for( const auto & dim : base_event_info.dim_info ){
                 if( qual_name.compare(dim.name) == 0 ){
                     // Make sure that the qualifier value is within the proper range.
-                    if( qual_val >= dim.instance_size ){
+                    if( (unsigned long)qual_val >= dim.instance_size ){
                         return PAPI_ENOEVNT;
                     }
                     dim_instances.emplace_back( std::make_pair(dim.id, qual_val) );
@@ -986,7 +995,8 @@ evt_name_to_id(std::string event_name, unsigned int *event_id){
 /* ** */
 int
 evt_enum(unsigned int *event_code, int modifier){
-    int papi_errno=PAPI_OK, tmp_code;
+    int papi_errno=PAPI_OK;
+    unsigned int tmp_code;
     base_event_info_t event_info;
     std::string full_name;
     event_instance_info_t ev_inst;
@@ -1030,11 +1040,11 @@ evt_enum(unsigned int *event_code, int modifier){
                 ++qual_i;
 
                 // If we exceeded the number of available dimensions (i.e. qualifiers) then we are done with this base event.
-                if( qual_i > ev_inst.dim_info.size() ){
+                if( qual_i > (int)ev_inst.dim_info.size() ){
                     papi_errno = PAPI_ENOEVNT;
                     break;
                 // Here we insert the "device" qualifier, which does not appear as a dimension in rocprofiler-sdk.
-                }else if( qual_i == ev_inst.dim_info.size() ){
+                }else if( qual_i == (int)ev_inst.dim_info.size() ){
                     full_name = ev_inst.counter_info.name + std::string(":device=0");
                     qual_ub = std::to_string(gpu_agents.size()-1);
                     tmp_desc = "masks: Range: [0-" + qual_ub + "], default=0.";
@@ -1104,7 +1114,7 @@ set_profile_cache(vendorp_ctx_t ctx){
         std::vector<rocprofiler_counter_id_t> event_vid_list = {};
         std::set<uint64_t> id_set = {};
 
-        for( const auto e_inst : active_events_per_device[agent->logical_node_type_id] ){
+        for( const auto& e_inst : active_events_per_device[agent->logical_node_type_id] ){
 
             rocprofiler_counter_id_t vid = e_inst.counter_info.id;
             // If the vid of the event (base event) is not already in the event_vid_list, then add it.
@@ -1128,7 +1138,7 @@ set_profile_cache(vendorp_ctx_t ctx){
 }
 
 /* ** */
-void tool_fini(void* tool_data) {
+void tool_fini(void*) {
     stop_counting();
     empty_active_event_set();
     return;
@@ -1327,7 +1337,11 @@ rocprofiler_sdk_evt_code_to_name(unsigned int event_code, char *name, int len)
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
     if( PAPI_OK == papi_errno ){
-        snprintf(name, len, "%s", tmp_name);
+        int expect = snprintf(name, len, "%s", tmp_name);
+        if (expect < 0 || expect >= len) {
+            SUBDBG("Failed to write event name.");
+            return PAPI_EBUF;
+        }
     }
 
     return papi_errno;
@@ -1341,7 +1355,10 @@ rocprofiler_sdk_evt_code_to_descr(unsigned int event_code, char *descr, int len)
 
     papi_errno = papi_rocpsdk::evt_id_to_descr(event_code, &tmp_descr);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(descr, len, "%s", tmp_descr);
+        int expect = snprintf(descr, len, "%s", tmp_descr);
+        if (expect < 0 || expect >= len) {
+            SUBDBG("Failed to write event description.");
+        }
     }
 
     return papi_errno;
@@ -1355,13 +1372,25 @@ rocprofiler_sdk_evt_code_to_info(unsigned int event_code, PAPI_event_info_t *inf
 
     papi_errno = papi_rocpsdk::evt_id_to_name(event_code, &tmp_name);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(info->symbol, PAPI_HUGE_STR_LEN, "%s", tmp_name);
+        int expect = snprintf(info->symbol, PAPI_HUGE_STR_LEN, "%s", tmp_name);
+        if (expect < 0 || expect >= PAPI_HUGE_STR_LEN) {
+            SUBDBG("Failed to write event name.");
+            return PAPI_EBUF;
+        }
     }
 
     papi_errno = papi_rocpsdk::evt_id_to_descr(event_code, &tmp_descr);
     if ( PAPI_OK == papi_errno ) {
-        snprintf(info->long_descr, PAPI_HUGE_STR_LEN, "%s", tmp_descr);
-        snprintf(info->short_descr, PAPI_MIN_STR_LEN, "%s", tmp_descr);
+        size_t availBytes = sizeof(info->long_descr);
+        int expect = snprintf(info->long_descr, availBytes, "%s", tmp_descr);
+        if (expect < 0 || expect >= availBytes) {
+            SUBDBG("Failed to write long event description.");
+        }
+        availBytes = sizeof(info->short_descr);
+        expect = snprintf(info->short_descr, availBytes, "%s", tmp_descr);
+        if (expect < 0 || expect >= availBytes) {
+            SUBDBG("Failed to write short event description.");
+        }
     }
 
     return papi_errno;
@@ -1376,12 +1405,13 @@ rocprofiler_sdk_evt_name_to_code(const char *event_name, unsigned int *event_cod
     if( NULL == strstr(event_name, "device=") ){
         char *amended_event_name;
         size_t len = strlen(event_name)+strlen(":device=0")+1; // +1 for '\0'
-        if( len > 1024 ){
+        if( len > PAPI_HUGE_STR_LEN ){
             return PAPI_EMISC;
         }
         amended_event_name = (char *)calloc(len, sizeof(char));
         int ret = snprintf(amended_event_name, len, "%s:device=0", event_name);
-        if( ret >= len ){
+        if( ret < 0 || (size_t)ret >= len ){
+            SUBDBG("Failed to write amended event name.");
             free(amended_event_name);
             return PAPI_EMISC;
         }
@@ -1426,9 +1456,9 @@ finalize_ctx(vendorp_ctx_t ctx)
 }
 
 rocprofiler_tool_configure_result_t *
-rocprofiler_configure(uint32_t                 version,
-                      const char*              runtime_version,
-                      uint32_t                 priority,
+rocprofiler_configure(uint32_t,
+                      const char*,
+                      uint32_t,
                       rocprofiler_client_id_t* id)
 {
     const char *error_msg = papi_rocpsdk::obtain_function_pointers();
