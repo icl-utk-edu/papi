@@ -15,26 +15,25 @@ endif
 
 FTESTS =
 ifeq ($(ENABLE_FORTRAN_TESTS),yes)
+    cray_compilers := ftn% crayftn%
+    flang_compilers := flang% armflang% amdflang%
+    gnu_compilers := gfortran%
+    intel_compilers := ifort% ifx%
+    nvidia_compilers := nvfortran% pgf%
+    ifneq ($(filter $(cray_compilers), $(notdir $(F77))),)
+        F90FLAGS += $(FFLAGS) -ffree
+    else ifneq ($(filter $(flang_compilers), $(notdir $(F77))),)
+        F90FLAGS += $(FFLAGS) -ffree-form
+    else ifneq ($(filter $(gnu_compilers), $(notdir $(F77))),)
+        F90FLAGS += $(FFLAGS) -ffree-form -ffree-line-length-none
+    else ifneq ($(filter $(intel_compilers), $(notdir $(F77))),)
+        F90FLAGS += $(FFLAGS) -free
+    else ifneq ($(filter $(nvidia_compilers), $(notdir $(F77))),)
+        F90FLAGS += $(FFLAGS) -Mfree
+    endif
+    F90 ?= $(F77)
     FTESTS = query_device_simple_f
 endif
-
-intel_compilers := ifort ifx
-cray_compilers := ftn crayftn
-nvidia_compilers := nvfortran
-
-gfortran_variants := $(shell echo "$(F77)" | grep --ignore-case --fixed-strings --silent gfortran; echo $$?)
-ifeq ($(gfortran_variants), 0)
-    F90FLAGS += $(FFLAGS) -ffree-form -ffree-line-length-none
-else ifeq ($(patsubst %flang,,$(notdir $(F77))),)  # compiler name ends with flang
-    F90FLAGS += $(FFLAGS) -ffree-form
-else ifneq ($(findstring $(notdir $(F77)), $(intel_compilers)),)
-    F90FLAGS += $(FFLAGS) -free
-else ifneq ($(findstring $(notdir $(F77)), $(cray_compilers)),)
-    F90FLAGS += $(FFLAGS) -ffree
-else ifneq ($(findstring $(notdir $(F77)), $(nvidia_compilers)),)
-    F90FLAGS += $(FFLAGS) -Mfree
-endif
-F90 ?= $(F77)
 
 TESTS = query_device_simple \
         $(FTESTS)           \
