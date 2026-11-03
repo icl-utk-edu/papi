@@ -4,7 +4,8 @@ COMPSRCS += components/sysdetect/sysdetect.c  \
 			components/sysdetect/cpu.c        \
 			components/sysdetect/cpu_utils.c  \
 			components/sysdetect/os_cpu_utils.c    \
-			components/sysdetect/linux_cpu_utils.c
+			components/sysdetect/linux_cpu_utils.c \
+			components/sysdetect/gpu_utils.c
 
 
 COMPOBJS += sysdetect.o  \
@@ -13,7 +14,8 @@ COMPOBJS += sysdetect.o  \
 			cpu.o        \
 			cpu_utils.o  \
 			os_cpu_utils.o    \
-			linux_cpu_utils.o
+			linux_cpu_utils.o \
+			gpu_utils.o
 
 get_rocm_version_major = $(firstword $(subst ., ,$(file < $(1)/.info/version)))
 compare_rocm_version_major = $(shell test $(call get_rocm_version_major,$(1)) -lt $(2) 2>/dev/null; echo $$?)
@@ -68,6 +70,9 @@ amd_gpu.o: components/sysdetect/amd_gpu.c components/sysdetect/amd_gpu.h $(HEADE
 
 cpu.o: components/sysdetect/cpu.c components/sysdetect/sysdetect.h $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/cpu.c -o $@
+
+gpu_utils.o: components/sysdetect/gpu_utils.c $(HEADERS)
+	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/gpu_utils.c -o $@
 
 cpu_utils.o: components/sysdetect/cpu_utils.c $(HEADERS)
 	$(CC) $(LIBCFLAGS) $(OPTFLAGS) -c components/sysdetect/cpu_utils.c -o $@

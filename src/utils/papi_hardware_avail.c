@@ -105,17 +105,17 @@ main( int argc, char **argv )
     printf( "\nDevice Summary -----------------------------------------------------------------\n" );
     void *handle;
     int enum_modifier = PAPI_DEV_TYPE_ENUM__ALL;
-    int id, vendor_id, dev_count;
-    const char *vendor_name, *status;
+    int id, vendor_id, dev_count, status;
+    const char *vendor_name, *status_msg;
 
     printf( "Vendor           DevCount \n" );
     while (PAPI_enum_dev_type(enum_modifier, &handle) == PAPI_OK) {
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
-        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_STATUS, &status);
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_STATUS_MSG, &status_msg);
 
         printf( "%-18s (%d)\n", vendor_name, dev_count);
-        printf( " \\-> Status: %s\n", status );
+        printf( " \\-> Status message: %s\n", status_msg );
         printf( "\n" );
     }
 
@@ -126,8 +126,9 @@ main( int argc, char **argv )
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID, &vendor_id);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
+        PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_STATUS, &status);
 
-        if ( id == PAPI_DEV_TYPE_ID__CPU && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CPU && status == 1 ) {
             unsigned int numas = 1;
             for ( i = 0; i < dev_count; ++i ) {
                 const char *cpu_name;
@@ -220,9 +221,8 @@ main( int argc, char **argv )
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CUDA && status == 1 ) {
             printf( "Vendor                                : %s\n", vendor_name );
-
             for ( i = 0; i < dev_count; ++i ) {
                 unsigned long uid;
                 unsigned int warp_size, thread_per_block, block_per_sm;
@@ -281,7 +281,7 @@ main( int argc, char **argv )
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__ROCM && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__ROCM && status == 1 ) {
             printf( "Vendor                                : %s\n", vendor_name );
 
             unsigned long uid;

@@ -85,7 +85,8 @@ typedef struct {
     PAPI_dev_type_id_e id;
     char vendor[PAPI_MAX_STR_LEN];
     int vendor_id;
-    char status[PAPI_MAX_STR_LEN];
+    int status;
+    char status_msg[PAPI_MAX_STR_LEN];
     int num_devices;
     _sysdetect_dev_info_u *dev_info_arr;
 } _sysdetect_dev_type_info_t;

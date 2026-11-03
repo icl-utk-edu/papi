@@ -215,8 +215,11 @@ _sysdetect_get_dev_type_attr( void *handle, PAPI_dev_type_attr_e attr, void *val
         case PAPI_DEV_TYPE_ATTR__INT_COUNT:
             *(int *) val = dev_type_info->num_devices;
             break;
-        case PAPI_DEV_TYPE_ATTR__CHAR_STATUS:
-            *(const char **) val = dev_type_info->status;
+        case PAPI_DEV_TYPE_ATTR__INT_STATUS:
+            *(int *) val = dev_type_info->status;
+            break;
+        case PAPI_DEV_TYPE_ATTR__CHAR_STATUS_MSG:
+            *(const char **) val = dev_type_info->status_msg;
             break;
         default:
             papi_errno = PAPI_ENOSUPP;

@@ -17,6 +17,7 @@
 
 #include "sysdetect.h"
 #include "amd_gpu.h"
+#include "gpu_utils.h"
 
 #ifdef HAVE_HSA
 #include "hsa.h"
@@ -510,52 +511,57 @@ open_amd_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     memset(dev_type_info, 0, sizeof(*dev_type_info));
     dev_type_info->id = PAPI_DEV_TYPE_ID__ROCM;
     strcpy(dev_type_info->vendor, "AMD/ATI");
-    strcpy(dev_type_info->status, "Device Initialized");
+    strcpy(dev_type_info->status_msg, "Device attribute and affinity enabled.");
+    dev_type_info->status = 0;
+
+    const char *amd_pci_id = "0x1002";
+    int papi_errno = query_available_vendor_devices(amd_pci_id, &dev_type_info->num_devices);
+    if (papi_errno != PAPI_OK) {
+        const char *message = "Failed to query for AMD devices.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status_msg), dev_type_info->status_msg);
+        return;
+    }
+    if (dev_type_info->num_devices == 0) {
+        const char *message = "No AMD devices detected on the system."
+                              " Therefore, AMD device attribute/affinity is not available.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status_msg), dev_type_info->status_msg);
+        return;
+    }
+
+    _sysdetect_gpu_info_u *gpu_info = papi_calloc(dev_type_info->num_devices, sizeof(_sysdetect_gpu_info_u));
+    if (gpu_info == NULL) {
+        const char *message = "Failed to allocate memory for gpu_info in amd_gpu.c.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status_msg), dev_type_info->status_msg);
+        return;
+    }
 
 #ifdef HAVE_HSA
-    if (load_hsa_sym(dev_type_info->status)) {
+    if (load_hsa_sym(dev_type_info->status_msg)) {
         return;
     }
 
-    int dev_count = 0;
-    hsa_status_t status = get_device_count(&dev_count);
-    if (status != HSA_STATUS_SUCCESS) {
-        const char *message = "Unable to iterate over avaiable agents.";
-        int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-        if (count < 0 || count >= PAPI_MAX_STR_LEN) {
-            SUBDBG("Error message truncated.\n");
-        }
-
-        return;
-    }
-    dev_type_info->num_devices = dev_count;
-
-    _sysdetect_gpu_info_u *arr = papi_calloc(dev_count, sizeof(*arr));
-    fill_dev_info(arr);
+    fill_dev_info(gpu_info);
 
 #if defined(HAVE_AMD_SMI) || defined(HAVE_ROCM_SMI)
-    if (!load_smi_sym(dev_type_info->status)) {
-        fill_dev_affinity_info(arr, dev_count);
+    if (!load_smi_sym(dev_type_info->status_msg)) {
+        fill_dev_affinity_info(gpu_info, dev_type_info->num_devices);
         unload_smi_sym();
     }
 #else
-    const char *message = "PAPI_AMDSMI_ROOT (for ROCm >= 6.4.0) nor PAPI_ROCMSMI_ROOT (for ROCm < 6.4.0) set; therefore, no device affinity available.";
-    int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count < 0 || count >= PAPI_MAX_STR_LEN) {
-        SUBDBG("The status string for rocm_smi/amd_smi has been truncated; however, proceeding.\n");
-    }
+    const char *message = "The ROCm installation found does not contain a Systems Management Library header (amdsmi.h or rocm_smi.h)."
+                          " Therefore, AMD device affinity is not available. Set PAPI_AMDSMI_ROOT (ROCm >= 6.4.0) or PAPI_ROCMSMI_ROOT"
+                          " (ROCm < 6.4.0) and reconfigure PAPI.";
+    set_dev_type_info_status(message, sizeof(dev_type_info->status_msg), dev_type_info->status_msg);
 #endif /* HAVE_AMD_SMI || HAVE_ROCM_SMI */
 
     unload_hsa_sym();
-    dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
+    dev_type_info->status = 1;
 #else
-    const char *message = "rocm nor rocp_sdk configured. Set PAPI_ROCP_SDK_ROOT for ROCm versions >= 6.3.2 or"
-                          " PAPI_ROCM_ROOT for ROCm versions < 6.3.2.";
-    int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
-        SUBDBG("Error message truncated.");
-    }
+    const char *message = "A ROCm installation was not found. Therefore, AMD device attribute/affinity is not available."
+                          " Set PAPI_ROCP_SDK_ROOT (ROCm >= 6.3.2) or PAPI_ROCM_ROOT (ROCm <= 6.3.2) and reconfigure PAPI.";
+    set_dev_type_info_status(message, sizeof(dev_type_info->status_msg), dev_type_info->status_msg);
 #endif /* HAVE_HSA */
+    dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)gpu_info;
 }
 
 void
