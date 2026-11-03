@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
 
-        if ( id == PAPI_DEV_TYPE_ID__CPU && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CPU ) {
             int numas = 1;
             for ( i = 0; i < dev_count; ++i ) {
                 const char *cpu_name;
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CUDA ) {
             if (!quiet) {
                 printf( "Vendor                                : %s\n", vendor_name );
             }
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__ROCM && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__ROCM ) {
             if (!quiet) {
                 printf( "Vendor                                : %s\n", vendor_name );
             }
