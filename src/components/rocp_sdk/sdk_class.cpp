@@ -368,6 +368,8 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
     uint64_t device;
 
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
+        // Release the lock taken by dispatch_callback() for this dispatch.
+        agent_mutex.unlock();
         return;
     }
 
