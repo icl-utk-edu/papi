@@ -543,6 +543,8 @@ buffered_callback(rocprofiler_context_id_t,
 }
 
 /* ** */
+int read_sample();
+
 // Only listen for the ROCTX Pause and Resume calls.
 void
 tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
@@ -557,6 +559,13 @@ tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
         // Pausing only makes sense while an event set is counting.
         if( (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
             return;
+        }
+
+        // In device sampling mode the counter values are only updated when
+        // sampled, so take a sample now to include work done since the last
+        // PAPI_read().
+        if( RPSDK_MODE_DEVICE_SAMPLING == get_profiling_mode() ){
+            read_sample();
         }
 
         // Stopping the context can still deliver records of dispatches that
