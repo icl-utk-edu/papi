@@ -38,4 +38,7 @@ int rocd_ctx_stop(rocd_ctx_t ctx);
 int rocd_ctx_read(rocd_ctx_t ctx, long long **counters);
 int rocd_ctx_reset(rocd_ctx_t ctx);
 
+/* misc. */
+int rocd_get_chip_name(char *name);
+
 #endif /* End of __ROC_DISPATCH_H__ */

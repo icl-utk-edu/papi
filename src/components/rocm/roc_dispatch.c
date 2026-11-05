@@ -110,3 +110,9 @@ rocd_ctx_reset(rocd_ctx_t ctx)
 {
     return rocp_ctx_reset(ctx);
 }
+
+int
+rocd_get_chip_name(char *name)
+{
+    return rocc_get_chip_name(name);
+}
