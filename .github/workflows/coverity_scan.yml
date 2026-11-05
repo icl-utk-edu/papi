@@ -1,0 +1,50 @@
+name: Coverity Scan
+
+on:
+  # Temporary for testing before merge.
+  pull_request:
+    paths:
+      - '.github/workflows/coverity.yml'
+  schedule:
+    # Run the Coverity Scan every Monday at 12:00 a.m. EST.
+    - cron: '0 0 * * 1'
+      timezone: 'America/New_York'
+  workflow_dispatch:
+    inputs:
+      options:
+        description: 'Options that will be passed to ./configure.'
+        required: false
+        type: string
+
+jobs:
+  coverity_scan_papi:
+    defaults:
+      run:
+        working-directory: src
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+    steps:
+      - name: Checkout PAPI Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Configure PAPI
+        run: |
+          ./configure ${{ inputs.options }}
+      - name: Download Coverity Scan Tool
+        run: |
+          wget https://scan.coverity.com/download/linux64 \
+          --post-data 'token=${{ secrets.COVERITY_TOKEN }}&project=papi' \
+          -O coverity_tool.tgz
+          tar xvf coverity_tool.tgz
+      - name: Run the Coverity Scan Tool
+        run: |
+          ./cov-analysis-linux64-*/bin/cov-build --dir cov-int make
+          tar czvf papi.tgz cov-int
+      - name: Upload the Coverity Scan Results
+        run: |
+          curl --form token=${{ secrets.COVERITY_TOKEN }} \
+               --form email=${{ secrets.COVERTIY_EMAIL }} \
+               --form file=@papi.tgz \
+               --form version='Commit Id ${GITHUB_SHA::6}.' \
+               --form description='$(TZ=America/New_York date +'Coverity Scan on %m-%d-%Y at %I:%M EST').' \
+               https://scan.coverity.com/builds?project=papi
