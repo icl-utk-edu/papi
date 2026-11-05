@@ -132,6 +132,7 @@ allocate_cpu( unsigned int cpu_num )
 
 error_free_contexts:
    for ( i--; i >= 0; i-- ) papi_free( cpu->context[i] );
+   papi_free( cpu->running_eventset );
 error_free_context:
    papi_free( cpu->context );
 error_free_cpu:
