@@ -56,7 +56,6 @@ static int load_cupti_common_sym(void);
 // Unload the loaded functions from Cuda toolkit e.g. cupti or runtime
 static int unload_cudart_sym(void);
 static int unload_cupti_common_sym(void);
-static void unload_linked_cudart_path(void);
 
 // Load necessary nvml functions
 static int load_nvml_for_cuda_sym(void);
@@ -65,12 +64,7 @@ static int load_nvml_for_cuda_sym(void);
 static int unload_nvml_for_cuda_sym(void);
 
 // Functions to get library versions 
-static int util_dylib_cu_runtime_version(void);
 static int util_dylib_cupti_version(void);
-
-// Functions to get cuda runtime library path
-static int dl_iterate_phdr_cb(struct dl_phdr_info *info, __attribute__((unused)) size_t size, __attribute__((unused)) void *data);
-static int get_user_cudart_path(void);
 
 // Function to determine compute capabilities
 static int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs);
@@ -79,7 +73,6 @@ static int compute_capabilities_on_system(sys_compute_capabilities_e *system_ccs
 static int get_enabled_devices(void); 
 
 // misc.
-static int _devmask_events_get(cuptiu_event_table_t *evt_table, gpu_occupancy_t *bitmask);
 static int verify_cuda_toolkit_supports_architectures_on_machine(void);
 static int verify_driver_branch_supports_legacy_apis(sys_compute_capabilities_e ccs_on_system);
 static const char *find_path_to_nvcc(char *path_from_env);
@@ -258,6 +251,10 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
 {
     char pathToSharedLibrary[PAPI_HUGE_STR_LEN];
     const char *standardSubPaths[3];
+    standardSubPaths[0] = NULL;
+    standardSubPaths[1] = NULL;
+    standardSubPaths[2] = NULL;
+
     // Case for when a user provides an exact path e.g. PAPI_CUDA_RUNTIME
     // and we do not want to search subpaths
     if (soMainName == NULL) {
@@ -289,7 +286,7 @@ void *search_and_load_shared_objects(const char *parentPath, const char *soMainN
     char directoryPathToSearch[PAPI_HUGE_STR_LEN];
     void *so = NULL;
     char *soNameFound;
-    int i, strLen;
+    int i;
     for (i = 0; standardSubPaths[i] != NULL; i++) {
         // Create path to search for dl names
         int strLen = snprintf(directoryPathToSearch, PAPI_HUGE_STR_LEN, standardSubPaths[i], parentPath);
@@ -573,13 +570,6 @@ int cuptic_shutdown(void)
     unload_cupti_common_sym();
     unload_nvml_for_cuda_sym();
     return PAPI_OK;
-}
-
-int util_dylib_cu_runtime_version(void)
-{
-    int runtimeVersion;
-    cudaArtCheckErrors(cudaRuntimeGetVersionPtr(&runtimeVersion), return PAPI_EMISC);
-    return runtimeVersion;
 }
 
 int util_dylib_cupti_version(void)
@@ -917,7 +907,8 @@ int verify_cuda_toolkit_supports_architectures_on_machine(void)
     char compute_capability[PAPI_MAX_STR_LEN] = { 0 };
     int dev_idx;
     for (dev_idx = 0; dev_idx < nvidia_device_count; dev_idx++) {
-        struct cudaDeviceProp prop = { { 0 } };
+        struct cudaDeviceProp prop;
+        memset(&prop, 0, sizeof(prop));
         cudaArtCheckErrors( cudaGetDevicePropertiesPtr(&prop, dev_idx), return PAPI_EMISC );
         strLen = snprintf(compute_capability, sizeof(compute_capability), "%d%d", prop.major, prop.minor);
         if (strLen < 0 || (size_t) strLen >= sizeof(compute_capability)) {
@@ -1261,7 +1252,7 @@ int cuptic_ctxarr_destroy(cuptic_info_t *pinfo)
 
 int cuptic_device_acquire(void *evt_table, int flag)
 {
-    int i;
+    unsigned int i;
     gpu_occupancy_t bitmask = 0;
     switch(flag) {
         case API_LEGACY:
@@ -1298,7 +1289,7 @@ int cuptic_device_acquire(void *evt_table, int flag)
 
 int cuptic_device_release(void *evt_table, int flag)
 {
-    int i;
+    unsigned int i;
     gpu_occupancy_t bitmask = 0;
     switch(flag) {
         case API_LEGACY:
