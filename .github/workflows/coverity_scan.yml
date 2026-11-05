@@ -4,7 +4,7 @@ on:
   # Temporary for testing before merge.
   pull_request:
     paths:
-      - '.github/workflows/coverity.yml'
+      - '.github/workflows/coverity_scan.yml'
   schedule:
     # Run the Coverity Scan every Monday at 12:00 a.m. EST.
     - cron: '0 0 * * 1'
@@ -33,7 +33,7 @@ jobs:
       - name: Download Coverity Scan Tool
         run: |
           wget https://scan.coverity.com/download/linux64 \
-          --post-data 'token=${{ secrets.COVERITY_TOKEN }}&project=papi' \
+          --post-data 'token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=papi' \
           -O coverity_tool.tgz
           tar xvf coverity_tool.tgz
       - name: Run the Coverity Scan Tool
@@ -42,8 +42,8 @@ jobs:
           tar czvf papi.tgz cov-int
       - name: Upload the Coverity Scan Results
         run: |
-          curl --form token=${{ secrets.COVERITY_TOKEN }} \
-               --form email=${{ secrets.COVERTIY_EMAIL }} \
+          curl --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
+               --form email=${{ secrets.COVERTIY_SCAN_EMAIL }} \
                --form file=@papi.tgz \
                --form version='Commit Id ${GITHUB_SHA::6}.' \
                --form description='$(TZ=America/New_York date +'Coverity Scan on %m-%d-%Y at %I:%M EST').' \
