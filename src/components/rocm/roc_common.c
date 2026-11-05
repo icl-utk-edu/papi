@@ -209,7 +209,11 @@ load_hsa_sym(void)
     char pathname[PATH_MAX] = { 0 };
     char *rocm_root = getenv("PAPI_ROCM_ROOT");
     if (rocm_root == NULL) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.");
+        size_t availBytes = sizeof(error_string);
+        int expect = snprintf(error_string, availBytes, "Can't load libhsa-runtime64.so, PAPI_ROCM_ROOT not set.");
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated error message. Proceeding.");
+        }
         goto fn_fail;
     }
 
@@ -217,7 +221,11 @@ load_hsa_sym(void)
 
     hsa_dlp = dlopen(pathname, RTLD_NOW | RTLD_GLOBAL);
     if (hsa_dlp == NULL) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "%s", dlerror());
+        size_t availBytes = sizeof(error_string);
+        int expect = snprintf(error_string, availBytes, "%s", dlerror());
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated error message. Proceeding.");
+        }
         goto fn_fail;
     }
 
@@ -239,7 +247,11 @@ load_hsa_sym(void)
 
     papi_errno = (hsa_not_initialized) ? PAPI_EMISC : PAPI_OK;
     if (papi_errno != PAPI_OK) {
-        snprintf(error_string, PAPI_MAX_STR_LEN, "Error while loading hsa symbols.");
+        size_t availBytes = sizeof(error_string);
+        int expect = snprintf(error_string, availBytes, "Error while loading hsa symbols.");
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated error message. Proceeding.");
+        }
     }
 
   fn_exit:
@@ -280,7 +292,11 @@ init_device_table(void)
     if (hsa_errno != HSA_STATUS_SUCCESS) {
         const char *error_string_p;
         hsa_status_string_p(hsa_errno, &error_string_p);
-        snprintf(error_string, PAPI_MAX_STR_LEN, "%s", error_string_p);
+        size_t availBytes = sizeof(error_string);
+        int expect = snprintf(error_string, availBytes, "%s", error_string_p);
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated error message. Proceeding.");
+        }
         goto fn_fail;
     }
 
