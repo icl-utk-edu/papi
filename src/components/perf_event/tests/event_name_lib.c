@@ -25,7 +25,6 @@ char *get_offcore_event(char *event, int size) {
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:LOCAL_DRAM",size);
 			return event;
-			break;
 
 			case 37:
 			case 44: /* Westmere */
@@ -33,21 +32,18 @@ char *get_offcore_event(char *event, int size) {
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:LOCAL_DRAM",size);
 			return event;
-			break;
 
 			case 45: /* SandyBridge EP */
 			case 42: /* SandyBridge */
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 58: /* IvyBridge */
 			case 62: /* Ivy Trail */
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 60: /* Haswell */
 			case 69:
@@ -56,7 +52,6 @@ char *get_offcore_event(char *event, int size) {
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 61: /* Broadwell */
 			case 71:
@@ -65,7 +60,6 @@ char *get_offcore_event(char *event, int size) {
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 78: /* Skylake */
 			case 94:
@@ -73,20 +67,17 @@ char *get_offcore_event(char *event, int size) {
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 142: /* Kabylake */
 			case 158:
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			case 87: /* Knights Landing */
 			strncpy(event,
 			"OFFCORE_RESPONSE_0:DMND_DATA_RD:ANY_RESPONSE",size);
 			return event;
-			break;
 
 			}
 		}
@@ -150,7 +141,6 @@ char *get_invalid_event_name(char *event, int size) {
 			strncpy(event,
 			"DTLB_LOAD_MISSES:MISS_CAUSES_A_WALK,DTLB_STORE_MISSES:MISS_CAUSES_A_WALK:u=1",size);
 			return event;
-			break;
 
 			}
 		}

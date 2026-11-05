@@ -111,10 +111,9 @@ int branches_testcode(void) {
 	);
 
 	return 0;
+#else
+	return CODE_UNIMPLEMENTED;
 #endif
-
-    return -1;
-
 }
 
 
