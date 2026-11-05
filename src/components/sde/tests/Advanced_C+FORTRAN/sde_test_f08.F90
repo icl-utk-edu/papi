@@ -93,7 +93,11 @@
           call papif_sde_register_counter_cb(handle, 'FP_EVENT', PAPI_SDE_RO, PAPI_SDE_long_long, c_funloc(f08_callback), C_loc(ev_cnt1), error)
           if(error .ne. PAPI_OK ) print *,'Error in sde_register_counter_cb'
 
-          call xandria_init()
+          call xandria_init(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_init'
+              call EXIT(ret_val)
+          endif
           call gamum_init()
           call recorder_init()
 
@@ -103,12 +107,8 @@
 
           call papif_library_init(ret_val)
           if( ret_val .ne. PAPI_VER_CURRENT ) then
-              print *,'Error at papif_init', ret_val, '!=', PAPI_VER_CURRENT
-              print *,'PAPI_EINVAL', PAPI_EINVAL
-              print *,'PAPI_ENOMEM', PAPI_ENOMEM
-              print *,'PAPI_ECMP', PAPI_ECMP
-              print *,'PAPI_ESYS', PAPI_ESYS
-              stop
+              print *,'Error at papif_library_init'
+              call EXIT(ret_val)
           endif
 
           call recorder_do_work()
@@ -117,27 +117,27 @@
           call papif_create_eventset( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_create_eventset'
-              stop
+              call EXIT(ret_val)
           endif
 
           eventset2 = PAPI_NULL
           call papif_create_eventset( eventset2, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_create_eventset'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 1
           call papif_event_name_to_code( 'sde:::TESTLIB::TESTEVENT', eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 !-------------------------------------------------------------------------------
@@ -149,16 +149,20 @@
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           ev_cnt1 = ev_cnt1+100
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
     
           call recorder_do_work()
@@ -173,13 +177,13 @@
           call papif_event_name_to_code( 'sde:::TESTLIB::FP_EVENT', eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           internal_variable = 12.0
@@ -191,7 +195,7 @@
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           ev_cnt1 = ev_cnt1+9
@@ -201,7 +205,7 @@
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (9) = ', values(1)
@@ -220,7 +224,7 @@
           call papif_event_name_to_code( 'sde:::TESTLIB::FLOATEVENT', eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call recorder_do_work()
@@ -228,7 +232,7 @@
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 4
@@ -239,20 +243,20 @@
           call papif_event_name_to_code( 'sde:::Xandria::EV_I2', junk, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 5
           call papif_add_named_event( eventset, 'sde:::Xandria::RW_I1', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           do i=1,37
@@ -263,7 +267,7 @@
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           ev_cnt1 = ev_cnt1+2
@@ -271,13 +275,17 @@
           internal_variable = 20.12
           internal_variable_int = 20
 
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
 ! Adding the 5th counter into a separate eventset so we can write into it.
           call papif_add_named_event( eventset2, 'sde:::Xandria::RW_I1', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 !--------------------
@@ -286,7 +294,7 @@
           call papif_read(eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_read'
-              stop
+              call EXIT(ret_val)
           endif
 
           do i=1,370
@@ -324,9 +332,21 @@
               all_tests_passed = 0
           endif
 
-          call xandria_do_work()
-          call xandria_do_work()
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
 !--------------------
           if( be_verbose .eq. 1 ) print *,''
@@ -334,7 +354,7 @@
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A24,I2)',   '  Xandria::RW_I1 (35) = ', values(5)
@@ -348,19 +368,19 @@
           call papif_start( eventset2, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_write(eventset2, values_to_write, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_write'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_read(eventset2, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_read'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A23,I1)',   '  Xandria::RW_I1 (9) = ', values(1)
@@ -372,14 +392,14 @@
           call papif_stop( eventset2, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 !-------------------------------------------------------------------------------
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           ev_cnt1 = ev_cnt1+5
@@ -387,14 +407,26 @@
           internal_variable = internal_variable + 30.1
           internal_variable_int = 30
 
-          call xandria_do_work()
-          call xandria_do_work()
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_read(eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_read'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A27,I1)',  '  TESTLIB::TESTEVENT (5) = ', values(1)
@@ -429,13 +461,13 @@
           call papif_reset(eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_reset'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
 
@@ -468,27 +500,27 @@
           call papif_event_name_to_code('sde:::Xandria::EV_R1' , codes(1), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 7
           call papif_event_name_to_code('sde:::Xandria::EV_R2' , codes(2), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 8
           call papif_event_name_to_code('sde:::Xandria::EV_R3' , codes(3), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_events( eventset, codes, 3, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_events'
-              stop
+              call EXIT(ret_val)
           endif
 
 
@@ -502,17 +534,29 @@
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
-          call xandria_do_work()
-          call xandria_do_work()
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A27,I2)',   '  TESTLIB::TESTEVENT (0) = ', values(1)
@@ -569,27 +613,27 @@
           call papif_event_name_to_code('sde:::Gamum::ev1' , codes(1), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 10
           call papif_event_name_to_code('sde:::Gamum::ev3' , codes(2), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 11
           call papif_event_name_to_code('sde:::Gamum::ev4' , codes(3), ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_events( eventset, codes, 3, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_events'
-              stop
+              call EXIT(ret_val)
           endif
 
 !-------------------------------------------------------------------------------
@@ -598,7 +642,7 @@
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           call gamum_do_work()
@@ -613,7 +657,7 @@
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
 
@@ -645,30 +689,38 @@
           call papif_event_name_to_code('sde:::Xandria::LATE' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! We register this event after the placeholder was created
-          call xandria_add_more()
+          call xandria_add_more(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_add_more'
+              call EXIT(ret_val)
+          endif
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           value_d = transfer(values(9), 1.0D0)
@@ -710,29 +762,41 @@
           call papif_event_name_to_code('sde:::Xandria::WRONG' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
-          call xandria_do_work()
-          call xandria_do_work()
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A23,I2)',   '  Xandria::LATE (21) = ', values(12)
@@ -753,32 +817,32 @@
           call papif_event_name_to_code('sde:::Gamum::group0' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 15
           call papif_event_name_to_code('sde:::Gamum::papi_counter' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           call gamum_do_work()
@@ -787,7 +851,7 @@
           call papif_read(eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_read'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A22,I2)',   '  Xandria::LATE (0) = ', values(12)
@@ -832,7 +896,11 @@
           do i=1,5
               call gamum_do_work()
           end do
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then 
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
           do i=1,217
               call recorder_do_work()
           end do
@@ -840,7 +908,7 @@
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           value_d = transfer(values(9), 1.0D0)
@@ -877,54 +945,54 @@
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:CNT', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 17
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MIN', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 18
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:Q1', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 19
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MED', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 20
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:Q3', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
 ! 21
           call papif_add_named_event(eventset, 'sde:::Lib_With_Recorder::simple_recording:MAX', ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_named_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A51,I4)',     '  Lib_With_Recorder::simple_recording:CNT (1036) = ', values(16)
@@ -955,29 +1023,41 @@
           call papif_event_name_to_code('sde:::Xandria::XND_CREATED' , eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_name_to_code'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_add_event( eventset, eventcode, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_add_event'
-              stop
+              call EXIT(ret_val)
           endif
 
           call papif_start( eventset, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_start'
-              stop
+              call EXIT(ret_val)
           endif
 
-          call xandria_do_work()
-          call xandria_do_work()
-          call xandria_do_work()
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
+          call xandria_do_work(ret_val)
+          if( ret_val .ne. PAPI_OK ) then
+              print *,'Error at xandria_do_work'
+              call EXIT(ret_val)
+          endif
 
           call papif_stop( eventset, values, ret_val )
           if( ret_val .ne. PAPI_OK ) then
               print *,'Error at papif_stop'
-              stop
+              call EXIT(ret_val)
           endif
 
           if( be_verbose .eq. 1 ) print '(A30,I2)',   '  Xandria::XND_CREATED (27) = ', values(22)
