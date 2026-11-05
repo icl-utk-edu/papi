@@ -613,7 +613,11 @@ construct_qualified_event(hwi_presets_t *prstPtr) {
             PAPIERROR("Failed to get code for native event %s used in derived event %s\n",
                       tmpEvent, prstPtr->symbol);
             ret = PAPI_EINVAL;
+            goto done;
         }
+
+        free(tmpEvent), tmpEvent = NULL;
+        free(tmpQuals), tmpQuals = NULL;
     }
 
 done:
@@ -2805,6 +2809,7 @@ _papi_hwi_native_name_to_code( const char *in, int *out )
 	if (_papi_hwd[cidx]->cmp_info.disabled &&
 	    _papi_hwd[cidx]->cmp_info.disabled != PAPI_EDELAY_INIT) {
 		INTDBG("Component %s at index %d is currently disabled.\n", _papi_hwd[cidx]->cmp_info.name, cidx);
+                free (full_event_name), full_event_name = NULL;
 		return _papi_hwd[cidx]->cmp_info.disabled;
 	}
 
