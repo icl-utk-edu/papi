@@ -1489,12 +1489,11 @@ PAPI_FCALL( papif_get_dev_type_attr, PAPIF_GET_DEV_TYPE_ATTR, (int *handle_index
         case PAPI_DEV_TYPE_ATTR__INT_PAPI_ID:
         case PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID:
         case PAPI_DEV_TYPE_ATTR__INT_COUNT:
-        case PAPI_DEV_TYPE_ATTR__INT_STATUS:
             *check = PAPI_get_dev_type_attr(sysdetect_fort_handle, *attribute,
                                             value);
             break;
         case PAPI_DEV_TYPE_ATTR__CHAR_NAME:
-        case PAPI_DEV_TYPE_ATTR__CHAR_STATUS_MSG:
+        case PAPI_DEV_TYPE_ATTR__CHAR_STATUS:
             *check = PAPI_get_dev_type_attr(sysdetect_fort_handle, *attribute,
                                             &string_ptr);
             if (*check != PAPI_OK) {

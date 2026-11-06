@@ -140,8 +140,7 @@ open_cpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     CPU_CALL(cpu_get_attribute(CPU_ATTR__VENDOR_ID, &dev_type_info->vendor_id),
              dev_type_info->vendor_id = -1);
 
-    strcpy(dev_type_info->status_msg, "Device enabled.");
-    dev_type_info->status = 1;
+    strcpy(dev_type_info->status, "Device enabled.");
     dev_type_info->num_devices = 1;
 
     _sysdetect_cpu_info_t *arr = papi_calloc(1, sizeof(*arr));

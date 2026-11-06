@@ -1063,8 +1063,7 @@ typedef enum {
     PAPI_DEV_TYPE_ATTR__INT_VENDOR_ID,
     PAPI_DEV_TYPE_ATTR__CHAR_NAME,
     PAPI_DEV_TYPE_ATTR__INT_COUNT,
-    PAPI_DEV_TYPE_ATTR__INT_STATUS,
-    PAPI_DEV_TYPE_ATTR__CHAR_STATUS_MSG,
+    PAPI_DEV_TYPE_ATTR__CHAR_STATUS,
 } PAPI_dev_type_attr_e;
 
 /** @ingroup papi_data_structures
