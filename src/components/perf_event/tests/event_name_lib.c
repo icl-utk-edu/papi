@@ -94,7 +94,6 @@ char *get_offcore_event(char *event, int size) {
 			"OFFCORE_RESPONSE_0:DEMAND_DATA_RD_LOCAL_DRAM",size);
 			return event;
 			break;
-
 			}
 		}
 		return NULL;
