@@ -1,0 +1,77 @@
+name: gpu health check
+
+# Optional, scheduled check of the GPUs on the self-hosted runners.
+# It is not part of the pull request CI and is not meant to be a required check.
+# The action supports NVIDIA and AMD cards only, so gpu_intel is not covered.
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC
+    - cron: '0 6 * * 1'
+  # allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpu-health-check
+  cancel-in-progress: false
+
+jobs:
+  nvidia:
+    # do not queue forever on forks, which have no self-hosted runners
+    if: github.repository == 'icl-utk-edu/papi'
+    runs-on: [self-hosted, gpu_nvidia]
+    timeout-minutes: 30
+    steps:
+      # nvcc is only available through the module system on these runners, so put it on PATH for the next steps
+      - name: put nvcc and g++ on PATH
+        run: |
+          source /etc/profile
+          export MODULEPATH=$MODULEPATH:/apps/spacks/cuda/share/spack/modules/linux-rocky9-skylake_avx512/
+          module load gcc@11
+          module load cuda/12.8.0
+          command -v nvcc g++
+          dirname "$(command -v nvcc)" >> "$GITHUB_PATH"
+          dirname "$(command -v g++)" >> "$GITHUB_PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+      - id: health
+        uses: pantheongpu/gpu-health-check@1913a4746f390e2ae8849173c127954e154d9e5e # v0.1.1
+        with:
+          platform: cuda
+          # the action uploads with an actions/upload-artifact tag, so upload the reports below with the SHA pinned version
+          upload-report: 'false'
+      - if: always() && steps.health.outputs.report-dir != ''
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: gpu-health-nvidia
+          path: ${{ steps.health.outputs.report-dir }}/*.json
+          if-no-files-found: ignore
+
+  amd:
+    if: github.repository == 'icl-utk-edu/papi'
+    runs-on: [self-hosted, gpu_amd]
+    timeout-minutes: 30
+    steps:
+      # hipcc is only available through the module system on these runners, so put it on PATH for the next steps
+      - name: put hipcc and g++ on PATH
+        run: |
+          source /etc/profile
+          module load gcc@11
+          module load rocm/7.0.1
+          command -v hipcc g++
+          dirname "$(command -v hipcc)" >> "$GITHUB_PATH"
+          dirname "$(command -v g++)" >> "$GITHUB_PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+      - id: health
+        uses: pantheongpu/gpu-health-check@1913a4746f390e2ae8849173c127954e154d9e5e # v0.1.1
+        with:
+          platform: hip
+          upload-report: 'false'
+      - if: always() && steps.health.outputs.report-dir != ''
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: gpu-health-amd
+          path: ${{ steps.health.outputs.report-dir }}/*.json
+          if-no-files-found: ignore
