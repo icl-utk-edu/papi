@@ -37,7 +37,10 @@
 #include <map>
 #include <mutex>
 
-#include "level_zero/zet_api.h"
+#include <level_zero/zet_api.h>
+#include <level_zero/layers/zel_tracing_api.h>
+
+#include "papi_debug.h"
 
 #include "GPUMetricInterface.h"
 
@@ -172,7 +175,11 @@ private: // Fields
 
 	zet_metric_streamer_handle_t m_metricStreamer;
 	zet_metric_query_pool_handle_t m_queryPool;
-	zet_tracer_exp_handle_t	m_tracer;
+    #if defined(PAPI_USE_ZET_EXP_API)
+    zet_tracer_exp_handle_t m_tracer;
+    #else
+    zel_tracer_handle_t m_tracer;
+    #endif
 
 	volatile int	m_status;
 	uint32_t		m_numDevices;
