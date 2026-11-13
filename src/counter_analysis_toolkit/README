@@ -15,7 +15,7 @@ The following five flags specify the corresponding benchmarks:
   -dcw     Data cache writing kernels.
   -flops   Floating point operations kernels.
   -ic      Instruction cache kernels.
-  -vec     Vector FLOPs kernels.
+  -vec     Vector-FLOPs kernels.
   -instr   Instrution kernels.
 
 Each line in the event-list file should contain ether the name of a base 
