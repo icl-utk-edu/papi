@@ -88,6 +88,12 @@ char *get_offcore_event(char *event, int size) {
 			return event;
 			break;
 
+			case 143: /* Sapphire Rapids */
+			case 173: /* Granite Rapids */
+			strncpy(event,
+			"OFFCORE_RESPONSE_0:DEMAND_DATA_RD_LOCAL_DRAM",size);
+			return event;
+			break;
 			}
 		}
 		return NULL;
@@ -147,6 +153,9 @@ char *get_invalid_event_name(char *event, int size) {
 			case 78: /* Skylake */
 			case 94:
 			case 85: /* Skylake-X */
+
+			case 143: /* Sapphire Rapids */
+			case 173: /* Granite Rapids */
 			strncpy(event,
 			"DTLB_LOAD_MISSES:MISS_CAUSES_A_WALK,DTLB_STORE_MISSES:MISS_CAUSES_A_WALK:u=1",size);
 			return event;
