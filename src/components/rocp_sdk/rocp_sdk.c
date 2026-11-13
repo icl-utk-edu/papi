@@ -143,13 +143,18 @@ rocp_sdk_init_component(int cid)
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        size_t availBytes = sizeof(_rocp_sdk_vector.cmp_info.disabled_reason);
+        int expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, availBytes, "%s", err_string);
+        if (expect < 0 || expect >= availBytes) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         return papi_errno;
     }
 
-    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", \
+    size_t availBytes = sizeof(_rocp_sdk_vector.cmp_info.disabled_reason);
+    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, availBytes, "%s", \
                           "Not initialized. Access component events to initialize it.");
-    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+    if (strLen < 0 || strLen >= availBytes) {
         SUBDBG("Failed to fully write initial disabled_reason.\n");
         return PAPI_EBUF;
     }
@@ -200,8 +205,9 @@ rocp_sdk_init_private(void)
         goto fn_exit;
     }
 
-    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_HUGE_STR_LEN, "%s", "");
-    if (strLen < 0 || strLen >= PAPI_HUGE_STR_LEN) {
+    size_t availBytes = sizeof(_rocp_sdk_vector.cmp_info.disabled_reason);
+    int strLen = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, availBytes, "%s", "");
+    if (strLen < 0 || strLen >= availBytes) {
         SUBDBG("Failed to write empty disabled_reason.\n");
     }
 
@@ -215,7 +221,11 @@ rocp_sdk_init_private(void)
         _rocp_sdk_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocprofiler_sdk_err_get_last(&err_string);
-        snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, "%s", err_string);
+        size_t availBytes = sizeof(_rocp_sdk_vector.cmp_info.disabled_reason);
+        int expect = snprintf(_rocp_sdk_vector.cmp_info.disabled_reason, availBytes, "%s", err_string);
+        if (expect < 0 || expect >= availBytes) {
+            SUBDBG("Failed to write disabled reason.");
+        }
         goto fn_fail;
     }
 
