@@ -20,7 +20,7 @@ main( int argc, char **argv )
 {
 	int retval;
 	int code = PAPI_TOT_CYC, last;
-	char event_name[PAPI_MAX_STR_LEN];
+	char event_name[PAPI_2MAX_STR_LEN];
 	const PAPI_component_info_t *cmp_info;
 	int quiet;
 
