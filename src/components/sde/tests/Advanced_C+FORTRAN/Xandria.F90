@@ -82,12 +82,13 @@
 
         end function papi_sde_hook_list_events
 
-        subroutine xandria_init
+        subroutine xandria_init(error)
           use, intrinsic :: ISO_C_BINDING
           use  :: xandria_mod
           implicit none
 
-          integer :: cntr_mode, rw_mode, cntr_type, error
+          integer, intent(out) :: error
+          integer :: cntr_mode, rw_mode, cntr_type
 
           cntr_i1 = 0
           cntr_i2 = 0
@@ -104,43 +105,43 @@
           call papif_sde_init('Xandria', xandria_sde_handle, error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'EV_I1', cntr_mode, cntr_type, C_loc(cntr_i1), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'EV_I2', cntr_mode, cntr_type, C_loc(cntr_i2), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'RW_I1', rw_mode, cntr_type, C_loc(cntr_rw_i1), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'EV_R1', cntr_mode, cntr_type, C_loc(cntr_i10), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'EV_R2', cntr_mode, cntr_type, C_loc(cntr_i20), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_register_counter(xandria_sde_handle, 'EV_R3', cntr_mode, cntr_type, C_loc(cntr_i30), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
           call papif_sde_create_counter(xandria_sde_handle, 'XND_CREATED', cntr_type, C_null_ptr, error)
@@ -150,31 +151,32 @@
           endif
         end subroutine
 
-        subroutine xandria_add_more
+        subroutine xandria_add_more(error)
           use, intrinsic :: ISO_C_BINDING
           use  :: xandria_mod
           implicit none
 
-          integer :: cntr_mode, cntr_type, error
+          integer, intent(out) :: error
+          integer :: cntr_mode, cntr_type
           cntr_mode = PAPI_SDE_RO+PAPI_SDE_DELTA
           cntr_type = PAPI_SDE_long_long
 
           call papif_sde_register_counter(xandria_sde_handle, 'LATE', cntr_mode, cntr_type, C_loc(cntr_iL), error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_register_counter() '
-              stop
+              return
           endif
 
         end subroutine
 
-        subroutine xandria_do_work
+        subroutine xandria_do_work(error)
           use, intrinsic :: ISO_C_BINDING
           use  :: xandria_mod
 
           implicit none
 
           TYPE(C_ptr) :: cntr_handle
-          integer :: error
+          integer, intent(out) :: error
 
           cntr_i1 = cntr_i1+1
           cntr_i2 = cntr_i2+3
@@ -190,13 +192,13 @@
           call papif_sde_get_counter_handle(xandria_sde_handle, 'XND_CREATED', cntr_handle, error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_get_counter_handle() '
-              stop
+              return
           endif
 
           call papif_sde_inc_counter( cntr_handle, 9_8, error)
           if( error .ne. PAPI_OK ) then
               print *,'Error in papif_sde_inc_counter() '
-              stop
+              return
           endif
 
         end subroutine
