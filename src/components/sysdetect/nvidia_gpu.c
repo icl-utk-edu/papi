@@ -16,6 +16,7 @@
 
 #include "sysdetect.h"
 #include "nvidia_gpu.h"
+#include "gpu_utils.h"
 
 #ifdef HAVE_CUDA
 #include "cuda.h"
@@ -25,7 +26,6 @@ static void *cuda_dlp = NULL;
 static CUresult (*cuInitPtr)( unsigned int flags ) = NULL;
 static CUresult (*cuDeviceGetPtr)( CUdevice *device, int ordinal ) = NULL;
 static CUresult (*cuDeviceGetNamePtr)( char *name, int len, CUdevice dev ) = NULL;
-static CUresult (*cuDeviceGetCountPtr)( int *count ) = NULL;
 static CUresult (*cuDeviceGetAttributePtr)( int *pi, CUdevice_attribute attrib,
                                             CUdevice dev ) = NULL;
 static CUresult (*cuDeviceGetPCIBusIdPtr)( char *bus_id_string, int len,
@@ -34,14 +34,6 @@ static CUresult (*cuDeviceGetPCIBusIdPtr)( char *bus_id_string, int len,
 #define CU_CALL(call, err_handle) do {                                          \
     CUresult _status = (call);                                                  \
     if (_status != CUDA_SUCCESS) {                                              \
-        if (_status == CUDA_ERROR_NOT_INITIALIZED) {                            \
-            if ((*cuInitPtr)(0) == CUDA_SUCCESS) {                              \
-                _status = (call);                                               \
-                if (_status == CUDA_SUCCESS) {                                  \
-                    break;                                                      \
-                }                                                               \
-            }                                                                   \
-        }                                                                       \
         SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
         err_handle;                                                             \
     }                                                                           \
@@ -68,14 +60,6 @@ static nvmlReturn_t (*nvmlDeviceGetUUIDPtr)( nvmlDevice_t device, char *uuid,
 #define NVML_CALL(call, err_handle) do {                                        \
     nvmlReturn_t _status = (call);                                              \
     if (_status != NVML_SUCCESS) {                                              \
-        if (_status == NVML_ERROR_UNINITIALIZED) {                              \
-            if ((*nvmlInitPtr)() == NVML_SUCCESS) {                             \
-                _status = (call);                                               \
-                if (_status == NVML_SUCCESS) {                                  \
-                    break;                                                      \
-                }                                                               \
-            }                                                                   \
-        }                                                                       \
         SUBDBG("error: function %s failed with error %d.\n", #call, _status);   \
         err_handle;                                                             \
     }                                                                           \
@@ -189,7 +173,6 @@ cuda_is_enabled( void )
     return (cuInitPtr               != NULL &&
             cuDeviceGetPtr          != NULL &&
             cuDeviceGetNamePtr      != NULL &&
-            cuDeviceGetCountPtr     != NULL &&
             cuDeviceGetAttributePtr != NULL &&
             cuDeviceGetPCIBusIdPtr  != NULL);
 }
@@ -209,7 +192,6 @@ load_cuda_sym( char *status )
     cuInitPtr               = dlsym(cuda_dlp, "cuInit");
     cuDeviceGetPtr          = dlsym(cuda_dlp, "cuDeviceGet");
     cuDeviceGetNamePtr      = dlsym(cuda_dlp, "cuDeviceGetName");
-    cuDeviceGetCountPtr     = dlsym(cuda_dlp, "cuDeviceGetCount");
     cuDeviceGetAttributePtr = dlsym(cuda_dlp, "cuDeviceGetAttribute");
     cuDeviceGetPCIBusIdPtr  = dlsym(cuda_dlp, "cuDeviceGetPCIBusId");
 
@@ -235,7 +217,6 @@ unload_cuda_sym( void )
     cuInitPtr               = NULL;
     cuDeviceGetPtr          = NULL;
     cuDeviceGetNamePtr      = NULL;
-    cuDeviceGetCountPtr     = NULL;
     cuDeviceGetAttributePtr = NULL;
     cuDeviceGetPCIBusIdPtr  = NULL;
 
@@ -339,47 +320,72 @@ open_nvidia_gpu_dev_type( _sysdetect_dev_type_info_t *dev_type_info )
     memset(dev_type_info, 0, sizeof(*dev_type_info));
     dev_type_info->id = PAPI_DEV_TYPE_ID__CUDA;
     strcpy(dev_type_info->vendor, "NVIDIA");
-    strcpy(dev_type_info->status, "Device Initialized");
+    strcpy(dev_type_info->status, "Device attribute and affinity enabled.");
 
+    const char *nvidia_pci_id = "0x10de";
+    int papi_errno = query_available_vendor_devices(nvidia_pci_id, &dev_type_info->num_devices);
+    if (papi_errno != PAPI_OK) {
+        const char *message = "Failed to query for NVIDIA devices.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status); 
+        return;
+    }
+    if (dev_type_info->num_devices == 0) {
+        const char *message = "No NVIDIA devices detected on the system."
+                              " Therefore, NVIDIA device attribute/affinity is not available.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
+        return;
+    }
+
+    _sysdetect_gpu_info_u *gpu_info = papi_calloc(dev_type_info->num_devices, sizeof(_sysdetect_gpu_info_u));
+    if (gpu_info == NULL) {
+        const char *message = "Failed to allocate memory for gpu_info in nvidia_gpu.c.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
+        return;
+    }
 #ifdef HAVE_CUDA
     if (load_cuda_sym(dev_type_info->status)) {
         return;
     }
 
-    int dev, dev_count;
-    CU_CALL((*cuDeviceGetCountPtr)(&dev_count), return);
-    dev_type_info->num_devices = dev_count;
-    if (dev_count == 0) {
+    CUresult cu_result = (*cuInitPtr)(0);
+    if (cu_result != CUDA_SUCCESS) {
+        const char *message = "Failed to initialize the CUDA driver API.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
         return;
     }
 
-    _sysdetect_gpu_info_u *arr = papi_calloc(dev_count, sizeof(*arr));
-    for (dev = 0; dev < dev_count; ++dev) {
-        fill_dev_info(&arr[dev], dev);
+    int dev;
+    for (dev = 0; dev < dev_type_info->num_devices; ++dev) {
+        fill_dev_info(&gpu_info[dev], dev);
     }
 
 #ifdef HAVE_NVML
-    if (!load_nvml_sym(dev_type_info->status)) {
-        fill_dev_affinity_info(arr, dev_count);
-        unload_nvml_sym();
+    if (load_nvml_sym(dev_type_info->status)) {
+        return;
     }
+
+    nvmlReturn_t nvml_return = (*nvmlInitPtr)();
+    if (nvml_return != NVML_SUCCESS) {
+        const char *message = "Failed to initialize the NVML library.";
+        set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
+        return;
+    }
+
+    fill_dev_affinity_info(gpu_info, dev_type_info->num_devices);
+    unload_nvml_sym();
 #else
-    const char *message = "NVML not configured, no device affinity available";
-    int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
-        SUBDBG("Status string truncated.");
-    }
+    const char *message = "The Cuda Toolkit found does not contain the NVIDIA Management Library header (nvml.h)."
+                          " Therefore, NVIDIA device affinity is not available. Set PAPI_CUDA_ROOT and reconfigure PAPI.";
+    set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
 #endif /* HAVE_NVML */
 
     unload_cuda_sym();
-    dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)arr;
 #else
-    const char *message = "CUDA not configured, no CUDA device available";
-    int count = snprintf(dev_type_info->status, PAPI_MAX_STR_LEN, "%s", message);
-    if (count >= PAPI_MAX_STR_LEN) {
-        SUBDBG("Status string truncated.");
-    }
+    const char *message = "A Cuda Toolkit installation was not found. Therefore, NVIDIA device attribute/affinity is not available."
+                          " Set PAPI_CUDA_ROOT and reconfigure PAPI.";
+    set_dev_type_info_status(message, sizeof(dev_type_info->status), dev_type_info->status);
 #endif /* HAVE_CUDA */
+    dev_type_info->dev_info_arr = (_sysdetect_dev_info_u *)gpu_info;
 }
 
 void

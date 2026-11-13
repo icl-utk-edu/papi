@@ -115,7 +115,7 @@ main( int argc, char **argv )
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_STATUS, &status);
 
         printf( "%-18s (%d)\n", vendor_name, dev_count);
-        printf( " \\-> Status: %s\n", status );
+        printf( " \\-> Status message: %s\n", status );
         printf( "\n" );
     }
 
@@ -127,7 +127,7 @@ main( int argc, char **argv )
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__CHAR_NAME, &vendor_name);
         PAPI_get_dev_type_attr(handle, PAPI_DEV_TYPE_ATTR__INT_COUNT, &dev_count);
 
-        if ( id == PAPI_DEV_TYPE_ID__CPU && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CPU ) {
             unsigned int numas = 1;
             for ( i = 0; i < dev_count; ++i ) {
                 const char *cpu_name;
@@ -220,9 +220,8 @@ main( int argc, char **argv )
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__CUDA && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__CUDA ) {
             printf( "Vendor                                : %s\n", vendor_name );
-
             for ( i = 0; i < dev_count; ++i ) {
                 unsigned long uid;
                 unsigned int warp_size, thread_per_block, block_per_sm;
@@ -281,7 +280,7 @@ main( int argc, char **argv )
             }
         }
 
-        if ( id == PAPI_DEV_TYPE_ID__ROCM && dev_count > 0 ) {
+        if ( id == PAPI_DEV_TYPE_ID__ROCM ) {
             printf( "Vendor                                : %s\n", vendor_name );
 
             unsigned long uid;
