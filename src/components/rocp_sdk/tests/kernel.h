@@ -14,7 +14,17 @@ do {                                                                           \
 do {                                                                           \
     hipError_t err = call;                                                     \
     if(err != hipSuccess) {                                                    \
-        test_fail(__FILE__, __LINE__, hipGetErrorString(err), PAPI_EMISC);     \
+        fprintf(stderr, "%s:%d: Error: %s.\n", __FILE__, __LINE__, hipGetErrorString(err)); \
+        exit(EXIT_FAILURE);                                                    \
+    }                                                                          \
+} while(0)
+
+#define HIP_CALL_THD(call)                                                     \
+do {                                                                           \
+    hipError_t err = call;                                                     \
+    if(err != hipSuccess) {                                                    \
+        fprintf(stderr, "Thread %d: %s.\n", id, hipGetErrorString(err));       \
+        status[id] = -1;                                                       \
     }                                                                          \
 } while(0)
 
