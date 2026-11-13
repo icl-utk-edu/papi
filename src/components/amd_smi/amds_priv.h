@@ -13,6 +13,7 @@
 #include <amd_smi/amdsmi.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "papi_debug.h"
 
@@ -89,10 +90,18 @@ typedef enum
     allowTruncation,
 } snprintf_truncation;
 
+static inline int amds_snprintf(char *buffer, size_t size, const char *formattedStr, ...) {
+    va_list ap;
+    va_start(ap, formattedStr);
+    int count = vsnprintf(buffer, size, formattedStr, ap);
+    va_end(ap);
+    return count;
+}
+
 #ifndef CHECK_SNPRINTF
 #define CHECK_SNPRINTF(truncation, buffer, size, ...) \
     do { \
-        int strLen = snprintf(buffer, size, __VA_ARGS__); \
+        int strLen = amds_snprintf(buffer, size, __VA_ARGS__); \
         if (strLen < 0 || (size_t)strLen >= size) { \
             if (truncation == allowTruncation) { \
                 SUBDBG("Failed to fully store string into buffer. Proceeding, but the string has been truncated.\n"); \
