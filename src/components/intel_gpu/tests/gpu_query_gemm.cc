@@ -45,9 +45,7 @@
 
 #if defined(ENABLE_PAPI)
 #include "papi.h" 
-const char *env_str = "ZE_ENABLE_TRACING_LAYER=1";
 #endif
-
 
 #define A_VALUE 0.128f
 #define B_VALUE 0.256f
@@ -391,13 +389,13 @@ main(int argc, char* argv[]) {
     int    num_metrics    = 0;
     char **metric_names   = NULL;
 
-    int cid         = -1;
-    retVal = putenv((char *)env_str);
-    if (retVal) {
-        cerr << "Failed to set ZE_ENABLE_TRACING_LAYER=1."
-             << "Set variable ZE_ENABLE_TRACING_LAYER=1 to enable query-based collection." << endl;
+	retVal = setenv("PAPI_INTEL_GPU_SAMPLING_MODE", "QUERY", 1);
+	if (retVal) {
+		fprintf(stderr, "Failed to set variable PAPI_INTEL_GPU_SAMPLING_MODE=QUERY to enable query-based collection.\n");
 		return 1;
-    }
+	}
+
+    int cid         = -1;
     cid = initPAPIGPUComp();
     if (cid < 0) {
        return 1;
