@@ -363,11 +363,11 @@ module papi_sde_fortran_wrappers
     character(len=*), intent(in)    :: event_name
     integer, intent(in) :: cntr_type
     integer, intent(in) :: cntr_mode
+    type(C_funptr), value, intent(in) :: c_func_ptr
     type(C_ptr), value, intent(in)  :: param
     integer, intent(out), optional :: error
     integer :: tmp
 
-    type(C_funptr) :: c_func_ptr
     type(C_ptr)    :: event_name_C_str
 
     event_name_C_str = F_str_to_C(event_name)
