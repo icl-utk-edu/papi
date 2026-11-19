@@ -1,5 +1,5 @@
-#ifndef __PAPI_ROCPSDK_INTERNAL_H__
-#define __PAPI_ROCPSDK_INTERNAL_H__
+#ifndef _SDK_CLASS_HPP
+#define _SDK_CLASS_HPP
 
 #include <stdint.h>
 #include <string.h>
@@ -140,4 +140,4 @@ static int finalize_ctx(vendorp_ctx_t ctx);
 
 extern unsigned int _rocp_sdk_lock;
 
-#endif
+#endif // _SDK_CLASS_HPP
