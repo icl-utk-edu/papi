@@ -75,6 +75,12 @@ char *get_offcore_event(char *event, int size) {
 			return event;
 			break;
 
+			case 106: /* Icelake */
+			strncpy(event,
+			"OFFCORE_RESPONSE_0:DEMAND_DATA_RD_LOCAL_DRAM",size);
+			return event;
+			break;
+
 			case 142: /* Kabylake */
 			case 158:
 			strncpy(event,
@@ -153,6 +159,7 @@ char *get_invalid_event_name(char *event, int size) {
 			case 78: /* Skylake */
 			case 94:
 			case 85: /* Skylake-X */
+			case 106: /* Icelake */
 
 			case 143: /* Sapphire Rapids */
 			case 173: /* Granite Rapids */
