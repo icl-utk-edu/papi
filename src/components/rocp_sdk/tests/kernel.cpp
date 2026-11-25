@@ -7,11 +7,13 @@ gemm(double *A, double *B, double *C, int N)
 {
     int colIdx = blockDim.x*blockIdx.x + threadIdx.x;
     int rowIdx = blockDim.y*blockIdx.y + threadIdx.y;
+    const double extraVal = 1.0002301;
 
     if( rowIdx < N && colIdx < N ) {
         for(int k = 0; k < N; ++k) {
             C[rowIdx*N + colIdx] += A[rowIdx*N + k] * B[k*N + colIdx];
         }
+        C[rowIdx*N + colIdx] += extraVal;
     }
 }
 

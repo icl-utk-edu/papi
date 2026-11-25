@@ -14,6 +14,7 @@ using dim_t = std::pair<uint64_t, unsigned long>;
 using dim_vector_t = std::vector< dim_t >;
 
 static inline bool dimensions_match( dim_vector_t dim_instances, dim_vector_t recorded_dims );
+static rocprofiler_thread_id_t control_thread_id;
 
 typedef struct {
     rocprofiler_counter_info_v0_t counter_info;
@@ -547,11 +548,34 @@ tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
                       rocprofiler_user_data_t*,
                       void* client_data) {
     rocprofiler_context_id_t *ctx = static_cast<rocprofiler_context_id_t*>(client_data);
+    rocprofiler_callback_tracing_marker_api_data_t *payload =
+            static_cast<rocprofiler_callback_tracing_marker_api_data_t*>(record.payload);
+
+    // Get calling thread.
+    rocprofiler_thread_id_t my_tid;
+    rocprofiler_get_thread_id_FPTR(&my_tid);
+
+    // Compare calling thread to profiling thread. If they do not match, simply return.
+    if( control_thread_id != my_tid ) {
+        SUBDBG("control_thread_id != my_tid\n");
+        return;
+    }
 
     if(record.phase == ROCPROFILER_CALLBACK_PHASE_ENTER &&
        record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
        record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerPause)
     {
+        // Get thread passed to ROCTX call.
+        rocprofiler_thread_id_t roctx_tid;
+        roctx_tid = payload->args.roctxProfilerPause.tid;
+        SUBDBG("ROCTX got roctx_tid = %d\n", roctx_tid);
+
+        // Compare ROCTX thread arg to profiling thread. If they do not match, simply return.
+        if( control_thread_id != roctx_tid ) {
+            SUBDBG("control_thread_id != roctx_tid\n");
+            return;
+        }
+
         for(int i = 0; i < _num_events_internal; ++i) {
             _counter_values_savestate[i] = _counter_values[i];
         }
@@ -563,6 +587,16 @@ tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
             record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
             record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerResume)
     {
+        // Get thread passed to ROCTX call.
+        rocprofiler_thread_id_t roctx_tid;
+        roctx_tid = payload->args.roctxProfilerResume.tid;
+
+        // Compare ROCTX thread arg to profiling thread. If they do not match, simply return.
+        if( control_thread_id != roctx_tid ) {
+            SUBDBG("control_thread_id != roctx_tid\n");
+            return;
+        }
+
         ROCPROFILER_CALL(rocprofiler_start_context_FPTR(*ctx), "resuming profiling context");
         SUBDBG("Received ROCTX call to resume context.\n");
         active_event_set_ctx->state = RPSDK_AES_RUNNING;
@@ -1168,6 +1202,19 @@ int setup() {
 
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
+
+extern "C" int
+rocprofiler_sdk_set_control_thread_id(rocprofiler_thread_id_t tid)
+{
+    papi_rocpsdk::control_thread_id = tid;
+    return PAPI_OK;
+}
+
+extern "C" int
+rocprofiler_sdk_get_thread_id(rocprofiler_thread_id_t *thread_lock)
+{
+    return papi_rocpsdk::rocprofiler_get_thread_id_FPTR(thread_lock);
+}
 
 extern "C" int
 rocprofiler_sdk_init_pre(void)
