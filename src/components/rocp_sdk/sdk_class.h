@@ -1,5 +1,5 @@
-#ifndef __VENDOR_PROFILER_V1_H__
-#define __VENDOR_PROFILER_V1_H__
+#ifndef _SDK_CLASS_H
+#define _SDK_CLASS_H
 
 typedef struct vendord_ctx *vendorp_ctx_t;
 
@@ -24,4 +24,4 @@ extern int rocprofiler_sdk_evt_name_to_code(const char *name, unsigned int *even
 extern int rocprofiler_sdk_err_get_last(const char **err_string);
 
 
-#endif
+#endif // _SDK_CLASS_H
