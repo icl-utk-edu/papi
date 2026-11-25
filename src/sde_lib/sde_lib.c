@@ -11,11 +11,12 @@
 #include "sde_lib_internal.h"
 #include "sde_lib_lock.h"
 
-#define DLSYM_CHECK(name)                \
+#define DLSYM_CHECK(name, handle)        \
     do {                                 \
         if ( NULL != (err=dlerror()) ) { \
             name##_ptr = NULL;           \
             SDEDBG("obtain_papi_symbols(): Unable to load symbol %s: %s\n", #name, err);\
+            dlclose(handle);             \
             return;                      \
         }                                \
     } while (0)
@@ -93,10 +94,10 @@ static inline void obtain_papi_symbols(void){
 
     // We need this function to inform the SDE component in libpapi about the value of created counters.
     papi_sde_check_overflow_status_ptr = dlsym(handle, "papi_sde_check_overflow_status");
-    DLSYM_CHECK(papi_sde_check_overflow_status);
+    DLSYM_CHECK(papi_sde_check_overflow_status, handle);
 
     papi_sde_set_timer_for_overflow_ptr = dlsym(handle, "papi_sde_set_timer_for_overflow");
-    DLSYM_CHECK(papi_sde_set_timer_for_overflow);
+    DLSYM_CHECK(papi_sde_set_timer_for_overflow, handle);
 
     if( !dlsym_err ){
         SDEDBG("obtain_papi_symbols(): All symbols from libpapi.so have been successfully acquired.\n");

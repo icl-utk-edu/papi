@@ -1137,6 +1137,7 @@ static int _internal_hl_mkdir(const char *dir)
    struct stat buf;
    if ( stat(dir, &buf) == 0 && S_ISREG(buf.st_mode) ) {
       verbose_fprintf(stdout, "PAPI-HL Error: Name conflict with measurement directory and existing file.\n");
+      free(tmp), tmp = NULL;
       return ( PAPI_ESYS );
    }
 
@@ -1591,6 +1592,7 @@ static void _internal_hl_write_output()
                   unsigned long *tids = NULL;
                   int threads_num;
                   if ( _internal_get_sorted_thread_list(&tids, &threads_num) != PAPI_OK ) {
+                     free(tids), tids = NULL;
                      fclose(fp);
                      free(final_absolute_output_file_path);
                      return;

@@ -309,6 +309,8 @@ static struct native_event_t *allocate_native_event(
 	}
 
 	if ((event_table->default_pmu.name) && (strcmp(pinfo.name, event_table->default_pmu.name)) != 0 && (strcmp(pinfo.name, pmu_name) != 0)) {
+		free(event_string), event_string = NULL;
+		free(pmu_name), pmu_name = NULL;
 		SUBDBG("EXIT: The provided event %s lacks the necessary pmu prefix %s.\n", name, pinfo.name);
 		return NULL;
 	}

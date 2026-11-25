@@ -2480,6 +2480,7 @@ _pe_handle_permissions(papi_vector_t *component) {
 
 	retval = syscall(__NR_capget, &cap_header, &cap_data);
 	if (retval < 0) {
+		fclose(fff), fff = NULL;
 		strCpy = strncpy(component->cmp_info.disabled_reason, "Erroy querying Linux capabilities", PAPI_MAX_STR_LEN);
 		if (strCpy == NULL) HANDLE_STRING_ERROR;
 		return PAPI_ECMP;
