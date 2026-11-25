@@ -14,23 +14,23 @@ static void  test_hp_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSe
 /* Wrapper functions of different vector widths. */
 #if defined(X86_VEC_WIDTH_128B)
 void test_hp_x86_128B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+    test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(X86_VEC_WIDTH_512B)
 void test_hp_x86_512B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+    test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(X86_VEC_WIDTH_256B)
 void test_hp_x86_256B_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+    test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(ARM)
 void test_hp_arm_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+    test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #elif defined(POWER)
 void test_hp_power_VEC_FMA( int instr_per_loop, uint64 iterations, int EventSet, FILE *fp ) {
-    return test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
+    test_hp_VEC_FMA( instr_per_loop, iterations, EventSet, fp );
 }
 #endif
 

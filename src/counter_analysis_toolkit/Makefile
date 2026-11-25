@@ -1,8 +1,8 @@
 PAPIDIR?=${PAPI_DIR}
 USEMPI?=false
 LDFLAGS=-L$(PAPIDIR)/lib -lpapi -lm -lpthread -ldl -lrt
-INCFLAGS=-I$(PAPIDIR)/include
-CFLAGS+=-g -Wall -Wextra
+INCFLAGS=-I$(PAPIDIR)/include -I${PWD}/..
+CFLAGS+=-g -Wall -Wextra -Wpedantic
 OPT0=-O0
 OPT1=-O1
 OPT2=-O2
@@ -166,6 +166,9 @@ cat_collect:
 	$(CC) $(CFLAGS) -fopenmp $(INCFLAGS) main.c $(wildcard *.o) -o cat_collect $(LDFLAGS)
 
 clean:
+	rm -f *.o
+
+distclean:
 	rm -f *.o
 
 realclean:
