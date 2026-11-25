@@ -2884,6 +2884,13 @@ _papi_hwi_native_code_to_name( unsigned int EventCode,
   cidx = _papi_hwi_component_index( EventCode );
   if (cidx<0) return PAPI_ENOEVNT;
 
+  // Update the character length to PAPI_2MAX_STR_LEN to
+  // account for cuda native events > PAPI_MAX_STR_LEN.
+  int string_length = len;
+  if (strcmp(_papi_hwd[cidx]->cmp_info.name, "cuda") == 0) {
+      string_length = PAPI_2MAX_STR_LEN;
+  }
+
   if ( EventCode & PAPI_NATIVE_MASK ) {
 	  // save event code so components can get it with call to: _papi_hwi_get_papi_event_code()
 	  _papi_hwi_set_papi_event_code(EventCode, 0);
@@ -2894,9 +2901,9 @@ _papi_hwi_native_code_to_name( unsigned int EventCode,
 	}
 	if ( (retval = _papi_hwd[cidx]->ntv_code_to_name(
 						(unsigned int)nevt_code,
-						hwi_name, len) ) == PAPI_OK ) {
+						hwi_name, string_length) ) == PAPI_OK ) {
 			retval = _papi_hwi_prefix_component_name( _papi_hwd[cidx]->cmp_info.short_name, 
-											 hwi_name, hwi_name, len);
+											 hwi_name, hwi_name, string_length);
 			INTDBG("EXIT: retval: %d\n", retval);
 			return retval;
 	}
