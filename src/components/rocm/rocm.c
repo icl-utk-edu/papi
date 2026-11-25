@@ -139,10 +139,11 @@ rocm_init_component(int cid)
         _rocm_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocd_err_get_last(&err_string);
+        size_t availBytes = sizeof(_rocm_vector.cmp_info.disabled_reason);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
-                              PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
-            SUBDBG("disabled_reason truncated");
+                              availBytes, "%s", err_string);
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated disabled_reason. Proceeding.");
         }
         goto fn_fail;
     }
@@ -208,10 +209,11 @@ rocm_init_private(void)
         _rocm_vector.cmp_info.disabled = papi_errno;
         const char *err_string;
         rocd_err_get_last(&err_string);
+        size_t availBytes = sizeof(_rocm_vector.cmp_info.disabled_reason);
         int expect = snprintf(_rocm_vector.cmp_info.disabled_reason,
-                              PAPI_MAX_STR_LEN, "%s", err_string);
-        if (expect > PAPI_MAX_STR_LEN) {
-            SUBDBG("disabled_reason truncated");
+                              availBytes, "%s", err_string);
+        if (expect < 0 || (size_t)expect >= availBytes) {
+            SUBDBG("Truncated disabled_reason. Proceeding.");
         }
 
         goto fn_fail;
