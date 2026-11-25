@@ -120,9 +120,9 @@ int branches_testcode(void) {
 
 int random_branches_testcode(int number, int quiet) {
 
-  int j,junk=0;
+  int j;
   double junk2=5.0;
-  long int b,z1,z2,z3,z4,result;
+  long int b,z1,z2,z3,z4,result,junk=0;
   z1=236;
   z2=347;
   z3=458;
