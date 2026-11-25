@@ -368,6 +368,8 @@ record_callback(rocprofiler_dispatch_counting_service_data_t dispatch_data,
     uint64_t device;
 
     if( (NULL == _counter_values) || (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
+        // Release the lock taken by dispatch_callback() for this dispatch.
+        agent_mutex.unlock();
         return;
     }
 
@@ -541,6 +543,8 @@ buffered_callback(rocprofiler_context_id_t,
 }
 
 /* ** */
+int read_sample();
+
 // Only listen for the ROCTX Pause and Resume calls.
 void
 tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
@@ -552,23 +556,49 @@ tool_tracing_callback(rocprofiler_callback_tracing_record_t record,
        record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
        record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerPause)
     {
+        // Pausing only makes sense while an event set is counting.
+        if( (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_RUNNING)) ){
+            return;
+        }
+
+        // In device sampling mode the counter values are only updated when
+        // sampled, so take a sample now to include work done since the last
+        // PAPI_read().
+        if( RPSDK_MODE_DEVICE_SAMPLING == get_profiling_mode() ){
+            read_sample();
+        }
+
+        // Stopping the context can still deliver records of dispatches that
+        // completed before the pause (dispatch mode), so save the counter
+        // values only after the context has stopped.
+        ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(*ctx), "pausing profiling context");
+        SUBDBG("Received ROCTX call to pause context.\n");
+
+        _papi_hwi_lock(_rocp_sdk_lock);
         for(int i = 0; i < _num_events_internal; ++i) {
             _counter_values_savestate[i] = _counter_values[i];
         }
-        ROCPROFILER_CALL(rocprofiler_stop_context_FPTR(*ctx), "pausing profiling context");
-        SUBDBG("Received ROCTX call to pause context.\n");
-        active_event_set_ctx->state = RPSDK_AES_PAUSED;
+        active_event_set_ctx->state = (active_event_set_ctx->state & ~RPSDK_AES_RUNNING) | RPSDK_AES_PAUSED;
+        _papi_hwi_unlock(_rocp_sdk_lock);
     }
     else if(record.phase == ROCPROFILER_CALLBACK_PHASE_EXIT &&
             record.kind == ROCPROFILER_CALLBACK_TRACING_MARKER_CONTROL_API &&
             record.operation == ROCPROFILER_MARKER_CONTROL_API_ID_roctxProfilerResume)
     {
+        // Resuming only makes sense if the event set was paused.
+        if( (NULL == active_event_set_ctx) || (0 == (active_event_set_ctx->state & RPSDK_AES_PAUSED)) ){
+            return;
+        }
+
         ROCPROFILER_CALL(rocprofiler_start_context_FPTR(*ctx), "resuming profiling context");
         SUBDBG("Received ROCTX call to resume context.\n");
-        active_event_set_ctx->state = RPSDK_AES_RUNNING;
+
+        _papi_hwi_lock(_rocp_sdk_lock);
         for(int i = 0; i < _num_events_internal; ++i) {
             _counter_values[i] = _counter_values_savestate[i];
         }
+        active_event_set_ctx->state = (active_event_set_ctx->state & ~RPSDK_AES_PAUSED) | RPSDK_AES_RUNNING;
+        _papi_hwi_unlock(_rocp_sdk_lock);
     }
 }
 
