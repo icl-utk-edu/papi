@@ -808,7 +808,7 @@ PAPI_FCALL( papif_event_code_to_name, PAPIF_EVENT_CODE_TO_NAME,
 #endif
 {
 #if defined(_FORTRAN_STRLEN_AT_END)
-	char tmp[PAPI_MAX_STR_LEN];
+	char tmp[PAPI_2MAX_STR_LEN];
 	int i;
 	*check = PAPI_event_code_to_name( *EventCode, tmp );
 	/* tmp has \0 within PAPI_MAX_STR_LEN chars so strncpy is safe */
