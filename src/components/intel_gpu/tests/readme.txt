@@ -1,6 +1,7 @@
 Test examples:
 To collect metrics, set ZET_ENABLE_METRICS=1
-To collect metrics in query mode, set ZE_ENABLE_TRACING_LAYER=1
+To collect metrics in query mode with the Experimental API Tracing, set ZET_ENABLE_API_TRACING_EXP=1
+To collect metrics in query mode with the Loader Tracing Layer, set ZE_ENABLE_TRACING_LAYER=1
 
 ---------------------------
 gpu_metric_list:

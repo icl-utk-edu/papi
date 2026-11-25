@@ -190,7 +190,8 @@ intel_gpu_init_component(int cidx)
 	char *errStr = NULL;
 	memset(_intel_gpu_vector.cmp_info.disabled_reason, 0, PAPI_MAX_STR_LEN);
 
-	if (putenv("ZET_ENABLE_METRICS=1")) {
+	int envStat = setenv("ZET_ENABLE_METRICS", "1", 1);
+	if (envStat) {
 		errStr = "Set ZET_ENABLE_METRICS=1 failed. Cannot access GPU metrics. ";
 		strncpy_se(_intel_gpu_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN,
 				   errStr, strlen(errStr));
@@ -216,12 +217,37 @@ intel_gpu_init_component(int cidx)
 
 	DEVICE_HANDLE handle = avail_devices[0];
 
-	char *envStr = NULL;
-	envStr =  getenv(ENABLE_API_TRACING);
+	// Get variable setting from the environment.
+	char *envStr = getenv("PAPI_INTEL_GPU_SAMPLING_MODE");
 	if (envStr != NULL) {
-	   if (atoi(envStr) == 1) {
+	   if (strcmp(envStr,"QUERY") == 0) {
 		   global_metrics_type = EVENT_BASED;
 	   }
+	}
+
+	// Track env. variable's value as a char for string manipulation purposes.
+	char varValue = '0'+global_metrics_type;
+
+	// If the setenv() fails, fallback by checking if the variable is already set to proper value.
+	envStat = setenv(ACTIVE_L0_API, &varValue, 1);
+	if (envStat) {
+		envStr = getenv(ACTIVE_L0_API);
+		if (envStr == NULL || strcmp(envStr, &varValue) != 0) {
+			errStr = (char*)malloc(PAPI_MAX_STR_LEN);
+			if( NULL == errStr ) {
+				SUBDBG("Failed to allocate memory for environment variable name plus value.\n");
+				return PAPI_ESYS;
+			}
+			retval = snprintf(errStr, PAPI_MAX_STR_LEN, "Set %s=%s failed. Cannot set sampling mode.", ACTIVE_L0_API, &varValue);
+			if( retval < 0 || retval >= PAPI_MAX_STR_LEN ) {
+				SUBDBG("Failed to write sampling mode error message.\n");
+				return PAPI_ESYS;
+			}
+			strncpy_se(_intel_gpu_vector.cmp_info.disabled_reason, PAPI_MAX_STR_LEN, errStr, strlen(errStr));
+			retval = PAPI_ENOSUPP;
+			free(errStr);
+			goto fn_fail;
+		}
 	}
 
 	metricInfoList.numEntries = 0;
