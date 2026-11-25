@@ -137,6 +137,9 @@ SRCS   += pfmlib_amd64.c pfmlib_intel_core.c pfmlib_intel_x86.c \
 	  pfmlib_intel_tmt.c \
 	  pfmlib_intel_knl.c \
 	  pfmlib_intel_adl.c \
+	  pfmlib_intel_arl_crt.c \
+	  pfmlib_intel_arl_lnc.c \
+	  pfmlib_intel_arl_skt.c \
 	  pfmlib_intel_knl_unc_imc.c \
 	  pfmlib_intel_knl_unc_edc.c \
 	  pfmlib_intel_knl_unc_cha.c \
@@ -321,6 +324,9 @@ INC_X86= pfmlib_intel_x86_priv.h	\
 	events/intel_gnr_events.h	\
 	events/intel_adl_glc_events.h	\
 	events/intel_adl_grt_events.h	\
+	events/intel_arl_crt_events.h	\
+	events/intel_arl_lnc_events.h	\
+	events/intel_arl_skt_events.h	\
 	pfmlib_intel_snbep_unc_priv.h	\
 	events/intel_snbep_unc_cbo_events.h \
 	events/intel_snbep_unc_ha_events.h \

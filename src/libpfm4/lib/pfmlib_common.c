@@ -295,6 +295,9 @@ static pfmlib_pmu_t *pfmlib_pmus[]=
 	&intel_gnr_unc_imc11_support,
 	&intel_adl_glc_support,
 	&intel_adl_grt_support,
+	&intel_arl_crt_support,
+	&intel_arl_lnc_support,
+	&intel_arl_skt_support,
 	&intel_rapl_support,
 	&intel_snbep_unc_cb0_support,
 	&intel_snbep_unc_cb1_support,
@@ -1893,8 +1896,7 @@ pfmlib_parse_event(const char *event, pfmlib_event_desc_t *d)
 	/*
 	 * support only one event at a time.
 	 */
-	p = strpbrk(event, PFMLIB_EVENT_DELIM);
-	if (p)
+	if (strpbrk(event, PFMLIB_EVENT_DELIM))
 		return PFM_ERR_INVAL;
 	/*
 	 * create copy because string is const

@@ -2611,7 +2611,7 @@ static const intel_x86_entry_t intel_spr_pe[]={
     .modmsk = INTEL_V5_ATTRS,
     .cntmsk = 0xffull,
     .ngrp   = 1,
-    .flags  = INTEL_X86_NHM_OFFCORE,
+    .flags  = INTEL_X86_SPEC,
     .numasks= LIBPFM_ARRAY_SIZE(intel_spr_exe),
     .umasks = intel_spr_exe,
   },

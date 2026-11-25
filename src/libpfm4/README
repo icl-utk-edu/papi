@@ -64,6 +64,9 @@ The library supports many PMUs. The current version can handle:
 		Intel GraniteRapids
 		Intel Alderlake (P-core)
 		Intel Alderlake (E-core)
+		Intel Arrowlake Cresmont (E-core)
+		Intel Arrowlake Lioncove (P-core)
+		Intel Arrowlake Skymont (E-core)
 		Intel Raptorlake (P-core, E-core)
 		Intel Silvermont
 		Intel Airmont
