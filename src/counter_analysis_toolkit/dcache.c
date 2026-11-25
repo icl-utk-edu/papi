@@ -75,7 +75,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
                 {
                     if( params.show_progress )
                     {
-                        printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
+                        fprintf(stdout, "%3d%%\b\b\b\b", (100*test_cnt++)/6);
                         fflush(stdout);
                     }
                     status = d_cache_test(pattern, params, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
@@ -87,7 +87,7 @@ void d_cache_driver(char* papi_event_name, cat_params_t params, hw_desc_t *hw_de
             {
                 if( params.show_progress )
                 {
-                    printf("%3d%%\b\b\b\b",(100*test_cnt++)/6);
+                    fprintf(stdout, "%3d%%\b\b\b\b", (100*test_cnt++)/6);
                     fflush(stdout);
                 }
                 status = d_cache_test(pattern, params, hw_desc, stride, ppb, papi_event_name, latency_only, mode, ofp_papi);
@@ -100,7 +100,7 @@ error2:
     if( params.show_progress )
     {
         size_t i;
-        printf("100%%");
+        fprintf(stdout, "100%%");
         for(i=0; i<strlen("Total:100%  Current test:100%"); i++) putchar('\b');
         fflush(stdout);
     }
@@ -381,7 +381,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, cat_par
             char symbol[4] = {'|','/','-','\\'};
             active_buf_len = bufSizes[j]/sizeof(uintptr_t);
             if( params.show_progress ){
-                printf("%c\b",symbol[j%4]);
+                fprintf(stdout, "%c\b", symbol[j%4]);
                 fflush(stdout);
             }
             long long llc_size = hw_desc->dcache_size[llc_idx]/hw_desc->split[llc_idx];
@@ -396,7 +396,7 @@ int varyBufferSizes(long long *values, double **rslts, double **counter, cat_par
             values[cnt++] = bufSizes[j];
         }
         if( params.show_progress ){
-            printf(" \b");
+            fprintf(stdout, " \b");
             fflush(stdout);
         }
 
