@@ -175,3 +175,46 @@ void enumerate_and_store_cuda_native_events(char ***cuda_native_event_names, int
 
     return;
 }
+
+/** @class verify_event_is_without_submetric
+  * @brief Verify that the provided eventname is without its submetric.
+  *
+  * @param *eventName
+  *   Cuda native event name.
+*/
+int  verify_event_is_without_submetric(const char *eventName)
+{
+    int currentNumberOfSubmetrics = 21;
+    char subMetricNamesArray[currentNumberOfSubmetrics][PAPI_MAX_STR_LEN] = {
+        "peak_sustained",
+        "peak_sustained_active",
+        "peak_sustained_active.per_second",
+        "peak_sustained_elapsed",
+        "peak_sustained_elapsed.per_second",
+        "peak_sustained_frame",
+        "peak_sustained_frame.per_second",
+        "peak_sustained_region",
+        "peak_sustained_region.per_second",
+        "per_cycle_active",
+        "per_cycle_elapsed",
+        "per_cycle_in_frame",
+        "per_cycle_in_region",
+        "per_second",
+        "pct_of_peak_sustained_active",
+        "pct_of_peak_sustained_elapsed",
+        "pct_of_peak_sustained_frame",
+        "pct_of_peak_sustained_region",
+        "max_rate",
+        "pct",
+        "ratio"
+    };
+
+    int entryIdx;
+    for (entryIdx = 0; entryIdx < currentNumberOfSubmetrics; entryIdx++) {
+        if (strstr(eventName, subMetricNamesArray[entryIdx])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
