@@ -45,7 +45,9 @@ static uint32_t amdsmi_lib_major = 0;
 static uint32_t amdsmi_lib_minor = 0;
 // Forward declarations for internal helpers
 static int load_amdsmi_sym(void);
+#ifdef AMDS_TMP_DISABLE
 static int init_device_table(void);
+#endif
 static int shutdown_device_table(void);
 static int init_event_table(void);
 static int shutdown_event_table(void);
@@ -133,6 +135,7 @@ amdsmi_status_t amds_query_gpu_memory_usage(amdsmi_processor_handle processor_ha
 } while (0)
 
 // Temporarily redirects stderr to /dev/null; returns dup of original fd (or -1 on failure)
+#ifdef AMDS_TMP_DISABLE
 static int silence_stderr_begin(void) {
   int devnull = open("/dev/null", O_WRONLY);
   if (devnull < 0)
@@ -154,6 +157,8 @@ static void silence_stderr_end(int saved_fd) {
     close(saved_fd);
   }
 }
+#endif
+
 // Simple open/close/start/stop functions (no special handling needed for most events)
 static int open_simple(native_event_t *event) {
   (void)event;
@@ -240,6 +245,7 @@ static int access_amdsmi_gpu_counter(int mode, void *arg) {
 }
 
 // Replace any non-alphanumeric characters with '_' to build safe event names
+#ifdef AMDS_TMP_DISABLE
 static void sanitize_name(const char *src, char *dst, size_t len) {
   if (len == 0) return;
   size_t j = 0;
@@ -254,6 +260,7 @@ static void sanitize_name(const char *src, char *dst, size_t len) {
   }
   dst[j] = '\0';
 }
+#endif
 
 static int strip_device_qualifier(const char *name, char *base, size_t len) {
   if (!name || !base || len == 0) {
@@ -666,10 +673,12 @@ static int shutdown_event_table(void) {
   return PAPI_OK;
 }
 
+#ifdef AMDS_TMP_DISABLE
 static int init_device_table(void) {
   // Nothing to do (device_handles and device_count already set in amds_init)
   return PAPI_OK;
 }
+#endif
 
 static int shutdown_device_table(void) {
   if (device_handles) {
@@ -1424,7 +1433,8 @@ static int init_event_table(void) {
       }
     }
 
-#if 0  // Temporarily disable PM metrics events due to AMD SMI memory issues
+// Temporarily disable PM metrics events due to AMD SMI memory issues
+#ifdef AMDS_TMP_DISABLE
     // GPU PM metrics count event (available in lib version 25+)
     if (amdsmi_lib_major >= 25 && amdsmi_get_gpu_pm_metrics_info_p) {
       amdsmi_name_value_t *metrics = NULL;
@@ -1470,6 +1480,7 @@ static int init_event_table(void) {
         free(metrics);
     }
 #endif
+
     if (amdsmi_is_gpu_power_management_enabled_p) {
       bool enabled = false;
       if (amdsmi_is_gpu_power_management_enabled_p(device_handles[d], &enabled) ==
